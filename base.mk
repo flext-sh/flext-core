@@ -90,7 +90,7 @@ VENV_PYTHON := $(ACTIVE_VENV)/bin/python
 VENV_ACTIVATE := source $(ACTIVE_VENV)/bin/activate
 export VIRTUAL_ENV := $(ACTIVE_VENV)
 
-# Go tooling/caches (zero-config defaults for make targets).
+# Go tooling/caches (zero-settings defaults for make targets).
 GO_TOOLS_BIN ?= $(WORKSPACE_ROOT)/.tools/bin
 GO_CACHE_ROOT ?= /tmp/flext-go-cache
 GO_BUILD_CACHE ?= $(GO_CACHE_ROOT)/build
@@ -359,9 +359,9 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 			fi; \
 			md_config=""; \
 			if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
-				md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
+				md_config="--settings $(WORKSPACE_ROOT)/.markdownlint.json"; \
 			elif [ -f ".markdownlint.json" ]; then \
-				md_config="--config .markdownlint.json"; \
+				md_config="--settings .markdownlint.json"; \
 			fi; \
 			if [ -n "$$md_files" ]; then echo "$$md_files" | xargs markdownlint $$md_config || { echo "FAIL: markdown"; exit 1; }; fi; \
 		fi; \
@@ -486,9 +486,9 @@ fmt: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
 	if [ -n "$$md_files" ]; then \
 		md_config=""; \
 		if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
-			md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
+			md_config="--settings $(WORKSPACE_ROOT)/.markdownlint.json"; \
 		elif [ -f ".markdownlint.json" ]; then \
-			md_config="--config .markdownlint.json"; \
+			md_config="--settings .markdownlint.json"; \
 		fi; \
 		echo "$$md_files" | xargs markdownlint --fix $$md_config; \
 	fi
@@ -646,7 +646,7 @@ daemon-start-mypy: ## Start dmypy daemon for this project
 	$(Q)if $(VENV_PYTHON) -m mypy.dmypy --status-file "$(DMPY_SOCKET)" status >/dev/null 2>&1; then \
 		echo "dmypy already running for $(PROJECT_NAME) at $(DMPY_SOCKET)"; \
 	else \
-		$(VENV_PYTHON) -m mypy.dmypy --status-file "$(DMPY_SOCKET)" start -- --config-file "$(WORKSPACE_ROOT)/pyproject.toml"; \
+		$(VENV_PYTHON) -m mypy.dmypy --status-file "$(DMPY_SOCKET)" start -- --settings-file "$(WORKSPACE_ROOT)/pyproject.toml"; \
 	fi
 
 daemon-stop-mypy: ## Stop dmypy daemon for this project

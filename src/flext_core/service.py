@@ -24,7 +24,6 @@ from pydantic import (
 )
 
 from flext_core import (
-    FlextSettings,
     c,
     e,
     h,
@@ -46,7 +45,7 @@ class FlextService[
     Subclasses implement ``execute`` to run business logic and return
     ``r`` (r) values. The base inherits :class:`x` (which extends
     :class:`u`) so services can reuse runtime automation for creating
-    scoped config/context/container triples via :meth:`create_service_runtime`
+    scoped settings/context/container triples via :meth:`create_service_runtime`
     while remaining protocol compliant via structural typing.
     """
 
@@ -57,22 +56,8 @@ class FlextService[
         use_enum_values=True,
         validate_assignment=True,
     )
+    __pydantic_parent_namespace__: ClassVar[dict[str, type]] = {"p": p}
     # --- Service Bootstrap Configuration ---
-    config_type: type | None = Field(
-        default=None,
-        exclude=True,
-        description="Settings class used to load runtime configuration.",
-    )
-    config_overrides: t.ContainerMapping | None = Field(
-        default=None,
-        exclude=True,
-        description="Key-value overrides applied on top of the loaded configuration.",
-    )
-    initial_context: p.Context | None = Field(
-        default=None,
-        exclude=True,
-        description="Initial execution context to inject into the runtime.",
-    )
     subproject: str | None = Field(
         default=None,
         exclude=True,
@@ -115,7 +100,7 @@ class FlextService[
     )
 
     _context: p.Context | None = PrivateAttr(default=None)
-    _config: p.Settings | None = PrivateAttr(default=None)
+    _settings: p.Settings | None = PrivateAttr(default=None)
     _container: p.Container | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _discovered_handlers: Sequence[tuple[str, m.DecoratorConfig]] = PrivateAttr(
@@ -128,26 +113,34 @@ class FlextService[
     def __init__(
         self,
         *,
-        config: p.Settings | None = None,
-        config_type: type | None = None,
-        config_overrides: t.ContainerMapping | None = None,
+        settings: p.Settings | None = None,
+        settings_type: t.SettingsClass | None = None,
+        settings_overrides: t.ContainerMapping | None = None,
         initial_context: p.Context | None = None,
         subproject: str | None = None,
         services: t.ServiceMap | None = None,
         factories: t.FactoryMap | None = None,
         resources: t.ResourceMap | None = None,
         container_overrides: t.ScalarMapping | None = None,
-        wire_modules: Sequence[ModuleType] | None = None,
+        wire_modules: Sequence[t.RuntimeModule] | None = None,
         wire_packages: t.StrSequence | None = None,
         wire_classes: Sequence[type] | None = None,
-        **data: object,
+        **data: t.ValueOrModel,
     ) -> None:
-        """Canonical public bootstrap signature for all FLEXT services."""
+        """Canonical public bootstrap surface for FLEXT services."""
+        bootstrap_options = u.resolve_runtime_options(
+            {
+                "settings": settings,
+                "settings_type": settings_type,
+                "settings_overrides": settings_overrides,
+                "context": initial_context,
+            },
+        )
         super().__init__(
-            config=config,
-            config_type=config_type,
-            config_overrides=config_overrides,
-            initial_context=initial_context,
+            runtime_settings=bootstrap_options.settings,
+            settings_type=bootstrap_options.settings_type,
+            settings_overrides=bootstrap_options.settings_overrides,
+            initial_context=bootstrap_options.context,
             subproject=subproject,
             services=services,
             factories=factories,
@@ -166,17 +159,18 @@ class FlextService[
         Sets up the service instance with runtime configuration after Pydantic
         has populated the fields.
 
-        Auto-discovery of handler-decorated methods enables zero-config handler
+        Auto-discovery of handler-decorated methods enables zero-settings handler
         registration: developers can mark methods with @h.handler() and they are
         automatically discovered.
         """
+        _ = __context
         runtime = self._create_initial_runtime()
         with u.service_context_scope(
             self.__class__.__name__,
-            runtime.config.version,
+            runtime.settings.version,
         ):
             self._context = runtime.context
-            self._config = runtime.config
+            self._settings = runtime.settings
             self._container = runtime.container
             self._runtime = runtime
             self._discovered_handlers = (
@@ -222,14 +216,14 @@ class FlextService[
 
     @property
     @override
-    def config(self) -> p.Settings:
-        """Service-scoped configuration clone."""
-        return u.require_initialized(self._config, "Config")
+    def settings(self) -> p.Settings:
+        """Service-scoped settings clone."""
+        return u.require_initialized(self._settings, "Settings")
 
     @property
     @override
     def container(self) -> p.Container:
-        """Container bound to the service context/config."""
+        """Container bound to the service context/settings."""
         return u.require_initialized(self._container, "Container")
 
     @property
@@ -242,11 +236,6 @@ class FlextService[
     def runtime(self) -> m.ServiceRuntime:
         """View of the runtime triple for this service instance."""
         return u.require_initialized(self._runtime, "Runtime")
-
-    @property
-    def settings(self) -> p.Settings:
-        """Return service config narrowed to FlextSettings."""
-        return self.config
 
     @classmethod
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions | None:
@@ -262,14 +251,14 @@ class FlextService[
         runtime_options: m.RuntimeBootstrapOptions | None = None,
         **runtime_kwargs: t.RuntimeData,
     ) -> m.ServiceRuntime:
-        """Materialize config, context, and container with DI wiring in one call.
+        """Materialize settings, context, and container with DI wiring in one call.
 
         This method provides the same parameterized automation previously found in
         ``u.create_service_runtime`` but uses the factory methods of each
         class directly (Clean Architecture - each class knows how to instantiate itself).
 
         All runtime components are created via the bootstrap options pattern:
-        1. Config materialization with overrides
+        1. Settings materialization with overrides
         2. Context creation with initial data
         3. Container creation with registrations
         4. Dispatcher creation with auto-discovery
@@ -288,17 +277,17 @@ class FlextService[
         return u.build_service_runtime(runtime_options, **runtime_kwargs)
 
     @classmethod
-    def _get_service_config_type(cls) -> type[FlextSettings]:
-        """Get the config type for this service class.
+    def _get_service_settings_type(cls) -> t.SettingsClass:
+        """Get the settings type for this service class.
 
-        Services can override this method to specify their specific config type.
-        Defaults to FlextSettings for generic services.
+        Services can override this method to specify their specific settings type.
+        Defaults to the canonical core settings base for generic services.
 
         Returns:
-            type[FlextSettings]: The config class to use for this service
+            type: The settings class to use for this service
 
         """
-        return FlextSettings
+        return u._settings_base()
 
     @field_validator("services", mode="before")
     @classmethod

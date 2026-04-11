@@ -22,7 +22,7 @@ from flext_core import r, s
 
 
 class DatabaseService(s[t.ConfigMap]):
-    """Example service showing config log-once pattern."""
+    """Example service showing settings log-once pattern."""
 
     db_config: t.ConfigMap
 
@@ -56,7 +56,7 @@ class DatabaseService(s[t.ConfigMap]):
 
 
 class MigrationService(s[t.ConfigMap]):
-    """Example migration service with config log-once pattern."""
+    """Example migration service with settings log-once pattern."""
 
     input_dir: str
     output_dir: str
@@ -71,7 +71,7 @@ class MigrationService(s[t.ConfigMap]):
 
         """
         super().model_post_init(__context)
-        config = t.ConfigMap(
+        settings = t.ConfigMap(
             root={
                 "input_dir": self.input_dir,
                 "output_dir": self.output_dir,
@@ -80,7 +80,7 @@ class MigrationService(s[t.ConfigMap]):
                 "max_workers": 4,
             },
         )
-        self._log_config_once(config, message="Migration configuration loaded")
+        self._log_config_once(settings, message="Migration configuration loaded")
 
     @override
     def execute(self) -> r[t.ConfigMap]:
@@ -102,7 +102,7 @@ class MigrationService(s[t.ConfigMap]):
 
 
 def main() -> None:
-    """Demonstrate config log-once pattern."""
+    """Demonstrate settings log-once pattern."""
     print("=== Example 1: Database Service ===")
     db_config = t.ConfigMap(
         root={
@@ -129,7 +129,7 @@ def main() -> None:
     print("1. Config logged ONCE when service initialized")
     print("2. Config does NOT appear in subsequent logs")
     print("3. Operation context (total_entries, batch_count) appears in all logs")
-    print("4. Clean, relevant logs without config repetition!")
+    print("4. Clean, relevant logs without settings repetition!")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""FlextProtocolsSettings - configuration protocols.
+"""FlextProtocolsSettings - settings protocols.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,7 +18,7 @@ class FlextProtocolsSettings:
     class Configurable(FlextProtocolsBase.Base, Protocol):
         """Protocol for component configuration."""
 
-        def configure(self, config: t.FlatContainerMapping | None = None) -> Self:
+        def configure(self, settings: t.FlatContainerMapping | None = None) -> Self:
             """Configure component with settings."""
             ...
 
@@ -74,6 +74,19 @@ class FlextProtocolsSettings:
                 A new instance of the model.
 
             """
+            ...
+
+    @runtime_checkable
+    class SettingsType(Protocol):
+        """Protocol for concrete settings classes with singleton access."""
+
+        @classmethod
+        def fetch_global(
+            cls,
+            *,
+            overrides: t.ScalarMapping | None = None,
+        ) -> FlextProtocolsSettings.Settings:
+            """Return the global singleton settings instance."""
             ...
 
 

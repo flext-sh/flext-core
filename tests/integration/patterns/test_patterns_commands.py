@@ -101,13 +101,13 @@ class TestPatternsCommands:
 
         def __init__(self) -> None:
             """Initialize create user command handler."""
-            config = m.Handler(
+            settings = m.Handler(
                 handler_id="create_user_handler",
                 handler_name="Create User Handler",
                 handler_type=c.HandlerType.COMMAND,
                 handler_mode=c.HandlerType.COMMAND,
             )
-            super().__init__(config=config)
+            super().__init__(settings=settings)
 
         def get_command_type(self) -> str:
             """Get command type this handler processes."""
@@ -161,13 +161,13 @@ class TestPatternsCommands:
 
         def __init__(self) -> None:
             """Initialize update user command handler."""
-            config = m.Handler(
+            settings = m.Handler(
                 handler_id="update_user_handler",
                 handler_name="Update User Handler",
                 handler_type=c.HandlerType.COMMAND,
                 handler_mode=c.HandlerType.COMMAND,
             )
-            super().__init__(config=config)
+            super().__init__(settings=settings)
             self.updated_users: t.MutableContainerMapping = dict[
                 str, t.NormalizedValue
             ]()

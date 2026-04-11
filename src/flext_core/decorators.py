@@ -254,11 +254,13 @@ class FlextDecorators:
                     ValueError,
                     RuntimeError,
                     KeyError,
-                ) as e:
+                ) as exc:
                     effective_error_code: str = (
                         str(error_code) if error_code is not None else "OPERATION_ERROR"
                     )
-                    return r[T].fail(str(e), error_code=effective_error_code)
+                    return e.fail_operation(
+                        func.__name__, exc, error_code=effective_error_code
+                    )
 
             return wrapper
 
@@ -318,7 +320,7 @@ class FlextDecorators:
                     logger = first_arg.logger
                 else:
                     logger = u.fetch_logger(func.__module__)
-                retry_config = m.RetryConfiguration.model_validate({
+                retry_settings = m.RetryConfiguration.model_validate({
                     "max_retries": attempts,
                     "initial_delay_seconds": delay,
                     "exponential_backoff": strategy == c.DEFAULT_BACKOFF_STRATEGY,
@@ -349,7 +351,7 @@ class FlextDecorators:
                         retry_args,
                         retry_kwargs,
                         logger,
-                        retry_config=retry_config,
+                        retry_settings=retry_settings,
                     )
                     if isinstance(retry_result, Exception):
                         FlextDecorators._handle_retry_exhaustion(
@@ -432,7 +434,7 @@ class FlextDecorators:
                 result=clear_result,
                 logger=logger,
                 fallback_message="operation_context_clear_failed",
-                kwargs=t.ConfigMap(
+                kwargs=t.SettingsMap(
                     root={
                         "extra": {
                             "function": function_name,
@@ -449,7 +451,7 @@ class FlextDecorators:
         kwargs: Mapping[str, t.ValueOrModel],
         logger: p.Logger,
         *,
-        retry_config: m.RetryConfiguration | None = None,
+        retry_settings: m.RetryConfiguration | None = None,
     ) -> R | Exception:
         """Execute retry loop and return last exception.
 
@@ -460,22 +462,22 @@ class FlextDecorators:
             args: Function positional arguments
             kwargs: Function keyword arguments
             logger: Logger instance
-            retry_config: RetryConfiguration instance (Pydantic v2)
+            retry_settings: RetryConfiguration instance (Pydantic v2)
 
         Returns:
             Function result on success
 
         """
-        if retry_config is None:
-            retry_config = m.RetryConfiguration(
+        if retry_settings is None:
+            retry_settings = m.RetryConfiguration(
                 retry_on_exceptions=[],
                 retry_on_status_codes=[],
             )
-        attempts = retry_config.max_retries
-        delay = retry_config.initial_delay_seconds
+        attempts = retry_settings.max_retries
+        delay = retry_settings.initial_delay_seconds
         strategy = (
             c.DEFAULT_BACKOFF_STRATEGY
-            if retry_config.exponential_backoff
+            if retry_settings.exponential_backoff
             else c.BackoffStrategy.LINEAR
         )
         last_exception: Exception | None = None
@@ -492,15 +494,21 @@ class FlextDecorators:
                     )
                     time.sleep(current_delay)
                 return func(*args, **kwargs)
-            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-                last_exception = e
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+            ) as exc:
+                last_exception = exc
                 logger.warning(
                     "operation_failed_retrying",
                     function=func.__name__,
                     attempt=attempt,
                     max_attempts=attempts,
-                    error=str(e),
-                    error_type=e.__class__.__name__,
+                    error=str(exc),
+                    error_type=exc.__class__.__name__,
                 )
                 if strategy == c.DEFAULT_BACKOFF_STRATEGY:
                     current_delay *= 2
@@ -519,7 +527,7 @@ class FlextDecorators:
         result: r[bool] | p.Result[bool],
         logger: p.Logger,
         fallback_message: str,
-        kwargs: t.ConfigMap,
+        kwargs: t.SettingsMap,
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if not result.failure:
@@ -527,7 +535,7 @@ class FlextDecorators:
         fallback_logger = FlextDecorators._resolve_fallback_logger(logger)
         if fallback_logger is None:
             return
-        warning_context = FlextDecorators._flatten_config_kwargs(kwargs)
+        warning_context = FlextDecorators._flatten_settings_kwargs(kwargs)
         warning_context["log_error"] = result.error or ""
         warning_context["log_error_code"] = result.error_code or ""
         fallback_logger.warning(fallback_message, **warning_context)
@@ -561,15 +569,15 @@ class FlextDecorators:
         ) from last_exception
 
     @staticmethod
-    def _flatten_config_kwargs(
-        kwargs: t.ConfigMap,
+    def _flatten_settings_kwargs(
+        kwargs: t.SettingsMap,
     ) -> MutableMapping[str, t.Container]:
-        """Flatten ConfigMap into a flat warning-context dict."""
+        """Flatten SettingsMap into a flat warning-context dict."""
         context: MutableMapping[str, t.Container] = {}
         for key, value in kwargs.root.items():
             if key == "extra" and u.dict_like(value):
                 extra_items: Mapping[str, t.ValueOrModel]
-                if isinstance(value, t.ConfigMap):
+                if isinstance(value, t.SettingsMap):
                     extra_items = value.root
                 else:
                     extra_items = {str(k): v for k, v in value.items()}
@@ -803,8 +811,12 @@ class FlextDecorators:
 
         def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
             """Apply factory configuration metadata to function."""
-            config = m.FactoryDecoratorConfig(name=name, singleton=singleton, lazy=lazy)
-            setattr(func, c.FACTORY_ATTR, config)
+            settings = m.FactoryDecoratorConfig(
+                name=name,
+                singleton=singleton,
+                lazy=lazy,
+            )
+            setattr(func, c.FACTORY_ATTR, settings)
             return func
 
         return decorator

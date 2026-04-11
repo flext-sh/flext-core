@@ -141,7 +141,7 @@ src/flext_core/
 ├── models.py           # DDD base classes (FlextModels)
 ├── service.py          # Domain service base (s)
 ├── dispatcher.py      # Command/query dispatcher
-├── config.py          # Configuration (FlextSettings)
+├── settings.py          # Configuration (FlextSettings)
 ├── loggings.py        # Logging (FlextLogger)
 └── ... (other modules)
 ```

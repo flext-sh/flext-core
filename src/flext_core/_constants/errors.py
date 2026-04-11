@@ -291,13 +291,13 @@ class FlextConstantsErrors:
         "DI bridge Provide helper returned unsupported type"
     )
     ERR_CONTAINER_BRIDGE_MUST_HAVE_CONFIG_PROVIDER: Final[str] = (
-        "Bridge must have config provider"
+        "Bridge must have settings provider"
     )
     ERR_CONTAINER_BRIDGE_CONFIG_PROVIDER_CANNOT_BE_NONE: Final[str] = (
-        "Bridge config provider cannot be None"
+        "Bridge settings provider cannot be None"
     )
     ERR_CONTAINER_BRIDGE_CONFIG_PROVIDER_MUST_SUPPORT_OVERRIDE: Final[str] = (
-        "Bridge config provider must support override()"
+        "Bridge settings provider must support override()"
     )
     ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED: Final[str] = (
         "Provider '{name}' is already registered"
@@ -354,9 +354,9 @@ class FlextConstantsErrors:
         "Namespace '{namespace}' not registered"
     )
     ERR_SETTINGS_DI_PROVIDER_NOT_INITIALIZED: Final[str] = "DI provider not initialized"
-    ERR_SETTINGS_CONFIG_CLASS_REQUIRED_FOR_NON_DECORATOR: Final[str] = (
-        "config_class is required when decorator=False"
+    ERR_SETTINGS_CLASS_REQUIRED_FOR_NON_DECORATOR: Final[str] = (
+        "settings_class is required when decorator=False"
     )
     ERR_SETTINGS_NAMESPACE_TYPE_MISMATCH: Final[str] = (
-        "Namespace '{namespace}' config instance {instance_class} is not instance of {expected_type}"
+        "Namespace '{namespace}' settings instance {instance_class} is not instance of {expected_type}"
     )

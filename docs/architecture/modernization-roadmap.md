@@ -79,7 +79,7 @@ ______________________________________________________________________
 - [ ] Extrair normalizações repetidas para funções puras reutilizáveis:
   - [ ] metadata
   - [ ] tags
-  - [ ] payload/config map
+  - [ ] payload/settings map
 - [ ] Unificar validators redundantes em `_models/container.py`, `_models/settings.py`, `_models/cqrs.py`.
 - [ ] Introduzir `Annotated[...]` com constraints nativas para remover validação manual onde aplicável.
 

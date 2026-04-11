@@ -244,7 +244,7 @@ from flext_core import t
 from flext_core import u
 
 try:
-    config = FlextSettings()
+    settings = FlextSettings()
     print("Configuration valid")
 except ValidationError as e:
     print(f"Configuration error: {e}")
@@ -281,8 +281,8 @@ for key, value in os.environ.items():
         print(f"{key}={value}")
 
 # Load and print configuration
-config = FlextSettings()
-print(f"Config: {config.dict()}")
+settings = FlextSettings()
+print(f"Config: {settings.dict()}")
 ```
 
 ### 5. LDIF Processing Issues
@@ -358,20 +358,20 @@ LdifMigrationException: Server compatibility error
 ```python
 from flext_ldif import FlextLdifSettings
 
-config = FlextLdifSettings(
+settings = FlextLdifSettings(
     source_server="oid",
     target_server="oud",
     preserve_oid_modifiers=True,
     handle_schema_extensions=True,
 )
 
-print(f"Config: {config.dict()}")
+print(f"Config: {settings.dict()}")
 ```
 
 **Enable server quirks:**
 
 ```python
-config = FlextLdifSettings(
+settings = FlextLdifSettings(
     servers_enabled=True, source_server="oid", target_server="oud"
 )
 ```
@@ -432,7 +432,7 @@ profile_memory()
 from flext_ldif import FlextLdifSettings
 
 # Reduce batch size for memory-constrained environments
-config = FlextLdifSettings(
+settings = FlextLdifSettings(
     batch_size=100,  # Instead of default 1000
     parallel_processing=False,  # Disable for memory issues
 )
@@ -441,7 +441,7 @@ config = FlextLdifSettings(
 **Enable parallel processing:**
 
 ```python
-config = FlextLdifSettings(
+settings = FlextLdifSettings(
     parallel_processing=True,
     max_workers=4,  # Adjust based on CPU cores
 )
@@ -550,11 +550,11 @@ from flext_core import t
 from flext_core import u
 
 # Enable debug mode
-config = FlextSettings(debug=True)
+settings = FlextSettings(debug=True)
 
 # Debug information will be printed
-print(f"Debug mode: {config.debug}")
-print(f"Log level: {config.log_level}")
+print(f"Debug mode: {settings.debug}")
+print(f"Log level: {settings.log_level}")
 ```
 
 ### 4. Step-by-Step Debugging
@@ -596,7 +596,7 @@ def debug_ldif_processing(content: str):
 
 | Error Code  | Description                     | Solution                                     |
 | ----------- | ------------------------------- | -------------------------------------------- |
-| `FLEXT_001` | Configuration validation failed | Check environment variables and config files |
+| `FLEXT_001` | Configuration validation failed | Check environment variables and settings files |
 | `FLEXT_002` | Dependency injection failed     | Verify service registration in container     |
 | `FLEXT_003` | Type validation failed          | Fix type annotations and data types          |
 

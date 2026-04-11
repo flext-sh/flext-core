@@ -67,7 +67,7 @@ class TestFlextSettingsSingletonIntegration:
         ] = ""
 
         def create_temp_file(self, temp_dir: Path) -> Path:
-            """Create temporary config file."""
+            """Create temporary settings file."""
             file_path = temp_dir / f"test_config.{self.file_format}"
             if self.file_format == "json":
                 u.Cli.json_write(file_path, self.config_data)
@@ -194,16 +194,16 @@ class TestFlextSettingsSingletonIntegration:
         assert id(config1) == id(config2) == id(config3)
 
     def test_config_in_flext_container(self) -> None:
-        """Test that FlextContainer uses the global config singleton."""
+        """Test that FlextContainer uses the global settings singleton."""
         global_config = FlextSettings.fetch_global()
         container = FlextContainer()
-        config_result = container.get("config")
+        config_result = container.get("settings")
         if config_result.success:
             retrieved_config = config_result.value
             assert retrieved_config is global_config
 
     def test_environment_variable_override(self) -> None:
-        """Test that environment variables override default config."""
+        """Test that environment variables override default settings."""
         FlextSettings.reset_for_testing()
         os.environ["FLEXT_APP_NAME"] = "test-app-from-env"
         os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
@@ -211,12 +211,12 @@ class TestFlextSettingsSingletonIntegration:
         os.environ["FLEXT_TIMEOUT_SECONDS"] = "90"
         os.environ["FLEXT_DEBUG"] = "true"
         try:
-            config = FlextSettings.fetch_global()
-            assert config.app_name == "test-app-from-env"
-            assert config.log_level == "DEBUG"
-            assert config.max_workers == 8
-            assert config.timeout_seconds == 90
-            assert config.debug is True
+            settings = FlextSettings.fetch_global()
+            assert settings.app_name == "test-app-from-env"
+            assert settings.log_level == "DEBUG"
+            assert settings.max_workers == 8
+            assert settings.timeout_seconds == 90
+            assert settings.debug is True
         finally:
             del os.environ["FLEXT_APP_NAME"]
             del os.environ["FLEXT_LOG_LEVEL"]
@@ -239,16 +239,16 @@ class TestFlextSettingsSingletonIntegration:
                 "max_name_length": 150,
                 "cache_enabled": False,
             }
-            config_file_path = temp_directory / "config.json"
+            config_file_path = temp_directory / "settings.json"
             u.Cli.json_write(config_file_path, config_data)
             assert config_file_path.exists()
             loaded = u.Cli.json_read(config_file_path).unwrap_or({})
             assert loaded == config_data
-            config = FlextSettings.fetch_global()
-            assert config.app_name is not None
-            assert config.log_level is not None
-            assert config.max_workers is not None
-            assert config.cache_ttl is not None
+            settings = FlextSettings.fetch_global()
+            assert settings.app_name is not None
+            assert settings.log_level is not None
+            assert settings.max_workers is not None
+            assert settings.cache_ttl is not None
         finally:
             if saved_env is not None:
                 os.environ["FLEXT_ENVIRONMENT"] = saved_env
@@ -265,7 +265,7 @@ class TestFlextSettingsSingletonIntegration:
         saved_app = os.environ.pop("FLEXT_APP_NAME", None)
         saved_debug = os.environ.pop("FLEXT_DEBUG", None)
         try:
-            config_file = temp_directory / "config.yaml"
+            config_file = temp_directory / "settings.yaml"
             config_data: Mapping[str, t.Primitives] = {
                 "app_name": "test-app-from-yaml",
                 "environment": "production",
@@ -279,11 +279,11 @@ class TestFlextSettingsSingletonIntegration:
                 config_file.read_text(encoding="utf-8"),
             ).unwrap_or({})
             assert loaded_data == config_data
-            config = FlextSettings.fetch_global()
-            assert config.app_name is not None
-            assert config.debug is not None
-            assert config.timeout_seconds is not None
-            assert config.max_batch_size is not None
+            settings = FlextSettings.fetch_global()
+            assert settings.app_name is not None
+            assert settings.debug is not None
+            assert settings.timeout_seconds is not None
+            assert settings.max_batch_size is not None
         finally:
             if saved_env is not None:
                 os.environ["FLEXT_ENVIRONMENT"] = saved_env
@@ -305,7 +305,7 @@ class TestFlextSettingsSingletonIntegration:
                 "app_name": "from-json",
                 "port": 3000,
             }
-            json_file = temp_directory / "config.json"
+            json_file = temp_directory / "settings.json"
             u.Cli.json_write(json_file, json_config)
             assert json_file.exists()
             assert u.Cli.json_read(json_file).unwrap_or({}) == json_config
@@ -317,10 +317,10 @@ class TestFlextSettingsSingletonIntegration:
             assert env_file.exists()
             assert "FLEXT_APP_NAME=from-env" in env_file.read_text(encoding="utf-8")
             os.environ["FLEXT_APP_NAME"] = "from-env-var"
-            config = FlextSettings.fetch_global()
-            assert config.app_name in {"from-env-var", "flext"}
-            assert config.cache_ttl in {300, 600}
-            assert config.max_retry_attempts in {3, 5}
+            settings = FlextSettings.fetch_global()
+            assert settings.app_name in {"from-env-var", "flext"}
+            assert settings.cache_ttl in {300, 600}
+            assert settings.max_retry_attempts in {3, 5}
         finally:
             if "FLEXT_APP_NAME" in os.environ:
                 del os.environ["FLEXT_APP_NAME"]
@@ -331,8 +331,8 @@ class TestFlextSettingsSingletonIntegration:
         configs: MutableSequence[FlextSettings] = []
 
         def collect_config() -> None:
-            config = FlextSettings.fetch_global()
-            configs.append(config)
+            settings = FlextSettings.fetch_global()
+            configs.append(settings)
 
         threads: MutableSequence[threading.Thread] = []
         for _ in range(10):
@@ -343,8 +343,8 @@ class TestFlextSettingsSingletonIntegration:
             t.join()
         assert len(configs) == 10
         first_config = configs[0]
-        for config in configs[1:]:
-            assert config is first_config
+        for settings in configs[1:]:
+            assert settings is first_config
 
     def test_pydantic_settings_precedence_order(self, temp_directory: Path) -> None:
         """Test comprehensive Pydantic 2 Settings precedence order.

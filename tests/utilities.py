@@ -903,7 +903,7 @@ class TestsFlextCoreUtilities(u):
                     m.Core.Tests.ReliabilityScenario(
                         name="retry_immediate_success",
                         strategy="retry",
-                        config=t.ConfigMap(
+                        settings=t.ConfigMap(
                             root={
                                 "max_retries": 3,
                                 "backoff_type": "constant",
@@ -918,7 +918,7 @@ class TestsFlextCoreUtilities(u):
                     m.Core.Tests.ReliabilityScenario(
                         name="retry_after_one_failure",
                         strategy="retry",
-                        config=t.ConfigMap(
+                        settings=t.ConfigMap(
                             root={
                                 "max_retries": 3,
                                 "backoff_type": "constant",
@@ -933,7 +933,7 @@ class TestsFlextCoreUtilities(u):
                     m.Core.Tests.ReliabilityScenario(
                         name="retry_exhausted",
                         strategy="retry",
-                        config=t.ConfigMap(
+                        settings=t.ConfigMap(
                             root={
                                 "max_retries": 2,
                                 "backoff_type": "constant",
@@ -952,7 +952,7 @@ class TestsFlextCoreUtilities(u):
                     m.Core.Tests.ReliabilityScenario(
                         name="circuit_initial_closed",
                         strategy="circuit_breaker",
-                        config=t.ConfigMap(
+                        settings=t.ConfigMap(
                             root={"failure_threshold": 5, "timeout_ms": 1000}
                         ),
                         simulate_failures=0,
@@ -963,7 +963,7 @@ class TestsFlextCoreUtilities(u):
                     m.Core.Tests.ReliabilityScenario(
                         name="circuit_open_on_threshold",
                         strategy="circuit_breaker",
-                        config=t.ConfigMap(
+                        settings=t.ConfigMap(
                             root={"failure_threshold": 2, "timeout_ms": 1000}
                         ),
                         simulate_failures=3,

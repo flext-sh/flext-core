@@ -22,36 +22,36 @@ class TestDecoratorsDiscoveryFullCoverage:
         assert result == []
 
     def test_scan_module_with_non_factory_functions(self) -> None:
-        """Functions without factory config attribute are ignored."""
+        """Functions without factory settings attribute are ignored."""
         mod = types.ModuleType("plain_mod")
         mod.__dict__["my_func"] = lambda: None
         result = u.scan_module(mod)
         assert result == []
 
     def test_scan_module_skips_private_names(self) -> None:
-        """Names starting with _ are skipped even if they have factory config."""
+        """Names starting with _ are skipped even if they have factory settings."""
         mod = types.ModuleType("private_mod")
 
         def _private_factory() -> None:
             msg = "Must use unified test helpers per Rule 3.6"
             raise NotImplementedError(msg)
 
-        config = m.FactoryDecoratorConfig(name="private")
-        setattr(_private_factory, c.FACTORY_ATTR, config)
+        settings = m.FactoryDecoratorConfig(name="private")
+        setattr(_private_factory, c.FACTORY_ATTR, settings)
         mod.__dict__["_private_factory"] = _private_factory
         result = u.scan_module(mod)
         assert result == []
 
     def test_scan_module_finds_factory_decorated_function(self) -> None:
-        """Finds functions that have the factory config attribute."""
+        """Finds functions that have the factory settings attribute."""
         mod = types.ModuleType("factory_mod")
 
         def my_factory() -> None:
             msg = "Must use unified test helpers per Rule 3.6"
             raise NotImplementedError(msg)
 
-        config = m.FactoryDecoratorConfig(name="my_factory")
-        setattr(my_factory, c.FACTORY_ATTR, config)
+        settings = m.FactoryDecoratorConfig(name="my_factory")
+        setattr(my_factory, c.FACTORY_ATTR, settings)
         mod.__dict__["my_factory"] = my_factory
         result = u.scan_module(mod)
         assert len(result) == 1

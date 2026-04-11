@@ -1140,16 +1140,16 @@ files = [
 ]
 
 [[package]]
-name = "editorconfig"
+name = "editorsettings"
 version = "0.17.1"
-description = "EditorConfig File Locator and Interpreter for Python"
+description = "EditorSettings File Locator and Interpreter for Python"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"dev\""
 files = [
-    {file = "editorconfig-0.17.1-py3-none-any.whl", hash = "sha256:1eda9c2c0db8c16dbd50111b710572a5e6de934e39772de1959d41f64fc17c82"},
-    {file = "editorconfig-0.17.1.tar.gz", hash = "sha256:23c08b00e8e08cc3adcddb825251c497478df1dada6aefeb01e626ad37303745"},
+    {file = "editorsettings-0.17.1-py3-none-any.whl", hash = "sha256:1eda9c2c0db8c16dbd50111b710572a5e6de934e39772de1959d41f64fc17c82"},
+    {file = "editorsettings-0.17.1.tar.gz", hash = "sha256:23c08b00e8e08cc3adcddb825251c497478df1dada6aefeb01e626ad37303745"},
 ]
 
 [package.extras]
@@ -1406,16 +1406,16 @@ test = ["jaraco.test (>=5.4)", "pytest (>=6,!=8.1.*)", "zipp (>=3.17)"]
 type = ["pytest-mypy"]
 
 [[package]]
-name = "iniconfig"
+name = "inisettings"
 version = "2.3.0"
-description = "brain-dead simple config-ini parsing"
+description = "brain-dead simple settings-ini parsing"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"dev\""
 files = [
-    {file = "iniconfig-2.3.0-py3-none-any.whl", hash = "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12"},
-    {file = "iniconfig-2.3.0.tar.gz", hash = "sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730"},
+    {file = "inisettings-2.3.0-py3-none-any.whl", hash = "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12"},
+    {file = "inisettings-2.3.0.tar.gz", hash = "sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730"},
 ]
 
 [[package]]
@@ -1492,7 +1492,7 @@ files = [
 ]
 
 [package.dependencies]
-editorconfig = ">=0.12.2"
+editorsettings = ">=0.12.2"
 six = ">=1.13.0"
 
 [[package]]
@@ -1923,7 +1923,7 @@ mkdocs = ">=1.1"
 [[package]]
 name = "mkdocs-awesome-pages-plugin"
 version = "2.10.1"
-description = "An MkDocs plugin that simplifies configuring page titles and their order"
+description = "An MkDocs plugin that simplifies settingsuring page titles and their order"
 optional = true
 python-versions = ">=3.8.1"
 groups = ["main"]
@@ -3209,7 +3209,7 @@ files = [
 
 [package.dependencies]
 colorama = {version = ">=0.4", markers = "sys_platform == \"win32\""}
-iniconfig = ">=1.0.1"
+inisettings = ">=1.0.1"
 packaging = ">=22"
 pluggy = ">=1.5,<2"
 pygments = ">=2.7.2"

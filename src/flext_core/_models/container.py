@@ -267,7 +267,7 @@ class FlextModelsContainer:
             arbitrary_types_allowed=True,
         )
 
-        config: Annotated[
+        settings: Annotated[
             p.Settings | None,
             SkipValidation,
             Field(
@@ -329,14 +329,14 @@ class FlextModelsContainer:
             lazy: Whether to defer factory invocation until first use. Default: True.
 
         Examples:
-            >>> config = FlextModelsContainer.FactoryDecoratorConfig(
+            >>> settings = FlextModelsContainer.FactoryDecoratorConfig(
             ...     name="database_service",
             ...     singleton=True,
             ...     lazy=False,
             ... )
-            >>> config.name
+            >>> settings.name
             'database_service'
-            >>> config.singleton
+            >>> settings.singleton
             True
 
         """

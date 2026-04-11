@@ -120,9 +120,9 @@ else:
 ```python
 # ❌ ANTI-PATTERN - Silent failure
 def load_config() -> dict:
-    """Loads config silently failing on error."""
+    """Loads settings silently failing on error."""
     try:
-        with open("config.json") as f:
+        with open("settings.json") as f:
             return json.load(f)
     except Exception:
         pass  # SILENT FAILURE!
@@ -144,19 +144,19 @@ from flext_core import r
 
 
 def load_config() -> r[dict]:
-    """Loads config with explicit error handling."""
+    """Loads settings with explicit error handling."""
     try:
-        with open("config.json") as f:
+        with open("settings.json") as f:
             return r[dict].ok(json.load(f))
     except FileNotFoundError:
         return r[dict].fail(
             "Config file not found",
             error_code="CONFIG_NOT_FOUND",
-            error_data={"filename": "config.json"},
+            error_data={"filename": "settings.json"},
         )
     except json.JSONDecodeError as e:
         return r[dict].fail(
-            f"Invalid JSON in config: {e}",
+            f"Invalid JSON in settings: {e}",
             error_code="CONFIG_PARSE_ERROR",
         )
 ```
@@ -313,20 +313,20 @@ ______________________________________________________________________
 **Problem**: Modules importing each other violates layer hierarchy.
 
 ```python
-config.py imports → result.py
+settings.py imports → result.py
     ↓
-result.py imports ← config.py
+result.py imports ← settings.py
         CIRCULAR!
 ```
 
 ```python
-# config.py
+# settings.py
 # ❌ ANTI-PATTERN - Imports from higher layer
-from flext_core import r  # config is higher than result
+from flext_core import r  # settings is higher than result
 
 # result.py
 # ❌ ANTI-PATTERN - Imports from lower layer
-from flext_core import FlextSettings  # result is lower than config
+from flext_core import FlextSettings  # result is lower than settings
 ```
 
 **Why it's wrong**:
@@ -349,7 +349,7 @@ Layer 4: FlextSettings, FlextLogger (imports all lower layers)
 
 ```python
 # ✅ CORRECT - Respect hierarchy
-# config.py (Layer 4) - can import from all lower layers
+# settings.py (Layer 4) - can import from all lower layers
 from flext_core import r
 from flext_core import FlextConstants
 
@@ -420,7 +420,7 @@ from flext_core import FlextModels
 ```python
 # ❌ ANTI-PATTERN - God t.NormalizedValue (3,000+ lines)
 class FlextMeltano:
-    """Everything in one class - config, validation, services, streams..."""
+    """Everything in one class - settings, validation, services, streams..."""
 
     def __init__(self, config_path: str):
         pass
@@ -464,21 +464,21 @@ class MeltanoConfig:
 class MeltanoValidator:
     """Handles validation only."""
 
-    def validate_config(self, config: dict) -> r[bool]:
+    def validate_config(self, settings: dict) -> r[bool]:
         pass
 
 
 class MeltanoStreamManager:
     """Handles stream operations."""
 
-    def load_streams(self, config: dict) -> r[list]:
+    def load_streams(self, settings: dict) -> r[list]:
         pass
 
 
 class MeltanoExecutor:
     """Handles execution (tap, target, dbt)."""
 
-    def run_tap(self, config: dict) -> r[bool]:
+    def run_tap(self, settings: dict) -> r[bool]:
         pass
 ```
 
@@ -699,7 +699,7 @@ ______________________________________________________________________
 **Problem**: Configuration values hardcoded in source.
 
 ```python
-# ❌ ANTI-PATTERN - Hardcoded config
+# ❌ ANTI-PATTERN - Hardcoded settings
 def connect_database():
     # Hardcoded values - can't change per environment!
     connection = psycopg2.connect(
@@ -769,14 +769,14 @@ DB_USER=prod_user DB_PASSWORD=$DB_PASSWORD python app.py
 
 ```python
 # ❌ ANTI-PATTERN - No validation
-config = {
+settings = {
     "timeout": "not_a_number",  # Should be int
     "log_level": "INVALID",  # Should be DEBUG/INFO/WARNING/ERROR
     "api_key": "",  # Should be non-empty
 }
 
 # Later in code - crashes with cryptic error
-time.sleep(config["timeout"])  # TypeError: float argument required
+time.sleep(settings["timeout"])  # TypeError: float argument required
 ```
 
 **Solution**: Validate configuration
@@ -803,7 +803,7 @@ class AppConfig(BaseSettings):
 
 # Pydantic validates automatically on construction
 try:
-    config = AppConfig(
+    settings = AppConfig(
         timeout="not_a_number",  # Invalid
         log_level="INVALID",  # Invalid
         api_key="",  # Invalid

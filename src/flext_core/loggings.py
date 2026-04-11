@@ -29,7 +29,6 @@ from pathlib import Path
 from typing import ClassVar, Self, override
 
 import structlog
-from pydantic import BaseModel
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 from structlog.types import Processor
@@ -196,7 +195,7 @@ class FlextLogger(FlextRuntime):
         self,
         name: str | None = None,
         *,
-        config: p.Settings | None = None,
+        settings: p.Settings | None = None,
         _bound_logger: p.Logger | None = None,
         _level: c.LogLevel | str | None = None,
         _service_name: str | None = None,
@@ -211,20 +210,20 @@ class FlextLogger(FlextRuntime):
         if _bound_logger is not None:
             self._structlog_instance = _bound_logger
             return
-        if config is not None:
-            _level = getattr(config, "level", _level)
-            _service_name = getattr(config, c.ContextKey.SERVICE_NAME, _service_name)
+        if settings is not None:
+            _level = getattr(settings, "level", _level)
+            _service_name = getattr(settings, c.ContextKey.SERVICE_NAME, _service_name)
             _service_version = getattr(
-                config,
+                settings,
                 c.ContextKey.SERVICE_VERSION,
                 _service_version,
             )
             _correlation_id = getattr(
-                config,
+                settings,
                 c.ContextKey.CORRELATION_ID,
                 _correlation_id,
             )
-            _force_new = getattr(config, "force_new", _force_new)
+            _force_new = getattr(settings, "force_new", _force_new)
         context: t.MutableStrMapping = {}
         if _service_name:
             context[c.ContextKey.SERVICE_NAME] = _service_name
@@ -257,7 +256,7 @@ class FlextLogger(FlextRuntime):
 
     @staticmethod
     def _structlog_processor(
-        value: object,
+        value: typing.Callable[..., t.ValueOrModel] | t.Container | None,
     ) -> typing.TypeIs[Processor]:
         return callable(value)
 
@@ -281,7 +280,7 @@ class FlextLogger(FlextRuntime):
 
     @staticmethod
     def _resolve_structlog_params(
-        config: BaseModel | None,
+        settings: t.ModelCarrier | None,
         *,
         log_level: int | None,
         console_renderer: bool,
@@ -298,26 +297,26 @@ class FlextLogger(FlextRuntime):
         bool,
         bool,
     ]:
-        """Extract structlog params from config model or pass-through args."""
+        """Extract structlog params from settings model or pass-through args."""
         async_logging = True
-        if config is not None:
-            log_level = getattr(config, "log_level", log_level)
-            console_renderer = getattr(config, "console_renderer", console_renderer)
-            cfg_processors = getattr(config, "additional_processors", None)
+        if settings is not None:
+            log_level = getattr(settings, "log_level", log_level)
+            console_renderer = getattr(settings, "console_renderer", console_renderer)
+            cfg_processors = getattr(settings, "additional_processors", None)
             if cfg_processors:
                 additional_processors = cfg_processors
             wrapper_class_factory = getattr(
-                config,
+                settings,
                 "wrapper_class_factory",
                 wrapper_class_factory,
             )
-            logger_factory = getattr(config, "logger_factory", logger_factory)
+            logger_factory = getattr(settings, "logger_factory", logger_factory)
             cache_logger_on_first_use = getattr(
-                config,
+                settings,
                 "cache_logger_on_first_use",
                 cache_logger_on_first_use,
             )
-            async_logging = getattr(config, "async_logging", True)
+            async_logging = getattr(settings, "async_logging", True)
         level = log_level if log_level is not None else logging.INFO
         return (
             level,
@@ -389,7 +388,7 @@ class FlextLogger(FlextRuntime):
     def configure_structlog(
         cls,
         *,
-        config: BaseModel | None = None,
+        settings: t.ModelCarrier | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
         additional_processors: Sequence[t.StructlogProcessor] | None = None,
@@ -409,7 +408,7 @@ class FlextLogger(FlextRuntime):
             cache_logger_on_first_use,
             async_logging,
         ) = cls._resolve_structlog_params(
-            config,
+            settings,
             log_level=log_level,
             console_renderer=console_renderer,
             additional_processors=additional_processors,
@@ -493,7 +492,10 @@ class FlextLogger(FlextRuntime):
                         10,
                     )
                     if current_level >= required_level:
-                        filtered_dict[actual_key] = value
+                        normalized_key = (
+                            "settings" if actual_key == "config" else actual_key
+                        )
+                        filtered_dict[normalized_key] = value
                 else:
                     filtered_dict[key] = value
             else:
@@ -761,7 +763,7 @@ class FlextLogger(FlextRuntime):
         cls,
         name: str = "flext",
         *,
-        config: p.Settings | None = None,
+        settings: p.Settings | None = None,
         service_name: str | None = None,
         service_version: str | None = None,
         correlation_id: str | None = None,
@@ -770,7 +772,7 @@ class FlextLogger(FlextRuntime):
 
         Args:
             name: Module name (typically __name__). Defaults to "flext".
-            config: Optional settings model used to seed logger context.
+            settings: Optional settings model used to seed logger context.
             service_name: Optional service name bound at construction time.
             service_version: Optional service version bound at construction time.
             correlation_id: Optional correlation identifier bound at construction time.
@@ -782,7 +784,7 @@ class FlextLogger(FlextRuntime):
         cls.ensure_structlog_configured()
         return cls(
             name,
-            config=config,
+            settings=settings,
             _service_name=service_name,
             _service_version=service_version,
             _correlation_id=correlation_id,
@@ -800,7 +802,7 @@ class FlextLogger(FlextRuntime):
         Args:
             container: Container instance to bind logger to.
             level: Optional log level override. If not provided, uses container's
-                config log_level.
+                settings log_level.
             **context: Additional context variables to bind.
 
         Returns:
@@ -808,12 +810,12 @@ class FlextLogger(FlextRuntime):
 
         """
         if level is None:
-            config: p.Settings | None
+            settings: p.Settings | None
             try:
-                config = container.config
+                settings = container.settings
             except (AttributeError, RuntimeError, TypeError, ValueError):
-                config = None
-            level = getattr(config, "log_level", "INFO")
+                settings = None
+            level = getattr(settings, "log_level", "INFO")
         logger = cls.create_module_logger(f"container_{id(container)}")
         if context:
             _ = logger.bind_global_context(**context)

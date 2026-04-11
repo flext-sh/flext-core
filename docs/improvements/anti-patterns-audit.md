@@ -65,7 +65,7 @@ All 15 anti-patterns verified against actual FLEXT-Core implementation:
 | 11. Not Checking Results         | Says: Check r         | Pattern enforced                    | ✅ FOLLOWED |
 | 12. Validation w/o Result        | Says: Wrap in r       | Implemented in models.py            | ✅ FOLLOWED |
 | 13. Mutable Value Objects        | Says: frozen=True               | Found 4 frozen=True uses            | ✅ FOLLOWED |
-| 14. Hardcoded Config             | Says: Use BaseSettings          | config.py uses BaseSettings         | ✅ FOLLOWED |
+| 14. Hardcoded Config             | Says: Use BaseSettings          | settings.py uses BaseSettings         | ✅ FOLLOWED |
 | 15. No Config Validation         | Says: Validate on load          | Pydantic validation used            | ✅ FOLLOWED |
 
 ______________________________________________________________________
@@ -261,7 +261,7 @@ ROOT IMPORT PATTERN (ECOSYSTEM STANDARD)
 **Layer Hierarchy Enforcement**:
 
 ```
-Layer 4: config.py, loggings.py, context.py
+Layer 4: settings.py, loggings.py, context.py
 Layer 3: handlers.py, bus.py, dispatcher.py
 Layer 2: models.py, service.py
 Layer 1: result.py, container.py, exceptions.py
@@ -442,10 +442,10 @@ ______________________________________________________________________
 
 **Guide Claims**:
 
-- ❌ Don't hardcode config values
+- ❌ Don't hardcode settings values
 - ✅ Use `pydantic_settings.BaseSettings`
 
-**Source Code Evidence** (config.py:23):
+**Source Code Evidence** (settings.py:23):
 
 ```python
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -464,16 +464,16 @@ class FlextSettings(BaseSettings):
 
 - FlextSettings extends pydantic_settings.BaseSettings
 - Environment variable support built-in
-- No hardcoded credentials or config values
+- No hardcoded credentials or settings values
 
 #### Anti-Pattern 15: No Configuration Validation ✅
 
 **Guide Claims**:
 
-- ❌ Don't skip config validation
+- ❌ Don't skip settings validation
 - ✅ Validate with Pydantic
 
-**Source Code Evidence** (config.py):
+**Source Code Evidence** (settings.py):
 
 ```python
 class FlextSettings(BaseSettings):
@@ -534,7 +534,7 @@ Layer violations: 0 (hierarchy enforced)
 frozen=True configurations: 4+ (all value objects)
 
 # Configuration
-BaseSettings usage: Yes (config.py:39)
+BaseSettings usage: Yes (settings.py:39)
 Pydantic validation: Yes (all fields)
 
 # Container Pattern

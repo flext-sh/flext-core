@@ -13,7 +13,7 @@ from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
 from typing import TYPE_CHECKING, TypeAliasType
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 from flext_core import FlextTypingBase, FlextTypingContainers
 
@@ -25,23 +25,27 @@ class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
     type RegistryDict[T] = MutableMapping[str, T]
+    type ModelCarrier = BaseModel
+    type ModelClass[T: BaseModel] = type[T]
 
-    type ScalarOrModel = FlextTypingBase.Scalar | Path | BaseModel
-    type ValueOrModel = FlextTypingBase.RecursiveContainer | BaseModel
+    type ScalarOrModel = FlextTypingBase.Scalar | Path | ModelCarrier
+    type ValueOrModel = FlextTypingBase.RecursiveContainer | ModelCarrier
     type RuntimeData = ValueOrModel | FlextTypesServices.MetadataValue
-    type RuntimeAtomic = FlextTypingBase.Container | BaseModel
+    type RuntimeAtomic = FlextTypingBase.Container | ModelCarrier
 
-    type BootstrapInput = BaseModel | FlextTypingBase.RecursiveContainerMapping | None
+    type BootstrapInput = (
+        ModelCarrier | FlextTypingBase.RecursiveContainerMapping | None
+    )
 
     type RegisterableService = (
         FlextTypingBase.Container
-        | BaseModel
+        | ModelCarrier
         | Mapping[
             str,
             FlextTypingBase.Container | FlextTypingBase.RecursiveContainer,
         ]
         | Sequence[FlextTypingBase.Container | FlextTypingBase.RecursiveContainer]
-        | Callable[..., FlextTypingBase.Container | BaseModel]
+        | Callable[..., FlextTypingBase.Container | ModelCarrier]
         | Callable[..., FlextTypesServices.RegisterableService]
     )
     type FactoryCallable = Callable[[], RegisterableService]
@@ -58,23 +62,24 @@ class FlextTypesServices:
     type MetadataAttributeValue = MetadataValue
     type ModelInput = (
         FlextTypingBase.RecursiveContainer
-        | BaseModel
+        | ModelCarrier
         | Mapping[
             str,
             FlextTypesServices.ValueOrModel,
         ]
     )
-    type ConfigModelInput = BaseModel | FlextTypingContainers.ConfigMap
+    type ConfigModelInput = ModelCarrier | FlextTypingContainers.ConfigMap
     type MetadataInput = (
-        BaseModel
+        ModelCarrier
         | FlextTypingContainers.ConfigMap
         | Mapping[str, FlextTypingBase.Scalar]
         | None
     )
-    type HandlerCallable = Callable[..., BaseModel | None]
-    type HandlerLike = Callable[..., BaseModel]
+    type HandlerCallable = Callable[..., ModelCarrier | None]
+    type HandlerLike = Callable[..., ModelCarrier]
     type DispatchableHandler = (
-        BaseModel | Callable[..., BaseModel | FlextTypesServices.RuntimeAtomic | None]
+        ModelCarrier
+        | Callable[..., ModelCarrier | FlextTypesServices.RuntimeAtomic | None]
     )
     type HandlerProtocolVariant = (
         FlextTypesServices.DispatchableHandler
@@ -85,7 +90,7 @@ class FlextTypesServices:
     )
     type ResolvedHandlerCallable = Callable[
         ...,
-        BaseModel | FlextTypesServices.RuntimeAtomic | None,
+        ModelCarrier | FlextTypesServices.RuntimeAtomic | None,
     ]
     type RoutedHandlerCallable = Callable[
         [p.Routable],
@@ -127,6 +132,7 @@ class FlextTypesServices:
         | TypeAliasType
         | Callable[[FlextTypingBase.Scalar], FlextTypingBase.Scalar]
     )
+    type ValueAdapter[T] = TypeAdapter[T]
     type TypeOriginSpecifier = TypeHintSpecifier
     type GenericTypeArgument = str | type[FlextTypingBase.Scalar]
     type MessageTypeSpecifier = str | type
@@ -150,13 +156,14 @@ class FlextTypesServices:
     type FactoryMap = Mapping[str, FactoryCallable]
     type ResourceMap = Mapping[str, ResourceCallable]
     type SettingsClass = type[p.Settings]
+    type RuntimeModule = ModuleType
     type LazyScalar = FlextTypingBase.Scalar | bytes | date | time
     type LazyCollection = Mapping[str, LazyScalar] | Sequence[LazyScalar]
     type ModuleExportValue = FlextTypingBase.Container | bytes | date | time
     type ModuleExport = (
         ModuleExportValue
         | LazyCollection
-        | ModuleType
+        | RuntimeModule
         | type[BaseException | Enum]
         | Callable[..., ModuleExportValue | LazyCollection | None]
     )
@@ -183,11 +190,11 @@ class FlextTypesServices:
         FlextTypingBase.Scalar
         | Path
         | FlextTypingBase.RecursiveContainerList
-        | Mapping[str, FlextTypingBase.RecursiveContainer | BaseModel]
+        | Mapping[str, FlextTypingBase.RecursiveContainer | ModelCarrier]
         | tuple[FlextTypingBase.RecursiveContainer, ...]
         | tuple[type, ...]
         | set[FlextTypingBase.RecursiveContainer]
-        | BaseModel
+        | ModelCarrier
         | FlextTypingContainers.ConfigMap
         | RegisterableService
         | p.Context
@@ -201,7 +208,7 @@ class FlextTypesServices:
         GuardInput
         | p.Flushable
         | p.AutoDiscoverableHandler
-        | p.ProviderLike[BaseModel | FlextTypingBase.Container]
+        | p.ProviderLike[ModelCarrier | FlextTypingBase.Container]
         | p.DispatchableService
         | p.SuccessCheckable
         | p.StructuredError

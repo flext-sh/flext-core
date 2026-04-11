@@ -18,7 +18,7 @@ class Ex02TestConfig(FlextSettings):
 class Ex02DatabaseService(m.Value):
     """Database service model used in example 02 settings integration."""
 
-    config: t.ConfigMap
+    settings: t.ConfigMap
     status: c.CommonStatus = c.CommonStatus.PENDING
 
     def connect(self) -> r[bool]:
@@ -33,7 +33,7 @@ class Ex02DatabaseService(m.Value):
 class Ex02CacheService(m.Value):
     """Cache service model used in example 02 settings integration."""
 
-    config: t.ConfigMap
+    settings: t.ConfigMap
     status: c.CommonStatus = c.CommonStatus.PENDING
 
     def set(self, key: str, value: str) -> r[bool]:
@@ -47,7 +47,7 @@ class Ex02CacheService(m.Value):
 class Ex02EmailService(m.Value):
     """Email service model used in example 02 settings integration."""
 
-    config: t.ConfigMap
+    settings: t.ConfigMap
     status: c.CommonStatus = c.CommonStatus.PENDING
 
     def send(self, to: str, subject: str, body: str) -> r[bool]:

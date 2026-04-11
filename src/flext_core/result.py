@@ -44,7 +44,7 @@ class FlextResult[T](BaseModel):
     success: Annotated[bool, Field(default=True)]
     error: Annotated[str | None, Field(default=None)]
     error_code: Annotated[str | None, Field(default=None)]
-    error_data: Annotated[t.ConfigMap | None, Field(default=None)]
+    error_data: Annotated[t.SettingsMap | None, Field(default=None)]
 
     _payload: T | None = PrivateAttr(default=None)
     _exception: BaseException | None = PrivateAttr(default=None)
@@ -99,30 +99,30 @@ class FlextResult[T](BaseModel):
 
     @staticmethod
     def _validate_error_data(
-        error_data: t.ResultErrorData | t.ConfigModelInput | None,
-    ) -> t.ConfigMap | None:
-        """Convert error_data to ConfigMap, matching RuntimeResult.fail() logic."""
+        error_data: t.ResultErrorData | t.SettingsModelInput | None,
+    ) -> t.SettingsMap | None:
+        """Convert error_data to SettingsMap, matching RuntimeResult.fail() logic."""
         if error_data is None:
             return None
-        if isinstance(error_data, t.ConfigMap):
+        if isinstance(error_data, t.SettingsMap):
             return error_data
-        if isinstance(error_data, BaseModel):
+        if isinstance(error_data, p.HasModelDump):
             dump = error_data.model_dump()
-            return t.ConfigMap(dump)
-        return t.ConfigMap(dict(error_data))
+            return t.SettingsMap(dump)
+        return t.SettingsMap(dict(error_data))
 
     def __init__(
         self,
         source: Result[T, str] | None = None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
+        error_data: t.ResultErrorData | t.SettingsModelInput | None = None,
         *,
         value: T | None = None,
         error: str | None = None,
         success: bool = True,
     ) -> None:
         """Initialize FlextResult from value/error/success only."""
-        # Convert error_data to ConfigMap using the same logic as RuntimeResult.fail()
+        # Convert error_data to SettingsMap using the same logic as RuntimeResult.fail()
         validated_error_data = FlextResult._validate_error_data(error_data)
 
         if source is not None and value is None and (error is None):
@@ -181,9 +181,9 @@ class FlextResult[T](BaseModel):
         )
 
     @staticmethod
-    def _validate_model[UModel: BaseModel](
+    def _validate_model[UModel: t.ModelCarrier](
         data: t.ModelInput,
-        model: type[UModel],
+        model: t.ModelClass[UModel],
         *,
         failure_prefix: str,
     ) -> FlextResult[UModel]:
@@ -234,15 +234,15 @@ class FlextResult[T](BaseModel):
                     error_code=error_code,
                 )
             return FlextResult[V].ok(value)
-        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
-            return FlextResult[V].fail(str(e), error_code=error_code, exception=e)
+        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
+            return FlextResult[V].fail(str(exc), error_code=error_code, exception=exc)
 
     @classmethod
     def fail(
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
+        error_data: t.ResultErrorData | t.SettingsModelInput | None = None,
         *,
         exception: BaseException | None = None,
     ) -> Self:
@@ -282,9 +282,9 @@ class FlextResult[T](BaseModel):
         return result
 
     @staticmethod
-    def from_validation[ModelT: BaseModel](
+    def from_validation[ModelT: t.ModelCarrier](
         data: t.ModelInput,
-        model: type[ModelT],
+        model: t.ModelClass[ModelT],
     ) -> FlextResult[ModelT]:
         """Create result from Pydantic validation.
 
@@ -337,7 +337,7 @@ class FlextResult[T](BaseModel):
         *,
         fail_fast: bool = True,
     ) -> FlextResult[Sequence[U]]:
-        """Map over sequence with configurable failure handling.
+        """Map over sequence with settingsurable failure handling.
 
         Args:
             items: Sequence of items to process.
@@ -430,8 +430,8 @@ class FlextResult[T](BaseModel):
                 OSError,
                 LookupError,
                 ArithmeticError,
-            ) as e:
-                return FlextResult[U].fail(str(e), exception=e)
+            ) as exc:
+                return FlextResult[U].fail(str(exc), exception=exc)
 
         return wrapper
 
@@ -509,7 +509,7 @@ class FlextResult[T](BaseModel):
             short-circuits on failure. FlextResult[U] if all funcs applied.
 
         Example:
-            result = r[ConfigMap].ok(data).flow_through(validate, enrich)
+            result = r[SettingsMap].ok(data).flow_through(validate, enrich)
 
         """
         if self.failure or not funcs:
@@ -606,9 +606,15 @@ class FlextResult[T](BaseModel):
             try:
                 mapped_value = func(self.value)
                 return FlextResult[U](value=mapped_value, success=True)
-            except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
-                result = FlextResult[U](error=str(e), success=False)
-                result._exception = e
+            except (
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+                RuntimeError,
+            ) as exc:
+                result = FlextResult[U](error=str(exc), success=False)
+                result._exception = exc
                 return result
         result = FlextResult[U](error=self.error or "", success=False)
         result._exception = self._exception
@@ -697,7 +703,10 @@ class FlextResult[T](BaseModel):
             func(self.error or "")
         return self
 
-    def to_model[U: BaseModel](self, model: type[U]) -> FlextResult[U]:
+    def to_model[U: t.ModelCarrier](
+        self,
+        model: t.ModelClass[U],
+    ) -> FlextResult[U]:
         """Convert successful value to Pydantic model.
 
         If the result is successful, attempts to convert the value to the
@@ -766,7 +775,7 @@ class FlextResult[T](BaseModel):
             raise RuntimeError(msg)
         return self.value
 
-    def unwrap_model[U: BaseModel](self, model: type[U]) -> U:
+    def unwrap_model[U: t.ModelCarrier](self, model: t.ModelClass[U]) -> U:
         """Unwrap successful value after Pydantic model conversion."""
         return self.to_model(model).unwrap()
 

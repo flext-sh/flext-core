@@ -455,105 +455,105 @@ class TestFlextContainer:
         for key in required_keys:
             tm.that(key in services, eq=True, msg=f"Services list must contain {key}")
 
-    @pytest.mark.parametrize("config", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
+    @pytest.mark.parametrize("settings", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
     def test_configure_container(
         self,
-        config: t.ScalarMapping,
+        settings: t.ScalarMapping,
         clean_container: p.Container,
     ) -> None:
         """Test container configuration."""
         container = clean_container
-        original_config = container.resolve_config()
-        container.configure(config)
-        config_result = container.resolve_config()
+        original_settings = container.resolve_settings()
+        container.configure(settings)
+        settings_result = container.resolve_settings()
         tm.that(
-            config_result,
+            settings_result,
             is_=t.ConfigMap,
             none=False,
-            msg="Container config must be a ConfigMap",
+            msg="Container settings must be a ConfigMap",
         )
-        for key, value in config.items():
-            if key in original_config.root:
+        for key, value in settings.items():
+            if key in original_settings.root:
                 tm.that(
-                    config_result.root.get(key),
+                    settings_result.root.get(key),
                     eq=value,
-                    msg=f"Config key {key} must be updated through configure()",
+                    msg=f"Settings key {key} must be updated through configure()",
                 )
             else:
                 tm.that(
-                    key in config_result.root,
+                    key in settings_result.root,
                     eq=False,
-                    msg=f"Unknown config key {key} must not leak into public config",
+                    msg=f"Unknown settings key {key} must not leak into public settings",
                 )
-        if not config:
+        if not settings:
             tm.that(
-                config_result.root,
-                eq=original_config.root,
-                msg="Empty configure() input must preserve existing config",
+                settings_result.root,
+                eq=original_settings.root,
+                msg="Empty configure() input must preserve existing settings",
             )
 
     def test_with_config_fluent(self, clean_container: p.Container) -> None:
         """Test fluent interface for configuration."""
         container = clean_container
-        config: t.ScalarMapping = {"max_services": 32}
-        result = container.configure(config)
+        settings: t.ScalarMapping = {"max_services": 32}
+        result = container.configure(settings)
         tm.that(
             result is container,
             eq=True,
             msg="with_config must return self for fluent interface",
         )
-        config_result = container.resolve_config()
+        settings_result = container.resolve_settings()
         tm.that(
-            config_result,
+            settings_result,
             is_=t.ConfigMap,
             none=False,
-            msg="resolve_config must return a ConfigMap",
+            msg="resolve_settings must return a ConfigMap",
         )
         tm.that(
-            config_result.root,
+            settings_result.root,
             none=False,
-            msg="Config must be accessible after with_config",
+            msg="Settings must be accessible after configure()",
         )
         tm.that(
-            config_result.root.get("max_services"),
+            settings_result.root.get("max_services"),
             eq=32,
-            msg="configure() must expose applied public config values",
+            msg="configure() must expose applied public settings values",
         )
 
-    def test_get_config(self) -> None:
-        """Test retrieving current configuration."""
+    def test_get_settings(self) -> None:
+        """Test retrieving current settings."""
         container = FlextContainer()
-        config = container.resolve_config()
+        settings = container.resolve_settings()
         tm.that(
-            config,
+            settings,
             is_=t.ConfigMap,
             none=False,
-            msg="resolve_config must return ConfigMap",
+            msg="resolve_settings must return ConfigMap",
         )
         tm.that(
-            "enable_singleton" in config.root,
+            "enable_singleton" in settings.root,
             eq=True,
             msg="Config must contain enable_singleton",
         )
         tm.that(
-            "max_services" in config.root,
+            "max_services" in settings.root,
             eq=True,
             msg="Config must contain max_services",
         )
 
     def test_config_property(self) -> None:
-        """Test accessing config via property."""
+        """Test accessing settings via property."""
         container = FlextContainer()
-        config = container.config
+        settings = container.settings
         tm.that(
-            config,
+            settings,
             is_=FlextSettings,
-            msg="Container config property must expose FlextSettings",
+            msg="Container settings property must expose FlextSettings",
         )
         tm.that(
-            config.app_name,
+            settings.app_name,
             eq=FlextSettings.fetch_global().app_name,
-            msg="Container config property must reflect the bound public settings",
+            msg="Container settings property must reflect the bound public settings",
         )
 
     def test_clear_all_services(self, clean_container: p.Container) -> None:

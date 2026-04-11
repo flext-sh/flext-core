@@ -24,12 +24,13 @@ from typing import (
 )
 
 from pydantic import ConfigDict, Field, PrivateAttr
-from pydantic_settings import BaseSettings
 
 from flext_core import (
+    FlextContainer,
     FlextContext,
     FlextLogger,
     c,
+    e,
     m,
     p,
     r,
@@ -42,21 +43,21 @@ class FlextMixins(m.ArbitraryTypesModel):
     """Composable behaviors for dispatcher-driven services and handlers."""
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _operation_stats: MutableMapping[str, t.ConfigMap] = PrivateAttr(
-        default_factory=dict[str, t.ConfigMap],
+    _operation_stats: MutableMapping[str, t.SettingsMap] = PrivateAttr(
+        default_factory=dict[str, t.SettingsMap],
     )
-
     _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
-    _cache_lock: ClassVar[threading.Lock] = threading.Lock()
+    _cache_lock: ClassVar[p.Lock] = threading.Lock()
+    _container_type: ClassVar[type[p.Container]] = FlextContainer
 
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
         """Auto-initialize container for subclasses (ABI compatibility)."""
         super().__init_subclass__(**kwargs)
 
     @property
-    def config(self) -> p.Settings:
-        """Return the runtime configuration associated with this component."""
-        return self._get_runtime().config
+    def settings(self) -> p.Settings:
+        """Return the runtime settings associated with this component."""
+        return self._get_runtime().settings
 
     @property
     def container(self) -> p.Container:
@@ -85,32 +86,37 @@ class FlextMixins(m.ArbitraryTypesModel):
             cls._logger_cache[logger_name] = logger
         return logger
 
-    config_type: Annotated[
+    settings_type: Annotated[
         type | None,
         Field(
             default=None,
-            description="Configuration class to initialize the service.",
+            exclude=True,
+            description="Settings class used to initialize the service.",
         ),
     ] = None
-    runtime_config: Annotated[
-        BaseSettings | None,
+    runtime_settings: Annotated[
+        p.Settings | None,
         Field(
             default=None,
-            alias="config",
             exclude=True,
             description="Pre-built settings instance used directly for the runtime.",
         ),
     ] = None
-    config_overrides: Annotated[
+    settings_overrides: Annotated[
         t.ContainerMapping | None,
         Field(
             default=None,
-            description="Configuration overrides applied at instantiation.",
+            exclude=True,
+            description="Settings overrides applied at instantiation.",
         ),
     ] = None
     initial_context: Annotated[
         p.Context | None,
-        Field(default=None, description="Initial context for the service scope."),
+        Field(
+            default=None,
+            exclude=True,
+            description="Initial context for the service scope.",
+        ),
     ] = None
 
     @staticmethod
@@ -133,30 +139,30 @@ class FlextMixins(m.ArbitraryTypesModel):
         """Set operation context with level-based binding (DEBUG/ERROR/normal)."""
         FlextMixins._propagate_context(operation_name)
         if operation_data:
-            debug_data: t.ConfigMap = t.ConfigMap(
+            debug_data: t.SettingsMap = t.SettingsMap(
                 root={
                     k: v for k, v in operation_data.items() if k in c.DEBUG_CONTEXT_KEYS
                 },
             )
-            error_data: t.ConfigMap = t.ConfigMap(
+            error_data: t.SettingsMap = t.SettingsMap(
                 root={
                     k: v for k, v in operation_data.items() if k in c.ERROR_CONTEXT_KEYS
                 },
             )
-            normal_data: t.ConfigMap = t.ConfigMap(
+            normal_data: t.SettingsMap = t.SettingsMap(
                 root={
                     k: v
                     for k, v in operation_data.items()
                     if k not in c.DEBUG_CONTEXT_KEYS and k not in c.ERROR_CONTEXT_KEYS
                 },
             )
-            all_context_data: t.ConfigMap = normal_data.model_copy()
+            all_context_data: t.SettingsMap = normal_data.model_copy()
             if debug_data:
-                merged_debug: t.ConfigMap = all_context_data.model_copy()
+                merged_debug: t.SettingsMap = all_context_data.model_copy()
                 merged_debug.update(debug_data.root)
                 all_context_data = merged_debug
             if error_data:
-                merged_error: t.ConfigMap = all_context_data.model_copy()
+                merged_error: t.SettingsMap = all_context_data.model_copy()
                 merged_error.update(error_data.root)
                 all_context_data = merged_error
             if all_context_data:
@@ -178,9 +184,9 @@ class FlextMixins(m.ArbitraryTypesModel):
     @contextmanager
     def track(self, operation_name: str) -> Generator[Mapping[str, t.ValueOrModel]]:
         """Track operation performance with timing and automatic context cleanup."""
-        stats: t.ConfigMap = self._operation_stats.get(
+        stats: t.SettingsMap = self._operation_stats.get(
             operation_name,
-            t.ConfigMap(
+            t.SettingsMap(
                 root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0},
             ),
         )
@@ -236,7 +242,7 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     def _enrich_context(self, **context_data: t.Scalar) -> None:
         """Log service information ONCE at initialization (not bound to context)."""
-        service_context: t.ConfigMap = t.ConfigMap(
+        service_context: t.SettingsMap = t.SettingsMap(
             root={
                 c.ContextKey.SERVICE_NAME: self.__class__.__name__,
                 c.ContextKey.SERVICE_MODULE: self.__class__.__module__,
@@ -290,23 +296,23 @@ class FlextMixins(m.ArbitraryTypesModel):
                     error=register_result.error or c.ERR_SERVICE_REGISTRATION_FAILED,
                 )
 
-    def _log_config_once(
+    def _log_settings_once(
         self,
-        config: t.ConfigMap,
+        settings: t.SettingsMap,
         message: str = "Configuration loaded",
     ) -> None:
         """Log configuration ONCE without binding to context."""
-        config_typed: t.ConfigMap = t.ConfigMap(root=dict(config))
+        settings_typed: t.SettingsMap = t.SettingsMap(root=dict(settings))
         self.logger.info(
             message,
-            **u.normalize_log_payload(config_typed.root),
+            **u.normalize_log_payload(settings_typed.root),
         )
 
     def _log_with_context(self, level: str, message: str, **extra: t.Scalar) -> None:
         """Log message with automatic context data inclusion."""
         correlation_id = FlextContext.Correlation.resolve_correlation_id()
         operation_name = FlextContext.Request.resolve_operation_name()
-        context_data: t.ConfigMap = t.ConfigMap(
+        context_data: t.SettingsMap = t.SettingsMap(
             root={
                 c.ContextKey.CORRELATION_ID: u.normalize_to_container(
                     correlation_id or "",
@@ -335,10 +341,17 @@ class FlextMixins(m.ArbitraryTypesModel):
             _ = container.register(service_name, self)
             if was_registered or container.has_service(service_name):
                 return r[bool].ok(True)
-            msg = c.ERR_SERVICE_REGISTRATION_FAILED
-            raise RuntimeError(msg)
-        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
-            return r[bool].fail(str(e))
+            raise RuntimeError(c.ERR_SERVICE_REGISTRATION_FAILED)
+        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
+            operation = "register service in container"
+            return r[bool].fail(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                    operation=operation,
+                    error=exc,
+                    params=m.OperationErrorParams(operation=operation, reason=str(exc)),
+                ),
+            )
 
 
 x = FlextMixins

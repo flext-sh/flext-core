@@ -158,7 +158,7 @@ infrastructure:
 
 | Property         | Type             | Description                    |
 | ---------------- | ---------------- | ------------------------------ |
-| `self.config`    | `FlextSettings`  | Configuration singleton        |
+| `self.settings`    | `FlextSettings`  | Configuration singleton        |
 | `self.logger`    | `FlextLogger`    | Logger with context            |
 | `self.container` | `FlextContainer` | Dependency injection container |
 | `self.context`   | `FlextContext`   | Execution context (task-local) |
@@ -176,7 +176,7 @@ class ProcessOrderService(s[Order]):
         self.logger.info(f"Processing order {self.order_id}")
 
         # Configuration (via x)
-        max_retries = self.config.max_retry_attempts
+        max_retries = self.settings.max_retry_attempts
 
         # Dependency resolution (via x)
         repo_result = self.container.get("order_repository")
@@ -324,7 +324,7 @@ ______________________________________________________________________
 
 - Keep services focused (single responsibility)
 - Return `r` from `execute()` (railway pattern)
-- Use lazy infrastructure properties (`self.config`, `self.logger`)
+- Use lazy infrastructure properties (`self.settings`, `self.logger`)
 - Validate inputs early with `r.fail()`
 
 ### DON'T ❌

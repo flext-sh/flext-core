@@ -1,11 +1,11 @@
-"""FlextSettings - Configuration Management Module.
+"""FlextSettings - Settings Management Module.
 
-This module provides comprehensive configuration management for the FLEXT ecosystem,
+This module provides comprehensive settings management for the FLEXT ecosystem,
 implementing Pydantic v2 BaseSettings with dependency injection, environment variable support,
 and runtime validation. Serves as the foundation layer (0.5) controlling all other layers.
 
-Scope: Global configuration management, singleton pattern, DI integration, validation,
-environment variable handling, thread-safe operations, and dynamic config updates.
+Scope: Global settings management, singleton pattern, DI integration, validation,
+environment variable handling, thread-safe operations, and dynamic settings updates.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -43,18 +43,18 @@ from flext_core.typings import T_Namespace, T_Settings
 
 
 class FlextSettings(BaseSettings):
-    """Configuration management with Pydantic validation and dependency injection.
+    """Settings management with Pydantic validation and dependency injection.
 
-    Architecture: Layer 0.5 (Configuration Foundation)
-    Provides enterprise-grade configuration management for the FLEXT ecosystem
+    Architecture: Layer 0.5 (Settings Foundation)
+    Provides enterprise-grade settings management for the FLEXT ecosystem
     through Pydantic BaseSettings with natural protocol compliance.
 
     Core Features:
-    - Pydantic v2 BaseSettings with type-safe configuration
+    - Pydantic v2 BaseSettings with type-safe settings
     - Environment variable support with FLEXT_ prefix
     - Thread-safe singleton pattern
     - Dependency injection integration
-    - Runtime configuration updates
+    - Runtime settings updates
     - Protocol compliance via inheritance (p.Settings)
     """
 
@@ -245,7 +245,7 @@ class FlextSettings(BaseSettings):
 
         Note: BaseSettings.__init__ accepts **values internally.
         We override __new__ to implement singleton pattern while allowing
-        kwargs to be passed for testing and configuration via model_validate.
+        kwargs to be passed for testing and settings via model_validate.
         """
         if not cls._singleton_enabled:
             return super().__new__(cls)
@@ -263,9 +263,9 @@ class FlextSettings(BaseSettings):
         return raw_instance
 
     def __init__(self, **kwargs: t.SettingsValue) -> None:
-        """Initialize config with data.
+        """Initialize settings with data.
 
-        Kwargs are applied as field overrides after base env/config loading
+        Kwargs are applied as field overrides after base env/settings loading
         to avoid type conflicts with BaseSettings internal parameters.
         Uses __dict__ update + single revalidation to avoid triggering
         validate_assignment validators on each individual field set.
@@ -336,12 +336,12 @@ class FlextSettings(BaseSettings):
         key: str,
         value: t.Scalar | t.ScalarList | t.ScalarMapping,
     ) -> bool:
-        """Validate and apply a configuration override.
+        """Validate and apply a settings override.
 
         Checks field existence in model_fields before applying via setattr.
 
         Args:
-            key: Configuration key to override
+            key: Settings key to override
             value: New value to set
 
         Returns:
@@ -353,8 +353,8 @@ class FlextSettings(BaseSettings):
         setattr(self, key, value)
         return True
 
-    def resolve_di_config_provider(self) -> t.Scalar:
-        """Get dependency injection provider for this config.
+    def resolve_di_settings_provider(self) -> t.Scalar:
+        """Get dependency injection provider for this settings.
 
         Returns a providers.Singleton instance via the runtime bridge.
         Type annotation stays framework-level to avoid DI imports in this module.
@@ -376,17 +376,17 @@ class FlextSettings(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_configuration(self) -> Self:
-        """Validate configuration.
+        """Validate settings.
 
-        Business Rule: Validates configuration consistency after model initialization.
+        Business Rule: Validates settings consistency after model initialization.
         Delegates to ``u`` validation utilities for database URL scheme
         and trace/debug consistency checks.
 
         Returns:
-            Self: Validated configuration instance
+            Self: Validated settings instance
 
         Raises:
-            ValueError: If configuration is invalid
+            ValueError: If settings are invalid
 
         """
         u.validate_database_url_scheme(self.database_url)
@@ -396,7 +396,7 @@ class FlextSettings(BaseSettings):
         )
         return self
 
-    AutoConfig: ClassVar[type[m.AutoConfig]] = m.AutoConfig
+    AutoSettings: ClassVar[type[m.AutoSettings]] = m.AutoSettings
 
     _namespace_registry: ClassVar[MutableMapping[str, type[BaseSettings]]] = {}
     _context_overrides: ClassVar[t.ScopedScalarRegistry] = {}
@@ -410,8 +410,8 @@ class FlextSettings(BaseSettings):
         if namespace in {"core", "root", "settings"}:
             return FlextSettings.fetch_global()
         namespace_key = namespace
-        config_class = self._namespace_registry.get(namespace_key)
-        if config_class is None:
+        settings_class = self._namespace_registry.get(namespace_key)
+        if settings_class is None:
             normalized = u.normalize_alnum(namespace)
             if normalized:
                 for key, value in self._namespace_registry.items():
@@ -420,29 +420,29 @@ class FlextSettings(BaseSettings):
                         key_normalized,
                     ):
                         namespace_key = key
-                        config_class = value
+                        settings_class = value
                         break
-        if config_class is None:
+        if settings_class is None:
             msg = f"Namespace '{name}' not registered"
             raise AttributeError(msg)
-        return self.fetch_namespace(namespace_key, config_class)
+        return self.fetch_namespace(namespace_key, settings_class)
 
     @classmethod
     def for_context(cls, context_id: str, **overrides: t.Scalar) -> Self:
-        """Get configuration instance with context-specific overrides.
+        """Get settings instance with context-specific overrides.
 
-        Creates a configuration instance with overrides specific to the given
-        context. Context overrides are applied on top of the base configuration.
+        Creates a settings instance with overrides specific to the given
+        context. Context overrides are applied on top of the base settings.
 
         Args:
             context_id: Unique identifier for the execution context.
-            **overrides: Configuration field overrides for this context.
+            **overrides: Settings field overrides for this context.
 
         Returns:
-            Self: Configuration instance with context overrides applied.
+            Self: Settings instance with context overrides applied.
 
         Example:
-            >>> config = FlextSettings.for_context(
+            >>> settings = FlextSettings.for_context(
             ...     "worker_1", log_level="DEBUG", timeout=60
             ... )
 
@@ -455,26 +455,26 @@ class FlextSettings(BaseSettings):
         return base
 
     @classmethod
-    def resolve_namespace_config(cls, namespace: str) -> type[BaseSettings] | None:
+    def resolve_namespace_settings(cls, namespace: str) -> type[BaseSettings] | None:
         """Internal namespace registry lookup."""
         return cls._namespace_registry.get(namespace)
 
     @classmethod
     def register_context_overrides(cls, context_id: str, **overrides: t.Scalar) -> None:
-        """Register context-specific configuration overrides.
+        """Register context-specific settings overrides.
 
         Registers overrides that will be automatically applied when using
         `for_context()` with the same context_id.
 
         Args:
             context_id: Unique identifier for the execution context.
-            **overrides: Configuration field overrides to register.
+            **overrides: Settings field overrides to register.
 
         Example:
             >>> FlextSettings.register_context_overrides(
             ...     "worker_1", log_level="DEBUG", timeout=60
             ... )
-            >>> config = FlextSettings.for_context("worker_1")
+            >>> settings = FlextSettings.for_context("worker_1")
 
         """
         cls._context_overrides.setdefault(context_id, {}).update(overrides)
@@ -483,17 +483,17 @@ class FlextSettings(BaseSettings):
     def register_namespace(
         cls,
         namespace: str,
-        config_class: type[BaseSettings] | None = None,
+        settings_class: type[BaseSettings] | None = None,
         *,
         decorator: bool = False,
     ) -> Callable[[type[T_Settings]], type[T_Settings]] | None:
-        """Register a configuration class for a namespace.
+        """Register a settings class for a namespace.
 
         When ``decorator=True``, returns a decorator that registers the class.
 
         Args:
             namespace: Namespace identifier
-            config_class: Configuration class to register
+            settings_class: Settings class to register
             decorator: If True, return a decorator-style registrar
 
         """
@@ -502,15 +502,15 @@ class FlextSettings(BaseSettings):
             def namespace_decorator(
                 class_to_register: type[T_Settings],
             ) -> type[T_Settings]:
-                """Register the configuration class while preserving type."""
+                """Register the settings class while preserving type."""
                 cls._namespace_registry[namespace] = class_to_register
                 return class_to_register
 
             return namespace_decorator
-        if config_class is None:
-            msg = c.ERR_SETTINGS_CONFIG_CLASS_REQUIRED_FOR_NON_DECORATOR
+        if settings_class is None:
+            msg = c.ERR_SETTINGS_CLASS_REQUIRED_FOR_NON_DECORATOR
             raise ValueError(msg)
-        cls._namespace_registry[namespace] = config_class
+        cls._namespace_registry[namespace] = settings_class
         return None
 
     @classmethod
@@ -532,33 +532,33 @@ class FlextSettings(BaseSettings):
     def fetch_namespace(
         self,
         namespace: str,
-        config_type: type[T_Namespace],
+        settings_type: type[T_Namespace],
     ) -> T_Namespace:
-        """Get configuration instance for a namespace.
+        """Get settings instance for a namespace.
 
-        Business Rule: Resolves namespace configuration class from registry and
-        instantiates it. Validates namespace exists and config class is subclass of
+        Business Rule: Resolves namespace settings class from registry and
+        instantiates it. Validates namespace exists and settings class is subclass of
         expected type. Raises ValueError if namespace not found, TypeError if type
-        mismatch. Used for dynamic namespace configuration resolution.
+        mismatch. Used for dynamic namespace settings resolution.
 
         Audit Implication: Namespace resolution ensures audit trail completeness by
-        validating namespace configurations before use. All namespace configurations
-        are validated before being used in production systems.
+        validating namespace settings before use. All namespace settings are
+        validated before being used in production systems.
 
         Args:
             namespace: Namespace identifier
-            config_type: Expected configuration type
+            settings_type: Expected settings type
 
         Returns:
-            Configuration instance
+            Settings instance
 
         Raises:
             ValueError: If namespace not found
             TypeError: If type mismatch
 
         """
-        config_class_raw = self._namespace_registry.get(namespace)
-        if config_class_raw is None:
+        settings_class_raw = self._namespace_registry.get(namespace)
+        if settings_class_raw is None:
             params = m.ConfigurationErrorParams(
                 config_key=namespace,
                 config_source="namespace_registry",
@@ -570,19 +570,19 @@ class FlextSettings(BaseSettings):
                     params=params,
                 ),
             )
-        config_instance = config_class_raw()
-        if isinstance(config_instance, config_type):
-            return config_instance
+        settings_instance = settings_class_raw()
+        if isinstance(settings_instance, settings_type):
+            return settings_instance
         params = m.TypeErrorParams(
-            expected_type=config_type.__name__,
-            actual_type=config_instance.__class__.__name__,
+            expected_type=settings_type.__name__,
+            actual_type=settings_instance.__class__.__name__,
         )
         raise TypeError(
             e.render_template(
-                "Namespace '{namespace}' config instance {instance_class} is not instance of {expected_type}",
+                "Namespace '{namespace}' settings instance {instance_class} is not instance of {expected_type}",
                 namespace=namespace,
-                instance_class=config_instance.__class__.__name__,
-                expected_type=config_type.__name__,
+                instance_class=settings_instance.__class__.__name__,
+                expected_type=settings_type.__name__,
                 params=params,
             ),
         )

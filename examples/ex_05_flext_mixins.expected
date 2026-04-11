@@ -16,7 +16,7 @@ accumulate_errors.fail: "e1; e2"
 container.type: "FlextContainer"
 logger.type: "FlextLogger"
 context.type: "FlextContext"
-config.type: "FlextSettings"
+settings.type: "FlextSettings"
 const.scope_operation: "operation"
 track.success.metrics: {"has_duration": False, "operation_count": "1"}
 track.failure.message: "boom"

@@ -56,7 +56,7 @@ class FlextProtocolsContainer:
     class ContainerCreationOptions(FlextProtocolsBase.Base, Protocol):
         """Structural contract for DI container bootstrap options."""
 
-        config: t.ConfigMap | None
+        settings: t.ConfigMap | None
         services: Mapping[str, t.RegisterableService] | None
         factories: Mapping[str, t.FactoryCallable] | None
         resources: Mapping[str, t.ResourceCallable] | None
@@ -86,7 +86,7 @@ class FlextProtocolsContainer:
         """
 
         @property
-        def config(self) -> FlextProtocolsSettings.Settings:
+        def settings(self) -> FlextProtocolsSettings.Settings:
             """Configuration bound to the container."""
             ...
 
@@ -115,8 +115,8 @@ class FlextProtocolsContainer:
             type_cls: None = None,
         ) -> FlextProtocolsResult.Result[t.RegisterableService]: ...
 
-        def resolve_config(self) -> t.ConfigMap:
-            """Return the merged configuration exposed by this container."""
+        def resolve_settings(self) -> t.ConfigMap:
+            """Return the merged settings exposed by this container."""
             ...
 
         def has_service(self, name: str) -> bool:
@@ -140,7 +140,7 @@ class FlextProtocolsContainer:
         def scoped(
             self,
             *,
-            config: FlextProtocolsSettings.Settings | None = None,
+            settings: FlextProtocolsSettings.Settings | None = None,
             context: FlextProtocolsContext.Context | None = None,
             subproject: str | None = None,
             services: Mapping[str, t.RegisterableService] | None = None,
@@ -158,6 +158,19 @@ class FlextProtocolsContainer:
             classes: Sequence[type] | None = None,
         ) -> None:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
+            ...
+
+    @runtime_checkable
+    class ContainerType(Protocol):
+        """Protocol for concrete container classes exposing the canonical factory."""
+
+        @classmethod
+        def create(
+            cls,
+            *,
+            auto_register_factories: bool = False,
+        ) -> FlextProtocolsContainer.Container:
+            """Create or return the canonical container instance."""
             ...
 
 

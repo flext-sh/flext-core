@@ -314,9 +314,9 @@ class TestServiceInternals:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test service init with non-standard context and config types."""
+        """Test service init with non-standard context and settings types."""
         bad_ctx_runtime = m.ServiceRuntime.model_construct(
-            config=FlextSettings(),
+            settings=FlextSettings(),
             context=cast("p.Context", "invalid-context"),
             container=cast("p.Container", "invalid-container"),
         )
@@ -335,7 +335,7 @@ class TestServiceInternals:
         assert service_with_bad_ctx.context == "invalid-context"
         good_ctx = FlextContext.create()
         bad_cfg_runtime = m.ServiceRuntime.model_construct(
-            config=cast("p.Settings", self._FakeConfig()),
+            settings=cast("p.Settings", self._FakeConfig()),
             context=good_ctx,
             container=cast("p.Container", "invalid-container"),
         )
@@ -351,15 +351,15 @@ class TestServiceInternals:
             classmethod(_bad_cfg_runtime_factory),
         )
         service_with_bad_cfg = self._Svc()
-        assert isinstance(service_with_bad_cfg.config, self._FakeConfig)
+        assert isinstance(service_with_bad_cfg.settings, self._FakeConfig)
 
     def test_service_create_runtime_container_overrides_branch(self) -> None:
         """Test _create_runtime with container_overrides."""
         runtime = self._Svc._create_runtime(container_overrides={"strict": True})
         assert isinstance(runtime, m.ServiceRuntime)
 
-    def test_service_create_initial_runtime_prefers_custom_config_type(self) -> None:
-        """Test _create_initial_runtime with custom config type via bootstrap options."""
+    def test_service_create_initial_runtime_prefers_custom_settings_type(self) -> None:
+        """Test _create_initial_runtime with custom settings type via bootstrap options."""
 
         class _CustomSettings(FlextSettings):
             pass
@@ -371,11 +371,11 @@ class TestServiceInternals:
                 cls,
             ) -> m.RuntimeBootstrapOptions:
                 return m.RuntimeBootstrapOptions(
-                    config_type=_CustomSettings,
+                    settings_type=_CustomSettings,
                 )
 
         runtime = _CustomSvc()._create_initial_runtime()
-        assert isinstance(runtime.config, _CustomSettings)
+        assert isinstance(runtime.settings, _CustomSettings)
         service = self._Svc()
         assert service.context is not None
 

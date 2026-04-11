@@ -14,9 +14,14 @@ class FlextUtilitiesGuardsTypeModel:
     """Pydantic and data model type guards."""
 
     @staticmethod
-    def base_model(value: t.RuntimeData) -> TypeIs[BaseModel]:
-        """Narrow broad runtime data to Pydantic BaseModel."""
+    def base_model(value: object) -> TypeIs[t.ModelCarrier]:
+        """Narrow a broad runtime value to the canonical model carrier alias."""
         return isinstance(value, BaseModel)
+
+    @staticmethod
+    def model_type(value: object) -> TypeIs[t.ModelClass[t.ModelCarrier]]:
+        """Narrow a runtime value to a canonical Pydantic model class."""
+        return isinstance(value, type) and issubclass(value, BaseModel)
 
     @staticmethod
     def object_list(
@@ -73,8 +78,8 @@ class FlextUtilitiesGuardsTypeModel:
         return True
 
     @staticmethod
-    def pydantic_model(value: t.GuardInput) -> TypeIs[BaseModel]:
-        """Narrow value to Pydantic BaseModel with callable model_dump."""
+    def pydantic_model(value: object) -> TypeIs[t.ModelCarrier]:
+        """Narrow value to the canonical Pydantic model carrier."""
         return (
             isinstance(value, BaseModel)
             and hasattr(value, "model_dump")

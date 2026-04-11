@@ -13,27 +13,22 @@ from contextlib import AbstractContextManager
 from datetime import datetime
 from importlib import import_module
 from pathlib import Path
-from types import ModuleType
-from typing import TYPE_CHECKING, Literal, TypeVar
+from typing import Literal, TypeVar
 
-from pydantic import BaseModel, Field, TypeAdapter, ValidationError
+from pydantic import Field, TypeAdapter, ValidationError
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.service import FlextModelsService
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.discovery import FlextUtilitiesDiscovery
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.typings import t
 
-if TYPE_CHECKING:
-    from flext_core.container import FlextContainer
-    from flext_core.context import FlextContext
-    from flext_core.settings import FlextSettings
-
-T_Model = TypeVar("T_Model", bound=BaseModel)
+T_Model = TypeVar("T_Model", bound=t.ModelCarrier)
 
 
 class FlextUtilitiesModel:
@@ -69,7 +64,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def safe_get_attribute(
-        obj: t.RuntimeData | type | ModuleType,
+        obj: p.Base | Mapping[str, t.ValueOrModel] | type,
         attr: str,
         default: t.ValueOrModel | None = None,
     ) -> t.ValueOrModel | None:
@@ -78,9 +73,9 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def _normalize_model_input(
-        data: BaseModel | Mapping[str, object] | t.ConfigMap,
-    ) -> Mapping[str, object]:
-        if isinstance(data, BaseModel):
+        data: t.ModelCarrier | Mapping[str, t.ValueOrModel] | t.ConfigMap,
+    ) -> Mapping[str, t.ValueOrModel]:
+        if FlextUtilitiesGuardsTypeModel.pydantic_model(data):
             root_value = getattr(data, "root", None)
             if isinstance(
                 root_value,
@@ -93,17 +88,17 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def dump(
-        model: BaseModel,
+        model: t.ModelCarrier,
         options: FlextUtilitiesModel.ModelDumpOptions | None = None,
         **kwargs: t.ValueOrModel,
-    ) -> t.ScalarMapping:
+    ) -> Mapping[str, t.ValueOrModel]:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.
 
         Args:
             model: Pydantic model instance to serialize.
-            options: Optional Pydantic model_dump arguments within the config model.
+            options: Optional Pydantic model_dump arguments within the settings model.
             **kwargs: Inline fallback serialization arguments mapped to ModelDumpOptions automatically.
 
         Returns:
@@ -121,8 +116,8 @@ class FlextUtilitiesModel:
     @classmethod
     def load(
         cls,
-        model_cls: type[T_Model],
-        data: BaseModel | Mapping[str, object] | t.ConfigMap,
+        model_cls: t.ModelClass[T_Model],
+        data: t.ModelCarrier | Mapping[str, t.ValueOrModel] | t.ConfigMap,
     ) -> r[T_Model]:
         """Load a model from a mapping-like input using Pydantic validation."""
         return r[T_Model].create_from_callable(
@@ -130,43 +125,76 @@ class FlextUtilitiesModel:
         )
 
     @staticmethod
-    def _settings_base() -> type[FlextSettings]:
+    def _settings_base() -> type:
         """Resolve FlextSettings lazily to avoid runtime import cycles."""
         settings_module = import_module("flext_core.settings")
         return settings_module.FlextSettings
 
     @staticmethod
-    def _container_type() -> type[FlextContainer]:
+    def _container_type() -> p.ContainerType:
         """Resolve FlextContainer lazily to avoid runtime import cycles."""
         container_module = import_module("flext_core.container")
         return container_module.FlextContainer
 
     @staticmethod
-    def _context_type() -> type[FlextContext]:
+    def _context_type() -> p.ContextType:
         """Resolve FlextContext lazily to avoid runtime import cycles."""
         context_module = import_module("flext_core.context")
         return context_module.FlextContext
 
     @staticmethod
     def service_settings_type(
-        service_or_cls: object,
-    ) -> type[FlextSettings]:
+        service_or_cls: p.Base | p.SettingsType | t.SettingsClass,
+    ) -> type:
         """Resolve the concrete settings type used by a service-like object."""
         settings_base = FlextUtilitiesModel._settings_base()
-        candidate = getattr(service_or_cls, "config_type", None)
-        if isinstance(candidate, type) and issubclass(candidate, settings_base):
+        if isinstance(
+            service_or_cls, type
+        ) and FlextUtilitiesModel._matches_settings_type(
+            service_or_cls,
+            settings_base,
+        ):
+            return service_or_cls
+        candidate = getattr(service_or_cls, "settings_type", None)
+        if isinstance(candidate, type) and FlextUtilitiesModel._matches_settings_type(
+            candidate,
+            settings_base,
+        ):
             return candidate
-        config_type_resolver = getattr(service_or_cls, "_get_service_config_type", None)
-        if callable(config_type_resolver):
-            resolved = config_type_resolver()
-            if isinstance(resolved, type) and issubclass(resolved, settings_base):
+        settings_type_resolver = getattr(
+            service_or_cls, "_get_service_settings_type", None
+        )
+        if callable(settings_type_resolver):
+            resolved = settings_type_resolver()
+            if isinstance(
+                resolved, type
+            ) and FlextUtilitiesModel._matches_settings_type(
+                resolved,
+                settings_base,
+            ):
                 return resolved
         return settings_base
 
     @staticmethod
+    def _matches_settings_type(
+        candidate: type,
+        settings_base: type,
+    ) -> bool:
+        """Check whether candidate behaves as a settings class.
+
+        Avoid direct Protocol subclass checks when runtime-checkable protocols
+        include non-method members, which raises ``TypeError`` in ``issubclass``.
+        """
+        try:
+            return issubclass(candidate, settings_base)
+        except TypeError:
+            fetch_global = getattr(candidate, "fetch_global", None)
+            return callable(fetch_global)
+
+    @staticmethod
     def validate_value[TValue](
-        target: TypeAdapter[TValue] | t.TypeHintSpecifier,
-        data: object,
+        target: t.ValueAdapter[TValue] | t.TypeHintSpecifier,
+        data: t.ValueOrModel,
         *,
         from_json: bool = False,
         strict: bool | None = None,
@@ -192,17 +220,17 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def _runtime_option_updates_from_source(
-        source: object,
+        source: p.Base,
     ) -> Mapping[str, t.ValueOrModel]:
         """Extract runtime bootstrap fields from a service-like instance."""
         field_map = {
-            "runtime_config": "config",
+            "runtime_settings": "settings",
             "initial_context": "context",
         }
         option_fields = (
-            "runtime_config",
-            "config_type",
-            "config_overrides",
+            "runtime_settings",
+            "settings_type",
+            "settings_overrides",
             "initial_context",
             "subproject",
             "services",
@@ -226,7 +254,7 @@ class FlextUtilitiesModel:
         source: (
             FlextModelsService.RuntimeBootstrapOptions
             | Mapping[str, t.ValueOrModel]
-            | object
+            | p.Base
             | None
         ) = None,
         **overrides: t.ValueOrModel,
@@ -237,9 +265,29 @@ class FlextUtilitiesModel:
             if isinstance(source, FlextModelsService.RuntimeBootstrapOptions):
                 resolved = source
             elif isinstance(source, Mapping):
-                resolved = FlextModelsService.RuntimeBootstrapOptions.model_validate(
-                    dict(source),
-                )
+                source_dict = dict(source)
+                try:
+                    resolved = (
+                        FlextModelsService.RuntimeBootstrapOptions.model_validate(
+                            source_dict,
+                        )
+                    )
+                except ValidationError:
+                    sanitized_source = dict(source_dict)
+                    wire_packages_raw = sanitized_source.get("wire_packages")
+                    if isinstance(wire_packages_raw, (list, tuple)):
+                        has_only_strings = all(
+                            isinstance(wire_pkg, str) for wire_pkg in wire_packages_raw
+                        )
+                        if has_only_strings:
+                            sanitized_source["wire_packages"] = list(wire_packages_raw)
+                        else:
+                            sanitized_source["wire_packages"] = None
+                    resolved = (
+                        FlextModelsService.RuntimeBootstrapOptions.model_validate(
+                            sanitized_source,
+                        )
+                    )
             else:
                 options_resolver = getattr(source, "_runtime_bootstrap_options", None)
                 if callable(options_resolver):
@@ -270,44 +318,48 @@ class FlextUtilitiesModel:
         source: (
             FlextModelsService.RuntimeBootstrapOptions
             | Mapping[str, t.ValueOrModel]
-            | object
+            | p.Base
             | None
         ) = None,
         **overrides: t.ValueOrModel,
     ) -> FlextModelsService.ServiceRuntime:
-        """Materialize config, context, and container from one runtime specification."""
+        """Materialize settings, context, and container from one runtime specification."""
         runtime_options = cls.resolve_runtime_options(source, **overrides)
-        settings_base = cls._settings_base()
         context_type = cls._context_type()
         container_type = cls._container_type()
-        config_instance = (
-            runtime_options.config
-            if isinstance(runtime_options.config, settings_base)
+        settings_instance = (
+            runtime_options.settings
+            if isinstance(runtime_options.settings, p.Settings)
             else None
         )
-        config_cls = (
-            type(config_instance)
-            if config_instance is not None
-            else cls.service_settings_type(runtime_options.config_type)
+        settings_cls = (
+            type(settings_instance)
+            if settings_instance is not None
+            else cls.service_settings_type(runtime_options.settings_type)
         )
-        config_overrides = (
+        settings_overrides = (
             {
                 key: value
-                for key, value in runtime_options.config_overrides.items()
+                for key, value in runtime_options.settings_overrides.items()
                 if FlextUtilitiesGuardsTypeCore.scalar(value)
             }
-            if runtime_options.config_overrides is not None
+            if runtime_options.settings_overrides is not None
             else None
         )
-        runtime_config: p.Settings
-        if config_instance is not None:
-            runtime_config = (
-                config_instance.model_copy(update=config_overrides, deep=True)
-                if config_overrides
-                else config_instance
+        runtime_settings: p.Settings
+        if settings_instance is not None:
+            runtime_settings = (
+                settings_instance.model_copy(update=settings_overrides, deep=True)
+                if settings_overrides
+                else settings_instance
             )
         else:
-            runtime_config = config_cls.fetch_global(overrides=config_overrides)
+            fetch_global = getattr(settings_cls, "fetch_global")
+            runtime_settings_candidate = fetch_global(overrides=settings_overrides)
+            if not isinstance(runtime_settings_candidate, p.Settings):
+                msg = "Resolved settings class returned non-settings instance"
+                raise TypeError(msg)
+            runtime_settings = runtime_settings_candidate
         runtime_context = (
             runtime_options.context
             if FlextUtilitiesGuardsTypeProtocol.context(runtime_options.context)
@@ -326,7 +378,7 @@ class FlextUtilitiesModel:
             )
         )
         runtime_container = container_type.create().scoped(
-            config=runtime_config,
+            settings=runtime_settings,
             context=runtime_context,
             subproject=runtime_options.subproject,
             services=bootstrap_services,
@@ -341,9 +393,15 @@ class FlextUtilitiesModel:
                 packages=wire_packages,
                 classes=wire_classes,
             )
+        runtime_container_context = getattr(runtime_container, "context", None)
+        resolved_context = (
+            runtime_container_context
+            if FlextUtilitiesGuardsTypeProtocol.context(runtime_container_context)
+            else runtime_context
+        )
         return FlextModelsService.ServiceRuntime(
-            config=runtime_config,
-            context=runtime_container.context,
+            settings=runtime_settings,
+            context=resolved_context,
             container=runtime_container,
         )
 

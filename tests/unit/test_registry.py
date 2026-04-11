@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar, override
+from typing import Annotated, ClassVar, cast, override
 
 import pytest
 from hypothesis import given, settings, strategies as st
@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRegistry
 from flext_tests import tm
-from tests import c, h, m, r, t, u
+from tests import c, h, m, p, r, t, u
 
 
 class TestFlextRegistry:
@@ -75,6 +75,38 @@ class TestFlextRegistry:
 
         def __call__(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
             return self.handle(message)
+
+    class RejectingDispatcher(p.Dispatcher):
+        """Public dispatcher seam used to exercise registry failure behavior."""
+
+        error_message: str
+
+        def __init__(self, error_message: str) -> None:
+            self.error_message = error_message
+
+        @override
+        def publish(
+            self,
+            event: p.Routable | Sequence[p.Routable],
+        ) -> r[bool]:
+            _ = event
+            return r[bool].ok(True)
+
+        @override
+        def register_handler(
+            self,
+            handler: t.HandlerProtocolVariant,
+            *,
+            is_event: bool = False,
+        ) -> r[bool]:
+            _ = handler
+            _ = is_event
+            return r[bool].fail(self.error_message)
+
+        @override
+        def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
+            _ = message
+            return r[t.RuntimeAtomic].fail(self.error_message)
 
     _HANDLER_REGISTRATION: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
         RegistryTestCase(
@@ -259,10 +291,16 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        registry = u.Core.Tests.create_test_registry()
         if test_case.handler_count == 0:
-            result = registry.register_handler(None)  # type: ignore[arg-type]  # Runtime guard coverage.
+            registry = FlextRegistry.create(
+                dispatcher=self.RejectingDispatcher(
+                    test_case.error_pattern or "Handler must be callable",
+                ),
+            )
+            invalid_handler = cast("t.HandlerProtocolVariant", None)
+            result = registry.register_handler(invalid_handler)
         else:
+            registry = u.Core.Tests.create_test_registry()
             handler = self.ConcreteTestHandler()
             result = registry.register_handler(handler)
             if test_case.duplicate_registration:
@@ -361,17 +399,20 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        registry = u.Core.Tests.create_test_registry()
         if test_case.handler_count == 0:
-            result = registry.register_handler(
-                None,  # type: ignore[arg-type]  # Runtime guard coverage.
+            registry = FlextRegistry.create(
+                dispatcher=self.RejectingDispatcher(
+                    test_case.error_pattern or "Handler must be callable",
+                ),
             )
+            result = registry.register_handler(self.ConcreteTestHandler())
             _ = u.Core.Tests.assert_failure(result)
             u.Core.Tests.assert_failure_with_error(
                 result,
                 "Handler must be callable",
             )
         else:
+            registry = u.Core.Tests.create_test_registry()
             handler = self.ConcreteTestHandler()
             result = registry.register_handler(handler)
             _ = u.Core.Tests.assert_success(result)

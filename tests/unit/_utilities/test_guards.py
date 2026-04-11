@@ -340,7 +340,14 @@ class TestFlextUtilitiesGuards:
 
     def test_is_type_protocol_names_reject_plain_string(self) -> None:
         """All protocol names should reject plain string values."""
-        for name in ("config", "context", "handler", "service", "middleware", "logger"):
+        for name in (
+            "settings",
+            "context",
+            "handler",
+            "service",
+            "middleware",
+            "logger",
+        ):
             tm.that(u.matches_type("plain", name), eq=False)
 
     # -----------------------------------------------------------------------

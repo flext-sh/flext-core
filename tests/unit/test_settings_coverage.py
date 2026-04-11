@@ -23,7 +23,7 @@ class TestFlextSettingsCoverage:
         FlextSettings.reset_for_testing()
 
     def test_get_global_and_apply_override(self) -> None:
-        with tm.scope(config={"debug": False}):
+        with tm.scope(settings={"debug": False}):
             settings_obj = FlextSettings.fetch_global()
         tm.that(settings_obj, is_=FlextSettings)
         tm.that(settings_obj.apply_override("debug", True), eq=True)
@@ -65,8 +65,8 @@ class TestFlextSettingsCoverage:
     def test_create_and_read_config_file(self, tmp_path: Path) -> None:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
-        config = t.ConfigMap(root={"app_name": "flext", "debug": True, "port": 8080})
-        config_path = files.create(config, "config.yaml", fmt=c.Tests.Format.YAML)
+        settings = t.ConfigMap(root={"app_name": "flext", "debug": True, "port": 8080})
+        config_path = files.create(settings, "settings.yaml", fmt=c.Tests.Format.YAML)
         tm.that(config_path.exists(), eq=True)
         read_result = files.read(config_path, fmt=c.Tests.Format.YAML)
         tm.ok(read_result)
@@ -80,7 +80,7 @@ class TestFlextSettingsCoverage:
         payload = t.ConfigMap(
             root={"name": "flext-core", "workers": 4, "enabled": True},
         )
-        config_path = files.create(payload, "config.json", fmt=c.Tests.Format.JSON)
+        config_path = files.create(payload, "settings.json", fmt=c.Tests.Format.JSON)
         tm.that(config_path.exists(), eq=True)
         read_result = files.read(config_path, fmt=c.Tests.Format.JSON)
         tm.ok(read_result)

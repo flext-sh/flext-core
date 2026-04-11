@@ -90,8 +90,8 @@ class _RuntimeFactoryService(s[str]):
     def create_runtime_full(cls) -> m.ServiceRuntime:
         return cls._create_runtime(
             runtime_options=m.RuntimeBootstrapOptions(
-                config_type=FlextSettings,
-                config_overrides={},
+                settings_type=FlextSettings,
+                settings_overrides={},
                 context=FlextContext.create(),
                 subproject="examples",
                 services={"svc_name": "service-value"},
@@ -298,7 +298,7 @@ class Ex11FlextService(Examples):
         # DependencyIntegration namespace
         di = u.DependencyIntegration.create_container(
             container_options=m.DependencyContainerCreationOptions(
-                config=t.ConfigMap(root={"env": env_value}),
+                settings=t.ConfigMap(root={"env": env_value}),
                 services={"object_item": service_object},
                 factories={"factory_item": lambda: factory_object},
                 resources={
@@ -321,7 +321,7 @@ class Ex11FlextService(Examples):
 
         bridge, service_mod, resource_mod = (
             u.DependencyIntegration.create_layered_bridge(
-                config=t.ConfigMap(root={"region": region_value}),
+                settings=t.ConfigMap(root={"region": region_value}),
             )
         )
         self.check("DependencyIntegration.bridge.type", type(bridge).__name__)
@@ -491,7 +491,7 @@ class Ex11FlextService(Examples):
             "create_runtime.full.container",
             type(runtime_full.container).__name__,
         )
-        self.check("create_runtime.full.config", type(runtime_full.config).__name__)
+        self.check("create_runtime.full.settings", type(runtime_full.settings).__name__)
 
         payload = _Payload(text=payload_text, count=payload_count)
         self.check("to_dict.none", t.ConfigMap(root={}).root)
@@ -523,11 +523,11 @@ class Ex11FlextService(Examples):
         self.check("result.property", result_value)
         runtime_view = service.runtime
         self.check("runtime.type", type(runtime_view).__name__)
-        self.check("runtime.has_config_attr", hasattr(runtime_view, "config"))
+        self.check("runtime.has_config_attr", hasattr(runtime_view, "settings"))
         self.check("runtime.has_context_attr", hasattr(runtime_view, "context"))
         self.check("runtime.has_container_attr", hasattr(runtime_view, "container"))
         self.check("context.type", type(service.context).__name__)
-        self.check("config.type", type(service.config).__name__)
+        self.check("settings.type", type(service.settings).__name__)
         self.check("container.type", type(service.container).__name__)
 
         self.check(

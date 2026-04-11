@@ -337,8 +337,8 @@ from flext_core import u
 
 # Main API class
 class FlextNewlib:
-    def __init__(self, config: FlextNewlibSettings):
-        self.config = config
+    def __init__(self, settings: FlextNewlibSettings):
+        self.settings = settings
 
     def process(self, data: dict) -> r[dict]:
         """Process data using r pattern."""
@@ -438,7 +438,7 @@ from flext_newlib import FlextNewlibSettings
 lib = FlextNewlib()
 result = lib.new_feature()
 
-config = FlextNewlibSettings(new_setting="value")
+settings = FlextNewlibSettings(new_setting="value")
 ```
 
 ## Contributing

@@ -101,7 +101,7 @@ def test_configuration_mapping_and_dict_negative_branches() -> None:
 
 def test_protocol_and_simple_guard_helpers() -> None:
     plain_obj: t.NormalizedValue = cast("t.NormalizedValue", "normalized")
-    tm.that(not _matches_type_obj(plain_obj, "config"), eq=True)
+    tm.that(not _matches_type_obj(plain_obj, "settings"), eq=True)
     tm.that(not _matches_type_obj(plain_obj, "container"), eq=True)
     tm.that(not _matches_type_obj(plain_obj, "command_bus"), eq=True)
     tm.that(not _matches_type_obj(plain_obj, "handler"), eq=True)
@@ -165,7 +165,7 @@ def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
 def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that is_type returns False for non-protocol objects against protocol types."""
     plain_obj: t.NormalizedValue = cast("t.NormalizedValue", "normalized")
-    tm.that(not _matches_type_obj(plain_obj, "config"), eq=True)
+    tm.that(not _matches_type_obj(plain_obj, "settings"), eq=True)
     tm.that(not _matches_type_obj(plain_obj, "context"), eq=True)
     tm.that(not _matches_type_obj(plain_obj, "handler"), eq=True)
     tm.that(not _matches_type_obj(plain_obj, "service"), eq=True)

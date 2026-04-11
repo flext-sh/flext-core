@@ -224,46 +224,46 @@ class TestFlextModelsContainer:
         config_dict: Mapping[str, t.ValueOrModel],
     ) -> None:
         """Test ContainerConfig creation with various configurations."""
-        config = m.ContainerConfig.model_validate(config_dict)
+        settings = m.ContainerConfig.model_validate(config_dict)
         tm.that(
-            config.enable_singleton,
+            settings.enable_singleton,
             eq=config_dict.get("enable_singleton", True),
         )
         tm.that(
-            config.enable_factory_caching,
+            settings.enable_factory_caching,
             eq=config_dict.get("enable_factory_caching", True),
         )
         tm.that(
-            config.max_services,
+            settings.max_services,
             eq=config_dict.get("max_services", 1000),
         )
         tm.that(
-            config.max_factories,
+            settings.max_factories,
             eq=config_dict.get("max_factories", 500),
         )
         tm.that(
-            config.enable_auto_registration,
+            settings.enable_auto_registration,
             eq=config_dict.get("enable_auto_registration", False),
         )
         tm.that(
-            config.enable_lifecycle_hooks,
+            settings.enable_lifecycle_hooks,
             eq=config_dict.get("enable_lifecycle_hooks", True),
         )
         tm.that(
-            config.lazy_loading,
+            settings.lazy_loading,
             eq=config_dict.get("lazy_loading", True),
         )
 
     def test_container_config_defaults(self) -> None:
         """Test ContainerConfig default values."""
-        config = m.ContainerConfig()
-        tm.that(config.enable_singleton, eq=True)
-        tm.that(config.enable_factory_caching, eq=True)
-        tm.that(config.max_services, eq=1000)
-        tm.that(config.max_factories, eq=500)
-        tm.that(not config.enable_auto_registration, eq=True)
-        tm.that(config.enable_lifecycle_hooks, eq=True)
-        tm.that(config.lazy_loading, eq=True)
+        settings = m.ContainerConfig()
+        tm.that(settings.enable_singleton, eq=True)
+        tm.that(settings.enable_factory_caching, eq=True)
+        tm.that(settings.max_services, eq=1000)
+        tm.that(settings.max_factories, eq=500)
+        tm.that(not settings.enable_auto_registration, eq=True)
+        tm.that(settings.enable_lifecycle_hooks, eq=True)
+        tm.that(settings.lazy_loading, eq=True)
 
     def test_container_config_validation_limits(self) -> None:
         """Test ContainerConfig field validation limits."""

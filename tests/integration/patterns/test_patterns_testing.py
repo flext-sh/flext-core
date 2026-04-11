@@ -820,7 +820,7 @@ class TestPatternsTesting:
         timeout_seconds: int,
         environment: str,
     ) -> None:
-        config: Mapping[str, t.Container] = {
+        settings: Mapping[str, t.Container] = {
             "database_url": database_url,
             "debug": debug,
             "timeout_seconds": timeout_seconds,
@@ -828,22 +828,22 @@ class TestPatternsTesting:
         }
         required_fields = ["database_url", "debug", "timeout_seconds"]
         for field in required_fields:
-            assert field in config, f"Missing required field: {field}"
-        assert isinstance(config["debug"], bool)
-        assert isinstance(config["timeout_seconds"], int)
-        assert config["timeout_seconds"] > 0
-        assert config["environment"] in {"development", "staging", "production"}
+            assert field in settings, f"Missing required field: {field}"
+        assert isinstance(settings["debug"], bool)
+        assert isinstance(settings["timeout_seconds"], int)
+        assert settings["timeout_seconds"] > 0
+        assert settings["environment"] in {"development", "staging", "production"}
         scenario = (
             self
             .GivenWhenThenBuilder("configuration_validation")
             .given(
                 "a configuration t.NormalizedValue",
-                config_environment=str(config["environment"]),
+                config_environment=str(settings["environment"]),
             )
             .when("configuration is validated", action="validate")
             .then("all required fields are present", validated=True)
             .with_tag("configuration")
             .build()
         )
-        assert scenario.given.get("config_environment") == config["environment"]
+        assert scenario.given.get("config_environment") == settings["environment"]
         assert "configuration" in scenario.tags

@@ -72,7 +72,7 @@ class FlextConstantsPlatform:
     class Directory(StrEnum):
         """Standard directory name identifiers."""
 
-        CONFIG = "config"
+        CONFIG = "settings"
         PLUGINS = "plugins"
         LOGS = "logs"
         DATA = "data"

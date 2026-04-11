@@ -391,7 +391,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging: bool = True
 
     _ = Config  # referenced for pyright
-    u.configure_structlog(config=cast("BaseModel", cast("t.NormalizedValue", Config())))
+    u.configure_structlog(
+        settings=cast("BaseModel", cast("t.NormalizedValue", Config()))
+    )
     tm.that(u.structlog_configured(), eq=True)
     tm.that(bool(calls), eq=True)
     u._structlog_configured = False
@@ -418,7 +420,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     _ = ConfigNoAsync  # referenced for pyright
     u.configure_structlog(
-        config=cast("BaseModel", cast("t.NormalizedValue", ConfigNoAsync())),
+        settings=cast("BaseModel", cast("t.NormalizedValue", ConfigNoAsync())),
     )
     tm.that(u._structlog_configured, eq=True)
     u._structlog_configured = False
@@ -438,7 +440,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     _ = ConfigAsyncFallback  # referenced for pyright
     u.configure_structlog(
-        config=cast("BaseModel", cast("t.NormalizedValue", ConfigAsyncFallback())),
+        settings=cast("BaseModel", cast("t.NormalizedValue", ConfigAsyncFallback())),
     )
     tm.that(u._structlog_configured, eq=True)
 
@@ -819,7 +821,7 @@ def test_configure_structlog_print_logger_factory_fallback(
             "async_logging": True,
         },
     )()
-    u.configure_structlog(config=cast("BaseModel", cfg))
+    u.configure_structlog(settings=cast("BaseModel", cfg))
     tm.that(module.print_calls, gte=0)
 
 
@@ -892,7 +894,7 @@ def test_configure_structlog_async_logging_uses_print_logger_factory(
             configured_has_logger_factory.append(callable(kwargs.get("logger_factory")))
 
     monkeypatch.setattr(runtime_module, "structlog", AsyncModule())
-    u.configure_structlog(config=None)
+    u.configure_structlog(settings=None)
     tm.that(u._async_writer is not None, eq=True)
     tm.that(bool(factory_streams), eq=True)
     tm.that(factory_streams[0] is u._async_writer, eq=True)
@@ -909,13 +911,13 @@ def test_fetch_logger_auto_configures_structlog() -> None:
 
 def test_dependency_integration_and_wiring_paths() -> None:
     bridge, services, resources = u.DependencyIntegration.create_layered_bridge(
-        config=t.ConfigMap(root={"db": t.Dict(root={"dsn": "sqlite://"})}),
+        settings=t.ConfigMap(root={"db": t.Dict(root={"dsn": "sqlite://"})}),
     )
     _ = (bridge, services, resources)
     tm.that(True, eq=True)
     di = u.DependencyIntegration.create_container(
         container_options=m.DependencyContainerCreationOptions(
-            config=t.ConfigMap(root={"feature": t.Dict(root={"enabled": True})}),
+            settings=t.ConfigMap(root={"feature": t.Dict(root={"enabled": True})}),
             services={"svc": 1},
             factories={"factory": lambda: 2},
             resources={"resource": lambda: {"ok": True}},

@@ -1,7 +1,7 @@
-"""Configuration patterns extracted from FlextModels.
+"""Settings patterns extracted from FlextModels.
 
-This module contains the FlextModelsSettings class with all configuration-related patterns
-as nested classes. It should NOT be imported directly - use FlextModels.Config instead.
+This module contains the FlextModelsSettings class with all settings-related patterns
+as nested classes. It should NOT be imported directly - use FlextModels.Settings instead.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -28,13 +28,13 @@ from flext_core import (
 
 
 class FlextModelsSettings:
-    """Configuration pattern container class.
+    """Settings pattern container class.
 
-    This class acts as a namespace container for configuration patterns.
-    All nested classes are accessed via FlextModels.Config.* in the main models.py.
+    This class acts as a namespace container for settings patterns.
+    All nested classes are accessed via FlextModels.Settings.* in the main models.py.
     """
 
-    class AutoConfig(FlextModelsBase.ArbitraryTypesModel):
+    class AutoSettings(FlextModelsBase.ArbitraryTypesModel):
         """Automatic settings wrapper for BaseSettings classes."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -42,7 +42,7 @@ class FlextModelsSettings:
             arbitrary_types_allowed=True,
         )
 
-        config_class: Annotated[
+        settings_class: Annotated[
             type[BaseSettings],
             Field(description="Settings class to instantiate"),
         ]
@@ -61,8 +61,8 @@ class FlextModelsSettings:
             ),
         ] = None
 
-        def create_config(self) -> BaseSettings:
-            return self.config_class()
+        def create_settings(self) -> BaseSettings:
+            return self.settings_class()
 
     class RetryConfiguration(
         FlextModelsBase.ArbitraryTypesModel,

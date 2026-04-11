@@ -37,7 +37,7 @@
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 **Document**: `docs/guides/pydantic-v2-patterns.md`
-**Sources**: `config.py` (674 lines), `models.py` (3,617 lines), `typings.py` (419 lines)
+**Sources**: `settings.py` (674 lines), `models.py` (3,617 lines), `typings.py` (419 lines)
 **Date**: 2025-10-21
 **Status**: ✅ ACCURATE & EXCELLENT - Pure Pydantic v2, zero v1 compatibility code
 
@@ -58,12 +58,12 @@ All 10 documented patterns verified against actual implementation:
 | Pattern                         | Guide Description              | Source Verification       | Status      |
 | ------------------------------- | ------------------------------ | ------------------------- | ----------- |
 | 1. Basic Model with Constraints | Field() with constraints       | Used throughout models.py | ✅ VERIFIED |
-| 2. ConfigDict for Settings      | model_config = ConfigDict()    | config.py:178, models.py  | ✅ VERIFIED |
+| 2. ConfigDict for Settings      | model_config = ConfigDict()    | settings.py:178, models.py  | ✅ VERIFIED |
 | 3. Field Validators             | @field_validator decorator     | 20+ usages verified       | ✅ VERIFIED |
 | 4. Model Validators             | @model_validator decorator     | 10+ usages verified       | ✅ VERIFIED |
 | 5. Computed Fields              | @computed_field decorator      | 10 usages verified        | ✅ VERIFIED |
 | 6. Annotated Types              | Annotated[type, Field(...)]    | typings.py:311-350+       | ✅ VERIFIED |
-| 7. BaseSettings                 | pydantic_settings.BaseSettings | config.py:39              | ✅ VERIFIED |
+| 7. BaseSettings                 | pydantic_settings.BaseSettings | settings.py:39              | ✅ VERIFIED |
 | 8. Custom Types                 | Field validators + Annotated   | models.py patterns        | ✅ VERIFIED |
 | 9. Discriminated Unions         | Discriminator()                | models.py:3582-3585       | ✅ VERIFIED |
 | 10. JSON Schema Generation      | models_JSON_schema()           | Referenced pattern        | ✅ VERIFIED |
@@ -110,7 +110,7 @@ $ grep -rn "\.dict()\|\.parse_obj()" src/flext_core/*.py
 - Use `model_config = ConfigDict(...)` instead of `class Config:`
 - Configure validation, serialization, extra fields
 
-**Source Code Evidence** (config.py:178-200):
+**Source Code Evidence** (settings.py:178-200):
 
 ```python
 model_config = SettingsConfigDict(
@@ -157,9 +157,9 @@ model_config = SettingsConfigDict(
 $ grep -n "@field_validator" src/flext_core/*.py | wc -l
 20
 
-# Sample usages across config.py and models.py
-config.py:427:  @field_validator("debug", "trace", mode="before")
-config.py:439:  @field_validator("log_level", mode="before")
+# Sample usages across settings.py and models.py
+settings.py:427:  @field_validator("debug", "trace", mode="before")
+settings.py:439:  @field_validator("log_level", mode="before")
 models.py:975:  @field_validator("command_type", mode="before")
 models.py:1023: @field_validator("url", mode="after")
 models.py:1152: @model_validator(mode="after")
@@ -186,7 +186,7 @@ $ grep -rn "@validator" src/flext_core/*.py | grep -v "@field_validator\|@model_
 
 ```bash
 $ grep -n "@model_validator" src/flext_core/*.py
-config.py:497:  @model_validator(mode="after")
+settings.py:497:  @model_validator(mode="after")
 models.py:1152: @model_validator(mode="after")
 models.py:1425: @model_validator(mode="after")
 models.py:1499: @model_validator(mode="after")
@@ -210,11 +210,11 @@ models.py:1499: @model_validator(mode="after")
 
 ```bash
 $ grep -n "computed_field" src/flext_core/*.py
-config.py:19:    computed_field,
-config.py:574:  @computed_field
-config.py:579:  @computed_field
-config.py:588:  @computed_field
-config.py:593:  @computed_field
+settings.py:19:    computed_field,
+settings.py:574:  @computed_field
+settings.py:579:  @computed_field
+settings.py:588:  @computed_field
+settings.py:593:  @computed_field
 models.py:44:   computed_field,
 models.py:379:  @computed_field
 models.py:425:  @computed_field
@@ -225,7 +225,7 @@ models.py:1008: @computed_field
 **Verification**: ✅ ACCURATE
 
 - 10 `@computed_field` decorators verified
-- Used in both config.py (4 instances) and models.py (6 instances)
+- Used in both settings.py (4 instances) and models.py (6 instances)
 - Pattern matches Pydantic v2 specifications
 
 ### Pattern 6: Annotated Types for Semantic Meaning ✅
@@ -260,7 +260,7 @@ $ grep -n "Annotated\[" src/flext_core/typings.py | head -5
 - Use `SettingsConfigDict` for configuration
 - Support environment variables with prefixes
 
-**Source Code Evidence** (config.py:23, 39):
+**Source Code Evidence** (settings.py:23, 39):
 
 ```python
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -281,7 +281,7 @@ class FlextSettings(BaseSettings):
 
 **Verification**: ✅ ACCURATE
 
-- BaseSettings imported and used (config.py:23, 39)
+- BaseSettings imported and used (settings.py:23, 39)
 - SettingsConfigDict with comprehensive configuration (178-200)
 - Environment prefix "FLEXT\_" configured
 - Pattern perfectly matches guide examples
@@ -407,13 +407,13 @@ ______________________________________________________________________
 | Pattern                       | Occurrences | Files                | Adoption |
 | ----------------------------- | ----------- | -------------------- | -------- |
 | model_dump()                  | 7           | models.py            | ✅ 100%  |
-| model_validate()              | 7           | models.py, config.py | ✅ 100%  |
-| ConfigDict/SettingsConfigDict | 2+          | config.py, models.py | ✅ 100%  |
-| @field_validator              | 20+         | config.py, models.py | ✅ 100%  |
-| @model_validator              | 10+         | config.py, models.py | ✅ 100%  |
-| @computed_field               | 10          | config.py, models.py | ✅ 100%  |
+| model_validate()              | 7           | models.py, settings.py | ✅ 100%  |
+| ConfigDict/SettingsConfigDict | 2+          | settings.py, models.py | ✅ 100%  |
+| @field_validator              | 20+         | settings.py, models.py | ✅ 100%  |
+| @model_validator              | 10+         | settings.py, models.py | ✅ 100%  |
+| @computed_field               | 10          | settings.py, models.py | ✅ 100%  |
 | Annotated types               | 30+         | typings.py           | ✅ 100%  |
-| BaseSettings                  | 1           | config.py            | ✅ 100%  |
+| BaseSettings                  | 1           | settings.py            | ✅ 100%  |
 | Discriminator                 | 1           | models.py            | ✅ 100%  |
 
 ### Pydantic v1 Legacy Code
@@ -459,14 +459,14 @@ Checked all referenced guides:
 ### External References ✅
 
 - ✅ Pydantic v2 Documentation link - Valid
-- ✅ Source references (config.py, models.py, typings.py) - Accurate
+- ✅ Source references (settings.py, models.py, typings.py) - Accurate
 
 ### Source Line References ⚠️
 
 **Minor Issue**: Guide references outdated line count
 
-- Guide says: `config.py (423 lines)`
-- Actual: `config.py (674 lines)` - File has grown by 251 lines
+- Guide says: `settings.py (423 lines)`
+- Actual: `settings.py (674 lines)` - File has grown by 251 lines
 
 **Recommendation**: Update line count in guide footer
 
@@ -478,7 +478,7 @@ ______________________________________________________________________
 
 | File       | Guide         | Actual      | Status           |
 | ---------- | ------------- | ----------- | ---------------- |
-| config.py  | 423 lines     | 674 lines   | ⚠️ Update needed |
+| settings.py  | 423 lines     | 674 lines   | ⚠️ Update needed |
 | models.py  | 3,655 lines   | 3,617 lines | ✅ Close enough  |
 | typings.py | Not mentioned | 419 lines   | ➕ Could add     |
 
@@ -495,11 +495,11 @@ ______________________________________________________________________
    ```markdown
    # Change:
 
-   "See `src/flext_core/config.py` (423 lines)"
+   "See `src/flext_core/settings.py` (423 lines)"
 
    # To:
 
-   "See `src/flext_core/config.py` (674 lines)"
+   "See `src/flext_core/settings.py` (674 lines)"
    ```
 
 ```
@@ -508,9 +508,9 @@ ______________________________________________________________________
 
 1. **Add Source Line References** (like other audited guides)
 
-   - Pattern 2: ConfigDict - config.py:178-200
-   - Pattern 3: field_validator - config.py:427, 439, models.py:975+
-   - Pattern 5: computed_field - config.py:574-593, models.py:379+
+   - Pattern 2: ConfigDict - settings.py:178-200
+   - Pattern 3: field_validator - settings.py:427, 439, models.py:975+
+   - Pattern 5: computed_field - settings.py:574-593, models.py:379+
    - Pattern 6: Annotated types - typings.py:311-350+
    - Pattern 9: Discriminator - models.py:3582-3585
 
@@ -586,7 +586,7 @@ The Pydantic v2 Patterns guide is **EXCELLENT** and represents **gold standard**
 - ✅ **100% Source-Verified** - All patterns exist in actual code
 - ✅ **Pure Pydantic v2** - Zero v1 compatibility code found
 - ✅ **Complete Migration** - FLEXT-Core has fully migrated to v2
-- ⚠️ **Minor Update Needed** - config.py line count (423 → 674)
+- ⚠️ **Minor Update Needed** - settings.py line count (423 → 674)
 
 **Critical Discovery**: FLEXT-Core demonstrates **complete Pydantic v2 adoption** with:
 
@@ -597,7 +597,7 @@ The Pydantic v2 Patterns guide is **EXCELLENT** and represents **gold standard**
 
 **Status**: ✅ EXCELLENT - Production-ready with minor line count update needed
 
-**Recommendation**: Update config.py line count reference. Otherwise, guide is exemplary and should serve as reference for ecosystem projects.
+**Recommendation**: Update settings.py line count reference. Otherwise, guide is exemplary and should serve as reference for ecosystem projects.
 
 ______________________________________________________________________
 

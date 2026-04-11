@@ -11,7 +11,7 @@ service_info: {'service_type': 'FlextRegistry'}
 result_property: True
 runtime.type: 'ModelPrivateAttr'
 context.type: 'FlextContext'
-config.type: 'FlextSettings'
+settings.type: 'FlextSettings'
 container.type: 'FlextContainer'
 
 [summary_and_mixins]

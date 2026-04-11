@@ -118,15 +118,15 @@ class TestArchitecturalPatterns:
             .build()
         )
         assert config_result.success
-        config = config_result.value
-        assert isinstance(config, dict)
-        database = config.get("database")
+        settings = config_result.value
+        assert isinstance(settings, dict)
+        database = settings.get("database")
         assert isinstance(database, dict)
         assert database.get("host") == c.LOCALHOST
-        logging = config.get("logging")
+        logging = settings.get("logging")
         assert isinstance(logging, dict)
         assert logging.get("level") == "INFO"
-        cache = config.get("cache")
+        cache = settings.get("cache")
         assert isinstance(cache, dict)
         assert cache.get("enabled")
 

@@ -77,7 +77,7 @@ export FLEXT_API_TIMEOUT=30
 
 Create configuration files in YAML, JSON, or TOML format:
 
-**config.YAML:**
+**settings.YAML:**
 
 ```yaml
 # FLEXT Configuration
@@ -127,7 +127,7 @@ from flext_core import u
 from flext_ldif import FlextLdifSettings
 
 # Core configuration
-config = FlextSettings(log_level="INFO", debug=False, environment="production")
+settings = FlextSettings(log_level="INFO", debug=False, environment="production")
 
 # LDIF configuration
 ldif_config = FlextLdifSettings(
@@ -145,7 +145,7 @@ ldif_config = FlextLdifSettings(
 ```python
 from flext_ldif import FlextLdifSettings
 
-config = FlextLdifSettings(
+settings = FlextLdifSettings(
     # Server-specific settings
     source_server="oid",
     target_server="oud",
@@ -165,7 +165,7 @@ config = FlextLdifSettings(
 ```python
 from flext_api import FlextApiSettings
 
-config = FlextApiSettings(
+settings = FlextApiSettings(
     base_url="https://api.example.com",
     timeout=30,
     retry_attempts=3,
@@ -179,7 +179,7 @@ config = FlextApiSettings(
 ```python
 from flext_auth import FlextAuthSettings
 
-config = FlextAuthSettings(
+settings = FlextAuthSettings(
     secret_key="your-secret-key",
     algorithm="HS256",
     access_token_expire_minutes=30,
@@ -192,7 +192,7 @@ config = FlextAuthSettings(
 ### Development Environment
 
 ```yaml
-# config.dev.yaml
+# settings.dev.yaml
 log_level: DEBUG
 debug: true
 environment: development
@@ -209,7 +209,7 @@ api:
 ### Production Environment
 
 ```yaml
-# config.prod.yaml
+# settings.prod.yaml
 log_level: WARNING
 debug: false
 environment: production
@@ -252,7 +252,7 @@ from flext_core import t
 from flext_core import u
 
 try:
-    config = FlextSettings(
+    settings = FlextSettings(
         log_level="INVALID_LEVEL"  # This will raise ValidationError
     )
 except ValidationError as e:
@@ -333,9 +333,9 @@ from flext_core import u
 
 def main():
     # Validate configuration at startup
-    config = FlextSettings()
+    settings = FlextSettings()
 
-    if not config.is_valid():
+    if not settings.is_valid():
         print("Invalid configuration")
         return 1
 
@@ -442,13 +442,13 @@ from flext_core import t
 from flext_core import u
 
 # Enable debug logging
-config = FlextSettings(debug=True)
+settings = FlextSettings(debug=True)
 
 # Print configuration
-print(config.dict())
+print(settings.dict())
 
 # Validate configuration
-if config.is_valid():
+if settings.is_valid():
     print("Configuration is valid")
 else:
     print("Configuration has errors")
@@ -489,7 +489,7 @@ from flext_api import FlextApiSettings
 
 def main():
     # Load configuration from environment
-    config = FlextSettings()
+    settings = FlextSettings()
 
     # Configure LDIF processing
     ldif_config = FlextLdifSettings(
@@ -505,7 +505,7 @@ def main():
     )
 
     print("Configuration loaded successfully")
-    print(f"Log level: {config.log_level}")
+    print(f"Log level: {settings.log_level}")
     print(f"LDIF batch size: {ldif_config.batch_size}")
     print(f"API base URL: {api_config.base_url}")
 

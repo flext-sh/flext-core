@@ -26,13 +26,13 @@ class Ex08FlextContainer(Examples):
         """Run all sections and record deterministic golden output."""
         root = self._exercise_singleton_and_creation()
         self._exercise_registration_and_resolution(root)
-        self._exercise_fluent_and_config(root)
+        self._exercise_fluent_and_settings(root)
         scoped_full = self._exercise_wiring_and_scoped(root)
         self._exercise_internal_and_cleanup(scoped_full, root)
 
-    def _exercise_fluent_and_config(self, container: FlextContainer) -> None:
+    def _exercise_fluent_and_settings(self, container: FlextContainer) -> None:
         """Exercise fluent registration and configuration APIs."""
-        self.section("fluent_and_config")
+        self.section("fluent_and_settings")
         fluent_service_name = f"svc.{self.rand_str(6)}"
         fluent_factory_name = f"svc.{self.rand_str(6)}"
         fluent_resource_name = f"svc.{self.rand_str(6)}"
@@ -54,20 +54,20 @@ class Ex08FlextContainer(Examples):
             lambda: fluent_resource_value,
             kind="resource",
         )
-        with_config_result = container.configure({"max_factories": max_factories})
+        with_settings_result = container.settingsure({"max_factories": max_factories})
         self.check("with_service.returns_self", with_service_result is container)
         self.check("with_factory.returns_self", with_factory_result is container)
         self.check("with_resource.returns_self", with_resource_result is container)
-        self.check("with_config.returns_self", with_config_result is container)
-        configured_max_services = self.rand_int(1, 1000)
-        configured_factory_caching = self.rand_bool()
-        container.configure({
-            "max_services": configured_max_services,
-            "enable_factory_caching": configured_factory_caching,
+        self.check("with_settings.returns_self", with_settings_result is container)
+        settingsured_max_services = self.rand_int(1, 1000)
+        settingsured_factory_caching = self.rand_bool()
+        container.settingsure({
+            "max_services": settingsured_max_services,
+            "enable_factory_caching": settingsured_factory_caching,
         })
-        config_map = container.resolve_config()
-        max_services = config_map["max_services"]
-        enable_factory_caching = config_map["enable_factory_caching"]
+        settings_map = container.resolve_settings()
+        max_services = settings_map["max_services"]
+        enable_factory_caching = settings_map["enable_factory_caching"]
         max_services_num = max_services if isinstance(max_services, int) else -1
         factory_cache_flag = (
             enable_factory_caching
@@ -75,12 +75,12 @@ class Ex08FlextContainer(Examples):
             else False
         )
         self.check(
-            "configure.resolve_config.max_services_matches",
-            max_services_num == configured_max_services,
+            "settingsure.resolve_settings.max_services_matches",
+            max_services_num == settingsured_max_services,
         )
         self.check(
-            "configure.resolve_config.enable_factory_caching_matches",
-            factory_cache_flag == configured_factory_caching,
+            "settingsure.resolve_settings.enable_factory_caching_matches",
+            factory_cache_flag == settingsured_factory_caching,
         )
         self.check(
             "with_service.get.value_matches",
@@ -115,19 +115,19 @@ class Ex08FlextContainer(Examples):
             hasattr(container, "_di_container"),
         )
         container.initialize_registrations(
-            config=root.config.model_copy(deep=True),
+            settings=root.settings.model_copy(deep=True),
             context=FlextContext(),
         )
         self.check(
             "initialize_registrations.list_services_empty",
             len(container.list_services()),
         )
-        container.sync_config_to_di()
+        container.sync_settings_to_di()
         container.register_existing_providers()
         container.register_core_services()
         self.check(
-            "sync_config_to_di.service_config_present",
-            container.has_service("config"),
+            "sync_settings_to_di.service_settings_present",
+            container.has_service("settings"),
         )
         self.check(
             "register_core_services.logger_present",
@@ -315,7 +315,7 @@ class Ex08FlextContainer(Examples):
         root = FlextContainer.fetch_global(context=root_context)
         self.check("fetch_global.type", type(root).__name__)
         self.check("fetch_global.context.type", type(root.context).__name__)
-        self.check("fetch_global.config.type", type(root.config).__name__)
+        self.check("fetch_global.settings.type", type(root.settings).__name__)
         self.check(
             "fetch_global.same_instance",
             root is FlextContainer.fetch_global(),
@@ -346,7 +346,7 @@ class Ex08FlextContainer(Examples):
         subproject_beta = self.rand_str(6)
         scoped_subproject = container.scoped(subproject=subproject_alpha)
         explicit_context = FlextContext()
-        explicit_config = container.config.model_copy(
+        explicit_settings = container.settings.model_copy(
             update={"app_name": f"scoped.{self.rand_str(8)}"},
         )
         scoped_service_name = f"svc.{self.rand_str(6)}"
@@ -356,13 +356,13 @@ class Ex08FlextContainer(Examples):
         scoped_factory_value = self.rand_int(1, 1000)
         scoped_resource_value = self.rand_str(8)
         scoped_full = container.scoped(
-            config=explicit_config,
+            settings=explicit_settings,
             context=explicit_context,
             subproject=subproject_beta,
             services={scoped_service_name: scoped_service_value},
             factories={scoped_factory_name: lambda: scoped_factory_value},
             resources={
-                scoped_resource_name: lambda: t.ConfigMap(
+                scoped_resource_name: lambda: t.SettingsMap(
                     root={"res": scoped_resource_value},
                 ),
             },
@@ -381,10 +381,10 @@ class Ex08FlextContainer(Examples):
         )
         self.check(
             "scoped.subproject.app_name_suffix",
-            scoped_subproject.config.app_name.endswith(f".{subproject_alpha}"),
+            scoped_subproject.settings.app_name.endswith(f".{subproject_alpha}"),
         )
         self.check("scoped.full.new_instance", scoped_full is not container)
-        self.check("scoped.full.config_app_name", scoped_full.config.app_name)
+        self.check("scoped.full.settings_app_name", scoped_full.settings.app_name)
         self.check(
             "scoped.full.uses_explicit_context",
             scoped_full.context is explicit_context,

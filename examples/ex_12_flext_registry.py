@@ -210,7 +210,7 @@ class Ex12FlextRegistry(Examples):
         self.check("result_property.type", type(reg_explicit.result).__name__)
         self.check("runtime.type", type(reg_explicit.runtime).__name__)
         self.check("context.type", type(reg_explicit.context).__name__)
-        self.check("config.type", type(reg_explicit.config).__name__)
+        self.check("settings.type", type(reg_explicit.settings).__name__)
         self.check("container.type", type(reg_explicit.container).__name__)
         return (reg_explicit, dispatcher)
 

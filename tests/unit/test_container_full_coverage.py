@@ -171,7 +171,7 @@ class TestContainerFullCoverage:
         c = FlextContainer.create()
         c._config = None
         with pytest.raises(RuntimeError):
-            _ = c.config
+            _ = c.settings
         c._context = None
         with pytest.raises(RuntimeError):
             _ = c.context
@@ -187,13 +187,13 @@ class TestContainerFullCoverage:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         c = FlextContainer.create()
-        bad_bridge = types.SimpleNamespace(config="not-provider")
+        bad_bridge = types.SimpleNamespace(settings="not-provider")
         monkeypatch.setattr(
             core_container.u.DependencyIntegration,
             "create_layered_bridge",
             lambda: (bad_bridge, types.SimpleNamespace(), types.SimpleNamespace()),
         )
-        with pytest.raises(TypeError, match="Bridge must have config provider"):
+        with pytest.raises(TypeError, match="Bridge must have settings provider"):
             c.initialize_di_components()
 
     def test_sync_config_namespace_paths(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -214,7 +214,7 @@ class TestContainerFullCoverage:
 
         monkeypatch.setattr(
             type(c._config),
-            "resolve_namespace_config",
+            "resolve_namespace_settings",
             staticmethod(self._namespace_config_none),
         )
         c.sync_config_to_di()
@@ -233,7 +233,7 @@ class TestContainerFullCoverage:
         setattr(c._di_services, "fac", "normalized")
         setattr(c._di_resources, "res", "normalized")
         c.register_existing_providers()
-        c._config = cast("p.Settings", m.Core.Tests.FalseConfig())
+        c._config = cast("p.Settings", m.Core.Tests.FalseSettings())
         c._context = None
         c.register_core_services()
 
@@ -344,7 +344,7 @@ class TestContainerFullCoverage:
             registration: m.ServiceRegistrationSpec,
             **kwargs: t.NormalizedValue,
         ) -> FlextContainer:
-            captured["config"] = registration.config
+            captured["settings"] = registration.settings
             captured["context"] = registration.context
             return c
 
@@ -352,9 +352,9 @@ class TestContainerFullCoverage:
             FlextContainer, "_create_scoped_instance", _fake_create_scoped_instance
         )
         _ = c.scoped(subproject="sub")
-        tm.that(captured["config"], is_=p.Settings)
+        tm.that(captured["settings"], is_=p.Settings)
         _ = c.scoped(
-            config=cast("p.Settings", m.Core.Tests.FalseConfig()),
+            settings=cast("p.Settings", m.Core.Tests.FalseSettings()),
             context=FlextContext(),
         )
         tm.that(captured["context"], is_=p.Context)
@@ -415,7 +415,7 @@ class TestContainerFullCoverage:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         c = FlextContainer.create()
-        bad_bridge = types.SimpleNamespace(config=None)
+        bad_bridge = types.SimpleNamespace(settings=None)
         monkeypatch.setattr(
             core_container.u.DependencyIntegration,
             "create_layered_bridge",
@@ -441,14 +441,14 @@ class TestContainerFullCoverage:
         class _NsBeta(_BaseSettings):
             v: str = "ok2"
 
-        # Register namespaces so FlextSettings.resolve_namespace_config() finds them.
+        # Register namespaces so FlextSettings.resolve_namespace_settings() finds them.
         original_registry = dict(FlextSettings._namespace_registry)
         FlextSettings._namespace_registry["alpha"] = _NsAlpha
         FlextSettings._namespace_registry["beta"] = _NsBeta
 
         try:
 
-            class _Cfg(m.Core.Tests.FalseConfig):
+            class _Cfg(m.Core.Tests.FalseSettings):
                 _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                     "alpha": _NsAlpha,
                     "beta": _NsBeta,
@@ -476,12 +476,12 @@ class TestContainerFullCoverage:
 
             monkeypatch.setattr(c, "register", _register)
             c.sync_config_to_di()
-            alpha_factory = registered["config.alpha"]
+            alpha_factory = registered["settings.alpha"]
             assert callable(alpha_factory) and isinstance(
                 alpha_factory(),
                 BaseModel,
             )
-            beta_factory = registered["config.beta"]
+            beta_factory = registered["settings.beta"]
             assert callable(beta_factory) and isinstance(beta_factory(), BaseModel)
         finally:
             FlextSettings._namespace_registry.clear()
@@ -520,7 +520,7 @@ class TestContainerFullCoverage:
         base = FlextContainer.create()
         scoped = FlextContainer._create_scoped_instance(
             registration=m.ServiceRegistrationSpec(
-                config=FlextSettings(),
+                settings=FlextSettings(),
                 context=FlextContext(),
                 services={},
                 factories={},
@@ -535,15 +535,15 @@ class TestContainerFullCoverage:
             ),
         )
         tm.that(scoped, is_=p.Container)
-        base._config = cast("p.Settings", m.Core.Tests.FalseConfig())
+        base._config = cast("p.Settings", m.Core.Tests.FalseSettings())
         base._context = FlextContext()
         _ = base.scoped(
-            config=FlextSettings(app_name="x"),
+            settings=FlextSettings(app_name="x"),
             services={"sx": "vx"},
             factories={"fx": lambda: "fv"},
             resources={"rx": lambda: "rv"},
         )
-        base._config = cast("p.Settings", m.Core.Tests.FalseConfig())
+        base._config = cast("p.Settings", m.Core.Tests.FalseSettings())
         base._context = FlextContext()
         _ = base.scoped()
 
@@ -561,7 +561,7 @@ class TestContainerFullCoverage:
         tm.that(c.configure({"enable_factory_caching": True}), eq=c)
         c.register("svc-x", self.TypedValue(value="value"))
         c.register("fac-x", lambda: "v", kind="factory")
-        tm.that(c.resolve_config().root, ne=None)
+        tm.that(c.resolve_settings().root, ne=None)
         c.register("", "x")
         assert c.get("svc-x").success
         tm.fail(c.get("missing-service"))
@@ -600,10 +600,10 @@ class TestContainerFullCoverage:
         )
         c._user_overrides = t.ConfigMap(root={})
 
-        # --- _CfgNoMethod: namespace_registry without resolve_namespace_config ---
-        # n1 is NOT registered in FlextSettings, so resolve_namespace_config returns None
+        # --- _CfgNoMethod: namespace_registry without resolve_namespace_settings ---
+        # n1 is NOT registered in FlextSettings, so resolve_namespace_settings returns None
         # and sync_config_to_di skips it (continue branch).
-        class _CfgNoMethod(m.Core.Tests.FalseConfig):
+        class _CfgNoMethod(m.Core.Tests.FalseSettings):
             _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                 "n1": _BaseSettings,
             }
@@ -616,7 +616,7 @@ class TestContainerFullCoverage:
             v: str = "x"
 
         # Register namespaces in FlextSettings._namespace_registry so that
-        # sync_config_to_di -> FlextSettings.resolve_namespace_config() finds them.
+        # sync_config_to_di -> FlextSettings.resolve_namespace_settings() finds them.
         original_registry = dict(FlextSettings._namespace_registry)
         FlextSettings._namespace_registry["n2"] = _NsModel
         FlextSettings._namespace_registry["n3"] = _NsModel
@@ -624,17 +624,17 @@ class TestContainerFullCoverage:
 
         try:
 
-            class _CfgFallback(m.Core.Tests.FalseConfig):
+            class _CfgFallback(m.Core.Tests.FalseSettings):
                 _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                     "n2": _NsModel,
                 }
 
-            class _CfgBadNamespace(m.Core.Tests.FalseConfig):
+            class _CfgBadNamespace(m.Core.Tests.FalseSettings):
                 _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                     "n3": _NsModel,
                 }
 
-            class _CfgGoodNamespace(m.Core.Tests.FalseConfig):
+            class _CfgGoodNamespace(m.Core.Tests.FalseSettings):
                 _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                     "n4": _NsModel,
                 }
@@ -659,13 +659,13 @@ class TestContainerFullCoverage:
             c._config = cast("p.Settings", _CfgGoodNamespace())
             c.sync_config_to_di()
             assert isinstance(
-                cast("Callable[[], BaseModel]", captured["config.n2"])(), BaseModel
+                cast("Callable[[], BaseModel]", captured["settings.n2"])(), BaseModel
             )
             assert isinstance(
-                cast("Callable[[], BaseModel]", captured["config.n3"])(), BaseModel
+                cast("Callable[[], BaseModel]", captured["settings.n3"])(), BaseModel
             )
             assert isinstance(
-                cast("Callable[[], BaseModel]", captured["config.n4"])(), BaseModel
+                cast("Callable[[], BaseModel]", captured["settings.n4"])(), BaseModel
             )
             c2 = FlextContainer.create()
             c2._global_config = m.ContainerConfig(

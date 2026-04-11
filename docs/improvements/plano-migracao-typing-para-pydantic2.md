@@ -39,7 +39,7 @@ No estado atual de `flext-core`, a fachada `FlextModels` cresce com muitas subcl
 
 ### Evidências principais no código
 
-- Reexports flat e wrappers em `models.py` (ex.: snapshots/progress/handler/config).
+- Reexports flat e wrappers em `models.py` (ex.: snapshots/progress/handler/settings).
 - Duplicidade semântica explícita (`ProcessingRequest`/`ProcessingConfig`, `CollectionsCategories`/`Categories`, versões flat e aninhadas de handler).
 - Base comum clara em `_models/base.py` para consolidar comportamento de validação.
 - Containers com API compartilhada em `_models/containers.py`, com espaço para redução de wrappers sem semântica real.
@@ -54,7 +54,7 @@ ______________________________________________________________________
    - S: modelo com uma intenção só;
    - O: extensão por novo modelo de domínio, não por wrapper vazio;
    - L: subclasse não pode afrouxar contrato do pai;
-   - I: contratos separados por contexto (CQRS, handler, container, config);
+   - I: contratos separados por contexto (CQRS, handler, container, settings);
    - D: camadas altas dependem de abstrações da foundation.
 1. **MRO curto:** máximo de 3 níveis públicos (Foundation -> Domain -> Facade opcional).
 1. **Deletion-first:** primeiro tentar remover; só depois adicionar.
@@ -98,7 +98,7 @@ Ações:
 
 - remover subclasses vazias na fachada;
 - remover nomes paralelos para o mesmo conceito;
-- manter somente rota canônica por família (handler, collections, config, generic).
+- manter somente rota canônica por família (handler, collections, settings, generic).
 
 Critério de aceite:
 

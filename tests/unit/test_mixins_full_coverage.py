@@ -95,7 +95,7 @@ class TestMixinsFullCoverage:
         def clear_all(self) -> None:
             return None
 
-        def resolve_config(self) -> t.ConfigMap:
+        def resolve_settings(self) -> t.ConfigMap:
             return t.ConfigMap(root={})
 
         def get(self, _key: str, **_kwargs: t.Scalar) -> r[t.NormalizedValue]:
@@ -106,7 +106,7 @@ class TestMixinsFullCoverage:
             return None
 
         @property
-        def config(self) -> None:
+        def settings(self) -> None:
             return None
 
     class _ContainerForLogger:
@@ -179,8 +179,8 @@ class TestMixinsFullCoverage:
                     cast(
                         "t.NormalizedValue",
                         SimpleNamespace(
-                            config_type=None,
-                            config_overrides=None,
+                            settings_type=None,
+                            settings_overrides=None,
                             context=None,
                             services=None,
                             wire_modules=["pkg"],
@@ -191,8 +191,8 @@ class TestMixinsFullCoverage:
                 )
 
         service = _Service(
-            config_type=None,
-            config_overrides=None,
+            settings_type=None,
+            settings_overrides=None,
             initial_context=None,
         )
         runtime = service._get_runtime()
@@ -216,8 +216,8 @@ class TestMixinsFullCoverage:
             pass
 
         service = _Service(
-            config_type=None,
-            config_overrides=None,
+            settings_type=None,
+            settings_overrides=None,
             initial_context=None,
         )
         ok_register = service._register_in_container("svc")
@@ -297,12 +297,12 @@ class TestMixinsFullCoverage:
                 return cast("p.Logger", cast("t.NormalizedValue", _LocalLogger()))
 
         service = _Service(
-            config_type=None,
-            config_overrides=None,
+            settings_type=None,
+            settings_overrides=None,
             initial_context=None,
         )
-        config = t.ConfigMap(root={"k": "v"})
-        service._log_config_once(config, message="cfg")
+        settings = t.ConfigMap(root={"k": "v"})
+        service._log_settings_once(settings, message="cfg")
         service._with_operation_context(
             "run",
             params="k=v",
@@ -356,8 +356,8 @@ class TestMixinsFullCoverage:
                 )
 
         _ = _WireService(
-            config_type=None,
-            config_overrides=None,
+            settings_type=None,
+            settings_overrides=None,
             initial_context=None,
         )._get_runtime()
         tm.that(runtime_container.wired, none=True)
@@ -368,8 +368,8 @@ class TestMixinsFullCoverage:
             pass
 
         model_service = _ModelService(
-            config_type=None,
-            config_overrides=None,
+            settings_type=None,
+            settings_overrides=None,
             initial_context=None,
         )
 
@@ -414,8 +414,8 @@ class TestMixinsFullCoverage:
             pass
 
         warn_service = _WarnService(
-            config_type=None,
-            config_overrides=None,
+            settings_type=None,
+            settings_overrides=None,
             initial_context=None,
         )
         monkeypatch.setattr(

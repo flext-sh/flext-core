@@ -260,8 +260,8 @@ class TestDocumentedPatterns:
 
     def test_infrastructure_config_automatic(self) -> None:
         service = u.Core.Tests.make(u.Core.Tests.GetUserService, user_id="123")
-        assert service.config is not None
-        assert isinstance(service.config, p.Settings)
+        assert service.settings is not None
+        assert isinstance(service.settings, p.Settings)
 
     def test_infrastructure_logger_automatic(self) -> None:
         service = u.Core.Tests.make(u.Core.Tests.GetUserService, user_id="123")
@@ -275,8 +275,8 @@ class TestDocumentedPatterns:
 
     def test_infrastructure_lazy_initialization(self) -> None:
         service = u.Core.Tests.make(u.Core.Tests.GetUserService, user_id="123")
-        config1 = service.config
-        config2 = service.config
+        config1 = service.settings
+        config2 = service.settings
         assert config1 is config2
 
     @pytest.mark.parametrize(

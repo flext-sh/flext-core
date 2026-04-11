@@ -59,13 +59,13 @@ class TestDIIncremental:
         """Test create_layered_bridge with real configuration."""
         bridge, service_module, resource_module = (
             u.DependencyIntegration.create_layered_bridge(
-                config=t.ConfigMap(root={"database": {"dsn": "sqlite://test.db"}}),
+                settings=t.ConfigMap(root={"database": {"dsn": "sqlite://test.db"}}),
             )
         )
         tm.that(repr(bridge), ne="")
         tm.that(repr(service_module), ne="")
         tm.that(repr(resource_module), ne="")
-        tm.that(callable(bridge.config), eq=True)
+        tm.that(callable(bridge.settings), eq=True)
 
     def test_register_object_with_real_container(self) -> None:
         """Test register_object with real container execution."""
@@ -229,11 +229,11 @@ class TestDIIncremental:
         assert factory_result.value == {"token": "abc123"}
 
     def test_scoped_with_config_override(self) -> None:
-        """Test scoped container with config override."""
+        """Test scoped container with settings override."""
         container = FlextContainer(_context=FlextContext())
         config_override = FlextSettings(app_name="scoped_app")
-        scoped = container.scoped(config=config_override)
-        config_obj = scoped.config
+        scoped = container.scoped(settings=config_override)
+        config_obj = scoped.settings
         tm.that(config_obj.app_name, eq="scoped_app")
 
     def test_create_service_runtime_with_resources(self) -> None:
@@ -327,15 +327,15 @@ class TestDIIncremental:
 
         @inject
         def func1(
-            config: t.StrMapping = u.DependencyIntegration.Provide["shared_config"],
+            settings: t.StrMapping = u.DependencyIntegration.Provide["shared_config"],
         ) -> str:
-            return config["env"]
+            return settings["env"]
 
         @inject
         def func2(
-            config: t.StrMapping = u.DependencyIntegration.Provide["shared_config"],
+            settings: t.StrMapping = u.DependencyIntegration.Provide["shared_config"],
         ) -> bool:
-            return config["env"] == "test"
+            return settings["env"] == "test"
 
         setattr(module, "func1", func1)
         setattr(module, "func2", func2)
@@ -428,14 +428,14 @@ class TestDIIncremental:
 
         runtime = s._create_runtime(
             runtime_options=m.RuntimeBootstrapOptions(
-                config_overrides={"app_name": "test_app"},
+                settings_overrides={"app_name": "test_app"},
                 services={"static_service": "static_value"},
                 factories={"token_factory": factory},
                 resources={"connection": resource_factory},
                 wire_modules=[sys.modules[__name__]],
             ),
         )
-        tm.that(runtime.config.app_name, eq="test_app")
+        tm.that(runtime.settings.app_name, eq="test_app")
         static_result = runtime.container.get("static_service", type_cls=str)
         tm.ok(static_result)
         tm.that(static_result.value, eq="static_value")

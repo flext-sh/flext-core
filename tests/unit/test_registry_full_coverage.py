@@ -53,8 +53,6 @@ def test_summary_properties_and_subclass_storage_reset() -> None:
 
 
 def test_execute_and_register_handler_failure_paths() -> None:
-    registry = FlextRegistry()
-
     class _FalseyDispatcher(p.Dispatcher):
         def __bool__(self) -> bool:
             return False
@@ -62,7 +60,7 @@ def test_execute_and_register_handler_failure_paths() -> None:
         @override
         def publish(
             self,
-            event: object | Sequence[object],
+            event: p.Routable | Sequence[p.Routable],
         ) -> r[bool]:
             _ = event
             return r[bool].ok(True)
@@ -85,8 +83,8 @@ def test_execute_and_register_handler_failure_paths() -> None:
                 c.Core.Tests.TestErrors.DISPATCHER_UNCONFIGURED
             )
 
-    registry._dispatcher = _FalseyDispatcher()
-    execute_result = registry.execute()
+    execute_registry = FlextRegistry.create(dispatcher=_FalseyDispatcher())
+    execute_result = execute_registry.execute()
     assert execute_result.failure
 
     class _FailDispatcher(p.Dispatcher):
@@ -114,10 +112,10 @@ def test_execute_and_register_handler_failure_paths() -> None:
             _ = message
             return r[t.RuntimeAtomic].fail(c.Core.Tests.TestErrors.DISPATCHER_FAIL)
 
-    registry._dispatcher = _FailDispatcher()
-    reg_result = registry.register_handler(_as_registry_handler(_Handler()))
+    failing_registry = FlextRegistry.create(dispatcher=_FailDispatcher())
+    reg_result = failing_registry.register_handler(_as_registry_handler(_Handler()))
     assert reg_result.failure
-    assert reg_result.error == "dispatcher-fail"
+    assert "dispatcher-fail" in (reg_result.error or "")
 
     class _OkDispatcher(p.Dispatcher):
         @override
@@ -144,8 +142,8 @@ def test_execute_and_register_handler_failure_paths() -> None:
             _ = message
             return r[t.RuntimeAtomic].ok(True)
 
-    registry._dispatcher = _OkDispatcher()
-    fallback = registry.register_handler(_as_registry_handler(_Handler()))
+    success_registry = FlextRegistry.create(dispatcher=_OkDispatcher())
+    fallback = success_registry.register_handler(_as_registry_handler(_Handler()))
     assert fallback.success
     assert fallback.value.registration_id != ""
 

@@ -14,7 +14,6 @@ from types import ModuleType
 from typing import Annotated
 
 from pydantic import Field
-from pydantic_settings import BaseSettings
 
 from flext_core import FlextModelsBase, p, t
 
@@ -27,14 +26,14 @@ class FlextModelsService:
     """
 
     class ServiceRuntime(FlextModelsBase.ArbitraryTypesModel):
-        """Runtime triple (config, context, container) for services.
+        """Runtime triple (settings, context, container) for services.
 
         Represents the core service runtime with configuration, context,
         and dependency injection container. CQRS components (dispatcher,
         registry) should be used directly - not through FlextService.
         """
 
-        config: Annotated[
+        settings: Annotated[
             p.Settings,
             Field(description="Service configuration settings for runtime behavior."),
         ]
@@ -52,15 +51,15 @@ class FlextModelsService:
     class RuntimeBootstrapOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options for runtime bootstrapping."""
 
-        config: p.Settings | None = Field(
+        settings: p.Settings | None = Field(
             default=None,
             description="Pre-built settings instance used directly for the runtime.",
         )
-        config_type: type[BaseSettings] | None = Field(
+        settings_type: type | None = Field(
             default=None,
-            description="Settings class used to load runtime configuration.",
+            description="FlextSettings class used to load runtime settings.",
         )
-        config_overrides: t.ScalarMapping | None = Field(
+        settings_overrides: t.ScalarMapping | None = Field(
             default=None,
             description="Key-value overrides applied on top of the loaded configuration.",
         )
@@ -104,7 +103,7 @@ class FlextModelsService:
     class DependencyContainerCreationOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options used to create and populate dependency container instances."""
 
-        config: t.ConfigMap | None = Field(
+        settings: t.ConfigMap | None = Field(
             default=None,
             title="Configuration",
             description="Optional configuration mapping bound to dependency container providers.",

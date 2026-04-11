@@ -274,10 +274,10 @@ class FlextUtilitiesChecker:
     def can_handle_message_type(
         cls,
         accepted_types: tuple[t.TypeHintSpecifier, ...],
-        message_type: t.MessageTypeSpecifier,
+        message_type: t.MessageTypeSpecifier | None,
     ) -> bool:
         """Check if handler can process this message type."""
-        if not accepted_types:
+        if not accepted_types or message_type is None:
             return False
         for expected_type in accepted_types:
             if cls._evaluate_type_compatibility(expected_type, message_type):

@@ -193,7 +193,7 @@ class TestService:
         )
 
     class LifecycleService(s[str]):
-        """Real lifecycle service using s with config model."""
+        """Real lifecycle service using s with settings model."""
 
         _initialized: bool = PrivateAttr(default=False)
         _service_config: TestService.ServiceConfig | None = PrivateAttr(default=None)
@@ -208,11 +208,11 @@ class TestService:
                 return r[str].ok("initialized")
             return r[str].ok("ready")
 
-        def initialize(self, config: TestService.ServiceConfig) -> r[str]:
-            """Initialize service with config model.
+        def initialize(self, settings: TestService.ServiceConfig) -> r[str]:
+            """Initialize service with settings model.
 
             Args:
-                config: Configuration model.
+                settings: Configuration model.
 
             Returns:
                 r[str]: Success or failure.
@@ -221,7 +221,7 @@ class TestService:
             if self._should_fail_init:
                 return r[str].fail("Initialization failed")
             self._initialized = True
-            self._service_config = config
+            self._service_config = settings
             return r[str].ok("initialized")
 
         def health_check(self) -> bool:
@@ -423,7 +423,7 @@ class TestService:
         clean_container: p.Container,
         temp_directory: str,
     ) -> None:
-        """Test lifecycle service initialization with config.
+        """Test lifecycle service initialization with settings.
 
         Args:
             clean_container: Isolated container fixture.

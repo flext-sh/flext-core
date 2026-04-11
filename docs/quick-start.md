@@ -415,7 +415,7 @@ A: Follow clean architecture layers:
 
 - **Domain**: Business logic (models, services, validation)
 - **Application**: Use cases (commands, queries, handlers)
-- **Infrastructure**: External dependencies (databases, APIs, config)
+- **Infrastructure**: External dependencies (databases, APIs, settings)
 
 ## Command Reference
 

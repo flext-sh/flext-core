@@ -32,8 +32,8 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
-        tm.that(config.command is CreateCommand, eq=True)
+        settings: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        tm.that(settings.command is CreateCommand, eq=True)
 
     def test_decorator_priority_timeout_and_middleware(self) -> None:
         class CreateCommand:
@@ -52,11 +52,11 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
-        tm.that(config.priority, eq=42)
-        if config.timeout is not None:
-            tm.that(abs(config.timeout - 5.0), lt=1e-9)
-        tm.that(config.middleware, eq=middleware_types)
+        settings: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        tm.that(settings.priority, eq=42)
+        if settings.timeout is not None:
+            tm.that(abs(settings.timeout - 5.0), lt=1e-9)
+        tm.that(settings.middleware, eq=middleware_types)
 
     def test_decorator_defaults(self) -> None:
         class CreateCommand:
@@ -68,10 +68,10 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
-        tm.that(config.priority, eq=c.DEFAULT_MAX_COMMAND_RETRIES)
-        tm.that(config.timeout, eq=c.DEFAULT_TIMEOUT_SECONDS)
-        tm.that(config.middleware, eq=[])
+        settings: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        tm.that(settings.priority, eq=c.DEFAULT_MAX_COMMAND_RETRIES)
+        tm.that(settings.timeout, eq=c.DEFAULT_TIMEOUT_SECONDS)
+        tm.that(settings.middleware, eq=[])
 
     def test_decorator_preserves_function_identity(self) -> None:
         class CreateCommand:
@@ -146,10 +146,10 @@ class TestHandlerDecoratorDiscovery:
 
         handlers = h.Discovery.scan_class(OrderService)
         tm.that(len(handlers), eq=1)
-        name, config = handlers[0]
+        name, settings = handlers[0]
         tm.that(name, eq="handle_event")
-        tm.that(config.command is EventPublished, eq=True)
-        tm.that(config.priority, eq=25)
+        tm.that(settings.command is EventPublished, eq=True)
+        tm.that(settings.priority, eq=25)
 
     def test_scan_module_finds_decorated_functions(self) -> None:
         class CreateCommand:
@@ -236,8 +236,8 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("ok")
 
-        config: m.DecoratorConfig = getattr(Service.handle, c.HANDLER_ATTR)
-        tm.that(config.timeout, none=True)
+        settings: m.DecoratorConfig = getattr(Service.handle, c.HANDLER_ATTR)
+        tm.that(settings.timeout, none=True)
 
     def test_multiple_decorations_overwrites_previous(self) -> None:
         class CreateCommand:
@@ -253,9 +253,9 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("ok")
 
-        config: m.DecoratorConfig = getattr(Service.handle, c.HANDLER_ATTR)
-        tm.that(config.command is DeleteCommand, eq=True)
-        tm.that(config.priority, eq=20)
+        settings: m.DecoratorConfig = getattr(Service.handle, c.HANDLER_ATTR)
+        tm.that(settings.command is DeleteCommand, eq=True)
+        tm.that(settings.priority, eq=20)
 
     def test_service_integration_with_flext_service(self) -> None:
         class CreateCommand:
@@ -273,10 +273,10 @@ class TestHandlerDecoratorDiscovery:
 
         handlers = h.Discovery.scan_class(Service)
         tm.that(len(handlers), gte=1)
-        method_name, config = handlers[0]
+        method_name, settings = handlers[0]
         tm.that(method_name, eq="handle_user_create")
-        tm.that(config.command is CreateCommand, eq=True)
-        tm.that(config.priority, eq=10)
+        tm.that(settings.command is CreateCommand, eq=True)
+        tm.that(settings.priority, eq=10)
 
 
 __all__ = ["TestHandlerDecoratorDiscovery"]

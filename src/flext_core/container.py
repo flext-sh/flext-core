@@ -17,7 +17,7 @@ import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from functools import partial
 from types import FrameType, ModuleType
-from typing import Self, TypeIs, cast, overload, override
+from typing import Self, TypeIs, overload, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
@@ -92,8 +92,8 @@ class FlextContainer(p.Container):
             str,
             t.RegistrationKwarg | t.UserOverridesMapping | t.ConfigMap,
         ] = {}
-        if override.config is not None:
-            override_updates["config"] = override.config
+        if override.settings is not None:
+            override_updates["settings"] = override.settings
         if override.context is not None:
             override_updates["context"] = override.context
         if override.services is not None:
@@ -119,7 +119,7 @@ class FlextContainer(p.Container):
         if not registration_kwargs:
             return base_registration
         override_registration = m.ServiceRegistrationSpec.model_validate({
-            "config": registration_kwargs.get("_config"),
+            "settings": registration_kwargs.get("_config"),
             "context": registration_kwargs.get("_context"),
             "services": registration_kwargs.get("_services"),
             "factories": registration_kwargs.get("_factories"),
@@ -195,7 +195,7 @@ class FlextContainer(p.Container):
             resources=init_registration.resources,
             global_config=init_registration.container_config,
             user_overrides=init_registration.user_overrides,
-            config=init_registration.config,
+            settings=init_registration.settings,
             context=init_registration.context,
         )
         self.sync_config_to_di()
@@ -204,7 +204,7 @@ class FlextContainer(p.Container):
 
     @property
     @override
-    def config(self) -> p.Settings:
+    def settings(self) -> p.Settings:
         """Return configuration bound to this container."""
         if self._config is None:
             error_msg = c.ERR_CONTAINER_CONFIG_NOT_INITIALIZED
@@ -307,7 +307,7 @@ class FlextContainer(p.Container):
             resources=scoped_registration.resources,
             global_config=scoped_registration.container_config,
             user_overrides=scoped_registration.user_overrides,
-            config=scoped_registration.config,
+            settings=scoped_registration.settings,
             context=scoped_registration.context,
         )
         instance.sync_config_to_di()
@@ -328,7 +328,7 @@ class FlextContainer(p.Container):
         container state across the application lifecycle. When
         ``auto_register_factories=True``, the method scans the calling module
         for functions decorated with ``@d.factory()`` and registers them
-        automatically, enabling zero-config factory discovery for services.
+        automatically, enabling zero-settings factory discovery for services.
         This factory method is the primary entry point for container creation
         in the FLEXT ecosystem.
 
@@ -341,7 +341,7 @@ class FlextContainer(p.Container):
 
         Auto-registration of factories discovers all functions marked with
         @d.factory() decorator and registers them in the container automatically.
-        This enables zero-config factory discovery for services.
+        This enables zero-settings factory discovery for services.
 
         Note: FlextContainer uses a singleton pattern, so this method returns
         the global instance on repeated calls unless explicitly reset.
@@ -405,7 +405,7 @@ class FlextContainer(p.Container):
     def _make_factory_wrapper(
         func_ref: t.FactoryCallable,
         name: str,
-        config: m.FactoryDecoratorConfig,
+        settings: m.FactoryDecoratorConfig,
     ) -> t.FactoryCallable:
         """Build a closure that invokes factory with validation on return type."""
 
@@ -413,7 +413,7 @@ class FlextContainer(p.Container):
             *,
             _factory_func_ref: t.FactoryCallable = func_ref,
             _factory_name: str = name,
-            _factory_config: m.FactoryDecoratorConfig = config,
+            _factory_config: m.FactoryDecoratorConfig = settings,
         ) -> t.RegisterableService:
             config_callable = getattr(_factory_config, "fn", None)
             raw_result: t.RegisterableService
@@ -441,7 +441,7 @@ class FlextContainer(p.Container):
     def fetch_global(
         cls,
         *,
-        config: p.Settings | None = None,
+        settings: p.Settings | None = None,
         context: p.Context | None = None,
     ) -> Self:
         """Return the thread-safe global container instance.
@@ -451,8 +451,8 @@ class FlextContainer(p.Container):
         previously applied settings.
         """
         instance = cls()
-        if config is not None:
-            instance._config = config
+        if settings is not None:
+            instance._config = settings
         if context is not None:
             instance._context = context
         return instance
@@ -504,17 +504,17 @@ class FlextContainer(p.Container):
         self._resources.clear()
 
     @override
-    def configure(self, config: t.FlatContainerMapping | None = None) -> Self:
+    def configure(self, settings: t.FlatContainerMapping | None = None) -> Self:
         """Apply user-provided overrides to container configuration.
 
         Args:
-            config: Mapping of configuration keys to values accepted by
+            settings: Mapping of configuration keys to values accepted by
                 ``t.Scalar``.
 
         """
-        if config is None:
+        if settings is None:
             return self
-        config_map: t.FlatContainerMapping = config
+        config_map: t.FlatContainerMapping = settings
         processed_dict = t.ConfigMap(root={})
         for key, value in config_map.items():
             processed_dict[str(key)] = u.normalize_to_container(value)
@@ -568,17 +568,12 @@ class FlextContainer(p.Container):
     ) -> r[T]:
         """Narrow a service object to a concrete type T via TypeIs."""
         if _is_service_of_type(service, cls):
-            return r[T].ok(cast("T", service))
+            return r[T].ok(service)
         type_name = cls.__name__ if hasattr(cls, "__name__") else "Unknown"
-        params = m.TypeErrorParams(
-            expected_type=type_name, actual_type=type(service).__name__
-        )
-        return r[T].fail(
-            e.render_template(
-                "Service is not of type {type_name}",
-                type_name=type_name,
-                params=params,
-            ),
+        return e.fail_type_mismatch(
+            type_name,
+            type(service).__name__,
+            service_name=type_name,
         )
 
     @overload
@@ -640,17 +635,7 @@ class FlextContainer(p.Container):
                 KeyError,
                 AttributeError,
             ) as exc:
-                params = m.OperationErrorParams(
-                    operation="resolve factory service", reason=str(exc)
-                )
-                return r[t.RegisterableService].fail(
-                    e.render_error_template(
-                        c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-                        operation="resolve factory service",
-                        error=exc,
-                        params=params,
-                    ),
-                )
+                return e.fail_operation("resolve factory service", exc)
         if name in self._resources:
             try:
                 resource_registration = self._resources[name]
@@ -670,29 +655,12 @@ class FlextContainer(p.Container):
                 KeyError,
                 AttributeError,
             ) as exc:
-                params = m.OperationErrorParams(
-                    operation="resolve resource service", reason=str(exc)
-                )
-                return r[t.RegisterableService].fail(
-                    e.render_error_template(
-                        c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-                        operation="resolve resource service",
-                        error=exc,
-                        params=params,
-                    ),
-                )
-        params = m.NotFoundErrorParams(resource_type="service", resource_id=name)
-        return r[t.RegisterableService].fail(
-            e.render_template(
-                "Service '{name}' not found",
-                name=name,
-                params=params,
-            ),
-        )
+                return e.fail_operation("resolve resource service", exc)
+        return e.fail_not_found("service", name)
 
     @override
-    def resolve_config(self) -> t.ConfigMap:
-        """Return the merged configuration exposed by this container."""
+    def resolve_settings(self) -> t.ConfigMap:
+        """Return the merged settings exposed by this container."""
         config_dict_raw = self._global_config.model_dump()
         return t.ConfigMap(
             root={
@@ -748,7 +716,7 @@ class FlextContainer(p.Container):
             raise TypeError(error_msg)
         override_method(base_config_provider)
         override_method(user_config_provider)
-        di_container.config = config_provider
+        di_container.settings = config_provider
         self._config_provider = config_provider
 
     def initialize_registrations(
@@ -759,12 +727,12 @@ class FlextContainer(p.Container):
         resources: Mapping[str, m.ResourceRegistration] | None = None,
         global_config: m.ContainerConfig | None = None,
         user_overrides: t.UserOverridesMapping | t.ConfigMap | None = None,
-        config: p.Settings | None = None,
+        settings: p.Settings | None = None,
         context: p.Context | None = None,
     ) -> None:
         """Initialize service registrations and configuration.
 
-        Internal method to set up registrations and config.
+        Internal method to set up registrations and settings.
         Can be called from __init__ or _create_scoped_instance.
         Sets private attributes directly - this is internal initialization.
         """
@@ -787,7 +755,7 @@ class FlextContainer(p.Container):
         user_overrides_map = t.ConfigMap(root=overrides_root)
         self._user_overrides = user_overrides_map
         config_instance: p.Settings = (
-            config if config is not None else FlextSettings.fetch_global()
+            settings if settings is not None else FlextSettings.fetch_global()
         )
         self._config = config_instance
         self._context = context
@@ -894,32 +862,32 @@ class FlextContainer(p.Container):
             setattr(self._di_bridge, name, provider)
             setattr(self._di_container, name, provider)
             return self
-        except (TypeError, ValueError, RuntimeError, AttributeError) as e:
-            _ = e
+        except (TypeError, ValueError, RuntimeError, AttributeError) as exc:
+            _ = exc
             return self
 
     def register_core_services(self) -> None:
         """Auto-register core services for easy DI access.
 
         Auto-registered services:
-        - "config" → FlextSettings singleton
+        - "settings" → FlextSettings singleton
         - "logger" → FlextLogger factory (creates module logger)
         - "context" → FlextContext singleton
         - "container" → Self-reference for nested resolution
 
         Business Rule: Auto-registers FlextSettings, FlextLogger, and FlextContext
-        with standard names ("config", "logger", "context") to enable easy
+        with standard names ("settings", "logger", "context") to enable easy
         dependency injection in downstream projects. Services are registered only
         if not already registered to avoid conflicts.
 
         This method ensures that core services are accessible via:
-        - container.get("config") -> FlextSettings
+        - container.get("settings") -> FlextSettings
         - container.get("logger") -> FlextLogger (factory)
         - container.get("context") -> FlextContext
         - container.get("container") -> FlextContainer (self-reference)
 
         Services are registered as:
-        - "config": Singleton instance (container.config property)
+        - "settings": Singleton instance (container.settings property)
         - "logger": Factory that creates module logger
         - "context": Singleton instance (container.context property)
         - "container": Self-reference for nested resolution
@@ -1004,7 +972,7 @@ class FlextContainer(p.Container):
     def scoped(
         self,
         *,
-        config: p.Settings | None = None,
+        settings: p.Settings | None = None,
         context: p.Context | None = None,
         subproject: str | None = None,
         services: Mapping[str, t.RegisterableService] | None = None,
@@ -1014,7 +982,7 @@ class FlextContainer(p.Container):
         """Create an isolated container scope with optional overrides.
 
         Args:
-            config: Optional settings overriding the global container's
+            settings: Optional settings overriding the global container's
                 configuration.
             context: Optional execution context to seed the scoped container.
             subproject: Optional suffix appended to ``app_name`` for nested
@@ -1031,11 +999,11 @@ class FlextContainer(p.Container):
             isolated state that inherits the global configuration by default.
 
         """
-        config_input = config
-        if config is not None:
-            base_config: p.Settings = config.model_copy(deep=True)
+        config_input = settings
+        if settings is not None:
+            base_config: p.Settings = settings.model_copy(deep=True)
         else:
-            base_config = self.config.model_copy(deep=True)
+            base_config = self.settings.model_copy(deep=True)
         if subproject and config_input is None:
             base_config = base_config.model_copy(
                 update={"app_name": f"{base_config.app_name}.{subproject}"},
@@ -1087,7 +1055,7 @@ class FlextContainer(p.Container):
         user_overrides_copy = t.ConfigMap(root=dict(self._user_overrides))
         return self.__class__._create_scoped_instance(
             registration=m.ServiceRegistrationSpec.model_validate({
-                "config": base_config,
+                "settings": base_config,
                 "context": scoped_context,
                 "services": cloned_services,
                 "factories": cloned_factories,
@@ -1102,12 +1070,12 @@ class FlextContainer(p.Container):
 
         Dependency Injector's layered ``providers.Configuration`` instances are
         used to avoid manual merges while still honoring validated defaults from
-        ``FlextSettings`` and runtime overrides. Base config and user overrides are
+        ``FlextSettings`` and runtime overrides. Base settings and user overrides are
         applied as separate providers to keep precedence explicit.
 
         Also registers namespace configs as factories for easy DI access:
-        - "config.ldif" → FlextLdifSettings instance
-        - "config.ldap" → FlextLdapSettings instance
+        - "settings.ldif" → FlextLdifSettings instance
+        - "settings.ldap" → FlextLdapSettings instance
         - etc.
         """
         config_dict_raw = self._global_config.model_dump()
@@ -1135,15 +1103,15 @@ class FlextContainer(p.Container):
         if not namespaces:
             return
         for namespace in namespaces:
-            factory_name = f"config.{namespace}"
-            config_class = FlextSettings.resolve_namespace_config(namespace)
-            if config_class is None:
+            factory_name = f"settings.{namespace}"
+            settings_class = FlextSettings.resolve_namespace_settings(namespace)
+            if settings_class is None:
                 continue
-            config_class_non_null: type[BaseModel] = config_class
+            settings_class_non_null: t.ModelClass[t.ModelCarrier] = settings_class
             namespace_factory: t.FactoryCallable = partial(
                 FlextSettings.fetch_global().fetch_namespace,
                 namespace,
-                config_class_non_null,
+                settings_class_non_null,
             )
 
             if not self.has_service(factory_name):
@@ -1171,7 +1139,16 @@ class FlextContainer(p.Container):
             delattr(self._di_resources, name)
         if removed:
             return r[bool].ok(True)
-        return r[bool].fail(c.ERR_SERVICE_NOT_FOUND.format(name=name))
+        return r[bool].fail(
+            e.render_template(
+                "Service '{name}' not found",
+                name=name,
+                params=m.NotFoundErrorParams(
+                    resource_type="service",
+                    resource_id=name,
+                ),
+            ),
+        )
 
     @override
     def wire_modules(
@@ -1190,7 +1167,7 @@ class FlextContainer(p.Container):
         )
 
     def _get_default_config(self) -> p.Settings:
-        """Get default configuration instance."""
+        """Get default settings instance."""
         return FlextSettings.fetch_global()
 
 

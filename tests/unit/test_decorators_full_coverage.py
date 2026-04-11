@@ -205,7 +205,7 @@ class TestDecoratorsFullCoverage:
             (),
             {},
             cast("p.Logger", fake_logger),
-            retry_config=cfg,
+            retry_settings=cfg,
         )
         tm.that(result_exc, is_=Exception)
         tm.that(calls["n"], eq=2)
@@ -227,7 +227,7 @@ class TestDecoratorsFullCoverage:
             (),
             {},
             cast("p.Logger", fake_logger),
-            retry_config=None,
+            retry_settings=None,
         )
         tm.that(result_none, is_=RuntimeError)
 
@@ -563,7 +563,7 @@ class TestDecoratorsFullCoverage:
             (),
             {},
             cast("p.Logger", fake_logger),
-            retry_config=cfg,
+            retry_settings=cfg,
         )
         tm.that(result, is_=Exception)
         tm.that(calls["n"], eq=2)

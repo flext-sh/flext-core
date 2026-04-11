@@ -43,29 +43,29 @@ class TestDiServicesAccess:
 
     def test_config_via_service_runtime(self) -> None:
         """Test FlextSettings accessible via s._create_runtime."""
-        runtime = s._create_runtime(config_overrides={"app_name": "test_app"})
-        assert runtime.config is not None
-        assert isinstance(runtime.config, p.Settings)
-        assert runtime.config.app_name == "test_app"
+        runtime = s._create_runtime(settings_overrides={"app_name": "test_app"})
+        assert runtime.settings is not None
+        assert isinstance(runtime.settings, p.Settings)
+        assert runtime.settings.app_name == "test_app"
 
     def test_config_via_container_scoped(self) -> None:
         """Test FlextSettings accessible via scoped container."""
         container = FlextContainer(_context=FlextContext())
-        scoped = container.scoped(config=FlextSettings(app_name="scoped_config"))
-        assert scoped.config is not None
-        assert isinstance(scoped.config, p.Settings)
-        assert scoped.config.app_name == "scoped_config"
+        scoped = container.scoped(settings=FlextSettings(app_name="scoped_config"))
+        assert scoped.settings is not None
+        assert isinstance(scoped.settings, p.Settings)
+        assert scoped.settings.app_name == "scoped_config"
 
     def test_config_injection_via_wiring(self) -> None:
         """Test injecting FlextSettings via @inject decorator."""
         di_container = u.DependencyIntegration.create_container(
-            config=t.ConfigMap(root={"app_name": "injected_config"}),
+            settings=t.ConfigMap(root={"app_name": "injected_config"}),
         )
         module = ModuleType("config_injection_module")
 
         @u.DependencyIntegration.inject
         def resolve_config_value(
-            app_name: str = u.DependencyIntegration.Provide["config.app_name"],
+            app_name: str = u.DependencyIntegration.Provide["settings.app_name"],
         ) -> str:
             return app_name
 
@@ -144,12 +144,12 @@ class TestDiServicesAccess:
         """Test all services accessible via single service runtime."""
         custom_context = FlextContext.create()
         runtime = s._create_runtime(
-            config_overrides={"app_name": "integrated_app"},
+            settings_overrides={"app_name": "integrated_app"},
             context=custom_context,
         )
-        assert runtime.config is not None
-        assert isinstance(runtime.config, p.Settings)
-        assert runtime.config.app_name == "integrated_app"
+        assert runtime.settings is not None
+        assert isinstance(runtime.settings, p.Settings)
+        assert runtime.settings.app_name == "integrated_app"
         assert runtime.context is not None
         assert isinstance(runtime.context, p.Context)
         assert runtime.container is not None
@@ -166,14 +166,14 @@ class TestDiServicesAccess:
                 cls,
             ) -> FlextModelsService.RuntimeBootstrapOptions:
                 return FlextModelsService.RuntimeBootstrapOptions(
-                    config_overrides={"app_name": "service_app"},
+                    settings_overrides={"app_name": "service_app"},
                     container_overrides={"logger": "service"},
                 )
 
             @override
             def execute(self) -> r[str]:
-                app_name = self.config.app_name
-                tm.that(app_name, eq="service_app", msg="Config must be accessible")
+                app_name = self.settings.app_name
+                tm.that(app_name, eq="service_app", msg="Settings must be accessible")
                 logger_result = self.container.get("logger")
                 _ = u.Core.Tests.assert_success(logger_result)
                 logger = logger_result.value
@@ -189,14 +189,14 @@ class TestDiServicesAccess:
         """Test injecting multiple services via @inject."""
         services = {"logger_name": "test"}
         di_container = u.DependencyIntegration.create_container(
-            config=t.ConfigMap(root={"app_name": "injected"}),
+            settings=t.ConfigMap(root={"app_name": "injected"}),
             services=services,
         )
         module = ModuleType("services_injection_module")
 
         @u.DependencyIntegration.inject
         def process(
-            app_name: str = u.DependencyIntegration.Provide["config.app_name"],
+            app_name: str = u.DependencyIntegration.Provide["settings.app_name"],
         ) -> t.StrMapping:
             return {"app": app_name}
 

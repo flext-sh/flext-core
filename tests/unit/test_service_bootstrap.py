@@ -34,7 +34,7 @@ class TestServiceBootstrap:
         def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
             """Return bootstrap options for this service."""
             return m.RuntimeBootstrapOptions(
-                config_overrides={"app_name": "test_app"},
+                settings_overrides={"app_name": "test_app"},
                 subproject="test",
             )
 
@@ -47,27 +47,27 @@ class TestServiceBootstrap:
         """Test _runtime_bootstrap_options method exists and returns options."""
         options = self.ConcreteTestService._runtime_bootstrap_options()
         assert options is not None
-        assert options.config_overrides is not None
+        assert options.settings_overrides is not None
 
     def test_create_runtime_with_options(self) -> None:
         """Test _create_runtime creates ServiceRuntime with bootstrap options."""
         runtime = self.ConcreteTestService._create_runtime(
-            config_overrides={"app_name": "runtime_app"},
+            settings_overrides={"app_name": "runtime_app"},
             subproject="test",
         )
-        assert runtime.config is not None
+        assert runtime.settings is not None
         assert runtime.context is not None
         assert runtime.container is not None
-        assert isinstance(runtime.config, p.Settings)
+        assert isinstance(runtime.settings, p.Settings)
         assert isinstance(runtime.context, p.Context)
         assert isinstance(runtime.container, p.Container)
-        assert runtime.config.app_name == "runtime_app"
+        assert runtime.settings.app_name == "runtime_app"
 
     def test_create_initial_runtime_uses_bootstrap_options(self) -> None:
         """Test _create_initial_runtime uses _runtime_bootstrap_options."""
         runtime = self.ConcreteTestService()._create_initial_runtime()
-        assert runtime.config is not None
-        assert runtime.config.app_name == "test_app"
+        assert runtime.settings is not None
+        assert runtime.settings.app_name == "test_app"
         assert runtime.container is not None
 
     def test_create_runtime_with_services(self) -> None:
@@ -109,10 +109,10 @@ class TestServiceBootstrap:
         runtime = self.ConcreteTestService._create_runtime(context=custom_context)
         assert runtime.context is custom_context
 
-    def test_create_runtime_with_config_overrides(self) -> None:
-        """Test _create_runtime applies config overrides."""
-        config_overrides = {"app_name": "override_app"}
+    def test_create_runtime_with_settings_overrides(self) -> None:
+        """Test _create_runtime applies settings overrides."""
+        settings_overrides = {"app_name": "override_app"}
         runtime = self.ConcreteTestService._create_runtime(
-            config_overrides=config_overrides,
+            settings_overrides=settings_overrides,
         )
-        assert runtime.config.app_name == "override_app"
+        assert runtime.settings.app_name == "override_app"

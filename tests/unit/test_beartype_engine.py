@@ -401,7 +401,7 @@ class TestBeartypeClawCompatibility:
         assert "aliasprobe_ok x" in result.stdout
 
     def test_claw_current_config_imports_flext_core(self) -> None:
-        """Current flext_core beartype config imports successfully."""
+        """Current flext_core beartype settings imports successfully."""
         result = self._run_python(
             textwrap.dedent(
                 """

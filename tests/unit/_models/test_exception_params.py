@@ -28,7 +28,7 @@ class TestFlextModelsExceptionParams:
             m.ParamsModel.model_validate({"unknown_field": "value"})
 
     def test_params_model_strict_mode(self) -> None:
-        """ParamsModel enforces strict=True in config."""
+        """ParamsModel enforces strict=True in settings."""
         tm.that(m.ParamsModel.model_config.get("strict"), eq=True)
         tm.that(m.ParamsModel.model_config.get("extra"), eq="forbid")
         tm.that(m.ParamsModel.model_config.get("validate_assignment"), eq=True)
@@ -180,11 +180,11 @@ class TestFlextModelsExceptionParams:
 
     def test_authorization_error_params_serialization(self) -> None:
         params = m.AuthorizationErrorParams(
-            user_id="admin", resource="config", permission="delete"
+            user_id="admin", resource="settings", permission="delete"
         )
         data = params.model_dump()
         tm.that(data["user_id"], eq="admin")
-        tm.that(data["resource"], eq="config")
+        tm.that(data["resource"], eq="settings")
         tm.that(data["permission"], eq="delete")
 
     # ── NotFoundErrorParams ───────────────────────────────────
@@ -359,10 +359,10 @@ class TestFlextModelsExceptionParams:
 
     def test_attribute_access_error_params_serialization(self) -> None:
         params = m.AttributeAccessErrorParams(
-            attribute_name="config", attribute_context="runtime"
+            attribute_name="settings", attribute_context="runtime"
         )
         data = params.model_dump()
-        tm.that(data["attribute_name"], eq="config")
+        tm.that(data["attribute_name"], eq="settings")
         tm.that(data["attribute_context"], eq="runtime")
 
     # ── Cross-cutting: extra fields forbidden ─────────────────

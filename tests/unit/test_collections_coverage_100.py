@@ -85,19 +85,19 @@ class TestFlextModelsCollectionsCoverage100:
 
     def test_config_from_dict(self) -> None:
         config_data = t.ConfigMap(root={"timeout": 60})
-        config = self.ConfigFixture.from_mapping(config_data)
-        tm.that(config.timeout, eq=60)
+        settings = self.ConfigFixture.from_mapping(config_data)
+        tm.that(settings.timeout, eq=60)
 
     def test_config_to_dict(self) -> None:
-        config = self.ConfigFixture.model_validate({"timeout": 60})
-        tm.that(config.to_mapping()["timeout"], eq=60)
+        settings = self.ConfigFixture.model_validate({"timeout": 60})
+        tm.that(settings.to_mapping()["timeout"], eq=60)
 
     def test_config_with_updates(self) -> None:
-        config = self.ConfigFixture.model_validate({"timeout": 30, "retries": 3})
-        updated = config.with_updates(timeout=60)
+        settings = self.ConfigFixture.model_validate({"timeout": 30, "retries": 3})
+        updated = settings.with_updates(timeout=60)
         tm.that(updated.timeout, eq=60)
         tm.that(updated.retries, eq=3)
-        tm.that(config.timeout, eq=30)
+        tm.that(settings.timeout, eq=30)
 
     def test_config_diff(self) -> None:
         config1 = self.ConfigFixture.model_validate({"timeout": 30, "retries": 3})
@@ -121,7 +121,7 @@ class TestFlextModelsCollectionsCoverage100:
         config3 = self.ConfigFixture.model_validate({"timeout": 60})
         tm.that(config1, eq=config2)
         tm.that(config1, ne=config3)
-        tm.that(config1, ne="not a config")
+        tm.that(config1, ne="not a settings")
 
     def test_options_merge(self) -> None:
         options1 = self.OptionsFixture(verbose=False, color=True)

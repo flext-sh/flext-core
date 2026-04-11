@@ -51,6 +51,31 @@ class Teste:
         )
         tm.that(e.BaseError in Exception.__subclasses__(), eq=True)
 
+    def test_fail_operation_returns_failure_result(self) -> None:
+        """fail_operation must return failed result with canonical message."""
+        result = e.fail_operation("register service", ValueError("boom"))
+        tm.that(result.failure, eq=True)
+        tm.that(result.error or "", contains="Failed to register service")
+        tm.that(result.error or "", contains="boom")
+
+    def test_fail_not_found_returns_failure_result(self) -> None:
+        """fail_not_found must return failed result for missing resource."""
+        result = e.fail_not_found("service", "command_bus")
+        tm.that(result.failure, eq=True)
+        tm.that(result.error or "", contains="Service 'command_bus' not found")
+
+    def test_fail_type_mismatch_returns_failure_result(self) -> None:
+        """fail_type_mismatch must return failed result for type mismatch."""
+        result = e.fail_type_mismatch("FlextDispatcher", "str")
+        tm.that(result.failure, eq=True)
+        tm.that(result.error or "", contains="Service is not of type FlextDispatcher")
+
+    def test_fail_validation_returns_failure_result(self) -> None:
+        """fail_validation must return failed result with validation context."""
+        result = e.fail_validation("name", "", error="empty")
+        tm.that(result.failure, eq=True)
+        tm.that(result.error or "", contains="validate name")
+
     def test_timestamp_generation(self) -> None:
         """Test that timestamp is automatically generated."""
         before = time.time()
@@ -78,7 +103,7 @@ class Teste:
             e.ConnectionError("connection"),
             e.RateLimitError("rate_limit"),
             e.CircuitBreakerError("circuit"),
-            e.ConfigurationError("config"),
+            e.ConfigurationError("settings"),
             e.OperationError("operation"),
             e.TypeError("type"),
         ]
@@ -591,7 +616,7 @@ class Teste:
             "metadata": m.Metadata(attributes={"key": "value"}),
             "auto_log": True,
             "auto_correlation": True,
-            "config": "test_config",
+            "settings": "test_config",
             "field": "override_field",
             "custom": "value",
         }
@@ -611,7 +636,7 @@ class Teste:
         tm.that(extra, lacks="metadata")
         tm.that(extra, lacks="auto_log")
         tm.that(extra, lacks="auto_correlation")
-        tm.that(extra, lacks="config")
+        tm.that(extra, lacks="settings")
 
     def test_prepare_kwargs_with_empty_specific_params(self) -> None:
         """Test prepare_exception_kwargs with empty specific_params - tests line 945."""

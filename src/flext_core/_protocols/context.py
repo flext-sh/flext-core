@@ -7,10 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from contextlib import AbstractContextManager
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
-
-from pydantic_settings import BaseSettings
 
 from flext_core import t
 
@@ -157,12 +156,43 @@ class FlextProtocolsContext:
         """
 
     @runtime_checkable
+    class ContextServiceNamespace(Protocol):
+        """Protocol for the service-scoped context namespace."""
+
+        @staticmethod
+        def service_context(
+            service_name: str,
+            version: str | None = None,
+        ) -> AbstractContextManager[None]:
+            """Create a service context scope manager."""
+            ...
+
+    @runtime_checkable
+    class ContextType(Protocol):
+        """Protocol for context classes exposing the canonical factory surface."""
+
+        Service: FlextProtocolsContext.ContextServiceNamespace
+
+        @classmethod
+        def create(
+            cls,
+            initial_data: t.ConfigMap | None = None,
+            *,
+            operation_id: str | None = None,
+            user_id: str | None = None,
+            metadata: t.ConfigMap | None = None,
+            auto_correlation_id: bool = True,
+        ) -> FlextProtocolsContext.Context:
+            """Create a new context instance."""
+            ...
+
+    @runtime_checkable
     class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options for service initialization."""
 
-        config: p.Settings | None
-        config_type: type[BaseSettings] | None
-        config_overrides: t.ScalarMapping | None
+        settings: p.Settings | None
+        settings_type: type | None
+        settings_overrides: t.ScalarMapping | None
         context: FlextProtocolsContext.Context | None
         subproject: str | None
         services: Mapping[str, t.RegisterableService] | None

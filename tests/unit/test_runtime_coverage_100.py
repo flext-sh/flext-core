@@ -177,9 +177,9 @@ class TestRuntimeCoverage100:
         assert malformed_key in result or "normal_key" in result
 
     def test_configure_structlog_with_config_object(self) -> None:
-        """Test configure_structlog with config t.NormalizedValue."""
+        """Test configure_structlog with settings t.NormalizedValue."""
         u._structlog_configured = False
-        u.configure_structlog(config=None)
+        u.configure_structlog(settings=None)
         assert u._structlog_configured
 
     def test_is_valid_identifier_non_string(self) -> None:
@@ -260,11 +260,11 @@ class TestRuntimeCoverage100:
         result = u.level_based_context_filter(logger, "info", event_dict)
         assert "status" in result
         assert "normal_key" in result
-        assert "config" in result
+        assert "settings" in result
         assert "stack" not in result
 
     def test_configure_structlog_with_config_additional_processors(self) -> None:
-        """Test configure_structlog with config t.NormalizedValue having additional_processors."""
+        """Test configure_structlog with settings t.NormalizedValue having additional_processors."""
         u._structlog_configured = False
 
         def custom_processor(
@@ -276,5 +276,5 @@ class TestRuntimeCoverage100:
             return event_dict
 
         _ = custom_processor
-        u.configure_structlog(config=None)
+        u.configure_structlog(settings=None)
         assert u._structlog_configured

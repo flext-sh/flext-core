@@ -60,6 +60,10 @@ class FlextTypes(
     ``None`` is **never** baked into definitions.
     """
 
+    # Canonical settings-first names
+    SettingsMap = FlextTypesCore.ConfigMap
+    SettingsModelInput = FlextTypesServices.ConfigModelInput
+
 
 t = FlextTypes
 

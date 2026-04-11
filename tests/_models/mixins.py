@@ -145,7 +145,7 @@ class TestsFlextCoreModelsMixins:
         inner: TestsFlextCoreModelsMixins.CacheTestModel
         count: int
 
-    class ConfigModelForTest(BaseModel):
+    class SettingsModelForTest(BaseModel):
         """Test configuration model (mutable for set_parameter tests)."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -153,7 +153,7 @@ class TestsFlextCoreModelsMixins:
             extra="forbid",
         )
 
-        name: str = "default_config"
+        name: str = "default_settings"
         timeout: Annotated[int, Field(default=30, ge=0)] = 30
         enabled: bool = True
 
@@ -191,8 +191,8 @@ class TestsFlextCoreModelsMixins:
             """Reset singleton instance for test isolation."""
             cls._instance = None
 
-    class BadConfigForTest(BaseModel):
-        """Config that fails to instantiate."""
+    class BadSettingsForTest(BaseModel):
+        """Settings that fails to instantiate."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True,
@@ -210,8 +210,8 @@ class TestsFlextCoreModelsMixins:
     class _Opts(BaseModel):
         value: int = 1
 
-    class _FakeConfig(BaseModel):
-        """Fake config with model_copy support."""
+    class _FakeSettings(BaseModel):
+        """Fake settings with model_copy support."""
 
         timeout: int = 10
 
@@ -290,7 +290,7 @@ class TestsFlextCoreModelsMixins:
         count: int
 
     class CustomEntity:
-        """Custom entity with configurable ID attribute."""
+        """Custom entity with settingsurable ID attribute."""
 
         def __init__(self, custom_id: str | None = None) -> None:
             """Initialize custom entity with ID."""
@@ -350,7 +350,7 @@ class TestsFlextCoreModelsMixins:
                 raise AttributeError(msg)
             object.__setattr__(self, name, value)
 
-    class NoConfigNoSetattr:
+    class NoSettingsNoSetattr:
         """Object without model_config or __setattr__."""
 
     class NoSetattr:
@@ -591,7 +591,7 @@ class TestsFlextCoreModelsMixins:
         name: str
         email: str
 
-    class ConfigTestCaseDict(BaseModel):
+    class SettingsTestCaseDict(BaseModel):
         """Configuration test case."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
@@ -855,8 +855,8 @@ class TestsFlextCoreModelsMixins:
 
         name: Annotated[str, Field(description="Unique reliability scenario name")]
         strategy: Annotated[str, Field(description="Reliability strategy under test")]
-        config: Annotated[
-            t.ConfigMap,
+        settings: Annotated[
+            t.SettingsMap,
             Field(description="Reliability configuration payload"),
         ]
         simulate_failures: Annotated[
@@ -879,7 +879,7 @@ class TestsFlextCoreModelsMixins:
             Field(default=None, description="Human-readable scenario description"),
         ] = None
 
-    class FalseConfig:
+    class FalseSettings:
         app_name: str = "app"
         version: str = "1.0.0"
         enable_caching: bool = False
@@ -1035,13 +1035,13 @@ class TestsFlextCoreModelsMixins:
                 description="Default operation error message",
             ),
         ] = "Op failed"
-        config_error: Annotated[
+        settings_error: Annotated[
             str,
             Field(
-                default="Config failed",
+                default="Settings failed",
                 description="Default configuration error message",
             ),
-        ] = "Config failed"
+        ] = "Settings failed"
         timeout_error: Annotated[
             str,
             Field(
@@ -1059,9 +1059,9 @@ class TestsFlextCoreModelsMixins:
             str,
             Field(default="test_field", description="Default test field name"),
         ] = "test_field"
-        config_key: Annotated[
+        settings_key: Annotated[
             str,
-            Field(default="test_key", description="Default test config key"),
+            Field(default="test_key", description="Default test settings key"),
         ] = "test_key"
         username: Annotated[
             str,

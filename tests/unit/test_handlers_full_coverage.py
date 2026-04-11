@@ -14,8 +14,8 @@ from tests import c, m, t
 
 class TestHandlersFullCoverage:
     class _Handler(h[t.ValueOrModel, t.ValueOrModel]):
-        def __init__(self, *, config: m.Handler | None = None) -> None:
-            super().__init__(config=config)
+        def __init__(self, *, settings: m.Handler | None = None) -> None:
+            super().__init__(settings=settings)
 
         @override
         def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
@@ -24,8 +24,8 @@ class TestHandlersFullCoverage:
             return r[t.ValueOrModel].fail(c.Core.Tests.TestErrors.UNSUPPORTED_MESSAGE)
 
     class _QueryHandler(_Handler):
-        def __init__(self, *, config: m.Handler | None = None) -> None:
-            super().__init__(config=config)
+        def __init__(self, *, settings: m.Handler | None = None) -> None:
+            super().__init__(settings=settings)
 
         @override
         def validate_message(self, data: t.ValueOrModel) -> r[bool]:
@@ -33,8 +33,8 @@ class TestHandlersFullCoverage:
             return r[bool].ok(True)
 
     class _EventHandler(_Handler):
-        def __init__(self, *, config: m.Handler | None = None) -> None:
-            super().__init__(config=config)
+        def __init__(self, *, settings: m.Handler | None = None) -> None:
+            super().__init__(settings=settings)
 
         @override
         def validate_message(self, data: t.ValueOrModel) -> r[bool]:
@@ -51,21 +51,21 @@ class TestHandlersFullCoverage:
         h._HANDLER_TYPE_LITERALS = original_literals
 
     def test_invalid_handler_mode_init_raises(self) -> None:
-        invalid_config = m.Handler.model_construct(
+        base_config = m.Handler(
             handler_id="h1",
             handler_name="bad",
             handler_type=c.HandlerType.COMMAND,
-            # type: ignore[arg-type]  # Intentionally invalid to cover FlextHandlers.__init__ guard.
-            handler_mode="invalid",
+            handler_mode=c.HandlerType.COMMAND,
             command_timeout=10,
             max_command_retries=1,
             metadata=None,
         )
+        invalid_config = base_config.model_copy(update={"handler_mode": "invalid"})
         with pytest.raises(
             e.ValidationError,
             match="Invalid handler mode",
         ):
-            self._Handler(config=invalid_config)
+            self._Handler(settings=invalid_config)
 
     def test_create_from_callable_branches(self) -> None:
         handler_from_config = h.create_from_callable(
@@ -94,7 +94,7 @@ class TestHandlersFullCoverage:
 
     def test_run_pipeline_query_and_event_paths(self) -> None:
         qh: TestHandlersFullCoverage._Handler = self._QueryHandler(
-            config=m.Handler(
+            settings=m.Handler(
                 handler_id="q2",
                 handler_name="q2",
                 handler_type=c.HandlerType.QUERY,
@@ -108,7 +108,7 @@ class TestHandlersFullCoverage:
         )
         assert qr.success
         eh: TestHandlersFullCoverage._Handler = self._EventHandler(
-            config=m.Handler(
+            settings=m.Handler(
                 handler_id="e2",
                 handler_name="e2",
                 handler_type=c.HandlerType.EVENT,

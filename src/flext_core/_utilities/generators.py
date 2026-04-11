@@ -15,7 +15,7 @@ import string
 import uuid
 from datetime import UTC, datetime
 
-from flext_core import c, r, t
+from flext_core import c, t
 
 
 class FlextUtilitiesGenerators:
@@ -36,12 +36,15 @@ class FlextUtilitiesGenerators:
             return "".join(secrets.choice(alphabet) for _ in range(length))
 
     @staticmethod
-    def _determine_prefix(kind: str | None, prefix: str | None) -> r[str]:
+    def _determine_prefix(
+        kind: str | None,
+        prefix: str | None,
+    ) -> tuple[bool, str | None]:
         """Resolve ID prefix from kind or custom override."""
         if prefix is not None:
-            return r[str].ok(prefix)
+            return (True, prefix)
         if kind is None:
-            return r[str].fail(c.ERR_GENERATOR_KIND_MISSING)
+            return (False, None)
         kind_prefix_map: t.StrMapping = {
             "correlation": "corr",
             "entity": "ent",
@@ -54,10 +57,8 @@ class FlextUtilitiesGenerators:
         }
         resolved_prefix = kind_prefix_map.get(kind)
         if resolved_prefix is None:
-            return r[str].fail(
-                c.ERR_RUNTIME_UNSUPPORTED_GENERATOR_KIND.format(kind=kind),
-            )
-        return r[str].ok(resolved_prefix)
+            return (False, None)
+        return (True, resolved_prefix)
 
     @staticmethod
     def _generate_id() -> str:
@@ -121,9 +122,9 @@ class FlextUtilitiesGenerators:
         separator: str = "_",
     ) -> str:
         """Generate ID by kind or custom prefix (the ONLY public ID generation method)."""
-        actual_prefix_result = FlextUtilitiesGenerators._determine_prefix(kind, prefix)
-        actual_prefix = (
-            actual_prefix_result.value if actual_prefix_result.success else None
+        _prefix_resolved, actual_prefix = FlextUtilitiesGenerators._determine_prefix(
+            kind,
+            prefix,
         )
         match (kind, actual_prefix):
             case (("uuid" | None), None):

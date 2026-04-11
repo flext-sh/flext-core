@@ -112,24 +112,24 @@ class Ex10FlextHandlers(Examples):
             "callable.mode_str.value_matches",
             mode_str_h.handle(probe_str).unwrap_or("-") == f"str:{probe_str}",
         )
-        config_h = h.create_from_callable(
+        settings_h = h.create_from_callable(
             lambda message: f"cfg:{message}",
-            handler_config=m.Handler(
+            handler_settings=m.Handler(
                 handler_id=cfg_handler_id,
                 handler_name=cfg_handler_name,
                 handler_mode=c.HandlerType.SAGA,
                 handler_type=c.HandlerType.SAGA,
             ),
         )
-        self.check("callable.handler_config.name", config_h.handler_name)
-        self.check("callable.handler_config.mode", config_h.mode.value)
+        self.check("callable.handler_settings.name", settings_h.handler_name)
+        self.check("callable.handler_settings.mode", settings_h.mode.value)
         self.check(
-            "callable.handler_config.name_matches",
-            config_h.handler_name == cfg_handler_name,
+            "callable.handler_settings.name_matches",
+            settings_h.handler_name == cfg_handler_name,
         )
         self.check(
-            "callable.handler_config.value_matches",
-            config_h.handle(probe_cfg).unwrap_or("-") == f"cfg:{probe_cfg}",
+            "callable.handler_settings.value_matches",
+            settings_h.handle(probe_cfg).unwrap_or("-") == f"cfg:{probe_cfg}",
         )
         try:
             h.create_from_callable(lambda message: message, mode="invalid")
@@ -278,10 +278,10 @@ class Ex10FlextHandlers(Examples):
             "push_context.execution",
             handler.push_context(context_payload_event).success,
         )
-        pop_ctx_1 = handler.pop_context().unwrap_or(t.ConfigMap(root={}))
+        pop_ctx_1 = handler.pop_context().unwrap_or(t.SettingsMap(root={}))
         pop_ctx_1_val = pop_ctx_1.get("handler_name", "-")
         self.check("pop_context.1", pop_ctx_1_val)
-        pop_ctx_2 = handler.pop_context().unwrap_or(t.ConfigMap(root={}))
+        pop_ctx_2 = handler.pop_context().unwrap_or(t.SettingsMap(root={}))
         pop_ctx_2_val = pop_ctx_2.get("handler_name", "-")
         self.check("pop_context.2", pop_ctx_2_val)
 
@@ -337,8 +337,10 @@ class Ex10FlextHandlers(Examples):
             .get("handler_name", "-"),
         )
         di = u.DependencyIntegration
-        di_container = di.create_container(config=t.ConfigMap(root={"env": env_value}))
-        self.check("di.bind_configuration_exists", hasattr(di_container, "config"))
+        di_container = di.create_container(
+            settings=t.SettingsMap(root={"env": env_value})
+        )
+        self.check("di.bind_configuration_exists", hasattr(di_container, "settings"))
         self.check(
             "di.register_object",
             di.register_object(di_container, obj_key, obj_value)() == obj_value,
@@ -356,7 +358,7 @@ class Ex10FlextHandlers(Examples):
         resource_provider = di.register_resource(
             di_container,
             resource_key,
-            lambda: t.ConfigMap(root={resource_key: resource_value}),
+            lambda: t.SettingsMap(root={resource_key: resource_value}),
         )
         self.check(
             "di.register_resource",
@@ -369,7 +371,7 @@ class Ex10FlextHandlers(Examples):
             duplicate_error = f"{type(exc).__name__}:{exc}"
         self.check("di.duplicate_error", duplicate_error)
         bridge, services_mod, resources_mod = di.create_layered_bridge(
-            t.ConfigMap(root={self.rand_str(2): self.rand_str(2)}),
+            t.SettingsMap(root={self.rand_str(2): self.rand_str(2)}),
         )
         self.check("di.layered.bridge", bridge.__class__.__name__)
         self.check("di.layered.services", services_mod.__class__.__name__)
@@ -385,7 +387,7 @@ class Ex10FlextHandlers(Examples):
         u.Integration.track_domain_event(
             event_name,
             aggregate_id=aggregate_id,
-            event_data=t.ConfigMap(root={self.rand_str(3): self.rand_int(1, 9)}),
+            event_data=t.SettingsMap(root={self.rand_str(3): self.rand_int(1, 9)}),
         )
         u.Integration.setup_service_infrastructure(
             service_name=service_name,
@@ -403,7 +405,7 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "protocol.handler.false",
-            not u.handler(t.ConfigMap(root={})),
+            not u.handler(t.SettingsMap(root={})),
         )
 
     def demo_runtime_result_and_utilities(self) -> None:
@@ -482,7 +484,7 @@ class Ex10FlextHandlers(Examples):
             "mixin.ensure_result.result",
             r[int].ok(ensured_result).unwrap_or(-1) == ensured_result,
         )
-        self.check("mixin.to_dict", t.ConfigMap(root={dict_key: dict_value}).root)
+        self.check("mixin.to_dict", t.SettingsMap(root={dict_key: dict_value}).root)
         generated_a = u.generate_id()
         generated_b = u.generate_id()
         self.check(
@@ -541,7 +543,9 @@ class Ex10FlextHandlers(Examples):
                 "timestamp" in trace_context,
             ],
         )
-        self.check("runtime.resolve_log_level", u.resolve_log_level_from_config() >= 0)
+        self.check(
+            "runtime.resolve_log_level", u.resolve_log_level_from_settings() >= 0
+        )
         self.check("runtime.is_dict_like.true", u.dict_like({"a": 1}))
         self.check("runtime.is_dict_like.false", u.dict_like([1, 2]))
         self.check("runtime.list_like.true", u.list_like([1, 2]))

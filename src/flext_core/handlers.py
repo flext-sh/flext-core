@@ -40,19 +40,23 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         c.HandlerType.SAGA: c.HandlerType.SAGA,
     }
 
-    def __init__(self, *, config: m.Handler | None = None) -> None:
+    def __init__(self, *, settings: m.Handler | None = None) -> None:
         """Initialize handler with configuration and context.
 
         Sets up the handler with optional configuration parameters.
-        The config parameter accepts a m instance.
+        The settings parameter accepts a m instance.
 
         Args:
-            config: Optional handler configuration model
+            settings: Optional handler configuration model
 
         """
-        super().__init__(config_type=None, config_overrides=None, initial_context=None)
-        if config is not None:
-            self._config_model = config
+        super().__init__(
+            settings_type=None,
+            settings_overrides=None,
+            initial_context=None,
+        )
+        if settings is not None:
+            self._config_model = settings
         else:
             self._config_model = m.Handler(
                 handler_id=f"handler_{id(self)}",
@@ -174,9 +178,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             def __init__(
                 self,
                 handler_fn: Callable[[t.Scalar], t.Scalar],
-                config: m.Handler | None = None,
+                settings: m.Handler | None = None,
             ) -> None:
-                super().__init__(config=config)
+                super().__init__(settings=settings)
                 self._handler_fn = handler_fn
 
             @override
@@ -202,7 +206,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                     return r[t.Scalar].fail(str(exc))
 
         if handler_config is not None:
-            return CallableHandler(handler_fn=handler_callable, config=handler_config)
+            return CallableHandler(handler_fn=handler_callable, settings=handler_config)
         resolved_type: c.HandlerType = c.HandlerType.COMMAND
         if mode is not None:
             if isinstance(mode, c.HandlerType):
@@ -218,13 +222,13 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             getattr(handler_callable, "__name__", "unknown_handler")
             or "unknown_handler",
         )
-        config = m.Handler(
+        settings = m.Handler(
             handler_id=f"callable_{id(handler_callable)}",
             handler_name=resolved_name,
             handler_type=resolved_type,
             handler_mode=resolved_type,
         )
-        return CallableHandler(handler_fn=handler_callable, config=config)
+        return CallableHandler(handler_fn=handler_callable, settings=settings)
 
     @staticmethod
     def _handler_type_to_literal(
@@ -274,15 +278,17 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             one to run takes precedence.
             """
             if not hasattr(func, c.HANDLER_ATTR):
-                config = m.DecoratorConfig(
+                settings = m.DecoratorConfig(
                     command=command,
                     priority=priority,
                     timeout=timeout,
                     middleware=[],
                 )
                 if middleware is not None:
-                    config = config.model_copy(update={"middleware": list(middleware)})
-                setattr(func, c.HANDLER_ATTR, config)
+                    settings = settings.model_copy(
+                        update={"middleware": list(middleware)}
+                    )
+                setattr(func, c.HANDLER_ATTR, settings)
             return func
 
         return decorator
@@ -570,7 +576,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         Scans classes for methods decorated with @handler() and provides
         utilities for finding and analyzing handler configurations.
 
-        This class enables zero-config handler registration in FlextService
+        This class enables zero-settings handler registration in FlextService
         by automatically discovering decorated methods at initialization time.
         """
 
@@ -615,8 +621,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
             Example:
                 >>> handlers = FlextHandlers.Discovery.scan_class(MyService)
-                >>> for method_name, config in handlers:
-                ...     print(f"{method_name}: {config.command.__name__}")
+                >>> for method_name, settings in handlers:
+                ...     print(f"{method_name}: {settings.command.__name__}")
 
             """
             handlers: Sequence[tuple[str, m.DecoratorConfig]] = [
@@ -643,8 +649,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
             Example:
                 >>> handlers = FlextHandlers.Discovery.scan_module(my_module)
-                >>> for func_name, func, config in handlers:
-                ...     print(f"{func_name}: {config.command.__name__}")
+                >>> for func_name, func, settings in handlers:
+                ...     print(f"{func_name}: {settings.command.__name__}")
 
             """
             handlers: MutableSequence[
@@ -664,7 +670,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                     continue
                 if not callable(func):
                     continue
-                config: m.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
+                settings: m.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
                 callable_func: Callable[..., t.RuntimeAtomic | None] = func
 
                 def narrowed_func(
@@ -685,8 +691,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                         return result
                     return str(result)
 
-                setattr(narrowed_func, c.HANDLER_ATTR, config)
-                handlers.append((name, narrowed_func, config))
+                setattr(narrowed_func, c.HANDLER_ATTR, settings)
+                handlers.append((name, narrowed_func, settings))
             return sorted(handlers, key=lambda x: (-x[2].priority, x[0]))
 
 

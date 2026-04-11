@@ -422,7 +422,7 @@ class TestuTypeChecker:
     def test_boundary_none_message_type(self) -> None:
         """Test boundary case: None as message type."""
         accepted = (str,)
-        result = u.can_handle_message_type(accepted, None)  # type: ignore[arg-type]  # Boundary coverage.
+        result = u.can_handle_message_type(accepted, None)
         tm.that(result, is_=bool)
 
     def test_boundary_string_type_specifier(self) -> None:

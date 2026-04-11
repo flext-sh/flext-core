@@ -23,9 +23,9 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Annotated, ClassVar, Final, Self, overload
 
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import Field, PrivateAttr
 
-from flext_core import FlextLogger, c, m, p, r, t, u
+from flext_core import FlextLogger, c, e, m, p, r, t, u
 
 
 class FlextContext(m.ArbitraryTypesModel):
@@ -47,10 +47,10 @@ class FlextContext(m.ArbitraryTypesModel):
 
     @staticmethod
     def _to_normalized(value: t.ValueOrModel) -> t.RecursiveContainer:
-        """Narrow ``Container | BaseModel`` to ``RecursiveContainer``.
+        """Narrow ``Container | t.ModelCarrier`` to ``RecursiveContainer``.
 
-        BaseModel instances are converted via ``model_dump()`` so the result
-        is always a plain ``RecursiveContainer`` (no BaseModel).
+        Pydantic model instances are converted via ``model_dump()`` so the result
+        is always a plain ``RecursiveContainer`` with no model carrier left inside.
         """
         if u.pydantic_model(value):
             raw = value.model_dump()
@@ -75,7 +75,7 @@ class FlextContext(m.ArbitraryTypesModel):
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
-        ctx_value: t.ConfigMap | t.ContainerMapping | BaseModel | None,
+        ctx_value: t.ConfigMap | t.ContainerMapping | t.ModelCarrier | None,
     ) -> t.ContainerMapping:
         """Return contextvar payload as ConfigMap with safe default."""
         if ctx_value is None:
@@ -216,7 +216,7 @@ class FlextContext(m.ArbitraryTypesModel):
         1. Simple creation: create(initial_data=...)
         2. Metadata-based creation: create(operation_id=..., user_id=..., metadata=...)
 
-        Auto-correlation_id generation enables zero-config context setup by
+        Auto-correlation_id generation enables zero-settings context setup by
         automatically generating a correlation ID when operation_id is not provided.
 
         Args:
@@ -225,13 +225,13 @@ class FlextContext(m.ArbitraryTypesModel):
             user_id: Optional user identifier (keyword-only).
             metadata: Optional additional metadata dictionary (keyword-only).
             auto_correlation_id: If True, auto-generate operation_id if not provided.
-                Default: True (enables zero-config setup).
+                Default: True (enables zero-settings setup).
 
         Returns:
             New FlextContext instance.
 
         Example:
-            >>> # Zero-config: auto-generates correlation_id
+            >>> # Zero-settings: auto-generates correlation_id
             >>> context = FlextContext.create()
             >>>
             >>> # With custom operation_id: disables auto-generation
@@ -511,14 +511,14 @@ class FlextContext(m.ArbitraryTypesModel):
     def resolve_metadata(self, key: str) -> r[t.RuntimeAtomic]:
         """Get metadata from the context.
 
-        Fast fail: Returns r[t.Container | BaseModel] - fails if key not found.
+        Fast fail: Returns r[t.RuntimeAtomic] - fails if key not found.
         No fallback behavior - use r monadic operations for defaults.
 
         Args:
             key: The metadata key
 
         Returns:
-            r[t.Container | BaseModel]: Success with metadata value, or failure if key not found
+            r[t.RuntimeAtomic]: Success with metadata value, or failure if key not found
 
         Example:
             >>> context = FlextContext()
@@ -788,8 +788,8 @@ class FlextContext(m.ArbitraryTypesModel):
                 scope_dict = self._narrow_contextvar_to_configuration_dict(
                     ctx_var.get(),
                 )
-            except TypeError as e:
-                return r[bool].fail(str(e))
+            except TypeError as exc:
+                return e.fail_operation("validate context scope", exc)
             for key in scope_dict:
                 if not key:
                     return r[bool].fail(c.ERR_CONTEXT_INVALID_KEY_FOUND)
@@ -941,8 +941,8 @@ class FlextContext(m.ArbitraryTypesModel):
                 t.ConfigMap(root={c.Directory.DATA: t.ConfigMap(root=data.root)}),
             )
             return r[bool].ok(True)
-        except TypeError as e:
-            return r[bool].fail(str(e))
+        except TypeError as exc:
+            return e.fail_operation("apply bulk context update", exc)
 
     def _update_contextvar(self, scope: str, data: t.ConfigMap) -> None:
         """Set multiple values in contextvar scope."""
@@ -988,8 +988,8 @@ class FlextContext(m.ArbitraryTypesModel):
                 t.ConfigMap(root={"key": key, "value": value}),
             )
             return r[bool].ok(True)
-        except TypeError as e:
-            return r[bool].fail(str(e))
+        except TypeError as exc:
+            return e.fail_operation("apply single context key", exc)
 
     def _update_statistics(self, operation: str) -> None:
         """Update statistics counter for an operation (DRY helper).
@@ -1205,7 +1205,14 @@ class FlextContext(m.ArbitraryTypesModel):
                 return r[t.Scalar].ok(str(service_value))
             return r[t.Scalar].fail(
                 service_result.error
-                or c.ERR_SERVICE_NOT_FOUND.format(name=service_name),
+                or e.render_template(
+                    "Service '{name}' not found",
+                    name=service_name,
+                    params=m.NotFoundErrorParams(
+                        resource_type="service",
+                        resource_id=service_name,
+                    ),
+                ),
             )
 
         @staticmethod
@@ -1239,8 +1246,8 @@ class FlextContext(m.ArbitraryTypesModel):
                 # Type ignoring register until Pydantic vs arbitrary type unification is complete
                 _ = container.register(service_name, service)
                 return r[bool].ok(True)
-            except ValueError as e:
-                return r[bool].fail(str(e))
+            except ValueError as exc:
+                return e.fail_operation("register service in context container", exc)
 
         @staticmethod
         @contextmanager

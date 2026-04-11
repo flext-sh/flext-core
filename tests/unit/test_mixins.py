@@ -172,8 +172,8 @@ class TestFlextMixinsNestedClasses:
 
             def __init__(self) -> None:
                 super().__init__(
-                    config_type=None,
-                    config_overrides=None,
+                    settings_type=None,
+                    settings_overrides=None,
                     initial_context=None,
                 )
                 if scenario.needs_init:
@@ -216,7 +216,7 @@ class TestFlextMixinsNestedClasses:
             assert service.run_process() == "done"
         elif scenario.scenario_type == self.ServiceMixinScenarioType.SERVICE_INIT:
             assert all(
-                hasattr(service, attr) for attr in ["logger", "container", "config"]
+                hasattr(service, attr) for attr in ["logger", "container", "settings"]
             )
         elif scenario.scenario_type == self.ServiceMixinScenarioType.SERVICE_ENRICH:
             service._enrich_context(version="1.0.0", team="test")
@@ -229,8 +229,8 @@ class TestFlextMixinsNestedClasses:
 
             def __init__(self) -> None:
                 super().__init__(
-                    config_type=None,
-                    config_overrides=None,
+                    settings_type=None,
+                    settings_overrides=None,
                     initial_context=None,
                 )
                 self._init_service()

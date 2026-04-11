@@ -14,12 +14,13 @@ import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Annotated, ClassVar, Literal, Self, override
 
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import Field, PrivateAttr
 
 from flext_core import (
     FlextContainer,
     FlextDispatcher,
     c,
+    e,
     h,
     m,
     p,
@@ -33,7 +34,7 @@ from flext_core import (
 class FlextRegistry(s[bool]):
     """Application-layer registry for CQRS handlers.
 
-    Extends s for automatic infrastructure (config, context,
+    Extends s for automatic infrastructure (settings, context,
     container, logging) while providing handler registration and management
     capabilities. The registry pairs message types with handlers, enforces
     idempotent registration, and exposes batch operations that return ``r``
@@ -105,7 +106,7 @@ class FlextRegistry(s[bool]):
 
         Auto-discovery of handlers discovers all functions marked with
         @h.handler() decorator in the calling module and auto-registers them
-        with built-in deduplication. This enables zero-config handler
+        with built-in deduplication. This enables zero-settings handler
         registration for services with idempotent tracking.
 
         Args:
@@ -118,7 +119,10 @@ class FlextRegistry(s[bool]):
             FlextRegistry instance with auto-discovered handlers if enabled.
 
         """
-        instance = cls.model_validate({"dispatcher": dispatcher})
+        instance = cls()
+        if dispatcher is not None:
+            instance.dispatcher = dispatcher
+            instance._dispatcher = dispatcher
         if auto_discover_handlers:
             frame = inspect.currentframe()
             if frame and frame.f_back:
@@ -137,14 +141,14 @@ class FlextRegistry(s[bool]):
             t.RecursiveContainer
             | t.RegisterableService
             | t.RegistrablePlugin
-            | BaseModel
+            | t.ModelCarrier
             | None
         ),
     ) -> t.RuntimeAtomic | None:
         """Safe conversion using centralized utilities."""
         if value is None:
             return None
-        if isinstance(value, (*t.CONTAINER_TYPES, BaseModel)):
+        if isinstance(value, t.CONTAINER_TYPES) or u.base_model(value):
             return value
         return str(value)
 
@@ -255,14 +259,14 @@ class FlextRegistry(s[bool]):
         """
         validated_metadata: t.ConfigMap | None = None
         if metadata is not None:
-            raw_metadata: Mapping[str, t.MetadataOrValue | BaseModel]
+            raw_metadata: Mapping[str, t.MetadataOrValue | t.ModelCarrier]
             if isinstance(metadata, m.Metadata):
                 raw_metadata = metadata.attributes
             else:
                 raw_metadata = metadata.root
             normalized_root: MutableMapping[str, t.ValueOrModel] = {}
             for k, v in raw_metadata.items():
-                if isinstance(v, (*t.CONTAINER_TYPES, BaseModel)):
+                if isinstance(v, t.CONTAINER_TYPES) or u.base_model(v):
                     normalized_root[k] = v
                 elif isinstance(v, (list, dict, tuple)):
                     normalized_root[k] = str(v)
@@ -282,9 +286,8 @@ class FlextRegistry(s[bool]):
         try:
             _ = self.container.register(name, service)
             return r[bool].ok(True)
-        except ValueError as e:
-            error_str = str(e)
-            return r[bool].fail(error_str)
+        except ValueError as exc:
+            return e.fail_operation("register service in registry", exc)
 
     def register_bindings(
         self,
@@ -353,8 +356,9 @@ class FlextRegistry(s[bool]):
         )
 
         if registration_result.failure:
-            return r[m.RegistrationDetails].fail(
-                registration_result.error or "Dispatcher registration failed",
+            return e.fail_operation(
+                "register handler in dispatcher",
+                registration_result.error or c.ERR_HANDLER_FAILED,
             )
 
         self._registered_keys.add(handler_id)
@@ -417,24 +421,30 @@ class FlextRegistry(s[bool]):
 
         """
         if not name:
-            return r[bool].fail(
-                c.ERR_REGISTRY_CATEGORY_NAME_CANNOT_BE_EMPTY.format(
+            params = m.RegistryPluginParams(
+                category=category,
+                name=name,
+                scope=scope,
+            )
+            return e.fail_validation(
+                field="name",
+                value=name,
+                error=e.render_template(
+                    c.ERR_REGISTRY_CATEGORY_NAME_CANNOT_BE_EMPTY,
                     category=category,
+                    params=params,
                 ),
             )
         if validate:
             try:
                 validation_result = validate(plugin)
                 if validation_result.failure:
-                    return r[bool].fail(
-                        c.ERR_VALIDATION_FAILED_WITH_ERROR.format(
-                            error=validation_result.error,
-                        ),
+                    return e.fail_operation(
+                        "validate plugin registration",
+                        validation_result.error or c.ERR_VALIDATION_FAILED,
                     )
             except (TypeError, ValueError, RuntimeError) as exc:
-                return r[bool].fail(
-                    c.ERR_REGISTRY_VALIDATION_ERROR.format(error=str(exc)),
-                )
+                return e.fail_operation("validate plugin registration", exc)
         key = f"{category}::{name}"
         if scope == c.RegistrationScope.INSTANCE:
             if key in self._registered_keys:
@@ -470,12 +480,19 @@ class FlextRegistry(s[bool]):
 
         """
         key = f"{category}::{name}"
+        params = m.RegistryPluginParams(
+            category=category,
+            name=name,
+            scope=scope,
+        )
         if scope == c.RegistrationScope.INSTANCE:
             if key not in self._registered_keys:
                 return r[bool].fail(
-                    c.ERR_REGISTRY_PLUGIN_NOT_REGISTERED.format(
+                    e.render_template(
+                        c.ERR_REGISTRY_PLUGIN_NOT_REGISTERED,
                         category=category,
                         name=name,
+                        params=params,
                     ),
                 )
             self._registered_keys.discard(key)
@@ -483,9 +500,11 @@ class FlextRegistry(s[bool]):
         cls = type(self)
         if key not in cls._class_registered_keys:
             return r[bool].fail(
-                c.ERR_REGISTRY_PLUGIN_NOT_REGISTERED.format(
+                e.render_template(
+                    c.ERR_REGISTRY_PLUGIN_NOT_REGISTERED,
                     category=category,
                     name=name,
+                    params=params,
                 ),
             )
         del cls._class_plugin_storage[key]

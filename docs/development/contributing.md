@@ -309,7 +309,7 @@ src/flext_core/
 ├── models.py # DDD base classes
 ├── service.py # Domain service base
 ├── bus.py # Message bus
-├── config.py # Configuration management
+├── settings.py # Configuration management
 ├── loggings.py # Structured logging
 └── ... (other modules)
 

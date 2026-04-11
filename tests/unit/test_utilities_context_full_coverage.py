@@ -25,7 +25,7 @@ class TestUtilitiesContextFullCoverage:
             self.runtime_dispatcher: p.Dispatcher | None = MagicMock(spec=p.Dispatcher)
             self.runtime_registry: p.Registry | None = MagicMock(spec=p.Registry)
             self.runtime_context: p.Context | None = MagicMock(spec=p.Context)
-            self.runtime_config: BaseModel | None = m.Core.Tests._FakeConfig(
+            self.runtime_settings: BaseModel | None = m.Core.Tests._FakeSettings(
                 timeout=10,
             )
 
@@ -46,7 +46,7 @@ class TestUtilitiesContextFullCoverage:
             self.runtime_dispatcher: p.Dispatcher | None = None
             self.runtime_registry: p.Registry | None = None
             self.runtime_context: p.Context | None = None
-            self.runtime_config: BaseModel | None = None
+            self.runtime_settings: BaseModel | None = None
 
     def test_create_str_proxy_basic(self) -> None:
         """Creates a StructlogProxyContextVar[str] with given key."""

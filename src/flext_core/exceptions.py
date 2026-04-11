@@ -15,7 +15,6 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from typing import ClassVar, override
 
 from pydantic import (
-    BaseModel,
     ValidationError as PydanticValidationError,
 )
 
@@ -24,6 +23,7 @@ from flext_core import (
     FlextUtilitiesGuardsTypeModel,
     c,
     m,
+    r,
     t,
 )
 from flext_core.runtime import FlextRuntime
@@ -36,25 +36,31 @@ class FlextExceptions:
     for consistent error handling and logging.
     """
 
-    type TemplateValues = Mapping[str, t.MetadataOrValue | None] | t.ConfigMap
+    type TemplateValues = Mapping[str, t.MetadataOrValue | None] | t.SettingsMap
 
     @staticmethod
     def _template_values(
-        params: BaseModel | None,
+        params: t.ModelCarrier | None,
         values: TemplateValues,
-    ) -> t.ConfigMap:
+    ) -> t.SettingsMap:
         """Build template substitution values using params data and field metadata."""
-        payload: t.ConfigMap = t.ConfigMap(root={})
+        payload: t.SettingsMap = t.SettingsMap(root={})
         if params is not None:
             params_dump = params.model_dump(exclude_none=True)
             for key, value in params_dump.items():
                 payload[str(key)] = FlextRuntime.normalize_to_container(
                     FlextRuntime.normalize_to_metadata(value)
                 )
-            for field_name, field_info in type(params).model_fields.items():
-                field_help = field_info.description or field_info.title
-                if field_help is not None:
-                    payload[f"{field_name}_description"] = field_help
+            model_fields = getattr(type(params), "model_fields", None)
+            if isinstance(model_fields, Mapping):
+                for field_name, field_info in model_fields.items():
+                    field_help = getattr(field_info, "description", None) or getattr(
+                        field_info,
+                        "title",
+                        None,
+                    )
+                    if field_help is not None:
+                        payload[f"{field_name}_description"] = field_help
         for key, value in values.items():
             payload[str(key)] = FlextRuntime.normalize_to_container(
                 FlextRuntime.normalize_to_metadata(value)
@@ -65,7 +71,7 @@ class FlextExceptions:
     def render_template(
         template: str,
         *,
-        params: BaseModel | None = None,
+        params: t.ModelCarrier | None = None,
         **values: t.MetadataOrValue | None,
     ) -> str:
         """Render a message template from params + explicit values.
@@ -90,11 +96,11 @@ class FlextExceptions:
         *,
         operation: str | None = None,
         error: Exception | str | None = None,
-        params: BaseModel | None = None,
+        params: t.ModelCarrier | None = None,
         **values: t.MetadataOrValue | None,
     ) -> str:
         """Render error template with canonical operation/error fields."""
-        payload: t.ConfigMap = t.ConfigMap(root={})
+        payload: t.SettingsMap = t.SettingsMap(root={})
         if operation is not None:
             payload[c.HandlerType.OPERATION] = operation
         if error is not None:
@@ -107,15 +113,138 @@ class FlextExceptions:
         }
         return e.render_template(template, params=params, **payload_mapping)
 
+    # ------------------------------------------------------------------ #
+    # Centralized fail_* factory helpers — return r[T].fail(msg) directly #
+    # Eliminates the 4-line boilerplate across all modules.               #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def fail_operation[T](
+        operation: str,
+        exc: Exception | str | None = None,
+        *,
+        error_code: str | None = None,
+    ) -> r[T]:
+        """Return r[T].fail with a canonical operation-error message.
+
+        Usage::
+
+            return e.fail_operation("resolve factory service", exc)
+
+        """
+        params = m.OperationErrorParams(
+            operation=operation,
+            reason=str(exc) if exc is not None else None,
+        )
+        msg = e.render_error_template(
+            c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+            operation=operation,
+            error=exc,
+            params=params,
+        )
+        return r[T].fail(
+            msg,
+            error_code=error_code,
+            exception=exc if isinstance(exc, BaseException) else None,
+        )
+
+    @staticmethod
+    def fail_not_found[T](
+        resource_type: str,
+        resource_id: str,
+        *,
+        error_code: str | None = None,
+    ) -> r[T]:
+        """Return r[T].fail with a canonical not-found message.
+
+        Usage::
+
+            return e.fail_not_found("service", name)
+
+        """
+        params = m.NotFoundErrorParams(
+            resource_type=resource_type,
+            resource_id=resource_id,
+        )
+        msg = e.render_template(
+            c.ERR_SERVICE_NOT_FOUND,
+            name=resource_id,
+            params=params,
+        )
+        return r[T].fail(msg, error_code=error_code)
+
+    @staticmethod
+    def fail_type_mismatch[T](
+        expected: str,
+        actual: str,
+        *,
+        service_name: str | None = None,
+        error_code: str | None = None,
+    ) -> r[T]:
+        """Return r[T].fail with a canonical type-mismatch message.
+
+        Usage::
+
+            return e.fail_type_mismatch("FlextLogger", type(svc).__name__)
+
+        """
+        params = m.ServiceLookupParams(
+            service_name=service_name,
+            expected_type=expected,
+            actual_type=actual,
+        )
+        msg = e.render_template(
+            c.ERR_SERVICE_TYPE_MISMATCH,
+            type_name=expected,
+            params=params,
+        )
+        return r[T].fail(msg, error_code=error_code)
+
+    @staticmethod
+    def fail_validation[T](
+        field: str | None = None,
+        value: t.Scalar | None = None,
+        *,
+        error_code: str | None = None,
+        error: Exception | str | None = None,
+    ) -> r[T]:
+        """Return r[T].fail with a canonical validation-failed message.
+
+        Usage::
+
+            return e.fail_validation("settings_key", raw_value, error=exc)
+
+        """
+        params = m.ValidationErrorParams(field=field, value=value)
+        base_msg = (
+            e.render_error_template(
+                c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                operation=f"validate {field or 'input'}",
+                error=error,
+                params=params,
+            )
+            if error is not None
+            else e.render_template(
+                "Validation failed for {field}",
+                field=field or "input",
+                params=params,
+            )
+        )
+        return r[T].fail(
+            base_msg,
+            error_code=error_code,
+            exception=error if isinstance(error, BaseException) else None,
+        )
+
     @staticmethod
     def _build_context_map(
-        context: Mapping[str, t.MetadataOrValue | None] | t.ConfigMap | None,
-        extra_kwargs: Mapping[str, t.MetadataOrValue | None] | t.ConfigMap,
+        context: Mapping[str, t.MetadataOrValue | None] | t.SettingsMap | None,
+        extra_kwargs: Mapping[str, t.MetadataOrValue | None] | t.SettingsMap,
         excluded_keys: set[str] | frozenset[str] | None = None,
-    ) -> t.ConfigMap:
+    ) -> t.SettingsMap:
         """Build normalized context map from context and kwargs."""
         excluded = excluded_keys or frozenset()
-        context_map: t.ConfigMap = t.ConfigMap(root={})
+        context_map: t.SettingsMap = t.SettingsMap(root={})
         if context:
             context_map.update({
                 k: FlextRuntime.normalize_to_container(
@@ -136,12 +265,12 @@ class FlextExceptions:
 
     @staticmethod
     def _build_param_map(
-        context: Mapping[str, t.MetadataOrValue | None] | t.ConfigMap | None,
-        extra_kwargs: Mapping[str, t.MetadataOrValue | None] | t.ConfigMap,
+        context: Mapping[str, t.MetadataOrValue | None] | t.SettingsMap | None,
+        extra_kwargs: Mapping[str, t.MetadataOrValue | None] | t.SettingsMap,
         keys: set[str] | frozenset[str],
-    ) -> t.ConfigMap:
+    ) -> t.SettingsMap:
         """Build unnormalized parameter map for strict params validation."""
-        param_map: t.ConfigMap = t.ConfigMap(root={})
+        param_map: t.SettingsMap = t.SettingsMap(root={})
         if context:
             param_map.update({
                 k: FlextRuntime.normalize_to_container(
@@ -161,16 +290,16 @@ class FlextExceptions:
         return param_map
 
     @staticmethod
-    def _init_error_params[TParams: BaseModel](
-        context: Mapping[str, t.MetadataOrValue | None] | t.ConfigMap | None,
-        extra_kwargs: Mapping[str, t.MetadataOrValue | None] | t.ConfigMap,
+    def _init_error_params[TParams: t.ModelCarrier](
+        context: Mapping[str, t.MetadataOrValue | None] | t.SettingsMap | None,
+        extra_kwargs: Mapping[str, t.MetadataOrValue | None] | t.SettingsMap,
         named_params: Mapping[str, t.RuntimeData | None],
-        params_cls: type[TParams],
+        params_cls: t.ModelClass[TParams],
         existing_params: TParams | None,
         param_keys: set[str] | frozenset[str],
         *,
         excluded_context_keys: set[str] | frozenset[str] | None = None,
-    ) -> tuple[TParams, t.ConfigMap | None, t.MetadataValue | None, str | None]:
+    ) -> tuple[TParams, t.SettingsMap | None, t.MetadataValue | None, str | None]:
         """Extract, resolve and build error parameters from kwargs.
 
         Shared init boilerplate for all typed error subclasses.
@@ -261,15 +390,15 @@ class FlextExceptions:
         return default
 
     @staticmethod
-    def _safe_config_map(
+    def _safe_settings_map(
         value: m.Metadata
-        | t.ConfigMap
+        | t.SettingsMap
         | Mapping[str, t.MetadataOrValue | None]
         | t.MetadataValue
         | t.RecursiveContainer
         | None,
     ) -> Mapping[str, t.MetadataOrValue | None] | None:
-        """Extract ConfigMap when value is mapping-compatible."""
+        """Extract SettingsMap when value is mapping-compatible."""
         if value is None:
             return None
         try:
@@ -280,7 +409,7 @@ class FlextExceptions:
     @staticmethod
     def _safe_metadata(
         value: m.Metadata
-        | t.ConfigMap
+        | t.SettingsMap
         | Mapping[str, t.MetadataOrValue | None]
         | t.MetadataValue
         | t.RecursiveContainer
@@ -304,14 +433,14 @@ class FlextExceptions:
                 dumped_map = None
         if dumped_map is not None:
             attrs_raw = dumped_map.get(c.FIELD_ATTRIBUTES)
-            attrs_map = e._safe_config_map(attrs_raw)
+            attrs_map = e._safe_settings_map(attrs_raw)
             if attrs_map is not None:
                 attrs = {
                     k: FlextRuntime.normalize_to_metadata(v)
                     for k, v in attrs_map.items()
                 }
                 return m.Metadata.model_validate({c.FIELD_ATTRIBUTES: attrs})
-        attrs_map = e._safe_config_map(value)
+        attrs_map = e._safe_settings_map(value)
         if attrs_map is not None:
             attrs = {
                 k: FlextRuntime.normalize_to_metadata(v) for k, v in attrs_map.items()
@@ -335,7 +464,7 @@ class FlextExceptions:
         handling, logging, and correlation tracking across the ecosystem.
         """
 
-        _params_cls: ClassVar[type[BaseModel] | None] = None
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = None
         _param_keys: ClassVar[frozenset[str]] = frozenset()
         _excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
 
@@ -344,12 +473,12 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.ErrorCode.UNKNOWN_ERROR,
-            context: Mapping[str, t.MetadataValue] | t.ConfigMap | None = None,
-            metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None = None,
+            context: Mapping[str, t.MetadataValue] | t.SettingsMap | None = None,
+            metadata: m.Metadata | t.SettingsMap | t.MetadataValue | None = None,
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
-            merged_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap | None = None,
+            merged_kwargs: Mapping[str, t.MetadataValue] | t.SettingsMap | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize base error with message and optional metadata.
@@ -368,7 +497,7 @@ class FlextExceptions:
             super().__init__(message)
             self.message = message
             self.error_code = error_code
-            final_kwargs: t.ConfigMap = t.ConfigMap(root={})
+            final_kwargs: t.SettingsMap = t.SettingsMap(root={})
             if merged_kwargs:
                 final_kwargs.update({
                     k: FlextRuntime.normalize_to_container(
@@ -424,15 +553,15 @@ class FlextExceptions:
                 message: str,
                 *,
                 error_code: str = default_code,
-                context: Mapping[str, t.MetadataValue] | t.ConfigMap | None = None,
-                metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None = None,
+                context: Mapping[str, t.MetadataValue] | t.SettingsMap | None = None,
+                metadata: m.Metadata | t.SettingsMap | t.MetadataValue | None = None,
                 correlation_id: str | None = None,
                 auto_correlation: bool = False,
                 auto_log: bool = True,
                 merged_kwargs: Mapping[str, t.MetadataValue]
-                | t.ConfigMap
+                | t.SettingsMap
                 | None = None,
-                params: BaseModel | None = None,
+                params: t.ModelCarrier | None = None,
                 **extra_kwargs: t.Container,
             ) -> None:
                 _ = auto_correlation, auto_log
@@ -467,8 +596,8 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata(
-            metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None,
-            merged_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
+            metadata: m.Metadata | t.SettingsMap | t.MetadataValue | None,
+            merged_kwargs: Mapping[str, t.MetadataValue] | t.SettingsMap,
         ) -> m.Metadata:
             """Normalize metadata from various input types to m.Metadata model.
 
@@ -503,7 +632,7 @@ class FlextExceptions:
                 return m.Metadata.model_validate({
                     c.FIELD_ATTRIBUTES: merged_attrs,
                 })
-            metadata_dict = e._safe_config_map(metadata)
+            metadata_dict = e._safe_settings_map(metadata)
             if metadata_dict is not None:
                 return e.BaseError._normalize_metadata_from_dict(
                     metadata_dict,
@@ -515,8 +644,8 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata_from_dict(
-            metadata_dict: Mapping[str, t.MetadataOrValue | None] | t.ConfigMap,
-            merged_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
+            metadata_dict: Mapping[str, t.MetadataOrValue | None] | t.SettingsMap,
+            merged_kwargs: Mapping[str, t.MetadataValue] | t.SettingsMap,
         ) -> m.Metadata:
             """Normalize metadata from dict-like recursive containers."""
             merged_attrs: MutableMapping[str, t.MetadataValue | None] = {}
@@ -558,15 +687,15 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str,
-            context: Mapping[str, t.MetadataOrValue | None] | t.ConfigMap | None,
-            params: BaseModel | None,
+            context: Mapping[str, t.MetadataOrValue | None] | t.SettingsMap | None,
+            params: t.ModelCarrier | None,
             named_params: Mapping[str, t.RuntimeData | None] | None = None,
             extra_kwargs: Mapping[str, t.MetadataOrValue | None]
-            | t.ConfigMap
+            | t.SettingsMap
             | None = None,
             param_keys: frozenset[str] | None = None,
             correlation_id: str | None = None,
-            metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None = None,
+            metadata: m.Metadata | t.SettingsMap | t.MetadataValue | None = None,
         ) -> None:
             """Initialize a typed error: resolve params, call BaseError.__init__, assign attrs."""
             declared_params_cls = type(self)._params_cls
@@ -616,19 +745,23 @@ class FlextExceptions:
         field: str | None = None
         value: t.Scalar | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.VALIDATION_ERROR
-        _params_cls: ClassVar[type[BaseModel] | None] = m.ValidationErrorParams
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+            m.ValidationErrorParams
+        )
         _param_keys: ClassVar[frozenset[str]] = frozenset({"field", "value"})
 
     class ConfigurationError(BaseError):
         """Exception raised for configuration-related errors."""
 
-        config_key: str | None = None
-        config_source: str | None = None
+        settings_key: str | None = None
+        settings_source: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.CONFIGURATION_ERROR
-        _params_cls: ClassVar[type[BaseModel] | None] = m.ConfigurationErrorParams
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+            m.ConfigurationErrorParams
+        )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
-            "config_key",
-            "config_source",
+            "settings_key",
+            "settings_source",
         })
 
     class ConnectionError(BaseError):
@@ -638,7 +771,9 @@ class FlextExceptions:
         port: int | None = None
         timeout: t.Numeric | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.CONNECTION_ERROR
-        _params_cls: ClassVar[type[BaseModel] | None] = m.ConnectionErrorParams
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+            m.ConnectionErrorParams
+        )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "host",
             "port",
@@ -650,7 +785,9 @@ class FlextExceptions:
 
         timeout_seconds: t.Numeric | None = None
         operation: str | None = None
-        _params_cls: ClassVar[type[BaseModel] | None] = m.TimeoutErrorParams
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+            m.TimeoutErrorParams
+        )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "timeout_seconds",
             "operation",
@@ -665,7 +802,7 @@ class FlextExceptions:
             error_code: str = c.ErrorCode.TIMEOUT_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
-            params: m.TimeoutErrorParams | None = None,
+            params: t.ModelCarrier | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize timeout error with timeout context."""
@@ -688,7 +825,9 @@ class FlextExceptions:
         auth_method: str | None = None
         user_id: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.AUTHENTICATION_ERROR
-        _params_cls: ClassVar[type[BaseModel] | None] = m.AuthenticationErrorParams
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+            m.AuthenticationErrorParams
+        )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "auth_method",
             c.ContextKey.USER_ID,
@@ -701,7 +840,9 @@ class FlextExceptions:
         resource: str | None = None
         permission: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.AUTHORIZATION_ERROR
-        _params_cls: ClassVar[type[BaseModel] | None] = m.AuthorizationErrorParams
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+            m.AuthorizationErrorParams
+        )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             c.ContextKey.USER_ID,
             "resource",
@@ -714,7 +855,9 @@ class FlextExceptions:
         resource_type: str | None = None
         resource_id: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.NOT_FOUND_ERROR
-        _params_cls: ClassVar[type[BaseModel] | None] = m.NotFoundErrorParams
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+            m.NotFoundErrorParams
+        )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "resource_type",
             "resource_id",
@@ -731,7 +874,9 @@ class FlextExceptions:
         resource_id: str | None = None
         conflict_reason: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.ALREADY_EXISTS
-        _params_cls: ClassVar[type[BaseModel] | None] = m.ConflictErrorParams
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+            m.ConflictErrorParams
+        )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "resource_type",
             "resource_id",
@@ -745,7 +890,9 @@ class FlextExceptions:
         window_seconds: int | None = None
         retry_after: t.Numeric | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.OPERATION_ERROR
-        _params_cls: ClassVar[type[BaseModel] | None] = m.RateLimitErrorParams
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+            m.RateLimitErrorParams
+        )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "limit",
             "window_seconds",
@@ -759,7 +906,9 @@ class FlextExceptions:
         failure_count: int | None = None
         reset_timeout: t.Numeric | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.EXTERNAL_SERVICE_ERROR
-        _params_cls: ClassVar[type[BaseModel] | None] = m.CircuitBreakerErrorParams
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+            m.CircuitBreakerErrorParams
+        )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             c.ContextKey.SERVICE_NAME,
             "failure_count",
@@ -777,7 +926,7 @@ class FlextExceptions:
             error_code: str = c.ErrorCode.EXTERNAL_SERVICE_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
-            params: m.CircuitBreakerErrorParams | None = None,
+            params: t.ModelCarrier | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize circuit breaker error with canonical service metadata."""
@@ -810,7 +959,7 @@ class FlextExceptions:
             actual_type: type | str | None = None,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
-            params: m.TypeErrorParams | None = None,
+            params: t.ModelCarrier | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize type error with type information."""
@@ -842,8 +991,8 @@ class FlextExceptions:
                 if normalized_actual_type is not None
                 else None,
             }
-            resolved_params: m.TypeErrorParams = (
-                params
+            resolved_params = (
+                m.TypeErrorParams.model_validate(params.model_dump())
                 if params is not None
                 else m.TypeErrorParams.model_validate(param_values)
             )
@@ -875,7 +1024,7 @@ class FlextExceptions:
             actual_type: type | str | None,
             context: Mapping[str, t.MetadataValue] | None,
             extra_kwargs: Mapping[str, t.MetadataValue],
-        ) -> t.ConfigMap:
+        ) -> t.SettingsMap:
             """Build type context dictionary."""
             type_context = e._build_context_map(context, extra_kwargs)
             resolved_expected_type = e.TypeError._resolve_type_name(expected_type)
@@ -939,7 +1088,9 @@ class FlextExceptions:
         reason: str | None
 
         _default_error_code: ClassVar[str] = c.ErrorCode.OPERATION_ERROR
-        _params_cls: ClassVar[type[BaseModel] | None] = m.OperationErrorParams
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+            m.OperationErrorParams
+        )
         _param_keys: ClassVar[frozenset[str]] = frozenset({"operation", "reason"})
 
     class AttributeAccessError(BaseError):
@@ -949,7 +1100,9 @@ class FlextExceptions:
         attribute_context: t.MetadataValue | None
 
         _default_error_code: ClassVar[str] = c.ErrorCode.ATTRIBUTE_ERROR
-        _params_cls: ClassVar[type[BaseModel] | None] = m.AttributeAccessErrorParams
+        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+            m.AttributeAccessErrorParams
+        )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "attribute_name",
             "attribute_context",
@@ -959,10 +1112,10 @@ class FlextExceptions:
     def _build_error_context(
         correlation_id: str | None,
         metadata_obj: m.Metadata | Mapping[str, t.MetadataOrValue | None] | None,
-        kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
-    ) -> t.ConfigMap:
+        kwargs: Mapping[str, t.MetadataValue] | t.SettingsMap,
+    ) -> t.SettingsMap:
         """Build error context dictionary."""
-        error_context: t.ConfigMap = t.ConfigMap(root={})
+        error_context: t.SettingsMap = t.SettingsMap(root={})
         if correlation_id is not None:
             error_context[c.ContextKey.CORRELATION_ID] = correlation_id
         e._merge_metadata_into_context(error_context, metadata_obj)
@@ -978,10 +1131,10 @@ class FlextExceptions:
         error_type: str | None,
         message: str,
         error_code: str | None,
-        context: Mapping[str, t.MetadataValue] | t.ConfigMap | None = None,
+        context: Mapping[str, t.MetadataValue] | t.SettingsMap | None = None,
     ) -> e.BaseError:
         """Create error by type using context dict."""
-        error_context: t.ConfigMap = t.ConfigMap(root={})
+        error_context: t.SettingsMap = t.SettingsMap(root={})
         if context is not None:
             error_context.update({
                 k: FlextRuntime.normalize_to_container(
@@ -1043,7 +1196,7 @@ class FlextExceptions:
         """
         error_patterns: Sequence[tuple[t.StrSequence, str]] = [
             (["field", "value"], "validation"),
-            (["config_key", "config_source"], "configuration"),
+            (["settings_key", "settings_source"], "configuration"),
             ([c.HandlerType.OPERATION], "operation"),
             (["host", "port"], "connection"),
             (["timeout_seconds"], "timeout"),
@@ -1080,10 +1233,10 @@ class FlextExceptions:
         if callable(model_dump):
             metadata = e._safe_metadata(metadata_raw)
         if metadata is None:
-            metadata = e._safe_config_map(metadata_raw)
+            metadata = e._safe_settings_map(metadata_raw)
         if metadata is None:
             attrs_raw = getattr(metadata_raw, c.FIELD_ATTRIBUTES, None)
-            attrs_map = e._safe_config_map(attrs_raw)
+            attrs_map = e._safe_settings_map(attrs_raw)
             if attrs_map is not None:
                 metadata = m.Metadata.model_validate({
                     c.FIELD_ATTRIBUTES: dict(attrs_map),
@@ -1092,7 +1245,7 @@ class FlextExceptions:
 
     @staticmethod
     def _merge_metadata_into_context(
-        context: t.ConfigMap,
+        context: t.SettingsMap,
         metadata_obj: m.Metadata | Mapping[str, t.MetadataOrValue | None] | None,
     ) -> None:
         """Merge metadata recursive-container values into the context dictionary."""
@@ -1105,7 +1258,7 @@ class FlextExceptions:
                     FlextRuntime.normalize_to_metadata(v)
                 )
             return
-        metadata_map = e._safe_config_map(metadata_obj)
+        metadata_map = e._safe_settings_map(metadata_obj)
         if metadata_map is not None:
             for k, metadata_value in metadata_map.items():
                 context[k] = FlextRuntime.normalize_to_container(
@@ -1134,7 +1287,7 @@ class FlextExceptions:
         field_metadata = c.FIELD_METADATA
         field_auto_log = getattr(c, "FIELD_AUTO_LOG", "auto_log")
         field_auto_correlation = c.FIELD_AUTO_CORRELATION
-        field_config = c.Directory.CONFIG
+        field_settings = c.Directory.CONFIG
         extra_kwargs = {
             k: v
             for k, v in merged_kwargs.items()
@@ -1144,7 +1297,7 @@ class FlextExceptions:
                 field_metadata,
                 field_auto_log,
                 field_auto_correlation,
-                field_config,
+                field_settings,
             }
         }
         correlation_id_raw = merged_kwargs.get(c.ContextKey.CORRELATION_ID)
@@ -1170,7 +1323,7 @@ class FlextExceptions:
                 else None,
                 default=False,
             ),
-            merged_kwargs.get(field_config),
+            merged_kwargs.get(field_settings),
             extra_kwargs,
         )
 
@@ -1254,7 +1407,7 @@ class FlextExceptions:
         **kwargs: t.MetadataValue,
     ) -> e.BaseError:
         """Create exception by calling the class instance."""
-        normalized_kwargs: t.ConfigMap = t.ConfigMap(root={})
+        normalized_kwargs: t.SettingsMap = t.SettingsMap(root={})
         for k, v in kwargs.items():
             normalized_kwargs[k] = FlextRuntime.normalize_to_container(
                 FlextRuntime.normalize_to_metadata(v)
@@ -1274,7 +1427,7 @@ class FlextExceptions:
         cls._exception_counts.clear()
 
     @classmethod
-    def resolve_metrics(cls) -> t.ConfigMap:
+    def resolve_metrics(cls) -> t.SettingsMap:
         """Get exception metrics and statistics."""
         total = sum(cls._exception_counts.values(), 0)
         exception_counts_list = [
@@ -1290,8 +1443,8 @@ class FlextExceptions:
                 else str(exc_type)
             )
             exception_counts_dict[exc_name] = count
-        exception_counts_payload = t.ConfigMap.model_validate(exception_counts_dict)
-        result_dict: t.ConfigMap = t.ConfigMap(
+        exception_counts_payload = t.SettingsMap.model_validate(exception_counts_dict)
+        result_dict: t.SettingsMap = t.SettingsMap(
             root={
                 "total_exceptions": total,
                 "exception_counts": exception_counts_payload,

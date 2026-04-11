@@ -362,6 +362,74 @@ class FlextModelsExceptionParams:
             ),
         ]
 
+    class ServiceLookupParams(ParamsModel):
+        """Validated params for service lookup and narrowing failures."""
+
+        service_name: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Service identifier requested from the container/registry.",
+                title="Service Name",
+                examples=["command_bus"],
+            ),
+        ]
+        expected_type: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Expected runtime type name for the resolved service.",
+                title="Expected Type",
+                examples=["FlextDispatcher"],
+            ),
+        ]
+        actual_type: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Actual runtime type name returned by resolution.",
+                title="Actual Type",
+                examples=["str"],
+            ),
+        ]
+
+    class RegistryPluginParams(ParamsModel):
+        """Validated params for registry plugin registration lifecycle."""
+
+        category: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Registry category for plugin registration.",
+                title="Category",
+                examples=["validators"],
+            ),
+        ]
+        name: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Plugin name within a category.",
+                title="Plugin Name",
+                examples=["strict_typing"],
+            ),
+        ]
+        scope: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Registration scope used by registry operations.",
+                title="Scope",
+                examples=["instance", "class"],
+            ),
+        ]
+
     class AttributeAccessErrorParams(ParamsModel):
         """Validated params for AttributeAccessError."""
 

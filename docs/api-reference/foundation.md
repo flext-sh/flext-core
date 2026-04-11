@@ -72,7 +72,7 @@ Runtime-checkable protocols that keep boundary contracts explicit.
 from flext_core import p
 
 if isinstance(service, p.Configurable):
-    service.configure(config)
+    service.configure(settings)
 ```
 
 ______________________________________________________________________
@@ -183,7 +183,7 @@ user = m.Entity(id="123", name="Alice")
 
 # Protocols
 if isinstance(service, p.Settings):
-    service.configure(config)
+    service.configure(settings)
 
 # Utilities
 if u.chk().eq(value, expected):

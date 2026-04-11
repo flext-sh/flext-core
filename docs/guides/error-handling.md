@@ -513,7 +513,7 @@ def read_config_file(path: str) -> r[str]:
     except PermissionError:
         return r[str].fail(f"Permission denied reading: {path}")
     except Exception as e:
-        return r[str].fail(f"System error reading config: {str(e)}")
+        return r[str].fail(f"System error reading settings: {str(e)}")
 ```
 
 ## Best Practices

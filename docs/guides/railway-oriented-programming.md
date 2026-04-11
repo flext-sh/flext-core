@@ -332,9 +332,9 @@ assert result.value["id"] == "guest"
 from flext_core import r
 
 
-def parse_config(config: str) -> r[dict]:
+def parse_config(settings: str) -> r[dict]:
     """Parse configuration that might fail."""
-    if not config.startswith("{"):
+    if not settings.startswith("{"):
         return r[dict].fail("Invalid JSON format")
     return r[dict].ok({"parsed": True})
 
@@ -574,8 +574,8 @@ def fetch_data_with_fallback(key: str) -> r[dict]:
 
 
 # Usage
-result = fetch_data_with_fallback("config")
-print(result.value)  # {"source": "primary", "value": "config"}
+result = fetch_data_with_fallback("settings")
+print(result.value)  # {"source": "primary", "value": "settings"}
 
 result = fetch_data_with_fallback("missing")
 print(result.value)  # {"source": "backup", "value": "missing_backup"}
@@ -650,7 +650,7 @@ import json
 
 
 def load_config_file(path: str) -> r[dict]:
-    """Load and parse JSON config file."""
+    """Load and parse JSON settings file."""
     try:
         if not os.path.exists(path):
             return r[dict].fail(
@@ -659,25 +659,25 @@ def load_config_file(path: str) -> r[dict]:
             )
 
         with open(path) as f:
-            config = json.load(f)
+            settings = json.load(f)
 
-        return r[dict].ok(config)
+        return r[dict].ok(settings)
     except json.JSONDecodeError as e:
         return r[dict].fail(
-            f"Invalid JSON in config: {e}",
+            f"Invalid JSON in settings: {e}",
             error_code="CONFIG_PARSE_ERROR",
         )
     except Exception as e:
         return r[dict].fail(
-            f"Unexpected error loading config: {e}",
+            f"Unexpected error loading settings: {e}",
             error_code="CONFIG_ERROR",
         )
 
 
-def validate_config_schema(config: dict) -> r[dict]:
-    """Validate required config fields."""
+def validate_config_schema(settings: dict) -> r[dict]:
+    """Validate required settings fields."""
     required = ["database_url", "api_key", "log_level"]
-    missing = [field for field in required if field not in config]
+    missing = [field for field in required if field not in settings]
 
     if missing:
         return r[dict].fail(
@@ -686,10 +686,10 @@ def validate_config_schema(config: dict) -> r[dict]:
             error_data={"missing_fields": missing},
         )
 
-    return r[dict].ok(config)
+    return r[dict].ok(settings)
 
 
-def apply_defaults(config: dict) -> r[dict]:
+def apply_defaults(settings: dict) -> r[dict]:
     """Apply default values for optional fields."""
     defaults = {
         "debug": False,
@@ -698,15 +698,15 @@ def apply_defaults(config: dict) -> r[dict]:
     }
 
     for key, value in defaults.items():
-        config.setdefault(key, value)
+        settings.setdefault(key, value)
 
-    return r[dict].ok(config)
+    return r[dict].ok(settings)
 
 
 # Load and validate configuration
 result = (
     r[str]
-    .ok("config.json")
+    .ok("settings.json")
     .flat_map(load_config_file)
     .flat_map(validate_config_schema)
     .flat_map(apply_defaults)
@@ -714,7 +714,7 @@ result = (
 
 if result.is_success:
     print("✅ Configuration loaded successfully")
-    config = result.value
+    settings = result.value
 else:
     print(f"❌ Configuration failed: {result.error}")
     print(f"   Error code: {result.error_code}")

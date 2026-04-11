@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core import t
@@ -30,13 +31,15 @@ class FlextProtocolsBase:
         in typings.py, preventing circular dependencies.
         """
 
+        model_fields: Mapping[str, object]
+
         def model_dump(
             self,
             *,
             mode: str = "python",
             include: t.IncEx | None = None,
             exclude: t.IncEx | None = None,
-            context: t.ValueOrModel | t.ContainerMapping | None = None,
+            context: object | None = None,
             by_alias: bool | None = None,
             exclude_unset: bool = False,
             exclude_defaults: bool = False,
@@ -44,24 +47,55 @@ class FlextProtocolsBase:
             exclude_computed_fields: bool = False,
             round_trip: bool = False,
             warnings: bool | str = True,
-            fallback: Callable[[t.ValueOrModel], t.ValueOrModel] | None = None,
+            fallback: Callable[[object], object] | None = None,
             serialize_as_any: bool = False,
-        ) -> Mapping[str, t.ValueOrModel]:
+        ) -> Mapping[str, object]:
             """Dump model to dictionary."""
             ...
 
         @classmethod
         def model_validate(
             cls,
-            obj: t.ModelInput,
+            obj: object,
             *,
             strict: bool | None = None,
+            extra: object | None = None,
             from_attributes: bool | None = None,
-            context: t.ValueOrModel | t.ContainerMapping | None = None,
+            context: object | None = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> Self:
-            """Validate a canonical value-or-model input against the model."""
+            """Validate arbitrary input into a concrete model instance."""
+            ...
+
+        def model_copy(
+            self,
+            *,
+            update: Mapping[str, object] | None = None,
+            deep: bool = False,
+        ) -> Self:
+            """Copy a validated model, optionally updating fields."""
+            ...
+
+    @runtime_checkable
+    class ModelType[TModel: Model](Protocol):
+        """Protocol for Pydantic-compatible model classes."""
+
+        model_fields: Mapping[str, object]
+
+        @classmethod
+        def model_validate(
+            cls,
+            obj: object,
+            *,
+            strict: bool | None = None,
+            extra: object | None = None,
+            from_attributes: bool | None = None,
+            context: object | None = None,
+            by_alias: bool | None = None,
+            by_name: bool | None = None,
+        ) -> TModel:
+            """Validate arbitrary input into a concrete model instance."""
             ...
 
     @runtime_checkable
@@ -96,6 +130,24 @@ class FlextProtocolsBase:
         """Protocol for objects with a flush() method."""
 
         def flush(self) -> None: ...
+
+    @runtime_checkable
+    class Lock(Protocol):
+        """Protocol for lock-like synchronization primitives."""
+
+        def __enter__(self) -> object:
+            """Context manager entry."""
+            ...
+
+        def __exit__(
+            self,
+            exc_type: type[BaseException] | None,
+            value: BaseException | None,
+            traceback: TracebackType | None,
+            /,
+        ) -> None:
+            """Context manager exit."""
+            ...
 
 
 __all__ = ["FlextProtocolsBase"]

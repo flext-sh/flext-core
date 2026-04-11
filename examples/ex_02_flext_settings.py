@@ -28,7 +28,7 @@ class Ex02FlextSettings(Examples):
         self._exercise_configuration_fields_and_validation()
         self._exercise_effective_log_level_and_override()
         self._exercise_fetch_global_and_provider()
-        self._exercise_resolve_env_file_and_auto_config()
+        self._exercise_resolve_env_file_and_auto_settings()
         self._exercise_namespace_system()
         self._exercise_context_system()
         FlextSettings.reset_for_testing()
@@ -76,7 +76,7 @@ class Ex02FlextSettings(Examples):
         """Exercise all configuration fields and validation."""
         self.section("configuration_fields_and_validation")
         FlextSettings.reset_for_testing()
-        config = FlextSettings(
+        settings = FlextSettings(
             app_name="demo-app",
             version="9.8.7",
             debug=True,
@@ -104,36 +104,44 @@ class Ex02FlextSettings(Examples):
             api_key="demo-key",
             exception_failure_level=c.FAILURE_LEVEL_DEFAULT,
         )
-        self.check("field.app_name", config.app_name)
-        self.check("field.version", config.version)
-        self.check("field.debug", config.debug)
-        self.check("field.trace", config.trace)
-        self.check("field.log_level", config.log_level)
-        self.check("field.async_logging", config.async_logging)
-        self.check("field.enable_caching", config.enable_caching)
-        self.check("field.cache_ttl", config.cache_ttl)
-        self.check("field.database_url", config.database_url)
-        self.check("field.database_pool_size", config.database_pool_size)
-        self.check("field.circuit_breaker_threshold", config.circuit_breaker_threshold)
-        self.check("field.rate_limit_max_requests", config.rate_limit_max_requests)
-        self.check("field.rate_limit_window_seconds", config.rate_limit_window_seconds)
-        self.check("field.retry_delay", config.retry_delay)
-        self.check("field.max_retry_attempts", config.max_retry_attempts)
-        self.check("field.enable_timeout_executor", config.enable_timeout_executor)
-        self.check("field.dispatcher_enable_logging", config.dispatcher_enable_logging)
-        self.check("field.dispatcher_auto_context", config.dispatcher_auto_context)
+        self.check("field.app_name", settings.app_name)
+        self.check("field.version", settings.version)
+        self.check("field.debug", settings.debug)
+        self.check("field.trace", settings.trace)
+        self.check("field.log_level", settings.log_level)
+        self.check("field.async_logging", settings.async_logging)
+        self.check("field.enable_caching", settings.enable_caching)
+        self.check("field.cache_ttl", settings.cache_ttl)
+        self.check("field.database_url", settings.database_url)
+        self.check("field.database_pool_size", settings.database_pool_size)
+        self.check(
+            "field.circuit_breaker_threshold", settings.circuit_breaker_threshold
+        )
+        self.check("field.rate_limit_max_requests", settings.rate_limit_max_requests)
+        self.check(
+            "field.rate_limit_window_seconds", settings.rate_limit_window_seconds
+        )
+        self.check("field.retry_delay", settings.retry_delay)
+        self.check("field.max_retry_attempts", settings.max_retry_attempts)
+        self.check("field.enable_timeout_executor", settings.enable_timeout_executor)
+        self.check(
+            "field.dispatcher_enable_logging", settings.dispatcher_enable_logging
+        )
+        self.check("field.dispatcher_auto_context", settings.dispatcher_auto_context)
         self.check(
             "field.dispatcher_timeout_seconds",
-            config.dispatcher_timeout_seconds,
+            settings.dispatcher_timeout_seconds,
         )
-        self.check("field.dispatcher_enable_metrics", config.dispatcher_enable_metrics)
-        self.check("field.executor_workers", config.executor_workers)
-        self.check("field.timeout_seconds", config.timeout_seconds)
-        self.check("field.max_workers", config.max_workers)
-        self.check("field.max_batch_size", config.max_batch_size)
-        self.check("field.api_key", config.api_key)
-        self.check("field.exception_failure_level", config.exception_failure_level)
-        validated = FlextSettings.model_validate(config.model_dump())
+        self.check(
+            "field.dispatcher_enable_metrics", settings.dispatcher_enable_metrics
+        )
+        self.check("field.executor_workers", settings.executor_workers)
+        self.check("field.timeout_seconds", settings.timeout_seconds)
+        self.check("field.max_workers", settings.max_workers)
+        self.check("field.max_batch_size", settings.max_batch_size)
+        self.check("field.api_key", settings.api_key)
+        self.check("field.exception_failure_level", settings.exception_failure_level)
+        validated = FlextSettings.model_validate(settings.model_dump())
         self.check(
             "validate_configuration.indirect_via_model_validate",
             validated.app_name,
@@ -143,19 +151,19 @@ class Ex02FlextSettings(Examples):
         """Exercise effective_log_level property and apply_override."""
         self.section("effective_log_level_and_override")
         FlextSettings.reset_for_testing()
-        config = FlextSettings(debug=False, trace=False, log_level=c.LogLevel.ERROR)
-        self.check("effective_log_level.base", config.effective_log_level)
-        valid_override = config.apply_override("debug", True)
+        settings = FlextSettings(debug=False, trace=False, log_level=c.LogLevel.ERROR)
+        self.check("effective_log_level.base", settings.effective_log_level)
+        valid_override = settings.apply_override("debug", True)
         self.check("apply_override.valid_return", valid_override)
-        self.check("apply_override.valid_applied", config.debug)
-        self.check("effective_log_level.debug", config.effective_log_level)
-        config.apply_override("trace", True)
-        self.check("effective_log_level.trace", config.effective_log_level)
-        invalid_override = config.apply_override("does_not_exist", "x")
+        self.check("apply_override.valid_applied", settings.debug)
+        self.check("effective_log_level.debug", settings.effective_log_level)
+        settings.apply_override("trace", True)
+        self.check("effective_log_level.trace", settings.effective_log_level)
+        invalid_override = settings.apply_override("does_not_exist", "x")
         self.check("apply_override.invalid_return", invalid_override)
 
     def _exercise_fetch_global_and_provider(self) -> None:
-        """Exercise fetch_global and DI config provider."""
+        """Exercise fetch_global and DI settings provider."""
         self.section("fetch_global_and_provider")
         FlextSettings.reset_for_testing()
         base = FlextSettings.fetch_global()
@@ -167,12 +175,12 @@ class Ex02FlextSettings(Examples):
         )
         self.check("fetch_global.override.app_name", overridden.app_name)
         self.check("fetch_global.override.timeout_seconds", overridden.timeout_seconds)
-        provider = overridden.resolve_di_config_provider()
-        self.check("resolve_di_config_provider.type", type(provider).__name__)
+        provider = overridden.resolve_di_settings_provider()
+        self.check("resolve_di_settings_provider.type", type(provider).__name__)
 
-    def _exercise_resolve_env_file_and_auto_config(self) -> None:
-        """Exercise resolve_env_file and AutoConfig."""
-        self.section("resolve_env_file_and_auto_config")
+    def _exercise_resolve_env_file_and_auto_settings(self) -> None:
+        """Exercise resolve_env_file and AutoSettings."""
+        self.section("resolve_env_file_and_auto_settings")
         FlextSettings.reset_for_testing()
         env_path = Path(sys.prefix) / "flext_settings_example.env"
         env_path.write_text("FLEXT_APP_NAME=from_env_file\n", encoding="utf-8")
@@ -180,15 +188,15 @@ class Ex02FlextSettings(Examples):
         try:
             resolved = u.resolve_env_file()
             self.check("resolve_env_file.custom_path", resolved)
-            auto = FlextSettings.AutoConfig(
-                config_class=self._TestConfig,
+            auto = FlextSettings.AutoSettings(
+                settings_class=self._TestConfig,
                 env_prefix=c.ENV_PREFIX,
                 env_file=resolved,
             )
-            created = auto.create_config()
-            self.check("AutoConfig.create_config.type", type(created).__name__)
+            created = auto.create_settings()
+            self.check("AutoSettings.create_settings.type", type(created).__name__)
             self.check(
-                "AutoConfig.create_config.service_name",
+                "AutoSettings.create_settings.service_name",
                 created.model_dump().get("service_name"),
             )
         finally:

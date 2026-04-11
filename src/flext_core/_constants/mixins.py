@@ -20,7 +20,7 @@ class FlextConstantsMixins:
     FIELD_TYPE: Final[str] = "type"
     FIELD_STATUS: Final[str] = "status"
     FIELD_DATA: Final[str] = "data"
-    FIELD_CONFIG: Final[str] = "config"
+    FIELD_CONFIG: Final[str] = "settings"
     FIELD_METADATA: Final[str] = "metadata"
     FIELD_ATTRIBUTES: Final[str] = "attributes"
     FIELD_DESCRIPTION: Final[str] = "description"

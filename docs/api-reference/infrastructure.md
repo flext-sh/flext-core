@@ -26,13 +26,13 @@ Layered configuration system supporting environment variables, files, and progra
 ```python
 from flext_core import FlextSettings
 
-config = FlextSettings(
-    config_files=["config.toml", "secrets.env"],
+settings = FlextSettings(
+    config_files=["settings.toml", "secrets.env"],
     overrides={"debug": True},
 )
 
-api_key = config.get("api.key", required=True)
-debug_mode = config.get("debug", default=False)
+api_key = settings.get("api.key", required=True)
+debug_mode = settings.get("debug", default=False)
 ```
 
 ## Logging and Observability

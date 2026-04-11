@@ -34,7 +34,7 @@
 !.tool-versions
 !.gitignore
 !.gitattributes
-!.pre-commit-config.yaml
+!.pre-commit-settings.yaml
 !sonar-project.properties
 
 # Environment templates (NOT .env - keep secrets out!)
@@ -174,7 +174,7 @@ state.json
 *.state
 *.state.json
 catalog.json
-target_config.json
+target_settings.json
 dbt.log
 dbt_packages/
 target/

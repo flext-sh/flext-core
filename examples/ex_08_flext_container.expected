@@ -1,7 +1,7 @@
 [singleton_and_creation]
 fetch_global.type: 'FlextContainer'
 fetch_global.context.type: 'FlextContext'
-fetch_global.config.type: 'FlextSettings'
+fetch_global.settings.type: 'FlextSettings'
 fetch_global.same_instance: True
 create.false.same_instance: True
 create.true.same_instance: True

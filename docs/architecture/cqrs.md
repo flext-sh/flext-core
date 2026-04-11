@@ -125,13 +125,13 @@ Handlers accept optional configuration via `FlextModelsCqrs.Handler`:
 ```python
 from flext_core import FlextModelsCqrs
 
-config = FlextModelsCqrs.Handler(
+settings = FlextModelsCqrs.Handler(
     handler_id="user_handler_001",
     handler_name="CreateUserHandler",
     handler_mode=c.HandlerType.COMMAND,
 )
 
-handler = CreateUserHandler(config=config)
+handler = CreateUserHandler(settings=settings)
 ```
 
 ### Metrics and Context (V1 – Manual)
@@ -176,10 +176,10 @@ The dispatcher applies layered reliability controls:
 
 | Pattern         | Manager Class           | Configuration Source       |
 | --------------- | ----------------------- | -------------------------- |
-| Circuit Breaker | `CircuitBreakerManager` | `config.circuit_breaker_*` |
-| Rate Limiting   | `RateLimiterManager`    | `config.rate_limit_*`      |
-| Retry           | `RetryPolicy`           | `config.max_retry_*`       |
-| Timeout         | `TimeoutEnforcer`       | `config.enable_timeout_*`  |
+| Circuit Breaker | `CircuitBreakerManager` | `settings.circuit_breaker_*` |
+| Rate Limiting   | `RateLimiterManager`    | `settings.rate_limit_*`      |
+| Retry           | `RetryPolicy`           | `settings.max_retry_*`       |
+| Timeout         | `TimeoutEnforcer`       | `settings.enable_timeout_*`  |
 
 ### Dispatch Flow
 

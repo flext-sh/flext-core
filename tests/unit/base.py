@@ -194,14 +194,14 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
                     if not handler_id:
                         msg = c.Core.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
                         raise ValueError(msg)
-                    config = m.Handler(
+                    settings = m.Handler(
                         handler_id=handler_id,
                         handler_name=handler_name
                         or handler_id.replace("_", " ").title(),
                         handler_type=handler_type,
                         handler_mode=handler_type,
                     )
-                    super().__init__(config=config)
+                    super().__init__(settings=settings)
 
                 @override
                 def handle(

@@ -36,7 +36,7 @@ class Ex05FlextMixins(Examples):
 
         @classmethod
         @override
-        def validate(cls, value: t.ConfigMap) -> Ex05FlextMixins.HandlerLike:
+        def validate(cls, value: t.SettingsMap) -> Ex05FlextMixins.HandlerLike:
             """Validate using Pydantic model_validate."""
             return cls.model_validate(value)
 
@@ -62,7 +62,7 @@ class Ex05FlextMixins(Examples):
 
         @classmethod
         @override
-        def validate(cls, value: t.ConfigMap) -> Ex05FlextMixins.GoodProcessor:
+        def validate(cls, value: t.SettingsMap) -> Ex05FlextMixins.GoodProcessor:
             """Validate for Pydantic compatibility."""
             del value
             return cls()
@@ -73,7 +73,7 @@ class Ex05FlextMixins(Examples):
     @override
     def exercise(self) -> None:
         """Run all scenarios and record deterministic golden output."""
-        u.configure_structlog()
+        u.settingsure_structlog()
         service = self.DemoService()
         self._exercise_result_and_conversion()
         self._exercise_runtime_properties_and_tracking(service)
@@ -82,13 +82,13 @@ class Ex05FlextMixins(Examples):
     def _exercise_result_and_conversion(self) -> None:
         """Exercise ok/fail, to_dict, ensure_result, traverse, accumulate."""
         self.section("result_and_conversion")
-        ok_result = r[t.ConfigMap].ok(t.ConfigMap(root={"k": "v"}))
+        ok_result = r[t.SettingsMap].ok(t.SettingsMap(root={"k": "v"}))
         self.check("ok.unwrap_or", str(ok_result.map_or("{}")))
-        fail_result = r[t.ConfigMap].fail("failure", error_code="E_EX")
+        fail_result = r[t.SettingsMap].fail("failure", error_code="E_EX")
         self.check("fail.error", fail_result.error)
         self.check("fail.error_code", fail_result.error_code)
-        to_dict_from_dict = t.ConfigMap(root={"x": 1, "y": "2"})
-        to_dict_from_none = t.ConfigMap(root={})
+        to_dict_from_dict = t.SettingsMap(root={"x": 1, "y": "2"})
+        to_dict_from_none = t.SettingsMap(root={})
         self.check("to_dict.dict", str(to_dict_from_dict.root))
         self.check("to_dict.none", str(to_dict_from_none.root))
         ensured_raw = r[int].ok(99)
@@ -124,12 +124,12 @@ class Ex05FlextMixins(Examples):
         self,
         service: Ex05FlextMixins.DemoService,
     ) -> None:
-        """Exercise container, logger, context, config, and tracking."""
+        """Exercise container, logger, context, settings, and tracking."""
         self.section("runtime_properties_and_tracking")
         self.check("container.type", type(service.container).__name__)
         self.check("logger.type", type(service.logger).__name__)
         self.check("context.type", type(service.context).__name__)
-        self.check("config.type", type(service.config).__name__)
+        self.check("settings.type", type(service.settings).__name__)
         self.check("const.scope_operation", c.ContextScope.OPERATION)
         success_metrics = service.run_track_success()
         failure_message = service.run_track_failure()

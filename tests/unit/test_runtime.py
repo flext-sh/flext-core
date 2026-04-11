@@ -823,17 +823,17 @@ class TestFlextRuntime:
                 t.ConfigMap(root={"database": {"dsn": "sqlite://"}}),
             )
             tm.that(repr(config_provider), ne="")
-            config = di_container.config
-            database_config = getattr(config, "database", None)
+            settings = di_container.settings
+            database_config = getattr(settings, "database", None)
             if database_config is None:
-                pytest.fail("database config should be available")
+                pytest.fail("database settings should be available")
             dsn_value = database_config.dsn()
             tm.that(dsn_value, eq="sqlite://")
             module = ModuleType("di_config_module")
 
             @u.DependencyIntegration.inject
             def read_config(
-                dsn: str = u.DependencyIntegration.Provide["config.database.dsn"],
+                dsn: str = u.DependencyIntegration.Provide["settings.database.dsn"],
             ) -> str:
                 return dsn
 
@@ -902,7 +902,7 @@ class TestFlextRuntime:
                 static_value: int = u.DependencyIntegration.Provide["static_value"],
                 token: t.IntMapping = u.DependencyIntegration.Provide["token_factory"],
                 config_flag: bool = u.DependencyIntegration.Provide[
-                    "config.flags.enabled"
+                    "settings.flags.enabled"
                 ],
                 resource: Mapping[
                     str,
@@ -914,7 +914,7 @@ class TestFlextRuntime:
             setattr(module, "consume", consume_automation)
             di_container = u.DependencyIntegration.create_container(
                 container_options=m.DependencyContainerCreationOptions(
-                    config=t.ConfigMap(root={"flags": {"enabled": True}}),
+                    settings=t.ConfigMap(root={"flags": {"enabled": True}}),
                     services={"static_value": 7},
                     factories={"token_factory": token_factory},
                     resources={"api_client": lambda: {"connected": True}},
@@ -964,7 +964,7 @@ class TestFlextRuntime:
             setattr(module, "consume", consume_service)
             runtime_raw = s._create_runtime(
                 runtime_options=m.RuntimeBootstrapOptions(
-                    config_overrides={"app_name": "runtime-service"},
+                    settings_overrides={"app_name": "runtime-service"},
                     services={"feature_flag": True},
                     factories={"token_factory": token_factory},
                     resources={"api_client": lambda: {"connected": True}},
@@ -980,7 +980,7 @@ class TestFlextRuntime:
                 tm.that(callable(consume_service_func), eq=True)
                 feature_flag, first_token, resource = consume_service_func()
                 _, second_token, _ = consume_service_func()
-                tm.that(runtime.config.app_name, eq="runtime-service")
+                tm.that(runtime.settings.app_name, eq="runtime-service")
                 tm.that(feature_flag is True, eq=True)
                 tm.that(resource, eq={"connected": True})
                 tm.that(first_token["count"], eq=1)
@@ -998,20 +998,20 @@ class TestFlextRuntime:
                         return {"count": 1}
 
                     return m.RuntimeBootstrapOptions(
-                        config_overrides={"app_name": "runtime-aware"},
+                        settings_overrides={"app_name": "runtime-aware"},
                         services={"preseed": {"enabled": True}},
                         factories={"counter": counter_factory},
                     )
 
             component = RuntimeAwareComponent(
-                config_type=None,
-                config_overrides=None,
+                settings_type=None,
+                settings_overrides=None,
                 initial_context=None,
             )
             runtime_first = component._get_runtime()
             runtime_second = component._get_runtime()
             tm.that(runtime_first is runtime_second, eq=True)
-            tm.that(component.config.app_name, eq="runtime-aware")
+            tm.that(component.settings.app_name, eq="runtime-aware")
             tm.that(component.context is runtime_first.context, eq=True)
             service_result = component.container.get("preseed", type_cls=t.ConfigMap)
             tm.that(service_result.success, eq=True)

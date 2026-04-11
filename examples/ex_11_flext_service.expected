@@ -8,7 +8,7 @@ runtime.has_config_attr: True
 runtime.has_context_attr: True
 runtime.has_container_attr: True
 context.type: 'FlextContext'
-config.type: 'FlextSettings'
+settings.type: 'FlextSettings'
 container.type: 'FlextContainer'
 validate_business_rules.default: True
 valid.default: True
@@ -27,7 +27,7 @@ auto_execute.execute_count_after_result: 1
 [runtime_creation_and_serialization]
 create_runtime.default.context: 'FlextContext'
 create_runtime.full.container: 'FlextContainer'
-create_runtime.full.config: 'FlextSettings'
+create_runtime.full.settings: 'FlextSettings'
 to_dict.none: dict
 to_dict.mapping: dict
 to_dict.model: dict

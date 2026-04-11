@@ -511,7 +511,7 @@ Use for documenting configuration options.
 
 ### Method 1: Configuration File - Configuration Documentation Template
 
-**File:** `config.toml`
+**File:** `settings.toml`
 
 ```toml
 [section]
@@ -532,7 +532,7 @@ export SETTING_NAME=value
 ```python
 from flext_core import [Component]
 
-config = Component
+settings = Component
 ```
 
 ## Configuration Options - Configuration Documentation Template
@@ -553,13 +553,13 @@ config = Component
 ### Development - Configuration Documentation Template
 
 ```toml
-[config.development]
+[settings.development]
 ```
 
 ### Production - Configuration Documentation Template
 
 ```toml
-[config.production]
+[settings.production]
 ```
 
 ## Complete Example - Configuration Documentation Template

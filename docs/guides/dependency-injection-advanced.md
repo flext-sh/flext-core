@@ -64,7 +64,7 @@ FlextContainer implements the Service Locator pattern (also called the registry 
 │ Services:           │
 │ - logger            │ → FlextLogger instance
 │ - database          │ → DatabaseService instance
-│ - config            │ → FlextSettings instance
+│ - settings            │ → FlextSettings instance
 │ - api_client        │ → APIClient factory
 └─────────────────────┘
 ```
@@ -240,22 +240,22 @@ def initialize_application() -> r[bool]:
     if config_result.is_failure:
         return config_result
 
-    config = config_result.value
+    settings = config_result.value
 
     # Register configuration
-    register_result = container.register("config", config)
+    register_result = container.register("settings", settings)
     if register_result.is_failure:
         return register_result
 
     # Register logger
-    logger = u.fetch_logger(config.log_level)
+    logger = u.fetch_logger(settings.log_level)
     logger_result = container.register("logger", logger)
     if logger_result.is_failure:
         return logger_result
 
     # Register database with factory
     def create_db():
-        return DatabaseConnection(config.database_url)
+        return DatabaseConnection(settings.database_url)
 
     db_result = container.register_factory("database", create_db)
     if db_result.is_failure:
@@ -279,15 +279,15 @@ from flext_core import FlextContainer, r
 
 
 class PaymentService:
-    def __init__(self, database, logger, config):
+    def __init__(self, database, logger, settings):
         self.db = database
         self.logger = logger
-        self.config = config
+        self.settings = settings
 
     def process_payment(self, amount: float) -> r[dict]:
         """Process payment with dependencies."""
         self.logger.info(f"Processing payment: {amount}")
-        # Use self.db, self.config
+        # Use self.db, self.settings
         return r[dict].ok({"status": "complete"})
 
 
@@ -305,16 +305,16 @@ def resolve_payment_service() -> r[PaymentService]:
     if logger_result.is_failure:
         return r[PaymentService].fail(f"No logger: {logger_result.error}")
 
-    # Get config
-    config_result = container.get("config")
+    # Get settings
+    config_result = container.get("settings")
     if config_result.is_failure:
-        return r[PaymentService].fail(f"No config: {config_result.error}")
+        return r[PaymentService].fail(f"No settings: {config_result.error}")
 
     # Construct service with resolved dependencies
     service = PaymentService(
         database=db_result.value,
         logger=logger_result.value,
-        config=config_result.value,
+        settings=config_result.value,
     )
 
     return r[PaymentService].ok(service)
@@ -380,22 +380,22 @@ def setup_services_based_on_config() -> r[bool]:
     """Register services conditionally based on configuration."""
     container = FlextContainer.get_global()
 
-    # Load config
+    # Load settings
     config_result = FlextSettings.load()
     if config_result.is_failure:
         return config_result
 
-    config = config_result.value
+    settings = config_result.value
 
     # Conditional registration
-    if config.debug:
+    if settings.debug:
         # In debug mode: use mock services
         _ = container.register("cache", MockCache())
         _ = container.register("email_service", DebugEmailService())
     else:
         # In production: use real services
-        _ = container.register("cache", RedisCache(config.redis_url))
-        _ = container.register("email_service", SendgridEmailService(config.api_key))
+        _ = container.register("cache", RedisCache(settings.redis_url))
+        _ = container.register("email_service", SendgridEmailService(settings.api_key))
 
     return r[bool].ok(True)
 ```
@@ -431,10 +431,10 @@ def setup_database_lifecycle() -> r[bool]:
     if config_result.is_failure:
         return config_result
 
-    config = config_result.value
+    settings = config_result.value
 
     # Create and register database
-    db = DatabaseConnection(config.database_url)
+    db = DatabaseConnection(settings.database_url)
 
     # Connect before registering
     connect_result = db.connect()
@@ -680,7 +680,7 @@ service = container.get("service").value  # May crash
 def initialize():
     container = FlextContainer.get_global()
     _ = container.register("logger", u.fetch_logger())
-    _ = container.register("config", FlextSettings.load().value)
+    _ = container.register("settings", FlextSettings.load().value)
 
 
 initialize()
@@ -740,8 +740,8 @@ class AppConfig(FlextSettings):
 
 
 # Initialize dispatcher with configuration
-config = AppConfig()
-dispatcher = FlextDispatcher()  # Uses config via FlextSettings singleton
+settings = AppConfig()
+dispatcher = FlextDispatcher()  # Uses settings via FlextSettings singleton
 ```
 
 ### Circuit Breaker Configuration
@@ -760,7 +760,7 @@ class ConfigWithCircuitBreaker(FlextSettings):
     circuit_breaker_success_threshold: int = 2  # Close after 2 successes
 
 
-config = ConfigWithCircuitBreaker()
+settings = ConfigWithCircuitBreaker()
 dispatcher = FlextDispatcher()
 
 # Dispatcher automatically applies circuit breaker to all operations
@@ -784,7 +784,7 @@ class ConfigWithRateLimiting(FlextSettings):
     rate_limit_window_seconds: float = 60.0  # Per 60 seconds
 
 
-config = ConfigWithRateLimiting()
+settings = ConfigWithRateLimiting()
 dispatcher = FlextDispatcher()
 
 # Dispatcher enforces rate limits automatically
@@ -810,7 +810,7 @@ class ConfigWithRetry(FlextSettings):
     retry_delay: float = 1.0  # 1 second delay between retries
 
 
-config = ConfigWithRetry()
+settings = ConfigWithRetry()
 dispatcher = FlextDispatcher()
 
 # Dispatcher automatically retries on failure
@@ -835,7 +835,7 @@ class ConfigWithTimeout(FlextSettings):
     executor_workers: int = 4  # Thread pool size
 
 
-config = ConfigWithTimeout()
+settings = ConfigWithTimeout()
 dispatcher = FlextDispatcher()
 
 # Dispatcher enforces timeout on all operations
@@ -879,7 +879,7 @@ class ProductionConfig(FlextSettings):
 
 
 # Initialize with production settings
-config = ProductionConfig()
+settings = ProductionConfig()
 dispatcher = FlextDispatcher()
 
 

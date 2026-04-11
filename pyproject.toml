@@ -684,7 +684,6 @@ split-on-trailing-comma = true
 "**/_constants/*.py" = [ "S105" ]
 "**/_utilities/parser.py" = [ "ARG004", "FBT001" ]
 "**/alert_manager*.py" = [ "S310" ]
-"**/config.py" = [ "ANN401", "FBT001", "SLF001" ]
 "**/constants.py" = [ "S105" ]
 "**/container.py" = [ "ANN401", "SLF001" ]
 "**/context.py" = [  ]

@@ -495,12 +495,12 @@ class FlextRuntime:
         class DynamicContainerWithConfig(containers.DynamicContainer):
             """Dynamic container with declared configuration provider."""
 
-            config: providers.Configuration = providers.Configuration()
+            settings: providers.Configuration = providers.Configuration()
 
         class BridgeContainer(containers.DeclarativeContainer):
-            """Declarative container grouping config and resource modules."""
+            """Declarative container grouping settings and resource modules."""
 
-            config = providers.Configuration()
+            settings = providers.Configuration()
             services = providers.Object(containers.DynamicContainer())
             resources = providers.Object(containers.DynamicContainer())
 
@@ -511,7 +511,7 @@ class FlextRuntime:
                 arbitrary_types_allowed=True,
             )
 
-            config: t.ConfigMap | None = None
+            settings: t.ConfigMap | None = None
             services: Mapping[str, t.RegisterableService] | None = None
             factories: Mapping[str, t.FactoryCallable] | None = None
             resources: Mapping[str, t.ResourceCallable] | None = None
@@ -542,7 +542,7 @@ class FlextRuntime:
             return options_model
 
         _OPTION_FIELDS: ClassVar[t.StrSequence] = (
-            "config",
+            "settings",
             "services",
             "factories",
             "resources",
@@ -600,9 +600,9 @@ class FlextRuntime:
             di_container: containers.DynamicContainer,
             opts: p.ContainerCreationOptions,
         ) -> None:
-            """Register config, services, factories, resources, and wiring."""
-            if opts.config is not None:
-                _ = cls.bind_configuration(di_container, opts.config)
+            """Register settings, services, factories, resources, and wiring."""
+            if opts.settings is not None:
+                _ = cls.bind_configuration(di_container, opts.settings)
             if opts.services:
                 for name, instance in opts.services.items():
                     _ = cls.register_object(di_container, name, instance)
@@ -653,7 +653,7 @@ class FlextRuntime:
         @classmethod
         def create_layered_bridge(
             cls,
-            config: t.ConfigMap | None = None,
+            settings: t.ConfigMap | None = None,
         ) -> tuple[
             containers.DeclarativeContainer,
             containers.DynamicContainer,
@@ -665,13 +665,13 @@ class FlextRuntime:
             resource_module = containers.DynamicContainer()
             bridge.services = providers.Object(service_module)
             bridge.resources = providers.Object(resource_module)
-            cls.bind_configuration_provider(bridge.config, config)
+            cls.bind_configuration_provider(bridge.settings, settings)
             return (bridge, service_module, resource_module)
 
         @staticmethod
         def bind_configuration(
             di_container: containers.DynamicContainer,
-            config: t.ConfigMap | None,
+            settings: t.ConfigMap | None,
         ) -> providers.Configuration:
             """Bind configuration mapping to the DI container.
 
@@ -680,14 +680,14 @@ class FlextRuntime:
             directly.
             """
             configuration_provider = providers.Configuration()
-            if config:
-                configuration_provider.from_dict(dict(config))
+            if settings:
+                configuration_provider.from_dict(dict(settings))
             if isinstance(
                 di_container,
                 FlextRuntime.DependencyIntegration.DynamicContainerWithConfig,
             ):
                 configured_container: FlextRuntime.DependencyIntegration.DynamicContainerWithConfig = di_container
-                configured_container.config = configuration_provider
+                configured_container.settings = configuration_provider
             else:
                 setattr(di_container, c.Directory.CONFIG, configuration_provider)
             return configuration_provider
@@ -695,11 +695,11 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration_provider(
             configuration_provider: providers.Configuration,
-            config: t.ConfigMap | None,
+            settings: t.ConfigMap | None,
         ) -> providers.Configuration:
             """Bind configuration directly to an existing provider."""
-            if config:
-                configuration_provider.from_dict(dict(config))
+            if settings:
+                configuration_provider.from_dict(dict(settings))
             return configuration_provider
 
         @staticmethod

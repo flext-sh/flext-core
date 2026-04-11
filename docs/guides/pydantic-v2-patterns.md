@@ -105,7 +105,7 @@ user2 = User.model_validate({"user_id": "...", ...})
 user3 = User.model_validate_json('{"user_id": "..."}')
 ```
 
-**From FLEXT**: `src/flext_core/config.py` - FlextSettings uses this pattern extensively.
+**From FLEXT**: `src/flext_core/settings.py` - FlextSettings uses this pattern extensively.
 
 ## Pattern 2: ConfigDict for Model Settings
 
@@ -155,7 +155,7 @@ class ApiResponse(BaseModel):
     )
 ```
 
-**From FLEXT**: `src/flext_core/config.py` uses ConfigDict for strict validation and serialization control.
+**From FLEXT**: `src/flext_core/settings.py` uses ConfigDict for strict validation and serialization control.
 
 ## Pattern 3: Field Validators
 
@@ -239,7 +239,7 @@ class Config(BaseModel):
 
 
 # Usage
-config = Config(
+settings = Config(
     timeout="300",  # Parsed from string
     retries=3,
     context={"strict": True},
@@ -293,7 +293,7 @@ class PasswordChange(BaseModel):
         return self
 ```
 
-**From FLEXT**: `src/flext_core/config.py` uses model validators for complex configuration rules.
+**From FLEXT**: `src/flext_core/settings.py` uses model validators for complex configuration rules.
 
 ## Pattern 5: Computed Fields
 
@@ -364,7 +364,7 @@ class ServiceConfig(BaseModel):
 
 
 # Usage - type checker knows constraints
-config = ServiceConfig(
+settings = ServiceConfig(
     service_id="svc_001",
     REDACTED_LDAP_BIND_PASSWORD_email="REDACTED_LDAP_BIND_PASSWORD@example.com",
     worker_count=4,
@@ -428,7 +428,7 @@ print(f"Database: {settings.database.host}:{settings.database.port}")
 print(f"API Key: {settings.api_key.get_secret_value()}")  # Only when needed
 ```
 
-**From FLEXT**: `src/flext_core/config.py` uses BaseSettings for environment configuration.
+**From FLEXT**: `src/flext_core/settings.py` uses BaseSettings for environment configuration.
 
 ## Pattern 8: Custom Types
 
@@ -719,7 +719,7 @@ else:
 
 ______________________________________________________________________
 
-**Example from FLEXT**: See `src/flext_core/config.py` (423 lines) for comprehensive Pydantic v2 usage patterns in production code.
+**Example from FLEXT**: See `src/flext_core/settings.py` (423 lines) for comprehensive Pydantic v2 usage patterns in production code.
 
 **Updated**: 2025-12-07 | **Version**: 0.10.0 | **Pydantic**: v2.12.3+
 

@@ -8,14 +8,13 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from pydantic import BaseModel
-
 from flext_core import (
     FlextProtocolsBase,
     FlextProtocolsContext,
     FlextProtocolsHandler,
     FlextProtocolsRegistry,
     FlextProtocolsResult,
+    FlextProtocolsSettings,
     t,
 )
 
@@ -27,7 +26,7 @@ class FlextProtocolsService:
     class CloneableRuntime(Protocol):
         """Structural protocol for runtime instances that support cloning.
 
-        Exposes dispatcher, registry, context, and config as read/write
+        Exposes dispatcher, registry, context, and settings as read/write
         properties for type-safe cloning without private member access.
         """
 
@@ -62,10 +61,14 @@ class FlextProtocolsService:
         ) -> None: ...
 
         @property
-        def runtime_config(self) -> BaseModel | None: ...
+        def runtime_settings(self) -> FlextProtocolsSettings.Settings | None: ...
 
-        @runtime_config.setter
-        def runtime_config(self, value: BaseModel | None, /) -> None: ...
+        @runtime_settings.setter
+        def runtime_settings(
+            self,
+            value: FlextProtocolsSettings.Settings | None,
+            /,
+        ) -> None: ...
 
     @runtime_checkable
     class Service[T](FlextProtocolsBase.Base, Protocol):
@@ -91,7 +94,11 @@ class FlextProtocolsService:
     class DispatchableService(Protocol):
         """Structural protocol for dispatch-capable service objects in the DI container."""
 
-        def dispatch(self, message: BaseModel, /) -> BaseModel:
+        def dispatch(
+            self,
+            message: FlextProtocolsBase.Model,
+            /,
+        ) -> FlextProtocolsBase.Model:
             """Dispatch a message and return the result."""
             ...
 

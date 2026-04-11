@@ -1,6 +1,6 @@
 """Tests for base Pydantic models via FlextModels facade.
 
-Covers FlextModelsBase classes: Metadata, Validators, model config variants,
+Covers FlextModelsBase classes: Metadata, Validators, model settings variants,
 FrozenValueModel, IdentifiableMixin, TimestampableMixin, VersionableMixin,
 RetryConfigurationMixin, messages, results, and validation outcomes.
 """

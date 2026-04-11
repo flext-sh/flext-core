@@ -48,7 +48,7 @@ class TestFlextProtocols:
         "StructuredError",
         "SuccessCheckable",
         "ErrorDomainProtocol",
-        # config
+        # settings
         "Configurable",
         "Settings",
         # handler
@@ -243,7 +243,7 @@ class TestFlextProtocols:
         """Object with dispatch(message) satisfies p.DispatchableService."""
 
         class _Svc:
-            def dispatch(self, message: BaseModel, /) -> BaseModel:
+            def dispatch(self, message: p.Model, /) -> p.Model:
                 return message
 
         instance = _as_protocol_subject(_Svc())
@@ -586,7 +586,7 @@ class TestFlextProtocols:
         class _Configurable:
             def configure(
                 self,
-                config: t.FlatContainerMapping | None = None,
+                settings: t.FlatContainerMapping | None = None,
             ) -> Self:
                 return self
 
@@ -600,7 +600,7 @@ class TestFlextProtocols:
             def handle(
                 self,
                 message: p.Routable,
-            ) -> r[t.RuntimeAtomic] | t.Container | BaseModel | None:
+            ) -> r[t.RuntimeAtomic] | t.Container | t.ModelCarrier | None:
                 return None
 
         instance = _as_protocol_subject(_HandleImpl())
@@ -613,7 +613,7 @@ class TestFlextProtocols:
             def execute(
                 self,
                 message: p.Routable,
-            ) -> r[t.RuntimeAtomic] | t.Container | BaseModel | None:
+            ) -> r[t.RuntimeAtomic] | t.Container | t.ModelCarrier | None:
                 return None
 
         instance = _as_protocol_subject(_ExecImpl())
@@ -652,8 +652,8 @@ class TestFlextProtocols:
     @pytest.mark.parametrize(
         ("name", "group"),
         [
-            ("Configurable", "config"),
-            ("Settings", "config"),
+            ("Configurable", "settings"),
+            ("Settings", "settings"),
         ],
     )
     def test_config_protocol_group(self, name: str, group: str) -> None:
