@@ -360,7 +360,7 @@ class FlextMixins(m.ArbitraryTypesModel):
             else self.__class__.__name__
         )
         register_result = self._register_in_container(effective_service_name)
-        if register_result.is_failure:
+        if register_result.failure:
             error_msg = register_result.error
             if error_msg is None:
                 error_msg = "Service registration failed"

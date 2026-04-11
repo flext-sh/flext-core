@@ -213,7 +213,7 @@ class Testr:
         """Test r with string values across all scenarios."""
         op_type = scenario.operation_type
         value = scenario.value
-        is_success = scenario.is_success_expected
+        success = scenario.is_success_expected
         if not isinstance(value, str):
             pytest.fail("Expected string scenario value")
         if op_type == self.ResultOperationType.CREATION_SUCCESS:
@@ -227,7 +227,7 @@ class Testr:
             failure_result: r[str] = failure_result_raw
             u.Core.Tests.assert_failure_with_error(failure_result, str(value))
         elif op_type == self.ResultOperationType.UNWRAP_OR:
-            if is_success:
+            if success:
                 unwrap_result: r[str] = u.Core.Tests.create_success_result(value)
             else:
                 failure_raw = u.Core.Tests.create_failure_result(str(value))
@@ -235,7 +235,7 @@ class Testr:
             default = "default"
             tm.that(
                 unwrap_result.unwrap_or(default),
-                eq=value if is_success else default,
+                eq=value if success else default,
             )
         elif op_type == self.ResultOperationType.MAP:
             map_result: r[str] = r[str].fail(str(value))
@@ -247,42 +247,42 @@ class Testr:
             flat_mapped = flat_map_result.flat_map(lambda x: r[str].ok(f"value_{x}"))
             u.Core.Tests.assert_failure_with_error(flat_mapped, str(value))
         elif op_type == self.ResultOperationType.ALT:
-            if is_success:
+            if success:
                 result_alt: r[str] = u.Core.Tests.create_success_result(value)
             else:
                 failure_raw = u.Core.Tests.create_failure_result(str(value))
                 result_alt = failure_raw
             alt_result = result_alt.map_error(lambda e: f"alt_{e}")
-            if is_success:
+            if success:
                 u.Core.Tests.assert_success_with_value(alt_result, value)
             else:
                 error_str_alt: str = f"alt_{value}"
                 u.Core.Tests.assert_failure_with_error(alt_result, error_str_alt)
         elif op_type == self.ResultOperationType.LASH:
             lash_result_base: r[str] = (
-                r[str].ok(str(value)) if is_success else r[str].fail(str(value))
+                r[str].ok(str(value)) if success else r[str].fail(str(value))
             )
             lash_result = lash_result_base.lash(lambda e: r[str].ok(f"recovered_{e}"))
-            if is_success:
+            if success:
                 u.Core.Tests.assert_success_with_value(lash_result, str(value))
             else:
                 expected = f"recovered_{value}"
                 u.Core.Tests.assert_success_with_value(lash_result, expected)
         elif op_type == self.ResultOperationType.OR_OPERATOR:
-            if is_success:
+            if success:
                 result_or: r[str] = u.Core.Tests.create_success_result(value)
             else:
                 failure_raw = u.Core.Tests.create_failure_result(str(value))
                 result_or = failure_raw
             default = "default"
-            tm.that(result_or | default, eq=value if is_success else default)
+            tm.that(result_or | default, eq=value if success else default)
 
     @pytest.mark.parametrize("scenario", INT_SCENARIOS, ids=lambda s: s.name)
     def test_result_int_operations(self, scenario: ResultScenario) -> None:
         """Test r with integer values across all scenarios."""
         op_type = scenario.operation_type
         value = scenario.value
-        is_success = scenario.is_success_expected
+        success = scenario.is_success_expected
         if op_type == self.ResultOperationType.UNWRAP:
             if not isinstance(value, int):
                 pytest.fail("Expected integer scenario value")
@@ -306,7 +306,7 @@ class Testr:
                 pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             filtered = result.filter(lambda x: x > 5)
-            if is_success:
+            if success:
                 u.Core.Tests.assert_success_with_value(filtered, value)
             else:
                 _ = u.Core.Tests.assert_failure(filtered)
@@ -397,12 +397,12 @@ class Testr:
             error_codes=error_codes,
         )
         tm.that(len(cases), eq=5)
-        for i, (result, is_success, _value, error) in enumerate(cases[:3]):
-            tm.that(is_success, eq=True)
+        for i, (result, success, _value, error) in enumerate(cases[:3]):
+            tm.that(success, eq=True)
             u.Core.Tests.assert_success_with_value(result, success_values[i])
             tm.that(error, none=True)
-        for i, (result, is_success, _value, error) in enumerate(cases[3:]):
-            tm.that(not is_success, eq=True)
+        for i, (result, success, _value, error) in enumerate(cases[3:]):
+            tm.that(not success, eq=True)
             _ = u.Core.Tests.assert_failure(result)
             tm.that(error, eq=failure_errors[i])
 
@@ -644,7 +644,7 @@ class Testr:
     def test_ok_with_none_succeeds(self) -> None:
         """Test ok(None) creates valid success result."""
         result = r[str | None].ok(None)
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         tm.that(result.value, none=True)
 
     def test_flow_through_stops_on_failure(self) -> None:
@@ -763,7 +763,7 @@ class Testr:
         left = r[int].ok(x).map(lambda v: v)
         right = r[int].ok(x)
         tm.ok(left, eq=right.value)
-        tm.that(left.is_success, eq=right.is_success)
+        tm.that(left.success, eq=right.success)
 
     @given(x=st.integers(min_value=-1000, max_value=1000))
     @settings(max_examples=50)
@@ -798,7 +798,7 @@ class Testr:
         """Errors propagate through map unchanged."""
         propagated = r[int].fail(err).map(lambda v: v + 1)
         tm.fail(propagated, has=err)
-        tm.that(propagated.is_failure, eq=True)
+        tm.that(propagated.failure, eq=True)
 
     __all__ = ["Testr"]
 

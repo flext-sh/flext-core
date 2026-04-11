@@ -17,6 +17,7 @@ from typing import TypeIs, get_args, get_origin, get_type_hints
 from pydantic import BaseModel
 
 from flext_core import (
+    FlextConstantsErrors as c_errors,
     FlextConstantsMixins as c,
     FlextProtocols as p,
     FlextUtilitiesGuards,
@@ -152,15 +153,17 @@ class FlextUtilitiesChecker:
     ) -> r[t.TypeHintSpecifier]:
         """Extract message type from handle method annotations when generics are absent."""
         if not hasattr(handler_class, c.METHOD_HANDLE):
-            return r[t.TypeHintSpecifier].fail("Handler has no handle method")
+            return r[t.TypeHintSpecifier].fail(
+                c_errors.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD
+            )
         handle_method_raw: t.GuardInput = getattr(handler_class, c.METHOD_HANDLE, None)
         if not cls._is_module_export_callable(handle_method_raw):
             return r[t.TypeHintSpecifier].fail(
-                "Handler handle attribute is not callable",
+                c_errors.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,
             )
         handle_method: Callable[..., t.ModuleExport] = handle_method_raw
         signature_result = cls._get_method_signature(handle_method)
-        if signature_result.is_failure:
+        if signature_result.failure:
             signature_error = signature_result.error or "Invalid handle signature"
             return r[t.TypeHintSpecifier].fail(signature_error)
         signature = signature_result.unwrap()
@@ -169,7 +172,7 @@ class FlextUtilitiesChecker:
             if name == "self":
                 continue
             return cls._extract_message_type_from_parameter(parameter, type_hints, name)
-        return r[t.TypeHintSpecifier].fail("No message parameter found in handle")
+        return r[t.TypeHintSpecifier].fail(c_errors.ERR_CHECKER_NO_MESSAGE_PARAMETER)
 
     @classmethod
     def _extract_message_type_from_parameter(
@@ -182,7 +185,7 @@ class FlextUtilitiesChecker:
         if param_name in type_hints:
             hint = type_hints[param_name]
             if hint is None:
-                return r[t.TypeHintSpecifier].fail("Type hint is None")
+                return r[t.TypeHintSpecifier].fail(c_errors.ERR_CHECKER_TYPE_HINT_NONE)
             if isinstance(hint, str):
                 return r[t.TypeHintSpecifier].ok(hint)
             if isinstance(hint, type):
@@ -196,7 +199,7 @@ class FlextUtilitiesChecker:
                 return r[t.TypeHintSpecifier].ok(annotation)
             return r[t.TypeHintSpecifier].ok(str(annotation))
         return r[t.TypeHintSpecifier].fail(
-            "No annotation or type hint for parameter",
+            c_errors.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
         )
 
     @classmethod
@@ -208,7 +211,9 @@ class FlextUtilitiesChecker:
         try:
             return r[inspect.Signature].ok(inspect.signature(handle_method))
         except (TypeError, ValueError):
-            return r[inspect.Signature].fail("Invalid handle method signature")
+            return r[inspect.Signature].fail(
+                c_errors.ERR_CHECKER_INVALID_HANDLE_METHOD_SIGNATURE,
+            )
 
     @classmethod
     def _get_type_hints_safe(
@@ -286,7 +291,7 @@ class FlextUtilitiesChecker:
         message_types.extend(generic_types)
         if not message_types:
             explicit_type_result = cls._extract_message_type_from_handle(handler_class)
-            if explicit_type_result.is_success:
+            if explicit_type_result.success:
                 message_types.append(explicit_type_result.unwrap())
         return tuple(message_types)
 

@@ -109,7 +109,7 @@ class FlextModelsEntity:
             """
             if not event_type:
                 return r[FlextModelsDomainEvent.Entry].fail(
-                    "Domain event name must be a non-empty string",
+                    c.ERR_DOMAIN_EVENT_NAME_REQUIRED,
                 )
             if len(self.domain_events) >= c.HTTP_STATUS_MIN:
                 return r[FlextModelsDomainEvent.Entry].fail(
@@ -152,7 +152,7 @@ class FlextModelsEntity:
             """
             if not isinstance(events, (list, tuple)):
                 return r[Sequence[FlextModelsDomainEvent.Entry]].fail(
-                    "Events must be a list or tuple",
+                    c.ERR_EVENTS_LIST_OR_TUPLE_REQUIRED,
                 )
             event_items = list(events)
             total_after = len(self.domain_events) + len(event_items)
@@ -163,7 +163,7 @@ class FlextModelsEntity:
             for event_type, _ in event_items:
                 if not event_type:
                     return r[Sequence[FlextModelsDomainEvent.Entry]].fail(
-                        "Event name must be non-empty string",
+                        c.ERR_EVENT_NAME_REQUIRED,
                     )
             created_events: MutableSequence[FlextModelsDomainEvent.Entry] = []
             for event_type, data in event_items:
@@ -235,7 +235,7 @@ class FlextModelsEntity:
         @model_validator(mode="after")
         def validate_aggregate_consistency(self) -> Self:
             invariant_result = r[None].ok(None).map(lambda _: self.check_invariants())
-            if invariant_result.is_failure:
+            if invariant_result.failure:
                 error_msg = invariant_result.error or "invariant check failed"
                 msg = f"Aggregate invariant violation: {error_msg}"
                 raise ValueError(msg)

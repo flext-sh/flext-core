@@ -161,7 +161,7 @@ def create_compare_entities_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
             remove_ids=[False, False, True],
         )
     )
-    assert entities_result.is_success, (
+    assert entities_result.success, (
         f"Failed to create entities: {entities_result.error}"
     )
     entities: Sequence[m.Core.Tests.DomainTestEntity] = entities_result.value
@@ -255,7 +255,7 @@ def create_hash_entity_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
             remove_ids=[False, True],
         )
     )
-    assert entities_result.is_success, (
+    assert entities_result.success, (
         f"Failed to create entities: {entities_result.error}"
     )
     entities: Sequence[m.Core.Tests.DomainTestEntity] = entities_result.value

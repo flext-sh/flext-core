@@ -21,7 +21,7 @@ class TestHandlersFullCoverage:
         def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
             if isinstance(message, (str, int, float, bool)):
                 return r[t.ValueOrModel].ok(message)
-            return r[t.ValueOrModel].fail("unsupported message")
+            return r[t.ValueOrModel].fail(c.Core.Tests.TestErrors.UNSUPPORTED_MESSAGE)
 
     class _QueryHandler(_Handler):
         def __init__(self, *, config: m.Handler | None = None) -> None:
@@ -87,10 +87,10 @@ class TestHandlersFullCoverage:
         assert str_mode_handler.mode == c.HandlerType.EVENT
         invalid_general = h.create_from_callable(lambda msg: msg)
         invalid_general_result = invalid_general.handle("{1, 2, 3}")
-        assert invalid_general_result.is_success
+        assert invalid_general_result.success
         assert invalid_general_result.value == "{1, 2, 3}"
         tuple_result = invalid_general.handle("('x', 'y')")
-        assert tuple_result.is_success
+        assert tuple_result.success
 
     def test_run_pipeline_query_and_event_paths(self) -> None:
         qh: TestHandlersFullCoverage._Handler = self._QueryHandler(
@@ -106,7 +106,7 @@ class TestHandlersFullCoverage:
             query_message,
             c.HANDLER_MODE_QUERY,
         )
-        assert qr.is_success
+        assert qr.success
         eh: TestHandlersFullCoverage._Handler = self._EventHandler(
             config=m.Handler(
                 handler_id="e2",
@@ -120,7 +120,7 @@ class TestHandlersFullCoverage:
             event_message,
             c.HandlerType.EVENT.value,
         )
-        assert er.is_success
+        assert er.success
 
     def test_discovery_narrowed_function_paths(self) -> None:
         decorator = h.handler(str)

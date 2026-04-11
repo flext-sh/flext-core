@@ -198,7 +198,7 @@ class TestFlextSettingsSingletonIntegration:
         global_config = FlextSettings.get_global()
         container = FlextContainer()
         config_result = container.get("config")
-        if config_result.is_success:
+        if config_result.success:
             retrieved_config = config_result.value
             assert retrieved_config is global_config
 

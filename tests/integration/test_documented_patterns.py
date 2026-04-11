@@ -58,7 +58,7 @@ class TestDocumentedPatterns:
             description=description,
         )
         result = u.Core.Tests.create_user_service(service_case).execute()
-        if result.is_success:
+        if result.success:
             user = result.value
             assert isinstance(user, m.Core.Tests.User)
             assert user.unique_id == service_case.user_id
@@ -171,7 +171,7 @@ class TestDocumentedPatterns:
             )
             .map(lambda response: response.message_id)
         )
-        assert pipeline.is_success
+        assert pipeline.success
         message_id: str = str(pipeline.value)
         assert message_id.startswith("msg-")
 
@@ -198,7 +198,7 @@ class TestDocumentedPatterns:
                 ).execute(),
             )
         )
-        assert pipeline.is_success
+        assert pipeline.success
 
     def test_monadic_filter(self) -> None:
         result = (
@@ -225,7 +225,7 @@ class TestDocumentedPatterns:
             )
             .map(lambda response: response.status)
         )
-        assert pipeline.is_success
+        assert pipeline.success
         assert pipeline.value == "sent"
 
     def test_error_handling_try_except_v2_property(self) -> None:
@@ -321,7 +321,7 @@ class TestDocumentedPatterns:
             )
             .map(operator.itemgetter("result"))
         )
-        assert pipeline.is_success
+        assert pipeline.success
         assert pipeline.value == 100
 
     def test_v1_v2_property_interoperability(self) -> None:
@@ -329,7 +329,7 @@ class TestDocumentedPatterns:
             u.Core.Tests.GetUserService,
             user_id="123",
         ).execute()
-        assert v1_result.is_success
+        assert v1_result.success
         v2_user_raw = u.Core.Tests.make(
             u.Core.Tests.GetUserService,
             user_id="456",
@@ -347,14 +347,14 @@ class TestDocumentedPatterns:
             .execute()
             .map(lambda u: u.email)
         )
-        assert v1_pipeline.is_success
+        assert v1_pipeline.success
         v2_pipeline = (
             u.Core.Tests
             .make(u.Core.Tests.GetUserService, user_id="456")
             .execute()
             .map(lambda u: u.email)
         )
-        assert v2_pipeline.is_success
+        assert v2_pipeline.success
 
         class CustomService(s[m.Core.Tests.User]):
             user_id: str = ""
@@ -375,7 +375,7 @@ class TestDocumentedPatterns:
             .execute()
             .map(lambda u: u.email)
         )
-        assert custom_pipeline.is_success
+        assert custom_pipeline.success
 
     def test_complete_real_world_scenario(self) -> None:
         user_raw = u.Core.Tests.make(
@@ -391,7 +391,7 @@ class TestDocumentedPatterns:
             .filter(lambda response: response.status == "sent")
             .map(lambda response: response.message_id)
         )
-        assert email_result.is_success
+        assert email_result.success
         message_id: str = str(email_result.value)
         assert message_id.startswith("msg-")
         calc_result: t.ConfigMap = u.Core.Tests.make(

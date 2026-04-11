@@ -161,27 +161,27 @@ class _Ex04Exercise(Ex04FlextDispatcher):
         dispatcher = FlextDispatcher()
         self.check("constructor.type", type(dispatcher).__name__)
         reg_handle = dispatcher.register_handler(self.CreateUserHandler())
-        self.check("register(Handle).is_success", reg_handle.is_success)
+        self.check("register(Handle).is_success", reg_handle.success)
         reg_dispatch_msg = dispatcher.register_handler(
             self.GetUserDispatcher(),
             is_event=False,
         )
-        self.check("register(DispatchMessage).is_success", reg_dispatch_msg.is_success)
+        self.check("register(DispatchMessage).is_success", reg_dispatch_msg.success)
         reg_execute = dispatcher.register_handler(self.DeleteExecutor())
-        self.check("register(Execute).is_success", reg_execute.is_success)
+        self.check("register(Execute).is_success", reg_execute.success)
         reg_callable = dispatcher.register_handler(self.PingCallable())
-        self.check("register(callable).is_success", reg_callable.is_success)
+        self.check("register(callable).is_success", reg_callable.success)
         create_r = dispatcher.dispatch(Ex04CreateUser(username="alice"))
-        self.check("dispatch(command).is_success", create_r.is_success)
+        self.check("dispatch(command).is_success", create_r.success)
         self.check("dispatch(command).value", create_r.value)
         get_r = dispatcher.dispatch(Ex04GetUser(username="alice"))
-        self.check("dispatch(query).is_success", get_r.is_success)
+        self.check("dispatch(query).is_success", get_r.success)
         self.check("dispatch(query).value", get_r.value)
         delete_r = dispatcher.dispatch(Ex04DeleteUser(username="alice"))
-        self.check("dispatch(execute).is_success", delete_r.is_success)
+        self.check("dispatch(execute).is_success", delete_r.success)
         self.check("dispatch(execute).value", delete_r.value)
         ping_r = dispatcher.dispatch(Ex04Ping(value="x"))
-        self.check("dispatch(callable).is_success", ping_r.is_success)
+        self.check("dispatch(callable).is_success", ping_r.success)
         self.check("dispatch(callable).value", ping_r.value)
 
     def _exercise_auto_discovery(self) -> None:
@@ -189,9 +189,9 @@ class _Ex04Exercise(Ex04FlextDispatcher):
         self.section("auto_discovery")
         dispatcher = FlextDispatcher()
         reg_auto = dispatcher.register_handler(self.AutoHandler())
-        self.check("register(can_handle).is_success", reg_auto.is_success)
+        self.check("register(can_handle).is_success", reg_auto.success)
         auto_r = dispatcher.dispatch(Ex04AutoCommand(payload="fallback"))
-        self.check("dispatch(auto_discovery).is_success", auto_r.is_success)
+        self.check("dispatch(auto_discovery).is_success", auto_r.success)
         self.check("dispatch(auto_discovery).value", auto_r.value)
 
     def _exercise_error_cases(self) -> None:
@@ -204,13 +204,13 @@ class _Ex04Exercise(Ex04FlextDispatcher):
             return type(message).__name__
 
         reg_invalid = dispatcher.register_handler(_invalid_handler)
-        self.check("register(no_route_attrs).is_failure", reg_invalid.is_failure)
+        self.check("register(no_route_attrs).is_failure", reg_invalid.failure)
         no_handler_r = dispatcher.dispatch(Ex04UnknownQuery(payload="none"))
-        self.check("dispatch(no_handler).is_failure", no_handler_r.is_failure)
+        self.check("dispatch(no_handler).is_failure", no_handler_r.failure)
         reg_fail_handler = dispatcher.register_handler(self.FailingDeleteCallable())
-        self.check("register(failing_callable).is_success", reg_fail_handler.is_success)
+        self.check("register(failing_callable).is_success", reg_fail_handler.success)
         failing_r = dispatcher.dispatch(Ex04FailingDelete(username="alice"))
-        self.check("dispatch(handler_returns_fail).is_failure", failing_r.is_failure)
+        self.check("dispatch(handler_returns_fail).is_failure", failing_r.failure)
 
     def _exercise_event_publishing(self) -> None:
         """Cover event registration and publish paths."""
@@ -219,20 +219,20 @@ class _Ex04Exercise(Ex04FlextDispatcher):
         subscriber = self.UserCreatedSubscriber()
         audit_subscriber = self.AuditSubscriber()
         reg_user = dispatcher.register_handler(subscriber, is_event=True)
-        self.check("register(event_subscriber).is_success", reg_user.is_success)
+        self.check("register(event_subscriber).is_success", reg_user.success)
         reg_audit = dispatcher.register_handler(audit_subscriber, is_event=True)
-        self.check("register(audit_subscriber).is_success", reg_audit.is_success)
+        self.check("register(audit_subscriber).is_success", reg_audit.success)
         pub_one = dispatcher.publish(Ex04UserCreated(username="alice"))
-        self.check("publish(single).is_success", pub_one.is_success)
+        self.check("publish(single).is_success", pub_one.success)
         pub_many = dispatcher.publish([
             Ex04UserCreated(username="bruno"),
             Ex04UserCreated(username="carla"),
         ])
-        self.check("publish(list).is_success", pub_many.is_success)
+        self.check("publish(list).is_success", pub_many.success)
         self.check("subscriber.events", subscriber.events)
         self.check("audit_subscriber.events", audit_subscriber.events)
         pub_none = dispatcher.publish(Ex04NoSubscriberEvent(marker="ok"))
-        self.check("publish(no_subscribers).is_success", pub_none.is_success)
+        self.check("publish(no_subscribers).is_success", pub_none.success)
         self.check("publish(no_subscribers).value", pub_none.value)
 
 

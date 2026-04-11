@@ -256,7 +256,7 @@ class TestFlextContext:
         def set_value(thread_id: int) -> None:
             context.set(f"thread_{thread_id}", f"value_{thread_id}")
             result = context.get(f"thread_{thread_id}")
-            if result.is_success:
+            if result.success:
                 results.append(str(result.value))
 
         threads = [threading.Thread(target=set_value, args=(i,)) for i in range(10)]

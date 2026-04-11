@@ -168,7 +168,7 @@ class FlextService[
         execution_result: p.Result[TResult],
     ) -> TResult:
         """Unwrap one successful execution result with the original generic type."""
-        if execution_result.is_failure:
+        if execution_result.failure:
             raise e.BaseError(execution_result.error or "Service execution failed")
         return execution_result.unwrap()
 
@@ -466,12 +466,12 @@ class FlextService[
         """
         raise NotImplementedError
 
-    def is_valid(self) -> bool:
+    def valid(self) -> bool:
         """Check if service is in valid state for execution."""
         validation_result = (
-            r[bool].ok(True).map(lambda _: self.validate_business_rules().is_success)
+            r[bool].ok(True).map(lambda _: self.validate_business_rules().success)
         )
-        if validation_result.is_failure:
+        if validation_result.failure:
             exc = getattr(validation_result, "_exception", None)
             self.logger.debug(
                 "Service business rule validation failed",

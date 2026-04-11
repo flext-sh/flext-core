@@ -653,7 +653,7 @@ class TestFlextContainer:
         tm.that(scoped.has_service("scoped_service"), eq=True)
         tm.ok(scoped.get("scoped_service", type_cls=str), eq="scoped-value")
         ctx_result = scoped.context.get("subproject")
-        assert ctx_result.is_success
+        assert ctx_result.success
         assert ctx_result.value == "unit"
 
     @given(

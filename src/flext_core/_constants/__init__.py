@@ -14,6 +14,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".errors": ("FlextConstantsErrors",),
         ".infrastructure": ("FlextConstantsInfrastructure",),
         ".mixins": ("FlextConstantsMixins",),
+        ".output": ("FlextConstantsOutput",),
         ".platform": ("FlextConstantsPlatform",),
         ".settings": ("FlextConstantsSettings",),
         ".validation": ("FlextConstantsValidation",),

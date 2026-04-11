@@ -21,6 +21,7 @@ from flext_core import (
     FlextUtilitiesGuards,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
+    c,
     p,
     r,
     t,
@@ -75,7 +76,7 @@ class FlextUtilitiesMapper:
                 result,
                 map_keys,
             )
-            if mapped.is_success:
+            if mapped.success:
                 mapped_value = mapped.value
                 return {str(key): value for key, value in mapped_value.items()}
         return result
@@ -229,7 +230,7 @@ class FlextUtilitiesMapper:
         if isinstance(current, t.ObjectList):
             raw = current.root
         if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes)):
-            return r[t.ValueOrModel].fail("Not a sequence")
+            return r[t.ValueOrModel].fail(c.ERR_MAPPER_NOT_A_SEQUENCE)
         sequence: Sequence[t.ValueOrModel] = raw
         try:
             idx = int(array_match)
@@ -238,7 +239,7 @@ class FlextUtilitiesMapper:
             if 0 <= idx < len(sequence):
                 item = sequence[idx]
                 if item is None:
-                    return r[t.ValueOrModel].fail("found_none:index")
+                    return r[t.ValueOrModel].fail(c.ERR_MAPPER_FOUND_NONE_INDEX)
                 return r[t.ValueOrModel].ok(item)
             return r[t.ValueOrModel].fail(f"Index {int(array_match)} out of range")
         except (ValueError, IndexError):
@@ -442,7 +443,7 @@ class FlextUtilitiesMapper:
         key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(part)
 
         get_result = FlextUtilitiesMapper._extract_get_value(current, key_part)
-        if get_result.is_failure:
+        if get_result.failure:
             error_str = get_result.error or ""
             if error_str.startswith(found_none_prefix):
                 next_val: t.ValueOrModel = None
@@ -466,7 +467,7 @@ class FlextUtilitiesMapper:
                 narrowed_for_index,
                 array_match,
             )
-            if index_result.is_failure:
+            if index_result.failure:
                 error_str = index_result.error or ""
                 if error_str.startswith(found_none_prefix):
                     next_val = None

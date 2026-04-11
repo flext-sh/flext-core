@@ -162,7 +162,7 @@ class FlextDispatcher:
                 resolved_handler = handler.execute
             case _:
                 if not callable(handler):
-                    return r[bool].fail("Handler must be callable")
+                    return r[bool].fail(c.ERR_HANDLER_MUST_BE_CALLABLE)
                 resolved_handler = handler
         handler_message_type = getattr(handler, "message_type", None)
         if isinstance(handler_message_type, str):
@@ -183,22 +183,22 @@ class FlextDispatcher:
                     accepted_message_types,
                 ))
                 self._logger.info(
-                    "Registered auto-discovery handler",
+                    c.LOG_REGISTERED_AUTO_DISCOVERY_HANDLER,
                     handler=str(handler),
                 )
                 return r[bool].ok(True)
             return r[bool].fail(
-                "Handler must expose message_type, event_type, or can_handle",
+                c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED,
             )
         if is_event:
             self._event_subscribers.setdefault(route_name, []).append((
                 handler,
                 resolved_handler,
             ))
-            self._logger.info("Registered event subscriber", route=route_name)
+            self._logger.info(c.LOG_REGISTERED_EVENT_SUBSCRIBER, route=route_name)
         else:
             self._handlers[route_name] = (handler, resolved_handler)
-            self._logger.info("Registered handler", route=route_name)
+            self._logger.info(c.LOG_REGISTERED_HANDLER, route=route_name)
         return r[bool].ok(True)
 
     def _execute_handler(
@@ -212,7 +212,7 @@ class FlextDispatcher:
         try:
             raw_output = resolved_handler(message)
             if u.is_result_like(raw_output):
-                if raw_output.is_failure:
+                if raw_output.failure:
                     error_data_value = raw_output.error_data
                     return dispatch_result.fail(
                         raw_output.error or "Handler failed",

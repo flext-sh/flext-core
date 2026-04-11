@@ -16,9 +16,17 @@ from collections.abc import (
     Sequence,
 )
 from enum import StrEnum
-from typing import ClassVar, overload
+from typing import ClassVar, TypeVar, overload
 
-from flext_core import FlextUtilitiesGuardsTypeCore, T, U, r, t
+from flext_core import (
+    FlextConstantsErrors as c,
+    FlextUtilitiesGuardsTypeCore,
+    r,
+    t,
+)
+
+T = TypeVar("T")
+U = TypeVar("U")
 
 
 class FlextUtilitiesCollection:
@@ -95,7 +103,7 @@ class FlextUtilitiesCollection:
                 current_val,
                 strategy="deep",
             )
-            if merged.is_success:
+            if merged.success:
                 result[key] = merged.value
                 return r[bool].ok(True)
             return r[bool].fail(
@@ -123,7 +131,7 @@ class FlextUtilitiesCollection:
             normalized_items_result = r[t.FlatContainerList].create_from_callable(
                 lambda: t.flat_container_list_adapter().validate_python(data),
             )
-            if normalized_items_result.is_failure:
+            if normalized_items_result.failure:
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)
             normalized_items = normalized_items_result.value
@@ -133,7 +141,7 @@ class FlextUtilitiesCollection:
                     result.append(v_raw)
                 elif isinstance(v_raw, str):
                     enum_result = r[str].ok(v_raw).map(enum_cls)
-                    if enum_result.is_failure:
+                    if enum_result.failure:
                         enum_name = getattr(enum_cls, "__name__", "Enum")
                         msg = f"Invalid {enum_name} value: '{v_raw}'"
                         raise ValueError(msg) from None
@@ -259,13 +267,13 @@ class FlextUtilitiesCollection:
                 result: bool = predicate(item)
                 if result:
                     return r[T].ok(item)
-            return r[T].fail("No matching item found")
+            return r[T].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
         if isinstance(items, Mapping):
             for v in items.values():
                 matched: bool = predicate(v)
                 if matched:
                     return r[T].ok(v)
-        return r[T].fail("No matching item found")
+        return r[T].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
 
     @overload
     @staticmethod
@@ -373,7 +381,7 @@ class FlextUtilitiesCollection:
                 key,
                 value,
             )
-            if merge_result.is_failure:
+            if merge_result.failure:
                 return r[t.ContainerMapping].fail(
                     merge_result.error or "Unknown error",
                 )
@@ -432,7 +440,7 @@ class FlextUtilitiesCollection:
             .ok([])
             .map(lambda _: list(enumerate(values)))
         )
-        if enumerate_result.is_failure:
+        if enumerate_result.failure:
             return r[tuple[StrEnum, ...]].fail(
                 f"Parse sequence failed: {enumerate_result.error}",
             )
@@ -441,7 +449,7 @@ class FlextUtilitiesCollection:
                 parsed.append(val)
                 continue
             enum_result = r[str].ok(val).map(enum_cls)
-            if enum_result.is_failure:
+            if enum_result.failure:
                 errors.append(f"[{idx}]: '{val}'")
                 continue
             parsed.append(enum_result.value)
@@ -471,7 +479,7 @@ class FlextUtilitiesCollection:
             if predicate is not None and (not predicate(item_typed)):
                 continue
             process_result = r[T].ok(item_typed).map(processor)
-            if process_result.is_failure:
+            if process_result.failure:
                 if on_error == "skip":
                     continue
                 return r[Sequence[U]].fail(f"Processing failed for item: {item}")

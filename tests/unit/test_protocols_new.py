@@ -281,7 +281,7 @@ class TestFlextProtocols:
         tm.that(isinstance(_NoCanHandle(), p.AutoDiscoverableHandler), eq=False)
 
     def test_empty_class_rejected_by_success_checkable(self) -> None:
-        """Class without is_success/is_failure properties is rejected."""
+        """Class without success/failure properties is rejected."""
 
         class _NoSuccess:
             pass
@@ -311,8 +311,8 @@ class TestFlextProtocols:
     def test_result_protocol_has_expected_properties(self) -> None:
         """p.Result defines expected property signatures."""
         expected_attrs = [
-            "is_success",
-            "is_failure",
+            "success",
+            "failure",
             "value",
             "error",
             "error_code",
@@ -465,11 +465,11 @@ class TestFlextProtocols:
             )
 
     def test_service_protocol_has_expected_methods(self) -> None:
-        """p.Service defines execute, get_service_info, is_valid, validate_business_rules."""
+        """p.Service defines execute, service_info, valid, validate_business_rules."""
         for method in (
             "execute",
-            "get_service_info",
-            "is_valid",
+            "service_info",
+            "valid",
             "validate_business_rules",
         ):
             tm.that(
@@ -530,15 +530,15 @@ class TestFlextProtocols:
     # ------------------------------------------------------------------
 
     def test_success_checkable_custom_implementation(self) -> None:
-        """Custom class with is_success/is_failure satisfies p.SuccessCheckable."""
+        """Custom class with success/failure satisfies p.SuccessCheckable."""
 
         class _Outcome:
             @property
-            def is_success(self) -> bool:
+            def success(self) -> bool:
                 return True
 
             @property
-            def is_failure(self) -> bool:
+            def failure(self) -> bool:
                 return False
 
         instance = _as_protocol_subject(_Outcome())
@@ -738,8 +738,8 @@ class TestFlextProtocols:
     def test_flext_result_ok_properties(self) -> None:
         """R success exposes expected Result protocol properties."""
         result = r[str].ok("hello")
-        tm.that(result.is_success, eq=True)
-        tm.that(result.is_failure, eq=False)
+        tm.that(result.success, eq=True)
+        tm.that(result.failure, eq=False)
         tm.that(result.value, eq="hello")
         tm.that(result.error, none=True)
         tm.that(result.error_code, none=True)
@@ -749,8 +749,8 @@ class TestFlextProtocols:
     def test_flext_result_fail_properties(self) -> None:
         """R failure exposes expected Result protocol properties."""
         result = r[str].fail("something broke")
-        tm.that(result.is_success, eq=False)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.success, eq=False)
+        tm.that(result.failure, eq=True)
         tm.that(result.error, eq="something broke")
         tm.that(bool(result), eq=False)
 

@@ -192,7 +192,7 @@ def test_guard_in_has_empty_none_helpers() -> None:
     tm.that(u.guard("x", validator=_raise_error, default="d"), eq="d")
     failure_result = u.guard("x", validator=_always_false, return_value=True)
     assert isinstance(failure_result, r)
-    tm.that(failure_result.is_failure, eq=True)
+    tm.that(failure_result.failure, eq=True)
     tm.that(u.in_("a", ["a", "b"]), eq=True)
     tm.that(not u.in_([], ("a", "b")), eq=True)
     tm.that(not u.in_("a", 42), eq=True)

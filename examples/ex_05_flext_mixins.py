@@ -94,9 +94,9 @@ class Ex05FlextMixins(Examples):
         self.check("to_dict.none", str(to_dict_from_none.root))
         ensured_raw = r[int].ok(99)
         ensured_existing = r[int].ok(7)
-        raw_str: str = str(ensured_raw.value) if ensured_raw.is_success else "-1"
+        raw_str: str = str(ensured_raw.value) if ensured_raw.success else "-1"
         existing_str: str = (
-            str(ensured_existing.value) if ensured_existing.is_success else "-1"
+            str(ensured_existing.value) if ensured_existing.success else "-1"
         )
         self.check("ensure_result.raw", raw_str)
         self.check("ensure_result.existing", existing_str)
@@ -141,9 +141,9 @@ class Ex05FlextMixins(Examples):
         """Exercise CQRS models, validation, and protocol check utilities."""
         self.section("cqrs_validation_protocols")
         tracker = m.MetricsTracker()
-        self.check("metrics.record_metric", tracker.record_metric("hits", 3).is_success)
+        self.check("metrics.record_metric", tracker.record_metric("hits", 3).success)
         metrics_result = tracker.get_metrics()
-        self.check("metrics.get_metrics.success", metrics_result.is_success)
+        self.check("metrics.get_metrics.success", metrics_result.success)
         metrics_str: str = metrics_result.map(lambda value: str(value)).unwrap_or("{}")
         self.check("metrics.get_metrics.value", metrics_str)
         stack = m.ContextStack()
@@ -154,14 +154,14 @@ class Ex05FlextMixins(Examples):
                     handler_name="Q",
                     handler_mode=c.HandlerType.QUERY,
                 ),
-            ).is_success,
+            ).success,
         )
         self.check(
             "context_stack.current_context.before_pop",
             stack.current_context() is not None,
         )
         popped = stack.pop_context()
-        self.check("context_stack.pop_context.success", popped.is_success)
+        self.check("context_stack.pop_context.success", popped.success)
         popped_str: str = popped.map(lambda value: str(value)).unwrap_or("{}")
         self.check("context_stack.pop_context.value", popped_str)
         self.check(

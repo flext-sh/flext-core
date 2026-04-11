@@ -210,11 +210,11 @@ class Ex10FlextHandlers(Examples):
         self.check("handler.mode", handler.mode.value)
         self.check(
             "validate.none.failure",
-            handler.validate_message(_Message(text="")).is_failure is False,
+            handler.validate_message(_Message(text="")).failure is False,
         )
         self.check(
             "validate.ok.success",
-            handler.validate_message(_Message(text=message_ok)).is_success,
+            handler.validate_message(_Message(text=message_ok)).success,
         )
         self.check(
             "validate.blocked_cmd",
@@ -234,7 +234,7 @@ class Ex10FlextHandlers(Examples):
         self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
         self.check("can_handle.other", handler.can_handle(str))
         execute_result = handler.execute(_Message(text=payload_text))
-        execute_value = execute_result.unwrap() if execute_result.is_success else "-"
+        execute_value = execute_result.unwrap() if execute_result.success else "-"
         self.check("execute.success.value", payload_text in str(execute_value))
         self.check(
             "execute.validation_failure",
@@ -243,7 +243,7 @@ class Ex10FlextHandlers(Examples):
         dispatch_result = handler.dispatch_message(
             _Message(text=dispatch_text),
         )
-        dispatch_value = dispatch_result.unwrap() if dispatch_result.is_success else "-"
+        dispatch_value = dispatch_result.unwrap() if dispatch_result.success else "-"
         self.check("dispatch.success", dispatch_text in str(dispatch_value))
         self.check(
             "dispatch.mode_mismatch",
@@ -261,7 +261,7 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "record_metric.ok",
-            handler.record_metric(metric_key, metric_value).is_success,
+            handler.record_metric(metric_key, metric_value).success,
         )
         context_payload_query: t.StrMapping = {
             "handler_name": context_name_1,
@@ -269,7 +269,7 @@ class Ex10FlextHandlers(Examples):
         }
         self.check(
             "push_context.mapping",
-            handler.push_context(context_payload_query).is_success,
+            handler.push_context(context_payload_query).success,
         )
         context_payload_event: t.StrMapping = {
             "handler_name": context_name_2,
@@ -277,7 +277,7 @@ class Ex10FlextHandlers(Examples):
         }
         self.check(
             "push_context.execution",
-            handler.push_context(context_payload_event).is_success,
+            handler.push_context(context_payload_event).success,
         )
         pop_ctx_1 = handler.pop_context().unwrap_or(t.ConfigMap(root={}))
         pop_ctx_1_val = pop_ctx_1.get("handler_name", "-")
@@ -312,7 +312,7 @@ class Ex10FlextHandlers(Examples):
         tracker = m.MetricsTracker()
         self.check(
             "cqrs.record_metric",
-            tracker.record_metric(hit_key, hit_value).is_success,
+            tracker.record_metric(hit_key, hit_value).success,
         )
         metrics_map = tracker.get_metrics().unwrap_or(t.ConfigMap(root={}))
         metrics_val = metrics_map.get(hit_key, -1)
@@ -323,7 +323,7 @@ class Ex10FlextHandlers(Examples):
             stack.push_context({
                 "handler_name": ctx_name,
                 "handler_mode": "command",
-            }).is_success,
+            }).success,
         )
         current_context = stack.current_context()
         self.check(
@@ -432,8 +432,8 @@ class Ex10FlextHandlers(Examples):
         dict_value = self.rand_int(1, 9)
         rr_ok = r[int].ok(rr_value)
         rr_fail = r[int].fail(rr_error, error_code=rr_error_code)
-        self.check("rr.is_success", rr_ok.is_success)
-        self.check("rr.is_failure", rr_fail.is_failure)
+        self.check("rr.is_success", rr_ok.success)
+        self.check("rr.is_failure", rr_fail.failure)
         self.check("rr.unwrap_or", rr_fail.unwrap_or(rr_delta) == rr_delta)
         self.check(
             "rr.map",

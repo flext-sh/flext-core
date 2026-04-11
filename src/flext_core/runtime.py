@@ -28,6 +28,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import (
     ClassVar,
+    TypeVar,
     cast,
 )
 
@@ -38,11 +39,12 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 from flext_core import (
     FlextUtilitiesGenerators,
     FlextUtilitiesGuardsTypeCore,
-    T,
     c,
     p,
     t,
 )
+
+T = TypeVar("T")
 
 
 class FlextRuntime:

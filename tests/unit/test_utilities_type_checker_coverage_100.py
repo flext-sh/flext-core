@@ -305,14 +305,14 @@ class TestuTypeChecker:
         message_type_result = u._extract_message_type_from_handle(
             self.NoHandleMethod,
         )
-        assert message_type_result.is_failure
+        assert message_type_result.failure
 
     def test_extract_message_type_from_handle_non_callable(self) -> None:
         """Test _extract_message_type_from_handle with non-callable handle."""
         message_type_result = u._extract_message_type_from_handle(
             self.NonCallableHandle,
         )
-        assert message_type_result.is_failure
+        assert message_type_result.failure
 
     def test_get_method_signature_valid_callable(self) -> None:
         """Test _get_method_signature with valid callable."""
@@ -322,7 +322,7 @@ class TestuTypeChecker:
             return str(x)
 
         signature = u._get_method_signature(test_func)
-        assert signature.is_success
+        assert signature.success
         signature_value = signature.value
         tm.that(len(signature_value.parameters), eq=1)
         assert "x" in signature_value.parameters
@@ -330,7 +330,7 @@ class TestuTypeChecker:
     def test_get_method_signature_non_callable(self) -> None:
         """Test _get_method_signature with non-callable."""
         signature = u._get_method_signature(self._BadSignatureCallable())
-        assert signature.is_failure
+        assert signature.failure
 
     def test_get_type_hints_safe_valid_method(self) -> None:
         """Test _get_type_hints_safe with valid method."""

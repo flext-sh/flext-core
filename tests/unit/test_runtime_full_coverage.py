@@ -490,7 +490,7 @@ def test_runtime_result_all_missed_branches() -> None:
         error_code="E1",
         error_data=t.ConfigMap(root={"x": 1}),
     )
-    tm.that(success.is_success, eq=True)
+    tm.that(success.success, eq=True)
     tm.that(success.unwrap_or(9), eq=1)
     tm.that(failure.unwrap_or(9), eq=9)
     tm.that(success.unwrap_or_else(lambda: 7), eq=1)
@@ -498,11 +498,11 @@ def test_runtime_result_all_missed_branches() -> None:
     with pytest.raises(RuntimeError, match="Cannot unwrap failed result"):
         failure.unwrap()
     mapped_ok = success.map(_plus_one)
-    tm.that(mapped_ok.is_success and mapped_ok.value == 2, eq=True)
+    tm.that(mapped_ok.success and mapped_ok.value == 2, eq=True)
     mapped_error = success.map(_raise_bad)
-    tm.that(mapped_error.is_failure, eq=True)
+    tm.that(mapped_error.failure, eq=True)
     mapped_failed = failure.map(int)
-    tm.that(mapped_failed.is_failure, eq=True)
+    tm.that(mapped_failed.failure, eq=True)
     flat_mapped = success.flat_map(_ok_plus_one)
     tm.that(flat_mapped.value, eq=2)
     tm.that(success.flat_map(_ok_plus_two).value, eq=3)
@@ -517,7 +517,7 @@ def test_runtime_result_all_missed_branches() -> None:
     tm.that(failure.map_error(lambda err: err.upper()).error, eq="E")
     tm.that(success.map_error(lambda err: err.upper()) is success, eq=True)
     filtered = success.filter(lambda value: value > 10)
-    tm.that(filtered.is_failure, eq=True)
+    tm.that(filtered.failure, eq=True)
     tm.that(filtered.error, eq="Value did not pass filter predicate")
     tm.that(failure.map_error(lambda err: f"{err}-alt").error, eq="e-alt")
     tm.that(
@@ -533,7 +533,7 @@ def test_runtime_result_all_missed_branches() -> None:
             return None
 
     none_success: r[int | None] = NoneValueResult(
-        is_success=True,
+        success=True,
         error=None,
         error_code=None,
         error_data=None,
@@ -542,14 +542,14 @@ def test_runtime_result_all_missed_branches() -> None:
     tm.that(flowed is none_success, eq=True)
 
     none_ok = r[int | None].ok(None)
-    tm.that(none_ok.is_success, eq=True)
+    tm.that(none_ok.success, eq=True)
     tm.that(none_ok.value, none=True)
     none_error: r[int] = r[int].fail(
         None,
     )
     tm.that(none_error.error, eq="")
     broken: r[int] = r(
-        is_success=True,
+        success=True,
         error=None,
         error_code=None,
         error_data=None,
@@ -958,15 +958,15 @@ def test_runtime_result_remaining_paths() -> None:
     with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
         _ = failure.value
     tm.that(success.unwrap(), eq=3)
-    tm.that(failure.flat_map(_ok_passthrough).is_failure, eq=True)
+    tm.that(failure.flat_map(_ok_passthrough).failure, eq=True)
     tm.that(success.filter(lambda value: value > 0) is success, eq=True)
     tm.that(success.map_error(str) is success, eq=True)
     tm.that(success.lash(r.fail) is success, eq=True)
     tm.that(success.recover(lambda _e: 0) is success, eq=True)
     chain_success = success.flow_through(_ok_inc, _ok_inc)
-    tm.that(chain_success.is_success and chain_success.value == 5, eq=True)
+    tm.that(chain_success.success and chain_success.value == 5, eq=True)
     chain_failure = success.flow_through(_fail_boom, _ok_inc)
-    tm.that(chain_failure.is_failure, eq=True)
+    tm.that(chain_failure.failure, eq=True)
     tm.that(success | 0, eq=3)
     tm.that(bool(success), eq=True)
     tm.that(repr(success).startswith("r[T].ok("), eq=True)

@@ -40,12 +40,12 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def is_failure(self) -> bool:
-            """Failure status (strict: not is_success)."""
+        def failure(self) -> bool:
+            """Failure status (strict: not success)."""
             ...
 
         @property
-        def is_success(self) -> bool:
+        def success(self) -> bool:
             """Success status (strict: True only when operation succeeded)."""
             ...
 
@@ -106,12 +106,12 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def is_failure(self) -> bool:
-            """Failure status (strict: not is_success)."""
+        def failure(self) -> bool:
+            """Failure status (strict: not success)."""
             ...
 
         @property
-        def is_success(self) -> bool:
+        def success(self) -> bool:
             """Success status (strict: True only when operation succeeded)."""
             ...
 
@@ -168,12 +168,12 @@ class FlextProtocolsResult:
         """
 
         @property
-        def is_success(self) -> bool:
+        def success(self) -> bool:
             """True when the operation succeeded."""
             ...
 
         @property
-        def is_failure(self) -> bool:
+        def failure(self) -> bool:
             """True when the operation failed."""
             ...
 

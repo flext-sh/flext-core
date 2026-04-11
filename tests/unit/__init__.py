@@ -16,10 +16,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
-            ".base": (
-                "TestsFlextCoreServiceBase",
-                "s",
-            ),
+            ".base": ("TestsFlextCoreServiceBase",),
             ".test_args_coverage_100": ("test_args_coverage_100",),
             ".test_beartype_engine": ("test_beartype_engine",),
             ".test_collection_utilities_coverage_100": (

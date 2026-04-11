@@ -302,9 +302,9 @@ class FlextContext(m.ArbitraryTypesModel):
 
         """
         if not key:
-            return r[bool].fail("Key must be a non-empty string")
+            return r[bool].fail(c.ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED)
         if value is None:
-            return r[bool].fail("Value cannot be None")
+            return r[bool].fail(c.ERR_CONTEXT_VALUE_CANNOT_BE_NONE)
         value_for_guard: t.RecursiveContainer = (
             FlextContext._to_normalized(
                 u.normalize_to_container(
@@ -318,7 +318,7 @@ class FlextContext(m.ArbitraryTypesModel):
             value_for_guard,
             (str, int, float, bool, list, dict, t.ConfigMap),
         ):
-            return r[bool].fail("Value must be serializable")
+            return r[bool].fail(c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE)
         return r[bool].ok(True)
 
     def clear(self) -> None:
@@ -492,7 +492,7 @@ class FlextContext(m.ArbitraryTypesModel):
 
         """
         if not self._active:
-            return r[t.RuntimeAtomic].fail("Context is not active")
+            return r[t.RuntimeAtomic].fail(c.ERR_CONTEXT_NOT_ACTIVE)
         scope_data = self._get_from_contextvar(scope)
         if key not in scope_data:
             return r[t.RuntimeAtomic].fail(
@@ -750,7 +750,7 @@ class FlextContext(m.ArbitraryTypesModel):
 
         """
         if not self._active:
-            return r[bool].fail("Context is not active")
+            return r[bool].fail(c.ERR_CONTEXT_NOT_ACTIVE)
         if isinstance(key_or_data, t.ConfigMap):
             return self._set_bulk(key_or_data, scope)
         return self._set_single(key_or_data, value, scope)
@@ -788,7 +788,7 @@ class FlextContext(m.ArbitraryTypesModel):
 
         """
         if not self._active:
-            return r[bool].fail("Context is not active")
+            return r[bool].fail(c.ERR_CONTEXT_NOT_ACTIVE)
         for ctx_var in self._scope_vars.values():
             try:
                 scope_dict = self._narrow_contextvar_to_configuration_dict(
@@ -798,7 +798,7 @@ class FlextContext(m.ArbitraryTypesModel):
                 return r[bool].fail(str(e))
             for key in scope_dict:
                 if not key:
-                    return r[bool].fail("Invalid key found in context")
+                    return r[bool].fail(c.ERR_CONTEXT_INVALID_KEY_FOUND)
         return r[bool].ok(True)
 
     def values(self) -> t.ContainerList:
@@ -977,10 +977,10 @@ class FlextContext(m.ArbitraryTypesModel):
     ) -> r[bool]:
         """Set a single key-value pair in the context."""
         if value is None:
-            return r[bool].fail("Value is required for single-key set")
+            return r[bool].fail(c.ERR_CONTEXT_SINGLE_KEY_VALUE_REQUIRED)
         validation_result = FlextContext._validate_set_inputs(key, value)
-        if validation_result.is_failure:
-            return r[bool].fail(validation_result.error or "Validation failed")
+        if validation_result.failure:
+            return r[bool].fail(validation_result.error or c.ERR_VALIDATION_FAILED)
         try:
             ctx_var = self._get_or_create_scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
@@ -1202,7 +1202,7 @@ class FlextContext(m.ArbitraryTypesModel):
             """
             container: p.Container = FlextContext.get_container()
             service_result = container.get(service_name)
-            if service_result.is_success:
+            if service_result.success:
                 service_value = service_result.value
                 if service_value is None:
                     return r[t.Scalar].ok("")

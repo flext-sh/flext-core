@@ -1016,10 +1016,10 @@ class TestFlextRuntime:
             tm.that(component.config.app_name, eq="runtime-aware")
             tm.that(component.context is runtime_first.context, eq=True)
             service_result = component.container.get("preseed", type_cls=t.ConfigMap)
-            tm.that(service_result.is_success, eq=True)
+            tm.that(service_result.success, eq=True)
             tm.that(service_result.value, eq=t.ConfigMap(root={"enabled": True}))
             factory_result = component.container.get("counter")
-            assert factory_result.is_success
+            assert factory_result.success
             assert factory_result.value == {"count": 1}
 
     @pytest.mark.parametrize(

@@ -409,7 +409,7 @@ class TestFlextDecorators:
             return x / y
 
         result = divide(a, b)
-        assert result.is_success or result.is_failure
+        assert result.success or result.failure
 
 
 __all__ = ["TestFlextDecorators"]

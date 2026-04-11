@@ -27,7 +27,7 @@ class TestResultExceptionCarrying:
     def test_fail_no_exception_backward_compat(self) -> None:
         error_msg = "Operation failed"
         result: r[int] = r[int].fail(error_msg)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.error, eq=error_msg)
         tm.that(result.exception, none=True)
 
@@ -35,7 +35,7 @@ class TestResultExceptionCarrying:
         error_msg = "Division by zero"
         exc = ZeroDivisionError("cannot divide by zero")
         result: r[float] = r[float].fail(error_msg, exception=exc)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.error, eq=error_msg)
         tm.that(result.exception is exc, eq=True)
         tm.that(result.exception, is_=ZeroDivisionError)
@@ -45,7 +45,7 @@ class TestResultExceptionCarrying:
         error_code = "INVALID_INPUT"
         exc = ValueError("expected integer")
         result: r[str] = r[str].fail(error_msg, error_code=error_code, exception=exc)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.error, eq=error_msg)
         tm.that(result.error_code, eq=error_code)
         tm.that(result.exception is exc, eq=True)
@@ -62,7 +62,7 @@ class TestResultExceptionCarrying:
             error_data=error_data,
             exception=exc,
         )
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.error, eq=error_msg)
         tm.that(result.error_data, none=False)
         if result.error_data is not None:
@@ -74,7 +74,7 @@ class TestResultExceptionCarrying:
     def test_fail_with_none_error_and_exception(self) -> None:
         exc = RuntimeError("something went wrong")
         result: r[int] = r[int].fail(None, exception=exc)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.error, eq="")
         tm.that(result.exception is exc, eq=True)
 
@@ -84,7 +84,7 @@ class TestResultExceptionCarrying:
             return a / b
 
         result: r[float] = divide(10, 0)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(
             result.error is not None and "division by zero" in result.error.lower(),
             eq=True,
@@ -98,7 +98,7 @@ class TestResultExceptionCarrying:
             return a + b
 
         result: r[int] = add(5, 3)
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         tm.that(result.value, eq=8)
         tm.that(result.exception, none=True)
 
@@ -110,7 +110,7 @@ class TestResultExceptionCarrying:
             return int(value)
 
         result: r[int] = parse_int("abc")
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=ValueError)
 
@@ -120,7 +120,7 @@ class TestResultExceptionCarrying:
             return len(obj)
 
         result: r[int] = get_length(self.BrokenSized())
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=TypeError)
 
@@ -130,7 +130,7 @@ class TestResultExceptionCarrying:
             raise RuntimeError(msg)
 
         result: r[int] = r[int].create_from_callable(risky_operation)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(
             result.error is not None and "operation failed" in result.error,
             eq=True,
@@ -143,7 +143,7 @@ class TestResultExceptionCarrying:
             return "success"
 
         result: r[str] = r[str].create_from_callable(safe_operation)
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         tm.that(result.value, eq="success")
         tm.that(result.exception, none=True)
 
@@ -156,7 +156,7 @@ class TestResultExceptionCarrying:
             failing_operation,
             error_code="INVALID_VALUE",
         )
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.error_code, eq="INVALID_VALUE")
         tm.that(result.exception, none=False)
 
@@ -164,13 +164,13 @@ class TestResultExceptionCarrying:
         exc = ValueError("original error")
         result: r[int] = r[int].fail("error", exception=exc)
         mapped: r[int] = result.map(lambda value: value * 2)
-        tm.that(mapped.is_failure, eq=True)
+        tm.that(mapped.failure, eq=True)
         tm.that(mapped.exception is exc, eq=True)
 
     def test_map_success_no_exception(self) -> None:
         result: r[int] = r[int].ok(5)
         mapped: r[int] = result.map(lambda value: value * 2)
-        tm.that(mapped.is_success, eq=True)
+        tm.that(mapped.success, eq=True)
         tm.that(mapped.value, eq=10)
         tm.that(mapped.exception, none=True)
 
@@ -180,20 +180,20 @@ class TestResultExceptionCarrying:
         mapped: r[int] = result.map(lambda value: value + 1).map(
             lambda value: value * 2,
         )
-        tm.that(mapped.is_failure, eq=True)
+        tm.that(mapped.failure, eq=True)
         tm.that(mapped.exception is exc, eq=True)
 
     def test_flat_map_propagates_exception_on_failure(self) -> None:
         exc = TypeError("type error")
         result: r[int] = r[int].fail("error", exception=exc)
         flat_mapped: r[str] = result.flat_map(lambda value: r[str].ok(str(value)))
-        tm.that(flat_mapped.is_failure, eq=True)
+        tm.that(flat_mapped.failure, eq=True)
         tm.that(flat_mapped.exception is exc, eq=True)
 
     def test_flat_map_success_no_exception(self) -> None:
         result: r[int] = r[int].ok(5)
         flat_mapped: r[str] = result.flat_map(lambda value: r[str].ok(str(value)))
-        tm.that(flat_mapped.is_success, eq=True)
+        tm.that(flat_mapped.success, eq=True)
         tm.that(flat_mapped.value, eq="5")
         tm.that(flat_mapped.exception, none=True)
 
@@ -205,21 +205,21 @@ class TestResultExceptionCarrying:
         ).flat_map(
             lambda value: r[str].ok(str(value)),
         )
-        tm.that(flat_mapped.is_failure, eq=True)
+        tm.that(flat_mapped.failure, eq=True)
         tm.that(flat_mapped.exception is exc, eq=True)
 
     def test_alt_propagates_exception(self) -> None:
         exc = ValueError("original")
         result: r[int] = r[int].fail("error", exception=exc)
         altered: r[int] = result.map_error(lambda error: f"transformed: {error}")
-        tm.that(altered.is_failure, eq=True)
+        tm.that(altered.failure, eq=True)
         tm.that(altered.exception is exc, eq=True)
         tm.that(altered.error is not None and "transformed" in altered.error, eq=True)
 
     def test_alt_success_no_exception(self) -> None:
         result: r[int] = r[int].ok(42)
         altered: r[int] = result.map_error(lambda error: f"error: {error}")
-        tm.that(altered.is_success, eq=True)
+        tm.that(altered.success, eq=True)
         tm.that(altered.value, eq=42)
         tm.that(altered.exception, none=True)
 
@@ -227,7 +227,7 @@ class TestResultExceptionCarrying:
         exc = RuntimeError("recovery needed")
         result: r[int] = r[int].fail("error", exception=exc)
         recovered = result.lash(lambda _: r[int].ok(0))
-        tm.that(recovered.is_success, eq=True)
+        tm.that(recovered.success, eq=True)
         tm.that(recovered.value, eq=0)
 
     def test_lash_preserves_exception_on_recovery_failure(self) -> None:
@@ -240,7 +240,7 @@ class TestResultExceptionCarrying:
                 exception=recovery_exc,
             ),
         )
-        tm.that(recovered.is_failure, eq=True)
+        tm.that(recovered.failure, eq=True)
         tm.that(recovered.exception is recovery_exc, eq=True)
 
     def test_traverse_propagates_exception(self) -> None:
@@ -253,7 +253,7 @@ class TestResultExceptionCarrying:
             return r[int].ok(value * 2)
 
         result = r[int].traverse(items, process_with_failure, fail_fast=True)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.exception is exc, eq=True)
 
     def test_traverse_accumulate_preserves_exceptions(self) -> None:
@@ -269,7 +269,7 @@ class TestResultExceptionCarrying:
             return r[int].ok(value * 2)
 
         result = r[int].traverse(items, process_with_failures, fail_fast=False)
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.error, none=False)
         if result.error is not None:
             tm.that("error 1" in result.error and "error 2" in result.error, eq=True)
@@ -280,7 +280,7 @@ class TestResultExceptionCarrying:
             invalid_data,
             TestResultExceptionCarrying.UserModel,
         )
-        tm.that(result.is_failure, eq=True)
+        tm.that(result.failure, eq=True)
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=ValidationError)
 
@@ -301,13 +301,13 @@ class TestResultExceptionCarrying:
 
     def test_ok_none_succeeds(self) -> None:
         result = r[int | None].ok(None)
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         tm.that(result.value, none=True)
 
     def test_ok_with_valid_value_succeeds(self) -> None:
         value = 42
         result: r[int] = r[int].ok(value)
-        tm.that(result.is_success, eq=True)
+        tm.that(result.success, eq=True)
         tm.that(result.value, eq=42)
         tm.that(result.exception, none=True)
 
@@ -319,7 +319,7 @@ class TestResultExceptionCarrying:
             .flat_map(lambda value: r[int].ok(value + 1))
             .filter(lambda value: value > 5)
         )
-        tm.that(final.is_success, eq=True)
+        tm.that(final.success, eq=True)
         tm.that(final.value, eq=11)
         tm.that(final.exception, none=True)
 
@@ -332,14 +332,14 @@ class TestResultExceptionCarrying:
             .flat_map(lambda _: r[int].fail("error", exception=exc))
             .map(lambda value: value + 1)
         )
-        tm.that(final.is_failure, eq=True)
+        tm.that(final.failure, eq=True)
         tm.that(final.exception is exc, eq=True)
 
     def test_recover_with_exception(self) -> None:
         exc = RuntimeError("recovery needed")
         result: r[int] = r[int].fail("error", exception=exc)
         recovered: r[int] = result.recover(lambda _: 0)
-        tm.that(recovered.is_success, eq=True)
+        tm.that(recovered.success, eq=True)
         tm.that(recovered.value, eq=0)
 
     def test_fold_with_exception(self) -> None:
@@ -361,7 +361,7 @@ class TestResultExceptionCarrying:
             side_effect_called = True
 
         tapped: r[int] = result.tap(side_effect)
-        tm.that(tapped.is_failure, eq=True)
+        tm.that(tapped.failure, eq=True)
         tm.that(not side_effect_called, eq=True)
         tm.that(tapped.exception is exc, eq=True)
 
@@ -375,7 +375,7 @@ class TestResultExceptionCarrying:
             side_effect_called = True
 
         tapped: r[int] = result.tap_error(side_effect)
-        tm.that(tapped.is_failure, eq=True)
+        tm.that(tapped.failure, eq=True)
         tm.that(side_effect_called, eq=True)
         tm.that(tapped.exception is exc, eq=True)
 

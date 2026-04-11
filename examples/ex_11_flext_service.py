@@ -48,7 +48,7 @@ class _RuleService(s[str]):
 
 
 class _ValidationCrashService(s[str]):
-    """Service raising from validate_business_rules() to test is_valid() guard."""
+    """Service raising from validate_business_rules() to test valid() guard."""
 
     @override
     def execute(self) -> r[str]:
@@ -187,7 +187,7 @@ class Ex11FlextService(Examples):
         )
         self.check(
             "accumulate_errors.ok",
-            r.accumulate_errors(r[int].ok(1), r[int].ok(2)).is_success,
+            r.accumulate_errors(r[int].ok(1), r[int].ok(2)).success,
         )
         fail_one = r[int].fail(err_one)
         fail_two = r[int].fail(err_two)
@@ -214,7 +214,7 @@ class Ex11FlextService(Examples):
         metrics = m.MetricsTracker()
         self.check(
             "CQRS.MetricsTracker.record",
-            metrics.record_metric(metric_key, metric_value).is_success,
+            metrics.record_metric(metric_key, metric_value).success,
         )
         metrics_map = metrics.get_metrics().unwrap_or(t.ConfigMap(root={}))
         self.check(
@@ -228,7 +228,7 @@ class Ex11FlextService(Examples):
             stack.push_context({
                 "handler_name": ctx_handler_name,
                 "handler_mode": "query",
-            }).is_success,
+            }).success,
         )
         current = stack.current_context()
         self.check(
@@ -338,8 +338,8 @@ class Ex11FlextService(Examples):
         rr_ok = r[int].ok(rr_value)
         rr_fail = r[int].fail(rr_error, error_code=rr_error_code)
 
-        self.check("RuntimeResult.is_success", rr_ok.is_success)
-        self.check("RuntimeResult.is_failure", rr_fail.is_failure)
+        self.check("RuntimeResult.is_success", rr_ok.success)
+        self.check("RuntimeResult.is_failure", rr_fail.failure)
         self.check("RuntimeResult.value", rr_ok.value)
         self.check("RuntimeResult.error", rr_fail.error)
         self.check("RuntimeResult.error_code", rr_fail.error_code)
@@ -396,11 +396,11 @@ class Ex11FlextService(Examples):
         tap_errors: MutableSequence[str] = []
         self.check(
             "RuntimeResult.tap",
-            rr_ok.tap(lambda num: taps.append(num)).is_success,
+            rr_ok.tap(lambda num: taps.append(num)).success,
         )
         self.check(
             "RuntimeResult.tap_error",
-            rr_fail.tap_error(lambda err: tap_errors.append(err)).is_failure,
+            rr_fail.tap_error(lambda err: tap_errors.append(err)).failure,
         )
         self.check("RuntimeResult.tap.values", taps)
         self.check("RuntimeResult.tap_error.values", tap_errors)
@@ -411,7 +411,7 @@ class Ex11FlextService(Examples):
         )
         self.check(
             "RuntimeResult.filter.pass",
-            rr_ok.filter(lambda num: num > 0).is_success,
+            rr_ok.filter(lambda num: num > 0).success,
         )
         self.check("RuntimeResult.filter.fail", rr_ok.filter(lambda num: num < 0).error)
         self.check(
@@ -438,7 +438,7 @@ class Ex11FlextService(Examples):
         valid_container_value = self.rand_str(4)
         self.check(
             "RuntimeResult.ok.none_raises",
-            r[str].ok(valid_container_value).is_success,
+            r[str].ok(valid_container_value).success,
         )
         self.check("RuntimeResult.ok.none_type", type(valid_container_value).__name__)
 
@@ -532,23 +532,23 @@ class Ex11FlextService(Examples):
 
         self.check(
             "validate_business_rules.default",
-            service.validate_business_rules().is_success,
+            service.validate_business_rules().success,
         )
-        self.check("is_valid.default", service.is_valid())
+        self.check("valid.default", service.valid())
 
         rule_service = _RuleService()
         self.check(
             "validate_business_rules.override.success",
-            rule_service.validate_business_rules().is_success,
+            rule_service.validate_business_rules().success,
         )
         self.check(
             "validate_business_rules.override.error",
             rule_service.validate_business_rules().error,
         )
-        self.check("is_valid.override", rule_service.is_valid())
+        self.check("valid.override", rule_service.valid())
 
         crashing = _ValidationCrashService()
-        self.check("is_valid.exception_guard", crashing.is_valid())
+        self.check("valid.exception_guard", crashing.valid())
 
         failing = _FailingService()
         try:

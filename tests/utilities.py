@@ -87,7 +87,9 @@ class TestsFlextCoreUtilities(u):
                 @override
                 def execute(self) -> r[m.Core.Tests.User]:
                     if self.user_id in {"invalid", ""}:
-                        return r[m.Core.Tests.User].fail("User not found")
+                        return r[m.Core.Tests.User].fail(
+                            c.Core.Tests.TestErrors.USER_NOT_FOUND
+                        )
                     return r[m.Core.Tests.User].ok(
                         m.Core.Tests.User(
                             id=self.user_id,
@@ -107,7 +109,7 @@ class TestsFlextCoreUtilities(u):
                 def execute(self) -> r[m.Core.Tests.EmailResponse]:
                     if "@" not in self.to:
                         return r[m.Core.Tests.EmailResponse].fail(
-                            "Invalid email address"
+                            c.Core.Tests.TestErrors.INVALID_EMAIL
                         )
                     return r[m.Core.Tests.EmailResponse].ok(
                         m.Core.Tests.EmailResponse(
@@ -123,9 +125,13 @@ class TestsFlextCoreUtilities(u):
                 @override
                 def execute(self) -> r[t.ConfigMap]:
                     if self.value < 0:
-                        return r[t.ConfigMap].fail("Value must be positive")
+                        return r[t.ConfigMap].fail(
+                            c.Core.Tests.TestErrors.VALUE_TOO_LOW
+                        )
                     if self.value > 100:
-                        return r[t.ConfigMap].fail("Value must be <= 100")
+                        return r[t.ConfigMap].fail(
+                            c.Core.Tests.TestErrors.VALUE_TOO_HIGH
+                        )
                     return r[t.ConfigMap].ok(
                         t.ConfigMap(root={"valid": True, "value": self.value}),
                     )
@@ -197,7 +203,7 @@ class TestsFlextCoreUtilities(u):
                 """Execute the documented V1 railway pipeline."""
                 if not case.user_ids:
                     return r[str | m.Core.Tests.User | m.Core.Tests.EmailResponse].fail(
-                        "No user IDs provided",
+                        c.Core.Tests.TestErrors.NO_USER_IDS_PROVIDED,
                     )
                 user_result: r[m.Core.Tests.User] = (
                     TestsFlextCoreUtilities.Core.Tests.make(

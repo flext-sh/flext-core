@@ -206,7 +206,7 @@ class FlextModelsCqrs:
             validate_result = r[BaseModel].create_from_callable(
                 lambda: pagination_cls.model_validate(normalized_input),
             )
-            if validate_result.is_failure:
+            if validate_result.failure:
                 return pagination_cls()
             return validate_result.value
 

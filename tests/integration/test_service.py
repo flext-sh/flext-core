@@ -515,12 +515,12 @@ class TestService:
         )
         lifecycle_service.set_failure_mode(fail_init=True)
         init_result = lifecycle_service.initialize(service_config)
-        assert init_result.is_success is False
+        assert init_result.success is False
         assert init_result.error == "Initialization failed"
         lifecycle_service.set_failure_mode(fail_init=False, fail_shutdown=True)
         _ = lifecycle_service.initialize(service_config)
         shutdown_result = lifecycle_service.shutdown()
-        assert shutdown_result.is_success is False
+        assert shutdown_result.success is False
         assert shutdown_result.error == "Shutdown failed"
 
     @pytest.mark.integration
@@ -557,18 +557,18 @@ class TestService:
             "notification_service",
             type_cls=self.NotificationService,
         )
-        assert user_service_result.is_success
-        assert notification_service_result.is_success
+        assert user_service_result.success
+        assert notification_service_result.success
         retrieved_user_service = user_service_result.value
         retrieved_notification_service = notification_service_result.value
         assert isinstance(retrieved_user_service, self.UserQueryService)
         assert isinstance(retrieved_notification_service, self.NotificationService)
         user_result = retrieved_user_service.get_user(user_id)
-        assert user_result.is_success is True
+        assert user_result.success is True
         user_entity = user_result.value
         assert user_entity is not None
         notification_result = retrieved_notification_service.send(user_entity.email)
-        assert notification_result.is_success is True
+        assert notification_result.success is True
         assert user_entity.email in retrieved_notification_service.sent_notifications
 
     @pytest.mark.integration
@@ -587,11 +587,11 @@ class TestService:
         user_service = self.UserQueryService()
         user_id = "test_user"
         user_result = user_service.get_user(user_id)
-        assert user_result.is_success is True
+        assert user_result.success is True
         user_entity = user_result.value
         assert user_entity is not None
         external_result = mock_external_service.process(user_entity.email)
-        assert external_result.is_success is True
+        assert external_result.success is True
         expected_processed = f"processed_{user_entity.email}"
         assert expected_processed in mock_external_service.processed_items
         assert mock_external_service.get_call_count() == 1

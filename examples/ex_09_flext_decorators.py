@@ -80,13 +80,13 @@ class Ex09FlextDecorators(Examples):
             "combined.standard_matches",
             std_result == f"{self._token_service_value}|{combined_standard_operation}",
         )
-        self.check("combined.railway.ok.is_success", rail_ok.is_success)
+        self.check("combined.railway.ok.is_success", rail_ok.success)
         self.check(
             "combined.railway.ok.value_matches",
             rail_ok.unwrap_or("none")
             == f"{self._flaky_service_value}|{combined_railway_operation}",
         )
-        self.check("combined.railway.fail.is_failure", rail_fail.is_failure)
+        self.check("combined.railway.fail.is_failure", rail_fail.failure)
         self.check("combined.railway.fail.error_nonempty", bool(rail_fail.error))
         self.check(
             "combined.railway.fail.error_code",
@@ -250,9 +250,9 @@ class Ex09FlextDecorators(Examples):
         fail_result = fail_railway()
         alias_value = self.rand_int(1, 500)
         self.check("railway.alias_r.ok", r[int].ok(alias_value).value == alias_value)
-        self.check("railway.ok.is_success", ok_result.is_success)
+        self.check("railway.ok.is_success", ok_result.success)
         self.check("railway.ok.value_matches", ok_result.unwrap_or(-1) == left + right)
-        self.check("railway.fail.is_failure", fail_result.is_failure)
+        self.check("railway.fail.is_failure", fail_result.failure)
         self.check("railway.fail.error_nonempty", bool(fail_result.error))
         self.check("railway.fail.error_code", fail_result.error_code == "E_RAILWAY")
 

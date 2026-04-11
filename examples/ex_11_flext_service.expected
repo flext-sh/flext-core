@@ -11,11 +11,11 @@ context.type: 'FlextContext'
 config.type: 'FlextSettings'
 container.type: 'FlextContainer'
 validate_business_rules.default: True
-is_valid.default: True
+valid.default: True
 validate_business_rules.override.success: False
 validate_business_rules.override.error: 'invalid-rule'
-is_valid.override: False
-is_valid.exception_guard: False
+valid.override: False
+valid.exception_guard: False
 result.failure.raises: False
 result.failure.raises: True
 result.failure.type: 'BaseError'

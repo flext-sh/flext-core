@@ -166,7 +166,7 @@ class TestUtilitiesParserFullCoverage:
     def test_parser_internal_helpers_parse_with_default(self) -> None:
         parser = u()
         tm.that(parser._parse_with_default(None, lambda: 3, "err").value, eq=3)
-        tm.that(parser._parse_with_default(None, None, "err").is_failure, eq=True)
+        tm.that(parser._parse_with_default(None, None, "err").failure, eq=True)
 
     def test_parser_remaining_branch_paths(
         self,

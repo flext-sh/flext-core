@@ -114,7 +114,7 @@ def main() -> None:
     )
     db_service = DatabaseService.model_construct(db_config=db_config)
     result = db_service.execute()
-    if result.is_success:
+    if result.success:
         print(f"✅ Database query successful: {result.value}")
     print("\n=== Example 2: Migration Service ===")
     migration_service = MigrationService(
@@ -123,7 +123,7 @@ def main() -> None:
         sync=True,
     )
     result = migration_service.execute()
-    if result.is_success:
+    if result.success:
         print(f"✅ Migration successful: {result.value}")
     print("\n=== Key Observations ===")
     print("1. Config logged ONCE when service initialized")

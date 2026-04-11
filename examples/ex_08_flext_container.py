@@ -144,8 +144,8 @@ class Ex08FlextContainer(Examples):
         _ = container.register(removable_name, self.rand_int(1, 1000))
         unregister_ok = container.unregister(removable_name)
         unregister_missing = container.unregister(missing_remove_name)
-        self.check("unregister.existing.success", unregister_ok.is_success)
-        self.check("unregister.missing.failure", unregister_missing.is_failure)
+        self.check("unregister.existing.success", unregister_ok.success)
+        self.check("unregister.missing.failure", unregister_missing.failure)
         container.clear_all()
         self.check("clear_all.count", len(container.list_services()))
         before_reset = root
@@ -177,7 +177,7 @@ class Ex08FlextContainer(Examples):
         register_empty = container.register("", empty_name_value)
         empty_after_register = container.has_service("")
         self.check("register.service.returns_self", register_ok is container)
-        self.check("register.service.success", container.get(service_name).is_success)
+        self.check("register.service.success", container.get(service_name).success)
         self.check(
             "register.service.stored_value_matches",
             container.get(service_name, type_cls=int).unwrap_or(-1) == service_value,
@@ -226,16 +226,15 @@ class Ex08FlextContainer(Examples):
             kind="factory",
         )
         self.check("register.factory.returns_self", register_factory_ok is container)
-        self.check("register.factory.success", container.get(factory_name).is_success)
+        self.check("register.factory.success", container.get(factory_name).success)
         self.check(
             "register.factory.duplicate_failure",
-            register_factory_dup is container
-            and container.get(factory_name).is_success,
+            register_factory_dup is container and container.get(factory_name).success,
         )
         self.check(
             "register.factory.bad_registration_success",
             register_factory_bad is container
-            and container.get(bad_factory_name).is_success,
+            and container.get(bad_factory_name).success,
         )
         resource_calls = {"count": 0}
 
@@ -254,50 +253,49 @@ class Ex08FlextContainer(Examples):
             kind="resource",
         )
         self.check("register.resource.returns_self", register_resource_ok is container)
-        self.check("register.resource.success", container.get(resource_name).is_success)
+        self.check("register.resource.success", container.get(resource_name).success)
         self.check(
             "register.resource.duplicate_failure",
-            register_resource_dup is container
-            and container.get(resource_name).is_success,
+            register_resource_dup is container and container.get(resource_name).success,
         )
         get_service = container.get(service_name)
         get_factory = container.get(factory_name)
         get_resource = container.get(resource_name)
         get_missing = container.get(missing_name)
         get_bad_factory = container.get(bad_factory_name)
-        self.check("get.service.success", get_service.is_success)
+        self.check("get.service.success", get_service.success)
         self.check(
             "get.service.value_matches",
             container.get(service_name, type_cls=int).unwrap_or(-1) == service_value,
         )
-        self.check("get.factory.success", get_factory.is_success)
+        self.check("get.factory.success", get_factory.success)
         self.check(
             "get.factory.value_first_call",
             container.get(factory_name, type_cls=int).unwrap_or(-1) == 1,
         )
-        self.check("get.resource.success", get_resource.is_success)
+        self.check("get.resource.success", get_resource.success)
         self.check("get.resource.call_count_is_one", resource_calls["count"] == 1)
-        self.check("get.missing.failure", get_missing.is_failure)
-        self.check("get.bad_factory.failure", get_bad_factory.is_failure)
+        self.check("get.missing.failure", get_missing.failure)
+        self.check("get.bad_factory.failure", get_bad_factory.failure)
         get_typed_service = container.get(service_name, type_cls=int)
         get_typed_service_bad = container.get(service_name, type_cls=str)
         get_typed_factory = container.get(factory_name, type_cls=int)
         get_typed_missing = container.get(missing_name, type_cls=int)
-        self.check("get_typed.service.success", get_typed_service.is_success)
+        self.check("get_typed.service.success", get_typed_service.success)
         self.check(
             "get_typed.service.value_matches",
             get_typed_service.unwrap_or(-1) == service_value,
         )
         self.check(
             "get_typed.service.type_mismatch_failure",
-            get_typed_service_bad.is_failure,
+            get_typed_service_bad.failure,
         )
-        self.check("get_typed.factory.success", get_typed_factory.is_success)
+        self.check("get_typed.factory.success", get_typed_factory.success)
         self.check(
             "get_typed.resource_via_get.success",
-            container.get(resource_name).is_success,
+            container.get(resource_name).success,
         )
-        self.check("get_typed.missing.failure", get_typed_missing.is_failure)
+        self.check("get_typed.missing.failure", get_typed_missing.failure)
         self.check("has_service.service.true", container.has_service(service_name))
         self.check("has_service.factory.true", container.has_service(factory_name))
         self.check("has_service.resource.true", container.has_service(resource_name))
@@ -410,7 +408,7 @@ class Ex08FlextContainer(Examples):
         )
         self.check(
             "scoped.full.get_resource.success",
-            scoped_full.get(scoped_resource_name).is_success,
+            scoped_full.get(scoped_resource_name).success,
         )
         return scoped_full
 

@@ -171,7 +171,7 @@ class TestServiceResultProperty:
         assert isinstance(user_v2_raw, m.Core.Tests.User)
         user_v2 = user_v2_raw
         user_v1_result = service2.execute()
-        assert user_v1_result.is_success
+        assert user_v1_result.success
         user_v1 = user_v1_result.value
         assert isinstance(user_v1, m.Core.Tests.User)
         assert user_v2.id == user_v1.id

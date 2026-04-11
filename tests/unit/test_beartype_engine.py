@@ -270,7 +270,7 @@ class TestBeartypeClawCompatibility:
             [sys.executable, "-c", script],
             cwd=cwd,
         )
-        if result.is_success:
+        if result.success:
             return result.value
         return m.Cli.CommandOutput(
             stdout="",

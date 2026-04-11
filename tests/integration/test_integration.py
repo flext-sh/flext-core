@@ -49,7 +49,7 @@ class TestLibraryIntegration:
         register_result = clean_container.register("test_service", test_value)
         assert register_result is clean_container
         service_result = clean_container.get("test_service")
-        assert service_result.is_success is True
+        assert service_result.success is True
         assert service_result.value == test_value
         global_container = FlextContainer()
         assert isinstance(global_container, p.Container)
@@ -85,7 +85,7 @@ class TestLibraryIntegration:
         )
         assert register_result is clean_container
         factory_result = clean_container.get("result_factory")
-        assert factory_result.is_success is True
+        assert factory_result.success is True
         result_value = factory_result.value
         assert isinstance(result_value, str)
         assert result_value == expected_result_data

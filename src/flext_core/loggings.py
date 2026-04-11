@@ -1221,8 +1221,8 @@ class FlextLogger(FlextRuntime):
         ) -> None:
             """Log operation result with timing."""
             elapsed = time.time() - self._start_time
-            is_success = exc_type is None
-            status = "success" if is_success else "failed"
+            success = exc_type is None
+            status = "success" if success else "failed"
             context: t.ConfigMap = t.ConfigMap(
                 root={
                     c.METADATA_KEY_DURATION_SECONDS: elapsed,
@@ -1230,10 +1230,10 @@ class FlextLogger(FlextRuntime):
                     c.FIELD_STATUS: status,
                 },
             )
-            if not is_success:
+            if not success:
                 context["exception_type"] = exc_type.__name__ if exc_type else ""
                 context["exception_message"] = str(exc_val) if exc_val else ""
-            if is_success:
+            if success:
                 _ = self.logger.info(
                     f"{self._operation_name} {status}",
                     **FlextLogger._to_container_context(context.root),

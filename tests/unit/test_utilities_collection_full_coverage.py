@@ -50,7 +50,7 @@ class TestUtilitiesCollectionFullCoverage:
         pass
 
     class _FailureResult:
-        is_success = False
+        success = False
         value: None = None
         error = "boom"
 
@@ -64,7 +64,7 @@ class TestUtilitiesCollectionFullCoverage:
 
     def test_find_mapping_no_match_and_merge_error_paths(self) -> None:
         assert c.UNKNOWN_ERROR
-        assert r[int].ok(1).is_success
+        assert r[int].ok(1).success
         assert isinstance(t.ConfigMap({"a": 1}), t.ConfigMap)
         not_found = u.find({"a": 1}, lambda value: value == 2)
         tm.fail(not_found)

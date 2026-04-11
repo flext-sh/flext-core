@@ -54,7 +54,7 @@ class TestMigrationValidation:
             return r[t.StrMapping].ok(user_data)
 
         result = process_user("user_123")
-        assert result.is_success
+        assert result.success
         assert result.value == {"id": "user_123", "name": "Alice"}
         assert result.value["id"] == "user_123"
         assert result.value["name"] == "Alice"
@@ -68,10 +68,10 @@ class TestMigrationValidation:
             return r[str].ok(email)
 
         failure_result = validate_email("invalid")
-        assert failure_result.is_failure
+        assert failure_result.failure
         assert failure_result.error and "Invalid email format" in failure_result.error
         success_result = validate_email("user@example.com")
-        assert success_result.is_success
+        assert success_result.success
         assert success_result.value == "user@example.com"
 
     def test_container_global_instance(self) -> None:
@@ -92,7 +92,7 @@ class TestMigrationValidation:
         registration_result = container.register("test_migration_service", test_service)
         assert registration_result is container
         resolution_result = container.get("test_migration_service")
-        assert resolution_result.is_success
+        assert resolution_result.success
         service = resolution_result.value
         assert isinstance(service, TestService)
         assert service.name == "test"
@@ -130,7 +130,7 @@ class TestMigrationValidation:
 
         service = UserService()
         result = service.create_user("alice", "alice@example.com")
-        assert result.is_success
+        assert result.success
         assert result.value["username"] == "alice"
 
     def test_logger_structured_logging(self) -> None:
@@ -164,19 +164,19 @@ class TestMigrationValidation:
     def test_flext_result_all_methods(self) -> None:
         """Verify all r methods work correctly."""
         success = r[str].ok("test_value")
-        assert success.is_success
-        assert not success.is_failure
+        assert success.success
+        assert not success.failure
         assert success.error is None
         assert success.value == "test_value"
         assert success.value == "test_value"
         assert success.unwrap_or("default") == "test_value"
         failure: r[str] = r[str].fail("test_error")
-        assert not failure.is_success
-        assert failure.is_failure
+        assert not failure.success
+        assert failure.failure
         assert failure.error == "test_error"
         assert failure.unwrap_or("default") == "default"
         mapped = success.map(lambda x: x.upper())
-        assert mapped.is_success
+        assert mapped.success
         assert mapped.value == "TEST_VALUE"
 
     def test_core_apis_work_correctly(self) -> None:
@@ -215,13 +215,13 @@ class TestMigrationValidation:
 
         app = ApplicationExample()
         result = app.process_data({"key": "value"})
-        assert result.is_success
+        assert result.success
         assert result.value["processed"] is True
 
     def test_all_core_apis_functional(self) -> None:
         """Verify all core APIs remain functional."""
         result = r[str].ok("test")
-        assert result.is_success
+        assert result.success
         assert result.value == "test"
         container = FlextContainer()
         assert container is not None

@@ -23,7 +23,9 @@ class TestFlextHandlers:
         @override
         def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
             if not isinstance(message, str):
-                return r[t.ValueOrModel].fail("Unexpected message type")
+                return r[t.ValueOrModel].fail(
+                    c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
+                )
             return r[t.ValueOrModel].ok(f"processed_{message}")
 
     class ValidationTestHandler(h[t.ValueOrModel, t.ValueOrModel]):
@@ -45,7 +47,9 @@ class TestFlextHandlers:
         @override
         def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
             if not isinstance(message, str):
-                return r[t.ValueOrModel].fail("Unexpected message type")
+                return r[t.ValueOrModel].fail(
+                    c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
+                )
             return r[t.ValueOrModel].fail(f"Handler failed for: {message}")
 
     class HandlerTypeScenario(m.Value):
@@ -156,7 +160,9 @@ class TestFlextHandlers:
             @override
             def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
                 if not isinstance(message, int):
-                    return r[t.ValueOrModel].fail("Unexpected message type")
+                    return r[t.ValueOrModel].fail(
+                        c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
+                    )
                 return r[t.ValueOrModel].ok(f"processed_{message}")
 
         config = u.Core.Tests.create_handler_config(
@@ -228,7 +234,9 @@ class TestFlextHandlers:
             @override
             def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
                 if not isinstance(message, dict):
-                    return r[t.ValueOrModel].fail("Unexpected message type")
+                    return r[t.ValueOrModel].fail(
+                        c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
+                    )
                 return r[t.ValueOrModel].ok(f"processed_{message}")
 
         config = u.Core.Tests.create_handler_config(
@@ -273,7 +281,9 @@ class TestFlextHandlers:
             @override
             def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
                 if not isinstance(message, str):
-                    return r[t.ValueOrModel].fail("Unexpected message type")
+                    return r[t.ValueOrModel].fail(
+                        c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
+                    )
                 return r[t.ValueOrModel].ok(f"processed_{message}")
 
         config = u.Core.Tests.create_handler_config(
@@ -298,12 +308,14 @@ class TestFlextHandlers:
             @override
             def validate_message(self, data: t.ValueOrModel) -> r[bool]:
                 _ = data
-                return r[bool].fail("Validation failed for test")
+                return r[bool].fail(c.Core.Tests.TestErrors.VALIDATION_FAILED_FOR_TEST)
 
             @override
             def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
                 if not isinstance(message, str):
-                    return r[t.ValueOrModel].fail("Unexpected message type")
+                    return r[t.ValueOrModel].fail(
+                        c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
+                    )
                 return r[t.ValueOrModel].ok(f"processed_{message}")
 
         config = u.Core.Tests.create_handler_config(

@@ -18,7 +18,7 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextContainer, FlextContext
-from tests import r, t, u
+from tests import c, r, t, u
 
 pytest_plugins = ["flext_tests.conftest_plugin"]
 
@@ -90,7 +90,7 @@ def flext_result_success() -> r[t.ContainerMapping]:
 @pytest.fixture
 def flext_result_failure() -> r[str]:
     """Failed r fixture available to all FLEXT projects."""
-    return r[str].fail("Test error")
+    return r[str].fail(c.Core.Tests.TestErrors.TEST_ERROR)
 
 
 @pytest.fixture

@@ -111,7 +111,7 @@ class FlextUtilitiesReliability:
         """
         current: r[T] = result
         for func in funcs:
-            if current.is_failure:
+            if current.failure:
                 return current
             current = func(current.value)
         return current
@@ -191,7 +191,7 @@ class FlextUtilitiesReliability:
             kwargs,
             FlextUtilitiesReliability.RetryOptions,
         )
-        if opts_res.is_failure:
+        if opts_res.failure:
             return r[TResult].fail(opts_res.error)
         opts = opts_res.value
         delay_val = opts.delay if opts.delay is not None else opts.delay_seconds
@@ -210,7 +210,7 @@ class FlextUtilitiesReliability:
         for attempt in range(max_att):
             try:
                 result = operation()
-                if result.is_success:
+                if result.success:
                     return result
                 last_error = result.error or "Unknown error"
             except FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS as e:

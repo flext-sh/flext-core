@@ -75,11 +75,11 @@ class FlextProtocolsService:
             """Execute domain service logic."""
             ...
 
-        def get_service_info(self) -> t.ScalarMapping:
+        def service_info(self) -> t.ScalarMapping:
             """Get service metadata and configuration information."""
             ...
 
-        def is_valid(self) -> bool:
+        def valid(self) -> bool:
             """Check if service is in valid state for execution."""
             ...
 

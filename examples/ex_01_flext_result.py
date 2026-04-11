@@ -82,7 +82,7 @@ class Ex01r(Examples):
         self.check("value.success", ok_value.value)
         self.check("value.failure.unwrap_or", fail_value.unwrap_or(123))
         self.check("map.success", ok_value.map(lambda value: value + 1).unwrap_or(-1))
-        self.check("map.failure", fail_value.map(lambda value: value + 1).is_failure)
+        self.check("map.failure", fail_value.map(lambda value: value + 1).failure)
         self.check(
             "flat_map.success",
             ok_value.flat_map(lambda value: r[int].ok(value * 2)).unwrap_or(-1),
@@ -106,8 +106,8 @@ class Ex01r(Examples):
             invalid_data,
             person_model,
         )
-        self.check("from_validation.success", from_validation_ok.is_success)
-        self.check("from_validation.failure", from_validation_fail.is_failure)
+        self.check("from_validation.success", from_validation_ok.success)
+        self.check("from_validation.failure", from_validation_fail.failure)
         self.check(
             "to_model.success",
             r[Mapping[str, t.Container]].ok(valid_data).to_model(self.Person).value.age,
@@ -118,10 +118,7 @@ class Ex01r(Examples):
         )
         self.check(
             "to_model.validation_failure",
-            r[Mapping[str, t.Container]]
-            .ok(invalid_data)
-            .to_model(self.Person)
-            .is_failure,
+            r[Mapping[str, t.Container]].ok(invalid_data).to_model(self.Person).failure,
         )
 
     def factories_and_guards(self) -> None:
@@ -161,20 +158,20 @@ class Ex01r(Examples):
         self.check("create_from_callable.success", callable_ok.unwrap_or("fallback"))
         self.check("create_from_callable.failure.code", callable_fail.error_code)
         self.check("create_from_callable.none.error", callable_none.error)
-        self.check("is_success_result.scalar", r.is_success_result("ok"))
-        self.check("is_success_result.int", r.is_success_result(1))
-        self.check("is_failure_result.scalar", r.is_failure_result("plain"))
-        self.check("is_failure_result.string", r.is_failure_result("plain"))
+        self.check("is_success_result.scalar", r.successful_result("ok"))
+        self.check("is_success_result.int", r.successful_result(1))
+        self.check("is_failure_result.scalar", r.failed_result("plain"))
+        self.check("is_failure_result.string", r.failed_result("plain"))
 
     def properties_and_unwrap(self) -> None:
         """Exercise result properties and unwrap behavior for both states."""
         self.section("properties_and_unwrap")
         success = r[str].ok("value")
         failure = r[str].fail("missing", error_code="E_PROP", error_data={"x": 1})
-        self.check("prop.success.is_success", success.is_success)
-        self.check("prop.success.is_failure", success.is_failure)
-        self.check("prop.failure.is_success", failure.is_success)
-        self.check("prop.failure.is_failure", failure.is_failure)
+        self.check("prop.success.is_success", success.success)
+        self.check("prop.success.is_failure", success.failure)
+        self.check("prop.failure.is_success", failure.success)
+        self.check("prop.failure.is_failure", failure.failure)
         self.check("prop.success.value", success.value)
         self.check("prop.success.value_readable", success.value == "value")
         self.check("prop.failure.error", failure.error)
@@ -210,20 +207,20 @@ class Ex01r(Examples):
         fail_value = r[int].fail("oops")
         self.check(
             "tap.success",
-            ok_value.tap(lambda n: side_effects.append(n)).is_success,
+            ok_value.tap(lambda n: side_effects.append(n)).success,
         )
         self.check(
             "tap.failure",
-            fail_value.tap(lambda n: side_effects.append(n)).is_failure,
+            fail_value.tap(lambda n: side_effects.append(n)).failure,
         )
         self.check("tap.log", side_effects)
         self.check(
             "tap_error.failure",
-            fail_value.tap_error(lambda e: error_effects.append(e)).is_failure,
+            fail_value.tap_error(lambda e: error_effects.append(e)).failure,
         )
         self.check(
             "tap_error.success",
-            ok_value.tap_error(lambda e: error_effects.append(e)).is_success,
+            ok_value.tap_error(lambda e: error_effects.append(e)).success,
         )
         self.check("tap_error.log", error_effects)
         self.check("map_or.success_default", ok_value.map_or(0))
@@ -244,11 +241,11 @@ class Ex01r(Examples):
                 on_success=lambda n: f"ok:{n}",
             ),
         )
-        self.check("filter.success_pass", ok_value.filter(lambda n: n > 0).is_success)
-        self.check("filter.success_fail", ok_value.filter(lambda n: n < 0).is_failure)
+        self.check("filter.success_pass", ok_value.filter(lambda n: n > 0).success)
+        self.check("filter.success_fail", ok_value.filter(lambda n: n < 0).failure)
         self.check(
             "filter.failure_stays",
-            fail_value.filter(lambda n: n > 0).is_failure,
+            fail_value.filter(lambda n: n > 0).failure,
         )
 
     def transform_chain_and_recover(self) -> None:
@@ -257,7 +254,7 @@ class Ex01r(Examples):
         base_ok = r[int].ok(5)
         base_fail = r[int].fail("bad-number")
         self.check("map.success", base_ok.map(lambda n: n + 1).unwrap_or(-1))
-        self.check("map.failure", base_fail.map(lambda n: n + 1).is_failure)
+        self.check("map.failure", base_fail.map(lambda n: n + 1).failure)
         self.check(
             "map.exception_to_failure",
             base_ok.map(
@@ -278,7 +275,7 @@ class Ex01r(Examples):
         )
         self.check(
             "flat_map_chain.failure",
-            base_fail.flat_map(lambda n: r[int].ok(n)).is_failure,
+            base_fail.flat_map(lambda n: r[int].ok(n)).failure,
         )
         bind_ok = self.bind_probe(base_ok, 3)
         bind_fail = self.bind_probe(base_fail, 3)

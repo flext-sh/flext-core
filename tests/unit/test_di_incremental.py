@@ -209,7 +209,7 @@ class TestDIIncremental:
 
         scoped = container.scoped(resources={"db": resource_factory})
         result = scoped.get("db")
-        assert result.is_success
+        assert result.success
         assert result.value == {"connected": True}
         tm.that(lifecycle["created"], eq=True)
         tm.that(scoped is not container, eq=True)
@@ -225,7 +225,7 @@ class TestDIIncremental:
         tm.ok(service_result)
         tm.that(service_result.value, eq="secret_key")
         factory_result = scoped.get("token_gen")
-        assert factory_result.is_success
+        assert factory_result.success
         assert factory_result.value == {"token": "abc123"}
 
     def test_scoped_with_config_override(self) -> None:
@@ -250,7 +250,7 @@ class TestDIIncremental:
             ),
         )
         db_result = runtime.container.get("database")
-        assert db_result.is_success
+        assert db_result.success
         assert db_result.value == {"connected": True}
         tm.that(lifecycle["created"], eq=True)
 
@@ -288,7 +288,7 @@ class TestDIIncremental:
         tm.ok(custom_result)
         tm.that(custom_result.value, eq="custom_value")
         factory_result = service.container.get("custom_factory")
-        assert factory_result.is_success
+        assert factory_result.success
         assert factory_result.value == {"custom": "data"}
 
     def test_handler_wiring_with_inject(self) -> None:
@@ -440,10 +440,10 @@ class TestDIIncremental:
         tm.ok(static_result)
         tm.that(static_result.value, eq="static_value")
         factory_result = runtime.container.get("token_factory")
-        assert factory_result.is_success
+        assert factory_result.success
         assert factory_result.value == {"token": "generated_token"}
         resource_result = runtime.container.get("connection")
-        assert resource_result.is_success
+        assert resource_result.success
         assert resource_result.value == {"connected": True}
 
     def test_container_wire_modules_with_classes(self) -> None:
@@ -499,7 +499,7 @@ class TestDIIncremental:
 
         scoped = container.scoped(resources={"test_resource": resource_factory})
         result = scoped.get("test_resource")
-        assert result.is_success
+        assert result.success
         assert result.value == {"resource": True}
         tm.that(lifecycle["created"], eq=True)
 

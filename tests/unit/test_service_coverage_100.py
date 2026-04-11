@@ -44,11 +44,11 @@ class TestService100Coverage:
         result = service.validate_business_rules()
         tm.ok(result)
 
-    def test_is_valid(self) -> None:
-        """Test is_valid property."""
+    def test_valid(self) -> None:
+        """Test valid property."""
         service = self._ServiceStub()
-        is_valid = service.is_valid()
-        tm.that(is_valid, is_=bool)
+        valid = service.valid()
+        tm.that(valid, is_=bool)
 
     def test_execute_success(self) -> None:
         """Test execute method."""

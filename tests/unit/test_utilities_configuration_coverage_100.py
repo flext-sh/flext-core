@@ -62,9 +62,9 @@ class TestFlextUtilitiesConfiguration:
             "unit_test_factory",
             lambda: "factory-value",
         )
-        assert register_result.is_success
+        assert register_result.success
         resolved = container.get("unit_test_factory")
-        assert resolved.is_success
+        assert resolved.success
         assert resolved.value == "factory-value"
 
     def test_resolve_effective_log_level_prioritizes_trace(self) -> None:

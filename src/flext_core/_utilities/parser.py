@@ -302,33 +302,25 @@ class FlextUtilitiesParser:
                 coerced = FlextUtilitiesParser._coerce_to_str(value)
             except (TypeError, ValueError):
                 return None
-            return typing.cast(
-                "T | None", coerced.value if coerced.is_success else None
-            )
+            return typing.cast("T | None", coerced.value if coerced.success else None)
         if target is int:
             try:
                 coerced = FlextUtilitiesParser._coerce_to_int(value)
             except (TypeError, ValueError):
                 return None
-            return typing.cast(
-                "T | None", coerced.value if coerced.is_success else None
-            )
+            return typing.cast("T | None", coerced.value if coerced.success else None)
         if target is float:
             try:
                 coerced = FlextUtilitiesParser._coerce_to_float(value)
             except (TypeError, ValueError):
                 return None
-            return typing.cast(
-                "T | None", coerced.value if coerced.is_success else None
-            )
+            return typing.cast("T | None", coerced.value if coerced.success else None)
         if target is bool:
             try:
                 coerced = FlextUtilitiesParser._coerce_to_bool(value)
             except (TypeError, ValueError):
                 return None
-            return typing.cast(
-                "T | None", coerced.value if coerced.is_success else None
-            )
+            return typing.cast("T | None", coerced.value if coerced.success else None)
         if target in {int, float, str, bool}:
             try:
                 validated: T = typing.cast(

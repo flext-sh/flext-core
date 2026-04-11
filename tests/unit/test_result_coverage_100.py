@@ -39,12 +39,12 @@ class TestrCoverage:
         @staticmethod
         def assert_success[T](result: r[T]) -> None:
             assert isinstance(result, r)
-            assert result.is_success
+            assert result.success
 
         @staticmethod
         def assert_failure[T](result: r[T]) -> None:
             assert isinstance(result, r)
-            assert not result.is_success
+            assert not result.success
 
         @staticmethod
         def assert_success_with_value[T](result: r[T], expected: T) -> None:
@@ -85,7 +85,7 @@ class TestrCoverage:
         """Test that ok(None) creates valid success."""
         result = r[t.GeneralValueType | None].ok(None)
         assert isinstance(result, r)
-        assert result.is_success
+        assert result.success
         tm.that(result.value, none=True)
 
     def test_fail_creates_failure_with_message(self) -> None:

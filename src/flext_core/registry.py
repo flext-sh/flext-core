@@ -165,7 +165,7 @@ class FlextRegistry(s[bool]):
 
         """
         if not self._dispatcher:
-            return r[bool].fail("Dispatcher not configured")
+            return r[bool].fail(c.ERR_DISPATCHER_NOT_CONFIGURED)
         return r[bool].ok(True)
 
     def get_plugin(
@@ -193,7 +193,7 @@ class FlextRegistry(s[bool]):
                     f"{category} '{name}' not found. Available: {available}",
                 )
             raw_result = self.container.get(key)
-            if raw_result.is_failure:
+            if raw_result.failure:
                 return r[t.RuntimeAtomic | None].fail(
                     f"Failed to retrieve {category} '{name}': {raw_result.error}",
                 )
@@ -306,7 +306,7 @@ class FlextRegistry(s[bool]):
             key = f"binding::{message_type_name}::{handler_name}"
 
             reg_result = self.register_handler(handler)
-            if reg_result.is_success:
+            if reg_result.success:
                 self._add_successful_registration(key, reg_result.value, summary)
             else:
                 summary.errors.append(
@@ -350,7 +350,7 @@ class FlextRegistry(s[bool]):
             is_event=(handler_mode == c.HandlerType.EVENT),
         )
 
-        if registration_result.is_failure:
+        if registration_result.failure:
             return r[m.RegistrationDetails].fail(
                 registration_result.error or "Dispatcher registration failed",
             )
@@ -381,7 +381,7 @@ class FlextRegistry(s[bool]):
         for handler in handlers:
             result = self.register_handler(handler)
             key = getattr(handler, "__name__", handler.__class__.__name__)
-            if result.is_success:
+            if result.success:
                 self._add_successful_registration(key, result.value, summary)
             else:
                 summary.errors.append(
@@ -396,7 +396,10 @@ class FlextRegistry(s[bool]):
         plugin: t.RegistrablePlugin,
         *,
         validate: Callable[[t.RegistrablePlugin], r[bool]] | None = None,
-        scope: Literal["instance", "class"] = "instance",
+        scope: Literal[
+            c.RegistrationScope.INSTANCE,
+            c.RegistrationScope.CLASS,
+        ] = c.RegistrationScope.INSTANCE,
     ) -> r[bool]:
         """Register a plugin with optional validation.
 
@@ -416,12 +419,12 @@ class FlextRegistry(s[bool]):
         if validate:
             try:
                 validation_result = validate(plugin)
-                if validation_result.is_failure:
+                if validation_result.failure:
                     return r[bool].fail(f"Validation failed: {validation_result.error}")
             except (TypeError, ValueError, RuntimeError) as exc:
                 return r[bool].fail(f"Validation error: {exc}")
         key = f"{category}::{name}"
-        if scope == "instance":
+        if scope == c.RegistrationScope.INSTANCE:
             if key in self._registered_keys:
                 return r[bool].ok(True)
             self.container.register(key, plugin)
@@ -439,7 +442,10 @@ class FlextRegistry(s[bool]):
         category: str,
         name: str,
         *,
-        scope: Literal["instance", "class"] = "instance",
+        scope: Literal[
+            c.RegistrationScope.INSTANCE,
+            c.RegistrationScope.CLASS,
+        ] = c.RegistrationScope.INSTANCE,
     ) -> r[bool]:
         """Unregister a plugin.
 
@@ -452,7 +458,7 @@ class FlextRegistry(s[bool]):
 
         """
         key = f"{category}::{name}"
-        if scope == "instance":
+        if scope == c.RegistrationScope.INSTANCE:
             if key not in self._registered_keys:
                 return r[bool].fail(f"{category} '{name}' not registered")
             self._registered_keys.discard(key)

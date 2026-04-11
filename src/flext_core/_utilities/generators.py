@@ -41,7 +41,7 @@ class FlextUtilitiesGenerators:
         if prefix is not None:
             return r[str].ok(prefix)
         if kind is None:
-            return r[str].fail("No kind provided for prefix resolution")
+            return r[str].fail(c.ERR_GENERATOR_KIND_MISSING)
         kind_prefix_map: t.StrMapping = {
             "correlation": "corr",
             "entity": "ent",
@@ -121,7 +121,7 @@ class FlextUtilitiesGenerators:
         """Generate ID by kind or custom prefix (the ONLY public ID generation method)."""
         actual_prefix_result = FlextUtilitiesGenerators._determine_prefix(kind, prefix)
         actual_prefix = (
-            actual_prefix_result.value if actual_prefix_result.is_success else None
+            actual_prefix_result.value if actual_prefix_result.success else None
         )
         match (kind, actual_prefix):
             case (("uuid" | None), None):

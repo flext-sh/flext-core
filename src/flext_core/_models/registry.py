@@ -42,12 +42,12 @@ class FlextModelsRegistry:
         ] = Field(default_factory=list[str])
 
         @computed_field
-        def is_failure(self) -> bool:
+        def failure(self) -> bool:
             """Indicate whether the batch registration had errors."""
             return bool(self.errors)
 
         @computed_field
-        def is_success(self) -> bool:
+        def success(self) -> bool:
             """Indicate whether the batch registration fully succeeded."""
             return not self.errors
 

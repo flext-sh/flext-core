@@ -18,15 +18,12 @@ from contextlib import suppress
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-from typing import Literal, NoReturn, Protocol, TypeIs, overload
+from typing import Literal, NoReturn, ParamSpec, Protocol, TypeIs, TypeVar, overload
 
 from flext_core import (
     FlextContainer,
     FlextContext,
     FlextLogger,
-    P,
-    R,
-    T,
     c,
     e,
     m,
@@ -35,6 +32,10 @@ from flext_core import (
     t,
     u,
 )
+
+P = ParamSpec("P")
+R = TypeVar("R")
+T = TypeVar("T")
 
 
 class FlextDecorators:
@@ -115,7 +116,7 @@ class FlextDecorators:
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
                         result = container.get(service_key)
-                        if result.is_success:
+                        if result.success:
                             kwargs[name] = result.value
                 return func(*args, **kwargs)
 
@@ -404,7 +405,7 @@ class FlextDecorators:
             c.SCOPE_OPERATION,
             operation=operation,
         )
-        if binding_result.is_failure:
+        if binding_result.failure:
             logger.warning(
                 "operation_context_binding_failed",
                 function=function_name,
@@ -424,7 +425,7 @@ class FlextDecorators:
     ) -> None:
         """Clear operation scope and log if cleanup fails."""
         clear_result = FlextLogger.clear_scope(c.SCOPE_OPERATION)
-        if clear_result.is_failure:
+        if clear_result.failure:
             FlextDecorators._handle_log_result(
                 result=clear_result,
                 logger=logger,
@@ -519,7 +520,7 @@ class FlextDecorators:
         kwargs: t.ConfigMap,
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
-        if not result.is_failure:
+        if not result.failure:
             return
         fallback_logger = FlextDecorators._resolve_fallback_logger(logger)
         if fallback_logger is None:
@@ -975,7 +976,7 @@ class FlextDecorators:
                             if v is not None and u.is_container(v)
                         }
                         bind_result = FlextLogger.bind_global_context(**filtered_vars)
-                        if bind_result.is_failure:
+                        if bind_result.failure:
                             logger.warning(
                                 "global_context_binding_failed",
                                 function=func.__name__,
@@ -989,7 +990,7 @@ class FlextDecorators:
                         unbind_result = FlextLogger.unbind_global_context(
                             *tuple(context_vars.keys()),
                         )
-                        if unbind_result.is_failure:
+                        if unbind_result.failure:
                             logger.warning(
                                 "global_context_unbind_failed",
                                 function=func.__name__,

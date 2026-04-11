@@ -36,7 +36,7 @@ class TestMixinsFullCoverage:
         """Mock _register_in_container that returns failure."""
         return cast(
             "r[bool]",
-            cast("t.NormalizedValue", SimpleNamespace(is_failure=True, error=None)),
+            cast("t.NormalizedValue", SimpleNamespace(failure=True, error=None)),
         )
 
     @staticmethod

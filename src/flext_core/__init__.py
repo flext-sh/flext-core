@@ -13,8 +13,6 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from pydantic.main import BaseModel
-
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.domain import FlextConstantsDomain
@@ -22,6 +20,7 @@ if _t.TYPE_CHECKING:
     from flext_core._constants.errors import FlextConstantsErrors
     from flext_core._constants.infrastructure import FlextConstantsInfrastructure
     from flext_core._constants.mixins import FlextConstantsMixins
+    from flext_core._constants.output import FlextConstantsOutput
     from flext_core._constants.platform import FlextConstantsPlatform
     from flext_core._constants.settings import FlextConstantsSettings
     from flext_core._constants.validation import FlextConstantsValidation
@@ -102,7 +101,7 @@ if _t.TYPE_CHECKING:
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.exceptions import FlextExceptions, e
     from flext_core.handlers import FlextHandlers, h
-    from flext_core.lazy import build_lazy_import_map
+    from flext_core.lazy import LazyNamespace
     from flext_core.loggings import FlextLogger
     from flext_core.mixins import FlextMixins, x
     from flext_core.models import FlextModels, m
@@ -113,10 +112,7 @@ if _t.TYPE_CHECKING:
     from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
-        TV,
-        EnumT,
         FlextTypes,
-        MessageT_contra,
         P,
         R,
         ResultT,
@@ -126,8 +122,6 @@ if _t.TYPE_CHECKING:
         T_Model,
         T_Namespace,
         T_Settings,
-        TRuntime,
-        TV_co,
         U,
         t,
     )
@@ -143,7 +137,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
     build_lazy_import_map(
         {
             ".__version__": (
-                "FlextVersion",
                 "__author__",
                 "__author_email__",
                 "__description__",
@@ -172,7 +165,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextHandlers",
                 "h",
             ),
-            ".lazy": ("build_lazy_import_map",),
+            ".lazy": ("LazyNamespace",),
             ".loggings": ("FlextLogger",),
             ".mixins": (
                 "FlextMixins",
@@ -198,16 +191,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".settings": ("FlextSettings",),
             ".typings": (
-                "EnumT",
                 "FlextTypes",
-                "MessageT_contra",
                 "P",
                 "R",
                 "ResultT",
                 "T",
-                "TRuntime",
-                "TV",
-                "TV_co",
                 "T_Model",
                 "T_Namespace",
                 "T_Settings",
@@ -220,7 +208,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextUtilities",
                 "u",
             ),
-            "pydantic.main": ("BaseModel",),
         },
     ),
     exclude_names=(
@@ -239,9 +226,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__ = [
-    "TV",
-    "BaseModel",
-    "EnumT",
     "FlextConstants",
     "FlextConstantsBase",
     "FlextConstantsCqrs",
@@ -250,6 +234,7 @@ __all__ = [
     "FlextConstantsErrors",
     "FlextConstantsInfrastructure",
     "FlextConstantsMixins",
+    "FlextConstantsOutput",
     "FlextConstantsPlatform",
     "FlextConstantsSettings",
     "FlextConstantsValidation",
@@ -338,14 +323,11 @@ __all__ = [
     "FlextUtilitiesReliability",
     "FlextUtilitiesResultHelpers",
     "FlextUtilitiesText",
-    "FlextVersion",
-    "MessageT_contra",
+    "LazyNamespace",
     "P",
     "R",
     "ResultT",
     "T",
-    "TRuntime",
-    "TV_co",
     "T_Model",
     "T_Namespace",
     "T_Settings",
@@ -360,7 +342,6 @@ __all__ = [
     "__url__",
     "__version__",
     "__version_info__",
-    "build_lazy_import_map",
     "c",
     "d",
     "e",

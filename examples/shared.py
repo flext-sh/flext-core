@@ -212,7 +212,7 @@ class Examples:
             case r() as result:
                 return t.ConfigMap(
                     root={
-                        "is_success": result.is_success,
+                        "is_success": result.success,
                         "error": result.error,
                         "unwrap_or": result.unwrap_or(-1),
                     },

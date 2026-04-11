@@ -58,9 +58,9 @@ class TestCompleteFlextSystemIntegration:
     def _test_railway_programming(self) -> None:
         """Test railway-oriented programming with r."""
         success_result = r[str].ok("dados_iniciais")
-        assert success_result.is_success
-        assert success_result.is_success
-        assert success_result.is_failure is False
+        assert success_result.success
+        assert success_result.success
+        assert success_result.failure is False
         assert success_result.value == "dados_iniciais"
         assert success_result.error is None
         pipeline_result = (
@@ -69,13 +69,13 @@ class TestCompleteFlextSystemIntegration:
             .map(lambda x: f"processado_{x}")
             .map(lambda x: str(x).replace("_", "-"))
         )
-        assert pipeline_result.is_success is True
+        assert pipeline_result.success is True
         assert str(pipeline_result.value) == "processado-DADOS-INICIAIS"
         failure_result: r[str] = r[str].fail(
             "erro_de_processamento",
         )
-        assert failure_result.is_success is False
-        assert failure_result.is_failure is True
+        assert failure_result.success is False
+        assert failure_result.failure is True
         assert failure_result.error == "erro_de_processamento"
         assert failure_result.unwrap_or("") == ""
 
@@ -85,11 +85,11 @@ class TestCompleteFlextSystemIntegration:
             return r[str].ok(f"validado_{data}")
 
         flat_map_success = success_result.flat_map(operacao_que_pode_falhar)
-        assert flat_map_success.is_success is True
+        assert flat_map_success.success is True
         assert str(flat_map_success.value) == "validado_dados_iniciais"
         invalid_data = r[str].ok("dados_invalido")
         flat_map_failure = invalid_data.flat_map(operacao_que_pode_falhar)
-        assert flat_map_failure.is_success is False
+        assert flat_map_failure.success is False
         assert flat_map_failure.error == "dados_invalidos"
 
     def _test_constants_system(self) -> None:
@@ -148,11 +148,11 @@ class TestCompleteFlextSystemIntegration:
         register_result = container.register("test_service", "test_value")
         assert register_result is container
         retrieved_service_result = container.get("test_service")
-        assert retrieved_service_result.is_success is True
+        assert retrieved_service_result.success is True
         retrieved_service = retrieved_service_result.value
         assert retrieved_service == "test_value"
         not_found_result = container.get("servico_inexistente")
-        assert not_found_result.is_success is False
+        assert not_found_result.success is False
         assert not_found_result.error is not None
 
     def _test_complex_integration(self) -> None:
@@ -186,7 +186,7 @@ class TestCompleteFlextSystemIntegration:
 
         dados_teste = {"nome": "João", "email": "joao@exemplo.com"}
         resultado_processamento = processar_dados_usuario(dados_teste)
-        assert resultado_processamento.is_success is True
+        assert resultado_processamento.success is True
         dados_finais = resultado_processamento.value
         assert "nome" in dados_finais
         assert "email" in dados_finais
@@ -196,7 +196,7 @@ class TestCompleteFlextSystemIntegration:
         assert dados_finais["email"] == "processado_joao@exemplo.com"
         dados_invalidos = {"nome": "", "email": "joao@exemplo.com"}
         resultado_erro = processar_dados_usuario(dados_invalidos)
-        assert resultado_erro.is_success is False
+        assert resultado_erro.success is False
         assert resultado_erro.error is not None
         assert "não pode estar vazio" in resultado_erro.error
 
@@ -206,7 +206,7 @@ class TestCompleteFlextSystemIntegration:
         resultado_recuperado = resultado_com_erro.lash(
             lambda _error: r[str].ok("valor_recuperado"),
         )
-        assert resultado_recuperado.is_success is True
+        assert resultado_recuperado.success is True
         assert resultado_recuperado.value == "valor_recuperado"
 
         def operacao_1(data: str) -> r[str]:
@@ -227,7 +227,7 @@ class TestCompleteFlextSystemIntegration:
             .flat_map(operacao_2)
             .flat_map(operacao_3)
         )
-        assert pipeline_sucesso.is_success is True
+        assert pipeline_sucesso.success is True
         assert str(pipeline_sucesso.value) == "final_etapa2_etapa1_dados_iniciais"
         pipeline_falha = (
             r[str]
@@ -236,7 +236,7 @@ class TestCompleteFlextSystemIntegration:
             .flat_map(operacao_2)
             .flat_map(operacao_3)
         )
-        assert pipeline_falha.is_success is False
+        assert pipeline_falha.success is False
         assert pipeline_falha.error == "erro_na_etapa2"
 
     def _validate_final_system(self) -> None:
@@ -249,5 +249,5 @@ class TestCompleteFlextSystemIntegration:
         container_final = FlextContainer()
         assert container_final is not None
         resultado_final = r[str].ok("sistema_funcionando")
-        assert resultado_final.is_success is True
+        assert resultado_final.success is True
         assert resultado_final.value == "sistema_funcionando"

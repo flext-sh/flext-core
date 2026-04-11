@@ -976,9 +976,9 @@ class TestUtilitiesCollectionCoverage:
             scenario.predicate,
         )
         if scenario.expected_result is None:
-            assert result.is_failure
+            assert result.failure
         else:
-            assert result.is_success
+            assert result.success
             assert result.value == scenario.expected_result
 
     @pytest.mark.parametrize(

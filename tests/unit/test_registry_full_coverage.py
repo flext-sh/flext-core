@@ -19,7 +19,7 @@ class _Handler(h[t.ValueOrModel, t.ValueOrModel]):
     def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
         if isinstance(message, (str, int, float, bool)):
             return r[t.ValueOrModel].ok(message)
-        return r[t.ValueOrModel].fail("unsupported message")
+        return r[t.ValueOrModel].fail(c.Core.Tests.TestErrors.UNSUPPORTED_MESSAGE)
 
     @override
     def __call__(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
@@ -81,11 +81,13 @@ def test_execute_and_register_handler_failure_paths() -> None:
         @override
         def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
             _ = message
-            return r[t.RuntimeAtomic].fail("dispatcher-unconfigured")
+            return r[t.RuntimeAtomic].fail(
+                c.Core.Tests.TestErrors.DISPATCHER_UNCONFIGURED
+            )
 
     registry._dispatcher = _FalseyDispatcher()
     execute_result = registry.execute()
-    assert execute_result.is_failure
+    assert execute_result.failure
 
     class _FailDispatcher(p.Dispatcher):
         @override
@@ -105,16 +107,16 @@ def test_execute_and_register_handler_failure_paths() -> None:
         ) -> r[bool]:
             _ = handler
             _ = is_event
-            return r[bool].fail("dispatcher-fail")
+            return r[bool].fail(c.Core.Tests.TestErrors.DISPATCHER_FAIL)
 
         @override
         def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
             _ = message
-            return r[t.RuntimeAtomic].fail("dispatcher-fail")
+            return r[t.RuntimeAtomic].fail(c.Core.Tests.TestErrors.DISPATCHER_FAIL)
 
     registry._dispatcher = _FailDispatcher()
     reg_result = registry.register_handler(_as_registry_handler(_Handler()))
-    assert reg_result.is_failure
+    assert reg_result.failure
     assert reg_result.error == "dispatcher-fail"
 
     class _OkDispatcher(p.Dispatcher):
@@ -144,7 +146,7 @@ def test_execute_and_register_handler_failure_paths() -> None:
 
     registry._dispatcher = _OkDispatcher()
     fallback = registry.register_handler(_as_registry_handler(_Handler()))
-    assert fallback.is_success
+    assert fallback.success
     assert fallback.value.registration_id != ""
 
 
@@ -205,18 +207,18 @@ def test_summary_error_paths_and_bindings_failures(
     registry = FlextRegistry()
     summary = m.RegistrySummary(errors=["something bad"])
     finalize = registry._finalize_summary(summary)
-    assert finalize.is_failure
+    assert finalize.failure
     monkeypatch.setattr(
         FlextRegistry,
         "register_handler",
         _register_handler_fail,
     )
     batch = registry.register_handlers([_as_registry_handler(_Handler())])
-    assert batch.is_failure
+    assert batch.failure
     failed = registry.register_bindings({str: _as_registry_handler(_Handler())})
-    assert failed.is_failure
+    assert failed.failure
     raised = registry.register_bindings({str: _as_registry_handler(_Handler())})
-    assert raised.is_failure
+    assert raised.failure
 
 
 def test_get_plugin_and_register_metadata_and_list_items_exception(
@@ -238,17 +240,17 @@ def test_get_plugin_and_register_metadata_and_list_items_exception(
         _container_get_fail,
     )
     missing = registry.get_plugin("cat", "name")
-    assert missing.is_failure
+    assert missing.failure
     metadata_result = registry.register(
         "svc",
         "service",
         metadata=m.Metadata(attributes={"k": "v"}),
     )
-    assert metadata_result.is_success
+    assert metadata_result.success
     monkeypatch.setattr(
         registry.container,
         "register",
         _container_register_raise,
     )
     reg_fail = registry.register("svc2", "service")
-    assert reg_fail.is_failure
+    assert reg_fail.failure

@@ -12,7 +12,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
 from types import ModuleType
-from typing import Literal
+from typing import Literal, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -20,10 +20,11 @@ from flext_core import (
     FlextModelsBase,
     FlextUtilitiesArgs,
     FlextUtilitiesGuardsTypeCore,
-    T_Model,
     r,
     t,
 )
+
+T_Model = TypeVar("T_Model", bound=BaseModel)
 
 
 class FlextUtilitiesModel:

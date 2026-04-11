@@ -65,15 +65,15 @@ class TestArchitecturalPatterns:
                 )
 
         email_service = ServiceFactory.create_service("email")
-        assert email_service.is_success
+        assert email_service.success
         assert isinstance(email_service.value, dict)
         assert email_service.value["type"] == "email"
         sms_service = ServiceFactory.create_service("sms")
-        assert sms_service.is_success
+        assert sms_service.success
         assert isinstance(sms_service.value, dict)
         assert sms_service.value["type"] == "sms"
         invalid_service = ServiceFactory.create_service("invalid")
-        assert invalid_service.is_failure
+        assert invalid_service.failure
 
     @pytest.mark.architecture
     def test_builder_pattern_implementation(self) -> None:
@@ -117,7 +117,7 @@ class TestArchitecturalPatterns:
             .with_cache(enabled=True)
             .build()
         )
-        assert config_result.is_success
+        assert config_result.success
         config = config_result.value
         assert isinstance(config, dict)
         database = config.get("database")
@@ -182,7 +182,7 @@ class TestArchitecturalPatterns:
         start_time = time.perf_counter()
         for i in range(100):
             query_result: r[t.RuntimeAtomic] = repo.find_by_id(f"entity_{i}")
-            assert query_result.is_success, f"Query {i} should succeed"
+            assert query_result.success, f"Query {i} should succeed"
             entity_data = query_result.value
             assert isinstance(entity_data, t.ConfigMap), (
                 f"Expected ConfigMap, got {type(entity_data)}"
@@ -246,9 +246,9 @@ class TestArchitecturalPatterns:
             "timestamp": time.time(),
         })
         result1 = handler.handle_user_created(created_event)
-        assert result1.is_success
+        assert result1.success
         result2 = handler.handle_user_updated(updated_event)
-        assert result2.is_success
+        assert result2.success
         assert len(handler.processed_events) == 2
         assert isinstance(handler.processed_events[0], _UserCreatedEvent)
         assert isinstance(handler.processed_events[1], _UserUpdatedEvent)

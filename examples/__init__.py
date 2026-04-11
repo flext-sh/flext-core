@@ -82,16 +82,7 @@ if _t.TYPE_CHECKING:
     from examples._models.exconfig import ExConfigAppConfig
     from examples._models.shared import SharedHandle, SharedPerson
     from examples.models import ExamplesFlextCoreModels, m
-    from flext_core.constants import FlextConstants as c
-    from flext_core.decorators import d
-    from flext_core.exceptions import e
-    from flext_core.handlers import h
-    from flext_core.mixins import x
-    from flext_core.protocols import p
-    from flext_core.result import r
-    from flext_core.service import s
-    from flext_core.typings import t
-    from flext_core.utilities import u
+    from flext_core import c, d, e, h, p, r, s, t, u, x
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._models",),
     build_lazy_import_map(
@@ -100,18 +91,18 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "ExamplesFlextCoreModels",
                 "m",
             ),
-            "flext_core.decorators": ("d",),
-            "flext_core.exceptions": ("e",),
-            "flext_core.handlers": ("h",),
-            "flext_core.mixins": ("x",),
-            "flext_core.protocols": ("p",),
-            "flext_core.result": ("r",),
-            "flext_core.service": ("s",),
-            "flext_core.typings": ("t",),
-            "flext_core.utilities": ("u",),
-        },
-        alias_groups={
-            "flext_core.constants": (("c", "FlextConstants"),),
+            "flext_core": (
+                "c",
+                "d",
+                "e",
+                "h",
+                "p",
+                "r",
+                "s",
+                "t",
+                "u",
+                "x",
+            ),
         },
     ),
     exclude_names=(

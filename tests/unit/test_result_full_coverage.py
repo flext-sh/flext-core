@@ -28,18 +28,18 @@ def test_validation_like_error_structure() -> None:
 def test_type_guards_result() -> None:
     ok_res = r[t.Container].ok("ok")
     fail_res = r[t.Container].fail("x")
-    tm.that(r.is_success_result(ok_res), eq=True)
-    tm.that(r.is_failure_result(fail_res), eq=True)
+    tm.that(r.successful_result(ok_res), eq=True)
+    tm.that(r.failed_result(fail_res), eq=True)
 
 
 def test_init_fallback_and_lazy_returns_result_property() -> None:
-    fallback = r[int](value=9, is_success=True)
+    fallback = r[int](value=9, success=True)
     tm.ok(fallback)
     tm.that(fallback.value, eq=9)
-    lazy_ok = r[int](value=5, is_success=True)
+    lazy_ok = r[int](value=5, success=True)
     assert lazy_ok._result is None
     _ = lazy_ok._returns_result
-    lazy_fail = r[int](error="nope", is_success=False)
+    lazy_fail = r[int](error="nope", success=False)
     assert lazy_fail._result is None
     _ = lazy_fail._returns_result
 
@@ -56,7 +56,7 @@ def test_map_flat_map_and_then_paths() -> None:
         "r[int]",
         r(
             error="inner",
-            is_success=False,
+            success=False,
             error_code=None,
             error_data=None,
         ),
@@ -140,7 +140,7 @@ def test_lash_runtime_result_paths() -> None:
     tm.that(lash_ok.value, eq=99)
     runtime_fail2: r[int] = r(
         error="recovery failed",
-        is_success=False,
+        success=False,
         error_code=None,
         error_data=None,
     )

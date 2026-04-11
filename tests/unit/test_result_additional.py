@@ -18,7 +18,7 @@ from tests import r, t, u
 def test_ok_accepts_none() -> None:
     """None is a valid success value when T includes None."""
     result = r[str | None].ok(None)
-    assert result.is_success
+    assert result.success
     assert result.value is None
 
 
@@ -32,7 +32,7 @@ def test_map_error_identity_and_transform() -> None:
         error_data=t.ConfigMap(root={"k": "v"}),
     )
     transformed = failure.map_error(lambda msg: f"{msg}_mapped")
-    assert transformed.is_failure
+    assert transformed.failure
     assert transformed.error is not None and "bad_mapped" in transformed.error
     assert transformed.error_code == "E1"
     assert transformed.error_data == t.ConfigMap(root={"k": "v"})
@@ -54,7 +54,7 @@ def test_flow_through_short_circuits_on_failure() -> None:
         return r[int].ok(0)
 
     result = r[int].ok(1).flow_through(step1, fail_step, unreachable)
-    assert result.is_failure
+    assert result.failure
     assert result.error is not None and "stop" in result.error
     assert visited == [1]
 

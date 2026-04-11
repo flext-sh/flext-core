@@ -625,14 +625,14 @@ class TestAdvancedPatterns:
 
         service = ProcessingService()
         result1 = service.process("data1")
-        assert result1.is_success
+        assert result1.success
         assert result1.value["status"] == "processing"
         result2 = service.process("data2")
-        assert result2.is_success
+        assert result2.success
         assert result2.value["status"] == "completed"
         assert service.call_count == 2
         result3 = service.process("data3")
-        assert result3.is_failure
+        assert result3.failure
         assert result3.error is not None and "Service unavailable" in result3.error
 
     def test_complex_test_data_generation(self) -> None:

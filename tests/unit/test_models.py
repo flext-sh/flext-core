@@ -85,7 +85,7 @@ class TestModels:
                 "status_changed",
                 t.ConfigMap(root={"old_status": "active", "new_status": new_status}),
             )
-            if result.is_failure:
+            if result.failure:
                 error_msg = f"Failed to add domain event: {result.error}"
                 raise ValueError(error_msg)
 

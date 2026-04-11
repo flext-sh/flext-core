@@ -16,7 +16,7 @@ class Ex07FlextExceptions(Examples):
     def exercise(self) -> None:
         self.section("imports")
         self.check("import.e_is_FlextExceptions", e.__name__ == "e")
-        self.check("import.r_ok", r[str].ok("ok").is_success)
+        self.check("import.r_ok", r[str].ok("ok").success)
         self.check("import.constant", c.UNKNOWN_ERROR)
         try:
             msg = "boom"

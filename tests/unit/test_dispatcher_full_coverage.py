@@ -122,14 +122,14 @@ class TestDispatcherFullCoverage:
     ) -> None:
         handler = self._SampleHandler()
         res = dispatcher.register_handler(handler)
-        assert res.is_success
+        assert res.success
         cmd = self._SampleCommand(payload="hello", command_id="cmd-1")
         dispatch_res = dispatcher.dispatch(cmd)
-        assert dispatch_res.is_success
+        assert dispatch_res.success
         assert dispatch_res.value == "handled:hello"
         unreg_cmd = self._UnregisteredCommand(command_id="cmd-2")
         fail_res = dispatcher.dispatch(unreg_cmd)
-        assert fail_res.is_failure
+        assert fail_res.failure
         assert (
             fail_res.error is not None and "no handler found" in fail_res.error.lower()
         )
@@ -137,10 +137,10 @@ class TestDispatcherFullCoverage:
     def test_invalid_registration_attempts(self, dispatcher: FlextDispatcher) -> None:
         assert dispatcher.register_handler(
             self._force_handler("not-a-handler"),
-        ).is_failure
+        ).failure
         assert dispatcher.register_handler(
             self._force_handler({"some": "dict"}),
-        ).is_failure
+        ).failure
 
         def nameless_handler(msg: m.Command) -> str:
             _ = msg
@@ -148,12 +148,12 @@ class TestDispatcherFullCoverage:
 
         assert dispatcher.register_handler(
             self._force_handler(nameless_handler),
-        ).is_failure
+        ).failure
 
     def test_event_publishing_strict(self, dispatcher: FlextDispatcher) -> None:
         handler = self._EventHandler()
         registration = dispatcher.register_handler(handler, is_event=True)
-        assert registration.is_success
+        assert registration.success
         evt = self._SampleEvent(
             aggregate_id="agg-1",
             event_type="sample_event",
@@ -162,16 +162,16 @@ class TestDispatcherFullCoverage:
             metadata=t.Dict(root={}),
         )
         res = dispatcher.publish(evt)
-        assert res.is_success
+        assert res.success
         batch_res = dispatcher.publish([evt, evt])
-        assert batch_res.is_success
+        assert batch_res.success
 
     def test_handler_attribute_discovery(self, dispatcher: FlextDispatcher) -> None:
         res = dispatcher.register_handler(self._PredicateHandler())
-        assert res.is_success
+        assert res.success
         assert dispatcher.dispatch(
             self._SampleCommand(payload="p", command_id="cmd-p"),
-        ).is_success
+        ).success
 
     def test_query_handler_can_return_config_map(
         self,
@@ -179,10 +179,10 @@ class TestDispatcherFullCoverage:
     ) -> None:
         """Dispatch should preserve BaseModel payloads allowed by the protocol."""
         registration = dispatcher.register_handler(self._QueryHandler())
-        assert registration.is_success
+        assert registration.success
         query = self._SampleQuery(query_id="query-1")
         result = dispatcher.dispatch(query)
-        assert result.is_success
+        assert result.success
         assert isinstance(result.value, t.ConfigMap)
         assert result.value.root["result"] == "data"
 
@@ -196,7 +196,7 @@ class TestDispatcherFullCoverage:
 
         setattr(func_handler, "message_type", self._SampleCommand)
         res = dispatcher.register_handler(func_handler)
-        assert res.is_success
+        assert res.success
         assert (
             dispatcher.dispatch(
                 self._SampleCommand(payload="x", command_id="cmd-x"),
@@ -205,8 +205,8 @@ class TestDispatcherFullCoverage:
         )
 
     def test_dispatch_invalid_input_types(self, dispatcher: FlextDispatcher) -> None:
-        assert dispatcher.dispatch(self._force_routable(None)).is_failure
-        assert dispatcher.dispatch(self._force_routable("not-a-model")).is_failure
+        assert dispatcher.dispatch(self._force_routable(None)).failure
+        assert dispatcher.dispatch(self._force_routable("not-a-model")).failure
 
     def test_exception_handling_in_dispatch(self, dispatcher: FlextDispatcher) -> None:
         def breaking_handler(msg: TestDispatcherFullCoverage._SampleCommand) -> str:
@@ -219,6 +219,6 @@ class TestDispatcherFullCoverage:
         res = dispatcher.dispatch(
             self._SampleCommand(payload="x", command_id="cmd-break"),
         )
-        assert res.is_failure
+        assert res.failure
         assert isinstance(res.error, str)
         assert "broken" in res.error

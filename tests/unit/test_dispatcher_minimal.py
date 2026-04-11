@@ -82,19 +82,19 @@ class TestDispatcherMinimal:
         """Handler with message_type attribute registers successfully."""
         dispatcher = FlextDispatcher()
         res = dispatcher.register_handler(self._EchoHandler())
-        assert res.is_success
+        assert res.success
 
     def test_register_handler_with_can_handle(self) -> None:
         """Handler with can_handle registers as auto-discovery handler."""
         dispatcher = FlextDispatcher()
         res = dispatcher.register_handler(self._AutoDiscoveryHandler())
-        assert res.is_success
+        assert res.success
 
     def test_register_handler_without_route_fails(self) -> None:
         """Handler without message_type/event_type/can_handle must fail."""
         dispatcher = FlextDispatcher()
         res = dispatcher.register_handler(self._BareHandler())
-        assert res.is_failure
+        assert res.failure
         assert "must expose" in (res.error or "")
 
     def test_register_handler_as_event_subscriber(self) -> None:
@@ -102,7 +102,7 @@ class TestDispatcherMinimal:
         dispatcher = FlextDispatcher()
         subscriber = self._EventSubscriber()
         res = dispatcher.register_handler(subscriber, is_event=True)
-        assert res.is_success
+        assert res.success
 
     def test_dispatch_command_success(self) -> None:
         """Dispatch a Command to its registered handler."""
@@ -110,7 +110,7 @@ class TestDispatcherMinimal:
         dispatcher.register_handler(self._EchoHandler())
         cmd = m.Command(command_type="EchoRoute", command_id="cmd-echo")
         result = dispatcher.dispatch(cmd)
-        assert result.is_success
+        assert result.success
         assert result.value == "handled:EchoRoute"
 
     def test_dispatch_no_handler_fails(self) -> None:
@@ -118,7 +118,7 @@ class TestDispatcherMinimal:
         dispatcher = FlextDispatcher()
         cmd = m.Command(command_type="UnknownRoute", command_id="cmd-unknown")
         result = dispatcher.dispatch(cmd)
-        assert result.is_failure
+        assert result.failure
         assert result.error_code == c.COMMAND_HANDLER_NOT_FOUND
 
     def test_dispatch_handler_exception_returns_failure(self) -> None:
@@ -127,7 +127,7 @@ class TestDispatcherMinimal:
         dispatcher.register_handler(self._ExplodingHandler())
         cmd = m.Command(command_type="ExplodeRoute", command_id="cmd-explode")
         result = dispatcher.dispatch(cmd)
-        assert result.is_failure
+        assert result.failure
         assert "boom" in (result.error or "")
         assert result.error_code == c.COMMAND_PROCESSING_FAILED
 
@@ -137,7 +137,7 @@ class TestDispatcherMinimal:
         dispatcher.register_handler(self._AutoDiscoveryHandler())
         cmd = self._AutoCommand(command_id="cmd-auto")
         result = dispatcher.dispatch(cmd)
-        assert result.is_success
+        assert result.success
         assert result.value == "auto:AutoRoute"
 
     def test_dispatch_after_handler_removal_fails(self) -> None:
@@ -147,7 +147,7 @@ class TestDispatcherMinimal:
         dispatcher._handlers.clear()
         cmd = m.Command(command_type="EchoRoute", command_id="cmd-cleared")
         result = dispatcher.dispatch(cmd)
-        assert result.is_failure
+        assert result.failure
         assert result.error_code == c.COMMAND_HANDLER_NOT_FOUND
 
     def test_publish_event_to_subscriber(self) -> None:
@@ -163,7 +163,7 @@ class TestDispatcherMinimal:
             metadata=t.Dict({}),
         )
         res = dispatcher.publish(event)
-        assert res.is_success
+        assert res.success
         assert len(subscriber.received) == 1
 
     def test_publish_no_subscribers_succeeds(self) -> None:
@@ -177,4 +177,4 @@ class TestDispatcherMinimal:
             metadata=t.Dict({}),
         )
         res = dispatcher.publish(event)
-        assert res.is_success
+        assert res.success

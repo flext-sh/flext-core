@@ -19,6 +19,7 @@ from flext_core import (
     FlextConstantsValidation,
     FlextModelsNamespace,
 )
+from flext_core._constants.output import FlextConstantsOutput
 
 
 class FlextConstants(
@@ -30,6 +31,7 @@ class FlextConstants(
     FlextConstantsCqrs,
     FlextConstantsErrors,
     FlextConstantsInfrastructure,
+    FlextConstantsOutput,
     FlextConstantsMixins,
     FlextConstantsEnforcement,
     FlextModelsNamespace,

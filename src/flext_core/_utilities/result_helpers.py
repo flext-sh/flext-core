@@ -11,8 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TypeVar
 
-from flext_core import T, p, r, t
+from flext_core import p, r, t
+
+T = TypeVar("T")
 
 
 class FlextUtilitiesResultHelpers:
@@ -58,7 +61,7 @@ class FlextUtilitiesResultHelpers:
 
         """
         func_result = r[T].create_from_callable(func)
-        if func_result.is_success:
+        if func_result.success:
             return r[T].ok(func_result.value)
         exc = getattr(func_result, "_exception", None)
         if exc is not None and not isinstance(exc, catch):
@@ -77,7 +80,7 @@ class FlextUtilitiesResultHelpers:
 
         Keeps call sites terse while preserving strong generic typing.
         """
-        if result.is_failure:
+        if result.failure:
             if message is None:
                 error_message = str(result.error)
             else:

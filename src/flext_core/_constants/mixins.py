@@ -95,6 +95,13 @@ class FlextConstantsMixins:
         OFF = "off"
         DISABLED = "disabled"
 
+    @unique
+    class RegistrationScope(StrEnum):
+        """Plugin registration scopes for registry operations."""
+
+        INSTANCE = "instance"
+        CLASS = "class"
+
     STRING_TRUE: Final[str] = "true"
     STRING_FALSE: Final[str] = "false"
     DEFAULT_USE_UTC: Final[bool] = True

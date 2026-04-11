@@ -181,13 +181,13 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             def handle(self, message: t.Scalar) -> r[t.Scalar]:
                 """Execute the wrapped callable."""
                 if isinstance(message, tuple):
-                    return r[t.Scalar].fail("Unexpected message type")
+                    return r[t.Scalar].fail(c.ERR_UNEXPECTED_MESSAGE_TYPE)
                 try:
                     result = self._handler_fn(message)
                     if isinstance(result, r):
                         return result
                     if isinstance(result, set):
-                        return r[t.Scalar].fail("Result must be compatible with Scalar")
+                        return r[t.Scalar].fail(c.ERR_RESULT_NOT_SCALAR_COMPATIBLE)
                     return r[t.Scalar].ok(result)
                 except (
                     ValueError,
@@ -367,7 +367,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         """
         validation = self.validate_message(message)
-        if validation.is_failure:
+        if validation.failure:
             return r[ResultT].fail(validation.error or "Validation failed")
         return self.handle(message)
 
@@ -481,7 +481,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         """
         if data is None:
-            return r[bool].fail("Message cannot be None")
+            return r[bool].fail(c.ERR_MESSAGE_CANNOT_BE_NONE)
         return r[bool].ok(True)
 
     def _record_execution_metrics(
@@ -536,7 +536,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             error_msg = f"Handler cannot handle message type {type_name}"
             return r[ResultT].fail(error_msg)
         validation = self.validate_message(message)
-        if validation.is_failure:
+        if validation.failure:
             error_detail = validation.error or "Validation failed"
             error_msg = f"Message validation failed: {error_detail}"
             return r[ResultT].fail(error_msg)
@@ -544,7 +544,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         _ = self.push_context(self._execution_context)
         try:
             result = self.handle(message)
-            self._record_execution_metrics(success=result.is_success)
+            self._record_execution_metrics(success=result.success)
             return result
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
             self.logger.warning("Critical handler pipeline failure", exc_info=exc)

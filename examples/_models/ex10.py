@@ -66,13 +66,13 @@ class Ex10ServiceStub(m.Value):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
     @property
-    def is_valid(self) -> bool:
+    def valid(self) -> bool:
         return True
 
     def execute(self) -> r[t.ConfigMap]:
         return r[t.ConfigMap].ok(t.ConfigMap(root={"ok": True}))
 
-    def get_service_info(self) -> t.ConfigMap:
+    def service_info(self) -> t.ConfigMap:
         return t.ConfigMap(root={"service": "stub"})
 
     def validate_business_rules(self) -> r[bool]:

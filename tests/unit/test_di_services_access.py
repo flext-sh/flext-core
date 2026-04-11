@@ -94,7 +94,7 @@ class TestDiServicesAccess:
         """Test registering FlextLogger in container for DI."""
         container = FlextContainer()
         logger_result = container.get("logger")
-        assert logger_result.is_success
+        assert logger_result.success
         assert isinstance(logger_result.value, p.Logger)
 
         def create_custom_logger() -> FlextLogger:
@@ -108,7 +108,7 @@ class TestDiServicesAccess:
         assert returned_container is container
         assert container.has_service("custom_logger")
         custom_logger_result = container.get("custom_logger")
-        assert custom_logger_result.is_success
+        assert custom_logger_result.success
         assert isinstance(custom_logger_result.value, p.Logger)
 
     def test_context_via_runtime_create(self) -> None:
@@ -129,7 +129,7 @@ class TestDiServicesAccess:
         """Test registering FlextContext in container for DI."""
         container = FlextContainer(_context=FlextContext())
         context_result = container.get("context")
-        assert context_result.is_success
+        assert context_result.success
         assert isinstance(context_result.value, p.Context)
         custom_context = FlextContext()
         returned_container = container.register(
@@ -139,7 +139,7 @@ class TestDiServicesAccess:
         assert returned_container is container
         assert container.has_service("custom_context")
         custom_context_result = container.get("custom_context")
-        assert custom_context_result.is_success
+        assert custom_context_result.success
         assert isinstance(custom_context_result.value, p.Context)
         assert custom_context_result.value is custom_context
 

@@ -40,11 +40,11 @@ class TestPatternsCommands:
         def validate_command(self) -> r[bool]:
             """Validate command data."""
             if not self.username:
-                return r[bool].fail("Username is required")
+                return r[bool].fail(c.Core.Tests.TestErrors.USERNAME_REQUIRED)
             if not self.email:
-                return r[bool].fail("Email is required")
+                return r[bool].fail(c.Core.Tests.TestErrors.EMAIL_REQUIRED)
             if "@" not in self.email:
-                return r[bool].fail("Invalid email format")
+                return r[bool].fail(c.Core.Tests.TestErrors.INVALID_EMAIL_FORMAT)
             return r[bool].ok(True)
 
     class UpdateUserCommand(m.Command):
@@ -76,9 +76,9 @@ class TestPatternsCommands:
         def validate_command(self) -> r[bool]:
             """Validate command data."""
             if not self.target_user_id:
-                return r[bool].fail("Target User ID is required")
+                return r[bool].fail(c.Core.Tests.TestErrors.TARGET_USER_ID_REQUIRED)
             if not self.updates:
-                return r[bool].fail("Updates are required")
+                return r[bool].fail(c.Core.Tests.TestErrors.UPDATES_REQUIRED)
             return r[bool].ok(True)
 
     class FailingCommand(m.Command):
@@ -90,7 +90,7 @@ class TestPatternsCommands:
 
         def validate_command(self) -> r[bool]:
             """Fail validation intentionally."""
-            return r[bool].fail("This command always fails")
+            return r[bool].fail(c.Core.Tests.TestErrors.COMMAND_ALWAYS_FAILS)
 
     class CreateUserCommandHandler(h[t.ValueOrModel, t.ValueOrModel]):
         """Test handler for CreateUserCommand."""
@@ -128,7 +128,7 @@ class TestPatternsCommands:
         ) -> r[bool]:
             """Validate command using command's validate_command method."""
             if not isinstance(data, TestPatternsCommands.CreateUserCommand):
-                return r[bool].fail("Cannot handle this command type")
+                return r[bool].fail(c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE)
             return data.validate_command()
 
         @override
@@ -138,7 +138,9 @@ class TestPatternsCommands:
         ) -> r[t.ValueOrModel]:
             """Handle the create user command."""
             if not isinstance(message, TestPatternsCommands.CreateUserCommand):
-                return r[t.ValueOrModel].fail("Cannot handle this command type")
+                return r[t.ValueOrModel].fail(
+                    c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE
+                )
             user_data: t.MutableContainerMapping = {
                 "id": f"user_{len(self.created_users) + 1}",
                 "username": message.username,
@@ -189,7 +191,7 @@ class TestPatternsCommands:
         ) -> r[bool]:
             """Validate command using command's validate_command method."""
             if not isinstance(data, TestPatternsCommands.UpdateUserCommand):
-                return r[bool].fail("Cannot handle this command type")
+                return r[bool].fail(c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE)
             return data.validate_command()
 
         @override
@@ -199,7 +201,9 @@ class TestPatternsCommands:
         ) -> r[t.ValueOrModel]:
             """Handle the update user command."""
             if not isinstance(message, TestPatternsCommands.UpdateUserCommand):
-                return r[t.ValueOrModel].fail("Cannot handle this command type")
+                return r[t.ValueOrModel].fail(
+                    c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE
+                )
             if message.target_user_id not in self.updated_users:
                 self.updated_users[message.target_user_id] = {}
             user_updates = self.updated_users[message.target_user_id]
@@ -240,14 +244,16 @@ class TestPatternsCommands:
         ) -> r[bool]:
             """Validate command using command's validate_command method."""
             if not isinstance(data, TestPatternsCommands.FailingCommand):
-                return r[bool].fail("Cannot handle this command type")
+                return r[bool].fail(c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE)
             return data.validate_command()
 
         @override
         def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
             """Fail to handle command intentionally."""
             if not isinstance(message, TestPatternsCommands.FailingCommand):
-                return r[t.ValueOrModel].fail("Cannot handle this command type")
+                return r[t.ValueOrModel].fail(
+                    c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE
+                )
             error_msg = (
                 f"Handler processing failed for command: {message.__class__.__name__}"
             )
@@ -325,16 +331,16 @@ class TestPatternsCommands:
             email="valid@example.com",
         )
         result = command.validate_command()
-        if not result.is_success:
-            msg = f"Expected True, got {result.is_success}"
+        if not result.success:
+            msg = f"Expected True, got {result.success}"
             raise AssertionError(msg)
 
     def test_validate_command_failure_no_username(self) -> None:
         """Test command validation failure for missing username."""
         command = self._create_user_command(username="", email="test@example.com")
         result = command.validate_command()
-        if not result.is_failure:
-            msg = f"Expected True, got {result.is_failure}"
+        if not result.failure:
+            msg = f"Expected True, got {result.failure}"
             raise AssertionError(msg)
         assert result.error is not None
         assert result.error
@@ -346,8 +352,8 @@ class TestPatternsCommands:
         """Test command validation failure for missing email."""
         command = self._create_user_command(username="test_user", email="")
         result = command.validate_command()
-        if not result.is_failure:
-            msg = f"Expected True, got {result.is_failure}"
+        if not result.failure:
+            msg = f"Expected True, got {result.failure}"
             raise AssertionError(msg)
         assert result.error is not None
         assert result.error
@@ -359,8 +365,8 @@ class TestPatternsCommands:
         """Test command validation failure for invalid email."""
         command = self._create_user_command(username="test_user", email="invalid_email")
         result = command.validate_command()
-        if not result.is_failure:
-            msg = f"Expected True, got {result.is_failure}"
+        if not result.failure:
+            msg = f"Expected True, got {result.failure}"
             raise AssertionError(msg)
         assert result.error is not None
         assert result.error
@@ -420,8 +426,8 @@ class TestPatternsCommands:
             email="john@example.com",
         )
         result = handler.handle(command)
-        if not result.is_success:
-            msg = f"Expected True, got {result.is_success}"
+        if not result.success:
+            msg = f"Expected True, got {result.success}"
             raise AssertionError(msg)
         assert result.value is not None
         value = result.value
@@ -444,8 +450,8 @@ class TestPatternsCommands:
             email="jane@example.com",
         )
         result = handler.handle(command)
-        if not result.is_success:
-            msg = f"Expected True, got {result.is_success}"
+        if not result.success:
+            msg = f"Expected True, got {result.success}"
             raise AssertionError(msg)
         if len(handler.created_users) != 1:
             msg = f"Expected {1}, got {len(handler.created_users)}"
@@ -456,8 +462,8 @@ class TestPatternsCommands:
         handler = self.CreateUserCommandHandler()
         command = self._create_user_command(username="", email="invalid")
         result = handler.execute(command)
-        if not result.is_failure:
-            msg = f"Expected True, got {result.is_failure}"
+        if not result.failure:
+            msg = f"Expected True, got {result.failure}"
             raise AssertionError(msg)
         assert result.error is not None
         assert result.error
@@ -474,8 +480,8 @@ class TestPatternsCommands:
         result = self.CreateUserCommandHandler().validate_message(
             wrong_command,
         )
-        if not result.is_failure:
-            msg = f"Expected True, got {result.is_failure}"
+        if not result.failure:
+            msg = f"Expected True, got {result.failure}"
             raise AssertionError(msg)
         assert result.error is not None
         assert result.error
@@ -487,8 +493,8 @@ class TestPatternsCommands:
         """Test creating successful command result."""
         result_data: t.ContainerMapping = {"id": "123", "username": "test"}
         command_result: r[t.ContainerMapping] = r[t.ContainerMapping].ok(result_data)
-        if not command_result.is_success:
-            msg = f"Expected True, got {command_result.is_success}"
+        if not command_result.success:
+            msg = f"Expected True, got {command_result.success}"
             raise AssertionError(msg)
         if command_result.value != result_data:
             msg = f"Expected {result_data}, got {command_result.value}"
@@ -499,10 +505,10 @@ class TestPatternsCommands:
         """Test creating failed command result."""
         error_message = "Command execution failed"
         command_result: r[bool] = r[bool].fail(error_message)
-        if command_result.is_success:
-            msg = f"Expected False, got {command_result.is_success}"
+        if command_result.success:
+            msg = f"Expected False, got {command_result.success}"
             raise AssertionError(msg)
-        assert command_result.is_failure
+        assert command_result.failure
         if command_result.error != error_message:
             msg = f"Expected {error_message}, got {command_result.error}"
             raise AssertionError(msg)
@@ -511,7 +517,7 @@ class TestPatternsCommands:
         """Test result metadata properties."""
         result_data = {"id": "123"}
         command_result = r[t.StrMapping].ok(result_data)
-        if not command_result.is_success:
-            msg = f"Expected True, got {command_result.is_success}"
+        if not command_result.success:
+            msg = f"Expected True, got {command_result.success}"
             raise AssertionError(msg)
         assert command_result.error_data is None

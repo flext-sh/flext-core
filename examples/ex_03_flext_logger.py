@@ -16,7 +16,7 @@ class Ex03FlextLogger(Examples):
 
     @staticmethod
     def _logged(result: r[bool] | None) -> bool:
-        return True if result is None else result.is_success
+        return True if result is None else result.success
 
     @override
     def exercise(self) -> None:
@@ -49,16 +49,16 @@ class Ex03FlextLogger(Examples):
             FlextLogger.bind_global_context(
                 app_name="flext-core",
                 correlation_id="g-001",
-            ).is_success,
+            ).success,
         )
         self.check("global.info.ok", self._logged(logger.info("global bound")))
         self.check(
             "unbind_global_context.ok",
-            FlextLogger.unbind_global_context("correlation_id").is_success,
+            FlextLogger.unbind_global_context("correlation_id").success,
         )
         self.check(
             "clear_global_context.ok",
-            FlextLogger.unbind_global_context("app_name").is_success,
+            FlextLogger.unbind_global_context("app_name").success,
         )
 
     def _exercise_scoped_context(self) -> None:
@@ -70,19 +70,19 @@ class Ex03FlextLogger(Examples):
         operation_scope = c.SCOPE_OPERATION
         self.check(
             "bind_context.application.ok",
-            FlextLogger.bind_context(application_scope, app="core").is_success,
+            FlextLogger.bind_context(application_scope, app="core").success,
         )
         self.check(
             "bind_context.request.ok",
-            FlextLogger.bind_context(request_scope, request_id="req-1").is_success,
+            FlextLogger.bind_context(request_scope, request_id="req-1").success,
         )
         self.check(
             "bind_context.operation.ok",
-            FlextLogger.bind_context(operation_scope, operation="sync").is_success,
+            FlextLogger.bind_context(operation_scope, operation="sync").success,
         )
         self.check(
             "bind_context.tenant.ok",
-            FlextLogger.bind_context(request_scope, tenant="acme").is_success,
+            FlextLogger.bind_context(request_scope, tenant="acme").success,
         )
         self.check(
             "scoped_context.info.ok",
@@ -90,15 +90,15 @@ class Ex03FlextLogger(Examples):
         )
         self.check(
             "clear_scope.application.ok",
-            FlextLogger.clear_scope(application_scope).is_success,
+            FlextLogger.clear_scope(application_scope).success,
         )
         self.check(
             "clear_scope.request.ok",
-            FlextLogger.clear_scope(request_scope).is_success,
+            FlextLogger.clear_scope(request_scope).success,
         )
         self.check(
             "clear_scope.operation.ok",
-            FlextLogger.clear_scope(operation_scope).is_success,
+            FlextLogger.clear_scope(operation_scope).success,
         )
 
     def _exercise_level_context(self) -> None:
@@ -107,7 +107,7 @@ class Ex03FlextLogger(Examples):
         logger = FlextLogger.create_module_logger("examples.ex_03.level")
         self.check(
             "bind_context_for_level.ok",
-            FlextLogger.bind_context_for_level("INFO", level_tag="l1").is_success,
+            FlextLogger.bind_context_for_level("INFO", level_tag="l1").success,
         )
         self.check(
             "level.info.ok",

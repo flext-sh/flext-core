@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Mapping, MutableMapping
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, TypeVar, override
 
 from pydantic import (
     Field,
@@ -33,13 +33,14 @@ from pydantic_settings import (
 
 import flext_core
 from flext_core import (
-    T_Namespace,
-    T_Settings,
     c,
     m,
     t,
     u,
 )
+
+T_Settings = TypeVar("T_Settings", bound="FlextSettings")
+T_Namespace = TypeVar("T_Namespace", bound=BaseSettings)
 
 
 class FlextSettings(BaseSettings):

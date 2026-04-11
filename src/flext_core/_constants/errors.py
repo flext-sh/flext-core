@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import override
+from typing import Final, override
 
 
 class FlextConstantsErrors:
@@ -47,3 +47,48 @@ class FlextConstantsErrors:
         def __str__(self) -> str:
             """Return the domain value (not the enum name)."""
             return self.value
+
+    ERR_HANDLER_MUST_BE_CALLABLE: Final[str] = "Handler must be callable"
+    ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED: Final[str] = (
+        "Handler must expose message_type, event_type, or can_handle"
+    )
+    ERR_DISPATCHER_NOT_CONFIGURED: Final[str] = "Dispatcher not configured"
+    ERR_UNEXPECTED_MESSAGE_TYPE: Final[str] = "Unexpected message type"
+    ERR_RESULT_NOT_SCALAR_COMPATIBLE: Final[str] = (
+        "Result must be compatible with Scalar"
+    )
+    ERR_MESSAGE_CANNOT_BE_NONE: Final[str] = "Message cannot be None"
+    ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED: Final[str] = (
+        "Key must be a non-empty string"
+    )
+    ERR_CONTEXT_VALUE_CANNOT_BE_NONE: Final[str] = "Value cannot be None"
+    ERR_CONTEXT_VALUE_NOT_SERIALIZABLE: Final[str] = "Value must be serializable"
+    ERR_CONTEXT_NOT_ACTIVE: Final[str] = "Context is not active"
+    ERR_CONTEXT_INVALID_KEY_FOUND: Final[str] = "Invalid key found in context"
+    ERR_CONTEXT_SINGLE_KEY_VALUE_REQUIRED: Final[str] = (
+        "Value is required for single-key set"
+    )
+    ERR_VALIDATION_FAILED: Final[str] = "Validation failed"
+    ERR_GENERATOR_KIND_MISSING: Final[str] = "No kind provided for prefix resolution"
+    ERR_DOMAIN_EVENT_NAME_REQUIRED: Final[str] = (
+        "Domain event name must be a non-empty string"
+    )
+    ERR_EVENTS_LIST_OR_TUPLE_REQUIRED: Final[str] = "Events must be a list or tuple"
+    ERR_EVENT_NAME_REQUIRED: Final[str] = "Event name must be non-empty string"
+    ERR_CHECKER_HANDLER_NO_HANDLE_METHOD: Final[str] = "Handler has no handle method"
+    ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE: Final[str] = (
+        "Handler handle attribute is not callable"
+    )
+    ERR_CHECKER_NO_MESSAGE_PARAMETER: Final[str] = (
+        "No message parameter found in handle"
+    )
+    ERR_CHECKER_TYPE_HINT_NONE: Final[str] = "Type hint is None"
+    ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT: Final[str] = (
+        "No annotation or type hint for parameter"
+    )
+    ERR_CHECKER_INVALID_HANDLE_METHOD_SIGNATURE: Final[str] = (
+        "Invalid handle method signature"
+    )
+    ERR_COLLECTION_NO_MATCHING_ITEM_FOUND: Final[str] = "No matching item found"
+    ERR_MAPPER_NOT_A_SEQUENCE: Final[str] = "Not a sequence"
+    ERR_MAPPER_FOUND_NONE_INDEX: Final[str] = "found_none:index"

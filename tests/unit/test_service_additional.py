@@ -25,8 +25,8 @@ class RuntimeCloneService(s[str]):
         return r[bool].ok(True)
 
 
-def test_is_valid_handles_validation_exception() -> None:
-    """is_valid should return False when validation raises exceptions."""
+def test_valid_handles_validation_exception() -> None:
+    """Valid should return False when validation raises exceptions."""
 
     class RaisingValidationService(s[str]):
         @override
@@ -39,7 +39,7 @@ def test_is_valid_handles_validation_exception() -> None:
             return r[str].ok("x")
 
     service = RaisingValidationService()
-    assert service.is_valid() is False
+    assert service.valid() is False
 
 
 def test_result_property_raises_on_failure() -> None:

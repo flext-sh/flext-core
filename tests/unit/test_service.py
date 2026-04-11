@@ -56,7 +56,7 @@ class TestsCore:
         ]
         is_valid_expected: Annotated[
             bool,
-            Field(description="Expected is_valid result"),
+            Field(description="Expected valid result"),
         ]
         service_kwargs: Annotated[
             t.ContainerMapping | None,
@@ -230,10 +230,10 @@ class TestsCore:
         assert data.user_id == 1
 
     def test_is_valid_scenarios(self) -> None:
-        """Test is_valid with various service scenarios."""
+        """Test valid with various service scenarios."""
         for scenario in self._service_scenarios():
             service = self.ServiceScenarios.create_service(scenario)
-            assert service.is_valid() is scenario.is_valid_expected
+            assert service.valid() is scenario.is_valid_expected
 
     def test_validate_business_rules_default(self) -> None:
         """Test default business rules validation."""
@@ -266,7 +266,7 @@ class TestsCore:
             required_attrs=["name", "amount", "enabled"],
             optional_attrs=["validate_business_rules"],
         )
-        assert validation_result.is_success
+        assert validation_result.success
 
     def test_service_validation_failure_limits(self) -> None:
         """Test service validation failure - limit cases."""
@@ -296,7 +296,7 @@ class TestsCore:
 
         service = _DynamicService(value=value)
         result = service.execute()
-        assert result.is_success or result.is_failure
+        assert result.success or result.failure
 
 
 class TestServiceInternals:

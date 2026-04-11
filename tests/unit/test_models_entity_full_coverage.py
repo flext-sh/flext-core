@@ -17,7 +17,7 @@ from tests import c, m, t, u
 
 def test_entity_comparable_map_and_bulk_validation_paths() -> None:
     assert c.UNKNOWN_ERROR
-    assert r[int].ok(1).is_success
+    assert r[int].ok(1).success
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
     assert u.to_str(1) == "1"
     cfg = m.ComparableConfigMap(root={"a": 1})
@@ -37,4 +37,4 @@ def test_entity_comparable_map_and_bulk_validation_paths() -> None:
     bad = entry.add_domain_events_bulk(
         cast("Sequence[tuple[str, t.ConfigMap | None]]", "invalid"),
     )
-    assert bad.is_failure
+    assert bad.failure

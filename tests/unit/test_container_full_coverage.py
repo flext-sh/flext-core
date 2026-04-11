@@ -505,7 +505,7 @@ class TestContainerFullCoverage:
         c.register_core_services()
         tm.that(c.has_service("context"), is_=bool)
         c.wire_modules(modules=[])
-        assert c.get("r1").is_success
+        assert c.get("r1").success
         tm.ok(self._get_with_type(c, "f1", typed_value_cls))
         tm.ok(self._get_with_type(c, "r1", typed_value_cls))
 
@@ -556,7 +556,7 @@ class TestContainerFullCoverage:
         c.register("fac-x", lambda: "v", kind="factory")
         tm.that(c.get_config().root, ne=None)
         c.register("", "x")
-        assert c.get("svc-x").is_success
+        assert c.get("svc-x").success
         tm.fail(c.get("missing-service"))
         tm.ok(self._get_with_type(c, "svc-x", typed_value_cls))
         tm.fail(self._get_with_type(c, "missing-service", typed_value_cls))
@@ -689,7 +689,7 @@ class TestContainerFullCoverage:
                     factory=lambda: "ok",
                 ),
             }
-            assert c2.get("ok-factory").is_success
+            assert c2.get("ok-factory").success
             c2._services = {
                 "svc-int": m.ServiceRegistration(
                     name="svc-int",

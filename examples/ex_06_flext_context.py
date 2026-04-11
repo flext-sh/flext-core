@@ -25,14 +25,14 @@ class Ex06FlextContext(Examples):
         self.check("create.instance", type(ctx).__name__)
         self.check("create.has.operation", ctx.has(c.KEY_OPERATION_ID))
         self.check("create.has.user", ctx.has(c.KEY_USER_ID))
-        self.check("set.success", (_ := ctx.set("k1", "v1")).is_success)
+        self.check("set.success", (_ := ctx.set("k1", "v1")).success)
         seed = FlextContext.create()
         _ = seed.set("k2", 2)
         _ = seed.set("k3", True)
         payload = seed.iter_scope_vars()[c.SCOPE_GLOBAL].get()
         self.check(
             "set_all.success",
-            ctx.set(payload or t.ConfigMap(root={})).is_success,
+            ctx.set(payload or t.ConfigMap(root={})).success,
         )
         self.check("get.k1", ctx.get("k1").unwrap_or("missing"))
         self.check("has.k2", ctx.has("k2"))
@@ -44,7 +44,7 @@ class Ex06FlextContext(Examples):
         merged = ctx.clone().merge(t.ConfigMap(root={"k4": "merged"}))
         self.check("merge.get", merged.get("k4").unwrap_or("missing"))
         self.check("clone.get", ctx.clone().get("k1").unwrap_or("missing"))
-        self.check("validate.success", ctx.validate_context().is_success)
+        self.check("validate.success", ctx.validate_context().success)
         ctx.set_metadata("meta_key", "meta_value")
         self.check("get_metadata", ctx.get_metadata("meta_key").unwrap_or("missing"))
         exported_min = ctx.export(as_dict=False)
@@ -72,7 +72,7 @@ class Ex06FlextContext(Examples):
             self.check("raise.msg", str(exc))
         self.check(
             "service.register.ok",
-            FlextContext.Service.register_service("demo-service", "svc").is_success,
+            FlextContext.Service.register_service("demo-service", "svc").success,
         )
         self.check(
             "service.get.ok",
@@ -80,7 +80,7 @@ class Ex06FlextContext(Examples):
         )
         self.check(
             "service.get.missing",
-            FlextContext.Service.get_service("missing").is_failure,
+            FlextContext.Service.get_service("missing").failure,
         )
         before_service_name = FlextContext.Variables.ServiceName.get()
         with FlextContext.Service.service_context("orders", version="1.2.3"):
