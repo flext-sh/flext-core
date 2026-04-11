@@ -46,7 +46,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _normalize_unknown_value[T](value: t.ValueOrModel) -> t.NormalizedValue:
         validated = FlextUtilitiesCollection._safe_validate_serializable(value)
-        if FlextUtilitiesGuardsTypeCore.is_scalar(validated):
+        if FlextUtilitiesGuardsTypeCore.scalar(validated):
             return validated
         if isinstance(validated, list):
             normalized_items: t.MutableContainerList = [

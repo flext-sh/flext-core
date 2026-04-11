@@ -49,21 +49,21 @@ class TestFlextModelsCollectionsCoverage100:
         stats1 = self.StatisticsCount(count=10)
         stats2 = self.StatisticsCount(count=20)
         result = self.StatisticsCount.aggregate([stats1, stats2])
-        tm.that(u.is_dict_like(result), eq=True)
+        tm.that(u.dict_like(result), eq=True)
         tm.that(result["count"], eq=30)
 
     def test_statistics_aggregate_lists(self) -> None:
         stats1 = self.StatisticsItems(items=["a", "b"])
         stats2 = self.StatisticsItems(items=["c"])
         result = self.StatisticsItems.aggregate([stats1, stats2])
-        tm.that(u.is_dict_like(result), eq=True)
+        tm.that(u.dict_like(result), eq=True)
         tm.that(result["items"], eq=["a", "b", "c"])
 
     def test_statistics_aggregate_mixed(self) -> None:
         stats1 = self.StatisticsMixed(count=10, items=["a"], name="first")
         stats2 = self.StatisticsMixed(count=20, items=["b"], name="second")
         result = self.StatisticsMixed.aggregate([stats1, stats2])
-        tm.that(u.is_dict_like(result), eq=True)
+        tm.that(u.dict_like(result), eq=True)
         tm.that(result["count"], eq=30)
         tm.that(result["items"], eq=["a", "b"])
         tm.that(result["name"], eq="second")
@@ -72,7 +72,7 @@ class TestFlextModelsCollectionsCoverage100:
         stats1 = self.StatisticsOptional(count=10, name="first")
         stats2 = self.StatisticsOptional(count=None, name=None)
         result = self.StatisticsOptional.aggregate([stats1, stats2])
-        tm.that(u.is_dict_like(result), eq=True)
+        tm.that(u.dict_like(result), eq=True)
         tm.that(result["count"], eq=10)
         tm.that(result["name"], eq="first")
 

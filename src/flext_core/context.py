@@ -52,12 +52,12 @@ class FlextContext(m.ArbitraryTypesModel):
         BaseModel instances are converted via ``model_dump()`` so the result
         is always a plain ``RecursiveContainer`` (no BaseModel).
         """
-        if u.is_pydantic_model(value):
+        if u.pydantic_model(value):
             raw = value.model_dump()
             result: t.MutableContainerMapping = {}
             for k, v in raw.items():
                 container_val = u.normalize_to_container(v)
-                if u.is_pydantic_model(container_val):
+                if u.pydantic_model(container_val):
                     result[str(k)] = str(container_val)
                 else:
                     result[str(k)] = container_val
@@ -85,9 +85,9 @@ class FlextContext(m.ArbitraryTypesModel):
         payload: Mapping[str, t.ValueOrModel] | t.ContainerMapping
         if isinstance(ctx_value, (t.ConfigMap, t.Dict)):
             payload = ctx_value.root
-        elif u.is_pydantic_model(ctx_value):
+        elif u.pydantic_model(ctx_value):
             payload = ctx_value.model_dump()
-        elif u.is_mapping(ctx_value):
+        elif u.mapping(ctx_value):
             payload = ctx_value
         else:
             empty_fallback: t.ContainerMapping = {}
@@ -106,7 +106,7 @@ class FlextContext(m.ArbitraryTypesModel):
                     normalized[key] = None
                     continue
                 normalized_value = u.normalize_to_container(value)
-                if u.is_pydantic_model(normalized_value):
+                if u.pydantic_model(normalized_value):
                     metadata_normalized = u.normalize_to_container(
                         u.normalize_to_metadata(normalized_value),
                     )
@@ -177,7 +177,7 @@ class FlextContext(m.ArbitraryTypesModel):
             ),
         }
         if context_data.data:
-            self._set_in_contextvar(
+            self._update_contextvar(
                 c.ContextScope.GLOBAL,
                 t.ConfigMap(root=context_data.data.root),
             )
@@ -290,7 +290,7 @@ class FlextContext(m.ArbitraryTypesModel):
             FlextLogger.structlog().contextvars.bind_contextvars(**{key: normalized})
 
     @staticmethod
-    def _validate_set_inputs(key: str, value: t.ValueOrModel) -> r[bool]:
+    def _validate_update_inputs(key: str, value: t.ValueOrModel) -> r[bool]:
         """Validate inputs for set operation.
 
         Args:
@@ -311,7 +311,7 @@ class FlextContext(m.ArbitraryTypesModel):
                     u.normalize_to_metadata(value),
                 ),
             )
-            if u.is_pydantic_model(value)
+            if u.pydantic_model(value)
             else value
         )
         if not isinstance(
@@ -388,20 +388,20 @@ class FlextContext(m.ArbitraryTypesModel):
 
         """
         all_data: t.ConfigMap = t.ConfigMap(root={})
-        all_scopes = self._get_all_scopes()
+        all_scopes = self._scope_payloads()
         all_data.update(dict(all_scopes))
         stats_dict_export: t.ConfigMap | None = None
         if include_statistics and self._statistics:
             stats_dict_export = t.ConfigMap(root=self._statistics.model_dump())
         metadata_dict_export: t.ContainerMapping | None = None
         if include_metadata:
-            metadata_dict_export = self._get_all_metadata()
+            metadata_dict_export = self._metadata_map()
         metadata_for_model: t.ConfigMap | None = None
         if metadata_dict_export:
             normalized_metadata_map: MutableMapping[str, t.ValueOrModel] = {}
             for k, v in metadata_dict_export.items():
                 metadata_value: t.ValueOrModel = v
-                if u.is_mapping(v):
+                if u.mapping(v):
                     metadata_value = t.ConfigMap(
                         root=dict(v),
                     )
@@ -493,7 +493,7 @@ class FlextContext(m.ArbitraryTypesModel):
         """
         if not self._active:
             return r[t.RuntimeAtomic].fail(c.ERR_CONTEXT_NOT_ACTIVE)
-        scope_data = self._get_from_contextvar(scope)
+        scope_data = self._contextvar_data(scope)
         if key not in scope_data:
             return r[t.RuntimeAtomic].fail(
                 f"Context key '{key}' not found in scope '{scope}'",
@@ -558,7 +558,7 @@ class FlextContext(m.ArbitraryTypesModel):
         """
         if not self._active:
             return False
-        scope_data = self._get_from_contextvar(scope)
+        scope_data = self._contextvar_data(scope)
         return key in scope_data
 
     def items(self) -> Sequence[tuple[str, t.RecursiveContainer]]:
@@ -641,7 +641,7 @@ class FlextContext(m.ArbitraryTypesModel):
         match other:
             case FlextContext():
                 exported_result = other.export(as_dict=True)
-                if u.is_pydantic_model(exported_result):
+                if u.pydantic_model(exported_result):
                     return None
                 return self._as_config_map(exported_result, "export payload")
             case t.ConfigMap():
@@ -656,11 +656,11 @@ class FlextContext(m.ArbitraryTypesModel):
         for scope_name, scope_payload in exported_map.items():
             if scope_name not in self._MERGEABLE_SCOPES:
                 continue
-            if not u.is_mapping(scope_payload):
+            if not u.mapping(scope_payload):
                 continue
             scope_data = self._as_config_map(scope_payload, "scope payload")
             if scope_data is not None:
-                self._set_in_contextvar(scope_name, scope_data)
+                self._update_contextvar(scope_name, scope_data)
 
     def merge(
         self,
@@ -686,14 +686,14 @@ class FlextContext(m.ArbitraryTypesModel):
         if isinstance(other, FlextContext):
             self._apply_scoped_merge(exported_map)
         else:
-            self._set_in_contextvar(c.ContextScope.GLOBAL, exported_map)
+            self._update_contextvar(c.ContextScope.GLOBAL, exported_map)
         return self
 
     def remove(self, key: str, scope: str = c.ContextScope.GLOBAL) -> None:
         """Remove a key from the context."""
         if not self._active:
             return
-        ctx_var = self._get_or_create_scope_var(scope)
+        ctx_var = self._scope_var(scope)
         current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
         if key in current:
             filtered = {k: v for k, v in current.items() if k != key}
@@ -752,8 +752,8 @@ class FlextContext(m.ArbitraryTypesModel):
         if not self._active:
             return r[bool].fail(c.ERR_CONTEXT_NOT_ACTIVE)
         if isinstance(key_or_data, t.ConfigMap):
-            return self._set_bulk(key_or_data, scope)
-        return self._set_single(key_or_data, value, scope)
+            return self._apply_bulk(key_or_data, scope)
+        return self._apply_single(key_or_data, value, scope)
 
     def apply_metadata(self, key: str, value: t.MetadataValue) -> None:
         """Set metadata for the context.
@@ -831,13 +831,13 @@ class FlextContext(m.ArbitraryTypesModel):
                 hook_data: t.Scalar
                 if event_data is None:
                     hook_data = ""
-                elif u.is_scalar(event_data):
+                elif u.scalar(event_data):
                     hook_data = event_data
                 else:
                     hook_data = str(event_data)
                 _ = hook(hook_data)
 
-    def _get_all_metadata(self) -> t.ContainerMapping:
+    def _metadata_map(self) -> t.ContainerMapping:
         """Get all metadata from the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -868,14 +868,14 @@ class FlextContext(m.ArbitraryTypesModel):
                 result[k] = v.isoformat()
             elif isinstance(v, (str, int, float, bool, list, dict, tuple)):
                 result[k] = v
-            elif u.is_pydantic_model(v):
+            elif u.pydantic_model(v):
                 result[k] = FlextContext._to_normalized(v)
             else:
                 result[k] = str(v)
         result.update(custom_fields_dict)
         return result
 
-    def _get_all_scopes(self) -> Mapping[str, t.ContainerMapping]:
+    def _scope_payloads(self) -> Mapping[str, t.ContainerMapping]:
         """Get all scope registrations.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -893,9 +893,9 @@ class FlextContext(m.ArbitraryTypesModel):
                 scopes[scope_name] = dict(scope_dict)
         return scopes
 
-    def _get_from_contextvar(self, scope: str) -> t.ConfigMap:
+    def _contextvar_data(self, scope: str) -> t.ConfigMap:
         """Get all values from contextvar scope."""
-        ctx_var = self._get_or_create_scope_var(scope)
+        ctx_var = self._scope_var(scope)
         value = ctx_var.get()
         return t.ConfigMap(
             root=dict(
@@ -903,7 +903,7 @@ class FlextContext(m.ArbitraryTypesModel):
             ),
         )
 
-    def _get_or_create_scope_var(
+    def _scope_var(
         self,
         scope: str,
     ) -> contextvars.ContextVar[t.ConfigMap | None]:
@@ -923,12 +923,12 @@ class FlextContext(m.ArbitraryTypesModel):
             )
         return self._scope_vars[scope]
 
-    def _set_bulk(self, data: t.ConfigMap, scope: str) -> r[bool]:
+    def _apply_bulk(self, data: t.ConfigMap, scope: str) -> r[bool]:
         """Set multiple values in the context from a ConfigMap."""
         if not data:
             return r[bool].ok(True)
         try:
-            ctx_var = self._get_or_create_scope_var(scope)
+            ctx_var = self._scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             updated = t.ConfigMap(root=dict(current))
             updated.update(data.root)
@@ -942,9 +942,9 @@ class FlextContext(m.ArbitraryTypesModel):
         except TypeError as e:
             return r[bool].fail(str(e))
 
-    def _set_in_contextvar(self, scope: str, data: t.ConfigMap) -> None:
+    def _update_contextvar(self, scope: str, data: t.ConfigMap) -> None:
         """Set multiple values in contextvar scope."""
-        ctx_var = self._get_or_create_scope_var(scope)
+        ctx_var = self._scope_var(scope)
         current = t.ConfigMap(
             root=dict(
                 self._narrow_contextvar_to_configuration_dict(ctx_var.get()),
@@ -961,7 +961,7 @@ class FlextContext(m.ArbitraryTypesModel):
             }
             FlextLogger.structlog().contextvars.bind_contextvars(**normalized_context)
 
-    def _set_single(
+    def _apply_single(
         self,
         key: str,
         value: t.ValueOrModel | None,
@@ -970,11 +970,11 @@ class FlextContext(m.ArbitraryTypesModel):
         """Set a single key-value pair in the context."""
         if value is None:
             return r[bool].fail(c.ERR_CONTEXT_SINGLE_KEY_VALUE_REQUIRED)
-        validation_result = FlextContext._validate_set_inputs(key, value)
+        validation_result = FlextContext._validate_update_inputs(key, value)
         if validation_result.failure:
             return r[bool].fail(validation_result.error or c.ERR_VALIDATION_FAILED)
         try:
-            ctx_var = self._get_or_create_scope_var(scope)
+            ctx_var = self._scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             updated = t.ConfigMap(root=dict(current))
             updated[key] = value
@@ -1034,7 +1034,7 @@ class FlextContext(m.ArbitraryTypesModel):
 
         """
         if cls._container is None:
-            msg = "Container not initialized. Call FlextContext.configure_container(container) before using resolve_container()."
+            msg = c.ERR_RUNTIME_CONTAINER_NOT_INITIALIZED
             raise RuntimeError(msg)
         return cls._container
 
@@ -1198,7 +1198,7 @@ class FlextContext(m.ArbitraryTypesModel):
                 service_value = service_result.value
                 if service_value is None:
                     return r[t.Scalar].ok("")
-                if u.is_scalar(service_value):
+                if u.scalar(service_value):
                     return r[t.Scalar].ok(service_value)
                 return r[t.Scalar].ok(str(service_value))
             return r[t.Scalar].fail(service_result.error or "Service not found")

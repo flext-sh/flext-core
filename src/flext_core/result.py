@@ -25,7 +25,7 @@ from pydantic import (
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core import p, t
+from flext_core import c, p, t
 
 
 class FlextResult[T](BaseModel):
@@ -93,7 +93,7 @@ class FlextResult[T](BaseModel):
     def value(self) -> T:
         """Result value — returns _payload directly on success."""
         if not self.success:
-            msg = f"Cannot access value of failed result: {self.error}"
+            msg = c.ERR_RESULT_CANNOT_ACCESS_VALUE.format(error=self.error)
             raise RuntimeError(msg)
         return cast("T", self._payload)
 
@@ -762,7 +762,7 @@ class FlextResult[T](BaseModel):
     def unwrap(self) -> T:
         """Unwrap the success value or raise RuntimeError."""
         if self.failure:
-            msg = f"Cannot unwrap failed result: {self.error}"
+            msg = c.ERR_RESULT_CANNOT_UNWRAP.format(error=self.error)
             raise RuntimeError(msg)
         return self.value
 

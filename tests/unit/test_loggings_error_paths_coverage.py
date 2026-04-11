@@ -1,7 +1,7 @@
 """Real tests to cover error paths in loggings.py - no mocks.
 
 Module: flext_core.loggings
-Scope: Error handling paths in bind_global_context, clear_global_context, _get_global_context
+Scope: Error handling paths in bind_global_context, clear_global_context, _global_context
 
 This module provides real tests (no mocks) to cover error handling paths
 that are difficult to trigger in normal operation.

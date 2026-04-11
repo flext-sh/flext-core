@@ -97,5 +97,10 @@ class FlextConstantsSettings:
         ALLOW = "allow"
         "Allow extra fields to pass through."
 
+    EXTRA_CONFIG_FORBID: Final = "forbid"
+    EXTRA_CONFIG_IGNORE: Final = "ignore"
+    SERIALIZATION_ISO8601: Final = "iso8601"
+    SERIALIZATION_BASE64: Final = "base64"
+
     JWT_DEFAULT_ALGORITHM: Final[str] = "HS256"
     CREDENTIAL_BCRYPT_ROUNDS: Final[int] = 12

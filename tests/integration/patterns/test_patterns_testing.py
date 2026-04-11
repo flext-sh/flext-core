@@ -69,7 +69,7 @@ class TestPatternsTesting:
 
         @staticmethod
         def as_object_dict(value: t.NormalizedValue) -> t.ContainerMapping:
-            if not TestPatternsTesting.Helpers.is_object_mapping(value):
+            if not TestPatternsTesting.Helpers.object_mapping(value):
                 return dict[str, t.NormalizedValue]()
             output: t.MutableContainerMapping = {}
             for key, item in value.items():
@@ -80,24 +80,24 @@ class TestPatternsTesting:
         def as_object_list(
             value: t.NormalizedValue,
         ) -> t.ContainerList | None:
-            if not TestPatternsTesting.Helpers.is_object_list(value):
+            if not TestPatternsTesting.Helpers.object_list(value):
                 return None
             return list(value)
 
         @staticmethod
-        def is_object_mapping(
+        def object_mapping(
             value: t.NormalizedValue,
         ) -> TypeIs[t.ContainerMapping]:
             return isinstance(value, Mapping)
 
         @staticmethod
-        def is_object_list(
+        def object_list(
             value: t.NormalizedValue,
         ) -> TypeIs[t.ContainerList]:
             return isinstance(value, list)
 
         @staticmethod
-        def is_object_container_sequence(
+        def object_container_sequence(
             value: t.NormalizedValue,
         ) -> bool:
             return isinstance(value, (list, tuple, set))
@@ -372,7 +372,7 @@ class TestPatternsTesting:
             item: t.NormalizedValue,
         ) -> TestPatternsTesting.AssertionBuilder:
             data = self._data
-            if TestPatternsTesting.Helpers.is_object_mapping(data):
+            if TestPatternsTesting.Helpers.object_mapping(data):
                 assert item in data
                 return self
             if isinstance(data, (list, tuple, set)):

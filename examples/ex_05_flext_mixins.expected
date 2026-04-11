@@ -32,7 +32,7 @@ context_stack.pop_context.value: "{'handler_name': 'Q', 'handler_mode': 'query'}
 context_stack.current_context.after_pop: True
 validation.ok: True
 validation.fail: "Validation failed: bad-input"
-protocol.is_handler.good: True
-protocol.is_handler.bad: False
+protocol.handler.good: True
+protocol.handler.bad: False
 protocol.validate_processor.good: True
 protocol.validate_processor.fail: "Processor BadProcessor missing required method 'process()'. Processors must implement: model_dump, process, validate"

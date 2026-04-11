@@ -112,11 +112,11 @@ class TestFlextUtilitiesGuards:
 
     @pytest.mark.parametrize(("value", "expected"), _PRIMITIVE_CASES)
     def test_is_primitive(self, value: t.GuardInput, expected: bool) -> None:
-        tm.that(u.is_primitive(value), eq=expected)
+        tm.that(u.primitive(value), eq=expected)
 
     @pytest.mark.parametrize(("value", "expected"), _SCALAR_CASES)
     def test_is_scalar(self, value: t.GuardInput, expected: bool) -> None:
-        tm.that(u.is_scalar(value), eq=expected)
+        tm.that(u.scalar(value), eq=expected)
 
     # -----------------------------------------------------------------------
     # is_string_non_empty
@@ -134,13 +134,13 @@ class TestFlextUtilitiesGuards:
         ],
     )
     def test_is_string_non_empty(self, value: str, expected: bool) -> None:
-        tm.that(u.is_string_non_empty(value), eq=expected)
+        tm.that(u.string_non_empty(value), eq=expected)
 
     def test_is_string_non_empty_non_string_input(self) -> None:
-        tm.that(u.is_string_non_empty(42), eq=False)
+        tm.that(u.string_non_empty(42), eq=False)
 
     # -----------------------------------------------------------------------
-    # is_list / is_mapping / is_dict_non_empty
+    # is_list / mapping / dict_non_empty
     # -----------------------------------------------------------------------
 
     @pytest.mark.parametrize(
@@ -148,21 +148,21 @@ class TestFlextUtilitiesGuards:
         [([1, 2], True), ([], True), ((1,), False), ("abc", False), (None, False)],
     )
     def test_is_list(self, value: t.GuardInput, expected: bool) -> None:
-        tm.that(u.is_list(value), eq=expected)
+        tm.that(u.list_value(value), eq=expected)
 
     @pytest.mark.parametrize(
         ("value", "expected"),
         [({"k": 1}, True), ({}, True), ([1], False), ("abc", False)],
     )
     def test_is_mapping(self, value: t.GuardInput, expected: bool) -> None:
-        tm.that(u.is_mapping(value), eq=expected)
+        tm.that(u.mapping(value), eq=expected)
 
     @pytest.mark.parametrize(
         ("value", "expected"),
         [({"k": 1}, True), ({}, False), ([1], False), (None, False)],
     )
     def test_is_dict_non_empty(self, value: t.ValueOrModel, expected: bool) -> None:
-        tm.that(u.is_dict_non_empty(value), eq=expected)
+        tm.that(u.dict_non_empty(value), eq=expected)
 
     # -----------------------------------------------------------------------
     # is_container — recursive validation
@@ -186,65 +186,65 @@ class TestFlextUtilitiesGuards:
         ],
     )
     def test_is_container_valid(self, value: t.GuardInput, expected: bool) -> None:
-        tm.that(u.is_container(value), eq=expected)
+        tm.that(u.container(value), eq=expected)
 
     def test_is_container_rejects_set_inside_list(self) -> None:
         """Sets are not containers — list containing a set should fail."""
-        tm.that(u.is_container(cast("t.GuardInput", [{1, 2}])), eq=False)
+        tm.that(u.container(cast("t.GuardInput", [{1, 2}])), eq=False)
 
     def test_is_container_rejects_set_in_mapping_value(self) -> None:
-        tm.that(u.is_container(cast("t.GuardInput", {"k": {1}})), eq=False)
+        tm.that(u.container(cast("t.GuardInput", {"k": {1}})), eq=False)
 
     # -----------------------------------------------------------------------
     # is_object_list / is_object_tuple
     # -----------------------------------------------------------------------
 
     def test_is_object_list(self) -> None:
-        tm.that(u.is_object_list([1, 2]), eq=True)
-        tm.that(u.is_object_list((1, 2)), eq=False)
-        tm.that(u.is_object_list("abc"), eq=False)
+        tm.that(u.object_list([1, 2]), eq=True)
+        tm.that(u.object_list((1, 2)), eq=False)
+        tm.that(u.object_list("abc"), eq=False)
 
     def test_is_object_tuple(self) -> None:
-        tm.that(u.is_object_tuple((1, 2)), eq=True)
-        tm.that(u.is_object_tuple([1, 2]), eq=False)
+        tm.that(u.object_tuple((1, 2)), eq=True)
+        tm.that(u.object_tuple([1, 2]), eq=False)
 
     # -----------------------------------------------------------------------
     # is_pydantic_model
     # -----------------------------------------------------------------------
 
     def test_is_pydantic_model_with_model(self) -> None:
-        tm.that(u.is_pydantic_model(_SampleModel()), eq=True)
+        tm.that(u.pydantic_model(_SampleModel()), eq=True)
 
     def test_is_pydantic_model_with_non_model(self) -> None:
-        tm.that(u.is_pydantic_model("not a model"), eq=False)
-        tm.that(u.is_pydantic_model(42), eq=False)
-        tm.that(u.is_pydantic_model(None), eq=False)
+        tm.that(u.pydantic_model("not a model"), eq=False)
+        tm.that(u.pydantic_model(42), eq=False)
+        tm.that(u.pydantic_model(None), eq=False)
 
     def test_is_pydantic_model_with_no_model_dump(self) -> None:
         inst = _SampleModel()
         object.__setattr__(inst, "model_dump", None)
-        tm.that(u.is_pydantic_model(inst), eq=False)
+        tm.that(u.pydantic_model(inst), eq=False)
 
     # -----------------------------------------------------------------------
     # is_configuration_dict / is_configuration_mapping
     # -----------------------------------------------------------------------
 
     def test_is_configuration_dict_valid_mapping(self) -> None:
-        tm.that(u.is_configuration_dict({"k": 1, "j": "v"}), eq=True)
+        tm.that(u.configuration_dict({"k": 1, "j": "v"}), eq=True)
 
     def test_is_configuration_dict_rejects_basemodel_values(self) -> None:
         bad: t.GuardInput = {"k": _SampleModel()}
-        tm.that(u.is_configuration_dict(bad), eq=False)
-        tm.that(u.is_configuration_mapping(bad), eq=False)
+        tm.that(u.configuration_dict(bad), eq=False)
+        tm.that(u.configuration_mapping(bad), eq=False)
 
     # -----------------------------------------------------------------------
     # is_instance_of — generic isinstance
     # -----------------------------------------------------------------------
 
     def test_is_instance_of(self) -> None:
-        tm.that(u.is_instance_of("hello", str), eq=True)
-        tm.that(u.is_instance_of(42, int), eq=True)
-        tm.that(u.is_instance_of("hello", int), eq=False)
+        tm.that(u.instance_of("hello", str), eq=True)
+        tm.that(u.instance_of(42, int), eq=True)
+        tm.that(u.instance_of("hello", int), eq=False)
 
     # -----------------------------------------------------------------------
     # require_initialized
@@ -287,81 +287,81 @@ class TestFlextUtilitiesGuards:
     def test_is_type_string_spec(
         self, type_name: str, value: t.GuardInput, expected: bool
     ) -> None:
-        tm.that(u.is_type(value, type_name), eq=expected)
+        tm.that(u.matches_type(value, type_name), eq=expected)
 
     def test_is_type_unknown_string_returns_false(self) -> None:
-        tm.that(u.is_type("x", "nonexistent_type"), eq=False)
+        tm.that(u.matches_type("x", "nonexistent_type"), eq=False)
 
     # -----------------------------------------------------------------------
     # is_type — type and tuple specs
     # -----------------------------------------------------------------------
 
     def test_is_type_with_type_class(self) -> None:
-        tm.that(u.is_type("hello", str), eq=True)
-        tm.that(u.is_type(42, str), eq=False)
+        tm.that(u.matches_type("hello", str), eq=True)
+        tm.that(u.matches_type(42, str), eq=False)
 
     def test_is_type_with_type_tuple(self) -> None:
-        tm.that(u.is_type(42, (int, float)), eq=True)
-        tm.that(u.is_type("x", (int, float)), eq=False)
+        tm.that(u.matches_type(42, (int, float)), eq=True)
+        tm.that(u.matches_type("x", (int, float)), eq=False)
 
     def test_is_type_invalid_spec_returns_false(self) -> None:
         """Non-type, non-string, non-tuple spec should return False."""
         spec: t.GuardInput = 123
         if isinstance(spec, type):
-            tm.that(u.is_type("x", spec), eq=False)
+            tm.that(u.matches_type("x", spec), eq=False)
 
     # -----------------------------------------------------------------------
     # is_type — dict_non_empty / list_non_empty
     # -----------------------------------------------------------------------
 
     def test_is_type_dict_non_empty(self) -> None:
-        tm.that(u.is_type({"k": 1}, "dict_non_empty"), eq=True)
-        tm.that(u.is_type({}, "dict_non_empty"), eq=False)
+        tm.that(u.matches_type({"k": 1}, "dict_non_empty"), eq=True)
+        tm.that(u.matches_type({}, "dict_non_empty"), eq=False)
 
     def test_is_type_list_non_empty(self) -> None:
-        tm.that(u.is_type([1], "list_non_empty"), eq=True)
-        tm.that(u.is_type([], "list_non_empty"), eq=False)
-        tm.that(u.is_type("string", "list_non_empty"), eq=False)
+        tm.that(u.matches_type([1], "list_non_empty"), eq=True)
+        tm.that(u.matches_type([], "list_non_empty"), eq=False)
+        tm.that(u.matches_type("string", "list_non_empty"), eq=False)
 
     def test_is_type_non_empty_rejects_basemodel(self) -> None:
         """BaseModel instances should not pass *_non_empty checks."""
         model = _SampleModel()
-        tm.that(u.is_type(model, "string_non_empty"), eq=False)
-        tm.that(u.is_type(model, "dict_non_empty"), eq=False)
-        tm.that(u.is_type(model, "list_non_empty"), eq=False)
+        tm.that(u.matches_type(model, "string_non_empty"), eq=False)
+        tm.that(u.matches_type(model, "dict_non_empty"), eq=False)
+        tm.that(u.matches_type(model, "list_non_empty"), eq=False)
 
     # -----------------------------------------------------------------------
     # Protocol-based type checks via is_type
     # -----------------------------------------------------------------------
 
     def test_is_type_result_protocol(self) -> None:
-        tm.that(u.is_type(r[int].ok(1), "result"), eq=True)
-        tm.that(u.is_type("not a result", "result"), eq=False)
+        tm.that(u.matches_type(r[int].ok(1), "result"), eq=True)
+        tm.that(u.matches_type("not a result", "result"), eq=False)
 
     def test_is_type_protocol_names_reject_plain_string(self) -> None:
         """All protocol names should reject plain string values."""
         for name in ("config", "context", "handler", "service", "middleware", "logger"):
-            tm.that(u.is_type("plain", name), eq=False)
+            tm.that(u.matches_type("plain", name), eq=False)
 
     # -----------------------------------------------------------------------
     # is_handler_callable / is_factory / is_resource / is_result_like
     # -----------------------------------------------------------------------
 
     def test_is_handler_callable(self) -> None:
-        tm.that(u.is_handler_callable(_always_true), eq=True)
-        tm.that(u.is_handler_callable("not callable"), eq=False)
+        tm.that(u.handler_callable(_always_true), eq=True)
+        tm.that(u.handler_callable("not callable"), eq=False)
 
     def test_is_factory(self) -> None:
-        tm.that(u.is_factory(_dummy_factory), eq=True)
-        tm.that(u.is_factory(42), eq=False)
+        tm.that(u.factory(_dummy_factory), eq=True)
+        tm.that(u.factory(42), eq=False)
 
     def test_is_resource(self) -> None:
-        tm.that(u.is_resource(_dummy_factory), eq=True)
-        tm.that(u.is_resource("nope"), eq=False)
+        tm.that(u.resource(_dummy_factory), eq=True)
+        tm.that(u.resource("nope"), eq=False)
 
     def test_is_result_like(self) -> None:
-        tm.that(u.is_result_like(r[str].ok("ok")), eq=True)
-        tm.that(u.is_result_like("not result"), eq=False)
+        tm.that(u.result_like(r[str].ok("ok")), eq=True)
+        tm.that(u.result_like("not result"), eq=False)
 
     # -----------------------------------------------------------------------
     # is_registerable_service
@@ -384,7 +384,7 @@ class TestFlextUtilitiesGuards:
         ],
     )
     def test_is_registerable_service_accepts(self, value: t.GuardInput) -> None:
-        tm.that(u.is_registerable_service(value), eq=True)
+        tm.that(u.registerable_service(value), eq=True)
 
     # -----------------------------------------------------------------------
     # filter_registerable_services
@@ -406,10 +406,10 @@ class TestFlextUtilitiesGuards:
     # -----------------------------------------------------------------------
 
     def test_is_settings_type_rejects_non_class(self) -> None:
-        tm.that(u.is_settings_type("not a type"), eq=False)
+        tm.that(u.settings_type("not a type"), eq=False)
 
     def test_is_settings_type_rejects_class_without_fetch_global(self) -> None:
-        tm.that(u.is_settings_type(str), eq=False)
+        tm.that(u.settings_type(str), eq=False)
 
     def test_is_settings_type_accepts_class_with_fetch_global(self) -> None:
         class _FakeSettings:
@@ -417,7 +417,7 @@ class TestFlextUtilitiesGuards:
             def fetch_global() -> None:
                 pass
 
-        tm.that(u.is_settings_type(_FakeSettings), eq=True)
+        tm.that(u.settings_type(_FakeSettings), eq=True)
 
     # -----------------------------------------------------------------------
     # guard — validator dispatch
@@ -592,11 +592,11 @@ class TestFlextUtilitiesGuards:
         )
 
     # -----------------------------------------------------------------------
-    # is_handler (protocol-based)
+    # handler (protocol-based)
     # -----------------------------------------------------------------------
 
     def test_is_handler_rejects_plain_object(self) -> None:
-        tm.that(u.is_handler(_SampleModel()), eq=False)
+        tm.that(u.handler(_SampleModel()), eq=False)
 
 
 __all__ = ["TestFlextUtilitiesGuards"]

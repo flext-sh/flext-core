@@ -67,7 +67,7 @@ class FlextSettings(BaseSettings):
         env_file=u.resolve_env_file(),
         env_file_encoding=c.DEFAULT_ENCODING,
         case_sensitive=False,
-        extra=c.ExtraConfig.IGNORE.value,
+        extra=c.EXTRA_CONFIG_IGNORE,
         validate_assignment=True,
     )
 
@@ -363,7 +363,7 @@ class FlextSettings(BaseSettings):
             self._di_provider = providers_module.Singleton(lambda: self)
         provider = self._di_provider
         if provider is None:
-            msg = "DI provider not initialized"
+            msg = c.ERR_SETTINGS_DI_PROVIDER_NOT_INITIALIZED
             raise RuntimeError(msg)
         return provider
 
@@ -507,7 +507,7 @@ class FlextSettings(BaseSettings):
 
             return namespace_decorator
         if config_class is None:
-            msg = "config_class is required when decorator=False"
+            msg = c.ERR_SETTINGS_CONFIG_CLASS_REQUIRED_FOR_NON_DECORATOR
             raise ValueError(msg)
         cls._namespace_registry[namespace] = config_class
         return None

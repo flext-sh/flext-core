@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
 import flext_core._utilities.discovery as _discovery_mod
+import flext_core.container as core_container
 from flext_core import FlextContainer, FlextContext, FlextSettings
 from flext_tests import tm
 from tests import m, p, r, t
@@ -175,7 +176,8 @@ class TestContainerFullCoverage:
         with pytest.raises(RuntimeError):
             _ = c.context
         monkeypatch.setattr(
-            "flext_core.container.FlextSettings.fetch_global",
+            core_container.FlextSettings,
+            "fetch_global",
             lambda: FlextSettings(),
         )
         tm.that(c._get_default_config(), is_=p.Settings)
@@ -187,7 +189,8 @@ class TestContainerFullCoverage:
         c = FlextContainer.create()
         bad_bridge = types.SimpleNamespace(config="not-provider")
         monkeypatch.setattr(
-            "flext_core.container.u.DependencyIntegration.create_layered_bridge",
+            core_container.u.DependencyIntegration,
+            "create_layered_bridge",
             lambda: (bad_bridge, types.SimpleNamespace(), types.SimpleNamespace()),
         )
         with pytest.raises(TypeError, match="Bridge must have config provider"):
@@ -251,12 +254,14 @@ class TestContainerFullCoverage:
         c.register("res", lambda: "x", kind="resource")
         tm.that(c._resources, has="res")
         monkeypatch.setattr(
-            "flext_core.container.u.DependencyIntegration.register_object",
+            core_container.u.DependencyIntegration,
+            "register_object",
             self._raise_register_object,
         )
         c.register("x", "y")
         monkeypatch.setattr(
-            "flext_core.container.u.DependencyIntegration.register_factory",
+            core_container.u.DependencyIntegration,
+            "register_factory",
             self._raise_register_factory,
         )
         c.register("x2", lambda: "v", kind="factory")
@@ -264,7 +269,8 @@ class TestContainerFullCoverage:
         c.register("dup", lambda: "v", kind="resource")
         del c._di_resources.dup
         monkeypatch.setattr(
-            "flext_core.container.u.DependencyIntegration.register_resource",
+            core_container.u.DependencyIntegration,
+            "register_resource",
             self._raise_register_resource,
         )
         c.register("new", lambda: "v", kind="resource")
@@ -343,8 +349,7 @@ class TestContainerFullCoverage:
             return c
 
         monkeypatch.setattr(
-            "flext_core.container.FlextContainer._create_scoped_instance",
-            _fake_create_scoped_instance,
+            FlextContainer, "_create_scoped_instance", _fake_create_scoped_instance
         )
         _ = c.scoped(subproject="sub")
         tm.that(captured["config"], is_=p.Settings)
@@ -412,11 +417,13 @@ class TestContainerFullCoverage:
         c = FlextContainer.create()
         bad_bridge = types.SimpleNamespace(config=None)
         monkeypatch.setattr(
-            "flext_core.container.u.DependencyIntegration.create_layered_bridge",
+            core_container.u.DependencyIntegration,
+            "create_layered_bridge",
             lambda: (bad_bridge, types.SimpleNamespace(), types.SimpleNamespace()),
         )
         monkeypatch.setattr(
-            "flext_core.container.di_providers.Configuration",
+            core_container.di_providers,
+            "Configuration",
             cast("t.NormalizedValue", t.NormalizedValue),
         )
         with pytest.raises(TypeError, match="cannot be None"):

@@ -57,7 +57,7 @@ class FlextRuntime:
         """Return the bound metadata model class or raise a runtime contract error."""
         metadata_cls = cls.Metadata
         if metadata_cls is None:
-            msg = "FlextRuntime.Metadata is not bound to a concrete model"
+            msg = c.ERR_RUNTIME_METADATA_MODEL_NOT_BOUND
             raise RuntimeError(msg)
         return metadata_cls
 
@@ -198,7 +198,7 @@ class FlextRuntime:
         elif isinstance(value, Mapping):
             result = dict(value)
         else:
-            msg = "attributes must be dict-like"
+            msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
             raise TypeError(msg)
         for key in result:
             if key.startswith("_"):
@@ -264,7 +264,9 @@ class FlextRuntime:
                 ):
                     normalized_mapping[key_s] = item
                 else:
-                    msg = f"Invalid type in Mapping: {type(item)}"
+                    msg = c.ERR_RUNTIME_MAPPING_INVALID_TYPE.format(
+                        type_name=type(item),
+                    )
                     raise TypeError(msg)
             return t.ConfigMap(root=normalized_mapping)
         if isinstance(value, Sequence) and not isinstance(
@@ -291,7 +293,9 @@ class FlextRuntime:
                         BaseModel,
                     ),
                 ):
-                    msg = f"Invalid type in Sequence: {type(item)}"
+                    msg = c.ERR_RUNTIME_SEQUENCE_INVALID_TYPE.format(
+                        type_name=type(item),
+                    )
                     raise TypeError(msg)
                 normalized_sequence.append(str(item))
             return t.ObjectList(root=normalized_sequence)
@@ -350,7 +354,9 @@ class FlextRuntime:
                     for err in exc.errors()
                 )
         if item_errors:
-            msg = f"Batch validation failed: {'; '.join(item_errors)}"
+            msg = c.ERR_RUNTIME_BATCH_VALIDATION_FAILED.format(
+                errors="; ".join(item_errors),
+            )
             raise TypeError(msg)
         return validated_items
 
@@ -396,15 +402,15 @@ class FlextRuntime:
                 return val
             case Path():
                 return val
-            case _ if FlextUtilitiesGuardsTypeCore.is_scalar(val):
+            case _ if FlextUtilitiesGuardsTypeCore.scalar(val):
                 return val
-            case _ if FlextUtilitiesGuardsTypeCore.is_dict_like(val):
+            case _ if FlextUtilitiesGuardsTypeCore.dict_like(val):
                 if isinstance(val, t.ConfigMap):
                     entries = [(k, v) for k, v in val.root.items()]
                 else:
                     entries = [(str(k), v) for k, v in val.items()]
                 return t.Dict(root=FlextRuntime._normalize_dict_entries(entries))
-            case _ if FlextUtilitiesGuardsTypeCore.is_list_like(val):
+            case _ if FlextUtilitiesGuardsTypeCore.list_like(val):
                 normalized_list: t.FlatContainerList = [
                     item
                     for v in val
@@ -421,7 +427,7 @@ class FlextRuntime:
     def _normalize_to_metadata_scalar(val: t.RuntimeData) -> t.Primitives:
         if val is None:
             return ""
-        if FlextUtilitiesGuardsTypeCore.is_primitive(val):
+        if FlextUtilitiesGuardsTypeCore.primitive(val):
             return val
         if isinstance(val, datetime):
             return val.isoformat()
@@ -443,11 +449,11 @@ class FlextRuntime:
                 return str(v)
             case BaseModel():
                 return v.model_dump_json()
-            case _ if FlextUtilitiesGuardsTypeCore.is_scalar(v):
+            case _ if FlextUtilitiesGuardsTypeCore.scalar(v):
                 return v
-            case _ if FlextUtilitiesGuardsTypeCore.is_list_like(v):
+            case _ if FlextUtilitiesGuardsTypeCore.list_like(v):
                 return [FlextRuntime._normalize_to_metadata_scalar(item) for item in v]
-            case _ if FlextUtilitiesGuardsTypeCore.is_dict_like(v):
+            case _ if FlextUtilitiesGuardsTypeCore.dict_like(v):
                 inner: MutableMapping[str, t.Primitives] = {}
                 for ik, iv in v.items():
                     inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
@@ -469,14 +475,14 @@ class FlextRuntime:
                 return val.model_dump_json()
             case datetime():
                 return val
-            case _ if FlextUtilitiesGuardsTypeCore.is_primitive(val):
+            case _ if FlextUtilitiesGuardsTypeCore.primitive(val):
                 return val
-            case _ if FlextUtilitiesGuardsTypeCore.is_dict_like(val):
+            case _ if FlextUtilitiesGuardsTypeCore.dict_like(val):
                 normalized: MutableMapping[str, t.Scalar | t.ScalarList] = {}
                 for k, v in val.items():
                     normalized[str(k)] = FlextRuntime._normalize_metadata_dict_value(v)
                 return normalized
-            case _ if FlextUtilitiesGuardsTypeCore.is_list_like(val):
+            case _ if FlextUtilitiesGuardsTypeCore.list_like(val):
                 return [
                     FlextRuntime._normalize_to_metadata_scalar(item) for item in val
                 ]
@@ -810,7 +816,7 @@ class FlextRuntime:
         elif not isinstance(
             context,
             Mapping,
-        ) and FlextUtilitiesGuardsTypeCore.is_scalar(context):
+        ) and FlextUtilitiesGuardsTypeCore.scalar(context):
             context_dict = t.ConfigMap(root={})
         elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())

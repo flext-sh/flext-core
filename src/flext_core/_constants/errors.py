@@ -49,6 +49,29 @@ class FlextConstantsErrors:
             return self.value
 
     ERR_HANDLER_MUST_BE_CALLABLE: Final[str] = "Handler must be callable"
+    ERR_HANDLER_FAILED: Final[str] = "Handler failed"
+    ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT: Final[str] = (
+        "Handler returned non-container value in success result"
+    )
+    ERR_HANDLER_RETURNED_NONE: Final[str] = "Handler returned None"
+    ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE: Final[str] = (
+        "Handler returned non-container value"
+    )
+    ERR_HANDLER_EXECUTION_FAILED: Final[str] = "Handler execution failed: {error}"
+    ERR_HANDLER_INVALID_MODE: Final[str] = "Invalid handler mode: {mode}"
+    ERR_HANDLER_MISSING_HANDLE_IMPLEMENTATION: Final[str] = (
+        "{qualname} must implement a handle() method"
+    )
+    ERR_HANDLER_INCOMPATIBLE_PIPELINE_MODE: Final[str] = (
+        "Handler with mode '{handler_mode}' cannot execute {operation} pipelines"
+    )
+    ERR_HANDLER_CANNOT_HANDLE_MESSAGE_TYPE: Final[str] = (
+        "Handler cannot handle message type {type_name}"
+    )
+    ERR_HANDLER_MESSAGE_VALIDATION_FAILED: Final[str] = (
+        "Message validation failed: {error}"
+    )
+    ERR_HANDLER_CRITICAL_FAILURE: Final[str] = "Critical handler failure: {error}"
     ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED: Final[str] = (
         "Handler must expose message_type, event_type, or can_handle"
     )
@@ -57,6 +80,10 @@ class FlextConstantsErrors:
     ERR_RESULT_NOT_SCALAR_COMPATIBLE: Final[str] = (
         "Result must be compatible with Scalar"
     )
+    ERR_RESULT_CANNOT_ACCESS_VALUE: Final[str] = (
+        "Cannot access value of failed result: {error}"
+    )
+    ERR_RESULT_CANNOT_UNWRAP: Final[str] = "Cannot unwrap failed result: {error}"
     ERR_MESSAGE_CANNOT_BE_NONE: Final[str] = "Message cannot be None"
     ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED: Final[str] = (
         "Key must be a non-empty string"
@@ -72,6 +99,9 @@ class FlextConstantsErrors:
     ERR_GENERATOR_KIND_MISSING: Final[str] = "No kind provided for prefix resolution"
     ERR_DOMAIN_EVENT_NAME_REQUIRED: Final[str] = (
         "Domain event name must be a non-empty string"
+    )
+    ERR_DOMAIN_EVENT_DATA_MUST_BE_DICT_OR_NONE: Final[str] = (
+        "Domain event data must be a dictionary or None"
     )
     ERR_EVENTS_LIST_OR_TUPLE_REQUIRED: Final[str] = "Events must be a list or tuple"
     ERR_EVENT_NAME_REQUIRED: Final[str] = "Event name must be non-empty string"
@@ -109,6 +139,7 @@ class FlextConstantsErrors:
     ERR_MIXINS_MISSING_TIMESTAMP: Final[str] = "Required timestamp fields missing"
     ERR_MIXINS_INVALID_LOG_LEVEL: Final[str] = "Invalid log level"
     ERR_SERVICE_REGISTRATION_FAILED: Final[str] = "Service registration failed"
+    ERR_SERVICE_EXECUTION_FAILED: Final[str] = "Service execution failed"
     ERR_TEXT_NONE_NOT_ALLOWED: Final[str] = (
         "Text cannot be None. Use explicit empty string '' or handle None in calling code."
     )
@@ -189,14 +220,58 @@ class FlextConstantsErrors:
         "Factory '{name}' returned value that does not satisfy RegisterableService"
         " protocol. Expected a canonical registerable service, protocol, or callable."
     )
+    ERR_CONTAINER_CONFIG_NOT_INITIALIZED: Final[str] = (
+        "Configuration must be initialized via initialize_registrations"
+    )
+    ERR_CONTAINER_CONTEXT_NOT_INITIALIZED: Final[str] = (
+        "Context not initialized. Provide context during container creation via "
+        "FlextContainer(registration=m.ServiceRegistrationSpec(context=...)) or "
+        "FlextContainer.fetch_global(context=...)"
+    )
+    ERR_CONTAINER_PROVIDE_HELPER_NOT_INITIALIZED: Final[str] = (
+        "DI bridge Provide helper not initialized"
+    )
+    ERR_CONTAINER_PROVIDE_HELPER_UNSUPPORTED_TYPE: Final[str] = (
+        "DI bridge Provide helper returned unsupported type"
+    )
+    ERR_CONTAINER_BRIDGE_MUST_HAVE_CONFIG_PROVIDER: Final[str] = (
+        "Bridge must have config provider"
+    )
+    ERR_CONTAINER_BRIDGE_CONFIG_PROVIDER_CANNOT_BE_NONE: Final[str] = (
+        "Bridge config provider cannot be None"
+    )
+    ERR_CONTAINER_BRIDGE_CONFIG_PROVIDER_MUST_SUPPORT_OVERRIDE: Final[str] = (
+        "Bridge config provider must support override()"
+    )
     ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED: Final[str] = (
         "Provider '{name}' is already registered"
+    )
+    ERR_RUNTIME_METADATA_MODEL_NOT_BOUND: Final[str] = (
+        "FlextRuntime.Metadata is not bound to a concrete model"
+    )
+    ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE: Final[str] = (
+        "attributes must be dict-like"
+    )
+    ERR_RUNTIME_MAPPING_INVALID_TYPE: Final[str] = (
+        "Invalid type in Mapping: {type_name}"
+    )
+    ERR_RUNTIME_SEQUENCE_INVALID_TYPE: Final[str] = (
+        "Invalid type in Sequence: {type_name}"
+    )
+    ERR_RUNTIME_BATCH_VALIDATION_FAILED: Final[str] = (
+        "Batch validation failed: {errors}"
     )
     ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED: Final[str] = (
         "Keys starting with '_' are reserved: {key}"
     )
     ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE: Final[str] = (
         "Service must be a RegisterableService type, got {type_name}"
+    )
+    ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT: Final[str] = (
+        "Retry loop completed without success or exception"
+    )
+    ERR_RUNTIME_CONTAINER_NOT_INITIALIZED: Final[str] = (
+        "Container not initialized. Call FlextContext.configure_container(container) before using resolve_container()."
     )
 
     # --- Exceptions / Error handling ---
@@ -218,6 +293,10 @@ class FlextConstantsErrors:
     # --- Settings ---
     ERR_SETTINGS_NAMESPACE_NOT_REGISTERED: Final[str] = (
         "Namespace '{namespace}' not registered"
+    )
+    ERR_SETTINGS_DI_PROVIDER_NOT_INITIALIZED: Final[str] = "DI provider not initialized"
+    ERR_SETTINGS_CONFIG_CLASS_REQUIRED_FOR_NON_DECORATOR: Final[str] = (
+        "config_class is required when decorator=False"
     )
     ERR_SETTINGS_NAMESPACE_TYPE_MISMATCH: Final[str] = (
         "Namespace '{namespace}' config instance {instance_class} is not instance of {expected_type}"

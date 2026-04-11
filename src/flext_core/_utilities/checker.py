@@ -122,7 +122,7 @@ class FlextUtilitiesChecker:
             "__orig_bases__",
             (),
         )
-        if FlextUtilitiesGuards.is_object_tuple(raw_bases):
+        if FlextUtilitiesGuards.object_tuple(raw_bases):
             for base in raw_bases:
                 origin = get_origin(base)
                 if origin is not None and origin.__name__ in {"h", "FlextHandlers"}:

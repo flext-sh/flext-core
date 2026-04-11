@@ -88,16 +88,16 @@ class TestFlextModelsContainer:
     def test_is_dict_like_static_method(self) -> None:
         """Test dict-like checking using utilities."""
 
-        def is_dict_like(value: t.NormalizedValue) -> bool:
+        def dict_like(value: t.NormalizedValue) -> bool:
             """Check if value is dict-like."""
             return isinstance(value, Mapping)
 
-        tm.that(is_dict_like({"key": "value"}), eq=True)
-        tm.that(is_dict_like({}), eq=True)
-        tm.that(not is_dict_like("not_dict"), eq=True)
-        tm.that(not is_dict_like(123), eq=True)
-        tm.that(not is_dict_like([1, 2, 3]), eq=True)
-        tm.that(not is_dict_like(None), eq=True)
+        tm.that(dict_like({"key": "value"}), eq=True)
+        tm.that(dict_like({}), eq=True)
+        tm.that(not dict_like("not_dict"), eq=True)
+        tm.that(not dict_like(123), eq=True)
+        tm.that(not dict_like([1, 2, 3]), eq=True)
+        tm.that(not dict_like(None), eq=True)
 
     @pytest.mark.parametrize(
         ("metadata_value", "should_pass"),

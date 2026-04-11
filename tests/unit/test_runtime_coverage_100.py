@@ -20,10 +20,10 @@ from tests import p, t, u
 
 
 class TestRuntimeCoverage100:
-    """Tests for is_dict_like runtime coverage."""
+    """Tests for dict_like runtime coverage."""
 
     def test_is_dict_like_with_exception_on_items(self) -> None:
-        """Test is_dict_like when items() raises AttributeError."""
+        """Test dict_like when items() raises AttributeError."""
 
         class BadDictLike:
             def keys(self) -> t.StrSequence:
@@ -37,11 +37,11 @@ class TestRuntimeCoverage100:
                 return None
 
         obj = BadDictLike()
-        result = u.is_dict_like(cast("t.NormalizedValue", obj))
+        result = u.dict_like(cast("t.NormalizedValue", obj))
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_exception_on_items_typeerror(self) -> None:
-        """Test is_dict_like when items() raises TypeError."""
+        """Test dict_like when items() raises TypeError."""
 
         class BadDictLike:
             def keys(self) -> t.StrSequence:
@@ -55,27 +55,27 @@ class TestRuntimeCoverage100:
                 return None
 
         obj = BadDictLike()
-        result = u.is_dict_like(cast("t.NormalizedValue", obj))
+        result = u.dict_like(cast("t.NormalizedValue", obj))
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_userdict(self) -> None:
-        """Test is_dict_like with UserDict (dict-like t.NormalizedValue)."""
+        """Test dict_like with UserDict (dict-like t.NormalizedValue)."""
         user_dict = UserDict({"key": "value"})
-        result = u.is_dict_like(user_dict)
+        result = u.dict_like(user_dict)
         tm.that(result, eq=True)
 
     def test_is_dict_like_with_missing_attributes(self) -> None:
-        """Test is_dict_like with t.NormalizedValue missing required attributes."""
+        """Test dict_like with t.NormalizedValue missing required attributes."""
 
         class NotDictLike:
             pass
 
         obj = NotDictLike()
-        result = u.is_dict_like(cast("t.NormalizedValue", obj))
+        result = u.dict_like(cast("t.NormalizedValue", obj))
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_missing_keys(self) -> None:
-        """Test is_dict_like with t.NormalizedValue missing keys attribute."""
+        """Test dict_like with t.NormalizedValue missing keys attribute."""
 
         class NotDictLike:
             def items(self) -> Sequence[tuple[str, str]]:
@@ -85,11 +85,11 @@ class TestRuntimeCoverage100:
                 return None
 
         obj = NotDictLike()
-        result = u.is_dict_like(cast("t.NormalizedValue", obj))
+        result = u.dict_like(cast("t.NormalizedValue", obj))
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_missing_items(self) -> None:
-        """Test is_dict_like with t.NormalizedValue missing items attribute."""
+        """Test dict_like with t.NormalizedValue missing items attribute."""
 
         class NotDictLike:
             def keys(self) -> t.StrSequence:
@@ -99,11 +99,11 @@ class TestRuntimeCoverage100:
                 return None
 
         obj = NotDictLike()
-        result = u.is_dict_like(cast("t.NormalizedValue", obj))
+        result = u.dict_like(cast("t.NormalizedValue", obj))
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_missing_get(self) -> None:
-        """Test is_dict_like with t.NormalizedValue missing get attribute."""
+        """Test dict_like with t.NormalizedValue missing get attribute."""
 
         class NotDictLike:
             def keys(self) -> t.StrSequence:
@@ -113,7 +113,7 @@ class TestRuntimeCoverage100:
                 return list[tuple[str, str]]()
 
         obj = NotDictLike()
-        result = u.is_dict_like(cast("t.NormalizedValue", obj))
+        result = u.dict_like(cast("t.NormalizedValue", obj))
         tm.that(not result, eq=True)
 
     def test_extract_generic_args_with_type_mapping(self) -> None:
@@ -158,11 +158,11 @@ class TestRuntimeCoverage100:
         class List:
             __name__ = "List"
 
-        tm.that(u.is_sequence_type(StringList), eq=True)
-        tm.that(u.is_sequence_type(IntList), eq=True)
-        tm.that(u.is_sequence_type(FloatList), eq=True)
-        tm.that(u.is_sequence_type(BoolList), eq=True)
-        tm.that(u.is_sequence_type(List), eq=True)
+        tm.that(u.sequence_type(StringList), eq=True)
+        tm.that(u.sequence_type(IntList), eq=True)
+        tm.that(u.sequence_type(FloatList), eq=True)
+        tm.that(u.sequence_type(BoolList), eq=True)
+        tm.that(u.sequence_type(List), eq=True)
 
     def test_level_based_context_filter_malformed_prefix(self) -> None:
         """Test level_based_context_filter with malformed prefix."""
@@ -184,8 +184,8 @@ class TestRuntimeCoverage100:
 
     def test_is_valid_identifier_non_string(self) -> None:
         """Test is_valid_identifier with non-string types."""
-        tm.that(not u.is_valid_identifier(123), eq=True)
-        tm.that(not u.is_valid_identifier(None), eq=True)
+        tm.that(not u.valid_identifier(123), eq=True)
+        tm.that(not u.valid_identifier(None), eq=True)
 
     def test_extract_generic_args_with_typing_get_args(self) -> None:
         """Test extract_generic_args when typing.get_args returns values."""
@@ -210,8 +210,8 @@ class TestRuntimeCoverage100:
 
     def test_is_sequence_type_with_origin(self) -> None:
         """Test is_sequence_type with typing.get_origin returning Sequence."""
-        tm.that(u.is_sequence_type(MutableSequence[str]), eq=True)
-        tm.that(u.is_sequence_type(MutableSequence[int]), eq=True)
+        tm.that(u.sequence_type(MutableSequence[str]), eq=True)
+        tm.that(u.sequence_type(MutableSequence[int]), eq=True)
 
     def test_is_sequence_type_with_sequence_subclass(self) -> None:
         """Test is_sequence_type with type that is Sequence subclass."""
@@ -231,7 +231,7 @@ class TestRuntimeCoverage100:
             def __len__(self) -> int:
                 return 0
 
-        tm.that(u.is_sequence_type(MySequence), eq=True)
+        tm.that(u.sequence_type(MySequence), eq=True)
 
     def test_is_sequence_type_exception_path(self) -> None:
         """Test is_sequence_type exception handling."""
@@ -244,7 +244,7 @@ class TestRuntimeCoverage100:
                     raise AttributeError(msg)
                 return super().__getattribute__(name)
 
-        result = u.is_sequence_type(BadType)
+        result = u.sequence_type(BadType)
         tm.that(not result, eq=True)
 
     def test_level_based_context_filter_with_level_prefixed(self) -> None:

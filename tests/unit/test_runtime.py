@@ -656,12 +656,12 @@ class TestFlextRuntime:
     ) -> None:
         """Test dict-like t.NormalizedValue validation.
 
-        Business Rule: is_dict_like accepts t.NormalizedValue compatible objects.
+        Business Rule: dict_like accepts t.NormalizedValue compatible objects.
         test_case.test_input may be None or various types, so we cast to t.NormalizedValue
         for type compatibility while preserving runtime behavior.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = u.is_dict_like(cast("t.RuntimeData", test_case.test_input))
+        result = u.dict_like(cast("t.RuntimeData", test_case.test_input))
         tm.that(result, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
@@ -675,12 +675,12 @@ class TestFlextRuntime:
     ) -> None:
         """Test list-like t.NormalizedValue validation.
 
-        Business Rule: is_list_like accepts t.NormalizedValue compatible objects.
+        Business Rule: list_like accepts t.NormalizedValue compatible objects.
         test_case.test_input may be None or various types, so we cast to t.NormalizedValue
         for type compatibility while preserving runtime behavior.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = u.is_list_like(cast("t.RuntimeData", test_case.test_input))
+        result = u.list_like(cast("t.RuntimeData", test_case.test_input))
         tm.that(result, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
@@ -698,9 +698,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = u.is_valid_identifier(
-            cast("t.RuntimeData", test_case.test_input),
-        )
+        result = u.valid_identifier(cast("t.RuntimeData", test_case.test_input))
         tm.that(result, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
@@ -780,7 +778,7 @@ class TestFlextRuntime:
         for type compatibility while preserving runtime behavior.
         """
         test_input_typed = cast("t.TypeHintSpecifier", test_case.test_input)
-        result = u.is_sequence_type(test_input_typed)
+        result = u.sequence_type(test_input_typed)
         tm.that(result, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
@@ -1198,7 +1196,7 @@ class TestFlextRuntime:
     @given(st.text())
     def test_hypothesis_identifier_guard_returns_bool(self, value: str) -> None:
         """Property: is_valid_identifier always returns bool."""
-        result = u.is_valid_identifier(value)
+        result = u.valid_identifier(value)
         tm.that(result, is_=bool)
 
     @given(
@@ -1214,8 +1212,8 @@ class TestFlextRuntime:
         value: float | str | bool,
     ) -> None:
         """Property: type guards always return bool for any input."""
-        tm.that(u.is_dict_like(value), is_=bool)
-        tm.that(u.is_list_like(value), is_=bool)
+        tm.that(u.dict_like(value), is_=bool)
+        tm.that(u.list_like(value), is_=bool)
 
     __all__ = ["TestFlextRuntime"]
 

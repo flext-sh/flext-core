@@ -170,8 +170,8 @@ class Ex10FlextHandlers(Examples):
         def plain_function(_message: BaseModel) -> BaseModel:
             return _PayloadModel(text="plain")
 
-        module.mod_handler = mod_handler
-        module.plain_function = plain_function
+        setattr(module, "mod_handler", mod_handler)
+        setattr(module, "plain_function", plain_function)
         module_scan = h.Discovery.scan_module(module)
         self.check("scan_module.count", len(module_scan))
         self.check("scan_module.name", module_scan[0][0] if module_scan else "none")
@@ -398,12 +398,12 @@ class Ex10FlextHandlers(Examples):
         self.check("metadata.attributes", meta.attributes)
         protocol_handler = Ex10ProtocolHandler()
         self.check(
-            "protocol.is_handler.true",
-            u.is_handler(protocol_handler),
+            "protocol.handler.true",
+            u.handler(protocol_handler),
         )
         self.check(
-            "protocol.is_handler.false",
-            not u.is_handler(t.ConfigMap(root={})),
+            "protocol.handler.false",
+            not u.handler(t.ConfigMap(root={})),
         )
 
     def demo_runtime_result_and_utilities(self) -> None:
@@ -542,17 +542,17 @@ class Ex10FlextHandlers(Examples):
             ],
         )
         self.check("runtime.resolve_log_level", u.resolve_log_level_from_config() >= 0)
-        self.check("runtime.is_dict_like.true", u.is_dict_like({"a": 1}))
-        self.check("runtime.is_dict_like.false", u.is_dict_like([1, 2]))
-        self.check("runtime.is_list_like.true", u.is_list_like([1, 2]))
-        self.check("runtime.is_list_like.false", u.is_list_like("ab"))
+        self.check("runtime.is_dict_like.true", u.dict_like({"a": 1}))
+        self.check("runtime.is_dict_like.false", u.dict_like([1, 2]))
+        self.check("runtime.list_like.true", u.list_like([1, 2]))
+        self.check("runtime.list_like.false", u.list_like("ab"))
         self.check(
             "runtime.is_valid_identifier.true",
-            u.is_valid_identifier(valid_identifier),
+            u.valid_identifier(valid_identifier),
         )
         self.check(
             "runtime.is_valid_identifier.false",
-            u.is_valid_identifier(invalid_identifier),
+            u.valid_identifier(invalid_identifier),
         )
         self.check(
             "runtime.safe_get_attribute",
@@ -562,10 +562,10 @@ class Ex10FlextHandlers(Examples):
             "runtime.extract_generic_args",
             len(u.extract_generic_args(t.IntMapping)) >= 1,
         )
-        self.check("runtime.is_sequence_type.true", u.is_sequence_type(Sequence[int]))
+        self.check("runtime.is_sequence_type.true", u.sequence_type(Sequence[int]))
         self.check(
             "runtime.is_sequence_type.false",
-            u.is_sequence_type(t.IntMapping),
+            u.sequence_type(t.IntMapping),
         )
         self.check(
             "runtime.normalize_general",

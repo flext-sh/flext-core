@@ -32,7 +32,7 @@ class Ex05FlextMixins(Examples):
             return {"has_duration": has_duration, "operation_count": operation_count}
 
     class HandlerLike(FlextSettings):
-        """Minimal handler-like satisfying ``u.is_handler``."""
+        """Minimal handler-like satisfying ``u.handler``."""
 
         @classmethod
         @override
@@ -49,7 +49,7 @@ class Ex05FlextMixins(Examples):
             return r[str].ok(str(message))
 
     class HandlerBad(m.Value):
-        """Non-handler for negative ``is_handler`` check."""
+        """Non-handler for negative ``handler`` check."""
 
         marker: str = "bad"
 
@@ -168,12 +168,12 @@ class Ex05FlextMixins(Examples):
         )
 
         self.check(
-            "protocol.is_handler.good",
-            bool(u.is_handler(self.HandlerLike())),
+            "protocol.handler.good",
+            bool(u.handler(self.HandlerLike())),
         )
         self.check(
-            "protocol.is_handler.bad",
-            bool(u.is_handler(self.HandlerBad())),
+            "protocol.handler.bad",
+            bool(u.handler(self.HandlerBad())),
         )
 
 

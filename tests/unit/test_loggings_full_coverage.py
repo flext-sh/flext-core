@@ -109,7 +109,7 @@ class TestModule:
         logger.trace("%s %s", "a")
         logger.trace("x")
         tm.that(u._format_log_message("%s %s", "a"), ne="")
-        tm.that(u._get_calling_frame(), is_=types.FrameType)
+        tm.that(u._calling_frame(), is_=types.FrameType)
 
         class _Code:
             co_qualname = "MyType.run"
@@ -132,7 +132,7 @@ class TestModule:
             cast("p.Logger", cast("t.NormalizedValue", fake)),
         )
 
-        tm.that(u._get_caller_source_path(), none=True)
+        tm.that(u._caller_source_path(), none=True)
 
         tm.that(u._convert_to_relative_path("/tmp/x.py"), eq="x.py")
 

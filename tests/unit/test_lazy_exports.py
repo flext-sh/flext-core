@@ -8,6 +8,7 @@ from types import ModuleType
 import pytest
 
 from flext_core import install_lazy_exports, merge_lazy_imports
+from flext_core.lazy import lazy
 
 
 class TestInstallLazyExports:
@@ -71,6 +72,22 @@ class TestInstallLazyExports:
         assert callable(getattr_fn)
         assert getattr_fn("Alpha") is Alpha
 
+    def test_repeated_install_reuses_cached_wiring(self) -> None:
+        """Second install with same inputs reuses previously installed handlers."""
+        module_globals: dict[str, object] = {}
+        lazy.reset()
+
+        lazy_map = {"Alpha": ("test_pkg.alpha", "Alpha")}
+        lazy.install("test_pkg", module_globals, lazy_map, publish_all=False)
+
+        first_getattr = module_globals["__getattr__"]
+        first_dir = module_globals["__dir__"]
+        lazy.install("test_pkg", module_globals, lazy_map, publish_all=False)
+
+        assert module_globals["__getattr__"] is first_getattr
+        assert module_globals["__dir__"] is first_dir
+        assert lazy.cache_stats["install_cache"] >= 1
+
 
 class TestMergeLazyImports:
     """Verify merged child maps normalize relative lazy targets."""
@@ -119,3 +136,57 @@ class TestMergeLazyImports:
 
         merged = merge_lazy_imports((".child",), {}, module_name=parent_package_name)
         assert merged["Alpha"] == (alpha_module_name, "Alpha")
+
+
+class TestLazyRuntimeState:
+    """Verify cache diagnostics and reset behavior."""
+
+    def test_cache_stats_and_reset(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Cache counters increase on usage and return to zero after reset."""
+        package_name = "test_lazy_pkg_state"
+        module_name = f"{package_name}.module"
+        module_globals: dict[str, object] = {}
+        child_module = ModuleType(module_name)
+
+        lazy.reset()
+        monkeypatch.setitem(sys.modules, package_name, ModuleType(package_name))
+        monkeypatch.setitem(sys.modules, module_name, child_module)
+
+        install_lazy_exports(
+            package_name,
+            module_globals,
+            {"module": module_name},
+            publish_all=False,
+        )
+        getattr_fn = module_globals["__getattr__"]
+        assert callable(getattr_fn)
+        assert getattr_fn("module") is child_module
+        assert lazy.cache_stats["module_cache"] >= 1
+
+        lazy.reset()
+        assert lazy.cache_stats == {
+            "module_cache": 0,
+            "child_lazy_cache": 0,
+            "child_merge_cache": 0,
+            "normalized_map_cache": 0,
+            "install_cache": 0,
+        }
+
+
+class TestBuildLazyImportMap:
+    """Verify build_map behavior stays deterministic and explicit."""
+
+    def test_build_map_sorts_keys_by_default(self) -> None:
+        """Default behavior returns a stable alphabetic key order."""
+        mapping = lazy.build_map({"pkg.mod": ("zeta", "alpha")})
+        assert list(mapping) == ["alpha", "zeta"]
+
+    def test_build_map_keeps_insertion_order_when_disabled(self) -> None:
+        """Disabling sorting preserves insertion order from inputs."""
+        mapping = lazy.build_map(
+            {"pkg.mod": ("zeta", "alpha")},
+            alias_groups={"pkg.alias": (("beta", "Thing"),)},
+            sort_keys=False,
+        )
+        assert list(mapping) == ["zeta", "alpha", "beta"]
+        assert mapping["beta"] == ("pkg.alias", "Thing")

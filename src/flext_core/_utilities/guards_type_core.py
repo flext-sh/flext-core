@@ -27,14 +27,14 @@ class FlextUtilitiesGuardsTypeCore:
     """
 
     @staticmethod
-    def _is_object_sequence(
+    def _object_sequence(
         value: t.GuardInput,
     ) -> TypeIs[t.ContainerList]:
         """Check if value is a sequence (list or tuple)."""
         return isinstance(value, (list, tuple))
 
     @staticmethod
-    def _is_object_mapping(
+    def _object_mapping(
         value: t.GuardInput,
     ) -> TypeIs[t.ContainerMapping]:
         """Check if value is a mapping type."""
@@ -44,7 +44,7 @@ class FlextUtilitiesGuardsTypeCore:
     def _all_container_sequence(value: Sequence[t.GuardInput]) -> bool:
         """Check if all items in sequence are valid containers."""
         for sequence_item in value:
-            if not FlextUtilitiesGuardsTypeCore.is_container(sequence_item):
+            if not FlextUtilitiesGuardsTypeCore.container(sequence_item):
                 return False
         return True
 
@@ -52,53 +52,53 @@ class FlextUtilitiesGuardsTypeCore:
     def all_container_mapping_values(value: Mapping[str, t.GuardInput]) -> bool:
         """Check if all values in mapping are valid containers."""
         for mapped_value in value.values():
-            if not FlextUtilitiesGuardsTypeCore.is_container(mapped_value):
+            if not FlextUtilitiesGuardsTypeCore.container(mapped_value):
                 return False
         return True
 
     @staticmethod
-    def is_dict_non_empty(value: t.ValueOrModel) -> bool:
+    def dict_non_empty(value: t.ValueOrModel) -> bool:
         """Check if value is a non-empty mapping."""
         return bool(isinstance(value, Mapping) and value)
 
     @staticmethod
-    def is_container(
+    def container(
         value: t.GuardInput,
     ) -> TypeIs[t.Container]:
         """Check if value is a valid container (recursive validation).
 
         Containers are None, scalars, Paths, or collections where all items
-        recursively satisfy is_container. Used to validate nested data structures.
+        recursively satisfy container. Used to validate nested data structures.
         """
         if value is None or isinstance(value, t.SCALAR_TYPES):
             return True
-        if FlextUtilitiesGuardsTypeCore._is_object_sequence(value):
+        if FlextUtilitiesGuardsTypeCore._object_sequence(value):
             return FlextUtilitiesGuardsTypeCore._all_container_sequence(value)
-        if FlextUtilitiesGuardsTypeCore._is_object_mapping(value):
+        if FlextUtilitiesGuardsTypeCore._object_mapping(value):
             return FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value)
         return isinstance(value, Path)
 
     @staticmethod
-    def is_list(value: t.GuardInput) -> TypeIs[t.ContainerList]:
+    def list_value(value: t.GuardInput) -> TypeIs[t.ContainerList]:
         """Check if value is a list."""
         return isinstance(value, list)
 
     @staticmethod
-    def is_mapping(
+    def mapping(
         value: t.GuardInput,
     ) -> TypeIs[t.ContainerMapping]:
         """Check if value is a mapping type."""
         return isinstance(value, Mapping)
 
     @staticmethod
-    def is_primitive(
+    def primitive(
         value: t.GuardInput,
     ) -> TypeIs[t.Primitives]:
         """Check if value is a primitive type (str, int, float, bool)."""
         return isinstance(value, (str, int, float, bool))
 
     @staticmethod
-    def is_scalar(
+    def scalar(
         value: t.GuardInput,
     ) -> TypeIs[t.Scalar]:
         """Check if value is a scalar type (str, int, float, bool, datetime)."""
@@ -118,7 +118,7 @@ class FlextUtilitiesGuardsTypeCore:
         return False
 
     @staticmethod
-    def is_dict_like(
+    def dict_like(
         value: t.RuntimeData,
     ) -> TypeIs[t.ConfigMap | t.ContainerMapping]:
         """Check if value behaves like a mapping accepted by FLEXT containers."""
@@ -133,7 +133,7 @@ class FlextUtilitiesGuardsTypeCore:
                 return bool(FlextUtilitiesGuardsTypeCore._has_dict_protocol(value))
 
     @staticmethod
-    def is_list_like(
+    def list_like(
         value: t.RuntimeData,
     ) -> TypeIs[t.ContainerList]:
         """Check if value behaves like a non-string object sequence."""
@@ -166,7 +166,7 @@ class FlextUtilitiesGuardsTypeCore:
             return ()
 
     @staticmethod
-    def _is_sequence_type_class(candidate: type) -> bool:
+    def _sequence_type_class(candidate: type) -> bool:
         candidate_name = getattr(candidate, "__name__", "")
         if candidate_name in {"list", "tuple", "range"}:
             return True
@@ -179,20 +179,20 @@ class FlextUtilitiesGuardsTypeCore:
         return all(hasattr(candidate, member) for member in required_members)
 
     @staticmethod
-    def is_sequence_type(type_hint: t.TypeHintSpecifier) -> bool:
+    def sequence_type(type_hint: t.TypeHintSpecifier) -> bool:
         """Check if a type hint represents a list-like sequence type."""
         try:
             origin = typing.get_origin(type_hint)
             if isinstance(origin, type):
                 if origin in {list, tuple}:
                     return True
-                return FlextUtilitiesGuardsTypeCore._is_sequence_type_class(origin)
+                return FlextUtilitiesGuardsTypeCore._sequence_type_class(origin)
             if type_hint in {list, tuple, str}:
                 return True
             if isinstance(
                 type_hint,
                 type,
-            ) and FlextUtilitiesGuardsTypeCore._is_sequence_type_class(type_hint):
+            ) and FlextUtilitiesGuardsTypeCore._sequence_type_class(type_hint):
                 return True
             if isinstance(type_hint, type) and getattr(type_hint, "__name__", "") in {
                 "StringList",
@@ -215,17 +215,17 @@ class FlextUtilitiesGuardsTypeCore:
             return False
 
     @staticmethod
-    def is_valid_identifier(value: t.RuntimeData) -> TypeIs[str]:
+    def valid_identifier(value: t.RuntimeData) -> TypeIs[str]:
         """Check if value is a valid Python identifier string."""
         return isinstance(value, str) and value.isidentifier()
 
     @staticmethod
-    def is_string_non_empty(value: t.GuardInput) -> TypeIs[str]:
+    def string_non_empty(value: t.GuardInput) -> TypeIs[str]:
         """Check if value is a non-empty string (after stripping whitespace)."""
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def is_instance_of[T](value: object, type_cls: type[T]) -> TypeIs[T]:
+    def instance_of[T](value: object, type_cls: type[T]) -> TypeIs[T]:
         """Check if value is instance of type class (handles generics)."""
         return isinstance(value, getattr(type_cls, "__origin__", None) or type_cls)
 

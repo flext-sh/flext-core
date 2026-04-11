@@ -101,7 +101,7 @@ if _t.TYPE_CHECKING:
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.exceptions import FlextExceptions, e
     from flext_core.handlers import FlextHandlers, h
-    from flext_core.lazy import build_lazy_import_map
+    from flext_core.lazy import FlextLazy, build_lazy_import_map, lazy
     from flext_core.loggings import FlextLogger
     from flext_core.mixins import FlextMixins, x
     from flext_core.models import FlextModels, m
@@ -172,7 +172,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextHandlers",
                 "h",
             ),
-            ".lazy": ("build_lazy_import_map",),
+            ".lazy": (
+                "FlextLazy",
+                "build_lazy_import_map",
+                "lazy",
+            ),
             ".loggings": ("FlextLogger",),
             ".mixins": (
                 "FlextMixins",
@@ -262,6 +266,7 @@ __all__ = [
     "FlextExceptions",
     "FlextGenericModels",
     "FlextHandlers",
+    "FlextLazy",
     "FlextLogger",
     "FlextMixins",
     "FlextModels",
@@ -367,6 +372,7 @@ __all__ = [
     "d",
     "e",
     "h",
+    "lazy",
     "m",
     "p",
     "r",

@@ -28,6 +28,7 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextSettings,
+    c,
     e,
     h,
     m,
@@ -169,7 +170,7 @@ class FlextService[
     ) -> TResult:
         """Unwrap one successful execution result with the original generic type."""
         if execution_result.failure:
-            raise e.BaseError(execution_result.error or "Service execution failed")
+            raise e.BaseError(execution_result.error or c.ERR_SERVICE_EXECUTION_FAILED)
         return execution_result.unwrap()
 
     def _get_execution_result(self) -> p.Result[TDomainResult]:
@@ -233,7 +234,7 @@ class FlextService[
         ctx_raw = self.initial_context or (
             bootstrap_opts.context if bootstrap_opts is not None else None
         )
-        context_val: p.Context | None = ctx_raw if u.is_context(ctx_raw) else None
+        context_val: p.Context | None = ctx_raw if u.context(ctx_raw) else None
         config_overrides = self.config_overrides or (
             bootstrap_opts.config_overrides if bootstrap_opts is not None else None
         )
@@ -270,9 +271,7 @@ class FlextService[
         config_overrides_scalar: t.ScalarMapping | None = None
         if config_overrides is not None:
             normalized_overrides: t.ScalarMapping = {
-                key: value
-                for key, value in config_overrides.items()
-                if u.is_scalar(value)
+                key: value for key, value in config_overrides.items() if u.scalar(value)
             }
             config_overrides_scalar = normalized_overrides or None
         runtime_options = m.RuntimeBootstrapOptions.model_validate({

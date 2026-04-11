@@ -14,26 +14,26 @@ class FlextUtilitiesGuardsTypeModel:
     """Pydantic and data model type guards."""
 
     @staticmethod
-    def is_base_model(value: t.RuntimeData) -> TypeIs[BaseModel]:
+    def base_model(value: t.RuntimeData) -> TypeIs[BaseModel]:
         """Narrow broad runtime data to Pydantic BaseModel."""
         return isinstance(value, BaseModel)
 
     @staticmethod
-    def is_object_list(
+    def object_list(
         value: t.RecursiveContainer,
     ) -> TypeIs[t.RecursiveContainerList]:
         """Narrow value to a recursive container list."""
         return isinstance(value, list)
 
     @staticmethod
-    def is_object_tuple(
+    def object_tuple(
         value: t.GuardInput,
     ) -> TypeIs[tuple[t.RecursiveContainer, ...]]:
         """Narrow value to a recursive container tuple."""
         return isinstance(value, tuple)
 
     @staticmethod
-    def is_configuration_dict(
+    def configuration_dict(
         value: t.GuardInput,
     ) -> TypeIs[t.Dict]:
         """Check if value is a Dict model or mapping with container values."""
@@ -42,7 +42,7 @@ class FlextUtilitiesGuardsTypeModel:
                 if isinstance(
                     item_value,
                     BaseModel,
-                ) or not FlextUtilitiesGuardsTypeCore.is_container(item_value):
+                ) or not FlextUtilitiesGuardsTypeCore.container(item_value):
                     return False
             return True
         return isinstance(
@@ -53,7 +53,7 @@ class FlextUtilitiesGuardsTypeModel:
         )
 
     @staticmethod
-    def is_configuration_mapping(
+    def configuration_mapping(
         value: t.GuardInput,
     ) -> TypeIs[t.ConfigMap]:
         """Check if value is a ConfigMap/Dict or mapping with container values."""
@@ -68,12 +68,12 @@ class FlextUtilitiesGuardsTypeModel:
             if isinstance(
                 item_value,
                 BaseModel,
-            ) or not FlextUtilitiesGuardsTypeCore.is_container(item_value):
+            ) or not FlextUtilitiesGuardsTypeCore.container(item_value):
                 return False
         return True
 
     @staticmethod
-    def is_pydantic_model(value: t.GuardInput) -> TypeIs[BaseModel]:
+    def pydantic_model(value: t.GuardInput) -> TypeIs[BaseModel]:
         """Narrow value to Pydantic BaseModel with callable model_dump."""
         return (
             isinstance(value, BaseModel)

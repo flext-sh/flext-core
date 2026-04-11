@@ -174,7 +174,7 @@ class TestCompleteFlextSystemIntegration:
                 )
             dados_processados: t.MutableStrMapping = {}
             for key, value in dados.items():
-                if not u.is_string_non_empty(value):
+                if not u.string_non_empty(value):
                     return r[t.StrMapping].fail(
                         f"Campo '{key}' não pode estar vazio",
                         error_code=c.ErrorCode.VALIDATION_ERROR,

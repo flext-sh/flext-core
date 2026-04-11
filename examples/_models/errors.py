@@ -35,6 +35,8 @@ class ExamplesFlextCoreModelsErrors:
             FAILED_OP = "failed op"
             BAD_ATTR = "bad attr"
             FORCED_BOOM = "forced boom"
+            CALLABLE_FAILED = "callable failed"
+            RULE_CRASH = "rule-crash"
 
         class TriggerTokens(StrEnum):
             """Canonical string tokens used to trigger demo/test behaviour."""

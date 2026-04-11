@@ -68,7 +68,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def _coerce_to_bool[T](value: t.ValueOrModel) -> r[bool]:
         """Coerce value to bool. Returns None if not coercible."""
-        if FlextUtilitiesGuards.is_type(value, str):
+        if FlextUtilitiesGuards.matches_type(value, str):
             normalized_val = FlextUtilitiesParser._parse_normalize_str(
                 value,
                 case="lower",
@@ -131,7 +131,7 @@ class FlextUtilitiesParser:
         strict: bool,
     ) -> r[TModel]:
         """Parse Pydantic BaseModel. Returns None if not model."""
-        if not FlextUtilitiesGuards.is_mapping(value):
+        if not FlextUtilitiesGuards.mapping(value):
             return r[TModel].fail(
                 f"{field_prefix}Expected dict for model, got {value.__class__.__name__}",
             )

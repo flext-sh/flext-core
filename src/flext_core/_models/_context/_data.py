@@ -36,12 +36,12 @@ class FlextModelsContextData:
         if v is None:
             out: t.ContainerMapping = {}
             return out
-        if FlextUtilitiesGuardsTypeCore.is_mapping(v):
+        if FlextUtilitiesGuardsTypeCore.mapping(v):
             validated = t.dict_str_metadata_adapter().validate_python(
                 v,
             )
             return dict(validated)
-        if FlextUtilitiesGuardsTypeModel.is_pydantic_model(v):
+        if FlextUtilitiesGuardsTypeModel.pydantic_model(v):
             return v.model_dump()
         msg = c.ERR_CONTEXT_CANNOT_NORMALIZE_TYPE_TO_MAPPING.format(
             type_name=type(v).__name__,
@@ -56,7 +56,7 @@ class FlextModelsContextData:
             return None
         if isinstance(v, FlextModelsBase.Metadata):
             return v
-        if FlextUtilitiesGuardsTypeCore.is_mapping(v):
+        if FlextUtilitiesGuardsTypeCore.mapping(v):
             return FlextModelsBase.Metadata.model_validate({
                 c.FIELD_ATTRIBUTES: t.dict_str_metadata_adapter().validate_python(
                     v,
@@ -85,7 +85,7 @@ class FlextModelsContextData:
                     for key, value in v.attributes.items()
                 }
                 normalized_mapping = normalized_metadata
-            elif FlextUtilitiesGuardsTypeModel.is_pydantic_model(v):
+            elif FlextUtilitiesGuardsTypeModel.pydantic_model(v):
                 dump_result = v.model_dump()
                 normalized_mapping = {
                     str(k): FlextRuntime.normalize_to_container(dv)
@@ -130,13 +130,13 @@ class FlextModelsContextData:
         @classmethod
         def check_json_serializable(cls, obj: t.ValueOrModel, path: str = "") -> None:
             """Recursively check if a canonical container value is JSON-serializable."""
-            if obj is None or FlextUtilitiesGuardsTypeCore.is_primitive(obj):
+            if obj is None or FlextUtilitiesGuardsTypeCore.primitive(obj):
                 return
-            if FlextUtilitiesGuardsTypeCore.is_dict_like(obj):
+            if FlextUtilitiesGuardsTypeCore.dict_like(obj):
                 for key, val in obj.items():
                     cls.check_json_serializable(val, f"{path}.{key}")
                 return
-            if FlextUtilitiesGuardsTypeCore.is_list_like(obj) and (
+            if FlextUtilitiesGuardsTypeCore.list_like(obj) and (
                 not isinstance(obj, (str, bytes))
             ):
                 seq_obj: t.ContainerList = obj
@@ -152,9 +152,7 @@ class FlextModelsContextData:
             val: t.ValueOrModel,
         ) -> t.RecursiveContainer:
             normalized = cls.normalize_to_container(val)
-            if normalized is None or FlextUtilitiesGuardsTypeCore.is_primitive(
-                normalized,
-            ):
+            if normalized is None or FlextUtilitiesGuardsTypeCore.primitive(normalized):
                 return normalized
             if isinstance(
                 normalized,
@@ -164,13 +162,13 @@ class FlextModelsContextData:
                     str(key): cls.normalize_to_serializable_value(item_value)
                     for key, item_value in normalized.root.items()
                 }
-            if FlextUtilitiesGuardsTypeModel.is_pydantic_model(normalized):
+            if FlextUtilitiesGuardsTypeModel.pydantic_model(normalized):
                 dumped_model = normalized.model_dump()
                 return {
                     str(key): cls.normalize_to_serializable_value(item_value)
                     for key, item_value in dumped_model.items()
                 }
-            if FlextUtilitiesGuardsTypeCore.is_mapping(normalized):
+            if FlextUtilitiesGuardsTypeCore.mapping(normalized):
                 normalized_map = t.dict_str_metadata_adapter().validate_python(
                     normalized,
                 )
@@ -178,7 +176,7 @@ class FlextModelsContextData:
                     str(key): cls.normalize_to_serializable_value(val)
                     for key, val in normalized_map.items()
                 }
-            if FlextUtilitiesGuardsTypeCore.is_list_like(normalized):
+            if FlextUtilitiesGuardsTypeCore.list_like(normalized):
                 return [
                     cls.normalize_to_serializable_value(item) for item in normalized
                 ]
@@ -193,11 +191,11 @@ class FlextModelsContextData:
                 return ""
             if isinstance(val, t.SCALAR_TYPES):
                 return val
-            if FlextUtilitiesGuardsTypeModel.is_pydantic_model(val):
+            if FlextUtilitiesGuardsTypeModel.pydantic_model(val):
                 return val
-            if FlextUtilitiesGuardsTypeCore.is_dict_like(
+            if FlextUtilitiesGuardsTypeCore.dict_like(
                 val,
-            ) or FlextUtilitiesGuardsTypeCore.is_list_like(val):
+            ) or FlextUtilitiesGuardsTypeCore.list_like(val):
                 return FlextRuntime.normalize_to_container(val)
             if hasattr(val, "__iter__"):
                 return str(val)

@@ -67,7 +67,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             c.HandlerType.SAGA,
         }
         if handler_type not in valid_handler_types:
-            error_msg = f"Invalid handler mode: {handler_type}"
+            error_msg = c.ERR_HANDLER_INVALID_MODE.format(mode=handler_type)
             raise e.ValidationError(error_msg)
         handler_mode_literal = self._handler_type_to_literal(handler_type)
         self._execution_context = m.ExecutionContext.create_for_handler(
@@ -104,7 +104,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return
         for klass in cls.mro():
             if klass is FlextHandlers:
-                msg = f"{cls.__qualname__} must implement a handle() method"
+                msg = c.ERR_HANDLER_MISSING_HANDLE_IMPLEMENTATION.format(
+                    qualname=cls.__qualname__,
+                )
                 raise TypeError(msg)
             if c.MethodName.HANDLE in klass.__dict__:
                 break
@@ -206,7 +208,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             if isinstance(mode, c.HandlerType):
                 resolved_type = mode
             elif mode not in u.enum_values(c.HandlerType):
-                error_msg = f"Invalid handler mode: {mode}"
+                error_msg = c.ERR_HANDLER_INVALID_MODE.format(mode=mode)
                 raise e.ValidationError(error_msg)
             else:
                 resolved_type = c.HandlerType(str(mode))
@@ -529,17 +531,24 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             c.HandlerType.EVENT.value,
         }
         if operation != handler_mode and operation in valid_operations:
-            error_msg = f"Handler with mode '{handler_mode}' cannot execute {operation} pipelines"
+            error_msg = c.ERR_HANDLER_INCOMPATIBLE_PIPELINE_MODE.format(
+                handler_mode=handler_mode,
+                operation=operation,
+            )
             return r[ResultT].fail(error_msg)
         message_type = message.__class__
         if not self.can_handle(message_type):
             type_name = message_type.__name__
-            error_msg = f"Handler cannot handle message type {type_name}"
+            error_msg = c.ERR_HANDLER_CANNOT_HANDLE_MESSAGE_TYPE.format(
+                type_name=type_name,
+            )
             return r[ResultT].fail(error_msg)
         validation = self.validate_message(message)
         if validation.failure:
-            error_detail = validation.error or "Validation failed"
-            error_msg = f"Message validation failed: {error_detail}"
+            error_detail = validation.error or c.ERR_VALIDATION_FAILED
+            error_msg = c.ERR_HANDLER_MESSAGE_VALIDATION_FAILED.format(
+                error=error_detail,
+            )
             return r[ResultT].fail(error_msg)
         self._execution_context.start_execution()
         _ = self.push_context(self._execution_context)
@@ -548,9 +557,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             self._record_execution_metrics(success=result.success)
             return result
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
-            self.logger.warning("Critical handler pipeline failure", exc_info=exc)
+            self.logger.warning(c.LOG_HANDLER_PIPELINE_FAILURE, exc_info=exc)
             self._record_execution_metrics(success=False, error=str(exc))
-            error_msg = f"Critical handler failure: {exc}"
+            error_msg = c.ERR_HANDLER_CRITICAL_FAILURE.format(error=str(exc))
             return r[ResultT].fail(error_msg)
         finally:
             _ = self.pop_context()
@@ -649,7 +658,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 if name.startswith("_"):
                     continue
                 func = getattr(module, name, None)
-                if not u.is_handler_callable(func):
+                if not u.handler_callable(func):
                     continue
                 if not hasattr(func, c.HANDLER_ATTR):
                     continue
@@ -672,7 +681,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                     result = fn_candidate(message)
                     if result is None:
                         return None
-                    if u.is_primitive(result):
+                    if u.primitive(result):
                         return result
                     return str(result)
 

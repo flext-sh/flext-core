@@ -10,6 +10,7 @@ from typing import cast, override
 
 import pytest
 
+import flext_core.mixins as core_mixins
 from flext_core import r, x
 from flext_tests import tm
 from tests import m, p, t
@@ -165,7 +166,8 @@ class TestMixinsFullCoverage:
     ) -> None:
         runtime_container = self._RuntimeContainer()
         monkeypatch.setattr(
-            "flext_core.mixins.FlextContainer.create",
+            core_mixins.FlextContainer,
+            "create",
             staticmethod(lambda: runtime_container),
         )
 
@@ -254,7 +256,8 @@ class TestMixinsFullCoverage:
         service._init_service("svc")
         x._logger_cache.clear()
         monkeypatch.setattr(
-            "flext_core.mixins.FlextContainer.create",
+            core_mixins.FlextContainer,
+            "create",
             staticmethod(
                 lambda: self._ContainerForLogger(True, logger="l"),
             ),
@@ -262,13 +265,15 @@ class TestMixinsFullCoverage:
         logger_from_di = _Service._get_or_create_logger()
         tm.that(logger_from_di, none=False)
         monkeypatch.setattr(
-            "flext_core.mixins.FlextContainer.create",
+            core_mixins.FlextContainer,
+            "create",
             staticmethod(lambda: self._ContainerForLogger(False)),
         )
         logger_created = _Service._get_or_create_logger()
         tm.that(logger_created, none=False)
         monkeypatch.setattr(
-            "flext_core.mixins.FlextContainer.create",
+            core_mixins.FlextContainer,
+            "create",
             staticmethod(lambda: (_ for _ in ()).throw(RuntimeError("no container"))),
         )
         logger_fallback = _Service._get_or_create_logger()
@@ -337,7 +342,8 @@ class TestMixinsFullCoverage:
             return runtime_container
 
         monkeypatch.setattr(
-            "flext_core.mixins.FlextContainer.create",
+            core_mixins.FlextContainer,
+            "create",
             staticmethod(_create_runtime_container),
         )
 
@@ -456,7 +462,8 @@ class TestMixinsFullCoverage:
 
         x._logger_cache.clear()
         monkeypatch.setattr(
-            "flext_core.mixins.FlextContainer.create",
+            core_mixins.FlextContainer,
+            "create",
             staticmethod(_create_broken_container),
         )
         fallback_logger = _LoggerService._get_or_create_logger()

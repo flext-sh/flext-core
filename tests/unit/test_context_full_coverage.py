@@ -6,6 +6,7 @@ from collections.abc import MutableMapping
 
 import pytest
 
+import flext_core.context as core_context
 from flext_core import FlextContainer, FlextContext, r
 from flext_tests import tm
 from tests import c, m, p, t
@@ -49,7 +50,8 @@ def test_narrow_contextvar_exception_branch(
         raise TypeError(msg)
 
     monkeypatch.setattr(
-        "flext_core.context.u.normalize_to_container",
+        core_context.u,
+        "normalize_to_container",
         _raise_type_error,
     )
     tm.that(FlextContext._narrow_contextvar_to_configuration_dict({"x": 1}), eq={})
@@ -73,7 +75,7 @@ def test_set_set_all_get_validation_and_error_paths() -> None:
     tm.ok(ctx.set("x", "y"))
     tm.ok(ctx.set(t.ConfigMap(root={"x": "y"})))
     tm.that(ctx.get("x").value, eq="y")
-    tm.ok(FlextContext._validate_set_inputs("k", "bad"))
+    tm.ok(FlextContext._validate_update_inputs("k", "bad"))
 
 
 def test_inactive_and_none_value_paths() -> None:
@@ -91,9 +93,9 @@ def test_inactive_and_none_value_paths() -> None:
     tm.that(ctx.keys(), eq=[])
     tm.that(ctx.values(), eq=[])
     tm.that(ctx.items(), eq=[])
-    tm.that(ctx._get_all_scopes(), eq={})
+    tm.that(ctx._scope_payloads(), eq={})
     ctx2 = FlextContext()
-    ctx2._set_in_contextvar(c.ContextScope.GLOBAL, t.ConfigMap(root={"k": None}))
+    ctx2._update_contextvar(c.ContextScope.GLOBAL, t.ConfigMap(root={"k": None}))
     tm.fail(ctx2.get("k"))
 
 
@@ -108,7 +110,7 @@ def test_clear_keys_values_items_and_validate_branches() -> None:
     ctx2 = FlextContext()
     tm.ok(ctx2.validate_context())
     ctx3 = FlextContext()
-    ctx3._set_in_contextvar("global", t.ConfigMap(root={"": "x"}))
+    ctx3._update_contextvar("global", t.ConfigMap(root={"": "x"}))
     tm.fail(ctx3.validate_context())
 
 

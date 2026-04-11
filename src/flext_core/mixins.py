@@ -278,12 +278,12 @@ class FlextMixins(m.ArbitraryTypesModel):
             )
 
         config_cls_typed: type[p.Settings] = (
-            config_type_raw if u.is_settings_type(config_type_raw) else FlextSettings
+            config_type_raw if u.settings_type(config_type_raw) else FlextSettings
         )
         if overrides is None:
             overrides = getattr(self, "config_overrides", None)
         overrides_typed: t.ScalarMapping | None = (
-            {k: v for k, v in overrides.items() if u.is_scalar(v)}
+            {k: v for k, v in overrides.items() if u.scalar(v)}
             if overrides is not None
             else None
         )
@@ -356,7 +356,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         """Initialize service with automatic container registration."""
         effective_service_name: str = (
             service_name
-            if service_name is not None and u.is_type(service_name, str)
+            if service_name is not None and u.matches_type(service_name, str)
             else self.__class__.__name__
         )
         register_result = self._register_in_container(effective_service_name)

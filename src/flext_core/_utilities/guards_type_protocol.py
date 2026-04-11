@@ -47,7 +47,7 @@ class FlextUtilitiesGuardsTypeProtocol:
                 ),
                 "handler": lambda v: isinstance(v, p.Handler),
                 "logger": lambda v: isinstance(v, p.Logger),
-                "result": lambda v: FlextUtilitiesGuardsTypeProtocol.is_result_like(v),
+                "result": lambda v: FlextUtilitiesGuardsTypeProtocol.result_like(v),
                 "service": lambda v: isinstance(v, p.Service),
                 "middleware": lambda v: isinstance(v, p.Middleware),
             })
@@ -73,7 +73,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         return FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache
 
     @staticmethod
-    def is_context(
+    def context(
         value: t.GuardInput,
     ) -> TypeIs[p.Context]:
         """Narrow value to Context protocol."""
@@ -91,35 +91,35 @@ class FlextUtilitiesGuardsTypeProtocol:
             return False
 
     @staticmethod
-    def is_handler_callable(
+    def handler_callable(
         value: object,
     ) -> TypeIs[t.HandlerCallable]:
         """Narrow value to callable handler function."""
         return callable(value)
 
     @staticmethod
-    def is_factory(
+    def factory(
         value: t.GuardInput,
     ) -> TypeIs[t.FactoryCallable]:
         """Narrow value to factory callable."""
         return callable(value)
 
     @staticmethod
-    def is_resource(
+    def resource(
         value: t.GuardInput,
     ) -> TypeIs[t.ResourceCallable]:
         """Narrow value to resource factory callable."""
         return callable(value)
 
     @staticmethod
-    def is_result_like(
+    def result_like(
         value: t.GuardInput,
     ) -> TypeIs[p.Result[t.RuntimeAtomic]]:
         """Narrow value to Result protocol."""
         return isinstance(value, p.Result)
 
     @staticmethod
-    def is_registerable_service(
+    def registerable_service(
         value: t.GuardInput,
     ) -> TypeIs[t.RegisterableService]:
         """Narrow value to DI-registerable service (primitives, models, callables, etc.)."""
@@ -129,11 +129,11 @@ class FlextUtilitiesGuardsTypeProtocol:
             return True
         if isinstance(value, Sequence):
             return not isinstance(value, (str, bytes, bytearray))
-        if FlextUtilitiesGuardsTypeModel.is_pydantic_model(value):
+        if FlextUtilitiesGuardsTypeModel.pydantic_model(value):
             return True
         if callable(value):
             return True
-        if FlextUtilitiesGuardsTypeProtocol.is_context(value):
+        if FlextUtilitiesGuardsTypeProtocol.context(value):
             return True
         return hasattr(value, "__dict__") or bool(
             hasattr(value, "bind") and hasattr(value, "info"),
@@ -195,21 +195,21 @@ class FlextUtilitiesGuardsTypeProtocol:
     def _check_protocol(value: t.GuardInput, name: str) -> bool:
         """Check if value implements a named protocol."""
         if name == c_mixins.FIELD_CONTEXT:
-            return FlextUtilitiesGuardsTypeProtocol.is_context(value)
+            return FlextUtilitiesGuardsTypeProtocol.context(value)
         try:
             return FlextUtilitiesGuardsTypeProtocol._get_protocol_specs()[name](value)
         except (TypeError, ValueError, AttributeError, RuntimeError):
             return False
 
     @staticmethod
-    def _is_type_tuple(
+    def _type_tuple(
         value: t.GuardInput,
     ) -> TypeIs[tuple[type, ...]]:
         """Narrow value to tuple of types."""
         return isinstance(value, tuple)
 
     @staticmethod
-    def is_type(
+    def matches_type(
         value: t.GuardInput,
         type_spec: str | type | tuple[type, ...],
     ) -> bool:
@@ -227,7 +227,7 @@ class FlextUtilitiesGuardsTypeProtocol:
                     "dict_non_empty",
                     "list_non_empty",
                 }:
-                    if FlextUtilitiesGuardsTypeModel.is_pydantic_model(value):
+                    if FlextUtilitiesGuardsTypeModel.pydantic_model(value):
                         return False
                     return FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
                         type_name,
@@ -254,7 +254,7 @@ class FlextUtilitiesGuardsTypeProtocol:
             return False
 
     @staticmethod
-    def is_settings_type(
+    def settings_type(
         candidate: type | t.GuardInput,
     ) -> TypeIs[type[p.Settings]]:
         """Narrow candidate to Settings type with callable fetch_global."""
@@ -272,11 +272,11 @@ class FlextUtilitiesGuardsTypeProtocol:
         return {
             str(key): value
             for key, value in services.items()
-            if FlextUtilitiesGuardsTypeProtocol.is_registerable_service(value)
+            if FlextUtilitiesGuardsTypeProtocol.registerable_service(value)
         }
 
     @staticmethod
-    def is_handler(obj: t.ProtocolSubject) -> bool:
+    def handler(obj: t.ProtocolSubject) -> bool:
         """Check if obj satisfies p.Handle protocol with validate capability."""
         return isinstance(obj, p.Handle) and callable(
             getattr(obj, "validate", None),

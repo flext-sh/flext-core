@@ -120,7 +120,7 @@ class Testu(u.Core.Tests.Contract):
         expected: bool,
     ) -> None:
         """Test string type guards."""
-        result = u.is_type(value, "string_non_empty")
+        result = u.matches_type(value, "string_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -134,7 +134,7 @@ class Testu(u.Core.Tests.Contract):
         expected: bool,
     ) -> None:
         """Test dict type guards."""
-        result = u.is_type(value, "dict_non_empty")
+        result = u.matches_type(value, "dict_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -148,7 +148,7 @@ class Testu(u.Core.Tests.Contract):
         expected: bool,
     ) -> None:
         """Test list type guards."""
-        result = u.is_type(value, "list_non_empty")
+        result = u.matches_type(value, "list_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(

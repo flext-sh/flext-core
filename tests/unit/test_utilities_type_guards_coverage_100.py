@@ -50,7 +50,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         TypeGuardScenario(name="tab_string", value="\t", expected_result=False),
     ]
 
-    IS_DICT_NON_EMPTY: ClassVar[Sequence[TypeGuardScenario]] = [
+    dict_non_empty: ClassVar[Sequence[TypeGuardScenario]] = [
         TypeGuardScenario(
             name="non_empty_dict",
             value="has_items",
@@ -126,16 +126,16 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     @pytest.mark.parametrize("scenario", IS_STRING_NON_EMPTY, ids=lambda s: s.name)
     def test_is_string_non_empty(self, scenario: TypeGuardScenario) -> None:
-        result = u.is_string_non_empty(scenario.value)
+        result = u.string_non_empty(scenario.value)
         tm.that(result, eq=scenario.expected_result)
 
-    @pytest.mark.parametrize("scenario", IS_DICT_NON_EMPTY, ids=lambda s: s.name)
+    @pytest.mark.parametrize("scenario", dict_non_empty, ids=lambda s: s.name)
     def test_is_dict_non_empty(self, scenario: TypeGuardScenario) -> None:
         if scenario.value == "has_items":
             test_value: t.StrMapping = {"key": "value"}
         else:
             test_value = dict[str, str]()
-        result = u.is_dict_non_empty(test_value)
+        result = u.dict_non_empty(test_value)
         tm.that(result, eq=scenario.expected_result)
 
     @pytest.mark.parametrize("scenario", IS_LIST_NON_EMPTY, ids=lambda s: s.name)
@@ -148,13 +148,13 @@ class TestUtilitiesTypeGuardsCoverage100:
             value = [""]
         else:
             value = scenario.value
-        result = u.is_type(value, "list_non_empty")
+        result = u.matches_type(value, "list_non_empty")
         tm.that(result, eq=scenario.expected_result)
 
     @pytest.mark.parametrize("scenario", NORMALIZE_TO_METADATA, ids=lambda s: s.name)
     def test_normalize_to_metadata(self, scenario: NormalizeScenario) -> None:
         value = scenario.value
-        assert u.is_container(value)
+        assert u.container(value)
         result = u.normalize_to_metadata(value)
         tm.that(result, is_=scenario.expected_type)
         if scenario.expected_value is not None:

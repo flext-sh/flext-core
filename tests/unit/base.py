@@ -41,7 +41,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
     @override
     def execute(self) -> r[T_DomainResult]:
         """Execute domain service logic - must be implemented by subclasses."""
-        msg = "Subclasses must implement execute()"
+        msg = c.Core.Tests.TestErrors.SUBCLASSES_MUST_IMPLEMENT_EXECUTE
         raise NotImplementedError(msg)
 
     class HandlerTestCase(BaseModel):
@@ -192,7 +192,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
 
                 def __init__(self) -> None:
                     if not handler_id:
-                        msg = "Handler ID cannot be empty"
+                        msg = c.Core.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
                         raise ValueError(msg)
                     config = m.Handler(
                         handler_id=handler_id,
@@ -238,7 +238,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
 
             """
             if not handler_id:
-                msg = "Handler ID cannot be empty"
+                msg = c.Core.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
                 raise ValueError(msg)
 
             def always_succeed(
@@ -268,10 +268,10 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
 
             """
             if not handler_id:
-                msg = "Handler ID cannot be empty"
+                msg = c.Core.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
                 raise ValueError(msg)
             if not error_message:
-                error_message = "Processing error"
+                error_message = c.Core.Tests.TestErrors.PROCESSING_ERROR_DEFAULT
 
             def always_fail(
                 _msg: t.ValueOrModel,
@@ -300,7 +300,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
 
             """
             if not handler_id:
-                msg = "Handler ID cannot be empty"
+                msg = c.Core.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
                 raise ValueError(msg)
 
             def transform(

@@ -56,7 +56,7 @@ class _ValidationCrashService(s[str]):
 
     @override
     def validate_business_rules(self) -> r[bool]:
-        msg = "rule-crash"
+        msg = m.Examples.ErrorMessages.RULE_CRASH
         raise RuntimeError(msg)
 
 

@@ -248,7 +248,7 @@ class TestsFlextCoreUtilities(u):
             ) -> m.Core.Tests.User | str:
                 """Execute the documented V2 railway pipeline."""
                 if not case.user_ids:
-                    msg = "No user IDs provided"
+                    msg = c.Core.Tests.TestErrors.NO_USER_IDS_PROVIDED
                     raise e.BaseError(msg)
                 user: m.Core.Tests.User | str = TestsFlextCoreUtilities.Core.Tests.make(
                     TestsFlextCoreUtilities.Core.Tests.GetUserService,

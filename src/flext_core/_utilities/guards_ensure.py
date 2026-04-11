@@ -147,7 +147,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     @staticmethod
     def _to_container_or_str(value: t.RecursiveContainer) -> t.Container:
         """Normalize a value to Container: pass through if already, else str()."""
-        return value if FlextUtilitiesGuardsEnsure.is_container(value) else str(value)
+        return value if FlextUtilitiesGuardsEnsure.container(value) else str(value)
 
     @staticmethod
     def _check_validator(
@@ -160,7 +160,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         """Evaluate validator against value. Returns True if guard passes."""
         if isinstance(validator, type):
             return isinstance(value, validator)
-        if FlextUtilitiesGuardsEnsure.is_object_tuple(validator):
+        if FlextUtilitiesGuardsEnsure.object_tuple(validator):
             tuple_types: tuple[type, ...] = tuple(
                 item for item in validator if isinstance(item, type)
             )

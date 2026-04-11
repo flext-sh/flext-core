@@ -46,6 +46,7 @@ if _t.TYPE_CHECKING:
         Ex05HandlerLike,
         Ex05StatusEnum,
         Ex05UserModel,
+        ExamplesFlextCoreModelsEx05,
     )
     from examples._models.ex07 import (
         Ex07CreateUserCommand,
@@ -179,6 +180,7 @@ __all__ = [
     "ExamplesFlextCoreModelsErrors",
     "ExamplesFlextCoreModelsEx00",
     "ExamplesFlextCoreModelsEx01",
+    "ExamplesFlextCoreModelsEx05",
     "ExamplesFlextCoreModelsOutput",
     "SharedHandle",
     "SharedPerson",

@@ -11,6 +11,7 @@ from typing import Annotated, ClassVar, cast
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
+import flext_core.decorators as core_decorators
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -70,7 +71,8 @@ class TestDecoratorsFullCoverage:
                 return r[str].ok("dep")
 
         monkeypatch.setattr(
-            "flext_core.decorators.FlextContainer.create",
+            core_decorators.FlextContainer,
+            "create",
             lambda: _Container(),
         )
 
@@ -96,15 +98,18 @@ class TestDecoratorsFullCoverage:
             return fake_logger
 
         monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._bind_operation_context",
+            core_decorators.FlextDecorators,
+            "_bind_operation_context",
             staticmethod(_bind_operation_context),
         )
         monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._clear_operation_scope",
+            core_decorators.FlextDecorators,
+            "_clear_operation_scope",
             staticmethod(_clear_operation_scope),
         )
         monkeypatch.setattr(
-            "flext_core.decorators.u.fetch_logger",
+            core_decorators.u,
+            "fetch_logger",
             _logger_factory,
         )
 
@@ -139,15 +144,18 @@ class TestDecoratorsFullCoverage:
             return TestDecoratorsFullCoverage._FakeLogger()
 
         monkeypatch.setattr(
-            "flext_core.decorators.d._execute_retry_loop",
+            core_decorators.d,
+            "_execute_retry_loop",
             _execute_retry_loop,
         )
         monkeypatch.setattr(
-            "flext_core.decorators.d._handle_retry_exhaustion",
+            core_decorators.d,
+            "_handle_retry_exhaustion",
             _handle_retry_exhaustion,
         )
         monkeypatch.setattr(
-            "flext_core.decorators.u.fetch_logger",
+            core_decorators.u,
+            "fetch_logger",
             _logger_factory,
         )
 
@@ -177,7 +185,7 @@ class TestDecoratorsFullCoverage:
         def _sleep(_seconds: float) -> None:
             return None
 
-        monkeypatch.setattr("flext_core.decorators.time.sleep", _sleep)
+        monkeypatch.setattr(core_decorators.time, "sleep", _sleep)
         calls = {"n": 0}
 
         def flaky(*_args: t.Scalar, **_kwargs: t.Scalar) -> str:
@@ -210,7 +218,8 @@ class TestDecoratorsFullCoverage:
             )
 
         monkeypatch.setattr(
-            "flext_core.decorators.m.RetryConfiguration",
+            core_decorators.m,
+            "RetryConfiguration",
             _fake_retry_config,
         )
         result_none = d._execute_retry_loop(
@@ -254,7 +263,8 @@ class TestDecoratorsFullCoverage:
             return r[bool].fail("bind-fail", error_code="E_BIND")
 
         monkeypatch.setattr(
-            "flext_core.decorators.u.bind_context",
+            core_decorators.u,
+            "bind_context",
             _bind_context,
         )
         cid = d._bind_operation_context(
@@ -276,7 +286,8 @@ class TestDecoratorsFullCoverage:
             return r[bool].fail("clear-fail", error_code="E_CLR")
 
         monkeypatch.setattr(
-            "flext_core.decorators.u.clear_scope",
+            core_decorators.u,
+            "clear_scope",
             _clear_scope,
         )
         d._clear_operation_scope(
@@ -377,7 +388,8 @@ class TestDecoratorsFullCoverage:
             return "cid-1"
 
         monkeypatch.setattr(
-            "flext_core.decorators.FlextContext.Utilities.ensure_correlation_id",
+            core_decorators.FlextContext.Utilities,
+            "ensure_correlation_id",
             _ensure_correlation_id,
         )
 
@@ -412,11 +424,13 @@ class TestDecoratorsFullCoverage:
 
         tm.that(with_ctx(), eq="ctx")
         monkeypatch.setattr(
-            "flext_core.decorators.d._bind_operation_context",
+            core_decorators.d,
+            "_bind_operation_context",
             _bind_operation_context,
         )
         monkeypatch.setattr(
-            "flext_core.decorators.d._clear_operation_scope",
+            core_decorators.d,
+            "_clear_operation_scope",
             _clear_operation_scope,
         )
 
@@ -448,15 +462,18 @@ class TestDecoratorsFullCoverage:
             return fake_logger
 
         monkeypatch.setattr(
-            "flext_core.decorators.u.fetch_logger",
+            core_decorators.u,
+            "fetch_logger",
             _logger_factory,
         )
         monkeypatch.setattr(
-            "flext_core.decorators.d._bind_operation_context",
+            core_decorators.d,
+            "_bind_operation_context",
             _bind_operation_context,
         )
         monkeypatch.setattr(
-            "flext_core.decorators.d._clear_operation_scope",
+            core_decorators.d,
+            "_clear_operation_scope",
             _clear_operation_scope,
         )
 
@@ -501,11 +518,13 @@ class TestDecoratorsFullCoverage:
             return fake_logger
 
         monkeypatch.setattr(
-            "flext_core.decorators.d._execute_retry_loop",
+            core_decorators.d,
+            "_execute_retry_loop",
             _execute_retry_loop,
         )
         monkeypatch.setattr(
-            "flext_core.decorators.u.fetch_logger",
+            core_decorators.u,
+            "fetch_logger",
             _logger_factory,
         )
 
@@ -524,7 +543,7 @@ class TestDecoratorsFullCoverage:
         def _sleep(_seconds: float) -> None:
             return None
 
-        monkeypatch.setattr("flext_core.decorators.time.sleep", _sleep)
+        monkeypatch.setattr(core_decorators.time, "sleep", _sleep)
         calls = {"n": 0}
 
         def always_fails(*_args: t.Scalar, **_kwargs: t.Scalar) -> str:

@@ -16,11 +16,11 @@ from pathlib import Path
 from typing import Literal
 
 from flext_core import (
-    FlextConstantsMixins as c,
     FlextModelsBase as m,
     FlextModelsCollections,
     FlextProtocols as p,
     FlextUtilitiesGuards as u,
+    c,
     t,
 )
 
@@ -68,11 +68,11 @@ class FlextUtilitiesDomain:
 
         Returns True if both entities have same type and ID.
         """
-        if u.is_scalar(entity_a):
+        if u.scalar(entity_a):
             return False
         if isinstance(entity_a, (Sequence, Mapping)):
             return False
-        if u.is_scalar(entity_b):
+        if u.scalar(entity_b):
             return False
         if isinstance(entity_b, (Sequence, Mapping)):
             return False
@@ -91,9 +91,9 @@ class FlextUtilitiesDomain:
 
         Returns True if same type and all attributes equal.
         """
-        if u.is_scalar(obj_a):
+        if u.scalar(obj_a):
             return obj_a == obj_b
-        if u.is_scalar(obj_b):
+        if u.scalar(obj_b):
             return False
         if hasattr(obj_a, "__iter__") and not hasattr(obj_a, "model_dump"):
             return obj_a == obj_b
@@ -115,7 +115,7 @@ class FlextUtilitiesDomain:
         id_attr: str = c.FIELD_ID,
     ) -> int:
         """Hash entity by ID + type. Falls back to identity hash if ID missing."""
-        if u.is_scalar(entity):
+        if u.scalar(entity):
             return hash(entity)
         entity_id = getattr(entity, id_attr, None)
         if entity_id is None:
@@ -125,7 +125,7 @@ class FlextUtilitiesDomain:
     @staticmethod
     def hash_value_object_by_value(obj: t.RuntimeData) -> int:
         """Hash value object by all attributes. Falls back to repr hash."""
-        if u.is_scalar(obj):
+        if u.scalar(obj):
             return hash(obj)
         if isinstance(obj, m.EnforcedModel):
             data = obj.model_dump()
@@ -155,14 +155,14 @@ class FlextUtilitiesDomain:
             for key, value in item.items():
                 normalized_map[str(key)] = (
                     FlextUtilitiesDomain.normalize_recursive_metadata_value(
-                        value if u.is_scalar(value) else str(value),
+                        value if u.scalar(value) else str(value),
                     )
                 )
             return normalized_map
         if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
             return [
                 FlextUtilitiesDomain.normalize_recursive_metadata_value(
-                    value if u.is_scalar(value) else str(value),
+                    value if u.scalar(value) else str(value),
                 )
                 for value in item
             ]
@@ -176,7 +176,7 @@ class FlextUtilitiesDomain:
         if value is None:
             return {}
         if not isinstance(value, (t.ConfigMap, Mapping)):
-            msg = "Domain event data must be a dictionary or None"
+            msg = c.ERR_DOMAIN_EVENT_DATA_MUST_BE_DICT_OR_NONE
             raise TypeError(msg)
         raw_source = value.root if isinstance(value, t.ConfigMap) else value
         typed_source = t.dict_str_metadata_adapter().validate_python(raw_source)

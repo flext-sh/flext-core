@@ -254,7 +254,7 @@ class FlextLogger(FlextRuntime):
         return instance
 
     @staticmethod
-    def _is_structlog_processor(
+    def _structlog_processor(
         value: object,
     ) -> typing.TypeIs[Processor]:
         return callable(value)
@@ -344,9 +344,7 @@ class FlextLogger(FlextRuntime):
         ]
         if additional_processors:
             processors.extend(
-                proc
-                for proc in additional_processors
-                if cls._is_structlog_processor(proc)
+                proc for proc in additional_processors if cls._structlog_processor(proc)
             )
         if console_renderer:
             processors.append(structlog.dev.ConsoleRenderer(colors=True))
@@ -581,7 +579,7 @@ class FlextLogger(FlextRuntime):
         )
 
     @classmethod
-    def _get_global_context(cls) -> t.ConfigMap:
+    def _global_context(cls) -> t.ConfigMap:
         """Get current global context (internal use only)."""
         try:
             context_vars = cls.structlog().contextvars.get_contextvars()
@@ -865,12 +863,12 @@ class FlextLogger(FlextRuntime):
             return str(value)
         if value is None:
             return ""
-        if FlextUtilitiesGuardsTypeCore.is_scalar(value) or isinstance(value, Path):
+        if FlextUtilitiesGuardsTypeCore.scalar(value) or isinstance(value, Path):
             return value
-        if FlextUtilitiesGuardsTypeModel.is_pydantic_model(value):
+        if FlextUtilitiesGuardsTypeModel.pydantic_model(value):
             return value.model_dump_json()
         normalized = FlextRuntime.normalize_to_container(value)
-        if FlextUtilitiesGuardsTypeCore.is_scalar(normalized) or isinstance(
+        if FlextUtilitiesGuardsTypeCore.scalar(normalized) or isinstance(
             normalized,
             Path,
         ):
@@ -887,7 +885,7 @@ class FlextLogger(FlextRuntime):
             return str(value)
         if isinstance(value, (list, tuple, dict, Mapping)):
             return str(value)
-        if FlextUtilitiesGuardsTypeCore.is_scalar(value):
+        if FlextUtilitiesGuardsTypeCore.scalar(value):
             return value
         return str(value)
 
@@ -909,10 +907,10 @@ class FlextLogger(FlextRuntime):
         return {key: cls._to_scalar_value(value) for key, value in context.items()}
 
     @staticmethod
-    def _get_caller_source_path() -> str | None:
+    def _caller_source_path() -> str | None:
         """Get source file path with line, class and method context."""
         try:
-            caller_frame = FlextLogger._get_calling_frame()
+            caller_frame = FlextLogger._calling_frame()
             if caller_frame is None:
                 return None
             filename = caller_frame.f_code.co_filename
@@ -938,7 +936,7 @@ class FlextLogger(FlextRuntime):
             return None
 
     @staticmethod
-    def _get_calling_frame() -> types.FrameType | None:
+    def _calling_frame() -> types.FrameType | None:
         """Get the calling frame 4 levels up the stack."""
         frame = inspect.currentframe()
         if not frame:
@@ -1190,7 +1188,7 @@ class FlextLogger(FlextRuntime):
         """Internal logging method - consolidates all log level methods."""
         try:
             if "source" not in context and (
-                source_path := FlextLogger._get_caller_source_path()
+                source_path := FlextLogger._caller_source_path()
             ):
                 context["source"] = source_path
             for idx, arg in enumerate(args):

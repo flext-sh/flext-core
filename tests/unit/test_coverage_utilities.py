@@ -172,7 +172,7 @@ class Testu(u.Core.Tests.Contract):
             should_succeed=should_succeed,
             description=description,
         )
-        result = u.is_type(case.input_data, "string_non_empty")
+        result = u.matches_type(case.input_data, "string_non_empty")
         tm.that(result, eq=case.should_succeed)
 
     @pytest.mark.parametrize(
@@ -193,7 +193,7 @@ class Testu(u.Core.Tests.Contract):
             should_succeed=should_succeed,
             description=description,
         )
-        result = u.is_type(case.input_data, "dict_non_empty")
+        result = u.matches_type(case.input_data, "dict_non_empty")
         tm.that(result, eq=case.should_succeed)
 
     @pytest.mark.parametrize(
@@ -214,7 +214,7 @@ class Testu(u.Core.Tests.Contract):
             should_succeed=should_succeed,
             description=description,
         )
-        result = u.is_type(case.input_data, "list_non_empty")
+        result = u.matches_type(case.input_data, "list_non_empty")
         tm.that(result, eq=case.should_succeed)
 
     def test_generate_id_uniqueness(self) -> None:

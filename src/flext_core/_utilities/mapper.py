@@ -92,7 +92,7 @@ class FlextUtilitiesMapper:
             normalized = FlextUtilitiesCache.normalize_component(
                 {str(k): v for k, v in result.items()},
             )
-            if FlextUtilitiesGuardsTypeCore.is_mapping(normalized):
+            if FlextUtilitiesGuardsTypeCore.mapping(normalized):
                 normalized_result: t.MutableContainerMapping = {}
                 for key, value in normalized.items():
                     normalized_result[str(key)] = value
@@ -157,17 +157,17 @@ class FlextUtilitiesMapper:
         field_name: str,
     ) -> t.RecursiveContainer:
         """Extract field value from dict or model for pyrefly type inference."""
-        if FlextUtilitiesGuardsTypeCore.is_mapping(item):
+        if FlextUtilitiesGuardsTypeCore.mapping(item):
             dict_item: t.MutableContainerMapping = {}
             for key, value in item.items():
                 coerced_value: t.RecursiveContainer = (
-                    value if FlextUtilitiesGuards.is_container(value) else str(value)
+                    value if FlextUtilitiesGuards.container(value) else str(value)
                 )
                 dict_item[str(key)] = coerced_value
             return dict_item.get(field_name)
         if hasattr(item, field_name):
             attr_value = getattr(item, field_name)
-            if FlextUtilitiesGuards.is_container(attr_value):
+            if FlextUtilitiesGuards.container(attr_value):
                 return attr_value
             return str(attr_value)
         return None
@@ -180,7 +180,7 @@ class FlextUtilitiesMapper:
         """Wrap a raw value into a Result: fail on None, narrow containers, stringify rest."""
         if raw is None:
             return r[t.ValueOrModel].fail(f"found_none:{key_part}")
-        if FlextUtilitiesGuards.is_container(raw):
+        if FlextUtilitiesGuards.container(raw):
             return r[t.ValueOrModel].ok(raw)
         return r[t.ValueOrModel].ok(str(raw))
 
@@ -214,7 +214,7 @@ class FlextUtilitiesMapper:
         if isinstance(
             current,
             BaseModel,
-        ) and FlextUtilitiesGuardsTypeModel.is_pydantic_model(current):
+        ) and FlextUtilitiesGuardsTypeModel.pydantic_model(current):
             model_dump_attr = current.model_dump
             if callable(model_dump_attr):
                 model_dict = model_dump_attr()
@@ -282,7 +282,7 @@ class FlextUtilitiesMapper:
         )
         map_keys_val = transform_opts.get("map_keys")
         map_keys_dict: t.StrMapping | None = None
-        if FlextUtilitiesGuardsTypeCore.is_mapping(map_keys_val) and all(
+        if FlextUtilitiesGuardsTypeCore.mapping(map_keys_val) and all(
             isinstance(v, str) for v in map_keys_val.values()
         ):
             map_keys_dict = {str(k): str(v) for k, v in map_keys_val.items()}
@@ -539,7 +539,7 @@ class FlextUtilitiesMapper:
                     default=default,
                     required=required,
                 )
-            if FlextUtilitiesGuards.is_container(current):
+            if FlextUtilitiesGuards.container(current):
                 return r[t.ValueOrModel].ok(current)
             return r[t.ValueOrModel].ok(str(current))
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as e:
@@ -557,7 +557,7 @@ class FlextUtilitiesMapper:
         """Get value by key from dict/object, returning default if missing."""
         runtime_default: t.RuntimeAtomic | None = (
             default
-            if default is None or FlextUtilitiesGuards.is_container(default)
+            if default is None or FlextUtilitiesGuards.container(default)
             else None
         )
         return FlextUtilitiesMapper._get_raw(data, key, default=runtime_default)
@@ -619,8 +619,8 @@ class FlextUtilitiesMapper:
         """Extract a value by key from a Mapping or BaseModel."""
         fallback: t.ValueOrModel | None = default
         match data_or_items:
-            case Mapping() if FlextUtilitiesGuardsTypeModel.is_configuration_mapping(
-                data_or_items,
+            case Mapping() if FlextUtilitiesGuardsTypeModel.configuration_mapping(
+                data_or_items
             ):
                 data: p.AccessibleData = data_or_items
             case BaseModel():
@@ -696,7 +696,7 @@ class FlextUtilitiesMapper:
         if isinstance(source, t.ConfigMap):
             coerced: t.MutableContainerMapping = {}
             for k, v in source.root.items():
-                coerced[str(k)] = v if FlextUtilitiesGuards.is_container(v) else str(v)
+                coerced[str(k)] = v if FlextUtilitiesGuards.container(v) else str(v)
             return coerced
         return source
 

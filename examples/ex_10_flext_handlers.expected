@@ -69,8 +69,8 @@ di.wire.noop: True
 integration.calls: True
 metadata.version: '9.1.0'
 metadata.attributes: {'tag': 'qoac'}
-protocol.is_handler.true: True
-protocol.is_handler.false: False
+protocol.handler.true: True
+protocol.handler.false: False
 protocol.is_service: True
 protocol.is_command_bus: True
 protocol.validate_known: False
@@ -113,10 +113,10 @@ runtime.resolve_log_level: True
 runtime.validate_http.success: [200, 404]
 runtime.validate_http.range_fail: 'Invalid HTTP status code: 99 (must be 100-599)'
 runtime.validate_http.type_fail: 'Invalid HTTP status code type: PosixPath'
-runtime.is_dict_like.true: True
-runtime.is_dict_like.false: False
-runtime.is_list_like.true: True
-runtime.is_list_like.false: False
+runtime.dict_like.true: True
+runtime.dict_like.false: False
+runtime.list_like.true: True
+runtime.list_like.false: False
 runtime.is_valid_identifier.true: True
 runtime.is_valid_identifier.false: False
 runtime.safe_get_attribute: True

@@ -115,7 +115,7 @@ class TestContext100Coverage:
         """Test None is rejected by context.set validation."""
         context = FlextContext()
         context.set("key1", "value1").value
-        result = context._set_single("none_key", None, c.ContextScope.GLOBAL)
+        result = context._apply_single("none_key", None, c.ContextScope.GLOBAL)
         tm.fail(result)
 
     def test_get_with_different_scope(self) -> None:
@@ -205,7 +205,7 @@ class TestContext100Coverage:
         context = FlextContext()
         context.set("key1", "value1").value
         context.set("key2", "value2", scope="user").value
-        all_scopes = context._get_all_scopes()
+        all_scopes = context._scope_payloads()
         tm.that(all_scopes, is_=dict)
         tm.that(all_scopes, contains=c.ContextScope.GLOBAL)
         tm.that(all_scopes, contains="user")

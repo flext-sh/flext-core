@@ -41,6 +41,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "Ex05HandlerLike",
             "Ex05StatusEnum",
             "Ex05UserModel",
+            "ExamplesFlextCoreModelsEx05",
         ),
         ".ex07": (
             "Ex07CreateUserCommand",

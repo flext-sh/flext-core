@@ -509,7 +509,7 @@ class FlextDecorators:
                 if attempt == attempts:
                     break
         if last_exception is None:
-            msg = "Retry loop completed without success or exception"
+            msg = c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
             return RuntimeError(msg)
         return last_exception
 
@@ -567,7 +567,7 @@ class FlextDecorators:
         """Flatten ConfigMap into a flat warning-context dict."""
         context: MutableMapping[str, t.Container] = {}
         for key, value in kwargs.root.items():
-            if key == "extra" and u.is_dict_like(value):
+            if key == "extra" and u.dict_like(value):
                 extra_items: Mapping[str, t.ValueOrModel]
                 if isinstance(value, t.ConfigMap):
                     extra_items = value.root
@@ -977,7 +977,7 @@ class FlextDecorators:
                         filtered_vars: t.FlatContainerMapping = {
                             k: v
                             for k, v in context_vars.items()
-                            if v is not None and u.is_container(v)
+                            if v is not None and u.container(v)
                         }
                         bind_result = FlextLogger.bind_global_context(**filtered_vars)
                         if bind_result.failure:

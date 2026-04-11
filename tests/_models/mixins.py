@@ -7,7 +7,7 @@ from typing import Annotated, ClassVar, Never, Self, override
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_tests import m
-from tests import t
+from tests import c, t
 
 # Use `flext_tests` generic model base classes here to avoid a runtime circular import
 # through the tests package. `t` comes from tests.typings, which extends the generic test
@@ -24,7 +24,7 @@ class TestsFlextCoreModelsMixins:
         def __getitem__(self, key: str) -> Never:
             """Raise error on get attempt."""
             _ = key
-            msg = "Bad dict get"
+            msg = c.Core.Tests.TestErrors.BAD_DICT_GET
             raise RuntimeError(msg)
 
     class BadList(UserList[t.Core.Tests.TestobjectSerializable]):
@@ -33,7 +33,7 @@ class TestsFlextCoreModelsMixins:
         @override
         def __iter__(self) -> Iterator[t.Core.Tests.TestobjectSerializable]:
             """Raise error on iteration."""
-            msg = "Bad list iteration"
+            msg = c.Core.Tests.TestErrors.BAD_LIST_ITERATION
             raise RuntimeError(msg)
 
     class BadModelDump:
@@ -125,7 +125,7 @@ class TestsFlextCoreModelsMixins:
         ) -> Never:
             _ = strict, extra, from_attributes, context, by_alias, by_name
             _ = obj
-            msg = "plain boom"
+            msg = c.Core.Tests.TestErrors.PLAIN_BOOM
             raise RuntimeError(msg)
 
     class _TargetModel(BaseModel):
@@ -201,7 +201,7 @@ class TestsFlextCoreModelsMixins:
         def __init__(self, **kwargs: t.Scalar) -> None:
             """Raise error on init."""
             super().__init__(**kwargs)
-            msg = "Cannot instantiate"
+            msg = c.Core.Tests.TestErrors.CANNOT_INSTANTIATE
             raise ValueError(msg)
 
     class _DumpErrorModel(BaseModel):
@@ -346,7 +346,7 @@ class TestsFlextCoreModelsMixins:
         def __setattr__(self, name: str, value: t.ContainerValue) -> None:
             """Prevent attribute setting if frozen."""
             if self._frozen:
-                msg = "Object is frozen"
+                msg = c.Core.Tests.TestErrors.OBJECT_IS_FROZEN
                 raise AttributeError(msg)
             object.__setattr__(self, name, value)
 

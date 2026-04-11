@@ -90,7 +90,7 @@ class FlextDispatcher:
         def _coerce(value: t.RuntimeAtomic) -> r[DispatchValueT]:
             if isinstance(value, expected_type):
                 return r[DispatchValueT].ok(value)
-            if u.is_pydantic_model(value):
+            if u.pydantic_model(value):
                 return r[DispatchValueT].fail(
                     f"Expected {expected_type.__name__}, got {value.__class__.__name__}",
                 )
@@ -211,26 +211,26 @@ class FlextDispatcher:
         dispatch_result = r[t.RuntimeAtomic]
         try:
             raw_output = resolved_handler(message)
-            if u.is_result_like(raw_output):
+            if u.result_like(raw_output):
                 if raw_output.failure:
                     error_data_value = raw_output.error_data
                     return dispatch_result.fail(
-                        raw_output.error or "Handler failed",
+                        raw_output.error or c.ERR_HANDLER_FAILED,
                         error_code=raw_output.error_code,
                         error_data=error_data_value
-                        if u.is_pydantic_model(error_data_value)
+                        if u.pydantic_model(error_data_value)
                         else None,
                     )
                 value: t.RuntimeAtomic | None = raw_output.value
-                if not u.is_container(value) and not u.is_pydantic_model(value):
+                if not u.container(value) and not u.pydantic_model(value):
                     return dispatch_result.fail(
-                        "Handler returned non-container value in success result",
+                        c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
                     )
                 return dispatch_result.ok(value)
             if raw_output is None:
-                return dispatch_result.fail("Handler returned None")
-            if not u.is_container(raw_output) and not u.is_pydantic_model(raw_output):
-                return dispatch_result.fail("Handler returned non-container value")
+                return dispatch_result.fail(c.ERR_HANDLER_RETURNED_NONE)
+            if not u.container(raw_output) and not u.pydantic_model(raw_output):
+                return dispatch_result.fail(c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE)
             return dispatch_result.ok(raw_output)
         except (
             TypeError,
@@ -242,8 +242,8 @@ class FlextDispatcher:
             LookupError,
             ArithmeticError,
         ) as exc:
-            self._logger.exception("Handler execution failed", route=route_name)
+            self._logger.exception(c.LOG_HANDLER_EXECUTION_FAILED, route=route_name)
             return dispatch_result.fail(
-                f"Handler execution failed: {exc}",
+                c.ERR_HANDLER_EXECUTION_FAILED.format(error=str(exc)),
                 error_code=c.ErrorCode.COMMAND_PROCESSING_FAILED.value,
             )

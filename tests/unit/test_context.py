@@ -316,7 +316,7 @@ class TestFlextContext:
         created_at_result = context.resolve_metadata("created_at")
         _ = u.Core.Tests.assert_success(created_at_result)
         tm.that(created_at_result.value, eq="2025-01-01")
-        metadata = context._get_all_metadata()
+        metadata = context._metadata_map()
         tm.that("created_at" in metadata and "version" in metadata, eq=True)
 
     def test_context_cleanup(self, test_context: FlextContext) -> None:
@@ -493,7 +493,7 @@ class TestFlextContext:
     def test_context_get_all_metadata_empty(self, test_context: FlextContext) -> None:
         """Test getting all metadata when empty."""
         context = test_context
-        metadata = context._get_all_metadata()
+        metadata = context._metadata_map()
         tm.that(metadata, is_=dict)
 
     def test_service_register_and_fetch_service(self) -> None:
@@ -587,7 +587,7 @@ class TestFlextContext:
         context = test_context
         context.set("key1", "value1").value
         context.set("key2", "value2").value
-        scopes = context._get_all_scopes()
+        scopes = context._scope_payloads()
         tm.that(scopes, none=False)
         tm.that(scopes, is_=dict)
 

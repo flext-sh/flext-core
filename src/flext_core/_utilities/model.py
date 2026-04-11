@@ -76,7 +76,7 @@ class FlextUtilitiesModel:
             if isinstance(
                 root_value,
                 Mapping,
-            ) and FlextUtilitiesGuardsTypeCore.is_mapping(root_value):
+            ) and FlextUtilitiesGuardsTypeCore.mapping(root_value):
                 return {str(key): value for key, value in root_value.items()}
             dumped = data.model_dump()
             return {str(key): value for key, value in dumped.items()}

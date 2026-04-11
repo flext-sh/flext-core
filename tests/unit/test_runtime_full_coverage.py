@@ -709,7 +709,7 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     class BasicModel(BaseModel):
         value: int = 1
 
-    tm.that(u.is_base_model(BasicModel()), eq=True)
+    tm.that(u.base_model(BasicModel()), eq=True)
     normalized_mapping = u.normalize_to_container(
         MappingProxyType({"k": "v"}),
     )

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableSequence, Sequence
 from typing import override
 
-from examples import t
+from examples import m, t
 from examples.shared import Examples
 from flext_core import r
 
@@ -146,7 +146,7 @@ class Ex01r(Examples):
         self.check("safe.failure.error", safe_fail.error)
 
         def func_fail() -> str | None:
-            msg = "callable failed"
+            msg = m.Examples.ErrorMessages.CALLABLE_FAILED
             raise RuntimeError(msg)
 
         def func_none() -> str | None:
