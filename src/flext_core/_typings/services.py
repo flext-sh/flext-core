@@ -11,36 +11,34 @@ from datetime import date, time
 from enum import Enum
 from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
-from typing import TYPE_CHECKING, TypeAliasType
+from typing import TypeAliasType
 
 from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._protocols.runtime import FlextProtocolsRuntime
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.containers import FlextTypingContainers
-
-if TYPE_CHECKING:
-    from flext_core import p
 
 
 class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
     type RegistryDict[T] = MutableMapping[str, T]
+    type ModelCarrier = FlextModelsPydantic.BaseModel
+    type ModelClass[T: ModelCarrier] = type[T]
 
-    type ScalarOrModel = FlextTypingBase.Scalar | Path | FlextModelsPydantic.BaseModel
-    type ValueOrModel = (
-        FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel
-    )
+    type ScalarOrModel = FlextTypingBase.Scalar | Path | ModelCarrier
+    type ValueOrModel = FlextTypingBase.RecursiveContainer | ModelCarrier
     type RuntimeData = ValueOrModel | FlextTypesServices.MetadataValue
-    type RuntimeAtomic = FlextTypingBase.Container | FlextModelsPydantic.BaseModel
+    type RuntimeAtomic = FlextTypingBase.Container | ModelCarrier
 
     type BootstrapInput = (
-        FlextModelsPydantic.BaseModel | FlextTypingBase.RecursiveContainerMapping | None
+        ModelCarrier | FlextTypingBase.RecursiveContainerMapping | None
     )
 
     type RegisterableService = (
         FlextTypingBase.Container
-        | FlextModelsPydantic.BaseModel
-        | p.Logger
+        | ModelCarrier
+        | FlextProtocolsRuntime.Logger
         | Mapping[
             str,
             FlextTypingBase.Container | FlextTypingBase.RecursiveContainer,
@@ -48,7 +46,7 @@ class FlextTypesServices:
         | Sequence[FlextTypingBase.Container | FlextTypingBase.RecursiveContainer]
         | Callable[
             ...,
-            FlextTypingBase.Container | FlextModelsPydantic.BaseModel | p.Logger,
+            FlextTypingBase.Container | ModelCarrier | FlextProtocolsRuntime.Logger,
         ]
         | Callable[..., FlextTypesServices.RegisterableService]
     )
@@ -66,46 +64,44 @@ class FlextTypesServices:
     type MetadataAttributeValue = MetadataValue
     type ModelInput = (
         FlextTypingBase.RecursiveContainer
-        | FlextModelsPydantic.BaseModel
+        | ModelCarrier
         | Mapping[
             str,
             FlextTypesServices.ValueOrModel,
         ]
     )
     type ConfigModelInput = (
-        FlextModelsPydantic.BaseModel
+        ModelCarrier
         | FlextTypingContainers.ConfigMap
         | Mapping[str, FlextTypesServices.RuntimeAtomic]
     )
     type MetadataInput = (
-        FlextModelsPydantic.BaseModel
+        ModelCarrier
         | FlextTypingContainers.ConfigMap
         | Mapping[str, FlextTypingBase.Scalar]
         | None
     )
-    type HandlerCallable = Callable[..., FlextModelsPydantic.BaseModel | None]
-    type HandlerLike = Callable[..., FlextModelsPydantic.BaseModel]
+    type HandlerCallable = Callable[..., ModelCarrier | None]
+    type HandlerLike = Callable[..., ModelCarrier]
     type DispatchableHandler = (
-        FlextModelsPydantic.BaseModel
-        | Callable[
-            ..., FlextModelsPydantic.BaseModel | FlextTypesServices.RuntimeAtomic | None
-        ]
+        ModelCarrier
+        | Callable[..., ModelCarrier | FlextTypesServices.RuntimeAtomic | None]
     )
     type HandlerProtocolVariant = (
         FlextTypesServices.DispatchableHandler
-        | p.DispatchMessage
-        | p.Handle
-        | p.Execute
-        | p.AutoDiscoverableHandler
+        | FlextProtocolsRuntime.DispatchMessage
+        | FlextProtocolsRuntime.Handle
+        | FlextProtocolsRuntime.Execute
+        | FlextProtocolsRuntime.AutoDiscoverableHandler
     )
     type ResolvedHandlerCallable = Callable[
         ...,
-        FlextModelsPydantic.BaseModel | FlextTypesServices.RuntimeAtomic | None,
+        ModelCarrier | FlextTypesServices.RuntimeAtomic | None,
     ]
     type RoutedHandlerCallable = Callable[
-        [p.Routable],
+        [FlextProtocolsRuntime.Routable],
         FlextTypesServices.RuntimeAtomic
-        | p.Result[FlextTypesServices.RuntimeAtomic]
+        | FlextProtocolsRuntime.Result[FlextTypesServices.RuntimeAtomic]
         | None,
     ]
     type RegisteredHandler = tuple[
@@ -121,8 +117,8 @@ class FlextTypesServices:
         FlextTypesServices.ScalarOrModel
         | Callable[..., FlextTypesServices.ScalarOrModel]
     )
-    type LoggerFactory = Callable[..., p.OutputLogger] | None
-    type LoggerWrapperFactory = Callable[[], type[p.Logger]]
+    type LoggerFactory = Callable[..., FlextProtocolsRuntime.OutputLogger] | None
+    type LoggerWrapperFactory = Callable[[], type[FlextProtocolsRuntime.Logger]]
     type StructlogProcessor = Callable[
         ...,
         FlextTypingBase.RecursiveContainerMapping,
@@ -165,7 +161,7 @@ class FlextTypesServices:
     type ServiceMap = Mapping[str, RegisterableService]
     type FactoryMap = Mapping[str, FactoryCallable]
     type ResourceMap = Mapping[str, ResourceCallable]
-    type SettingsClass = type[p.Settings]
+    type SettingsClass = type[FlextProtocolsRuntime.Settings]
     type RuntimeModule = ModuleType
     type LazyScalar = FlextTypingBase.Scalar | bytes | date | time
     type LazyCollection = Mapping[str, LazyScalar] | Sequence[LazyScalar]
@@ -200,34 +196,32 @@ class FlextTypesServices:
         FlextTypingBase.Scalar
         | Path
         | FlextTypingBase.RecursiveContainerList
-        | Mapping[
-            str, FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel
-        ]
+        | Mapping[str, FlextTypingBase.RecursiveContainer | ModelCarrier]
         | tuple[FlextTypingBase.RecursiveContainer, ...]
         | tuple[type, ...]
         | set[FlextTypingBase.RecursiveContainer]
-        | FlextModelsPydantic.BaseModel
+        | ModelCarrier
         | FlextTypingContainers.ConfigMap
         | RegisterableService
-        | p.Context
-        | p.Settings
-        | p.Dispatcher
-        | p.Result[RuntimeAtomic]
+        | FlextProtocolsRuntime.Context
+        | FlextProtocolsRuntime.Settings
+        | FlextProtocolsRuntime.Dispatcher
+        | FlextProtocolsRuntime.Result[RuntimeAtomic]
         | None
     )
 
     type ProtocolSubject = (
         GuardInput
-        | p.Flushable
-        | p.AutoDiscoverableHandler
-        | p.ProviderLike[FlextModelsPydantic.BaseModel | FlextTypingBase.Container]
-        | p.DispatchableService
-        | p.SuccessCheckable
-        | p.StructuredError
-        | p.ErrorDomainProtocol
-        | p.Configurable
-        | p.Handle
-        | p.Execute
+        | FlextProtocolsRuntime.Flushable
+        | FlextProtocolsRuntime.AutoDiscoverableHandler
+        | FlextProtocolsRuntime.ProviderLike[ModelCarrier | FlextTypingBase.Container]
+        | FlextProtocolsRuntime.DispatchableService
+        | FlextProtocolsRuntime.SuccessCheckable
+        | FlextProtocolsRuntime.StructuredError
+        | FlextProtocolsRuntime.ErrorDomainProtocol
+        | FlextProtocolsRuntime.Configurable
+        | FlextProtocolsRuntime.Handle
+        | FlextProtocolsRuntime.Execute
     )
 
     type UserOverridesMapping = Mapping[
@@ -239,8 +233,8 @@ class FlextTypesServices:
 
     type RegistrationKwarg = (
         RuntimeData
-        | p.Settings
-        | p.Context
+        | FlextProtocolsRuntime.Settings
+        | FlextProtocolsRuntime.Context
         | Mapping[str, RegisterableService]
         | Mapping[str, FactoryCallable]
         | Mapping[str, ResourceCallable]

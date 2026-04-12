@@ -13,11 +13,11 @@ from contextlib import AbstractContextManager
 from datetime import datetime
 from importlib import import_module
 from pathlib import Path
-from typing import Literal, TypeVar
+from typing import Literal
 
 from pydantic import Field, TypeAdapter, ValidationError
 
-from flext_core import c, e, p, r, t
+from flext_core import T_Model, c, e, p, r, t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.service import FlextModelsService
 from flext_core._utilities.args import FlextUtilitiesArgs
@@ -25,8 +25,6 @@ from flext_core._utilities.discovery import FlextUtilitiesDiscovery
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
-
-T_Model = TypeVar("T_Model", bound=t.ModelCarrier)
 
 
 class FlextUtilitiesModel:
