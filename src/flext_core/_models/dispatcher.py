@@ -35,7 +35,7 @@ class FlextModelsDispatcher:
             ),
         ]
         _executor: concurrent.futures.ThreadPoolExecutor | None = (
-            FlextUtilitiesPydantic.PrivateAttr(default=None)
+            FlextUtilitiesPydantic.PrivateAttr(default_factory=lambda: None)
         )
 
         @override

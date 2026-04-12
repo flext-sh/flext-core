@@ -104,7 +104,7 @@ class FlextProtocolsContainer:
             ...
 
         @overload
-        def get[T](
+        def get[T: FlextTypesServices.RegisterableService](
             self,
             name: str,
             *,

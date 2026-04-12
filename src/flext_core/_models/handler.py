@@ -164,8 +164,12 @@ class FlextModelsHandler:
 
         """
 
-        _start_time: float | None = FlextUtilitiesPydantic.PrivateAttr(default=None)
-        _metrics_state: t.Dict | None = FlextUtilitiesPydantic.PrivateAttr(default=None)
+        _start_time: float | None = FlextUtilitiesPydantic.PrivateAttr(
+            default_factory=lambda: None,
+        )
+        _metrics_state: t.Dict | None = FlextUtilitiesPydantic.PrivateAttr(
+            default_factory=lambda: None,
+        )
 
         model_config: ClassVar[c.ConfigDict] = c.ConfigDict(
             json_schema_extra={

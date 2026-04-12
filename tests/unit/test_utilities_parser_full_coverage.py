@@ -8,6 +8,7 @@ normalization helpers are not asserted here so coverage reflects public usage.
 from __future__ import annotations
 
 import pytest
+from pydantic import BaseModel
 
 from flext_tests import tm
 from tests import c, m, u
@@ -27,9 +28,10 @@ class TestUtilitiesParserFullCoverage:
         self,
         scenario: m.Core.Tests.PublicParseCase,
     ) -> None:
+        options = scenario.options
         result = (
-            u.parse(scenario.input_value, scenario.target, options=scenario.options)
-            if scenario.options is not None
+            u.parse(scenario.input_value, scenario.target, options=options)
+            if isinstance(options, u.ParseOptions)
             else u.parse(scenario.input_value, scenario.target)
         )
         tm.ok(result, eq=scenario.expected_value)
@@ -47,9 +49,10 @@ class TestUtilitiesParserFullCoverage:
         self,
         scenario: m.Core.Tests.PublicParseCase,
     ) -> None:
+        options = scenario.options
         result = (
-            u.parse(scenario.input_value, scenario.target, options=scenario.options)
-            if scenario.options is not None
+            u.parse(scenario.input_value, scenario.target, options=options)
+            if isinstance(options, u.ParseOptions)
             else u.parse(scenario.input_value, scenario.target)
         )
         tm.ok(result, eq=scenario.expected_value)
@@ -69,7 +72,8 @@ class TestUtilitiesParserFullCoverage:
     ) -> None:
         result = u.parse(scenario.input_value, scenario.target)
         payload = tm.ok(result)
-        tm.that(payload, is_=scenario.target)
+        assert isinstance(payload, scenario.target)
+        assert isinstance(payload, BaseModel)
         tm.that(payload.model_dump(), eq=scenario.expected_data)
 
     @pytest.mark.parametrize(
@@ -85,9 +89,10 @@ class TestUtilitiesParserFullCoverage:
         self,
         scenario: m.Core.Tests.PublicParseCase,
     ) -> None:
+        options = scenario.options
         result = (
-            u.parse(scenario.input_value, scenario.target, options=scenario.options)
-            if scenario.options is not None
+            u.parse(scenario.input_value, scenario.target, options=options)
+            if isinstance(options, u.ParseOptions)
             else u.parse(scenario.input_value, scenario.target)
         )
         error = tm.fail(result)

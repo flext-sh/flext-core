@@ -243,7 +243,7 @@ class TestFlextProtocols:
         """Object with dispatch(message) satisfies p.DispatchableService."""
 
         class _Svc:
-            def dispatch(self, message: m.BaseModel, /) -> m.BaseModel:
+            def dispatch(self, message: p.Model, /) -> p.Model:
                 return message
 
         instance = _as_protocol_subject(_Svc())

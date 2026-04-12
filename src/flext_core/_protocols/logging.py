@@ -77,6 +77,25 @@ class FlextProtocolsLogging:
             """Log info message."""
             ...
 
+        def log(
+            self,
+            level: str,
+            message: str,
+            *args: FlextTypesServices.LogValue,
+            **kw: FlextTypesServices.LogValue,
+        ) -> FlextTypesServices.LogResult:
+            """Log a message at an arbitrary level."""
+            ...
+
+        def trace(
+            self,
+            message: str,
+            *args: FlextTypesServices.LogValue,
+            **kwargs: FlextTypesServices.RuntimeData,
+        ) -> FlextTypesServices.LogResult:
+            """Log a trace/debug-level diagnostic message."""
+            ...
+
         def warning(
             self,
             msg: str,

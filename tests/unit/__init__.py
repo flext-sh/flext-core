@@ -94,9 +94,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_typings_full_coverage": ("test_typings_full_coverage",),
             ".test_typings_new": ("test_typings_new",),
             ".test_utilities": ("test_utilities",),
-            ".test_utilities_cache_coverage_100": (
-                "test_utilities_cache_coverage_100",
-            ),
             ".test_utilities_collection_coverage_100": (
                 "test_utilities_collection_coverage_100",
             ),

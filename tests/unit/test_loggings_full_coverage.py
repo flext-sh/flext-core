@@ -211,13 +211,16 @@ class TestModule:
         )
 
         broken.exception("msg", exception=ValueError("x"), exc_info=True)
-        tracker = u.PerformanceTracker(logger, "op")
+        tracker = u.PerformanceTracker(
+            cast("p.Logger", cast("t.ProtocolSubject", logger)),
+            "op",
+        )
         with tracker:
             pass
         tracker.__exit__(RuntimeError, RuntimeError("x"), None)
-        tm.that(logger.unbind("missing", safe=True), none=False)
+        assert logger.unbind("missing", safe=True) is not None
         with pytest.warns(DeprecationWarning, match="try_unbind"):
-            tm.that(logger.try_unbind("missing"), none=False)
+            assert logger.try_unbind("missing") is not None
 
 
 __all__: list[str] = ["TestModule"]

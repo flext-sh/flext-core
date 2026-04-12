@@ -96,6 +96,7 @@ class TestContainerFullCoverage:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         called: MutableSequence[str] = []
+        FlextContainer.reset_for_testing()
 
         def factory() -> int:
             return 1
@@ -415,9 +416,9 @@ class TestContainerFullCoverage:
     def test_initialize_di_components_exposes_valid_runtime_providers(self) -> None:
         c = FlextContainer.create()
         c.initialize_di_components()
-        tm.that(c._config_provider, none=False)
-        tm.that(c._base_config_provider, none=False)
-        tm.that(c._user_config_provider, none=False)
+        assert c._config_provider is not None
+        assert c._base_config_provider is not None
+        assert c._user_config_provider is not None
 
     def test_sync_config_registers_namespace_factories_and_fallbacks(
         self,
