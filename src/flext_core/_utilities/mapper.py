@@ -719,7 +719,9 @@ class FlextUtilitiesMapper:
         """Extract a value by key from a Mapping or BaseModel."""
         fallback: t.ValueOrModel | None = default
         data: p.AccessibleData | t.ConfigModelInput
-        if FlextUtilitiesGuardsTypeModel.configuration_mapping(data_or_items) or FlextUtilitiesGuardsTypeModel.base_model(data_or_items):
+        if FlextUtilitiesGuardsTypeModel.configuration_mapping(
+            data_or_items
+        ) or FlextUtilitiesGuardsTypeModel.base_model(data_or_items):
             data = data_or_items
         else:
             return fallback
