@@ -13,9 +13,8 @@ import concurrent.futures
 import time
 from typing import Annotated, override
 
-from pydantic import Field, PrivateAttr, computed_field
-
 from flext_core import FlextModelsBase, c, r, t
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsDispatcher:
@@ -26,16 +25,18 @@ class FlextModelsDispatcher:
 
         use_timeout_executor: Annotated[
             bool,
-            Field(description="Whether timeout executor is enabled"),
+            FlextUtilitiesPydantic.Field(
+                description="Whether timeout executor is enabled"
+            ),
         ]
         executor_workers: Annotated[
             t.PositiveInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Number of worker threads for timeout executor",
             ),
         ]
-        _executor: concurrent.futures.ThreadPoolExecutor | None = PrivateAttr(
-            default=None,
+        _executor: concurrent.futures.ThreadPoolExecutor | None = (
+            FlextUtilitiesPydantic.PrivateAttr()
         )
 
         @override
@@ -65,7 +66,7 @@ class FlextModelsDispatcher:
                 )
             return self._executor
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         @property
         def executor_status(self) -> t.ScalarMapping:
             """Return executor status metadata for diagnostics and metrics."""
@@ -101,49 +102,49 @@ class FlextModelsDispatcher:
 
         state: Annotated[
             str,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.CircuitBreakerState.CLOSED,
                 description="Current circuit breaker state (CLOSED, OPEN, or HALF_OPEN).",
             ),
         ] = c.CircuitBreakerState.CLOSED
         failures: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=0,
                 description="Consecutive failure count since last reset.",
             ),
         ] = 0
         success_count: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=0,
                 description="Consecutive success count during half-open recovery.",
             ),
         ] = 0
         opened_at: Annotated[
             t.NonNegativeFloat,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=0.0,
                 description="Epoch timestamp when the circuit was opened.",
             ),
         ] = 0.0
         recovery_successes: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=0,
                 description="Total successful recovery transitions from half-open to closed.",
             ),
         ] = 0
         recovery_failures: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=0,
                 description="Total failed recovery attempts that re-opened the circuit.",
             ),
         ] = 0
         total_successes: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=0,
                 description="Cumulative successful dispatches tracked for metrics.",
             ),
@@ -159,22 +160,24 @@ class FlextModelsDispatcher:
 
         threshold: Annotated[
             t.PositiveInt,
-            Field(description="Failure count before opening circuit"),
+            FlextUtilitiesPydantic.Field(
+                description="Failure count before opening circuit"
+            ),
         ]
         recovery_timeout: Annotated[
             t.PositiveFloat,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Seconds before attempting recovery",
             ),
         ]
         success_threshold: Annotated[
             t.PositiveInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Successes needed to close from half-open",
             ),
         ]
         _breakers: dict[str, FlextModelsDispatcher.CircuitBreakerStateRecord] = (
-            PrivateAttr(
+            FlextUtilitiesPydantic.PrivateAttr(
                 default_factory=lambda: dict[
                     str,
                     FlextModelsDispatcher.CircuitBreakerStateRecord,
@@ -232,7 +235,7 @@ class FlextModelsDispatcher:
                 FlextModelsDispatcher.CircuitBreakerStateRecord(),
             ).failures
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         @property
         def metrics(self) -> t.ScalarMapping:
             """Collect circuit breaker metrics, including recovery statistics."""
@@ -368,14 +371,14 @@ class FlextModelsDispatcher:
 
         window_start: Annotated[
             t.NonNegativeFloat,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=0.0,
                 description="Epoch timestamp marking the start of the current rate window.",
             ),
         ] = 0.0
         count: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=0,
                 description="Number of requests recorded in the current rate window.",
             ),
@@ -386,21 +389,27 @@ class FlextModelsDispatcher:
 
         max_requests: Annotated[
             t.PositiveInt,
-            Field(description="Maximum requests allowed per window"),
+            FlextUtilitiesPydantic.Field(
+                description="Maximum requests allowed per window"
+            ),
         ]
         window_seconds: Annotated[
             t.PositiveFloat,
-            Field(description="Time window in seconds for rate limiting"),
+            FlextUtilitiesPydantic.Field(
+                description="Time window in seconds for rate limiting"
+            ),
         ]
         jitter_factor: Annotated[
             t.DecimalFraction,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=0.1,
                 description="Jitter variance as fraction between 0.0 and 1.0",
             ),
         ] = 0.1
-        _windows: dict[str, FlextModelsDispatcher.RateWindow] = PrivateAttr(
-            default_factory=lambda: dict[str, FlextModelsDispatcher.RateWindow](),
+        _windows: dict[str, FlextModelsDispatcher.RateWindow] = (
+            FlextUtilitiesPydantic.PrivateAttr(
+                default_factory=lambda: dict[str, FlextModelsDispatcher.RateWindow](),
+            )
         )
 
         @override

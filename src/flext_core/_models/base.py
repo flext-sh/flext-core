@@ -17,24 +17,17 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
 
-from pydantic import (
-    AfterValidator,
-    BaseModel,
-    BeforeValidator,
-    ConfigDict,
-    Field,
-    field_serializer,
-    model_validator,
-)
-
 from flext_core import FlextUtilitiesEnforcement, c, t
+from flext_core._constants.pydantic import FlextConstantsPydantic
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsBase:
     """Container for base model classes - Tier 0, 100% standalone."""
 
-    class EnforcedModel(BaseModel):
+    class EnforcedModel(FlextModelsPydantic.BaseModel):
         """Base model that enforces architectural rules on subclasses."""
 
         @classmethod
@@ -51,31 +44,39 @@ class FlextModelsBase:
     class ManagedModel(EnforcedModel):
         """Shared preset for assignment validation with forbidden extra fields."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            validate_assignment=True,
-            extra=c.EXTRA_CONFIG_FORBID,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                validate_assignment=True,
+                extra=c.EXTRA_CONFIG_FORBID,
+            )
         )
 
     class EnumManagedModel(ManagedModel):
         """Shared preset for managed models that serialize enum values."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            use_enum_values=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                use_enum_values=True,
+            )
         )
 
     class NormalizedModel(EnumManagedModel):
         """Shared preset for managed models with whitespace normalization."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            str_strip_whitespace=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                str_strip_whitespace=True,
+            )
         )
 
     class StrictManagedModel(NormalizedModel):
         """Shared preset for strict managed validation boundaries."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            strict=True,
-            validate_default=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                strict=True,
+                validate_default=True,
+            )
         )
 
     class StrictModel(StrictManagedModel):
@@ -84,13 +85,17 @@ class FlextModelsBase:
     class FrozenModel(StrictModel):
         """Immutable strict domain model preset."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(frozen=True)
+        )
 
     class ArbitraryTypesModel(EnumManagedModel):
         """Base model with arbitrary types support."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            arbitrary_types_allowed=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                arbitrary_types_allowed=True,
+            )
         )
 
     class StrictBoundaryModel(FrozenModel):
@@ -99,71 +104,85 @@ class FlextModelsBase:
     class FlexibleInternalModel(NormalizedModel):
         """Flexible internal model for domain logic."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="ignore",
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                extra="ignore",
+            )
         )
 
     class ImmutableValueModel(ManagedModel):
         """Immutable value model for value objects."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                frozen=True,
+            )
         )
 
     class TaggedModel(EnforcedModel):
         """Base pattern for tagged discriminated unions."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid")
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(extra="forbid")
+        )
         tag: ClassVar[str]
 
     class FlexibleModel(ArbitraryTypesModel):
         """Model for dynamic configuration - allows extra fields."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="ignore",
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                extra="ignore",
+            )
         )
 
     class DynamicModel(FlexibleModel):
         """Dynamic domain model preset with string whitespace normalization."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            str_strip_whitespace=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                str_strip_whitespace=True,
+            )
         )
 
     class FrozenDynamicModel(DynamicModel):
         """Immutable dynamic domain model preset."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(frozen=True)
+        )
 
-    class Metadata(BaseModel):
+    class Metadata(FlextModelsPydantic.BaseModel):
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra=c.EXTRA_CONFIG_FORBID,
-            frozen=True,
-            validate_assignment=True,
-            populate_by_name=True,
-            arbitrary_types_allowed=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                extra=c.EXTRA_CONFIG_FORBID,
+                frozen=True,
+                validate_assignment=True,
+                populate_by_name=True,
+                arbitrary_types_allowed=True,
+            )
         )
         created_at: Annotated[
             datetime,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Timestamp when the metadata record was first created in UTC.",
                 title="Created At",
                 examples=["2026-03-03T10:00:00+00:00"],
             ),
-        ] = Field(default_factory=lambda: datetime.now(UTC))
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: datetime.now(UTC))
         updated_at: Annotated[
             datetime,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Timestamp of the most recent metadata update in UTC.",
                 title="Updated At",
                 examples=["2026-03-03T10:05:00+00:00"],
             ),
-        ] = Field(default_factory=lambda: datetime.now(UTC))
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: datetime.now(UTC))
         version: Annotated[
             str,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default="1.0.0",
                 description="Semantic version string representing the metadata schema revision.",
                 title="Metadata Version",
@@ -172,7 +191,7 @@ class FlextModelsBase:
         ] = "1.0.0"
         created_by: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 description="Identifier of the actor that originally created this metadata.",
                 title="Created By",
@@ -181,7 +200,7 @@ class FlextModelsBase:
         ] = None
         modified_by: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 description="Identifier of the actor that last modified this metadata.",
                 title="Modified By",
@@ -190,36 +209,42 @@ class FlextModelsBase:
         ] = None
         tags: Annotated[
             t.StrSequence,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Normalized labels used to classify and filter this metadata.",
                 title="Tags",
                 examples=[["billing", "critical"]],
             ),
-        ] = Field(default_factory=list)
+        ] = FlextUtilitiesPydantic.Field(default_factory=list)
         attributes: Annotated[
             Mapping[str, t.MetadataValue],
-            BeforeValidator(FlextRuntime.validate_metadata_attributes),
-            Field(
+            FlextModelsPydantic.BeforeValidator(
+                FlextRuntime.validate_metadata_attributes
+            ),
+            FlextUtilitiesPydantic.Field(
                 description="Arbitrary metadata attributes stored as key-value pairs.",
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
-        ] = Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
         metadata_value: Annotated[
             t.Scalar | None,
-            Field(default=None, description="Scalar metadata value."),
+            FlextUtilitiesPydantic.Field(
+                default=None, description="Scalar metadata value."
+            ),
         ] = None
 
     class ContractModel(StrictModel):
         """Immutable base model with strict validation."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            validate_return=True,
-            arbitrary_types_allowed=True,
-            ser_json_timedelta=c.SERIALIZATION_ISO8601,
-            ser_json_bytes=c.SERIALIZATION_BASE64,
-            hide_input_in_errors=True,
-            frozen=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                validate_return=True,
+                arbitrary_types_allowed=True,
+                ser_json_timedelta=c.SERIALIZATION_ISO8601,
+                ser_json_bytes=c.SERIALIZATION_BASE64,
+                hide_input_in_errors=True,
+                frozen=True,
+            )
         )
 
     class FrozenValueModel(ContractModel):
@@ -238,16 +263,20 @@ class FlextModelsBase:
     class MutableConfiguredMixin:
         """Shared preset for mutable mixins with assignment validation."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            validate_assignment=True,
-            arbitrary_types_allowed=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                validate_assignment=True,
+                arbitrary_types_allowed=True,
+            )
         )
 
     class NormalizedMutableConfiguredMixin(MutableConfiguredMixin):
         """Shared preset for mutable mixins with whitespace normalization."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            str_strip_whitespace=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                str_strip_whitespace=True,
+            )
         )
 
     class IdentifiableMixin(NormalizedMutableConfiguredMixin):
@@ -255,11 +284,11 @@ class FlextModelsBase:
 
         unique_id: Annotated[
             t.NonEmptyStr,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Unique identifier",
                 frozen=False,
             ),
-        ] = Field(default_factory=lambda: str(uuid.uuid4()))
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: str(uuid.uuid4()))
 
         def regenerate_id(self) -> None:
             """Regenerate the unique_id with a new UUID."""
@@ -270,19 +299,27 @@ class FlextModelsBase:
 
         created_at: Annotated[
             datetime,
-            AfterValidator(lambda v: FlextRuntime.ensure_utc_datetime(v)),
-            Field(
+            FlextModelsPydantic.AfterValidator(
+                lambda v: FlextRuntime.ensure_utc_datetime(v)
+            ),
+            FlextUtilitiesPydantic.Field(
                 description="Creation timestamp (UTC)",
                 frozen=True,
             ),
-        ] = Field(default_factory=lambda: datetime.now(UTC))
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: datetime.now(UTC))
         updated_at: Annotated[
             datetime | None,
-            AfterValidator(lambda v: FlextRuntime.ensure_utc_datetime(v)),
-            Field(default=None, description="Last update timestamp (UTC)"),
+            FlextModelsPydantic.AfterValidator(
+                lambda v: FlextRuntime.ensure_utc_datetime(v)
+            ),
+            FlextUtilitiesPydantic.Field(
+                default=None, description="Last update timestamp (UTC)"
+            ),
         ] = None
 
-        @field_serializer("created_at", "updated_at", when_used="json")
+        @FlextUtilitiesPydantic.field_serializer(
+            "created_at", "updated_at", when_used="json"
+        )
         def serialize_timestamps(self, value: datetime | None) -> str | None:
             """Serialize timestamps to ISO 8601 for JSON."""
             return value.isoformat() if value else None
@@ -291,7 +328,7 @@ class FlextModelsBase:
             """Update the updated_at timestamp to current UTC time."""
             self.updated_at = datetime.now(UTC)
 
-        @model_validator(mode="after")
+        @FlextUtilitiesPydantic.model_validator(mode="after")
         def validate_timestamp_consistency(self) -> Self:
             """Validate timestamp consistency."""
             if self.updated_at is not None and self.updated_at < self.created_at:
@@ -303,7 +340,7 @@ class FlextModelsBase:
 
         version: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.DEFAULT_RETRY_DELAY_SECONDS,
                 description="Version number for optimistic locking",
                 frozen=False,
@@ -314,7 +351,7 @@ class FlextModelsBase:
             """Increment the version number."""
             self.version += 1
 
-        @model_validator(mode="after")
+        @FlextUtilitiesPydantic.model_validator(mode="after")
         def validate_version_consistency(self) -> Self:
             """Ensure version consistency."""
             if self.version < c.DEFAULT_RETRY_DELAY_SECONDS:
@@ -326,13 +363,15 @@ class FlextModelsBase:
                 )
             return self
 
-    class RetryConfigurationMixin(BaseModel):
+    class RetryConfigurationMixin(FlextModelsPydantic.BaseModel):
         """Mixin for shared retry configuration properties."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(populate_by_name=True)
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(populate_by_name=True)
+        )
         max_retries: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.MAX_RETRY_ATTEMPTS,
                 alias="max_attempts",
                 description="Maximum retry attempts",
@@ -340,14 +379,14 @@ class FlextModelsBase:
         ] = c.MAX_RETRY_ATTEMPTS
         initial_delay_seconds: Annotated[
             t.PositiveFloat,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.DEFAULT_RETRY_DELAY_SECONDS,
                 description="Initial delay between retries",
             ),
         ] = c.DEFAULT_RETRY_DELAY_SECONDS
         max_delay_seconds: Annotated[
             t.PositiveFloat,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.DEFAULT_MAX_DELAY_SECONDS,
                 description="Maximum delay between retries",
             ),

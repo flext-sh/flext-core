@@ -8,9 +8,8 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from pydantic import Field, computed_field
-
 from flext_core import FlextModelsBase, t
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsErrors:
@@ -19,29 +18,46 @@ class FlextModelsErrors:
     class StructuredErrorSnapshot(FlextModelsBase.StrictModel):
         """Validated public snapshot for structured error serialization."""
 
-        error_type: Annotated[str, Field(description="Concrete exception type name.")]
-        message: Annotated[str, Field(description="Human-readable error message.")]
+        error_type: Annotated[
+            str,
+            FlextUtilitiesPydantic.Field(description="Concrete exception type name."),
+        ]
+        message: Annotated[
+            str,
+            FlextUtilitiesPydantic.Field(description="Human-readable error message."),
+        ]
         error_code: Annotated[
-            str, Field(description="Canonical structured error code.")
+            str,
+            FlextUtilitiesPydantic.Field(
+                description="Canonical structured error code."
+            ),
         ]
         error_domain: Annotated[
             str | None,
-            Field(description="Canonical routing domain for the error."),
+            FlextUtilitiesPydantic.Field(
+                description="Canonical routing domain for the error."
+            ),
         ] = None
         correlation_id: Annotated[
             str | None,
-            Field(description="Correlation identifier propagated with the error."),
+            FlextUtilitiesPydantic.Field(
+                description="Correlation identifier propagated with the error."
+            ),
         ] = None
         timestamp: Annotated[
             t.Numeric,
-            Field(description="Unix timestamp when the error instance was created."),
+            FlextUtilitiesPydantic.Field(
+                description="Unix timestamp when the error instance was created."
+            ),
         ]
         attributes: Annotated[
             t.ConfigMap,
-            Field(description="Flattenable metadata attributes exposed publicly."),
-        ] = Field(default_factory=lambda: t.ConfigMap(root={}))
+            FlextUtilitiesPydantic.Field(
+                description="Flattenable metadata attributes exposed publicly."
+            ),
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: t.ConfigMap(root={}))
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         @property
         def error_message(self) -> str:
             """Public alias expected by structured error consumers."""
@@ -62,22 +78,30 @@ class FlextModelsErrors:
 
         total_exceptions: Annotated[
             t.NonNegativeInt,
-            Field(description="Total recorded exception occurrences."),
+            FlextUtilitiesPydantic.Field(
+                description="Total recorded exception occurrences."
+            ),
         ] = 0
         exception_counts: Annotated[
             t.ConfigMap,
-            Field(description="Per-exception occurrence totals keyed by type name."),
-        ] = Field(default_factory=lambda: t.ConfigMap(root={}))
+            FlextUtilitiesPydantic.Field(
+                description="Per-exception occurrence totals keyed by type name."
+            ),
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: t.ConfigMap(root={}))
         exception_counts_summary: Annotated[
             str,
-            Field(description="Human-readable summary for logs and diagnostics."),
+            FlextUtilitiesPydantic.Field(
+                description="Human-readable summary for logs and diagnostics."
+            ),
         ] = ""
         unique_exception_types: Annotated[
             t.NonNegativeInt,
-            Field(description="Number of unique exception types recorded."),
+            FlextUtilitiesPydantic.Field(
+                description="Number of unique exception types recorded."
+            ),
         ] = 0
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         @property
         def has_exceptions(self) -> bool:
             """Whether the metrics snapshot contains recorded exceptions."""
@@ -99,22 +123,24 @@ class FlextModelsErrors:
 
         exception_counts: Annotated[
             t.IntMapping,
-            Field(description="Recorded counts keyed by exception type name."),
-        ] = Field(default_factory=dict)
+            FlextUtilitiesPydantic.Field(
+                description="Recorded counts keyed by exception type name."
+            ),
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         @property
         def total_exceptions(self) -> int:
             """Total recorded exception occurrences."""
             return sum(self.exception_counts.values(), 0)
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         @property
         def unique_exception_types(self) -> int:
             """Number of unique exception types recorded."""
             return len(self.exception_counts)
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         @property
         def exception_counts_summary(self) -> str:
             """Human-readable summary for logs and diagnostics."""

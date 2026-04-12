@@ -9,7 +9,8 @@ from __future__ import annotations
 from typing import Annotated
 
 from annotated_types import Ge, Gt, Le, Len
-from pydantic import Discriminator
+
+from flext_core._typings.pydantic import FlextTypesPydantic
 
 
 class FlextTypesAnnotateds:
@@ -17,17 +18,17 @@ class FlextTypesAnnotateds:
 
     type MessageUnion[CommandT, QueryT, EventT] = Annotated[
         CommandT | QueryT | EventT,
-        Discriminator("message_type"),
+        FlextTypesPydantic.Discriminator("message_type"),
     ]
 
     type OperationResult[SuccessT, FailureT, PartialT] = Annotated[
         SuccessT | FailureT | PartialT,
-        Discriminator("result_type"),
+        FlextTypesPydantic.Discriminator("result_type"),
     ]
 
     type ValidationOutcome[ValidT, InvalidT, WarningT] = Annotated[
         ValidT | InvalidT | WarningT,
-        Discriminator("outcome_type"),
+        FlextTypesPydantic.Discriminator("outcome_type"),
     ]
 
     # -- string constraints --------------------------------------------------

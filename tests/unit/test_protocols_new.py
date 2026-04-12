@@ -18,7 +18,7 @@ import pytest
 from pydantic import BaseModel
 
 from flext_tests import tm
-from tests import e, p, r, t, u
+from tests import e, m, p, r, t, u
 
 type ProtocolSubject = t.ProtocolSubject
 

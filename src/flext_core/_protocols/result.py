@@ -9,7 +9,9 @@ from __future__ import annotations
 from types import TracebackType
 from typing import Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocolsBase, t
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.containers import FlextTypingContainers
 
 
 class FlextProtocolsResult:
@@ -30,7 +32,7 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def error_data(self) -> t.ConfigMap | None:
+        def error_data(self) -> FlextTypingContainers.ConfigMap | None:
             """Structured error metadata when available."""
             ...
 
@@ -96,7 +98,7 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def error_data(self) -> t.ConfigMap | None:
+        def error_data(self) -> FlextTypingContainers.ConfigMap | None:
             """Error metadata with structured error context (optional)."""
             ...
 
@@ -131,7 +133,7 @@ class FlextProtocolsResult:
         Used for Pydantic model compatibility and serialization.
         """
 
-        def model_dump(self) -> t.ScalarMapping:
+        def model_dump(self) -> FlextTypingBase.ScalarMapping:
             """Dump model data to dictionary."""
             ...
 

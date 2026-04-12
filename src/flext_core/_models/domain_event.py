@@ -14,9 +14,9 @@ import typing
 from collections.abc import Mapping
 from typing import Annotated, override
 
-from pydantic import BeforeValidator, Field
-
 from flext_core import FlextModelsBase, FlextUtilitiesDomain, t
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsDomainEvent:
@@ -52,25 +52,30 @@ class FlextModelsDomainEvent:
     ):
         """Base class for domain events."""
 
-        message_type: str = Field(
-            default="event",
+        message_type: str = FlextUtilitiesPydantic.Field(
+            "event",
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
+            validate_default=True,
         )
         event_type: Annotated[
             t.NonEmptyStr,
-            Field(description="Domain event type identifier for subscriber routing."),
+            FlextUtilitiesPydantic.Field(
+                description="Domain event type identifier for subscriber routing."
+            ),
         ]
         aggregate_id: Annotated[
             t.NonEmptyStr,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Identifier of the aggregate root that produced this event.",
             ),
         ]
         data: Annotated[
             t.ConfigMap,
-            BeforeValidator(FlextUtilitiesDomain.normalize_domain_event_data),
-        ] = Field(
+            FlextModelsPydantic.BeforeValidator(
+                FlextUtilitiesDomain.normalize_domain_event_data
+            ),
+        ] = FlextUtilitiesPydantic.Field(
             validate_default=True,
             description="Event data container",
             default_factory=lambda: FlextModelsDomainEvent.ComparableConfigMap(

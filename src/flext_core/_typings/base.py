@@ -10,7 +10,7 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from pathlib import Path
 
-from pydantic import SecretBytes, SecretStr
+from flext_core._typings.pydantic import FlextTypesPydantic
 
 
 class FlextTypingBase:
@@ -46,7 +46,7 @@ class FlextTypingBase:
     type MutableContainerMapping = MutableRecursiveContainerMapping
     type MutableContainerList = MutableRecursiveContainerList
     type NormalizedValue = RecursiveContainer
-    type SecretValue = SecretStr | SecretBytes
+    type SecretValue = FlextTypesPydantic.SecretStr | FlextTypesPydantic.SecretBytes
     type SettingsValue = RecursiveContainer | SecretValue
 
     # Flat (non-recursive) mapping/list aliases for high-frequency patterns

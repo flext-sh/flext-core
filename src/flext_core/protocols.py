@@ -15,7 +15,6 @@ from flext_core._protocols.logging import FlextProtocolsLogging
 from flext_core._protocols.pydantic import FlextProtocolsPydantic
 from flext_core._protocols.registry import FlextProtocolsRegistry
 from flext_core._protocols.result import FlextProtocolsResult
-from flext_core._protocols.runtime import FlextProtocolsRuntime
 from flext_core._protocols.service import FlextProtocolsService
 from flext_core._protocols.settings import FlextProtocolsSettings
 
@@ -28,7 +27,6 @@ class FlextProtocols(
     FlextProtocolsContainer,
     FlextProtocolsService,
     FlextProtocolsHandler,
-    FlextProtocolsRuntime,
     FlextProtocolsLogging,
     FlextProtocolsPydantic,
     FlextProtocolsRegistry,

@@ -12,9 +12,9 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
-from pydantic import ConfigDict, Field
-
 from flext_core import FlextModelsBase, t
+from flext_core._constants.pydantic import FlextConstantsPydantic
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsCollections:
@@ -186,10 +186,12 @@ class FlextModelsCollections:
         Non-frozen models are not hashable by design.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            arbitrary_types_allowed=True,
-            extra="forbid",
-            validate_assignment=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                arbitrary_types_allowed=True,
+                extra="forbid",
+                validate_assignment=True,
+            )
         )
 
         @override
@@ -233,7 +235,7 @@ class FlextModelsCollections:
 
         eq: Annotated[
             t.RecursiveContainer | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Equals",
                 description="Require the value to equal this value.",
@@ -241,7 +243,7 @@ class FlextModelsCollections:
         ] = None
         ne: Annotated[
             t.RecursiveContainer | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Not Equals",
                 description="Require the value to differ from this value.",
@@ -249,7 +251,7 @@ class FlextModelsCollections:
         ] = None
         gt: Annotated[
             float | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Greater Than",
                 description="Require numeric or length-derived value to be greater than this value.",
@@ -257,7 +259,7 @@ class FlextModelsCollections:
         ] = None
         gte: Annotated[
             float | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Greater Than Or Equal",
                 description="Require numeric or length-derived value to be greater than or equal to this value.",
@@ -265,7 +267,7 @@ class FlextModelsCollections:
         ] = None
         lt: Annotated[
             float | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Less Than",
                 description="Require numeric or length-derived value to be less than this value.",
@@ -273,7 +275,7 @@ class FlextModelsCollections:
         ] = None
         lte: Annotated[
             float | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Less Than Or Equal",
                 description="Require numeric or length-derived value to be less than or equal to this value.",
@@ -281,7 +283,7 @@ class FlextModelsCollections:
         ] = None
         is_: Annotated[
             type | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Is Type",
                 description="Require the value to be an instance of this type.",
@@ -289,7 +291,7 @@ class FlextModelsCollections:
         ] = None
         not_: Annotated[
             type | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Not Type",
                 description="Require the value to not be an instance of this type.",
@@ -297,7 +299,7 @@ class FlextModelsCollections:
         ] = None
         in_: Annotated[
             t.ContainerList | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="In Values",
                 description="Require the value to be present in this sequence.",
@@ -305,7 +307,7 @@ class FlextModelsCollections:
         ] = None
         not_in: Annotated[
             t.ContainerList | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Not In Values",
                 description="Require the value to not be present in this sequence.",
@@ -313,7 +315,7 @@ class FlextModelsCollections:
         ] = None
         none: Annotated[
             bool | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="None Constraint",
                 description="When True, require None. When False, require non-None.",
@@ -321,7 +323,7 @@ class FlextModelsCollections:
         ] = None
         empty: Annotated[
             bool | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Empty Constraint",
                 description="When True, require empty value; when False, require non-empty.",
@@ -329,7 +331,7 @@ class FlextModelsCollections:
         ] = None
         match: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Regex Match",
                 description="Require string value to match this regular expression.",
@@ -337,7 +339,7 @@ class FlextModelsCollections:
         ] = None
         contains: Annotated[
             t.RecursiveContainer | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Contains",
                 description="Require string or iterable value to contain this item.",
@@ -345,7 +347,7 @@ class FlextModelsCollections:
         ] = None
         starts: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Starts With",
                 description="Require string value to start with this prefix.",
@@ -353,7 +355,7 @@ class FlextModelsCollections:
         ] = None
         ends: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Ends With",
                 description="Require string value to end with this suffix.",

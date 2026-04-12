@@ -6,13 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Protocol, Self, runtime_checkable
 
 from structlog.typing import BindableLogger
 
-from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextProtocolsLogging:
@@ -30,8 +32,10 @@ class FlextProtocolsLogging:
         def critical(
             self,
             msg: str,
-            *args: t.RuntimeData,
-            **kw: t.RuntimeData | Exception,
+            *args: FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
+            **kw: FlextTypingBase.RecursiveContainer
+            | FlextProtocolsBase.Model
+            | Exception,
         ) -> FlextProtocolsResult.Result[bool] | None:
             """Log critical message."""
             ...
@@ -39,8 +43,10 @@ class FlextProtocolsLogging:
         def debug(
             self,
             msg: str,
-            *args: t.RuntimeData,
-            **kw: t.RuntimeData | Exception,
+            *args: FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
+            **kw: FlextTypingBase.RecursiveContainer
+            | FlextProtocolsBase.Model
+            | Exception,
         ) -> FlextProtocolsResult.Result[bool] | None:
             """Log debug message."""
             ...
@@ -48,8 +54,10 @@ class FlextProtocolsLogging:
         def error(
             self,
             msg: str,
-            *args: t.RuntimeData,
-            **kw: t.RuntimeData | Exception,
+            *args: FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
+            **kw: FlextTypingBase.RecursiveContainer
+            | FlextProtocolsBase.Model
+            | Exception,
         ) -> FlextProtocolsResult.Result[bool] | None:
             """Log error message."""
             ...
@@ -57,8 +65,10 @@ class FlextProtocolsLogging:
         def exception(
             self,
             msg: str,
-            *args: t.RuntimeData,
-            **kw: t.RuntimeData | Exception,
+            *args: FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
+            **kw: FlextTypingBase.RecursiveContainer
+            | FlextProtocolsBase.Model
+            | Exception,
         ) -> FlextProtocolsResult.Result[bool] | None:
             """Log exception with traceback."""
             ...
@@ -66,8 +76,10 @@ class FlextProtocolsLogging:
         def info(
             self,
             msg: str,
-            *args: t.RuntimeData,
-            **kw: t.RuntimeData | Exception,
+            *args: FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
+            **kw: FlextTypingBase.RecursiveContainer
+            | FlextProtocolsBase.Model
+            | Exception,
         ) -> FlextProtocolsResult.Result[bool] | None:
             """Log info message."""
             ...
@@ -75,8 +87,10 @@ class FlextProtocolsLogging:
         def warning(
             self,
             msg: str,
-            *args: t.RuntimeData,
-            **kw: t.RuntimeData | Exception,
+            *args: FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
+            **kw: FlextTypingBase.RecursiveContainer
+            | FlextProtocolsBase.Model
+            | Exception,
         ) -> FlextProtocolsResult.Result[bool] | None:
             """Log warning message."""
             ...
@@ -112,7 +126,14 @@ class FlextProtocolsLogging:
         """Metadata protocol."""
 
         @property
-        def attributes(self) -> Mapping[str, t.MetadataValue]:
+        def attributes(
+            self,
+        ) -> Mapping[
+            str,
+            FlextTypingBase.Scalar
+            | Mapping[str, FlextTypingBase.Scalar | Sequence[FlextTypingBase.Scalar]]
+            | Sequence[FlextTypingBase.Scalar],
+        ]:
             """Metadata attributes."""
             ...
 
@@ -161,7 +182,7 @@ class FlextProtocolsLogging:
 
         """
 
-        def __call__(self, value: t.Container) -> bool:
+        def __call__(self, value: FlextTypingBase.Container) -> bool:
             """Validate value, return True if valid."""
             ...
 
@@ -188,7 +209,7 @@ class FlextProtocolsLogging:
         """Entry protocol (read-only)."""
 
         @property
-        def attributes(self) -> Mapping[str, t.StrSequence]:
+        def attributes(self) -> Mapping[str, FlextTypingBase.StrSequence]:
             """Entry attributes as immutable mapping."""
             ...
 
@@ -197,7 +218,11 @@ class FlextProtocolsLogging:
             """Distinguished name."""
             ...
 
-        def add_attribute(self, name: str, values: t.StrSequence) -> Self:
+        def add_attribute(
+            self,
+            name: str,
+            values: FlextTypingBase.StrSequence,
+        ) -> Self:
             """Add attribute values, returning self for chaining."""
             ...
 
@@ -205,11 +230,15 @@ class FlextProtocolsLogging:
             """Remove attribute, returning self for chaining."""
             ...
 
-        def update_attribute(self, name: str, values: t.StrSequence) -> Self:
+        def update_attribute(
+            self,
+            name: str,
+            values: FlextTypingBase.StrSequence,
+        ) -> Self:
             """Update attribute values, returning self for chaining."""
             ...
 
-        def to_dict(self) -> t.ScalarMapping:
+        def to_dict(self) -> FlextTypingBase.ScalarMapping:
             """Convert to dictionary representation."""
             ...
 
@@ -230,8 +259,12 @@ class FlextProtocolsLogging:
         def flush(self) -> None: ...
 
     type AccessibleData = (
-        t.ValueOrModel
-        | Mapping[str, t.ValueOrModel]
+        FlextTypingBase.RecursiveContainer
+        | FlextProtocolsBase.Model
+        | Mapping[
+            str,
+            FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
+        ]
         | FlextProtocolsResult.HasModelDump
         | FlextProtocolsLogging.ValidatorSpec
     )

@@ -11,9 +11,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from pydantic import Field
-
 from flext_core import FlextModelsEntity, c, t
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsContextTokens:
@@ -33,7 +32,7 @@ class FlextModelsContextTokens:
 
         key: Annotated[
             t.NonEmptyStr,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 pattern=c.PATTERN_IDENTIFIER_WITH_UNDERSCORE,
                 description="Context variable key (alphanumeric, underscore)",
                 examples=["correlation_id", "service_name", "user_id"],
@@ -41,7 +40,9 @@ class FlextModelsContextTokens:
         ]
         previous_value: Annotated[
             t.ValueOrModel | None,
-            Field(default=None, description="Previous value before set operation"),
+            FlextUtilitiesPydantic.Field(
+                default=None, description="Previous value before set operation"
+            ),
         ] = None
 
     class Token(FlextModelsEntity.Value):
@@ -58,14 +59,16 @@ class FlextModelsContextTokens:
 
         key: Annotated[
             t.NonEmptyStr,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Unique key for the context variable",
                 examples=["user_id", "request_id", "session_id"],
             ),
         ]
         old_value: Annotated[
             t.ValueOrModel | None,
-            Field(default=None, description="Previous value before set operation"),
+            FlextUtilitiesPydantic.Field(
+                default=None, description="Previous value before set operation"
+            ),
         ]
 
 

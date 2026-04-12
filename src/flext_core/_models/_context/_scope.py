@@ -10,9 +10,9 @@ import contextvars
 from collections.abc import Mapping
 from typing import Annotated, Self
 
-from pydantic import BeforeValidator, Field, computed_field
-
 from flext_core import FlextModelsBase, FlextModelsContextData, c, p, t
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsContextScope:
@@ -23,117 +23,127 @@ class FlextModelsContextScope:
 
         scope_name: Annotated[
             t.NonEmptyStr,
-            Field(description="Name of the scope"),
+            FlextUtilitiesPydantic.Field(description="Name of the scope"),
         ] = ""
         scope_type: Annotated[
             str,
-            Field(default="", description="Type/category of scope"),
+            FlextUtilitiesPydantic.Field(
+                default="", description="Type/category of scope"
+            ),
         ] = ""
         data: Annotated[
             Mapping[str, t.ValueOrModel],
-            BeforeValidator(lambda v: FlextModelsContextData.normalize_to_mapping(v)),
-            Field(description="Scope data"),
-        ] = Field(default_factory=dict)
+            FlextModelsPydantic.BeforeValidator(
+                lambda v: FlextModelsContextData.normalize_to_mapping(v)
+            ),
+            FlextUtilitiesPydantic.Field(description="Scope data"),
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
         metadata: Annotated[
             t.ContainerMapping,
-            BeforeValidator(lambda v: FlextModelsContextData.normalize_to_mapping(v)),
-            Field(description="Scope metadata"),
-        ] = Field(default_factory=dict)
+            FlextModelsPydantic.BeforeValidator(
+                lambda v: FlextModelsContextData.normalize_to_mapping(v)
+            ),
+            FlextUtilitiesPydantic.Field(description="Scope metadata"),
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
 
     class ContextStatistics(FlextModelsBase.ArbitraryTypesModel):
         """Statistics tracking for context operations."""
 
         sets: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of set operations",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         gets: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of get operations",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         removes: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of remove operations",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         clears: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of clear operations",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         operations: Annotated[
             t.ContainerMapping,
-            BeforeValidator(
+            FlextModelsPydantic.BeforeValidator(
                 lambda v: (
                     FlextModelsContextData.normalize_to_mapping(v)
                     if v is not None
                     else {}
                 ),
             ),
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Additional metric counters and timing values grouped by metric key.",
             ),
-        ] = Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
 
     class ContextRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Centralized mutable runtime state for `FlextContext`."""
 
         metadata: Annotated[
             FlextModelsBase.Metadata,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default_factory=FlextModelsBase.Metadata,
                 description="Normalized metadata bound to the active context",
             ),
-        ] = Field(default_factory=FlextModelsBase.Metadata)
+        ] = FlextUtilitiesPydantic.Field(default_factory=FlextModelsBase.Metadata)
         hooks: Annotated[
             t.ContextHookMap,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default_factory=dict,
                 description="Lifecycle hooks keyed by event name",
             ),
-        ] = Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
         statistics: Annotated[
             FlextModelsContextScope.ContextStatistics,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default_factory=lambda: FlextModelsContextScope.ContextStatistics(),
                 description="Operation counters for this context instance",
             ),
-        ] = Field(default_factory=lambda: FlextModelsContextScope.ContextStatistics())
+        ] = FlextUtilitiesPydantic.Field(
+            default_factory=lambda: FlextModelsContextScope.ContextStatistics()
+        )
         active: Annotated[
             bool,
-            Field(default=True, description="Whether the context accepts operations"),
+            FlextUtilitiesPydantic.Field(
+                default=True, description="Whether the context accepts operations"
+            ),
         ] = True
         suspended: Annotated[
             bool,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=False,
                 description="Whether the context is temporarily suspended",
             ),
         ] = False
         scope_vars: Annotated[
             Mapping[str, contextvars.ContextVar[t.ConfigMap | None]],
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default_factory=dict,
                 description="ContextVar registry keyed by scope name",
             ),
-        ] = Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         def inactive(self) -> bool:
             """Expose inactive state as the inverse of `active`."""
             return not self.active
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         def scope_names(self) -> tuple[str, ...]:
             """Expose configured scope names for debugging/export."""
             return tuple(self.scope_vars)
@@ -222,13 +232,13 @@ class FlextModelsContextScope:
 
         container: Annotated[
             p.Container | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 description="Container configured for service namespace resolution",
             ),
         ] = None
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         def configured(self) -> bool:
             """Whether a container is configured for service access."""
             return self.container is not None

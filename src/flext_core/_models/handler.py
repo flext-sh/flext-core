@@ -13,9 +13,9 @@ import time
 from collections.abc import MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self
 
-from pydantic import ConfigDict, Field, PrivateAttr, computed_field
-
 from flext_core import FlextModelsBase, c, p, r, t
+from flext_core._constants.pydantic import FlextConstantsPydantic
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsHandler:
@@ -32,25 +32,32 @@ class FlextModelsHandler:
         including status, mode, and identification.
         """
 
-        handler_name: Annotated[t.NonEmptyStr, Field(description="Name of the handler")]
+        handler_name: Annotated[
+            t.NonEmptyStr,
+            FlextUtilitiesPydantic.Field(description="Name of the handler"),
+        ]
         status: Annotated[
             t.NonEmptyStr,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Registration status (registered, skipped, failed)",
             ),
         ]
         mode: Annotated[
             t.NonEmptyStr,
-            Field(description="Registration mode (auto_discovery, explicit)"),
+            FlextUtilitiesPydantic.Field(
+                description="Registration mode (auto_discovery, explicit)"
+            ),
         ]
         handler_mode: Annotated[
             c.HandlerType | None,
-            Field(default=None, description="Handler mode (command/query/event)"),
+            FlextUtilitiesPydantic.Field(
+                None, description="Handler mode (command/query/event)"
+            ),
         ] = None
         message_type: Annotated[
             str | None,
-            Field(
-                default=None,
+            FlextUtilitiesPydantic.Field(
+                None,
                 description="Message type bound (for explicit mode)",
             ),
         ] = None
@@ -104,22 +111,24 @@ class FlextModelsHandler:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            json_schema_extra={
-                "title": "RegistrationDetails",
-                "description": "Handler registration tracking details",
-            },
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                json_schema_extra={
+                    "title": "RegistrationDetails",
+                    "description": "Handler registration tracking details",
+                },
+            )
         )
         registration_id: Annotated[
             t.NonEmptyStr,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Unique registration identifier",
                 examples=["reg-abc123", "handler-create-user-001"],
             ),
         ]
         handler_mode: Annotated[
             c.HandlerType,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.HandlerType.COMMAND,
                 description="Handler mode (command, query, or event)",
                 examples=["command", "query", "event"],
@@ -127,16 +136,16 @@ class FlextModelsHandler:
         ] = c.HandlerType.COMMAND
         timestamp: Annotated[
             str,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="ISO 8601 timestamp recording when the registration entry was created.",
                 title="Registration Timestamp",
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
                 pattern=c.PATTERN_ISO8601_TIMESTAMP,
             ),
-        ] = Field(default_factory=lambda: c.DEFAULT_EMPTY_STRING)
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: c.DEFAULT_EMPTY_STRING)
         status: Annotated[
             c.CommonStatus,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.CommonStatus.RUNNING,
                 description="Current registration status",
                 examples=["running", "stopped", "failed"],
@@ -152,31 +161,33 @@ class FlextModelsHandler:
 
         """
 
-        _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: t.Dict | None = PrivateAttr(default=None)
+        _start_time: float | None = FlextUtilitiesPydantic.PrivateAttr()
+        _metrics_state: t.Dict | None = FlextUtilitiesPydantic.PrivateAttr()
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            json_schema_extra={
-                "title": "HandlerExecutionContext",
-                "description": "Handler execution context for tracking performance and state",
-            },
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                json_schema_extra={
+                    "title": "HandlerExecutionContext",
+                    "description": "Handler execution context for tracking performance and state",
+                },
+            )
         )
         handler_name: Annotated[
             t.NonEmptyStr,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Name of the handler being executed",
                 examples=["ProcessOrderCommand", "GetUserQuery", "OrderCreatedEvent"],
             ),
         ]
         handler_mode: Annotated[
             c.HandlerType,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Mode of handler execution",
                 examples=["command", "query", "event"],
             ),
         ]
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         def execution_time_ms(self) -> float:
             """Get execution time in milliseconds."""
             if self._start_time is None:
@@ -185,17 +196,17 @@ class FlextModelsHandler:
             elapsed: float = time.time() - start_time
             return round(elapsed * c.DEFAULT_SIZE, 2)
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         def has_metrics(self) -> bool:
             """Check if metrics have been recorded."""
             return self._metrics_state is not None and bool(self._metrics_state)
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         def running(self) -> bool:
             """Check if execution is currently running."""
             return self._start_time is not None
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         def metrics_state(self) -> t.Dict:
             """Get current metrics state.
 
@@ -257,16 +268,18 @@ class FlextModelsHandler:
         providing a simplified record/get interface for CQRS handler pipelines.
         """
 
-        _context: FlextModelsHandler.ExecutionContext = PrivateAttr(
-            default_factory=lambda: (
-                FlextModelsHandler.ExecutionContext.create_for_handler(
-                    handler_name="metrics",
-                    handler_mode=c.HandlerType.OPERATION,
-                )
-            ),
+        _context: FlextModelsHandler.ExecutionContext = (
+            FlextUtilitiesPydantic.PrivateAttr(
+                default_factory=lambda: (
+                    FlextModelsHandler.ExecutionContext.create_for_handler(
+                        handler_name="metrics",
+                        handler_mode=c.HandlerType.OPERATION,
+                    )
+                ),
+            )
         )
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         @property
         def metrics(self) -> t.ConfigMap:
             """Return all recorded metrics as a ConfigMap."""
@@ -304,8 +317,10 @@ class FlextModelsHandler:
     class ContextStack(FlextModelsBase.ArbitraryTypesModel):
         """Manages a stack of ExecutionContext instances for CQRS handler pipelines."""
 
-        _stack: MutableSequence[FlextModelsHandler.ExecutionContext] = PrivateAttr(
-            default_factory=lambda: list[FlextModelsHandler.ExecutionContext](),
+        _stack: MutableSequence[FlextModelsHandler.ExecutionContext] = (
+            FlextUtilitiesPydantic.PrivateAttr(
+                default_factory=lambda: list[FlextModelsHandler.ExecutionContext](),
+            )
         )
 
         def current_context(self) -> FlextModelsHandler.ExecutionContext | None:
@@ -362,57 +377,59 @@ class FlextModelsHandler:
 
         execution_context: Annotated[
             FlextModelsHandler.ExecutionContext,
-            Field(description="Execution context for the active handler"),
+            FlextUtilitiesPydantic.Field(
+                description="Execution context for the active handler"
+            ),
         ]
         metrics_tracker: Annotated[
             FlextModelsHandler.MetricsTracker,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default_factory=lambda: FlextModelsHandler.MetricsTracker(),
                 description="Metrics tracker bound to the handler execution context",
             ),
         ]
         context_stack: Annotated[
             FlextModelsHandler.ContextStack,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default_factory=lambda: FlextModelsHandler.ContextStack(),
                 description="Context stack used by nested handler execution",
             ),
         ]
         accepted_message_types: Annotated[
             tuple[t.TypeHintSpecifier, ...],
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default_factory=tuple,
                 description="Accepted message types computed for dispatch routing",
             ),
         ]
         revalidate_pydantic_messages: Annotated[
             bool,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=False,
                 description="Whether Pydantic messages must be revalidated on dispatch",
             ),
         ] = False
         type_warning_emitted: Annotated[
             bool,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=False,
                 description="Whether the handler already emitted a type warning",
             ),
         ] = False
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         @property
         def handler_name(self) -> str:
             """Expose the active handler name from the execution context."""
             return self.execution_context.handler_name
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         @property
         def handler_mode(self) -> c.HandlerType:
             """Expose the active handler mode from the execution context."""
             return self.execution_context.handler_mode
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         @property
         def metrics(self) -> t.ConfigMap:
             """Expose normalized metrics collected for the handler."""
@@ -462,24 +479,28 @@ class FlextModelsHandler:
     class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
         """Configuration extracted from @FlextHandlers.handler() decorator."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                frozen=True,
+                arbitrary_types_allowed=True,
+            )
         )
         command: Annotated[
             type,
-            Field(description="Command type this handler processes"),
+            FlextUtilitiesPydantic.Field(
+                description="Command type this handler processes"
+            ),
         ]
         priority: Annotated[
             t.NonNegativeInt,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Handler priority (higher = processed first)",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         timeout: Annotated[
             float | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=c.DEFAULT_TIMEOUT_SECONDS,
                 description="Handler execution timeout in seconds",
                 gt=0.0,
@@ -487,10 +508,10 @@ class FlextModelsHandler:
         ] = c.DEFAULT_TIMEOUT_SECONDS
         middleware: Annotated[
             Sequence[type[p.Middleware]],
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Middleware types to apply to this handler",
             ),
-        ] = Field(default_factory=list[type[p.Middleware]])
+        ] = FlextUtilitiesPydantic.Field(default_factory=list[type[p.Middleware]])
 
 
 __all__: list[str] = ["FlextModelsHandler"]

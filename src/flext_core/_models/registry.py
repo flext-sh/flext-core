@@ -9,9 +9,8 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Annotated
 
-from pydantic import Field, computed_field
-
 from flext_core import FlextModelsBase, FlextModelsEntity, FlextModelsHandler, p, t
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsRegistry:
@@ -22,20 +21,20 @@ class FlextModelsRegistry:
 
         dispatcher: Annotated[
             p.Dispatcher | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 description="Dispatcher used for handler registration and execution.",
             ),
         ] = None
         registered_keys: Annotated[
             frozenset[str],
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default_factory=frozenset,
                 description="Keys registered in the instance scope of the registry.",
             ),
         ]
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         def configured(self) -> bool:
             """Whether a dispatcher has been materialized for the registry."""
             return self.dispatcher is not None
@@ -45,31 +44,33 @@ class FlextModelsRegistry:
 
         registered: Annotated[
             MutableSequence[FlextModelsHandler.RegistrationDetails],
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Successfully registered handlers with registration details.",
             ),
-        ] = Field(default_factory=list[FlextModelsHandler.RegistrationDetails])
+        ] = FlextUtilitiesPydantic.Field(
+            default_factory=list[FlextModelsHandler.RegistrationDetails]
+        )
         skipped: Annotated[
             t.StrSequence,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Handler identifiers that were skipped (already registered)",
                 examples=[["CreateUserCommand", "UpdateUserCommand"]],
             ),
-        ] = Field(default_factory=list[str])
+        ] = FlextUtilitiesPydantic.Field(default_factory=list[str])
         errors: Annotated[
             MutableSequence[str],
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Error messages for failed registrations",
                 examples=[["Handler validation failed", "Duplicate registration"]],
             ),
-        ] = Field(default_factory=list[str])
+        ] = FlextUtilitiesPydantic.Field(default_factory=list[str])
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         def failure(self) -> bool:
             """Indicate whether the batch registration had errors."""
             return bool(self.errors)
 
-        @computed_field
+        @FlextUtilitiesPydantic.computed_field()
         def success(self) -> bool:
             """Indicate whether the batch registration fully succeeded."""
             return not self.errors

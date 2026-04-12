@@ -10,15 +10,17 @@ from collections.abc import Mapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
-from flext_core import t
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.context import FlextProtocolsContext
 from flext_core._protocols.logging import FlextProtocolsLogging
 from flext_core._protocols.result import FlextProtocolsResult
 from flext_core._protocols.settings import FlextProtocolsSettings
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.containers import FlextTypingContainers
 
 if TYPE_CHECKING:
-    from flext_core import m
+    from flext_core._models.container import FlextModelsContainer
+    from flext_core._typings.services import FlextTypesServices
 
 
 class FlextProtocolsContainer:
@@ -58,12 +60,12 @@ class FlextProtocolsContainer:
     class ContainerCreationOptions(FlextProtocolsBase.Base, Protocol):
         """Structural contract for DI container bootstrap options."""
 
-        settings: t.ConfigMap | None
-        services: Mapping[str, t.RegisterableService] | None
-        factories: Mapping[str, t.FactoryCallable] | None
-        resources: Mapping[str, t.ResourceCallable] | None
+        settings: FlextTypingContainers.ConfigMap | None
+        services: Mapping[str, FlextTypesServices.RegisterableService] | None
+        factories: Mapping[str, FlextTypesServices.FactoryCallable] | None
+        resources: Mapping[str, FlextTypesServices.ResourceCallable] | None
         wire_modules: Sequence[ModuleType] | None
-        wire_packages: t.StrSequence | None
+        wire_packages: FlextTypingBase.StrSequence | None
         wire_classes: Sequence[type] | None
         factory_cache: bool
 
@@ -74,7 +76,7 @@ class FlextProtocolsContainer:
         @classmethod
         def model_validate(
             cls,
-            obj: t.ModelInput,
+            obj: FlextTypesServices.ModelInput,
         ) -> FlextProtocolsContainer.ContainerCreationOptions:
             """Validate arbitrary input into container creation options."""
             ...
@@ -102,7 +104,7 @@ class FlextProtocolsContainer:
             ...
 
         @overload
-        def get[T: t.RegisterableService](
+        def get[T](
             self,
             name: str,
             *,
@@ -115,9 +117,9 @@ class FlextProtocolsContainer:
             name: str,
             *,
             type_cls: None = None,
-        ) -> FlextProtocolsResult.Result[t.RegisterableService]: ...
+        ) -> FlextProtocolsResult.Result[FlextTypesServices.RegisterableService]: ...
 
-        def resolve_settings(self) -> t.ConfigMap:
+        def resolve_settings(self) -> FlextTypingContainers.ConfigMap:
             """Return the merged settings exposed by this container."""
             ...
 
@@ -125,14 +127,14 @@ class FlextProtocolsContainer:
             """Check if a service is registered."""
             ...
 
-        def list_services(self) -> t.StrSequence:
+        def list_services(self) -> FlextTypingBase.StrSequence:
             """List all registered services."""
             ...
 
         def register(
             self,
             name: str,
-            impl: t.RegisterableService,
+            impl: FlextTypesServices.RegisterableService,
             *,
             kind: str = "service",
         ) -> Self:
@@ -145,9 +147,10 @@ class FlextProtocolsContainer:
             settings: FlextProtocolsSettings.Settings | None = None,
             context: FlextProtocolsContext.Context | None = None,
             subproject: str | None = None,
-            services: Mapping[str, t.RegisterableService] | None = None,
-            factories: t.FactoryMap | None = None,
-            resources: t.ResourceMap | None = None,
+            services: Mapping[str, FlextTypesServices.RegisterableService]
+            | None = None,
+            factories: FlextTypesServices.FactoryMap | None = None,
+            resources: FlextTypesServices.ResourceMap | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
             ...
@@ -156,7 +159,7 @@ class FlextProtocolsContainer:
             self,
             *,
             modules: Sequence[ModuleType] | None = None,
-            packages: t.StrSequence | None = None,
+            packages: FlextTypingBase.StrSequence | None = None,
             classes: Sequence[type] | None = None,
         ) -> None:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
@@ -183,11 +186,16 @@ class FlextProtocolsContainer:
         def initialize_registrations(
             self,
             *,
-            services: Mapping[str, m.ServiceRegistration] | None = None,
-            factories: Mapping[str, m.FactoryRegistration] | None = None,
-            resources: Mapping[str, m.ResourceRegistration] | None = None,
-            global_config: m.ContainerConfig | None = None,
-            user_overrides: t.UserOverridesMapping | t.ConfigMap | None = None,
+            services: Mapping[str, FlextModelsContainer.ServiceRegistration]
+            | None = None,
+            factories: Mapping[str, FlextModelsContainer.FactoryRegistration]
+            | None = None,
+            resources: Mapping[str, FlextModelsContainer.ResourceRegistration]
+            | None = None,
+            global_config: FlextModelsContainer.ContainerConfig | None = None,
+            user_overrides: FlextTypesServices.UserOverridesMapping
+            | FlextTypingContainers.ConfigMap
+            | None = None,
             settings: FlextProtocolsSettings.Settings | None = None,
             context: FlextProtocolsContext.Context | None = None,
         ) -> None:

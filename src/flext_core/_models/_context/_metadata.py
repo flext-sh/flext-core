@@ -9,9 +9,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Annotated, Self
 
-from pydantic import BeforeValidator, Field, model_validator
-
 from flext_core import FlextModelsBase, FlextModelsContextData, c, t
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsContextMetadata:
@@ -22,55 +22,71 @@ class FlextModelsContextMetadata:
 
         user_id: Annotated[
             str | None,
-            Field(default=None, description="Associated user ID"),
+            FlextUtilitiesPydantic.Field(
+                default=None, description="Associated user ID"
+            ),
         ] = None
         correlation_id: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 description="Primary correlation ID for distributed tracing",
             ),
         ] = None
         parent_correlation_id: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 description="Parent request's correlation ID for nested calls",
             ),
         ] = None
         request_id: Annotated[
             str | None,
-            Field(default=None, description="HTTP request identifier"),
+            FlextUtilitiesPydantic.Field(
+                default=None, description="HTTP request identifier"
+            ),
         ] = None
         session_id: Annotated[
             str | None,
-            Field(default=None, description="User session identifier"),
+            FlextUtilitiesPydantic.Field(
+                default=None, description="User session identifier"
+            ),
         ] = None
         tenant_id: Annotated[
             str | None,
-            Field(default=None, description="Tenant/Organization ID"),
+            FlextUtilitiesPydantic.Field(
+                default=None, description="Tenant/Organization ID"
+            ),
         ] = None
         handler_mode: Annotated[
             str | None,
-            Field(default=None, description="Handler mode (command/query/event)"),
+            FlextUtilitiesPydantic.Field(
+                default=None, description="Handler mode (command/query/event)"
+            ),
         ] = None
         message_type: Annotated[
             str | None,
-            Field(default=None, description="Type of message being processed"),
+            FlextUtilitiesPydantic.Field(
+                default=None, description="Type of message being processed"
+            ),
         ] = None
         message_id: Annotated[
             str | None,
-            Field(default=None, description="Unique message identifier"),
+            FlextUtilitiesPydantic.Field(
+                default=None, description="Unique message identifier"
+            ),
         ] = None
         custom_fields: Annotated[
             Mapping[str, t.ValueOrModel],
-            BeforeValidator(lambda v: FlextModelsContextData.normalize_to_mapping(v)),
-            Field(
+            FlextModelsPydantic.BeforeValidator(
+                lambda v: FlextModelsContextData.normalize_to_mapping(v)
+            ),
+            FlextUtilitiesPydantic.Field(
                 description="Custom metadata attributes for caller-specific tracing and context.",
             ),
-        ] = Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
 
-        @model_validator(mode="after")
+        @FlextUtilitiesPydantic.model_validator(mode="after")
         def validate_context_protocol(self) -> Self:
             """Validate context instance has get() and set() methods."""
             context_field = None
@@ -89,24 +105,26 @@ class FlextModelsContextMetadata:
 
         domain_name: Annotated[
             str | None,
-            Field(default=None, description="Domain name/identifier"),
+            FlextUtilitiesPydantic.Field(
+                default=None, description="Domain name/identifier"
+            ),
         ] = None
         domain_type: Annotated[
             str | None,
-            Field(default=None, description="Type of domain"),
+            FlextUtilitiesPydantic.Field(default=None, description="Type of domain"),
         ] = None
         domain_data: Annotated[
             Mapping[str, t.ValueOrModel],
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Domain payload values scoped to the current business context.",
             ),
-        ] = Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
         domain_metadata: Annotated[
             t.ContainerMapping,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Domain metadata attributes describing origin and processing state.",
             ),
-        ] = Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
 
 
 __all__: list[str] = ["FlextModelsContextMetadata"]

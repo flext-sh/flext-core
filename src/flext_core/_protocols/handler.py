@@ -7,9 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.result import FlextProtocolsResult
+
+if TYPE_CHECKING:
+    from flext_core._typings.services import FlextTypesServices
 
 
 class FlextProtocolsHandler:
@@ -37,7 +41,11 @@ class FlextProtocolsHandler:
             self,
             message: FlextProtocolsBase.Routable,
             operation: str = ...,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic] | t.RuntimeAtomic | None: ...
+        ) -> (
+            FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]
+            | FlextTypesServices.RuntimeAtomic
+            | None
+        ): ...
 
     @runtime_checkable
     class Handle(Protocol):
@@ -46,7 +54,11 @@ class FlextProtocolsHandler:
         def handle(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic] | t.RuntimeAtomic | None: ...
+        ) -> (
+            FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]
+            | FlextTypesServices.RuntimeAtomic
+            | None
+        ): ...
 
     @runtime_checkable
     class Execute(Protocol):
@@ -55,7 +67,11 @@ class FlextProtocolsHandler:
         def execute(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic] | t.RuntimeAtomic | None: ...
+        ) -> (
+            FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]
+            | FlextTypesServices.RuntimeAtomic
+            | None
+        ): ...
 
     @runtime_checkable
     class _MessageBusBase(Protocol):
@@ -68,7 +84,7 @@ class FlextProtocolsHandler:
 
         def register_handler(
             self,
-            handler: t.HandlerProtocolVariant,
+            handler: FlextTypesServices.HandlerProtocolVariant,
             *,
             is_event: bool = False,
         ) -> FlextProtocolsResult.Result[bool]: ...
@@ -80,7 +96,7 @@ class FlextProtocolsHandler:
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]: ...
+        ) -> FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]: ...
 
     @runtime_checkable
     class AutoDiscoverableHandler(Protocol):
@@ -95,7 +111,7 @@ class FlextProtocolsHandler:
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]: ...
+        ) -> FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]: ...
 
     @runtime_checkable
     class Middleware(FlextProtocolsBase.Base, Protocol):

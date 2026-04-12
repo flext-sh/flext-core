@@ -11,8 +11,7 @@ from enum import StrEnum
 from pathlib import Path
 from re import Pattern
 
-from pydantic import ConfigDict
-
+from flext_core._constants.pydantic import FlextConstantsPydantic
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.containers import FlextTypingContainers
 
@@ -50,7 +49,7 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
 
     type ConstantValue = (
         FlextTypingBase.Primitives
-        | ConfigDict
+        | FlextConstantsPydantic.ConfigDict
         | frozenset[str]
         | tuple[str, ...]
         | FlextTypingBase.HeaderMapping

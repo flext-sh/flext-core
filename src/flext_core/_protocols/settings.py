@@ -6,9 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._typings.base import FlextTypingBase
+
+if TYPE_CHECKING:
+    from flext_core._typings.services import FlextTypesServices
 
 
 class FlextProtocolsSettings:
@@ -18,7 +23,10 @@ class FlextProtocolsSettings:
     class Configurable(FlextProtocolsBase.Base, Protocol):
         """Protocol for component configuration."""
 
-        def configure(self, settings: t.FlatContainerMapping | None = None) -> Self:
+        def configure(
+            self,
+            settings: FlextTypesServices.FlatContainerMapping | None = None,
+        ) -> Self:
             """Configure component with settings."""
             ...
 
@@ -53,7 +61,7 @@ class FlextProtocolsSettings:
         def fetch_global(
             cls,
             *,
-            overrides: t.ScalarMapping | None = None,
+            overrides: FlextTypingBase.ScalarMapping | None = None,
         ) -> Self:
             """Return the global singleton settings instance, optionally with overrides."""
             ...
@@ -61,7 +69,7 @@ class FlextProtocolsSettings:
         def model_copy(
             self,
             *,
-            update: t.FlatContainerMapping | None = None,
+            update: FlextTypesServices.FlatContainerMapping | None = None,
             deep: bool = False,
         ) -> Self:
             """Create a copy of the model, optionally updating fields or deep copying.
@@ -84,7 +92,7 @@ class FlextProtocolsSettings:
         def fetch_global(
             cls,
             *,
-            overrides: t.ScalarMapping | None = None,
+            overrides: FlextTypingBase.ScalarMapping | None = None,
         ) -> FlextProtocolsSettings.Settings:
             """Return the global singleton settings instance."""
             ...

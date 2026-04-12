@@ -17,15 +17,17 @@ from collections.abc import (
 )
 from typing import Annotated, override
 
-from pydantic import BaseModel, Field, RootModel
-
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextTypingContainers:
     """Container type system for FLEXT."""
 
-    class RootDictModel[DictValueT](RootModel[MutableMapping[str, DictValueT]]):
+    class RootDictModel[DictValueT](
+        FlextModelsPydantic.RootModel[MutableMapping[str, DictValueT]]
+    ):
         """Dict-backed RootModel with full dict protocol.
 
         Wraps typed dict in Pydantic v2 validation, exposes all dict methods
@@ -78,12 +80,14 @@ class FlextTypingContainers:
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()
 
-    class ObjectList(RootModel[Sequence[FlextTypingBase.Container]]):
+    class ObjectList(
+        FlextModelsPydantic.RootModel[Sequence[FlextTypingBase.Container]]
+    ):
         """Ordered list of strongly-typed container values for batch operations."""
 
         root: Annotated[
             Sequence[FlextTypingBase.Container],
-            Field(
+            FlextUtilitiesPydantic.Field(
                 title="Object List",
                 description=(
                     "Ordered container values for batch operations "
@@ -91,17 +95,24 @@ class FlextTypingContainers:
                 ),
                 examples=[["item-1", 2, True]],
             ),
-        ] = Field(default_factory=list)
+        ] = FlextUtilitiesPydantic.Field(default_factory=list)
 
-    class Dict(RootDictModel[FlextTypingBase.RecursiveContainer | BaseModel]):
+    class Dict(
+        RootDictModel[
+            FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel
+        ]
+    ):
         """Validated dict payload for requests, responses, and data transfer.
 
         Type-safe MutableMapping[str, RecursiveContainer | BaseModel] with full dict protocol.
         """
 
         root: Annotated[
-            MutableMapping[str, FlextTypingBase.RecursiveContainer | BaseModel],
-            Field(
+            MutableMapping[
+                str,
+                FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel,
+            ],
+            FlextUtilitiesPydantic.Field(
                 title="Dictionary Payload",
                 description=(
                     "Dictionary payload storing strict container values "
@@ -109,32 +120,46 @@ class FlextTypingContainers:
                 ),
                 examples=[{"request_id": "req-123", "retry_count": 3, "dry_run": True}],
             ),
-        ] = Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
 
         @override
         def get(
             self,
             key: str,
-            default: FlextTypingBase.RecursiveContainer | BaseModel | None = None,
-        ) -> FlextTypingBase.RecursiveContainer | BaseModel | None:
+            default: (
+                FlextTypingBase.RecursiveContainer
+                | FlextModelsPydantic.BaseModel
+                | None
+            ) = None,
+        ) -> FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel | None:
             value = self.root.get(key, default)
-            if isinstance(value, Mapping) and not isinstance(value, BaseModel):
+            if isinstance(value, Mapping) and not isinstance(
+                value,
+                FlextModelsPydantic.BaseModel,
+            ):
                 return dict(value)
             return value
 
-    class ConfigMap(RootDictModel[FlextTypingBase.RecursiveContainer | BaseModel]):
+    class ConfigMap(
+        RootDictModel[
+            FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel
+        ]
+    ):
         """Configuration container for settings and environment parameters.
 
         Semantically distinct Dict for configuration (not data).
         """
 
         root: Annotated[
-            MutableMapping[str, FlextTypingBase.RecursiveContainer | BaseModel],
-            Field(
+            MutableMapping[
+                str,
+                FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel,
+            ],
+            FlextUtilitiesPydantic.Field(
                 title="Configuration Map",
                 description="Configuration entries keyed by normalized setting names.",
                 examples=[
                     {"timeout_seconds": 30, "environment": "dev", "debug": False},
                 ],
             ),
-        ] = Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)

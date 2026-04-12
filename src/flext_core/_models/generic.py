@@ -17,14 +17,13 @@ from collections.abc import MutableSequence
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import Field
-
 from flext_core import (
     FlextModelsBase,
     FlextUtilitiesDomain,
     FlextUtilitiesGenerators,
     t,
 )
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextGenericModels:
@@ -38,50 +37,50 @@ class FlextGenericModels:
 
         success_count: Annotated[
             t.NonNegativeInt,
-            Field(default=0, description="Successes"),
+            FlextUtilitiesPydantic.Field(default=0, description="Successes"),
         ] = 0
         failure_count: Annotated[
             t.NonNegativeInt,
-            Field(default=0, description="Failures"),
+            FlextUtilitiesPydantic.Field(default=0, description="Failures"),
         ] = 0
         skipped_count: Annotated[
             t.NonNegativeInt,
-            Field(default=0, description="Skipped"),
+            FlextUtilitiesPydantic.Field(default=0, description="Skipped"),
         ] = 0
         warning_count: Annotated[
             t.NonNegativeInt,
-            Field(default=0, description="Warnings"),
+            FlextUtilitiesPydantic.Field(default=0, description="Warnings"),
         ] = 0
         retry_count: Annotated[
             t.NonNegativeInt,
-            Field(default=0, description="Retries"),
+            FlextUtilitiesPydantic.Field(default=0, description="Retries"),
         ] = 0
         start_time: Annotated[
             datetime | None,
-            Field(default=None, description="Start time"),
+            FlextUtilitiesPydantic.Field(default=None, description="Start time"),
         ] = None
         last_update: Annotated[
             datetime | None,
-            Field(default=None, description="Last update"),
+            FlextUtilitiesPydantic.Field(default=None, description="Last update"),
         ] = None
         estimated_total: Annotated[
             t.NonNegativeInt | None,
-            Field(default=None, description="Estimated total"),
+            FlextUtilitiesPydantic.Field(default=None, description="Estimated total"),
         ] = None
         current_item: Annotated[
             str | None,
-            Field(default=None, description="Current item"),
+            FlextUtilitiesPydantic.Field(default=None, description="Current item"),
         ] = None
         operation_name: Annotated[
             str | None,
-            Field(default=None, description="Operation name"),
+            FlextUtilitiesPydantic.Field(default=None, description="Operation name"),
         ] = None
         metadata: Annotated[
             t.Dict,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Operation metadata",
             ),
-        ] = Field(default_factory=t.Dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=t.Dict)
 
         def record_failure(self) -> None:
             """Record a failed operation."""
@@ -127,46 +126,46 @@ class FlextGenericModels:
 
         converted: Annotated[
             MutableSequence[t.ValueOrModel],
-            Field(description="Converted items"),
-        ] = Field(default_factory=list[t.ValueOrModel])
+            FlextUtilitiesPydantic.Field(description="Converted items"),
+        ] = FlextUtilitiesPydantic.Field(default_factory=list[t.ValueOrModel])
         errors: Annotated[
             MutableSequence[str],
-            Field(description="Error messages"),
-        ] = Field(default_factory=list)
+            FlextUtilitiesPydantic.Field(description="Error messages"),
+        ] = FlextUtilitiesPydantic.Field(default_factory=list)
         warnings: Annotated[
             MutableSequence[str],
-            Field(description="Warning messages"),
-        ] = Field(default_factory=list)
+            FlextUtilitiesPydantic.Field(description="Warning messages"),
+        ] = FlextUtilitiesPydantic.Field(default_factory=list)
         skipped: Annotated[
             MutableSequence[t.ValueOrModel],
-            Field(description="Skipped items"),
-        ] = Field(default_factory=list[t.ValueOrModel])
+            FlextUtilitiesPydantic.Field(description="Skipped items"),
+        ] = FlextUtilitiesPydantic.Field(default_factory=list[t.ValueOrModel])
         start_time: Annotated[
             datetime | None,
-            Field(default=None, description="Start time"),
+            FlextUtilitiesPydantic.Field(default=None, description="Start time"),
         ] = None
         end_time: Annotated[
             datetime | None,
-            Field(default=None, description="End time"),
+            FlextUtilitiesPydantic.Field(default=None, description="End time"),
         ] = None
         source_format: Annotated[
             str | None,
-            Field(default=None, description="Source format"),
+            FlextUtilitiesPydantic.Field(default=None, description="Source format"),
         ] = None
         target_format: Annotated[
             str | None,
-            Field(default=None, description="Target format"),
+            FlextUtilitiesPydantic.Field(default=None, description="Target format"),
         ] = None
         total_input_count: Annotated[
             t.NonNegativeInt | None,
-            Field(default=None, description="Total input count"),
+            FlextUtilitiesPydantic.Field(default=None, description="Total input count"),
         ] = None
         metadata: Annotated[
             t.Dict,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Conversion metadata",
             ),
-        ] = Field(default_factory=t.Dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=t.Dict)
 
         def add_converted(self, item: t.ValueOrModel) -> None:
             """Add a successfully converted item."""

@@ -16,9 +16,9 @@ from collections.abc import (
 )
 from typing import Annotated
 
-from pydantic import Field, RootModel
-
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.services import FlextTypesServices
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsContainers:
@@ -29,12 +29,14 @@ class FlextModelsContainers:
     Access via ``t.ConfigMap``, ``t.Dict``, etc.
     """
 
-    class ValidatorCallable(RootModel[FlextTypesServices.ValidatorCallable]):
+    class ValidatorCallable(
+        FlextModelsPydantic.RootModel[FlextTypesServices.ValidatorCallable]
+    ):
         """Callable validator container. Fixed types: ScalarValue | BaseModel."""
 
         root: Annotated[
             FlextTypesServices.ValidatorCallable,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 title="Validator Callable",
                 description="Callable that validates or transforms one scalar/model input value.",
                 examples=["identity_validator"],
@@ -49,7 +51,9 @@ class FlextModelsContainers:
             return self.root(value)
 
     class _RootValidatorMapModel(
-        RootModel[Mapping[str, FlextTypesServices.ValidatorCallable]],
+        FlextModelsPydantic.RootModel[
+            Mapping[str, FlextTypesServices.ValidatorCallable]
+        ],
     ):
         """Shared API for validator map containers."""
 
@@ -72,12 +76,12 @@ class FlextModelsContainers:
 
         root: Annotated[
             Mapping[str, FlextTypesServices.ValidatorCallable],
-            Field(
+            FlextUtilitiesPydantic.Field(
                 title="Field Validator Map",
                 description="Field-level validators keyed by field name.",
                 examples=[{"email": "validate_email"}],
             ),
-        ] = Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
 
 
 __all__: list[str] = ["FlextModelsContainers"]

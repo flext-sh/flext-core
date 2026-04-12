@@ -6,9 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.container import FlextProtocolsContainer
 from flext_core._protocols.context import FlextProtocolsContext
@@ -16,6 +15,9 @@ from flext_core._protocols.handler import FlextProtocolsHandler
 from flext_core._protocols.registry import FlextProtocolsRegistry
 from flext_core._protocols.result import FlextProtocolsResult
 from flext_core._protocols.settings import FlextProtocolsSettings
+
+if TYPE_CHECKING:
+    from flext_core._typings.services import FlextTypesServices
 
 
 class FlextProtocolsService:
@@ -87,7 +89,7 @@ class FlextProtocolsService:
             """Execute domain service logic."""
             ...
 
-        def service_info(self) -> t.FlatContainerMapping:
+        def service_info(self) -> FlextTypesServices.FlatContainerMapping:
             """Get service metadata and configuration information."""
             ...
 

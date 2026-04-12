@@ -13,9 +13,8 @@ from collections.abc import Mapping, Sequence
 from types import ModuleType
 from typing import Annotated
 
-from pydantic import Field
-
 from flext_core import FlextModelsBase, p, t
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsService:
@@ -35,29 +34,33 @@ class FlextModelsService:
 
         settings: Annotated[
             p.Settings,
-            Field(description="Service configuration settings for runtime behavior."),
+            FlextUtilitiesPydantic.Field(
+                description="Service configuration settings for runtime behavior."
+            ),
         ]
         context: Annotated[
             p.Context,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 description="Execution context carrying correlation and tracing metadata.",
             ),
         ]
         container: Annotated[
             p.Container,
-            Field(description="Dependency injection container for service resolution."),
+            FlextUtilitiesPydantic.Field(
+                description="Dependency injection container for service resolution."
+            ),
         ]
         dispatcher: Annotated[
             p.Dispatcher | None,
-            Field(
-                default=None,
+            FlextUtilitiesPydantic.Field(
+                None,
                 description="Dispatcher resolved for CQRS routing in this runtime.",
             ),
         ] = None
         registry: Annotated[
             p.Registry | None,
-            Field(
-                default=None,
+            FlextUtilitiesPydantic.Field(
+                None,
                 description="Registry bound to the runtime when one is materialized.",
             ),
         ] = None
@@ -65,105 +68,139 @@ class FlextModelsService:
     class RuntimeBootstrapOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options for runtime bootstrapping."""
 
-        settings: p.Settings | None = Field(
-            default=None,
+        settings: p.Settings | None = FlextUtilitiesPydantic.Field(
+            None,
             description="Pre-built settings instance used directly for the runtime.",
+            validate_default=True,
         )
-        settings_type: type | None = Field(
-            default=None,
+        settings_type: type | None = FlextUtilitiesPydantic.Field(
+            None,
             description="FlextSettings class used to load runtime settings.",
+            validate_default=True,
         )
-        settings_overrides: t.ScalarMapping | None = Field(
-            default=None,
+        settings_overrides: t.ScalarMapping | None = FlextUtilitiesPydantic.Field(
+            None,
             description="Key-value overrides applied on top of the loaded configuration.",
+            validate_default=True,
         )
-        context: p.Context | None = Field(
-            default=None,
+        context: p.Context | None = FlextUtilitiesPydantic.Field(
+            None,
             description="Pre-built execution context to inject into the runtime.",
+            validate_default=True,
         )
-        dispatcher: p.Dispatcher | None = Field(
-            default=None,
+        dispatcher: p.Dispatcher | None = FlextUtilitiesPydantic.Field(
+            None,
             description="Pre-built dispatcher injected into the runtime DSL.",
+            validate_default=True,
         )
-        registry: p.Registry | None = Field(
-            default=None,
+        registry: p.Registry | None = FlextUtilitiesPydantic.Field(
+            None,
             description="Pre-built registry injected into the runtime DSL.",
+            validate_default=True,
         )
-        subproject: str | None = Field(
-            default=None,
+        subproject: str | None = FlextUtilitiesPydantic.Field(
+            None,
             description="Subproject name used to scope configuration and wiring.",
+            validate_default=True,
         )
-        services: Mapping[str, t.RegisterableService] | None = Field(
-            default=None,
-            description="Named services to register in the dependency container.",
+        services: Mapping[str, t.RegisterableService] | None = (
+            FlextUtilitiesPydantic.Field(
+                None,
+                description="Named services to register in the dependency container.",
+                validate_default=True,
+            )
         )
-        factories: Mapping[str, t.FactoryCallable] | None = Field(
-            default=None,
-            description="Named factory callables to register in the dependency container.",
+        factories: Mapping[str, t.FactoryCallable] | None = (
+            FlextUtilitiesPydantic.Field(
+                None,
+                description="Named factory callables to register in the dependency container.",
+                validate_default=True,
+            )
         )
-        resources: Mapping[str, t.ResourceCallable] | None = Field(
-            default=None,
-            description="Named lifecycle resources to register in the dependency container.",
+        resources: Mapping[str, t.ResourceCallable] | None = (
+            FlextUtilitiesPydantic.Field(
+                None,
+                description="Named lifecycle resources to register in the dependency container.",
+                validate_default=True,
+            )
         )
-        container_overrides: t.ScalarMapping | None = Field(
-            default=None,
+        container_overrides: t.ScalarMapping | None = FlextUtilitiesPydantic.Field(
+            None,
             description="Provider overrides applied to the dependency container.",
+            validate_default=True,
         )
-        wire_modules: Sequence[ModuleType | str] | None = Field(
-            default=None,
+        wire_modules: Sequence[ModuleType | str] | None = FlextUtilitiesPydantic.Field(
+            None,
             description="Modules to wire for dependency-injector resolution.",
+            validate_default=True,
         )
-        wire_packages: t.StrSequence | None = Field(
-            default=None,
+        wire_packages: t.StrSequence | None = FlextUtilitiesPydantic.Field(
+            None,
             description="Package names to consider for dependency wiring.",
+            validate_default=True,
         )
-        wire_classes: Sequence[type] | None = Field(
-            default=None,
+        wire_classes: Sequence[type] | None = FlextUtilitiesPydantic.Field(
+            None,
             description="Classes whose modules are wired for dependency resolution.",
+            validate_default=True,
         )
 
     class DependencyContainerCreationOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options used to create and populate dependency container instances."""
 
-        settings: t.ConfigMap | None = Field(
-            default=None,
+        settings: t.ConfigMap | None = FlextUtilitiesPydantic.Field(
+            None,
             title="Configuration",
             description="Optional configuration mapping bound to dependency container providers.",
+            validate_default=True,
         )
-        services: Mapping[str, t.RegisterableService] | None = Field(
-            default=None,
-            title="Services",
-            description="Object providers registered before optional wiring.",
+        services: Mapping[str, t.RegisterableService] | None = (
+            FlextUtilitiesPydantic.Field(
+                None,
+                title="Services",
+                description="Object providers registered before optional wiring.",
+                validate_default=True,
+            )
         )
-        factories: Mapping[str, t.FactoryCallable] | None = Field(
-            default=None,
-            title="Factories",
-            description="Factory providers registered with singleton/factory semantics.",
+        factories: Mapping[str, t.FactoryCallable] | None = (
+            FlextUtilitiesPydantic.Field(
+                None,
+                title="Factories",
+                description="Factory providers registered with singleton/factory semantics.",
+                validate_default=True,
+            )
         )
-        resources: Mapping[str, t.ResourceCallable] | None = Field(
-            default=None,
-            title="Resources",
-            description="Lifecycle resource providers registered before wiring.",
+        resources: Mapping[str, t.ResourceCallable] | None = (
+            FlextUtilitiesPydantic.Field(
+                None,
+                title="Resources",
+                description="Lifecycle resource providers registered before wiring.",
+                validate_default=True,
+            )
         )
-        wire_modules: Sequence[ModuleType] | None = Field(
-            default=None,
+        wire_modules: Sequence[ModuleType] | None = FlextUtilitiesPydantic.Field(
+            None,
             title="Wire Modules",
             description="Modules wired for dependency-injector @inject resolution.",
+            validate_default=True,
         )
-        wire_packages: t.StrSequence | None = Field(
-            default=None,
+        wire_packages: t.StrSequence | None = FlextUtilitiesPydantic.Field(
+            None,
             title="Wire Packages",
             description="Package names considered for dependency wiring.",
+            validate_default=True,
         )
-        wire_classes: Sequence[type] | None = Field(
-            default=None,
+        wire_classes: Sequence[type] | None = FlextUtilitiesPydantic.Field(
+            None,
             title="Wire Classes",
             description="Classes whose modules are wired for dependency resolution.",
+            validate_default=True,
         )
-        factory_cache: bool = Field(
-            default=True,
+        factory_cache: bool = FlextUtilitiesPydantic.Field(
+            True,
             title="Factory Cache",
             description="Whether registered factories use singleton caching semantics.",
+            validate_default=True,
         )
 
 

@@ -12,9 +12,9 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from pydantic import ConfigDict, Field
-
 from flext_core import FlextModelsBase, t
+from flext_core._constants.pydantic import FlextConstantsPydantic
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsExceptionParams:
@@ -23,12 +23,14 @@ class FlextModelsExceptionParams:
     class ParamsModel(FlextModelsBase.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid",
-            strict=True,
-            validate_assignment=True,
-            arbitrary_types_allowed=True,
-            use_enum_values=True,
+        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
+            FlextConstantsPydantic.ConfigDict(
+                extra="forbid",
+                strict=True,
+                validate_assignment=True,
+                arbitrary_types_allowed=True,
+                use_enum_values=True,
+            )
         )
 
     class ValidationErrorParams(ParamsModel):
@@ -36,7 +38,7 @@ class FlextModelsExceptionParams:
 
         field: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Name of the input field that failed validation.",
@@ -46,7 +48,7 @@ class FlextModelsExceptionParams:
         ]
         value: Annotated[
             t.Scalar | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 description="Rejected input value that triggered the validation error.",
             ),
@@ -57,7 +59,7 @@ class FlextModelsExceptionParams:
 
         config_key: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Settings key associated with the error.",
@@ -67,7 +69,7 @@ class FlextModelsExceptionParams:
         ]
         config_source: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Settings source where the invalid value originated.",
@@ -81,7 +83,7 @@ class FlextModelsExceptionParams:
 
         host: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Hostname or address used for the failed connection attempt.",
@@ -91,7 +93,7 @@ class FlextModelsExceptionParams:
         ]
         port: Annotated[
             int | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Network port used for the failed connection attempt.",
@@ -101,7 +103,7 @@ class FlextModelsExceptionParams:
         ]
         timeout: Annotated[
             t.Numeric | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 description="Connection timeout threshold in seconds.",
                 title="Timeout",
@@ -114,7 +116,7 @@ class FlextModelsExceptionParams:
 
         timeout_seconds: Annotated[
             t.Numeric | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 description="Timeout duration in seconds that triggered this exception.",
                 title="Timeout Seconds",
@@ -123,7 +125,7 @@ class FlextModelsExceptionParams:
         ]
         operation: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Operation name that exceeded the configured timeout.",
@@ -137,7 +139,7 @@ class FlextModelsExceptionParams:
 
         auth_method: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Authentication method used when the failure occurred.",
@@ -147,7 +149,7 @@ class FlextModelsExceptionParams:
         ]
         user_id: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="User identifier associated with the authentication attempt.",
@@ -161,7 +163,7 @@ class FlextModelsExceptionParams:
 
         user_id: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="User identifier denied access to a protected resource.",
@@ -171,7 +173,7 @@ class FlextModelsExceptionParams:
         ]
         resource: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Protected resource that triggered the authorization failure.",
@@ -181,7 +183,7 @@ class FlextModelsExceptionParams:
         ]
         permission: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Missing permission required to complete the requested action.",
@@ -195,7 +197,7 @@ class FlextModelsExceptionParams:
 
         resource_type: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Domain resource type that could not be located.",
@@ -205,7 +207,7 @@ class FlextModelsExceptionParams:
         ]
         resource_id: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Unique identifier of the missing resource.",
@@ -219,7 +221,7 @@ class FlextModelsExceptionParams:
 
         resource_type: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Domain resource type involved in the conflict.",
@@ -229,7 +231,7 @@ class FlextModelsExceptionParams:
         ]
         resource_id: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Identifier of the resource that caused the conflict.",
@@ -239,7 +241,7 @@ class FlextModelsExceptionParams:
         ]
         conflict_reason: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Human-readable explanation for why the conflict occurred.",
@@ -253,7 +255,7 @@ class FlextModelsExceptionParams:
 
         limit: Annotated[
             int | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Maximum request count allowed within the configured window.",
@@ -263,7 +265,7 @@ class FlextModelsExceptionParams:
         ]
         window_seconds: Annotated[
             int | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Duration, in seconds, of the rate-limit window.",
@@ -273,7 +275,7 @@ class FlextModelsExceptionParams:
         ]
         retry_after: Annotated[
             t.Numeric | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 description="Time in seconds clients should wait before retrying.",
                 title="Retry After",
@@ -286,7 +288,7 @@ class FlextModelsExceptionParams:
 
         service_name: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="External service monitored by the circuit breaker.",
@@ -296,7 +298,7 @@ class FlextModelsExceptionParams:
         ]
         failure_count: Annotated[
             int | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Consecutive failure count at the moment the breaker opened.",
@@ -306,7 +308,7 @@ class FlextModelsExceptionParams:
         ]
         reset_timeout: Annotated[
             t.Numeric | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 description="Seconds before allowing a circuit breaker reset attempt.",
                 title="Reset Timeout",
@@ -319,7 +321,7 @@ class FlextModelsExceptionParams:
 
         expected_type: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Expected type name for the failing value.",
@@ -329,7 +331,7 @@ class FlextModelsExceptionParams:
         ]
         actual_type: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Actual type name received at runtime.",
@@ -343,7 +345,7 @@ class FlextModelsExceptionParams:
 
         operation: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Operation name associated with the failure.",
@@ -353,7 +355,7 @@ class FlextModelsExceptionParams:
         ]
         reason: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Short reason explaining the operation failure.",
@@ -367,7 +369,7 @@ class FlextModelsExceptionParams:
 
         service_name: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Service identifier requested from the container/registry.",
@@ -377,7 +379,7 @@ class FlextModelsExceptionParams:
         ]
         expected_type: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Expected runtime type name for the resolved service.",
@@ -387,7 +389,7 @@ class FlextModelsExceptionParams:
         ]
         actual_type: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Actual runtime type name returned by resolution.",
@@ -401,7 +403,7 @@ class FlextModelsExceptionParams:
 
         category: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Registry category for plugin registration.",
@@ -411,7 +413,7 @@ class FlextModelsExceptionParams:
         ]
         name: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Plugin name within a category.",
@@ -421,7 +423,7 @@ class FlextModelsExceptionParams:
         ]
         scope: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Registration scope used by registry operations.",
@@ -435,7 +437,7 @@ class FlextModelsExceptionParams:
 
         attribute_name: Annotated[
             str | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 strict=True,
                 description="Attribute name that could not be accessed safely.",
@@ -445,7 +447,7 @@ class FlextModelsExceptionParams:
         ]
         attribute_context: Annotated[
             t.MetadataValue | None,
-            Field(
+            FlextUtilitiesPydantic.Field(
                 default=None,
                 description="Context payload describing the state during access failure.",
                 title="Attribute Context",

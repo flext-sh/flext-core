@@ -10,10 +10,9 @@ from collections.abc import Callable, Iterable, Mapping
 from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core import t
-
 if TYPE_CHECKING:
-    from flext_core import p
+    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._typings.services import FlextTypesServices
 
 
 class FlextProtocolsBase:
@@ -37,8 +36,8 @@ class FlextProtocolsBase:
             self,
             *,
             mode: str = "python",
-            include: t.IncEx | None = None,
-            exclude: t.IncEx | None = None,
+            include: FlextTypesServices.IncEx | None = None,
+            exclude: FlextTypesServices.IncEx | None = None,
             context: object | None = None,
             by_alias: bool | None = None,
             exclude_unset: bool = False,
@@ -121,9 +120,11 @@ class FlextProtocolsBase:
     class Executable(Base, Protocol):
         """Protocol for objects that can be executed and report service info."""
 
-        def execute(self) -> p.Result[t.RuntimeAtomic]: ...
+        def execute(
+            self,
+        ) -> FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]: ...
 
-        def service_info(self) -> t.FlatContainerMapping: ...
+        def service_info(self) -> FlextTypesServices.FlatContainerMapping: ...
 
     @runtime_checkable
     class ConfigObject(Protocol):
@@ -132,8 +133,8 @@ class FlextProtocolsBase:
         def get(
             self,
             key: str,
-            default: t.RuntimeAtomic | None = None,
-        ) -> t.RuntimeAtomic | None:
+            default: FlextTypesServices.RuntimeAtomic | None = None,
+        ) -> FlextTypesServices.RuntimeAtomic | None:
             """Fetch a configuration value by key."""
             ...
 
@@ -141,7 +142,7 @@ class FlextProtocolsBase:
             """Return known configuration keys."""
             ...
 
-        def items(self) -> Iterable[tuple[str, t.RuntimeAtomic]]:
+        def items(self) -> Iterable[tuple[str, FlextTypesServices.RuntimeAtomic]]:
             """Return key/value entries for configuration payloads."""
             ...
 
