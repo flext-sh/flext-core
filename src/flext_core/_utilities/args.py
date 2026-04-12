@@ -11,9 +11,9 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableSequence
 from enum import StrEnum
 
-from pydantic import BaseModel, TypeAdapter, ValidationError
-
 from flext_core import e, r, t
+from flext_core._constants.pydantic import FlextConstantsPydantic
+from flext_core._models.pydantic import FlextModelsPydantic
 
 
 class FlextUtilitiesArgs:
@@ -40,10 +40,10 @@ class FlextUtilitiesArgs:
         for field, enum_cls in enum_fields.items():
             if field in parsed:
                 value = parsed[field]
-                adapter = TypeAdapter(enum_cls)
+                adapter = FlextModelsPydantic.TypeAdapter(enum_cls)
                 try:
                     parsed[field] = adapter.validate_python(value)
-                except ValidationError:
+                except FlextConstantsPydantic.ValidationError:
                     members_dict = getattr(enum_cls, "__members__", {})
                     enum_members = list(members_dict.values())
                     valid = ", ".join(m.value for m in enum_members)
@@ -56,7 +56,7 @@ class FlextUtilitiesArgs:
         return r[Mapping[str, t.ValueOrModel]].ok(parsed)
 
     @staticmethod
-    def parse_model[M: BaseModel](
+    def parse_model[M: FlextModelsPydantic.BaseModel](
         kwargs: Mapping[str, t.ValueOrModel],
         model_cls: type[M],
         *,
@@ -78,7 +78,7 @@ class FlextUtilitiesArgs:
         try:
             return r[M].ok(model_cls.model_validate(kwargs))
         except (
-            ValidationError,
+            FlextConstantsPydantic.ValidationError,
             ValueError,
             TypeError,
             AttributeError,
@@ -87,7 +87,7 @@ class FlextUtilitiesArgs:
             return e.fail_validation(error=exc)
 
     @staticmethod
-    def resolve_options[M: BaseModel](
+    def resolve_options[M: FlextModelsPydantic.BaseModel](
         options: M | None,
         kwargs: Mapping[str, t.ValueOrModel],
         model_cls: type[M],

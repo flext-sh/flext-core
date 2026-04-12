@@ -5,9 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TypeIs, cast
 
-from pydantic import BaseModel
-
 from flext_core import FlextUtilitiesGuardsTypeCore, t
+from flext_core._models.pydantic import FlextModelsPydantic
 
 
 class FlextUtilitiesGuardsTypeModel:
@@ -16,12 +15,15 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def base_model(value: object) -> TypeIs[t.ModelCarrier]:
         """Narrow a broad runtime value to the canonical model carrier alias."""
-        return isinstance(value, BaseModel)
+        return isinstance(value, FlextModelsPydantic.BaseModel)
 
     @staticmethod
     def model_type(value: object) -> TypeIs[t.ModelClass[t.ModelCarrier]]:
         """Narrow a runtime value to a canonical Pydantic model class."""
-        return isinstance(value, type) and issubclass(value, BaseModel)
+        return isinstance(value, type) and issubclass(
+            value,
+            FlextModelsPydantic.BaseModel,
+        )
 
     @staticmethod
     def object_list(
@@ -46,7 +48,7 @@ class FlextUtilitiesGuardsTypeModel:
             for item_value in value.root.values():
                 if isinstance(
                     item_value,
-                    BaseModel,
+                    FlextModelsPydantic.BaseModel,
                 ) or not FlextUtilitiesGuardsTypeCore.container(item_value):
                     return False
             return True
@@ -72,7 +74,7 @@ class FlextUtilitiesGuardsTypeModel:
         for item_value in candidate.values():
             if isinstance(
                 item_value,
-                BaseModel,
+                FlextModelsPydantic.BaseModel,
             ) or not FlextUtilitiesGuardsTypeCore.container(item_value):
                 return False
         return True
@@ -81,7 +83,7 @@ class FlextUtilitiesGuardsTypeModel:
     def pydantic_model(value: object) -> TypeIs[t.ModelCarrier]:
         """Narrow value to the canonical Pydantic model carrier."""
         return (
-            isinstance(value, BaseModel)
+            isinstance(value, FlextModelsPydantic.BaseModel)
             and hasattr(value, "model_dump")
             and callable(value.model_dump)
         )

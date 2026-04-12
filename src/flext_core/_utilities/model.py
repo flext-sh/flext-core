@@ -15,16 +15,17 @@ from importlib import import_module
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, TypeAdapter, ValidationError
-
 from flext_core import T_Model, c, e, p, r, t
+from flext_core._constants.pydantic import FlextConstantsPydantic
 from flext_core._models.base import FlextModelsBase
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._models.service import FlextModelsService
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.discovery import FlextUtilitiesDiscovery
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextUtilitiesModel:
@@ -33,27 +34,27 @@ class FlextUtilitiesModel:
     class ModelDumpOptions(FlextModelsBase.FlexibleInternalModel):
         """Options controlling Pydantic model_dump() serialization behavior."""
 
-        by_alias: bool | None = Field(
+        by_alias: bool | None = FlextUtilitiesPydantic.Field(
             default=None,
             description="Serialize using field aliases",
         )
-        exclude_none: bool | None = Field(
+        exclude_none: bool | None = FlextUtilitiesPydantic.Field(
             default=None,
             description="Exclude None-valued fields",
         )
-        exclude_unset: bool | None = Field(
+        exclude_unset: bool | None = FlextUtilitiesPydantic.Field(
             default=None,
             description="Exclude fields not explicitly set",
         )
-        exclude_defaults: bool | None = Field(
+        exclude_defaults: bool | None = FlextUtilitiesPydantic.Field(
             default=None,
             description="Exclude fields matching defaults",
         )
-        include: set[str] | None = Field(
+        include: set[str] | None = FlextUtilitiesPydantic.Field(
             default=None,
             description="Whitelist of field names to include",
         )
-        exclude: set[str] | None = Field(
+        exclude: set[str] | None = FlextUtilitiesPydantic.Field(
             default=None,
             description="Blacklist of field names to exclude",
         )
@@ -197,7 +198,11 @@ class FlextUtilitiesModel:
     ) -> r[TValue]:
         """Validate one value through a model class or TypeAdapter."""
         try:
-            adapter = target if isinstance(target, TypeAdapter) else TypeAdapter(target)
+            adapter = (
+                target
+                if isinstance(target, FlextModelsPydantic.TypeAdapter)
+                else FlextModelsPydantic.TypeAdapter(target)
+            )
             if from_json:
                 if not isinstance(data, (str, bytes, bytearray)):
                     return e.fail_validation(
@@ -207,7 +212,7 @@ class FlextUtilitiesModel:
                 return r[TValue].ok(adapter.validate_json(data, strict=strict))
             return r[TValue].ok(adapter.validate_python(data, strict=strict))
         except (
-            ValidationError,
+            FlextConstantsPydantic.ValidationError,
             TypeError,
             ValueError,
             AttributeError,
@@ -275,7 +280,7 @@ class FlextUtilitiesModel:
                             source_dict,
                         )
                     )
-                except ValidationError:
+                except FlextConstantsPydantic.ValidationError:
                     sanitized_source = dict(source_dict)
                     wire_packages_raw = sanitized_source.get("wire_packages")
                     if isinstance(wire_packages_raw, (list, tuple)):
