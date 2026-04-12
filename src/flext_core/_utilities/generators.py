@@ -180,4 +180,4 @@ class FlextUtilitiesGenerators:
         return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
-__all__ = ["FlextUtilitiesGenerators"]
+__all__: list[str] = ["FlextUtilitiesGenerators"]

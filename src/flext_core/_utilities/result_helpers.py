@@ -89,4 +89,4 @@ class FlextUtilitiesResultHelpers:
         return result.value
 
 
-__all__ = ["FlextUtilitiesResultHelpers"]
+__all__: list[str] = ["FlextUtilitiesResultHelpers"]

@@ -83,4 +83,4 @@ class FlextModelsBuilder:
                 return state
 
 
-__all__ = ["FlextModelsBuilder"]
+__all__: list[str] = ["FlextModelsBuilder"]

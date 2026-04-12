@@ -2,12 +2,12 @@
 
 Module: flext_core DI services validation
 Scope: Real execution validating that core services
-       (FlextSettings, FlextLogger, FlextContext) are easily accessible via DI
+       (settings, logger contract, context) are easily accessible via DI
        following Clear Architecture principles
 
 Tests service accessibility via DI:
 - FlextSettings via container and service runtime
-- FlextLogger via container and service runtime
+- Logger contract via container and service runtime
 - FlextContext via container and service runtime
 - Service registration and injection patterns
 - Integration with create_service_runtime
@@ -84,13 +84,13 @@ class TestDiServicesAccess:
         assert structlog_module is not None
 
     def test_logger_factory_method(self) -> None:
-        """Test FlextLogger.create_module_logger."""
+        """Test module logger creation through the public logging DSL."""
         logger = u.create_module_logger("test_service")
         assert logger is not None
         assert callable(getattr(logger, "bind", None))
 
     def test_logger_registration_in_container(self) -> None:
-        """Test registering FlextLogger in container for DI."""
+        """Test registering a public logger in the container for DI."""
         container = FlextContainer()
         logger_result = container.get("logger")
         assert logger_result.success
@@ -210,4 +210,4 @@ class TestDiServicesAccess:
             di_container.unwire()
 
 
-__all__ = ["TestDiServicesAccess"]
+__all__: list[str] = ["TestDiServicesAccess"]

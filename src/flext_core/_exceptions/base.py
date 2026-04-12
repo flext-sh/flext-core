@@ -339,4 +339,4 @@ class FlextExceptionsBase:
                 setattr(self, key, getattr(resolved, key))
 
 
-__all__ = ["FlextExceptionsBase"]
+__all__: list[str] = ["FlextExceptionsBase"]

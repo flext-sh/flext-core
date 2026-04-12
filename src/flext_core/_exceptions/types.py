@@ -398,4 +398,4 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         })
 
 
-__all__ = ["FlextExceptionsTypes"]
+__all__: list[str] = ["FlextExceptionsTypes"]

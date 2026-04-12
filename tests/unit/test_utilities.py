@@ -295,4 +295,4 @@ class Testu(u.Core.Tests.Contract):
         tm.that(len(generated), gt=0)
 
 
-__all__ = ["Testu"]
+__all__: list[str] = ["Testu"]

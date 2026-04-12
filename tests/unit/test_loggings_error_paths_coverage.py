@@ -17,4 +17,4 @@ class TestLoggingsErrorPaths:
     """Test error handling paths in loggings.py."""
 
 
-__all__ = ["TestLoggingsErrorPaths"]
+__all__: list[str] = ["TestLoggingsErrorPaths"]

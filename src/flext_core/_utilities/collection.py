@@ -499,4 +499,4 @@ class FlextUtilitiesCollection:
         return r[Sequence[U]].ok(results)
 
 
-__all__ = ["FlextUtilitiesCollection"]
+__all__: list[str] = ["FlextUtilitiesCollection"]

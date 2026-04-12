@@ -57,4 +57,4 @@ class FlextTypesAnnotateds:
     type DecimalFraction = Annotated[float, Ge(0.0), Le(1.0)]
 
 
-__all__ = ["FlextTypesAnnotateds"]
+__all__: list[str] = ["FlextTypesAnnotateds"]

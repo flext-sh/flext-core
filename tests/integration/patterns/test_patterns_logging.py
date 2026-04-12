@@ -153,12 +153,12 @@ class TestPatternsLogging:
         assert logger is not None
 
     def test_fetch_logger_creates_instance(self) -> None:
-        """Test that FlextLogger creates logger instances."""
+        """Test that the public logging DSL creates logger instances."""
         logger = self.make_result_logger("test_logger")
         assert logger is not None
 
     def test_fetch_logger_creates_distinct_instances(self) -> None:
-        """Test that FlextLogger creates new instances (no caching in new implementation)."""
+        """Test that the public logging DSL creates distinct logger instances."""
         logger1 = self.make_result_logger("cached_test")
         logger2 = self.make_result_logger("cached_test")
         assert logger1 is not logger2

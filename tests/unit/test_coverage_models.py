@@ -11,9 +11,8 @@ import pytest
 from pydantic import Field, ValidationError, field_validator
 
 from flext_core import FlextModelsCqrs
-from flext_core.runtime import FlextRuntime
 from flext_tests import tm
-from tests import m, t
+from tests import m, t, u
 
 
 class GetUserQuery(m.Query):
@@ -244,7 +243,7 @@ class TestCoverageModels:
 
     def test_query_creation(self) -> None:
         assert (
-            FlextRuntime.resolve_nested_model_class(
+            u.resolve_nested_model_class(
                 module_name=GetUserQuery.__module__,
                 qualname=GetUserQuery.__qualname__,
                 models_module_name="flext_core.models",
@@ -475,4 +474,4 @@ class TestCoverageModels:
         tm.that(cmd.email, eq="user@example.com")
 
 
-__all__ = ["TestCoverageModels"]
+__all__: list[str] = ["TestCoverageModels"]

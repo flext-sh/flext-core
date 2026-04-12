@@ -17,6 +17,7 @@ from typing import Literal, TypeVar
 
 from pydantic import Field, TypeAdapter, ValidationError
 
+from flext_core import c, e, p, r, t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.service import FlextModelsService
 from flext_core._utilities.args import FlextUtilitiesArgs
@@ -24,10 +25,6 @@ from flext_core._utilities.discovery import FlextUtilitiesDiscovery
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
 
 T_Model = TypeVar("T_Model", bound=t.ModelCarrier)
 
@@ -205,8 +202,9 @@ class FlextUtilitiesModel:
             adapter = target if isinstance(target, TypeAdapter) else TypeAdapter(target)
             if from_json:
                 if not isinstance(data, (str, bytes, bytearray)):
-                    return r[TValue].fail(
-                        "JSON validation requires str or bytes input",
+                    return e.fail_validation(
+                        "json_input",
+                        error="JSON validation requires str or bytes input",
                     )
                 return r[TValue].ok(adapter.validate_json(data, strict=strict))
             return r[TValue].ok(adapter.validate_python(data, strict=strict))
@@ -217,7 +215,7 @@ class FlextUtilitiesModel:
             AttributeError,
             RuntimeError,
         ) as exc:
-            return r[TValue].fail(f"Validation failed: {exc}", exception=exc)
+            return e.fail_validation(error=exc)
 
     @staticmethod
     def _runtime_option_updates_from_source(
@@ -531,4 +529,4 @@ class FlextUtilitiesModel:
         metadata.root["skip_reasons"] = reasons
 
 
-__all__ = ["FlextUtilitiesModel"]
+__all__: list[str] = ["FlextUtilitiesModel"]

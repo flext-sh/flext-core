@@ -103,4 +103,4 @@ class FlextExceptionsTemplate:
         return payload or None
 
 
-__all__ = ["FlextExceptionsTemplate"]
+__all__: list[str] = ["FlextExceptionsTemplate"]

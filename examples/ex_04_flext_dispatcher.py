@@ -26,7 +26,7 @@ from examples import (
 from examples.shared import Examples
 
 
-class Ex04FlextDispatcher(Examples):
+class Ex04DispatchDsl(Examples):
     """Golden-file tests for the canonical dispatcher DSL."""
 
     class CreateUserHandler:
@@ -159,7 +159,7 @@ class Ex04FlextDispatcher(Examples):
             return True
 
 
-class _Ex04Exercise(Ex04FlextDispatcher):
+class _Ex04Exercise(Ex04DispatchDsl):
     """Exercise runner — separated to keep bindings above the exercise logic."""
 
     @override
@@ -175,7 +175,7 @@ class _Ex04Exercise(Ex04FlextDispatcher):
         """Cover constructor, register_handler and dispatch happy paths."""
         self.section("register_and_dispatch")
         dispatcher = u.build_dispatcher()
-        self.check("constructor.type", type(dispatcher).__name__)
+        self.check("constructor.protocol", isinstance(dispatcher, p.Dispatcher))
         reg_handle = dispatcher.register_handler(self.CreateUserHandler())
         self.check("register(Handle).is_success", reg_handle.success)
         reg_dispatch_msg = dispatcher.register_handler(

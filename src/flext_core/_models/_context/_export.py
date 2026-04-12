@@ -15,12 +15,10 @@ from pydantic import (
     computed_field,
 )
 
-from flext_core import (
-    FlextModelsBase,
-    FlextModelsContextData,
-    FlextModelsEntity,
-    t,
-)
+from flext_core import t
+from flext_core._models._context._data import FlextModelsContextData
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.entity import FlextModelsEntity
 
 
 class FlextModelsContextExport:

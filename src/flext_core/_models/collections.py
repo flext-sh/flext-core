@@ -361,4 +361,4 @@ class FlextModelsCollections:
         ] = None
 
 
-__all__ = ["FlextModelsCollections"]
+__all__: list[str] = ["FlextModelsCollections"]

@@ -16,17 +16,7 @@ from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import Field, PrivateAttr
 
-from flext_core import (
-    c,
-    e,
-    h,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_core import c, e, h, m, p, r, s, t, u
 
 
 class FlextRegistry(s[bool]):
@@ -211,7 +201,7 @@ class FlextRegistry(s[bool]):
         """
         dispatcher = self._state.dispatcher
         if dispatcher is None or (not dispatcher):
-            return r[bool].fail(c.ERR_DISPATCHER_NOT_CONFIGURED)
+            return e.fail_operation("execute registry", c.ERR_DISPATCHER_NOT_CONFIGURED)
         return r[bool].ok(True)
 
     def _remember_registered_key(self, key: str) -> None:
@@ -250,30 +240,17 @@ class FlextRegistry(s[bool]):
         key = f"{category}::{name}"
         if scope == c.RegistrationScope.INSTANCE:
             if key not in self._state.registered_keys:
-                available = [
-                    k.split("::")[1]
-                    for k in self._state.registered_keys
-                    if k.startswith(f"{category}::")
-                ]
-                return r[t.RuntimeAtomic | None].fail(
-                    f"{category} '{name}' not found. Available: {available}",
-                )
+                return e.fail_not_found(category, name)
             raw_result = self.container.get(key)
             if raw_result.failure:
-                return r[t.RuntimeAtomic | None].fail(
-                    f"Failed to retrieve {category} '{name}': {raw_result.error}",
+                return e.fail_operation(
+                    f"retrieve {category} '{name}'",
+                    raw_result.error or c.CQRS_OPERATION_FAILED,
                 )
             return r[t.RuntimeAtomic | None].ok(self._narrow_value(raw_result.value))
         cls = type(self)
         if key not in cls._class_registered_keys:
-            available = [
-                k.split("::")[1]
-                for k in cls._class_registered_keys
-                if k.startswith(f"{category}::")
-            ]
-            return r[t.RuntimeAtomic | None].fail(
-                f"{category} '{name}' not found. Available: {available}",
-            )
+            return e.fail_not_found(category, name)
         return r[t.RuntimeAtomic | None].ok(
             self._narrow_value(cls._class_plugin_storage[key]),
         )
@@ -414,7 +391,10 @@ class FlextRegistry(s[bool]):
         registration_handler: t.HandlerProtocolVariant = handler
         dispatcher = self._state.dispatcher
         if dispatcher is None:
-            return r[m.RegistrationDetails].fail(c.ERR_DISPATCHER_NOT_CONFIGURED)
+            return e.fail_operation(
+                "register handler in registry",
+                c.ERR_DISPATCHER_NOT_CONFIGURED,
+            )
         registration_result = dispatcher.register_handler(
             registration_handler,
             is_event=(handler_mode == c.HandlerType.EVENT),
@@ -545,33 +525,14 @@ class FlextRegistry(s[bool]):
 
         """
         key = f"{category}::{name}"
-        params = m.RegistryPluginParams(
-            category=category,
-            name=name,
-            scope=scope,
-        )
         if scope == c.RegistrationScope.INSTANCE:
             if key not in self._state.registered_keys:
-                return r[bool].fail(
-                    e.render_template(
-                        c.ERR_REGISTRY_PLUGIN_NOT_REGISTERED,
-                        category=category,
-                        name=name,
-                        params=params,
-                    ),
-                )
+                return e.fail_not_found(category, name)
             self._forget_registered_key(key)
             return r[bool].ok(True)
         cls = type(self)
         if key not in cls._class_registered_keys:
-            return r[bool].fail(
-                e.render_template(
-                    c.ERR_REGISTRY_PLUGIN_NOT_REGISTERED,
-                    category=category,
-                    name=name,
-                    params=params,
-                ),
-            )
+            return e.fail_not_found(category, name)
         del cls._class_plugin_storage[key]
         cls._class_registered_keys.discard(key)
         return r[bool].ok(True)
@@ -627,8 +588,10 @@ class FlextRegistry(s[bool]):
 
         """
         if summary.errors:
-            return r[m.RegistrySummary].fail("; ".join(summary.errors))
+            return e.fail_operation(
+                "finalize registry summary", "; ".join(summary.errors)
+            )
         return r[m.RegistrySummary].ok(summary)
 
 
-__all__ = ["FlextRegistry"]
+__all__: list[str] = ["FlextRegistry"]

@@ -170,4 +170,4 @@ class FlextProtocolsBase:
             ...
 
 
-__all__ = ["FlextProtocolsBase"]
+__all__: list[str] = ["FlextProtocolsBase"]

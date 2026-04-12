@@ -1,18 +1,12 @@
 [create_and_service_methods]
-create.default.type: 'FlextRegistry'
-create.explicit.type: 'FlextRegistry'
-create.auto_false.type: 'FlextRegistry'
-create.auto_true.type: 'FlextRegistry'
-decorated_handler.type: 'str'
+dispatcher.protocol: True
+create.shared.protocol: True
+create.default.protocol: True
+create.explicit.protocol: True
+create.auto_false.protocol: True
+create.auto_true.protocol: True
+decorated_handler.type: 'Ex12CommandA'
 execute.success: True
-validate_business_rules.success: True
-is_valid: True
-service_info: {'service_type': 'FlextRegistry'}
-result_property: True
-runtime.type: 'ModelPrivateAttr'
-context.type: 'FlextContext'
-settings.type: 'FlextSettings'
-container.type: 'FlextContainer'
 
 [summary_and_mixins]
 summary.ok.success: True
@@ -24,27 +18,27 @@ mixin.fail.error: True
 mixin.fail.error_code: True
 ensure_result.raw: True
 ensure_result.existing: True
-to_dict.none: ConfigMap
-to_dict.mapping: ConfigMap
-to_dict.basemodel: ConfigMap
+to_dict.none: dict
+to_dict.mapping: dict
+to_dict.basemodel: dict
 generate_id.len: 36
 generate_prefixed_id: True
 generate_datetime_utc.type: 'datetime'
 
 [registration_and_dispatch]
 register_handler.a.success: True
-register_handler.a.id: '_ProtocolHandler'
+register_handler.a.id_present: True
 register_handler.duplicate.success: True
 register_handler.b.success: True
 register_handler.mode.success: True
-create_from_callable.type: 'CallableHandler'
+create_from_callable.handle_success: True
 register_handlers.success: True
 register_handlers.registered_len: 3
 register_handlers.errors_len: 0
-dispatch.a.success: False
-dispatch.a.value: False
-dispatch.b.success: False
-dispatch.b.value: False
+dispatch.a.success: True
+dispatch.a.value: True
+dispatch.b.success: True
+dispatch.b.value: True
 
 [bindings_and_plugins]
 register_bindings.success: True
@@ -57,7 +51,7 @@ register_plugin.validate_fail: True
 register_plugin.validate_exc: True
 fetch_plugin.ok: True
 fetch_plugin.missing: True
-list_plugins.transports: ['hqpdto', 'rngqcl']
+list_plugins.transports: list
 unregister_plugin.ok: True
 unregister_plugin.missing: True
 register_class_plugin.ok: True
@@ -65,7 +59,7 @@ register_class_plugin.dup: True
 register_class_plugin.empty_name: True
 fetch_class_plugin.ok: True
 fetch_class_plugin.missing: True
-list_class_plugins.auth: ['pffbqf']
+list_class_plugins.auth: list
 unregister_class_plugin.ok: True
 unregister_class_plugin.missing: True
 
@@ -74,5 +68,3 @@ register.service.plain: True
 register.service.meta_dict: True
 register.service.meta_model: True
 register.service.bad: False
-track.has_operation_count: True
-track.operation_count: 1

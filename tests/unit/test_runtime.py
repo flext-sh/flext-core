@@ -1215,7 +1215,7 @@ class TestFlextRuntime:
         tm.that(u.dict_like(value), is_=bool)
         tm.that(u.list_like(value), is_=bool)
 
-    __all__ = ["TestFlextRuntime"]
+    __all__: list[str] = ["TestFlextRuntime"]
 
 
-__all__ = ["TestFlextRuntime"]
+__all__: list[str] = ["TestFlextRuntime"]

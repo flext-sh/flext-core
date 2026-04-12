@@ -1266,4 +1266,4 @@ class TestFlextConstants:
         tm.that("layer 0" in doc.lower(), eq=True)
 
 
-__all__ = ["TestFlextConstants"]
+__all__: list[str] = ["TestFlextConstants"]

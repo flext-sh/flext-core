@@ -218,4 +218,4 @@ class TestModule:
             tm.that(logger.try_unbind("missing"), none=False)
 
 
-__all__ = ["TestModule"]
+__all__: list[str] = ["TestModule"]

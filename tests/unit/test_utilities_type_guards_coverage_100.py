@@ -267,4 +267,4 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, has="test")
 
 
-__all__ = ["TestUtilitiesTypeGuardsCoverage100"]
+__all__: list[str] = ["TestUtilitiesTypeGuardsCoverage100"]

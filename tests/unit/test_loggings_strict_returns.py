@@ -1,14 +1,14 @@
-"""Tests for FlextLogger strict return types (r[bool] instead of None).
+"""Tests for public logger strict return types (r[bool] instead of None).
 
 Module: flext_core.loggings
-Scope: Verify all FlextLogger logging methods return r[bool]
+Scope: Verify all public logger methods return r[bool]
 
 Tests verify that:
 - All 8 public logging methods (debug, info, warning, error, critical,
   exception, trace, log) return r[bool] instead of None
 - Return values have success=True on normal logging
 - Backward compatibility: code that discards return value still works
-- Protocol compliance: FlextLogger satisfies p.Logger
+- Protocol compliance: logger instances satisfy p.Logger
 
 Uses Python 3.13 patterns and pytest parametrization.
 
@@ -23,7 +23,7 @@ from tests import u
 
 
 class TestLoggingsStrictReturns:
-    """Unified strict-return tests for FlextLogger methods."""
+    """Unified strict-return tests for public logger methods."""
 
     def test_debug_returns_result_bool(self) -> None:
         logger = u.create_module_logger(__name__)

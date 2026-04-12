@@ -34,4 +34,4 @@ class FlextModelsContext(
     """
 
 
-__all__ = ["FlextModelsContext"]
+__all__: list[str] = ["FlextModelsContext"]

@@ -279,4 +279,4 @@ class TestHandlerDecoratorDiscovery:
         tm.that(settings.priority, eq=10)
 
 
-__all__ = ["TestHandlerDecoratorDiscovery"]
+__all__: list[str] = ["TestHandlerDecoratorDiscovery"]

@@ -238,4 +238,4 @@ class FlextModelsContextScope:
             return self.model_copy(update={"container": container})
 
 
-__all__ = ["FlextModelsContextScope"]
+__all__: list[str] = ["FlextModelsContextScope"]

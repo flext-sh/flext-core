@@ -87,4 +87,4 @@ class FlextUtilitiesGuardsTypeModel:
         )
 
 
-__all__ = ["FlextUtilitiesGuardsTypeModel"]
+__all__: list[str] = ["FlextUtilitiesGuardsTypeModel"]

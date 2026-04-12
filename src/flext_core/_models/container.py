@@ -365,4 +365,4 @@ class FlextModelsContainer:
         ] = True
 
 
-__all__ = ["FlextModelsContainer"]
+__all__: list[str] = ["FlextModelsContainer"]

@@ -9,8 +9,7 @@ import pytest
 from pydantic import TypeAdapter
 
 from flext_core import m as core_m
-from flext_core.runtime import FlextRuntime
-from tests import c, m
+from tests import c, m, u
 
 
 def test_command_pagination_limit() -> None:
@@ -35,7 +34,7 @@ def test_query_resolve_pagination_wrapper_and_fallback(
     setattr(mock_module, "Wrapper", Wrapper)
     monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
     assert (
-        FlextRuntime.resolve_nested_model_class(
+        u.resolve_nested_model_class(
             module_name=Wrapper.Query.__module__,
             qualname=Wrapper.Query.__qualname__,
             models_module_name="flext_core.models",
@@ -50,7 +49,7 @@ def test_query_resolve_pagination_wrapper_and_fallback(
         ModuleType("flext_core.models"),
     )
     assert (
-        FlextRuntime.resolve_nested_model_class(
+        u.resolve_nested_model_class(
             module_name=Wrapper.Query.__module__,
             qualname=Wrapper.Query.__qualname__,
             models_module_name="flext_core.models",
@@ -99,7 +98,7 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
     setattr(mock_module, "Wrapper", Wrapper)
     monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
     assert (
-        FlextRuntime.resolve_nested_model_class(
+        u.resolve_nested_model_class(
             module_name=Wrapper.Inner.Query.__module__,
             qualname=Wrapper.Inner.Query.__qualname__,
             models_module_name="flext_core.models",

@@ -1,18 +1,18 @@
-"""FlextLogger — exercises ALL public API methods with golden file validation."""
+"""Logging DSL example with golden-file validation."""
 
 from __future__ import annotations
 
 from typing import override
 
-from examples import c, m, r, u
+from examples import c, m, p, r, u
 from examples.shared import Examples
 from flext_core import FlextContainer
 
 u.configure_structlog()
 
 
-class Ex03FlextLogger(Examples):
-    """Golden-file tests for ``FlextLogger`` public API."""
+class Ex03LoggingDsl(Examples):
+    """Golden-file tests for the public logging DSL."""
 
     @staticmethod
     def _logged(result: r[bool] | None) -> bool:
@@ -34,11 +34,11 @@ class Ex03FlextLogger(Examples):
         """Exercise logger factory class methods."""
         self.section("factory_methods")
         logger = u.create_module_logger("examples.ex_03.factory")
-        self.check("create_module_logger.type", type(logger).__name__)
+        self.check("create_module_logger.protocol", isinstance(logger, p.Logger))
         raw = u.fetch_logger("examples.ex_03.factory.raw")
-        self.check("fetch_logger.type", type(raw).__name__)
+        self.check("fetch_logger.protocol", isinstance(raw, p.Logger))
         wrapped = u.create_bound_logger("examples.ex_03.factory.bound", raw)
-        self.check("create_bound_logger.type", type(wrapped).__name__)
+        self.check("create_bound_logger.protocol", isinstance(wrapped, p.Logger))
 
     def _exercise_global_context(self) -> None:
         """Exercise global context bind, unbind, and clear."""
@@ -58,7 +58,7 @@ class Ex03FlextLogger(Examples):
         )
         self.check(
             "clear_global_context.ok",
-            u.unbind_global_context("app_name").success,
+            u.clear_global_context().success,
         )
 
     def _exercise_scoped_context(self) -> None:
@@ -123,7 +123,7 @@ class Ex03FlextLogger(Examples):
         self.section("container")
         container = FlextContainer()
         logger = u.for_container(container, level="DEBUG", worker="w-1")
-        self.check("for_container.type", type(logger).__name__)
+        self.check("for_container.protocol", isinstance(logger, p.Logger))
         self.check(
             "for_container.debug.ok",
             self._logged(logger.debug("for_container debug")),
@@ -138,14 +138,14 @@ class Ex03FlextLogger(Examples):
         self.section("instance_methods")
         logger = u.create_module_logger("examples.ex_03.instance")
         bound = logger.bind(component="demo")
-        self.check("bind.type", type(bound).__name__)
+        self.check("bind.protocol", isinstance(bound, p.Logger))
         renewed = bound.new(stage="new")
-        self.check("new.type", type(renewed).__name__)
+        self.check("new.protocol", isinstance(renewed, p.Logger))
         unbound = renewed.unbind("stage")
-        self.check("unbind.type", type(unbound).__name__)
+        self.check("unbind.protocol", isinstance(unbound, p.Logger))
         safe = unbound.unbind("missing", "component", safe=True)
-        self.check("try_unbind.type", type(safe).__name__)
-        self.check("with_result.type", type(safe).__name__)
+        self.check("try_unbind.protocol", isinstance(safe, p.Logger))
+        self.check("with_result.protocol", isinstance(safe, p.Logger))
         self.check("trace.ok", self._logged(safe.trace("trace value=%s", 1, key="t")))
         self.check("debug.ok", self._logged(safe.debug("debug value=%s", 2, key="d")))
         self.check("info.ok", self._logged(safe.info("info value=%s", 3, key="i")))
@@ -199,7 +199,7 @@ class Ex03FlextLogger(Examples):
         logger = u.create_module_logger("examples.ex_03.adapter")
         self.check("adapter.name", logger.name)
         rebound = logger.bind(adapter_key="v")
-        self.check("adapter.bind.type", type(rebound).__name__)
+        self.check("adapter.bind.protocol", isinstance(rebound, p.Logger))
         self.check("adapter.trace.ok", self._logged(logger.trace("adapter trace")))
         self.check("adapter.debug.ok", self._logged(logger.debug("adapter debug")))
         self.check("adapter.info.ok", self._logged(logger.info("adapter info")))
@@ -222,4 +222,4 @@ class Ex03FlextLogger(Examples):
 
 
 if __name__ == "__main__":
-    Ex03FlextLogger(__file__).run()
+    Ex03LoggingDsl(__file__).run()

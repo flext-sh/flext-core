@@ -327,7 +327,6 @@ from flext_core import FlextContext
 from flext_core import d
 from flext_core import e
 from flext_core import h
-from flext_core import FlextLogger
 from flext_core import x
 from flext_core import FlextModels
 from flext_core import p

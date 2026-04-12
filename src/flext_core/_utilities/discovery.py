@@ -76,4 +76,4 @@ class FlextUtilitiesDiscovery:
         return resolved_modules, resolved_packages, resolved_classes
 
 
-__all__ = ["FlextUtilitiesDiscovery"]
+__all__: list[str] = ["FlextUtilitiesDiscovery"]

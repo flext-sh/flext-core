@@ -25,18 +25,9 @@ from typing import (
 
 from pydantic import ConfigDict, Field, PrivateAttr
 
-from flext_core import (
-    FlextContainer,
-    FlextContext,
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
-from flext_core.loggings import FlextLogger
+from flext_core import c, e, m, p, r, t, u
+from flext_core.container import FlextContainer
+from flext_core.context import FlextContext
 
 
 class FlextMixins(m.ArbitraryTypesModel):
@@ -122,7 +113,7 @@ class FlextMixins(m.ArbitraryTypesModel):
     @staticmethod
     def _clear_operation_context() -> None:
         """Clear operation scope context (preserves request/application scopes)."""
-        _ = FlextLogger.clear_scope(c.ContextScope.OPERATION)
+        _ = u.clear_scope(c.ContextScope.OPERATION)
         FlextContext.Request.apply_operation_name("")
 
     @staticmethod
@@ -170,13 +161,13 @@ class FlextMixins(m.ArbitraryTypesModel):
                     key: u.normalize_to_container(value)
                     for key, value in all_context_data.root.items()
                 }
-                _ = FlextLogger.bind_global_context(**metadata_context)
+                _ = u.bind_global_context(**metadata_context)
             if normal_data:
                 normal_metadata_context: Mapping[str, t.RuntimeAtomic] = {
                     key: u.normalize_to_container(value)
                     for key, value in normal_data.root.items()
                 }
-                _ = FlextLogger.bind_context(
+                _ = u.bind_context(
                     c.ContextScope.OPERATION,
                     **normal_metadata_context,
                 )
@@ -271,7 +262,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         try:
             return u.resolve_runtime_options(instance)
         except (AttributeError, TypeError, RuntimeError, ValueError) as exc:
-            FlextLogger.create_module_logger(__name__).warning(
+            u.fetch_logger(__name__).warning(
                 c.LOG_RUNTIME_BOOTSTRAP_OPTIONS_LOAD_FAILED,
                 exc_info=exc,
             )

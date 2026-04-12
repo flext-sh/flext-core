@@ -64,4 +64,4 @@ class FlextModelsContextProxyVar:
             )
 
 
-__all__ = ["FlextModelsContextProxyVar"]
+__all__: list[str] = ["FlextModelsContextProxyVar"]

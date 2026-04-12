@@ -44,4 +44,4 @@ class FlextUtilitiesCache:
         return str(component)
 
 
-__all__ = ["FlextUtilitiesCache"]
+__all__: list[str] = ["FlextUtilitiesCache"]

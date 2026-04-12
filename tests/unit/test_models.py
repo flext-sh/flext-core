@@ -999,4 +999,4 @@ class TestModels:
         assert details.status == "running"
 
 
-__all__ = ["TestModels"]
+__all__: list[str] = ["TestModels"]

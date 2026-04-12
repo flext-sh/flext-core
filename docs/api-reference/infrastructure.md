@@ -42,8 +42,6 @@ debug_mode = settings.get("debug", default=False)
 Structured logging with correlation metadata and DI-friendly construction.
 
 ```python
-from flext_core import FlextLogger
-
 logger = u.fetch_logger(__name__)
 logger.info("Application started")
 

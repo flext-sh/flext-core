@@ -25,7 +25,7 @@ class TestUtilitiesCoverage:
         assert True
 
 
-__all__ = ["TestUtilitiesCoverage"]
+__all__: list[str] = ["TestUtilitiesCoverage"]
 
 
 def test_utilities_get_method_coverage() -> None:

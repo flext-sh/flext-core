@@ -925,4 +925,4 @@ class FlextResult[T](BaseModel):
 r = FlextResult
 
 
-__all__ = ["FlextResult", "r"]
+__all__: list[str] = ["FlextResult", "r"]

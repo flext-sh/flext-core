@@ -12,17 +12,21 @@ from collections.abc import Sequence
 from enum import StrEnum
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
-from pydantic import BaseModel
-
 from flext_core._models.namespace import FlextModelsNamespace
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.annotateds import FlextTypesAnnotateds
 from flext_core._typings.core import FlextTypesCore
+from flext_core._typings.pydantic import FlextTypesPydantic
 from flext_core._typings.services import FlextTypesServices
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 from flext_core._typings.validation import FlextTypesValidation
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 if TYPE_CHECKING:
     from flext_core.settings import FlextSettings
+
+BaseModel = FlextModelsPydantic.BaseModel
+TypeAdapter = FlextUtilitiesPydantic.TypeAdapter
 
 EnumT = TypeVar("EnumT", bound=StrEnum)
 MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
@@ -48,6 +52,7 @@ U = TypeVar("U")
 class FlextTypes(
     FlextTypesAnnotateds,
     FlextTypesCore,
+    FlextTypesPydantic,
     FlextTypesServices,
     FlextTypesValidation,
     FlextTypesTypeAdapters,
@@ -67,7 +72,7 @@ class FlextTypes(
 
 t = FlextTypes
 
-__all__ = [
+__all__: list[str] = [
     "TV",
     "BaseModel",
     "EnumT",
@@ -85,6 +90,7 @@ __all__ = [
     "T_Settings",
     "T_co",
     "T_contra",
+    "TypeAdapter",
     "U",
     "t",
 ]

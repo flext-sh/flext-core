@@ -672,7 +672,7 @@ class TestFlextContainer:
         tm.ok(container.get(sanitized, type_cls=str), eq=sanitized)
         FlextContainer.reset_for_testing()
 
-    __all__ = ["TestFlextContainer"]
+    __all__: list[str] = ["TestFlextContainer"]
 
 
-__all__ = ["TestFlextContainer"]
+__all__: list[str] = ["TestFlextContainer"]

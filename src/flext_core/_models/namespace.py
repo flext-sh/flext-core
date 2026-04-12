@@ -51,4 +51,4 @@ class FlextModelsNamespace:
                 return
 
 
-__all__ = ["FlextModelsNamespace"]
+__all__: list[str] = ["FlextModelsNamespace"]

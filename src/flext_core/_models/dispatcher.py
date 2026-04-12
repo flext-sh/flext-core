@@ -447,4 +447,4 @@ class FlextModelsDispatcher:
             self._windows.clear()
 
 
-__all__ = ["FlextModelsDispatcher"]
+__all__: list[str] = ["FlextModelsDispatcher"]

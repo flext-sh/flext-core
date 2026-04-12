@@ -80,4 +80,4 @@ class FlextModelsContainers:
         ] = Field(default_factory=dict)
 
 
-__all__ = ["FlextModelsContainers"]
+__all__: list[str] = ["FlextModelsContainers"]

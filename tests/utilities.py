@@ -1583,4 +1583,4 @@ class TestsFlextCoreUtilities(u):
 
 u = TestsFlextCoreUtilities
 
-__all__ = ["TestsFlextCoreUtilities", "u"]
+__all__: list[str] = ["TestsFlextCoreUtilities", "u"]

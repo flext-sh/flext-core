@@ -111,4 +111,4 @@ class FlextProtocolsHandler:
         ) -> FlextProtocolsResult.Result[TResult]: ...
 
 
-__all__ = ["FlextProtocolsHandler"]
+__all__: list[str] = ["FlextProtocolsHandler"]

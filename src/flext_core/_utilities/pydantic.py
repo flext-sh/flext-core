@@ -1,12 +1,8 @@
-"""Pydantic v2 helper utilities exported via FlextUtilities.
+"""Pydantic v2 runtime utilities and validators exported via FlextUtilities.
 
-This module provides public aliases for pydantic v2 field/validation helpers
-that are used across the flext ecosystem. All projects consuming these
-must import from flext_core.u.* instead of directly from pydantic.
+Field helpers, validators, type adapters, and JSON helpers.
 
 Architecture: Abstraction boundary - utilities layer
-Boundary: flext-core is sole owner of pydantic v2 integration. All other
-projects receive pydantic functionality ONLY through public facades.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,37 +11,88 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pydantic import (
+    AfterValidator,
+    BeforeValidator,
     Field,
+    FieldSerializationInfo,
+    GetCoreSchemaHandler,
+    GetJsonSchemaHandler,
+    GetPydanticSchema,
+    PlainSerializer,
+    PlainValidator,
     PrivateAttr,
     TypeAdapter,
+    WrapSerializer,
+    WrapValidator,
     computed_field,
+    create_model,
     field_serializer,
     field_validator,
+    model_serializer,
     model_validator,
+    validate_call,
+    with_config,
 )
+from pydantic_core import (
+    SchemaValidator,
+    from_json,
+    to_json,
+    to_jsonable_python,
+)
+from pydantic_settings import EnvSettingsSource, PydanticBaseSettingsSource
 
 
 class FlextUtilitiesPydantic:
-    """Public field/validation helpers from pydantic v2.
+    """Runtime utilities: field helpers, validators, type adapters, JSON handlers.
 
     **NEVER import pydantic directly outside flext-core/src/.**
-    Use these aliases via u.* instead: u.Field, u.computed_field, etc.
-
-    Available helpers (accessible as u.HELPER_NAME):
-        Field: Pydantic field definition with validation constraints
-        PrivateAttr: Decorator for private model attributes
-        computed_field: Decorator for derived fields from model state
-        field_validator: Decorator for field-level validation
-        field_serializer: Decorator for field-level serialization
-        model_validator: Decorator for model-wide validation
-        TypeAdapter: Runtime type validation and coercion
+    Use u.* instead.
     """
 
-    # Public Pydantic v2 field/validation APIs available via u.*
+    # Field definition and private attributes
     Field = Field
     PrivateAttr = PrivateAttr
+
+    # Field and model decorators
     computed_field = computed_field
     field_validator = field_validator
     field_serializer = field_serializer
     model_validator = model_validator
+    model_serializer = model_serializer
+    # root_validator = root_validator
+    # validator = validator
+
+    # Annotation validators
+    AfterValidator = AfterValidator
+    BeforeValidator = BeforeValidator
+    PlainValidator = PlainValidator
+    WrapValidator = WrapValidator
+
+    # Serializers
+    PlainSerializer = PlainSerializer
+    WrapSerializer = WrapSerializer
+
+    # Validation and serialization context helpers
+    FieldSerializationInfo = FieldSerializationInfo
+
+    # Type adapters and model creation
     TypeAdapter = TypeAdapter
+    create_model = create_model
+    validate_call = validate_call
+    # parse_obj_as = parse_obj_as
+    with_config = with_config
+
+    # Schema and validator handlers
+    GetCoreSchemaHandler = GetCoreSchemaHandler
+    GetJsonSchemaHandler = GetJsonSchemaHandler
+    GetPydanticSchema = GetPydanticSchema
+
+    # Schema and JSON utilities (from pydantic_core)
+    SchemaValidator = SchemaValidator
+    from_json = from_json
+    to_json = to_json
+    to_jsonable_python = to_jsonable_python
+
+    # Settings sources (from pydantic_settings)
+    EnvSettingsSource = EnvSettingsSource
+    PydanticBaseSettingsSource = PydanticBaseSettingsSource

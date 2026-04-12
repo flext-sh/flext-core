@@ -493,4 +493,4 @@ class FlextModelsHandler:
         ] = Field(default_factory=list[type[p.Middleware]])
 
 
-__all__ = ["FlextModelsHandler"]
+__all__: list[str] = ["FlextModelsHandler"]

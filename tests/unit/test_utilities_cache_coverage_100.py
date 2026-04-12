@@ -329,7 +329,7 @@ class UtilitiesCacheCoverage100Namespace:
             assert isinstance(result, str)
             assert result == "custom_object"
 
-    __all__ = [
+    __all__: list[str] = [
         "NORMALIZE_COMPONENT_SCENARIOS",
         "TestuCacheLogger",
         "TestuCacheNormalizeComponent",

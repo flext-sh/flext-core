@@ -32,4 +32,4 @@ class FlextExceptionsMetrics:
         return cls._metrics_state.snapshot().to_config_map()
 
 
-__all__ = ["FlextExceptionsMetrics"]
+__all__: list[str] = ["FlextExceptionsMetrics"]

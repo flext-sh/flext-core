@@ -569,4 +569,4 @@ class TestFlextTypes:
         tm.that(t.CONTAINER_VALUE_SCALAR_TYPES, eq=t.SCALAR_TYPES)
 
 
-__all__ = ["TestFlextTypes"]
+__all__: list[str] = ["TestFlextTypes"]

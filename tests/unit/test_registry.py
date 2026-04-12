@@ -10,7 +10,7 @@ from hypothesis import given, settings, strategies as st
 from tests import c, p, r, t, u
 
 
-class TestFlextRegistry:
+class TestRegistryDsl:
     class NamedHandler:
         """Simple public handler with explicit route metadata."""
 

@@ -15,14 +15,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-from flext_core import (
-    FlextModelsBase as m,
-    FlextModelsCollections,
-    FlextProtocols as p,
-    FlextUtilitiesGuards as u,
-    c,
-    t,
-)
+from flext_core import c, p, t
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.collections import FlextModelsCollections
+from flext_core._utilities.guards import FlextUtilitiesGuards as u
 
 
 class FlextUtilitiesDomain:

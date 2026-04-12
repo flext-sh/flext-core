@@ -270,4 +270,4 @@ class FlextUtilitiesGuardsTypeCore:
     }
 
 
-__all__ = ["FlextUtilitiesGuardsTypeCore"]
+__all__: list[str] = ["FlextUtilitiesGuardsTypeCore"]

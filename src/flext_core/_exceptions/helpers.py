@@ -11,13 +11,9 @@ from collections.abc import Mapping, MutableMapping
 from pydantic import ValidationError as PydanticValidationError
 from pydantic.fields import FieldInfo
 
-from flext_core import (
-    FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesGuardsTypeModel,
-    c,
-    m,
-    t,
-)
+from flext_core import c, m, t
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core.runtime import FlextRuntime
 
 
@@ -313,4 +309,4 @@ class FlextExceptionsHelpers:
         return (correlation_id, metadata)
 
 
-__all__ = ["FlextExceptionsHelpers"]
+__all__: list[str] = ["FlextExceptionsHelpers"]

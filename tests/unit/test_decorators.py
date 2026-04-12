@@ -411,4 +411,4 @@ class TestFlextDecorators:
         assert result.success or result.failure
 
 
-__all__ = ["TestFlextDecorators"]
+__all__: list[str] = ["TestFlextDecorators"]

@@ -11,14 +11,11 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import TypeIs
 
-from flext_core import (
-    FlextConstantsMixins as c_mixins,
-    FlextConstantsPlatform as c_platform,
-    FlextConstantsValidation as c_validation,
-    FlextProtocols as p,
-    FlextUtilitiesGuardsTypeModel,
-    t,
-)
+from flext_core import p, t
+from flext_core._constants.mixins import FlextConstantsMixins as c_mixins
+from flext_core._constants.platform import FlextConstantsPlatform as c_platform
+from flext_core._constants.validation import FlextConstantsValidation as c_validation
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 
 
 class FlextUtilitiesGuardsTypeProtocol:

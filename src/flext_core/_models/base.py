@@ -357,4 +357,4 @@ class FlextModelsBase:
         """Model with timestamp fields."""
 
 
-__all__ = ["FlextModelsBase"]
+__all__: list[str] = ["FlextModelsBase"]

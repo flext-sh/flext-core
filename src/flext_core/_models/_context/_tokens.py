@@ -69,4 +69,4 @@ class FlextModelsContextTokens:
         ]
 
 
-__all__ = ["FlextModelsContextTokens"]
+__all__: list[str] = ["FlextModelsContextTokens"]

@@ -666,4 +666,4 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
 h = FlextHandlers
 
-__all__ = ["FlextHandlers", "h"]
+__all__: list[str] = ["FlextHandlers", "h"]

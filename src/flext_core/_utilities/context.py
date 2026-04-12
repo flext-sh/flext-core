@@ -43,4 +43,4 @@ class FlextUtilitiesContext:
         return m.StructlogProxyContextVar(key, default=default)
 
 
-__all__ = ["FlextUtilitiesContext"]
+__all__: list[str] = ["FlextUtilitiesContext"]

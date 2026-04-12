@@ -10,13 +10,17 @@ from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
 from typing import Annotated, ClassVar
 
-from pydantic import Field, TypeAdapter
-
 from flext_core import FlextTypesCore, FlextTypesServices, FlextTypingBase
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+
+Field = FlextUtilitiesPydantic.Field
+TypeAdapter = FlextUtilitiesPydantic.TypeAdapter
 
 
 class FlextTypesTypeAdapters:
     """Cached TypeAdapter factories shared through the ``t`` facade."""
+
+    TypeAdapter = TypeAdapter
 
     _str_sequence_adapter: ClassVar[TypeAdapter[FlextTypingBase.StrSequence] | None] = (
         None
@@ -295,4 +299,4 @@ class FlextTypesTypeAdapters:
         return cls._structlog_processor_adapter
 
 
-__all__ = ["FlextTypesTypeAdapters"]
+__all__: list[str] = ["FlextTypesTypeAdapters"]

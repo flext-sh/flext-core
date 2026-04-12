@@ -43,8 +43,6 @@ Global context is managed using `structlog.contextvars` and is automatically pro
 **Usage:**
 
 ```python
-from flext_core import FlextLogger
-
 # Bind global context
 FlextLogger.Context.bind_global_context(
     app_version="1.0.0", environment="production", service_id="flext-api-001"
@@ -80,7 +78,6 @@ Scoped contexts provide isolation for different execution scopes. Each scope mai
 **Usage:**
 
 ```python
-from flext_core import FlextLogger
 from flext_core import c
 
 # Bind context to APPLICATION scope
@@ -127,7 +124,6 @@ Level contexts allow you to add additional context that is only included in log 
 **Usage:**
 
 ```python
-from flext_core import FlextLogger
 import logging
 
 # Bind context for DEBUG level only
@@ -188,7 +184,6 @@ logger.error("Operation failed")  # Automatically includes request_id
 ## Example: Request Handler Pattern
 
 ```python
-from flext_core import FlextLogger
 from flext_core import c
 
 

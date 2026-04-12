@@ -13,7 +13,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import c, r, t
+from flext_core import e, r, t
 
 
 class FlextUtilitiesArgs:
@@ -49,8 +49,9 @@ class FlextUtilitiesArgs:
                     valid = ", ".join(m.value for m in enum_members)
                     errors.append(f"{field}: '{value}' not in [{valid}]")
         if errors:
-            return r[Mapping[str, t.ValueOrModel]].fail(
-                f"Invalid values: {'; '.join(errors)}",
+            return e.fail_validation(
+                "kwargs",
+                error=f"Invalid values: {'; '.join(errors)}",
             )
         return r[Mapping[str, t.ValueOrModel]].ok(parsed)
 
@@ -83,10 +84,7 @@ class FlextUtilitiesArgs:
             AttributeError,
             RuntimeError,
         ) as exc:
-            return r[M].fail(
-                c.ERR_VALIDATION_FAILED_WITH_ERROR.format(error=str(exc)),
-                exception=exc,
-            )
+            return e.fail_validation(error=exc)
 
     @staticmethod
     def resolve_options[M: BaseModel](
@@ -110,4 +108,4 @@ class FlextUtilitiesArgs:
         )
 
 
-__all__ = ["FlextUtilitiesArgs"]
+__all__: list[str] = ["FlextUtilitiesArgs"]

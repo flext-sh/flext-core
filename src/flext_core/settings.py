@@ -31,15 +31,8 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-import flext_core
-from flext_core import (
-    c,
-    e,
-    m,
-    p,
-    t,
-    u,
-)
+from flext_core import c, e, m, p, t, u
+from flext_core.__version__ import __version__
 
 
 class FlextSettings(BaseSettings):
@@ -113,7 +106,7 @@ class FlextSettings(BaseSettings):
     ]
     version: Annotated[
         str,
-        Field(default=flext_core.__version__, description="Application version"),
+        Field(default=__version__, description="Application version"),
     ]
     debug: Annotated[bool, Field(default=False, description="Enable debug mode")]
     trace: Annotated[bool, Field(default=False, description="Enable trace mode")]

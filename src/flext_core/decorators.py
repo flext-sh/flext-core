@@ -20,18 +20,9 @@ from functools import wraps
 from pathlib import Path
 from typing import Literal, NoReturn, ParamSpec, TypeIs, TypeVar, overload
 
-from flext_core import (
-    FlextContainer,
-    FlextContext,
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
-from flext_core.loggings import FlextLogger
+from flext_core import c, e, m, p, r, t, u
+from flext_core.container import FlextContainer
+from flext_core.context import FlextContext
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -44,10 +35,10 @@ class FlextDecorators:
     Provides decorators that automatically handle common infrastructure
     concerns to reduce boilerplate code in services, handlers, and other
     components. All decorators are designed to integrate seamlessly with
-    r, FlextContext, FlextLogger, and FlextContainer.
+    `r`, `FlextContext`, the public logging DSL in `u`, and `FlextContainer`.
     """
 
-    type _LoggerCarrier = p.HasLogger | p.Logger | t.RuntimeAtomic | p.Model
+    type _LoggerCarrier = p.HasLogger | p.Logger | t.RuntimeAtomic | m.BaseModel
 
     @staticmethod
     def _resolve_logger(
@@ -163,7 +154,7 @@ class FlextDecorators:
                 if args:
                     first_arg_raw = args[0]
                     if isinstance(
-                        first_arg_raw, (p.Logger, p.Model, *t.CONTAINER_TYPES)
+                        first_arg_raw, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)
                     ) or FlextDecorators._has_flext_logger(first_arg_raw):
                         logger_carrier = first_arg_raw
                 logger = FlextDecorators._resolve_logger(
@@ -322,7 +313,7 @@ class FlextDecorators:
                 if args:
                     first_arg_raw = args[0]
                     if isinstance(
-                        first_arg_raw, (p.Logger, p.Model, *t.CONTAINER_TYPES)
+                        first_arg_raw, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)
                     ) or FlextDecorators._has_flext_logger(first_arg_raw):
                         logger_carrier = first_arg_raw
                 logger = FlextDecorators._resolve_logger(
@@ -339,7 +330,7 @@ class FlextDecorators:
                 try:
                     retry_args: tuple[t.ValueOrModel, ...] = tuple(
                         str(a.model_dump())
-                        if isinstance(a, p.Model)
+                        if isinstance(a, m.BaseModel)
                         else u.normalize_to_container(a)
                         if isinstance(a, (str, int, float, bool, datetime, Path))
                         else str(a)
@@ -349,7 +340,7 @@ class FlextDecorators:
                     )
                     retry_kwargs: MutableMapping[str, t.ValueOrModel] = {}
                     for key, value in kwargs.items():
-                        if isinstance(value, p.Model):
+                        if isinstance(value, m.BaseModel):
                             retry_kwargs[str(key)] = str(value.model_dump())
                         elif isinstance(value, (str, int, float, bool, datetime, Path)):
                             retry_kwargs[str(key)] = u.normalize_to_container(value)
@@ -925,7 +916,7 @@ class FlextDecorators:
                 if args:
                     first_arg_raw = args[0]
                     if isinstance(
-                        first_arg_raw, (p.Logger, p.Model, *t.CONTAINER_TYPES)
+                        first_arg_raw, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)
                     ) or FlextDecorators._has_flext_logger(first_arg_raw):
                         logger_carrier = first_arg_raw
                 logger = FlextDecorators._resolve_logger(
@@ -984,7 +975,7 @@ class FlextDecorators:
                 if args:
                     first_arg_raw = args[0]
                     if isinstance(
-                        first_arg_raw, (p.Logger, p.Model, *t.CONTAINER_TYPES)
+                        first_arg_raw, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)
                     ) or FlextDecorators._has_flext_logger(first_arg_raw):
                         logger_carrier = first_arg_raw
                 logger = FlextDecorators._resolve_logger(
@@ -998,7 +989,7 @@ class FlextDecorators:
                             for k, v in context_vars.items()
                             if v is not None and u.container(v)
                         }
-                        bind_result = FlextLogger.bind_global_context(**filtered_vars)
+                        bind_result = u.bind_global_context(**filtered_vars)
                         if bind_result.failure:
                             logger.warning(
                                 "global_context_binding_failed",
@@ -1010,7 +1001,7 @@ class FlextDecorators:
                     return func(*args, **kwargs)
                 finally:
                     if context_vars:
-                        unbind_result = FlextLogger.unbind_global_context(
+                        unbind_result = u.unbind_global_context(
                             *tuple(context_vars.keys()),
                         )
                         if unbind_result.failure:

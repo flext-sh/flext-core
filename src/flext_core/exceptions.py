@@ -34,4 +34,4 @@ class FlextExceptions(
 
 e = FlextExceptions
 
-__all__ = ["FlextExceptions", "e"]
+__all__: list[str] = ["FlextExceptions", "e"]

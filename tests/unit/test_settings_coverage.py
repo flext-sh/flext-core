@@ -148,4 +148,4 @@ class TestFlextSettingsCoverage:
         tm.that(perf_counter() - start, gte=0.0)
 
 
-__all__ = ["TestFlextSettingsCoverage"]
+__all__: list[str] = ["TestFlextSettingsCoverage"]

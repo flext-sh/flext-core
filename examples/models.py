@@ -30,4 +30,4 @@ class ExamplesFlextCoreModels(
 
 m = ExamplesFlextCoreModels
 
-__all__ = ["ExamplesFlextCoreModels", "c", "m"]
+__all__: list[str] = ["ExamplesFlextCoreModels", "c", "m"]

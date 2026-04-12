@@ -120,4 +120,4 @@ class TestCoverageContext:
         tm.that(result2.value, eq="value2")
 
 
-__all__ = ["TestCoverageContext"]
+__all__: list[str] = ["TestCoverageContext"]

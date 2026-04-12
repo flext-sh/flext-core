@@ -215,4 +215,4 @@ class FlextGenericModels:
             self.start_time = FlextUtilitiesGenerators.generate_datetime_utc()
 
 
-__all__ = ["FlextGenericModels"]
+__all__: list[str] = ["FlextGenericModels"]

@@ -333,4 +333,4 @@ class Testu(u.Core.Tests.Contract):
         tm.that(not u.can_handle_message_type(accepted, str), eq=True)
 
 
-__all__ = ["Testu"]
+__all__: list[str] = ["Testu"]

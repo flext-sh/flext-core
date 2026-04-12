@@ -39,4 +39,4 @@ class TestsFlextCoreConstants(
 
 
 c = TestsFlextCoreConstants
-__all__ = ["TestsFlextCoreConstants", "c"]
+__all__: list[str] = ["TestsFlextCoreConstants", "c"]

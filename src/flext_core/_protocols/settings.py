@@ -90,4 +90,4 @@ class FlextProtocolsSettings:
             ...
 
 
-__all__ = ["FlextProtocolsSettings"]
+__all__: list[str] = ["FlextProtocolsSettings"]

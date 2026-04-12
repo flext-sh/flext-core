@@ -69,15 +69,15 @@ class TestExceptions:
 
     def test_fail_type_mismatch_returns_structured_failure(self) -> None:
         result: r[bool] = e.fail_type_mismatch(
-            "FlextDispatcher",
+            "Dispatcher",
             "str",
         )
         assert result.failure
         assert result.error is not None
-        assert "FlextDispatcher" in result.error
+        assert "Dispatcher" in result.error
         assert result.error_code == c.ErrorCode.TYPE_ERROR
         assert result.error_data is not None
-        assert result.error_data["expected_type"] == "FlextDispatcher"
+        assert result.error_data["expected_type"] == "Dispatcher"
         assert result.error_data["actual_type"] == "str"
 
     def test_fail_validation_returns_structured_failure(self) -> None:

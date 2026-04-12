@@ -70,4 +70,4 @@ class FlextUtilitiesText:
         return "".join(ch for ch in text.lower() if ch.isalnum())
 
 
-__all__ = ["FlextUtilitiesText"]
+__all__: list[str] = ["FlextUtilitiesText"]

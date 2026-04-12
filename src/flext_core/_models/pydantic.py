@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pydantic import BaseModel, RootModel
+from pydantic_settings import BaseSettings
 
 
 class FlextModelsPydantic:
@@ -30,4 +31,5 @@ class FlextModelsPydantic:
 
     # Public Pydantic v2 model bases available via m.*
     BaseModel = BaseModel
+    BaseSettings = BaseSettings
     RootModel = RootModel

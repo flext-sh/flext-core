@@ -8,16 +8,14 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from flext_core import (
-    FlextProtocolsBase,
-    FlextProtocolsContainer,
-    FlextProtocolsContext,
-    FlextProtocolsHandler,
-    FlextProtocolsRegistry,
-    FlextProtocolsResult,
-    FlextProtocolsSettings,
-    t,
-)
+from flext_core import t
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.container import FlextProtocolsContainer
+from flext_core._protocols.context import FlextProtocolsContext
+from flext_core._protocols.handler import FlextProtocolsHandler
+from flext_core._protocols.registry import FlextProtocolsRegistry
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols.settings import FlextProtocolsSettings
 
 
 class FlextProtocolsService:
@@ -114,4 +112,4 @@ class FlextProtocolsService:
             ...
 
 
-__all__ = ["FlextProtocolsService"]
+__all__: list[str] = ["FlextProtocolsService"]

@@ -24,17 +24,7 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import (
-    c,
-    e,
-    h,
-    m,
-    p,
-    r,
-    t,
-    u,
-    x,
-)
+from flext_core import c, e, h, m, p, r, t, u, x
 
 
 class FlextService[
@@ -275,7 +265,7 @@ class FlextService[
         """Service-scoped execution context."""
         return u.require_initialized(self._context, "Context")
 
-    @computed_field
+    @computed_field(repr=False)
     def runtime(self) -> m.ServiceRuntime:
         """View of the runtime triple for this service instance."""
         return u.require_initialized(self._runtime, "Runtime")
@@ -468,4 +458,4 @@ class FlextService[
 
 
 s = FlextService
-__all__ = ["FlextService", "s"]
+__all__: list[str] = ["FlextService", "s"]

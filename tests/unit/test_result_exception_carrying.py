@@ -412,4 +412,4 @@ class TestResultExceptionCarrying:
             tm.that(result.exception, is_=type(exc))
 
 
-__all__ = ["TestResultExceptionCarrying"]
+__all__: list[str] = ["TestResultExceptionCarrying"]

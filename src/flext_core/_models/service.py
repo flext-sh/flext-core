@@ -167,4 +167,4 @@ class FlextModelsService:
         )
 
 
-__all__ = ["FlextModelsService"]
+__all__: list[str] = ["FlextModelsService"]

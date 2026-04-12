@@ -296,4 +296,4 @@ class FlextProtocolsContext:
         wire_classes: Sequence[type] | None
 
 
-__all__ = ["FlextProtocolsContext"]
+__all__: list[str] = ["FlextProtocolsContext"]

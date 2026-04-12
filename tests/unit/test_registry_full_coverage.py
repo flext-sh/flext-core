@@ -1,4 +1,4 @@
-"""Behavior tests for FlextRegistry public runtime flows."""
+"""Behavior tests for registry DSL public runtime flows."""
 
 from __future__ import annotations
 

@@ -14,19 +14,12 @@ from typing import cast
 
 from pydantic import BaseModel
 
-from flext_core import (
-    FlextUtilitiesCache,
-    FlextUtilitiesCollection,
-    FlextUtilitiesGuards,
-    FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesGuardsTypeModel,
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-)
+from flext_core import c, e, m, p, r, t
+from flext_core._utilities.cache import FlextUtilitiesCache
+from flext_core._utilities.collection import FlextUtilitiesCollection
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core.runtime import FlextRuntime
 
 
@@ -808,17 +801,7 @@ class FlextUtilitiesMapper:
         return transform_result.fold(
             on_failure=lambda exc: r[
                 t.MutableContainerMapping | t.ContainerMapping
-            ].fail(
-                e.render_error_template(
-                    c.ERR_TEMPLATE_TRANSFORM_FAILED,
-                    operation="transform",
-                    error=exc,
-                    params=m.OperationErrorParams(
-                        operation="transform",
-                        reason=str(exc),
-                    ),
-                ),
-            ),
+            ].fail_op("transform mapping", exc),
             on_success=lambda _: transform_result,
         )
 

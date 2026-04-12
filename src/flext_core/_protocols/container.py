@@ -10,14 +10,12 @@ from collections.abc import Mapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
-from flext_core import (
-    FlextProtocolsBase,
-    FlextProtocolsContext,
-    FlextProtocolsLogging,
-    FlextProtocolsResult,
-    FlextProtocolsSettings,
-    t,
-)
+from flext_core import t
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.context import FlextProtocolsContext
+from flext_core._protocols.logging import FlextProtocolsLogging
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols.settings import FlextProtocolsSettings
 
 if TYPE_CHECKING:
     from flext_core import m
@@ -241,4 +239,4 @@ class FlextProtocolsContainer:
             ...
 
 
-__all__ = ["FlextProtocolsContainer"]
+__all__: list[str] = ["FlextProtocolsContainer"]

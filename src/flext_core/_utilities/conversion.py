@@ -133,4 +133,4 @@ class FlextUtilitiesConversion:
         return normalized
 
 
-__all__ = ["FlextUtilitiesConversion"]
+__all__: list[str] = ["FlextUtilitiesConversion"]

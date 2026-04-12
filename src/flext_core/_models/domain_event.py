@@ -81,4 +81,4 @@ class FlextModelsDomainEvent:
     DomainEvent = Entry
 
 
-__all__ = ["FlextModelsDomainEvent"]
+__all__: list[str] = ["FlextModelsDomainEvent"]

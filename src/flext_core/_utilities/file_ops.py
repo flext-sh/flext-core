@@ -46,4 +46,4 @@ class FlextUtilitiesFileOps:
             _ = path.write_text(content, encoding=encoding)
 
 
-__all__ = ["FlextUtilitiesFileOps"]
+__all__: list[str] = ["FlextUtilitiesFileOps"]

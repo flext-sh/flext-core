@@ -14,7 +14,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core import c, p, r, t
+from flext_core import c, e, p, r, t
 
 
 class FlextUtilitiesSettings:
@@ -133,20 +133,29 @@ class FlextUtilitiesSettings:
             _ = _cache
             register_result = container.register(name, factory, kind="factory")
             if isinstance(register_result, p.Result) and register_result.failure:
-                return r[bool].fail(
+                return e.fail_operation(
+                    "register config factory",
                     register_result.error or c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
                 )
             resolved = container.get(name)
             if resolved.failure:
-                return r[bool].fail(
+                return e.fail_operation(
+                    "resolve registered config factory",
                     resolved.error or c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
                 )
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[bool].fail(
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+        ) as exc:
+            return e.fail_operation(
+                "register config factory",
                 c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED_FOR_NAME.format(
                     name=name,
-                    error=str(e),
+                    error=str(exc),
                 ),
             )
 
@@ -177,4 +186,4 @@ class FlextUtilitiesSettings:
             raise ValueError(c.ERR_CONFIG_TRACE_REQUIRES_DEBUG)
 
 
-__all__ = ["FlextUtilitiesSettings"]
+__all__: list[str] = ["FlextUtilitiesSettings"]

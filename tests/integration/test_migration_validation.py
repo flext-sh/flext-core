@@ -131,7 +131,7 @@ class TestMigrationValidation:
         assert result.value["username"] == "alice"
 
     def test_logger_structured_logging(self) -> None:
-        """Verify FlextLogger continues working."""
+        """Verify the public logging DSL continues working."""
         logger = u.fetch_logger(__name__)
         assert logger is not None
         logger.info("Test message", test_key="test_value")

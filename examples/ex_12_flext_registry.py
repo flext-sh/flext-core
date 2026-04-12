@@ -4,24 +4,15 @@ from __future__ import annotations
 
 from typing import override
 
-from pydantic import BaseModel
-
-from examples import c, m, p, r, t, u
+from examples import Ex12CommandA, Ex12CommandB, c, m, p, r, t, u
 from examples.shared import Examples
 from flext_core import h
 
 
-class _CommandA(m.Command):
-    value: str
+class _ProtocolHandler:
+    message_type: type[m.Command]
 
-
-class _CommandB(m.Command):
-    amount: int
-
-
-class _ProtocolHandler(h[BaseModel, t.NormalizedValue]):
-    def __init__(self, label: str, message_type: type) -> None:
-        super().__init__()
+    def __init__(self, label: str, message_type: type[m.Command]) -> None:
         self._label = label
         self.message_type = message_type
 
@@ -30,21 +21,21 @@ class _ProtocolHandler(h[BaseModel, t.NormalizedValue]):
         return message_type is self.message_type
 
     @override
-    def handle(self, message: BaseModel) -> r[t.NormalizedValue]:
+    def handle(self, message: p.Routable) -> r[t.Scalar]:
         value = ""
-        if isinstance(message, _CommandA):
+        if isinstance(message, Ex12CommandA):
             value = str(message.value)
-        elif isinstance(message, _CommandB):
+        elif isinstance(message, Ex12CommandB):
             value = str(message.amount)
-        return r[t.NormalizedValue].ok(f"{self._label}:{value}")
+        return r[t.Scalar].ok(f"{self._label}:{value}")
 
 
-@h.handler(_CommandA, priority=3)
-def _discovered_handler(_message: BaseModel) -> BaseModel:
-    return _CommandA(value="decorated")
+@h.handler(Ex12CommandA, priority=3)
+def _discovered_handler(_message: m.Command) -> m.Command:
+    return Ex12CommandA(value="decorated")
 
 
-class Ex12FlextRegistry(Examples):
+class Ex12RegistryDsl(Examples):
     """Exercise the canonical registry DSL public API."""
 
     @override
@@ -84,7 +75,7 @@ class Ex12FlextRegistry(Examples):
         invalid_error = self.rand_str(7)
         boom_message = self.rand_str(7)
         bindings_result = registry.register_bindings({
-            _CommandA: handler_a,
+            Ex12CommandA: handler_a,
             custom_binding_name: handler_b,
         })
         self.check("register_bindings.success", bindings_result.success)
@@ -195,20 +186,23 @@ class Ex12FlextRegistry(Examples):
         self.section("create_and_service_methods")
         discovered_value = self.rand_str(4)
         dispatcher = u.build_dispatcher()
+        registry = u.build_registry(dispatcher=dispatcher)
         reg_default = u.build_registry()
         reg_explicit = u.build_registry(dispatcher=None)
         reg_auto_false = u.build_registry(auto_discover_handlers=False)
         reg_auto_true = u.build_registry(auto_discover_handlers=True)
+        self.check("dispatcher.protocol", isinstance(dispatcher, p.Dispatcher))
+        self.check("create.shared.protocol", isinstance(registry, p.Registry))
         self.check("create.default.protocol", isinstance(reg_default, p.Registry))
         self.check("create.explicit.protocol", isinstance(reg_explicit, p.Registry))
         self.check("create.auto_false.protocol", isinstance(reg_auto_false, p.Registry))
         self.check("create.auto_true.protocol", isinstance(reg_auto_true, p.Registry))
         self.check(
             "decorated_handler.type",
-            type(_discovered_handler(_CommandA(value=discovered_value))).__name__,
+            type(_discovered_handler(Ex12CommandA(value=discovered_value))).__name__,
         )
-        self.check("execute.success", reg_explicit.execute().success)
-        return (reg_explicit, dispatcher)
+        self.check("execute.success", registry.execute().success)
+        return (registry, dispatcher)
 
     def _exercise_register_method_and_tracking(self, registry: p.Registry) -> None:
         self.section("register_method_and_tracking")
@@ -222,7 +216,6 @@ class Ex12FlextRegistry(Examples):
         svc_meta_name = f"svc.{self.rand_str(6)}"
         callable_value = self.rand_str(10)
         bad_value = self.rand_str(4)
-        track_name = self.rand_str(8)
         meta_dict = t.ConfigMap(root={"team": team_value, "version": version_value})
         meta_model = m.Metadata(attributes={"owner": owner_value, "enabled": True})
         reg_plain = registry.register(svc_plain_name, svc_plain_value)
@@ -241,7 +234,6 @@ class Ex12FlextRegistry(Examples):
         self.check("register.service.meta_dict", reg_meta_dict.success)
         self.check("register.service.meta_model", reg_meta_model.success)
         self.check("register.service.bad", reg_bad.failure)
-        self.check("track.name", track_name)
 
     def _exercise_registration_and_dispatch(
         self,
@@ -255,8 +247,8 @@ class Ex12FlextRegistry(Examples):
         callable_name = self.rand_str(10)
         cmd_a_value = self.rand_str(6)
         cmd_b_value = self.rand_int(1, 100)
-        handler_a = _ProtocolHandler(label_a, _CommandA)
-        handler_b = _ProtocolHandler(label_b, _CommandB)
+        handler_a = _ProtocolHandler(label_a, Ex12CommandA)
+        handler_b = _ProtocolHandler(label_b, Ex12CommandB)
         handler_mode = h.create_from_callable(
             lambda msg: f"{callable_prefix}:{msg}",
             handler_name=callable_name,
@@ -268,13 +260,14 @@ class Ex12FlextRegistry(Examples):
         reg_mode = registry.register_handler(handler_a)
         self.check("register_handler.a.success", reg_one.success)
         self.check(
-            "register_handler.a.id",
-            reg_one.value.registration_id if reg_one.success else "",
+            "register_handler.a.id_present",
+            bool(reg_one.value.registration_id) if reg_one.success else False,
         )
         self.check("register_handler.duplicate.success", reg_dup.success)
         self.check("register_handler.b.success", reg_two.success)
         self.check("register_handler.mode.success", reg_mode.success)
-        self.check("create_from_callable.type", type(handler_mode).__name__)
+        handler_mode_probe = handler_mode.handle(callable_prefix)
+        self.check("create_from_callable.handle_success", handler_mode_probe.success)
         batch = registry.register_handlers([handler_a, handler_b, handler_a])
         self.check("register_handlers.success", batch.success)
         self.check(
@@ -285,14 +278,14 @@ class Ex12FlextRegistry(Examples):
             "register_handlers.errors_len",
             len(batch.value.errors) if batch.success else -1,
         )
-        cmd_a = _CommandA(value=cmd_a_value)
+        cmd_a = Ex12CommandA(value=cmd_a_value)
         dispatch_a = dispatcher.dispatch(cmd_a)
         self.check("dispatch.a.success", dispatch_a.success)
         self.check(
             "dispatch.a.value",
             dispatch_a.value == f"{label_a}:{cmd_a_value}",
         )
-        cmd_b = _CommandB(amount=cmd_b_value)
+        cmd_b = Ex12CommandB(amount=cmd_b_value)
         dispatch_b = dispatcher.dispatch(cmd_b)
         self.check("dispatch.b.success", dispatch_b.success)
         self.check(
@@ -372,4 +365,4 @@ class Ex12FlextRegistry(Examples):
 
 
 if __name__ == "__main__":
-    Ex12FlextRegistry(__file__).run()
+    Ex12RegistryDsl(__file__).run()

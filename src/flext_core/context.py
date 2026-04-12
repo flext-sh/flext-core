@@ -26,7 +26,6 @@ from typing import Annotated, ClassVar, Final, Self, overload
 from pydantic import Field, PrivateAttr
 
 from flext_core import c, e, m, p, r, t, u
-from flext_core.loggings import FlextLogger
 
 
 class FlextContext(m.ArbitraryTypesModel):
@@ -35,7 +34,7 @@ class FlextContext(m.ArbitraryTypesModel):
     The dispatcher and decorators rely on FlextContext to move correlation IDs,
     service metadata, and timing details through CQRS handlers without mutating
     function signatures. Data lives in ``contextvars`` to survive async hops and
-    thread switches, and hooks keep ``FlextLogger`` in sync for structured logs.
+    thread switches, and hooks keep the public logging DSL in sync for structured logs.
 
     Highlights:
     - Correlation IDs and service identity helpers for cross-service tracing
@@ -256,7 +255,7 @@ class FlextContext(m.ArbitraryTypesModel):
 
     @staticmethod
     def _propagate_to_logger(key: str, value: t.ValueOrModel, scope: str) -> None:
-        """Propagate context changes to FlextLogger (DRY helper).
+        """Propagate context changes to the public logging DSL.
 
         Args:
             key: Context key
@@ -266,7 +265,7 @@ class FlextContext(m.ArbitraryTypesModel):
         """
         if scope == c.ContextScope.GLOBAL:
             normalized = u.normalize_to_container(value)
-            FlextLogger.structlog().contextvars.bind_contextvars(**{key: normalized})
+            _ = u.bind_global_context(**{key: normalized})
 
     @staticmethod
     def _validate_update_inputs(key: str, value: t.ValueOrModel) -> r[bool]:
@@ -312,8 +311,8 @@ class FlextContext(m.ArbitraryTypesModel):
     def clear(self) -> None:
         """Clear all data from the context including metadata.
 
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
-        FlextLogger for logging integration (global scope only).
+        ARCHITECTURAL NOTE: Uses Python contextvars for storage and delegates to
+        the public logging DSL for global logging integration.
 
         This method consolidates cleanup functionality - it clears all scope
         data, resets metadata, and updates statistics.
@@ -324,7 +323,7 @@ class FlextContext(m.ArbitraryTypesModel):
         for scope_name, ctx_var in self._state.scope_vars.items():
             _ = ctx_var.set(t.ConfigMap(root={}))
             if scope_name == c.ContextScope.GLOBAL:
-                FlextLogger.structlog().contextvars.clear_contextvars()
+                _ = u.clear_global_context()
         self._state = self._state.model_copy(
             update={"metadata": m.Metadata()},
         ).with_operation_update(c.ContextOperation.CLEAR.value)
@@ -954,7 +953,7 @@ class FlextContext(m.ArbitraryTypesModel):
                 for key, value in data.items()
                 if value is not None
             }
-            FlextLogger.structlog().contextvars.bind_contextvars(**normalized_context)
+            _ = u.bind_global_context(**normalized_context)
 
     def _apply_single(
         self,

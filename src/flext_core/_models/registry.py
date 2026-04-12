@@ -75,4 +75,4 @@ class FlextModelsRegistry:
             return not self.errors
 
 
-__all__ = ["FlextModelsRegistry"]
+__all__: list[str] = ["FlextModelsRegistry"]

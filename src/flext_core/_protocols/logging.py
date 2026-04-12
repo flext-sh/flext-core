@@ -237,4 +237,4 @@ class FlextProtocolsLogging:
     )
 
 
-__all__ = ["FlextProtocolsLogging"]
+__all__: list[str] = ["FlextProtocolsLogging"]

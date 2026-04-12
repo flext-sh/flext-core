@@ -243,7 +243,7 @@ class TestFlextProtocols:
         """Object with dispatch(message) satisfies p.DispatchableService."""
 
         class _Svc:
-            def dispatch(self, message: p.Model, /) -> p.Model:
+            def dispatch(self, message: m.BaseModel, /) -> m.BaseModel:
                 return message
 
         instance = _as_protocol_subject(_Svc())
@@ -479,12 +479,12 @@ class TestFlextProtocols:
             )
 
     def test_model_protocol_has_model_methods(self) -> None:
-        """p.Model defines model_dump and model_validate."""
+        """m.BaseModel defines model_dump and model_validate."""
         for method in ("model_dump", "model_validate"):
             tm.that(
-                hasattr(p.Model, method),
+                hasattr(m.BaseModel, method),
                 eq=True,
-                msg=f"p.Model must have {method}",
+                msg=f"m.BaseModel must have {method}",
             )
 
     def test_routable_protocol_has_type_properties(self) -> None:

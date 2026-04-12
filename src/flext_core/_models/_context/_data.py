@@ -16,13 +16,10 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import (
-    FlextModelsBase,
-    FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesGuardsTypeModel,
-    c,
-    t,
-)
+from flext_core import c, t
+from flext_core._models.base import FlextModelsBase
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core.runtime import FlextRuntime
 
 

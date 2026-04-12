@@ -111,4 +111,4 @@ class FlextUtilitiesEnum:
         ) or FlextUtilitiesEnum._is_member_by_value(enum_cls, value)
 
 
-__all__ = ["FlextUtilitiesEnum"]
+__all__: list[str] = ["FlextUtilitiesEnum"]

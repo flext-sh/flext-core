@@ -523,4 +523,4 @@ class TestrCoverage:
         self._ResultAssertions.assert_success_with_value(result, "13")
 
 
-__all__ = ["TestrCoverage"]
+__all__: list[str] = ["TestrCoverage"]

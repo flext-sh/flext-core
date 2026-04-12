@@ -43,7 +43,7 @@ class TestsFlextCoreModels(m):
 
 m = TestsFlextCoreModels
 
-__all__ = [
+__all__: list[str] = [
     "TestsFlextCoreModels",
     "m",
 ]

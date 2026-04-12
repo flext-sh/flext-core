@@ -189,4 +189,4 @@ class FlextProtocolsResult:
         name: str  # e.g., "ValidationError", "NetworkError"
 
 
-__all__ = ["FlextProtocolsResult"]
+__all__: list[str] = ["FlextProtocolsResult"]

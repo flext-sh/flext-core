@@ -34,4 +34,4 @@ class FlextConstantsOutput:
     LOG_SERVICE_REGISTRATION_FAILED: Final[str] = "Service registration failed"
 
 
-__all__ = ["FlextConstantsOutput"]
+__all__: list[str] = ["FlextConstantsOutput"]

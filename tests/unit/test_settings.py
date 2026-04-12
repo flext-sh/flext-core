@@ -610,7 +610,7 @@ class TestFlextSettings:
             assert isinstance(instance, p.Settings)
             del FlextSettings._namespace_registry["test_attr"]
 
-    __all__ = ["TestFlextSettings"]
+    __all__: list[str] = ["TestFlextSettings"]
 
 
-__all__ = ["TestFlextSettings"]
+__all__: list[str] = ["TestFlextSettings"]

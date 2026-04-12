@@ -1,12 +1,8 @@
-"""Pydantic v2 configuration and exception types exported via FlextConstants.
+"""Pydantic v2 constants, exceptions and configuration exported via FlextConstants.
 
-This module provides public aliases for pydantic v2 config and error classes
-that are used across the flext ecosystem. All projects consuming these
-must reference flext_core.c.* instead of directly from pydantic.
+Including: ConfigDict, SettingsConfigDict, ValidationError, sentinels, deprecations.
 
 Architecture: Abstraction boundary - constants layer
-Boundary: flext-core is sole owner of pydantic v2 integration. All other
-projects receive pydantic config/exceptions ONLY through public facades.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,24 +10,93 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import ConfigDict, SecretBytes, SecretStr, ValidationError
+from pydantic import (
+    VERSION,
+    BaseConfig,
+    ConfigDict,
+    PydanticDeprecatedSince20,
+    PydanticDeprecatedSince26,
+    PydanticDeprecatedSince29,
+    PydanticDeprecatedSince210,
+    PydanticDeprecatedSince211,
+    PydanticDeprecatedSince212,
+    PydanticDeprecationWarning,
+    PydanticErrorCodes,
+    PydanticExperimentalWarning,
+    PydanticForbiddenQualifier,
+    PydanticImportError,
+    PydanticInvalidForJsonSchema,
+    PydanticSchemaGenerationError,
+    PydanticUndefinedAnnotation,
+    PydanticUserError,
+    ValidationError,
+)
+from pydantic_core import (
+    MISSING,
+    PydanticCustomError,
+    PydanticKnownError,
+    PydanticOmit,
+    PydanticSerializationError,
+    PydanticSerializationUnexpectedValue,
+    PydanticUndefined,
+    PydanticUndefinedType,
+    PydanticUseDefault,
+    SchemaError,
+    ValidationError as CoreValidationError,
+)
+from pydantic_settings import SettingsConfigDict
 
 
 class FlextConstantsPydantic:
-    """Public configuration and exception types from pydantic v2.
+    """Configuration, exceptions and constants: ConfigDict, ValidationError, sentinels.
 
     **NEVER import pydantic directly outside flext-core/src/.**
-    Use these via c.* instead: c.ConfigDict, c.ValidationError, c.SecretBytes, c.SecretStr
-
-    Available constants/exceptions (accessible as c.NAME):
-        ConfigDict: TypedDict for model configuration (e.g., extra="ignore")
-        ValidationError: Exception raised when model validation fails
-        SecretStr: String type that masks value in repr/logging
-        SecretBytes: Bytes type that masks value in repr/logging
+    Use c.* instead.
     """
 
-    # Public Pydantic v2 config/exceptions available via c.*
+    # Configuration
+    BaseConfig = BaseConfig
     ConfigDict = ConfigDict
+    SettingsConfigDict = SettingsConfigDict
+
+    # Exceptions (pydantic v2)
     ValidationError = ValidationError
-    SecretStr = SecretStr
-    SecretBytes = SecretBytes
+    PydanticImportError = PydanticImportError
+    PydanticSchemaGenerationError = PydanticSchemaGenerationError
+    PydanticUserError = PydanticUserError
+    PydanticInvalidForJsonSchema = PydanticInvalidForJsonSchema
+    PydanticUndefinedAnnotation = PydanticUndefinedAnnotation
+    PydanticForbiddenQualifier = PydanticForbiddenQualifier
+
+    # Warnings
+    PydanticDeprecationWarning = PydanticDeprecationWarning
+    PydanticExperimentalWarning = PydanticExperimentalWarning
+
+    # Deprecation markers
+    PydanticDeprecatedSince20 = PydanticDeprecatedSince20
+    PydanticDeprecatedSince26 = PydanticDeprecatedSince26
+    PydanticDeprecatedSince29 = PydanticDeprecatedSince29
+    PydanticDeprecatedSince210 = PydanticDeprecatedSince210
+    PydanticDeprecatedSince211 = PydanticDeprecatedSince211
+    PydanticDeprecatedSince212 = PydanticDeprecatedSince212
+
+    # Error information
+    PydanticErrorCodes = PydanticErrorCodes
+
+    # pydantic_core exceptions
+    SchemaError = SchemaError
+    PydanticCustomError = PydanticCustomError
+    PydanticKnownError = PydanticKnownError
+    PydanticSerializationError = PydanticSerializationError
+    PydanticSerializationUnexpectedValue = PydanticSerializationUnexpectedValue
+    CoreValidationError = CoreValidationError
+
+    # pydantic_core sentinels and special values
+    MISSING = MISSING
+    PydanticUndefined = PydanticUndefined
+    PydanticUndefinedType = PydanticUndefinedType
+    PydanticUseDefault = PydanticUseDefault
+    PydanticOmit = PydanticOmit
+
+    # Version
+    VERSION = VERSION

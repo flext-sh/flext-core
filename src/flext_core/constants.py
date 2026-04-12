@@ -44,7 +44,7 @@ class FlextConstants(
 
 
 c = FlextConstants
-__all__ = [
+__all__: list[str] = [
     "FlextConstants",
     "c",
 ]

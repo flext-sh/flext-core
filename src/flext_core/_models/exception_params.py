@@ -454,4 +454,4 @@ class FlextModelsExceptionParams:
         ]
 
 
-__all__ = ["FlextModelsExceptionParams"]
+__all__: list[str] = ["FlextModelsExceptionParams"]

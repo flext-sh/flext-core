@@ -594,7 +594,7 @@ def process_request(request) -> r[dict]:
 ### 5. Log Errors Appropriately
 
 ```python
-from flext_core import FlextLogger, r
+from flext_core import r
 
 logger = u.fetch_logger(__name__)
 

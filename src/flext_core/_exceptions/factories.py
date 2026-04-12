@@ -433,4 +433,4 @@ class FlextExceptionsFactories:
         )
 
 
-__all__ = ["FlextExceptionsFactories"]
+__all__: list[str] = ["FlextExceptionsFactories"]

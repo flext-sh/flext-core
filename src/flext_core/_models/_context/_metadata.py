@@ -109,4 +109,4 @@ class FlextModelsContextMetadata:
         ] = Field(default_factory=dict)
 
 
-__all__ = ["FlextModelsContextMetadata"]
+__all__: list[str] = ["FlextModelsContextMetadata"]

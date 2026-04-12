@@ -17,13 +17,9 @@ from collections.abc import Callable
 
 from pydantic import Field
 
-from flext_core import (
-    FlextModelsBase,
-    FlextUtilitiesArgs,
-    c,
-    r,
-    t,
-)
+from flext_core import c, r, t
+from flext_core._models.base import FlextModelsBase
+from flext_core._utilities.args import FlextUtilitiesArgs
 
 
 class FlextUtilitiesReliability:

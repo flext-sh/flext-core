@@ -1067,4 +1067,4 @@ CollectionUtilitiesScenarios = (
     TestUtilitiesCollectionCoverage.CollectionUtilitiesScenarios
 )
 
-__all__ = ["TestUtilitiesCollectionCoverage"]
+__all__: list[str] = ["TestUtilitiesCollectionCoverage"]

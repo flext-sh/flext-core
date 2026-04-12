@@ -16,17 +16,11 @@ from enum import StrEnum
 
 from pydantic import Field
 
-from flext_core import (
-    FlextUtilitiesArgs,
-    FlextUtilitiesGuards,
-    FlextUtilitiesGuardsTypeModel,
-    FlextUtilitiesModel,
-    c,
-    m,
-    p,
-    r,
-    t,
-)
+from flext_core import c, m, p, r, t
+from flext_core._utilities.args import FlextUtilitiesArgs
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core._utilities.model import FlextUtilitiesModel
 
 
 class FlextUtilitiesParser:

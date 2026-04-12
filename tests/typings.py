@@ -59,4 +59,4 @@ class TestsFlextCoreTypes(t):
 
 t = TestsFlextCoreTypes
 
-__all__ = ["T", "T_co", "T_contra", "TestsFlextCoreTypes", "t"]
+__all__: list[str] = ["T", "T_co", "T_contra", "TestsFlextCoreTypes", "t"]

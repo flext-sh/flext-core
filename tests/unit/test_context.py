@@ -705,7 +705,7 @@ class TestFlextContext:
         tm.ok(ctx.set(key, value), eq=True)
         tm.ok(ctx.get(key), eq=value)
 
-    __all__ = ["TestFlextContext"]
+    __all__: list[str] = ["TestFlextContext"]
 
 
-__all__ = ["TestFlextContext"]
+__all__: list[str] = ["TestFlextContext"]

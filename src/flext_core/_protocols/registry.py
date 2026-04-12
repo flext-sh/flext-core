@@ -103,4 +103,4 @@ class FlextProtocolsRegistry:
             ...
 
 
-__all__ = ["FlextProtocolsRegistry"]
+__all__: list[str] = ["FlextProtocolsRegistry"]

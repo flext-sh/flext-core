@@ -12,8 +12,10 @@ from flext_core._protocols.container import FlextProtocolsContainer
 from flext_core._protocols.context import FlextProtocolsContext
 from flext_core._protocols.handler import FlextProtocolsHandler
 from flext_core._protocols.logging import FlextProtocolsLogging
+from flext_core._protocols.pydantic import FlextProtocolsPydantic
 from flext_core._protocols.registry import FlextProtocolsRegistry
 from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols.runtime import FlextProtocolsRuntime
 from flext_core._protocols.service import FlextProtocolsService
 from flext_core._protocols.settings import FlextProtocolsSettings
 
@@ -26,7 +28,9 @@ class FlextProtocols(
     FlextProtocolsContainer,
     FlextProtocolsService,
     FlextProtocolsHandler,
+    FlextProtocolsRuntime,
     FlextProtocolsLogging,
+    FlextProtocolsPydantic,
     FlextProtocolsRegistry,
     FlextModelsNamespace,
 ):
@@ -34,4 +38,4 @@ class FlextProtocols(
 
 
 p = FlextProtocols
-__all__ = ["FlextProtocols", "p"]
+__all__: list[str] = ["FlextProtocols", "p"]

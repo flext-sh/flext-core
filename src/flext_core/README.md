@@ -83,7 +83,6 @@ from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 from flext_core import FlextExceptions
 from flext_core import h
-from flext_core import FlextLogger
 from flext_core import x
 from flext_core import FlextModels
 from flext_core import p
@@ -108,7 +107,6 @@ if result.is_success:
 
 ```python
 from flext_core import FlextContainer
-from flext_core import FlextLogger
 
 container = FlextContainer()
 container.register("logger", FlextLogger.create_module_logger(__name__))

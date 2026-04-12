@@ -15,44 +15,34 @@ import inspect
 import sys
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from functools import partial
 from types import FrameType, ModuleType
 from typing import Self, TypeIs, overload, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
 
-from flext_core import (
-    FlextSettings,
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_core import c, e, m, p, r, t, u
 from flext_core.context import FlextContext
-from flext_core.loggings import FlextLogger
+from flext_core.settings import FlextSettings
 
 
 def _is_service_of_type[T: t.RegisterableService](
-    value: t.RegisterableService,
+    value: object,
     cls: type[T],
 ) -> TypeIs[T]:
     """TypeIs guard that narrows an object to T for pyright."""
     return isinstance(value, cls)
 
 
-class FlextContainer(p.Container):
+class FlextContainer(p.ContainerLifecycle):
     """Singleton container that exposes DI registration and resolution helpers.
 
     Services and factories remain local to the container, keeping dispatcher and
     domain code free from infrastructure imports. All operations surface
     ``r`` (r) so failures are explicit. Thread-safe initialization
     guarantees one global instance for runtime usage while allowing scoped
-    containers in tests. The class satisfies ``p.Configurable`` and
-    ``p.Container`` through structural typing only.
+    containers in tests. The class satisfies ``p.ContainerLifecycle`` through
+    structural typing only.
     """
 
     _global_instance: Self | None = None
@@ -554,19 +544,17 @@ class FlextContainer(p.Container):
             A protocol-typed logger configured for the specified module.
 
         """
-        return FlextLogger.create_module_logger(
-            module_name or c.DEFAULT_LOGGER_MODULE,
-            service_name=service_name,
-            service_version=service_version,
-            correlation_id=correlation_id,
-        )
+        _ = service_name
+        _ = service_version
+        _ = correlation_id
+        return u.fetch_logger(module_name or c.DEFAULT_LOGGER_MODULE)
 
     @staticmethod
     def _narrow_service[T: t.RegisterableService](
-        service: t.RegisterableService,
+        service: object,
         cls: type[T],
     ) -> r[T]:
-        """Narrow a service object to a concrete type T via TypeIs."""
+        """Narrow a service object to a concrete type T via runtime checking."""
         if _is_service_of_type(service, cls):
             return r[T].ok(service)
         type_name = cls.__name__ if hasattr(cls, "__name__") else "Unknown"
@@ -609,7 +597,7 @@ class FlextContainer(p.Container):
             >>> container = FlextContainer()
             >>> container.register("logger", u.fetch_logger(__name__))
             >>> result = container.get("logger")
-            >>> if result.success and isinstance(result.value, FlextLogger):
+            >>> if result.success and isinstance(result.value, p.Logger):
             ...     result.value.info("Resolved")
 
         """
@@ -642,8 +630,10 @@ class FlextContainer(p.Container):
                 resource_callable: t.ResourceCallable = resource_registration.factory
                 resolved = resource_callable()
                 if not u.registerable_service(resolved):
-                    return r[t.RegisterableService].fail(
-                        c.ERR_RESOURCE_UNSUPPORTED_RUNTIME_TYPE.format(name=name),
+                    return e.fail_type_mismatch(
+                        "registerable service",
+                        resolved.__class__.__name__,
+                        service_name=name,
                     )
                 if type_cls is not None:
                     return self._narrow_service(resolved, type_cls)
@@ -874,18 +864,18 @@ class FlextContainer(p.Container):
 
         Auto-registered services:
         - "settings" → FlextSettings singleton
-        - "logger" → FlextLogger factory (creates module logger)
+        - "logger" → protocol-typed logger factory via `u.fetch_logger(...)`
         - "context" → FlextContext singleton
         - "container" → Self-reference for nested resolution
 
-        Business Rule: Auto-registers FlextSettings, FlextLogger, and FlextContext
+        Business Rule: Auto-registers FlextSettings, the public logging DSL, and FlextContext
         with standard names ("settings", "logger", "context") to enable easy
         dependency injection in downstream projects. Services are registered only
         if not already registered to avoid conflicts.
 
         This method ensures that core services are accessible via:
         - container.get("settings") -> FlextSettings
-        - container.get("logger") -> FlextLogger (factory)
+        - container.get("logger") -> `p.Logger` (factory)
         - container.get("context") -> FlextContext
         - container.get("container") -> FlextContainer (self-reference)
 
@@ -906,7 +896,7 @@ class FlextContainer(p.Container):
         if not self.has_service(c.ServiceName.LOGGER):
             _ = self.register(
                 c.ServiceName.LOGGER,
-                lambda: FlextLogger.create_module_logger(c.DEFAULT_LOGGER_MODULE),
+                lambda: u.fetch_logger(c.DEFAULT_LOGGER_MODULE),
                 kind=c.ContainerKind.FACTORY,
             )
         if (
@@ -1113,11 +1103,24 @@ class FlextContainer(p.Container):
             if settings_class is None:
                 continue
             settings_class_non_null: t.SettingsClass = settings_class
-            namespace_factory: t.FactoryCallable = partial(
-                FlextSettings.fetch_global().fetch_namespace,
-                namespace,
-                settings_class_non_null,
-            )
+
+            def namespace_factory(
+                *,
+                _namespace: str = namespace,
+                _settings_class: t.SettingsClass = settings_class_non_null,
+            ) -> t.ModelCarrier:
+                namespace_settings = FlextSettings.fetch_global().fetch_namespace(
+                    _namespace,
+                    _settings_class,
+                )
+                if u.pydantic_model(namespace_settings):
+                    return namespace_settings
+                error_msg = (
+                    f"Namespace settings '{_namespace}' must be a Pydantic model"
+                )
+                raise TypeError(
+                    error_msg,
+                )
 
             if not self.has_service(factory_name):
                 self.register(
@@ -1145,16 +1148,7 @@ class FlextContainer(p.Container):
             delattr(self._di_resources, name)
         if removed:
             return r[bool].ok(True)
-        return r[bool].fail(
-            e.render_template(
-                "Service '{name}' not found",
-                name=name,
-                params=m.NotFoundErrorParams(
-                    resource_type="service",
-                    resource_id=name,
-                ),
-            ),
-        )
+        return e.fail_not_found("service", name)
 
     @override
     def wire_modules(
@@ -1177,4 +1171,4 @@ class FlextContainer(p.Container):
         return FlextSettings.fetch_global()
 
 
-__all__ = ["FlextContainer"]
+__all__: list[str] = ["FlextContainer"]

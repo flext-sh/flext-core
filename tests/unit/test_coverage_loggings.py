@@ -1,6 +1,6 @@
-"""Comprehensive coverage tests for FlextLogger.
+"""Comprehensive coverage tests for the public logging DSL.
 
-This module provides extensive tests for FlextLogger functionality:
+This module provides extensive tests for public logging functionality:
 - Global context management (bind/unbind/clear/get)
 - Scoped context (application/request/operation tiers)
 - Level-based context filtering
@@ -74,7 +74,7 @@ class TestCoverageLoggings:
         _ = assert_log_result_success(result)
 
     def test_create_service_logger(self) -> None:
-        """Test creating service logger using FlextLogger constructor."""
+        """Test creating a service logger through the public logging DSL."""
         logger = u.fetch_logger("user-service")
         tm.that(logger, none=False)
 
@@ -409,4 +409,4 @@ class TestCoverageLoggings:
 make_result_logger = TestCoverageLoggings.make_result_logger
 assert_log_result_success = TestCoverageLoggings.assert_log_result_success
 
-__all__ = ["TestCoverageLoggings"]
+__all__: list[str] = ["TestCoverageLoggings"]

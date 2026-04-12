@@ -34,18 +34,11 @@ from structlog.stdlib import add_log_level
 from structlog.types import Processor
 from structlog.typing import Context
 
-from flext_core import (
-    FlextUtilitiesCollection,
-    FlextUtilitiesGenerators,
-    FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesGuardsTypeModel,
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-)
+from flext_core import c, e, p, r, t
+from flext_core._utilities.collection import FlextUtilitiesCollection
+from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core.runtime import FlextRuntime
 
 
@@ -231,7 +224,7 @@ class FlextLogger(FlextRuntime):
             context[c.ContextKey.SERVICE_VERSION] = _service_version
         if _correlation_id:
             context[c.ContextKey.CORRELATION_ID] = _correlation_id
-        base_logger = type(self).fetch_logger(resolved_name)
+        base_logger = type(self).resolve_bound_logger(resolved_name)
         self._structlog_instance = (
             base_logger.bind(**context) if context else base_logger
         )
@@ -250,7 +243,7 @@ class FlextLogger(FlextRuntime):
         """Wrapped structlog logger instance."""
         instance = self._structlog_instance
         if instance is None:
-            instance = type(self).fetch_logger(getattr(self, "name", __name__))
+            instance = type(self).resolve_bound_logger(getattr(self, "name", __name__))
             self._structlog_instance = instance
         return instance
 
@@ -266,8 +259,8 @@ class FlextLogger(FlextRuntime):
         return structlog
 
     @classmethod
-    def fetch_logger(cls, name: str | None = None) -> p.Logger:
-        """Fetch structlog logger instance using shared FLEXT configuration."""
+    def resolve_bound_logger(cls, name: str | None = None) -> p.Logger:
+        """Fetch the underlying bound structlog logger for internal use."""
         cls.ensure_structlog_configured()
         if name is None:
             frame = inspect.currentframe()
@@ -277,6 +270,18 @@ class FlextLogger(FlextRuntime):
                 name = __name__
         logger: p.Logger = structlog.get_logger(name)
         return logger
+
+    @classmethod
+    def fetch_logger(cls, name: str | None = None) -> Self:
+        """Fetch the canonical public logger wrapper using shared FLEXT configuration."""
+        resolved_name = name
+        if resolved_name is None:
+            frame = inspect.currentframe()
+            if frame is not None and frame.f_back is not None:
+                resolved_name = frame.f_back.f_globals.get("__name__", __name__)
+            else:
+                resolved_name = __name__
+        return cls.create_module_logger(resolved_name)
 
     @staticmethod
     def _resolve_structlog_params(
@@ -643,16 +648,7 @@ class FlextLogger(FlextRuntime):
             cls.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            operation = f"bind context for scope '{scope}'"
-            params = m.OperationErrorParams(operation=operation, reason=str(exc))
-            return r[bool].fail(
-                e.render_error_template(
-                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-                    operation=operation,
-                    error=exc,
-                    params=params,
-                ),
-            )
+            return cls._fail_logging_operation(f"bind context for scope '{scope}'", exc)
 
     @classmethod
     def bind_context_for_level(cls, level: str, **context: t.RuntimeData) -> r[bool]:
@@ -685,16 +681,7 @@ class FlextLogger(FlextRuntime):
             cls.structlog().contextvars.bind_contextvars(**prefixed_context)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            operation = f"bind context for level {level}"
-            params = m.OperationErrorParams(operation=operation, reason=str(exc))
-            return r[bool].fail(
-                e.render_error_template(
-                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-                    operation=operation,
-                    error=exc,
-                    params=params,
-                ),
-            )
+            return cls._fail_logging_operation(f"bind context for level {level}", exc)
 
     @classmethod
     def bind_global_context(cls, **context: t.RuntimeData) -> r[bool]:
@@ -712,16 +699,18 @@ class FlextLogger(FlextRuntime):
             cls.structlog().contextvars.bind_contextvars(**normalized_context)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            operation = "bind global context"
-            params = m.OperationErrorParams(operation=operation, reason=str(exc))
-            return r[bool].fail(
-                e.render_error_template(
-                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-                    operation=operation,
-                    error=exc,
-                    params=params,
-                ),
-            )
+            return cls._fail_logging_operation("bind global context", exc)
+
+    @classmethod
+    def clear_global_context(cls) -> r[bool]:
+        """Clear global logging context and cached scoped bindings."""
+        try:
+            cls.structlog().contextvars.clear_contextvars()
+            cls._scoped_contexts.clear()
+            cls._level_contexts.clear()
+            return r[bool].ok(True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            return cls._fail_logging_operation("clear global context", exc)
 
     @classmethod
     def clear_scope(cls, scope: str) -> r[bool]:
@@ -742,16 +731,7 @@ class FlextLogger(FlextRuntime):
                 cls._scoped_contexts[scope].clear()
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            operation = f"clear scope '{scope}'"
-            params = m.OperationErrorParams(operation=operation, reason=str(exc))
-            return r[bool].fail(
-                e.render_error_template(
-                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-                    operation=operation,
-                    error=exc,
-                    params=params,
-                ),
-            )
+            return cls._fail_logging_operation(f"clear scope '{scope}'", exc)
 
     @classmethod
     def create_bound_logger(cls, name: str, bound_logger: p.Logger) -> Self:
@@ -834,16 +814,7 @@ class FlextLogger(FlextRuntime):
             cls.structlog().contextvars.unbind_contextvars(*unbind_keys)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            operation = "unbind global context"
-            params = m.OperationErrorParams(operation=operation, reason=str(exc))
-            return r[bool].fail(
-                e.render_error_template(
-                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-                    operation=operation,
-                    error=exc,
-                    params=params,
-                ),
-            )
+            return cls._fail_logging_operation("unbind global context", exc)
 
     @staticmethod
     def _convert_to_relative_path(filename: str) -> str:
@@ -1008,6 +979,11 @@ class FlextLogger(FlextRuntime):
             )
 
     @staticmethod
+    def _fail_logging_operation(operation: str, exc: Exception) -> r[bool]:
+        """Return the canonical failed result for a logger operation."""
+        return e.fail_operation(operation, exc)
+
+    @staticmethod
     def _should_include_stack_trace() -> bool:
         try:
             return logging.getLogger().getEffectiveLevel() <= logging.DEBUG
@@ -1138,16 +1114,7 @@ class FlextLogger(FlextRuntime):
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             FlextLogger._report_internal_logging_failure("exception", exc)
-            operation = "exception logging"
-            params = m.OperationErrorParams(operation=operation, reason=str(exc))
-            return r[bool].fail(
-                e.render_error_template(
-                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-                    operation=operation,
-                    error=exc,
-                    params=params,
-                ),
-            )
+            return self._fail_logging_operation("exception logging", exc)
 
     def log(
         self,
@@ -1196,16 +1163,7 @@ class FlextLogger(FlextRuntime):
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             FlextLogger._report_internal_logging_failure("trace", exc)
-            operation = "trace logging"
-            params = m.OperationErrorParams(operation=operation, reason=str(exc))
-            return r[bool].fail(
-                e.render_error_template(
-                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-                    operation=operation,
-                    error=exc,
-                    params=params,
-                ),
-            )
+            return self._fail_logging_operation("trace logging", exc)
 
     def unbind(self, *keys: str, safe: bool = False) -> Self:
         """Unbind keys from logger - implements BindableLogger protocol."""
@@ -1270,16 +1228,7 @@ class FlextLogger(FlextRuntime):
             getattr(self.logger, level_str)(event, **scalar_context)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            operation = "logging"
-            params = m.OperationErrorParams(operation=operation, reason=str(exc))
-            return r[bool].fail(
-                e.render_error_template(
-                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-                    operation=operation,
-                    error=exc,
-                    params=params,
-                ),
-            )
+            return self._fail_logging_operation("logging", exc)
 
     def _log_standard_level(
         self,

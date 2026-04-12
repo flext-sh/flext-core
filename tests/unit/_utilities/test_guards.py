@@ -606,4 +606,4 @@ class TestFlextUtilitiesGuards:
         tm.that(u.handler(_SampleModel()), eq=False)
 
 
-__all__ = ["TestFlextUtilitiesGuards"]
+__all__: list[str] = ["TestFlextUtilitiesGuards"]

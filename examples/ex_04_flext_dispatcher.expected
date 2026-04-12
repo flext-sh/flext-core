@@ -1,5 +1,5 @@
 [register_and_dispatch]
-constructor.type: 'FlextDispatcher'
+constructor.protocol: True
 register(Handle).is_success: True
 register(DispatchMessage).is_success: True
 register(Execute).is_success: True
