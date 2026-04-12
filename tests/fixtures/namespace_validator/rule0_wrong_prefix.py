@@ -9,4 +9,4 @@ class RandomConstants:
     VALUE = 42
 
 
-__all__ = []
+__all__: list[str] = []

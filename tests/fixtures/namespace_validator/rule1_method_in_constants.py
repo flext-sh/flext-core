@@ -20,4 +20,4 @@ class FlextTestConstants:
 
 
 c = FlextTestConstants
-__all__ = []
+__all__: list[str] = []

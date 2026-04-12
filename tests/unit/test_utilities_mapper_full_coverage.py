@@ -355,7 +355,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[u]) -> None:
     tm.that(str(res_bad_index.error), has="Array error")
     res_terminal_none = mapper.extract({"a": None}, "a")
     tm.fail(res_terminal_none)
-    tm.that(str(res_terminal_none.error), has="Extracted value is None")
+    tm.that(str(res_terminal_none.error), has="default is None")
 
     class NotGeneral:
         @override

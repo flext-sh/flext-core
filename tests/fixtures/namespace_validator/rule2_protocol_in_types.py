@@ -19,4 +19,4 @@ class FlextTestTypes(_t):
 
 
 t = FlextTestTypes
-__all__ = []
+__all__: list[str] = []

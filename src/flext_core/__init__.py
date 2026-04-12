@@ -22,6 +22,7 @@ if _t.TYPE_CHECKING:
     from flext_core._constants.mixins import FlextConstantsMixins
     from flext_core._constants.output import FlextConstantsOutput
     from flext_core._constants.platform import FlextConstantsPlatform
+    from flext_core._constants.pydantic import FlextConstantsPydantic
     from flext_core._constants.settings import FlextConstantsSettings
     from flext_core._constants.validation import FlextConstantsValidation
     from flext_core._exceptions.base import FlextExceptionsBase
@@ -52,6 +53,7 @@ if _t.TYPE_CHECKING:
     from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.namespace import FlextModelsNamespace
+    from flext_core._models.pydantic import FlextModelsPydantic
     from flext_core._models.registry import FlextModelsRegistry
     from flext_core._models.service import FlextModelsService
     from flext_core._models.settings import FlextModelsSettings
@@ -96,6 +98,7 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.mapper import FlextUtilitiesMapper
     from flext_core._utilities.model import FlextUtilitiesModel
     from flext_core._utilities.parser import FlextUtilitiesParser
+    from flext_core._utilities.pydantic import FlextUtilitiesPydantic
     from flext_core._utilities.reliability import FlextUtilitiesReliability
     from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
     from flext_core._utilities.settings import FlextUtilitiesSettings
@@ -260,6 +263,7 @@ __all__ = [
     "FlextConstantsMixins",
     "FlextConstantsOutput",
     "FlextConstantsPlatform",
+    "FlextConstantsPydantic",
     "FlextConstantsSettings",
     "FlextConstantsValidation",
     "FlextContainer",
@@ -298,6 +302,7 @@ __all__ = [
     "FlextModelsExceptionParams",
     "FlextModelsHandler",
     "FlextModelsNamespace",
+    "FlextModelsPydantic",
     "FlextModelsRegistry",
     "FlextModelsService",
     "FlextModelsSettings",
@@ -346,6 +351,7 @@ __all__ = [
     "FlextUtilitiesMapper",
     "FlextUtilitiesModel",
     "FlextUtilitiesParser",
+    "FlextUtilitiesPydantic",
     "FlextUtilitiesReliability",
     "FlextUtilitiesResultHelpers",
     "FlextUtilitiesSettings",

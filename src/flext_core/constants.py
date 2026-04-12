@@ -6,20 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import (
-    FlextConstantsBase,
-    FlextConstantsCqrs,
-    FlextConstantsDomain,
-    FlextConstantsEnforcement,
-    FlextConstantsErrors,
-    FlextConstantsInfrastructure,
-    FlextConstantsMixins,
-    FlextConstantsPlatform,
-    FlextConstantsSettings,
-    FlextConstantsValidation,
-    FlextModelsNamespace,
-)
+from flext_core._constants.base import FlextConstantsBase
+from flext_core._constants.cqrs import FlextConstantsCqrs
+from flext_core._constants.domain import FlextConstantsDomain
+from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._constants.errors import FlextConstantsErrors
+from flext_core._constants.infrastructure import FlextConstantsInfrastructure
+from flext_core._constants.mixins import FlextConstantsMixins
 from flext_core._constants.output import FlextConstantsOutput
+from flext_core._constants.platform import FlextConstantsPlatform
+from flext_core._constants.pydantic import FlextConstantsPydantic
+from flext_core._constants.settings import FlextConstantsSettings
+from flext_core._constants.validation import FlextConstantsValidation
 
 
 class FlextConstants(
@@ -34,7 +32,7 @@ class FlextConstants(
     FlextConstantsOutput,
     FlextConstantsMixins,
     FlextConstantsEnforcement,
-    FlextModelsNamespace,
+    FlextConstantsPydantic,
 ):
     """Centralized constants for the FLEXT ecosystem (Layer 0).
 

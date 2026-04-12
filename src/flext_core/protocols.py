@@ -6,18 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import (
-    FlextModelsNamespace,
-    FlextProtocolsBase,
-    FlextProtocolsContainer,
-    FlextProtocolsContext,
-    FlextProtocolsHandler,
-    FlextProtocolsLogging,
-    FlextProtocolsRegistry,
-    FlextProtocolsResult,
-    FlextProtocolsService,
-    FlextProtocolsSettings,
-)
+from flext_core._models.namespace import FlextModelsNamespace
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.container import FlextProtocolsContainer
+from flext_core._protocols.context import FlextProtocolsContext
+from flext_core._protocols.handler import FlextProtocolsHandler
+from flext_core._protocols.logging import FlextProtocolsLogging
+from flext_core._protocols.registry import FlextProtocolsRegistry
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols.service import FlextProtocolsService
+from flext_core._protocols.settings import FlextProtocolsSettings
 
 
 class FlextProtocols(

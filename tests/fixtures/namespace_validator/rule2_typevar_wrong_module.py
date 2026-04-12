@@ -12,4 +12,4 @@ class FlextTestModels:
 
 
 m = FlextTestModels
-__all__ = []
+__all__: list[str] = []

@@ -13,4 +13,4 @@ class Rule0MultipleClassesFixture:
     """Fixture demonstrating multiple classes violation."""
 
 
-__all__ = []
+__all__: list[str] = []

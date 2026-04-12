@@ -10,4 +10,4 @@ class FlextTestUtilities:
 VALID_STATUSES = frozenset({"active", "inactive"})
 DEFAULT_HEADERS = {"content_type": "json"}
 u = FlextTestUtilities
-__all__ = []
+__all__: list[str] = []

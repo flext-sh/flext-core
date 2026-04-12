@@ -17,4 +17,4 @@ class Rule1LooseEnumFixture:
     """Fixture demonstrating loose enum violation."""
 
 
-__all__ = []
+__all__: list[str] = []

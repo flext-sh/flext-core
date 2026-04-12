@@ -30,6 +30,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".mapper": ("FlextUtilitiesMapper",),
         ".model": ("FlextUtilitiesModel",),
         ".parser": ("FlextUtilitiesParser",),
+        ".pydantic": ("FlextUtilitiesPydantic",),
         ".reliability": ("FlextUtilitiesReliability",),
         ".result_helpers": ("FlextUtilitiesResultHelpers",),
         ".settings": ("FlextUtilitiesSettings",),

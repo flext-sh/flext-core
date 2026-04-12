@@ -181,9 +181,10 @@ class FlextUtilitiesMapper:
     ) -> r[t.ValueOrModel]:
         """Wrap a raw value into a Result: fail on None, narrow containers, stringify rest."""
         if raw is None:
+            marker = "found_none:"
             return r[t.ValueOrModel].fail_op(
                 "resolve extracted value",
-                e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
+                marker + e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
             )
         if FlextUtilitiesGuards.container(raw):
             return r[t.ValueOrModel].ok(raw)
@@ -230,19 +231,18 @@ class FlextUtilitiesMapper:
                 getattr(current, key_part),
                 key_part,
             )
-        if isinstance(
-            current,
-            BaseModel,
-        ) and FlextUtilitiesGuardsTypeModel.pydantic_model(current):
+        if FlextUtilitiesGuardsTypeModel.pydantic_model(current):
             model_dump_attr = current.model_dump
             if callable(model_dump_attr):
                 model_dict = model_dump_attr()
                 if key_part in model_dict:
                     val = model_dict[key_part]
                     if val is None:
+                        marker = "found_none:"
                         return r[t.ValueOrModel].fail_op(
                             "extract model key value",
-                            e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
+                            marker
+                            + e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
                         )
                     return r[t.ValueOrModel].ok(val)
         return r[t.ValueOrModel].fail_op(
@@ -497,7 +497,7 @@ class FlextUtilitiesMapper:
         get_result = FlextUtilitiesMapper._extract_get_value(current, key_part)
         if get_result.failure:
             error_str = get_result.error or ""
-            if error_str.startswith(found_none_prefix):
+            if found_none_prefix in error_str:
                 next_val: t.ValueOrModel = None
             else:
                 return None, FlextUtilitiesMapper._extract_fail_or_default(
@@ -525,7 +525,7 @@ class FlextUtilitiesMapper:
             )
             if index_result.failure:
                 error_str = index_result.error or ""
-                if error_str.startswith(found_none_prefix):
+                if found_none_prefix in error_str:
                     next_val = None
                 else:
                     return None, FlextUtilitiesMapper._extract_fail_or_default(

@@ -15,4 +15,4 @@ class FlextTestModels:
 MAX_RETRIES: Final[int] = 3
 DEFAULT_TIMEOUT: Final[float] = 30.0
 
-__all__ = []
+__all__: list[str] = []

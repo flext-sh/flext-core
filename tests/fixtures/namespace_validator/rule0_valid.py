@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Final
 
-__all__ = []
+__all__: list[str] = []
 
 
 class FlextTestConstants:

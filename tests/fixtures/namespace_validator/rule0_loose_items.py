@@ -24,4 +24,4 @@ class Rule0LooseItemsFixture:
     """Fixture demonstrating loose items violation."""
 
 
-__all__ = []
+__all__: list[str] = []

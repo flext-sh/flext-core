@@ -16,6 +16,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".mixins": ("FlextConstantsMixins",),
         ".output": ("FlextConstantsOutput",),
         ".platform": ("FlextConstantsPlatform",),
+        ".pydantic": ("FlextConstantsPydantic",),
         ".settings": ("FlextConstantsSettings",),
         ".validation": ("FlextConstantsValidation",),
     },

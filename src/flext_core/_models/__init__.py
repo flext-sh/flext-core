@@ -29,6 +29,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".generic": ("FlextGenericModels",),
             ".handler": ("FlextModelsHandler",),
             ".namespace": ("FlextModelsNamespace",),
+            ".pydantic": ("FlextModelsPydantic",),
             ".registry": ("FlextModelsRegistry",),
             ".service": ("FlextModelsService",),
             ".settings": ("FlextModelsSettings",),
