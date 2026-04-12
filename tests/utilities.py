@@ -1080,8 +1080,8 @@ class TestsFlextCoreUtilities(u):
                     """Build a `GetUserService` instance."""
                     n = next(cls._counter)
                     actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
-                    return TestsFlextCoreUtilities.Core.Tests.GetUserService.model_construct(
-                        user_id=actual_user_id
+                    return TestsFlextCoreUtilities.Core.Tests.GetUserService(
+                        user_id=actual_user_id,
                     )
 
                 @classmethod
@@ -1106,8 +1106,8 @@ class TestsFlextCoreUtilities(u):
                     error_message: str = c.Core.Tests.Services.DEFAULT_ERROR_MESSAGE,
                 ) -> TestsFlextCoreUtilities.Core.Tests.FailingService:
                     """Build a FailingService instance."""
-                    return TestsFlextCoreUtilities.Core.Tests.FailingService.model_construct(
-                        error_message=error_message
+                    return TestsFlextCoreUtilities.Core.Tests.FailingService(
+                        error_message=error_message,
                     )
 
                 @classmethod
@@ -1129,8 +1129,8 @@ class TestsFlextCoreUtilities(u):
                     """Build a GetUserServiceAuto instance."""
                     n = next(cls._counter)
                     actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
-                    return TestsFlextCoreUtilities.Core.Tests.GetUserServiceAuto.model_construct(
-                        user_id=actual_user_id
+                    return TestsFlextCoreUtilities.Core.Tests.GetUserServiceAuto(
+                        user_id=actual_user_id,
                     )
 
                 @classmethod
@@ -1175,7 +1175,7 @@ class TestsFlextCoreUtilities(u):
                     actual_value = (
                         value_input if value_input is not None else cls._next_word()
                     )
-                    return TestsFlextCoreUtilities.Core.Tests.ValidatingServiceAuto.model_construct(
+                    return TestsFlextCoreUtilities.Core.Tests.ValidatingServiceAuto(
                         value_input=actual_value,
                         min_length=min_length,
                     )
@@ -1222,7 +1222,7 @@ class TestsFlextCoreUtilities(u):
                     actual_value = (
                         value_input if value_input is not None else cls._next_word()
                     )
-                    return TestsFlextCoreUtilities.Core.Tests.ValidatingService.model_construct(
+                    return TestsFlextCoreUtilities.Core.Tests.ValidatingService(
                         value_input=actual_value,
                         min_length=min_length,
                     )
@@ -1249,8 +1249,8 @@ class TestsFlextCoreUtilities(u):
                     error_message: str = c.Core.Tests.Services.DEFAULT_ERROR_MESSAGE,
                 ) -> TestsFlextCoreUtilities.Core.Tests.FailingServiceAuto:
                     """Build a FailingServiceAuto instance."""
-                    return TestsFlextCoreUtilities.Core.Tests.FailingServiceAuto.model_construct(
-                        error_message=error_message
+                    return TestsFlextCoreUtilities.Core.Tests.FailingServiceAuto(
+                        error_message=error_message,
                     )
 
                 @classmethod

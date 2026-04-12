@@ -58,9 +58,12 @@ class TestServiceBootstrap:
         assert runtime.settings is not None
         assert runtime.context is not None
         assert runtime.container is not None
+        assert runtime.dispatcher is not None
         assert isinstance(runtime.settings, p.Settings)
         assert isinstance(runtime.context, p.Context)
         assert isinstance(runtime.container, p.Container)
+        assert isinstance(runtime.dispatcher, p.Dispatcher)
+        assert isinstance(runtime, p.CloneableRuntime)
         assert runtime.settings.app_name == "runtime_app"
 
     def test_create_initial_runtime_uses_bootstrap_options(self) -> None:
@@ -69,6 +72,7 @@ class TestServiceBootstrap:
         assert runtime.settings is not None
         assert runtime.settings.app_name == "test_app"
         assert runtime.container is not None
+        assert runtime.dispatcher is not None
 
     def test_create_runtime_with_services(self) -> None:
         """Test _create_runtime accepts services parameter."""

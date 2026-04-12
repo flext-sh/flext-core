@@ -27,7 +27,8 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextRuntime, FlextUtilitiesEnforcement, c, t
+from flext_core import FlextUtilitiesEnforcement, c, t
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsBase:

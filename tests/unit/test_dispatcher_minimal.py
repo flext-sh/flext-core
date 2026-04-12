@@ -1,17 +1,10 @@
-"""Minimal dispatcher flow coverage with real handlers (no mocks).
-
-Tests the strict FlextDispatcher API:
-- register_handler(handler: p.HandlerLike) — handler must expose
-  message_type, event_type, or can_handle.
-- dispatch(message: p.Routable) — accepts only CQRS messages.
-"""
+"""Minimal dispatcher flow coverage through the public DSL."""
 
 from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_core import FlextDispatcher, r
-from tests import c, m, t
+from tests import c, m, r, t, u
 
 
 class TestDispatcherMinimal:
@@ -80,33 +73,33 @@ class TestDispatcherMinimal:
 
     def test_register_handler_with_message_type(self) -> None:
         """Handler with message_type attribute registers successfully."""
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         res = dispatcher.register_handler(self._EchoHandler())
         assert res.success
 
     def test_register_handler_with_can_handle(self) -> None:
         """Handler with can_handle registers as auto-discovery handler."""
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         res = dispatcher.register_handler(self._AutoDiscoveryHandler())
         assert res.success
 
     def test_register_handler_without_route_fails(self) -> None:
         """Handler without message_type/event_type/can_handle must fail."""
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         res = dispatcher.register_handler(self._BareHandler())
         assert res.failure
         assert "must expose" in (res.error or "")
 
     def test_register_handler_as_event_subscriber(self) -> None:
         """Handler registered with is_event=True goes to event subscribers."""
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         subscriber = self._EventSubscriber()
         res = dispatcher.register_handler(subscriber, is_event=True)
         assert res.success
 
     def test_dispatch_command_success(self) -> None:
         """Dispatch a Command to its registered handler."""
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         dispatcher.register_handler(self._EchoHandler())
         cmd = m.Command(command_type="EchoRoute", command_id="cmd-echo")
         result = dispatcher.dispatch(cmd)
@@ -115,7 +108,7 @@ class TestDispatcherMinimal:
 
     def test_dispatch_no_handler_fails(self) -> None:
         """Dispatch with no matching handler returns failure."""
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         cmd = m.Command(command_type="UnknownRoute", command_id="cmd-unknown")
         result = dispatcher.dispatch(cmd)
         assert result.failure
@@ -123,7 +116,7 @@ class TestDispatcherMinimal:
 
     def test_dispatch_handler_exception_returns_failure(self) -> None:
         """Handler that raises returns a failure result."""
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         dispatcher.register_handler(self._ExplodingHandler())
         cmd = m.Command(command_type="ExplodeRoute", command_id="cmd-explode")
         result = dispatcher.dispatch(cmd)
@@ -133,18 +126,16 @@ class TestDispatcherMinimal:
 
     def test_dispatch_auto_discovery_handler(self) -> None:
         """Auto-discovery handler is found via can_handle fallback."""
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         dispatcher.register_handler(self._AutoDiscoveryHandler())
         cmd = self._AutoCommand(command_id="cmd-auto")
         result = dispatcher.dispatch(cmd)
         assert result.success
         assert result.value == "auto:AutoRoute"
 
-    def test_dispatch_after_handler_removal_fails(self) -> None:
-        """Dispatching when handler route is cleared fails gracefully."""
-        dispatcher = FlextDispatcher()
-        dispatcher.register_handler(self._EchoHandler())
-        dispatcher._handlers.clear()
+    def test_dispatch_on_fresh_dispatcher_fails_for_unknown_route(self) -> None:
+        """A fresh dispatcher exposes no routes until handlers are registered."""
+        dispatcher = u.build_dispatcher()
         cmd = m.Command(command_type="EchoRoute", command_id="cmd-cleared")
         result = dispatcher.dispatch(cmd)
         assert result.failure
@@ -152,7 +143,7 @@ class TestDispatcherMinimal:
 
     def test_publish_event_to_subscriber(self) -> None:
         """Published event is delivered to registered subscriber."""
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         subscriber = self._EventSubscriber()
         dispatcher.register_handler(subscriber, is_event=True)
         event = m.Event(
@@ -168,7 +159,7 @@ class TestDispatcherMinimal:
 
     def test_publish_no_subscribers_succeeds(self) -> None:
         """Publishing with no subscribers succeeds silently."""
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         event = m.Event(
             event_type="NobodyListening",
             aggregate_id="agg-1",

@@ -13,7 +13,7 @@ from __future__ import annotations
 import contextlib
 from collections.abc import MutableSequence, Sequence
 
-from flext_core import c, p, r, t, u
+from flext_core import c, e, p, r, t, u
 
 
 class FlextDispatcher:
@@ -54,8 +54,9 @@ class FlextDispatcher:
         try:
             route_name = u.resolve_message_route(message)
         except (TypeError, ValueError) as e:
-            return r[t.RuntimeAtomic].fail(
-                f"Dispatch failed: {e!s}",
+            return r[t.RuntimeAtomic].fail_op(
+                "dispatch message",
+                e,
                 error_code=c.ErrorCode.COMMAND_PROCESSING_FAILED.value,
             )
         handler_entry = self._handlers.get(route_name)
@@ -69,7 +70,8 @@ class FlextDispatcher:
                     handler_entry = (auto_h, resolved_handler)
                     break
         if not handler_entry:
-            return r[t.RuntimeAtomic].fail(
+            return r[t.RuntimeAtomic].fail_op(
+                "resolve message handler",
                 f"No handler found for {route_name}",
                 error_code=c.ErrorCode.COMMAND_HANDLER_NOT_FOUND.value,
             )
@@ -91,8 +93,9 @@ class FlextDispatcher:
             if isinstance(value, expected_type):
                 return r[DispatchValueT].ok(value)
             if u.pydantic_model(value):
-                return r[DispatchValueT].fail(
-                    f"Expected {expected_type.__name__}, got {value.__class__.__name__}",
+                return e.fail_type_mismatch(
+                    expected_type.__name__,
+                    value.__class__.__name__,
                 )
             return u.parse(value, expected_type)
 
@@ -162,7 +165,10 @@ class FlextDispatcher:
                 resolved_handler = handler.execute
             case _:
                 if not callable(handler):
-                    return r[bool].fail(c.ERR_HANDLER_MUST_BE_CALLABLE)
+                    return r[bool].fail_op(
+                        "register handler",
+                        c.ERR_HANDLER_MUST_BE_CALLABLE,
+                    )
                 resolved_handler = handler
         handler_message_type = getattr(handler, "message_type", None)
         if isinstance(handler_message_type, str):
@@ -187,7 +193,8 @@ class FlextDispatcher:
                     handler=str(handler),
                 )
                 return r[bool].ok(True)
-            return r[bool].fail(
+            return r[bool].fail_op(
+                "discover handler route",
                 c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED,
             )
         if is_event:
@@ -223,14 +230,21 @@ class FlextDispatcher:
                     )
                 value: t.RuntimeAtomic | None = raw_output.value
                 if not u.container(value) and not u.pydantic_model(value):
-                    return dispatch_result.fail(
+                    return dispatch_result.fail_op(
+                        "validate handler success payload",
                         c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
                     )
                 return dispatch_result.ok(value)
             if raw_output is None:
-                return dispatch_result.fail(c.ERR_HANDLER_RETURNED_NONE)
+                return dispatch_result.fail_op(
+                    "execute resolved handler",
+                    c.ERR_HANDLER_RETURNED_NONE,
+                )
             if not u.container(raw_output) and not u.pydantic_model(raw_output):
-                return dispatch_result.fail(c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE)
+                return dispatch_result.fail_op(
+                    "validate handler return payload",
+                    c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
+                )
             return dispatch_result.ok(raw_output)
         except (
             TypeError,
@@ -243,7 +257,8 @@ class FlextDispatcher:
             ArithmeticError,
         ) as exc:
             self._logger.exception(c.LOG_HANDLER_EXECUTION_FAILED, route=route_name)
-            return dispatch_result.fail(
-                c.ERR_HANDLER_EXECUTION_FAILED.format(error=str(exc)),
+            return dispatch_result.fail_op(
+                "execute resolved handler",
+                exc,
                 error_code=c.ErrorCode.COMMAND_PROCESSING_FAILED.value,
             )

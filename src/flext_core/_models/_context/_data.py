@@ -18,12 +18,12 @@ from pydantic import (
 
 from flext_core import (
     FlextModelsBase,
-    FlextRuntime,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     c,
     t,
 )
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsContextData:

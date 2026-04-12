@@ -255,7 +255,7 @@ class TestFlextHandlers:
         result = handler.execute(dict_message)
         _ = u.Core.Tests.assert_success(result)
 
-    def test_handlers_run_pipeline_mode_validation_error(self) -> None:
+    def test_handlers_dispatch_message_mode_validation_error(self) -> None:
         settings = u.Core.Tests.create_handler_config(
             "test_pipeline_mode_error",
             "Test Pipeline Mode Error",
@@ -263,13 +263,13 @@ class TestFlextHandlers:
             handler_mode=c.HandlerType.COMMAND,
         )
         handler = self.ConcreteTestHandler(settings=settings)
-        result = handler._run_pipeline("test_message", operation="query")
+        result = handler.dispatch_message("test_message", operation="query")
         u.Core.Tests.assert_result_failure_with_error(
             result,
             expected_error="Handler with mode 'command' cannot execute query pipelines",
         )
 
-    def test_handlers_run_pipeline_cannot_handle_message_type(self) -> None:
+    def test_handlers_dispatch_message_cannot_handle_message_type(self) -> None:
         class RestrictiveHandler(h[t.ValueOrModel, t.ValueOrModel]):
             @override
             def __init__(self, settings: m.Handler) -> None:
@@ -295,13 +295,13 @@ class TestFlextHandlers:
             handler_mode=c.HandlerType.COMMAND,
         )
         handler = RestrictiveHandler(settings=settings)
-        result = handler._run_pipeline("test_message", operation="command")
+        result = handler.dispatch_message("test_message", operation="command")
         u.Core.Tests.assert_result_failure_with_error(
             result,
             expected_error="Handler cannot handle message type str",
         )
 
-    def test_handlers_run_pipeline_validation_failure(self) -> None:
+    def test_handlers_dispatch_message_validation_failure(self) -> None:
         class ValidationFailingHandler(h[t.ValueOrModel, t.ValueOrModel]):
             @override
             def __init__(self, settings: m.Handler) -> None:
@@ -327,13 +327,13 @@ class TestFlextHandlers:
             handler_mode=c.HandlerType.COMMAND,
         )
         handler = ValidationFailingHandler(settings=settings)
-        result = handler._run_pipeline("test_message", operation="command")
+        result = handler.dispatch_message("test_message", operation="command")
         u.Core.Tests.assert_result_failure_with_error(
             result,
             expected_error="Message validation failed: Validation failed for test",
         )
 
-    def test_handlers_run_pipeline_handler_exception(self) -> None:
+    def test_handlers_dispatch_message_handler_exception(self) -> None:
         class ExceptionHandler(h[t.ValueOrModel, t.ValueOrModel]):
             @override
             def __init__(self, settings: m.Handler) -> None:
@@ -352,7 +352,7 @@ class TestFlextHandlers:
             handler_mode=c.HandlerType.COMMAND,
         )
         handler = ExceptionHandler(settings=settings)
-        result = handler._run_pipeline("test_message", operation="command")
+        result = handler.dispatch_message("test_message", operation="command")
         u.Core.Tests.assert_result_failure_with_error(
             result,
             expected_error="Critical handler failure: Test exception in handler",

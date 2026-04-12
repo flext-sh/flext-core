@@ -22,6 +22,9 @@ class FlextConstantsErrors:
     ERR_TEMPLATE_MISSING_VALUE: Final[str] = (
         "Template value '{key}' is required for template '{template}'"
     )
+    ERR_TEMPLATE_VALIDATION_FAILED_FOR_FIELD: Final[str] = (
+        "Validation failed for {field}"
+    )
     ERR_TEMPLATE_MESSAGE_AND_DEFAULT_IS_NONE: Final[str] = (
         "{message} and default is None"
     )
@@ -159,7 +162,9 @@ class FlextConstantsErrors:
     )
     ERR_COLLECTION_NO_MATCHING_ITEM_FOUND: Final[str] = "No matching item found"
     ERR_MAPPER_NOT_A_SEQUENCE: Final[str] = "Not a sequence"
-    ERR_MAPPER_FOUND_NONE_INDEX: Final[str] = ERR_TEMPLATE_FOUND_NONE.format(key="index")
+    ERR_MAPPER_FOUND_NONE_INDEX: Final[str] = ERR_TEMPLATE_FOUND_NONE.format(
+        key="index"
+    )
     ERR_INFRA_INVALID_HANDLER_MODE: Final[str] = (
         "handler_mode must be 'command' or 'query'"
     )

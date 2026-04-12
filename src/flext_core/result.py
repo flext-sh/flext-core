@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from collections.abc import Callable, MutableSequence, Sequence
 from types import TracebackType
 from typing import Annotated, ClassVar, Self, TypeIs, cast, overload, override
 
@@ -44,7 +44,7 @@ class FlextResult[T](BaseModel):
     success: Annotated[bool, Field(default=True)]
     error: Annotated[str | None, Field(default=None)]
     error_code: Annotated[str | None, Field(default=None)]
-    error_data: Annotated[t.SettingsMap | None, Field(default=None)]
+    error_data: Annotated[t.ConfigMap | None, Field(default=None)]
 
     _payload: T | None = PrivateAttr(default=None)
     _exception: BaseException | None = PrivateAttr(default=None)
@@ -99,17 +99,17 @@ class FlextResult[T](BaseModel):
 
     @staticmethod
     def _validate_error_data(
-        error_data: t.ResultErrorData | t.SettingsModelInput | None,
-    ) -> t.SettingsMap | None:
-        """Convert error_data to SettingsMap, matching RuntimeResult.fail() logic."""
+        error_data: t.ResultErrorData | t.ConfigModelInput | None,
+    ) -> t.ConfigMap | None:
+        """Convert error_data to ConfigMap, matching RuntimeResult.fail() logic."""
         if error_data is None:
             return None
-        if isinstance(error_data, t.SettingsMap):
+        if isinstance(error_data, t.ConfigMap):
             return error_data
         if isinstance(error_data, p.HasModelDump):
             dump = error_data.model_dump()
-            return t.SettingsMap(dump)
-        return t.SettingsMap(dict(error_data))
+            return t.ConfigMap.model_validate(dump)
+        return t.ConfigMap.model_validate(dict(error_data))
 
     @staticmethod
     def _exception_message(exception: BaseException | None) -> str | None:
@@ -133,25 +133,28 @@ class FlextResult[T](BaseModel):
         return None
 
     @staticmethod
-    def _exception_error_data(exception: BaseException | None) -> t.SettingsMap | None:
+    def _exception_error_data(exception: BaseException | None) -> t.ConfigMap | None:
         """Extract structured metadata attributes from an exception."""
         if exception is None:
             return None
         metadata = getattr(exception, "metadata", None)
-        attributes = getattr(metadata, c.FIELD_ATTRIBUTES, None)
-        if not isinstance(attributes, Mapping):
+        raw_attributes = getattr(metadata, c.FIELD_ATTRIBUTES, None)
+        if raw_attributes is None:
             return None
-        payload = {str(key): value for key, value in attributes.items()}
+        try:
+            payload = t.ConfigMap.model_validate(raw_attributes)
+        except ValidationError:
+            return None
         correlation_id = getattr(exception, "correlation_id", None)
         if isinstance(correlation_id, str) and correlation_id:
-            payload.setdefault(c.ContextKey.CORRELATION_ID, correlation_id)
-        return t.SettingsMap(payload)
+            payload[c.ContextKey.CORRELATION_ID] = correlation_id
+        return payload
 
     def __init__(
         self,
         source: Result[T, str] | None = None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData | t.SettingsModelInput | None = None,
+        error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
         *,
         value: T | None = None,
         error: str | None = None,
@@ -278,7 +281,7 @@ class FlextResult[T](BaseModel):
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData | t.SettingsModelInput | None = None,
+        error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
         *,
         exception: BaseException | None = None,
     ) -> Self:
@@ -306,7 +309,7 @@ class FlextResult[T](BaseModel):
             Failed FlextResult instance
 
         """
-        error_msg = error if error is not None else cls._exception_message(exception) or ""
+        error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._exception_error_code(exception)
         resolved_error_data = (
             error_data
@@ -330,14 +333,60 @@ class FlextResult[T](BaseModel):
         *,
         error: str | None = None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData | t.SettingsModelInput | None = None,
+        error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
     ) -> Self:
         """Create a failed result directly from an exception public surface."""
         return cls.fail(
-            error,
+            error if error is not None else cls._exception_message(exception),
             error_code=error_code,
             error_data=error_data,
             exception=exception,
+        )
+
+    @classmethod
+    def fail_exc(
+        cls,
+        exc: BaseException,
+    ) -> Self:
+        """Create failed result from a BaseException (e.BaseError or stdlib).
+
+        Usage::
+
+            return r[bool].fail_exc(exc)
+
+        """
+        return cls.fail(
+            str(exc),
+            error_code=cls._exception_error_code(exc),
+            error_data=cls._exception_error_data(exc),
+            exception=exc,
+        )
+
+    @classmethod
+    def fail_op(
+        cls,
+        operation: str,
+        exc: Exception | str | None = None,
+        *,
+        error_code: str | None = None,
+    ) -> Self:
+        """Create failed result for an operation that failed.
+
+        Usage::
+
+            return r[bool].fail_op("load config", exc)
+
+        """
+        reason = str(exc) if exc is not None else None
+        msg = (
+            f"Failed to {operation}: {reason}"
+            if reason is not None
+            else f"Failed to {operation}"
+        )
+        return cls.fail(
+            msg,
+            error_code=error_code,
+            exception=exc if isinstance(exc, BaseException) else None,
         )
 
     @staticmethod

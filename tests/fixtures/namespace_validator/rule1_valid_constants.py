@@ -22,4 +22,4 @@ class FlextTestConstants:
 
 
 c = FlextTestConstants
-__all__ = ["FlextTestConstants", "c"]
+__all__ = []

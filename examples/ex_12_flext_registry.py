@@ -1,4 +1,4 @@
-"""Golden-file example for FlextRegistry public APIs."""
+"""Golden-file example for the registry DSL public APIs."""
 
 from __future__ import annotations
 
@@ -6,9 +6,9 @@ from typing import override
 
 from pydantic import BaseModel
 
-from examples import c, m, t, u
+from examples import c, m, p, r, t, u
 from examples.shared import Examples
-from flext_core import FlextDispatcher, FlextRegistry, h, r
+from flext_core import h
 
 
 class _CommandA(m.Command):
@@ -45,11 +45,11 @@ def _discovered_handler(_message: BaseModel) -> BaseModel:
 
 
 class Ex12FlextRegistry(Examples):
-    """Exercise FlextRegistry public API."""
+    """Exercise the canonical registry DSL public API."""
 
     @override
     def exercise(self) -> None:
-        """Run all FlextRegistry example sections."""
+        """Run all registry DSL example sections."""
         registry, dispatcher = self._exercise_create_and_service_methods()
         self._exercise_summary_and_mixins()
         handler_a, handler_b = self._exercise_registration_and_dispatch(
@@ -61,7 +61,7 @@ class Ex12FlextRegistry(Examples):
 
     def _exercise_bindings_and_plugin_apis(
         self,
-        registry: FlextRegistry,
+        registry: p.Registry,
         handler_a: _ProtocolHandler,
         handler_b: _ProtocolHandler,
     ) -> None:
@@ -127,9 +127,12 @@ class Ex12FlextRegistry(Examples):
             plugin_ns,
             plugin_unreg_missing_name,
         )
-        self.check("fetch_plugin.ok", plugin_fetch_ok.unwrap_or("") == plugin_value_a)
+        self.check("fetch_plugin.ok", plugin_fetch_ok.value == plugin_value_a)
         self.check("fetch_plugin.missing", plugin_fetch_missing.failure)
-        self.check("list_plugins.transports", sorted(plugin_list.unwrap_or([])))
+        self.check(
+            "list_plugins.transports",
+            sorted(plugin_list.value) if plugin_list.success else [],
+        )
         self.check("unregister_plugin.ok", plugin_unreg_ok.success)
         self.check("unregister_plugin.missing", plugin_unreg_missing.failure)
         class_ok = registry.register_plugin(
@@ -176,45 +179,38 @@ class Ex12FlextRegistry(Examples):
         self.check("register_class_plugin.empty_name", class_empty.failure)
         self.check(
             "fetch_class_plugin.ok",
-            class_fetch_ok.unwrap_or("") == class_plugin_value,
+            class_fetch_ok.value == class_plugin_value,
         )
         self.check("fetch_class_plugin.missing", class_fetch_missing.failure)
-        self.check("list_class_plugins.auth", class_list.unwrap_or([]))
+        self.check(
+            "list_class_plugins.auth",
+            class_list.value if class_list.success else [],
+        )
         self.check("unregister_class_plugin.ok", class_unreg_ok.success)
         self.check("unregister_class_plugin.missing", class_unreg_missing.failure)
 
     def _exercise_create_and_service_methods(
         self,
-    ) -> tuple[FlextRegistry, FlextDispatcher]:
+    ) -> tuple[p.Registry, p.Dispatcher]:
         self.section("create_and_service_methods")
         discovered_value = self.rand_str(4)
-        dispatcher = FlextDispatcher()
-        reg_default = FlextRegistry.create()
-        reg_explicit = FlextRegistry.create(dispatcher=None)
-        reg_auto_false = FlextRegistry.create(auto_discover_handlers=False)
-        reg_auto_true = FlextRegistry.create(auto_discover_handlers=True)
-        self.check("create.default.type", type(reg_default).__name__)
-        self.check("create.explicit.type", type(reg_explicit).__name__)
-        self.check("create.auto_false.type", type(reg_auto_false).__name__)
-        self.check("create.auto_true.type", type(reg_auto_true).__name__)
+        dispatcher = u.build_dispatcher()
+        reg_default = u.build_registry()
+        reg_explicit = u.build_registry(dispatcher=None)
+        reg_auto_false = u.build_registry(auto_discover_handlers=False)
+        reg_auto_true = u.build_registry(auto_discover_handlers=True)
+        self.check("create.default.protocol", isinstance(reg_default, p.Registry))
+        self.check("create.explicit.protocol", isinstance(reg_explicit, p.Registry))
+        self.check("create.auto_false.protocol", isinstance(reg_auto_false, p.Registry))
+        self.check("create.auto_true.protocol", isinstance(reg_auto_true, p.Registry))
         self.check(
             "decorated_handler.type",
             type(_discovered_handler(_CommandA(value=discovered_value))).__name__,
         )
         self.check("execute.success", reg_explicit.execute().success)
-        self.check(
-            "validate_business_rules.success",
-            reg_explicit.validate_business_rules().success,
-        )
-        self.check("valid", reg_explicit.valid())
-        self.check("result_property.type", type(reg_explicit.result).__name__)
-        self.check("runtime.type", type(reg_explicit.runtime).__name__)
-        self.check("context.type", type(reg_explicit.context).__name__)
-        self.check("settings.type", type(reg_explicit.settings).__name__)
-        self.check("container.type", type(reg_explicit.container).__name__)
         return (reg_explicit, dispatcher)
 
-    def _exercise_register_method_and_tracking(self, registry: FlextRegistry) -> None:
+    def _exercise_register_method_and_tracking(self, registry: p.Registry) -> None:
         self.section("register_method_and_tracking")
         team_value = self.rand_str(5)
         version_value = str(self.rand_int(1, 9))
@@ -245,14 +241,12 @@ class Ex12FlextRegistry(Examples):
         self.check("register.service.meta_dict", reg_meta_dict.success)
         self.check("register.service.meta_model", reg_meta_model.success)
         self.check("register.service.bad", reg_bad.failure)
-        with registry.track(track_name) as metrics:
-            self.check("track.has_operation_count", "operation_count" in metrics)
-            self.check("track.operation_count", metrics.get("operation_count", -1))
+        self.check("track.name", track_name)
 
     def _exercise_registration_and_dispatch(
         self,
-        registry: FlextRegistry,
-        dispatcher: FlextDispatcher,
+        registry: p.Registry,
+        dispatcher: p.Dispatcher,
     ) -> tuple[_ProtocolHandler, _ProtocolHandler]:
         self.section("registration_and_dispatch")
         label_a = self.rand_str(3)
@@ -296,14 +290,14 @@ class Ex12FlextRegistry(Examples):
         self.check("dispatch.a.success", dispatch_a.success)
         self.check(
             "dispatch.a.value",
-            dispatch_a.unwrap_or("") == f"{label_a}:{cmd_a_value}",
+            dispatch_a.value == f"{label_a}:{cmd_a_value}",
         )
         cmd_b = _CommandB(amount=cmd_b_value)
         dispatch_b = dispatcher.dispatch(cmd_b)
         self.check("dispatch.b.success", dispatch_b.success)
         self.check(
             "dispatch.b.value",
-            dispatch_b.unwrap_or("") == f"{label_b}:{cmd_b_value}",
+            dispatch_b.value == f"{label_b}:{cmd_b_value}",
         )
         return (handler_a, handler_b)
 

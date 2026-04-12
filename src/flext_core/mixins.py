@@ -28,7 +28,6 @@ from pydantic import ConfigDict, Field, PrivateAttr
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextLogger,
     c,
     e,
     m,
@@ -37,6 +36,7 @@ from flext_core import (
     t,
     u,
 )
+from flext_core.loggings import FlextLogger
 
 
 class FlextMixins(m.ArbitraryTypesModel):

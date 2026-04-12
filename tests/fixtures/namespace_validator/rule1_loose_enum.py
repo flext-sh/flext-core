@@ -15,3 +15,6 @@ class Status(StrEnum):
 
 class Rule1LooseEnumFixture:
     """Fixture demonstrating loose enum violation."""
+
+
+__all__ = []

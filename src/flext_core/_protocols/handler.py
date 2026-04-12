@@ -36,6 +36,7 @@ class FlextProtocolsHandler:
         def dispatch_message(
             self,
             message: FlextProtocolsBase.Routable,
+            operation: str = ...,
         ) -> FlextProtocolsResult.Result[t.RuntimeAtomic] | t.RuntimeAtomic | None: ...
 
     @runtime_checkable

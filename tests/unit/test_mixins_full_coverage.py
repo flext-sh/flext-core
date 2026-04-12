@@ -196,7 +196,7 @@ class TestMixinsFullCoverage:
             initial_context=None,
         )
         runtime = service._get_runtime()
-        tm.that(runtime, none=False)
+        assert runtime is not None
         tm.that(runtime_container.wired, none=False)
         with service.track("op") as metrics:
             cast("t.MutableContainerMapping", metrics)["duration_ms"] = 2.0

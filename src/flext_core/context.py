@@ -25,7 +25,8 @@ from typing import Annotated, ClassVar, Final, Self, overload
 
 from pydantic import Field, PrivateAttr
 
-from flext_core import FlextLogger, c, e, m, p, r, t, u
+from flext_core import c, e, m, p, r, t, u
+from flext_core.loggings import FlextLogger
 
 
 class FlextContext(m.ArbitraryTypesModel):
@@ -125,17 +126,8 @@ class FlextContext(m.ArbitraryTypesModel):
             empty_err: t.ContainerMapping = {}
             return empty_err
 
-    _metadata: m.Metadata = PrivateAttr()
-    _hooks: t.ContextHookMap = PrivateAttr(
-        default_factory=_empty_hooks,
-    )
-    _statistics: m.ContextStatistics = PrivateAttr(
-        default_factory=lambda: m.ContextStatistics(),
-    )
-    _active: bool = PrivateAttr(default=True)
-    _suspended: bool = PrivateAttr(default=False)
-    _scope_vars: MutableMapping[str, contextvars.ContextVar[t.ConfigMap | None]] = (
-        PrivateAttr()
+    _state: m.ContextRuntimeState = PrivateAttr(
+        default_factory=lambda: m.ContextRuntimeState.create_default(),
     )
 
     def __init__(self, **data: t.ValueOrModel) -> None:
@@ -157,25 +149,12 @@ class FlextContext(m.ArbitraryTypesModel):
                         root=dict(self.initial_data),
                     ),
                 )
-        self._metadata = m.Metadata()
-        self._hooks = {}
-        self._statistics = m.ContextStatistics()
-        self._active = True
-        self._suspended = False
-        self._scope_vars = {
-            c.ContextScope.GLOBAL: contextvars.ContextVar(
-                "flext_global_context",
-                default=None,
-            ),
-            c.ContextScope.USER: contextvars.ContextVar(
-                "flext_user_context",
-                default=None,
-            ),
-            c.ContextScope.SESSION: contextvars.ContextVar(
-                "flext_session_context",
-                default=None,
-            ),
-        }
+        metadata_model = (
+            context_data.metadata.model_copy()
+            if isinstance(context_data.metadata, m.Metadata)
+            else m.Metadata()
+        )
+        self._state = m.ContextRuntimeState.create_default(metadata=metadata_model)
         if context_data.data:
             self._update_contextvar(
                 c.ContextScope.GLOBAL,
@@ -302,9 +281,15 @@ class FlextContext(m.ArbitraryTypesModel):
 
         """
         if not key:
-            return r[bool].fail(c.ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED)
+            return r[bool].fail_op(
+                "validate context key",
+                c.ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED,
+            )
         if value is None:
-            return r[bool].fail(c.ERR_CONTEXT_VALUE_CANNOT_BE_NONE)
+            return r[bool].fail_op(
+                "validate context value",
+                c.ERR_CONTEXT_VALUE_CANNOT_BE_NONE,
+            )
         value_for_guard: t.RecursiveContainer = (
             FlextContext._to_normalized(
                 u.normalize_to_container(
@@ -318,7 +303,10 @@ class FlextContext(m.ArbitraryTypesModel):
             value_for_guard,
             (str, int, float, bool, list, dict, t.ConfigMap),
         ):
-            return r[bool].fail(c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE)
+            return r[bool].fail_op(
+                "validate context value serializable",
+                c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
+            )
         return r[bool].ok(True)
 
     def clear(self) -> None:
@@ -331,21 +319,15 @@ class FlextContext(m.ArbitraryTypesModel):
         data, resets metadata, and updates statistics.
 
         """
-        if not self._active:
+        if not self._state.active:
             return
-        for scope_name, ctx_var in self._scope_vars.items():
+        for scope_name, ctx_var in self._state.scope_vars.items():
             _ = ctx_var.set(t.ConfigMap(root={}))
             if scope_name == c.ContextScope.GLOBAL:
                 FlextLogger.structlog().contextvars.clear_contextvars()
-        self._metadata = m.Metadata()
-        self._statistics.clears += 1
-        operations = dict(self._statistics.operations)
-        clear_value = operations.get(c.ContextOperation.CLEAR.value)
-        if isinstance(clear_value, int):
-            operations[c.ContextOperation.CLEAR.value] = clear_value + 1
-            self._statistics = self._statistics.model_copy(
-                update={"operations": operations},
-            )
+        self._state = self._state.model_copy(
+            update={"metadata": m.Metadata()},
+        ).with_operation_update(c.ContextOperation.CLEAR.value)
 
     def clone(self) -> Self:
         """Create a clone of this context.
@@ -364,9 +346,12 @@ class FlextContext(m.ArbitraryTypesModel):
                     t.ConfigMap(root=dict(scope_dict)),
                     scope=scope_name,
                 )
-        cloned._metadata = self._metadata.model_copy()
-        statistics_copy: m.ContextStatistics = self._statistics.model_copy()
-        cloned._statistics = statistics_copy
+        cloned._state = cloned._state.model_copy(
+            update={
+                "metadata": self._state.metadata.model_copy(),
+                "statistics": self._state.statistics.model_copy(),
+            },
+        )
         return cloned
 
     def export(
@@ -391,8 +376,8 @@ class FlextContext(m.ArbitraryTypesModel):
         all_scopes = self._scope_payloads()
         all_data.update(dict(all_scopes))
         stats_dict_export: t.ConfigMap | None = None
-        if include_statistics and self._statistics:
-            stats_dict_export = t.ConfigMap(root=self._statistics.model_dump())
+        if include_statistics and self._state.statistics:
+            stats_dict_export = t.ConfigMap(root=self._state.statistics.model_dump())
         metadata_dict_export: t.ContainerMapping | None = None
         if include_metadata:
             metadata_dict_export = self._metadata_map()
@@ -491,17 +476,21 @@ class FlextContext(m.ArbitraryTypesModel):
             >>> value = context.get("key").unwrap_or("default")
 
         """
-        if not self._active:
-            return r[t.RuntimeAtomic].fail(c.ERR_CONTEXT_NOT_ACTIVE)
+        if not self._state.active:
+            return r[t.RuntimeAtomic].fail_op(
+                "get context value", c.ERR_CONTEXT_NOT_ACTIVE
+            )
         scope_data = self._contextvar_data(scope)
         if key not in scope_data:
-            return r[t.RuntimeAtomic].fail(
+            return r[t.RuntimeAtomic].fail_op(
+                "resolve context key",
                 f"Context key '{key}' not found in scope '{scope}'",
             )
         value = scope_data[key]
         self._update_statistics(c.ContextOperation.GET.value)
         if value is None:
-            return r[t.RuntimeAtomic].fail(
+            return r[t.RuntimeAtomic].fail_op(
+                "resolve context key value",
                 f"Context key '{key}' has None value in scope '{scope}'",
             )
 
@@ -535,11 +524,12 @@ class FlextContext(m.ArbitraryTypesModel):
             >>> value = context.resolve_metadata("key").unwrap_or("default")
 
         """
-        if key not in self._metadata.attributes:
-            return r[t.RuntimeAtomic].fail(
+        if key not in self._state.metadata.attributes:
+            return r[t.RuntimeAtomic].fail_op(
+                "resolve context metadata",
                 c.ERR_CONTEXT_METADATA_KEY_NOT_FOUND.format(key=key),
             )
-        raw_value: t.MetadataValue = self._metadata.attributes[key]
+        raw_value: t.MetadataValue = self._state.metadata.attributes[key]
         normalized_value: t.RuntimeAtomic = u.normalize_to_container(
             raw_value,
         )
@@ -558,7 +548,7 @@ class FlextContext(m.ArbitraryTypesModel):
             True if key exists, False otherwise
 
         """
-        if not self._active:
+        if not self._state.active:
             return False
         scope_data = self._contextvar_data(scope)
         return key in scope_data
@@ -572,11 +562,11 @@ class FlextContext(m.ArbitraryTypesModel):
             List of (key, value) tuples across all scopes
 
         """
-        if not self._active:
+        if not self._state.active:
             return []
         all_items: Sequence[tuple[str, t.RecursiveContainer]] = [
             item
-            for ctx_var in self._scope_vars.values()
+            for ctx_var in self._state.scope_vars.values()
             for item in self._narrow_contextvar_to_configuration_dict(
                 ctx_var.get(),
             ).items()
@@ -595,7 +585,7 @@ class FlextContext(m.ArbitraryTypesModel):
             Dictionary of scope names to their context variables.
 
         """
-        return self._scope_vars
+        return self._state.scope_vars
 
     def keys(self) -> t.StrSequence:
         """Get all keys in the context.
@@ -606,10 +596,10 @@ class FlextContext(m.ArbitraryTypesModel):
             List of all keys across all scopes
 
         """
-        if not self._active:
+        if not self._state.active:
             return list[str]()
         all_keys: set[str] = set()
-        for ctx_var in self._scope_vars.values():
+        for ctx_var in self._state.scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_keys.update(scope_dict.keys())
         return list(all_keys)
@@ -641,7 +631,7 @@ class FlextContext(m.ArbitraryTypesModel):
     ) -> t.ConfigMap | None:
         """Extract a ConfigMap from any supported merge source."""
         match other:
-            case FlextContext():
+            case _ if isinstance(other, p.Context):
                 exported_result = other.export(as_dict=True)
                 if u.pydantic_model(exported_result):
                     return None
@@ -680,12 +670,12 @@ class FlextContext(m.ArbitraryTypesModel):
             Self for chaining
 
         """
-        if not self._active:
+        if not self._state.active:
             return self
         exported_map = self._extract_config_map(other)
         if exported_map is None:
             return self
-        if isinstance(other, FlextContext):
+        if isinstance(other, p.Context):
             self._apply_scoped_merge(exported_map)
         else:
             self._update_contextvar(c.ContextScope.GLOBAL, exported_map)
@@ -693,7 +683,7 @@ class FlextContext(m.ArbitraryTypesModel):
 
     def remove(self, key: str, scope: str = c.ContextScope.GLOBAL) -> None:
         """Remove a key from the context."""
-        if not self._active:
+        if not self._state.active:
             return
         ctx_var = self._scope_var(scope)
         current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
@@ -751,8 +741,8 @@ class FlextContext(m.ArbitraryTypesModel):
             r[bool]: Success with True if set, failure with error message
 
         """
-        if not self._active:
-            return r[bool].fail(c.ERR_CONTEXT_NOT_ACTIVE)
+        if not self._state.active:
+            return r[bool].fail_op("set context value", c.ERR_CONTEXT_NOT_ACTIVE)
         if isinstance(key_or_data, t.ConfigMap):
             return self._apply_bulk(key_or_data, scope)
         return self._apply_single(key_or_data, value, scope)
@@ -766,10 +756,14 @@ class FlextContext(m.ArbitraryTypesModel):
 
         """
         normalized_value: t.MetadataValue = u.normalize_to_metadata(value)
-        updated_attributes = dict(self._metadata.attributes)
+        updated_attributes = dict(self._state.metadata.attributes)
         updated_attributes[key] = normalized_value
-        self._metadata = self._metadata.model_copy(
-            update={c.FIELD_ATTRIBUTES: updated_attributes},
+        self._state = self._state.model_copy(
+            update={
+                "metadata": self._state.metadata.model_copy(
+                    update={c.FIELD_ATTRIBUTES: updated_attributes},
+                ),
+            },
         )
 
     def validate_context(self) -> r[bool]:
@@ -781,9 +775,9 @@ class FlextContext(m.ArbitraryTypesModel):
             r[bool]: Success with True if valid, failure with error details
 
         """
-        if not self._active:
-            return r[bool].fail(c.ERR_CONTEXT_NOT_ACTIVE)
-        for ctx_var in self._scope_vars.values():
+        if not self._state.active:
+            return r[bool].fail_op("validate context", c.ERR_CONTEXT_NOT_ACTIVE)
+        for ctx_var in self._state.scope_vars.values():
             try:
                 scope_dict = self._narrow_contextvar_to_configuration_dict(
                     ctx_var.get(),
@@ -792,7 +786,10 @@ class FlextContext(m.ArbitraryTypesModel):
                 return e.fail_operation("validate context scope", exc)
             for key in scope_dict:
                 if not key:
-                    return r[bool].fail(c.ERR_CONTEXT_INVALID_KEY_FOUND)
+                    return r[bool].fail_op(
+                        "validate context key",
+                        c.ERR_CONTEXT_INVALID_KEY_FOUND,
+                    )
         return r[bool].ok(True)
 
     def values(self) -> t.ContainerList:
@@ -804,11 +801,11 @@ class FlextContext(m.ArbitraryTypesModel):
             List of all values across all scopes
 
         """
-        if not self._active:
+        if not self._state.active:
             empty_values: t.ContainerList = []
             return empty_values
         all_values: t.MutableContainerList = []
-        for ctx_var in self._scope_vars.values():
+        for ctx_var in self._state.scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_values.extend(scope_dict.values())
         return all_values
@@ -825,9 +822,9 @@ class FlextContext(m.ArbitraryTypesModel):
             event_data: Data to pass to hooks
 
         """
-        if event not in self._hooks:
+        if event not in self._state.hooks:
             return
-        hooks = self._hooks[event]
+        hooks = self._state.hooks[event]
         for hook in hooks:
             if callable(hook):
                 hook_data: t.Scalar
@@ -849,7 +846,7 @@ class FlextContext(m.ArbitraryTypesModel):
             Dictionary of all metadata (with custom_fields flattened)
 
         """
-        data = dict(self._metadata.model_dump())
+        data = dict(self._state.metadata.model_dump())
         custom_fields_raw = data.pop("custom_fields", {})
         custom_fields_dict: t.MutableContainerMapping = {}
         try:
@@ -886,10 +883,10 @@ class FlextContext(m.ArbitraryTypesModel):
             Dictionary mapping scope names to their data dictionaries
 
         """
-        if not self._active:
+        if not self._state.active:
             return {}
         scopes: MutableMapping[str, t.ContainerMapping] = {}
-        for scope_name, ctx_var in self._scope_vars.items():
+        for scope_name, ctx_var in self._state.scope_vars.items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
                 scopes[scope_name] = dict(scope_dict)
@@ -918,12 +915,8 @@ class FlextContext(m.ArbitraryTypesModel):
             ContextVar for the scope
 
         """
-        if scope not in self._scope_vars:
-            self._scope_vars[scope] = contextvars.ContextVar(
-                f"flext_{scope}_context",
-                default=None,
-            )
-        return self._scope_vars[scope]
+        self._state, scope_var = self._state.resolve_scope_var(scope)
+        return scope_var
 
     def _apply_bulk(self, data: t.ConfigMap, scope: str) -> r[bool]:
         """Set multiple values in the context from a ConfigMap."""
@@ -971,10 +964,16 @@ class FlextContext(m.ArbitraryTypesModel):
     ) -> r[bool]:
         """Set a single key-value pair in the context."""
         if value is None:
-            return r[bool].fail(c.ERR_CONTEXT_SINGLE_KEY_VALUE_REQUIRED)
+            return r[bool].fail_op(
+                "set single context value",
+                c.ERR_CONTEXT_SINGLE_KEY_VALUE_REQUIRED,
+            )
         validation_result = FlextContext._validate_update_inputs(key, value)
         if validation_result.failure:
-            return r[bool].fail(validation_result.error or c.ERR_VALIDATION_FAILED)
+            return r[bool].fail_op(
+                "validate context update inputs",
+                validation_result.error or c.ERR_VALIDATION_FAILED,
+            )
         try:
             ctx_var = self._scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
@@ -998,21 +997,9 @@ class FlextContext(m.ArbitraryTypesModel):
             operation: Operation name ('set', 'get', 'remove', etc')
 
         """
-        counter_attr: str = f"{operation}s"
-        update_fields: MutableMapping[str, t.ValueOrModel] = {}
-        if counter_attr in m.ContextStatistics.model_fields:
-            current_value = getattr(self._statistics, counter_attr, 0)
-            if isinstance(current_value, int):
-                update_fields[counter_attr] = current_value + 1
-        operations = dict(self._statistics.operations)
-        op_value = operations.get(operation)
-        if isinstance(op_value, int):
-            operations[operation] = op_value + 1
-            update_fields["operations"] = operations
-        if update_fields:
-            self._statistics = self._statistics.model_copy(update=update_fields)
+        self._state = self._state.with_operation_update(operation)
 
-    _container: p.Container | None = None
+    _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
 
     @classmethod
     def resolve_container(cls) -> p.Container:
@@ -1035,15 +1022,18 @@ class FlextContext(m.ArbitraryTypesModel):
             >>> result = container.get("service_name")
 
         """
-        if cls._container is None:
+        if (
+            not cls._container_state.configured
+            or cls._container_state.container is None
+        ):
             msg = c.ERR_RUNTIME_CONTAINER_NOT_INITIALIZED
             raise RuntimeError(msg)
-        return cls._container
+        return cls._container_state.container
 
     @classmethod
     def configure_container(cls, container: p.Container) -> None:
         """Set the global container instance."""
-        cls._container = container
+        cls._container_state = cls._container_state.with_container(container)
 
     class Variables:
         """Context variables using structlog as single source of truth."""
@@ -1203,17 +1193,13 @@ class FlextContext(m.ArbitraryTypesModel):
                 if u.scalar(service_value):
                     return r[t.Scalar].ok(service_value)
                 return r[t.Scalar].ok(str(service_value))
-            return r[t.Scalar].fail(
-                service_result.error
-                or e.render_template(
-                    "Service '{name}' not found",
-                    name=service_name,
-                    params=m.NotFoundErrorParams(
-                        resource_type="service",
-                        resource_id=service_name,
-                    ),
-                ),
-            )
+            if service_result.error:
+                return r[t.Scalar].fail_op(
+                    "fetch service from context container",
+                    service_result.error,
+                    error_code=service_result.error_code,
+                )
+            return e.fail_not_found("service", service_name)
 
         @staticmethod
         def register_service(

@@ -23,8 +23,6 @@ from dependency_injector import containers as di_containers, providers as di_pro
 from pydantic import BaseModel, ValidationError
 
 from flext_core import (
-    FlextDispatcher,
-    FlextLogger,
     FlextSettings,
     c,
     e,
@@ -35,6 +33,7 @@ from flext_core import (
     u,
 )
 from flext_core.context import FlextContext
+from flext_core.loggings import FlextLogger
 
 
 def _is_service_of_type[T: t.RegisterableService](
@@ -380,7 +379,7 @@ class FlextContainer(p.Container):
 
     @staticmethod
     def _auto_register_module_factories(
-        instance: FlextContainer,
+        instance: p.Container,
         caller_module: ModuleType,
     ) -> None:
         """Scan module for @d.factory() functions and register them."""
@@ -533,6 +532,7 @@ class FlextContainer(p.Container):
         self.sync_config_to_di()
         return self
 
+    @override
     def create_module_logger(
         self,
         module_name: str | None = None,
@@ -541,9 +541,9 @@ class FlextContainer(p.Container):
         service_version: str | None = None,
         correlation_id: str | None = None,
     ) -> p.Logger:
-        """Create a FlextLogger instance for the specified module.
+        """Create a module logger for the specified runtime scope.
 
-        This method provides direct access to FlextLogger without going through
+        This method provides direct access to the logger implementation without going through
         the generic DI resolution. Use this for logging needs instead of
         container.get("logger").
 
@@ -551,7 +551,7 @@ class FlextContainer(p.Container):
             module_name: Module name for the logger. Defaults to "flext_core".
 
         Returns:
-            A FlextLogger instance configured for the specified module.
+            A protocol-typed logger configured for the specified module.
 
         """
         return FlextLogger.create_module_logger(
@@ -676,6 +676,7 @@ class FlextContainer(p.Container):
             name in self._services or name in self._factories or name in self._resources
         )
 
+    @override
     def initialize_di_components(self) -> None:
         """Initialize DI components (bridge, services, resources, container).
 
@@ -719,6 +720,7 @@ class FlextContainer(p.Container):
         di_container.settings = config_provider
         self._config_provider = config_provider
 
+    @override
     def initialize_registrations(
         self,
         *,
@@ -866,6 +868,7 @@ class FlextContainer(p.Container):
             _ = exc
             return self
 
+    @override
     def register_core_services(self) -> None:
         """Auto-register core services for easy DI access.
 
@@ -913,7 +916,7 @@ class FlextContainer(p.Container):
         ):
             _ = self.register(c.FIELD_CONTEXT, self._context)
         if not self.has_service(c.ServiceName.COMMAND_BUS):
-            dispatcher = FlextDispatcher()
+            dispatcher = u.build_dispatcher()
             dispatcher_candidate = dispatcher
             if not u.registerable_service(dispatcher_candidate):
                 return
@@ -934,6 +937,7 @@ class FlextContainer(p.Container):
                 setattr(self._di_bridge, dispatcher_name, provider)
                 setattr(self._di_container, dispatcher_name, provider)
 
+    @override
     def register_existing_providers(self) -> None:
         """Hydrate the dynamic container with current registrations."""
         for name, registration in self._services.items():
@@ -1065,6 +1069,7 @@ class FlextContainer(p.Container):
             }),
         )
 
+    @override
     def sync_config_to_di(self) -> None:
         """Synchronize FlextSettings to DI providers.Configuration.
 
@@ -1107,7 +1112,7 @@ class FlextContainer(p.Container):
             settings_class = FlextSettings.resolve_namespace_settings(namespace)
             if settings_class is None:
                 continue
-            settings_class_non_null: t.ModelClass[t.ModelCarrier] = settings_class
+            settings_class_non_null: t.SettingsClass = settings_class
             namespace_factory: t.FactoryCallable = partial(
                 FlextSettings.fetch_global().fetch_namespace,
                 namespace,
@@ -1121,6 +1126,7 @@ class FlextContainer(p.Container):
                     kind=c.ContainerKind.FACTORY,
                 )
 
+    @override
     def unregister(self, name: str) -> r[bool]:
         """Remove a service or factory registration by name."""
         removed = False

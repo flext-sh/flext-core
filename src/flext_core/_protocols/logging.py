@@ -82,6 +82,12 @@ class FlextProtocolsLogging:
             ...
 
     @runtime_checkable
+    class HasLogger(Protocol):
+        """Protocol for values that expose a canonical logger attribute."""
+
+        logger: FlextProtocolsLogging.Logger
+
+    @runtime_checkable
     class OutputLogger(Protocol):
         """Protocol for raw structlog wrapped loggers returned by logger factories."""
 

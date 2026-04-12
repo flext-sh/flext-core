@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from types import ModuleType
 from typing import ClassVar, Unpack, override
 
@@ -74,15 +74,10 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             error_msg = c.ERR_HANDLER_INVALID_MODE.format(mode=handler_type)
             raise e.ValidationError(error_msg)
         handler_mode_literal = self._handler_type_to_literal(handler_type)
-        self._execution_context = m.ExecutionContext.create_for_handler(
+        self._runtime_state = m.HandlerRuntimeState.create_for_handler(
             handler_name=self._config_model.handler_name,
             handler_mode=handler_mode_literal,
         )
-        self._accepted_message_types: Sequence[type] = []
-        self._revalidate_pydantic_messages: bool = False
-        self._type_warning_emitted: bool = False
-        self._metrics: MutableMapping[str, t.MetadataAttributeValue] = {}
-        self._stack: MutableSequence[m.ExecutionContext | t.ConfigMap] = []
 
     def __call__(self, message: MessageT_contra) -> r[ResultT]:
         """Callable interface for seamless dispatcher integration."""
@@ -123,7 +118,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             str: The handler name
 
         """
-        return self._config_model.handler_name
+        return self._runtime_state.handler_name
 
     @property
     def mode(self) -> c.HandlerType:
@@ -133,7 +128,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             c.HandlerType: The handler mode (command, query, event, saga)
 
         """
-        return self._config_model.handler_mode
+        return self._runtime_state.handler_mode
 
     @classmethod
     def create_from_callable(
@@ -187,13 +182,19 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             def handle(self, message: t.Scalar) -> r[t.Scalar]:
                 """Execute the wrapped callable."""
                 if isinstance(message, tuple):
-                    return r[t.Scalar].fail(c.ERR_UNEXPECTED_MESSAGE_TYPE)
+                    return r[t.Scalar].fail_op(
+                        "validate callable handler message type",
+                        c.ERR_UNEXPECTED_MESSAGE_TYPE,
+                    )
                 try:
                     result = self._handler_fn(message)
                     if isinstance(result, r):
                         return result
                     if isinstance(result, set):
-                        return r[t.Scalar].fail(c.ERR_RESULT_NOT_SCALAR_COMPATIBLE)
+                        return r[t.Scalar].fail_op(
+                            "normalize callable handler result",
+                            c.ERR_RESULT_NOT_SCALAR_COMPATIBLE,
+                        )
                     return r[t.Scalar].ok(result)
                 except (
                     ValueError,
@@ -203,7 +204,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                     RuntimeError,
                 ) as exc:
                     self.logger.debug("Callable handler execution failed", exc_info=exc)
-                    return r[t.Scalar].fail(str(exc))
+                    return r[t.Scalar].fail_op("execute callable handler", exc)
 
         if handler_config is not None:
             return CallableHandler(handler_fn=handler_callable, settings=handler_config)
@@ -377,7 +378,10 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """
         validation = self.validate_message(message)
         if validation.failure:
-            return r[ResultT].fail(validation.error or "Validation failed")
+            return r[ResultT].fail_op(
+                "execute handler validation",
+                validation.error or c.ERR_VALIDATION_FAILED,
+            )
         return self.handle(message)
 
     def handle(self, message: MessageT_contra) -> r[ResultT]:
@@ -403,64 +407,24 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     def pop_context(self) -> r[t.ConfigMap]:
         """Pop execution context from the local handler stack."""
-        if not self._stack:
-            return r[t.ConfigMap].ok(t.ConfigMap(root={}))
-        popped = self._stack.pop()
-        if isinstance(popped, m.ExecutionContext):
-            context_dict = t.ConfigMap(
-                root={
-                    "handler_name": popped.handler_name,
-                    c.FIELD_HANDLER_MODE: popped.handler_mode,
-                },
+        result = self._runtime_state.pop_context()
+        if result.failure:
+            return r[t.ConfigMap].fail_op(
+                "pop handler context",
+                result.error or c.ERR_HANDLER_FAILED,
             )
-            return r[t.ConfigMap].ok(context_dict)
-        return r[t.ConfigMap].ok(popped)
+        return r[t.ConfigMap].ok(t.ConfigMap(root=dict(result.value)))
 
     def push_context(
         self,
         ctx: m.ExecutionContext | t.ContainerMapping,
     ) -> r[bool]:
         """Push execution context onto the local handler stack."""
-        if isinstance(ctx, m.ExecutionContext):
-            self._stack.append(ctx)
-            return r[bool].ok(True)
-        handler_name_raw = ctx.get("handler_name", c.IDENTIFIER_UNKNOWN)
-        handler_name = (
-            str(handler_name_raw)
-            if handler_name_raw is not None
-            else c.IDENTIFIER_UNKNOWN
-        )
-        handler_mode_raw = ctx.get(
-            c.FIELD_HANDLER_MODE,
-            c.HandlerType.OPERATION,
-        )
-        handler_mode_str = (
-            str(handler_mode_raw)
-            if handler_mode_raw is not None
-            else c.HandlerType.OPERATION
-        )
-        handler_mode_literal: c.HandlerType = (
-            c.HandlerType.COMMAND
-            if handler_mode_str == c.HandlerType.COMMAND
-            else c.HandlerType.QUERY
-            if handler_mode_str == c.HandlerType.QUERY
-            else c.HandlerType.EVENT
-            if handler_mode_str == c.HandlerType.EVENT
-            else c.HandlerType.SAGA
-            if handler_mode_str == "saga"
-            else c.HandlerType.OPERATION
-        )
-        execution_ctx = m.ExecutionContext.create_for_handler(
-            handler_name=handler_name,
-            handler_mode=handler_mode_literal,
-        )
-        self._stack.append(execution_ctx)
-        return r[bool].ok(True)
+        return self._runtime_state.push_context(ctx)
 
     def record_metric(self, name: str, value: t.MetadataAttributeValue) -> r[bool]:
         """Record a metric value in the current handler state."""
-        self._metrics[name] = value
-        return r[bool].ok(True)
+        return self._runtime_state.record_metric(name, value)
 
     def validate_message(self, data: MessageT_contra) -> r[bool]:
         """Validate input data using extensible validation pipeline.
@@ -490,7 +454,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         """
         if data is None:
-            return r[bool].fail(c.ERR_MESSAGE_CANNOT_BE_NONE)
+            return r[bool].fail_op(
+                "validate handler message", c.ERR_MESSAGE_CANNOT_BE_NONE
+            )
         return r[bool].ok(True)
 
     def _record_execution_metrics(
@@ -500,7 +466,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         error: str | None = None,
     ) -> None:
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
-        raw_time = self._execution_context.execution_time_ms
+        raw_time = self._runtime_state.execution_context.execution_time_ms
         exec_time = u.to_float(raw_time() if callable(raw_time) else raw_time)
         _ = self.record_metric("execution_time_ms", exec_time)
         _ = self.record_metric("success", success)
@@ -541,23 +507,23 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 handler_mode=handler_mode,
                 operation=operation,
             )
-            return r[ResultT].fail(error_msg)
+            return r[ResultT].fail_op("validate handler pipeline mode", error_msg)
         message_type = message.__class__
         if not self.can_handle(message_type):
             type_name = message_type.__name__
             error_msg = c.ERR_HANDLER_CANNOT_HANDLE_MESSAGE_TYPE.format(
                 type_name=type_name,
             )
-            return r[ResultT].fail(error_msg)
+            return r[ResultT].fail_op("validate handler message type", error_msg)
         validation = self.validate_message(message)
         if validation.failure:
             error_detail = validation.error or c.ERR_VALIDATION_FAILED
             error_msg = c.ERR_HANDLER_MESSAGE_VALIDATION_FAILED.format(
                 error=error_detail,
             )
-            return r[ResultT].fail(error_msg)
-        self._execution_context.start_execution()
-        _ = self.push_context(self._execution_context)
+            return r[ResultT].fail_op("validate handler message", error_msg)
+        self._runtime_state.start_execution()
+        _ = self.push_context(self._runtime_state.execution_context)
         try:
             result = self.handle(message)
             self._record_execution_metrics(success=result.success)
@@ -565,8 +531,10 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
             self.logger.warning(c.LOG_HANDLER_PIPELINE_FAILURE, exc_info=exc)
             self._record_execution_metrics(success=False, error=str(exc))
-            error_msg = c.ERR_HANDLER_CRITICAL_FAILURE.format(error=str(exc))
-            return r[ResultT].fail(error_msg)
+            return r[ResultT].fail_op(
+                "run handler pipeline",
+                c.ERR_HANDLER_CRITICAL_FAILURE.format(error=str(exc)),
+            )
         finally:
             _ = self.pop_context()
 

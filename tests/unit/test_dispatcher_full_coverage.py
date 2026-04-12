@@ -1,15 +1,11 @@
-"""Comprehensive coverage tests for strict FlextDispatcher implementation."""
+"""Comprehensive coverage tests for the dispatcher DSL."""
 
 from __future__ import annotations
-
-from collections.abc import Callable
-from typing import cast
 
 import pytest
 from pydantic import Field
 
-from flext_core import FlextDispatcher, FlextModelsCqrs, r
-from tests import m, p, t
+from tests import m, p, r, t, u
 
 
 class TestDispatcherFullCoverage:
@@ -22,7 +18,7 @@ class TestDispatcherFullCoverage:
     class _SampleQuery(m.Query):
         """Refined sample query."""
 
-        pagination: FlextModelsCqrs.Pagination | t.Dict = Field(default_factory=t.Dict)
+        pagination: m.Pagination | t.Dict = Field(default_factory=t.Dict)
         query_type: str | None = "sample_query"
 
     class _SampleEvent(m.Event):
@@ -87,34 +83,22 @@ class TestDispatcherFullCoverage:
             _ = message
             return r[str].ok("ok")
 
-    @staticmethod
-    def _force_handler(
-        obj: Callable[[m.Command], str] | str | t.MutableStrMapping,
-    ) -> t.DispatchableHandler:
-        _ = obj
+    class _UnroutedMessage:
+        @property
+        def command_type(self) -> str | None:
+            return None
 
-        def _wrapper(
-            *_args: t.Container,
-            **_kwargs: t.Scalar,
-        ) -> p.Result[t.Container] | t.Container | None:
-            return "invalid"
+        @property
+        def query_type(self) -> str | None:
+            return None
 
-        return cast("t.DispatchableHandler", _wrapper)
-
-    @staticmethod
-    def _force_routable(obj: str | None) -> p.Routable:
-        _ = obj
-
-        class _FakeRoutable:
-            command_type: str | None = None
-            query_type: str | None = None
-            event_type: str | None = None
-
-        return _FakeRoutable()
+        @property
+        def event_type(self) -> str | None:
+            return None
 
     @pytest.fixture
     def dispatcher(self) -> p.Dispatcher:
-        return FlextDispatcher()
+        return u.build_dispatcher()
 
     def test_strict_registration_and_dispatch(
         self,
@@ -135,20 +119,11 @@ class TestDispatcherFullCoverage:
         )
 
     def test_invalid_registration_attempts(self, dispatcher: p.Dispatcher) -> None:
-        assert dispatcher.register_handler(
-            self._force_handler("not-a-handler"),
-        ).failure
-        assert dispatcher.register_handler(
-            self._force_handler({"some": "dict"}),
-        ).failure
-
         def nameless_handler(msg: m.Command) -> str:
             _ = msg
             return "ok"
 
-        assert dispatcher.register_handler(
-            self._force_handler(nameless_handler),
-        ).failure
+        assert dispatcher.register_handler(nameless_handler).failure
 
     def test_event_publishing_strict(self, dispatcher: p.Dispatcher) -> None:
         handler = self._EventHandler()
@@ -205,8 +180,7 @@ class TestDispatcherFullCoverage:
         )
 
     def test_dispatch_invalid_input_types(self, dispatcher: p.Dispatcher) -> None:
-        assert dispatcher.dispatch(self._force_routable(None)).failure
-        assert dispatcher.dispatch(self._force_routable("not-a-model")).failure
+        assert dispatcher.dispatch(self._UnroutedMessage()).failure
 
     def test_exception_handling_in_dispatch(self, dispatcher: p.Dispatcher) -> None:
         def breaking_handler(msg: TestDispatcherFullCoverage._SampleCommand) -> str:

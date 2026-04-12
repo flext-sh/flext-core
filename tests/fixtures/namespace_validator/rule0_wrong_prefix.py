@@ -7,3 +7,6 @@ class RandomConstants:
     """Class without Flext prefix — VIOLATION."""
 
     VALUE = 42
+
+
+__all__ = []

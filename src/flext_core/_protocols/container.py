@@ -8,15 +8,19 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from types import ModuleType
-from typing import Protocol, Self, overload, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
 from flext_core import (
     FlextProtocolsBase,
     FlextProtocolsContext,
+    FlextProtocolsLogging,
     FlextProtocolsResult,
     FlextProtocolsSettings,
     t,
 )
+
+if TYPE_CHECKING:
+    from flext_core import m
 
 
 class FlextProtocolsContainer:
@@ -160,17 +164,80 @@ class FlextProtocolsContainer:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...
 
+    class ContainerLifecycle(Container, Protocol):
+        """Extended container contract for bootstrap and lifecycle operations."""
+
+        def create_module_logger(
+            self,
+            module_name: str | None = None,
+            *,
+            service_name: str | None = None,
+            service_version: str | None = None,
+            correlation_id: str | None = None,
+        ) -> FlextProtocolsLogging.Logger:
+            """Create a logger bound to the current container runtime."""
+            ...
+
+        def initialize_di_components(self) -> None:
+            """Initialize DI bridge and backing containers."""
+            ...
+
+        def initialize_registrations(
+            self,
+            *,
+            services: Mapping[str, m.ServiceRegistration] | None = None,
+            factories: Mapping[str, m.FactoryRegistration] | None = None,
+            resources: Mapping[str, m.ResourceRegistration] | None = None,
+            global_config: m.ContainerConfig | None = None,
+            user_overrides: t.UserOverridesMapping | t.ConfigMap | None = None,
+            settings: FlextProtocolsSettings.Settings | None = None,
+            context: FlextProtocolsContext.Context | None = None,
+        ) -> None:
+            """Initialize explicit registrations and runtime-bound state."""
+            ...
+
+        def register_core_services(self) -> None:
+            """Register the canonical core service set into the container."""
+            ...
+
+        def register_existing_providers(self) -> None:
+            """Hydrate dependency providers from current registrations."""
+            ...
+
+        def sync_config_to_di(self) -> None:
+            """Synchronize validated configuration into DI providers."""
+            ...
+
+        def unregister(self, name: str) -> FlextProtocolsResult.Result[bool]:
+            """Remove a service, factory, or resource by name."""
+            ...
+
     @runtime_checkable
-    class ContainerType(Protocol):
-        """Protocol for concrete container classes exposing the canonical factory."""
+    class ContainerType[TContainer: Container = Container](Protocol):
+        """Protocol for concrete container classes exposing canonical factories."""
 
         @classmethod
         def create(
             cls,
             *,
             auto_register_factories: bool = False,
-        ) -> FlextProtocolsContainer.Container:
+        ) -> TContainer:
             """Create or return the canonical container instance."""
+            ...
+
+        @classmethod
+        def fetch_global(
+            cls,
+            *,
+            settings: FlextProtocolsSettings.Settings | None = None,
+            context: FlextProtocolsContext.Context | None = None,
+        ) -> TContainer:
+            """Return the process-global container instance."""
+            ...
+
+        @classmethod
+        def reset_for_testing(cls) -> None:
+            """Reset singleton container state for test/example isolation."""
             ...
 
 

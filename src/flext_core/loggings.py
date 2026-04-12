@@ -35,7 +35,6 @@ from structlog.types import Processor
 from structlog.typing import Context
 
 from flext_core import (
-    FlextRuntime,
     FlextUtilitiesCollection,
     FlextUtilitiesGenerators,
     FlextUtilitiesGuardsTypeCore,
@@ -47,6 +46,7 @@ from flext_core import (
     r,
     t,
 )
+from flext_core.runtime import FlextRuntime
 
 
 class FlextLogger(FlextRuntime):

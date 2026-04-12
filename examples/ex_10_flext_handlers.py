@@ -114,7 +114,7 @@ class Ex10FlextHandlers(Examples):
         )
         settings_h = h.create_from_callable(
             lambda message: f"cfg:{message}",
-            handler_settings=m.Handler(
+            handler_config=m.Handler(
                 handler_id=cfg_handler_id,
                 handler_name=cfg_handler_name,
                 handler_mode=c.HandlerType.SAGA,

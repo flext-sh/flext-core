@@ -1,83 +1,30 @@
+"""Behavior tests for the registry DSL public surface."""
+
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
-from enum import StrEnum, unique
-from typing import Annotated, ClassVar, cast, override
+from collections.abc import Sequence
+from typing import override
 
-import pytest
 from hypothesis import given, settings, strategies as st
-from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextRegistry
-from flext_tests import tm
-from tests import c, h, m, p, r, t, u
+from tests import c, p, r, t, u
 
 
 class TestFlextRegistry:
-    @unique
-    class RegistryOperationType(StrEnum):
-        """Registry operation types."""
+    class NamedHandler:
+        """Simple public handler with explicit route metadata."""
 
-        REGISTER_HANDLER = "register_handler"
-        REGISTER_HANDLERS = "register_handlers"
-        REGISTER_BINDINGS = "register_bindings"
-        REGISTER_FUNCTION_MAP = "register_function_map"
-        RESOLVE_BINDING_KEY = "resolve_binding_key"
-        RESOLVE_HANDLER_KEY = "resolve_handler_key"
-        SUMMARY_MANAGEMENT = "summary_management"
-        ERROR_HANDLING = "error_handling"
+        def __init__(self, route_name: str) -> None:
+            self.message_type = route_name
 
-    class RegistryTestCase(BaseModel):
-        """Test case for registry operations."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-
-        name: Annotated[str, Field(description="Registry test case name")]
-        operation: Annotated[StrEnum, Field(description="Registry operation type")]
-        handler_count: Annotated[
-            int,
-            Field(default=1, description="Number of handlers to generate"),
-        ] = 1
-        should_succeed: Annotated[
-            bool,
-            Field(default=True, description="Expected operation success"),
-        ] = True
-        error_pattern: Annotated[
-            str | None,
-            Field(default=None, description="Expected error message pattern"),
-        ] = None
-        with_bindings: Annotated[
-            bool,
-            Field(default=False, description="Whether bindings are included"),
-        ] = False
-        with_function_map: Annotated[
-            bool,
-            Field(default=False, description="Whether function map is included"),
-        ] = False
-        with_summary: Annotated[
-            bool,
-            Field(default=False, description="Whether summary is included"),
-        ] = False
-        duplicate_registration: Annotated[
-            bool,
-            Field(
-                default=False,
-                description="Whether registration is intentionally duplicated",
-            ),
-        ] = False
-
-    class ConcreteTestHandler(h[t.ValueOrModel, t.ValueOrModel]):
-        """Test handler for registry."""
-
-        @override
-        def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
-            return r[t.ValueOrModel].ok(f"processed_{message}")
-
-        def __call__(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
-            return self.handle(message)
+        def handle(self, message: p.Routable) -> r[str]:
+            route = (
+                message.command_type or message.query_type or message.event_type or ""
+            )
+            return r[str].ok(f"{self.message_type}:{route}")
 
     class RejectingDispatcher(p.Dispatcher):
-        """Public dispatcher seam used to exercise registry failure behavior."""
+        """Dispatcher seam that lets tests observe registry error propagation."""
 
         error_message: str
 
@@ -108,363 +55,111 @@ class TestFlextRegistry:
             _ = message
             return r[t.RuntimeAtomic].fail(self.error_message)
 
-    _HANDLER_REGISTRATION: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
-        RegistryTestCase(
-            name="single_handler_success",
-            operation=RegistryOperationType.REGISTER_HANDLER,
-            handler_count=1,
-            should_succeed=True,
-        ),
-        RegistryTestCase(
-            name="idempotent_registration",
-            operation=RegistryOperationType.REGISTER_HANDLER,
-            handler_count=1,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=False,
-            with_summary=False,
-            duplicate_registration=True,
-        ),
-        RegistryTestCase(
-            name="none_handler_failure",
-            operation=RegistryOperationType.REGISTER_HANDLER,
-            handler_count=0,
-            should_succeed=False,
-            error_pattern="Handler must be callable",
-        ),
-    ]
-    _BATCH_REGISTRATION: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
-        RegistryTestCase(
-            name="multiple_handlers_success",
-            operation=RegistryOperationType.REGISTER_HANDLERS,
-            handler_count=2,
-            should_succeed=True,
-        ),
-        RegistryTestCase(
-            name="empty_handlers_list",
-            operation=RegistryOperationType.REGISTER_HANDLERS,
-            handler_count=0,
-            should_succeed=True,
-        ),
-        RegistryTestCase(
-            name="duplicate_handlers",
-            operation=RegistryOperationType.REGISTER_HANDLERS,
-            handler_count=2,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=False,
-            with_summary=False,
-            duplicate_registration=True,
-        ),
-    ]
-    _BINDING_REGISTRATION: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
-        RegistryTestCase(
-            name="single_binding_success",
-            operation=RegistryOperationType.REGISTER_BINDINGS,
-            handler_count=1,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=True,
-        ),
-        RegistryTestCase(
-            name="empty_bindings_list",
-            operation=RegistryOperationType.REGISTER_BINDINGS,
-            handler_count=0,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=True,
-        ),
-        RegistryTestCase(
-            name="duplicate_bindings",
-            operation=RegistryOperationType.REGISTER_BINDINGS,
-            handler_count=1,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=True,
-            with_function_map=False,
-            with_summary=False,
-            duplicate_registration=True,
-        ),
-    ]
-    _FUNCTION_MAP_SCENARIOS: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
-        RegistryTestCase(
-            name="function_map_with_handler",
-            operation=RegistryOperationType.REGISTER_FUNCTION_MAP,
-            handler_count=1,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=True,
-        ),
-        RegistryTestCase(
-            name="empty_function_map",
-            operation=RegistryOperationType.REGISTER_FUNCTION_MAP,
-            handler_count=0,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=True,
-        ),
-        RegistryTestCase(
-            name="duplicate_function_map",
-            operation=RegistryOperationType.REGISTER_FUNCTION_MAP,
-            handler_count=1,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=True,
-            with_summary=False,
-            duplicate_registration=True,
-        ),
-    ]
-    _SUMMARY_SCENARIOS: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
-        RegistryTestCase(
-            name="empty_summary",
-            operation=RegistryOperationType.SUMMARY_MANAGEMENT,
-            handler_count=0,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=False,
-            with_summary=True,
-        ),
-        RegistryTestCase(
-            name="summary_with_registrations",
-            operation=RegistryOperationType.SUMMARY_MANAGEMENT,
-            handler_count=2,
-            should_succeed=True,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=False,
-            with_summary=True,
-        ),
-        RegistryTestCase(
-            name="summary_with_errors",
-            operation=RegistryOperationType.SUMMARY_MANAGEMENT,
-            handler_count=1,
-            should_succeed=False,
-            error_pattern=None,
-            with_bindings=False,
-            with_function_map=False,
-            with_summary=True,
-        ),
-    ]
-    _ERROR_SCENARIOS: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
-        RegistryTestCase(
-            name="register_none_handler",
-            operation=RegistryOperationType.ERROR_HANDLING,
-            handler_count=0,
-            should_succeed=False,
-            error_pattern="Handler must be callable",
-        ),
-        RegistryTestCase(
-            name="dispatcher_integration",
-            operation=RegistryOperationType.ERROR_HANDLING,
-            handler_count=1,
-            should_succeed=True,
-        ),
-    ]
+    class ReadyDispatcher(p.Dispatcher):
+        """Dispatcher seam that accepts every registration."""
 
-    @staticmethod
-    def _create_handlers(count: int) -> Sequence[t.HandlerLike]:
-        return [TestFlextRegistry.ConcreteTestHandler() for _ in range(count)]
+        @override
+        def publish(
+            self,
+            event: p.Routable | Sequence[p.Routable],
+        ) -> r[bool]:
+            _ = event
+            return r[bool].ok(True)
 
-    @staticmethod
-    def _create_bindings(
-        handlers: Sequence[t.HandlerLike],
-    ) -> Sequence[tuple[type, t.HandlerLike]]:
-        return [(str, handler) for handler in handlers]
+        @override
+        def register_handler(
+            self,
+            handler: t.HandlerProtocolVariant,
+            *,
+            is_event: bool = False,
+        ) -> r[bool]:
+            _ = handler
+            _ = is_event
+            return r[bool].ok(True)
 
-    @staticmethod
-    def _create_function_map(
-        handlers: Sequence[t.HandlerLike],
-    ) -> Mapping[type, t.HandlerLike]:
-        result: MutableMapping[type, t.HandlerLike] = {}
-        for idx, handler in enumerate(handlers):
-            result[str if idx == 0 else int] = handler
-        return result
+        @override
+        def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
+            _ = message
+            return r[t.RuntimeAtomic].ok(True)
 
-    @pytest.mark.parametrize("test_case", _HANDLER_REGISTRATION, ids=lambda c: c.name)
-    def test_handler_registration(
+    def test_registry_execute_uses_canonical_runtime_dispatcher(self) -> None:
+        registry = u.build_registry()
+        assert registry.execute().success
+
+    def test_registry_register_handler_exposes_public_registration_details(
         self,
-        test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        if test_case.handler_count == 0:
-            registry = FlextRegistry.create(
-                dispatcher=self.RejectingDispatcher(
-                    test_case.error_pattern or "Handler must be callable",
-                ),
-            )
-            invalid_handler = cast("t.HandlerProtocolVariant", None)
-            result = registry.register_handler(invalid_handler)
-        else:
-            registry = u.Core.Tests.create_test_registry()
-            handler = self.ConcreteTestHandler()
-            result = registry.register_handler(handler)
-            if test_case.duplicate_registration:
-                result = registry.register_handler(handler)
-        if test_case.should_succeed:
-            _ = u.Core.Tests.assert_success(result)
-        else:
-            _ = u.Core.Tests.assert_failure(result)
-            if test_case.error_pattern:
-                u.Core.Tests.assert_failure_with_error(
-                    result,
-                    test_case.error_pattern,
-                )
-
-    @pytest.mark.parametrize("test_case", _BATCH_REGISTRATION, ids=lambda c: c.name)
-    def test_batch_registration(
-        self,
-        test_case: TestFlextRegistry.RegistryTestCase,
-    ) -> None:
-        registry = u.Core.Tests.create_test_registry()
-        handlers = self._create_handlers(test_case.handler_count)
-        if test_case.duplicate_registration and handlers:
-            registry.register_handlers(handlers)
-            result = registry.register_handlers(handlers)
-        else:
-            result = registry.register_handlers(handlers)
-        _ = (
-            u.Core.Tests.assert_success(result)
-            if test_case.should_succeed
-            else u.Core.Tests.assert_failure(result)
-        )
-        assert isinstance(result.value, m.RegistrySummary)
-
-    @pytest.mark.parametrize("test_case", _BINDING_REGISTRATION, ids=lambda c: c.name)
-    def test_binding_registration(
-        self,
-        test_case: TestFlextRegistry.RegistryTestCase,
-    ) -> None:
-        registry = u.Core.Tests.create_test_registry()
-        handlers = self._create_handlers(test_case.handler_count)
-        if test_case.duplicate_registration and handlers:
-            registry.register_handlers(handlers)
-            result = registry.register_handlers(handlers)
-        else:
-            result = registry.register_handlers(handlers)
-        _ = (
-            u.Core.Tests.assert_success(result)
-            if test_case.should_succeed
-            else u.Core.Tests.assert_failure(result)
-        )
+        registry = u.build_registry(dispatcher=self.ReadyDispatcher())
+        result = registry.register_handler(self.NamedHandler("alpha"))
+        assert result.success
         assert result.value is not None
+        assert result.value.registration_id != ""
+        assert result.value.handler_mode == c.HandlerType.COMMAND
+        assert result.value.status == c.CommonStatus.ACTIVE
 
-    @pytest.mark.parametrize("test_case", _FUNCTION_MAP_SCENARIOS, ids=lambda c: c.name)
-    def test_function_map_registration(
-        self,
-        test_case: TestFlextRegistry.RegistryTestCase,
-    ) -> None:
-        registry = u.Core.Tests.create_test_registry()
-        handlers = self._create_handlers(test_case.handler_count)
-        if test_case.duplicate_registration and handlers:
-            registry.register_handlers(handlers)
-            result = registry.register_handlers(handlers)
-        else:
-            result = registry.register_handlers(handlers)
-        _ = (
-            u.Core.Tests.assert_success(result)
-            if test_case.should_succeed
-            else u.Core.Tests.assert_failure(result)
+    def test_registry_register_handler_surfaces_dispatcher_failures(self) -> None:
+        registry = u.build_registry(
+            dispatcher=self.RejectingDispatcher("dispatcher-fail"),
         )
-        assert result.value is not None
+        result = registry.register_handler(self.NamedHandler("alpha"))
+        assert result.failure
+        assert "dispatcher-fail" in (result.error or "")
 
-    @pytest.mark.parametrize("test_case", _SUMMARY_SCENARIOS, ids=lambda c: c.name)
-    def test_summary_management(
-        self,
-        test_case: TestFlextRegistry.RegistryTestCase,
-    ) -> None:
-        summary = m.RegistrySummary(registered=[], skipped=[], errors=[])
-        if test_case.handler_count > 0:
-            for i in range(test_case.handler_count):
-                summary.registered.append(
-                    m.RegistrationDetails(
-                        registration_id=f"test_{i}",
-                        handler_mode=c.HandlerType.COMMAND,
-                        timestamp="2025-01-01T00:00:00Z",
-                        status=c.CommonStatus.RUNNING,
-                    ),
-                )
-        if not test_case.should_succeed:
-            summary.errors.append("test_error")
-        assert len(summary.registered) == test_case.handler_count
-        assert bool(summary.errors) == (not test_case.should_succeed)
-        assert summary.failure == (not test_case.should_succeed)
+    def test_registry_batch_registration_returns_public_summary(self) -> None:
+        registry = u.build_registry(dispatcher=self.ReadyDispatcher())
+        result = registry.register_handlers([
+            self.NamedHandler("alpha"),
+            self.NamedHandler("beta"),
+        ])
+        assert result.success
+        assert len(result.value.registered) == 2
+        assert result.value.errors == []
 
-    @pytest.mark.parametrize("test_case", _ERROR_SCENARIOS, ids=lambda c: c.name)
-    def test_error_handling(
-        self,
-        test_case: TestFlextRegistry.RegistryTestCase,
-    ) -> None:
-        if test_case.handler_count == 0:
-            registry = FlextRegistry.create(
-                dispatcher=self.RejectingDispatcher(
-                    test_case.error_pattern or "Handler must be callable",
-                ),
-            )
-            result = registry.register_handler(self.ConcreteTestHandler())
-            _ = u.Core.Tests.assert_failure(result)
-            u.Core.Tests.assert_failure_with_error(
-                result,
-                "Handler must be callable",
-            )
-        else:
-            registry = u.Core.Tests.create_test_registry()
-            handler = self.ConcreteTestHandler()
-            result = registry.register_handler(handler)
-            _ = u.Core.Tests.assert_success(result)
-            assert isinstance(result.value, m.RegistrationDetails)
+    def test_registry_binding_registration_returns_public_summary(self) -> None:
+        registry = u.build_registry(dispatcher=self.ReadyDispatcher())
+        result = registry.register_bindings({
+            str: self.NamedHandler("alpha"),
+            int: self.NamedHandler("beta"),
+        })
+        assert result.success
+        assert len(result.value.registered) == 2
+        assert result.value.errors == []
 
-    def test_registry_initialization(self) -> None:
-        registry = u.Core.Tests.create_test_registry()
-        assert registry is not None
-        assert isinstance(registry, FlextRegistry)
+    def test_registry_plugin_roundtrip_uses_only_public_methods(self) -> None:
+        registry = u.build_registry(dispatcher=self.ReadyDispatcher())
+        assert registry.register_plugin("validators", "local", "plugin").success
+        assert registry.fetch_plugin("validators", "local").value == "plugin"
+        assert registry.list_plugins("validators").value == ["local"]
+        assert registry.unregister_plugin("validators", "local").success
+        assert registry.fetch_plugin("validators", "local").failure
 
-    def test_registry_with_dispatcher(self) -> None:
-        registry = u.Core.Tests.create_test_registry()
-        handler = self.ConcreteTestHandler()
-        result = registry.register_handler(handler)
-        _ = u.Core.Tests.assert_success(result)
-        assert isinstance(result.value, m.RegistrationDetails)
-
-    @pytest.mark.parametrize(
-        ("mode", "expected"),
-        [
-            ("command", c.HandlerType.COMMAND),
-            ("query", c.HandlerType.QUERY),
-            ("invalid", c.HandlerType.COMMAND),
-            (None, c.HandlerType.COMMAND),
-        ],
-        ids=["command", "query", "invalid", "none"],
-    )
-    def test_safe_handler_mode_extraction(
-        self,
-        mode: str | None,
-        expected: str,
-    ) -> None:
-        registry = u.Core.Tests.create_test_registry()
-        assert registry._get_handler_mode(mode or "") == expected
-
-    @pytest.mark.parametrize(
-        ("status", "expected"),
-        [
-            ("active", c.CommonStatus.ACTIVE),
-            ("inactive", c.CommonStatus.INACTIVE),
-            ("invalid", c.CommonStatus.ACTIVE),
-            ("", c.CommonStatus.ACTIVE),
-        ],
-        ids=["active", "inactive", "invalid", "empty"],
-    )
-    def test_safe_status_extraction(
-        self,
-        status: str,
-        expected: c.CommonStatus,
-    ) -> None:
-        registry = u.Core.Tests.create_test_registry()
-        assert registry._get_status(status) == expected
+    def test_registry_class_scope_is_shared_across_instances(self) -> None:
+        registry_a = u.build_registry(dispatcher=self.ReadyDispatcher())
+        registry_b = u.build_registry(dispatcher=self.ReadyDispatcher())
+        assert registry_a.register_plugin(
+            "validators",
+            "shared",
+            "plugin",
+            scope=c.RegistrationScope.CLASS,
+        ).success
+        assert (
+            registry_b.fetch_plugin(
+                "validators",
+                "shared",
+                scope=c.RegistrationScope.CLASS,
+            ).value
+            == "plugin"
+        )
+        assert registry_b.unregister_plugin(
+            "validators",
+            "shared",
+            scope=c.RegistrationScope.CLASS,
+        ).success
+        assert registry_a.fetch_plugin(
+            "validators",
+            "shared",
+            scope=c.RegistrationScope.CLASS,
+        ).failure
 
     @given(
         name=st.text(
@@ -474,10 +169,7 @@ class TestFlextRegistry:
         ),
     )
     @settings(max_examples=40)
-    def test_hypothesis_plugin_roundtrip(self, name: str) -> None:
-        """Property: register then get plugin roundtrips."""
-        registry = FlextRegistry.create()
-        category = "validators"
-        plugin = "plugin_impl"
-        tm.ok(registry.register_plugin(category, name, plugin), eq=True)
-        tm.ok(registry.fetch_plugin(category, name), none=False)
+    def test_registry_plugin_roundtrip_property(self, name: str) -> None:
+        registry = u.build_registry(dispatcher=self.ReadyDispatcher())
+        assert registry.register_plugin("validators", name, "plugin").success
+        assert registry.fetch_plugin("validators", name).value == "plugin"

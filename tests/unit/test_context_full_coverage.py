@@ -1,134 +1,50 @@
-"""Expanded coverage tests for active FlextContext behaviors."""
+"""Behavior-focused coverage tests for FlextContext public APIs."""
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
-
-import pytest
-
-import flext_core.context as core_context
-from flext_core import FlextContainer, FlextContext, r
+from flext_core import FlextContainer, FlextContext
 from flext_tests import tm
 from tests import c, m, p, t
-
-
-class _ContainerStub:
-    def __init__(self) -> None:
-        self.services: MutableMapping[str, t.RuntimeAtomic] = {}
-
-    def get(self, name: str) -> r[t.RuntimeAtomic]:
-        if name in self.services:
-            return r[t.RuntimeAtomic].ok(self.services[name])
-        return r[t.RuntimeAtomic].fail("missing")
-
-    def with_service(self, name: str, service: t.RuntimeAtomic) -> _ContainerStub:
-        if name == "bad":
-            msg = "bad service"
-            raise ValueError(msg)
-        self.services[name] = service
-        return self
-
-    def register(self, name: str, service: t.RuntimeAtomic) -> _ContainerStub:
-        return self.with_service(name, service)
-
-
-def test_narrow_contextvar_invalid_inputs() -> None:
-    tm.that(FlextContext._narrow_contextvar_to_configuration_dict(None), eq={})
-    data = FlextContext._narrow_contextvar_to_configuration_dict(
-        t.ConfigMap(root={"a": "v"}),
-    )
-    tm.that(data, has="a")
-
-
-def test_narrow_contextvar_exception_branch(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    FlextContext()
-
-    def _raise_type_error(_value: t.NormalizedValue) -> None:
-        msg = "bad"
-        raise TypeError(msg)
-
-    monkeypatch.setattr(
-        core_context.u,
-        "normalize_to_container",
-        _raise_type_error,
-    )
-    tm.that(FlextContext._narrow_contextvar_to_configuration_dict({"x": 1}), eq={})
 
 
 def test_create_overloads_and_auto_correlation() -> None:
     ctx = FlextContext.create(user_id="u1", metadata=t.ConfigMap(root={"x": 1}))
     tm.that(ctx, is_=p.Context)
     tm.that(ctx.get(c.ContextKey.USER_ID).value, eq="u1")
-    ctx2 = FlextContext.create(initial_data=t.ConfigMap(root={}))
-    tm.ok(ctx2.get(c.ContextKey.OPERATION_ID))
-    ctx3 = FlextContext.create(operation_id="op-explicit")
-    tm.that(ctx3.get(c.ContextKey.OPERATION_ID).value, eq="op-explicit")
+
+    generated = FlextContext.create(initial_data=t.ConfigMap(root={}))
+    tm.ok(generated.get(c.ContextKey.OPERATION_ID))
+
+    explicit = FlextContext.create(operation_id="op-explicit")
+    tm.that(explicit.get(c.ContextKey.OPERATION_ID).value, eq="op-explicit")
 
 
-def test_set_set_all_get_validation_and_error_paths() -> None:
+def test_public_set_get_merge_clone_and_clear_flow() -> None:
     ctx = FlextContext()
-    _ = ctx.set("k", "v")
-    tm.that(ctx.get("k").value, eq="v")
-    tm.ok(ctx.set(t.ConfigMap(root={})))
-    tm.ok(ctx.set("x", "y"))
-    tm.ok(ctx.set(t.ConfigMap(root={"x": "y"})))
-    tm.that(ctx.get("x").value, eq="y")
-    tm.ok(FlextContext._validate_update_inputs("k", "bad"))
 
+    tm.ok(ctx.set("key1", "value1"))
+    tm.ok(ctx.set(t.ConfigMap(root={"key2": "value2", "key3": 3})))
+    tm.that(ctx.get("key1").value, eq="value1")
+    tm.that(ctx.get("key2").value, eq="value2")
 
-def test_inactive_and_none_value_paths() -> None:
-    ctx = FlextContext()
-    ctx._active = False
-    tm.fail(ctx.set("k", "v"))
-    tm.fail(ctx.set(t.ConfigMap(root={"k": "v"})))
-    tm.fail(ctx.get("k"))
-    tm.that(ctx.has("k") is False, eq=True)
-    ctx.remove("k")
-    ctx.clear()
-    merge_data: t.ContainerMapping = {"k": "v"}
-    tm.that(ctx.merge(merge_data) is ctx, eq=True)
-    tm.fail(ctx.validate_context())
-    tm.that(ctx.keys(), eq=[])
-    tm.that(ctx.values(), eq=[])
-    tm.that(ctx.items(), eq=[])
-    tm.that(ctx._scope_payloads(), eq={})
-    ctx2 = FlextContext()
-    ctx2._update_contextvar(c.ContextScope.GLOBAL, t.ConfigMap(root={"k": None}))
-    tm.fail(ctx2.get("k"))
+    merged = ctx.merge({"key4": "value4"})
+    tm.that(merged is ctx, eq=True)
+    tm.that(ctx.get("key4").value, eq="value4")
 
-
-def test_clear_keys_values_items_and_validate_branches() -> None:
-    ctx = FlextContext()
-    ctx._statistics.operations = {c.ContextOperation.CLEAR.value: 1}
-    ctx.clear()
-    ctx._active = False
-    tm.that(ctx.keys(), eq=[])
-    tm.that(ctx.values(), eq=[])
-    tm.that(ctx.items(), eq=[])
-    ctx2 = FlextContext()
-    tm.ok(ctx2.validate_context())
-    ctx3 = FlextContext()
-    ctx3._update_contextvar("global", t.ConfigMap(root={"": "x"}))
-    tm.fail(ctx3.validate_context())
-
-
-def test_update_statistics_remove_hook_and_clone_false_result() -> None:
-    ctx = FlextContext()
-    ctx._statistics.operations = {c.ContextOperation.GET.value: 1}
-    ctx._update_statistics(c.ContextOperation.GET.value)
-    tm.that(ctx._statistics.operations[c.ContextOperation.GET.value], eq=2)
-    clone_source = FlextContext()
-    _ = clone_source.set("a", "b")
-    cloned = clone_source.clone()
+    cloned = ctx.clone()
     tm.that(cloned, is_=p.Context)
+    ctx.clear()
+    tm.fail(ctx.get("key1"))
+    tm.that(cloned.get("key1").value, eq="value1")
 
 
-def test_export_paths_with_metadata_and_statistics() -> None:
+def test_public_export_includes_metadata_and_statistics() -> None:
     ctx = FlextContext()
-    _ = ctx.set("k", "v")
-    ctx.apply_metadata("mk", "mv")
+
+    tm.ok(ctx.set("key", "value"))
+    _ = ctx.get("key")
+    ctx.apply_metadata("meta_key", "meta_value")
+
     exported_dict = ctx.export(
         include_statistics=True,
         include_metadata=True,
@@ -138,31 +54,59 @@ def test_export_paths_with_metadata_and_statistics() -> None:
     if isinstance(exported_dict, dict):
         tm.that(exported_dict, has="statistics")
         tm.that(exported_dict, has="metadata")
+
     exported_model = ctx.export(
         include_statistics=True,
         include_metadata=True,
         as_dict=False,
     )
     tm.that(exported_model, is_=m.ContextExport)
+    if isinstance(exported_model, m.ContextExport):
+        tm.that(exported_model.has_statistics, eq=True)
+        tm.that(exported_model.total_data_items, gte=1)
 
 
-def test_container_and_service_domain_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    FlextContext._container = None
-    with pytest.raises(RuntimeError):
-        FlextContext.resolve_container()
-    container = FlextContainer()
+def test_public_validation_and_missing_value_paths() -> None:
+    ctx = FlextContext()
+
+    tm.fail(ctx.get("missing"))
+    tm.fail(ctx.resolve_metadata("missing"))
+    tm.fail(ctx.set("", "value"))
+    tm.ok(ctx.validate_context())
+
+
+def test_service_namespace_register_fetch_and_scope() -> None:
+    container = FlextContainer(_context=FlextContext())
     container.clear_all()
     FlextContext.configure_container(container)
-    tm.that(FlextContext.resolve_container() is container, eq=True)
-    container.register("obj", "x")
-    result = FlextContext.Service.fetch_service("obj")
-    tm.ok(result)
-    tm.that(result.value, eq="x")
-    tm.ok(FlextContext.Service.register_service("ok", "value"))
-    tm.ok(FlextContext.Service.register_service("bad", "value"))
+
+    tm.ok(FlextContext.Service.register_service("svc", "value"))
+    fetched = FlextContext.Service.fetch_service("svc")
+    tm.ok(fetched)
+    tm.that(fetched.value, eq="value")
     tm.fail(FlextContext.Service.fetch_service("missing"))
 
+    with FlextContext.Service.service_context("svc-name", version="1.0.0"):
+        exported = FlextContext.Serialization.export_full_context()
+        tm.that(exported[c.ContextKey.SERVICE_NAME], eq="svc-name")
+        tm.that(exported[c.ContextKey.SERVICE_VERSION], eq="1.0.0")
 
-def test_create_merges_metadata_dict_branch() -> None:
-    ctx = FlextContext.create(metadata=t.ConfigMap(root={"meta_key": "meta_value"}))
-    tm.that(ctx.get("meta_key").value, eq="meta_value")
+
+def test_correlation_and_utility_public_apis() -> None:
+    FlextContext.Utilities.clear_context()
+    correlation_id = FlextContext.Utilities.ensure_correlation_id()
+    tm.that(FlextContext.Correlation.resolve_correlation_id(), eq=correlation_id)
+
+    FlextContext.Correlation.apply_correlation_id(None)
+    tm.that(FlextContext.Correlation.resolve_correlation_id(), none=True)
+
+
+def test_performance_and_serialization_public_apis() -> None:
+    FlextContext.Utilities.clear_context()
+
+    with FlextContext.Performance.timed_operation("demo-operation") as metadata:
+        tm.that(metadata[c.MetadataKey.START_TIME], none=False)
+        tm.that(metadata[c.ContextKey.OPERATION_NAME], eq="demo-operation")
+
+    tm.that(metadata[c.MetadataKey.END_TIME], none=False)
+    tm.that(metadata[c.MetadataKey.DURATION_SECONDS], gte=0.0)

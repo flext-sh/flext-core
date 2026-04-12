@@ -13,12 +13,12 @@ container.type: 'FlextContainer'
 validate_business_rules.default: True
 valid.default: True
 validate_business_rules.override.success: False
-validate_business_rules.override.error: 'invalid-rule'
+validate_business_rules.override.error: 'Failed to validate business_rule: E_RULE'
 valid.override: False
 valid.exception_guard: False
 result.failure.raises: False
 result.failure.raises: True
-result.failure.type: 'BaseError'
+result.failure.type: 'OperationError'
 auto_execute.declared: True
 auto_execute.execute_count_after_init: 1
 auto_execute.result: 'auto:1'

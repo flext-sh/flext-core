@@ -92,7 +92,7 @@ class TestHandlersFullCoverage:
         tuple_result = invalid_general.handle("('x', 'y')")
         assert tuple_result.success
 
-    def test_run_pipeline_query_and_event_paths(self) -> None:
+    def test_dispatch_message_query_and_event_paths(self) -> None:
         qh: TestHandlersFullCoverage._Handler = self._QueryHandler(
             settings=m.Handler(
                 handler_id="q2",
@@ -102,7 +102,7 @@ class TestHandlersFullCoverage:
             ),
         )
         query_message: t.ValueOrModel = "query"
-        qr = qh._run_pipeline(
+        qr = qh.dispatch_message(
             query_message,
             c.HandlerType.QUERY,
         )
@@ -116,7 +116,7 @@ class TestHandlersFullCoverage:
             ),
         )
         event_message: t.ValueOrModel = "event"
-        er = eh._run_pipeline(
+        er = eh.dispatch_message(
             event_message,
             c.HandlerType.EVENT.value,
         )

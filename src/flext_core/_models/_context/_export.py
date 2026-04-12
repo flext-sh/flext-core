@@ -63,10 +63,12 @@ class FlextModelsContextExport:
         ] = Field(default_factory=dict)
 
         @computed_field
+        @property
         def has_statistics(self) -> bool:
             return bool(self.statistics)
 
         @computed_field
+        @property
         def total_data_items(self) -> int:
             return len(self.data)
 

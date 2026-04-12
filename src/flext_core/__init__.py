@@ -24,6 +24,12 @@ if _t.TYPE_CHECKING:
     from flext_core._constants.platform import FlextConstantsPlatform
     from flext_core._constants.settings import FlextConstantsSettings
     from flext_core._constants.validation import FlextConstantsValidation
+    from flext_core._exceptions.base import FlextExceptionsBase
+    from flext_core._exceptions.factories import FlextExceptionsFactories
+    from flext_core._exceptions.helpers import FlextExceptionsHelpers
+    from flext_core._exceptions.metrics import FlextExceptionsMetrics
+    from flext_core._exceptions.template import FlextExceptionsTemplate
+    from flext_core._exceptions.types import FlextExceptionsTypes
     from flext_core._models._context._data import FlextModelsContextData
     from flext_core._models._context._export import FlextModelsContextExport
     from flext_core._models._context._metadata import FlextModelsContextMetadata
@@ -98,17 +104,13 @@ if _t.TYPE_CHECKING:
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
     from flext_core.decorators import FlextDecorators, d
-    from flext_core.dispatcher import FlextDispatcher
     from flext_core.exceptions import FlextExceptions, e
     from flext_core.handlers import FlextHandlers, h
     from flext_core.lazy import FlextLazy, build_lazy_import_map, lazy
-    from flext_core.loggings import FlextLogger
     from flext_core.mixins import FlextMixins, x
     from flext_core.models import FlextModels, m
     from flext_core.protocols import FlextProtocols, p
-    from flext_core.registry import FlextRegistry
     from flext_core.result import FlextResult, r
-    from flext_core.runtime import FlextRuntime
     from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
@@ -136,6 +138,7 @@ if _t.TYPE_CHECKING:
 _LAZY_IMPORTS = merge_lazy_imports(
     (
         "._constants",
+        "._exceptions",
         "._models",
         "._protocols",
         "._typings",
@@ -163,7 +166,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextDecorators",
                 "d",
             ),
-            ".dispatcher": ("FlextDispatcher",),
             ".exceptions": (
                 "FlextExceptions",
                 "e",
@@ -177,7 +179,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "build_lazy_import_map",
                 "lazy",
             ),
-            ".loggings": ("FlextLogger",),
             ".mixins": (
                 "FlextMixins",
                 "x",
@@ -190,12 +191,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextProtocols",
                 "p",
             ),
-            ".registry": ("FlextRegistry",),
             ".result": (
                 "FlextResult",
                 "r",
             ),
-            ".runtime": ("FlextRuntime",),
             ".service": (
                 "FlextService",
                 "s",
@@ -229,6 +228,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
         },
     ),
     exclude_names=(
+        "FlextDispatcher",
+        "FlextLogger",
+        "FlextRegistry",
+        "FlextRuntime",
         "cleanup_submodule_namespace",
         "install_lazy_exports",
         "lazy_getattr",
@@ -262,12 +265,16 @@ __all__ = [
     "FlextContainer",
     "FlextContext",
     "FlextDecorators",
-    "FlextDispatcher",
     "FlextExceptions",
+    "FlextExceptionsBase",
+    "FlextExceptionsFactories",
+    "FlextExceptionsHelpers",
+    "FlextExceptionsMetrics",
+    "FlextExceptionsTemplate",
+    "FlextExceptionsTypes",
     "FlextGenericModels",
     "FlextHandlers",
     "FlextLazy",
-    "FlextLogger",
     "FlextMixins",
     "FlextModels",
     "FlextModelsBase",
@@ -304,9 +311,7 @@ __all__ = [
     "FlextProtocolsResult",
     "FlextProtocolsService",
     "FlextProtocolsSettings",
-    "FlextRegistry",
     "FlextResult",
-    "FlextRuntime",
     "FlextService",
     "FlextSettings",
     "FlextTypes",

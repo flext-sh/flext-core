@@ -9,7 +9,7 @@ from typing import override
 
 from pydantic import BaseModel
 
-from examples import c, m, t, u
+from examples import c, m, p, t, u
 from flext_core import FlextContainer, FlextContext, d, e, r
 
 from .shared import Examples

@@ -17,11 +17,12 @@ type LazyImportMap = dict[str, LazyImportEntry]
 
 REAL_SYMBOLS: tuple[str, ...] = (
     "FlextConstants",
-    "FlextDispatcher",
+    "FlextContainer",
+    "FlextContext",
     "FlextModels",
     "FlextProtocols",
-    "FlextRuntime",
     "FlextService",
+    "FlextSettings",
     "FlextUtilities",
     "c",
     "m",
@@ -39,8 +40,8 @@ EXTRA_INSTALL_MAPS: tuple[LazyImportMap, ...] = (
     },
     {
         "_svc": ".service:FlextService",
-        "_dispatch": ".dispatcher:FlextDispatcher",
-        "_runtime": ".runtime:FlextRuntime",
+        "_container": ".container:FlextContainer",
+        "_context": ".context:FlextContext",
     },
     {
         "_const": ".constants:FlextConstants",

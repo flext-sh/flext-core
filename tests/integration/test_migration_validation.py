@@ -24,8 +24,6 @@ from pydantic import BaseModel as PydanticBaseModel, PrivateAttr
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextDispatcher,
-    FlextRegistry,
     FlextSettings,
 )
 from tests import (
@@ -148,17 +146,20 @@ class TestMigrationValidation:
         assert m is not None
         assert s is not None
         assert callable(u.create_module_logger)
+        assert callable(u.build_dispatcher)
+        assert callable(u.build_registry)
         assert FlextSettings is not None
         assert c is not None
         assert FlextContext is not None
-        assert FlextDispatcher is not None
         assert e is not None
         assert h is not None
         assert x is not None
         assert p is not None
-        assert FlextRegistry is not None
         assert t is not None
         assert u is not None
+
+        assert isinstance(u.build_dispatcher(), p.Dispatcher)
+        assert isinstance(u.build_registry(), p.Registry)
 
     def test_flext_result_all_methods(self) -> None:
         """Verify all r methods work correctly."""

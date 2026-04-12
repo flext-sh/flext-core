@@ -1,8 +1,9 @@
-"""FlextDispatcher — exercises ALL public API methods with golden file validation."""
+"""Dispatcher DSL example with golden-file validation."""
 
 from __future__ import annotations
 
 from collections.abc import MutableSequence
+from logging import ERROR
 from typing import override
 
 from pydantic import BaseModel
@@ -18,14 +19,15 @@ from examples import (
     Ex04UnknownQuery,
     Ex04UserCreated,
     p,
+    r,
     t,
+    u,
 )
 from examples.shared import Examples
-from flext_core import FlextDispatcher, r
 
 
 class Ex04FlextDispatcher(Examples):
-    """Golden-file tests for ``FlextDispatcher`` public API."""
+    """Golden-file tests for the canonical dispatcher DSL."""
 
     class CreateUserHandler:
         """Handle handler for CreateUser commands."""
@@ -50,8 +52,13 @@ class Ex04FlextDispatcher(Examples):
             """Bind dispatcher to GetUser query type."""
             self.message_type = Ex04GetUser
 
-        def dispatch_message(self, message: p.Routable) -> t.Container | BaseModel:
+        def dispatch_message(
+            self,
+            message: p.Routable,
+            operation: str = "dispatch_message",
+        ) -> t.Container | BaseModel:
             """Return deterministic user payload for GetUser."""
+            _ = operation
             typed_message = Ex04GetUser.model_validate(message)
             return t.ConfigMap(
                 root={"state": "active", "username": typed_message.username},
@@ -83,7 +90,10 @@ class Ex04FlextDispatcher(Examples):
         def __call__(self, message: p.Routable) -> r[str]:
             """Reject deletion to exercise dispatcher failure handling."""
             typed_message = Ex04FailingDelete.model_validate(message)
-            return r[str].fail(f"deletion blocked for {typed_message.username}")
+            return r[str].fail_op(
+                "delete user",
+                f"deletion blocked for {typed_message.username}",
+            )
 
     class PingCallable:
         """Callable handler that returns a bare value."""
@@ -137,8 +147,13 @@ class Ex04FlextDispatcher(Examples):
             self.message_type = "user_created"
             self.events: MutableSequence[str] = []
 
-        def dispatch_message(self, message: p.Routable) -> t.Container | BaseModel:
+        def dispatch_message(
+            self,
+            message: p.Routable,
+            operation: str = "dispatch_message",
+        ) -> t.Container | BaseModel:
             """Store audit entries when receiving UserCreated."""
+            _ = operation
             typed_message = Ex04UserCreated.model_validate(message)
             self.events.append(f"audit:{typed_message.username}")
             return True
@@ -150,6 +165,7 @@ class _Ex04Exercise(Ex04FlextDispatcher):
     @override
     def exercise(self) -> None:
         """Run all scenarios and record deterministic golden output."""
+        u.configure_structlog(log_level=ERROR)
         self._exercise_register_and_dispatch()
         self._exercise_auto_discovery()
         self._exercise_error_cases()
@@ -158,7 +174,7 @@ class _Ex04Exercise(Ex04FlextDispatcher):
     def _exercise_register_and_dispatch(self) -> None:
         """Cover constructor, register_handler and dispatch happy paths."""
         self.section("register_and_dispatch")
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         self.check("constructor.type", type(dispatcher).__name__)
         reg_handle = dispatcher.register_handler(self.CreateUserHandler())
         self.check("register(Handle).is_success", reg_handle.success)
@@ -187,7 +203,7 @@ class _Ex04Exercise(Ex04FlextDispatcher):
     def _exercise_auto_discovery(self) -> None:
         """Cover can_handle route discovery for dispatch fallback."""
         self.section("auto_discovery")
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         reg_auto = dispatcher.register_handler(self.AutoHandler())
         self.check("register(can_handle).is_success", reg_auto.success)
         auto_r = dispatcher.dispatch(Ex04AutoCommand(payload="fallback"))
@@ -197,7 +213,7 @@ class _Ex04Exercise(Ex04FlextDispatcher):
     def _exercise_error_cases(self) -> None:
         """Cover registration and dispatch failure paths."""
         self.section("error_cases")
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
 
         def _invalid_handler(message: p.Routable) -> str:
             """Return a value but lacks route metadata for registration."""
@@ -215,7 +231,7 @@ class _Ex04Exercise(Ex04FlextDispatcher):
     def _exercise_event_publishing(self) -> None:
         """Cover event registration and publish paths."""
         self.section("event_publishing")
-        dispatcher = FlextDispatcher()
+        dispatcher = u.build_dispatcher()
         subscriber = self.UserCreatedSubscriber()
         audit_subscriber = self.AuditSubscriber()
         reg_user = dispatcher.register_handler(subscriber, is_event=True)

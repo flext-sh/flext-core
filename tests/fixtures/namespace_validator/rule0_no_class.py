@@ -9,3 +9,5 @@ def helper() -> str:
 
 
 MAX_VALUE = 100
+
+__all__ = []

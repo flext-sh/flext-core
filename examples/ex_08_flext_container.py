@@ -6,7 +6,7 @@ import sys
 from types import ModuleType
 from typing import override
 
-from examples import c, t, u
+from examples import c, p, t, u
 from examples.shared import Examples
 from flext_core import FlextContainer, FlextContext, r
 
@@ -30,7 +30,7 @@ class Ex08FlextContainer(Examples):
         scoped_full = self._exercise_wiring_and_scoped(root)
         self._exercise_internal_and_cleanup(scoped_full, root)
 
-    def _exercise_fluent_and_settings(self, container: FlextContainer) -> None:
+    def _exercise_fluent_and_settings(self, container: p.Container) -> None:
         """Exercise fluent registration and configuration APIs."""
         self.section("fluent_and_settings")
         fluent_service_name = f"svc.{self.rand_str(6)}"
@@ -84,24 +84,36 @@ class Ex08FlextContainer(Examples):
         )
         self.check(
             "with_service.get.value_matches",
-            container.get(fluent_service_name, type_cls=str).unwrap_or("")
+            (
+                container.get(fluent_service_name, type_cls=str).value
+                if container.get(fluent_service_name, type_cls=str).success
+                else ""
+            )
             == fluent_service_value,
         )
         self.check(
             "with_factory.get.value_matches",
-            container.get(fluent_factory_name, type_cls=str).unwrap_or("")
+            (
+                container.get(fluent_factory_name, type_cls=str).value
+                if container.get(fluent_factory_name, type_cls=str).success
+                else ""
+            )
             == fluent_factory_value,
         )
         self.check(
             "with_resource.get.value_matches",
-            container.get(fluent_resource_name, type_cls=str).unwrap_or("")
+            (
+                container.get(fluent_resource_name, type_cls=str).value
+                if container.get(fluent_resource_name, type_cls=str).success
+                else ""
+            )
             == fluent_resource_value,
         )
 
     def _exercise_internal_and_cleanup(
         self,
-        container: FlextContainer,
-        root: FlextContainer,
+        container: p.ContainerLifecycle,
+        root: p.ContainerLifecycle,
     ) -> None:
         """Exercise lifecycle helpers and cleanup APIs."""
         self.section("internal_and_cleanup")
@@ -159,7 +171,7 @@ class Ex08FlextContainer(Examples):
             after_reset is FlextContainer.fetch_global(),
         )
 
-    def _exercise_registration_and_resolution(self, container: FlextContainer) -> None:
+    def _exercise_registration_and_resolution(self, container: p.Container) -> None:
         """Exercise register APIs plus get/get_typed/list/has checks."""
         self.section("registration_and_resolution")
         service_name = f"svc.{self.rand_str(6)}"
@@ -182,7 +194,12 @@ class Ex08FlextContainer(Examples):
         self.check("register.service.success", container.get(service_name).success)
         self.check(
             "register.service.stored_value_matches",
-            container.get(service_name, type_cls=int).unwrap_or(-1) == service_value,
+            (
+                container.get(service_name, type_cls=int).value
+                if container.get(service_name, type_cls=int).success
+                else -1
+            )
+            == service_value,
         )
         self.check("register.service.duplicate_returns_self", register_dup is container)
         self.check(
@@ -190,7 +207,12 @@ class Ex08FlextContainer(Examples):
             service_before_dup
             and service_after_dup
             and (
-                container.get(service_name, type_cls=int).unwrap_or(-1) == service_value
+                (
+                    container.get(service_name, type_cls=int).value
+                    if container.get(service_name, type_cls=int).success
+                    else -1
+                )
+                == service_value
             ),
         )
         self.check(
@@ -268,12 +290,22 @@ class Ex08FlextContainer(Examples):
         self.check("get.service.success", get_service.success)
         self.check(
             "get.service.value_matches",
-            container.get(service_name, type_cls=int).unwrap_or(-1) == service_value,
+            (
+                container.get(service_name, type_cls=int).value
+                if container.get(service_name, type_cls=int).success
+                else -1
+            )
+            == service_value,
         )
         self.check("get.factory.success", get_factory.success)
         self.check(
             "get.factory.value_first_call",
-            container.get(factory_name, type_cls=int).unwrap_or(-1) == 1,
+            (
+                container.get(factory_name, type_cls=int).value
+                if container.get(factory_name, type_cls=int).success
+                else -1
+            )
+            == 1,
         )
         self.check("get.resource.success", get_resource.success)
         self.check("get.resource.call_count_is_one", resource_calls["count"] == 1)
@@ -286,7 +318,8 @@ class Ex08FlextContainer(Examples):
         self.check("get_typed.service.success", get_typed_service.success)
         self.check(
             "get_typed.service.value_matches",
-            get_typed_service.unwrap_or(-1) == service_value,
+            (get_typed_service.value if get_typed_service.success else -1)
+            == service_value,
         )
         self.check(
             "get_typed.service.type_mismatch_failure",
@@ -307,7 +340,7 @@ class Ex08FlextContainer(Examples):
         self.check("list_services.contains.factory", factory_name in service_list)
         self.check("list_services.contains.resource", resource_name in service_list)
 
-    def _exercise_singleton_and_creation(self) -> p.Container:
+    def _exercise_singleton_and_creation(self) -> p.ContainerLifecycle:
         """Exercise fetch_global/create entrypoints and singleton semantics."""
         self.section("singleton_and_creation")
         FlextContainer.reset_for_testing()
@@ -333,7 +366,10 @@ class Ex08FlextContainer(Examples):
         self.check("constants.default_max_services", c.DEFAULT_SIZE)
         return root
 
-    def _exercise_wiring_and_scoped(self, container: FlextContainer) -> p.Container:
+    def _exercise_wiring_and_scoped(
+        self,
+        container: p.ContainerLifecycle,
+    ) -> p.ContainerLifecycle:
         """Exercise wire_modules and scoped with all supported parameter styles."""
         self.section("wiring_and_scoped")
         this_module: ModuleType = sys.modules[__name__]
@@ -374,8 +410,12 @@ class Ex08FlextContainer(Examples):
         )
         self.check(
             "scoped.default.get_typed_service_matches",
-            scoped_default.get(self._registered_service_name, type_cls=int).unwrap_or(
-                -1,
+            (
+                scoped_default.get(self._registered_service_name, type_cls=int).value
+                if scoped_default.get(
+                    self._registered_service_name, type_cls=int
+                ).success
+                else -1
             )
             == self._registered_service_value,
         )
@@ -403,12 +443,20 @@ class Ex08FlextContainer(Examples):
         )
         self.check(
             "scoped.full.get_service_matches",
-            scoped_full.get(scoped_service_name, type_cls=str).unwrap_or("")
+            (
+                scoped_full.get(scoped_service_name, type_cls=str).value
+                if scoped_full.get(scoped_service_name, type_cls=str).success
+                else ""
+            )
             == scoped_service_value,
         )
         self.check(
             "scoped.full.get_factory_matches",
-            scoped_full.get(scoped_factory_name, type_cls=int).unwrap_or(-1)
+            (
+                scoped_full.get(scoped_factory_name, type_cls=int).value
+                if scoped_full.get(scoped_factory_name, type_cls=int).success
+                else -1
+            )
             == scoped_factory_value,
         )
         self.check(

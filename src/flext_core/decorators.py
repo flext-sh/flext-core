@@ -18,12 +18,11 @@ from contextlib import suppress
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-from typing import Literal, NoReturn, ParamSpec, Protocol, TypeIs, TypeVar, overload
+from typing import Literal, NoReturn, ParamSpec, TypeIs, TypeVar, overload
 
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextLogger,
     c,
     e,
     m,
@@ -32,6 +31,7 @@ from flext_core import (
     t,
     u,
 )
+from flext_core.loggings import FlextLogger
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -47,20 +47,27 @@ class FlextDecorators:
     r, FlextContext, FlextLogger, and FlextContainer.
     """
 
+    type _LoggerCarrier = p.HasLogger | p.Logger | t.RuntimeAtomic | p.Model
+
     @staticmethod
     def _resolve_logger(
-        first_arg: p.Logger | t.RuntimeAtomic | None = None,
+        first_arg: p.Logger | FlextDecorators._LoggerCarrier | None = None,
         *,
-        func: Callable[..., t.RuntimeAtomic | None] | None = None,
+        func: t.DispatchableHandler | None = None,
+        func_module: str | None = None,
     ) -> p.Logger:
         """Resolve the logger associated with the decorated call."""
         if isinstance(first_arg, p.Logger):
             return first_arg
-        if hasattr(first_arg, "logger"):
-            logger_value = getattr(first_arg, "logger", None)
+        if first_arg is not None and FlextDecorators._has_flext_logger(first_arg):
+            logger_value = first_arg.logger
             if isinstance(logger_value, p.Logger):
                 return logger_value
-        module_name = func.__module__ if func is not None else __name__
+        module_name = (
+            func_module
+            if isinstance(func_module, str)
+            else (func.__module__ if callable(func) else __name__)
+        )
         return u.fetch_logger(module_name)
 
     @staticmethod
@@ -152,16 +159,17 @@ class FlextDecorators:
                 op_name: str = (
                     operation_name if operation_name is not None else func.__name__
                 )
-                first_arg = args[0] if args else None
-                if isinstance(first_arg, p.Logger):
-                    logger = first_arg
-                elif isinstance(
-                    first_arg,
-                    p.Model,
-                ) and FlextDecorators._has_flext_logger(first_arg):
-                    logger = first_arg.logger
-                else:
-                    logger = u.fetch_logger(func.__module__)
+                logger_carrier: FlextDecorators._LoggerCarrier | None = None
+                if args:
+                    first_arg_raw = args[0]
+                    if isinstance(
+                        first_arg_raw, (p.Logger, p.Model, *t.CONTAINER_TYPES)
+                    ) or FlextDecorators._has_flext_logger(first_arg_raw):
+                        logger_carrier = first_arg_raw
+                logger = FlextDecorators._resolve_logger(
+                    logger_carrier,
+                    func_module=func.__module__,
+                )
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
@@ -310,16 +318,17 @@ class FlextDecorators:
 
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                first_arg = args[0] if args else None
-                if isinstance(first_arg, p.Logger):
-                    logger = first_arg
-                elif isinstance(
-                    first_arg,
-                    p.Model,
-                ) and FlextDecorators._has_flext_logger(first_arg):
-                    logger = first_arg.logger
-                else:
-                    logger = u.fetch_logger(func.__module__)
+                logger_carrier: FlextDecorators._LoggerCarrier | None = None
+                if args:
+                    first_arg_raw = args[0]
+                    if isinstance(
+                        first_arg_raw, (p.Logger, p.Model, *t.CONTAINER_TYPES)
+                    ) or FlextDecorators._has_flext_logger(first_arg_raw):
+                        logger_carrier = first_arg_raw
+                logger = FlextDecorators._resolve_logger(
+                    logger_carrier,
+                    func_module=func.__module__,
+                )
                 retry_settings = m.RetryConfiguration.model_validate({
                     "max_retries": attempts,
                     "initial_delay_seconds": delay,
@@ -380,13 +389,6 @@ class FlextDecorators:
             return wrapper
 
         return decorator
-
-    class _HasLogger(Protocol):
-        """Protocol indicating a logger-carrying canonical value contract."""
-
-        logger: p.Logger
-
-    type _LoggerCarrier = _HasLogger | FlextLogger | t.RuntimeAtomic | p.Model
 
     @staticmethod
     def _bind_operation_context(
@@ -525,7 +527,7 @@ class FlextDecorators:
         result: r[bool] | p.Result[bool],
         logger: p.Logger,
         fallback_message: str,
-        kwargs: Mapping[str, t.ValueOrModel],
+        kwargs: t.ConfigMap | p.ConfigObject | Mapping[str, t.ValueOrModel],
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if not result.failure:
@@ -568,7 +570,7 @@ class FlextDecorators:
 
     @staticmethod
     def _flatten_settings_kwargs(
-        kwargs: Mapping[str, t.ValueOrModel],
+        kwargs: t.ConfigMap | p.ConfigObject | Mapping[str, t.ValueOrModel],
     ) -> MutableMapping[str, t.Container]:
         """Flatten one mapping into a flat warning-context dict."""
         context: MutableMapping[str, t.Container] = {}
@@ -593,12 +595,17 @@ class FlextDecorators:
 
     @staticmethod
     def _has_flext_logger(
-        value: _LoggerCarrier,
-    ) -> TypeIs[_HasLogger]:
+        value: t.OpaqueValue,
+    ) -> TypeIs[p.HasLogger]:
         if not hasattr(value, "logger"):
             return False
         logger_value = getattr(value, "logger", None)
-        return isinstance(logger_value, p.Logger)
+        return (
+            logger_value is not None
+            and hasattr(logger_value, "bind")
+            and hasattr(logger_value, "debug")
+            and hasattr(logger_value, "info")
+        )
 
     @staticmethod
     def _log_start(
@@ -705,7 +712,7 @@ class FlextDecorators:
     @staticmethod
     def _resolve_fallback_logger(logger: p.Logger) -> p.Logger | None:
         """Extract fallback logger from logger wrapper."""
-        if isinstance(logger, FlextLogger):
+        if FlextDecorators._has_flext_logger(logger):
             return logger.logger
         candidate: p.Logger | None = getattr(logger, "logger", None)
         if isinstance(candidate, p.Logger):
@@ -914,16 +921,17 @@ class FlextDecorators:
                 op_name: str = (
                     operation_name if operation_name is not None else func.__name__
                 )
-                first_arg = args[0] if args else None
-                if isinstance(first_arg, p.Logger):
-                    logger = first_arg
-                elif isinstance(
-                    first_arg,
-                    p.Model,
-                ) and FlextDecorators._has_flext_logger(first_arg):
-                    logger = first_arg.logger
-                else:
-                    logger = u.fetch_logger(func.__module__)
+                logger_carrier: FlextDecorators._LoggerCarrier | None = None
+                if args:
+                    first_arg_raw = args[0]
+                    if isinstance(
+                        first_arg_raw, (p.Logger, p.Model, *t.CONTAINER_TYPES)
+                    ) or FlextDecorators._has_flext_logger(first_arg_raw):
+                        logger_carrier = first_arg_raw
+                logger = FlextDecorators._resolve_logger(
+                    logger_carrier,
+                    func_module=func.__module__,
+                )
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
@@ -972,16 +980,17 @@ class FlextDecorators:
 
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                first_arg = args[0] if args else None
-                if isinstance(first_arg, p.Logger):
-                    logger = first_arg
-                elif isinstance(
-                    first_arg,
-                    p.Model,
-                ) and FlextDecorators._has_flext_logger(first_arg):
-                    logger = first_arg.logger
-                else:
-                    logger = u.fetch_logger(func.__module__)
+                logger_carrier: FlextDecorators._LoggerCarrier | None = None
+                if args:
+                    first_arg_raw = args[0]
+                    if isinstance(
+                        first_arg_raw, (p.Logger, p.Model, *t.CONTAINER_TYPES)
+                    ) or FlextDecorators._has_flext_logger(first_arg_raw):
+                        logger_carrier = first_arg_raw
+                logger = FlextDecorators._resolve_logger(
+                    logger_carrier,
+                    func_module=func.__module__,
+                )
                 try:
                     if context_vars:
                         filtered_vars: t.FlatContainerMapping = {

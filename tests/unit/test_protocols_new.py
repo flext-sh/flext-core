@@ -18,7 +18,7 @@ import pytest
 from pydantic import BaseModel
 
 from flext_tests import tm
-from tests import p, r, t, u
+from tests import e, p, r, t, u
 
 type ProtocolSubject = t.ProtocolSubject
 
@@ -569,6 +569,16 @@ class TestFlextProtocols:
         tm.that(instance.error_domain, eq="VALIDATION")
         tm.that(instance.matches_error_domain("VALIDATION"), eq=True)
         tm.that(instance.matches_error_domain("NETWORK"), eq=False)
+
+    def test_structured_error_concrete_exception_implementation(self) -> None:
+        """Public exceptions must satisfy the same structured error protocol."""
+        instance = e.ValidationError("Field required", field="email")
+        subject = _as_protocol_subject(instance)
+
+        tm.that(u.check_protocol_compliance(subject, p.StructuredError), eq=True)
+        tm.that(instance.error_domain, eq="VALIDATION")
+        tm.that(instance.error_message, eq="Field required")
+        tm.that(instance.matches_error_domain("VALIDATION"), eq=True)
 
     def test_error_domain_protocol_conformance(self) -> None:
         """Custom class with value/name attrs satisfies p.ErrorDomainProtocol."""

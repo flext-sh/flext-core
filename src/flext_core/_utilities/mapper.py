@@ -15,7 +15,6 @@ from typing import cast
 from pydantic import BaseModel
 
 from flext_core import (
-    FlextRuntime,
     FlextUtilitiesCache,
     FlextUtilitiesCollection,
     FlextUtilitiesGuards,
@@ -28,6 +27,7 @@ from flext_core import (
     r,
     t,
 )
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesMapper:
@@ -181,7 +181,8 @@ class FlextUtilitiesMapper:
     ) -> r[t.ValueOrModel]:
         """Wrap a raw value into a Result: fail on None, narrow containers, stringify rest."""
         if raw is None:
-            return r[t.ValueOrModel].fail(
+            return r[t.ValueOrModel].fail_op(
+                "resolve extracted value",
                 e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
             )
         if FlextUtilitiesGuards.container(raw):
@@ -201,7 +202,8 @@ class FlextUtilitiesMapper:
                     mapping_obj[key_part],
                     key_part,
                 )
-            return r[t.ValueOrModel].fail(
+            return r[t.ValueOrModel].fail_op(
+                "extract mapping key",
                 e.render_template(
                     c.ERR_TEMPLATE_KEY_NOT_FOUND,
                     key=key_part,
@@ -215,7 +217,8 @@ class FlextUtilitiesMapper:
                     mapping_obj[key_part],
                     key_part,
                 )
-            return r[t.ValueOrModel].fail(
+            return r[t.ValueOrModel].fail_op(
+                "extract config mapping key",
                 e.render_template(
                     c.ERR_TEMPLATE_KEY_NOT_FOUND,
                     key=key_part,
@@ -237,11 +240,13 @@ class FlextUtilitiesMapper:
                 if key_part in model_dict:
                     val = model_dict[key_part]
                     if val is None:
-                        return r[t.ValueOrModel].fail(
+                        return r[t.ValueOrModel].fail_op(
+                            "extract model key value",
                             e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
                         )
                     return r[t.ValueOrModel].ok(val)
-        return r[t.ValueOrModel].fail(
+        return r[t.ValueOrModel].fail_op(
+            "extract key",
             e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part),
         )
 
@@ -255,7 +260,10 @@ class FlextUtilitiesMapper:
         if isinstance(current, t.ObjectList):
             raw = current.root
         if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes)):
-            return r[t.ValueOrModel].fail(c.ERR_MAPPER_NOT_A_SEQUENCE)
+            return r[t.ValueOrModel].fail_op(
+                "extract array index",
+                c.ERR_MAPPER_NOT_A_SEQUENCE,
+            )
         sequence: Sequence[t.ValueOrModel] = raw
         try:
             idx = int(array_match)
@@ -264,16 +272,21 @@ class FlextUtilitiesMapper:
             if 0 <= idx < len(sequence):
                 item = sequence[idx]
                 if item is None:
-                    return r[t.ValueOrModel].fail(c.ERR_MAPPER_FOUND_NONE_INDEX)
+                    return r[t.ValueOrModel].fail_op(
+                        "extract array index value",
+                        c.ERR_MAPPER_FOUND_NONE_INDEX,
+                    )
                 return r[t.ValueOrModel].ok(item)
-            return r[t.ValueOrModel].fail(
+            return r[t.ValueOrModel].fail_op(
+                "extract array index",
                 e.render_template(
                     c.ERR_TEMPLATE_INDEX_OUT_OF_RANGE,
                     index=int(array_match),
                 ),
             )
         except (ValueError, IndexError):
-            return r[t.ValueOrModel].fail(
+            return r[t.ValueOrModel].fail_op(
+                "extract array index",
                 e.render_template(c.ERR_TEMPLATE_INVALID_INDEX, index=array_match),
             )
 
@@ -457,9 +470,10 @@ class FlextUtilitiesMapper:
     ) -> r[t.ValueOrModel]:
         """Return fail (required) or ok(default) / fail (no default) for extract paths."""
         if required:
-            return r[t.ValueOrModel].fail(msg)
+            return r[t.ValueOrModel].fail_op("extract required path", msg)
         if default is None:
-            return r[t.ValueOrModel].fail(
+            return r[t.ValueOrModel].fail_op(
+                "extract path default",
                 e.render_template(
                     c.ERR_TEMPLATE_MESSAGE_AND_DEFAULT_IS_NONE,
                     message=msg,
@@ -587,7 +601,8 @@ class FlextUtilitiesMapper:
             return r[t.ValueOrModel].ok(str(current))
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as exc:
             params = m.OperationErrorParams(operation="extract", reason=str(exc))
-            return r[t.ValueOrModel].fail(
+            return r[t.ValueOrModel].fail_op(
+                "extract path",
                 e.render_error_template(
                     c.ERR_TEMPLATE_EXTRACT_FAILED,
                     operation="extract",
@@ -634,7 +649,8 @@ class FlextUtilitiesMapper:
 
         mapped_result = r[t.MutableContainerMapping].create_from_callable(_map_keys)
         return mapped_result.fold(
-            on_failure=lambda exc: r[t.MutableContainerMapping].fail(
+            on_failure=lambda exc: r[t.MutableContainerMapping].fail_op(
+                "map dict keys",
                 e.render_error_template(
                     c.ERR_TEMPLATE_FAILED_TO_MAP_DICT_KEYS,
                     operation="map dict keys",

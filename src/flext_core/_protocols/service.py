@@ -10,6 +10,7 @@ from typing import Protocol, runtime_checkable
 
 from flext_core import (
     FlextProtocolsBase,
+    FlextProtocolsContainer,
     FlextProtocolsContext,
     FlextProtocolsHandler,
     FlextProtocolsRegistry,
@@ -26,47 +27,57 @@ class FlextProtocolsService:
     class CloneableRuntime(Protocol):
         """Structural protocol for runtime instances that support cloning.
 
-        Exposes dispatcher, registry, context, and settings as read/write
+        Exposes dispatcher, registry, context, container, and settings as read/write
         properties for type-safe cloning without private member access.
         """
 
         @property
-        def runtime_dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None: ...
+        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None: ...
 
-        @runtime_dispatcher.setter
-        def runtime_dispatcher(
+        @dispatcher.setter
+        def dispatcher(
             self,
             value: FlextProtocolsHandler.Dispatcher | None,
             /,
         ) -> None: ...
 
         @property
-        def runtime_registry(self) -> FlextProtocolsRegistry.Registry | None: ...
+        def registry(self) -> FlextProtocolsRegistry.Registry | None: ...
 
-        @runtime_registry.setter
-        def runtime_registry(
+        @registry.setter
+        def registry(
             self,
             value: FlextProtocolsRegistry.Registry | None,
             /,
         ) -> None: ...
 
         @property
-        def runtime_context(self) -> FlextProtocolsContext.Context | None: ...
+        def context(self) -> FlextProtocolsContext.Context: ...
 
-        @runtime_context.setter
-        def runtime_context(
+        @context.setter
+        def context(
             self,
-            value: FlextProtocolsContext.Context | None,
+            value: FlextProtocolsContext.Context,
             /,
         ) -> None: ...
 
         @property
-        def runtime_settings(self) -> FlextProtocolsSettings.Settings | None: ...
+        def settings(self) -> FlextProtocolsSettings.Settings: ...
 
-        @runtime_settings.setter
-        def runtime_settings(
+        @settings.setter
+        def settings(
             self,
-            value: FlextProtocolsSettings.Settings | None,
+            value: FlextProtocolsSettings.Settings,
+            /,
+        ) -> None: ...
+
+        @property
+        def container(self) -> FlextProtocolsContainer.Container: ...
+
+        @container.setter
+        def container(
+            self,
+            value: FlextProtocolsContainer.Container,
             /,
         ) -> None: ...
 

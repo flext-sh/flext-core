@@ -17,8 +17,6 @@ from typing import Annotated, ClassVar, Literal, Self, override
 from pydantic import Field, PrivateAttr
 
 from flext_core import (
-    FlextContainer,
-    FlextDispatcher,
     c,
     e,
     h,
@@ -44,8 +42,7 @@ class FlextRegistry(s[bool]):
     for actual handler registration and execution.
     """
 
-    _dispatcher: p.Dispatcher | FlextDispatcher = PrivateAttr()
-    _registered_keys: set[str] = PrivateAttr(default_factory=lambda: set[str]())
+    _state: m.RegistryState = PrivateAttr(default_factory=lambda: m.RegistryState())
     _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
@@ -63,18 +60,21 @@ class FlextRegistry(s[bool]):
         """Post-initialization hook for registry.
 
         Calls parent model_post_init for runtime setup, then resolves
-        the dispatcher from the field or from the global container.
+        the dispatcher from the centralized service runtime DSL.
         """
         super().model_post_init(__context)
-        if self.dispatcher is not None:
-            self._dispatcher = self.dispatcher
-        else:
-            container_value = FlextContainer.fetch_global().get("command_bus").unwrap()
-            if isinstance(container_value, FlextDispatcher):
-                self._dispatcher = container_value
-            else:
-                msg = f"Expected CommandBus, got {type(container_value).__name__}"
-                raise TypeError(msg)
+        runtime_model = u.require_initialized(self._runtime, "Runtime")
+        resolved_dispatcher = (
+            self.dispatcher if isinstance(self.dispatcher, p.Dispatcher) else None
+        )
+        if resolved_dispatcher is None:
+            resolved_dispatcher = runtime_model.dispatcher
+        self._state = m.RegistryState(dispatcher=resolved_dispatcher)
+        self._runtime = runtime_model.model_copy(
+            update={
+                "dispatcher": resolved_dispatcher,
+            },
+        )
 
     def __init_subclass__(
         cls,
@@ -96,6 +96,7 @@ class FlextRegistry(s[bool]):
         cls,
         dispatcher: p.Dispatcher | None = None,
         *,
+        runtime: m.ServiceRuntime | None = None,
         auto_discover_handlers: bool = False,
     ) -> Self:
         """Factory method to create a new FlextRegistry instance.
@@ -110,7 +111,8 @@ class FlextRegistry(s[bool]):
         registration for services with idempotent tracking.
 
         Args:
-            dispatcher: Optional CommandBus instance (defaults to FlextDispatcher)
+            dispatcher: Optional CommandBus instance (defaults to DSL dispatcher)
+            runtime: Optional runtime snapshot whose container/context are reused
             auto_discover_handlers: If True, scan calling module for @handler()
                 decorated functions and auto-register them with deduplication.
                 Default: False.
@@ -119,10 +121,21 @@ class FlextRegistry(s[bool]):
             FlextRegistry instance with auto-discovered handlers if enabled.
 
         """
-        instance = cls()
-        if dispatcher is not None:
-            instance.dispatcher = dispatcher
-            instance._dispatcher = dispatcher
+        if runtime is None:
+            instance = cls(dispatcher=dispatcher)
+        else:
+            resolved_dispatcher = (
+                dispatcher
+                if isinstance(dispatcher, p.Dispatcher)
+                else runtime.dispatcher
+            )
+            instance = cls(
+                initial_context=runtime.context,
+                dispatcher=resolved_dispatcher,
+            ).configure_runtime(
+                runtime,
+                dispatcher=resolved_dispatcher,
+            )
         if auto_discover_handlers:
             frame = inspect.currentframe()
             if frame and frame.f_back:
@@ -134,6 +147,34 @@ class FlextRegistry(s[bool]):
                     for _handler_name, handler_func, _handler_config in handlers:
                         _ = handler_func
         return instance
+
+    def configure_runtime(
+        self,
+        runtime: m.ServiceRuntime,
+        *,
+        dispatcher: p.Dispatcher | None = None,
+    ) -> Self:
+        """Bind this registry to a pre-built runtime snapshot."""
+        resolved_dispatcher = (
+            dispatcher if isinstance(dispatcher, p.Dispatcher) else runtime.dispatcher
+        )
+        self.dispatcher = resolved_dispatcher
+        self._context = runtime.context
+        self._settings = runtime.settings
+        self._container = runtime.container
+        self._state = self._state.model_copy(update={"dispatcher": resolved_dispatcher})
+        self._runtime = runtime.model_copy(
+            update={
+                "dispatcher": resolved_dispatcher,
+                "registry": self,
+            },
+        )
+        return self
+
+    @override
+    def _create_initial_runtime(self) -> m.ServiceRuntime:
+        """Build the registry runtime without recursively materializing another registry."""
+        return u.build_service_runtime(self, registry=self)
 
     @staticmethod
     def _narrow_value(
@@ -168,9 +209,30 @@ class FlextRegistry(s[bool]):
             r[bool]: Success if dispatcher is configured, failure otherwise.
 
         """
-        if not self._dispatcher:
+        dispatcher = self._state.dispatcher
+        if dispatcher is None or (not dispatcher):
             return r[bool].fail(c.ERR_DISPATCHER_NOT_CONFIGURED)
         return r[bool].ok(True)
+
+    def _remember_registered_key(self, key: str) -> None:
+        """Persist one instance-scoped registry key via immutable model state."""
+        self._state = self._state.model_copy(
+            update={
+                "registered_keys": self._state.registered_keys | frozenset({key}),
+            },
+        )
+
+    def _forget_registered_key(self, key: str) -> None:
+        """Remove one instance-scoped registry key via immutable model state."""
+        self._state = self._state.model_copy(
+            update={
+                "registered_keys": frozenset(
+                    existing_key
+                    for existing_key in self._state.registered_keys
+                    if existing_key != key
+                ),
+            },
+        )
 
     def fetch_plugin(
         self,
@@ -187,10 +249,10 @@ class FlextRegistry(s[bool]):
         """
         key = f"{category}::{name}"
         if scope == c.RegistrationScope.INSTANCE:
-            if key not in self._registered_keys:
+            if key not in self._state.registered_keys:
                 available = [
                     k.split("::")[1]
-                    for k in self._registered_keys
+                    for k in self._state.registered_keys
                     if k.startswith(f"{category}::")
                 ]
                 return r[t.RuntimeAtomic | None].fail(
@@ -231,7 +293,7 @@ class FlextRegistry(s[bool]):
             r[t.StrSequence]: Success with list of plugin names.
 
         """
-        keys = self._registered_keys
+        keys = self._state.registered_keys
         if scope == c.RegistrationScope.CLASS:
             keys = self._class_registered_keys
         plugins = [k.split("::")[1] for k in keys if k.startswith(f"{category}::")]
@@ -350,7 +412,10 @@ class FlextRegistry(s[bool]):
         # Standard Dispatcher registration avoids passing name/metadata
         # as it discovers routes from the handler itself.
         registration_handler: t.HandlerProtocolVariant = handler
-        registration_result = self._dispatcher.register_handler(
+        dispatcher = self._state.dispatcher
+        if dispatcher is None:
+            return r[m.RegistrationDetails].fail(c.ERR_DISPATCHER_NOT_CONFIGURED)
+        registration_result = dispatcher.register_handler(
             registration_handler,
             is_event=(handler_mode == c.HandlerType.EVENT),
         )
@@ -361,7 +426,7 @@ class FlextRegistry(s[bool]):
                 registration_result.error or c.ERR_HANDLER_FAILED,
             )
 
-        self._registered_keys.add(handler_id)
+        self._remember_registered_key(handler_id)
         return r[m.RegistrationDetails].ok(
             m.RegistrationDetails(
                 registration_id=handler_id,
@@ -447,10 +512,10 @@ class FlextRegistry(s[bool]):
                 return e.fail_operation("validate plugin registration", exc)
         key = f"{category}::{name}"
         if scope == c.RegistrationScope.INSTANCE:
-            if key in self._registered_keys:
+            if key in self._state.registered_keys:
                 return r[bool].ok(True)
             self.container.register(key, plugin)
-            self._registered_keys.add(key)
+            self._remember_registered_key(key)
             return r[bool].ok(True)
         cls = type(self)
         if key in cls._class_registered_keys:
@@ -486,7 +551,7 @@ class FlextRegistry(s[bool]):
             scope=scope,
         )
         if scope == c.RegistrationScope.INSTANCE:
-            if key not in self._registered_keys:
+            if key not in self._state.registered_keys:
                 return r[bool].fail(
                     e.render_template(
                         c.ERR_REGISTRY_PLUGIN_NOT_REGISTERED,
@@ -495,7 +560,7 @@ class FlextRegistry(s[bool]):
                         params=params,
                     ),
                 )
-            self._registered_keys.discard(key)
+            self._forget_registered_key(key)
             return r[bool].ok(True)
         cls = type(self)
         if key not in cls._class_registered_keys:
@@ -518,7 +583,7 @@ class FlextRegistry(s[bool]):
         summary: m.RegistrySummary,
     ) -> None:
         """Add successful registration to summary."""
-        self._registered_keys.add(key)
+        self._remember_registered_key(key)
         summary.registered.append(registration)
 
     def _create_registration_details(

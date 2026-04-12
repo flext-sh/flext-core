@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import MutableMapping, Sequence
 from importlib import import_module
 from types import ModuleType
 from typing import ClassVar, override
@@ -128,9 +128,18 @@ class FlextService[
         **data: t.ValueOrModel,
     ) -> None:
         """Canonical public bootstrap surface for FLEXT services."""
+        runtime_settings_payload = data.pop("runtime_settings", None)
         bootstrap_options = u.resolve_runtime_options(
             {
-                "settings": settings,
+                "settings": (
+                    settings
+                    if isinstance(settings, p.Settings)
+                    else (
+                        runtime_settings_payload
+                        if isinstance(runtime_settings_payload, p.Settings)
+                        else None
+                    )
+                ),
                 "settings_type": settings_type,
                 "settings_overrides": settings_overrides,
                 "context": initial_context,
@@ -205,41 +214,39 @@ class FlextService[
         """Convert a failed service result into the canonical public exception."""
         operation = "service execution"
         reason = execution_result.error or c.ERR_SERVICE_EXECUTION_FAILED
-        params = m.OperationErrorParams(operation=operation, reason=reason)
-        message = e.render_error_template(
-            c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-            operation=operation,
-            error=reason,
-            params=params,
+        op_params = m.OperationErrorParams(operation=operation, reason=reason)
+        error_data = execution_result.error_data
+        data_map: t.ConfigMap | None = (
+            t.ConfigMap.model_validate(error_data) if u.dict_like(error_data) else None
         )
-        result_error_data = execution_result.error_data
-        correlation_id = None
-        result_error_data_map: Mapping[str, t.MetadataValue | None] | None = None
-        if isinstance(result_error_data, Mapping):
-            result_error_data_map = result_error_data
-        elif isinstance(result_error_data, p.HasModelDump):
-            dumped_error_data = result_error_data.model_dump()
-            if isinstance(dumped_error_data, Mapping):
-                result_error_data_map = dumped_error_data
-        if result_error_data_map is not None:
-            correlation_value = result_error_data_map.get(c.ContextKey.CORRELATION_ID)
-            if isinstance(correlation_value, str) and correlation_value:
-                correlation_id = correlation_value
-        payload = {
-            key: u.normalize_to_metadata(value)
-            for key, value in e._template_values(params, {}).items()
-        }
-        if result_error_data_map is not None:
-            for key, value in result_error_data_map.items():
-                if key == c.ContextKey.CORRELATION_ID:
-                    continue
-                payload[str(key)] = u.normalize_to_metadata(value)
-        return e.create(
-            message,
+        raw_corr = (
+            data_map.get(c.ContextKey.CORRELATION_ID) if data_map is not None else None
+        )
+        correlation_id: str | None = (
+            raw_corr if isinstance(raw_corr, str) and raw_corr else None
+        )
+        extra: dict[str, t.MetadataValue] = (
+            {
+                str(k): u.normalize_to_metadata(v)
+                for k, v in data_map.items()
+                if k != c.ContextKey.CORRELATION_ID
+            }
+            if data_map is not None
+            else {}
+        )
+        return e.OperationError(
+            e.render_error_template(
+                c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                operation=operation,
+                error=reason,
+                params=op_params,
+            ),
             error_code=execution_result.error_code or c.ErrorCode.OPERATION_ERROR,
+            metadata=error_data,
             correlation_id=correlation_id,
-            metadata=result_error_data,
-            **payload,
+            operation=operation,
+            reason=reason,
+            merged_kwargs=extra,
         )
 
     def _get_execution_result(self) -> p.Result[TDomainResult]:
@@ -436,6 +443,28 @@ class FlextService[
 
         """
         return r[bool].ok(True)
+
+    def ok[T: t.ValueOrModel | Sequence[t.ValueOrModel]](self, value: T) -> r[T]:
+        """Wrap a successful value into a result."""
+        return r[T].ok(value)
+
+    def fail_op(
+        self,
+        operation: str,
+        exc: Exception | str | None = None,
+    ) -> r[TDomainResult]:
+        """Return a failure result for an operation that failed."""
+        return e.fail_operation(operation, exc)
+
+    def fail_val(
+        self,
+        field: str | None = None,
+        value: t.Scalar | None = None,
+        *,
+        error: Exception | str | None = None,
+    ) -> r[TDomainResult]:
+        """Return a failure result for a field validation failure."""
+        return e.fail_validation(field, value, error=error)
 
 
 s = FlextService

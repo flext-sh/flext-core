@@ -24,6 +24,7 @@ from flext_core._utilities.discovery import FlextUtilitiesDiscovery
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
+from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.typings import t
@@ -226,12 +227,18 @@ class FlextUtilitiesModel:
         field_map = {
             "runtime_settings": "settings",
             "initial_context": "context",
+            "runtime_dispatcher": "dispatcher",
+            "runtime_registry": "registry",
         }
         option_fields = (
             "runtime_settings",
             "settings_type",
             "settings_overrides",
             "initial_context",
+            "dispatcher",
+            "registry",
+            "runtime_dispatcher",
+            "runtime_registry",
             "subproject",
             "services",
             "factories",
@@ -311,6 +318,66 @@ class FlextUtilitiesModel:
             if override_updates:
                 resolved = resolved.model_copy(update=override_updates)
         return resolved
+
+    @staticmethod
+    def _resolve_runtime_dispatcher(
+        runtime_options: FlextModelsService.RuntimeBootstrapOptions,
+        runtime_container: p.Container,
+    ) -> p.Dispatcher | None:
+        """Resolve the dispatcher from explicit options or the built container."""
+        explicit_dispatcher = runtime_options.dispatcher
+        if isinstance(explicit_dispatcher, p.Dispatcher):
+            return explicit_dispatcher
+        dispatcher_result = runtime_container.get(c.ServiceName.COMMAND_BUS)
+        if dispatcher_result.failure:
+            return None
+        dispatcher_candidate = dispatcher_result.value
+        if isinstance(dispatcher_candidate, p.Dispatcher):
+            return dispatcher_candidate
+        return None
+
+    @classmethod
+    def build_dispatcher(cls) -> p.Dispatcher:
+        """Materialize the canonical dispatcher implementation behind `p.Dispatcher`."""
+        dispatcher_module = import_module("flext_core.dispatcher")
+        dispatcher_candidate = dispatcher_module.FlextDispatcher()
+        if not isinstance(dispatcher_candidate, p.Dispatcher):
+            msg = "Resolved dispatcher implementation does not satisfy p.Dispatcher"
+            raise TypeError(msg)
+        return dispatcher_candidate
+
+    @classmethod
+    def build_registry(
+        cls,
+        dispatcher: p.Dispatcher | None = None,
+        *,
+        runtime: FlextModelsService.ServiceRuntime | None = None,
+        auto_discover_handlers: bool = False,
+    ) -> p.Registry:
+        """Materialize the canonical registry implementation behind `p.Registry`."""
+        resolved_dispatcher = dispatcher or (runtime.dispatcher if runtime else None)
+        registry_module = import_module("flext_core.registry")
+        registry_candidate = registry_module.FlextRegistry.create(
+            dispatcher=resolved_dispatcher,
+            runtime=runtime,
+            auto_discover_handlers=auto_discover_handlers,
+        )
+        if not isinstance(registry_candidate, p.Registry):
+            msg = "Resolved registry implementation does not satisfy p.Registry"
+            raise TypeError(msg)
+        return registry_candidate
+
+    @classmethod
+    def _resolve_runtime_registry(
+        cls,
+        runtime_options: FlextModelsService.RuntimeBootstrapOptions,
+        runtime: FlextModelsService.ServiceRuntime,
+    ) -> p.Registry:
+        """Resolve the registry from explicit options or the shared runtime DSL."""
+        explicit_registry = runtime_options.registry
+        if isinstance(explicit_registry, p.Registry):
+            return explicit_registry
+        return cls.build_registry(dispatcher=runtime.dispatcher, runtime=runtime)
 
     @classmethod
     def build_service_runtime(
@@ -399,11 +466,20 @@ class FlextUtilitiesModel:
             if FlextUtilitiesGuardsTypeProtocol.context(runtime_container_context)
             else runtime_context
         )
-        return FlextModelsService.ServiceRuntime(
+        runtime_dispatcher = cls._resolve_runtime_dispatcher(
+            runtime_options,
+            runtime_container,
+        )
+        service_runtime = FlextModelsService.ServiceRuntime(
             settings=runtime_settings,
             context=resolved_context,
             container=runtime_container,
+            dispatcher=runtime_dispatcher,
         )
+        runtime_registry = cls._resolve_runtime_registry(
+            runtime_options, service_runtime
+        )
+        return service_runtime.model_copy(update={"registry": runtime_registry})
 
     @staticmethod
     def service_context_scope(

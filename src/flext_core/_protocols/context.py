@@ -160,6 +160,19 @@ class FlextProtocolsContext:
         """Protocol for the service-scoped context namespace."""
 
         @staticmethod
+        def fetch_service(service_name: str) -> p.Result[t.Scalar]:
+            """Resolve a service from the configured container."""
+            ...
+
+        @staticmethod
+        def register_service(
+            service_name: str,
+            service: t.RegisterableService,
+        ) -> p.Result[bool]:
+            """Register a service through the configured container."""
+            ...
+
+        @staticmethod
         def service_context(
             service_name: str,
             version: str | None = None,
@@ -168,10 +181,77 @@ class FlextProtocolsContext:
             ...
 
     @runtime_checkable
+    class ContextCorrelationNamespace(Protocol):
+        """Protocol for correlation-id helpers on the context class."""
+
+        @staticmethod
+        def resolve_correlation_id() -> str | None:
+            """Resolve the current correlation id."""
+            ...
+
+        @staticmethod
+        def apply_correlation_id(correlation_id: str | None) -> None:
+            """Apply or clear the current correlation id."""
+            ...
+
+    @runtime_checkable
+    class ContextRequestNamespace(Protocol):
+        """Protocol for request-level helpers on the context class."""
+
+        @staticmethod
+        def resolve_operation_name() -> str | None:
+            """Resolve the current operation name."""
+            ...
+
+        @staticmethod
+        def apply_operation_name(operation_name: str) -> None:
+            """Apply the current operation name."""
+            ...
+
+    @runtime_checkable
+    class ContextPerformanceNamespace(Protocol):
+        """Protocol for performance-scoped context helpers."""
+
+        @staticmethod
+        def timed_operation(
+            operation_name: str | None = None,
+        ) -> AbstractContextManager[t.ConfigMap]:
+            """Create a timed operation scope."""
+            ...
+
+    @runtime_checkable
+    class ContextSerializationNamespace(Protocol):
+        """Protocol for context serialization helpers."""
+
+        @staticmethod
+        def export_full_context() -> t.ContainerMapping:
+            """Export the active global context variables."""
+            ...
+
+    @runtime_checkable
+    class ContextUtilitiesNamespace(Protocol):
+        """Protocol for class-level context utilities."""
+
+        @staticmethod
+        def clear_context() -> None:
+            """Clear the active context variables."""
+            ...
+
+        @staticmethod
+        def ensure_correlation_id() -> str:
+            """Ensure and return the active correlation id."""
+            ...
+
+    @runtime_checkable
     class ContextType(Protocol):
         """Protocol for context classes exposing the canonical factory surface."""
 
         Service: FlextProtocolsContext.ContextServiceNamespace
+        Correlation: FlextProtocolsContext.ContextCorrelationNamespace
+        Request: FlextProtocolsContext.ContextRequestNamespace
+        Performance: FlextProtocolsContext.ContextPerformanceNamespace
+        Serialization: FlextProtocolsContext.ContextSerializationNamespace
+        Utilities: FlextProtocolsContext.ContextUtilitiesNamespace
 
         @classmethod
         def create(
@@ -186,6 +266,16 @@ class FlextProtocolsContext:
             """Create a new context instance."""
             ...
 
+        @classmethod
+        def resolve_container(cls) -> p.Container:
+            """Resolve the configured container."""
+            ...
+
+        @classmethod
+        def configure_container(cls, container: p.Container) -> None:
+            """Configure the container used by the context service namespace."""
+            ...
+
     @runtime_checkable
     class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options for service initialization."""
@@ -194,6 +284,8 @@ class FlextProtocolsContext:
         settings_type: type | None
         settings_overrides: t.ScalarMapping | None
         context: FlextProtocolsContext.Context | None
+        dispatcher: p.Dispatcher | None
+        registry: p.Registry | None
         subproject: str | None
         services: Mapping[str, t.RegisterableService] | None
         factories: Mapping[str, t.FactoryCallable] | None

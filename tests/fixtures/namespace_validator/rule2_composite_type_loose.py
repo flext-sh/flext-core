@@ -14,4 +14,4 @@ class FlextTestModels:
 
 
 m = FlextTestModels
-__all__ = ["FlextTestModels", "m"]
+__all__ = []

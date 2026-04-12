@@ -276,7 +276,21 @@ class FlextModelsHandler:
             )
             return t.ConfigMap(root=dict(state.root))
 
-        def record_metric(self, name: str, value: t.Scalar) -> r[bool]:
+        @classmethod
+        def create_for_context(
+            cls,
+            context: FlextModelsHandler.ExecutionContext,
+        ) -> Self:
+            """Create a tracker bound to an existing execution context."""
+            tracker = cls()
+            tracker._context = context
+            return tracker
+
+        def record_metric(
+            self,
+            name: str,
+            value: t.MetadataAttributeValue,
+        ) -> r[bool]:
             """Record a named metric value in the tracker."""
             raw_state = self._context.metrics_state
             state: t.Dict = (
@@ -312,13 +326,13 @@ class FlextModelsHandler:
 
         def push_context(
             self,
-            ctx: FlextModelsHandler.ExecutionContext | t.ScalarMapping,
+            ctx: FlextModelsHandler.ExecutionContext | t.ContainerMapping,
         ) -> r[bool]:
             """Push an execution context or mapping onto the context stack."""
             if isinstance(ctx, FlextModelsHandler.ExecutionContext):
                 self._stack.append(ctx)
                 return r[bool].ok(True)
-            ctx_mapping: t.ScalarMapping = {str(k): v for k, v in ctx.items()}
+            ctx_mapping: t.ContainerMapping = {str(k): v for k, v in ctx.items()}
             handler_name: str = str(
                 ctx_mapping.get("handler_name", c.IDENTIFIER_UNKNOWN),
             )
@@ -342,6 +356,108 @@ class FlextModelsHandler:
             )
             self._stack.append(execution_ctx)
             return r[bool].ok(True)
+
+    class HandlerRuntimeState(FlextModelsBase.ArbitraryTypesModel):
+        """Centralized mutable runtime state for a handler pipeline."""
+
+        execution_context: Annotated[
+            FlextModelsHandler.ExecutionContext,
+            Field(description="Execution context for the active handler"),
+        ]
+        metrics_tracker: Annotated[
+            FlextModelsHandler.MetricsTracker,
+            Field(
+                default_factory=lambda: FlextModelsHandler.MetricsTracker(),
+                description="Metrics tracker bound to the handler execution context",
+            ),
+        ]
+        context_stack: Annotated[
+            FlextModelsHandler.ContextStack,
+            Field(
+                default_factory=lambda: FlextModelsHandler.ContextStack(),
+                description="Context stack used by nested handler execution",
+            ),
+        ]
+        accepted_message_types: Annotated[
+            tuple[t.TypeHintSpecifier, ...],
+            Field(
+                default_factory=tuple,
+                description="Accepted message types computed for dispatch routing",
+            ),
+        ]
+        revalidate_pydantic_messages: Annotated[
+            bool,
+            Field(
+                default=False,
+                description="Whether Pydantic messages must be revalidated on dispatch",
+            ),
+        ] = False
+        type_warning_emitted: Annotated[
+            bool,
+            Field(
+                default=False,
+                description="Whether the handler already emitted a type warning",
+            ),
+        ] = False
+
+        @computed_field
+        @property
+        def handler_name(self) -> str:
+            """Expose the active handler name from the execution context."""
+            return self.execution_context.handler_name
+
+        @computed_field
+        @property
+        def handler_mode(self) -> c.HandlerType:
+            """Expose the active handler mode from the execution context."""
+            return self.execution_context.handler_mode
+
+        @computed_field
+        @property
+        def metrics(self) -> t.ConfigMap:
+            """Expose normalized metrics collected for the handler."""
+            return self.metrics_tracker.metrics
+
+        @classmethod
+        def create_for_handler(
+            cls,
+            handler_name: str,
+            handler_mode: c.HandlerType,
+        ) -> Self:
+            """Create runtime state with a shared execution context and metrics."""
+            execution_context = FlextModelsHandler.ExecutionContext.create_for_handler(
+                handler_name=handler_name,
+                handler_mode=handler_mode,
+            )
+            return cls(
+                execution_context=execution_context,
+                metrics_tracker=FlextModelsHandler.MetricsTracker.create_for_context(
+                    execution_context,
+                ),
+            )
+
+        def pop_context(self) -> r[t.ScalarMapping]:
+            """Pop handler context from the runtime stack."""
+            return self.context_stack.pop_context()
+
+        def push_context(
+            self,
+            ctx: FlextModelsHandler.ExecutionContext | t.ContainerMapping,
+        ) -> r[bool]:
+            """Push handler context onto the runtime stack."""
+            return self.context_stack.push_context(ctx)
+
+        def record_metric(
+            self,
+            name: str,
+            value: t.MetadataAttributeValue,
+        ) -> r[bool]:
+            """Record a metric via the bound metrics tracker."""
+            return self.metrics_tracker.record_metric(name, value)
+
+        def start_execution(self) -> None:
+            """Start timing for the active execution context."""
+            self.execution_context.start_execution()
 
     class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
         """Configuration extracted from @FlextHandlers.handler() decorator."""

@@ -8,7 +8,8 @@ from types import ModuleType
 import pytest
 from pydantic import TypeAdapter
 
-from flext_core import FlextRuntime, m as core_m
+from flext_core import m as core_m
+from flext_core.runtime import FlextRuntime
 from tests import c, m
 
 

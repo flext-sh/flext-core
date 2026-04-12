@@ -21,13 +21,13 @@ from pydantic import (
 
 from flext_core import (
     FlextModelsBase,
-    FlextRuntime,
     FlextUtilitiesGenerators,
     c,
     p,
     r,
     t,
 )
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsCqrs:

@@ -11,11 +11,34 @@ from typing import Annotated
 
 from pydantic import Field, computed_field
 
-from flext_core import FlextModelsEntity, FlextModelsHandler, t
+from flext_core import FlextModelsBase, FlextModelsEntity, FlextModelsHandler, p, t
 
 
 class FlextModelsRegistry:
     """Registry model namespace for handler registration aggregates."""
+
+    class RegistryState(FlextModelsBase.ArbitraryTypesModel):
+        """Validated registry runtime state shared by public registry methods."""
+
+        dispatcher: Annotated[
+            p.Dispatcher | None,
+            Field(
+                default=None,
+                description="Dispatcher used for handler registration and execution.",
+            ),
+        ] = None
+        registered_keys: Annotated[
+            frozenset[str],
+            Field(
+                default_factory=frozenset,
+                description="Keys registered in the instance scope of the registry.",
+            ),
+        ]
+
+        @computed_field
+        def configured(self) -> bool:
+            """Whether a dispatcher has been materialized for the registry."""
+            return self.dispatcher is not None
 
     class RegistrySummary(FlextModelsEntity.Value):
         """Aggregated outcome for batch handler registration tracking."""

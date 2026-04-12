@@ -13,7 +13,6 @@ from flext_core.lazy import (
 
 if _t.TYPE_CHECKING:
     from flext_core import d, e, h, r, s, x
-    from flext_tests import td, tf, tk, tm, tv
     from tests._constants.domain import TestsFlextCoreConstantsDomain
     from tests._constants.errors import TestsFlextCoreConstantsErrors
     from tests._constants.fixtures import TestsFlextCoreConstantsFixtures
@@ -35,13 +34,6 @@ if _t.TYPE_CHECKING:
     from tests.unit._utilities.test_guards import TestFlextUtilitiesGuards
     from tests.unit._utilities.test_mapper import TestsFlextCoreUtilitiesMapper
     from tests.unit.base import TestsFlextCoreServiceBase
-    from tests.unit.typings import (
-        InputPayloadMap,
-        SampleValue,
-        SetGetExpectedValue,
-        SetGetInputValue,
-        TestCaseMap,
-    )
     from tests.utilities import TestsFlextCoreUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
@@ -84,16 +76,13 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "s",
                 "x",
             ),
-            "flext_tests": (
-                "td",
-                "tf",
-                "tk",
-                "tm",
-                "tv",
-            ),
         },
     ),
     exclude_names=(
+        "FlextDispatcher",
+        "FlextLogger",
+        "FlextRegistry",
+        "FlextRuntime",
         "cleanup_submodule_namespace",
         "install_lazy_exports",
         "lazy_getattr",
@@ -109,14 +98,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__ = [
-    "InputPayloadMap",
-    "SampleValue",
-    "SetGetExpectedValue",
-    "SetGetInputValue",
     "T",
     "T_co",
     "T_contra",
-    "TestCaseMap",
     "TestFlextModelsEntity",
     "TestFlextModelsExceptionParams",
     "TestFlextUtilitiesGuards",
@@ -148,11 +132,6 @@ __all__ = [
     "r",
     "s",
     "t",
-    "td",
-    "tf",
-    "tk",
-    "tm",
-    "tv",
     "u",
     "x",
 ]

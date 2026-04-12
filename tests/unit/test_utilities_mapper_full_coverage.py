@@ -334,7 +334,7 @@ def mapper() -> type[u]:
 def test_extract_array_index_helpers(mapper: type[u]) -> None:
     idx_result = mapper._extract_handle_array_index("x", "0")
     tm.fail(idx_result)
-    tm.that(idx_result.error, eq="Not a sequence")
+    tm.that(str(idx_result.error), has="Not a sequence")
     idx_neg = mapper._extract_handle_array_index([1, 2], "-1")
     tm.ok(idx_neg)
     tm.that(idx_neg.value, eq=2)

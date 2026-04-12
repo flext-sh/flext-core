@@ -32,7 +32,7 @@ class _FailingService(s[str]):
 
     @override
     def execute(self) -> r[str]:
-        return r[str].fail("boom-service")
+        return self.fail_op("execute failing service", "boom-service")
 
 
 class _RuleService(s[str]):
@@ -44,7 +44,7 @@ class _RuleService(s[str]):
 
     @override
     def validate_business_rules(self) -> r[bool]:
-        return r[bool].fail("invalid-rule", error_code="E_RULE")
+        return e.fail_validation("business_rule", "invalid-rule", error="E_RULE")
 
 
 class _ValidationCrashService(s[str]):

@@ -212,13 +212,15 @@ class Ex07FlextExceptions(Examples):
         self.section("factories_helpers")
         self.check(
             "create_error.ValidationError",
-            type(e.create("ValidationError", "factory validation")).__name__,
+            type(e.ValidationError("factory validation", field="test")).__name__,
         )
         self.check(
             "create_error.AttributeError",
-            type(e.create("AttributeError", "factory attribute")).__name__,
+            type(
+                e.AttributeAccessError("factory attribute", attribute_name="test")
+            ).__name__,
         )
-        created_dynamic = e.create(
+        created_dynamic = e.ValidationError(
             "dynamic",
             error_code="E_DYNAMIC",
             field="username",
@@ -232,7 +234,7 @@ class Ex07FlextExceptions(Examples):
             str(created_dynamic.metadata.attributes.get("caller") or ""),
         )
         self.check("create.correlation_id", created_dynamic.correlation_id or "")
-        instance_created = e()(
+        instance_created = e.ValidationError(
             "from __call__",
             error_code="E_CALL",
             field="title",

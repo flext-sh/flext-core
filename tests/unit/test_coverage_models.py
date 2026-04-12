@@ -10,7 +10,8 @@ from typing import Annotated, override
 import pytest
 from pydantic import Field, ValidationError, field_validator
 
-from flext_core import FlextModelsCqrs, FlextRuntime
+from flext_core import FlextModelsCqrs
+from flext_core.runtime import FlextRuntime
 from flext_tests import tm
 from tests import m, t
 

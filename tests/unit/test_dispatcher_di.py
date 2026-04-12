@@ -1,30 +1,27 @@
-"""Tests for FlextDispatcher Dependency Injection integration.
-
-Module: flext_core.dispatcher
-Scope: DI integration for reliability managers (circuit breaker, rate limiter, timeout, retry)
-
-Tests DI functionality with real implementations:
-- Dispatcher accepts container for manager resolution
-- Custom managers can be injected via container
-- Managers are resolved from container or created with defaults
-- Handler factory registration in container
-
-Uses real implementations (no mocks) and flext_tests helpers.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Behavior tests for dispatcher materialization through the public DSL."""
 
 from __future__ import annotations
 
-from flext_core import FlextDispatcher
+from tests import m, p, r, u
 
 
 class TestDispatcherDI:
-    """Test dispatcher dependency injection integration."""
+    """Test dispatcher materialization without touching internals."""
 
-    def test_dispatcher_has_handlers(self) -> None:
-        """Test dispatcher has handlers registry."""
-        dispatcher = FlextDispatcher()
-        assert dispatcher._handlers is not None
-        assert isinstance(dispatcher._handlers, dict)
+    class _Handler:
+        message_type = "di_route"
+
+        def handle(self, message: p.Routable) -> r[str]:
+            route = message.command_type or ""
+            return r[str].ok(f"handled:{route}")
+
+    def test_dispatcher_builder_returns_protocol_aligned_dispatcher(self) -> None:
+        """The dispatcher DSL returns a usable dispatcher protocol instance."""
+        dispatcher = u.build_dispatcher()
+        assert isinstance(dispatcher, p.Dispatcher)
+        assert dispatcher.register_handler(self._Handler()).success
+        result = dispatcher.dispatch(
+            m.Command(command_type="di_route", command_id="cmd-di"),
+        )
+        assert result.success
+        assert result.value == "handled:di_route"

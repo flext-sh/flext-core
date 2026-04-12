@@ -26,11 +26,11 @@ class FlextModelsService:
     """
 
     class ServiceRuntime(FlextModelsBase.ArbitraryTypesModel):
-        """Runtime triple (settings, context, container) for services.
+        """Shared runtime state for services and infrastructure collaborators.
 
         Represents the core service runtime with configuration, context,
-        and dependency injection container. CQRS components (dispatcher,
-        registry) should be used directly - not through FlextService.
+        dependency injection container, and the internal dispatcher/registry
+        implementations exposed only through protocol-typed fields.
         """
 
         settings: Annotated[
@@ -47,6 +47,20 @@ class FlextModelsService:
             p.Container,
             Field(description="Dependency injection container for service resolution."),
         ]
+        dispatcher: Annotated[
+            p.Dispatcher | None,
+            Field(
+                default=None,
+                description="Dispatcher resolved for CQRS routing in this runtime.",
+            ),
+        ] = None
+        registry: Annotated[
+            p.Registry | None,
+            Field(
+                default=None,
+                description="Registry bound to the runtime when one is materialized.",
+            ),
+        ] = None
 
     class RuntimeBootstrapOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options for runtime bootstrapping."""
@@ -66,6 +80,14 @@ class FlextModelsService:
         context: p.Context | None = Field(
             default=None,
             description="Pre-built execution context to inject into the runtime.",
+        )
+        dispatcher: p.Dispatcher | None = Field(
+            default=None,
+            description="Pre-built dispatcher injected into the runtime DSL.",
+        )
+        registry: p.Registry | None = Field(
+            default=None,
+            description="Pre-built registry injected into the runtime DSL.",
         )
         subproject: str | None = Field(
             default=None,
