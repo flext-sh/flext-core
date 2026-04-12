@@ -14,20 +14,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import ConfigDict, ValidationError
+from pydantic import ConfigDict, SecretBytes, SecretStr, ValidationError
 
 
 class FlextConstantsPydantic:
     """Public configuration and exception types from pydantic v2.
 
     **NEVER import pydantic directly outside flext-core/src/.**
-    Use these via c.* instead: c.ConfigDict, c.ValidationError
+    Use these via c.* instead: c.ConfigDict, c.ValidationError, c.SecretBytes, c.SecretStr
 
     Available constants/exceptions (accessible as c.NAME):
         ConfigDict: TypedDict for model configuration (e.g., extra="ignore")
         ValidationError: Exception raised when model validation fails
+        SecretStr: String type that masks value in repr/logging
+        SecretBytes: Bytes type that masks value in repr/logging
     """
 
     # Public Pydantic v2 config/exceptions available via c.*
     ConfigDict = ConfigDict
     ValidationError = ValidationError
+    SecretStr = SecretStr
+    SecretBytes = SecretBytes

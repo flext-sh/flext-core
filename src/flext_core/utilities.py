@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core._models.namespace import FlextModelsNamespace
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
@@ -61,6 +62,7 @@ class FlextUtilities(
     FlextUtilitiesReliability,
     FlextUtilitiesResultHelpers,
     FlextUtilitiesText,
+    FlextModelsNamespace,
 ):
     """Unified facade for all FLEXT utility functionality.
 

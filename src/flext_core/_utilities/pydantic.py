@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from pydantic import (
     Field,
+    PrivateAttr,
     TypeAdapter,
     computed_field,
     field_serializer,
@@ -32,6 +33,7 @@ class FlextUtilitiesPydantic:
 
     Available helpers (accessible as u.HELPER_NAME):
         Field: Pydantic field definition with validation constraints
+        PrivateAttr: Decorator for private model attributes
         computed_field: Decorator for derived fields from model state
         field_validator: Decorator for field-level validation
         field_serializer: Decorator for field-level serialization
@@ -41,6 +43,7 @@ class FlextUtilitiesPydantic:
 
     # Public Pydantic v2 field/validation APIs available via u.*
     Field = Field
+    PrivateAttr = PrivateAttr
     computed_field = computed_field
     field_validator = field_validator
     field_serializer = field_serializer

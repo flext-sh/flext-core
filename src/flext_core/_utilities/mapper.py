@@ -242,7 +242,9 @@ class FlextUtilitiesMapper:
                         return r[t.ValueOrModel].fail_op(
                             "extract model key value",
                             marker
-                            + e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
+                            + e.render_template(
+                                c.ERR_TEMPLATE_FOUND_NONE, key=key_part
+                            ),
                         )
                     return r[t.ValueOrModel].ok(val)
         return r[t.ValueOrModel].fail_op(

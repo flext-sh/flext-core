@@ -18,6 +18,7 @@ from flext_core._constants.platform import FlextConstantsPlatform
 from flext_core._constants.pydantic import FlextConstantsPydantic
 from flext_core._constants.settings import FlextConstantsSettings
 from flext_core._constants.validation import FlextConstantsValidation
+from flext_core._models.namespace import FlextModelsNamespace
 
 
 class FlextConstants(
@@ -33,6 +34,7 @@ class FlextConstants(
     FlextConstantsMixins,
     FlextConstantsEnforcement,
     FlextConstantsPydantic,
+    FlextModelsNamespace,
 ):
     """Centralized constants for the FLEXT ecosystem (Layer 0).
 
