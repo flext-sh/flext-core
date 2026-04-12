@@ -1,6 +1,6 @@
 """Comprehensive tests for r module - Real functionality only.
 
-Module: flext_core.result.r[T]
+Module: flext_core[T]
 Scope: All public r operations, creation, transformation, chaining patterns
 Pattern: Railway-Oriented, Monadic operations, Type validation, Error handling
 

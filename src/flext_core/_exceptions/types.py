@@ -9,9 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext_core import c, m, t
-from flext_core._exceptions.base import FlextExceptionsBase
-from flext_core._exceptions.helpers import FlextExceptionsHelpers
+from flext_core import FlextExceptionsBase, FlextExceptionsHelpers, c, m, t
 from flext_core.runtime import FlextRuntime
 
 _BaseError = FlextExceptionsBase.BaseError

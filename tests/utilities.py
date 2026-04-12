@@ -867,6 +867,116 @@ class TestsFlextCoreUtilities(u):
             class ParserScenarios:
                 """Centralized parser scenarios - single source of truth."""
 
+                PUBLIC_PARSE_CASES: ClassVar[Sequence[m.Core.Tests.PublicParseCase]] = [
+                    m.Core.Tests.PublicParseCase(
+                        name="string-to-int",
+                        input_value="42",
+                        target=int,
+                        should_succeed=True,
+                        expected_value=42,
+                        description="Public parse coerces numeric string into int",
+                    ),
+                    m.Core.Tests.PublicParseCase(
+                        name="int-to-str",
+                        input_value=42,
+                        target=str,
+                        should_succeed=True,
+                        expected_value="42",
+                        description="Public parse coerces int into string",
+                    ),
+                    m.Core.Tests.PublicParseCase(
+                        name="string-to-float",
+                        input_value="2.2",
+                        target=float,
+                        should_succeed=True,
+                        expected_value=2.2,
+                        description="Public parse coerces numeric string into float",
+                    ),
+                    m.Core.Tests.PublicParseCase(
+                        name="string-to-bool",
+                        input_value="true",
+                        target=bool,
+                        should_succeed=True,
+                        expected_value=True,
+                        description="Public parse coerces truthy string into bool",
+                    ),
+                    m.Core.Tests.PublicParseCase(
+                        name="none-uses-default",
+                        input_value=None,
+                        target=int,
+                        options=u.ParseOptions[int](default=7),
+                        should_succeed=True,
+                        expected_value=7,
+                        description="Public parse returns default when value is None",
+                    ),
+                    m.Core.Tests.PublicParseCase(
+                        name="invalid-uses-default-factory",
+                        input_value="x",
+                        target=int,
+                        options=u.ParseOptions[int](default_factory=lambda: 9),
+                        should_succeed=True,
+                        expected_value=9,
+                        description="Public parse returns default_factory output on failure",
+                    ),
+                    m.Core.Tests.PublicParseCase(
+                        name="enum-exact",
+                        input_value="inactive",
+                        target=c.Core.Tests.StatusEnum,
+                        should_succeed=True,
+                        expected_value=c.Core.Tests.StatusEnum.INACTIVE,
+                        description="Public parse resolves StrEnum exact values",
+                    ),
+                    m.Core.Tests.PublicParseCase(
+                        name="enum-case-insensitive",
+                        input_value="INACTIVE",
+                        target=c.Core.Tests.StatusEnum,
+                        options=u.ParseOptions[c.Core.Tests.StatusEnum](
+                            case_insensitive=True,
+                        ),
+                        should_succeed=True,
+                        expected_value=c.Core.Tests.StatusEnum.INACTIVE,
+                        description="Public parse resolves StrEnum values case-insensitively",
+                    ),
+                    m.Core.Tests.PublicParseCase(
+                        name="model-from-mapping",
+                        input_value={"name": "parsed", "value": 3},
+                        target=m.Core.Tests.SampleModel,
+                        should_succeed=True,
+                        expected_data={"name": "parsed", "value": 3},
+                        description="Public parse materializes canonical test model from mapping",
+                    ),
+                    m.Core.Tests.PublicParseCase(
+                        name="invalid-int-fails",
+                        input_value="x",
+                        target=int,
+                        should_succeed=False,
+                        description="Public parse fails for non-numeric int input",
+                    ),
+                    m.Core.Tests.PublicParseCase(
+                        name="invalid-enum-fails",
+                        input_value="missing",
+                        target=c.Core.Tests.StatusEnum,
+                        should_succeed=False,
+                        description="Public parse fails for unknown enum values",
+                    ),
+                    m.Core.Tests.PublicParseCase(
+                        name="invalid-model-shape-fails",
+                        input_value={"bad": "shape"},
+                        target=m.Core.Tests.SampleModel,
+                        should_succeed=False,
+                        description="Public parse fails for invalid model payloads",
+                    ),
+                    m.Core.Tests.PublicParseCase(
+                        name="invalid-bool-field-context",
+                        input_value="maybe",
+                        target=bool,
+                        options=u.ParseOptions[bool](field_name="flag"),
+                        should_succeed=False,
+                        error_contains="flag",
+                        description="Public parse includes field context on bool failure",
+                    ),
+                ]
+
                 LDIF_PARSE_SCENARIOS: ClassVar[
                     Sequence[m.Core.Tests.ParserScenario]
                 ] = [

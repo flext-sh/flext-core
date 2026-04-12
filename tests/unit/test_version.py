@@ -1,4 +1,4 @@
-"""Tests for flext_core.__version__ module.
+"""Tests for flext_core module.
 
 Tests cover FlextVersion class methods and module-level exports,
 including version string, version info tuple, version comparison,

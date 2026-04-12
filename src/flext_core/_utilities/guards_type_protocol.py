@@ -11,8 +11,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import TypeIs
 
-from flext_core import c, p, t
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core import FlextUtilitiesGuardsTypeModel, c, p, t
 
 
 class FlextUtilitiesGuardsTypeProtocol:

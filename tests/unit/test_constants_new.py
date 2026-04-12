@@ -477,7 +477,7 @@ class TestFlextConstants:
             ("DEFAULT_AUTO_CONTEXT", True),
             ("DEFAULT_ENABLE_LOGGING", True),
             ("DEFAULT_ENABLE_METRICS", True),
-            ("DEFAULT_DISPATCHER_PATH", "flext_core.dispatcher:FlextDispatcher"),
+            ("DEFAULT_DISPATCHER_PATH", "flext_core:FlextDispatcher"),
             ("DEFAULT_SERVICE_NAME", "default_service"),
             ("DEFAULT_RESOURCE_TYPE", "default_resource"),
             ("SENTINEL_MISSING", "__sentinel_missing__"),
@@ -697,7 +697,7 @@ class TestFlextConstants:
             ),
             (
                 "PATTERN_MODULE_PATH",
-                ["flext_core.dispatcher:FlextDispatcher"],
+                ["flext_core:FlextDispatcher"],
                 ["no_colon_here", "too:many:colons"],
             ),
         ],

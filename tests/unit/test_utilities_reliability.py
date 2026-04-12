@@ -1,9 +1,9 @@
 """FLEXT Core Reliability Utilities Tests - Comprehensive Coverage.
 
-Tests for flext_core._utilities.reliability.FlextUtilitiesReliability covering:
+Tests for flext_core.FlextUtilitiesReliability covering:
 - Retry mechanisms (success after failure, parameter validation)
 
-Modules tested: flext_core._utilities.reliability.FlextUtilitiesReliability
+Modules tested: flext_core.FlextUtilitiesReliability
 Scope: Reliability utility methods with 100% coverage including edge cases
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -55,7 +55,8 @@ class TestFlextUtilitiesReliability:
             max_attempts=self.Constants.MAX_ATTEMPTS_VALID,
             delay_seconds=0.0,
         )
-        u.Core.Tests.assert_success_with_value(result, self.Constants.SUCCESS_VALUE)
+        assert result.success
+        assert result.value == self.Constants.SUCCESS_VALUE
         assert len(attempts) == 2
 
     def test_retry_validation_error(self) -> None:
@@ -64,5 +65,5 @@ class TestFlextUtilitiesReliability:
             lambda: r[int].fail("fail"),
             max_attempts=self.Constants.MAX_ATTEMPTS_INVALID,
         )
-        _ = u.Core.Tests.assert_failure(result)
+        assert result.failure
         assert "Max attempts must be at least" in (result.error or "")

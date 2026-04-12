@@ -1,6 +1,6 @@
 """Comprehensive tests for FlextContainer - Dependency Injection Container.
 
-Module: flext_core.container
+Module: flext_core
 Scope: FlextContainer - dependency injection, service registration, factory patterns
 
 Tests FlextContainer functionality including:

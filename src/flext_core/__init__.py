@@ -77,7 +77,6 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
     from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
-    from flext_core._utilities.cache import FlextUtilitiesCache
     from flext_core._utilities.checker import FlextUtilitiesChecker
     from flext_core._utilities.collection import FlextUtilitiesCollection
     from flext_core._utilities.context import FlextUtilitiesContext
@@ -330,7 +329,6 @@ __all__: list[str] = [
     "FlextUtilitiesArgs",
     "FlextUtilitiesBeartypeConf",
     "FlextUtilitiesBeartypeEngine",
-    "FlextUtilitiesCache",
     "FlextUtilitiesChecker",
     "FlextUtilitiesCollection",
     "FlextUtilitiesContext",

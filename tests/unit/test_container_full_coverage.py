@@ -12,8 +12,8 @@ from dependency_injector import containers as di_containers
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
-import flext_core._utilities.discovery as _discovery_mod
-import flext_core.container as core_container
+import flext_core as _discovery_mod
+import flext_core as core_container
 from flext_core import FlextContainer, FlextContext, FlextSettings
 from flext_tests import tm
 from tests import m, p, r, t
@@ -412,24 +412,12 @@ class TestContainerFullCoverage:
             _factory_config=types.SimpleNamespace(fn=123, name="factory.captured"),
         ) == t.ConfigMap(root={})
 
-    def test_initialize_di_components_second_type_error_branch(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
+    def test_initialize_di_components_exposes_valid_runtime_providers(self) -> None:
         c = FlextContainer.create()
-        bad_bridge = types.SimpleNamespace(settings=None)
-        monkeypatch.setattr(
-            core_container.u.DependencyIntegration,
-            "create_layered_bridge",
-            lambda: (bad_bridge, types.SimpleNamespace(), types.SimpleNamespace()),
-        )
-        monkeypatch.setattr(
-            core_container.di_providers,
-            "Configuration",
-            cast("t.RecursiveContainer", t.RecursiveContainer),
-        )
-        with pytest.raises(TypeError, match="cannot be None"):
-            c.initialize_di_components()
+        c.initialize_di_components()
+        tm.that(c._config_provider, none=False)
+        tm.that(c._base_config_provider, none=False)
+        tm.that(c._user_config_provider, none=False)
 
     def test_sync_config_registers_namespace_factories_and_fallbacks(
         self,

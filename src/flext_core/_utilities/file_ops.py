@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import overload
 
 from flext_core import c
 
@@ -20,30 +19,18 @@ class FlextUtilitiesFileOps:
     """Side-effect file/IO write operations that return None."""
 
     @staticmethod
-    @overload
-    def write_file(path: Path, content: str, *, encoding: str = ...) -> None: ...
-
-    @staticmethod
-    @overload
-    def write_file(path: Path, content: bytes) -> None: ...
-
-    @staticmethod
     def write_file(
         path: Path,
-        content: str | bytes,
+        content: str,
         *,
         encoding: str = c.DEFAULT_ENCODING,
     ) -> None:
         """Write content to *path*, discarding the byte-count return value.
 
-        Overloaded for ``str`` (text mode) and ``bytes`` (binary mode).
-        Replaces direct ``path.write_text(...)`` / ``path.write_bytes(...)``
-        calls where the ``int`` return value is intentionally unused.
+        Replaces direct ``path.write_text(...)`` calls where the ``int``
+        return value is intentionally unused.
         """
-        if isinstance(content, bytes):
-            path.write_bytes(content)
-        else:
-            _ = path.write_text(content, encoding=encoding)
+        _ = path.write_text(content, encoding=encoding)
 
 
 __all__: list[str] = ["FlextUtilitiesFileOps"]

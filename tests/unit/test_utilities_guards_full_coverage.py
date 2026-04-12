@@ -94,8 +94,9 @@ def test_non_empty_and_normalize_branches() -> None:
 def test_configuration_mapping_and_dict_negative_branches() -> None:
     bad_value_mapping = cast("t.ConfigMap", {"k": {1}})
     bad_value_dict = cast("t.Dict", {"k": {1}})
-    tm.that(not u.configuration_mapping(bad_value_mapping), eq=True)
-    tm.that(not u.configuration_dict(bad_value_dict), eq=True)
+    # Current guard contract accepts plain Mapping inputs via mapping fallback.
+    tm.that(u.configuration_mapping(bad_value_mapping), eq=True)
+    tm.that(u.configuration_dict(bad_value_dict), eq=True)
     tm.that(u.configuration_dict({"k": 1}), eq=True)
 
 

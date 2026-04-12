@@ -47,7 +47,7 @@ class FlextProtocolsContext:
             """Return all keys across all scopes."""
             ...
 
-        def values(self) -> FlextTypingBase.ContainerList:
+        def values(self) -> FlextTypingBase.RecursiveContainerList:
             """Return all values across all scopes."""
             ...
 
@@ -107,7 +107,7 @@ class FlextProtocolsContext:
             self,
             other: Self
             | FlextTypingContainers.ConfigMap
-            | FlextTypingBase.ContainerMapping,
+            | FlextTypingBase.RecursiveContainerMapping,
         ) -> Self:
             """Merge another context or mapping into this one."""
             ...
@@ -126,7 +126,9 @@ class FlextProtocolsContext:
             include_statistics: bool = ...,
             include_metadata: bool = ...,
             as_dict: bool = ...,
-        ) -> FlextModelsContext.ContextExport | FlextTypingBase.ContainerMapping:
+        ) -> (
+            FlextModelsContext.ContextExport | FlextTypingBase.RecursiveContainerMapping
+        ):
             """Export context state as the canonical context export model or dict."""
             ...
 
@@ -237,7 +239,7 @@ class FlextProtocolsContext:
         """Protocol for context serialization helpers."""
 
         @staticmethod
-        def export_full_context() -> FlextTypingBase.ContainerMapping:
+        def export_full_context() -> FlextTypingBase.RecursiveContainerMapping:
             """Export the active global context variables."""
             ...
 

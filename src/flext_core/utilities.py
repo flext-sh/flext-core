@@ -10,30 +10,31 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models.namespace import FlextModelsNamespace
-from flext_core._utilities.args import FlextUtilitiesArgs
-from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
-from flext_core._utilities.cache import FlextUtilitiesCache
-from flext_core._utilities.checker import FlextUtilitiesChecker
-from flext_core._utilities.collection import FlextUtilitiesCollection
-from flext_core._utilities.context import FlextUtilitiesContext
-from flext_core._utilities.conversion import FlextUtilitiesConversion
-from flext_core._utilities.discovery import FlextUtilitiesDiscovery
-from flext_core._utilities.domain import FlextUtilitiesDomain
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
-from flext_core._utilities.enum import FlextUtilitiesEnum
-from flext_core._utilities.file_ops import FlextUtilitiesFileOps
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core._utilities.mapper import FlextUtilitiesMapper
-from flext_core._utilities.model import FlextUtilitiesModel
-from flext_core._utilities.parser import FlextUtilitiesParser
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
-from flext_core._utilities.reliability import FlextUtilitiesReliability
-from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
-from flext_core._utilities.settings import FlextUtilitiesSettings
-from flext_core._utilities.text import FlextUtilitiesText
+from flext_core import (
+    FlextModelsNamespace,
+    FlextUtilitiesArgs,
+    FlextUtilitiesBeartypeConf,
+    FlextUtilitiesBeartypeEngine,
+    FlextUtilitiesChecker,
+    FlextUtilitiesCollection,
+    FlextUtilitiesContext,
+    FlextUtilitiesConversion,
+    FlextUtilitiesDiscovery,
+    FlextUtilitiesDomain,
+    FlextUtilitiesEnforcement,
+    FlextUtilitiesEnum,
+    FlextUtilitiesFileOps,
+    FlextUtilitiesGenerators,
+    FlextUtilitiesGuards,
+    FlextUtilitiesMapper,
+    FlextUtilitiesModel,
+    FlextUtilitiesParser,
+    FlextUtilitiesPydantic,
+    FlextUtilitiesReliability,
+    FlextUtilitiesResultHelpers,
+    FlextUtilitiesSettings,
+    FlextUtilitiesText,
+)
 from flext_core.loggings import FlextLogger
 
 
@@ -42,7 +43,6 @@ class FlextUtilities(
     FlextUtilitiesArgs,
     FlextUtilitiesBeartypeConf,
     FlextUtilitiesBeartypeEngine,
-    FlextUtilitiesCache,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,
     FlextUtilitiesSettings,

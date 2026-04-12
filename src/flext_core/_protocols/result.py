@@ -9,9 +9,7 @@ from __future__ import annotations
 from types import TracebackType
 from typing import Protocol, Self, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.containers import FlextTypingContainers
+from flext_core import FlextProtocolsBase, FlextTypingBase, FlextTypingContainers
 
 
 class FlextProtocolsResult:

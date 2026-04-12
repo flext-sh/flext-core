@@ -1,6 +1,6 @@
 """Real tests to achieve 100% timeout dispatcher coverage - no mocks.
 
-Module: flext_core._dispatcher.timeout
+Module: flext_core
 Scope: TimeoutEnforcer - all methods and edge cases
 
 This module provides comprehensive real tests (no mocks, patches, or bypasses)

@@ -14,9 +14,13 @@ import typing
 from collections.abc import Mapping
 from typing import Annotated, override
 
-from flext_core import FlextModelsBase, FlextUtilitiesDomain, t
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import (
+    FlextModelsBase,
+    FlextModelsPydantic,
+    FlextUtilitiesDomain,
+    FlextUtilitiesPydantic,
+    t,
+)
 
 
 class FlextModelsDomainEvent:

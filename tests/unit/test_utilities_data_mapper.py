@@ -1,6 +1,6 @@
 """Comprehensive tests for FlextUtilities - 100% coverage target.
 
-Tested modules: flext_core._utilities.mapper
+Tested modules: flext_core
 Test scope: Data mapping utilities for dict key mapping, flags building, active keys
 collection, value transformation, dict filtering, and inversion with full edge case coverage.
 

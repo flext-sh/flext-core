@@ -1,7 +1,7 @@
 """Primitive text helpers used by higher-level utilities.
 
 The functions here intentionally return raw values and may raise on invalid
-input; dispatcher-facing wrappers in ``flext_core.utilities`` apply
+input; dispatcher-facing wrappers in ``flext_core`` apply
 ``p.Result`` semantics when needed. Keeping this layer minimal reduces
 cross-layer coupling while providing deterministic normalization behaviors.
 

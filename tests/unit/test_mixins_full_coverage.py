@@ -10,7 +10,7 @@ from typing import cast, override
 
 import pytest
 
-import flext_core.mixins as core_mixins
+import flext_core as core_mixins
 from flext_core import r, x
 from flext_tests import tm
 from tests import m, p, t

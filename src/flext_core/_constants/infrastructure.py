@@ -56,7 +56,7 @@ class FlextConstantsInfrastructure:
     DEFAULT_ENABLE_METRICS: Final[bool] = True
     # DEFAULT_TIMEOUT_SECONDS inherited from FlextConstantsBase via FlextConstants MRO
     MIN_REGISTRATION_ID_LENGTH: Final[int] = 1
-    DEFAULT_DISPATCHER_PATH: Final[str] = "flext_core.dispatcher:FlextDispatcher"
+    DEFAULT_DISPATCHER_PATH: Final[str] = "flext_core:FlextDispatcher"
     "Default dispatcher implementation path."
     DEFAULT_SERVICE_NAME: Final[str] = "default_service"
     "Default service name for service models."

@@ -1,6 +1,6 @@
 """Comprehensive tests for FlextModelsContainer models.
 
-Module: flext_core._models.container
+Module: flext_core
 Scope: ServiceRegistration, FactoryRegistration, ContainerConfig models
 
 Tests cover:

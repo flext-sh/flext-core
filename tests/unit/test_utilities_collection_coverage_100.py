@@ -1,8 +1,8 @@
 """Real tests to achieve 100% collection utilities coverage - no mocks.
 
-Module: flext_core._utilities.collection
-Scope: FlextUtilitiesCollection - parse_sequence, coerce_list_validator,
-parse_mapping, coerce_dict_validator
+Module: flext_core
+Scope: FlextUtilitiesCollection - parse_mapping, coerce_dict_validator,
+map/find/filter/count/process/merge
 
 This module provides comprehensive real tests (no mocks, patches, or bypasses)
 to cover all remaining lines in _utilities/collection.py.
@@ -45,56 +45,6 @@ class TestUtilitiesCollectionCoverage:
         MEDIUM = "medium"
         HIGH = "high"
         CRITICAL = "critical"
-
-    class ParseSequenceScenario(BaseModel):
-        """Parse sequence test scenario."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Parse sequence scenario name")]
-        enum_cls: Annotated[type[StrEnum], Field(description="Enum class under test")]
-        values: Annotated[
-            Sequence[str | StrEnum],
-            Field(description="Input values to parse"),
-        ]
-        expected_success: Annotated[
-            bool,
-            Field(description="Whether parsing should succeed"),
-        ]
-        expected_count: Annotated[
-            int | None,
-            Field(default=None, description="Expected parsed values count"),
-        ] = None
-        error_contains: Annotated[
-            str | None,
-            Field(default=None, description="Expected error message fragment"),
-        ] = None
-
-    class CoerceListScenario(BaseModel):
-        """Coerce list validator test scenario."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Coerce list scenario name")]
-        enum_cls: Annotated[type[StrEnum], Field(description="Enum class for coercion")]
-        value: Annotated[
-            Annotated[t.RecursiveContainer, SkipValidation],
-            Field(description="Input value to coerce"),
-        ]
-        expected_success: Annotated[
-            bool,
-            Field(description="Whether coercion should succeed"),
-        ]
-        expected_count: Annotated[
-            int | None,
-            Field(default=None, description="Expected result count"),
-        ] = None
-        error_type: Annotated[
-            type[Exception] | None,
-            Field(default=None, description="Expected exception type"),
-        ] = None
-        error_contains: Annotated[
-            str | None,
-            Field(default=None, description="Expected error message fragment"),
-        ] = None
 
     class ParseMappingScenario(BaseModel):
         """Parse mapping test scenario."""
@@ -177,18 +127,6 @@ class TestUtilitiesCollectionCoverage:
             ),
             Field(description="Expected mapped output"),
         ]
-        default_error: Annotated[
-            str,
-            Field(default="Operation failed", description="Default error message"),
-        ] = "Operation failed"
-        expected_failure: Annotated[
-            bool,
-            Field(default=False, description="Whether map should fail"),
-        ] = False
-        error_contains: Annotated[
-            str | None,
-            Field(default=None, description="Expected error message fragment"),
-        ] = None
 
     class FindScenario(BaseModel):
         """Find method test scenario."""
@@ -209,10 +147,6 @@ class TestUtilitiesCollectionCoverage:
             t.RecursiveContainer | None,
             Field(description="Expected found value"),
         ]
-        return_key: Annotated[
-            bool,
-            Field(default=False, description="Whether to return dictionary key"),
-        ] = False
 
     class FilterScenario(BaseModel):
         """Filter method test scenario."""
@@ -279,14 +213,6 @@ class TestUtilitiesCollectionCoverage:
         predicate: Annotated[
             Callable[[t.RecursiveContainer], bool] | None,
             Field(default=None, description="Optional predicate filter"),
-        ] = None
-        filter_keys: Annotated[
-            set[str] | None,
-            Field(default=None, description="Keys to include when processing mappings"),
-        ] = None
-        exclude_keys: Annotated[
-            set[str] | None,
-            Field(default=None, description="Keys to exclude when processing mappings"),
         ] = None
         expected_failure: Annotated[
             bool,
@@ -370,8 +296,6 @@ class TestUtilitiesCollectionCoverage:
 
     globals()["FixtureStatus"] = FixtureStatus
     globals()["FixturePriority"] = FixturePriority
-    globals()["ParseSequenceScenario"] = ParseSequenceScenario
-    globals()["CoerceListScenario"] = CoerceListScenario
     globals()["ParseMappingScenario"] = ParseMappingScenario
     globals()["CoerceDictScenario"] = CoerceDictScenario
     globals()["MapScenario"] = MapScenario
@@ -425,150 +349,6 @@ class TestUtilitiesCollectionCoverage:
         @staticmethod
         def _by_length(value: str) -> int:
             return len(value)
-
-        @staticmethod
-        def parse_sequence_cases() -> Sequence[
-            TestUtilitiesCollectionCoverage.ParseSequenceScenario
-        ]:
-            return [
-                ParseSequenceScenario(
-                    name="valid_strings",
-                    enum_cls=FixtureStatus,
-                    values=["active", "pending"],
-                    expected_success=True,
-                    expected_count=2,
-                ),
-                ParseSequenceScenario(
-                    name="valid_enums",
-                    enum_cls=FixtureStatus,
-                    values=[FixtureStatus.ACTIVE, FixtureStatus.PENDING],
-                    expected_success=True,
-                    expected_count=2,
-                ),
-                ParseSequenceScenario(
-                    name="mixed_strings_enums",
-                    enum_cls=FixtureStatus,
-                    values=["active", FixtureStatus.PENDING, "completed"],
-                    expected_success=True,
-                    expected_count=3,
-                ),
-                ParseSequenceScenario(
-                    name="empty_list",
-                    enum_cls=FixtureStatus,
-                    values=[],
-                    expected_success=True,
-                    expected_count=0,
-                ),
-                ParseSequenceScenario(
-                    name="invalid_string",
-                    enum_cls=FixtureStatus,
-                    values=["invalid_status"],
-                    expected_success=False,
-                    error_contains="Invalid",
-                ),
-                ParseSequenceScenario(
-                    name="mixed_valid_invalid",
-                    enum_cls=FixtureStatus,
-                    values=["active", "invalid", "pending"],
-                    expected_success=False,
-                    error_contains="Invalid",
-                ),
-                ParseSequenceScenario(
-                    name="single_valid",
-                    enum_cls=FixturePriority,
-                    values=["high"],
-                    expected_success=True,
-                    expected_count=1,
-                ),
-                ParseSequenceScenario(
-                    name="single_invalid",
-                    enum_cls=FixturePriority,
-                    values=["invalid_priority"],
-                    expected_success=False,
-                    error_contains="Invalid",
-                ),
-            ]
-
-        @staticmethod
-        def coerce_list_cases() -> Sequence[
-            TestUtilitiesCollectionCoverage.CoerceListScenario
-        ]:
-            return [
-                CoerceListScenario(
-                    name="valid_list_strings",
-                    enum_cls=FixtureStatus,
-                    value=["active", "pending"],
-                    expected_success=True,
-                    expected_count=2,
-                ),
-                CoerceListScenario(
-                    name="valid_list_enums",
-                    enum_cls=FixtureStatus,
-                    value=[FixtureStatus.ACTIVE, FixtureStatus.PENDING],
-                    expected_success=True,
-                    expected_count=2,
-                ),
-                CoerceListScenario(
-                    name="valid_tuple",
-                    enum_cls=FixtureStatus,
-                    value=("active", "pending"),
-                    expected_success=True,
-                    expected_count=2,
-                ),
-                CoerceListScenario(
-                    name="valid_set",
-                    enum_cls=FixtureStatus,
-                    value=list({"active", "pending"}),
-                    expected_success=True,
-                    expected_count=2,
-                ),
-                CoerceListScenario(
-                    name="valid_frozenset",
-                    enum_cls=FixtureStatus,
-                    value=list(frozenset(["active", "pending"])),
-                    expected_success=True,
-                    expected_count=2,
-                ),
-                CoerceListScenario(
-                    name="empty_list",
-                    enum_cls=FixtureStatus,
-                    value=[],
-                    expected_success=True,
-                    expected_count=0,
-                ),
-                CoerceListScenario(
-                    name="invalid_type_int",
-                    enum_cls=FixtureStatus,
-                    value=123,
-                    expected_success=False,
-                    error_type=TypeError,
-                    error_contains="Expected sequence",
-                ),
-                CoerceListScenario(
-                    name="invalid_type_str",
-                    enum_cls=FixtureStatus,
-                    value="active",
-                    expected_success=False,
-                    error_type=TypeError,
-                    error_contains="Expected sequence",
-                ),
-                CoerceListScenario(
-                    name="invalid_string_in_list",
-                    enum_cls=FixtureStatus,
-                    value=["active", "invalid_status"],
-                    expected_success=False,
-                    error_type=ValueError,
-                    error_contains="Invalid",
-                ),
-                CoerceListScenario(
-                    name="invalid_type_in_list",
-                    enum_cls=FixtureStatus,
-                    value=["active", 123],
-                    expected_success=False,
-                    error_type=TypeError,
-                    error_contains="Expected str",
-                ),
-            ]
 
         @staticmethod
         def parse_mapping_cases() -> Sequence[
@@ -689,84 +469,6 @@ class TestUtilitiesCollectionCoverage:
                     error_type=ValueError,
                     error_contains="Invalid",
                 ),
-                CoerceDictScenario(
-                    name="invalid_type_in_dict",
-                    enum_cls=FixtureStatus,
-                    value={"user1": "active", "user2": 123},
-                    expected_success=False,
-                    error_type=TypeError,
-                    error_contains="Expected str",
-                ),
-            ]
-
-        @staticmethod
-        def map_cases() -> Sequence[TestUtilitiesCollectionCoverage.MapScenario]:
-            return [
-                MapScenario(
-                    name="list_ints",
-                    items=[1, 2, 3],
-                    mapper=lambda x: cast("int", x) * 2,
-                    expected_result=[2, 4, 6],
-                ),
-                MapScenario(
-                    name="tuple_ints",
-                    items=(1, 2, 3),
-                    mapper=lambda x: cast("int", x) * 2,
-                    expected_result=(2, 4, 6),
-                ),
-                MapScenario(
-                    name="set_ints",
-                    items={1, 2, 3},
-                    mapper=lambda x: cast("int", x) * 2,
-                    expected_result={2, 4, 6},
-                ),
-                MapScenario(
-                    name="dict_values",
-                    items={"a": 1, "b": 2},
-                    mapper=lambda v: cast("int", v) * 2,
-                    expected_result={"a": 2, "b": 4},
-                ),
-                MapScenario(
-                    name="frozenset_ints",
-                    items=frozenset({1, 2, 3}),
-                    mapper=lambda x: cast("int", x) * 2,
-                    expected_result=frozenset({2, 4, 6}),
-                ),
-                MapScenario(
-                    name="strings_upper",
-                    items=["hello", "world"],
-                    mapper=lambda x: cast("str", x).upper(),
-                    expected_result=["HELLO", "WORLD"],
-                ),
-            ]
-
-        @staticmethod
-        def find_cases() -> Sequence[TestUtilitiesCollectionCoverage.FindScenario]:
-            return [
-                FindScenario(
-                    name="list_find",
-                    items=[1, 2, 3, 4],
-                    predicate=lambda x: cast("int", x) % 2 == 0,
-                    expected_result=2,
-                ),
-                FindScenario(
-                    name="list_not_found",
-                    items=[1, 3, 5],
-                    predicate=lambda x: cast("int", x) % 2 == 0,
-                    expected_result=None,
-                ),
-                FindScenario(
-                    name="dict_find_value",
-                    items={"a": 1, "b": 2},
-                    predicate=lambda v: v == 2,
-                    expected_result=2,
-                ),
-                FindScenario(
-                    name="dict_find_other",
-                    items={"x": 10, "y": 20},
-                    predicate=lambda v: cast("int", v) > 15,
-                    expected_result=20,
-                ),
             ]
 
         @staticmethod
@@ -809,6 +511,52 @@ class TestUtilitiesCollectionCoverage:
                     items=[2, 4, 6],
                     predicate=lambda x: cast("int", x) % 2 == 0,
                     expected_result=[2, 4, 6],
+                ),
+            ]
+
+        @staticmethod
+        def map_cases() -> Sequence[TestUtilitiesCollectionCoverage.MapScenario]:
+            return [
+                MapScenario(
+                    name="map_list",
+                    items=[1, 2, 3],
+                    mapper=lambda x: cast("int", x) * 2,
+                    expected_result=[2, 4, 6],
+                ),
+                MapScenario(
+                    name="map_tuple",
+                    items=(1, 2),
+                    mapper=lambda x: cast("int", x) + 1,
+                    expected_result=(2, 3),
+                ),
+                MapScenario(
+                    name="map_dict",
+                    items={"a": 1, "b": 2},
+                    mapper=lambda x: cast("int", x) * 10,
+                    expected_result={"a": 10, "b": 20},
+                ),
+            ]
+
+        @staticmethod
+        def find_cases() -> Sequence[TestUtilitiesCollectionCoverage.FindScenario]:
+            return [
+                FindScenario(
+                    name="find_list_match",
+                    items=[1, 2, 3],
+                    predicate=lambda x: cast("int", x) == 2,
+                    expected_result=2,
+                ),
+                FindScenario(
+                    name="find_dict_match",
+                    items={"a": 1, "b": 4},
+                    predicate=lambda x: cast("int", x) == 4,
+                    expected_result=4,
+                ),
+                FindScenario(
+                    name="find_no_match",
+                    items=[1, 3, 5],
+                    predicate=lambda x: cast("int", x) == 2,
+                    expected_result=None,
                 ),
             ]
 
@@ -880,90 +628,6 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.parse_sequence_cases(),
-        ids=lambda s: s.name,
-    )
-    def test_parse_sequence(self, scenario: ParseSequenceScenario) -> None:
-        """Test parse_sequence with various scenarios."""
-        result = u.parse_sequence(scenario.enum_cls, scenario.values)
-        if scenario.expected_success:
-            _ = u.Core.Tests.assert_success(result)
-            tm.that(result.value, none=False)
-            if scenario.expected_count is not None:
-                tm.that(len(result.value), eq=scenario.expected_count)
-            for val in result.value:
-                tm.that(val, is_=scenario.enum_cls)
-        else:
-            _ = u.Core.Tests.assert_failure(result)
-            tm.that(result.error, none=False)
-            if scenario.error_contains:
-                tm.that(result.error, has=scenario.error_contains)
-
-    def test_parse_sequence_with_custom_enum(self) -> None:
-        """Test parse_sequence with custom enum class."""
-        result = u.parse_sequence(FixturePriority, ["low", "medium", "high"])
-        _ = u.Core.Tests.assert_success(result)
-        tm.that(result.value, none=False)
-        tm.that(len(result.value), eq=3)
-        tm.that(all(isinstance(v, FixturePriority) for v in result.value), eq=True)
-
-    def test_parse_sequence_error_message_format(self) -> None:
-        """Test parse_sequence error message format."""
-        result = u.parse_sequence(
-            FixtureStatus,
-            ["active", "invalid1", "invalid2"],
-        )
-        _ = u.Core.Tests.assert_failure(result)
-        tm.that(result.error, none=False)
-        tm.that(result.error, has="Invalid")
-        error_message = result.error or ""
-        assert "invalid1" in error_message or "invalid2" in error_message
-
-    @pytest.mark.parametrize(
-        "scenario",
-        CollectionUtilitiesScenarios.coerce_list_cases(),
-        ids=lambda s: s.name,
-    )
-    def test_coerce_list_validator(self, scenario: CoerceListScenario) -> None:
-        """Test coerce_list_validator with various scenarios."""
-        validator = u.coerce_list_validator(scenario.enum_cls)
-        if scenario.expected_success:
-            result = validator(scenario.value)
-            assert isinstance(result, list)
-            if scenario.expected_count is not None:
-                tm.that(len(result), eq=scenario.expected_count)
-            for val in result:
-                tm.that(val, is_=scenario.enum_cls)
-        else:
-            with pytest.raises(
-                scenario.error_type or Exception,
-                match=scenario.error_contains or "",
-            ):
-                _ = validator(scenario.value)
-
-    def test_coerce_list_validator_with_pydantic(self) -> None:
-        """Test coerce_list_validator integration with Pydantic."""
-        _ = u.coerce_list_validator(FixtureStatus)
-
-        class TestModel(BaseModel):
-            statuses: Annotated[
-                tuple[FixtureStatus, ...],
-                Field(default_factory=tuple),
-            ]
-
-        model1: TestModel = TestModel.model_validate({
-            "statuses": ["active", "pending"],
-        })
-        dumped1 = model1.model_dump()
-        tm.that(len(dumped1["statuses"]), eq=2)
-        model2: TestModel = TestModel.model_validate({
-            "statuses": [FixtureStatus.ACTIVE, FixtureStatus.PENDING],
-        })
-        dumped2 = model2.model_dump()
-        tm.that(len(dumped2["statuses"]), eq=2)
-
-    @pytest.mark.parametrize(
-        "scenario",
         CollectionUtilitiesScenarios.map_cases(),
         ids=lambda s: s.name,
     )
@@ -1027,15 +691,13 @@ class TestUtilitiesCollectionCoverage:
             scenario.processor,
             on_error=scenario.on_error,
             predicate=scenario.predicate,
-            filter_keys=scenario.filter_keys,
-            exclude_keys=scenario.exclude_keys,
         )
         if scenario.expected_failure:
-            _ = u.Core.Tests.assert_failure(result)
+            assert result.failure
             if scenario.error_contains:
                 tm.that(str(result.error), has=scenario.error_contains)
         else:
-            _ = u.Core.Tests.assert_success(result)
+            assert result.success
             assert result.value == scenario.expected_result
 
     def test_merge_deep(self) -> None:
@@ -1043,7 +705,7 @@ class TestUtilitiesCollectionCoverage:
         base_data: t.RecursiveContainerMapping = {"a": 1, "b": {"x": 1}}
         other_data: t.RecursiveContainerMapping = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base_data, other_data)
-        _ = u.Core.Tests.assert_success(result)
+        assert result.success
         tm.that(result.value["a"], eq=1)
         tm.that(result.value["c"], eq=3)
         tm.that(result.value["b"], is_=dict)
@@ -1053,7 +715,7 @@ class TestUtilitiesCollectionCoverage:
         base_data: t.RecursiveContainerMapping = {"a": 1, "b": {"x": 1}}
         other_data: t.RecursiveContainerMapping = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base_data, other_data, strategy="override")
-        _ = u.Core.Tests.assert_success(result)
+        assert result.success
         tm.that(result.value["a"], eq=1)
         tm.that(result.value["c"], eq=3)
         tm.that(result.value["b"], is_=dict)
@@ -1061,8 +723,6 @@ class TestUtilitiesCollectionCoverage:
 
 FixtureStatus = TestUtilitiesCollectionCoverage.FixtureStatus
 FixturePriority = TestUtilitiesCollectionCoverage.FixturePriority
-ParseSequenceScenario = TestUtilitiesCollectionCoverage.ParseSequenceScenario
-CoerceListScenario = TestUtilitiesCollectionCoverage.CoerceListScenario
 ParseMappingScenario = TestUtilitiesCollectionCoverage.ParseMappingScenario
 CoerceDictScenario = TestUtilitiesCollectionCoverage.CoerceDictScenario
 MapScenario = TestUtilitiesCollectionCoverage.MapScenario

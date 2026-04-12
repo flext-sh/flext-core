@@ -16,11 +16,17 @@ from enum import StrEnum
 
 from pydantic import Field
 
-from flext_core import c, m, p, r, t
-from flext_core._utilities.args import FlextUtilitiesArgs
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core._utilities.model import FlextUtilitiesModel
+from flext_core import (
+    FlextUtilitiesArgs,
+    FlextUtilitiesGuards,
+    FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesModel,
+    c,
+    m,
+    p,
+    r,
+    t,
+)
 
 
 class FlextUtilitiesParser:
@@ -38,10 +44,6 @@ class FlextUtilitiesParser:
         strict: bool | None = Field(
             default=None,
             description="Reject coercions; fail on type mismatch",
-        )
-        coerce: bool | None = Field(
-            default=None,
-            description="Enable implicit type coercion",
         )
         case_insensitive: bool | None = Field(
             default=None,
@@ -61,7 +63,7 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _coerce_to_bool[T](value: t.ValueOrModel) -> r[bool]:
+    def _coerce_to_bool(value: t.ValueOrModel) -> r[bool]:
         """Coerce value to bool. Returns None if not coercible."""
         if FlextUtilitiesGuards.matches_type(value, str):
             normalized_val = FlextUtilitiesParser._parse_normalize_str(
@@ -78,7 +80,7 @@ class FlextUtilitiesParser:
         return r[bool].ok(bool(value))
 
     @staticmethod
-    def _coerce_to_float[T](value: t.ValueOrModel) -> r[float]:
+    def _coerce_to_float(value: t.ValueOrModel) -> r[float]:
         """Coerce value to float. Returns None if not coercible."""
         if isinstance(value, (str, int)):
             return r[float].create_from_callable(
@@ -93,7 +95,7 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _coerce_to_int[T](value: t.ValueOrModel) -> r[int]:
+    def _coerce_to_int(value: t.ValueOrModel) -> r[int]:
         """Coerce value to int. Returns None if not coercible."""
         if isinstance(value, (str, float)):
             return r[int].create_from_callable(
@@ -106,48 +108,6 @@ class FlextUtilitiesParser:
             ),
             error_code="INT_COERCE_TYPE_ERROR",
         )
-
-    @staticmethod
-    def _coerce_to_str[T](value: t.ValueOrModel) -> r[str]:
-        """Coerce value to string - returns p.Result[str]."""
-        return r[str].ok(str(value))
-
-    @staticmethod
-    def _is_primitive_type(target: type) -> bool:
-        """Check if target is a primitive type."""
-        return target in {int, float, str, bool}
-
-    @staticmethod
-    def _parse_model[TModel: t.ModelCarrier](
-        value: t.ValueOrModel,
-        target: t.ModelClass[TModel],
-        field_prefix: str,
-        *,
-        strict: bool,
-    ) -> r[TModel]:
-        """Parse Pydantic BaseModel. Returns None if not model."""
-        if not FlextUtilitiesGuards.mapping(value):
-            return r[TModel].fail(
-                c.ERR_PARSER_EXPECTED_DICT_FOR_MODEL.format(
-                    field_prefix=field_prefix,
-                    type_name=value.__class__.__name__,
-                ),
-            )
-        value_dict_data: t.RecursiveContainerMapping = {
-            str(k): v for k, v in value.items()
-        }
-        validation_result = FlextUtilitiesModel.validate_value(
-            target,
-            value_dict_data,
-            strict=strict,
-        )
-        if validation_result.failure:
-            return r[TModel].fail(
-                c.ERR_PARSER_MODEL_PARSE_FAILED.format(
-                    error=validation_result.error or "",
-                ),
-            )
-        return validation_result
 
     _CASE_OPS: Mapping[str, Callable[[str], str]] = {
         c.ParserCase.LOWER.value: str.lower,
@@ -165,14 +125,6 @@ class FlextUtilitiesParser:
         value_str = value if isinstance(value, str) else str(value)
         op = FlextUtilitiesParser._CASE_OPS.get(case)
         return op(value_str) if op else value_str
-
-    @staticmethod
-    def _parse_result_error[T](result: r[T], default: str = "") -> str:
-        """Extract error from result (avoids circular import with u.err)."""
-        return result.fold(
-            on_failure=lambda e: e or default,
-            on_success=lambda _: default,
-        )
 
     @staticmethod
     def _parse_try_direct[T](
@@ -239,7 +191,7 @@ class FlextUtilitiesParser:
             if opts.default_factory is not None:
                 return opts.default_factory()
             raise ValueError(c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp))
-        value_str = FlextUtilitiesParser._coerce_to_str(value).unwrap()
+        value_str = str(value)
         options_text = [member.value for member in target]
         if not opts.case_insensitive:
             validation_result = FlextUtilitiesModel.validate_value(target, value_str)
@@ -338,15 +290,8 @@ class FlextUtilitiesParser:
                 c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
             ).unwrap()
         if target is str:
-            if isinstance(value, str):
-                return FlextUtilitiesModel.validate_value(target, value).unwrap()
-            try:
-                coerced = FlextUtilitiesParser._coerce_to_str(value)
-            except (TypeError, ValueError):
-                return None
-            if coerced.failure:
-                return None
-            return FlextUtilitiesModel.validate_value(target, coerced.value).unwrap()
+            coerced_value = value if isinstance(value, str) else str(value)
+            return FlextUtilitiesModel.validate_value(target, coerced_value).unwrap()
         if target is int:
             try:
                 coerced = FlextUtilitiesParser._coerce_to_int(value)
@@ -459,38 +404,6 @@ class FlextUtilitiesParser:
 
     @staticmethod
     @r.safe
-    def _parse_dispatch_primitive[T](
-        value: t.ValueOrModel,
-        target: type[T],
-        options: FlextUtilitiesParser.ParseOptions[T] | None = None,
-        **kwargs: t.ValueOrModel,
-    ) -> T:
-        """Dispatch primitive coercion with validation."""
-        opts = FlextUtilitiesArgs.resolve_options(
-            options,
-            kwargs,
-            FlextUtilitiesParser.ParseOptions[T],
-        ).unwrap()
-        fp = f"{opts.field_name}: " if opts.field_name else ""
-        prim = FlextUtilitiesParser._parse_try_primitive(
-            value,
-            target,
-            options=opts,
-        )
-        if prim is not None:
-            return prim
-        return FlextUtilitiesParser._parse_with_default(
-            opts.default,
-            opts.default_factory,
-            c.ERR_PARSER_PARSE_FAILED_FOR_TARGET.format(
-                field_prefix=fp,
-                value=value,
-                target_name=target.__name__,
-            ),
-        ).unwrap()
-
-    @staticmethod
-    @r.safe
     def parse[T](
         value: t.ValueOrModel,
         target: type[T],
@@ -553,7 +466,7 @@ class FlextUtilitiesParser:
                         ),
                     ).unwrap()
                 return model_result.value
-            case tgt if FlextUtilitiesParser._is_primitive_type(tgt):
+            case tgt if tgt in {int, float, str, bool}:
                 prim = FlextUtilitiesParser._parse_try_primitive(
                     value,
                     target,

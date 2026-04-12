@@ -1,4 +1,4 @@
-"""Additional coverage for flext_core.service using real executions."""
+"""Additional coverage for flext_core using real executions."""
 
 from __future__ import annotations
 

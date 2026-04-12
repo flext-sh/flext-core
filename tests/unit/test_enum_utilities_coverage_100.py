@@ -1,6 +1,6 @@
 """Real tests to achieve 100% enum utilities coverage - no mocks.
 
-Module: flext_core._utilities.enum
+Module: flext_core
 Scope: FlextUtilitiesEnum - all methods and edge cases
 
 This module provides comprehensive real tests (no mocks, patches, or bypasses)
@@ -17,13 +17,13 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from enum import StrEnum, unique
-from typing import Annotated, Any, ClassVar, cast
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_tests import tm
-from tests import t, u
+from tests import u
 
 
 class TestEnumUtilitiesCoverage:
@@ -74,28 +74,6 @@ class TestEnumUtilitiesCoverage:
         default: Annotated[StrEnum, Field(description="Default enum value")]
         expected: Annotated[StrEnum, Field(description="Expected output enum value")]
 
-    class CoerceValidatorScenario(BaseModel):
-        """Coerce validator test scenario."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Coerce validator scenario name")]
-        value: Annotated[
-            t.RecursiveContainer | StrEnum | None,
-            Field(description="Input value for coercion"),
-        ]
-        expected_success: Annotated[
-            bool,
-            Field(description="Whether coercion should succeed"),
-        ]
-        expected_status: Annotated[
-            StrEnum | None,
-            Field(default=None, description="Expected coerced status"),
-        ] = None
-        expected_error: Annotated[
-            str | None,
-            Field(default=None, description="Expected error message fragment"),
-        ] = None
-
     PARSE: ClassVar[Sequence[ParseScenario]] = [
         ParseScenario(
             name="valid_string",
@@ -145,36 +123,6 @@ class TestEnumUtilitiesCoverage:
             expected=Status.PENDING,
         ),
     ]
-    COERCE_VALIDATOR: ClassVar[Sequence[CoerceValidatorScenario]] = [
-        CoerceValidatorScenario(
-            name="valid_string",
-            value="active",
-            expected_success=True,
-            expected_status=Status.ACTIVE,
-            expected_error=None,
-        ),
-        CoerceValidatorScenario(
-            name="valid_enum",
-            value=Status.PENDING,
-            expected_success=True,
-            expected_status=Status.PENDING,
-            expected_error=None,
-        ),
-        CoerceValidatorScenario(
-            name="invalid_string",
-            value="invalid",
-            expected_success=False,
-            expected_status=None,
-            expected_error="Invalid Status",
-        ),
-        CoerceValidatorScenario(
-            name="invalid_type",
-            value=123,
-            expected_success=False,
-            expected_status=None,
-            expected_error="Invalid Status",
-        ),
-    ]
 
     @pytest.mark.parametrize("scenario", PARSE, ids=lambda s: s.name)
     def test_parse(self, scenario: ParseScenario) -> None:
@@ -184,7 +132,7 @@ class TestEnumUtilitiesCoverage:
             tm.ok(result)
             tm.that(result.value, eq=scenario.expected_status)
         else:
-            _ = u.Core.Tests.assert_failure(result)
+            assert result.failure
             assert (
                 result.error is not None
                 and scenario.expected_error is not None
@@ -198,38 +146,12 @@ class TestEnumUtilitiesCoverage:
     )
     def test_parse_or_default(self, scenario: ParseOrDefaultScenario) -> None:
         """Test parse_or_default with various scenarios."""
-        # Narrow the type from StrEnum to Status
         if isinstance(scenario.default, TestEnumUtilitiesCoverage.Status):
             default: TestEnumUtilitiesCoverage.Status = scenario.default
         else:
             default = self.Status.PENDING
-        result = u.parse_or_default(self.Status, scenario.value, cast("Any", default))
+        result = u.parse_or_default(self.Status, scenario.value, default)
         tm.that(result, eq=scenario.expected)
-
-    @pytest.mark.parametrize(
-        "scenario",
-        COERCE_VALIDATOR,
-        ids=lambda s: s.name,
-    )
-    def test_coerce_validator(self, scenario: CoerceValidatorScenario) -> None:
-        """Test coerce_validator with various scenarios."""
-        validator = u.coerce_validator(self.Status)
-        value: t.Primitives | StrEnum = (
-            scenario.value
-            if isinstance(scenario.value, (str, int, float, bool, StrEnum))
-            else str(scenario.value)
-        )
-        if scenario.expected_success:
-            result = validator(value)
-            tm.that(result, eq=scenario.expected_status)
-        else:
-            with pytest.raises(ValueError) as exc_info:
-                _ = validator(value)
-            error_str = str(exc_info.value) if exc_info.value else ""
-            assert (
-                scenario.expected_error is not None
-                and scenario.expected_error in error_str
-            )
 
     def test_values(self) -> None:
         """Test values method."""

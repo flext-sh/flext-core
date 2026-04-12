@@ -1,6 +1,6 @@
 """Coverage stubs for utilities methods tested elsewhere.
 
-Tested modules: Various flext_core._utilities modules
+Tested modules: Various flext_core
 Test scope: Placeholder tests for utilities coverage where methods are tested
 in specialized coverage modules (e.g., _coverage_100.py files).
 

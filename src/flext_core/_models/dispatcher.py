@@ -13,8 +13,7 @@ import concurrent.futures
 import time
 from typing import Annotated, override
 
-from flext_core import FlextModelsBase, c, r, t
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import FlextModelsBase, FlextUtilitiesPydantic, c, r, t
 
 
 class FlextModelsDispatcher:
@@ -36,7 +35,7 @@ class FlextModelsDispatcher:
             ),
         ]
         _executor: concurrent.futures.ThreadPoolExecutor | None = (
-            FlextUtilitiesPydantic.PrivateAttr()
+            FlextUtilitiesPydantic.PrivateAttr(default=None)
         )
 
         @override

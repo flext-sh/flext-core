@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import cast
 
 from flext_core import (
-    FlextUtilitiesCache,
     FlextUtilitiesCollection,
     FlextUtilitiesGuards,
     FlextUtilitiesGuardsTypeCore,
@@ -84,6 +83,36 @@ class FlextUtilitiesMapper:
         return result
 
     @staticmethod
+    def _normalize_component(
+        component: t.ValueOrModel | set[t.RecursiveContainer],
+    ) -> t.RecursiveContainer:
+        """Normalize a component recursively for consistent representation."""
+        if isinstance(
+            component,
+            m.BaseModel,
+        ) and FlextUtilitiesGuardsTypeModel.pydantic_model(component):
+            return {
+                str(key): FlextUtilitiesMapper._normalize_component(value)
+                for key, value in component.model_dump().items()
+            }
+        if FlextUtilitiesGuardsTypeCore.mapping(component):
+            return {
+                str(key): FlextUtilitiesMapper._normalize_component(value)
+                for key, value in component.items()
+            }
+        if isinstance(component, set):
+            return tuple(
+                FlextUtilitiesMapper._normalize_component(item) for item in component
+            )
+        if FlextUtilitiesGuardsTypeCore.primitive(component) or component is None:
+            return component
+        if isinstance(component, (list, tuple)):
+            return [
+                FlextUtilitiesMapper._normalize_component(item) for item in component
+            ]
+        return str(component)
+
+    @staticmethod
     def _apply_normalize(
         result: t.RecursiveContainerMapping,
         *,
@@ -91,7 +120,7 @@ class FlextUtilitiesMapper:
     ) -> t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping:
         """Apply normalize step."""
         if normalize:
-            normalized = FlextUtilitiesCache.normalize_component(
+            normalized = FlextUtilitiesMapper._normalize_component(
                 {str(k): v for k, v in result.items()},
             )
             if FlextUtilitiesGuardsTypeCore.mapping(normalized):
@@ -156,11 +185,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _success_value_result(value: t.PresentValueOrModel) -> r[t.ValueOrModel]:
         """Create a successful mapper result with concrete value typing."""
-
-        def _return_value() -> t.ValueOrModel:
-            return value
-
-        return r[t.ValueOrModel].create_from_callable(_return_value)
+        return r[t.ValueOrModel].ok(value)
 
     @staticmethod
     def _normalize_accessible_value(
@@ -340,49 +365,6 @@ class FlextUtilitiesMapper:
             key_part = part[:bracket_pos]
             return (key_part, array_match)
         return (part, "")
-
-    @staticmethod
-    def _extract_transform_options(
-        transform_opts: t.RecursiveContainerMapping,
-    ) -> tuple[
-        bool,
-        bool,
-        bool,
-        t.StrMapping | None,
-        set[str] | None,
-        set[str] | None,
-    ]:
-        """Extract transform options from dict."""
-        normalize_val = transform_opts.get("normalize")
-        normalize_bool = normalize_val if isinstance(normalize_val, bool) else False
-        strip_none_val = transform_opts.get("strip_none")
-        strip_none_bool = strip_none_val if isinstance(strip_none_val, bool) else False
-        strip_empty_val = transform_opts.get("strip_empty")
-        strip_empty_bool = (
-            strip_empty_val if isinstance(strip_empty_val, bool) else False
-        )
-        map_keys_val = transform_opts.get("map_keys")
-        map_keys_dict: t.StrMapping | None = None
-        if FlextUtilitiesGuardsTypeCore.mapping(map_keys_val) and all(
-            isinstance(v, str) for v in map_keys_val.values()
-        ):
-            map_keys_dict = {str(k): str(v) for k, v in map_keys_val.items()}
-        filter_keys_val = transform_opts.get("filter_keys")
-        filter_keys_set: set[str] | None = None
-        if isinstance(filter_keys_val, set):
-            filter_keys_set = set(map(str, filter_keys_val))
-        exclude_keys_val = transform_opts.get("exclude_keys")
-        exclude_keys_set: set[str] | None = None
-        if isinstance(exclude_keys_val, set):
-            exclude_keys_set = set(map(str, exclude_keys_val))
-        return (
-            normalize_bool,
-            strip_none_bool,
-            strip_empty_bool,
-            map_keys_dict,
-            filter_keys_set,
-            exclude_keys_set,
-        )
 
     @staticmethod
     def _get_raw(

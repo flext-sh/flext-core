@@ -11,8 +11,7 @@ import uuid
 from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, override
 
-from flext_core import c, m, t
-from flext_core._exceptions.helpers import FlextExceptionsHelpers
+from flext_core import FlextExceptionsHelpers, c, m, t
 from flext_core.runtime import FlextRuntime
 
 

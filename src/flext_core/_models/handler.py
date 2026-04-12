@@ -13,9 +13,14 @@ import time
 from collections.abc import MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self
 
-from flext_core import FlextModelsBase, c, p, r, t
-from flext_core._constants.pydantic import FlextConstantsPydantic
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import (
+    FlextModelsBase as m,
+    FlextUtilitiesPydantic,
+    c,
+    p,
+    r,
+    t,
+)
 
 
 class FlextModelsHandler:
@@ -25,7 +30,7 @@ class FlextModelsHandler:
     All nested classes are accessed via FlextModels.Handler.* in the main models.py.
     """
 
-    class RegistrationResult(FlextModelsBase.ArbitraryTypesModel):
+    class RegistrationResult(m.ArbitraryTypesModel):
         """Result of a handler registration operation.
 
         Provides structured feedback on the outcome of a handler registration,
@@ -84,7 +89,7 @@ class FlextModelsHandler:
                 case _:
                     raise KeyError(key)
 
-    class RegistrationDetails(FlextModelsBase.ArbitraryTypesModel):
+    class RegistrationDetails(m.ArbitraryTypesModel):
         """Registration details for handler registration tracking.
 
         Tracks metadata about handler registrations in the CQRS system,
@@ -111,13 +116,11 @@ class FlextModelsHandler:
 
         """
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
-                json_schema_extra={
-                    "title": "RegistrationDetails",
-                    "description": "Handler registration tracking details",
-                },
-            )
+        model_config: ClassVar[c.ConfigDict] = c.ConfigDict(
+            json_schema_extra={
+                "title": "RegistrationDetails",
+                "description": "Handler registration tracking details",
+            },
         )
         registration_id: Annotated[
             t.NonEmptyStr,
@@ -152,7 +155,7 @@ class FlextModelsHandler:
             ),
         ] = c.CommonStatus.RUNNING
 
-    class ExecutionContext(FlextModelsBase.ArbitraryTypesModel):
+    class ExecutionContext(m.ArbitraryTypesModel):
         """Handler execution context for tracking handler performance and state.
 
         Attributes:
@@ -161,16 +164,14 @@ class FlextModelsHandler:
 
         """
 
-        _start_time: float | None = FlextUtilitiesPydantic.PrivateAttr()
-        _metrics_state: t.Dict | None = FlextUtilitiesPydantic.PrivateAttr()
+        _start_time: float | None = FlextUtilitiesPydantic.PrivateAttr(default=None)
+        _metrics_state: t.Dict | None = FlextUtilitiesPydantic.PrivateAttr(default=None)
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
-                json_schema_extra={
-                    "title": "HandlerExecutionContext",
-                    "description": "Handler execution context for tracking performance and state",
-                },
-            )
+        model_config: ClassVar[c.ConfigDict] = c.ConfigDict(
+            json_schema_extra={
+                "title": "HandlerExecutionContext",
+                "description": "Handler execution context for tracking performance and state",
+            },
         )
         handler_name: Annotated[
             t.NonEmptyStr,
@@ -261,7 +262,7 @@ class FlextModelsHandler:
             """
             self._start_time = time.time()
 
-    class MetricsTracker(FlextModelsBase.ArbitraryTypesModel):
+    class MetricsTracker(m.ArbitraryTypesModel):
         """Tracks handler execution metrics via ExecutionContext.
 
         Delegates metric storage to an internal ExecutionContext instance,
@@ -314,7 +315,7 @@ class FlextModelsHandler:
             self._context.apply_metrics_state(t.Dict(root=current))
             return r[bool].ok(True)
 
-    class ContextStack(FlextModelsBase.ArbitraryTypesModel):
+    class ContextStack(m.ArbitraryTypesModel):
         """Manages a stack of ExecutionContext instances for CQRS handler pipelines."""
 
         _stack: MutableSequence[FlextModelsHandler.ExecutionContext] = (
@@ -374,7 +375,7 @@ class FlextModelsHandler:
             self._stack.append(execution_ctx)
             return r[bool].ok(True)
 
-    class HandlerRuntimeState(FlextModelsBase.ArbitraryTypesModel):
+    class HandlerRuntimeState(m.ArbitraryTypesModel):
         """Centralized mutable runtime state for a handler pipeline."""
 
         execution_context: Annotated[
@@ -478,14 +479,12 @@ class FlextModelsHandler:
             """Start timing for the active execution context."""
             self.execution_context.start_execution()
 
-    class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
+    class DecoratorConfig(m.ArbitraryTypesModel):
         """Configuration extracted from @FlextHandlers.handler() decorator."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
-                frozen=True,
-                arbitrary_types_allowed=True,
-            )
+        model_config: ClassVar[c.ConfigDict] = c.ConfigDict(
+            frozen=True,
+            arbitrary_types_allowed=True,
         )
         command: Annotated[
             type,

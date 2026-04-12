@@ -6,6 +6,7 @@ import importlib
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
+from typing import TYPE_CHECKING
 
 from pydantic import (
     BaseModel,
@@ -16,6 +17,9 @@ from pydantic import (
     ValidationError,
     computed_field,
 )
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 type LazyImportEntry = str | tuple[str, str]
 type LazyImportMap = Mapping[str, LazyImportEntry]

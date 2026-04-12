@@ -12,25 +12,26 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import FlextModelsBase, t
-from flext_core._constants.pydantic import FlextConstantsPydantic
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import (
+    FlextModelsBase as m,
+    FlextUtilitiesPydantic,
+    c,
+    t,
+)
 
 
 class FlextModelsExceptionParams:
     """Validated parameter models for the FLEXT exception hierarchy."""
 
-    class ParamsModel(FlextModelsBase.ArbitraryTypesModel):
+    class ParamsModel(m.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
-                extra="forbid",
-                strict=True,
-                validate_assignment=True,
-                arbitrary_types_allowed=True,
-                use_enum_values=True,
-            )
+        model_config: ClassVar[c.ConfigDict] = c.ConfigDict(
+            extra="forbid",
+            strict=True,
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+            use_enum_values=True,
         )
 
     class ValidationErrorParams(ParamsModel):

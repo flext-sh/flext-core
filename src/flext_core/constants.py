@@ -6,19 +6,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants.base import FlextConstantsBase
-from flext_core._constants.cqrs import FlextConstantsCqrs
-from flext_core._constants.domain import FlextConstantsDomain
-from flext_core._constants.enforcement import FlextConstantsEnforcement
-from flext_core._constants.errors import FlextConstantsErrors
-from flext_core._constants.infrastructure import FlextConstantsInfrastructure
-from flext_core._constants.mixins import FlextConstantsMixins
-from flext_core._constants.output import FlextConstantsOutput
-from flext_core._constants.platform import FlextConstantsPlatform
-from flext_core._constants.pydantic import FlextConstantsPydantic
-from flext_core._constants.settings import FlextConstantsSettings
-from flext_core._constants.validation import FlextConstantsValidation
-from flext_core._models.namespace import FlextModelsNamespace
+from flext_core import (
+    FlextConstantsBase,
+    FlextConstantsCqrs,
+    FlextConstantsDomain,
+    FlextConstantsEnforcement,
+    FlextConstantsErrors,
+    FlextConstantsInfrastructure,
+    FlextConstantsMixins,
+    FlextConstantsOutput,
+    FlextConstantsPlatform,
+    FlextConstantsPydantic,
+    FlextConstantsSettings,
+    FlextConstantsValidation,
+    FlextModelsNamespace,
+)
 
 
 class FlextConstants(

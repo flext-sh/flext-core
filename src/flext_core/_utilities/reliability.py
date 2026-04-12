@@ -11,15 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import secrets
 import time
 from collections.abc import Callable
 
 from pydantic import Field
 
-from flext_core import c, r, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.args import FlextUtilitiesArgs
+from flext_core import FlextModelsBase, FlextUtilitiesArgs, c, r, t
 
 
 class FlextUtilitiesReliability:
@@ -48,44 +45,6 @@ class FlextUtilitiesReliability:
             default=None,
             description="Exception types to retry on",
         )
-
-    _RETRIABLE_ERROR_PATTERNS: tuple[str, ...] = (
-        "Temporary failure",
-        "timeout",
-        "transient",
-        "temporarily unavailable",
-        "try again",
-    )
-
-    @staticmethod
-    def apply_jitter(base_delay: float, jitter_factor: float) -> float:
-        """Apply symmetric jitter variance to a delay value."""
-        if base_delay <= 0.0 or jitter_factor <= 0.0:
-            return base_delay
-        secure_random = secrets.SystemRandom()
-        variance = (2.0 * secure_random.random() - 1.0) * jitter_factor
-        jittered = base_delay * (1.0 + variance)
-        return max(0.0, jittered)
-
-    @staticmethod
-    def is_retriable_error_message(error: str | None) -> bool:
-        """Return whether an error message matches transient failure heuristics."""
-        if error is None:
-            return False
-        return any(
-            pattern.lower() in error.lower()
-            for pattern in FlextUtilitiesReliability._RETRIABLE_ERROR_PATTERNS
-        )
-
-    @staticmethod
-    def _calculate_retry_delay(
-        attempt: int,
-        delay_seconds: float,
-        backoff_multiplier: float,
-    ) -> float:
-        """Calculate delay for retry attempt with exponential backoff."""
-        current_delay = delay_seconds * backoff_multiplier**attempt
-        return min(current_delay, c.DEFAULT_MAX_DELAY_SECONDS)
 
     @staticmethod
     def flow_result[T](result: r[T], *funcs: Callable[[T], r[T]]) -> r[T]:
@@ -116,48 +75,6 @@ class FlextUtilitiesReliability:
                 return current
             current = func(current.value)
         return current
-
-    @staticmethod
-    def _resolve_retry_config(
-        max_attempts: int | None,
-        delay: float | None,
-        delay_seconds: float | None,
-        backoff_multiplier: float | None,
-    ) -> tuple[int, float, float]:
-        """Resolve retry configuration with defaults."""
-        delay_value = delay if delay is not None else delay_seconds
-        return (
-            max_attempts if max_attempts is not None else c.MAX_RETRY_ATTEMPTS,
-            delay_value if delay_value is not None else c.DEFAULT_RETRY_DELAY_SECONDS,
-            backoff_multiplier
-            if backoff_multiplier is not None
-            else c.DEFAULT_BACKOFF_MULTIPLIER,
-        )
-
-    @staticmethod
-    def _should_retry(
-        exc: Exception,
-        retry_on: tuple[type[Exception], ...] | None,
-    ) -> bool:
-        """Check if the exception is retryable."""
-        return retry_on is None or isinstance(exc, retry_on)
-
-    @staticmethod
-    def _sleep_between_retries(
-        attempt: int,
-        max_attempts: int,
-        delay_seconds: float,
-        backoff_multiplier: float,
-    ) -> None:
-        """Sleep between retry attempts with exponential backoff."""
-        if attempt < max_attempts - 1:
-            current_delay = FlextUtilitiesReliability._calculate_retry_delay(
-                attempt,
-                delay_seconds,
-                backoff_multiplier,
-            )
-            if current_delay > 0:
-                time.sleep(current_delay)
 
     _RETRYABLE_EXCEPTIONS: tuple[type[Exception], ...] = (
         AttributeError,
@@ -195,13 +112,17 @@ class FlextUtilitiesReliability:
         if opts_res.failure:
             return r[TResult].fail(opts_res.error)
         opts = opts_res.value
-        delay_val = opts.delay if opts.delay is not None else opts.delay_seconds
-
-        max_att, delay_sec, backoff = FlextUtilitiesReliability._resolve_retry_config(
-            opts.max_attempts,
-            delay_val,
-            delay_val,
-            opts.backoff_multiplier,
+        delay_value = opts.delay if opts.delay is not None else opts.delay_seconds
+        max_att = (
+            opts.max_attempts if opts.max_attempts is not None else c.MAX_RETRY_ATTEMPTS
+        )
+        delay_sec = (
+            delay_value if delay_value is not None else c.DEFAULT_RETRY_DELAY_SECONDS
+        )
+        backoff = (
+            opts.backoff_multiplier
+            if opts.backoff_multiplier is not None
+            else c.DEFAULT_BACKOFF_MULTIPLIER
         )
         if max_att < c.DEFAULT_RETRY_DELAY_SECONDS:
             return r[TResult].fail(
@@ -215,15 +136,16 @@ class FlextUtilitiesReliability:
                     return result
                 last_error = result.error or "Unknown error"
             except FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS as e:
-                if not FlextUtilitiesReliability._should_retry(e, opts.retry_on):
+                if opts.retry_on is not None and (not isinstance(e, opts.retry_on)):
                     raise
                 last_error = str(e)
-            FlextUtilitiesReliability._sleep_between_retries(
-                attempt,
-                max_att,
-                delay_sec,
-                backoff,
-            )
+            if attempt < max_att - 1:
+                current_delay = min(
+                    delay_sec * backoff**attempt,
+                    c.DEFAULT_MAX_DELAY_SECONDS,
+                )
+                if current_delay > 0:
+                    time.sleep(current_delay)
         return r[TResult].fail(
             f"Operation failed after {max_att} attempts: {last_error}",
         )

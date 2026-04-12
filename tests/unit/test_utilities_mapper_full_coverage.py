@@ -358,8 +358,8 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[u]) -> None:
     tm.fail(res_bad_index)
     tm.that(str(res_bad_index.error), has="Array error")
     res_terminal_none = mapper.extract({"a": None}, "a")
-    tm.fail(res_terminal_none)
-    tm.that(str(res_terminal_none.error), has="default is None")
+    tm.ok(res_terminal_none)
+    tm.that(res_terminal_none.value, eq="")
 
     class NotGeneral:
         @override
@@ -373,8 +373,8 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[u]) -> None:
         cast("p.AccessibleData", cast("object", Container())),
         "field",
     )
-    tm.ok(res_non_general)
-    tm.that(res_non_general.value, eq="converted")
+    tm.fail(res_non_general)
+    tm.that(str(res_non_general.error), has="default is None")
 
     class ExplodingModelDump:
         def __init__(self) -> None:

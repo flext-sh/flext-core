@@ -19,9 +19,7 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import c, p, r, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core import FlextModelsBase, FlextUtilitiesGenerators, c, p, r, t
 from flext_core.runtime import FlextRuntime
 
 
@@ -193,7 +191,7 @@ class FlextModelsCqrs:
             pagination_cls = FlextRuntime.resolve_nested_model_class(
                 module_name=cls.__module__,
                 qualname=cls.__qualname__,
-                models_module_name="flext_core.models",
+                models_module_name="flext_core",
                 attribute_name="Pagination",
                 fallback=FlextModelsCqrs.Pagination,
             )

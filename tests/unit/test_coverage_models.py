@@ -246,7 +246,7 @@ class TestCoverageModels:
             u.resolve_nested_model_class(
                 module_name=GetUserQuery.__module__,
                 qualname=GetUserQuery.__qualname__,
-                models_module_name="flext_core.models",
+                models_module_name="flext_core",
                 attribute_name="Pagination",
                 fallback=FlextModelsCqrs.Pagination,
             )

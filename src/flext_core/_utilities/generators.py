@@ -21,19 +21,8 @@ from flext_core import c, t
 class FlextUtilitiesGenerators:
     """Generate deterministic IDs and timestamps for CQRS workflows.
 
-    Nested classes organize related generators:
-    - Random: Random/short ID generation
-    - Type: Dynamic type generation
+    Centralizes random, prefixed, and timestamp-based identifier generation.
     """
-
-    class Random:
-        """Random ID generation helpers."""
-
-        @staticmethod
-        def generate_short_id(length: int = c.SHORT_UUID_LENGTH) -> str:
-            """Generate a short random ID (public API for backward compatibility)."""
-            alphabet = string.ascii_letters + string.digits
-            return "".join(secrets.choice(alphabet) for _ in range(length))
 
     @staticmethod
     def _determine_prefix(
@@ -77,11 +66,6 @@ class FlextUtilitiesGenerators:
             middle = "_".join(str(p) for p in parts)
             return f"{prefix}_{middle}_{uuid_part}"
         return f"{prefix}_{uuid_part}"
-
-    @staticmethod
-    def _should_generate_uuid(kind: str | None, actual_prefix: str | None) -> bool:
-        """Check if UUID generation should be used."""
-        return kind == "uuid" or (kind is None and actual_prefix is None)
 
     @staticmethod
     def _build_parts_list(
@@ -130,9 +114,9 @@ class FlextUtilitiesGenerators:
             case (("uuid" | None), None):
                 return FlextUtilitiesGenerators._generate_id()
             case ("ulid", _):
-                return FlextUtilitiesGenerators.Random.generate_short_id(
-                    length if length is not None else c.SHORT_UUID_LENGTH,
-                )
+                alphabet = string.ascii_letters + string.digits
+                short_length = length if length is not None else c.SHORT_UUID_LENGTH
+                return "".join(secrets.choice(alphabet) for _ in range(short_length))
             case ("id", None):
                 return FlextUtilitiesGenerators._generate_id()
             case (_, str() as pfx):

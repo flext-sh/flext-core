@@ -31,8 +31,7 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from flext_core import c, e, m, p, t, u
-from flext_core.__version__ import __version__
+from flext_core import __version__, c, e, m, p, t, u
 
 
 class FlextSettings(BaseSettings):

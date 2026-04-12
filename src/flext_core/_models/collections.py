@@ -12,9 +12,12 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextModelsBase, t
-from flext_core._constants.pydantic import FlextConstantsPydantic
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import (
+    FlextConstantsPydantic,
+    FlextModelsBase,
+    FlextUtilitiesPydantic,
+    t,
+)
 
 
 class FlextModelsCollections:

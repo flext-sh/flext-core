@@ -48,7 +48,7 @@ class FlextConstantsPlatform:
     PATTERN_SIMPLE_IDENTIFIER: Final[str] = "^[a-zA-Z0-9]+$"
     "Pattern for simple alphanumeric identifiers."
     PATTERN_MODULE_PATH: Final[str] = "^[^:]+:[^:]+$"
-    "Pattern for module:class paths (e.g., 'flext_core.dispatcher:FlextDispatcher')."
+    "Pattern for module:class paths (e.g., 'flext_core:FlextDispatcher')."
     PATTERN_ISO8601_TIMESTAMP: Final[str] = (
         "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[Z+\\-][0-9:]*)?$"
     )

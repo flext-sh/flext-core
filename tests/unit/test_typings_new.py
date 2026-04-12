@@ -1,6 +1,6 @@
 """Tests for t - type aliases, generics, validation types, containers.
 
-Source: flext_core._typings/ (7 files, ~693 LOC)
+Source: flext_core/ (7 files, ~693 LOC)
 Tested through facade: t.*
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

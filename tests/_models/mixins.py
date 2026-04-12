@@ -848,6 +848,48 @@ class TestsFlextCoreModelsMixins:
             Field(default=None, description="Human-readable scenario description"),
         ] = None
 
+    class PublicParseCase(BaseModel):
+        """Data-driven public parser contract scenario."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            frozen=True,
+            arbitrary_types_allowed=True,
+        )
+
+        name: Annotated[str, Field(description="Unique scenario name")]
+        input_value: Annotated[
+            t.ValueOrModel | None,
+            Field(description="Public value passed to u.parse()"),
+        ]
+        target: Annotated[
+            type[object],
+            Field(description="Public target type passed to u.parse()"),
+        ]
+        options: Annotated[
+            BaseModel | None,
+            Field(default=None, description="Optional ParseOptions instance"),
+        ] = None
+        should_succeed: Annotated[
+            bool,
+            Field(default=True, description="Whether parsing should succeed"),
+        ] = True
+        expected_value: Annotated[
+            t.ValueOrModel | None,
+            Field(default=None, description="Expected parsed scalar or enum value"),
+        ] = None
+        expected_data: Annotated[
+            Mapping[str, t.ContainerValue] | None,
+            Field(default=None, description="Expected parsed model_dump payload"),
+        ] = None
+        error_contains: Annotated[
+            str | None,
+            Field(default=None, description="Expected failure error substring"),
+        ] = None
+        description: Annotated[
+            str | None,
+            Field(default=None, description="Human-readable scenario description"),
+        ] = None
+
     class ReliabilityScenario(BaseModel):
         """Single scenario for reliability testing (circuit breaker, retry)."""
 

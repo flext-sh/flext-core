@@ -36,9 +36,7 @@ import orjson
 from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from flext_core import c, p, t
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core import FlextUtilitiesGenerators, FlextUtilitiesGuardsTypeCore, c, p, t
 
 T = TypeVar("T")
 

@@ -21,9 +21,7 @@ from typing import Self, TypeIs, overload, override
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
 
-from flext_core import c, e, m, p, r, t, u
-from flext_core.context import FlextContext
-from flext_core.settings import FlextSettings
+from flext_core import FlextContext, FlextSettings, c, e, m, p, r, t, u
 
 
 def _is_service_of_type[T: t.RegisterableService](

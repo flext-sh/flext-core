@@ -10,9 +10,15 @@ import contextvars
 from collections.abc import Mapping
 from typing import Annotated, Self
 
-from flext_core import FlextModelsBase, FlextModelsContextData, c, p, t
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import (
+    FlextModelsBase,
+    FlextModelsContextData,
+    FlextModelsPydantic,
+    FlextUtilitiesPydantic,
+    c,
+    p,
+    t,
+)
 
 
 class FlextModelsContextScope:

@@ -32,6 +32,9 @@ class FlextTypesServices:
     type RegistryDict[T] = MutableMapping[str, T]
     type ModelCarrier = FlextModelsPydantic.BaseModel
     type ModelClass[T: ModelCarrier] = type[T]
+    type LogArgument = FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model
+    type LogValue = FlextTypesServices.LogArgument | Exception
+    type LogResult = FlextProtocolsResult.Result[bool] | None
 
     type ScalarOrModel = FlextTypingBase.Container | ModelCarrier
     type ValueOrModel = FlextTypingBase.RecursiveContainer | ModelCarrier

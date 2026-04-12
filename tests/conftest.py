@@ -20,8 +20,6 @@ from pydantic import ValidationError
 from flext_core import FlextContainer, FlextContext
 from tests import c, p, r, t, u
 
-pytest_plugins = ["flext_tests.conftest_plugin"]
-
 
 @pytest.fixture
 def test_context() -> p.Context:

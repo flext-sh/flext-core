@@ -11,8 +11,7 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
-    from flext_core._protocols.result import FlextProtocolsResult
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core import FlextProtocolsResult, FlextTypesServices
 
 
 class FlextProtocolsBase:

@@ -10,22 +10,26 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from contextlib import AbstractContextManager
-from datetime import datetime
 from importlib import import_module
-from pathlib import Path
-from typing import Literal
 
-from flext_core import T_Model, c, e, p, r, t
-from flext_core._constants.pydantic import FlextConstantsPydantic
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._models.service import FlextModelsService
-from flext_core._utilities.args import FlextUtilitiesArgs
-from flext_core._utilities.discovery import FlextUtilitiesDiscovery
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import (
+    FlextConstantsPydantic,
+    FlextModelsBase,
+    FlextModelsPydantic,
+    FlextModelsService,
+    FlextUtilitiesArgs,
+    FlextUtilitiesDiscovery,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesGuardsTypeProtocol,
+    FlextUtilitiesPydantic,
+    T_Model,
+    c,
+    e,
+    p,
+    r,
+    t,
+)
 
 
 class FlextUtilitiesModel:
@@ -130,19 +134,19 @@ class FlextUtilitiesModel:
     @staticmethod
     def _settings_base() -> t.SettingsClass:
         """Resolve FlextSettings lazily to avoid runtime import cycles."""
-        settings_module = import_module("flext_core.settings")
+        settings_module = import_module("flext_core")
         return settings_module.FlextSettings
 
     @staticmethod
     def _container_type() -> p.ContainerType:
         """Resolve FlextContainer lazily to avoid runtime import cycles."""
-        container_module = import_module("flext_core.container")
+        container_module = import_module("flext_core")
         return container_module.FlextContainer
 
     @staticmethod
     def _context_type() -> p.ContextType:
         """Resolve FlextContext lazily to avoid runtime import cycles."""
-        context_module = import_module("flext_core.context")
+        context_module = import_module("flext_core")
         return context_module.FlextContext
 
     @staticmethod
@@ -498,44 +502,6 @@ class FlextUtilitiesModel:
             service_name,
             version,
         )
-
-    @staticmethod
-    def append_metadata_sequence_item(
-        metadata: t.Dict,
-        key: Literal["failed_items", "warning_items"],
-        item: t.ValueOrModel,
-    ) -> None:
-        """Append one normalized item to a metadata sequence bucket."""
-        raw_items = metadata.root.get(key)
-        result_list: t.MutableRecursiveContainerList = []
-        if isinstance(raw_items, list):
-            for raw_item in raw_items:
-                if isinstance(
-                    raw_item,
-                    (str, int, float, bool, datetime, Path, list, dict, tuple),
-                ):
-                    result_list.append(raw_item)
-                elif raw_item is not None:
-                    result_list.append(str(raw_item))
-        if isinstance(item, (str, int, float, bool, datetime, Path, list, dict, tuple)):
-            result_list.append(item)
-        elif item is not None:
-            result_list.append(str(item))
-        metadata.root[key] = result_list
-
-    @staticmethod
-    def upsert_skip_reason(
-        metadata: t.Dict,
-        item: t.ValueOrModel,
-        reason: str,
-    ) -> None:
-        """Store one skip reason keyed by the stringified item representation."""
-        raw_reasons = metadata.root.get("skip_reasons", {})
-        reasons: t.MutableStrMapping = {}
-        if isinstance(raw_reasons, Mapping):
-            reasons = {str(key): str(value) for key, value in raw_reasons.items()}
-        reasons[str(item)] = reason
-        metadata.root["skip_reasons"] = reasons
 
 
 __all__: list[str] = ["FlextUtilitiesModel"]

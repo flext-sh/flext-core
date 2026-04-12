@@ -232,10 +232,10 @@ class TestFlextUtilitiesGuards:
     def test_is_configuration_dict_valid_mapping(self) -> None:
         tm.that(u.configuration_dict({"k": 1, "j": "v"}), eq=True)
 
-    def test_is_configuration_dict_rejects_basemodel_values(self) -> None:
+    def test_is_configuration_dict_allows_plain_mapping_with_model_values(self) -> None:
         bad: t.GuardInput = {"k": _SampleModel()}
-        tm.that(u.configuration_dict(bad), eq=False)
-        tm.that(u.configuration_mapping(bad), eq=False)
+        tm.that(u.configuration_dict(bad), eq=True)
+        tm.that(u.configuration_mapping(bad), eq=True)
 
     # -----------------------------------------------------------------------
     # is_instance_of — generic isinstance

@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import FlextModelsBase, t
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import FlextModelsBase, FlextUtilitiesPydantic, t
 
 
 class FlextModelsErrors:

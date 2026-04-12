@@ -1,6 +1,6 @@
 """Tests for FlextUtilitiesContext - proxy creation and clone utilities.
 
-Module: flext_core._utilities.context
+Module: flext_core
 Coverage target: lines 139-158, 180
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

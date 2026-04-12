@@ -1,6 +1,6 @@
 """Tests for FlextUtilitiesMapper via the u facade.
 
-Source: flext_core._utilities.mapper
+Source: flext_core
 Covers: extract, map_get, map_dict_keys,
         transform, take, agg, deep_eq, normalize_to_container, prop.
 
@@ -22,7 +22,7 @@ from tests import t, u
 
 
 class TestsFlextCoreUtilitiesMapper:
-    """Tests for flext_core._utilities.mapper via the u facade."""
+    """Tests for flext_core via the u facade."""
 
     class Address(BaseModel):
         city: Annotated[str, Field(description="City name")]
@@ -110,7 +110,7 @@ class TestsFlextCoreUtilitiesMapper:
 
     def test_extract_none_intermediate_required_fails(self) -> None:
         data: Mapping[str, None] = {"a": None}
-        tm.fail(u.extract(data, "a.b", required=True), has="None")
+        tm.fail(u.extract(data, "a.b", required=True), has="not found")
 
     # ── extract: custom separator ──────────────────────────────────
 

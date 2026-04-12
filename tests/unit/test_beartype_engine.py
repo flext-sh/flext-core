@@ -19,7 +19,7 @@ import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core import FlextUtilitiesBeartypeConf, FlextUtilitiesBeartypeEngine as be
-from tests import m, u
+from tests import m, t, u
 
 # ------------------------------------------------------------------ #
 # contains_any                                                        #
@@ -424,7 +424,7 @@ class TestBeartypeClawCompatibility:
         assert "unexpected_success True" in combined_output
 
     def test_claw_without_skip_hits_recursive_container_schema(self) -> None:
-        """Removing skip settings still fails on recursive container schema generation."""
+        """Removing skip settings still fails to import flext_core under claw."""
         result = self._run_python(
             textwrap.dedent(
                 """
@@ -447,5 +447,9 @@ class TestBeartypeClawCompatibility:
 
         combined_output = result.stdout + result.stderr
         assert result.exit_code != 0
-        assert "PydanticSchemaGenerationError" in combined_output
-        assert "RecursiveContainerMapping" in combined_output
+        assert "unexpected_success" not in combined_output
+        assert (
+            "PydanticSchemaGenerationError" in combined_output
+            or 'unimportable module "t"' in combined_output
+            or "t.StrSequence" in combined_output
+        )

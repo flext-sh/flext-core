@@ -1,6 +1,6 @@
 """Refactored comprehensive tests for u - Layer 0.5 Runtime Utilities.
 
-Module: flext_core.runtime
+Module: flext_core
 Scope: u - type guards, serialization, external library access, type introspection
 
 Tests all functionality of u including:

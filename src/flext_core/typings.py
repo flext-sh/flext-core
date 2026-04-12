@@ -12,16 +12,18 @@ from collections.abc import Sequence
 from enum import StrEnum
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
-from flext_core._models.namespace import FlextModelsNamespace
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.annotateds import FlextTypesAnnotateds
-from flext_core._typings.core import FlextTypesCore
-from flext_core._typings.pydantic import FlextTypesPydantic
-from flext_core._typings.services import FlextTypesServices
-from flext_core._typings.typeadapters import FlextTypesTypeAdapters
+from flext_core import (
+    FlextModelsNamespace,
+    FlextModelsPydantic,
+    FlextTypesAnnotateds,
+    FlextTypesCore,
+    FlextTypesPydantic,
+    FlextTypesServices,
+    FlextTypesTypeAdapters,
+)
 
 if TYPE_CHECKING:
-    from flext_core.settings import FlextSettings
+    from flext_core import FlextSettings
 
 EnumT = TypeVar("EnumT", bound=StrEnum)
 MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
@@ -62,6 +64,10 @@ class FlextTypes(
     # Canonical settings-first names
     SettingsMap = FlextTypesCore.ConfigMap
     SettingsModelInput = FlextTypesServices.ConfigModelInput
+
+    # Compatibility aliases still consumed by downstream projects
+    ContainerMapping = FlextTypesCore.RecursiveContainerMapping
+    NormalizedValue = FlextTypesCore.RecursiveContainer
 
 
 t = FlextTypes

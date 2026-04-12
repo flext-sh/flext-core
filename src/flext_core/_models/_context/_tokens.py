@@ -11,8 +11,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextModelsEntity, c, t
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import FlextModelsEntity, FlextUtilitiesPydantic, c, t
 
 
 class FlextModelsContextTokens:

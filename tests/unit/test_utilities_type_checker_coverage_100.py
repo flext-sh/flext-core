@@ -1,6 +1,6 @@
 """Comprehensive coverage tests for u.
 
-Module: flext_core._utilities.checker
+Module: flext_core
 Scope: Handler type checking utilities for h
 
 Tests validate:

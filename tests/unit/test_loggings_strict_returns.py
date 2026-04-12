@@ -1,6 +1,6 @@
 """Tests for public logger strict return types (r[bool] instead of None).
 
-Module: flext_core.loggings
+Module: flext_core
 Scope: Verify all public logger methods return r[bool]
 
 Tests verify that:

@@ -2,7 +2,7 @@
 
 This module provides public aliases for pydantic v2 base model classes
 that are used across the flext ecosystem. All projects consuming these
-must extend from flext_core.m.* instead of directly from pydantic.
+must extend from flext_core* instead of directly from pydantic.
 
 Architecture: Abstraction boundary - models layer
 Boundary: flext-core is sole owner of pydantic v2 integration. All other

@@ -1,6 +1,6 @@
 """Tests for x infrastructure - Container, Context, Logging, Metrics, Service.
 
-Module: flext_core.mixins
+Module: flext_core
 Scope: x - all nested mixin classes
 
 Tests x functionality including:

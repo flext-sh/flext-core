@@ -1,6 +1,6 @@
 """Tests for s runtime bootstrap patterns.
 
-Module: flext_core.service
+Module: flext_core
 Scope: Runtime bootstrap options, service runtime creation, auto-initialization
 
 Tests service bootstrap functionality with real implementations:

@@ -6,9 +6,7 @@ import re
 from collections.abc import Callable, Iterable, Mapping, Sized
 from typing import ClassVar
 
-from flext_core import r, t
-from flext_core._models.collections import FlextModelsCollections
-from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
+from flext_core import FlextModelsCollections, FlextUtilitiesGuardsType, r, t
 
 
 class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):

@@ -1,4 +1,4 @@
-"""Additional coverage for flext_core.result using real flows (no mocks).
+"""Additional coverage for flext_core using real flows (no mocks).
 
 Exercises edge/error paths not covered in the base suite:
 - ok(None) guard

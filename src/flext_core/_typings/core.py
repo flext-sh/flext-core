@@ -11,9 +11,7 @@ from enum import StrEnum
 from pathlib import Path
 from re import Pattern
 
-from flext_core._constants.pydantic import FlextConstantsPydantic
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.containers import FlextTypingContainers
+from flext_core import FlextConstantsPydantic, FlextTypingBase, FlextTypingContainers
 
 
 class FlextTypesCore(FlextTypingBase, FlextTypingContainers):

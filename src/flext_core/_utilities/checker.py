@@ -70,7 +70,6 @@ class FlextUtilitiesChecker:
         """Check if expected type is a canonical catch-all value contract."""
         return expected_type in {
             t.RecursiveContainer,
-            t.RecursiveContainer,
             t.ValueOrModel,
         }
 

@@ -10,7 +10,7 @@ from typing import Annotated
 
 from annotated_types import Ge, Gt, Le, Len
 
-from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core import FlextTypesPydantic
 
 
 class FlextTypesAnnotateds:

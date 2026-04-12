@@ -1,6 +1,6 @@
 """Comprehensive coverage tests for u.
 
-Module: flext_core.utilities.u
+Module: flext_core
 Scope: Type guards, generators, text processing, caching, reliability,
 validation, type checking
 
@@ -8,10 +8,9 @@ Tests validate:
 - Type guards (string, dict, list non-empty checks)
 - ID/timestamp generation (multiple generator types)
 - Text processing (cleaning, truncation, safe string conversion)
-- Caching utilities (normalization, key generation, cleanup)
 - Reliability patterns (timeout, retry)
 - Type checking for message handlers
-- Validation utilities (sort_key, normalize_component, validate_pipeline)
+- Validation utilities (sort_key, validate_pipeline)
 - Cache utilities (sort_dict_keys, cache operations)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -74,15 +73,6 @@ class Testu(u.Core.Tests.Contract):
             (10, 10),
             (20, 20),
             (None, c.SHORT_UUID_LENGTH),
-        ]
-        CACHE_NORMALIZE_CASES: ClassVar[
-            Sequence[tuple[t.RecursiveContainer, type | tuple[type, ...]]]
-        ] = [
-            ({"a": 1, "b": 2}, dict),
-            ([1, 2, 3], list),
-            ("string", str),
-            (42, (int, float, str, dict, list, tuple)),
-            ({"a": {"b": {"c": 1}}, "d": [1, 2, 3]}, dict),
         ]
         VALIDATION_PIPELINE_CASES: ClassVar[
             Sequence[tuple[str, Sequence[Callable[[str], r[bool]]], bool, str | None]]
@@ -221,22 +211,6 @@ class Testu(u.Core.Tests.Contract):
         self.assert_format_app_id(text, expected)
 
     @pytest.mark.parametrize(
-        ("input_data", "expected_type"),
-        UtilityScenarios.CACHE_NORMALIZE_CASES,
-    )
-    def test_cache_normalize_component(
-        self,
-        input_data: t.RecursiveContainer,
-        expected_type: type | tuple[type, ...],
-    ) -> None:
-        """Test cache component normalization."""
-        normalized = u.normalize_component(input_data)
-        if isinstance(expected_type, tuple):
-            assert isinstance(normalized, expected_type)
-        else:
-            assert isinstance(normalized, expected_type)
-
-    @pytest.mark.parametrize(
         ("accepted_types", "message_type", "expected"),
         UtilityScenarios.TYPE_CHECKER_CASES,
     )
@@ -260,7 +234,8 @@ class Testu(u.Core.Tests.Contract):
             quick_success,
             max_attempts=c.MAX_RETRY_ATTEMPTS,
         )
-        u.Core.Tests.assert_success_with_value(result, "success")
+        assert result.success
+        assert result.value == "success"
 
     def test_reliability_retry_eventual_success(self) -> None:
         """Test retry with eventual success."""
@@ -277,7 +252,8 @@ class Testu(u.Core.Tests.Contract):
             max_attempts=5,
             delay_seconds=c.DEFAULT_RETRY_DELAY_SECONDS,
         )
-        u.Core.Tests.assert_success_with_value(result, "Success")
+        assert result.success
+        assert result.value == "Success"
         assert call_count[0] >= 3
 
     def test_string_conversion_edge_cases(self) -> None:

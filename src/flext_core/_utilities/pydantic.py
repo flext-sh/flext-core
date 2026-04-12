@@ -28,6 +28,8 @@ from pydantic_core import (
     to_jsonable_python,
 )
 
+from flext_core._models.pydantic import FlextModelsPydantic
+
 
 class FlextUtilitiesPydantic:
     """Runtime utilities: field helpers, validators, type adapters, JSON handlers.
@@ -50,6 +52,8 @@ class FlextUtilitiesPydantic:
     # validator = validator
 
     # Type adapters and model creation
+    FieldSerializationInfo = FlextModelsPydantic.FieldSerializationInfo
+    TypeAdapter = FlextModelsPydantic.TypeAdapter
     create_model = create_model
     validate_call = validate_call
     # parse_obj_as = parse_obj_as

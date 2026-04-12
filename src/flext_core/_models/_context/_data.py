@@ -16,10 +16,13 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import c, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core import (
+    FlextModelsBase as m,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    c,
+    t,
+)
 from flext_core.runtime import FlextRuntime
 
 
@@ -51,10 +54,10 @@ class FlextModelsContextData:
     ) -> t.ValueOrModel | None:
         if v is None:
             return None
-        if isinstance(v, FlextModelsBase.Metadata):
+        if isinstance(v, m.Metadata):
             return v
         if FlextUtilitiesGuardsTypeCore.mapping(v):
-            return FlextModelsBase.Metadata.model_validate({
+            return m.Metadata.model_validate({
                 c.FIELD_ATTRIBUTES: t.dict_str_metadata_adapter().validate_python(
                     v,
                 ),
@@ -76,7 +79,7 @@ class FlextModelsContextData:
             if v is None:
                 empty: t.RecursiveContainerMapping = {}
                 return empty
-            if isinstance(v, FlextModelsBase.Metadata):
+            if isinstance(v, m.Metadata):
                 normalized_metadata: Mapping[str, t.ValueOrModel] = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in v.attributes.items()
@@ -103,7 +106,7 @@ class FlextModelsContextData:
 
     class ContextData(
         SerializableDataValidatorMixin,
-        FlextModelsBase.FlexibleInternalModel,
+        m.FlexibleInternalModel,
     ):
         """Lightweight container for initializing context state."""
 
@@ -114,7 +117,7 @@ class FlextModelsContextData:
             ),
         ] = Field(default_factory=t.Dict)
         metadata: Annotated[
-            FlextModelsBase.Metadata | t.Dict | None,
+            m.Metadata | t.Dict | None,
             BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_metadata_before(v),
             ),

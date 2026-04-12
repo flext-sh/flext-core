@@ -9,8 +9,7 @@ from types import ModuleType
 import pytest
 
 import flext_core
-from flext_core import install_lazy_exports
-from flext_core.lazy import lazy
+from flext_core import install_lazy_exports, lazy
 
 type LazyImportEntry = str | tuple[str, str]
 type LazyImportMap = dict[str, LazyImportEntry]
@@ -77,7 +76,7 @@ class TestLazyPerformance:
             reloaded_module = importlib.reload(flext_core)
 
             for index, lazy_map in enumerate(EXTRA_INSTALL_MAPS):
-                module_name = f"flext_core._bench_virtual_{index}"
+                module_name = f"flext_core_{index}"
                 virtual_module = TestLazyPerformance.LazyBenchmark._new_virtual_module(
                     module_name,
                 )

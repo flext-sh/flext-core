@@ -1,6 +1,6 @@
 """m comprehensive functionality tests.
 
-Module: flext_core.models
+Module: flext_core
 Scope: m - Pydantic-based data models, validation, serialization,
 domain entities, value objects, aggregates, commands, queries, events
 

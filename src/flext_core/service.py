@@ -320,7 +320,7 @@ class FlextService[
             type: The settings class to use for this service
 
         """
-        settings_module = import_module("flext_core.settings")
+        settings_module = import_module("flext_core")
         return settings_module.FlextSettings
 
     @field_validator("services", mode="before")

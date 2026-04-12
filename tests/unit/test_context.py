@@ -1,6 +1,6 @@
 """Comprehensive tests for FlextContext - Context Management.
 
-Module: flext_core.context
+Module: flext_core
 Scope: p.Context - hierarchical context management, correlation IDs, metadata
 
 Tests FlextContext functionality including:

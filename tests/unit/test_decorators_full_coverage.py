@@ -11,7 +11,7 @@ from typing import Annotated, ClassVar, cast
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-import flext_core.decorators as core_decorators
+import flext_core as core_decorators
 from flext_core import (
     FlextContainer,
     FlextContext,

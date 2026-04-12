@@ -20,11 +20,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextCoreServiceBase",
                 "s",
             ),
-            ".test_args_coverage_100": ("test_args_coverage_100",),
             ".test_beartype_engine": ("test_beartype_engine",),
-            ".test_collection_utilities_coverage_100": (
-                "test_collection_utilities_coverage_100",
-            ),
             ".test_collections_coverage_100": ("test_collections_coverage_100",),
             ".test_constants_new": ("test_constants_new",),
             ".test_container": ("test_container",),

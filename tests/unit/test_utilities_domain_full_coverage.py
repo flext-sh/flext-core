@@ -1,6 +1,6 @@
 """Tests for FlextUtilitiesDomain - entity comparison, hashing, validation.
 
-Module: flext_core._utilities.domain
+Module: flext_core
 Coverage target: lines 32, 156, 197-202, 211
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

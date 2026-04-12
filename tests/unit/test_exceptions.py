@@ -11,7 +11,7 @@ from tests import c, e, r, t
 
 
 class TestExceptions:
-    """Validate the public behavior exposed by flext_core.exceptions."""
+    """Validate the public behavior exposed by flext_core."""
 
     def test_exception_hierarchy_uses_base_error(self) -> None:
         assert issubclass(e.ValidationError, e.BaseError)

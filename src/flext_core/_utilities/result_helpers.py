@@ -34,7 +34,7 @@ class FlextUtilitiesResultHelpers:
             True if any value is truthy, False otherwise.
 
         """
-        return any(bool(v) for v in values)
+        return any(values)
 
     @staticmethod
     def try_(
@@ -59,13 +59,13 @@ class FlextUtilitiesResultHelpers:
         """
         func_result = r[T].create_from_callable(func)
         if func_result.success:
-            return r[T].ok(func_result.value)
+            return func_result
         exc = getattr(func_result, "_exception", None)
         if exc is not None and not isinstance(exc, catch):
             raise exc
         if default is not None:
             return r[T].ok(default)
-        return r[T].fail(func_result.error or "Callable failed")
+        return func_result
 
     @staticmethod
     def expect_success[TValue](

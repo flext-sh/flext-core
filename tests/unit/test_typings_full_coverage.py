@@ -1,6 +1,6 @@
 """Tests for FlextTypes - dict mixin operations and validator map.
 
-Module: flext_core.typings
+Module: flext_core
 Coverage target: lines 320, 324, 331, 351, 355, 359, 363, 367, 371, 457, 470, 476
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

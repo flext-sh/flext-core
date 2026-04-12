@@ -15,12 +15,18 @@ import warnings
 from collections.abc import Mapping, MutableSequence, MutableSet, Sequence
 from enum import EnumType
 from pathlib import Path
-from typing import Annotated, get_args, get_origin
+from typing import TYPE_CHECKING, Annotated, get_args, get_origin
 
 from pydantic.fields import FieldInfo
 
-from flext_core import FlextConstantsEnforcement as c, FlextUtilitiesBeartypeEngine
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core import (
+    FlextConstantsEnforcement as c,
+    FlextModelsPydantic as mp,
+    FlextUtilitiesBeartypeEngine,
+)
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class FlextUtilitiesEnforcement:
@@ -42,7 +48,7 @@ class FlextUtilitiesEnforcement:
 
     @staticmethod
     def own_fields(
-        model_type: type[FlextModelsPydantic.BaseModel],
+        model_type: type[mp.BaseModel],
     ) -> Mapping[str, FieldInfo]:
         """Get fields defined directly on this class (not inherited)."""
         own_annotations = set(vars(model_type).get("__annotations__", {}))
@@ -91,7 +97,7 @@ class FlextUtilitiesEnforcement:
 
     @staticmethod
     def check_no_v1_patterns(
-        model_type: type[FlextModelsPydantic.BaseModel],
+        model_type: type[mp.BaseModel],
     ) -> t.StrSequence:
         """Reject class Config (v1 style)."""
         config_attr = model_type.__dict__.get("Config")
@@ -106,7 +112,7 @@ class FlextUtilitiesEnforcement:
 
     @staticmethod
     def check_field_descriptions(
-        model_type: type[FlextModelsPydantic.BaseModel],
+        model_type: type[mp.BaseModel],
         own: Mapping[str, FieldInfo],
     ) -> t.StrSequence:
         """Require Field(description=...) on all public fields."""
@@ -136,7 +142,7 @@ class FlextUtilitiesEnforcement:
 
     @staticmethod
     def check_extra_policy(
-        model_type: type[FlextModelsPydantic.BaseModel],
+        model_type: type[mp.BaseModel],
     ) -> t.StrSequence:
         """Require extra='forbid' unless inheriting from relaxed base."""
         for base in model_type.__mro__:
@@ -190,7 +196,7 @@ class FlextUtilitiesEnforcement:
 
     @staticmethod
     def check_frozen_value_objects(
-        model_type: type[FlextModelsPydantic.BaseModel],
+        model_type: type[mp.BaseModel],
     ) -> t.StrSequence:
         """Value objects (ImmutableValueModel/FrozenValueModel) must be frozen."""
         value_bases = {"ImmutableValueModel", "FrozenValueModel", "FrozenStrictModel"}
@@ -248,7 +254,7 @@ class FlextUtilitiesEnforcement:
         return errors
 
     @staticmethod
-    def run(model_type: type[FlextModelsPydantic.BaseModel]) -> None:
+    def run(model_type: type[mp.BaseModel]) -> None:
         """Orchestrate all enforcement checks on a model class.
 
         Called from __pydantic_init_subclass__ on FLEXT base models.

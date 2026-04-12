@@ -21,7 +21,7 @@ class FlextUtilitiesBeartypeConf:
     downstream projects to use in their beartype_this_package() calls.
     """
 
-    CLAW_SKIP_PACKAGES: tuple[str, ...] = ("flext_core._typings",)
+    CLAW_SKIP_PACKAGES: tuple[str, ...] = ("flext_core",)
     """Packages to skip in beartype.claw due to Pydantic recursive type conflicts."""
 
     @staticmethod
@@ -32,7 +32,7 @@ class FlextUtilitiesBeartypeConf:
         - "strict" -> violation_type=TypeError (raises on violation)
         - "off" -> returns conf with O0 strategy (no checking)
 
-        Skips flext_core._typings because unresolved PEP 695 aliases and
+        Skips flext_core unresolved PEP 695 aliases and
         recursive container schemas are still incompatible with beartype.claw.
         """
         mode = c.ENFORCEMENT_MODE

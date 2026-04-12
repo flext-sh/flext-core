@@ -1,6 +1,6 @@
 """Tests for FlextUtilitiesText - safe_string, format.
 
-Module: flext_core._utilities.text
+Module: flext_core
 Coverage target: lines 33, 82-83, 109
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

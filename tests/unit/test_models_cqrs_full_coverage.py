@@ -28,16 +28,16 @@ def test_query_resolve_pagination_wrapper_and_fallback(
         class Query(m.Query):
             pass
 
-    Wrapper.Query.__module__ = "flext_core.models"
+    Wrapper.Query.__module__ = "flext_core"
     Wrapper.Query.__qualname__ = "Wrapper.Query"
-    mock_module: ModuleType = ModuleType("flext_core.models")
+    mock_module: ModuleType = ModuleType("flext_core")
     setattr(mock_module, "Wrapper", Wrapper)
-    monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
+    monkeypatch.setitem(sys.modules, "flext_core", mock_module)
     assert (
         u.resolve_nested_model_class(
             module_name=Wrapper.Query.__module__,
             qualname=Wrapper.Query.__qualname__,
-            models_module_name="flext_core.models",
+            models_module_name="flext_core",
             attribute_name="Pagination",
             fallback=m.Pagination,
         )
@@ -45,14 +45,14 @@ def test_query_resolve_pagination_wrapper_and_fallback(
     )
     monkeypatch.setitem(
         sys.modules,
-        "flext_core.models",
-        ModuleType("flext_core.models"),
+        "flext_core",
+        ModuleType("flext_core"),
     )
     assert (
         u.resolve_nested_model_class(
             module_name=Wrapper.Query.__module__,
             qualname=Wrapper.Query.__qualname__,
-            models_module_name="flext_core.models",
+            models_module_name="flext_core",
             attribute_name="Pagination",
             fallback=m.Pagination,
         )
@@ -92,16 +92,16 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
             class Query(m.Query):
                 pass
 
-    Wrapper.Inner.Query.__module__ = "flext_core.models"
+    Wrapper.Inner.Query.__module__ = "flext_core"
     Wrapper.Inner.Query.__qualname__ = "Wrapper.Inner.Query"
-    mock_module = ModuleType("flext_core.models")
+    mock_module = ModuleType("flext_core")
     setattr(mock_module, "Wrapper", Wrapper)
-    monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
+    monkeypatch.setitem(sys.modules, "flext_core", mock_module)
     assert (
         u.resolve_nested_model_class(
             module_name=Wrapper.Inner.Query.__module__,
             qualname=Wrapper.Inner.Query.__qualname__,
-            models_module_name="flext_core.models",
+            models_module_name="flext_core",
             attribute_name="Pagination",
             fallback=m.Pagination,
         )

@@ -1,7 +1,7 @@
 """Tests for FlextProtocols — structural typing protocol contracts.
 
-Source: flext_core._protocols/ (10 files, ~1306 LOC)
-Facade: flext_core.protocols.FlextProtocols (MRO composition)
+Source: flext_core/ (10 files, ~1306 LOC)
+Facade: flext_coreFlextProtocols (MRO composition)
 
 Tests protocol existence, runtime checkability, structural conformance
 of concrete FLEXT classes, non-conformance rejection, and method signatures.

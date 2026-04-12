@@ -9,18 +9,22 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._constants.mixins import FlextConstantsMixins
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.result import FlextProtocolsResult
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.containers import FlextTypingContainers
-from flext_core._typings.core import FlextTypesCore
+from flext_core import (
+    FlextConstantsMixins,
+    FlextProtocolsBase,
+    FlextProtocolsResult,
+    FlextTypesCore,
+    FlextTypingBase,
+    FlextTypingContainers,
+)
 
 if TYPE_CHECKING:
-    from flext_core._models.base import FlextModelsBase
-    from flext_core._models.handler import FlextModelsHandler
-    from flext_core._models.registry import FlextModelsRegistry
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core import (
+        FlextModelsBase,
+        FlextModelsHandler,
+        FlextModelsRegistry,
+        FlextTypesServices,
+    )
 
 
 class FlextProtocolsRegistry:

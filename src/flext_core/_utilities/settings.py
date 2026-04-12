@@ -12,8 +12,7 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
 
-from flext_core import c, e, p, r, t
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core import FlextUtilitiesGuardsTypeModel, c, e, p, r, t
 
 
 class FlextUtilitiesSettings:

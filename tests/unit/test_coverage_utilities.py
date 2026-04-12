@@ -1,6 +1,6 @@
 """Comprehensive coverage tests for u.
 
-Module: flext_core.utilities.u
+Module: flext_core
 Scope: All public u namespaces
 Pattern: Railway-Oriented, Functional utilities, Type guards, Generators
 
@@ -8,7 +8,6 @@ Tests validate:
 - Type guards (string, dict, list non-empty checks)
 - ID/timestamp generation (multiple generator types)
 - Text processing and normalization
-- Caching utilities (normalization, key generation, cleanup)
 - Reliability patterns (timeout, retry)
 - Type checking for message handlers
 - Configuration parameter access
@@ -43,7 +42,6 @@ class Testu(u.Core.Tests.Contract):
         TYPE_GUARD_LIST = "type_guard_list"
         ID_GENERATION = "id_generation"
         TIMESTAMP_GENERATION = "timestamp_generation"
-        CACHE_NORMALIZATION = "cache_normalization"
         CACHE_KEY = "cache_key"
         TEXT_CLEANING = "text_cleaning"
         TEXT_TRUNCATION = "text_truncation"
@@ -278,19 +276,6 @@ class Testu(u.Core.Tests.Contract):
         with pytest.raises(ValueError, match=error_message):
             u.safe_string(raw)
 
-    @pytest.mark.parametrize(
-        ("input_data", "expected_type"),
-        UtilityScenarios.CACHE_NORMALIZATION_CASES,
-    )
-    def test_cache_normalize_component(
-        self,
-        input_data: t.RecursiveContainer,
-        expected_type: type,
-    ) -> None:
-        """Test cache component normalization."""
-        result = u.normalize_component(input_data)
-        tm.that(result, is_=(dict, str, type(None), expected_type))
-
     def test_reliability_retry_first_success(self) -> None:
         """Test retry that succeeds immediately."""
 
@@ -298,7 +283,7 @@ class Testu(u.Core.Tests.Contract):
             return r[str].ok("success")
 
         result: r[str] = u.retry(op, max_attempts=3)
-        _ = u.Core.Tests.assert_success(result)
+        assert result.success
         tm.that(result.value, eq="success")
 
     def test_reliability_retry_eventual_success(self) -> None:
@@ -309,7 +294,7 @@ class Testu(u.Core.Tests.Contract):
             max_attempts=3,
             delay_seconds=0.01,
         )
-        _ = u.Core.Tests.assert_success(result)
+        assert result.success
         tm.that(attempt_count[0], gte=2)
 
     def test_type_checker_object_accepts_all(self) -> None:

@@ -1,6 +1,6 @@
 """Tests for s .result property (V2 zero-ceremony pattern).
 
-Module: flext_core.service.s[T]
+Module: flext_core[T]
 Scope: .result property, V2 pattern, V1 backward compatibility, property behavior
 Pattern: Railway-Oriented, zero-ceremony result access with exception handling
 

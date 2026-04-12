@@ -34,11 +34,16 @@ from structlog.stdlib import add_log_level
 from structlog.types import Processor
 from structlog.typing import Context
 
-from flext_core import c, e, p, r, t
-from flext_core._utilities.collection import FlextUtilitiesCollection
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core import (
+    FlextUtilitiesCollection,
+    FlextUtilitiesGenerators,
+    FlextUtilitiesGuardsTypeCore,
+    c,
+    e,
+    p,
+    r,
+    t,
+)
 from flext_core.runtime import FlextRuntime
 
 
@@ -55,7 +60,6 @@ class FlextLogger(FlextRuntime):
     _level_contexts: ClassVar[t.ScopedContainerRegistry] = {}
     _structlog_instance: p.Logger | None = None
     _structlog_configured: ClassVar[bool] = False
-    type _LogArg = t.RuntimeData | Exception
 
     class _AsyncLogWriter(io.TextIOBase):
         """Background log writer using a queue and a separate thread."""
@@ -272,7 +276,7 @@ class FlextLogger(FlextRuntime):
         return logger
 
     @classmethod
-    def fetch_logger(cls, name: str | None = None) -> Self:
+    def fetch_logger(cls, name: str | None = None) -> p.Logger:
         """Fetch the canonical public logger wrapper using shared FLEXT configuration."""
         resolved_name = name
         if resolved_name is None:
@@ -747,7 +751,7 @@ class FlextLogger(FlextRuntime):
         service_name: str | None = None,
         service_version: str | None = None,
         correlation_id: str | None = None,
-    ) -> Self:
+    ) -> p.Logger:
         """Create a logger instance for a module.
 
         Args:
@@ -796,7 +800,7 @@ class FlextLogger(FlextRuntime):
             except (AttributeError, RuntimeError, TypeError, ValueError):
                 settings = None
             level = getattr(settings, "log_level", "INFO")
-        logger = cls.create_module_logger(f"container_{id(container)}")
+        logger = cls(f"container_{id(container)}")
         if context:
             _ = logger.bind_global_context(**context)
         return logger
@@ -867,7 +871,7 @@ class FlextLogger(FlextRuntime):
         return None
 
     @staticmethod
-    def _format_log_message(message: str, *args: _LogArg) -> str:
+    def _format_log_message(message: str, *args: t.LogValue) -> str:
         """Format log message with % arguments."""
         try:
             return message % args if args else message
@@ -876,17 +880,17 @@ class FlextLogger(FlextRuntime):
 
     @staticmethod
     def _to_container_value(
-        value: _LogArg | t.Container | t.ValueOrModel,
+        value: t.LogValue | t.Container | t.ValueOrModel,
     ) -> t.Container:
         """Normalize value to Container (internal helper)."""
         if isinstance(value, Exception):
             return str(value)
         if value is None:
             return ""
+        if isinstance(value, p.Model):
+            return str(value.model_dump())
         if FlextUtilitiesGuardsTypeCore.scalar(value) or isinstance(value, Path):
             return value
-        if FlextUtilitiesGuardsTypeModel.pydantic_model(value):
-            return value.model_dump_json()
         normalized = FlextRuntime.normalize_to_container(value)
         if FlextUtilitiesGuardsTypeCore.scalar(normalized) or isinstance(
             normalized,
@@ -897,12 +901,14 @@ class FlextLogger(FlextRuntime):
 
     @staticmethod
     def _to_scalar_value(
-        value: _LogArg | t.Container | t.ValueOrModel | None,
+        value: t.LogValue | t.Container | t.ValueOrModel | None,
     ) -> t.Scalar:
         if value is None:
             return ""
         if isinstance(value, Exception):
             return str(value)
+        if isinstance(value, p.Model):
+            return str(value.model_dump())
         if isinstance(value, (list, tuple, dict, Mapping)):
             return str(value)
         if FlextUtilitiesGuardsTypeCore.scalar(value):
@@ -911,7 +917,7 @@ class FlextLogger(FlextRuntime):
 
     @staticmethod
     def _to_container_context(
-        context: Mapping[str, _LogArg | t.Container | t.ValueOrModel],
+        context: Mapping[str, t.LogValue | t.Container | t.ValueOrModel],
     ) -> t.FlatContainerMapping:
         """Convert mapping to container context using normalization."""
         return {
@@ -922,7 +928,7 @@ class FlextLogger(FlextRuntime):
     @classmethod
     def _to_scalar_context(
         cls,
-        context: Mapping[str, _LogArg | t.Container | t.ValueOrModel | None],
+        context: Mapping[str, t.LogValue | t.Container | t.ValueOrModel | None],
     ) -> t.ScalarMapping:
         return {key: cls._to_scalar_value(value) for key, value in context.items()}
 
@@ -970,7 +976,7 @@ class FlextLogger(FlextRuntime):
     @staticmethod
     def _report_internal_logging_failure(operation: str, exc: Exception) -> None:
         with suppress(AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            FlextLogger.structlog().get_logger("flext_core.loggings").warning(
+            FlextLogger.structlog().get_logger("flext_core").warning(
                 "Internal logger operation failed",
                 operation=operation,
                 error=exc,
@@ -1037,9 +1043,9 @@ class FlextLogger(FlextRuntime):
     def critical(
         self,
         msg: str,
-        *args: t.RuntimeData,
-        **kw: t.RuntimeData | Exception,
-    ) -> r[bool]:
+        *args: t.LogValue,
+        **kw: t.LogValue,
+    ) -> t.LogResult:
         """Log critical message - Logger.Log implementation.
 
         Business Rule: Logs a critical-level message with optional context. Uses _log
@@ -1056,27 +1062,27 @@ class FlextLogger(FlextRuntime):
     def debug(
         self,
         msg: str,
-        *args: t.RuntimeData,
-        **kw: t.RuntimeData | Exception,
-    ) -> r[bool]:
+        *args: t.LogValue,
+        **kw: t.LogValue,
+    ) -> t.LogResult:
         """Log debug message - Logger.Log implementation."""
         return self._log_standard_level(c.LogLevel.DEBUG, msg, *args, **kw)
 
     def error(
         self,
         msg: str,
-        *args: t.RuntimeData,
-        **kw: t.RuntimeData | Exception,
-    ) -> r[bool]:
+        *args: t.LogValue,
+        **kw: t.LogValue,
+    ) -> t.LogResult:
         """Log error message - Logger.Log implementation."""
         return self._log_standard_level(c.LogLevel.ERROR, msg, *args, **kw)
 
     def exception(
         self,
         msg: str,
-        *args: t.RuntimeData,
-        **kw: t.RuntimeData | Exception,
-    ) -> r[bool]:
+        *args: t.LogValue,
+        **kw: t.LogValue,
+    ) -> t.LogResult:
         """Log exception with conditional stack trace (DEBUG only)."""
         message = str(msg)
         filtered_args: tuple[t.Scalar, ...] = tuple(
@@ -1120,9 +1126,9 @@ class FlextLogger(FlextRuntime):
         self,
         level: str,
         message: str,
-        *args: _LogArg,
-        **context: t.RuntimeData,
-    ) -> r[bool]:
+        *args: t.LogValue,
+        **context: t.LogValue,
+    ) -> t.LogResult:
         """Log message with specified level - Logger.Log implementation.
 
         Args:
@@ -1147,9 +1153,9 @@ class FlextLogger(FlextRuntime):
     def trace(
         self,
         message: str,
-        *args: _LogArg,
+        *args: t.LogValue,
         **kwargs: t.RuntimeData,
-    ) -> r[bool]:
+    ) -> t.LogResult:
         """Log trace message - Logger.Log implementation."""
         try:
             try:
@@ -1188,18 +1194,18 @@ class FlextLogger(FlextRuntime):
     def info(
         self,
         msg: str,
-        *args: t.RuntimeData,
-        **kw: t.RuntimeData | Exception,
-    ) -> r[bool]:
+        *args: t.LogValue,
+        **kw: t.LogValue,
+    ) -> t.LogResult:
         """Log info message - Logger.Log implementation."""
         return self._log_standard_level(c.LogLevel.INFO, msg, *args, **kw)
 
     def warning(
         self,
         msg: str,
-        *args: t.RuntimeData,
-        **kw: t.RuntimeData | Exception,
-    ) -> r[bool]:
+        *args: t.LogValue,
+        **kw: t.LogValue,
+    ) -> t.LogResult:
         """Log warning message - Logger.Log implementation."""
         return self._log_standard_level(c.LogLevel.WARNING, msg, *args, **kw)
 
@@ -1207,9 +1213,9 @@ class FlextLogger(FlextRuntime):
         self,
         _level: c.LogLevel | str,
         event: str,
-        *args: t.RuntimeData,
-        **context: t.RuntimeData | Exception,
-    ) -> r[bool]:
+        *args: t.LogValue,
+        **context: t.LogValue,
+    ) -> t.LogResult:
         """Internal logging method - consolidates all log level methods."""
         try:
             if "source" not in context and (
@@ -1234,9 +1240,9 @@ class FlextLogger(FlextRuntime):
         self,
         level: c.LogLevel,
         msg: str,
-        *args: t.RuntimeData,
-        **kw: t.RuntimeData | Exception,
-    ) -> r[bool]:
+        *args: t.LogValue,
+        **kw: t.LogValue,
+    ) -> t.LogResult:
         return self._log(level, msg, *args, **kw)
 
     class PerformanceTracker:

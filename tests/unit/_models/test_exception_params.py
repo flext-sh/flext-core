@@ -19,7 +19,7 @@ from tests import m, t
 
 
 class TestFlextModelsExceptionParams:
-    """Tests for flext_core._models.exception_params via the m facade."""
+    """Tests for flext_core via the m facade."""
 
     # ── ParamsModel base ──────────────────────────────────────
 

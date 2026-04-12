@@ -19,11 +19,16 @@ from typing import Annotated, ClassVar, Self, override
 import structlog
 from pydantic import BaseModel, Field, computed_field, model_validator
 
-from flext_core import c, p, r, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.domain_event import FlextModelsDomainEvent
-from flext_core._utilities.domain import FlextUtilitiesDomain
-from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core import (
+    FlextModelsBase,
+    FlextModelsDomainEvent,
+    FlextUtilitiesDomain,
+    FlextUtilitiesGenerators,
+    c,
+    p,
+    r,
+    t,
+)
 
 
 class FlextModelsEntity:

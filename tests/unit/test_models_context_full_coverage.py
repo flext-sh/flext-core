@@ -8,7 +8,6 @@ import pytest
 import structlog.contextvars
 from pydantic import BaseModel
 
-import flext_core._models._context._proxy_var as _proxy_var_mod
 from flext_core import FlextModelsContextProxyVar
 from flext_tests import tm
 from tests import m, t
@@ -57,7 +56,7 @@ def test_structlog_proxy_context_var_default_when_key_missing(
     )
 
     monkeypatch.setattr(
-        _proxy_var_mod.structlog.contextvars,
+        structlog.contextvars,
         "get_contextvars",
         lambda: {"other": "x"},
     )

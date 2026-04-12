@@ -1,6 +1,6 @@
 """Tests for u - Domain entity and value t.RecursiveContainer operations.
 
-Module: flext_core._utilities.domain
+Module: flext_core
 Scope: u - entity/value t.RecursiveContainer comparison, hashing, validation
 
 Tests u functionality including:

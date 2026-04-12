@@ -20,9 +20,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Literal, NoReturn, ParamSpec, TypeIs, TypeVar, overload
 
-from flext_core import c, e, m, p, r, t, u
-from flext_core.container import FlextContainer
-from flext_core.context import FlextContext
+from flext_core import FlextContainer, FlextContext, c, e, m, p, r, t, u
 
 P = ParamSpec("P")
 R = TypeVar("R")

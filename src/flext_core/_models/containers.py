@@ -16,9 +16,7 @@ from collections.abc import (
 )
 from typing import Annotated
 
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.services import FlextTypesServices
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import FlextModelsPydantic, FlextTypesServices, FlextUtilitiesPydantic
 
 
 class FlextModelsContainers:

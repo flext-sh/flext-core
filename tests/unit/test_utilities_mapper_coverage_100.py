@@ -1,6 +1,6 @@
 """Real tests for u coverage - extract and accessors.
 
-Module: flext_core._utilities.mapper
+Module: flext_core
 Scope: FlextUtilitiesMapper - extract, get, at, take, pick, as_, or_, flat, agg, etc.
 
 This module provides comprehensive real tests to achieve 100% coverage for
@@ -155,7 +155,7 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(result.value, eq="defs")
             result_req = u.extract(data, "a.b", required=True)
             tm.fail(result_req)
-            assert "is None" in str(result_req.error)
+            assert "not found" in str(result_req.error)
 
     class TestuMapperAccessors:
         """Tests for u accessors (get, at, take, pick)."""

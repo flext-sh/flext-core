@@ -6,7 +6,7 @@ import time
 
 from flext_core import FlextModelsDispatcher
 from flext_tests import tm
-from tests import c, u
+from tests import c
 
 
 def test_circuit_breaker_transitions_and_metrics() -> None:
@@ -55,13 +55,6 @@ def test_rate_limiter_blocks_then_recovers() -> None:
     tm.ok(limiter.check_rate_limit(msg_type))
     limiter.cleanup()
     tm.ok(limiter.check_rate_limit(msg_type))
-
-
-def test_rate_limiter_jitter_application() -> None:
-    """Ensure the canonical jitter utility respects bounds and zero short-circuit."""
-    jittered = u.apply_jitter(2.0, 0.5)
-    tm.that(jittered, gte=0.0)
-    tm.that(abs(u.apply_jitter(0.5, 0.0) - 0.5), lt=1e-9)
 
 
 def test_circuit_breaker_half_open_and_rate_limiter_public_contract() -> None:

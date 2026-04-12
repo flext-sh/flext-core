@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import ClassVar
 
 from flext_core import c, m, t
 from flext_core.runtime import FlextRuntime
@@ -17,8 +16,6 @@ from flext_core.runtime import FlextRuntime
 
 class FlextUtilitiesConversion:
     """Utilities for value conversion operations."""
-
-    _V: ClassVar[type[t]] = t
 
     @staticmethod
     def join(
@@ -55,7 +52,7 @@ class FlextUtilitiesConversion:
         if isinstance(value, str):
             return str(value)
         try:
-            float_value = FlextUtilitiesConversion._V.float_adapter().validate_python(
+            float_value = t.float_adapter().validate_python(
                 value,
             )
             if float_value.is_integer():
@@ -78,11 +75,7 @@ class FlextUtilitiesConversion:
         if value_class is str:
             return [str(value)]
         try:
-            list_value = (
-                FlextUtilitiesConversion._V.strict_json_list_adapter().validate_python(
-                    value,
-                )
-            )
+            list_value = t.strict_json_list_adapter().validate_python(value)
             return [str(item) for item in list_value if item is not None]
         except c.ValidationError:
             pass

@@ -16,11 +16,16 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar
 
-from flext_core import FlextModelsBase, c, p, t
-from flext_core._constants.pydantic import FlextConstantsPydantic
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.pydantic import FlextTypesPydantic
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import (
+    FlextConstantsPydantic,
+    FlextModelsBase,
+    FlextModelsPydantic,
+    FlextTypesPydantic,
+    FlextUtilitiesPydantic,
+    c,
+    p,
+    t,
+)
 from flext_core.runtime import FlextRuntime
 
 

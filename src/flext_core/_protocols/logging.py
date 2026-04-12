@@ -8,13 +8,16 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from structlog.typing import BindableLogger
 
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.result import FlextProtocolsResult
 from flext_core._typings.base import FlextTypingBase
+
+if TYPE_CHECKING:
+    from flext_core._typings.services import FlextTypesServices
 
 
 class FlextProtocolsLogging:
@@ -32,66 +35,54 @@ class FlextProtocolsLogging:
         def critical(
             self,
             msg: str,
-            *args: FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
-            **kw: FlextTypingBase.RecursiveContainer
-            | FlextProtocolsBase.Model
-            | Exception,
-        ) -> FlextProtocolsResult.Result[bool] | None:
+            *args: FlextTypesServices.LogValue,
+            **kw: FlextTypesServices.LogValue,
+        ) -> FlextTypesServices.LogResult:
             """Log critical message."""
             ...
 
         def debug(
             self,
             msg: str,
-            *args: FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
-            **kw: FlextTypingBase.RecursiveContainer
-            | FlextProtocolsBase.Model
-            | Exception,
-        ) -> FlextProtocolsResult.Result[bool] | None:
+            *args: FlextTypesServices.LogValue,
+            **kw: FlextTypesServices.LogValue,
+        ) -> FlextTypesServices.LogResult:
             """Log debug message."""
             ...
 
         def error(
             self,
             msg: str,
-            *args: FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
-            **kw: FlextTypingBase.RecursiveContainer
-            | FlextProtocolsBase.Model
-            | Exception,
-        ) -> FlextProtocolsResult.Result[bool] | None:
+            *args: FlextTypesServices.LogValue,
+            **kw: FlextTypesServices.LogValue,
+        ) -> FlextTypesServices.LogResult:
             """Log error message."""
             ...
 
         def exception(
             self,
             msg: str,
-            *args: FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
-            **kw: FlextTypingBase.RecursiveContainer
-            | FlextProtocolsBase.Model
-            | Exception,
-        ) -> FlextProtocolsResult.Result[bool] | None:
+            *args: FlextTypesServices.LogValue,
+            **kw: FlextTypesServices.LogValue,
+        ) -> FlextTypesServices.LogResult:
             """Log exception with traceback."""
             ...
 
         def info(
             self,
             msg: str,
-            *args: FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
-            **kw: FlextTypingBase.RecursiveContainer
-            | FlextProtocolsBase.Model
-            | Exception,
-        ) -> FlextProtocolsResult.Result[bool] | None:
+            *args: FlextTypesServices.LogValue,
+            **kw: FlextTypesServices.LogValue,
+        ) -> FlextTypesServices.LogResult:
             """Log info message."""
             ...
 
         def warning(
             self,
             msg: str,
-            *args: FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
-            **kw: FlextTypingBase.RecursiveContainer
-            | FlextProtocolsBase.Model
-            | Exception,
-        ) -> FlextProtocolsResult.Result[bool] | None:
+            *args: FlextTypesServices.LogValue,
+            **kw: FlextTypesServices.LogValue,
+        ) -> FlextTypesServices.LogResult:
             """Log warning message."""
             ...
 

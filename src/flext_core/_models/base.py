@@ -17,10 +17,14 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import FlextUtilitiesEnforcement, c, t
-from flext_core._constants.pydantic import FlextConstantsPydantic
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import (
+    FlextConstantsPydantic,
+    FlextModelsPydantic,
+    FlextUtilitiesEnforcement,
+    FlextUtilitiesPydantic,
+    c,
+    t,
+)
 from flext_core.runtime import FlextRuntime
 
 

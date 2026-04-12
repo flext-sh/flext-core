@@ -1,6 +1,6 @@
 """FlextSettings comprehensive functionality tests.
 
-Module: flext_core.settings
+Module: flext_core
 Scope: FlextSettings class - settings management, validation, environment handling,
 thread safety, namespace management, and Pydantic integration.
 

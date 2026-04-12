@@ -19,9 +19,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import c, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._protocols.settings import FlextProtocolsSettings
+from flext_core import FlextModelsBase as m, c, p, t
 
 
 class FlextModelsSettings:
@@ -31,7 +29,7 @@ class FlextModelsSettings:
     All nested classes are accessed via FlextModels.Settings.* in the main models.py.
     """
 
-    class AutoSettings(FlextModelsBase.ArbitraryTypesModel):
+    class AutoSettings(m.ArbitraryTypesModel):
         """Automatic settings wrapper for canonical FLEXT settings classes."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -40,7 +38,7 @@ class FlextModelsSettings:
         )
 
         settings_class: Annotated[
-            type[FlextProtocolsSettings.SettingsType],
+            type[p.SettingsType],
             Field(description="Settings class to instantiate"),
         ]
         env_prefix: Annotated[
@@ -58,12 +56,12 @@ class FlextModelsSettings:
             ),
         ] = None
 
-        def create_settings(self) -> FlextProtocolsSettings.Settings:
+        def create_settings(self) -> p.Settings:
             return self.settings_class.fetch_global()
 
     class RetryConfiguration(
-        FlextModelsBase.ArbitraryTypesModel,
-        FlextModelsBase.RetryConfigurationMixin,
+        m.ArbitraryTypesModel,
+        m.RetryConfigurationMixin,
     ):
         """Retry configuration with advanced validation."""
 

@@ -18,18 +18,18 @@ from datetime import datetime
 from typing import Annotated
 
 from flext_core import (
-    FlextModelsBase,
+    FlextModelsBase as m,
     FlextUtilitiesDomain,
     FlextUtilitiesGenerators,
+    FlextUtilitiesPydantic,
     t,
 )
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextGenericModels:
     """Generic models for mutable progress accumulation during operations."""
 
-    class Operation(FlextModelsBase.ArbitraryTypesModel):
+    class Operation(m.ArbitraryTypesModel):
         """Progress tracking for ongoing operations.
 
         Used by: batch operations, migrations, sync, data processing.
@@ -118,7 +118,7 @@ class FlextGenericModels:
             self.start_time = FlextUtilitiesGenerators.generate_datetime_utc()
             self.last_update = self.start_time
 
-    class Conversion(FlextModelsBase.ArbitraryTypesModel):
+    class Conversion(m.ArbitraryTypesModel):
         """Conversion progress tracking with error reporting.
 
         Used by: flext-ldif conversion, data transformations, ETL.

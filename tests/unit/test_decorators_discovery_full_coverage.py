@@ -1,6 +1,6 @@
 """Tests for u - scan_module and has_factories.
 
-Module: flext_core._utilities.discovery
+Module: flext_core
 Coverage target: lines 50-63, 85 (scan_module body, has_factories body)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

@@ -1,6 +1,6 @@
 """Tests for r - Core railway pattern implementation.
 
-Module: flext_core.result
+Module: flext_core
 Scope: r - railway-oriented programming core implementation
 
 Tests r functionality including:
