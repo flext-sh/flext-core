@@ -16,10 +16,7 @@ from typing import TypeIs, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
-from flext_core import p, r, t
-from flext_core._constants.errors import FlextConstantsErrors as c_errors
-from flext_core._constants.mixins import FlextConstantsMixins as c
-from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core import FlextUtilitiesGuards, c, p, r, t
 
 
 class FlextUtilitiesChecker:
@@ -72,7 +69,7 @@ class FlextUtilitiesChecker:
     ) -> bool:
         """Check if expected type is a canonical catch-all value contract."""
         return expected_type in {
-            t.NormalizedValue,
+            t.RecursiveContainer,
             t.RecursiveContainer,
             t.ValueOrModel,
         }
@@ -150,7 +147,7 @@ class FlextUtilitiesChecker:
         """Extract message type from handle method annotations when generics are absent."""
         if not hasattr(handler_class, c.MethodName.HANDLE):
             return r[t.TypeHintSpecifier].fail(
-                c_errors.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD,
+                c.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD,
             )
         handle_method_raw: t.GuardInput = getattr(
             handler_class,
@@ -159,7 +156,7 @@ class FlextUtilitiesChecker:
         )
         if not cls._is_module_export_callable(handle_method_raw):
             return r[t.TypeHintSpecifier].fail(
-                c_errors.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,
+                c.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,
             )
         handle_method: Callable[..., t.ModuleExport] = handle_method_raw
         signature_result = cls._get_method_signature(handle_method)
@@ -172,7 +169,7 @@ class FlextUtilitiesChecker:
             if name == "self":
                 continue
             return cls._extract_message_type_from_parameter(parameter, type_hints, name)
-        return r[t.TypeHintSpecifier].fail(c_errors.ERR_CHECKER_NO_MESSAGE_PARAMETER)
+        return r[t.TypeHintSpecifier].fail(c.ERR_CHECKER_NO_MESSAGE_PARAMETER)
 
     @classmethod
     def _extract_message_type_from_parameter(
@@ -185,7 +182,7 @@ class FlextUtilitiesChecker:
         if param_name in type_hints:
             hint = type_hints[param_name]
             if hint is None:
-                return r[t.TypeHintSpecifier].fail(c_errors.ERR_CHECKER_TYPE_HINT_NONE)
+                return r[t.TypeHintSpecifier].fail(c.ERR_CHECKER_TYPE_HINT_NONE)
             if isinstance(hint, str):
                 return r[t.TypeHintSpecifier].ok(hint)
             if isinstance(hint, type):
@@ -199,7 +196,7 @@ class FlextUtilitiesChecker:
                 return r[t.TypeHintSpecifier].ok(annotation)
             return r[t.TypeHintSpecifier].ok(str(annotation))
         return r[t.TypeHintSpecifier].fail(
-            c_errors.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
+            c.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
         )
 
     @classmethod
@@ -212,7 +209,7 @@ class FlextUtilitiesChecker:
             return r[inspect.Signature].ok(inspect.signature(handle_method))
         except (TypeError, ValueError):
             return r[inspect.Signature].fail(
-                c_errors.ERR_CHECKER_INVALID_HANDLE_METHOD_SIGNATURE,
+                c.ERR_CHECKER_INVALID_HANDLE_METHOD_SIGNATURE,
             )
 
     @classmethod

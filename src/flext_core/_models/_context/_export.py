@@ -47,7 +47,7 @@ class FlextModelsContextExport:
             ),
         ] = None
         statistics: Annotated[
-            t.ContainerMapping,
+            t.RecursiveContainerMapping,
             BeforeValidator(
                 lambda v: (
                     FlextModelsContextData.normalize_to_mapping(v)

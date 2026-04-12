@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 
 from flext_core import c, e, p, r, t
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 
 
 class FlextUtilitiesSettings:
@@ -21,7 +21,7 @@ class FlextUtilitiesSettings:
 
     @staticmethod
     def _duck_dump_get_parameter(
-        obj: p.HasModelDump | FlextModelsPydantic.BaseModel | p.Base,
+        obj: p.HasModelDump | p.Model | p.Base,
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
         """Get parameter from duck-typed model_dump() result.
@@ -46,7 +46,7 @@ class FlextUtilitiesSettings:
             return (False, None)
         if val is None or isinstance(val, (str, int, float, bool, datetime, Path)):
             return (True, val)
-        if isinstance(val, FlextModelsPydantic.BaseModel):
+        if isinstance(val, p.Model) and FlextUtilitiesGuardsTypeModel.base_model(val):
             return (True, val)
         return (True, str(val))
 
@@ -74,11 +74,13 @@ class FlextUtilitiesSettings:
 
     @staticmethod
     def _try_get_attr(
-        obj: p.HasModelDump | FlextModelsPydantic.BaseModel | p.Base,
+        obj: p.HasModelDump | p.Model | p.Base,
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
         """Try direct attribute access, returning (found, value) tuple."""
-        obj_vars: t.ContainerMapping = vars(obj) if hasattr(obj, "__dict__") else {}
+        obj_vars: t.RecursiveContainerMapping = (
+            vars(obj) if hasattr(obj, "__dict__") else {}
+        )
         if parameter not in obj_vars:
             return FlextUtilitiesSettings._NOT_FOUND
         value = obj_vars[parameter]
@@ -96,7 +98,7 @@ class FlextUtilitiesSettings:
 
     @staticmethod
     def _try_get_from_duck_model_dump(
-        obj: p.HasModelDump | FlextModelsPydantic.BaseModel | p.Base,
+        obj: p.HasModelDump | p.Model | p.Base,
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
         try:
@@ -111,13 +113,7 @@ class FlextUtilitiesSettings:
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
         """Try model_dump() field lookup, returning (found, value) tuple."""
-        try:
-            obj_dict = obj.model_dump()
-            if parameter in obj_dict:
-                return (True, obj_dict[parameter])
-        except (AttributeError, TypeError, ValueError, RuntimeError):
-            pass
-        return FlextUtilitiesSettings._NOT_FOUND
+        return FlextUtilitiesSettings._try_get_from_duck_model_dump(obj, parameter)
 
     @staticmethod
     def register_factory(
@@ -142,7 +138,7 @@ class FlextUtilitiesSettings:
                     "resolve registered config factory",
                     resolved.error or c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
                 )
-            return r[bool](value=True, success=True)
+            return r[bool].create_from_callable(lambda: True)
         except (
             AttributeError,
             TypeError,

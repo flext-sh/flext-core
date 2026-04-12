@@ -341,13 +341,15 @@ class FlextModelsHandler:
 
         def push_context(
             self,
-            ctx: FlextModelsHandler.ExecutionContext | t.ContainerMapping,
+            ctx: FlextModelsHandler.ExecutionContext | t.RecursiveContainerMapping,
         ) -> r[bool]:
             """Push an execution context or mapping onto the context stack."""
             if isinstance(ctx, FlextModelsHandler.ExecutionContext):
                 self._stack.append(ctx)
                 return r[bool].ok(True)
-            ctx_mapping: t.ContainerMapping = {str(k): v for k, v in ctx.items()}
+            ctx_mapping: t.RecursiveContainerMapping = {
+                str(k): v for k, v in ctx.items()
+            }
             handler_name: str = str(
                 ctx_mapping.get("handler_name", c.IDENTIFIER_UNKNOWN),
             )
@@ -459,7 +461,7 @@ class FlextModelsHandler:
 
         def push_context(
             self,
-            ctx: FlextModelsHandler.ExecutionContext | t.ContainerMapping,
+            ctx: FlextModelsHandler.ExecutionContext | t.RecursiveContainerMapping,
         ) -> r[bool]:
             """Push handler context onto the runtime stack."""
             return self.context_stack.push_context(ctx)

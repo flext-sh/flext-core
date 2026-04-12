@@ -210,7 +210,7 @@ class TestDecoratorsFullCoverage:
         tm.that(result_exc, is_=Exception)
         tm.that(calls["n"], eq=2)
 
-        def _fake_retry_config(**_kw: t.NormalizedValue) -> SimpleNamespace:
+        def _fake_retry_config(**_kw: t.RecursiveContainer) -> SimpleNamespace:
             return SimpleNamespace(
                 max_retries=0,
                 initial_delay_seconds=0.1,

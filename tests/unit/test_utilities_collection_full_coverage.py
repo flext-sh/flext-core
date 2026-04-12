@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator
 from enum import StrEnum, unique
 from typing import NoReturn, cast, override
 
@@ -20,7 +20,7 @@ class TestUtilitiesCollectionFullCoverage:
         RED = "red"
         BLUE = "blue"
 
-    class _BadMapping(Mapping[str, str]):
+    class _BadMapping(t.StrMapping):
         @override
         def __getitem__(self, _key: str) -> str:
             msg = "mapping get failed"
@@ -40,7 +40,7 @@ class TestUtilitiesCollectionFullCoverage:
             msg = "iter failed"
             raise TypeError(msg)
 
-    class _BadCopyDict(UserDict[str, t.NormalizedValue]):
+    class _BadCopyDict(UserDict[str, t.RecursiveContainer]):
         @override
         def copy(self) -> TestUtilitiesCollectionFullCoverage._BadCopyDict:
             msg = "copy failed"
@@ -70,22 +70,22 @@ class TestUtilitiesCollectionFullCoverage:
         tm.fail(not_found)
         nested = u._merge_deep_single_key(
             cast(
-                "t.MutableContainerMapping",
+                "t.MutableRecursiveContainerMapping",
                 {"x": self._BadCopyDict({"a": 1})},
             ),
             "x",
-            cast("t.NormalizedValue", {"b": 2}),
+            cast("t.RecursiveContainer", {"b": 2}),
         )
         tm.ok(nested)
         deep = u.merge_mappings(
-            cast("t.ContainerMapping", {"x": self._BadCopyDict({"a": 1})}),
-            cast("t.ContainerMapping", {"x": {"b": 2}}),
+            cast("t.RecursiveContainerMapping", {"x": self._BadCopyDict({"a": 1})}),
+            cast("t.RecursiveContainerMapping", {"x": {"b": 2}}),
             strategy="deep",
         )
         tm.ok(deep)
         with pytest.raises(TypeError, match="iterable"):
             _ = u.merge_mappings(
-                cast("t.ContainerMapping", None),
+                cast("t.RecursiveContainerMapping", None),
                 {"x": 1},
                 strategy="deep",
             )

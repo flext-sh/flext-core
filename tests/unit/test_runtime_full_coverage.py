@@ -77,12 +77,12 @@ def test_async_log_writer_paths() -> None:
 
     forced = cast(
         "u._AsyncLogWriter",
-        cast("t.NormalizedValue", object.__new__(u._AsyncLogWriter)),
+        cast("t.RecursiveContainer", object.__new__(u._AsyncLogWriter)),
     )
     forced.stream = stream
     forced.queue = cast(
         "queue.Queue[str | None]",
-        cast("t.NormalizedValue", EmptyQueue()),
+        cast("t.RecursiveContainer", EmptyQueue()),
     )
     forced.stop_event = threading.Event()
     forced.stop_event.set()
@@ -125,12 +125,12 @@ def test_async_log_writer_paths() -> None:
     failing = FailingStream()
     broken = cast(
         "u._AsyncLogWriter",
-        cast("t.NormalizedValue", object.__new__(u._AsyncLogWriter)),
+        cast("t.RecursiveContainer", object.__new__(u._AsyncLogWriter)),
     )
     broken.stream = failing
     broken.queue = cast(
         "queue.Queue[str | None]",
-        cast("t.NormalizedValue", SequenceQueue()),
+        cast("t.RecursiveContainer", SequenceQueue()),
     )
     broken.stop_event = threading.Event()
     broken._worker()
@@ -153,12 +153,12 @@ def test_async_log_writer_paths() -> None:
 
     continue_writer = cast(
         "u._AsyncLogWriter",
-        cast("t.NormalizedValue", object.__new__(u._AsyncLogWriter)),
+        cast("t.RecursiveContainer", object.__new__(u._AsyncLogWriter)),
     )
     continue_writer.stream = stream
     continue_writer.queue = cast(
         "queue.Queue[str | None]",
-        cast("t.NormalizedValue", EmptyThenSentinelQueue()),
+        cast("t.RecursiveContainer", EmptyThenSentinelQueue()),
     )
     continue_writer.stop_event = threading.Event()
     continue_writer._worker()
@@ -195,16 +195,16 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
     stream = FlushOnlyStream()
     writer = cast(
         "u._AsyncLogWriter",
-        cast("t.NormalizedValue", object.__new__(u._AsyncLogWriter)),
+        cast("t.RecursiveContainer", object.__new__(u._AsyncLogWriter)),
     )
     writer.stream = stream
     writer.queue = cast(
         "queue.Queue[str | None]",
-        cast("t.NormalizedValue", FullQueue()),
+        cast("t.RecursiveContainer", FullQueue()),
     )
     writer.stop_event = threading.Event()
     thread = JoinRecorderThread()
-    writer.thread = cast("threading.Thread", cast("t.NormalizedValue", thread))
+    writer.thread = cast("threading.Thread", cast("t.RecursiveContainer", thread))
     writer.shutdown()
     tm.that(writer.stop_event.is_set(), eq=True)
     tm.that(thread.join_timeout, none=False)
@@ -392,7 +392,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     _ = Config  # referenced for pyright
     u.configure_structlog(
-        settings=cast("BaseModel", cast("t.NormalizedValue", Config()))
+        settings=cast("BaseModel", cast("t.RecursiveContainer", Config()))
     )
     tm.that(u.structlog_configured(), eq=True)
     tm.that(bool(calls), eq=True)
@@ -420,7 +420,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     _ = ConfigNoAsync  # referenced for pyright
     u.configure_structlog(
-        settings=cast("BaseModel", cast("t.NormalizedValue", ConfigNoAsync())),
+        settings=cast("BaseModel", cast("t.RecursiveContainer", ConfigNoAsync())),
     )
     tm.that(u._structlog_configured, eq=True)
     u._structlog_configured = False
@@ -440,7 +440,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     _ = ConfigAsyncFallback  # referenced for pyright
     u.configure_structlog(
-        settings=cast("BaseModel", cast("t.NormalizedValue", ConfigAsyncFallback())),
+        settings=cast("BaseModel", cast("t.RecursiveContainer", ConfigAsyncFallback())),
     )
     tm.that(u._structlog_configured, eq=True)
 
@@ -457,7 +457,7 @@ def test_reconfigure_and_reset_state_paths() -> None:
     dummy = DummyWriter()
     u._async_writer = cast(
         "u._AsyncLogWriter",
-        cast("t.NormalizedValue", dummy),
+        cast("t.RecursiveContainer", dummy),
     )
     u._structlog_configured = True
     u.reconfigure_structlog(log_level=logging.DEBUG, console_renderer=True)
@@ -978,7 +978,7 @@ def test_runtime_result_remaining_paths() -> None:
 
 
 def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    events: MutableSequence[tuple[str, t.ContainerMapping]] = []
+    events: MutableSequence[tuple[str, t.RecursiveContainerMapping]] = []
     assert runtime_module is not None
 
     class Logger:

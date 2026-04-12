@@ -298,7 +298,7 @@ class FlextModelsCollections:
             ),
         ] = None
         in_: Annotated[
-            t.ContainerList | None,
+            t.RecursiveContainerList | None,
             FlextUtilitiesPydantic.Field(
                 default=None,
                 title="In Values",
@@ -306,7 +306,7 @@ class FlextModelsCollections:
             ),
         ] = None
         not_in: Annotated[
-            t.ContainerList | None,
+            t.RecursiveContainerList | None,
             FlextUtilitiesPydantic.Field(
                 default=None,
                 title="Not In Values",

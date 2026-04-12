@@ -120,7 +120,7 @@ class FlextModelsContextMetadata:
             ),
         ] = FlextUtilitiesPydantic.Field(default_factory=dict)
         domain_metadata: Annotated[
-            t.ContainerMapping,
+            t.RecursiveContainerMapping,
             FlextUtilitiesPydantic.Field(
                 description="Domain metadata attributes describing origin and processing state.",
             ),

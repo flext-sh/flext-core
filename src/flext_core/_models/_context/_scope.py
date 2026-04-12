@@ -39,7 +39,7 @@ class FlextModelsContextScope:
             FlextUtilitiesPydantic.Field(description="Scope data"),
         ] = FlextUtilitiesPydantic.Field(default_factory=dict)
         metadata: Annotated[
-            t.ContainerMapping,
+            t.RecursiveContainerMapping,
             FlextModelsPydantic.BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),
@@ -78,7 +78,7 @@ class FlextModelsContextScope:
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         operations: Annotated[
-            t.ContainerMapping,
+            t.RecursiveContainerMapping,
             FlextModelsPydantic.BeforeValidator(
                 lambda v: (
                     FlextModelsContextData.normalize_to_mapping(v)

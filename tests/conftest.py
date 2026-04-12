@@ -48,9 +48,9 @@ def mock_external_service() -> u.Core.Tests.FunctionalExternalService:
 
 
 @pytest.fixture
-def sample_data() -> t.ContainerMapping:
+def sample_data() -> t.RecursiveContainerMapping:
     """Provide sample test data for integration tests."""
-    result: t.ContainerMapping = {
+    result: t.RecursiveContainerMapping = {
         "string": "test_value",
         "integer": 42,
         "float": math.pi,
@@ -82,9 +82,9 @@ def temp_file(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def flext_result_success() -> r[t.ContainerMapping]:
+def flext_result_success() -> r[t.RecursiveContainerMapping]:
     """Successful r fixture available to all FLEXT projects."""
-    return r[t.ContainerMapping].ok({"success": True})
+    return r[t.RecursiveContainerMapping].ok({"success": True})
 
 
 @pytest.fixture
@@ -236,8 +236,8 @@ def out_of_range() -> Sequence[tuple[int, int, int]]:
 def assert_validates(
     model_class: type,
     field_name: str,
-    value: t.NormalizedValue,
-) -> t.NormalizedValue:
+    value: t.RecursiveContainer,
+) -> t.RecursiveContainer:
     """Validate a value against a model field and return the validated value.
 
     Args:
@@ -262,7 +262,7 @@ def assert_validates(
 def assert_rejects(
     model_class: type,
     field_name: str,
-    value: t.NormalizedValue,
+    value: t.RecursiveContainer,
     error_type: type[Exception] | None = None,
 ) -> str:
     """Assert that a value is rejected during validation.

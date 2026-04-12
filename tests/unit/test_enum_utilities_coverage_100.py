@@ -80,7 +80,7 @@ class TestEnumUtilitiesCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Coerce validator scenario name")]
         value: Annotated[
-            t.NormalizedValue | StrEnum | None,
+            t.RecursiveContainer | StrEnum | None,
             Field(description="Input value for coercion"),
         ]
         expected_success: Annotated[

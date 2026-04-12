@@ -629,10 +629,10 @@ class FlextLogger(FlextRuntime):
             incoming_context: t.FlatContainerMapping = {
                 key: cls._to_container_value(value) for key, value in context.items()
             }
-            current_context_obj: t.ContainerMapping = dict(
+            current_context_obj: t.RecursiveContainerMapping = dict(
                 current_context.items(),
             )
-            incoming_context_obj: t.ContainerMapping = dict(
+            incoming_context_obj: t.RecursiveContainerMapping = dict(
                 incoming_context.items(),
             )
             merge_result = FlextUtilitiesCollection.merge_mappings(

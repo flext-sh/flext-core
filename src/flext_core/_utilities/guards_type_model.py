@@ -2,22 +2,23 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import TypeIs, cast
+from typing import TypeIs
 
-from flext_core import FlextModelsPydantic, FlextUtilitiesGuardsTypeCore, t
+from flext_core import FlextModelsPydantic, FlextUtilitiesGuardsTypeCore, p, t
 
 
 class FlextUtilitiesGuardsTypeModel:
     """Pydantic and data model type guards."""
 
     @staticmethod
-    def base_model(value: object) -> TypeIs[t.ModelCarrier]:
+    def base_model(value: t.GuardInput | p.Model) -> TypeIs[t.ModelCarrier]:
         """Narrow a broad runtime value to the canonical model carrier alias."""
         return isinstance(value, FlextModelsPydantic.BaseModel)
 
     @staticmethod
-    def model_type(value: object) -> TypeIs[t.ModelClass[t.ModelCarrier]]:
+    def model_type(
+        value: t.TypeHintSpecifier,
+    ) -> TypeIs[t.ModelClass[t.ModelCarrier]]:
         """Narrow a runtime value to a canonical Pydantic model class."""
         return isinstance(value, type) and issubclass(
             value,
@@ -51,35 +52,25 @@ class FlextUtilitiesGuardsTypeModel:
                 ) or not FlextUtilitiesGuardsTypeCore.container(item_value):
                     return False
             return True
-        return isinstance(
-            value,
-            Mapping,
-        ) and FlextUtilitiesGuardsTypeCore.all_container_mapping_values(
-            cast("Mapping[str, t.Container]", value),
-        )
+        return FlextUtilitiesGuardsTypeCore.mapping(value)
 
     @staticmethod
     def configuration_mapping(
         value: t.GuardInput,
     ) -> TypeIs[t.ConfigMap]:
         """Check if value is a ConfigMap/Dict or mapping with container values."""
-        if not isinstance(value, (t.ConfigMap, t.Dict, Mapping)):
-            return False
-        candidate: Mapping[str, t.ValueOrModel] = (
-            value.root
-            if isinstance(value, (t.ConfigMap, t.Dict))
-            else cast("Mapping[str, t.ValueOrModel]", value)
-        )
-        for item_value in candidate.values():
-            if isinstance(
-                item_value,
-                FlextModelsPydantic.BaseModel,
-            ) or not FlextUtilitiesGuardsTypeCore.container(item_value):
-                return False
-        return True
+        if isinstance(value, (t.ConfigMap, t.Dict)):
+            for item_value in value.root.values():
+                if isinstance(
+                    item_value,
+                    FlextModelsPydantic.BaseModel,
+                ) or not FlextUtilitiesGuardsTypeCore.container(item_value):
+                    return False
+            return True
+        return FlextUtilitiesGuardsTypeCore.mapping(value)
 
     @staticmethod
-    def pydantic_model(value: object) -> TypeIs[t.ModelCarrier]:
+    def pydantic_model(value: t.GuardInput | p.Model) -> TypeIs[t.ModelCarrier]:
         """Narrow value to the canonical Pydantic model carrier."""
         return (
             isinstance(value, FlextModelsPydantic.BaseModel)

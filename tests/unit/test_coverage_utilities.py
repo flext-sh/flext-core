@@ -53,26 +53,26 @@ class Testu(u.Core.Tests.Contract):
         """Test case for utility operations."""
 
         operation: str
-        input_data: t.NormalizedValue = None
+        input_data: t.RecursiveContainer = None
         expected_type: type | None = None
         should_succeed: bool = True
         description: str = ""
 
     class _TestCachedObject:
-        """Mock t.NormalizedValue with cache attributes."""
+        """Mock t.RecursiveContainer with cache attributes."""
 
         def __init__(self) -> None:
             self._cache: t.ConfigMap = t.ConfigMap(root={"key": "value"})
             self._simple_cache: str = "cached_value"
 
     class _TestUncachedObject:
-        """Mock t.NormalizedValue without cache attributes."""
+        """Mock t.RecursiveContainer without cache attributes."""
 
         def __init__(self) -> None:
             self.name: str = "uncached"
 
     class _CustomObject:
-        """Custom serializable t.NormalizedValue."""
+        """Custom serializable t.RecursiveContainer."""
 
         @override
         def __str__(self) -> str:
@@ -82,21 +82,21 @@ class Testu(u.Core.Tests.Contract):
         """Centralized utility test scenarios."""
 
         TYPE_GUARD_STRING_CASES: ClassVar[
-            Sequence[tuple[t.NormalizedValue, bool, str]]
+            Sequence[tuple[t.RecursiveContainer, bool, str]]
         ] = [
             ("hello", True, "Non-empty string passes guard"),
             ("", False, "Empty string fails guard"),
             (123, False, "Non-string fails guard"),
         ]
         TYPE_GUARD_DICT_CASES: ClassVar[
-            Sequence[tuple[t.NormalizedValue, bool, str]]
+            Sequence[tuple[t.RecursiveContainer, bool, str]]
         ] = [
             ({"key": "value"}, True, "Non-empty dict passes guard"),
             ({}, False, "Empty dict fails guard"),
             (None, False, "None fails dict guard"),
         ]
         TYPE_GUARD_LIST_CASES: ClassVar[
-            Sequence[tuple[t.NormalizedValue, bool, str]]
+            Sequence[tuple[t.RecursiveContainer, bool, str]]
         ] = [
             ([1, 2, 3], True, "Non-empty list passes guard"),
             ([], False, "Empty list fails guard"),
@@ -111,7 +111,7 @@ class Testu(u.Core.Tests.Contract):
             ("generate_event_id", None),
         ]
         CACHE_NORMALIZATION_CASES: ClassVar[
-            Sequence[tuple[t.NormalizedValue, type]]
+            Sequence[tuple[t.RecursiveContainer, type]]
         ] = [
             ({"a": 1, "b": 2}, dict),
             ([1, 2, 3], list),
@@ -120,7 +120,7 @@ class Testu(u.Core.Tests.Contract):
 
         @staticmethod
         def create_mock_config(**kwargs: t.Scalar) -> t.ConfigMap:
-            """Create mock settings t.NormalizedValue."""
+            """Create mock settings t.RecursiveContainer."""
             result: MutableMapping[str, t.ValueOrModel] = {}
             for key, value in kwargs.items():
                 result[str(key)] = value
@@ -128,17 +128,17 @@ class Testu(u.Core.Tests.Contract):
 
         @staticmethod
         def create_mock_cached_object() -> Testu._TestCachedObject:
-            """Create mock t.NormalizedValue with cache attributes."""
+            """Create mock t.RecursiveContainer with cache attributes."""
             return Testu._TestCachedObject()
 
         @staticmethod
         def create_mock_uncached_object() -> Testu._TestUncachedObject:
-            """Create mock t.NormalizedValue without cache attributes."""
+            """Create mock t.RecursiveContainer without cache attributes."""
             return Testu._TestUncachedObject()
 
         @staticmethod
         def create_custom_object() -> Testu._CustomObject:
-            """Create custom serializable t.NormalizedValue."""
+            """Create custom serializable t.RecursiveContainer."""
             return Testu._CustomObject()
 
         @staticmethod
@@ -160,7 +160,7 @@ class Testu(u.Core.Tests.Contract):
     )
     def test_type_guard_string(
         self,
-        input_data: t.NormalizedValue,
+        input_data: t.RecursiveContainer,
         should_succeed: bool,
         description: str,
     ) -> None:
@@ -181,7 +181,7 @@ class Testu(u.Core.Tests.Contract):
     )
     def test_type_guard_dict(
         self,
-        input_data: t.NormalizedValue,
+        input_data: t.RecursiveContainer,
         should_succeed: bool,
         description: str,
     ) -> None:
@@ -202,7 +202,7 @@ class Testu(u.Core.Tests.Contract):
     )
     def test_type_guard_list(
         self,
-        input_data: t.NormalizedValue,
+        input_data: t.RecursiveContainer,
         should_succeed: bool,
         description: str,
     ) -> None:
@@ -284,7 +284,7 @@ class Testu(u.Core.Tests.Contract):
     )
     def test_cache_normalize_component(
         self,
-        input_data: t.NormalizedValue,
+        input_data: t.RecursiveContainer,
         expected_type: type,
     ) -> None:
         """Test cache component normalization."""
@@ -313,7 +313,7 @@ class Testu(u.Core.Tests.Contract):
         tm.that(attempt_count[0], gte=2)
 
     def test_type_checker_object_accepts_all(self) -> None:
-        """Test type checking with t.NormalizedValue (accepts all)."""
+        """Test type checking with t.RecursiveContainer (accepts all)."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = (str,)
         tm.that(u.can_handle_message_type(accepted, str), eq=True)
 

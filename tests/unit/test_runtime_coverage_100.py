@@ -37,7 +37,7 @@ class TestRuntimeCoverage100:
                 return None
 
         obj = BadDictLike()
-        result = u.dict_like(cast("t.NormalizedValue", obj))
+        result = u.dict_like(cast("t.RecursiveContainer", obj))
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_exception_on_items_typeerror(self) -> None:
@@ -55,27 +55,27 @@ class TestRuntimeCoverage100:
                 return None
 
         obj = BadDictLike()
-        result = u.dict_like(cast("t.NormalizedValue", obj))
+        result = u.dict_like(cast("t.RecursiveContainer", obj))
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_userdict(self) -> None:
-        """Test dict_like with UserDict (dict-like t.NormalizedValue)."""
+        """Test dict_like with UserDict (dict-like t.RecursiveContainer)."""
         user_dict = UserDict({"key": "value"})
         result = u.dict_like(user_dict)
         tm.that(result, eq=True)
 
     def test_is_dict_like_with_missing_attributes(self) -> None:
-        """Test dict_like with t.NormalizedValue missing required attributes."""
+        """Test dict_like with t.RecursiveContainer missing required attributes."""
 
         class NotDictLike:
             pass
 
         obj = NotDictLike()
-        result = u.dict_like(cast("t.NormalizedValue", obj))
+        result = u.dict_like(cast("t.RecursiveContainer", obj))
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_missing_keys(self) -> None:
-        """Test dict_like with t.NormalizedValue missing keys attribute."""
+        """Test dict_like with t.RecursiveContainer missing keys attribute."""
 
         class NotDictLike:
             def items(self) -> Sequence[tuple[str, str]]:
@@ -85,11 +85,11 @@ class TestRuntimeCoverage100:
                 return None
 
         obj = NotDictLike()
-        result = u.dict_like(cast("t.NormalizedValue", obj))
+        result = u.dict_like(cast("t.RecursiveContainer", obj))
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_missing_items(self) -> None:
-        """Test dict_like with t.NormalizedValue missing items attribute."""
+        """Test dict_like with t.RecursiveContainer missing items attribute."""
 
         class NotDictLike:
             def keys(self) -> t.StrSequence:
@@ -99,11 +99,11 @@ class TestRuntimeCoverage100:
                 return None
 
         obj = NotDictLike()
-        result = u.dict_like(cast("t.NormalizedValue", obj))
+        result = u.dict_like(cast("t.RecursiveContainer", obj))
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_missing_get(self) -> None:
-        """Test dict_like with t.NormalizedValue missing get attribute."""
+        """Test dict_like with t.RecursiveContainer missing get attribute."""
 
         class NotDictLike:
             def keys(self) -> t.StrSequence:
@@ -113,7 +113,7 @@ class TestRuntimeCoverage100:
                 return list[tuple[str, str]]()
 
         obj = NotDictLike()
-        result = u.dict_like(cast("t.NormalizedValue", obj))
+        result = u.dict_like(cast("t.RecursiveContainer", obj))
         tm.that(not result, eq=True)
 
     def test_extract_generic_args_with_type_mapping(self) -> None:
@@ -177,7 +177,7 @@ class TestRuntimeCoverage100:
         assert malformed_key in result or "normal_key" in result
 
     def test_configure_structlog_with_config_object(self) -> None:
-        """Test configure_structlog with settings t.NormalizedValue."""
+        """Test configure_structlog with settings t.RecursiveContainer."""
         u._structlog_configured = False
         u.configure_structlog(settings=None)
         assert u._structlog_configured
@@ -199,7 +199,7 @@ class TestRuntimeCoverage100:
 
         class BadType:
             @override
-            def __getattribute__(self, name: str) -> t.NormalizedValue:
+            def __getattribute__(self, name: str) -> t.RecursiveContainer:
                 if name == "__name__":
                     msg = "Cannot access __name__"
                     raise AttributeError(msg)
@@ -216,7 +216,7 @@ class TestRuntimeCoverage100:
     def test_is_sequence_type_with_sequence_subclass(self) -> None:
         """Test is_sequence_type with type that is Sequence subclass."""
 
-        class MySequence(Sequence[str]):
+        class MySequence(t.StrSequence):
             @overload
             def __getitem__(self, index: int) -> str: ...
 
@@ -238,7 +238,7 @@ class TestRuntimeCoverage100:
 
         class BadType:
             @override
-            def __getattribute__(self, name: str) -> t.NormalizedValue:
+            def __getattribute__(self, name: str) -> t.RecursiveContainer:
                 if name == "__name__":
                     msg = "Cannot access __name__"
                     raise AttributeError(msg)
@@ -264,14 +264,14 @@ class TestRuntimeCoverage100:
         assert "stack" not in result
 
     def test_configure_structlog_with_config_additional_processors(self) -> None:
-        """Test configure_structlog with settings t.NormalizedValue having additional_processors."""
+        """Test configure_structlog with settings t.RecursiveContainer having additional_processors."""
         u._structlog_configured = False
 
         def custom_processor(
             logger: p.Logger | None,
             method_name: str,
-            event_dict: t.MutableContainerMapping,
-        ) -> t.MutableContainerMapping:
+            event_dict: t.MutableRecursiveContainerMapping,
+        ) -> t.MutableRecursiveContainerMapping:
             event_dict["custom"] = True
             return event_dict
 

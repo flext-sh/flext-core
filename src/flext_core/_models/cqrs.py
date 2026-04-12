@@ -323,7 +323,7 @@ class FlextModelsCqrs:
 
     @staticmethod
     def parse_message(
-        payload: p.Base | BaseModel | t.ContainerMapping,
+        payload: p.Base | BaseModel | t.RecursiveContainerMapping,
     ) -> FlextMessage:
         """Parse a message payload into a FlextMessage instance."""
         _ = payload

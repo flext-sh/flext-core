@@ -417,7 +417,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     def push_context(
         self,
-        ctx: m.ExecutionContext | t.ContainerMapping,
+        ctx: m.ExecutionContext | t.RecursiveContainerMapping,
     ) -> r[bool]:
         """Push execution context onto the local handler stack."""
         return self._runtime_state.push_context(ctx)

@@ -30,7 +30,7 @@ class TestAdvancedPatterns:
     """Test class demonstrating advanced testing patterns."""
 
     class MockScenario:
-        """Mock scenario t.NormalizedValue for testing purposes."""
+        """Mock scenario t.RecursiveContainer for testing purposes."""
 
         def __init__(self, name: str, data: m.Core.Tests.MockScenarioData) -> None:
             """Initialize mockscenario:."""
@@ -49,9 +49,15 @@ class TestAdvancedPatterns:
             """Initialize givenwhenthenbuilder:."""
             super().__init__()
             self.name = name
-            self._given: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
-            self._when: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
-            self._then: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
+            self._given: t.MutableRecursiveContainerMapping = dict[
+                str, t.RecursiveContainer
+            ]()
+            self._when: t.MutableRecursiveContainerMapping = dict[
+                str, t.RecursiveContainer
+            ]()
+            self._then: t.MutableRecursiveContainerMapping = dict[
+                str, t.RecursiveContainer
+            ]()
             self._tags: MutableSequence[str] = []
             self._priority = "normal"
 
@@ -128,8 +134,8 @@ class TestAdvancedPatterns:
 
             """
 
-            def convert_dict_value(value: t.NormalizedValue) -> t.Scalar:
-                """Convert t.NormalizedValue to t.Scalar."""
+            def convert_dict_value(value: t.RecursiveContainer) -> t.Scalar:
+                """Convert t.RecursiveContainer to t.Scalar."""
                 if isinstance(value, (str, int, bool)):
                     return value
                 if isinstance(value, float):
@@ -137,7 +143,7 @@ class TestAdvancedPatterns:
                 return str(value)
 
             given_mapped_raw = u.map_dict_keys(
-                cast("t.ContainerMapping", self._given),
+                cast("t.RecursiveContainerMapping", self._given),
                 {k: str(k) for k in self._given},
                 keep_unmapped=True,
             ).value
@@ -148,7 +154,7 @@ class TestAdvancedPatterns:
                 key: convert_dict_value(value) for key, value in given_mapped.items()
             }
             when_mapped_raw = u.map_dict_keys(
-                cast("t.ContainerMapping", self._when),
+                cast("t.RecursiveContainerMapping", self._when),
                 {k: str(k) for k in self._when},
                 keep_unmapped=True,
             ).value
@@ -157,7 +163,7 @@ class TestAdvancedPatterns:
                 key: convert_dict_value(value) for key, value in when_mapped.items()
             }
             then_mapped_raw = u.map_dict_keys(
-                cast("t.ContainerMapping", self._then),
+                cast("t.RecursiveContainerMapping", self._then),
                 {k: str(k) for k in self._then},
                 keep_unmapped=True,
             ).value
@@ -182,9 +188,11 @@ class TestAdvancedPatterns:
         def __init__(self) -> None:
             """Initialize flexttestbuilder:."""
             super().__init__()
-            self._data: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
-            self._validation_rules: t.MutableContainerMapping = dict[
-                str, t.NormalizedValue
+            self._data: t.MutableRecursiveContainerMapping = dict[
+                str, t.RecursiveContainer
+            ]()
+            self._validation_rules: t.MutableRecursiveContainerMapping = dict[
+                str, t.RecursiveContainer
             ]()
 
         def with_id(self, id_: str) -> TestAdvancedPatterns.FlextTestBuilder:
@@ -212,7 +220,7 @@ class TestAdvancedPatterns:
 
         def with_metadata(
             self,
-            **kwargs: t.NormalizedValue,
+            **kwargs: t.RecursiveContainer,
         ) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_metadata method.
 
@@ -251,7 +259,7 @@ class TestAdvancedPatterns:
 
         def with_validation_rules(
             self,
-            **kwargs: t.NormalizedValue,
+            **kwargs: t.RecursiveContainer,
         ) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_validation_rules method.
 
@@ -262,7 +270,7 @@ class TestAdvancedPatterns:
             self._validation_rules = kwargs
             return self
 
-        def build(self) -> t.ContainerMapping:
+        def build(self) -> t.RecursiveContainerMapping:
             """Build method.
 
             Returns:
@@ -359,18 +367,18 @@ class TestAdvancedPatterns:
 
         def __init__(
             self,
-            data: t.ContainerList
-            | t.ContainerMapping
+            data: t.RecursiveContainerList
+            | t.RecursiveContainerMapping
             | str
-            | tuple[t.NormalizedValue, ...],
+            | tuple[t.RecursiveContainer, ...],
         ) -> None:
             """Initialize assertionbuilder:."""
             super().__init__()
             self.data: (
-                t.ContainerList
-                | t.ContainerMapping
+                t.RecursiveContainerList
+                | t.RecursiveContainerMapping
                 | str
-                | tuple[t.NormalizedValue, ...]
+                | tuple[t.RecursiveContainer, ...]
             ) = data
             self._assertions: MutableSequence[Callable[[], None]] = []
 
@@ -434,10 +442,10 @@ class TestAdvancedPatterns:
             self,
             condition: Callable[
                 [
-                    t.ContainerList
-                    | t.ContainerMapping
+                    t.RecursiveContainerList
+                    | t.RecursiveContainerMapping
                     | str
-                    | tuple[t.NormalizedValue, ...],
+                    | tuple[t.RecursiveContainer, ...],
                 ],
                 bool,
             ],
@@ -568,7 +576,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: t.ContainerMapping = {
+        test_data: t.RecursiveContainerMapping = {
             "name": "John",
             "age": 30,
             "active": True,
@@ -672,7 +680,7 @@ class TestAdvancedPatterns:
         assert main_data.get("id") == "main-123"
         nested_data = main_data.get("nested_data")
         assert nested_data is not None
-        nested_mapping: t.ContainerMapping = (
+        nested_mapping: t.RecursiveContainerMapping = (
             nested_data if isinstance(nested_data, dict) else {}
         )
         nested_dict = nested_mapping.get("id")

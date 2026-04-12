@@ -63,7 +63,7 @@ class TestFlextModelsContainer:
     def _service_reg_with_metadata(
         name: str,
         service: str,
-        metadata: t.NormalizedValue,
+        metadata: t.RecursiveContainer,
     ) -> m.ServiceRegistration:
         """Create ServiceRegistration with arbitrary metadata for validation testing."""
         return m.ServiceRegistration.model_validate({
@@ -76,7 +76,7 @@ class TestFlextModelsContainer:
     def _factory_reg_with_metadata(
         name: str,
         factory: Callable[[], t.Scalar],
-        metadata: t.NormalizedValue,
+        metadata: t.RecursiveContainer,
     ) -> m.FactoryRegistration:
         """Create FactoryRegistration with arbitrary metadata for validation testing."""
         return m.FactoryRegistration.model_validate({
@@ -88,7 +88,7 @@ class TestFlextModelsContainer:
     def test_is_dict_like_static_method(self) -> None:
         """Test dict-like checking using utilities."""
 
-        def dict_like(value: t.NormalizedValue) -> bool:
+        def dict_like(value: t.RecursiveContainer) -> bool:
             """Check if value is dict-like."""
             return isinstance(value, Mapping)
 
@@ -105,7 +105,7 @@ class TestFlextModelsContainer:
     )
     def test_service_registration_metadata_validation(
         self,
-        metadata_value: t.NormalizedValue,
+        metadata_value: t.RecursiveContainer,
         should_pass: bool,
     ) -> None:
         """Test ServiceRegistration metadata validation with various types."""
@@ -155,7 +155,7 @@ class TestFlextModelsContainer:
     )
     def test_factory_registration_metadata_validation(
         self,
-        metadata_value: t.NormalizedValue,
+        metadata_value: t.RecursiveContainer,
         should_pass: bool,
     ) -> None:
         """Test FactoryRegistration metadata validation with various types."""

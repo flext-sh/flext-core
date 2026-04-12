@@ -20,7 +20,7 @@ class TestModule:
     class _FakeBindable:
         def __init__(self) -> None:
             self.calls: MutableSequence[
-                tuple[str, tuple[t.NormalizedValue, ...], t.ScalarMapping]
+                tuple[str, tuple[t.RecursiveContainer, ...], t.ScalarMapping]
             ] = []
 
         def bind(self, **kwargs: t.Scalar) -> TestModule._FakeBindable:
@@ -52,7 +52,9 @@ class TestModule:
 
     class _ContextVars:
         def __init__(self) -> None:
-            self.store: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
+            self.store: t.MutableRecursiveContainerMapping = dict[
+                str, t.RecursiveContainer
+            ]()
 
         def bind_contextvars(self, **kwargs: t.Scalar) -> None:
             self.store.update(kwargs)
@@ -64,7 +66,7 @@ class TestModule:
         def clear_contextvars(self) -> None:
             self.store.clear()
 
-        def get_contextvars(self) -> t.ContainerMapping:
+        def get_contextvars(self) -> t.RecursiveContainerMapping:
             return dict(self.store)
 
     class _StructlogShim:
@@ -115,12 +117,12 @@ class TestModule:
             co_qualname = "MyType.run"
 
         class _Frame:
-            f_locals: ClassVar[t.ContainerMapping] = {}
+            f_locals: ClassVar[t.RecursiveContainerMapping] = {}
             f_code = _Code()
 
         tm.that(
             u._extract_class_name(
-                cast("types.FrameType", cast("t.NormalizedValue", _Frame())),
+                cast("types.FrameType", cast("t.RecursiveContainer", _Frame())),
             ),
             none=True,
         )
@@ -129,7 +131,7 @@ class TestModule:
         fake = self._FakeBindable()
         logger = u.create_bound_logger(
             "x",
-            cast("p.Logger", cast("t.NormalizedValue", fake)),
+            cast("p.Logger", cast("t.RecursiveContainer", fake)),
         )
 
         tm.that(u._caller_source_path(), none=True)
@@ -152,17 +154,17 @@ class TestModule:
 
         tm.that(
             u._find_workspace_root(
-                cast("Path", cast("t.NormalizedValue", _NoMarkers(Path("/tmp")))),
+                cast("Path", cast("t.RecursiveContainer", _NoMarkers(Path("/tmp")))),
             ),
             none=True,
         )
         logger_boom = u.create_bound_logger(
             "x",
-            cast("p.Logger", cast("t.NormalizedValue", self._FakeBindable())),
+            cast("p.Logger", cast("t.RecursiveContainer", self._FakeBindable())),
         )
         logger_boom._structlog_instance = cast(
             "p.Logger",
-            cast("t.NormalizedValue", self._FailingInfoBindable()),
+            cast("t.RecursiveContainer", self._FailingInfoBindable()),
         )
 
         failed = logger_boom._log("INFO", "msg")
@@ -178,7 +180,7 @@ class TestModule:
         fake = self._FakeBindable()
         logger = u.create_bound_logger(
             "x",
-            cast("p.Logger", cast("t.NormalizedValue", fake)),
+            cast("p.Logger", cast("t.RecursiveContainer", fake)),
         )
 
         def _raise_cfg(_cls: type) -> p.Settings:
@@ -188,7 +190,7 @@ class TestModule:
         monkeypatch.setattr(
             FlextSettings,
             "fetch_global",
-            cast("t.NormalizedValue", classmethod(_raise_cfg)),
+            cast("t.RecursiveContainer", classmethod(_raise_cfg)),
         )
         tm.that(logger._should_include_stack_trace(), is_=bool)
         with_exception = logger.build_exception_context(
@@ -205,7 +207,7 @@ class TestModule:
         tm.that(with_exc_info, is_=t.ConfigMap)
         broken = u.create_bound_logger(
             "x",
-            cast("p.Logger", cast("t.NormalizedValue", self._FakeBindable())),
+            cast("p.Logger", cast("t.RecursiveContainer", self._FakeBindable())),
         )
 
         broken.exception("msg", exception=ValueError("x"), exc_info=True)

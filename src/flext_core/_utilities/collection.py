@@ -16,21 +16,61 @@ from collections.abc import (
     Sequence,
 )
 from enum import StrEnum
-from typing import ClassVar, TypeVar, overload
+from typing import ClassVar, overload
 
 from flext_core import (
-    FlextConstantsErrors as c,
     FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesResultHelpers,
+    T,
+    U,
+    c,
     r,
     t,
 )
 
-T = TypeVar("T")
-U = TypeVar("U")
-
 
 class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
+
+    @staticmethod
+    def _ok_result[TValue](value: TValue) -> r[TValue]:
+        """Create a typed success result without leaking generic inference noise."""
+
+        def _return_value() -> TValue:
+            return value
+
+        return r[TValue].create_from_callable(_return_value)
+
+    @staticmethod
+    def _ok_mapping_result(
+        value: t.RecursiveContainerMapping | t.MutableRecursiveContainerMapping,
+    ) -> r[t.RecursiveContainerMapping]:
+        """Wrap a recursive mapping as a typed success result."""
+
+        def _return_mapping() -> t.RecursiveContainerMapping:
+            return value
+
+        return r[t.RecursiveContainerMapping].create_from_callable(_return_mapping)
+
+    @staticmethod
+    def _ok_sequence_result[TValue](
+        value: Sequence[TValue],
+    ) -> r[Sequence[TValue]]:
+        """Wrap a sequence as a typed success result."""
+
+        def _return_sequence() -> Sequence[TValue]:
+            return value
+
+        return r[Sequence[TValue]].create_from_callable(_return_sequence)
+
+    @staticmethod
+    def _parse_enum_member[E: StrEnum](enum_cls: type[E], value: str) -> r[E]:
+        """Parse one enum member through the result carrier."""
+
+        def _build_enum() -> E:
+            return enum_cls(value)
+
+        return r[E].create_from_callable(_build_enum)
 
     @staticmethod
     def _safe_validate_serializable[T](
@@ -44,18 +84,18 @@ class FlextUtilitiesCollection:
             return result
 
     @staticmethod
-    def _normalize_unknown_value[T](value: t.ValueOrModel) -> t.NormalizedValue:
+    def _normalize_unknown_value[T](value: t.ValueOrModel) -> t.RecursiveContainer:
         validated = FlextUtilitiesCollection._safe_validate_serializable(value)
         if FlextUtilitiesGuardsTypeCore.scalar(validated):
             return validated
         if isinstance(validated, list):
-            normalized_items: t.MutableContainerList = [
+            normalized_items: t.MutableRecursiveContainerList = [
                 FlextUtilitiesCollection._normalize_unknown_value(item)
                 for item in validated
             ]
             return normalized_items
         if isinstance(validated, dict):
-            normalized_dict: t.MutableContainerMapping = {}
+            normalized_dict: t.MutableRecursiveContainerMapping = {}
             for dict_key, dict_value in validated.items():
                 normalized_dict[str(dict_key)] = (
                     FlextUtilitiesCollection._normalize_unknown_value(dict_value)
@@ -66,11 +106,16 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _normalize_mapping_items[T](
         data: t.ValueOrModel,
-    ) -> Sequence[tuple[str, t.NormalizedValue]]:
-        normalized_mapping = t.dict_str_metadata_adapter().validate_python(
-            data,
+    ) -> Sequence[tuple[str, t.RecursiveContainer]]:
+        normalized_mapping: t.RecursiveContainerMapping = (
+            t.dict_str_metadata_adapter().validate_python(
+                data,
+            )
         )
-        return list(normalized_mapping.items())
+        normalized_items: Sequence[tuple[str, t.RecursiveContainer]] = list(
+            normalized_mapping.items(),
+        )
+        return normalized_items
 
     @staticmethod
     def _is_empty_value[T](value: t.ValueOrModel) -> bool:
@@ -87,9 +132,9 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_deep_single_key[T](
-        result: t.MutableContainerMapping,
+        result: t.MutableRecursiveContainerMapping,
         key: str,
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
     ) -> r[bool]:
         """Merge single key in deep merge strategy."""
         current_val = result.get(key)
@@ -98,19 +143,24 @@ class FlextUtilitiesCollection:
             and isinstance(current_val, dict)
             and isinstance(value, dict)
         ):
-            merged = FlextUtilitiesCollection.merge_mappings(
-                value,
-                current_val,
-                strategy="deep",
+            merged_result: r[t.RecursiveContainerMapping] = (
+                FlextUtilitiesCollection.merge_mappings(
+                    value,
+                    current_val,
+                    strategy="deep",
+                )
             )
-            if merged.success:
-                result[key] = merged.value
-                return r[bool].ok(True)
+            if merged_result.success:
+                merged_value: t.RecursiveContainerMapping = (
+                    FlextUtilitiesResultHelpers.expect_success(merged_result)
+                )
+                result[key] = merged_value
+                return FlextUtilitiesCollection._ok_result(True)
             return r[bool].fail(
-                f"Failed to merge nested dict for key {key}: {merged.error}",
+                f"Failed to merge nested dict for key {key}: {merged_result.error}",
             )
         result[key] = value
-        return r[bool].ok(True)
+        return FlextUtilitiesCollection._ok_result(True)
 
     @staticmethod
     def coerce_list_validator[E: StrEnum](
@@ -144,7 +194,10 @@ class FlextUtilitiesCollection:
                 if isinstance(v_raw, enum_cls):
                     result.append(v_raw)
                 elif isinstance(v_raw, str):
-                    enum_result = r[str].ok(v_raw).map(enum_cls)
+                    enum_result = FlextUtilitiesCollection._parse_enum_member(
+                        enum_cls,
+                        v_raw,
+                    )
                     if enum_result.failure:
                         raise ValueError(
                             c.ERR_COLLECTION_INVALID_ENUM_VALUE.format(
@@ -152,7 +205,10 @@ class FlextUtilitiesCollection:
                                 value=v_raw,
                             ),
                         ) from None
-                    result.append(enum_result.value)
+                    parsed_member: E = FlextUtilitiesResultHelpers.expect_success(
+                        enum_result,
+                    )
+                    result.append(parsed_member)
                 else:
                     raise TypeError(
                         c.ERR_COLLECTION_EXPECTED_STR_FOR_ENUM.format(
@@ -276,13 +332,13 @@ class FlextUtilitiesCollection:
             for item in items:
                 result: bool = predicate(item)
                 if result:
-                    return r[T].ok(item)
+                    return FlextUtilitiesCollection._ok_result(item)
             return r[T].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
         if isinstance(items, Mapping):
             for v in items.values():
                 matched: bool = predicate(v)
                 if matched:
-                    return r[T].ok(v)
+                    return FlextUtilitiesCollection._ok_result(v)
         return r[T].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
 
     @overload
@@ -327,45 +383,45 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_replace(
-        other: t.ContainerMapping,
-        base: t.ContainerMapping,
-    ) -> r[t.ContainerMapping]:
+        other: t.RecursiveContainerMapping,
+        base: t.RecursiveContainerMapping,
+    ) -> r[t.RecursiveContainerMapping]:
         """Replace strategy: base values overwrite other."""
-        result: t.MutableContainerMapping = dict(other)
+        result: t.MutableRecursiveContainerMapping = dict(other)
         result.update(base)
-        return r[t.ContainerMapping].ok(result)
+        return FlextUtilitiesCollection._ok_mapping_result(result)
 
     @staticmethod
     def _merge_filter_none(
-        other: t.ContainerMapping,
-        base: t.ContainerMapping,
-    ) -> r[t.ContainerMapping]:
+        other: t.RecursiveContainerMapping,
+        base: t.RecursiveContainerMapping,
+    ) -> r[t.RecursiveContainerMapping]:
         """Filter-none strategy: skip None values from base."""
-        result: t.MutableContainerMapping = dict(other)
+        result: t.MutableRecursiveContainerMapping = dict(other)
         for key, value in base.items():
             if value is not None:
                 result[key] = value
-        return r[t.ContainerMapping].ok(result)
+        return FlextUtilitiesCollection._ok_mapping_result(result)
 
     @staticmethod
     def _merge_filter_empty(
-        other: t.ContainerMapping,
-        base: t.ContainerMapping,
-    ) -> r[t.ContainerMapping]:
+        other: t.RecursiveContainerMapping,
+        base: t.RecursiveContainerMapping,
+    ) -> r[t.RecursiveContainerMapping]:
         """Filter-empty strategy: skip empty values from base."""
-        result: t.MutableContainerMapping = dict(other)
+        result: t.MutableRecursiveContainerMapping = dict(other)
         for key, value in base.items():
             if not FlextUtilitiesCollection._is_empty_value(value):
                 result[key] = value
-        return r[t.ContainerMapping].ok(result)
+        return FlextUtilitiesCollection._ok_mapping_result(result)
 
     @staticmethod
     def _merge_append(
-        other: t.ContainerMapping,
-        base: t.ContainerMapping,
-    ) -> r[t.ContainerMapping]:
+        other: t.RecursiveContainerMapping,
+        base: t.RecursiveContainerMapping,
+    ) -> r[t.RecursiveContainerMapping]:
         """Append strategy: concatenate lists instead of replacing."""
-        result: t.MutableContainerMapping = dict(other)
+        result: t.MutableRecursiveContainerMapping = dict(other)
         for key, value in base.items():
             current_val = result.get(key)
             if (
@@ -376,15 +432,15 @@ class FlextUtilitiesCollection:
                 result[key] = current_val + value
             else:
                 result[key] = value
-        return r[t.ContainerMapping].ok(result)
+        return FlextUtilitiesCollection._ok_mapping_result(result)
 
     @staticmethod
     def _merge_deep(
-        other: t.ContainerMapping,
-        base: t.ContainerMapping,
-    ) -> r[t.ContainerMapping]:
+        other: t.RecursiveContainerMapping,
+        base: t.RecursiveContainerMapping,
+    ) -> r[t.RecursiveContainerMapping]:
         """Deep strategy: recursively merge nested dicts."""
-        result: t.MutableContainerMapping = dict(other)
+        result: t.MutableRecursiveContainerMapping = dict(other)
         for key, value in base.items():
             merge_result = FlextUtilitiesCollection._merge_deep_single_key(
                 result,
@@ -392,14 +448,14 @@ class FlextUtilitiesCollection:
                 value,
             )
             if merge_result.failure:
-                return r[t.ContainerMapping].fail(
+                return r[t.RecursiveContainerMapping].fail(
                     merge_result.error or "Unknown error",
                 )
-        return r[t.ContainerMapping].ok(result)
+        return FlextUtilitiesCollection._ok_mapping_result(result)
 
     _MergeHandler = Callable[
-        [t.ContainerMapping, t.ContainerMapping],
-        "r[t.ContainerMapping]",
+        [t.RecursiveContainerMapping, t.RecursiveContainerMapping],
+        "r[t.RecursiveContainerMapping]",
     ]
 
     _MERGE_STRATEGIES: ClassVar[Mapping[str, _MergeHandler]] = {
@@ -414,11 +470,11 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def merge_mappings(
-        other: t.ContainerMapping,
-        base: t.ContainerMapping,
+        other: t.RecursiveContainerMapping,
+        base: t.RecursiveContainerMapping,
         *,
         strategy: str = "deep",
-    ) -> r[t.ContainerMapping]:
+    ) -> r[t.RecursiveContainerMapping]:
         """Merge two dictionaries with configurable strategy.
 
         Strategies:
@@ -432,7 +488,7 @@ class FlextUtilitiesCollection:
         """
         handler = FlextUtilitiesCollection._MERGE_STRATEGIES.get(strategy)
         if handler is None:
-            return r[t.ContainerMapping].fail(
+            return r[t.RecursiveContainerMapping].fail(
                 f"Unknown merge strategy: {strategy}",
             )
         return handler(other, base)
@@ -445,10 +501,8 @@ class FlextUtilitiesCollection:
         """Parse sequence of strings to tuple of StrEnum."""
         parsed: MutableSequence[StrEnum] = []
         errors: MutableSequence[str] = []
-        enumerate_result = (
-            r[Sequence[tuple[int, str | StrEnum]]]
-            .ok([])
-            .map(lambda _: list(enumerate(values)))
+        enumerate_result = r[Sequence[tuple[int, str | StrEnum]]].create_from_callable(
+            lambda: list(enumerate(values)),
         )
         if enumerate_result.failure:
             return r[tuple[StrEnum, ...]].fail(
@@ -458,17 +512,23 @@ class FlextUtilitiesCollection:
             if isinstance(val, enum_cls):
                 parsed.append(val)
                 continue
-            enum_result = r[str].ok(val).map(enum_cls)
+            enum_result = FlextUtilitiesCollection._parse_enum_member(
+                enum_cls,
+                str(val),
+            )
             if enum_result.failure:
                 errors.append(f"[{idx}]: '{val}'")
                 continue
-            parsed.append(enum_result.value)
+            parsed_member: StrEnum = FlextUtilitiesResultHelpers.expect_success(
+                enum_result,
+            )
+            parsed.append(parsed_member)
         if errors:
             enum_name = getattr(enum_cls, "__name__", "Enum")
             return r[tuple[StrEnum, ...]].fail(
                 f"Invalid {enum_name} values: {', '.join(errors)}",
             )
-        return r[tuple[StrEnum, ...]].ok(tuple(parsed))
+        return FlextUtilitiesCollection._ok_result(tuple(parsed))
 
     @staticmethod
     def process(
@@ -488,15 +548,20 @@ class FlextUtilitiesCollection:
             item_typed: T = item
             if predicate is not None and (not predicate(item_typed)):
                 continue
-            process_result = r[T].ok(item_typed).map(processor)
+            process_result = r[U].create_from_callable(
+                lambda current_item=item_typed: processor(current_item),
+            )
             if process_result.failure:
                 if on_error == "skip":
                     continue
                 return r[Sequence[U]].fail(
                     c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(item=item),
                 )
-            results.append(process_result.value)
-        return r[Sequence[U]].ok(results)
+            processed_item: U = FlextUtilitiesResultHelpers.expect_success(
+                process_result,
+            )
+            results.append(processed_item)
+        return FlextUtilitiesCollection._ok_sequence_result(results)
 
 
 __all__: list[str] = ["FlextUtilitiesCollection"]

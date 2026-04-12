@@ -27,7 +27,7 @@ class TestLibraryIntegration:
     def test_all_exports_work(
         self,
         clean_container: p.Container,
-        sample_data: t.ContainerMapping,
+        sample_data: t.RecursiveContainerMapping,
     ) -> None:
         """Test comprehensive integration of core library exports.
 

@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from importlib.metadata import PackageMetadata, metadata
 from typing import TYPE_CHECKING
 
@@ -24,7 +23,7 @@ class FlextVersion:
     metadata extraction.
     """
 
-    _metadata: PackageMetadata | Mapping[str, str] = metadata("flext-core")
+    _metadata: PackageMetadata | t.StrMapping = metadata("flext-core")
     __version__ = _metadata["Version"]
     __version_info__ = tuple(
         int(part) if part.isdigit() else part for part in __version__.split(".")

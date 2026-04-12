@@ -83,7 +83,7 @@ class TestFlextHandlers:
         ),
     ]
 
-    VALIDATION_TYPES: ClassVar[Sequence[tuple[str, t.NormalizedValue]]] = [
+    VALIDATION_TYPES: ClassVar[Sequence[tuple[str, t.RecursiveContainer]]] = [
         ("str", "test_message"),
         ("int", 42),
         ("float", math.pi),
@@ -248,7 +248,7 @@ class TestFlextHandlers:
             handler_mode=c.HandlerType.COMMAND,
         )
         handler = DictHandler(settings=settings)
-        dict_message: t.MutableContainerMapping = {
+        dict_message: t.MutableRecursiveContainerMapping = {
             "command_id": "cmd_123",
             "data": "test_data",
         }
@@ -470,7 +470,7 @@ class TestFlextHandlers:
     def test_handlers_message_validation_types(
         self,
         type_name: str,
-        message: t.NormalizedValue,
+        message: t.RecursiveContainer,
     ) -> None:
         settings = u.Core.Tests.create_handler_config(
             f"test_{type_name}_message",
@@ -495,7 +495,7 @@ class TestFlextHandlers:
             "Test Push Context",
         )
         handler = self.ConcreteTestHandler(settings=settings)
-        context_typed: t.ContainerMapping = {
+        context_typed: t.RecursiveContainerMapping = {
             "user_id": "123",
             "operation": "test",
         }

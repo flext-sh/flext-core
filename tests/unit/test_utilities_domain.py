@@ -1,15 +1,15 @@
-"""Tests for u - Domain entity and value t.NormalizedValue operations.
+"""Tests for u - Domain entity and value t.RecursiveContainer operations.
 
 Module: flext_core._utilities.domain
-Scope: u - entity/value t.NormalizedValue comparison, hashing, validation
+Scope: u - entity/value t.RecursiveContainer comparison, hashing, validation
 
 Tests u functionality including:
 - Entity comparison by ID (compare_entities_by_id)
 - Entity hashing by ID (hash_entity_by_id)
-- Value t.NormalizedValue comparison by value (compare_value_objects_by_value)
-- Value t.NormalizedValue hashing by value (hash_value_object_by_value)
+- Value t.RecursiveContainer comparison by value (compare_value_objects_by_value)
+- Value t.RecursiveContainer hashing by value (hash_value_object_by_value)
 - Entity ID validation (validate_entity_has_id)
-- Value t.NormalizedValue immutability validation (validate_value_object_immutable)
+- Value t.RecursiveContainer immutability validation (validate_value_object_immutable)
 
 Uses Python 3.13 patterns, u, constants (c), types (t),
 utilities (u), protocols (p), models (m) extensively for maximum code reuse.
@@ -94,14 +94,14 @@ def _build_domain_test_entity(
 
 def _convert_to_general_value(
     obj: t.Core.Tests.TestobjectSerializable,
-) -> t.NormalizedValue:
+) -> t.RecursiveContainer:
     """Convert test object to NormalizedValue (handles Pydantic models).
 
     Args:
         obj: Object to convert (Pydantic model, dict, list, or primitive)
 
     Returns:
-        t.NormalizedValue-compatible value
+        t.RecursiveContainer-compatible value
 
     """
     if isinstance(obj, BaseModel):
@@ -299,7 +299,7 @@ def create_hash_entity_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
 
 
 def create_compare_value_objects_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
-    """Create test cases for value t.NormalizedValue comparison using constants."""
+    """Create test cases for value t.RecursiveContainer comparison using constants."""
     value_objs: Sequence[m.Core.Tests.DomainTestValue] = _create_value_objects_batch(
         data_list=[
             c.Core.Tests.TestDomain.VALUE_DATA_TEST,
@@ -355,7 +355,7 @@ def create_compare_value_objects_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
 
 
 def create_hash_value_object_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
-    """Create test cases for value t.NormalizedValue hashing using constants."""
+    """Create test cases for value t.RecursiveContainer hashing using constants."""
     value_obj: m.Core.Tests.DomainTestValue = _create_value_object(
         data=c.Core.Tests.TestDomain.VALUE_DATA_TEST,
         count=c.Core.Tests.TestDomain.VALUE_COUNT_5,

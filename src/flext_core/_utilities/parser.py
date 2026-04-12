@@ -133,7 +133,9 @@ class FlextUtilitiesParser:
                     type_name=value.__class__.__name__,
                 ),
             )
-        value_dict_data: t.ContainerMapping = {str(k): v for k, v in value.items()}
+        value_dict_data: t.RecursiveContainerMapping = {
+            str(k): v for k, v in value.items()
+        }
         validation_result = FlextUtilitiesModel.validate_value(
             target,
             value_dict_data,

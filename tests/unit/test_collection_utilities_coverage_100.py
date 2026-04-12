@@ -71,7 +71,7 @@ class TestCollectionUtilitiesCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Coerce list scenario name")]
         value: Annotated[
-            t.NormalizedValue,
+            t.RecursiveContainer,
             Field(description="Input value for list coercion"),
         ]
         expected_success: Annotated[

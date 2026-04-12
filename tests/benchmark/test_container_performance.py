@@ -31,8 +31,8 @@ class TestContainerPerformance:
 
         @staticmethod
         def measure_time(
-            func: Callable[[], t.NormalizedValue],
-        ) -> tuple[t.NormalizedValue, float]:
+            func: Callable[[], t.RecursiveContainer],
+        ) -> tuple[t.RecursiveContainer, float]:
             """Measure execution time of a function.
 
             Args:

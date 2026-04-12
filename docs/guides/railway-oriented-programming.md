@@ -140,7 +140,7 @@ if result.failed:
 if result.is_failure:
     message = result.error  # str
     code = result.error_code  # str | None
-    data = result.error_data  # t.NormalizedValue
+    data = result.error_data  # t.RecursiveContainer
 ```
 
 ### Accessing Success Values

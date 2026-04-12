@@ -285,7 +285,7 @@ class TestFlextModelsEntity:
         class _TrackedEntity(m.Entity):
             applied: list[str] = []
 
-            def _apply_order_placed(self, data: t.ContainerMapping) -> None:
+            def _apply_order_placed(self, data: t.RecursiveContainerMapping) -> None:
                 self.applied.append("order_placed")
 
         entity = _TrackedEntity(unique_id="e-1")
@@ -296,7 +296,7 @@ class TestFlextModelsEntity:
         """Apply handler exceptions are suppressed, event still added."""
 
         class _FailingEntity(m.Entity):
-            def _apply_boom(self, data: t.ContainerMapping) -> None:
+            def _apply_boom(self, data: t.RecursiveContainerMapping) -> None:
                 msg = "handler error"
                 raise RuntimeError(msg)
 
@@ -311,7 +311,7 @@ class TestFlextModelsEntity:
         class _OverrideEntity(m.Entity):
             applied: list[str] = []
 
-            def _apply_real_type(self, data: t.ContainerMapping) -> None:
+            def _apply_real_type(self, data: t.RecursiveContainerMapping) -> None:
                 self.applied.append("real_type")
 
         entity = _OverrideEntity(unique_id="e-1")

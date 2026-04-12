@@ -76,7 +76,7 @@ class TestUtilitiesCollectionCoverage:
         name: Annotated[str, Field(description="Coerce list scenario name")]
         enum_cls: Annotated[type[StrEnum], Field(description="Enum class for coercion")]
         value: Annotated[
-            Annotated[t.NormalizedValue, SkipValidation],
+            Annotated[t.RecursiveContainer, SkipValidation],
             Field(description="Input value to coerce"),
         ]
         expected_success: Annotated[
@@ -126,7 +126,7 @@ class TestUtilitiesCollectionCoverage:
         name: Annotated[str, Field(description="Coerce dict scenario name")]
         enum_cls: Annotated[type[StrEnum], Field(description="Enum class for coercion")]
         value: Annotated[
-            Annotated[t.NormalizedValue, SkipValidation],
+            Annotated[t.RecursiveContainer, SkipValidation],
             Field(description="Input value to coerce"),
         ]
         expected_success: Annotated[
@@ -152,11 +152,11 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Map scenario name")]
         items: Annotated[
-            t.ContainerList
-            | tuple[t.NormalizedValue, ...]
-            | t.ContainerMapping
-            | set[t.NormalizedValue]
-            | frozenset[t.NormalizedValue],
+            t.RecursiveContainerList
+            | tuple[t.RecursiveContainer, ...]
+            | t.RecursiveContainerMapping
+            | set[t.RecursiveContainer]
+            | frozenset[t.RecursiveContainer],
             (
                 Field(
                     description="Collection input for map operation",
@@ -164,16 +164,16 @@ class TestUtilitiesCollectionCoverage:
             ),
         ]
         mapper: Annotated[
-            Callable[[t.NormalizedValue], t.NormalizedValue],
+            Callable[[t.RecursiveContainer], t.RecursiveContainer],
             Field(description="Mapper callable under test"),
         ]
         expected_result: Annotated[
             (
-                t.MutableContainerList
-                | tuple[t.NormalizedValue, ...]
-                | t.MutableContainerMapping
-                | set[t.NormalizedValue]
-                | frozenset[t.NormalizedValue]
+                t.MutableRecursiveContainerList
+                | tuple[t.RecursiveContainer, ...]
+                | t.MutableRecursiveContainerMapping
+                | set[t.RecursiveContainer]
+                | frozenset[t.RecursiveContainer]
             ),
             Field(description="Expected mapped output"),
         ]
@@ -196,15 +196,17 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Find scenario name")]
         items: Annotated[
-            t.ContainerList | tuple[t.NormalizedValue, ...] | t.ContainerMapping,
+            t.RecursiveContainerList
+            | tuple[t.RecursiveContainer, ...]
+            | t.RecursiveContainerMapping,
             Field(description="Input items for find"),
         ]
         predicate: Annotated[
-            Callable[[t.NormalizedValue], bool],
+            Callable[[t.RecursiveContainer], bool],
             Field(description="Predicate callable under test"),
         ]
         expected_result: Annotated[
-            t.NormalizedValue | None,
+            t.RecursiveContainer | None,
             Field(description="Expected found value"),
         ]
         return_key: Annotated[
@@ -218,21 +220,25 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Filter scenario name")]
         items: Annotated[
-            t.ContainerList | tuple[t.NormalizedValue, ...] | t.ContainerMapping,
+            t.RecursiveContainerList
+            | tuple[t.RecursiveContainer, ...]
+            | t.RecursiveContainerMapping,
             Field(description="Input items for filter"),
         ]
         predicate: Annotated[
-            Callable[[t.NormalizedValue], bool],
+            Callable[[t.RecursiveContainer], bool],
             Field(description="Predicate callable under test"),
         ]
         expected_result: Annotated[
-            t.ContainerList | tuple[t.NormalizedValue, ...] | t.ContainerMapping,
+            t.RecursiveContainerList
+            | tuple[t.RecursiveContainer, ...]
+            | t.RecursiveContainerMapping,
             Field(
                 description="Expected filtered output",
             ),
         ]
         mapper: Annotated[
-            Callable[[t.NormalizedValue], t.NormalizedValue] | None,
+            Callable[[t.RecursiveContainer], t.RecursiveContainer] | None,
             Field(default=None, description="Optional mapping callable"),
         ] = None
 
@@ -241,10 +247,12 @@ class TestUtilitiesCollectionCoverage:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Count scenario name")]
-        items: Annotated[t.ContainerList, Field(description="Input items for count")]
+        items: Annotated[
+            t.RecursiveContainerList, Field(description="Input items for count")
+        ]
         expected_count: Annotated[int, Field(description="Expected item count")]
         predicate: Annotated[
-            Callable[[t.NormalizedValue], bool] | None,
+            Callable[[t.RecursiveContainer], bool] | None,
             Field(default=None, description="Optional predicate filter"),
         ] = None
 
@@ -253,13 +261,15 @@ class TestUtilitiesCollectionCoverage:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Process scenario name")]
-        items: Annotated[t.ContainerList, Field(description="Input items for process")]
+        items: Annotated[
+            t.RecursiveContainerList, Field(description="Input items for process")
+        ]
         processor: Annotated[
-            Callable[[t.NormalizedValue], t.NormalizedValue],
+            Callable[[t.RecursiveContainer], t.RecursiveContainer],
             Field(description="Processor callable under test"),
         ]
         expected_result: Annotated[
-            t.NormalizedValue,
+            t.RecursiveContainer,
             Field(description="Expected processing result"),
         ]
         on_error: Annotated[
@@ -267,7 +277,7 @@ class TestUtilitiesCollectionCoverage:
             Field(default="collect", description="Error handling mode"),
         ] = "collect"
         predicate: Annotated[
-            Callable[[t.NormalizedValue], bool] | None,
+            Callable[[t.RecursiveContainer], bool] | None,
             Field(default=None, description="Optional predicate filter"),
         ] = None
         filter_keys: Annotated[
@@ -329,11 +339,11 @@ class TestUtilitiesCollectionCoverage:
         name: Annotated[str, Field(description="Batch scenario name")]
         items: Annotated[Sequence[int], Field(description="Input items for batch")]
         operation: Annotated[
-            Callable[..., t.NormalizedValue],
+            Callable[..., t.RecursiveContainer],
             Field(description="Batch operation callable"),
         ]
         expected_result: Annotated[
-            t.NormalizedValue,
+            t.RecursiveContainer,
             Field(description="Expected batch result"),
         ]
         size: Annotated[int, Field(default=100, description="Batch size")] = 100
@@ -377,39 +387,39 @@ class TestUtilitiesCollectionCoverage:
         """Centralized collection utilities test scenarios."""
 
         @staticmethod
-        def _double(value: t.NormalizedValue) -> t.NormalizedValue:
+        def _double(value: t.RecursiveContainer) -> t.RecursiveContainer:
             return cast("int", value) * 2
 
         @staticmethod
-        def _upper(value: t.NormalizedValue) -> t.NormalizedValue:
+        def _upper(value: t.RecursiveContainer) -> t.RecursiveContainer:
             return cast("str", value).upper()
 
         @staticmethod
-        def _is_even(value: t.NormalizedValue) -> bool:
+        def _is_even(value: t.RecursiveContainer) -> bool:
             return cast("int", value) % 2 == 0
 
         @staticmethod
-        def _is_odd(value: t.NormalizedValue) -> bool:
+        def _is_odd(value: t.RecursiveContainer) -> bool:
             return cast("int", value) % 2 != 0
 
         @staticmethod
-        def _greater_than_two(value: t.NormalizedValue) -> bool:
+        def _greater_than_two(value: t.RecursiveContainer) -> bool:
             return cast("int", value) > 2
 
         @staticmethod
-        def _greater_than_one(value: t.NormalizedValue) -> bool:
+        def _greater_than_one(value: t.RecursiveContainer) -> bool:
             return cast("int", value) > 1
 
         @staticmethod
-        def _greater_than_ten(value: t.NormalizedValue) -> bool:
+        def _greater_than_ten(value: t.RecursiveContainer) -> bool:
             return cast("int", value) > 10
 
         @staticmethod
-        def _greater_than_fifteen(value: t.NormalizedValue) -> bool:
+        def _greater_than_fifteen(value: t.RecursiveContainer) -> bool:
             return cast("int", value) > 15
 
         @staticmethod
-        def _equals_two(value: t.NormalizedValue) -> bool:
+        def _equals_two(value: t.RecursiveContainer) -> bool:
             return value == 2
 
         @staticmethod
@@ -1030,8 +1040,8 @@ class TestUtilitiesCollectionCoverage:
 
     def test_merge_deep(self) -> None:
         """Test deep merge."""
-        base_data: t.ContainerMapping = {"a": 1, "b": {"x": 1}}
-        other_data: t.ContainerMapping = {"b": {"y": 2}, "c": 3}
+        base_data: t.RecursiveContainerMapping = {"a": 1, "b": {"x": 1}}
+        other_data: t.RecursiveContainerMapping = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base_data, other_data)
         _ = u.Core.Tests.assert_success(result)
         tm.that(result.value["a"], eq=1)
@@ -1040,8 +1050,8 @@ class TestUtilitiesCollectionCoverage:
 
     def test_merge_override(self) -> None:
         """Test override merge."""
-        base_data: t.ContainerMapping = {"a": 1, "b": {"x": 1}}
-        other_data: t.ContainerMapping = {"b": {"y": 2}, "c": 3}
+        base_data: t.RecursiveContainerMapping = {"a": 1, "b": {"x": 1}}
+        other_data: t.RecursiveContainerMapping = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base_data, other_data, strategy="override")
         _ = u.Core.Tests.assert_success(result)
         tm.that(result.value["a"], eq=1)

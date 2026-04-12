@@ -15,7 +15,7 @@ from tests import m, t
 
 
 class _ValidationLikeError(ValueError):
-    def errors(self) -> Sequence[t.ContainerMapping]:
+    def errors(self) -> Sequence[t.RecursiveContainerMapping]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 

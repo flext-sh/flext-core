@@ -231,8 +231,8 @@ T = TypeVar("T")
 
 
 def process_data(
-    data: t.ContainerMapping,
-) -> t.ContainerMapping:
+    data: t.RecursiveContainerMapping,
+) -> t.RecursiveContainerMapping:
     """Specific types - type checker validates."""
     return data  # IDE knows dict methods
 
@@ -258,7 +258,7 @@ result = container.process("hello")  # Type is str
 from flext_core import FlextContainer
 
 container = FlextContainer.get_global()
-logger = container.get("logger").value  # Type is t.NormalizedValue
+logger = container.get("logger").value  # Type is t.RecursiveContainer
 logger.debug("Message")  # IDE doesn't know if debug() exists
 ```
 
@@ -418,7 +418,7 @@ from flext_core import FlextModels
 **Problem**: Single class doing too much.
 
 ```python
-# ❌ ANTI-PATTERN - God t.NormalizedValue (3,000+ lines)
+# ❌ ANTI-PATTERN - God t.RecursiveContainer (3,000+ lines)
 class FlextMeltano:
     """Everything in one class - settings, validation, services, streams..."""
 
@@ -644,7 +644,7 @@ else:
 **Problem**: Value objects that can be modified.
 
 ```python
-# ❌ ANTI-PATTERN - Mutable value t.NormalizedValue
+# ❌ ANTI-PATTERN - Mutable value t.RecursiveContainer
 from flext_core import FlextModels
 
 
@@ -672,7 +672,7 @@ if money1 == money2:
 **Solution**: Mark value objects as frozen
 
 ```python
-# ✅ CORRECT - Immutable value t.NormalizedValue
+# ✅ CORRECT - Immutable value t.RecursiveContainer
 from flext_core import FlextModels
 from pydantic import ConfigDict
 from decimal import Decimal
@@ -685,7 +685,9 @@ class Money(FlextModels.Value):
 
 
 money = Money(amount=Decimal("100"), currency="USD")
-money.amount = Decimal("50")  # TypeError: frozen t.NormalizedValue cannot be modified
+money.amount = Decimal(
+    "50"
+)  # TypeError: frozen t.RecursiveContainer cannot be modified
 
 # Now safe - value objects can't be modified
 ```

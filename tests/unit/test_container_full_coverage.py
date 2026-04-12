@@ -153,13 +153,13 @@ class TestContainerFullCoverage:
 
         c._di_bridge = cast(
             "di_containers.DeclarativeContainer",
-            cast("t.NormalizedValue", ProvideBridge()),
+            cast("t.RecursiveContainer", ProvideBridge()),
         )
         result = c.provide("x")
         assert result == "x"
         c._di_bridge = cast(
             "di_containers.DeclarativeContainer",
-            cast("t.NormalizedValue", NoProvideBridge()),
+            cast("t.RecursiveContainer", NoProvideBridge()),
         )
         with pytest.raises(RuntimeError, match="Provide helper not initialized"):
             _ = c.provide
@@ -342,7 +342,7 @@ class TestContainerFullCoverage:
         def _fake_create_scoped_instance(
             *,
             registration: m.ServiceRegistrationSpec,
-            **kwargs: t.NormalizedValue,
+            **kwargs: t.RecursiveContainer,
         ) -> p.Container:
             captured["settings"] = registration.settings
             captured["context"] = registration.context
@@ -404,7 +404,9 @@ class TestContainerFullCoverage:
 
         monkeypatch.setattr(FlextContainer, "register", capture_register)
         _ = FlextContainer.create(auto_register_factories=True)
-        wrapper = cast("Callable[..., t.NormalizedValue]", captured["factory.captured"])
+        wrapper = cast(
+            "Callable[..., t.RecursiveContainer]", captured["factory.captured"]
+        )
         assert wrapper() == 7
         assert wrapper(
             _factory_config=types.SimpleNamespace(fn=123, name="factory.captured"),
@@ -424,7 +426,7 @@ class TestContainerFullCoverage:
         monkeypatch.setattr(
             core_container.di_providers,
             "Configuration",
-            cast("t.NormalizedValue", t.NormalizedValue),
+            cast("t.RecursiveContainer", t.RecursiveContainer),
         )
         with pytest.raises(TypeError, match="cannot be None"):
             c.initialize_di_components()

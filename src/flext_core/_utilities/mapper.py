@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from itertools import starmap
+from pathlib import Path
 from typing import cast
 
 from flext_core import (
@@ -37,13 +38,13 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_exclude_keys(
-        result: t.ContainerMapping,
+        result: t.RecursiveContainerMapping,
         *,
         exclude_keys: set[str] | None,
-    ) -> t.MutableContainerMapping | t.ContainerMapping:
+    ) -> t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping:
         """Apply exclude keys step."""
         if exclude_keys:
-            filtered_result: t.MutableContainerMapping = dict(result)
+            filtered_result: t.MutableRecursiveContainerMapping = dict(result)
             for key in exclude_keys:
                 _ = filtered_result.pop(key, None)
             return filtered_result
@@ -51,13 +52,13 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_filter_keys(
-        result: t.ContainerMapping,
+        result: t.RecursiveContainerMapping,
         *,
         filter_keys: set[str] | None,
-    ) -> t.MutableContainerMapping | t.ContainerMapping:
+    ) -> t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping:
         """Apply filter keys step."""
         if filter_keys:
-            filtered_dict: t.MutableContainerMapping = {}
+            filtered_dict: t.MutableRecursiveContainerMapping = {}
             for key in filter_keys:
                 if key in result:
                     filtered_dict[key] = result[key]
@@ -66,34 +67,35 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_map_keys(
-        result: t.ContainerMapping,
+        result: t.RecursiveContainerMapping,
         *,
         map_keys: t.StrMapping | None,
-    ) -> t.MutableContainerMapping | t.ContainerMapping:
+    ) -> t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping:
         """Apply map keys step."""
         if map_keys:
-            mapped = FlextUtilitiesMapper.map_dict_keys(
-                result,
-                map_keys,
+            mapped_result: r[t.MutableRecursiveContainerMapping] = (
+                FlextUtilitiesMapper.map_dict_keys(
+                    result,
+                    map_keys,
+                )
             )
-            if mapped.success:
-                mapped_value: t.MutableContainerMapping = mapped.value
-                return mapped_value
+            if mapped_result.success:
+                return mapped_result.unwrap_or(dict(result))
         return result
 
     @staticmethod
     def _apply_normalize(
-        result: t.ContainerMapping,
+        result: t.RecursiveContainerMapping,
         *,
         normalize: bool,
-    ) -> t.MutableContainerMapping | t.ContainerMapping:
+    ) -> t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping:
         """Apply normalize step."""
         if normalize:
             normalized = FlextUtilitiesCache.normalize_component(
                 {str(k): v for k, v in result.items()},
             )
             if FlextUtilitiesGuardsTypeCore.mapping(normalized):
-                normalized_result: t.MutableContainerMapping = {}
+                normalized_result: t.MutableRecursiveContainerMapping = {}
                 for key, value in normalized.items():
                     normalized_result[str(key)] = value
                 return normalized_result
@@ -101,10 +103,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_strip_empty(
-        result: t.ContainerMapping,
+        result: t.RecursiveContainerMapping,
         *,
         strip_empty: bool,
-    ) -> t.ContainerMapping:
+    ) -> t.RecursiveContainerMapping:
         """Apply strip empty step."""
         if strip_empty:
             return FlextUtilitiesCollection.filter(
@@ -115,10 +117,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_strip_none(
-        result: t.ContainerMapping,
+        result: t.RecursiveContainerMapping,
         *,
         strip_none: bool,
-    ) -> t.ContainerMapping:
+    ) -> t.RecursiveContainerMapping:
         """Apply strip none step."""
         if strip_none:
             return FlextUtilitiesCollection.filter(result, lambda v: v is not None)
@@ -126,7 +128,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_transform_steps(
-        result: t.ContainerMapping,
+        result: t.RecursiveContainerMapping,
         *,
         normalize: bool,
         map_keys: t.StrMapping | None,
@@ -134,9 +136,9 @@ class FlextUtilitiesMapper:
         exclude_keys: set[str] | None,
         strip_none: bool,
         strip_empty: bool,
-    ) -> t.MutableContainerMapping | t.ContainerMapping:
+    ) -> t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping:
         """Apply transform steps to result dict."""
-        step: t.MutableContainerMapping | t.ContainerMapping = (
+        step: t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping = (
             FlextUtilitiesMapper._apply_normalize(result, normalize=normalize)
         )
         step = FlextUtilitiesMapper._apply_map_keys(step, map_keys=map_keys)
@@ -152,35 +154,52 @@ class FlextUtilitiesMapper:
         return FlextUtilitiesMapper._apply_strip_empty(step, strip_empty=strip_empty)
 
     @staticmethod
-    def _success_value_result(value: t.ValueOrModel) -> r[t.ValueOrModel]:
+    def _success_value_result(value: t.PresentValueOrModel) -> r[t.ValueOrModel]:
         """Create a successful mapper result with concrete value typing."""
-        return r[t.ValueOrModel](value=value, success=True)
+
+        def _return_value() -> t.ValueOrModel:
+            return value
+
+        return r[t.ValueOrModel].create_from_callable(_return_value)
 
     @staticmethod
     def _normalize_accessible_value(
-        value: object,
+        value: t.ValueOrModel | p.Model | p.HasModelDump | p.ValidatorSpec,
     ) -> t.RuntimeAtomic | t.RecursiveContainer:
         """Normalize protocol-accessible values to canonical runtime/container shapes."""
         if value is None:
             return ""
-        if FlextUtilitiesGuardsTypeModel.base_model(value):
+        if isinstance(value, m.BaseModel):
             return value
-        if isinstance(value, p.HasModelDump):
-            return FlextRuntime.normalize_to_container(value.model_dump())
+        model_dump_attr = getattr(value, "model_dump", None)
+        if callable(model_dump_attr):
+            return FlextRuntime.normalize_to_container(
+                t.ConfigMap.model_validate(model_dump_attr()),
+            )
         if isinstance(value, p.ValidatorSpec):
             return str(value)
-        if FlextUtilitiesGuards.container(value):
+        if isinstance(value, (*t.SCALAR_TYPES, Path)):
+            return value
+        if isinstance(
+            value, Mapping
+        ) and FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value):
+            return value
+        if isinstance(value, (list, tuple)) and all(
+            FlextUtilitiesGuardsTypeCore.container(item) for item in value
+        ):
             return value
         return str(value)
 
     @staticmethod
     def _extract_field_value(
-        item: t.ValueOrModel | t.ContainerMapping | Mapping[str, t.ValueOrModel],
+        item: t.ValueOrModel
+        | t.RecursiveContainerMapping
+        | Mapping[str, t.ValueOrModel],
         field_name: str,
     ) -> t.RecursiveContainer:
         """Extract field value from dict or model for pyrefly type inference."""
         if FlextUtilitiesGuardsTypeCore.mapping(item):
-            dict_item: t.MutableContainerMapping = {}
+            dict_item: t.MutableRecursiveContainerMapping = {}
             for key, value in item.items():
                 coerced_value: t.RecursiveContainer = (
                     value if FlextUtilitiesGuards.container(value) else str(value)
@@ -324,7 +343,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_transform_options(
-        transform_opts: t.ContainerMapping,
+        transform_opts: t.RecursiveContainerMapping,
     ) -> tuple[
         bool,
         bool,
@@ -396,7 +415,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_numeric_field(
-        item: m.BaseModel | Mapping[str, t.RecursiveContainer],
+        item: t.ModelCarrier | t.RecursiveContainerMapping,
         field_name: str,
     ) -> t.Numeric | None:
         """Extract a numeric field value from a model or mapping-like object."""
@@ -426,7 +445,7 @@ class FlextUtilitiesMapper:
                     field_value = FlextUtilitiesMapper._get_numeric_field(item, field)
                 elif isinstance(item, Mapping):
                     field_value = FlextUtilitiesMapper._get_numeric_field(
-                        cast("Mapping[str, t.RecursiveContainer]", item),
+                        cast("t.RecursiveContainerMapping", item),
                         field,
                     )
                 else:
@@ -536,7 +555,7 @@ class FlextUtilitiesMapper:
                     required=required,
                 )
         else:
-            next_val = get_result.value
+            next_val = get_result.unwrap_or(None)
 
         if array_match and next_val is not None:
             narrowed_for_index = (
@@ -564,7 +583,7 @@ class FlextUtilitiesMapper:
                         required=required,
                     )
             else:
-                next_val = index_result.value
+                next_val = index_result.unwrap_or(None)
 
         return next_val, None
 
@@ -581,19 +600,28 @@ class FlextUtilitiesMapper:
         try:
             parts = path.split(separator)
             current: t.ValueOrModel | None = None
-            if FlextUtilitiesGuardsTypeModel.base_model(data):
+            if isinstance(data, m.BaseModel):
                 current = data
             elif isinstance(data, Mapping):
                 config_map = t.ConfigMap(
-                    root={str(k): v for k, v in data.items()},
+                    root={
+                        str(k): FlextUtilitiesMapper._normalize_accessible_value(v)
+                        for k, v in data.items()
+                    },
                 )
                 current = FlextRuntime.normalize_to_container(config_map)
-            elif isinstance(data, p.HasModelDump):
-                current = FlextRuntime.normalize_to_container(data.model_dump())
-            elif isinstance(data, p.ValidatorSpec):
-                current = str(data)
-            elif FlextUtilitiesGuards.container(data):
-                current = data
+            else:
+                model_dump_attr = getattr(data, "model_dump", None)
+                if callable(model_dump_attr):
+                    current = FlextRuntime.normalize_to_container(
+                        t.ConfigMap.model_validate(model_dump_attr()),
+                    )
+                elif isinstance(data, p.ValidatorSpec):
+                    current = str(data)
+                elif data is None or isinstance(
+                    data, (*t.SCALAR_TYPES, Path, list, tuple)
+                ):
+                    current = data
 
             for i, part in enumerate(parts):
                 if current is None:
@@ -655,15 +683,15 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def map_dict_keys(
-        source: t.ContainerMapping,
+        source: t.RecursiveContainerMapping,
         key_mapping: t.StrMapping,
         *,
         keep_unmapped: bool = True,
-    ) -> r[t.MutableContainerMapping]:
+    ) -> r[t.MutableRecursiveContainerMapping]:
         """Rename dict keys using old_key->new_key mapping."""
 
-        def _map_keys() -> t.MutableContainerMapping:
-            result: t.MutableContainerMapping = {}
+        def _map_keys() -> t.MutableRecursiveContainerMapping:
+            result: t.MutableRecursiveContainerMapping = {}
             for key, value in source.items():
                 new_key = key_mapping.get(key)
                 if new_key:
@@ -672,9 +700,11 @@ class FlextUtilitiesMapper:
                     result[key] = value
             return result
 
-        mapped_result = r[t.MutableContainerMapping].create_from_callable(_map_keys)
+        mapped_result = r[t.MutableRecursiveContainerMapping].create_from_callable(
+            _map_keys
+        )
         return mapped_result.fold(
-            on_failure=lambda exc: r[t.MutableContainerMapping].fail_op(
+            on_failure=lambda exc: r[t.MutableRecursiveContainerMapping].fail_op(
                 "map dict keys",
                 e.render_error_template(
                     c.ERR_TEMPLATE_FAILED_TO_MAP_DICT_KEYS,
@@ -719,9 +749,10 @@ class FlextUtilitiesMapper:
         """Extract a value by key from a Mapping or BaseModel."""
         fallback: t.ValueOrModel | None = default
         data: p.AccessibleData | t.ConfigModelInput
-        if FlextUtilitiesGuardsTypeModel.configuration_mapping(
-            data_or_items
-        ) or FlextUtilitiesGuardsTypeModel.base_model(data_or_items):
+        if (
+            isinstance(data_or_items, (t.ConfigMap, t.Dict, Mapping))
+            and FlextUtilitiesGuardsTypeModel.configuration_mapping(data_or_items)
+        ) or (isinstance(data_or_items, m.BaseModel)):
             data = data_or_items
         else:
             return fallback
@@ -788,11 +819,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _coerce_source_to_container_mapping(
-        source: t.ContainerMapping | t.ConfigMap,
-    ) -> t.ContainerMapping:
+        source: t.RecursiveContainerMapping | t.ConfigMap,
+    ) -> t.RecursiveContainerMapping:
         """Coerce ConfigMap (whose root may include BaseModel values) to ContainerMapping."""
         if isinstance(source, t.ConfigMap):
-            coerced: t.MutableContainerMapping = {}
+            coerced: t.MutableRecursiveContainerMapping = {}
             for k, v in source.root.items():
                 coerced[str(k)] = v if FlextUtilitiesGuards.container(v) else str(v)
             return coerced
@@ -800,7 +831,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def transform(
-        source: t.ContainerMapping | t.ConfigMap,
+        source: t.RecursiveContainerMapping | t.ConfigMap,
         *,
         normalize: bool = False,
         strip_none: bool = False,
@@ -808,13 +839,13 @@ class FlextUtilitiesMapper:
         map_keys: t.StrMapping | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
-    ) -> r[t.MutableContainerMapping | t.ContainerMapping]:
+    ) -> r[t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping]:
         """Apply normalize/strip_none/strip_empty/map_keys/filter_keys/exclude_keys to a dict."""
         coerced_source = FlextUtilitiesMapper._coerce_source_to_container_mapping(
             source,
         )
         transform_result = r[
-            t.MutableContainerMapping | t.ContainerMapping
+            t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping
         ].create_from_callable(
             lambda: FlextUtilitiesMapper._apply_transform_steps(
                 dict(coerced_source),
@@ -828,7 +859,7 @@ class FlextUtilitiesMapper:
         )
         return transform_result.fold(
             on_failure=lambda exc: r[
-                t.MutableContainerMapping | t.ContainerMapping
+                t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping
             ].fail_op("transform", exc),
             on_success=lambda _: transform_result,
         )

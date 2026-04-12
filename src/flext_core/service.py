@@ -105,7 +105,7 @@ class FlextService[
         *,
         settings: p.Settings | None = None,
         settings_type: t.SettingsClass | None = None,
-        settings_overrides: t.ContainerMapping | None = None,
+        settings_overrides: t.RecursiveContainerMapping | None = None,
         initial_context: p.Context | None = None,
         subproject: str | None = None,
         services: t.ServiceMap | None = None,

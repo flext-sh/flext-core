@@ -60,7 +60,7 @@ class TestModels:
             Field(description="Model type under creation test"),
         ]
         field_data: Annotated[
-            t.ContainerMapping,
+            t.RecursiveContainerMapping,
             Field(description="Model input payload"),
         ]
         expected_checks: Annotated[
@@ -725,11 +725,11 @@ class TestModels:
             name: str
             handler_called: bool = False
             handler_data: Annotated[
-                t.ContainerMapping,
+                t.RecursiveContainerMapping,
                 Field(default_factory=dict),
             ]
 
-            def _apply_test_event(self, data: t.ContainerMapping) -> None:
+            def _apply_test_event(self, data: t.RecursiveContainerMapping) -> None:
                 self.handler_called = True
                 self.handler_data = data
 
@@ -750,7 +750,7 @@ class TestModels:
 
             def _apply_failing_event(
                 self,
-                _data: t.ContainerMapping,
+                _data: t.RecursiveContainerMapping,
             ) -> None:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)
@@ -968,7 +968,7 @@ class TestModels:
 
     def test_context_export_model_creation(self) -> None:
         """Test ContextExport model creation."""
-        stats: t.ContainerMapping = {"sets": 10, "gets": 20}
+        stats: t.RecursiveContainerMapping = {"sets": 10, "gets": 20}
         export = m.ContextExport(
             data=t.Dict(root={"key": "value"}).root,
             metadata=m.Metadata(attributes={"version": "1.0"}),

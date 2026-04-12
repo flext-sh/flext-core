@@ -304,7 +304,7 @@ class TestCoverageLoggings:
         assert_log_result_success(logger.info("Message with %s and %d", "arg1", 42))
 
     def test_exception_logging_with_exception_object(self) -> None:
-        """Test logging with exception t.NormalizedValue.
+        """Test logging with exception t.RecursiveContainer.
 
         Validates:
         1. Logger handles exception objects correctly

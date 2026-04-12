@@ -30,7 +30,7 @@
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Clean Architecture Foundation
 
-FlextModels provides domain-driven design (DDD) patterns through semantic base classes for building rich domain models with proper entity and value t.NormalizedValue semantics.
+FlextModels provides domain-driven design (DDD) patterns through semantic base classes for building rich domain models with proper entity and value t.RecursiveContainer semantics.
 
 ## Core Concepts
 
@@ -70,7 +70,7 @@ from decimal import Decimal
 
 
 class Money(FlextModels.Value):
-    """Money is a value t.NormalizedValue - represented by amount and currency."""
+    """Money is a value t.RecursiveContainer - represented by amount and currency."""
 
     amount: Decimal
     currency: str  # "USD", "EUR", "GBP", etc.
@@ -108,20 +108,20 @@ from flext_core import FlextModels
 
 
 class Email(FlextModels.Value):
-    """Email address - value t.NormalizedValue."""
+    """Email address - value t.RecursiveContainer."""
 
     address: str
 
 
 class PhoneNumber(FlextModels.Value):
-    """Phone number - value t.NormalizedValue."""
+    """Phone number - value t.RecursiveContainer."""
 
     country_code: str
     number: str
 
 
 class Address(FlextModels.Value):
-    """Physical address - value t.NormalizedValue."""
+    """Physical address - value t.RecursiveContainer."""
 
     street: str
     city: str
@@ -258,7 +258,7 @@ class OrderItem(FlextModels.Entity):
 
 
 class ShippingInfo(FlextModels.Value):
-    """Shipping address - value t.NormalizedValue."""
+    """Shipping address - value t.RecursiveContainer."""
 
     address: str
     city: str
@@ -442,14 +442,14 @@ class OrderStatus(str, Enum):
 
 
 class Money(FlextModels.Value):
-    """Money value t.NormalizedValue."""
+    """Money value t.RecursiveContainer."""
 
     amount: Decimal
     currency: str = "USD"
 
 
 class Address(FlextModels.Value):
-    """Address value t.NormalizedValue."""
+    """Address value t.RecursiveContainer."""
 
     street: str
     city: str
@@ -654,7 +654,7 @@ import re
 
 
 class Email(FlextModels.Value):
-    """Email value t.NormalizedValue."""
+    """Email value t.RecursiveContainer."""
 
     address: str
 
@@ -665,7 +665,7 @@ class Email(FlextModels.Value):
 
 
 class Password(FlextModels.Value):
-    """Password value t.NormalizedValue (hashed representation)."""
+    """Password value t.RecursiveContainer (hashed representation)."""
 
     hash: str
 

@@ -55,7 +55,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def check_no_any(
         own: Mapping[str, FieldInfo],
-    ) -> Sequence[str]:
+    ) -> t.StrSequence:
         """Reject Any in field annotations — recursive via beartype.door."""
         errors: MutableSequence[str] = []
         for name, info in own.items():
@@ -69,9 +69,9 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def check_no_bare_collections(
         own: Mapping[str, FieldInfo],
-    ) -> Sequence[str]:
+    ) -> t.StrSequence:
         """Reject dict/list/set as field annotation origins via beartype engine."""
-        replacements: Mapping[str, str] = dict(
+        replacements: t.StrMapping = dict(
             c.ENFORCEMENT_COLLECTION_REPLACEMENTS,
         )
         errors: MutableSequence[str] = []
@@ -92,7 +92,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def check_no_v1_patterns(
         model_type: type[FlextModelsPydantic.BaseModel],
-    ) -> Sequence[str]:
+    ) -> t.StrSequence:
         """Reject class Config (v1 style)."""
         config_attr = model_type.__dict__.get("Config")
         if config_attr is not None and isinstance(config_attr, type):
@@ -108,7 +108,7 @@ class FlextUtilitiesEnforcement:
     def check_field_descriptions(
         model_type: type[FlextModelsPydantic.BaseModel],
         own: Mapping[str, FieldInfo],
-    ) -> Sequence[str]:
+    ) -> t.StrSequence:
         """Require Field(description=...) on all public fields."""
         errors: MutableSequence[str] = []
         raw_annotation_map = vars(model_type).get("__annotations__", {})
@@ -137,7 +137,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def check_extra_policy(
         model_type: type[FlextModelsPydantic.BaseModel],
-    ) -> Sequence[str]:
+    ) -> t.StrSequence:
         """Require extra='forbid' unless inheriting from relaxed base."""
         for base in model_type.__mro__:
             if base.__name__ in c.ENFORCEMENT_RELAXED_EXTRA_BASES:
@@ -162,7 +162,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def check_no_object(
         own: Mapping[str, FieldInfo],
-    ) -> Sequence[str]:
+    ) -> t.StrSequence:
         """Reject object as field annotation — use specific t.* contract."""
         errors: MutableSequence[str] = []
         for name, info in own.items():
@@ -175,7 +175,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def check_no_str_none_with_empty_default(
         own: Mapping[str, FieldInfo],
-    ) -> Sequence[str]:
+    ) -> t.StrSequence:
         """Reject str | None with default='' via beartype engine."""
         errors: MutableSequence[str] = []
         for name, info in own.items():
@@ -191,7 +191,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def check_frozen_value_objects(
         model_type: type[FlextModelsPydantic.BaseModel],
-    ) -> Sequence[str]:
+    ) -> t.StrSequence:
         """Value objects (ImmutableValueModel/FrozenValueModel) must be frozen."""
         value_bases = {"ImmutableValueModel", "FrozenValueModel", "FrozenStrictModel"}
         is_value = False
@@ -213,7 +213,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def check_no_mutable_field_defaults(
         own: Mapping[str, FieldInfo],
-    ) -> Sequence[str]:
+    ) -> t.StrSequence:
         """Reject mutable defaults ([], {}, set()) — use Field(default_factory=...)."""
         errors: MutableSequence[str] = []
         for name, info in own.items():
@@ -234,7 +234,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def check_no_inline_union_types(
         own: Mapping[str, FieldInfo],
-    ) -> Sequence[str]:
+    ) -> t.StrSequence:
         """Flag complex inline union types via beartype engine."""
         errors: MutableSequence[str] = []
         max_inline_union = 2
@@ -334,7 +334,7 @@ class FlextUtilitiesEnforcement:
     def _emit(
         qualname: str,
         layer: str,
-        errors: Sequence[str],
+        errors: t.StrSequence,
         severity: str,
     ) -> None:
         """Emit enforcement violation as warning and optionally TypeError."""
@@ -365,7 +365,7 @@ class FlextUtilitiesEnforcement:
         return not callable(value)
 
     @staticmethod
-    def check_constants_no_mutable_values(target: type) -> Sequence[str]:
+    def check_constants_no_mutable_values(target: type) -> t.StrSequence:
         """Constants must not have mutable default values (list/dict/set)."""
         errors: MutableSequence[str] = []
         own_dict = vars(target)
@@ -395,7 +395,7 @@ class FlextUtilitiesEnforcement:
         return errors
 
     @staticmethod
-    def check_constants_final_hints(target: type) -> Sequence[str]:
+    def check_constants_final_hints(target: type) -> t.StrSequence:
         """Public constant attributes must have Final[...] type hints."""
         errors: MutableSequence[str] = []
         own_annotations = vars(target).get("__annotations__", {})
@@ -418,7 +418,7 @@ class FlextUtilitiesEnforcement:
         return errors
 
     @staticmethod
-    def check_constants_upper_case(target: type) -> Sequence[str]:
+    def check_constants_upper_case(target: type) -> t.StrSequence:
         """Public constant attribute names must be UPPER_CASE."""
         errors: MutableSequence[str] = []
         own_dict = vars(target)
@@ -529,7 +529,7 @@ class FlextUtilitiesEnforcement:
         )
 
     @staticmethod
-    def _check_protocol_inner_classes(target: type, *, path: str) -> Sequence[str]:
+    def _check_protocol_inner_classes(target: type, *, path: str) -> t.StrSequence:
         """Validate nested protocol classes recursively."""
         errors: MutableSequence[str] = []
         for (
@@ -561,7 +561,7 @@ class FlextUtilitiesEnforcement:
         return errors
 
     @staticmethod
-    def check_protocols_inner_classes(target: type) -> Sequence[str]:
+    def check_protocols_inner_classes(target: type) -> t.StrSequence:
         """Allow namespace-holder classes while validating nested protocols."""
         return FlextUtilitiesEnforcement._check_protocol_inner_classes(
             target,
@@ -569,7 +569,7 @@ class FlextUtilitiesEnforcement:
         )
 
     @staticmethod
-    def check_protocols_runtime_checkable(target: type) -> Sequence[str]:
+    def check_protocols_runtime_checkable(target: type) -> t.StrSequence:
         """Protocol inner classes must be @runtime_checkable."""
         errors: MutableSequence[str] = []
         for name, value in FlextUtilitiesEnforcement._iter_protocol_inner_types(target):
@@ -624,7 +624,7 @@ class FlextUtilitiesEnforcement:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def check_types_no_any_in_aliases(target: type) -> Sequence[str]:
+    def check_types_no_any_in_aliases(target: type) -> t.StrSequence:
         """PEP 695 type aliases must not reference Any — via beartype.door."""
         errors: MutableSequence[str] = []
         for name, value in vars(target).items():
@@ -641,7 +641,7 @@ class FlextUtilitiesEnforcement:
         return errors
 
     @staticmethod
-    def check_types_typeadapter_placement(target: type) -> Sequence[str]:
+    def check_types_typeadapter_placement(target: type) -> t.StrSequence:
         """TypeAdapter instances must be in FlextTypes* hierarchy only."""
         errors: MutableSequence[str] = []
         own_dict = vars(target)
@@ -705,7 +705,7 @@ class FlextUtilitiesEnforcement:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def check_utilities_method_types(target: type) -> Sequence[str]:
+    def check_utilities_method_types(target: type) -> t.StrSequence:
         """Public methods on utility classes must be static or classmethod."""
         errors: MutableSequence[str] = []
         own_dict = vars(target)
@@ -789,7 +789,7 @@ class FlextUtilitiesEnforcement:
         for pkg, prefix in c.ENFORCEMENT_NAMESPACE_SPECIAL_PREFIXES:
             if package == pkg:
                 return prefix
-        package_surface_map: Mapping[str, str] = {
+        package_surface_map: t.StrMapping = {
             "tests": "Tests",
             "examples": "Examples",
             "scripts": "Scripts",
@@ -859,7 +859,7 @@ class FlextUtilitiesEnforcement:
         return target.__name__ in c.ENFORCEMENT_INFRASTRUCTURE_BASES
 
     @staticmethod
-    def _emit_namespace(qualname: str, layer: str, errors: Sequence[str]) -> None:
+    def _emit_namespace(qualname: str, layer: str, errors: t.StrSequence) -> None:
         """Emit namespace violation warning or TypeError."""
         mode = c.ENFORCEMENT_NAMESPACE_MODE
         if mode == "off":
@@ -875,7 +875,7 @@ class FlextUtilitiesEnforcement:
             raise TypeError(msg)
 
     @staticmethod
-    def check_class_prefix(target: type) -> Sequence[str]:
+    def check_class_prefix(target: type) -> t.StrSequence:
         """Validate class name starts with expected project prefix."""
         if target.__name__ in c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS:
             return []
@@ -896,7 +896,7 @@ class FlextUtilitiesEnforcement:
         return []
 
     @staticmethod
-    def check_inner_namespace(target: type) -> Sequence[str]:
+    def check_inner_namespace(target: type) -> t.StrSequence:
         """Validate inner namespace class names match project."""
         expected = FlextUtilitiesEnforcement._derive_expected_namespace(target)
         if expected is None:
@@ -933,7 +933,7 @@ class FlextUtilitiesEnforcement:
         target: type,
         layer: str,
         path: str = "",
-    ) -> Sequence[str]:
+    ) -> t.StrSequence:
         """Recursively scan inner classes for StrEnum/Protocol in wrong layers."""
         errors: MutableSequence[str] = []
         check_strenum = layer not in c.ENFORCEMENT_NAMESPACE_STRENUM_ALLOWED_LAYERS
@@ -970,7 +970,7 @@ class FlextUtilitiesEnforcement:
         return errors
 
     @staticmethod
-    def check_cross_layer_strenum(target: type, layer: str) -> Sequence[str]:
+    def check_cross_layer_strenum(target: type, layer: str) -> t.StrSequence:
         """Detect StrEnum/IntEnum in wrong layer — recursive scan."""
         if layer in c.ENFORCEMENT_NAMESPACE_STRENUM_ALLOWED_LAYERS:
             return []
@@ -984,7 +984,7 @@ class FlextUtilitiesEnforcement:
         ]
 
     @staticmethod
-    def check_cross_layer_protocol(target: type, layer: str) -> Sequence[str]:
+    def check_cross_layer_protocol(target: type, layer: str) -> t.StrSequence:
         """Detect Protocol in wrong layer — recursive scan."""
         if layer in c.ENFORCEMENT_NAMESPACE_PROTOCOL_ALLOWED_LAYERS:
             return []

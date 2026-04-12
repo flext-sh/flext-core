@@ -507,7 +507,7 @@ class TestFlextSettings:
 
                 wrong_instance = cast(
                     "FlextSettings",
-                    cast("t.NormalizedValue", WrongType()),
+                    cast("t.RecursiveContainer", WrongType()),
                 )
                 FlextSettings._instances[FlextSettings] = wrong_instance
                 with pytest.raises(

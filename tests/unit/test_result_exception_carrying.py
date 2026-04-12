@@ -11,7 +11,7 @@ from tests import r, t
 
 class TestResultExceptionCarrying:
     class BrokenSized:
-        """Sized t.NormalizedValue that raises on __len__."""
+        """Sized t.RecursiveContainer that raises on __len__."""
 
         def __len__(self) -> int:
             """Raise TypeError on length call."""

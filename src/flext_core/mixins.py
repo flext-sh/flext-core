@@ -94,7 +94,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         ),
     ] = None
     settings_overrides: Annotated[
-        t.ContainerMapping | None,
+        t.RecursiveContainerMapping | None,
         Field(
             default=None,
             exclude=True,

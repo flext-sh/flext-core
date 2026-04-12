@@ -175,7 +175,7 @@ def create_service_that_might_fail():
     return ServiceInstance()
 
 
-def safe_factory() -> r[t.NormalizedValue]:
+def safe_factory() -> r[t.RecursiveContainer]:
     """Wrap potentially-failing factory."""
     try:
         service = create_service_that_might_fail()
@@ -197,7 +197,7 @@ from flext_core import FlextContainer
 
 container = FlextContainer.get_global()
 
-# Get service (returns r[t.NormalizedValue])
+# Get service (returns r[t.RecursiveContainer])
 result = container.get("logger")
 
 if result.is_success:
@@ -561,10 +561,10 @@ if result.is_success:
 
 ```python
 # WORKS but loses type information
-result = container.get("logger")  # Returns r[t.NormalizedValue]
+result = container.get("logger")  # Returns r[t.RecursiveContainer]
 
 if result.is_success:
-    logger = result.value  # Type is t.NormalizedValue
+    logger = result.value  # Type is t.RecursiveContainer
     # IDE can't help with autocomplete
 ```
 
@@ -703,7 +703,7 @@ def some_random_function():
 result: r[FlextLogger] = container.get_typed("logger", FlextLogger)
 
 # ⚠️ OK but less safe - Basic retrieval
-result: r[t.NormalizedValue] = container.get("logger")
+result: r[t.RecursiveContainer] = container.get("logger")
 ```
 
 ## FlextDispatcher Reliability Settings

@@ -26,10 +26,10 @@ from tests import m, t, u
 
 class UtilitiesMapperCoverage100Namespace:
     class SimpleObj(BaseModel):
-        """Simple test t.NormalizedValue."""
+        """Simple test t.RecursiveContainer."""
 
-        name: Annotated[str, Field(description="Simple t.NormalizedValue name")]
-        value: Annotated[int, Field(description="Simple t.NormalizedValue value")]
+        name: Annotated[str, Field(description="Simple t.RecursiveContainer name")]
+        value: Annotated[int, Field(description="Simple t.RecursiveContainer value")]
 
     class _DoubleOp(BaseModel):
         def __call__(self, value: float | str) -> t.Numeric | str:
@@ -92,7 +92,7 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(result.value, eq=3)
 
         def test_extract_object(self) -> None:
-            """Test t.NormalizedValue attribute extraction."""
+            """Test t.RecursiveContainer attribute extraction."""
             obj = SimpleObj(name="test", value=42)
             result = u.extract(obj, "name")
             _ = u.Core.Tests.assert_success(result)
@@ -111,14 +111,16 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_extract_array_index(self) -> None:
             """Test array indexing."""
-            data: t.ContainerMapping = {"items": [1, 2, 3]}
+            data: t.RecursiveContainerMapping = {"items": [1, 2, 3]}
             result = u.extract(data, "items[1]")
             _ = u.Core.Tests.assert_success(result)
             tm.that(result.value, eq=2)
 
         def test_extract_array_index_nested(self) -> None:
             """Test nested array indexing."""
-            data: t.ContainerMapping = {"users": [{"name": "alice"}, {"name": "bob"}]}
+            data: t.RecursiveContainerMapping = {
+                "users": [{"name": "alice"}, {"name": "bob"}]
+            }
             result = u.extract(data, "users[1].name")
             _ = u.Core.Tests.assert_success(result)
             tm.that(result.value, eq="bob")
@@ -139,7 +141,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_extract_array_index_error(self) -> None:
             """Test invalid array index."""
-            data: t.ContainerMapping = {"items": [1]}
+            data: t.RecursiveContainerMapping = {"items": [1]}
             result = u.extract(data, "items[5]", required=True)
             _ = u.Core.Tests.assert_failure(result)
             msg = str(result.error)
@@ -172,7 +174,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_take_slice(self) -> None:
             """Test take slicing."""
-            items: t.ContainerList = [1, 2, 3, 4, 5]
+            items: t.RecursiveContainerList = [1, 2, 3, 4, 5]
             tm.that(u.take(items, 2), eq=[1, 2])
             tm.that(u.take(items, 2, from_start=False), eq=[4, 5])
             d: Mapping[str, t.Container] = {"a": 1, "b": 2, "c": 3}
@@ -195,14 +197,14 @@ class UtilitiesMapperCoverage100Namespace:
         """Tests for u conversions (ensure, convert)."""
 
         @staticmethod
-        def _to_json_safe(value: t.ValueOrModel) -> t.NormalizedValue:
+        def _to_json_safe(value: t.ValueOrModel) -> t.RecursiveContainer:
             if isinstance(value, BaseModel):
-                return cast("t.NormalizedValue", value.model_dump(mode="json"))
+                return cast("t.RecursiveContainer", value.model_dump(mode="json"))
             if isinstance(value, Path):
                 return value.as_posix()
             if isinstance(value, datetime):
                 return value.isoformat()
-            return cast("t.NormalizedValue", value)
+            return cast("t.RecursiveContainer", value)
 
         def test_to_str(self) -> None:
             """Test to_str."""
@@ -212,7 +214,7 @@ class UtilitiesMapperCoverage100Namespace:
         def test_convert_to_json_value(self) -> None:
             obj = SimpleObj(name="test", value=1)
             payload: Mapping[str, t.ValueOrModel] = {"obj": obj}
-            res: t.MutableContainerMapping = {}
+            res: t.MutableRecursiveContainerMapping = {}
             for key, val in payload.items():
                 res[key] = self._to_json_safe(val)
             assert "obj" in res
@@ -233,7 +235,7 @@ class UtilitiesMapperCoverage100Namespace:
                 "when": now,
             }
 
-            res: t.MutableContainerMapping = {}
+            res: t.MutableRecursiveContainerMapping = {}
             for key, val in payload.items():
                 res[key] = self._to_json_safe(val)
 
@@ -249,7 +251,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_convert_dict_to_json(self) -> None:
             d: Mapping[str, t.ValueOrModel] = {"a": SimpleObj(name="test", value=1)}
-            res: t.MutableContainerMapping = {}
+            res: t.MutableRecursiveContainerMapping = {}
             for key, val in d.items():
                 res[key] = self._to_json_safe(val)
             tm.that(
@@ -264,9 +266,9 @@ class UtilitiesMapperCoverage100Namespace:
             test_list: Sequence[Mapping[str, t.ValueOrModel]] = [
                 {"a": SimpleObj(name="test", value=1)},
             ]
-            res: MutableSequence[t.ContainerMapping] = []
+            res: MutableSequence[t.RecursiveContainerMapping] = []
             for item in test_list:
-                item_dict: t.MutableContainerMapping = {}
+                item_dict: t.MutableRecursiveContainerMapping = {}
                 for key, val in item.items():
                     item_dict[key] = self._to_json_safe(val)
                 res.append(item_dict)
@@ -293,7 +295,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_transform_via_static(self) -> None:
             """Test transform via static method."""
-            data: t.ContainerMapping = {"a": "UPPER", "b": None, "c": ""}
+            data: t.RecursiveContainerMapping = {"a": "UPPER", "b": None, "c": ""}
             result = u.transform(
                 data,
                 strip_none=True,

@@ -51,7 +51,7 @@ with logger.context(operation="user_creation", user_id="user_123"):
 
 ### FlextContext — Request and Operation Context
 
-Context t.NormalizedValue that carries correlation IDs, timing metadata, and arbitrary tags through dispatcher pipelines.
+Context t.RecursiveContainer that carries correlation IDs, timing metadata, and arbitrary tags through dispatcher pipelines.
 
 ```python
 from flext_core import FlextContext

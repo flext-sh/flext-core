@@ -65,7 +65,7 @@ def test_structlog_proxy_context_var_default_when_key_missing(
 
 
 def test_context_data_normalize_and_json_checks() -> None:
-    nested: t.NormalizedValue = cast("t.NormalizedValue", {"a": [{"b": 1}]})
+    nested: t.RecursiveContainer = cast("t.RecursiveContainer", {"a": [{"b": 1}]})
     m.ContextData.normalize_to_container(nested)
     check_result = m.ContextData.check_json_serializable(
         cast("t.ValueOrModel", {"k": [1, "x"]}),
@@ -90,7 +90,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
         _ = m.ContextData.validate_dict_serializable(
             cast(
                 "t.Dict | t.ConfigurationMapping | BaseModel | None",
-                cast("t.NormalizedValue", _ModelWithNoCallableDump()),
+                cast("t.RecursiveContainer", _ModelWithNoCallableDump()),
             ),
         )
     tm.that(exc_info2.value, none=False)
@@ -126,7 +126,7 @@ def test_context_data_validate_dict_serializable_none_and_mapping() -> None:
 )
 def test_context_data_validate_dict_serializable_real_dicts(
     input_value: t.Dict,
-    expected_result: t.ContainerMapping,
+    expected_result: t.RecursiveContainerMapping,
 ) -> None:
     """Test validate_dict_serializable with real dict inputs."""
     result = m.ContextData.validate_dict_serializable(input_value)
@@ -146,7 +146,7 @@ def test_context_export_serializable_and_validators() -> None:
         _ = m.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | t.ConfigurationMapping | BaseModel | None",
-                cast("t.NormalizedValue", _ModelWithNoCallableDump()),
+                cast("t.RecursiveContainer", _ModelWithNoCallableDump()),
             ),
         )
     result = m.ContextExport.validate_dict_serializable(None)

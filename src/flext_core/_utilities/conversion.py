@@ -11,9 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext_core import t
-from flext_core._constants.pydantic import FlextConstantsPydantic
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core import c, m, t
 from flext_core.runtime import FlextRuntime
 
 
@@ -63,7 +61,7 @@ class FlextUtilitiesConversion:
             if float_value.is_integer():
                 return str(int(float_value))
             return f"{float_value:.2f}"
-        except FlextConstantsPydantic.ValidationError:
+        except c.ValidationError:
             pass
         return str(value)
 
@@ -86,7 +84,7 @@ class FlextUtilitiesConversion:
                 )
             )
             return [str(item) for item in list_value if item is not None]
-        except FlextConstantsPydantic.ValidationError:
+        except c.ValidationError:
             pass
         return [str(value)]
 
@@ -126,7 +124,7 @@ class FlextUtilitiesConversion:
         normalized: t.MutableFlatContainerMapping = {}
         for key, value in payload.items():
             atomic = FlextRuntime.normalize_to_container(value)
-            if isinstance(atomic, FlextModelsPydantic.BaseModel):
+            if isinstance(atomic, m.BaseModel):
                 normalized[str(key)] = atomic.model_dump_json()
             else:
                 normalized[str(key)] = atomic

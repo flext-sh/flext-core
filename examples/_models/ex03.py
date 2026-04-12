@@ -12,13 +12,13 @@ from flext_core import m, r
 
 
 class Ex03Email(m.Value):
-    """Email value t.NormalizedValue model."""
+    """Email value t.RecursiveContainer model."""
 
     address: EmailStr
 
 
 class Ex03Money(m.Value):
-    """Money value t.NormalizedValue model."""
+    """Money value t.RecursiveContainer model."""
 
     amount: Decimal
     currency: c.Currency = c.Currency.USD
@@ -48,7 +48,7 @@ class Ex03User(m.Entity):
 
 
 class Ex03OrderItem(m.Value):
-    """Order item value t.NormalizedValue."""
+    """Order item value t.RecursiveContainer."""
 
     product_id: str
     name: str

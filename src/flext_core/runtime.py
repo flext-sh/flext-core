@@ -388,7 +388,7 @@ class FlextRuntime:
             val: Value to normalize
 
         Returns:
-            Scalar | Path | BaseModel
+            t.Container | BaseModel
 
         """
         match val:

@@ -37,13 +37,13 @@ class TestFlextSettingsSingletonIntegration:
 
         test_name: Annotated[str, Field(description="Configuration test case name")]
         config_data: Annotated[
-            t.ContainerMapping,
+            t.RecursiveContainerMapping,
             Field(
                 description="Input configuration payload",
             ),
         ]
         expected_values: Annotated[
-            t.ContainerMapping,
+            t.RecursiveContainerMapping,
             Field(
                 description="Expected effective values",
             ),

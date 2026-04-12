@@ -54,8 +54,8 @@ class TestContainsAny:
         assert be.contains_any(Mapping[str, int]) is False
 
     def test_clean_sequence(self) -> None:
-        """Sequence[str] has no Any."""
-        assert be.contains_any(Sequence[str]) is False
+        """t.StrSequence has no Any."""
+        assert be.contains_any(t.StrSequence) is False
 
     def test_union_with_any(self) -> None:
         """Str | Any detected."""
@@ -105,8 +105,8 @@ class TestForbiddenCollectionOrigin:
         assert result == (False, "")
 
     def test_sequence_ok(self) -> None:
-        """Sequence[str] is not forbidden."""
-        result = be.has_forbidden_collection_origin(Sequence[str], self.FORBIDDEN)
+        """t.StrSequence is not forbidden."""
+        result = be.has_forbidden_collection_origin(t.StrSequence, self.FORBIDDEN)
         assert result == (False, "")
 
     def test_plain_str_ok(self) -> None:

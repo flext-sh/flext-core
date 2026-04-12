@@ -525,7 +525,7 @@ def load_test_fixture(fixture_name: str) -> str:
     return fixture_path.read_text()
 
 
-def load_json_fixture(fixture_name: str) -> t.ContainerMapping:
+def load_json_fixture(fixture_name: str) -> t.RecursiveContainerMapping:
     """Load JSON test fixture."""
     fixture_path = Path(__file__).parent / "fixtures" / fixture_name
     return json.loads(fixture_path.read_text())

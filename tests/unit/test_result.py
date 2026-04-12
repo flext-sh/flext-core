@@ -64,7 +64,7 @@ class Testr:
             Field(description="Result operation type"),
         ]
         value: Annotated[
-            t.NormalizedValue,
+            t.RecursiveContainer,
             Field(description="Input value for result operation"),
         ]
         is_success_expected: Annotated[
@@ -72,7 +72,7 @@ class Testr:
             Field(default=True, description="Expected success state"),
         ] = True
         expected_result: Annotated[
-            t.NormalizedValue | None,
+            t.RecursiveContainer | None,
             Field(default=None, description="Optional expected result payload"),
         ] = None
 
@@ -80,10 +80,10 @@ class Testr:
             self,
             name: str,
             operation_type: ResultOperationType,
-            value: t.NormalizedValue,
+            value: t.RecursiveContainer,
             *,
             is_success_expected: bool = True,
-            expected_result: t.NormalizedValue | None = None,
+            expected_result: t.RecursiveContainer | None = None,
         ) -> None:
             super().__init__(
                 name=name,
@@ -388,7 +388,7 @@ class Testr:
 
         Replaces 10+ lines of manual test case creation.
         """
-        success_values: t.ContainerList = ["value1", "value2", "value3"]
+        success_values: t.RecursiveContainerList = ["value1", "value2", "value3"]
         failure_errors: t.StrSequence = ["error1", "error2"]
         error_codes: Sequence[str | None] = ["CODE1", None]
         cases = u.Core.Tests.create_parametrized_cases(
@@ -744,7 +744,7 @@ class Testr:
     def test_fold_different_return_types(self) -> None:
         """Test fold can return different types than input."""
         result: r[str] = r[str].ok("hello")
-        response: t.ContainerMapping = result.fold(
+        response: t.RecursiveContainerMapping = result.fold(
             on_success=lambda v: {"status": 200, "data": v},
             on_failure=lambda e: {"status": 400, "error": e},
         )

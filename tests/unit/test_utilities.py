@@ -37,7 +37,7 @@ class Testu(u.Core.Tests.Contract):
         """Centralized utility test scenarios using c (FlextConstants)."""
 
         TYPE_GUARD_CASES: ClassVar[
-            Mapping[str, Sequence[tuple[str, t.NormalizedValue, bool]]]
+            Mapping[str, Sequence[tuple[str, t.RecursiveContainer, bool]]]
         ] = {
             "string": [
                 ("string_empty", "", False),
@@ -48,13 +48,13 @@ class Testu(u.Core.Tests.Contract):
                 ("string_content", " content ", True),
             ],
             "dict": [
-                ("dict_empty", dict[str, t.NormalizedValue](), False),
+                ("dict_empty", dict[str, t.RecursiveContainer](), False),
                 ("dict_valid", {"a": 1}, True),
                 ("dict_none", None, False),
                 ("dict_string", "not_dict", False),
             ],
             "list": [
-                ("list_empty", list[t.NormalizedValue](), False),
+                ("list_empty", list[t.RecursiveContainer](), False),
                 ("list_valid", [1, 2, 3], True),
                 ("list_none", None, False),
                 ("list_string", "not_list", False),
@@ -76,7 +76,7 @@ class Testu(u.Core.Tests.Contract):
             (None, c.SHORT_UUID_LENGTH),
         ]
         CACHE_NORMALIZE_CASES: ClassVar[
-            Sequence[tuple[t.NormalizedValue, type | tuple[type, ...]]]
+            Sequence[tuple[t.RecursiveContainer, type | tuple[type, ...]]]
         ] = [
             ({"a": 1, "b": 2}, dict),
             ([1, 2, 3], list),
@@ -116,7 +116,7 @@ class Testu(u.Core.Tests.Contract):
     def test_type_guard_string(
         self,
         description: str,
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
         expected: bool,
     ) -> None:
         """Test string type guards."""
@@ -130,7 +130,7 @@ class Testu(u.Core.Tests.Contract):
     def test_type_guard_dict(
         self,
         description: str,
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
         expected: bool,
     ) -> None:
         """Test dict type guards."""
@@ -144,7 +144,7 @@ class Testu(u.Core.Tests.Contract):
     def test_type_guard_list(
         self,
         description: str,
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
         expected: bool,
     ) -> None:
         """Test list type guards."""
@@ -226,7 +226,7 @@ class Testu(u.Core.Tests.Contract):
     )
     def test_cache_normalize_component(
         self,
-        input_data: t.NormalizedValue,
+        input_data: t.RecursiveContainer,
         expected_type: type | tuple[type, ...],
     ) -> None:
         """Test cache component normalization."""

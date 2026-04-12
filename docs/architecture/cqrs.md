@@ -140,8 +140,8 @@ The current implementation uses manual state management:
 
 ```python
 # Internal state (handlers.py lines 177-178)
-self._context_stack: Sequence[t.ContainerMapping] = []
-self._metrics: t.ContainerMapping = {}
+self._context_stack: Sequence[t.RecursiveContainerMapping] = []
+self._metrics: t.RecursiveContainerMapping = {}
 
 # Methods for state management
 handler.push_context({"operation": "create_user"})

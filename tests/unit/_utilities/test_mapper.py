@@ -43,39 +43,39 @@ class TestsFlextCoreUtilitiesMapper:
     # ── extract: basic dict ────────────────────────────────────────
 
     def test_extract_simple_key(self) -> None:
-        data: t.ContainerMapping = {"name": "alice", "score": 42}
+        data: t.RecursiveContainerMapping = {"name": "alice", "score": 42}
         result = u.extract(data, "name")
         tm.ok(result, eq="alice")
 
     def test_extract_nested_dict(self) -> None:
-        data: t.ContainerMapping = {"a": {"b": {"c": "deep"}}}
+        data: t.RecursiveContainerMapping = {"a": {"b": {"c": "deep"}}}
         tm.ok(u.extract(data, "a.b.c"), eq="deep")
 
     def test_extract_missing_key_default(self) -> None:
-        data: t.ContainerMapping = {"a": 1}
+        data: t.RecursiveContainerMapping = {"a": 1}
         tm.ok(u.extract(data, "missing", default="fallback"), eq="fallback")
 
     def test_extract_missing_key_required_fails(self) -> None:
-        data: t.ContainerMapping = {"a": 1}
+        data: t.RecursiveContainerMapping = {"a": 1}
         tm.fail(u.extract(data, "missing", required=True), has="not found")
 
     # ── extract: array index ───────────────────────────────────────
 
     def test_extract_array_index(self) -> None:
-        data: t.ContainerMapping = {"items": [10, 20, 30]}
+        data: t.RecursiveContainerMapping = {"items": [10, 20, 30]}
         tm.ok(u.extract(data, "items[1]"), eq=20)
 
     def test_extract_negative_array_index(self) -> None:
-        data: t.ContainerMapping = {"items": [10, 20, 30]}
+        data: t.RecursiveContainerMapping = {"items": [10, 20, 30]}
         tm.ok(u.extract(data, "items[-1]"), eq=30)
 
     def test_extract_array_out_of_range(self) -> None:
-        data: t.ContainerMapping = {"items": [1]}
+        data: t.RecursiveContainerMapping = {"items": [1]}
         result = u.extract(data, "items[99]", required=True)
         tm.fail(result)
 
     def test_extract_nested_array_field(self) -> None:
-        data: t.ContainerMapping = {
+        data: t.RecursiveContainerMapping = {
             "users": [{"name": "alice"}, {"name": "bob"}],
         }
         tm.ok(u.extract(data, "users[1].name"), eq="bob")
@@ -95,7 +95,7 @@ class TestsFlextCoreUtilitiesMapper:
 
         class WithData(BaseModel):
             data: Annotated[
-                t.ContainerMapping,
+                t.RecursiveContainerMapping,
                 Field(description="Data dict"),
             ] = {"key": "val"}
 
@@ -115,40 +115,40 @@ class TestsFlextCoreUtilitiesMapper:
     # ── extract: custom separator ──────────────────────────────────
 
     def test_extract_custom_separator(self) -> None:
-        data: t.ContainerMapping = {"a": {"b": {"c": "val"}}}
+        data: t.RecursiveContainerMapping = {"a": {"b": {"c": "val"}}}
         tm.ok(u.extract(data, "a/b/c", separator="/"), eq="val")
 
     # ── map_get ────────────────────────────────────────────────────
 
     def test_map_get_existing_key(self) -> None:
-        data: t.ContainerMapping = {"x": 42}
+        data: t.RecursiveContainerMapping = {"x": 42}
         tm.that(u.map_get(data, "x"), eq=42)
 
     def test_map_get_missing_key_default(self) -> None:
-        data: t.ContainerMapping = {"x": 42}
+        data: t.RecursiveContainerMapping = {"x": 42}
         tm.that(u.map_get(data, "y", default="nope"), eq="nope")
 
     def test_map_get_missing_key_no_default(self) -> None:
-        data: t.ContainerMapping = {"x": 42}
+        data: t.RecursiveContainerMapping = {"x": 42}
         result = u.map_get(data, "y")
         tm.that(result, eq="")
 
     # ── map_dict_keys ──────────────────────────────────────────────
 
     def test_map_dict_keys_basic(self) -> None:
-        source: t.ContainerMapping = {"old": "v1", "foo": "v2"}
+        source: t.RecursiveContainerMapping = {"old": "v1", "foo": "v2"}
         result = u.map_dict_keys(source, {"old": "new", "foo": "bar"})
         mapped = tm.ok(result)
         tm.that(mapped, kv={"new": "v1", "bar": "v2"})
 
     def test_map_dict_keys_keep_unmapped_true(self) -> None:
-        source: t.ContainerMapping = {"old": "v1", "extra": "v2"}
+        source: t.RecursiveContainerMapping = {"old": "v1", "extra": "v2"}
         result = u.map_dict_keys(source, {"old": "new"}, keep_unmapped=True)
         mapped = tm.ok(result)
         tm.that(mapped, keys=["new", "extra"])
 
     def test_map_dict_keys_keep_unmapped_false(self) -> None:
-        source: t.ContainerMapping = {"old": "v1", "extra": "v2"}
+        source: t.RecursiveContainerMapping = {"old": "v1", "extra": "v2"}
         result = u.map_dict_keys(source, {"old": "new"}, keep_unmapped=False)
         mapped = tm.ok(result)
         tm.that(mapped, keys=["new"])
@@ -156,42 +156,42 @@ class TestsFlextCoreUtilitiesMapper:
     # ── deep_eq ────────────────────────────────────────────────────
 
     def test_deep_eq_identical(self) -> None:
-        d: t.ContainerMapping = {"a": 1, "b": [2, 3]}
+        d: t.RecursiveContainerMapping = {"a": 1, "b": [2, 3]}
         tm.that(u.deep_eq(d, d), eq=True)
 
     def test_deep_eq_equal(self) -> None:
-        a: t.ContainerMapping = {"x": {"y": [1, 2]}, "z": "val"}
-        b: t.ContainerMapping = {"x": {"y": [1, 2]}, "z": "val"}
+        a: t.RecursiveContainerMapping = {"x": {"y": [1, 2]}, "z": "val"}
+        b: t.RecursiveContainerMapping = {"x": {"y": [1, 2]}, "z": "val"}
         tm.that(u.deep_eq(a, b), eq=True)
 
     def test_deep_eq_different_values(self) -> None:
-        a: t.ContainerMapping = {"x": 1}
-        b: t.ContainerMapping = {"x": 2}
+        a: t.RecursiveContainerMapping = {"x": 1}
+        b: t.RecursiveContainerMapping = {"x": 2}
         tm.that(u.deep_eq(a, b), eq=False)
 
     def test_deep_eq_different_keys(self) -> None:
-        a: t.ContainerMapping = {"x": 1}
-        b: t.ContainerMapping = {"y": 1}
+        a: t.RecursiveContainerMapping = {"x": 1}
+        b: t.RecursiveContainerMapping = {"y": 1}
         tm.that(u.deep_eq(a, b), eq=False)
 
     def test_deep_eq_different_lengths(self) -> None:
-        a: t.ContainerMapping = {"x": 1}
-        b: t.ContainerMapping = {"x": 1, "y": 2}
+        a: t.RecursiveContainerMapping = {"x": 1}
+        b: t.RecursiveContainerMapping = {"x": 1, "y": 2}
         tm.that(u.deep_eq(a, b), eq=False)
 
     def test_deep_eq_nested_list_mismatch(self) -> None:
-        a: t.ContainerMapping = {"items": [1, 2]}
-        b: t.ContainerMapping = {"items": [1, 3]}
+        a: t.RecursiveContainerMapping = {"items": [1, 2]}
+        b: t.RecursiveContainerMapping = {"items": [1, 3]}
         tm.that(u.deep_eq(a, b), eq=False)
 
     def test_deep_eq_none_handling(self) -> None:
-        a: t.ContainerMapping = {"x": None}
-        b: t.ContainerMapping = {"x": None}
+        a: t.RecursiveContainerMapping = {"x": None}
+        b: t.RecursiveContainerMapping = {"x": None}
         tm.that(u.deep_eq(a, b), eq=True)
 
     def test_deep_eq_none_vs_value(self) -> None:
-        a: t.ContainerMapping = {"x": None}
-        b: t.ContainerMapping = {"x": 1}
+        a: t.RecursiveContainerMapping = {"x": None}
+        b: t.RecursiveContainerMapping = {"x": 1}
         tm.that(u.deep_eq(a, b), eq=False)
 
     # ── narrow_to_container ────────────────────────────────────────
@@ -243,30 +243,30 @@ class TestsFlextCoreUtilitiesMapper:
     # ── take: by key ───────────────────────────────────────────────
 
     def test_take_by_key(self) -> None:
-        data: t.ContainerMapping = {"a": 1, "b": "two"}
+        data: t.RecursiveContainerMapping = {"a": 1, "b": "two"}
         tm.that(u.take(data, "a"), eq=1)
 
     def test_take_by_key_with_type(self) -> None:
-        data: t.ContainerMapping = {"a": 1, "b": "two"}
+        data: t.RecursiveContainerMapping = {"a": 1, "b": "two"}
         tm.that(u.take(data, "a", as_type=int), eq=1)
         tm.that(u.take(data, "b", as_type=int, default=0), eq=0)
 
     def test_take_by_key_missing(self) -> None:
-        data: t.ContainerMapping = {"a": 1}
+        data: t.RecursiveContainerMapping = {"a": 1}
         tm.that(u.take(data, "z", default="nope"), eq="nope")
 
     # ── take: N items ──────────────────────────────────────────────
 
     def test_take_n_from_list(self) -> None:
-        items: t.ContainerList = [10, 20, 30, 40, 50]
+        items: t.RecursiveContainerList = [10, 20, 30, 40, 50]
         tm.that(u.take(items, 2), eq=[10, 20])
 
     def test_take_n_from_list_end(self) -> None:
-        items: t.ContainerList = [10, 20, 30, 40, 50]
+        items: t.RecursiveContainerList = [10, 20, 30, 40, 50]
         tm.that(u.take(items, 2, from_start=False), eq=[40, 50])
 
     def test_take_n_from_dict(self) -> None:
-        data: t.ContainerMapping = {"a": 1, "b": 2, "c": 3}
+        data: t.RecursiveContainerMapping = {"a": 1, "b": 2, "c": 3}
         taken = u.take(data, 2)
         tm.that(taken, is_=dict)
         assert isinstance(taken, Mapping)
@@ -278,17 +278,17 @@ class TestsFlextCoreUtilitiesMapper:
     # ── agg ────────────────────────────────────────────────────────
 
     def test_agg_sum_field_name(self) -> None:
-        items: list[t.ContainerMapping] = [{"v": 10}, {"v": 20}]
+        items: list[t.RecursiveContainerMapping] = [{"v": 10}, {"v": 20}]
         tm.that(u.agg(items, "v"), eq=30)
 
     def test_agg_with_custom_fn(self) -> None:
-        items: list[t.ContainerMapping] = [{"v": 10}, {"v": 20}, {"v": 5}]
+        items: list[t.RecursiveContainerMapping] = [{"v": 10}, {"v": 20}, {"v": 5}]
         tm.that(u.agg(items, "v", fn=max), eq=20)
 
     def test_agg_with_callable_extractor(self) -> None:
-        items: list[t.ContainerMapping] = [{"v": 3}, {"v": 7}]
+        items: list[t.RecursiveContainerMapping] = [{"v": 3}, {"v": 7}]
 
-        def get_v(item: t.ContainerMapping) -> t.Numeric:
+        def get_v(item: t.RecursiveContainerMapping) -> t.Numeric:
             val = item.get("v")
             return val if isinstance(val, (int, float)) else 0
 
@@ -298,7 +298,7 @@ class TestsFlextCoreUtilitiesMapper:
         tm.that(u.agg([], "v"), eq=0)
 
     def test_agg_missing_field(self) -> None:
-        items: list[t.ContainerMapping] = [{"x": 10}]
+        items: list[t.RecursiveContainerMapping] = [{"x": 10}]
         tm.that(u.agg(items, "v"), eq=0)
 
     def test_agg_pydantic_model(self) -> None:
@@ -308,37 +308,37 @@ class TestsFlextCoreUtilitiesMapper:
     # ── transform (top-level static) ───────────────────────────────
 
     def test_transform_strip_none(self) -> None:
-        source: t.ContainerMapping = {"a": 1, "b": None}
+        source: t.RecursiveContainerMapping = {"a": 1, "b": None}
         result = u.transform(source, strip_none=True)
         mapped = tm.ok(result)
         tm.that(mapped, eq={"a": 1})
 
     def test_transform_strip_empty(self) -> None:
-        source: t.ContainerMapping = {"a": 1, "b": ""}
+        source: t.RecursiveContainerMapping = {"a": 1, "b": ""}
         result = u.transform(source, strip_empty=True)
         mapped = tm.ok(result)
         tm.that(mapped, eq={"a": 1})
 
     def test_transform_map_keys(self) -> None:
-        source: t.ContainerMapping = {"old": "val"}
+        source: t.RecursiveContainerMapping = {"old": "val"}
         result = u.transform(source, map_keys={"old": "new"})
         mapped = tm.ok(result)
         tm.that(mapped, kv={"new": "val"})
 
     def test_transform_filter_keys(self) -> None:
-        source: t.ContainerMapping = {"a": 1, "b": 2, "c": 3}
+        source: t.RecursiveContainerMapping = {"a": 1, "b": 2, "c": 3}
         result = u.transform(source, filter_keys={"a", "c"})
         mapped = tm.ok(result)
         tm.that(mapped, kv={"a": 1, "c": 3})
 
     def test_transform_exclude_keys(self) -> None:
-        source: t.ContainerMapping = {"a": 1, "b": 2, "c": 3}
+        source: t.RecursiveContainerMapping = {"a": 1, "b": 2, "c": 3}
         result = u.transform(source, exclude_keys={"b"})
         mapped = tm.ok(result)
         tm.that(mapped, eq={"a": 1, "c": 3})
 
     def test_transform_combined(self) -> None:
-        source: t.ContainerMapping = {"a": 1, "b": None, "c": ""}
+        source: t.RecursiveContainerMapping = {"a": 1, "b": None, "c": ""}
         result = u.transform(source, strip_none=True, strip_empty=True)
         mapped = tm.ok(result)
         tm.that(mapped, eq={"a": 1})
@@ -353,8 +353,12 @@ class TestsFlextCoreUtilitiesMapper:
         tm.that(u.deep_eq({}, {}), eq=True)
 
     def test_deep_eq_nested_none_vs_none(self) -> None:
-        a: t.ContainerMapping = {"x": cast("t.ContainerMapping", {"y": None})}
-        b: t.ContainerMapping = {"x": cast("t.ContainerMapping", {"y": None})}
+        a: t.RecursiveContainerMapping = {
+            "x": cast("t.RecursiveContainerMapping", {"y": None})
+        }
+        b: t.RecursiveContainerMapping = {
+            "x": cast("t.RecursiveContainerMapping", {"y": None})
+        }
         tm.that(u.deep_eq(a, b), eq=True)
 
     @pytest.mark.parametrize(
@@ -369,9 +373,9 @@ class TestsFlextCoreUtilitiesMapper:
     )
     def test_extract_parametrized(
         self,
-        data: t.ContainerMapping,
+        data: t.RecursiveContainerMapping,
         path: str,
-        expected: t.NormalizedValue,
+        expected: t.RecursiveContainer,
     ) -> None:
         tm.ok(u.extract(data, path), eq=expected)
 
@@ -384,6 +388,6 @@ class TestsFlextCoreUtilitiesMapper:
     # ── deep_eq: list length mismatch ──────────────────────────────
 
     def test_deep_eq_list_length_mismatch(self) -> None:
-        a: t.ContainerMapping = {"x": [1, 2]}
-        b: t.ContainerMapping = {"x": [1, 2, 3]}
+        a: t.RecursiveContainerMapping = {"x": [1, 2]}
+        b: t.RecursiveContainerMapping = {"x": [1, 2, 3]}
         tm.that(u.deep_eq(a, b), eq=False)

@@ -20,7 +20,7 @@ class TestUtilitiesSettingsFullCoverage:
         def register(
             self,
             _name: str,
-            _instance: t.NormalizedValue,
+            _instance: t.RecursiveContainer,
             **_kwargs: t.Scalar,
         ) -> r[bool]:
             return r[bool].ok(True)
@@ -28,7 +28,7 @@ class TestUtilitiesSettingsFullCoverage:
         def register_factory(
             self,
             _name: str,
-            _factory: Callable[[], t.NormalizedValue],
+            _factory: Callable[[], t.RecursiveContainer],
         ) -> r[bool]:
             return r[bool].ok(True)
 
@@ -36,7 +36,7 @@ class TestUtilitiesSettingsFullCoverage:
         def register(
             self,
             _name: str,
-            _instance: t.NormalizedValue,
+            _instance: t.RecursiveContainer,
             **_kwargs: t.Scalar,
         ) -> r[bool]:
             return r[bool].fail("reg fail")
@@ -44,7 +44,7 @@ class TestUtilitiesSettingsFullCoverage:
         def register_factory(
             self,
             _name: str,
-            _factory: Callable[[], t.NormalizedValue],
+            _factory: Callable[[], t.RecursiveContainer],
         ) -> r[bool]:
             return r[bool].fail("fac fail")
 
@@ -52,7 +52,7 @@ class TestUtilitiesSettingsFullCoverage:
         def register(
             self,
             _name: str,
-            _instance: t.NormalizedValue,
+            _instance: t.RecursiveContainer,
             **_kwargs: t.Scalar,
         ) -> r[bool]:
             msg = "reg ex"
@@ -61,7 +61,7 @@ class TestUtilitiesSettingsFullCoverage:
         def register_factory(
             self,
             _name: str,
-            _factory: Callable[[], t.NormalizedValue],
+            _factory: Callable[[], t.RecursiveContainer],
         ) -> r[bool]:
             msg = "fac ex"
             raise RuntimeError(msg)
@@ -96,7 +96,7 @@ class TestUtilitiesSettingsFullCoverage:
         assert u._try_get_from_model_dump(
             cast(
                 "p.HasModelDump",
-                cast("t.NormalizedValue", m.Core.Tests._DumpErrorModel()),
+                cast("t.RecursiveContainer", m.Core.Tests._DumpErrorModel()),
             ),
             "missing",
         ) == (False, None)

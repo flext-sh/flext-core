@@ -202,16 +202,16 @@ class TestMigrationValidation:
             def process_data(
                 self,
                 data: t.StrMapping,
-            ) -> r[t.ContainerMapping]:
+            ) -> r[t.RecursiveContainerMapping]:
                 """Typical data processing method."""
                 if not data:
-                    return r[t.ContainerMapping].fail("Data required")
+                    return r[t.RecursiveContainerMapping].fail("Data required")
                 self.logger.info("Processing data", size=len(data))
-                processed: t.ContainerMapping = {
+                processed: t.RecursiveContainerMapping = {
                     "original": str(data),
                     "processed": True,
                 }
-                return r[t.ContainerMapping].ok(processed)
+                return r[t.RecursiveContainerMapping].ok(processed)
 
         app = ApplicationExample()
         result = app.process_data({"key": "value"})

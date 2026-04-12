@@ -54,7 +54,7 @@ class FlextContext(m.ArbitraryTypesModel):
         """
         if u.pydantic_model(value):
             raw = value.model_dump()
-            result: t.MutableContainerMapping = {}
+            result: t.MutableRecursiveContainerMapping = {}
             for k, v in raw.items():
                 container_val = u.normalize_to_container(v)
                 if u.pydantic_model(container_val):
@@ -75,14 +75,14 @@ class FlextContext(m.ArbitraryTypesModel):
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
-        ctx_value: t.ConfigMap | t.ContainerMapping | t.ModelCarrier | None,
-    ) -> t.ContainerMapping:
+        ctx_value: t.ConfigMap | t.RecursiveContainerMapping | t.ModelCarrier | None,
+    ) -> t.RecursiveContainerMapping:
         """Return contextvar payload as ConfigMap with safe default."""
         if ctx_value is None:
-            empty: t.ContainerMapping = {}
+            empty: t.RecursiveContainerMapping = {}
             return empty
 
-        payload: Mapping[str, t.ValueOrModel] | t.ContainerMapping
+        payload: Mapping[str, t.ValueOrModel] | t.RecursiveContainerMapping
         if isinstance(ctx_value, (t.ConfigMap, t.Dict)):
             payload = ctx_value.root
         elif u.pydantic_model(ctx_value):
@@ -90,17 +90,17 @@ class FlextContext(m.ArbitraryTypesModel):
         elif u.mapping(ctx_value):
             payload = ctx_value
         else:
-            empty_fallback: t.ContainerMapping = {}
+            empty_fallback: t.RecursiveContainerMapping = {}
             return empty_fallback
 
         try:
-            normalized: t.MutableContainerMapping = {}
+            normalized: t.MutableRecursiveContainerMapping = {}
             mapping_value: Mapping[str, t.ValueOrModel] = dict(
                 payload.items(),
             )
             for key, value in mapping_value.items():
                 if str(key) != key:
-                    empty_key: t.ContainerMapping = {}
+                    empty_key: t.RecursiveContainerMapping = {}
                     return empty_key
                 if value is None:
                     normalized[key] = None
@@ -122,7 +122,7 @@ class FlextContext(m.ArbitraryTypesModel):
                 "Failed to normalize contextvar payload to configuration dict",
                 exc_info=exc,
             )
-            empty_err: t.ContainerMapping = {}
+            empty_err: t.RecursiveContainerMapping = {}
             return empty_err
 
     _state: m.ContextRuntimeState = PrivateAttr(
@@ -359,7 +359,7 @@ class FlextContext(m.ArbitraryTypesModel):
         include_statistics: bool = False,
         include_metadata: bool = False,
         as_dict: bool = True,
-    ) -> m.ContextExport | t.ContainerMapping:
+    ) -> m.ContextExport | t.RecursiveContainerMapping:
         """Export context data for serialization or debugging.
 
         Args:
@@ -377,7 +377,7 @@ class FlextContext(m.ArbitraryTypesModel):
         stats_dict_export: t.ConfigMap | None = None
         if include_statistics and self._state.statistics:
             stats_dict_export = t.ConfigMap(root=self._state.statistics.model_dump())
-        metadata_dict_export: t.ContainerMapping | None = None
+        metadata_dict_export: t.RecursiveContainerMapping | None = None
         if include_metadata:
             metadata_dict_export = self._metadata_map()
         metadata_for_model: t.ConfigMap | None = None
@@ -397,9 +397,9 @@ class FlextContext(m.ArbitraryTypesModel):
             root=dict(stats_dict_export or t.ConfigMap(root={})),
         )
         if as_dict:
-            result_dict: t.MutableContainerMapping = dict(all_scopes)
+            result_dict: t.MutableRecursiveContainerMapping = dict(all_scopes)
             if include_statistics and stats_dict_export:
-                stats_items: t.ContainerMapping = {
+                stats_items: t.RecursiveContainerMapping = {
                     sk: FlextContext._to_normalized(sv)
                     for sk, sv in stats_dict_export.items()
                 }
@@ -408,7 +408,7 @@ class FlextContext(m.ArbitraryTypesModel):
                 metadata_container: t.ConfigMap = t.ConfigMap(
                     root=dict(metadata_dict_export),
                 )
-                meta_items: t.ContainerMapping = {
+                meta_items: t.RecursiveContainerMapping = {
                     mk: FlextContext._to_normalized(mv)
                     for mk, mv in metadata_container.items()
                 }
@@ -611,7 +611,7 @@ class FlextContext(m.ArbitraryTypesModel):
 
     @staticmethod
     def _as_config_map(
-        source: Mapping[str, t.ValueOrModel] | t.ContainerMapping,
+        source: Mapping[str, t.ValueOrModel] | t.RecursiveContainerMapping,
         label: str,
     ) -> t.ConfigMap | None:
         """Try to wrap a mapping as ConfigMap, logging on failure."""
@@ -626,7 +626,7 @@ class FlextContext(m.ArbitraryTypesModel):
 
     def _extract_config_map(
         self,
-        other: p.Context | t.ConfigMap | t.ContainerMapping,
+        other: p.Context | t.ConfigMap | t.RecursiveContainerMapping,
     ) -> t.ConfigMap | None:
         """Extract a ConfigMap from any supported merge source."""
         match other:
@@ -655,7 +655,7 @@ class FlextContext(m.ArbitraryTypesModel):
 
     def merge(
         self,
-        other: p.Context | t.ConfigMap | t.ContainerMapping,
+        other: p.Context | t.ConfigMap | t.RecursiveContainerMapping,
     ) -> Self:
         """Merge another context or dictionary into this context.
 
@@ -791,7 +791,7 @@ class FlextContext(m.ArbitraryTypesModel):
                     )
         return r[bool].ok(True)
 
-    def values(self) -> t.ContainerList:
+    def values(self) -> t.RecursiveContainerList:
         """Get all values in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -801,9 +801,9 @@ class FlextContext(m.ArbitraryTypesModel):
 
         """
         if not self._state.active:
-            empty_values: t.ContainerList = []
+            empty_values: t.RecursiveContainerList = []
             return empty_values
-        all_values: t.MutableContainerList = []
+        all_values: t.MutableRecursiveContainerList = []
         for ctx_var in self._state.scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_values.extend(scope_dict.values())
@@ -835,7 +835,7 @@ class FlextContext(m.ArbitraryTypesModel):
                     hook_data = str(event_data)
                 _ = hook(hook_data)
 
-    def _metadata_map(self) -> t.ContainerMapping:
+    def _metadata_map(self) -> t.RecursiveContainerMapping:
         """Get all metadata from the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -847,7 +847,7 @@ class FlextContext(m.ArbitraryTypesModel):
         """
         data = dict(self._state.metadata.model_dump())
         custom_fields_raw = data.pop("custom_fields", {})
-        custom_fields_dict: t.MutableContainerMapping = {}
+        custom_fields_dict: t.MutableRecursiveContainerMapping = {}
         try:
             cf_map = t.ConfigMap(root=dict(custom_fields_raw))
             for ck, cv in cf_map.items():
@@ -858,7 +858,7 @@ class FlextContext(m.ArbitraryTypesModel):
                 exc_info=exc,
             )
             custom_fields_dict = {}
-        result: t.MutableContainerMapping = {}
+        result: t.MutableRecursiveContainerMapping = {}
         for k, v in data.items():
             if v is None or v == {}:
                 continue
@@ -873,7 +873,7 @@ class FlextContext(m.ArbitraryTypesModel):
         result.update(custom_fields_dict)
         return result
 
-    def _scope_payloads(self) -> Mapping[str, t.ContainerMapping]:
+    def _scope_payloads(self) -> Mapping[str, t.RecursiveContainerMapping]:
         """Get all scope registrations.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -884,7 +884,7 @@ class FlextContext(m.ArbitraryTypesModel):
         """
         if not self._state.active:
             return {}
-        scopes: MutableMapping[str, t.ContainerMapping] = {}
+        scopes: MutableMapping[str, t.RecursiveContainerMapping] = {}
         for scope_name, ctx_var in self._state.scope_vars.items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
@@ -1315,7 +1315,7 @@ class FlextContext(m.ArbitraryTypesModel):
         """Context serialization and deserialization utilities."""
 
         @staticmethod
-        def export_full_context() -> t.ContainerMapping:
+        def export_full_context() -> t.RecursiveContainerMapping:
             """Get current context as dictionary."""
             context_vars = FlextContext.Variables
             operation_metadata_raw = context_vars.Performance.OPERATION_METADATA.get()

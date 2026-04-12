@@ -507,7 +507,7 @@ class FlextUtilitiesModel:
     ) -> None:
         """Append one normalized item to a metadata sequence bucket."""
         raw_items = metadata.root.get(key)
-        result_list: t.MutableContainerList = []
+        result_list: t.MutableRecursiveContainerList = []
         if isinstance(raw_items, list):
             for raw_item in raw_items:
                 if isinstance(

@@ -53,7 +53,7 @@ class TestContext100Coverage:
         """Test merge with dictionary."""
         context1 = FlextContext()
         context1.set("key1", "value1").value
-        merge_data: t.ContainerMapping = {
+        merge_data: t.RecursiveContainerMapping = {
             "key2": "value2",
             "key3": "value3",
         }

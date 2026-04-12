@@ -29,14 +29,14 @@ class FlextUtilitiesGuardsTypeCore:
     @staticmethod
     def _object_sequence(
         value: t.GuardInput,
-    ) -> TypeIs[t.ContainerList]:
+    ) -> TypeIs[t.RecursiveContainerList]:
         """Check if value is a sequence (list or tuple)."""
         return isinstance(value, (list, tuple))
 
     @staticmethod
     def _object_mapping(
         value: t.GuardInput,
-    ) -> TypeIs[t.ContainerMapping]:
+    ) -> TypeIs[t.RecursiveContainerMapping]:
         """Check if value is a mapping type."""
         return isinstance(value, Mapping)
 
@@ -79,14 +79,14 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, Path)
 
     @staticmethod
-    def list_value(value: t.GuardInput) -> TypeIs[t.ContainerList]:
+    def list_value(value: t.GuardInput) -> TypeIs[t.RecursiveContainerList]:
         """Check if value is a list."""
         return isinstance(value, list)
 
     @staticmethod
     def mapping(
         value: t.GuardInput,
-    ) -> TypeIs[t.ContainerMapping]:
+    ) -> TypeIs[t.RecursiveContainerMapping]:
         """Check if value is a mapping type."""
         return isinstance(value, Mapping)
 
@@ -120,7 +120,7 @@ class FlextUtilitiesGuardsTypeCore:
     @staticmethod
     def dict_like(
         value: t.RuntimeData,
-    ) -> TypeIs[t.ConfigMap | t.ContainerMapping]:
+    ) -> TypeIs[t.ConfigMap | t.RecursiveContainerMapping]:
         """Check if value behaves like a mapping accepted by FLEXT containers."""
         match value:
             case t.ConfigMap():
@@ -135,7 +135,7 @@ class FlextUtilitiesGuardsTypeCore:
     @staticmethod
     def list_like(
         value: t.RuntimeData,
-    ) -> TypeIs[t.ContainerList]:
+    ) -> TypeIs[t.RecursiveContainerList]:
         """Check if value behaves like a non-string object sequence."""
         return isinstance(value, (list, tuple)) and not isinstance(
             value,

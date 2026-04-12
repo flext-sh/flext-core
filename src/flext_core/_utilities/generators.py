@@ -88,9 +88,9 @@ class FlextUtilitiesGenerators:
         parts: tuple[t.RecursiveContainer, ...] | None,
         *,
         include_timestamp: bool,
-    ) -> t.MutableContainerList:
+    ) -> t.MutableRecursiveContainerList:
         """Collect ID parts including optional timestamp prefix."""
-        all_parts: t.MutableContainerList = []
+        all_parts: t.MutableRecursiveContainerList = []
         if include_timestamp:
             all_parts.append(int(datetime.now(UTC).timestamp()))
         if parts:
@@ -100,7 +100,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_custom_separator_id(
         actual_prefix: str,
-        all_parts: t.MutableContainerList,
+        all_parts: t.MutableRecursiveContainerList,
         separator: str,
         id_length: int,
     ) -> str:

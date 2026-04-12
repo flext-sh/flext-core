@@ -33,8 +33,15 @@ class FlextTypesServices:
     type ModelCarrier = FlextModelsPydantic.BaseModel
     type ModelClass[T: ModelCarrier] = type[T]
 
-    type ScalarOrModel = FlextTypingBase.Scalar | Path | ModelCarrier
+    type ScalarOrModel = FlextTypingBase.Container | ModelCarrier
     type ValueOrModel = FlextTypingBase.RecursiveContainer | ModelCarrier
+    type PresentValueOrModel = (
+        FlextTypingBase.Container
+        | FlextTypingBase.RecursiveContainerMapping
+        | FlextTypingBase.RecursiveContainerList
+        | tuple[FlextTypingBase.RecursiveContainer, ...]
+        | ModelCarrier
+    )
     type RuntimeData = ValueOrModel | FlextTypesServices.MetadataValue
     type RuntimeAtomic = FlextTypingBase.Container | ModelCarrier
 
@@ -151,7 +158,7 @@ class FlextTypesServices:
     type MessageTypeSpecifier = str | type
     type IncEx = set[str] | Mapping[str, set[str] | bool]
 
-    type LazyImportIndex = Mapping[str, str | Sequence[str]]
+    type LazyImportIndex = Mapping[str, str | FlextTypingBase.StrSequence]
     type ConfigurationMapping = Mapping[str, FlextTypingBase.Scalar]
     type ResultErrorData = Mapping[str, FlextTypingBase.Container]
     type FlatContainerMapping = Mapping[str, FlextTypingBase.Container]
@@ -182,7 +189,9 @@ class FlextTypesServices:
     )
     type LazyGetattr = Callable[[str], ModuleExport]
     type LazyDir = Callable[[], list[str]]
-    type LazyNamespaceValue = ModuleExport | Sequence[str] | LazyGetattr | LazyDir
+    type LazyNamespaceValue = (
+        ModuleExport | FlextTypingBase.StrSequence | LazyGetattr | LazyDir
+    )
 
     type ValidatorCallable = Callable[[ScalarOrModel | None], ScalarOrModel | None]
 

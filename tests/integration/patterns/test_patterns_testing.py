@@ -30,10 +30,10 @@ from tests import t, u
 P = ParamSpec("P")
 R = TypeVar("R")
 
-type FixtureCaseDict = t.ContainerMapping
-type FixtureDataDict = t.ContainerMapping
-type FixtureFixturesDict = t.ContainerMapping
-type FixtureSuiteDict = t.ContainerMapping
+type FixtureCaseDict = t.RecursiveContainerMapping
+type FixtureDataDict = t.RecursiveContainerMapping
+type FixtureFixturesDict = t.RecursiveContainerMapping
+type FixtureSuiteDict = t.RecursiveContainerMapping
 
 
 pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
@@ -68,42 +68,42 @@ class TestPatternsTesting:
             return str(value)
 
         @staticmethod
-        def as_object_dict(value: t.NormalizedValue) -> t.ContainerMapping:
+        def as_object_dict(value: t.RecursiveContainer) -> t.RecursiveContainerMapping:
             if not TestPatternsTesting.Helpers.object_mapping(value):
-                return dict[str, t.NormalizedValue]()
-            output: t.MutableContainerMapping = {}
+                return dict[str, t.RecursiveContainer]()
+            output: t.MutableRecursiveContainerMapping = {}
             for key, item in value.items():
                 output[str(key)] = item
             return output
 
         @staticmethod
         def as_object_list(
-            value: t.NormalizedValue,
-        ) -> t.ContainerList | None:
+            value: t.RecursiveContainer,
+        ) -> t.RecursiveContainerList | None:
             if not TestPatternsTesting.Helpers.object_list(value):
                 return None
             return list(value)
 
         @staticmethod
         def object_mapping(
-            value: t.NormalizedValue,
-        ) -> TypeIs[t.ContainerMapping]:
+            value: t.RecursiveContainer,
+        ) -> TypeIs[t.RecursiveContainerMapping]:
             return isinstance(value, Mapping)
 
         @staticmethod
         def object_list(
-            value: t.NormalizedValue,
-        ) -> TypeIs[t.ContainerList]:
+            value: t.RecursiveContainer,
+        ) -> TypeIs[t.RecursiveContainerList]:
             return isinstance(value, list)
 
         @staticmethod
         def object_container_sequence(
-            value: t.NormalizedValue,
+            value: t.RecursiveContainer,
         ) -> bool:
             return isinstance(value, (list, tuple, set))
 
         @staticmethod
-        def as_int_list(value: t.NormalizedValue) -> Sequence[int] | None:
+        def as_int_list(value: t.RecursiveContainer) -> Sequence[int] | None:
             object_list = TestPatternsTesting.Helpers.as_object_list(value)
             if object_list is None:
                 return None
@@ -126,17 +126,17 @@ class TestPatternsTesting:
 
         @staticmethod
         def arrange_act_assert(
-            _arrange_func: Callable[[], t.NormalizedValue],
-            _act_func: Callable[[t.NormalizedValue], t.NormalizedValue],
-            _assert_func: Callable[[t.NormalizedValue, t.NormalizedValue], None],
+            _arrange_func: Callable[[], t.RecursiveContainer],
+            _act_func: Callable[[t.RecursiveContainer], t.RecursiveContainer],
+            _assert_func: Callable[[t.RecursiveContainer, t.RecursiveContainer], None],
         ) -> Callable[
-            [Callable[[], t.NormalizedValue]],
-            Callable[[], t.NormalizedValue],
+            [Callable[[], t.RecursiveContainer]],
+            Callable[[], t.RecursiveContainer],
         ]:
             def decorator(
-                _test_func: Callable[[], t.NormalizedValue],
-            ) -> Callable[[], t.NormalizedValue]:
-                def wrapper() -> t.NormalizedValue:
+                _test_func: Callable[[], t.RecursiveContainer],
+            ) -> Callable[[], t.RecursiveContainer]:
+                def wrapper() -> t.RecursiveContainer:
                     data = _arrange_func()
                     result = _act_func(data)
                     _assert_func(result, data)
@@ -251,7 +251,9 @@ class TestPatternsTesting:
 
         def __init__(self) -> None:
             super().__init__()
-            self._data: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
+            self._data: t.MutableRecursiveContainerMapping = dict[
+                str, t.RecursiveContainer
+            ]()
 
         def with_id(self, id_: str) -> TestPatternsTesting.FlextTestBuilder:
             self._data["id"] = id_
@@ -306,7 +308,7 @@ class TestPatternsTesting:
             email: str | None = None,
             input_value: str | None = None,
         ) -> TestPatternsTesting.ParameterizedTestBuilder:
-            case: t.MutableContainerMapping = {}
+            case: t.MutableRecursiveContainerMapping = {}
             if email is not None:
                 case["email"] = email
             if input_value is not None:
@@ -351,10 +353,10 @@ class TestPatternsTesting:
     class AssertionBuilder:
         """Builder for assertions."""
 
-        def __init__(self, data: t.NormalizedValue) -> None:
+        def __init__(self, data: t.RecursiveContainer) -> None:
             super().__init__()
             self._data = data
-            self._checks: MutableSequence[tuple[str, t.NormalizedValue]] = []
+            self._checks: MutableSequence[tuple[str, t.RecursiveContainer]] = []
 
         def is_not_none(self) -> TestPatternsTesting.AssertionBuilder:
             assert self._data is not None
@@ -362,14 +364,14 @@ class TestPatternsTesting:
 
         def has_length(self, length: int) -> TestPatternsTesting.AssertionBuilder:
             if not isinstance(self._data, Sized):
-                msg = f"Expected Sized t.NormalizedValue, got {type(self._data)}"
+                msg = f"Expected Sized t.RecursiveContainer, got {type(self._data)}"
                 raise TypeError(msg)
             assert len(self._data) == length
             return self
 
         def contains(
             self,
-            item: t.NormalizedValue,
+            item: t.RecursiveContainer,
         ) -> TestPatternsTesting.AssertionBuilder:
             data = self._data
             if TestPatternsTesting.Helpers.object_mapping(data):
@@ -386,12 +388,12 @@ class TestPatternsTesting:
                 assert isinstance(item, bytes | bytearray)
                 assert item in data
                 return self
-            msg = f"Expected Container t.NormalizedValue, got {type(data)}"
+            msg = f"Expected Container t.RecursiveContainer, got {type(data)}"
             raise TypeError(msg)
 
         def satisfies(
             self,
-            predicate: Callable[[t.NormalizedValue], bool],
+            predicate: Callable[[t.RecursiveContainer], bool],
             message: str = "",
         ) -> TestPatternsTesting.AssertionBuilder:
             assert predicate(self._data), message
@@ -407,7 +409,9 @@ class TestPatternsTesting:
             super().__init__()
             self.name = name
             self._scenarios: MutableSequence[TestPatternsTesting.MockScenario] = []
-            self._setup_data: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
+            self._setup_data: t.MutableRecursiveContainerMapping = dict[
+                str, t.RecursiveContainer
+            ]()
             self._tags: MutableSequence[str] = []
 
         def add_scenarios(
@@ -419,7 +423,7 @@ class TestPatternsTesting:
 
         def with_setup_data(
             self,
-            **kwargs: t.NormalizedValue,
+            **kwargs: t.RecursiveContainer,
         ) -> TestPatternsTesting.SuiteBuilder:
             self._setup_data.update(kwargs)
             return self
@@ -429,7 +433,7 @@ class TestPatternsTesting:
             return self
 
         def build(self) -> FixtureSuiteDict:
-            tags: t.ContainerList = list(self._tags)
+            tags: t.RecursiveContainerList = list(self._tags)
             return {
                 "suite_name": self.name,
                 "scenario_count": len(self._scenarios),
@@ -442,7 +446,9 @@ class TestPatternsTesting:
 
         def __init__(self) -> None:
             super().__init__()
-            self._fixtures: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
+            self._fixtures: t.MutableRecursiveContainerMapping = dict[
+                str, t.RecursiveContainer
+            ]()
             self._setups: MutableSequence[Callable[[], None]] = []
             self._teardowns: MutableSequence[Callable[[], None]] = []
 
@@ -652,7 +658,7 @@ class TestPatternsTesting:
     def test_assertion_builder(self) -> None:
         test_data: t.StrSequence = ["apple", "banana", "cherry"]
 
-        def check_all_strings(x: t.NormalizedValue) -> bool:
+        def check_all_strings(x: t.RecursiveContainer) -> bool:
             values = self.Helpers.as_object_dict({"items": x}).get("items")
             values_list = self.Helpers.as_object_list(values)
             if values_list is None:
@@ -665,11 +671,11 @@ class TestPatternsTesting:
 
     @Helpers.mark_test_pattern("arrange_act_assert")
     def test_arrange_act_assert_decorator(self) -> None:
-        def arrange_data() -> t.NormalizedValue:
-            numbers: t.ContainerList = [1, 2, 3, 4, 5]
+        def arrange_data() -> t.RecursiveContainer:
+            numbers: t.RecursiveContainerList = [1, 2, 3, 4, 5]
             return {"numbers": numbers}
 
-        def act_on_data(data: t.NormalizedValue) -> t.NormalizedValue:
+        def act_on_data(data: t.RecursiveContainer) -> t.RecursiveContainer:
             payload = self.Helpers.as_object_dict(data)
             if "numbers" in payload:
                 numbers = self.Helpers.as_int_list(payload["numbers"])
@@ -679,8 +685,8 @@ class TestPatternsTesting:
             return 0
 
         def assert_result(
-            result: t.NormalizedValue,
-            original_data: t.NormalizedValue,
+            result: t.RecursiveContainer,
+            original_data: t.RecursiveContainer,
         ) -> None:
             assert result == 15
             payload = self.Helpers.as_object_dict(original_data)
@@ -734,7 +740,7 @@ class TestPatternsTesting:
         assert isinstance(tags_value, list)
         assert "integration" in tags_value
         setup_data = suite["setup_data"]
-        empty_setup: t.MutableContainerMapping = {}
+        empty_setup: t.MutableRecursiveContainerMapping = {}
         typed_setup_data = (
             {str(key): item for key, item in setup_data.items()}
             if isinstance(setup_data, dict)
@@ -758,7 +764,7 @@ class TestPatternsTesting:
         _ = fixture_builder.add_fixture("api_base_url", "https://api.test.com")
         _ = fixture_builder.add_fixture("timeout", 30)
         with fixture_builder.setup_context()():
-            test_request: t.ContainerMapping = {
+            test_request: t.RecursiveContainerMapping = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -767,8 +773,8 @@ class TestPatternsTesting:
             }
 
             def process_api_request(
-                request: t.ContainerMapping,
-            ) -> t.ContainerMapping:
+                request: t.RecursiveContainerMapping,
+            ) -> t.RecursiveContainerMapping:
                 return {
                     "status": "success",
                     "method": request["method"],
@@ -779,15 +785,15 @@ class TestPatternsTesting:
 
             result = process_api_request(test_request)
 
-            def check_status_success(x: t.NormalizedValue) -> bool:
+            def check_status_success(x: t.RecursiveContainer) -> bool:
                 payload = self.Helpers.as_object_dict(x)
                 return payload.get("status") == "success"
 
-            def check_correlation_id(x: t.NormalizedValue) -> bool:
+            def check_correlation_id(x: t.RecursiveContainer) -> bool:
                 payload = self.Helpers.as_object_dict(x)
                 return "correlation_id" in payload
 
-            def check_valid_method(x: t.NormalizedValue) -> bool:
+            def check_valid_method(x: t.RecursiveContainer) -> bool:
                 payload = self.Helpers.as_object_dict(x)
                 method = payload.get("method")
                 return isinstance(method, str) and method in {
@@ -837,7 +843,7 @@ class TestPatternsTesting:
             self
             .GivenWhenThenBuilder("configuration_validation")
             .given(
-                "a configuration t.NormalizedValue",
+                "a configuration t.RecursiveContainer",
                 config_environment=str(settings["environment"]),
             )
             .when("configuration is validated", action="validate")

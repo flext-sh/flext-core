@@ -41,11 +41,6 @@ class FlextTypingBase:
     type MutableMappingKV[KeyT, ValueT] = dict[KeyT, ValueT]
     type SequenceOf[ItemT] = Sequence[ItemT]
     type MutableSequenceOf[ItemT] = list[ItemT]
-    type ContainerMapping = RecursiveContainerMapping
-    type ContainerList = RecursiveContainerList
-    type MutableContainerMapping = MutableRecursiveContainerMapping
-    type MutableContainerList = MutableRecursiveContainerList
-    type NormalizedValue = RecursiveContainer
     type SecretValue = FlextTypesPydantic.SecretStr | FlextTypesPydantic.SecretBytes
     type SettingsValue = RecursiveContainer | SecretValue
 

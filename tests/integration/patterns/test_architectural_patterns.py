@@ -85,7 +85,9 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
+                self._config: t.MutableRecursiveContainerMapping = dict[
+                    str, t.RecursiveContainer
+                ]()
 
             def with_database(self, host: str, port: int) -> Self:
                 """Add database configuration."""
@@ -102,13 +104,13 @@ class TestArchitecturalPatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> r[t.ContainerMapping]:
+            def build(self) -> r[t.RecursiveContainerMapping]:
                 """Build the configuration."""
                 if not self._config:
-                    return r[t.ContainerMapping].fail(
+                    return r[t.RecursiveContainerMapping].fail(
                         "Configuration cannot be empty",
                     )
-                return r[t.ContainerMapping].ok(dict(self._config))
+                return r[t.RecursiveContainerMapping].ok(dict(self._config))
 
         config_result = (
             ConfigurationBuilder()
@@ -256,17 +258,17 @@ class TestArchitecturalPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        observers: MutableSequence[t.MutableContainerMapping] = []
+        observers: MutableSequence[t.MutableRecursiveContainerMapping] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
-        obs1: t.MutableContainerMapping = {
+        obs1: t.MutableRecursiveContainerMapping = {
             "name": "Observer1",
             "state": None,
         }
-        obs2: t.MutableContainerMapping = {
+        obs2: t.MutableRecursiveContainerMapping = {
             "name": "Observer2",
             "state": None,
         }

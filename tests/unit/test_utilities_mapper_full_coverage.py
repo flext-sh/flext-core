@@ -24,7 +24,7 @@ class _PortModel(BaseModel):
 
     port: int = 0
     nested: Annotated[
-        t.ContainerMapping,
+        t.RecursiveContainerMapping,
         Field(default_factory=dict),
     ]
 
@@ -72,7 +72,9 @@ class _TakeCallable(Protocol):
         key_or_index: int | str,
         *,
         default: str | None = None,
-    ) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer: ...
+    ) -> (
+        t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer
+    ): ...
 
 
 class _BuildApplyConvertCallable(Protocol):
@@ -106,7 +108,9 @@ class _BuildApplyOpCallable(Protocol):
         operations: Mapping[str, t.MapperInput],
         default_val: t.RecursiveContainer,
         on_error: str,
-    ) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer: ...
+    ) -> (
+        t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer
+    ): ...
 
 
 class _TransformCallable(Protocol):
@@ -114,7 +118,7 @@ class _TransformCallable(Protocol):
         self,
         source: BadMapping,
         **kwargs: t.StrMapping,
-    ) -> r[t.ContainerMapping]: ...
+    ) -> r[t.RecursiveContainerMapping]: ...
 
 
 class _MapDictKeysCallable(Protocol):
@@ -124,7 +128,7 @@ class _MapDictKeysCallable(Protocol):
         key_map: t.StrMapping,
         *,
         keep_unmapped: bool = True,
-    ) -> r[t.ContainerMapping]: ...
+    ) -> r[t.RecursiveContainerMapping]: ...
 
 
 def _extract_field_obj(item: AttrObject, field_name: str) -> t.RecursiveContainer:
@@ -138,7 +142,7 @@ def _take_obj(
     key_or_index: int | str,
     *,
     default: str | None = None,
-) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer:
+) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
     fn: _TakeCallable = getattr(u, "take")
     return fn(data_or_items, key_or_index, default=default)
 
@@ -168,7 +172,7 @@ def _extract_transform_options_obj(
 def _build_apply_sort_obj(
     current: tuple[str, str],
     operations: Mapping[str, t.MapperInput],
-) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer:
+) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
     fn: _BuildApplyOpCallable = getattr(u, "_op_sort")
     return fn(current, operations, None, "stop")
 
@@ -176,7 +180,7 @@ def _build_apply_sort_obj(
 def _build_apply_unique_obj(
     current: tuple[int, int, int],
     operations: Mapping[str, t.MapperInput],
-) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer:
+) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
     fn: _BuildApplyOpCallable = getattr(u, "_op_unique")
     return fn(current, operations, None, "stop")
 
@@ -184,7 +188,7 @@ def _build_apply_unique_obj(
 def _build_apply_slice_obj(
     current: tuple[int, int, int],
     operations: Mapping[str, t.MapperInput],
-) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer:
+) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
     fn: _BuildApplyOpCallable = getattr(u, "_op_slice")
     return fn(current, operations, None, "stop")
 
@@ -192,7 +196,7 @@ def _build_apply_slice_obj(
 def _build_apply_group_obj(
     current: Sequence[_GroupModel],
     operations: Mapping[str, t.MapperInput],
-) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer:
+) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
     fn: _BuildApplyOpCallable = getattr(u, "_op_group")
     return fn(current, operations, None, "stop")
 
@@ -200,7 +204,7 @@ def _build_apply_group_obj(
 def _transform_obj(
     source: BadMapping,
     **kwargs: t.StrMapping,
-) -> r[t.ContainerMapping]:
+) -> r[t.RecursiveContainerMapping]:
     fn: _TransformCallable = getattr(u, "transform")
     return fn(source, **kwargs)
 
@@ -210,7 +214,7 @@ def _map_dict_keys_obj(
     key_map: t.StrMapping,
     *,
     keep_unmapped: bool = True,
-) -> r[t.ContainerMapping]:
+) -> r[t.RecursiveContainerMapping]:
     fn: _MapDictKeysCallable = getattr(u, "map_dict_keys")
     return fn(source, key_map, keep_unmapped=keep_unmapped)
 

@@ -72,8 +72,8 @@ class FlextConstantsEnforcement:
     """Collection type names forbidden as field annotation origins."""
 
     ENFORCEMENT_COLLECTION_REPLACEMENTS: Final[tuple[tuple[str, str], ...]] = (
-        ("dict", "Mapping[K, V] or t.ContainerMapping"),
-        ("list", "Sequence[X] or t.ContainerList"),
+        ("dict", "Mapping[K, V] or t.RecursiveContainerMapping"),
+        ("list", "Sequence[X] or t.RecursiveContainerList"),
         ("set", "frozenset[X] or AbstractSet[X]"),
     )
     """Replacement suggestions for forbidden collection origins."""

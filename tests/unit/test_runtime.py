@@ -39,15 +39,15 @@ from tests import m, p, s, t, u, x
 
 class TestFlextRuntime:
     type RuntimeScenarioValue = (
-        t.NormalizedValue
-        | type[t.NormalizedValue]
-        | tuple[type[t.NormalizedValue], ...]
+        t.RecursiveContainer
+        | type[t.RecursiveContainer]
+        | tuple[type[t.RecursiveContainer], ...]
         | ModuleType
         | GenericAlias
     )
     type RuntimeScenarioInput = (
         RuntimeScenarioValue
-        | Mapping[str, Callable[[], t.NormalizedValue]]
+        | Mapping[str, Callable[[], t.RecursiveContainer]]
         | Sequence[ModuleType]
     )
 
@@ -106,12 +106,12 @@ class TestFlextRuntime:
         name: str
         operation: TestFlextRuntime.RuntimeOperationType
         test_input: (
-            t.NormalizedValue
-            | type[t.NormalizedValue]
-            | tuple[type[t.NormalizedValue], ...]
+            t.RecursiveContainer
+            | type[t.RecursiveContainer]
+            | tuple[type[t.RecursiveContainer], ...]
             | ModuleType
             | GenericAlias
-            | Mapping[str, Callable[[], t.NormalizedValue]]
+            | Mapping[str, Callable[[], t.RecursiveContainer]]
             | Sequence[ModuleType]
             | None
         ) = None
@@ -654,10 +654,10 @@ class TestFlextRuntime:
         self,
         test_case: TestFlextRuntime.RuntimeTestCase,
     ) -> None:
-        """Test dict-like t.NormalizedValue validation.
+        """Test dict-like t.RecursiveContainer validation.
 
-        Business Rule: dict_like accepts t.NormalizedValue compatible objects.
-        test_case.test_input may be None or various types, so we cast to t.NormalizedValue
+        Business Rule: dict_like accepts t.RecursiveContainer compatible objects.
+        test_case.test_input may be None or various types, so we cast to t.RecursiveContainer
         for type compatibility while preserving runtime behavior.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
@@ -673,10 +673,10 @@ class TestFlextRuntime:
         self,
         test_case: TestFlextRuntime.RuntimeTestCase,
     ) -> None:
-        """Test list-like t.NormalizedValue validation.
+        """Test list-like t.RecursiveContainer validation.
 
-        Business Rule: list_like accepts t.NormalizedValue compatible objects.
-        test_case.test_input may be None or various types, so we cast to t.NormalizedValue
+        Business Rule: list_like accepts t.RecursiveContainer compatible objects.
+        test_case.test_input may be None or various types, so we cast to t.RecursiveContainer
         for type compatibility while preserving runtime behavior.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
@@ -1058,8 +1058,8 @@ class TestFlextRuntime:
             def custom_processor(
                 _logger: p.Logger,
                 _method_name: str,
-                event_dict: t.MutableContainerMapping,
-            ) -> t.MutableContainerMapping:
+                event_dict: t.MutableRecursiveContainerMapping,
+            ) -> t.MutableRecursiveContainerMapping:
                 event_dict["custom"] = True
                 return event_dict
 

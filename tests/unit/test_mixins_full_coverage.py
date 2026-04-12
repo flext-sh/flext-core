@@ -37,23 +37,23 @@ class TestMixinsFullCoverage:
         """Mock _register_in_container that returns failure."""
         return cast(
             "r[bool]",
-            cast("t.NormalizedValue", SimpleNamespace(failure=True, error=None)),
+            cast("t.RecursiveContainer", SimpleNamespace(failure=True, error=None)),
         )
 
     @staticmethod
-    def _validation_ok_true(v: t.NormalizedValue) -> r[bool]:
+    def _validation_ok_true(v: t.RecursiveContainer) -> r[bool]:
         """Validator that always returns ok(True)."""
         _ = v
         return r[bool].ok(True)
 
     @staticmethod
-    def _validation_ok_false(v: t.NormalizedValue) -> r[bool]:
+    def _validation_ok_false(v: t.RecursiveContainer) -> r[bool]:
         """Validator that always returns ok(False)."""
         _ = v
         return r[bool].ok(False)
 
     @staticmethod
-    def _validation_fail_no(v: t.NormalizedValue) -> r[bool]:
+    def _validation_fail_no(v: t.RecursiveContainer) -> r[bool]:
         """Validator that always returns fail('no')."""
         _ = v
         return r[bool].fail("no")
@@ -61,8 +61,8 @@ class TestMixinsFullCoverage:
     class _RuntimeContainer:
         def __init__(self) -> None:
             super().__init__()
-            self.configured: t.ContainerMapping | None = None
-            self.wired: t.ContainerMapping | None = None
+            self.configured: t.RecursiveContainerMapping | None = None
+            self.wired: t.RecursiveContainerMapping | None = None
 
         def scoped(
             self,
@@ -70,7 +70,7 @@ class TestMixinsFullCoverage:
         ) -> TestMixinsFullCoverage._RuntimeContainer:
             return self
 
-        def configure(self, overrides: t.ContainerMapping) -> None:
+        def configure(self, overrides: t.RecursiveContainerMapping) -> None:
             self.configured = overrides
 
         def wire_modules(self, **kwargs: t.Scalar) -> None:
@@ -85,7 +85,7 @@ class TestMixinsFullCoverage:
         def register(
             self,
             _name: str,
-            _value: t.NormalizedValue,
+            _value: t.RecursiveContainer,
             *,
             kind: str = "service",
         ) -> TestMixinsFullCoverage._RuntimeContainer:
@@ -98,8 +98,8 @@ class TestMixinsFullCoverage:
         def resolve_settings(self) -> t.ConfigMap:
             return t.ConfigMap(root={})
 
-        def get(self, _key: str, **_kwargs: t.Scalar) -> r[t.NormalizedValue]:
-            return r[t.NormalizedValue].fail("not implemented")
+        def get(self, _key: str, **_kwargs: t.Scalar) -> r[t.RecursiveContainer]:
+            return r[t.RecursiveContainer].fail("not implemented")
 
         @property
         def context(self) -> None:
@@ -118,7 +118,9 @@ class TestMixinsFullCoverage:
             super().__init__()
             self.success: bool = success
             self.logger: t.RuntimeAtomic | None = logger
-            self.factories: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
+            self.factories: t.MutableRecursiveContainerMapping = dict[
+                str, t.RecursiveContainer
+            ]()
             self.register_calls: MutableSequence[tuple[str, str]] = []
 
         def get_typed(
@@ -150,7 +152,7 @@ class TestMixinsFullCoverage:
         def register(
             self,
             name: str,
-            value: t.NormalizedValue,
+            value: t.RecursiveContainer,
             *,
             kind: str = "service",
         ) -> TestMixinsFullCoverage._ContainerForLogger:
@@ -177,7 +179,7 @@ class TestMixinsFullCoverage:
                 return cast(
                     "p.RuntimeBootstrapOptions",
                     cast(
-                        "t.NormalizedValue",
+                        "t.RecursiveContainer",
                         SimpleNamespace(
                             settings_type=None,
                             settings_overrides=None,
@@ -199,7 +201,7 @@ class TestMixinsFullCoverage:
         assert runtime is not None
         tm.that(runtime_container.wired, none=False)
         with service.track("op") as metrics:
-            cast("t.MutableContainerMapping", metrics)["duration_ms"] = 2.0
+            cast("t.MutableRecursiveContainerMapping", metrics)["duration_ms"] = 2.0
         tm.that(service._operation_stats, has="op")
         try:
             with service.track("op_fail"):
@@ -230,7 +232,7 @@ class TestMixinsFullCoverage:
             def register(
                 self,
                 _name: str,
-                _value: t.NormalizedValue,
+                _value: t.RecursiveContainer,
             ) -> _AlreadyContainer:
                 return self
 
@@ -245,7 +247,9 @@ class TestMixinsFullCoverage:
             def has_service(self, _name: str) -> bool:
                 return False
 
-            def register(self, _name: str, _value: t.NormalizedValue) -> _FailContainer:
+            def register(
+                self, _name: str, _value: t.RecursiveContainer
+            ) -> _FailContainer:
                 return self
 
         monkeypatch.setattr(
@@ -294,7 +298,7 @@ class TestMixinsFullCoverage:
             @override
             @classmethod
             def _get_or_create_logger(cls) -> p.Logger:
-                return cast("p.Logger", cast("t.NormalizedValue", _LocalLogger()))
+                return cast("p.Logger", cast("t.RecursiveContainer", _LocalLogger()))
 
         service = _Service(
             settings_type=None,
@@ -352,7 +356,7 @@ class TestMixinsFullCoverage:
             def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
                 return cast(
                     "p.RuntimeBootstrapOptions",
-                    cast("t.NormalizedValue", {"wire_packages": ["pkg", 1]}),
+                    cast("t.RecursiveContainer", {"wire_packages": ["pkg", 1]}),
                 )
 
         _ = _WireService(
@@ -362,7 +366,7 @@ class TestMixinsFullCoverage:
         )._get_runtime()
         tm.that(runtime_container.wired, none=True)
 
-        captured: t.MutableContainerMapping = {}
+        captured: t.MutableRecursiveContainerMapping = {}
 
         class _ModelService(x):
             pass
@@ -376,14 +380,14 @@ class TestMixinsFullCoverage:
         class _RegContainer:
             def __init__(self) -> None:
                 super().__init__()
-                self._services: t.MutableContainerMapping = dict[
-                    str, t.NormalizedValue
+                self._services: t.MutableRecursiveContainerMapping = dict[
+                    str, t.RecursiveContainer
                 ]()
 
             def has_service(self, name: str) -> bool:
                 return name in self._services
 
-            def register(self, name: str, value: t.NormalizedValue) -> _RegContainer:
+            def register(self, name: str, value: t.RecursiveContainer) -> _RegContainer:
                 self._services[name] = value
                 captured["name"] = name
                 captured["value"] = value
@@ -408,7 +412,7 @@ class TestMixinsFullCoverage:
             @override
             @classmethod
             def _get_or_create_logger(cls) -> p.Logger:
-                return cast("p.Logger", cast("t.NormalizedValue", _WarnLogger()))
+                return cast("p.Logger", cast("t.RecursiveContainer", _WarnLogger()))
 
         class _LoggerService(x):
             pass

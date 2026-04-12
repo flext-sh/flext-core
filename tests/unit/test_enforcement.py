@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from collections.abc import Mapping, Sequence
 from typing import ClassVar, Final, Protocol, runtime_checkable
 
 import pytest
@@ -89,7 +88,7 @@ class TestCheckNoBareCollections:
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            data: Mapping[str, str] = Field(default_factory=dict, description="d")
+            data: t.StrMapping = Field(default_factory=dict, description="d")
 
         fields = FlextUtilitiesEnforcement.own_fields(_M)
         errors = FlextUtilitiesEnforcement.check_no_bare_collections(fields)
@@ -100,7 +99,7 @@ class TestCheckNoBareCollections:
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            items: Sequence[str] = Field(default_factory=list, description="d")
+            items: t.StrSequence = Field(default_factory=list, description="d")
 
         fields = FlextUtilitiesEnforcement.own_fields(_M)
         errors = FlextUtilitiesEnforcement.check_no_bare_collections(fields)

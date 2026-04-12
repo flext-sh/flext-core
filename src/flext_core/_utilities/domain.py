@@ -40,7 +40,7 @@ class FlextUtilitiesDomain:
         return FlextModelsCollections.normalize_aggregated_metadata_value(value)
 
     @staticmethod
-    def _get_obj_dict(obj: t.RuntimeData) -> Mapping[str, t.RecursiveContainer] | None:
+    def _get_obj_dict(obj: t.RuntimeData) -> t.RecursiveContainerMapping | None:
         """Extract __dict__ safely, returning None on failure."""
         try:
             return obj.__dict__
@@ -147,7 +147,7 @@ class FlextUtilitiesDomain:
         if isinstance(item, (bool, str, int, float, datetime)):
             return item
         if isinstance(item, Mapping):
-            normalized_map: t.MutableContainerMapping = {}
+            normalized_map: t.MutableRecursiveContainerMapping = {}
             for key, value in item.items():
                 normalized_map[str(key)] = (
                     FlextUtilitiesDomain.normalize_recursive_metadata_value(
@@ -167,7 +167,7 @@ class FlextUtilitiesDomain:
     @staticmethod
     def normalize_domain_event_data(
         value: t.ValueOrModel | Mapping[str, t.ValueOrModel] | None,
-    ) -> Mapping[str, t.RecursiveContainer]:
+    ) -> t.RecursiveContainerMapping:
         """Normalize domain event payloads into comparable plain mappings."""
         if value is None:
             return {}
@@ -220,7 +220,7 @@ class FlextUtilitiesDomain:
     ) -> None:
         """Append one normalized item to a metadata sequence bucket."""
         raw_items = metadata.root.get(key)
-        result_list: t.MutableContainerList = []
+        result_list: t.MutableRecursiveContainerList = []
         if isinstance(raw_items, list):
             for raw_item in raw_items:
                 if isinstance(

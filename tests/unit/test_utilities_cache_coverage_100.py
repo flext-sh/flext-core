@@ -44,7 +44,7 @@ class UtilitiesCacheCoverage100Namespace:
             Field(description="Expected normalized value type"),
         ]
         expected_value: Annotated[
-            t.NormalizedValue | None,
+            t.RecursiveContainer | None,
             Field(default=None, description="Optional expected normalized value"),
         ] = None
 
@@ -70,12 +70,12 @@ class UtilitiesCacheCoverage100Namespace:
 
         name: Annotated[str, Field(description="Cache clear scenario name")]
         obj: Annotated[
-            t.NormalizedValue,
+            t.RecursiveContainer,
             Field(description="Object under cache clear test"),
         ]
         has_cache_attr: Annotated[
             bool,
-            Field(description="Whether t.NormalizedValue exposes cache attribute"),
+            Field(description="Whether t.RecursiveContainer exposes cache attribute"),
         ]
         expected_success: Annotated[
             bool,
@@ -221,7 +221,7 @@ class UtilitiesCacheCoverage100Namespace:
             for scenario in NORMALIZE_COMPONENT_SCENARIOS:
                 result = u.normalize_component(
                     cast(
-                        "t.ValueOrModel | set[t.NormalizedValue]",
+                        "t.ValueOrModel | set[t.RecursiveContainer]",
                         scenario.component,
                     ),
                 )
@@ -234,7 +234,7 @@ class UtilitiesCacheCoverage100Namespace:
             model = m.Core.Tests.CacheTestModel(name="test", value=42)
             result = u.normalize_component(model)
             assert isinstance(result, dict)
-            result_dict: t.ContainerMapping = result
+            result_dict: t.RecursiveContainerMapping = result
             assert result_dict["name"] == "test"
             assert result_dict["value"] == 42
 
@@ -246,9 +246,9 @@ class UtilitiesCacheCoverage100Namespace:
             )
             result = u.normalize_component(model)
             assert isinstance(result, dict)
-            result_dict: t.ContainerMapping = result
+            result_dict: t.RecursiveContainerMapping = result
             assert isinstance(result_dict["inner"], dict)
-            inner_dict: t.ContainerMapping = result_dict["inner"]
+            inner_dict: t.RecursiveContainerMapping = result_dict["inner"]
             assert inner_dict["name"] == "inner"
             assert inner_dict["value"] == 10
             assert result_dict["count"] == 5
@@ -258,7 +258,7 @@ class UtilitiesCacheCoverage100Namespace:
             component = {3, 1, 2}
             result = u.normalize_component(
                 cast(
-                    "t.ValueOrModel | set[t.NormalizedValue]",
+                    "t.ValueOrModel | set[t.RecursiveContainer]",
                     component,
                 ),
             )
@@ -272,7 +272,7 @@ class UtilitiesCacheCoverage100Namespace:
             component = {1, "test", math.pi, None}
             result = u.normalize_component(
                 cast(
-                    "t.ValueOrModel | set[t.NormalizedValue]",
+                    "t.ValueOrModel | set[t.RecursiveContainer]",
                     component,
                 ),
             )
@@ -282,7 +282,7 @@ class UtilitiesCacheCoverage100Namespace:
                 none=False,
                 msg="Result must be tuple or list",
             )
-            result_tuple = cast("tuple[t.NormalizedValue, ...]", result)
+            result_tuple = cast("tuple[t.RecursiveContainer, ...]", result)
             tm.that(len(result_tuple), eq=4, msg="Result tuple must have 4 items")
             result_set = set(result_tuple)
             tm.that(1 in result_set, eq=True, msg="1 must be in result")
@@ -292,15 +292,15 @@ class UtilitiesCacheCoverage100Namespace:
 
         def test_normalize_sequence_with_nested_values(self) -> None:
             """Test normalize_component with Sequence containing nested values."""
-            component_raw: t.ContainerList = [
+            component_raw: t.RecursiveContainerList = [
                 1,
                 "test",
                 {"nested": "dict"},
                 [1, 2, 3],
             ]
-            result = u.normalize_component(cast("t.NormalizedValue", component_raw))
+            result = u.normalize_component(cast("t.RecursiveContainer", component_raw))
             tm.that(result, is_=list, none=False, msg="Result must be list")
-            result_list = cast("t.ContainerList", result)
+            result_list = cast("t.RecursiveContainerList", result)
             tm.that(len(result_list), eq=4, msg="Result list must have 4 items")
             tm.that(result_list[0], eq=1, msg="First item must be 1")
             tm.that(result_list[1], eq="test", msg="Second item must be 'test'")
@@ -316,7 +316,7 @@ class UtilitiesCacheCoverage100Namespace:
             """Test normalize_component fallback to string for unknown types."""
 
             class CustomObject:
-                """Custom t.NormalizedValue for testing fallback."""
+                """Custom t.RecursiveContainer for testing fallback."""
 
                 @override
                 def __str__(self) -> str:
@@ -324,7 +324,7 @@ class UtilitiesCacheCoverage100Namespace:
 
             obj = CustomObject()
             result = u.normalize_component(
-                cast("t.ValueOrModel | set[t.NormalizedValue]", obj),
+                cast("t.ValueOrModel | set[t.RecursiveContainer]", obj),
             )
             assert isinstance(result, str)
             assert result == "custom_object"

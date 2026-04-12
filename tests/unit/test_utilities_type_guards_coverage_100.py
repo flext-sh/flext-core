@@ -141,9 +141,9 @@ class TestUtilitiesTypeGuardsCoverage100:
     @pytest.mark.parametrize("scenario", IS_LIST_NON_EMPTY, ids=lambda s: s.name)
     def test_is_list_non_empty(self, scenario: TypeGuardScenario) -> None:
         if scenario.value == "has_items":
-            value: t.NormalizedValue = [1, 2, 3]
+            value: t.RecursiveContainer = [1, 2, 3]
         elif scenario.value == "empty":
-            value = cast("t.NormalizedValue", [])
+            value = cast("t.RecursiveContainer", [])
         elif scenario.value in {"has_empty", "has_none"}:
             value = [""]
         else:
@@ -205,7 +205,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_list_with_nested_list(self) -> None:
-        test_list: Sequence[t.NormalizedValue] = [[1, 2], [3, 4]]
+        test_list: Sequence[t.RecursiveContainer] = [[1, 2], [3, 4]]
         result = u.normalize_to_metadata(cast("t.RuntimeData", test_list))
         tm.that(result, is_=list)
 
@@ -215,7 +215,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_list_with_complex_items(self) -> None:
-        test_list: Sequence[t.NormalizedValue] = [
+        test_list: Sequence[t.RecursiveContainer] = [
             "string",
             42,
             True,
@@ -231,7 +231,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_dict_with_complex_nested_structure(self) -> None:
-        test_dict: Mapping[str, t.NormalizedValue] = {
+        test_dict: Mapping[str, t.RecursiveContainer] = {
             "str": "value",
             "int": 42,
             "nested_dict": {"inner": "value"},

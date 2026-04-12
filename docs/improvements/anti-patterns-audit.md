@@ -147,7 +147,7 @@ def fail(
     cls,
     error: str,
     error_code: str | None = None,
-    error_data: t.ContainerMapping | None = None,
+    error_data: t.RecursiveContainerMapping | None = None,
 ) -> r[Never]:
     """Create failed result with error message and optional code/data."""
     return cls._failure(error, error_code, error_data)
@@ -326,13 +326,13 @@ $ wc -l src/flext_core/*.py | sort -nr | head -5
 - 3,617 lines BUT only ONE top-level class: `FlextModels`
 - Contains many nested classes (Value, Entity, AggregateRoot, Command, Query, etc.)
 - Each nested class is focused (Single Responsibility Principle)
-- This is the CORRECT pattern, not a god t.NormalizedValue
+- This is the CORRECT pattern, not a god t.RecursiveContainer
 
 **Verification**: ✅ ACCURATE
 
 - Guide uses "3,000+ lines" as example, not absolute rule
 - models.py follows FLEXT pattern (one main class with nested helpers)
-- Not a god t.NormalizedValue - focused domain model collection
+- Not a god t.RecursiveContainer - focused domain model collection
 
 ______________________________________________________________________
 
@@ -372,7 +372,7 @@ container.py:1032: # For new code, use FlextContainer() directly
 **Source Code Evidence** (container.py:491):
 
 ```python
-def get(self, identifier: str) -> r[t.NormalizedValue]:
+def get(self, identifier: str) -> r[t.RecursiveContainer]:
     """Get service with r error handling.
 
     Returns r wrapping service or error.
@@ -413,7 +413,7 @@ The guide shows wrapping pattern, and source code demonstrates both approaches:
 
 **Guide Claims**:
 
-- ❌ Don't allow value t.NormalizedValue modification
+- ❌ Don't allow value t.RecursiveContainer modification
 - ✅ Use `frozen=True`
 
 **Source Code Evidence** (models.py):

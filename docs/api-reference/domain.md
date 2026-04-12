@@ -29,7 +29,7 @@ from flext_core import m, r
 
 
 class Email(m.Value):
-    """Immutable value t.NormalizedValue compared by value."""
+    """Immutable value t.RecursiveContainer compared by value."""
 
     address: str
 

@@ -62,7 +62,7 @@ class TestUtilitiesParserFullCoverage:
             eq="fallback",
         )
         parser._parse_model(
-            cast("t.NormalizedValue", {"name": "ok", "count": 2, "payload": "obj"}),
+            cast("t.RecursiveContainer", {"name": "ok", "count": 2, "payload": "obj"}),
             m.Core.Tests._Model,
             "field: ",
             strict=False,

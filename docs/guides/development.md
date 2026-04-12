@@ -151,7 +151,7 @@ git push origin feature/amazing-feature
 
 ```python
 # ✅ CORRECT - Complete type annotations
-def process_data(data: t.ContainerMapping) -> r[ProcessedData]:
+def process_data(data: t.RecursiveContainerMapping) -> r[ProcessedData]:
     """Process data with type safety."""
     if not data:
         return r[ProcessedData].fail("Data required")
@@ -190,16 +190,16 @@ def validate_and_process(data: dict) -> ProcessedData:
 # ✅ CORRECT - Use [Project]Models pattern
 class FlextApiModels:
     class Request(BaseModel):
-        data: t.ContainerMapping
+        data: t.RecursiveContainerMapping
 
     class Response(BaseModel):
-        result: r[t.NormalizedValue]
+        result: r[t.RecursiveContainer]
         status: int
 
 
 # ❌ WRONG - Scattered model definitions
 class ApiRequest(BaseModel):
-    data: t.ContainerMapping
+    data: t.RecursiveContainerMapping
 
 
 class ApiResponse(BaseModel):
@@ -350,10 +350,10 @@ class FlextNewlibModels:
         setting: str = "default"
 
     class Request(BaseModel):
-        data: t.ContainerMapping
+        data: t.RecursiveContainerMapping
 
     class Response(BaseModel):
-        result: r[t.NormalizedValue]
+        result: r[t.RecursiveContainer]
 ```
 
 ### 3. Add to Workspace
@@ -402,7 +402,7 @@ poetry env info
 ### Code Documentation
 
 ```python
-def process_data(data: t.ContainerMapping) -> r[ProcessedData]:
+def process_data(data: t.RecursiveContainerMapping) -> r[ProcessedData]:
     """
     Process data using the FLEXT pipeline.
 

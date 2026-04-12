@@ -48,7 +48,7 @@ class TestsFlextCoreModelsMixins:
     class _ValidationLikeError(Exception):
         """Validation-like error for tests."""
 
-        def errors(self) -> Sequence[t.ContainerMapping]:
+        def errors(self) -> Sequence[t.RecursiveContainerMapping]:
             return [{"loc": ["value"], "msg": "bad value"}]
 
     type TestCaseMap = Mapping[str, t.Core.Tests.TestobjectSerializable]
@@ -94,12 +94,12 @@ class TestsFlextCoreModelsMixins:
         @override
         def model_validate(
             cls,
-            obj: t.NormalizedValue,
+            obj: t.RecursiveContainer,
             *,
             strict: bool | None = None,
             extra: str | None = None,
             from_attributes: bool | None = None,
-            context: t.ContainerMapping | None = None,
+            context: t.RecursiveContainerMapping | None = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> Never:
@@ -114,12 +114,12 @@ class TestsFlextCoreModelsMixins:
         @override
         def model_validate(
             cls,
-            obj: t.NormalizedValue,
+            obj: t.RecursiveContainer,
             *,
             strict: bool | None = None,
             extra: str | None = None,
             from_attributes: bool | None = None,
-            context: t.ContainerMapping | None = None,
+            context: t.RecursiveContainerMapping | None = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> Never:
@@ -216,7 +216,7 @@ class TestsFlextCoreModelsMixins:
         timeout: int = 10
 
         @property
-        def data(self) -> t.ContainerMapping:
+        def data(self) -> t.RecursiveContainerMapping:
             return {"timeout": self.timeout}
 
     class _Model(BaseModel):
@@ -244,7 +244,7 @@ class TestsFlextCoreModelsMixins:
         """Complex test model."""
 
         id: int
-        data: t.ContainerMapping
+        data: t.RecursiveContainerMapping
         items: t.StrSequence
 
     class _Cfg(BaseModel):
@@ -282,7 +282,7 @@ class TestsFlextCoreModelsMixins:
         value: t.ContainerValue
 
     class DomainTestValue(m.Value):
-        """Test value t.NormalizedValue for domain tests."""
+        """Test value t.RecursiveContainer for domain tests."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
@@ -297,14 +297,14 @@ class TestsFlextCoreModelsMixins:
             self.custom_id = custom_id
 
     class SimpleValue:
-        """Simple value t.NormalizedValue without model_dump."""
+        """Simple value t.RecursiveContainer without model_dump."""
 
         def __init__(self, data: str) -> None:
-            """Initialize simple value t.NormalizedValue."""
+            """Initialize simple value t.RecursiveContainer."""
             self.data = data
 
     class ComplexValue:
-        """TestsFlextModels.Value t.NormalizedValue with non-hashable attributes."""
+        """TestsFlextModels.Value t.RecursiveContainer with non-hashable attributes."""
 
         def __init__(self, data: str, items: t.StrSequence) -> None:
             """Initialize complex value with non-hashable items."""
@@ -318,7 +318,7 @@ class TestsFlextCoreModelsMixins:
         value: int
 
         def __init__(self, value: int) -> None:
-            """Initialize t.NormalizedValue without __dict__."""
+            """Initialize t.RecursiveContainer without __dict__."""
             object.__setattr__(self, "value", value)
 
         @override
@@ -327,19 +327,19 @@ class TestsFlextCoreModelsMixins:
             return f"NoDict(value={self.value})"
 
     class MutableObj:
-        """Mutable t.NormalizedValue for immutability testing."""
+        """Mutable t.RecursiveContainer for immutability testing."""
 
         def __init__(self, value: int) -> None:
-            """Initialize mutable t.NormalizedValue."""
+            """Initialize mutable t.RecursiveContainer."""
             self.value = value
 
     class ImmutableObj:
-        """Immutable t.NormalizedValue with custom __setattr__."""
+        """Immutable t.RecursiveContainer with custom __setattr__."""
 
         _frozen: bool = True
 
         def __init__(self, value: int) -> None:
-            """Initialize immutable t.NormalizedValue."""
+            """Initialize immutable t.RecursiveContainer."""
             object.__setattr__(self, "value", value)
 
         @override
@@ -781,11 +781,11 @@ class TestsFlextCoreModelsMixins:
             str, Field(description="Validator category under test")
         ]
         input_value: Annotated[
-            t.NormalizedValue,
+            t.RecursiveContainer,
             Field(description="Input value passed to validator"),
         ]
         input_params: Annotated[
-            t.NormalizedValue | None,
+            t.RecursiveContainer | None,
             Field(
                 default=None,
                 description="Optional validator parameters for scenario execution",
@@ -799,7 +799,7 @@ class TestsFlextCoreModelsMixins:
             ),
         ] = True
         expected_value: Annotated[
-            t.NormalizedValue | None,
+            t.RecursiveContainer | None,
             Field(
                 default=None,
                 description="Expected normalized value when validation succeeds",
@@ -826,7 +826,7 @@ class TestsFlextCoreModelsMixins:
         parser_method: Annotated[str, Field(description="Parser method to execute")]
         input_data: Annotated[str, Field(description="Raw parser input data")]
         expected_output: Annotated[
-            t.NormalizedValue | None,
+            t.RecursiveContainer | None,
             Field(
                 default=None,
                 description="Expected parsed output for successful scenarios",

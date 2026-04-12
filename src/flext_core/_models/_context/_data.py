@@ -29,9 +29,9 @@ class FlextModelsContextData:
     @staticmethod
     def normalize_to_mapping(
         v: t.ValueOrModel,
-    ) -> t.ContainerMapping:
+    ) -> t.RecursiveContainerMapping:
         if v is None:
-            out: t.ContainerMapping = {}
+            out: t.RecursiveContainerMapping = {}
             return out
         if FlextUtilitiesGuardsTypeCore.mapping(v):
             validated = t.dict_str_metadata_adapter().validate_python(
@@ -69,12 +69,12 @@ class FlextModelsContextData:
         def validate_dict_serializable(
             cls,
             v: t.Dict | t.ScalarMapping | BaseModel | None,
-        ) -> t.ContainerMapping:
+        ) -> t.RecursiveContainerMapping:
             """Validate that data values are JSON-serializable."""
-            working_value: t.ContainerMapping
+            working_value: t.RecursiveContainerMapping
             normalized_mapping: Mapping[str, t.ValueOrModel]
             if v is None:
-                empty: t.ContainerMapping = {}
+                empty: t.RecursiveContainerMapping = {}
                 return empty
             if isinstance(v, FlextModelsBase.Metadata):
                 normalized_metadata: Mapping[str, t.ValueOrModel] = {
@@ -136,7 +136,7 @@ class FlextModelsContextData:
             if FlextUtilitiesGuardsTypeCore.list_like(obj) and (
                 not isinstance(obj, (str, bytes))
             ):
-                seq_obj: t.ContainerList = obj
+                seq_obj: t.RecursiveContainerList = obj
                 for i, item in enumerate(seq_obj):
                     cls.check_json_serializable(item, f"{path}[{i}]")
                 return

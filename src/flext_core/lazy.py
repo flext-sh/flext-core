@@ -137,7 +137,7 @@ class FlextLazy(BaseModel):
 
     def build_map(
         self,
-        module_groups: Mapping[str, Sequence[str]] | None = None,
+        module_groups: Mapping[str, t.StrSequence] | None = None,
         *,
         alias_groups: Mapping[str, Sequence[tuple[str, str]]] | None = None,
         sort_keys: bool = True,
@@ -217,10 +217,10 @@ class FlextLazy(BaseModel):
 
     def merge(
         self,
-        child_module_paths: Sequence[str],
+        child_module_paths: t.StrSequence,
         local_lazy_imports: LazyImportMap,
         *,
-        exclude_names: Sequence[str] = (),
+        exclude_names: t.StrSequence = (),
         module_name: str | None = None,
     ) -> dict[str, LazyImportEntry]:
         """Merge child lazy maps with local entries."""
@@ -245,7 +245,7 @@ class FlextLazy(BaseModel):
         module_name: str,
         module_globals: dict[str, object],
         lazy_imports: LazyImportMap,
-        all_exports: Sequence[str] | None = None,
+        all_exports: t.StrSequence | None = None,
         *,
         publish_all: bool = True,
     ) -> None:

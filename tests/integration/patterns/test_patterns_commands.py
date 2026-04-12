@@ -51,7 +51,7 @@ class TestPatternsCommands:
         """Test command for updating users."""
 
         target_user_id: str
-        updates: t.ContainerMapping
+        updates: t.RecursiveContainerMapping
 
         def get_payload(self) -> m.Core.Tests.UpdatePayloadDict:
             """Get command payload."""
@@ -95,8 +95,8 @@ class TestPatternsCommands:
     class CreateUserCommandHandler(h[t.ValueOrModel, t.ValueOrModel]):
         """Test handler for CreateUserCommand."""
 
-        created_users: MutableSequence[t.ContainerMapping] = Field(
-            default_factory=lambda: list[t.ContainerMapping](),
+        created_users: MutableSequence[t.RecursiveContainerMapping] = Field(
+            default_factory=lambda: list[t.RecursiveContainerMapping](),
         )
 
         def __init__(self) -> None:
@@ -141,7 +141,7 @@ class TestPatternsCommands:
                 return r[t.ValueOrModel].fail(
                     c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE
                 )
-            user_data: t.MutableContainerMapping = {
+            user_data: t.MutableRecursiveContainerMapping = {
                 "id": f"user_{len(self.created_users) + 1}",
                 "username": message.username,
                 "email": message.email,
@@ -168,8 +168,8 @@ class TestPatternsCommands:
                 handler_mode=c.HandlerType.COMMAND,
             )
             super().__init__(settings=settings)
-            self.updated_users: t.MutableContainerMapping = dict[
-                str, t.NormalizedValue
+            self.updated_users: t.MutableRecursiveContainerMapping = dict[
+                str, t.RecursiveContainer
             ]()
 
         def get_command_type(self) -> str:
@@ -209,7 +209,7 @@ class TestPatternsCommands:
             user_updates = self.updated_users[message.target_user_id]
             if isinstance(user_updates, dict):
                 user_updates.update(message.updates)
-            result_data: t.MutableContainerMapping = {
+            result_data: t.MutableRecursiveContainerMapping = {
                 "target_user_id": message.target_user_id,
                 "updated_fields": list(message.updates.keys()),
             }
@@ -280,7 +280,7 @@ class TestPatternsCommands:
     def _update_user_command(
         *,
         target_user_id: str,
-        updates: t.ContainerMapping,
+        updates: t.RecursiveContainerMapping,
     ) -> UpdateUserCommand:
         return TestPatternsCommands.UpdateUserCommand.model_validate(
             obj={
@@ -412,7 +412,7 @@ class TestPatternsCommands:
             raise AssertionError(msg)
 
     def test_can_handle_non_command_object(self) -> None:
-        """Test can_handle with non-command t.NormalizedValue."""
+        """Test can_handle with non-command t.RecursiveContainer."""
         handler = self.CreateUserCommandHandler()
         if handler.can_handle(str):
             msg = f"Expected False, got {handler.can_handle(str)}"
@@ -491,8 +491,10 @@ class TestPatternsCommands:
 
     def test_success_result_creation(self) -> None:
         """Test creating successful command result."""
-        result_data: t.ContainerMapping = {"id": "123", "username": "test"}
-        command_result: r[t.ContainerMapping] = r[t.ContainerMapping].ok(result_data)
+        result_data: t.RecursiveContainerMapping = {"id": "123", "username": "test"}
+        command_result: r[t.RecursiveContainerMapping] = r[
+            t.RecursiveContainerMapping
+        ].ok(result_data)
         if not command_result.success:
             msg = f"Expected True, got {command_result.success}"
             raise AssertionError(msg)

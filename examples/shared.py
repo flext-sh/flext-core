@@ -71,12 +71,12 @@ class Examples:
     def check(
         self,
         label: str,
-        value: t.NormalizedValue
+        value: t.RecursiveContainer
         | Path
         | datetime
         | Mapping[str, bool | str]
         | BaseModel
-        | MutableMapping[str, t.NormalizedValue | BaseModel],
+        | MutableMapping[str, t.RecursiveContainer | BaseModel],
     ) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         separator = m.Examples.LABEL_VALUE_SEPARATOR
@@ -132,12 +132,12 @@ class Examples:
 
     def ser(
         self,
-        v: t.NormalizedValue
+        v: t.RecursiveContainer
         | Path
         | datetime
         | Mapping[str, bool | str]
         | BaseModel
-        | MutableMapping[str, t.NormalizedValue | BaseModel],
+        | MutableMapping[str, t.RecursiveContainer | BaseModel],
     ) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 

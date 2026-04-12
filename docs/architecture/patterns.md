@@ -457,7 +457,7 @@ if result.is_success:
 
 **Benefits:**
 
-- ✅ Encapsulates t.NormalizedValue creation
+- ✅ Encapsulates t.RecursiveContainer creation
 - ✅ Easy to add new types
 - ✅ Centralized creation logic
 

@@ -16,11 +16,11 @@ from tests import c, m, r, t, u
 
 
 def _matches_type_obj(
-    value: t.NormalizedValue,
+    value: t.RecursiveContainer,
     type_spec: str | type | tuple[type, ...],
 ) -> bool:
-    """Call matches_type with arbitrary t.NormalizedValue for negative-case testing."""
-    fn: Callable[[t.NormalizedValue, str | type | tuple[type, ...]], bool] = getattr(
+    """Call matches_type with arbitrary t.RecursiveContainer for negative-case testing."""
+    fn: Callable[[t.RecursiveContainer, str | type | tuple[type, ...]], bool] = getattr(
         u,
         "matches_type",
     )
@@ -44,7 +44,7 @@ class _LoggerLike:
         return None
 
 
-def _sample_handler(value: t.NormalizedValue) -> t.NormalizedValue:
+def _sample_handler(value: t.RecursiveContainer) -> t.RecursiveContainer:
     return value
 
 
@@ -62,14 +62,14 @@ def test_aliases_are_available() -> None:
 def test_is_container_negative_paths_and_callable() -> None:
     tm.that(
         callable(_sample_handler)
-        or u.container(cast("t.NormalizedValue", _sample_handler)),
+        or u.container(cast("t.RecursiveContainer", _sample_handler)),
         eq=True,
     )
     tm.that(u.container([1, "x", None]), eq=True)
     tm.that(u.container({"k": 1}), eq=True)
-    tm.that(not u.container(cast("t.NormalizedValue", [{"x"}])), eq=True)
-    tm.that(u.container(cast("t.NormalizedValue", {1: "x"})), eq=True)
-    tm.that(not u.container(cast("t.NormalizedValue", {"x": {1}})), eq=True)
+    tm.that(not u.container(cast("t.RecursiveContainer", [{"x"}])), eq=True)
+    tm.that(u.container(cast("t.RecursiveContainer", {1: "x"})), eq=True)
+    tm.that(not u.container(cast("t.RecursiveContainer", {"x": {1}})), eq=True)
 
 
 def test_non_empty_and_normalize_branches() -> None:
@@ -80,15 +80,15 @@ def test_non_empty_and_normalize_branches() -> None:
     dict_scalar_out = u.normalize_to_metadata({"k": 1})
     tm.that(dict_scalar_out, eq={"k": 1})
     dict_complex_out = u.normalize_to_metadata(
-        cast("t.NormalizedValue", {"k": "normalized"}),
+        cast("t.RecursiveContainer", {"k": "normalized"}),
     )
     tm.that(isinstance(dict_complex_out, dict) and "k" in dict_complex_out, eq=True)
-    list_out = u.normalize_to_metadata(cast("t.NormalizedValue", [1, "normalized"]))
+    list_out = u.normalize_to_metadata(cast("t.RecursiveContainer", [1, "normalized"]))
     tm.that(list_out, is_=list)
     assert isinstance(list_out, list)
     tm.that(list_out[0], eq=1)
     tm.that(list_out[1], is_=str)
-    tm.that(u.normalize_to_metadata(cast("t.NormalizedValue", {1, 2})), is_=str)
+    tm.that(u.normalize_to_metadata(cast("t.RecursiveContainer", {1, 2})), is_=str)
 
 
 def test_configuration_mapping_and_dict_negative_branches() -> None:
@@ -100,28 +100,28 @@ def test_configuration_mapping_and_dict_negative_branches() -> None:
 
 
 def test_protocol_and_simple_guard_helpers() -> None:
-    plain_obj: t.NormalizedValue = cast("t.NormalizedValue", "normalized")
+    plain_obj: t.RecursiveContainer = cast("t.RecursiveContainer", "normalized")
     tm.that(not _matches_type_obj(plain_obj, "settings"), eq=True)
     tm.that(not _matches_type_obj(plain_obj, "container"), eq=True)
     tm.that(not _matches_type_obj(plain_obj, "command_bus"), eq=True)
     tm.that(not _matches_type_obj(plain_obj, "handler"), eq=True)
     tm.that(
-        not _matches_type_obj(cast("t.NormalizedValue", _LoggerLike()), "logger"),
+        not _matches_type_obj(cast("t.RecursiveContainer", _LoggerLike()), "logger"),
         eq=True,
     )
     tm.that(
-        _matches_type_obj(cast("t.NormalizedValue", r[int].ok(1)), "result"), eq=True
+        _matches_type_obj(cast("t.RecursiveContainer", r[int].ok(1)), "result"), eq=True
     )
     tm.that(not _matches_type_obj(plain_obj, "service"), eq=True)
     tm.that(not _matches_type_obj(plain_obj, "middleware"), eq=True)
-    tm.that(u.handler_callable(cast("t.NormalizedValue", _sample_handler)), eq=True)
+    tm.that(u.handler_callable(cast("t.RecursiveContainer", _sample_handler)), eq=True)
     tm.that(u.mapping({"k": "v"}), eq=True)
 
-    def _identity(value: t.NormalizedValue) -> t.NormalizedValue:
+    def _identity(value: t.RecursiveContainer) -> t.RecursiveContainer:
         return value
 
     tm.that(
-        _matches_type_obj(cast("t.NormalizedValue", _identity), "callable"), eq=True
+        _matches_type_obj(cast("t.RecursiveContainer", _identity), "callable"), eq=True
     )
     tm.that(u.matches_type(3, "int"), eq=True)
     tm.that(u.matches_type([1, 2], "list_or_tuple"), eq=True)
@@ -130,7 +130,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
     tm.that(u.matches_type(True, "bool"), eq=True)
     tm.that(u.matches_type(None, "none"), eq=True)
     tm.that(u.matches_type((1, 2), "tuple"), eq=True)
-    tm.that(u.matches_type(cast("t.NormalizedValue", b"a"), "bytes"), eq=True)
+    tm.that(u.matches_type(cast("t.RecursiveContainer", b"a"), "bytes"), eq=True)
     tm.that(u.matches_type("abc", "str"), eq=True)
     tm.that(u.matches_type({"k": "v"}, "dict"), eq=True)
     tm.that(u.matches_type([1], "list"), eq=True)
@@ -141,7 +141,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
     tm.that(
         u.pydantic_model(
             cast(
-                "t.NormalizedValue",
+                "t.RecursiveContainer",
                 m.Core.Tests._Model.model_validate({"value": 1}),
             )
         ),
@@ -152,19 +152,23 @@ def test_protocol_and_simple_guard_helpers() -> None:
 def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
     value_set: set[int] = set()
     tm.that(
-        not _matches_type_obj(cast("t.NormalizedValue", value_set), "string_non_empty"),
+        not _matches_type_obj(
+            cast("t.RecursiveContainer", value_set), "string_non_empty"
+        ),
         eq=True,
     )
     tm.that(not u.matches_type("x", "unknown_type_name"), eq=True)
     tm.that(u.matches_type(3, (int, float)), eq=True)
     tm.that(u.matches_type("x", str), eq=True)
-    invalid_spec = cast("str | type | tuple[type, ...]", cast("t.NormalizedValue", 123))
+    invalid_spec = cast(
+        "str | type | tuple[type, ...]", cast("t.RecursiveContainer", 123)
+    )
     tm.that(not u.matches_type("x", invalid_spec), eq=True)
 
 
 def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that is_type returns False for non-protocol objects against protocol types."""
-    plain_obj: t.NormalizedValue = cast("t.NormalizedValue", "normalized")
+    plain_obj: t.RecursiveContainer = cast("t.RecursiveContainer", "normalized")
     tm.that(not _matches_type_obj(plain_obj, "settings"), eq=True)
     tm.that(not _matches_type_obj(plain_obj, "context"), eq=True)
     tm.that(not _matches_type_obj(plain_obj, "handler"), eq=True)
@@ -184,10 +188,10 @@ def test_guard_in_has_empty_none_helpers() -> None:
     tm.that(u.guard("x", validator=None, return_value=False), eq=True)
     tm.that(u.guard("x", validator=None, return_value=True), eq="x")
 
-    def _always_false(_v: t.NormalizedValue) -> bool:
+    def _always_false(_v: t.RecursiveContainer) -> bool:
         return False
 
-    def _raise_error(_v: t.NormalizedValue) -> bool:
+    def _raise_error(_v: t.RecursiveContainer) -> bool:
         _ = _v
         msg = "test error"
         raise TypeError(msg)
@@ -209,9 +213,9 @@ def test_chk_exercises_missed_branches() -> None:
     tm.that(not u.chk(None, **m.GuardCheckSpec(none=False).model_dump()), eq=True)
     tm.that(not u.chk("a", **m.GuardCheckSpec(is_=int).model_dump()), eq=True)
     with pytest.raises(ValidationError):
-        u.chk("a", is_=cast("t.NormalizedValue", MutableSequence[int]))
+        u.chk("a", is_=cast("t.RecursiveContainer", MutableSequence[int]))
     with pytest.raises(ValidationError):
-        u.chk("a", not_=cast("t.NormalizedValue", MutableSequence[int]))
+        u.chk("a", not_=cast("t.RecursiveContainer", MutableSequence[int]))
     tm.that(not u.chk("a", **m.GuardCheckSpec(not_=str).model_dump()), eq=True)
     tm.that(not u.chk(1, **m.GuardCheckSpec(eq=2).model_dump()), eq=True)
     tm.that(not u.chk(1, **m.GuardCheckSpec(ne=1).model_dump()), eq=True)
@@ -238,7 +242,8 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
         return original_issubclass(cls, classinfo)
 
     tm.that(
-        not _matches_type_obj(cast("t.NormalizedValue", _SomeType), "handler"), eq=True
+        not _matches_type_obj(cast("t.RecursiveContainer", _SomeType), "handler"),
+        eq=True,
     )
     tm.that(not u.chk(1, **m.GuardCheckSpec(not_in=[1, 2]).model_dump()), eq=True)
     tm.that(not u.chk(1, **m.GuardCheckSpec(gt=1).model_dump()), eq=True)
@@ -279,7 +284,7 @@ def test_guard_instance_attribute_access_warnings() -> None:
     method = guards.matches_type
     tm.that(callable(method), eq=True)
     mapping_method = cast(
-        "Callable[..., t.NormalizedValue]",
+        "Callable[..., t.RecursiveContainer]",
         getattr(guards, "mapping"),
     )
     tm.that(callable(mapping_method), eq=True)
@@ -303,7 +308,7 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
     setattr(builtins, "issubclass", _explode)
     try:
         tm.that(
-            not _matches_type_obj(cast("t.NormalizedValue", _Candidate), "handler"),
+            not _matches_type_obj(cast("t.RecursiveContainer", _Candidate), "handler"),
             eq=True,
         )
     finally:
@@ -316,7 +321,7 @@ def test_guards_bool_identity_branch_via_isinstance_fallback(
     original_isinstance = builtins.isinstance
 
     def _patched_isinstance(
-        obj: t.NormalizedValue,
+        obj: t.RecursiveContainer,
         classinfo: type | tuple[type, ...],
     ) -> bool:
         if obj is True and classinfo == (str, int, float, bool, type(None), datetime):
@@ -335,7 +340,7 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
     class _Candidate:
         pass
 
-    def _patched_callable(value: t.NormalizedValue) -> bool:
+    def _patched_callable(value: t.RecursiveContainer) -> bool:
         if value is _Candidate:
             return False
         return original_callable(value)
@@ -350,7 +355,8 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
         return original_issubclass(cls, classinfo)
 
     tm.that(
-        not _matches_type_obj(cast("t.NormalizedValue", _Candidate), "handler"), eq=True
+        not _matches_type_obj(cast("t.RecursiveContainer", _Candidate), "handler"),
+        eq=True,
     )
 
 
@@ -362,12 +368,12 @@ def test_guards_issubclass_success_when_callable_is_patched(
     class _ModelSub:
         value: str = "ok"
 
-    def _patched_callable(value: t.NormalizedValue) -> bool:
+    def _patched_callable(value: t.RecursiveContainer) -> bool:
         if value is _ModelSub:
             return False
         return original_callable(value)
 
     tm.that(
-        _matches_type_obj(cast("t.NormalizedValue", _ModelSub), "handler") is False,
+        _matches_type_obj(cast("t.RecursiveContainer", _ModelSub), "handler") is False,
         eq=True,
     )
