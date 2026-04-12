@@ -20,13 +20,9 @@ from flext_core._typings.pydantic import FlextTypesPydantic
 from flext_core._typings.services import FlextTypesServices
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 from flext_core._typings.validation import FlextTypesValidation
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 if TYPE_CHECKING:
     from flext_core.settings import FlextSettings
-
-BaseModel = FlextModelsPydantic.BaseModel
-TypeAdapter = FlextUtilitiesPydantic.TypeAdapter
 
 EnumT = TypeVar("EnumT", bound=StrEnum)
 MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
@@ -40,7 +36,7 @@ T_DomainResult = TypeVar(
     "T_DomainResult",
     bound=FlextTypesServices.ValueOrModel | Sequence[FlextTypesServices.ValueOrModel],
 )
-T_Model = TypeVar("T_Model", bound=BaseModel)
+T_Model = TypeVar("T_Model", bound=FlextModelsPydantic.BaseModel)
 T_Namespace = TypeVar("T_Namespace")
 T_Settings = TypeVar("T_Settings", bound="FlextSettings")
 TRuntime = TypeVar("TRuntime")
@@ -74,7 +70,6 @@ t = FlextTypes
 
 __all__: list[str] = [
     "TV",
-    "BaseModel",
     "EnumT",
     "FlextTypes",
     "MessageT_contra",
@@ -90,7 +85,6 @@ __all__: list[str] = [
     "T_Settings",
     "T_co",
     "T_contra",
-    "TypeAdapter",
     "U",
     "t",
 ]

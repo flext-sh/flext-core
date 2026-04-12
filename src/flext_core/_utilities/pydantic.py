@@ -11,19 +11,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pydantic import (
-    AfterValidator,
-    BeforeValidator,
     Field,
-    FieldSerializationInfo,
-    GetCoreSchemaHandler,
-    GetJsonSchemaHandler,
-    GetPydanticSchema,
-    PlainSerializer,
-    PlainValidator,
     PrivateAttr,
-    TypeAdapter,
-    WrapSerializer,
-    WrapValidator,
     computed_field,
     create_model,
     field_serializer,
@@ -34,12 +23,10 @@ from pydantic import (
     with_config,
 )
 from pydantic_core import (
-    SchemaValidator,
     from_json,
     to_json,
     to_jsonable_python,
 )
-from pydantic_settings import EnvSettingsSource, PydanticBaseSettingsSource
 
 
 class FlextUtilitiesPydantic:
@@ -62,37 +49,13 @@ class FlextUtilitiesPydantic:
     # root_validator = root_validator
     # validator = validator
 
-    # Annotation validators
-    AfterValidator = AfterValidator
-    BeforeValidator = BeforeValidator
-    PlainValidator = PlainValidator
-    WrapValidator = WrapValidator
-
-    # Serializers
-    PlainSerializer = PlainSerializer
-    WrapSerializer = WrapSerializer
-
-    # Validation and serialization context helpers
-    FieldSerializationInfo = FieldSerializationInfo
-
     # Type adapters and model creation
-    TypeAdapter = TypeAdapter
     create_model = create_model
     validate_call = validate_call
     # parse_obj_as = parse_obj_as
     with_config = with_config
 
-    # Schema and validator handlers
-    GetCoreSchemaHandler = GetCoreSchemaHandler
-    GetJsonSchemaHandler = GetJsonSchemaHandler
-    GetPydanticSchema = GetPydanticSchema
-
     # Schema and JSON utilities (from pydantic_core)
-    SchemaValidator = SchemaValidator
     from_json = from_json
     to_json = to_json
     to_jsonable_python = to_jsonable_python
-
-    # Settings sources (from pydantic_settings)
-    EnvSettingsSource = EnvSettingsSource
-    PydanticBaseSettingsSource = PydanticBaseSettingsSource

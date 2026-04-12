@@ -65,6 +65,7 @@ if _t.TYPE_CHECKING:
     from flext_core._protocols.pydantic import FlextProtocolsPydantic
     from flext_core._protocols.registry import FlextProtocolsRegistry
     from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._protocols.runtime import FlextProtocolsRuntime
     from flext_core._protocols.service import FlextProtocolsService
     from flext_core._protocols.settings import FlextProtocolsSettings
     from flext_core._typings.annotateds import FlextTypesAnnotateds
@@ -120,7 +121,6 @@ if _t.TYPE_CHECKING:
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
         TV,
-        BaseModel,
         EnumT,
         FlextTypes,
         MessageT_contra,
@@ -206,7 +206,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".settings": ("FlextSettings",),
             ".typings": (
-                "BaseModel",
                 "EnumT",
                 "FlextTypes",
                 "MessageT_contra",
@@ -253,7 +252,6 @@ install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
     "TV",
-    "BaseModel",
     "EnumT",
     "FlextConstants",
     "FlextConstantsBase",
@@ -317,6 +315,7 @@ __all__: list[str] = [
     "FlextProtocolsPydantic",
     "FlextProtocolsRegistry",
     "FlextProtocolsResult",
+    "FlextProtocolsRuntime",
     "FlextProtocolsService",
     "FlextProtocolsSettings",
     "FlextResult",

@@ -14,8 +14,29 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import BaseModel, RootModel
-from pydantic_settings import BaseSettings
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    BeforeValidator,
+    FieldSerializationInfo,
+    GetCoreSchemaHandler,
+    GetJsonSchemaHandler,
+    GetPydanticSchema,
+    PlainSerializer,
+    PlainValidator,
+    RootModel,
+    TypeAdapter,
+    WrapSerializer,
+    WrapValidator,
+)
+from pydantic_core import (
+    SchemaValidator,
+)
+from pydantic_settings import (
+    BaseSettings,
+    EnvSettingsSource,
+    PydanticBaseSettingsSource,
+)
 
 
 class FlextModelsPydantic:
@@ -33,3 +54,29 @@ class FlextModelsPydantic:
     BaseModel = BaseModel
     BaseSettings = BaseSettings
     RootModel = RootModel
+
+    # Annotation validators
+    AfterValidator = AfterValidator
+    BeforeValidator = BeforeValidator
+    PlainValidator = PlainValidator
+    WrapValidator = WrapValidator
+
+    # Serializers
+    PlainSerializer = PlainSerializer
+    WrapSerializer = WrapSerializer
+
+    # Validation and serialization context helpers
+    FieldSerializationInfo = FieldSerializationInfo
+    TypeAdapter = TypeAdapter
+
+    # Schema and validator handlers
+    GetCoreSchemaHandler = GetCoreSchemaHandler
+    GetJsonSchemaHandler = GetJsonSchemaHandler
+    GetPydanticSchema = GetPydanticSchema
+
+    # Schema and JSON utilities (from pydantic_core)
+    SchemaValidator = SchemaValidator
+
+    # Settings sources (from pydantic_settings)
+    EnvSettingsSource = EnvSettingsSource
+    PydanticBaseSettingsSource = PydanticBaseSettingsSource

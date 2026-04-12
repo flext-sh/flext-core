@@ -18,7 +18,6 @@ from structlog.typing import BindableLogger
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.containers import FlextTypingContainers
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 if TYPE_CHECKING:
     from flext_core import m, p
@@ -194,7 +193,7 @@ class FlextTypesServices:
         | TypeAliasType
         | Callable[[FlextTypingBase.Scalar], FlextTypingBase.Scalar]
     )
-    type ValueAdapter[T] = FlextUtilitiesPydantic.TypeAdapter[T]
+    type ValueAdapter[T] = m.TypeAdapter[T]
     type TypeOriginSpecifier = TypeHintSpecifier
     type GenericTypeArgument = str | type[FlextTypingBase.Scalar]
     type MessageTypeSpecifier = str | type

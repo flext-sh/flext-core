@@ -148,6 +148,13 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "test_utilities_type_guards_coverage_100",
             ),
             ".test_version": ("test_version",),
+            ".typings": (
+                "InputPayloadMap",
+                "SampleValue",
+                "SetGetExpectedValue",
+                "SetGetInputValue",
+                "TestCaseMap",
+            ),
         },
     ),
     exclude_names=(

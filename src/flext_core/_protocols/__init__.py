@@ -15,6 +15,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".pydantic": ("FlextProtocolsPydantic",),
         ".registry": ("FlextProtocolsRegistry",),
         ".result": ("FlextProtocolsResult",),
+        ".runtime": ("FlextProtocolsRuntime",),
         ".service": ("FlextProtocolsService",),
         ".settings": ("FlextProtocolsSettings",),
     },
