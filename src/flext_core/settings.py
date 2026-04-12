@@ -36,10 +36,10 @@ from flext_core import (
     c,
     e,
     m,
+    p,
     t,
     u,
 )
-from flext_core.typings import T_Namespace, T_Settings
 
 
 class FlextSettings(BaseSettings):
@@ -398,10 +398,10 @@ class FlextSettings(BaseSettings):
 
     AutoSettings: ClassVar[type[m.AutoSettings]] = m.AutoSettings
 
-    _namespace_registry: ClassVar[MutableMapping[str, type[BaseSettings]]] = {}
+    _namespace_registry: ClassVar[MutableMapping[str, t.SettingsClass]] = {}
     _context_overrides: ClassVar[t.ScopedScalarRegistry] = {}
 
-    def __getattr__(self, name: str) -> BaseSettings:
+    def __getattr__(self, name: str) -> p.Settings:
         """Resolve namespace-style attribute access to registered settings."""
         pydantic_private = object.__getattribute__(self, "__pydantic_private__")
         if pydantic_private is not None and name in pydantic_private:
@@ -455,7 +455,7 @@ class FlextSettings(BaseSettings):
         return base
 
     @classmethod
-    def resolve_namespace_settings(cls, namespace: str) -> type[BaseSettings] | None:
+    def resolve_namespace_settings(cls, namespace: str) -> t.SettingsClass | None:
         """Internal namespace registry lookup."""
         return cls._namespace_registry.get(namespace)
 
@@ -480,13 +480,13 @@ class FlextSettings(BaseSettings):
         cls._context_overrides.setdefault(context_id, {}).update(overrides)
 
     @classmethod
-    def register_namespace(
+    def register_namespace[TSettings: p.Settings](
         cls,
         namespace: str,
-        settings_class: type[BaseSettings] | None = None,
+        settings_class: type[TSettings] | None = None,
         *,
         decorator: bool = False,
-    ) -> Callable[[type[T_Settings]], type[T_Settings]] | None:
+    ) -> Callable[[type[TSettings]], type[TSettings]] | None:
         """Register a settings class for a namespace.
 
         When ``decorator=True``, returns a decorator that registers the class.
@@ -500,8 +500,8 @@ class FlextSettings(BaseSettings):
         if decorator:
 
             def namespace_decorator(
-                class_to_register: type[T_Settings],
-            ) -> type[T_Settings]:
+                class_to_register: type[TSettings],
+            ) -> type[TSettings]:
                 """Register the settings class while preserving type."""
                 cls._namespace_registry[namespace] = class_to_register
                 return class_to_register
@@ -520,20 +520,22 @@ class FlextSettings(BaseSettings):
         cls._context_overrides.clear()
 
     @staticmethod
-    def auto_register(namespace: str) -> Callable[[type[T_Settings]], type[T_Settings]]:
+    def auto_register[TSettings: p.Settings](
+        namespace: str,
+    ) -> Callable[[type[TSettings]], type[TSettings]]:
         """Build a decorator that registers a settings class by namespace."""
 
-        def decorator(cls: type[T_Settings]) -> type[T_Settings]:
+        def decorator(cls: type[TSettings]) -> type[TSettings]:
             FlextSettings._namespace_registry[namespace] = cls
             return cls
 
         return decorator
 
-    def fetch_namespace(
+    def fetch_namespace[TNamespace: p.Settings](
         self,
         namespace: str,
-        settings_type: type[T_Namespace],
-    ) -> T_Namespace:
+        settings_type: type[TNamespace],
+    ) -> TNamespace:
         """Get settings instance for a namespace.
 
         Business Rule: Resolves namespace settings class from registry and

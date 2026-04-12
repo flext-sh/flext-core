@@ -229,6 +229,18 @@ class TestsCore:
         assert isinstance(data, self.UserData)
         assert data.user_id == 1
 
+    def test_service_info_exposes_public_runtime_metadata(self) -> None:
+        """Service metadata must be available through the public contract."""
+        service = self.UserService(subproject="core-tests")
+        info = service.service_info()
+        assert info["service_name"] == "UserService"
+        assert info["service_module"] == self.UserService.__module__
+        assert info["settings_class"] == service.settings.__class__.__name__
+        assert info["app_name"] == service.settings.app_name
+        assert info["version"] == service.settings.version
+        assert info["subproject"] == "core-tests"
+        assert info["handler_count"] == 0
+
     def test_is_valid_scenarios(self) -> None:
         """Test valid with various service scenarios."""
         for scenario in self._service_scenarios():

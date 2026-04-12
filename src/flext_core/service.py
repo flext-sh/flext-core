@@ -363,6 +363,19 @@ class FlextService[
             return False
         return validation_result.value
 
+    def service_info(self) -> t.FlatContainerMapping:
+        """Return public runtime metadata for this service instance."""
+        settings = self.settings
+        return {
+            "service_name": self.__class__.__name__,
+            "service_module": self.__class__.__module__,
+            "settings_class": settings.__class__.__name__,
+            "app_name": settings.app_name,
+            "version": settings.version,
+            "subproject": self.subproject or "",
+            "handler_count": len(self._discovered_handlers),
+        }
+
     def validate_business_rules(self) -> r[bool]:
         """Validate business rules with extensible validation pipeline.
 

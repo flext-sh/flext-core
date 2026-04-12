@@ -125,7 +125,7 @@ class FlextUtilitiesModel:
         )
 
     @staticmethod
-    def _settings_base() -> type:
+    def _settings_base() -> t.SettingsClass:
         """Resolve FlextSettings lazily to avoid runtime import cycles."""
         settings_module = import_module("flext_core.settings")
         return settings_module.FlextSettings
@@ -145,7 +145,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def service_settings_type(
         service_or_cls: p.Base | p.SettingsType | t.SettingsClass,
-    ) -> type:
+    ) -> t.SettingsClass:
         """Resolve the concrete settings type used by a service-like object."""
         settings_base = FlextUtilitiesModel._settings_base()
         if isinstance(
@@ -178,7 +178,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def _matches_settings_type(
         candidate: type,
-        settings_base: type,
+        settings_base: t.SettingsClass,
     ) -> bool:
         """Check whether candidate behaves as a settings class.
 

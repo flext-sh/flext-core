@@ -29,7 +29,6 @@ from typing import ClassVar, cast
 
 import pytest
 from pydantic import ValidationError
-from pydantic_settings import BaseSettings
 
 from flext_core import FlextSettings
 from flext_tests import tm
@@ -587,15 +586,19 @@ class TestFlextSettings:
                 ValueError,
                 match="Namespace 'nonexistent' not registered",
             ):
-                settings.fetch_namespace("nonexistent", BaseSettings)
+                settings.fetch_namespace("nonexistent", FlextSettings)
 
         def test_fetch_namespace_type_mismatch(self) -> None:
             """Test fetch_namespace raises TypeError for type mismatch."""
+
+            class OtherSettings(FlextSettings):
+                pass
+
             FlextSettings.register_namespace("test_type", FlextSettings)
             settings = u.Core.Tests.create_test_config()
             with pytest.raises(TypeError, match="is not instance"):
-                settings.fetch_namespace("test_type", threading.Thread)
-            instance = settings.fetch_namespace("test_type", BaseSettings)
+                settings.fetch_namespace("test_type", OtherSettings)
+            instance = settings.fetch_namespace("test_type", FlextSettings)
             assert isinstance(instance, p.Settings)
             del FlextSettings._namespace_registry["test_type"]
 

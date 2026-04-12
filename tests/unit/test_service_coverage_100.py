@@ -57,6 +57,14 @@ class TestService100Coverage:
         tm.ok(result)
         tm.that(result.value, is_=str)
 
+    def test_service_info_returns_flat_public_mapping(self) -> None:
+        """Test service_info public metadata surface."""
+        service = self._ServiceStub(subproject="coverage")
+        info = service.service_info()
+        tm.that(info["service_name"], eq="_ServiceStub")
+        tm.that(info["subproject"], eq="coverage")
+        tm.that(info["handler_count"], eq=0)
+
     def test_ok_method(self) -> None:
         """Test r.ok factory method (strict mode — no self.ok)."""
         result = r[str].ok("test")
