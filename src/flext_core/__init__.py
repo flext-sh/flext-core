@@ -75,7 +75,6 @@ if _t.TYPE_CHECKING:
     from flext_core._typings.pydantic import FlextTypesPydantic
     from flext_core._typings.services import FlextTypesServices
     from flext_core._typings.typeadapters import FlextTypesTypeAdapters
-    from flext_core._typings.validation import FlextTypesValidation
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
     from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
@@ -327,7 +326,6 @@ __all__: list[str] = [
     "FlextTypesPydantic",
     "FlextTypesServices",
     "FlextTypesTypeAdapters",
-    "FlextTypesValidation",
     "FlextTypingBase",
     "FlextTypingContainers",
     "FlextUtilities",

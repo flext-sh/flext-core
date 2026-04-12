@@ -19,7 +19,6 @@ from flext_core._typings.core import FlextTypesCore
 from flext_core._typings.pydantic import FlextTypesPydantic
 from flext_core._typings.services import FlextTypesServices
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters
-from flext_core._typings.validation import FlextTypesValidation
 
 if TYPE_CHECKING:
     from flext_core.settings import FlextSettings
@@ -50,7 +49,6 @@ class FlextTypes(
     FlextTypesCore,
     FlextTypesPydantic,
     FlextTypesServices,
-    FlextTypesValidation,
     FlextTypesTypeAdapters,
     FlextModelsNamespace,
 ):
