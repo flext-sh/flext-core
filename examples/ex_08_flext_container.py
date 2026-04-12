@@ -307,7 +307,7 @@ class Ex08FlextContainer(Examples):
         self.check("list_services.contains.factory", factory_name in service_list)
         self.check("list_services.contains.resource", resource_name in service_list)
 
-    def _exercise_singleton_and_creation(self) -> FlextContainer:
+    def _exercise_singleton_and_creation(self) -> p.Container:
         """Exercise fetch_global/create entrypoints and singleton semantics."""
         self.section("singleton_and_creation")
         FlextContainer.reset_for_testing()
@@ -333,7 +333,7 @@ class Ex08FlextContainer(Examples):
         self.check("constants.default_max_services", c.DEFAULT_SIZE)
         return root
 
-    def _exercise_wiring_and_scoped(self, container: FlextContainer) -> FlextContainer:
+    def _exercise_wiring_and_scoped(self, container: FlextContainer) -> p.Container:
         """Exercise wire_modules and scoped with all supported parameter styles."""
         self.section("wiring_and_scoped")
         this_module: ModuleType = sys.modules[__name__]
@@ -362,7 +362,7 @@ class Ex08FlextContainer(Examples):
             services={scoped_service_name: scoped_service_value},
             factories={scoped_factory_name: lambda: scoped_factory_value},
             resources={
-                scoped_resource_name: lambda: t.SettingsMap(
+                scoped_resource_name: lambda: t.ConfigMap(
                     root={"res": scoped_resource_value},
                 ),
             },

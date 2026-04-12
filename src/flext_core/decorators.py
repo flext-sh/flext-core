@@ -434,14 +434,12 @@ class FlextDecorators:
                 result=clear_result,
                 logger=logger,
                 fallback_message="operation_context_clear_failed",
-                kwargs=t.SettingsMap(
-                    root={
-                        "extra": {
-                            "function": function_name,
-                            c.HandlerType.OPERATION: operation,
-                        },
+                kwargs={
+                    "extra": {
+                        "function": function_name,
+                        c.HandlerType.OPERATION: operation,
                     },
-                ),
+                },
             )
 
     @staticmethod
@@ -527,7 +525,7 @@ class FlextDecorators:
         result: r[bool] | p.Result[bool],
         logger: p.Logger,
         fallback_message: str,
-        kwargs: t.SettingsMap,
+        kwargs: Mapping[str, t.ValueOrModel],
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if not result.failure:
@@ -570,14 +568,14 @@ class FlextDecorators:
 
     @staticmethod
     def _flatten_settings_kwargs(
-        kwargs: t.SettingsMap,
+        kwargs: Mapping[str, t.ValueOrModel],
     ) -> MutableMapping[str, t.Container]:
-        """Flatten SettingsMap into a flat warning-context dict."""
+        """Flatten one mapping into a flat warning-context dict."""
         context: MutableMapping[str, t.Container] = {}
-        for key, value in kwargs.root.items():
+        for key, value in kwargs.items():
             if key == "extra" and u.dict_like(value):
                 extra_items: Mapping[str, t.ValueOrModel]
-                if isinstance(value, t.SettingsMap):
+                if isinstance(value, t.ConfigMap):
                     extra_items = value.root
                 else:
                     extra_items = {str(k): v for k, v in value.items()}

@@ -457,7 +457,7 @@ class Ex09FlextDecorators(Examples):
             isinstance(corr_id, str) and corr_id.startswith("corr_"),
         )
 
-    def _setup_container(self) -> FlextContainer:
+    def _setup_container(self) -> p.Container:
         """Register services used by decorator examples."""
         container = FlextContainer.create()
         FlextContext.Utilities.clear_context()

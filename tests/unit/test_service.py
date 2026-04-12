@@ -29,7 +29,7 @@ from hypothesis import given, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContext, FlextSettings
-from tests import m, p, r, s, t, u
+from tests import c, e, m, p, r, s, t, u
 
 
 class TestsCore:
@@ -293,6 +293,32 @@ class TestsCore:
         _ = u.Core.Tests.assert_success(validation_result)
         business_result = service.validate_business_rules()
         _ = u.Core.Tests.assert_failure(business_result)
+
+    def test_result_failure_raises_structured_operation_error(self) -> None:
+        """Public result property must raise a structured operation error on failure."""
+
+        class FailingService(s[bool]):
+            @override
+            def execute(self) -> r[bool]:
+                return r[bool].fail(
+                    "Missing required data",
+                    error_code=c.ErrorCode.VALIDATION_ERROR,
+                    error_data={
+                        "field": "name",
+                        c.ContextKey.CORRELATION_ID: "svc-corr-1",
+                    },
+                )
+
+        service = FailingService()
+
+        with pytest.raises(e.BaseError) as captured:
+            _ = service.result
+
+        error = captured.value
+        assert error.error_code == c.ErrorCode.VALIDATION_ERROR
+        assert error.correlation_id == "svc-corr-1"
+        assert error.metadata.attributes["field"] == "name"
+        assert error.metadata.attributes["operation"] == "service execution"
 
     @given(st.text(min_size=1))
     def test_execute_hypothesis(self, value: str) -> None:

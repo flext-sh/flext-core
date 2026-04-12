@@ -856,7 +856,7 @@ class TestsFlextCoreModelsMixins:
         name: Annotated[str, Field(description="Unique reliability scenario name")]
         strategy: Annotated[str, Field(description="Reliability strategy under test")]
         settings: Annotated[
-            t.SettingsMap,
+            t.ConfigMap,
             Field(description="Reliability configuration payload"),
         ]
         simulate_failures: Annotated[

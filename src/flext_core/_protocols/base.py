@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
@@ -124,6 +124,26 @@ class FlextProtocolsBase:
         def execute(self) -> p.Result[t.RuntimeAtomic]: ...
 
         def service_info(self) -> t.FlatContainerMapping: ...
+
+    @runtime_checkable
+    class ConfigObject(Protocol):
+        """Protocol for mapping-like configuration payloads."""
+
+        def get(
+            self,
+            key: str,
+            default: t.RuntimeAtomic | None = None,
+        ) -> t.RuntimeAtomic | None:
+            """Fetch a configuration value by key."""
+            ...
+
+        def keys(self) -> Iterable[str]:
+            """Return known configuration keys."""
+            ...
+
+        def items(self) -> Iterable[tuple[str, t.RuntimeAtomic]]:
+            """Return key/value entries for configuration payloads."""
+            ...
 
     @runtime_checkable
     class Flushable(Protocol):

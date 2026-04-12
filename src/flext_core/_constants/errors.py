@@ -13,18 +13,12 @@ from typing import Final, override
 class FlextConstantsErrors:
     """Error domain constants for structured error routing."""
 
-    _TEMPLATE_FAILED_WITH_ERROR: Final[str] = "Failed to {operation}: {error}"
-    _TEMPLATE_KEY_NOT_FOUND: Final[str] = "Key '{key}' not found"
-    _TEMPLATE_KEY_NOT_FOUND_AT_PATH: Final[str] = "Key '{key}' not found at '{path}'"
-    _TEMPLATE_FOUND_NONE: Final[str] = "found_none:{key}"
-    _TEMPLATE_INDEX_OUT_OF_RANGE: Final[str] = "Index {index} out of range"
-    _TEMPLATE_INVALID_INDEX: Final[str] = "Invalid index {index}"
-    ERR_TEMPLATE_FAILED_WITH_ERROR: Final[str] = _TEMPLATE_FAILED_WITH_ERROR
-    ERR_TEMPLATE_KEY_NOT_FOUND: Final[str] = _TEMPLATE_KEY_NOT_FOUND
-    ERR_TEMPLATE_KEY_NOT_FOUND_AT_PATH: Final[str] = _TEMPLATE_KEY_NOT_FOUND_AT_PATH
-    ERR_TEMPLATE_FOUND_NONE: Final[str] = _TEMPLATE_FOUND_NONE
-    ERR_TEMPLATE_INDEX_OUT_OF_RANGE: Final[str] = _TEMPLATE_INDEX_OUT_OF_RANGE
-    ERR_TEMPLATE_INVALID_INDEX: Final[str] = _TEMPLATE_INVALID_INDEX
+    ERR_TEMPLATE_FAILED_WITH_ERROR: Final[str] = "Failed to {operation}: {error}"
+    ERR_TEMPLATE_KEY_NOT_FOUND: Final[str] = "Key '{key}' not found"
+    ERR_TEMPLATE_KEY_NOT_FOUND_AT_PATH: Final[str] = "Key '{key}' not found at '{path}'"
+    ERR_TEMPLATE_FOUND_NONE: Final[str] = "found_none:{key}"
+    ERR_TEMPLATE_INDEX_OUT_OF_RANGE: Final[str] = "Index {index} out of range"
+    ERR_TEMPLATE_INVALID_INDEX: Final[str] = "Invalid index {index}"
     ERR_TEMPLATE_MISSING_VALUE: Final[str] = (
         "Template value '{key}' is required for template '{template}'"
     )
@@ -165,7 +159,7 @@ class FlextConstantsErrors:
     )
     ERR_COLLECTION_NO_MATCHING_ITEM_FOUND: Final[str] = "No matching item found"
     ERR_MAPPER_NOT_A_SEQUENCE: Final[str] = "Not a sequence"
-    ERR_MAPPER_FOUND_NONE_INDEX: Final[str] = _TEMPLATE_FOUND_NONE.format(key="index")
+    ERR_MAPPER_FOUND_NONE_INDEX: Final[str] = ERR_TEMPLATE_FOUND_NONE.format(key="index")
     ERR_INFRA_INVALID_HANDLER_MODE: Final[str] = (
         "handler_mode must be 'command' or 'query'"
     )

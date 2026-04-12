@@ -1,7 +1,7 @@
 """Comprehensive tests for FlextContext - Context Management.
 
 Module: flext_core.context
-Scope: FlextContext - hierarchical context management, correlation IDs, metadata
+Scope: p.Context - hierarchical context management, correlation IDs, metadata
 
 Tests FlextContext functionality including:
 - Context initialization and lifecycle
@@ -33,7 +33,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext
 from flext_tests import tm
-from tests import t, u
+from tests import p, t, u
 
 
 class TestFlextContext:
@@ -100,7 +100,7 @@ class TestFlextContext:
             ("application", "application_value"),
         ]
 
-    def test_context_initialization(self, test_context: FlextContext) -> None:
+    def test_context_initialization(self, test_context: p.Context) -> None:
         """Test context initialization."""
         tm.that(
             test_context,
@@ -121,7 +121,7 @@ class TestFlextContext:
     )
     def test_context_set_get_value(
         self,
-        test_context: FlextContext,
+        test_context: p.Context,
         key: str,
         value: SetGetInputValue,
         expected: SetGetExpectedValue,
@@ -138,23 +138,23 @@ class TestFlextContext:
         expected_value = expected
         u.Core.Tests.assert_context_get_success(context, key, expected_value)
 
-    def test_context_get_with_default(self, test_context: FlextContext) -> None:
+    def test_context_get_with_default(self, test_context: p.Context) -> None:
         """Test context get with default value using monadic operations."""
         context = test_context
         result = context.get("nonexistent_key")
         _ = u.Core.Tests.assert_failure(result)
         default_value = "default_value"
-        value = result.map_or(default_value)
+        value = result.value if result.success else default_value
         tm.that(value, eq=default_value)
 
-    def test_context_has_value(self, test_context: FlextContext) -> None:
+    def test_context_has_value(self, test_context: p.Context) -> None:
         """Test context has value check."""
         context = test_context
         context.set("test_key", "test_value").value
         tm.that(context.has("test_key"), eq=True)
         tm.that(not context.has("nonexistent_key"), eq=True)
 
-    def test_context_remove_value(self, test_context: FlextContext) -> None:
+    def test_context_remove_value(self, test_context: p.Context) -> None:
         """Test context remove value operation."""
         context = test_context
         context.set("test_key", "test_value").value
@@ -162,7 +162,7 @@ class TestFlextContext:
         context.remove("test_key")
         tm.that(not context.has("test_key"), eq=True)
 
-    def test_context_clear(self, test_context: FlextContext) -> None:
+    def test_context_clear(self, test_context: p.Context) -> None:
         """Test context clear operation."""
         context = test_context
         context.set("key1", "value1").value
@@ -171,7 +171,7 @@ class TestFlextContext:
         context.clear()
         tm.that(not any(context.has(k) for k in ["key1", "key2"]), eq=True)
 
-    def test_context_keys_values_items(self, test_context: FlextContext) -> None:
+    def test_context_keys_values_items(self, test_context: p.Context) -> None:
         """Test context keys, values, and items operations."""
         context = test_context
         context.set("key1", "value1").value
@@ -186,7 +186,7 @@ class TestFlextContext:
             eq=True,
         )
 
-    def test_context_nested_data(self, test_context: FlextContext) -> None:
+    def test_context_nested_data(self, test_context: p.Context) -> None:
         """Test context with nested data structures."""
         context = test_context
         nested_data: Mapping[str, Mapping[str, str | t.MutableStrMapping]] = {
@@ -205,7 +205,7 @@ class TestFlextContext:
             eq='{"user":{"id":"123","profile":{"name":"John Doe","email":"john@example.com"}}}',
         )
 
-    def test_context_merge(self, test_context: FlextContext) -> None:
+    def test_context_merge(self, test_context: p.Context) -> None:
         """Test context merging."""
         context1 = test_context
         context1.set("key1", "value1").value
@@ -218,7 +218,7 @@ class TestFlextContext:
         u.Core.Tests.assert_context_get_success(merged, "key2", "value2")
         u.Core.Tests.assert_context_get_success(merged, "key3", "value3")
 
-    def test_context_clone(self, test_context: FlextContext) -> None:
+    def test_context_clone(self, test_context: p.Context) -> None:
         """Test context cloning."""
         context = test_context
         context.set("key1", "value1").value
@@ -230,14 +230,14 @@ class TestFlextContext:
         cloned.set("key1", "modified_value").value
         u.Core.Tests.assert_context_get_success(context, "key1", "value1")
 
-    def test_context_validation(self, test_context: FlextContext) -> None:
+    def test_context_validation(self, test_context: p.Context) -> None:
         """Test context validation."""
         context = test_context
         context.set("valid_key", "valid_value").value
         result = context.validate_context()
         _ = u.Core.Tests.assert_success(result)
 
-    def test_context_validation_failure(self, test_context: FlextContext) -> None:
+    def test_context_validation_failure(self, test_context: p.Context) -> None:
         """Test context validation failure - empty key returns failure."""
         context = test_context
         result = context.set("", "empty_key")
@@ -248,7 +248,7 @@ class TestFlextContext:
             pytest.fail("Expected error message for invalid context key")
         tm.that(error_message, has="must be a non-empty string")
 
-    def test_context_thread_safety(self, test_context: FlextContext) -> None:
+    def test_context_thread_safety(self, test_context: p.Context) -> None:
         """Test context thread safety."""
         context = test_context
         results: MutableSequence[str] = []
@@ -267,7 +267,7 @@ class TestFlextContext:
         tm.that(len(results), eq=10)
         tm.that(all(r.startswith("value_") for r in results), eq=True)
 
-    def test_context_performance(self, test_context: FlextContext) -> None:
+    def test_context_performance(self, test_context: p.Context) -> None:
         """Test context performance."""
         context = test_context
         start_time = time.time()
@@ -277,7 +277,7 @@ class TestFlextContext:
             _ = u.Core.Tests.assert_success(result)
         tm.that(time.time() - start_time, lt=30.0)
 
-    def test_context_error_handling(self, test_context: FlextContext) -> None:
+    def test_context_error_handling(self, test_context: p.Context) -> None:
         """Test context error handling with r pattern."""
         context = test_context
         result = context.set("", "value")
@@ -291,7 +291,7 @@ class TestFlextContext:
     @pytest.mark.parametrize(("scope", "value"), ContextScenarios.SCOPE_CASES)
     def test_context_scoped_access(
         self,
-        test_context: FlextContext,
+        test_context: p.Context,
         scope: str,
         value: str,
     ) -> None:
@@ -308,7 +308,7 @@ class TestFlextContext:
         _ = u.Core.Tests.assert_success(scoped_result)
         tm.that(scoped_result.value, eq=value)
 
-    def test_context_metadata(self, test_context: FlextContext) -> None:
+    def test_context_metadata(self, test_context: p.Context) -> None:
         """Test context metadata."""
         context = test_context
         context.apply_metadata("created_at", "2025-01-01")
@@ -316,10 +316,11 @@ class TestFlextContext:
         created_at_result = context.resolve_metadata("created_at")
         _ = u.Core.Tests.assert_success(created_at_result)
         tm.that(created_at_result.value, eq="2025-01-01")
-        metadata = context._metadata_map()
-        tm.that("created_at" in metadata and "version" in metadata, eq=True)
+        version_result = context.resolve_metadata("version")
+        _ = u.Core.Tests.assert_success(version_result)
+        tm.that(version_result.value, eq="1.0.0")
 
-    def test_context_cleanup(self, test_context: FlextContext) -> None:
+    def test_context_cleanup(self, test_context: p.Context) -> None:
         """Test context cleanup."""
         context = test_context
         context.set("key1", "value1").value
@@ -334,7 +335,7 @@ class TestFlextContext:
     )
     def test_context_edge_case_special_characters(
         self,
-        test_context: FlextContext,
+        test_context: p.Context,
         key_name: str,
         special_key: str,
     ) -> None:
@@ -354,7 +355,7 @@ class TestFlextContext:
     )
     def test_context_edge_case_special_values(
         self,
-        test_context: FlextContext,
+        test_context: p.Context,
         value_name: str,
         special_value: str | NestedDictValue,
     ) -> None:
@@ -386,7 +387,7 @@ class TestFlextContext:
 
     def test_context_edge_case_duplicate_keys_overwrite(
         self,
-        test_context: FlextContext,
+        test_context: p.Context,
     ) -> None:
         """Test context behavior when overwriting existing keys."""
         context = test_context
@@ -399,7 +400,7 @@ class TestFlextContext:
         _ = u.Core.Tests.assert_success(result2)
         tm.that(result2.value, eq="value2")
 
-    def test_context_concurrent_reads(self, test_context: FlextContext) -> None:
+    def test_context_concurrent_reads(self, test_context: p.Context) -> None:
         """Test context with concurrent read operations."""
         context = test_context
         context.set("shared_key", "shared_value").value
@@ -418,7 +419,7 @@ class TestFlextContext:
             thread.join()
         tm.that(len(error_count), eq=0)
 
-    def test_context_concurrent_writes(self, test_context: FlextContext) -> None:
+    def test_context_concurrent_writes(self, test_context: p.Context) -> None:
         """Test context with concurrent write operations."""
         context = test_context
         error_count: MutableSequence[int] = []
@@ -441,7 +442,7 @@ class TestFlextContext:
 
     def test_context_multiple_sequential_operations(
         self,
-        test_context: FlextContext,
+        test_context: p.Context,
     ) -> None:
         """Test multiple sequential set/get/remove operations."""
         context = test_context
@@ -464,7 +465,7 @@ class TestFlextContext:
                 f"value_{i}",
             )
 
-    def test_context_get_metadata_nonexistent(self, test_context: FlextContext) -> None:
+    def test_context_get_metadata_nonexistent(self, test_context: p.Context) -> None:
         """Test getting metadata that doesn't exist."""
         context = test_context
         result = context.resolve_metadata("nonexistent_meta")
@@ -473,16 +474,16 @@ class TestFlextContext:
 
     def test_context_get_metadata_with_default(
         self,
-        test_context: FlextContext,
+        test_context: p.Context,
     ) -> None:
         """Test getting metadata with default value."""
         context = test_context
         result = context.resolve_metadata("nonexistent_meta")
         default_value = "default_value"
-        value = result.map_or(default_value)
+        value = result.value if result.success else default_value
         tm.that(value, eq=default_value)
 
-    def test_context_apply_resolve_metadata(self, test_context: FlextContext) -> None:
+    def test_context_apply_resolve_metadata(self, test_context: p.Context) -> None:
         """Test setting and getting metadata."""
         context = test_context
         context.apply_metadata("meta_key", "meta_value")
@@ -490,11 +491,11 @@ class TestFlextContext:
         _ = u.Core.Tests.assert_success(result)
         tm.that(result.value, eq="meta_value")
 
-    def test_context_get_all_metadata_empty(self, test_context: FlextContext) -> None:
+    def test_context_get_all_metadata_empty(self, test_context: p.Context) -> None:
         """Test getting all metadata when empty."""
         context = test_context
-        metadata = context._metadata_map()
-        tm.that(metadata, is_=dict)
+        result = context.resolve_metadata("meta_key")
+        _ = u.Core.Tests.assert_failure(result)
 
     def test_service_register_and_fetch_service(self) -> None:
         """Test Service.register_service and get_service."""
@@ -509,13 +510,13 @@ class TestFlextContext:
         with FlextContext.Service.service_context(service_name="temp-service"):
             pass
 
-    def test_context_remove_nonexistent(self, test_context: FlextContext) -> None:
+    def test_context_remove_nonexistent(self, test_context: p.Context) -> None:
         """Test removing a nonexistent key."""
         context = test_context
         context.remove("nonexistent_key")
         tm.that(not context.has("nonexistent_key"), eq=True)
 
-    def test_context_merge_empty_dicts(self, test_context: FlextContext) -> None:
+    def test_context_merge_empty_dicts(self, test_context: p.Context) -> None:
         """Test merging context with empty dictionary."""
         context = test_context
         context.set("key1", "value1").value
@@ -524,7 +525,7 @@ class TestFlextContext:
 
     def test_context_clone_then_clear_original(
         self,
-        test_context: FlextContext,
+        test_context: p.Context,
     ) -> None:
         """Test cloning, then clearing original."""
         context1 = test_context
@@ -535,7 +536,7 @@ class TestFlextContext:
         tm.that(not context1.has("key1"), eq=True)
         tm.that(context2.has("key1"), eq=True)
 
-    def test_context_export_after_clear(self, test_context: FlextContext) -> None:
+    def test_context_export_after_clear(self, test_context: p.Context) -> None:
         """Test exporting after clearing context."""
         context = test_context
         context.set("key1", "value1").value
@@ -543,7 +544,7 @@ class TestFlextContext:
         exported = context.export()
         tm.that(exported, is_=dict)
 
-    def test_context_merge_with_dict(self, test_context: FlextContext) -> None:
+    def test_context_merge_with_dict(self, test_context: p.Context) -> None:
         """Test merging context with dictionary."""
         context = test_context
         context.set("key1", "value1").value
@@ -552,7 +553,7 @@ class TestFlextContext:
         u.Core.Tests.assert_context_get_success(merged, "key2", "value2")
         u.Core.Tests.assert_context_get_success(merged, "key3", "value3")
 
-    def test_context_merge_with_context(self, test_context: FlextContext) -> None:
+    def test_context_merge_with_context(self, test_context: p.Context) -> None:
         """Test merging context with another context."""
         context1 = test_context
         context1.set("key1", "value1").value
@@ -562,7 +563,7 @@ class TestFlextContext:
         u.Core.Tests.assert_context_get_success(merged, "key1", "value1")
         u.Core.Tests.assert_context_get_success(merged, "key2", "value2")
 
-    def test_context_clone_independence(self, test_context: FlextContext) -> None:
+    def test_context_clone_independence(self, test_context: p.Context) -> None:
         """Test cloned context is independent."""
         context1 = test_context
         context1.set("key1", "value1").value
@@ -575,23 +576,23 @@ class TestFlextContext:
         tm.that(not context1.has("key3"), eq=True)
         tm.that(context2.has("key3"), eq=True)
 
-    def test_context_edge_case_none_value(self, test_context: FlextContext) -> None:
+    def test_context_edge_case_none_value(self, test_context: p.Context) -> None:
         """Test context with None value."""
         context = test_context
         config_map = t.ConfigMap(root={"key_none": None})
         result = context.set(config_map)
         _ = u.Core.Tests.assert_success(result)
 
-    def test_context_get_all_scopes(self, test_context: FlextContext) -> None:
+    def test_context_get_all_scopes(self, test_context: p.Context) -> None:
         """Test getting all scope registrations."""
         context = test_context
         context.set("key1", "value1").value
         context.set("key2", "value2").value
-        scopes = context._scope_payloads()
-        tm.that(scopes, none=False)
-        tm.that(scopes, is_=dict)
+        keys = context.keys()
+        tm.that("key1" in keys, eq=True)
+        tm.that("key2" in keys, eq=True)
 
-    def test_context_performance_timing(self, test_context: FlextContext) -> None:
+    def test_context_performance_timing(self, test_context: p.Context) -> None:
         """Test context performance tracking."""
         context = test_context
         start_time = time.time()
@@ -603,7 +604,7 @@ class TestFlextContext:
 
     def test_context_multiple_scopes_isolation(
         self,
-        test_context: FlextContext,
+        test_context: p.Context,
     ) -> None:
         """Test that values in different scopes are isolated."""
         context = test_context
@@ -632,13 +633,13 @@ class TestFlextContext:
         """Test Variables inner class Request access."""
         tm.that(FlextContext.Variables.Request, none=False)
 
-    def test_context_export_empty(self, test_context: FlextContext) -> None:
+    def test_context_export_empty(self, test_context: p.Context) -> None:
         """Test exporting empty context."""
         context = test_context
         exported = context.export()
         tm.that(exported, is_=dict)
 
-    def test_context_export_with_data(self, test_context: FlextContext) -> None:
+    def test_context_export_with_data(self, test_context: p.Context) -> None:
         """Test exporting context with data."""
         context = test_context
         context.set("key1", "value1").value
@@ -647,34 +648,34 @@ class TestFlextContext:
         tm.that(exported, none=False)
         tm.that(exported, is_=dict)
 
-    def test_context_clear_already_empty(self, test_context: FlextContext) -> None:
+    def test_context_clear_already_empty(self, test_context: p.Context) -> None:
         """Test clearing an already empty context."""
         context = test_context
         context.clear()
         tm.that(len(context.keys()), eq=0)
 
-    def test_context_values_method_empty(self, test_context: FlextContext) -> None:
+    def test_context_values_method_empty(self, test_context: p.Context) -> None:
         """Test context.values() on empty context."""
         context = test_context
         values = context.values()
         tm.that(values, is_=list)
         tm.that(len(values), eq=0)
 
-    def test_context_keys_method_empty(self, test_context: FlextContext) -> None:
+    def test_context_keys_method_empty(self, test_context: p.Context) -> None:
         """Test context.keys() on empty context."""
         context = test_context
         keys = context.keys()
         tm.that(keys, is_=list)
         tm.that(len(keys), eq=0)
 
-    def test_context_items_method_empty(self, test_context: FlextContext) -> None:
+    def test_context_items_method_empty(self, test_context: p.Context) -> None:
         """Test context.items() on empty context."""
         context = test_context
         items = context.items()
         tm.that(items, is_=list)
         tm.that(len(items), eq=0)
 
-    def test_context_cleanup_twice(self, test_context: FlextContext) -> None:
+    def test_context_cleanup_twice(self, test_context: p.Context) -> None:
         """Test cleanup called multiple times."""
         context = test_context
         context.set("key1", "value1").value

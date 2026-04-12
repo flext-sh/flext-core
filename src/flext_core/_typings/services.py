@@ -68,7 +68,11 @@ class FlextTypesServices:
             FlextTypesServices.ValueOrModel,
         ]
     )
-    type ConfigModelInput = ModelCarrier | FlextTypingContainers.ConfigMap
+    type ConfigModelInput = (
+        ModelCarrier
+        | FlextTypingContainers.ConfigMap
+        | Mapping[str, FlextTypesServices.RuntimeAtomic]
+    )
     type MetadataInput = (
         ModelCarrier
         | FlextTypingContainers.ConfigMap

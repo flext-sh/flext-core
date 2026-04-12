@@ -150,7 +150,7 @@ def test_execute_and_register_handler_failure_paths() -> None:
 
 def test_create_auto_discover_and_mode_mapping(monkeypatch: pytest.MonkeyPatch) -> None:
     def _register_handler_ok(
-        _self: FlextRegistry,
+        _self: p.Registry,
         handler: t.HandlerLike,
     ) -> r[m.RegistrationDetails]:
         return r[m.RegistrationDetails].ok(
@@ -197,7 +197,7 @@ def test_summary_error_paths_and_bindings_failures(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     def _register_handler_fail(
-        _self: FlextRegistry,
+        _self: p.Registry,
         _handler: t.HandlerLike,
     ) -> r[m.RegistrationDetails]:
         return r[m.RegistrationDetails].fail("x")

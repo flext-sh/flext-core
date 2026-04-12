@@ -18,19 +18,19 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextContainer, FlextContext
-from tests import c, r, t, u
+from tests import c, p, r, t, u
 
 pytest_plugins = ["flext_tests.conftest_plugin"]
 
 
 @pytest.fixture
-def test_context() -> FlextContext:
+def test_context() -> p.Context:
     """Provide FlextContext instance for testing."""
     return FlextContext()
 
 
 @pytest.fixture
-def clean_container() -> FlextContainer:
+def clean_container() -> p.Container:
     """Provide a clean FlextContainer instance for testing.
 
     Creates a container and clears all registered services for testing

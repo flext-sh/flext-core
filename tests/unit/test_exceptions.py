@@ -29,7 +29,7 @@ from hypothesis import given, settings, strategies as st
 
 from flext_core import e
 from flext_tests import tm
-from tests import c, m, t, u
+from tests import c, m, r, t, u
 
 
 class Teste:
@@ -57,24 +57,81 @@ class Teste:
         tm.that(result.failure, eq=True)
         tm.that(result.error or "", contains="Failed to register service")
         tm.that(result.error or "", contains="boom")
+        tm.that(result.error_code, eq=c.ErrorCode.OPERATION_ERROR)
+        tm.that(result.error_data, none=False)
+        if result.error_data is not None:
+            tm.that(result.error_data.get("operation"), eq="register service")
+            tm.that(result.error_data.get("reason"), eq="boom")
+            tm.that(
+                result.error_data.get("operation_description"),
+                contains="Operation name associated with the failure",
+            )
 
     def test_fail_not_found_returns_failure_result(self) -> None:
         """fail_not_found must return failed result for missing resource."""
         result = e.fail_not_found("service", "command_bus")
         tm.that(result.failure, eq=True)
         tm.that(result.error or "", contains="Service 'command_bus' not found")
+        tm.that(result.error_code, eq=c.ErrorCode.NOT_FOUND_ERROR)
+        tm.that(result.error_data, none=False)
+        if result.error_data is not None:
+            tm.that(result.error_data.get("resource_type"), eq="service")
+            tm.that(result.error_data.get("resource_id"), eq="command_bus")
+            tm.that(
+                result.error_data.get("resource_type_description"),
+                contains="Domain resource type that could not be located",
+            )
 
     def test_fail_type_mismatch_returns_failure_result(self) -> None:
         """fail_type_mismatch must return failed result for type mismatch."""
         result = e.fail_type_mismatch("FlextDispatcher", "str")
         tm.that(result.failure, eq=True)
         tm.that(result.error or "", contains="Service is not of type FlextDispatcher")
+        tm.that(result.error_code, eq=c.ErrorCode.TYPE_ERROR)
+        tm.that(result.error_data, none=False)
+        if result.error_data is not None:
+            tm.that(result.error_data.get("expected_type"), eq="FlextDispatcher")
+            tm.that(result.error_data.get("actual_type"), eq="str")
+            tm.that(
+                result.error_data.get("actual_type_description"),
+                contains="Actual runtime type name returned by resolution",
+            )
 
     def test_fail_validation_returns_failure_result(self) -> None:
         """fail_validation must return failed result with validation context."""
         result = e.fail_validation("name", "", error="empty")
         tm.that(result.failure, eq=True)
         tm.that(result.error or "", contains="validate name")
+        tm.that(result.error_code, eq=c.ErrorCode.VALIDATION_ERROR)
+        tm.that(result.error_data, none=False)
+        if result.error_data is not None:
+            tm.that(result.error_data.get("field"), eq="name")
+            tm.that(result.error_data.get("value"), eq="")
+            tm.that(result.error_data.get("cause"), eq="empty")
+            tm.that(
+                result.error_data.get("field_description"),
+                contains="Name of the input field that failed validation",
+            )
+
+    def test_result_from_exception_uses_public_exception_surface(self) -> None:
+        """from_exception must derive public error fields from BaseError."""
+        error = e.ValidationError(
+            "Validation failed",
+            field="email",
+            value="bad",
+            correlation_id="corr-123",
+        )
+
+        result = r[bool].from_exception(error)
+
+        tm.that(result.failure, eq=True)
+        tm.that(result.error, eq="Validation failed")
+        tm.that(result.error_code, eq=c.ErrorCode.VALIDATION_ERROR)
+        tm.that(result.error_data, none=False)
+        if result.error_data is not None:
+            tm.that(result.error_data.get("field"), eq="email")
+            tm.that(result.error_data.get("value"), eq="bad")
+            tm.that(result.error_data.get("correlation_id"), eq="corr-123")
 
     def test_timestamp_generation(self) -> None:
         """Test that timestamp is automatically generated."""

@@ -638,7 +638,7 @@ class TestFlextContainer:
 
     def test_scoped_container_with_context(
         self,
-        clean_container: FlextContainer,
+        clean_container: p.Container,
     ) -> None:
         """Test scoped container creation with FlextContext."""
         scoped = clean_container.scoped(

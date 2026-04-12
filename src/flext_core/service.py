@@ -10,7 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
+from importlib import import_module
 from types import ModuleType
 from typing import ClassVar, override
 
@@ -56,7 +57,6 @@ class FlextService[
         use_enum_values=True,
         validate_assignment=True,
     )
-    __pydantic_parent_namespace__: ClassVar[dict[str, type]] = {"p": p}
     # --- Service Bootstrap Configuration ---
     subproject: str | None = Field(
         default=None,
@@ -193,18 +193,54 @@ class FlextService[
     ) -> TResult:
         """Unwrap one successful execution result with the original generic type."""
         if execution_result.failure:
-            operation = "service execution"
-            reason = execution_result.error or c.ERR_SERVICE_EXECUTION_FAILED
-            params = m.OperationErrorParams(operation=operation, reason=reason)
-            raise e.BaseError(
-                e.render_error_template(
-                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-                    operation=operation,
-                    error=reason,
-                    params=params,
-                ),
-            )
+            raise FlextService._execution_failure_exception(execution_result)
         return execution_result.unwrap()
+
+    @staticmethod
+    def _execution_failure_exception[
+        TResult: t.ValueOrModel | Sequence[t.ValueOrModel],
+    ](
+        execution_result: p.Result[TResult],
+    ) -> e.BaseError:
+        """Convert a failed service result into the canonical public exception."""
+        operation = "service execution"
+        reason = execution_result.error or c.ERR_SERVICE_EXECUTION_FAILED
+        params = m.OperationErrorParams(operation=operation, reason=reason)
+        message = e.render_error_template(
+            c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+            operation=operation,
+            error=reason,
+            params=params,
+        )
+        result_error_data = execution_result.error_data
+        correlation_id = None
+        result_error_data_map: Mapping[str, t.MetadataValue | None] | None = None
+        if isinstance(result_error_data, Mapping):
+            result_error_data_map = result_error_data
+        elif isinstance(result_error_data, p.HasModelDump):
+            dumped_error_data = result_error_data.model_dump()
+            if isinstance(dumped_error_data, Mapping):
+                result_error_data_map = dumped_error_data
+        if result_error_data_map is not None:
+            correlation_value = result_error_data_map.get(c.ContextKey.CORRELATION_ID)
+            if isinstance(correlation_value, str) and correlation_value:
+                correlation_id = correlation_value
+        payload = {
+            key: u.normalize_to_metadata(value)
+            for key, value in e._template_values(params, {}).items()
+        }
+        if result_error_data_map is not None:
+            for key, value in result_error_data_map.items():
+                if key == c.ContextKey.CORRELATION_ID:
+                    continue
+                payload[str(key)] = u.normalize_to_metadata(value)
+        return e.create(
+            message,
+            error_code=execution_result.error_code or c.ErrorCode.OPERATION_ERROR,
+            correlation_id=correlation_id,
+            metadata=result_error_data,
+            **payload,
+        )
 
     def _get_execution_result(self) -> p.Result[TDomainResult]:
         """Return cached execution result or execute the service once."""
@@ -287,7 +323,8 @@ class FlextService[
             type: The settings class to use for this service
 
         """
-        return u._settings_base()
+        settings_module = import_module("flext_core.settings")
+        return settings_module.FlextSettings
 
     @field_validator("services", mode="before")
     @classmethod

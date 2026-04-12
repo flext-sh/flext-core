@@ -278,10 +278,10 @@ class Ex10FlextHandlers(Examples):
             "push_context.execution",
             handler.push_context(context_payload_event).success,
         )
-        pop_ctx_1 = handler.pop_context().unwrap_or(t.SettingsMap(root={}))
+        pop_ctx_1 = handler.pop_context().unwrap_or(t.ConfigMap(root={}))
         pop_ctx_1_val = pop_ctx_1.get("handler_name", "-")
         self.check("pop_context.1", pop_ctx_1_val)
-        pop_ctx_2 = handler.pop_context().unwrap_or(t.SettingsMap(root={}))
+        pop_ctx_2 = handler.pop_context().unwrap_or(t.ConfigMap(root={}))
         pop_ctx_2_val = pop_ctx_2.get("handler_name", "-")
         self.check("pop_context.2", pop_ctx_2_val)
 
@@ -338,7 +338,7 @@ class Ex10FlextHandlers(Examples):
         )
         di = u.DependencyIntegration
         di_container = di.create_container(
-            settings=t.SettingsMap(root={"env": env_value})
+            settings=t.ConfigMap(root={"env": env_value})
         )
         self.check("di.bind_configuration_exists", hasattr(di_container, "settings"))
         self.check(
@@ -358,7 +358,7 @@ class Ex10FlextHandlers(Examples):
         resource_provider = di.register_resource(
             di_container,
             resource_key,
-            lambda: t.SettingsMap(root={resource_key: resource_value}),
+            lambda: t.ConfigMap(root={resource_key: resource_value}),
         )
         self.check(
             "di.register_resource",
@@ -371,7 +371,7 @@ class Ex10FlextHandlers(Examples):
             duplicate_error = f"{type(exc).__name__}:{exc}"
         self.check("di.duplicate_error", duplicate_error)
         bridge, services_mod, resources_mod = di.create_layered_bridge(
-            t.SettingsMap(root={self.rand_str(2): self.rand_str(2)}),
+            t.ConfigMap(root={self.rand_str(2): self.rand_str(2)}),
         )
         self.check("di.layered.bridge", bridge.__class__.__name__)
         self.check("di.layered.services", services_mod.__class__.__name__)
@@ -387,7 +387,7 @@ class Ex10FlextHandlers(Examples):
         u.Integration.track_domain_event(
             event_name,
             aggregate_id=aggregate_id,
-            event_data=t.SettingsMap(root={self.rand_str(3): self.rand_int(1, 9)}),
+            event_data=t.ConfigMap(root={self.rand_str(3): self.rand_int(1, 9)}),
         )
         u.Integration.setup_service_infrastructure(
             service_name=service_name,
@@ -405,7 +405,7 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "protocol.handler.false",
-            not u.handler(t.SettingsMap(root={})),
+            not u.handler(t.ConfigMap(root={})),
         )
 
     def demo_runtime_result_and_utilities(self) -> None:
@@ -484,7 +484,7 @@ class Ex10FlextHandlers(Examples):
             "mixin.ensure_result.result",
             r[int].ok(ensured_result).unwrap_or(-1) == ensured_result,
         )
-        self.check("mixin.to_dict", t.SettingsMap(root={dict_key: dict_value}).root)
+        self.check("mixin.to_dict", t.ConfigMap(root={dict_key: dict_value}).root)
         generated_a = u.generate_id()
         generated_b = u.generate_id()
         self.check(

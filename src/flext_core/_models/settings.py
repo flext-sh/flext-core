@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Annotated, ClassVar, Final, Self
+from typing import Annotated, ClassVar, Final, Self
 
 from pydantic import (
     AliasChoices,
@@ -24,9 +24,7 @@ from flext_core import (
     c,
     t,
 )
-
-if TYPE_CHECKING:
-    from flext_core import p
+from flext_core._protocols.settings import FlextProtocolsSettings
 
 
 class FlextModelsSettings:
@@ -45,7 +43,8 @@ class FlextModelsSettings:
         )
 
         settings_class: Annotated[
-            t.SettingsClass, Field(description="Settings class to instantiate")
+            type[FlextProtocolsSettings.SettingsType],
+            Field(description="Settings class to instantiate"),
         ]
         env_prefix: Annotated[
             str,
@@ -62,8 +61,8 @@ class FlextModelsSettings:
             ),
         ] = None
 
-        def create_settings(self) -> p.Settings:
-            return self.settings_class()
+        def create_settings(self) -> FlextProtocolsSettings.Settings:
+            return self.settings_class.fetch_global()
 
     class RetryConfiguration(
         FlextModelsBase.ArbitraryTypesModel,

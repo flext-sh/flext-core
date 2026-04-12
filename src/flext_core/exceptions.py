@@ -51,15 +51,16 @@ class FlextExceptions:
                 payload[str(key)] = FlextRuntime.normalize_to_container(
                     FlextRuntime.normalize_to_metadata(value)
                 )
-            model_fields = getattr(type(params), "model_fields", None)
-            if isinstance(model_fields, Mapping):
-                for field_name, field_info in model_fields.items():
-                    field_help = getattr(field_info, "description", None) or getattr(
-                        field_info,
+            schema = params.model_json_schema()
+            properties = schema.get("properties")
+            if isinstance(properties, Mapping):
+                for field_name, field_schema in properties.items():
+                    if not isinstance(field_schema, Mapping):
+                        continue
+                    field_help = field_schema.get("description") or field_schema.get(
                         "title",
-                        None,
                     )
-                    if field_help is not None:
+                    if isinstance(field_help, str) and field_help:
                         payload[f"{field_name}_description"] = field_help
         for key, value in values.items():
             payload[str(key)] = FlextRuntime.normalize_to_container(
@@ -113,6 +114,15 @@ class FlextExceptions:
         }
         return e.render_template(template, params=params, **payload_mapping)
 
+    @staticmethod
+    def _result_error_data(
+        params: t.ModelCarrier | None,
+        **values: t.MetadataOrValue | None,
+    ) -> t.SettingsMap | None:
+        """Build canonical error_data payload from params and explicit values."""
+        payload = e._template_values(params, values)
+        return payload or None
+
     # ------------------------------------------------------------------ #
     # Centralized fail_* factory helpers — return r[T].fail(msg) directly #
     # Eliminates the 4-line boilerplate across all modules.               #
@@ -144,7 +154,8 @@ class FlextExceptions:
         )
         return r[T].fail(
             msg,
-            error_code=error_code,
+            error_code=error_code or c.ErrorCode.OPERATION_ERROR,
+            error_data=e._result_error_data(params),
             exception=exc if isinstance(exc, BaseException) else None,
         )
 
@@ -171,7 +182,11 @@ class FlextExceptions:
             name=resource_id,
             params=params,
         )
-        return r[T].fail(msg, error_code=error_code)
+        return r[T].fail(
+            msg,
+            error_code=error_code or c.ErrorCode.NOT_FOUND_ERROR,
+            error_data=e._result_error_data(params),
+        )
 
     @staticmethod
     def fail_type_mismatch[T](
@@ -198,7 +213,11 @@ class FlextExceptions:
             type_name=expected,
             params=params,
         )
-        return r[T].fail(msg, error_code=error_code)
+        return r[T].fail(
+            msg,
+            error_code=error_code or c.ErrorCode.TYPE_ERROR,
+            error_data=e._result_error_data(params),
+        )
 
     @staticmethod
     def fail_validation[T](
@@ -232,7 +251,11 @@ class FlextExceptions:
         )
         return r[T].fail(
             base_msg,
-            error_code=error_code,
+            error_code=error_code or c.ErrorCode.VALIDATION_ERROR,
+            error_data=e._result_error_data(
+                params,
+                cause=str(error) if error is not None else None,
+            ),
             exception=error if isinstance(error, BaseException) else None,
         )
 
@@ -378,6 +401,18 @@ class FlextExceptions:
                 error_context[key] = FlextRuntime.normalize_to_container(
                     FlextRuntime.normalize_to_metadata(attr_val)
                 )
+        schema = resolved.model_json_schema()
+        properties = schema.get("properties")
+        if isinstance(properties, Mapping):
+            for key in param_keys:
+                field_schema = properties.get(key)
+                if not isinstance(field_schema, Mapping):
+                    continue
+                field_help = field_schema.get("description") or field_schema.get(
+                    "title",
+                )
+                if isinstance(field_help, str) and field_help:
+                    error_context[f"{key}_description"] = field_help
         return (resolved, error_context or None, preserved_metadata, correlation_id_str)
 
     @staticmethod

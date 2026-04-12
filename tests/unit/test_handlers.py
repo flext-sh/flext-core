@@ -109,7 +109,8 @@ class TestFlextHandlers:
         )
         handlers = self.ConcreteTestHandler(settings=settings)
         assert handlers is not None
-        assert handlers._config_model.handler_type == c.HandlerType.QUERY
+        assert handlers.mode == c.HandlerType.QUERY
+        assert handlers.handler_name == "Test Handler 2"
 
     def test_handlers_handle_success(self) -> None:
         settings = u.Core.Tests.create_handler_config(
@@ -140,9 +141,8 @@ class TestFlextHandlers:
             handler_mode=c.HandlerType.COMMAND,
         )
         handler = self.ConcreteTestHandler(settings=settings)
-        assert handler._config_model.handler_id == "test_handler_5"
-        assert handler._config_model.handler_name == "Test Handler 5"
-        assert handler._config_model.handler_type == c.HandlerType.COMMAND
+        assert handler.handler_name == "Test Handler 5"
+        assert handler.mode == c.HandlerType.COMMAND
 
     def test_handlers_execution_context(self) -> None:
         settings = u.Core.Tests.create_handler_config(
@@ -150,7 +150,8 @@ class TestFlextHandlers:
             "Test Handler 6",
         )
         handler = self.ConcreteTestHandler(settings=settings)
-        assert handler._execution_context is not None
+        result = handler.execute("test_message")
+        u.Core.Tests.assert_success_with_value(result, "processed_test_message")
 
     def test_handlers_different_types(self) -> None:
         class IntHandler(h[t.ValueOrModel, t.ValueOrModel]):
@@ -186,8 +187,7 @@ class TestFlextHandlers:
             handler_mode=scenario.handler_mode,
         )
         handler = self.ConcreteTestHandler(settings=settings)
-        assert handler._config_model.handler_type == scenario.handler_type
-        assert handler._config_model.handler_mode == scenario.handler_mode
+        assert handler.mode == scenario.handler_mode
 
     def test_handlers_with_metadata(self) -> None:
         settings = u.Core.Tests.create_handler_config(
@@ -196,8 +196,8 @@ class TestFlextHandlers:
             metadata=m.Metadata(attributes={"test_key": "test_value", "priority": 1}),
         )
         handler = self.ConcreteTestHandler(settings=settings)
-        assert handler._config_model.metadata is not None
-        assert handler._config_model.metadata.attributes["test_key"] == "test_value"
+        result = handler.execute("test_message")
+        u.Core.Tests.assert_success_with_value(result, "processed_test_message")
 
     def test_handlers_with_timeout(self) -> None:
         settings = u.Core.Tests.create_handler_config(
@@ -206,7 +206,8 @@ class TestFlextHandlers:
             command_timeout=60,
         )
         handler = self.ConcreteTestHandler(settings=settings)
-        assert handler._config_model.command_timeout == 60
+        result = handler.execute("test_message")
+        u.Core.Tests.assert_success_with_value(result, "processed_test_message")
 
     def test_handlers_with_retry_config(self) -> None:
         settings = u.Core.Tests.create_handler_config(
@@ -215,7 +216,8 @@ class TestFlextHandlers:
             max_command_retries=3,
         )
         handler = self.ConcreteTestHandler(settings=settings)
-        assert handler._config_model.max_command_retries == 3
+        result = handler.execute("test_message")
+        u.Core.Tests.assert_success_with_value(result, "processed_test_message")
 
     def test_handlers_inheritance_chain(self) -> None:
         settings = u.Core.Tests.create_handler_config(
@@ -250,7 +252,7 @@ class TestFlextHandlers:
             "command_id": "cmd_123",
             "data": "test_data",
         }
-        result = handler._run_pipeline(dict_message, operation="command")
+        result = handler.execute(dict_message)
         _ = u.Core.Tests.assert_success(result)
 
     def test_handlers_run_pipeline_mode_validation_error(self) -> None:

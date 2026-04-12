@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from types import TracebackType
 from typing import Annotated, ClassVar, Self, TypeIs, cast, overload, override
 
@@ -110,6 +110,42 @@ class FlextResult[T](BaseModel):
             dump = error_data.model_dump()
             return t.SettingsMap(dump)
         return t.SettingsMap(dict(error_data))
+
+    @staticmethod
+    def _exception_message(exception: BaseException | None) -> str | None:
+        """Extract a stable message from a structured or plain exception."""
+        if exception is None:
+            return None
+        message = getattr(exception, "message", None)
+        if isinstance(message, str) and message:
+            return message
+        text = str(exception)
+        return text or None
+
+    @staticmethod
+    def _exception_error_code(exception: BaseException | None) -> str | None:
+        """Extract structured error code when present on an exception."""
+        if exception is None:
+            return None
+        error_code = getattr(exception, "error_code", None)
+        if isinstance(error_code, str) and error_code:
+            return error_code
+        return None
+
+    @staticmethod
+    def _exception_error_data(exception: BaseException | None) -> t.SettingsMap | None:
+        """Extract structured metadata attributes from an exception."""
+        if exception is None:
+            return None
+        metadata = getattr(exception, "metadata", None)
+        attributes = getattr(metadata, c.FIELD_ATTRIBUTES, None)
+        if not isinstance(attributes, Mapping):
+            return None
+        payload = {str(key): value for key, value in attributes.items()}
+        correlation_id = getattr(exception, "correlation_id", None)
+        if isinstance(correlation_id, str) and correlation_id:
+            payload.setdefault(c.ContextKey.CORRELATION_ID, correlation_id)
+        return t.SettingsMap(payload)
 
     def __init__(
         self,
@@ -270,16 +306,39 @@ class FlextResult[T](BaseModel):
             Failed FlextResult instance
 
         """
-        error_msg = error if error is not None else ""
+        error_msg = error if error is not None else cls._exception_message(exception) or ""
+        resolved_error_code = error_code or cls._exception_error_code(exception)
+        resolved_error_data = (
+            error_data
+            if error_data is not None
+            else cls._exception_error_data(exception)
+        )
         result: Self = cls(
-            error_code=error_code,
-            error_data=error_data,
+            error_code=resolved_error_code,
+            error_data=resolved_error_data,
             error=error_msg,
             success=False,
         )
         result._result = Failure(error_msg)
         result._exception = exception
         return result
+
+    @classmethod
+    def from_exception(
+        cls,
+        exception: BaseException,
+        *,
+        error: str | None = None,
+        error_code: str | None = None,
+        error_data: t.ResultErrorData | t.SettingsModelInput | None = None,
+    ) -> Self:
+        """Create a failed result directly from an exception public surface."""
+        return cls.fail(
+            error,
+            error_code=error_code,
+            error_data=error_data,
+            exception=exception,
+        )
 
     @staticmethod
     def from_validation[ModelT: t.ModelCarrier](

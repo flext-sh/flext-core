@@ -283,7 +283,7 @@ class UserService(s):
         self.container = FlextContainer.get_global()
         self.logger = self._get_logger()
 
-    def _get_logger(self) -> FlextLogger:
+    def _get_logger(self) -> p.Logger:
         result = self.container.get("logger")
         return result.value if result.is_success else u.fetch_logger(__name__)
 

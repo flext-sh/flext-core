@@ -113,12 +113,12 @@ class TestDispatcherFullCoverage:
         return _FakeRoutable()
 
     @pytest.fixture
-    def dispatcher(self) -> FlextDispatcher:
+    def dispatcher(self) -> p.Dispatcher:
         return FlextDispatcher()
 
     def test_strict_registration_and_dispatch(
         self,
-        dispatcher: FlextDispatcher,
+        dispatcher: p.Dispatcher,
     ) -> None:
         handler = self._SampleHandler()
         res = dispatcher.register_handler(handler)
@@ -134,7 +134,7 @@ class TestDispatcherFullCoverage:
             fail_res.error is not None and "no handler found" in fail_res.error.lower()
         )
 
-    def test_invalid_registration_attempts(self, dispatcher: FlextDispatcher) -> None:
+    def test_invalid_registration_attempts(self, dispatcher: p.Dispatcher) -> None:
         assert dispatcher.register_handler(
             self._force_handler("not-a-handler"),
         ).failure
@@ -150,7 +150,7 @@ class TestDispatcherFullCoverage:
             self._force_handler(nameless_handler),
         ).failure
 
-    def test_event_publishing_strict(self, dispatcher: FlextDispatcher) -> None:
+    def test_event_publishing_strict(self, dispatcher: p.Dispatcher) -> None:
         handler = self._EventHandler()
         registration = dispatcher.register_handler(handler, is_event=True)
         assert registration.success
@@ -166,7 +166,7 @@ class TestDispatcherFullCoverage:
         batch_res = dispatcher.publish([evt, evt])
         assert batch_res.success
 
-    def test_handler_attribute_discovery(self, dispatcher: FlextDispatcher) -> None:
+    def test_handler_attribute_discovery(self, dispatcher: p.Dispatcher) -> None:
         res = dispatcher.register_handler(self._PredicateHandler())
         assert res.success
         assert dispatcher.dispatch(
@@ -175,7 +175,7 @@ class TestDispatcherFullCoverage:
 
     def test_query_handler_can_return_config_map(
         self,
-        dispatcher: FlextDispatcher,
+        dispatcher: p.Dispatcher,
     ) -> None:
         """Dispatch should preserve BaseModel payloads allowed by the protocol."""
         registration = dispatcher.register_handler(self._QueryHandler())
@@ -188,7 +188,7 @@ class TestDispatcherFullCoverage:
 
     def test_callable_registration_with_attribute(
         self,
-        dispatcher: FlextDispatcher,
+        dispatcher: p.Dispatcher,
     ) -> None:
         def func_handler(msg: TestDispatcherFullCoverage._SampleCommand) -> str:
             _ = msg
@@ -204,11 +204,11 @@ class TestDispatcherFullCoverage:
             == "func:ok"
         )
 
-    def test_dispatch_invalid_input_types(self, dispatcher: FlextDispatcher) -> None:
+    def test_dispatch_invalid_input_types(self, dispatcher: p.Dispatcher) -> None:
         assert dispatcher.dispatch(self._force_routable(None)).failure
         assert dispatcher.dispatch(self._force_routable("not-a-model")).failure
 
-    def test_exception_handling_in_dispatch(self, dispatcher: FlextDispatcher) -> None:
+    def test_exception_handling_in_dispatch(self, dispatcher: p.Dispatcher) -> None:
         def breaking_handler(msg: TestDispatcherFullCoverage._SampleCommand) -> str:
             _ = msg
             error_msg = "broken"
