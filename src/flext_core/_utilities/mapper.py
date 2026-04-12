@@ -77,8 +77,8 @@ class FlextUtilitiesMapper:
                 map_keys,
             )
             if mapped.success:
-                mapped_value = mapped.value
-                return {str(key): value for key, value in mapped_value.items()}
+                mapped_value: t.MutableContainerMapping = mapped.value
+                return mapped_value
         return result
 
     @staticmethod
@@ -152,6 +152,28 @@ class FlextUtilitiesMapper:
         return FlextUtilitiesMapper._apply_strip_empty(step, strip_empty=strip_empty)
 
     @staticmethod
+    def _success_value_result(value: t.ValueOrModel) -> r[t.ValueOrModel]:
+        """Create a successful mapper result with concrete value typing."""
+        return r[t.ValueOrModel](value=value, success=True)
+
+    @staticmethod
+    def _normalize_accessible_value(
+        value: object,
+    ) -> t.RuntimeAtomic | t.RecursiveContainer:
+        """Normalize protocol-accessible values to canonical runtime/container shapes."""
+        if value is None:
+            return ""
+        if FlextUtilitiesGuardsTypeModel.base_model(value):
+            return value
+        if isinstance(value, p.HasModelDump):
+            return FlextRuntime.normalize_to_container(value.model_dump())
+        if isinstance(value, p.ValidatorSpec):
+            return str(value)
+        if FlextUtilitiesGuards.container(value):
+            return value
+        return str(value)
+
+    @staticmethod
     def _extract_field_value(
         item: t.ValueOrModel | t.ContainerMapping | Mapping[str, t.ValueOrModel],
         field_name: str,
@@ -185,8 +207,8 @@ class FlextUtilitiesMapper:
                 marker + e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
             )
         if FlextUtilitiesGuards.container(raw):
-            return r[t.ValueOrModel].ok(raw)
-        return r[t.ValueOrModel].ok(str(raw))
+            return FlextUtilitiesMapper._success_value_result(raw)
+        return FlextUtilitiesMapper._success_value_result(str(raw))
 
     @staticmethod
     def _extract_get_value(
@@ -244,7 +266,7 @@ class FlextUtilitiesMapper:
                                 c.ERR_TEMPLATE_FOUND_NONE, key=key_part
                             ),
                         )
-                    return r[t.ValueOrModel].ok(val)
+                    return FlextUtilitiesMapper._success_value_result(val)
         return r[t.ValueOrModel].fail_op(
             "extract key",
             e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part),
@@ -276,7 +298,7 @@ class FlextUtilitiesMapper:
                         "extract array index value",
                         c.ERR_MAPPER_FOUND_NONE_INDEX,
                     )
-                return r[t.ValueOrModel].ok(item)
+                return FlextUtilitiesMapper._success_value_result(item)
             return r[t.ValueOrModel].fail_op(
                 "extract array index",
                 e.render_template(
@@ -345,7 +367,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_raw(
-        data: p.AccessibleData,
+        data: p.AccessibleData | t.ConfigModelInput,
         key: str,
         *,
         default: t.RuntimeAtomic | None = None,
@@ -358,13 +380,17 @@ class FlextUtilitiesMapper:
             case dict() | Mapping():
                 if key not in data:
                     return fallback
-                return FlextRuntime.normalize_to_container(data[key])
+                return FlextUtilitiesMapper._normalize_accessible_value(data[key])
             case t.ConfigMap() | t.Dict():
                 if key not in data.root:
                     return fallback
-                return FlextRuntime.normalize_to_container(data.root[key])
+                return FlextUtilitiesMapper._normalize_accessible_value(
+                    data.root[key],
+                )
             case _ if hasattr(data, key):
-                return FlextRuntime.normalize_to_container(getattr(data, key))
+                return FlextUtilitiesMapper._normalize_accessible_value(
+                    getattr(data, key),
+                )
             case _:
                 return fallback
 
@@ -479,7 +505,7 @@ class FlextUtilitiesMapper:
                     message=msg,
                 ),
             )
-        return r[t.ValueOrModel].ok(default)
+        return FlextUtilitiesMapper._success_value_result(default)
 
     @staticmethod
     def _extract_resolve_path_part(
@@ -555,20 +581,19 @@ class FlextUtilitiesMapper:
         try:
             parts = path.split(separator)
             current: t.ValueOrModel | None = None
-            match data:
-                case m.BaseModel():
-                    current = data
-                case Mapping():
-                    config_map = t.ConfigMap(
-                        root={str(k): v for k, v in data.items()},
-                    )
-                    current = FlextRuntime.normalize_to_container(config_map)
-                case p.HasModelDump():
-                    current = FlextRuntime.normalize_to_container(data.model_dump())
-                case p.ValidatorSpec():
-                    current = str(data)
-                case _:
-                    current = data
+            if FlextUtilitiesGuardsTypeModel.base_model(data):
+                current = data
+            elif isinstance(data, Mapping):
+                config_map = t.ConfigMap(
+                    root={str(k): v for k, v in data.items()},
+                )
+                current = FlextRuntime.normalize_to_container(config_map)
+            elif isinstance(data, p.HasModelDump):
+                current = FlextRuntime.normalize_to_container(data.model_dump())
+            elif isinstance(data, p.ValidatorSpec):
+                current = str(data)
+            elif FlextUtilitiesGuards.container(data):
+                current = data
 
             for i, part in enumerate(parts):
                 if current is None:
@@ -597,8 +622,8 @@ class FlextUtilitiesMapper:
                     required=required,
                 )
             if FlextUtilitiesGuards.container(current):
-                return r[t.ValueOrModel].ok(current)
-            return r[t.ValueOrModel].ok(str(current))
+                return FlextUtilitiesMapper._success_value_result(current)
+            return FlextUtilitiesMapper._success_value_result(str(current))
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as exc:
             params = m.OperationErrorParams(operation="extract", reason=str(exc))
             return r[t.ValueOrModel].fail_op(
@@ -615,7 +640,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def map_get(
-        data: p.AccessibleData,
+        data: p.AccessibleData | t.ConfigModelInput,
         key: str,
         *,
         default: t.ValueOrModel | None = None,
@@ -693,15 +718,11 @@ class FlextUtilitiesMapper:
     ) -> t.ValueOrModel | None:
         """Extract a value by key from a Mapping or BaseModel."""
         fallback: t.ValueOrModel | None = default
-        match data_or_items:
-            case Mapping() if FlextUtilitiesGuardsTypeModel.configuration_mapping(
-                data_or_items
-            ):
-                data: p.AccessibleData = data_or_items
-            case m.BaseModel():
-                data = data_or_items
-            case _:
-                return fallback
+        data: p.AccessibleData | t.ConfigModelInput
+        if FlextUtilitiesGuardsTypeModel.configuration_mapping(data_or_items) or FlextUtilitiesGuardsTypeModel.base_model(data_or_items):
+            data = data_or_items
+        else:
+            return fallback
         value = FlextUtilitiesMapper.map_get(data, key, default=default)
         if value is None:
             return fallback

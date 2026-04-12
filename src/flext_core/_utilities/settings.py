@@ -142,8 +142,7 @@ class FlextUtilitiesSettings:
                     "resolve registered config factory",
                     resolved.error or c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
                 )
-            registered_successfully: bool = True
-            return r[bool].ok(registered_successfully)
+            return r[bool](value=True, success=True)
         except (
             AttributeError,
             TypeError,
