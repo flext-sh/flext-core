@@ -1,4 +1,4 @@
-<!-- Generated from docs/guides/configuration.md for flext-core. -->
+<!-- Generated from docs/guides/settings.md for flext-core. -->
 
 <!-- Source of truth: workspace docs/guides/. -->
 

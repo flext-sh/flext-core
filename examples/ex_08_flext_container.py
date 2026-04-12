@@ -54,16 +54,16 @@ class Ex08FlextContainer(Examples):
             lambda: fluent_resource_value,
             kind="resource",
         )
-        with_settings_result = container.settingsure({"max_factories": max_factories})
+        with_settings_result = container.configure({"max_factories": max_factories})
         self.check("with_service.returns_self", with_service_result is container)
         self.check("with_factory.returns_self", with_factory_result is container)
         self.check("with_resource.returns_self", with_resource_result is container)
         self.check("with_settings.returns_self", with_settings_result is container)
-        settingsured_max_services = self.rand_int(1, 1000)
-        settingsured_factory_caching = self.rand_bool()
-        container.settingsure({
-            "max_services": settingsured_max_services,
-            "enable_factory_caching": settingsured_factory_caching,
+        configured_max_services = self.rand_int(1, 1000)
+        configured_factory_caching = self.rand_bool()
+        container.configure({
+            "max_services": configured_max_services,
+            "enable_factory_caching": configured_factory_caching,
         })
         settings_map = container.resolve_settings()
         max_services = settings_map["max_services"]
@@ -75,12 +75,12 @@ class Ex08FlextContainer(Examples):
             else False
         )
         self.check(
-            "settingsure.resolve_settings.max_services_matches",
-            max_services_num == settingsured_max_services,
+            "configure.resolve_settings.max_services_matches",
+            max_services_num == configured_max_services,
         )
         self.check(
-            "settingsure.resolve_settings.enable_factory_caching_matches",
-            factory_cache_flag == settingsured_factory_caching,
+            "configure.resolve_settings.enable_factory_caching_matches",
+            factory_cache_flag == configured_factory_caching,
         )
         self.check(
             "with_service.get.value_matches",
@@ -122,7 +122,7 @@ class Ex08FlextContainer(Examples):
             "initialize_registrations.list_services_empty",
             len(container.list_services()),
         )
-        container.sync_settings_to_di()
+        container.sync_config_to_di()
         container.register_existing_providers()
         container.register_core_services()
         self.check(

@@ -81,7 +81,7 @@ if _t.TYPE_CHECKING:
         Ex14GetUserQuery,
         Ex14UserDTO,
     )
-    from examples._models.exconfig import ExConfigAppConfig
+    from examples._models.exsettings import ExSettingsAppSettings
     from examples._models.output import ExamplesFlextCoreModelsOutput
     from examples._models.shared import SharedHandle, SharedPerson
     from examples.models import ExamplesFlextCoreModels, c, m
@@ -175,7 +175,7 @@ __all__ = [
     "Ex14CreateUserCommand",
     "Ex14GetUserQuery",
     "Ex14UserDTO",
-    "ExConfigAppConfig",
+    "ExSettingsAppSettings",
     "ExamplesFlextCoreModels",
     "ExamplesFlextCoreModelsErrors",
     "ExamplesFlextCoreModelsEx00",

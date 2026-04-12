@@ -60,8 +60,8 @@ class FlextModelsExceptionParams:
             Field(
                 default=None,
                 strict=True,
-                description="Configuration key associated with the error.",
-                title="Config Key",
+                description="Settings key associated with the error.",
+                title="Settings Key",
                 examples=["database_url"],
             ),
         ]
@@ -70,8 +70,8 @@ class FlextModelsExceptionParams:
             Field(
                 default=None,
                 strict=True,
-                description="Configuration source where the invalid value originated.",
-                title="Config Source",
+                description="Settings source where the invalid value originated.",
+                title="Settings Source",
                 examples=[".env"],
             ),
         ]

@@ -113,7 +113,7 @@ $ grep -rn "\.dict()\|\.parse_obj()" src/flext_core/*.py
 **Source Code Evidence** (settings.py:178-200):
 
 ```python
-model_config = SettingsConfigDict(
+model_config = ConfigDict(
     case_sensitive=False,
     env_prefix=FlextConstants.ENV_PREFIX,
     env_file=FlextConstants.ENV_FILE_DEFAULT,
@@ -138,7 +138,7 @@ model_config = SettingsConfigDict(
 
 **Verification**: ✅ ACCURATE
 
-- ConfigDict/SettingsConfigDict used throughout
+- ConfigDict/ConfigDict used throughout
 - **Zero instances of `class Config:`** (old v1 pattern)
 - Comprehensive configuration with 15+ settings
 
@@ -257,19 +257,19 @@ $ grep -n "Annotated\[" src/flext_core/typings.py | head -5
 **Guide Claims**:
 
 - Use `pydantic_settings.BaseSettings`
-- Use `SettingsConfigDict` for configuration
+- Use `ConfigDict` for configuration
 - Support environment variables with prefixes
 
 **Source Code Evidence** (settings.py:23, 39):
 
 ```python
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, ConfigDict
 
 
 class FlextSettings(BaseSettings):
     """Configuration management with Pydantic validation."""
 
-    model_config = SettingsConfigDict(
+    model_config = ConfigDict(
         case_sensitive=False,
         env_prefix=FlextConstants.ENV_PREFIX,  # "FLEXT_"
         env_file=FlextConstants.ENV_FILE_DEFAULT,
@@ -282,7 +282,7 @@ class FlextSettings(BaseSettings):
 **Verification**: ✅ ACCURATE
 
 - BaseSettings imported and used (settings.py:23, 39)
-- SettingsConfigDict with comprehensive configuration (178-200)
+- ConfigDict with comprehensive configuration (178-200)
 - Environment prefix "FLEXT\_" configured
 - Pattern perfectly matches guide examples
 
@@ -385,7 +385,7 @@ $ grep -rn "@validator" src/flext_core/*.py | grep -v "@field_validator\|@model_
 
 # V1 Config class check
 $ grep -rn "class Config:" src/flext_core/*.py
-# NO RESULTS - Only ConfigDict/SettingsConfigDict used
+# NO RESULTS - Only ConfigDict/ConfigDict used
 ```
 
 **Evidence Summary**:
@@ -408,7 +408,7 @@ ______________________________________________________________________
 | ----------------------------- | ----------- | -------------------- | -------- |
 | model_dump()                  | 7           | models.py            | ✅ 100%  |
 | model_validate()              | 7           | models.py, settings.py | ✅ 100%  |
-| ConfigDict/SettingsConfigDict | 2+          | settings.py, models.py | ✅ 100%  |
+| ConfigDict/ConfigDict | 2+          | settings.py, models.py | ✅ 100%  |
 | @field_validator              | 20+         | settings.py, models.py | ✅ 100%  |
 | @model_validator              | 10+         | settings.py, models.py | ✅ 100%  |
 | @computed_field               | 10          | settings.py, models.py | ✅ 100%  |

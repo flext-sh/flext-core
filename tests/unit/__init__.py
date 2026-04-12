@@ -26,7 +26,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "test_collection_utilities_coverage_100",
             ),
             ".test_collections_coverage_100": ("test_collections_coverage_100",),
-            ".test_config": ("test_config",),
             ".test_constants_new": ("test_constants_new",),
             ".test_container": ("test_container",),
             ".test_container_full_coverage": ("test_container_full_coverage",),
@@ -94,6 +93,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_service_additional": ("test_service_additional",),
             ".test_service_bootstrap": ("test_service_bootstrap",),
             ".test_service_coverage_100": ("test_service_coverage_100",),
+            ".test_settings": ("test_settings",),
             ".test_settings_coverage": ("test_settings_coverage",),
             ".test_typings_full_coverage": ("test_typings_full_coverage",),
             ".test_typings_new": ("test_typings_new",),
@@ -106,12 +106,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".test_utilities_collection_full_coverage": (
                 "test_utilities_collection_full_coverage",
-            ),
-            ".test_utilities_configuration_coverage_100": (
-                "test_utilities_configuration_coverage_100",
-            ),
-            ".test_utilities_configuration_full_coverage": (
-                "test_utilities_configuration_full_coverage",
             ),
             ".test_utilities_context_full_coverage": (
                 "test_utilities_context_full_coverage",
@@ -138,6 +132,12 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "test_utilities_parser_full_coverage",
             ),
             ".test_utilities_reliability": ("test_utilities_reliability",),
+            ".test_utilities_settings_coverage_100": (
+                "test_utilities_settings_coverage_100",
+            ),
+            ".test_utilities_settings_full_coverage": (
+                "test_utilities_settings_full_coverage",
+            ),
             ".test_utilities_text_full_coverage": (
                 "test_utilities_text_full_coverage",
             ),

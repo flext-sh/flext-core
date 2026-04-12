@@ -667,7 +667,7 @@ def test_model_support_and_hash_compare_paths() -> None:
 
 
 def test_config_bridge_and_trace_context_and_http_validation() -> None:
-    level = u.resolve_log_level_from_config()
+    level = u.resolve_log_level_from_settings()
     tm.that(level, is_=int)
     trace_from_scalar = u.ensure_trace_context(
         1,

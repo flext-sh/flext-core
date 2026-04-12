@@ -13,7 +13,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".cache": ("FlextUtilitiesCache",),
         ".checker": ("FlextUtilitiesChecker",),
         ".collection": ("FlextUtilitiesCollection",),
-        ".configuration": ("FlextUtilitiesConfiguration",),
         ".context": ("FlextUtilitiesContext",),
         ".conversion": ("FlextUtilitiesConversion",),
         ".discovery": ("FlextUtilitiesDiscovery",),
@@ -33,6 +32,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".parser": ("FlextUtilitiesParser",),
         ".reliability": ("FlextUtilitiesReliability",),
         ".result_helpers": ("FlextUtilitiesResultHelpers",),
+        ".settings": ("FlextUtilitiesSettings",),
         ".text": ("FlextUtilitiesText",),
     },
 )

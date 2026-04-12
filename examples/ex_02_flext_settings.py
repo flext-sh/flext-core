@@ -25,7 +25,7 @@ class Ex02FlextSettings(Examples):
     def exercise(self) -> None:
         """Run all sections and record deterministic golden output."""
         self._exercise_singleton_and_global()
-        self._exercise_configuration_fields_and_validation()
+        self._exercise_settings_fields_and_validation()
         self._exercise_effective_log_level_and_override()
         self._exercise_fetch_global_and_provider()
         self._exercise_resolve_env_file_and_auto_settings()
@@ -72,9 +72,9 @@ class Ex02FlextSettings(Examples):
         test_b = self._TestConfig()
         self.check("subclass.singleton_identity", test_a is test_b)
 
-    def _exercise_configuration_fields_and_validation(self) -> None:
-        """Exercise all configuration fields and validation."""
-        self.section("configuration_fields_and_validation")
+    def _exercise_settings_fields_and_validation(self) -> None:
+        """Exercise all settings fields and validation."""
+        self.section("settings_fields_and_validation")
         FlextSettings.reset_for_testing()
         settings = FlextSettings(
             app_name="demo-app",

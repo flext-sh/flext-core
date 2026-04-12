@@ -1,4 +1,4 @@
-"""Example 04 configuration models."""
+"""Example 04 settings models."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from examples._models.errors import ExamplesFlextCoreModelsErrors as _err
 from flext_core import FlextSettings, t
 
 
-class ExConfigAppConfig(FlextSettings):
-    """Application settings model for configuration examples."""
+class ExSettingsAppSettings(FlextSettings):
+    """Application settings model for settings examples."""
 
     database_url: str = Field(
         default=f"postgresql://{c.LOCALHOST}:5432/testdb",

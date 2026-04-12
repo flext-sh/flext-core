@@ -86,7 +86,7 @@ python examples/01_basic_result.py
 | `01_basic_result.py`         | [Railway-Oriented Programming](../docs/guides/railway-oriented-programming.md)                                                         |
 | `02_dependency_injection.py` | [Advanced Dependency Injection](../docs/guides/dependency-injection-advanced.md)                                                       |
 | `03_models_basics.py`        | [Domain-Driven Design](../docs/guides/domain-driven-design.md)                                                                         |
-| `04_config_basics.py`        | [Configuration Management](../docs/guides/configuration.md)                                                                            |
+| `04_settings_basics.py`      | [Settings Management](../docs/guides/settings.md)                                                                                      |
 | `06_decorators_complete.py`  | [Railway-Oriented Programming - Decorators](../docs/guides/railway-oriented-programming.md#decorator-composition-with-railway-pattern) |
 | `07_registry_dispatcher.py`  | [Advanced Dependency Injection - Dispatcher](../docs/guides/dependency-injection-advanced.md#flextdispatcher-reliability-settings)     |
 | `09_context_management.py`   | [Advanced Dependency Injection - Context](../docs/guides/dependency-injection-advanced.md)                                             |

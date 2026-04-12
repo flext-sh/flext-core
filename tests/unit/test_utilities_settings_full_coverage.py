@@ -1,4 +1,4 @@
-"""Tests for Configuration utilities full coverage."""
+"""Tests for settings utilities full coverage."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ import pytest
 from tests import m, p, r, t, u
 
 
-class TestUtilitiesConfigurationFullCoverage:
+class TestUtilitiesSettingsFullCoverage:
     class _DuckDumpError:
         model_dump = "duck boom"
 
@@ -83,8 +83,8 @@ class TestUtilitiesConfigurationFullCoverage:
         env_file.write_text("B=2\n", encoding="utf-8")
         monkeypatch.chdir(tmp_path)
         assert u.resolve_env_file() == str(env_file.resolve())
-        assert isinstance(u.resolve_log_level_from_config(), int)
-        assert u.resolve_log_level_from_config() in {
+        assert isinstance(u.resolve_log_level_from_settings(), int)
+        assert u.resolve_log_level_from_settings() in {
             logging.DEBUG,
             logging.INFO,
             logging.WARNING,

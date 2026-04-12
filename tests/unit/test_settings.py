@@ -1,11 +1,11 @@
 """FlextSettings comprehensive functionality tests.
 
 Module: flext_core.settings
-Scope: FlextSettings class - configuration management, validation, environment handling,
+Scope: FlextSettings class - settings management, validation, environment handling,
 thread safety, namespace management, and Pydantic integration.
 
 Tests core FlextSettings functionality including:
-- Configuration initialization and validation
+- Settings initialization and validation
 - Environment variable handling
 - Thread safety and singleton patterns
 - Namespace management and auto-registration
@@ -37,7 +37,7 @@ from tests import c, p, t, u
 
 
 class TestFlextSettings:
-    class ConfigScenarios:
+    class SettingsScenarios:
         """Centralized settings test scenarios using c."""
 
         INIT_CASES: ClassVar[Sequence[t.FeatureFlagMapping]] = [
@@ -69,10 +69,10 @@ class TestFlextSettings:
 
     @pytest.mark.parametrize(
         "config_data",
-        ConfigScenarios.INIT_CASES,
+        SettingsScenarios.INIT_CASES,
         ids=lambda d: str(d.get("app_name", "default")),
     )
-    def test_config_initialization(self, config_data: t.FeatureFlagMapping) -> None:
+    def test_settings_initialization(self, config_data: t.FeatureFlagMapping) -> None:
         """Test settings initialization with various values."""
         settings = u.Core.Tests.create_test_config(**config_data)
         u.Core.Tests.assert_config_fields(
@@ -80,7 +80,7 @@ class TestFlextSettings:
             t.ConfigMap(dict(config_data)),
         )
         tm.that(
-            settings, is_=FlextSettings, msg="Config must be FlextSettings instance"
+            settings, is_=FlextSettings, msg="Settings must be FlextSettings instance"
         )
 
     def test_config_from_dict(self) -> None:
@@ -135,7 +135,7 @@ class TestFlextSettings:
 
     @pytest.mark.parametrize(
         ("field_name", "value", "modified"),
-        ConfigScenarios.FIELD_ACCESS_CASES,
+        SettingsScenarios.FIELD_ACCESS_CASES,
     )
     def test_config_field_access(
         self,
@@ -260,7 +260,7 @@ class TestFlextSettings:
 
     @pytest.mark.parametrize(
         ("config_data", "error_pattern"),
-        ConfigScenarios.VALIDATION_ERROR_CASES,
+        SettingsScenarios.VALIDATION_ERROR_CASES,
     )
     def test_config_validation_errors(
         self,
@@ -291,7 +291,7 @@ class TestFlextSettings:
 
     @pytest.mark.parametrize(
         "debug_trace",
-        ConfigScenarios.DEBUG_TRACE_CASES,
+        SettingsScenarios.DEBUG_TRACE_CASES,
         ids=lambda d: f"debug_{d.get('debug')}_trace_{d.get('trace', False)}",
     )
     def test_config_debug_enabled(self, debug_trace: t.BoolMapping) -> None:
@@ -303,7 +303,7 @@ class TestFlextSettings:
 
     @pytest.mark.parametrize(
         ("log_level", "debug", "trace"),
-        ConfigScenarios.LOG_LEVEL_CASES,
+        SettingsScenarios.LOG_LEVEL_CASES,
     )
     def test_config_effective_log_level(
         self,

@@ -212,7 +212,7 @@ class FlextExceptions:
 
         Usage::
 
-            return e.fail_validation("settings_key", raw_value, error=exc)
+            return e.fail_validation("config_key", raw_value, error=exc)
 
         """
         params = m.ValidationErrorParams(field=field, value=value)
@@ -753,15 +753,15 @@ class FlextExceptions:
     class ConfigurationError(BaseError):
         """Exception raised for configuration-related errors."""
 
-        settings_key: str | None = None
-        settings_source: str | None = None
+        config_key: str | None = None
+        config_source: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.CONFIGURATION_ERROR
         _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
             m.ConfigurationErrorParams
         )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
-            "settings_key",
-            "settings_source",
+            "config_key",
+            "config_source",
         })
 
     class ConnectionError(BaseError):
@@ -1196,7 +1196,7 @@ class FlextExceptions:
         """
         error_patterns: Sequence[tuple[t.StrSequence, str]] = [
             (["field", "value"], "validation"),
-            (["settings_key", "settings_source"], "configuration"),
+            (["config_key", "config_source"], "configuration"),
             ([c.HandlerType.OPERATION], "operation"),
             (["host", "port"], "connection"),
             (["timeout_seconds"], "timeout"),

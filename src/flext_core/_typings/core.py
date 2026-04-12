@@ -12,7 +12,6 @@ from pathlib import Path
 from re import Pattern
 
 from pydantic import ConfigDict
-from pydantic_settings import SettingsConfigDict
 
 from flext_core import FlextTypingBase, FlextTypingContainers
 
@@ -51,7 +50,6 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
     type ConstantValue = (
         FlextTypingBase.Primitives
         | ConfigDict
-        | SettingsConfigDict
         | frozenset[str]
         | tuple[str, ...]
         | FlextTypingBase.HeaderMapping

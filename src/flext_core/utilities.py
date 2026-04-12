@@ -19,7 +19,6 @@ from flext_core import (
     FlextUtilitiesCache,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,
-    FlextUtilitiesConfiguration,
     FlextUtilitiesContext,
     FlextUtilitiesConversion,
     FlextUtilitiesDiscovery,
@@ -34,6 +33,7 @@ from flext_core import (
     FlextUtilitiesParser,
     FlextUtilitiesReliability,
     FlextUtilitiesResultHelpers,
+    FlextUtilitiesSettings,
     FlextUtilitiesText,
 )
 
@@ -46,7 +46,7 @@ class FlextUtilities(
     FlextUtilitiesCache,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,
-    FlextUtilitiesConfiguration,
+    FlextUtilitiesSettings,
     FlextUtilitiesContext,
     FlextUtilitiesConversion,
     FlextUtilitiesDiscovery,

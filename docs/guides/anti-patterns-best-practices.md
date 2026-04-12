@@ -724,11 +724,11 @@ def connect_database():
 ```python
 # ✅ CORRECT - Configuration from environment
 from flext_core import FlextSettings
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, ConfigDict
 
 
 class DatabaseConfig(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="DB_")
+    model_config = ConfigDict(env_prefix="DB_")
 
     host: str = "localhost"
     port: int = 5432

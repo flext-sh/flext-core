@@ -375,7 +375,7 @@ class FlextSettings(BaseSettings):
         return v.upper()
 
     @model_validator(mode="after")
-    def _validate_configuration(self) -> Self:
+    def _validate_settings(self) -> Self:
         """Validate settings.
 
         Business Rule: Validates settings consistency after model initialization.

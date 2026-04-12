@@ -5,7 +5,7 @@ reset_for_testing.recreates_singleton: True
 reset_for_testing.recreates_global: True
 subclass.singleton_identity: True
 
-[configuration_fields_and_validation]
+[settings_fields_and_validation]
 field.app_name: 'demo-app'
 field.version: '9.8.7'
 field.debug: True

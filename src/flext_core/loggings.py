@@ -573,7 +573,7 @@ class FlextLogger(FlextRuntime):
                 )
 
     @staticmethod
-    def resolve_log_level_from_config() -> int:
+    def resolve_log_level_from_settings() -> int:
         """Resolve log level from default constant."""
         default_log_level = c.DEFAULT_LEVEL.upper()
         return int(

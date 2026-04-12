@@ -1059,7 +1059,7 @@ class TestsFlextCoreModelsMixins:
             str,
             Field(default="test_field", description="Default test field name"),
         ] = "test_field"
-        settings_key: Annotated[
+        config_key: Annotated[
             str,
             Field(default="test_key", description="Default test settings key"),
         ] = "test_key"

@@ -73,7 +73,7 @@ class Ex05FlextMixins(Examples):
     @override
     def exercise(self) -> None:
         """Run all scenarios and record deterministic golden output."""
-        u.settingsure_structlog()
+        u.configure_structlog()
         service = self.DemoService()
         self._exercise_result_and_conversion()
         self._exercise_runtime_properties_and_tracking(service)

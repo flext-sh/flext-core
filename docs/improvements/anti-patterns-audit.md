@@ -448,13 +448,13 @@ ______________________________________________________________________
 **Source Code Evidence** (settings.py:23):
 
 ```python
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, ConfigDict
 
 
 class FlextSettings(BaseSettings):
     """Configuration management with Pydantic validation."""
 
-    model_config = SettingsConfigDict(
+    model_config = ConfigDict(
         env_prefix="FLEXT_",
         # Environment variable support
     )

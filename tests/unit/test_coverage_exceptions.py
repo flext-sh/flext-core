@@ -57,7 +57,10 @@ class TestCoverageExceptions:
             exception_type=e.ConfigurationError,
             message="Missing API key",
             kwargs={"config_key": "API_KEY", "config_source": "environment"},
-            expected_attrs={"config_key": "API_KEY", "config_source": "environment"},
+            expected_attrs={
+                "config_key": "API_KEY",
+                "config_source": "environment",
+            },
         ),
         ExceptionCreationScenario(
             name="connection",

@@ -84,7 +84,10 @@ class TestFlextModelsExceptionParams:
         tm.that(params.config_source, eq=".env")
 
     def test_configuration_error_params_serialization(self) -> None:
-        params = m.ConfigurationErrorParams(config_key="api_key", config_source="vault")
+        params = m.ConfigurationErrorParams(
+            config_key="api_key",
+            config_source="vault",
+        )
         data = params.model_dump()
         tm.that(data["config_key"], eq="api_key")
         tm.that(data["config_source"], eq="vault")

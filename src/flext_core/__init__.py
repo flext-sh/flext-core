@@ -71,7 +71,6 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.cache import FlextUtilitiesCache
     from flext_core._utilities.checker import FlextUtilitiesChecker
     from flext_core._utilities.collection import FlextUtilitiesCollection
-    from flext_core._utilities.configuration import FlextUtilitiesConfiguration
     from flext_core._utilities.context import FlextUtilitiesContext
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
@@ -93,6 +92,7 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.parser import FlextUtilitiesParser
     from flext_core._utilities.reliability import FlextUtilitiesReliability
     from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
+    from flext_core._utilities.settings import FlextUtilitiesSettings
     from flext_core._utilities.text import FlextUtilitiesText
     from flext_core.constants import FlextConstants, c
     from flext_core.container import FlextContainer
@@ -324,7 +324,6 @@ __all__ = [
     "FlextUtilitiesCache",
     "FlextUtilitiesChecker",
     "FlextUtilitiesCollection",
-    "FlextUtilitiesConfiguration",
     "FlextUtilitiesContext",
     "FlextUtilitiesConversion",
     "FlextUtilitiesDiscovery",
@@ -344,6 +343,7 @@ __all__ = [
     "FlextUtilitiesParser",
     "FlextUtilitiesReliability",
     "FlextUtilitiesResultHelpers",
+    "FlextUtilitiesSettings",
     "FlextUtilitiesText",
     "MessageT_contra",
     "P",

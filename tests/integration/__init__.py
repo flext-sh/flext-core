@@ -14,13 +14,13 @@ _LAZY_IMPORTS = merge_lazy_imports(
     build_lazy_import_map(
         {
             ".test_architecture": ("test_architecture",),
-            ".test_config_integration": ("test_config_integration",),
             ".test_documented_patterns": ("test_documented_patterns",),
             ".test_examples_execution": ("test_examples_execution",),
             ".test_integration": ("test_integration",),
             ".test_migration_validation": ("test_migration_validation",),
             ".test_service": ("test_service",),
             ".test_service_result_property": ("test_service_result_property",),
+            ".test_settings_integration": ("test_settings_integration",),
             ".test_system": ("test_system",),
         },
     ),

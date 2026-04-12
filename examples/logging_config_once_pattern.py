@@ -52,7 +52,7 @@ class DatabaseService(s[t.ConfigMap]):
 
         """
         super().model_post_init(__context)
-        self._log_config_once(self.db_config, message="Database configuration loaded")
+        self._log_settings_once(self.db_config, message="Database configuration loaded")
 
 
 class MigrationService(s[t.ConfigMap]):
@@ -80,7 +80,7 @@ class MigrationService(s[t.ConfigMap]):
                 "max_workers": 4,
             },
         )
-        self._log_config_once(settings, message="Migration configuration loaded")
+        self._log_settings_once(settings, message="Migration configuration loaded")
 
     @override
     def execute(self) -> r[t.ConfigMap]:

@@ -1,4 +1,4 @@
-"""Configuration helpers for parameter access and manipulation.
+"""Settings helpers for parameter access and manipulation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,8 +17,8 @@ from pydantic import BaseModel
 from flext_core import c, p, r, t
 
 
-class FlextUtilitiesConfiguration:
-    """Configuration utilities for parameter access and manipulation."""
+class FlextUtilitiesSettings:
+    """Settings utilities for parameter access and manipulation."""
 
     @staticmethod
     def _duck_dump_get_parameter(
@@ -52,7 +52,7 @@ class FlextUtilitiesConfiguration:
         return (True, str(val))
 
     @staticmethod
-    def resolve_log_level_from_config() -> int:
+    def resolve_log_level_from_settings() -> int:
         """Resolve numeric log level from default constant."""
         default_log_level = c.DEFAULT_LEVEL.upper()
         return getattr(logging, default_log_level, logging.INFO)
@@ -81,7 +81,7 @@ class FlextUtilitiesConfiguration:
         """Try direct attribute access, returning (found, value) tuple."""
         obj_vars: t.ContainerMapping = vars(obj) if hasattr(obj, "__dict__") else {}
         if parameter not in obj_vars:
-            return FlextUtilitiesConfiguration._NOT_FOUND
+            return FlextUtilitiesSettings._NOT_FOUND
         value = obj_vars[parameter]
         return (True, value)
 
@@ -93,7 +93,7 @@ class FlextUtilitiesConfiguration:
         """Try dict-like key lookup, returning (found, value) tuple."""
         if parameter in obj:
             return (True, obj[parameter])
-        return FlextUtilitiesConfiguration._NOT_FOUND
+        return FlextUtilitiesSettings._NOT_FOUND
 
     @staticmethod
     def _try_get_from_duck_model_dump(
@@ -101,10 +101,10 @@ class FlextUtilitiesConfiguration:
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
         try:
-            return FlextUtilitiesConfiguration._duck_dump_get_parameter(obj, parameter)
+            return FlextUtilitiesSettings._duck_dump_get_parameter(obj, parameter)
         except (AttributeError, TypeError, ValueError, RuntimeError):
             pass
-        return FlextUtilitiesConfiguration._NOT_FOUND
+        return FlextUtilitiesSettings._NOT_FOUND
 
     @staticmethod
     def _try_get_from_model_dump(
@@ -118,7 +118,7 @@ class FlextUtilitiesConfiguration:
                 return (True, obj_dict[parameter])
         except (AttributeError, TypeError, ValueError, RuntimeError):
             pass
-        return FlextUtilitiesConfiguration._NOT_FOUND
+        return FlextUtilitiesSettings._NOT_FOUND
 
     @staticmethod
     def register_factory(
@@ -177,4 +177,4 @@ class FlextUtilitiesConfiguration:
             raise ValueError(c.ERR_CONFIG_TRACE_REQUIRES_DEBUG)
 
 
-__all__ = ["FlextUtilitiesConfiguration"]
+__all__ = ["FlextUtilitiesSettings"]

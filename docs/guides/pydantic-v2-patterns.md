@@ -377,14 +377,14 @@ settings = ServiceConfig(
 ## Pattern 7: Settings with Environment Variables
 
 ```python
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, ConfigDict
 from pydantic import Field, SecretStr
 
 
 class Settings(BaseSettings):
     """Application settings with environment variables."""
 
-    model_config = SettingsConfigDict(
+    model_config = ConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         env_nested_delimiter="__",  # Use __ for nested fields

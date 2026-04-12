@@ -82,7 +82,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "Ex14GetUserQuery",
             "Ex14UserDTO",
         ),
-        ".exconfig": ("ExConfigAppConfig",),
+        ".exsettings": ("ExSettingsAppSettings",),
         ".output": ("ExamplesFlextCoreModelsOutput",),
         ".shared": (
             "SharedHandle",
