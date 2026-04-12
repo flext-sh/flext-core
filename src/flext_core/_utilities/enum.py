@@ -11,11 +11,9 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping
 from enum import StrEnum
-from typing import ClassVar, TypeVar
+from typing import ClassVar
 
-from flext_core import c, r, t
-
-EnumT = TypeVar("EnumT", bound=StrEnum)
+from flext_core import EnumT, c, r, t
 
 
 class FlextUtilitiesEnum:

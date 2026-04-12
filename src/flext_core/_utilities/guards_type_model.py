@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TypeIs, cast
 
-from flext_core import FlextUtilitiesGuardsTypeCore, t
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core import FlextModelsPydantic, FlextUtilitiesGuardsTypeCore, t
 
 
 class FlextUtilitiesGuardsTypeModel:

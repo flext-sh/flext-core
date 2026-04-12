@@ -11,10 +11,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import TypeIs
 
-from flext_core import p, t
-from flext_core._constants.mixins import FlextConstantsMixins as c_mixins
-from flext_core._constants.platform import FlextConstantsPlatform as c_platform
-from flext_core._constants.validation import FlextConstantsValidation as c_validation
+from flext_core import c, p, t
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 
 
@@ -34,8 +31,8 @@ class FlextUtilitiesGuardsTypeProtocol:
         """Get cached mapping of protocol names to type check predicates."""
         if FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache = MappingProxyType({
-                c_platform.Directory.CONFIG.value: lambda v: isinstance(v, p.Settings),
-                c_mixins.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
+                c.Directory.CONFIG.value: lambda v: isinstance(v, p.Settings),
+                c.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
                 "container": lambda v: isinstance(v, p.Container),
                 "command_bus": lambda v: (
                     hasattr(v, "dispatch")
@@ -56,8 +53,8 @@ class FlextUtilitiesGuardsTypeProtocol:
         if FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache = (
                 MappingProxyType({
-                    p.Settings: c_platform.Directory.CONFIG.value,
-                    p.Context: c_mixins.FIELD_CONTEXT,
+                    p.Settings: c.Directory.CONFIG.value,
+                    p.Context: c.FIELD_CONTEXT,
                     p.Container: "container",
                     p.Dispatcher: "command_bus",
                     p.Handler: "handler",
@@ -191,7 +188,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def _check_protocol(value: t.GuardInput, name: str) -> bool:
         """Check if value implements a named protocol."""
-        if name == c_mixins.FIELD_CONTEXT:
+        if name == c.FIELD_CONTEXT:
             return FlextUtilitiesGuardsTypeProtocol.context(value)
         try:
             return FlextUtilitiesGuardsTypeProtocol._get_protocol_specs()[name](value)
@@ -218,7 +215,7 @@ class FlextUtilitiesGuardsTypeProtocol:
                     value,
                     type_name,
                 )
-            if type_name in c_validation.STRING_METHOD_MAP:
+            if type_name in c.STRING_METHOD_MAP:
                 if type_name in {
                     "string_non_empty",
                     "dict_non_empty",

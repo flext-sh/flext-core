@@ -11,11 +11,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TypeVar
 
-from flext_core import p, r, t
-
-T = TypeVar("T")
+from flext_core import T, p, r, t
 
 
 class FlextUtilitiesResultHelpers:

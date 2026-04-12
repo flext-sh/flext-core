@@ -12,9 +12,8 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
 
-from pydantic import BaseModel
-
 from flext_core import c, e, p, r, t
+from flext_core._models.pydantic import FlextModelsPydantic
 
 
 class FlextUtilitiesSettings:
@@ -22,7 +21,7 @@ class FlextUtilitiesSettings:
 
     @staticmethod
     def _duck_dump_get_parameter(
-        obj: p.HasModelDump | BaseModel | p.Base,
+        obj: p.HasModelDump | FlextModelsPydantic.BaseModel | p.Base,
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
         """Get parameter from duck-typed model_dump() result.
@@ -47,7 +46,7 @@ class FlextUtilitiesSettings:
             return (False, None)
         if val is None or isinstance(val, (str, int, float, bool, datetime, Path)):
             return (True, val)
-        if isinstance(val, BaseModel):
+        if isinstance(val, FlextModelsPydantic.BaseModel):
             return (True, val)
         return (True, str(val))
 
@@ -75,7 +74,7 @@ class FlextUtilitiesSettings:
 
     @staticmethod
     def _try_get_attr(
-        obj: p.HasModelDump | BaseModel | p.Base,
+        obj: p.HasModelDump | FlextModelsPydantic.BaseModel | p.Base,
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
         """Try direct attribute access, returning (found, value) tuple."""
@@ -97,7 +96,7 @@ class FlextUtilitiesSettings:
 
     @staticmethod
     def _try_get_from_duck_model_dump(
-        obj: p.HasModelDump | BaseModel | p.Base,
+        obj: p.HasModelDump | FlextModelsPydantic.BaseModel | p.Base,
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
         try:
@@ -143,7 +142,8 @@ class FlextUtilitiesSettings:
                     "resolve registered config factory",
                     resolved.error or c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
                 )
-            return r[bool].ok(True)
+            registered_successfully: bool = True
+            return r[bool].ok(registered_successfully)
         except (
             AttributeError,
             TypeError,

@@ -6,9 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import BaseModel
-
 from flext_core import FlextUtilitiesGuardsTypeCore, FlextUtilitiesGuardsTypeModel, t
+from flext_core._models.pydantic import FlextModelsPydantic
 
 
 class FlextUtilitiesCache:
@@ -21,7 +20,7 @@ class FlextUtilitiesCache:
         """Normalize a component recursively for consistent representation."""
         if isinstance(
             component,
-            BaseModel,
+            FlextModelsPydantic.BaseModel,
         ) and FlextUtilitiesGuardsTypeModel.pydantic_model(component):
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)

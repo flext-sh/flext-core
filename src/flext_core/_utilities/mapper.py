@@ -12,14 +12,19 @@ from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from itertools import starmap
 from typing import cast
 
-from pydantic import BaseModel
-
-from flext_core import c, e, m, p, r, t
-from flext_core._utilities.cache import FlextUtilitiesCache
-from flext_core._utilities.collection import FlextUtilitiesCollection
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core import (
+    FlextUtilitiesCache,
+    FlextUtilitiesCollection,
+    FlextUtilitiesGuards,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    c,
+    e,
+    m,
+    p,
+    r,
+    t,
+)
 from flext_core.runtime import FlextRuntime
 
 
@@ -365,11 +370,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_numeric_field(
-        item: BaseModel | Mapping[str, t.RecursiveContainer],
+        item: m.BaseModel | Mapping[str, t.RecursiveContainer],
         field_name: str,
     ) -> t.Numeric | None:
         """Extract a numeric field value from a model or mapping-like object."""
-        if isinstance(item, BaseModel):
+        if isinstance(item, m.BaseModel):
             val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)
             return val_raw if isinstance(val_raw, (int, float)) else None
         val = item.get(field_name)
@@ -391,7 +396,7 @@ class FlextUtilitiesMapper:
         else:
             numeric_values = []
             for item in items_list:
-                if isinstance(item, BaseModel):
+                if isinstance(item, m.BaseModel):
                     field_value = FlextUtilitiesMapper._get_numeric_field(item, field)
                 elif isinstance(item, Mapping):
                     field_value = FlextUtilitiesMapper._get_numeric_field(
@@ -551,7 +556,7 @@ class FlextUtilitiesMapper:
             parts = path.split(separator)
             current: t.ValueOrModel | None = None
             match data:
-                case BaseModel():
+                case m.BaseModel():
                     current = data
                 case Mapping():
                     config_map = t.ConfigMap(
@@ -693,7 +698,7 @@ class FlextUtilitiesMapper:
                 data_or_items
             ):
                 data: p.AccessibleData = data_or_items
-            case BaseModel():
+            case m.BaseModel():
                 data = data_or_items
             case _:
                 return fallback
@@ -801,9 +806,9 @@ class FlextUtilitiesMapper:
         return transform_result.fold(
             on_failure=lambda exc: r[
                 t.MutableContainerMapping | t.ContainerMapping
-            ].fail_op("transform mapping", exc),
+            ].fail_op("transform", exc),
             on_success=lambda _: transform_result,
         )
 
 
-__all__ = ["FlextUtilitiesMapper"]
+__all__: list[str] = ["FlextUtilitiesMapper"]

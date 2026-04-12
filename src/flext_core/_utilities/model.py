@@ -35,28 +35,34 @@ class FlextUtilitiesModel:
         """Options controlling Pydantic model_dump() serialization behavior."""
 
         by_alias: bool | None = FlextUtilitiesPydantic.Field(
-            default=None,
+            None,
             description="Serialize using field aliases",
+            validate_default=True,
         )
         exclude_none: bool | None = FlextUtilitiesPydantic.Field(
-            default=None,
+            None,
             description="Exclude None-valued fields",
+            validate_default=True,
         )
         exclude_unset: bool | None = FlextUtilitiesPydantic.Field(
-            default=None,
+            None,
             description="Exclude fields not explicitly set",
+            validate_default=True,
         )
         exclude_defaults: bool | None = FlextUtilitiesPydantic.Field(
-            default=None,
+            None,
             description="Exclude fields matching defaults",
+            validate_default=True,
         )
         include: set[str] | None = FlextUtilitiesPydantic.Field(
-            default=None,
+            None,
             description="Whitelist of field names to include",
+            validate_default=True,
         )
         exclude: set[str] | None = FlextUtilitiesPydantic.Field(
-            default=None,
+            None,
             description="Blacklist of field names to exclude",
+            validate_default=True,
         )
 
     @staticmethod

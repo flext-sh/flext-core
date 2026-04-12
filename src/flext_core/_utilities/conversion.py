@@ -11,9 +11,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import ClassVar
 
-from pydantic import BaseModel, ValidationError
-
 from flext_core import t
+from flext_core._constants.pydantic import FlextConstantsPydantic
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core.runtime import FlextRuntime
 
 
@@ -63,7 +63,7 @@ class FlextUtilitiesConversion:
             if float_value.is_integer():
                 return str(int(float_value))
             return f"{float_value:.2f}"
-        except ValidationError:
+        except FlextConstantsPydantic.ValidationError:
             pass
         return str(value)
 
@@ -86,7 +86,7 @@ class FlextUtilitiesConversion:
                 )
             )
             return [str(item) for item in list_value if item is not None]
-        except ValidationError:
+        except FlextConstantsPydantic.ValidationError:
             pass
         return [str(value)]
 
@@ -122,11 +122,11 @@ class FlextUtilitiesConversion:
     def normalize_log_payload(
         payload: Mapping[str, t.ValueOrModel],
     ) -> t.FlatContainerMapping:
-        """Normalize payload to flat container types, stringifying BaseModel instances."""
+        """Normalize payload to flat container types, stringifying model instances."""
         normalized: t.MutableFlatContainerMapping = {}
         for key, value in payload.items():
             atomic = FlextRuntime.normalize_to_container(value)
-            if isinstance(atomic, BaseModel):
+            if isinstance(atomic, FlextModelsPydantic.BaseModel):
                 normalized[str(key)] = atomic.model_dump_json()
             else:
                 normalized[str(key)] = atomic

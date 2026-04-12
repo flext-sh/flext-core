@@ -19,7 +19,6 @@ from pydantic import (
     model_validator,
 )
 
-
 from flext_core import c, t
 from flext_core._models.base import FlextModelsBase
 from flext_core._protocols.settings import FlextProtocolsSettings
