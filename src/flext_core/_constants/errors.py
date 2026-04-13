@@ -138,6 +138,17 @@ class FlextConstantsErrors:
     ERR_VALIDATION_FAILED: Final[str] = "Validation failed"
     ERR_VALIDATION_FAILED_WITH_ERROR: Final[str] = "Validation failed: {error}"
     ERR_GENERATOR_KIND_MISSING: Final[str] = "No kind provided for prefix resolution"
+
+    CATCHABLE_RUNTIME_EXCEPTIONS: Final[tuple[type[Exception], ...]] = (
+        ArithmeticError,
+        AttributeError,
+        KeyError,
+        LookupError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    )
     ERR_DOMAIN_EVENT_NAME_REQUIRED: Final[str] = (
         "Domain event name must be a non-empty string"
     )
