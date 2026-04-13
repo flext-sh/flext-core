@@ -209,7 +209,7 @@ class FlextResult[T](BaseModel):
     def _from_result[V](
         cls,
         source: p.Result[V],
-    ) -> Self:
+    ) -> FlextResult[V]:
         if source.success:
             return FlextResult[V].ok(source.value)
         return FlextResult[V].fail(
@@ -245,7 +245,7 @@ class FlextResult[T](BaseModel):
     def accumulate_errors[ValueT](
         cls,
         *results: p.Result[ValueT],
-    ) -> p.Result[Sequence[ValueT]]:
+    ) -> FlextResult[Sequence[ValueT]]:
         """Collect all successes, fail if any failure with all errors combined."""
         successes: MutableSequence[ValueT] = []
         errors: MutableSequence[str] = []
@@ -263,7 +263,7 @@ class FlextResult[T](BaseModel):
         cls,
         func: Callable[[], V | None],
         error_code: str | None = None,
-    ) -> p.Result[V]:
+    ) -> FlextResult[V]:
         """Create result from callable, catching exceptions."""
         try:
             value = func()
@@ -277,14 +277,14 @@ class FlextResult[T](BaseModel):
             return FlextResult[V].fail(str(exc), error_code=error_code, exception=exc)
 
     @classmethod
-    def fail(
-        cls,
+    def fail[V](
+        cls: type[FlextResult[V]],
         error: str | None,
         error_code: str | None = None,
         error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
         *,
         exception: BaseException | None = None,
-    ) -> Self:
+    ) -> FlextResult[V]:
         """Create failed result with error message using Python 3.13 advanced patterns.
 
         Business Rule: Creates failed FlextResult with error message, optional error
@@ -327,14 +327,14 @@ class FlextResult[T](BaseModel):
         return result
 
     @classmethod
-    def from_exception(
-        cls,
+    def from_exception[V](
+        cls: type[FlextResult[V]],
         exception: BaseException,
         *,
         error: str | None = None,
         error_code: str | None = None,
         error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
-    ) -> Self:
+    ) -> FlextResult[V]:
         """Create a failed result directly from an exception public surface."""
         return cls.fail(
             error if error is not None else cls._exception_message(exception),
@@ -344,10 +344,10 @@ class FlextResult[T](BaseModel):
         )
 
     @classmethod
-    def fail_exc(
-        cls,
+    def fail_exc[V](
+        cls: type[FlextResult[V]],
         exc: BaseException,
-    ) -> Self:
+    ) -> FlextResult[V]:
         """Create failed result from a BaseException (e.BaseError or stdlib).
 
         Usage::
@@ -363,13 +363,13 @@ class FlextResult[T](BaseModel):
         )
 
     @classmethod
-    def fail_op(
-        cls,
+    def fail_op[V](
+        cls: type[FlextResult[V]],
         operation: str,
         exc: Exception | str | None = None,
         *,
         error_code: str | None = None,
-    ) -> Self:
+    ) -> FlextResult[V]:
         """Create failed result for an operation that failed.
 
         Usage::
@@ -393,7 +393,7 @@ class FlextResult[T](BaseModel):
     def from_validation[ModelT: t.ModelCarrier](
         data: t.ModelInput,
         model: t.ModelClass[ModelT],
-    ) -> p.Result[ModelT]:
+    ) -> FlextResult[ModelT]:
         """Create result from Pydantic validation.
 
         Validates data against a Pydantic model and returns a successful result
@@ -415,7 +415,7 @@ class FlextResult[T](BaseModel):
         )
 
     @classmethod
-    def ok(cls, value: T) -> Self:
+    def ok[V](cls: type[FlextResult[V]], value: V) -> FlextResult[V]:
         """Create successful result wrapping value.
 
         None IS a valid value when T includes None (e.g. r[str | None].ok(None)).
@@ -433,7 +433,7 @@ class FlextResult[T](BaseModel):
     def from_result[V](
         cls,
         source: p.Result[V],
-    ) -> p.Result[V]:
+    ) -> FlextResult[V]:
         """Normalize any structural FLEXT result into FlextResult."""
         return FlextResult[V]._from_result(source)
 
@@ -444,7 +444,7 @@ class FlextResult[T](BaseModel):
         func: Callable[[V], p.Result[U]],
         *,
         fail_fast: bool = True,
-    ) -> p.Result[Sequence[U]]:
+    ) -> FlextResult[Sequence[U]]:
         """Map over sequence with settingsurable failure handling.
 
         Args:
@@ -480,7 +480,7 @@ class FlextResult[T](BaseModel):
         factory: Callable[[], R],
         op: Callable[[R], p.Result[U]],
         cleanup: Callable[[R], None] | None = None,
-    ) -> p.Result[U]:
+    ) -> FlextResult[U]:
         """Resource management with automatic cleanup."""
         resource = factory()
         try:
@@ -513,7 +513,7 @@ class FlextResult[T](BaseModel):
         return isinstance(value, p.Result) and value.success
 
     @staticmethod
-    def safe[U, **PFunc](func: Callable[PFunc, U]) -> Callable[PFunc, p.Result[U]]:
+    def safe[U, **PFunc](func: Callable[PFunc, U]) -> Callable[PFunc, FlextResult[U]]:
         """Decorator to wrap function in FlextResult.
 
         Catches exceptions and returns FlextResult.fail() on error.
@@ -567,7 +567,7 @@ class FlextResult[T](BaseModel):
         if self.success and self.value is not None:
             if predicate(self.value):
                 return self
-            return FlextResult[T].fail(c.ERR_RESULT_FILTER_PREDICATE_FAILED)
+            return self.__class__.fail(c.ERR_RESULT_FILTER_PREDICATE_FAILED)
         return self
 
     def flat_map[U](
