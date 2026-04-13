@@ -10,7 +10,7 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from pathlib import Path
 
-from flext_core import FlextTypesPydantic
+from flext_core._typings.pydantic import FlextTypesPydantic
 
 
 class FlextTypingBase:

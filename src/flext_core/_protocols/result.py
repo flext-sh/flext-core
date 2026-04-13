@@ -338,10 +338,10 @@ class FlextProtocolsResult:
         factories and type guards stay on the concrete carrier alias ``r``.
         """
 
-        error: str | None
-        error_code: str | None
-        error_data: FlextTypingContainers.ConfigMap | None
-        success: bool
+        error: str | None = None
+        error_code: str | None = None
+        error_data: FlextTypingContainers.ConfigMap | None = None
+        success: bool = False
 
         @property
         @abstractmethod

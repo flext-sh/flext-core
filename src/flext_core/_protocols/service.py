@@ -1,4 +1,8 @@
-"""FlextProtocolsService - service and repository protocols.
+"""FlextProtocolsService - service, mixin infrastructure, and repository protocols.
+
+Mirrors the public surface of ``FlextService``, ``FlextMixins``, and related
+concrete classes so that ``p.*`` protocols can be used in type annotations
+everywhere instead of concrete types.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,22 +10,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.container import FlextProtocolsContainer
 from flext_core._protocols.context import FlextProtocolsContext
 from flext_core._protocols.handler import FlextProtocolsHandler
+from flext_core._protocols.logging import FlextProtocolsLogging
 from flext_core._protocols.registry import FlextProtocolsRegistry
 from flext_core._protocols.result import FlextProtocolsResult
 from flext_core._protocols.settings import FlextProtocolsSettings
 
 if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase
     from flext_core._typings.services import FlextTypesServices
 
 
 class FlextProtocolsService:
-    """Protocols for service execution and repository access."""
+    """Protocols for service execution, mixin infrastructure, and repository access."""
 
     @runtime_checkable
     class CloneableRuntime(Protocol):
@@ -81,9 +89,76 @@ class FlextProtocolsService:
             /,
         ) -> None: ...
 
+    # ------------------------------------------------------------------
+    # MixinsInfrastructure — mirrors FlextMixins public instance surface
+    # ------------------------------------------------------------------
+
+    @runtime_checkable
+    class MixinsInfrastructure(Protocol):
+        """Structural protocol for the shared infrastructure provided by ``FlextMixins``.
+
+        ``FlextMixins`` (alias ``x``) is the base class for Service, Handler, and
+        Registry. This protocol exposes its public runtime-access surface so
+        consumers can depend on the abstraction instead of the concrete.
+        """
+
+        @property
+        def settings(self) -> FlextProtocolsSettings.Settings:
+            """Runtime settings associated with this component."""
+            ...
+
+        @property
+        def container(self) -> FlextProtocolsContainer.Container:
+            """Global DI container instance."""
+            ...
+
+        @property
+        def context(self) -> FlextProtocolsContext.Context:
+            """Execution context for context operations."""
+            ...
+
+        @property
+        def logger(self) -> FlextProtocolsLogging.Logger:
+            """Structured logger for this component."""
+            ...
+
+        def track(
+            self,
+            operation_name: str,
+        ) -> AbstractContextManager[Mapping[str, FlextTypesServices.ValueOrModel]]:
+            """Track operation performance with timing and context cleanup."""
+            ...
+
+    # ------------------------------------------------------------------
+    # Service — mirrors FlextService public instance surface
+    # ------------------------------------------------------------------
+
     @runtime_checkable
     class Service[T](FlextProtocolsBase.Base, Protocol):
-        """FlextProtocolsBase.Base domain service interface."""
+        """Domain service interface.
+
+        Mirrors the public instance API of ``FlextService[T]`` so consumers
+        can depend on ``p.Service`` for typing instead of the concrete class.
+        """
+
+        # --- runtime access (from FlextMixins via MRO) ---
+
+        @property
+        def settings(self) -> FlextProtocolsSettings.Settings:
+            """Service-scoped settings."""
+            ...
+
+        @property
+        def container(self) -> FlextProtocolsContainer.Container:
+            """Container bound to the service context/settings."""
+            ...
+
+        @property
+        def context(self) -> FlextProtocolsContext.Context:
+            """Service-scoped execution context."""
+            ...
+
+        # --- core contract ---
 
         def execute(self) -> FlextProtocolsResult.Result[T]:
             """Execute domain service logic."""
@@ -98,7 +173,31 @@ class FlextProtocolsService:
             ...
 
         def validate_business_rules(self) -> FlextProtocolsResult.Result[bool]:
-            """Validate business rules with extensible validation pipeline.business rule validation without external command parameters."""
+            """Validate business rules with extensible validation pipeline."""
+            ...
+
+        # --- result helpers ---
+
+        def ok[V](self, value: V) -> FlextProtocolsResult.Result[V]:
+            """Wrap a successful value into a result."""
+            ...
+
+        def fail_op(
+            self,
+            operation: str,
+            exc: Exception | str | None = ...,
+        ) -> FlextProtocolsResult.Result[T]:
+            """Return a failure result for an operation that failed."""
+            ...
+
+        def fail_val(
+            self,
+            field: str | None = ...,
+            value: FlextTypingBase.Scalar | None = ...,
+            *,
+            error: Exception | str | None = ...,
+        ) -> FlextProtocolsResult.Result[T]:
+            """Return a failure result for a field validation failure."""
             ...
 
     @runtime_checkable

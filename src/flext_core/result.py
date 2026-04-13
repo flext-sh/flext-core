@@ -811,7 +811,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
         Overrides RuntimeResult.recover to return FlextResult for type consistency.
         """
         if self.success:
-            return FlextResult[T | U].ok(self.value)
+            return cast("FlextResult[T | U]", self)
         fallback_value = func(self.error or "")
         return FlextResult[T | U].ok(fallback_value)
 

@@ -452,6 +452,11 @@ class FlextSettings(BaseSettings):
         return cls._namespace_registry.get(namespace)
 
     @classmethod
+    def registered_namespaces(cls) -> t.StrSequence:
+        """Return the currently registered settings namespaces."""
+        return tuple(cls._namespace_registry.keys())
+
+    @classmethod
     def register_context_overrides(cls, context_id: str, **overrides: t.Scalar) -> None:
         """Register context-specific settings overrides.
 

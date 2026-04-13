@@ -214,6 +214,7 @@ class FlextContainer(p.ContainerLifecycle):
         return self._context
 
     @property
+    @override
     def provide(self) -> Callable[[str], t.RegisterableService]:
         """Return the dependency-injector Provide helper scoped to the bridge.
 
@@ -979,10 +980,7 @@ class FlextContainer(p.ContainerLifecycle):
         )
         user_overrides_plain = dict(self._user_overrides)
         self._user_config_provider.from_dict(user_overrides_plain)
-        namespace_registry = FlextSettings._namespace_registry
-        if not namespace_registry:
-            return
-        namespaces: t.StrSequence = list(namespace_registry.keys())
+        namespaces = FlextSettings.registered_namespaces()
         if not namespaces:
             return
         for namespace in namespaces:

@@ -1,5 +1,9 @@
 """FlextProtocolsHandler - handler, bus, registry, middleware protocols.
 
+Mirrors the public surface of ``FlextHandlers``, ``FlextDispatcher``, and
+related concrete classes so that ``p.*`` protocols can be used in type
+annotations everywhere instead of concrete types.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -12,25 +16,117 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core import FlextProtocolsBase, FlextProtocolsResult
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypesServices
+    from flext_core import FlextConstantsCqrs, FlextModelsHandler, FlextTypesServices
+    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings.containers import FlextTypingContainers
 
 
 class FlextProtocolsHandler:
     """Protocols for CQRS handlers and message routing."""
+
+    # ------------------------------------------------------------------
+    # Handler — mirrors FlextHandlers public instance surface
+    # ------------------------------------------------------------------
 
     @runtime_checkable
     class Handler[MessageT: FlextProtocolsBase.Model, ResultT](
         FlextProtocolsBase.Base,
         Protocol,
     ):
-        """Protocol that defines a typed message handler contract."""
+        """Typed message handler contract.
 
-        def can_handle(self, message_type: type) -> bool: ...
+        Mirrors the public instance API of ``FlextHandlers[MessageT, ResultT]``
+        so consumers can depend on ``p.Handler`` for typing instead of the
+        concrete class.
+        """
+
+        # --- identity ---
+
+        @property
+        def handler_name(self) -> str:
+            """Handler name from configuration."""
+            ...
+
+        @property
+        def mode(self) -> FlextConstantsCqrs.HandlerType:
+            """Handler mode (command, query, event, operation, saga)."""
+            ...
+
+        # --- core contract ---
+
+        def can_handle(self, message_type: type) -> bool:
+            """Check if handler can process the given message type."""
+            ...
 
         def handle(
             self,
             message: MessageT,
-        ) -> FlextProtocolsResult.Result[ResultT]: ...
+        ) -> FlextProtocolsResult.Result[ResultT]:
+            """Core business logic — must be implemented by concrete handlers."""
+            ...
+
+        # --- pipeline ---
+
+        def execute(
+            self,
+            message: MessageT,
+        ) -> FlextProtocolsResult.Result[ResultT]:
+            """Execute handler with validation and error handling pipeline."""
+            ...
+
+        def dispatch_message(
+            self,
+            message: MessageT,
+            operation: str = ...,
+        ) -> FlextProtocolsResult.Result[ResultT]:
+            """Dispatch message through the full handler pipeline."""
+            ...
+
+        def validate_message(
+            self,
+            data: MessageT,
+        ) -> FlextProtocolsResult.Result[bool]:
+            """Validate input data before execution."""
+            ...
+
+        # --- callable ---
+
+        def __call__(
+            self,
+            message: MessageT,
+        ) -> FlextProtocolsResult.Result[ResultT]:
+            """Callable interface for dispatcher integration."""
+            ...
+
+        # --- context & metrics ---
+
+        def push_context(
+            self,
+            ctx: (
+                FlextModelsHandler.ExecutionContext
+                | FlextTypingBase.RecursiveContainerMapping
+            ),
+        ) -> FlextProtocolsResult.Result[bool]:
+            """Push execution context onto the local handler stack."""
+            ...
+
+        def pop_context(
+            self,
+        ) -> FlextProtocolsResult.Result[FlextTypingContainers.ConfigMap]:
+            """Pop execution context from the local handler stack."""
+            ...
+
+        def record_metric(
+            self,
+            name: str,
+            value: FlextTypesServices.MetadataAttributeValue,
+        ) -> FlextProtocolsResult.Result[bool]:
+            """Record a metric value in the current handler state."""
+            ...
+
+    # ------------------------------------------------------------------
+    # Dispatch-style structural protocols (used by dispatcher routing)
+    # ------------------------------------------------------------------
 
     @runtime_checkable
     class DispatchMessage(Protocol):
@@ -73,44 +169,75 @@ class FlextProtocolsHandler:
         ): ...
 
     @runtime_checkable
-    class _MessageBusBase(Protocol):
-        """Shared protocol for publish/register_handler on bus-like types."""
+    class AutoDiscoverableHandler(Protocol):
+        """Protocol for handlers that can inspect message types at runtime."""
+
+        def can_handle(self, message_type: type) -> bool: ...
+
+    # ------------------------------------------------------------------
+    # Dispatcher — inlined from _MessageBusBase, mirrors FlextDispatcher
+    # ------------------------------------------------------------------
+
+    @runtime_checkable
+    class Dispatcher(FlextProtocolsBase.Base, Protocol):
+        """Protocol for dispatching and publishing messages in CQRS systems.
+
+        Mirrors the public surface of ``FlextDispatcher``.
+        """
+
+        def dispatch(
+            self,
+            message: FlextProtocolsBase.Routable,
+        ) -> FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]:
+            """Route a CQRS message to a registered handler."""
+            ...
 
         def publish(
             self,
             event: FlextProtocolsBase.Routable | Sequence[FlextProtocolsBase.Routable],
-        ) -> FlextProtocolsResult.Result[bool]: ...
+        ) -> FlextProtocolsResult.Result[bool]:
+            """Publish event(s) to all registered subscribers."""
+            ...
 
         def register_handler(
             self,
             handler: FlextTypesServices.HandlerProtocolVariant,
             *,
             is_event: bool = False,
-        ) -> FlextProtocolsResult.Result[bool]: ...
+        ) -> FlextProtocolsResult.Result[bool]:
+            """Register a handler for message routing."""
+            ...
+
+    # ------------------------------------------------------------------
+    # CommandBus — dispatch + register only (no publish — SRP)
+    # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Dispatcher(_MessageBusBase, FlextProtocolsBase.Base, Protocol):
-        """Protocol for dispatching and publishing messages in CQRS systems."""
+    class CommandBus(Protocol):
+        """Protocol for command bus implementations with dispatch and registration.
+
+        Unlike ``Dispatcher``, a command bus does NOT publish events.
+        """
 
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]: ...
+        ) -> FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]:
+            """Dispatch a command to a registered handler."""
+            ...
 
-    @runtime_checkable
-    class AutoDiscoverableHandler(Protocol):
-        """Protocol for handlers that can inspect message types at runtime."""
-
-        def can_handle(self, message_type: type) -> bool: ...
-
-    @runtime_checkable
-    class CommandBus(_MessageBusBase, Protocol):
-        """Protocol for command bus implementations with dispatch/publish/register."""
-
-        def dispatch(
+        def register_handler(
             self,
-            message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]: ...
+            handler: FlextTypesServices.HandlerProtocolVariant,
+            *,
+            is_event: bool = False,
+        ) -> FlextProtocolsResult.Result[bool]:
+            """Register a handler for command routing."""
+            ...
+
+    # ------------------------------------------------------------------
+    # Middleware
+    # ------------------------------------------------------------------
 
     @runtime_checkable
     class Middleware(FlextProtocolsBase.Base, Protocol):

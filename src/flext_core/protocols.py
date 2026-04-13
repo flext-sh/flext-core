@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from flext_core import (
     FlextModelsNamespace,
     FlextProtocolsBase,
@@ -35,6 +37,8 @@ class FlextProtocols(
     FlextModelsNamespace,
 ):
     """Runtime-checkable structural typing protocols for FLEXT framework."""
+
+    _flext_enforcement_exempt: ClassVar[bool] = True
 
 
 p = FlextProtocols

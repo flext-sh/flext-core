@@ -20,10 +20,8 @@ from pydantic import BaseModel
 from flext_tests import tm
 from tests import e, m, p, r, t, u
 
-type ProtocolSubject = t.ProtocolSubject
 
-
-def _as_protocol_subject(value: ProtocolSubject) -> ProtocolSubject:
+def _as_protocol_subject[T](value: T) -> T:
     """Normalize a concrete sample to the canonical protocol-check subject type."""
     return value
 
@@ -243,7 +241,7 @@ class TestFlextProtocols:
         """Object with dispatch(message) satisfies p.DispatchableService."""
 
         class _Svc:
-            def dispatch(self, message: p.Model, /) -> p.Model:
+            def dispatch(self, message: object, /) -> object:
                 return message
 
         instance = _as_protocol_subject(_Svc())
@@ -375,14 +373,19 @@ class TestFlextProtocols:
                 msg=f"p.Dispatcher must have {method}",
             )
 
-    def test_command_bus_has_dispatch_publish_register(self) -> None:
-        """p.CommandBus has dispatch, publish, register_handler."""
-        for method in ("dispatch", "publish", "register_handler"):
+    def test_command_bus_has_dispatch_and_register(self) -> None:
+        """p.CommandBus exposes only command-routing behavior."""
+        for method in ("dispatch", "register_handler"):
             tm.that(
                 hasattr(p.CommandBus, method),
                 eq=True,
                 msg=f"p.CommandBus must have {method}",
             )
+        tm.that(
+            hasattr(p.CommandBus, "publish"),
+            eq=False,
+            msg="p.CommandBus must not expose event publishing",
+        )
 
     def test_registry_protocol_has_expected_methods(self) -> None:
         """p.Registry defines handler and plugin management methods."""
