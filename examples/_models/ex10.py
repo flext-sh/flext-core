@@ -55,10 +55,10 @@ class Ex10ContextPayload(m.Value):
 class Ex10ProtocolHandler(m.Value):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
-    def handle(self, message: m.Command) -> r[str]:
+    def handle(self, message: m.Command) -> p.Result[str]:
         return r[str].ok(str(message))
 
-    def check_data(self, data: m.Value | None) -> r[bool]:
+    def check_data(self, data: m.Value | None) -> p.Result[bool]:
         return r[bool].ok(data is not None)
 
 
@@ -69,23 +69,23 @@ class Ex10ServiceStub(m.Value):
     def valid(self) -> bool:
         return True
 
-    def execute(self) -> r[t.ConfigMap]:
+    def execute(self) -> p.Result[t.ConfigMap]:
         return r[t.ConfigMap].ok(t.ConfigMap(root={"ok": True}))
 
     def service_info(self) -> t.ConfigMap:
         return t.ConfigMap(root={"service": "stub"})
 
-    def validate_business_rules(self) -> r[bool]:
+    def validate_business_rules(self) -> p.Result[bool]:
         return r[bool].ok(True)
 
 
 class Ex10CommandBusStub(m.Value):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
-    def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
+    def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
         return r[t.RuntimeAtomic].ok(str(message))
 
-    def publish(self, event: p.Routable | Sequence[p.Routable]) -> r[bool]:
+    def publish(self, event: p.Routable | Sequence[p.Routable]) -> p.Result[bool]:
         del event
         return r[bool].ok(True)
 
@@ -94,6 +94,6 @@ class Ex10CommandBusStub(m.Value):
         _handler: t.HandlerLike,
         *,
         is_event: bool = False,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         del is_event
         return r[bool].ok(True)

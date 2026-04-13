@@ -21,7 +21,7 @@ class _ProtocolHandler:
         return message_type is self.message_type
 
     @override
-    def handle(self, message: p.Routable) -> r[t.Scalar]:
+    def handle(self, message: p.Routable) -> p.Result[t.Scalar]:
         value = ""
         if isinstance(message, Ex12CommandA):
             value = str(message.value)

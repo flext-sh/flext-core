@@ -96,7 +96,7 @@ class FlextModelsEntity:
             self: Self,
             event_type: str,
             data: t.ConfigMap | Mapping[str, t.MetadataOrValue | None] | None = None,
-        ) -> r[FlextModelsDomainEvent.Entry]:
+        ) -> p.Result[FlextModelsDomainEvent.Entry]:
             """Add a domain event to this entity.
 
             Args:
@@ -140,7 +140,7 @@ class FlextModelsEntity:
         def add_domain_events_bulk(
             self: Self,
             events: Sequence[tuple[str, t.ConfigMap | None]],
-        ) -> r[Sequence[FlextModelsDomainEvent.Entry]]:
+        ) -> p.Result[Sequence[FlextModelsDomainEvent.Entry]]:
             """Add multiple domain events in bulk.
 
             Args:
@@ -190,7 +190,7 @@ class FlextModelsEntity:
 
         def mark_events_as_committed(
             self: Self,
-        ) -> r[Sequence[FlextModelsDomainEvent.Entry]]:
+        ) -> p.Result[Sequence[FlextModelsDomainEvent.Entry]]:
             """Mark all uncommitted events as committed and return them.
 
             Returns:

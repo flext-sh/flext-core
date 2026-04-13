@@ -21,6 +21,7 @@ from flext_core import (
     T,
     U,
     c,
+    p,
     r,
     t,
 )
@@ -30,7 +31,7 @@ class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
 
     @staticmethod
-    def _ok_result[TValue](value: TValue) -> r[TValue]:
+    def _ok_result[TValue](value: TValue) -> p.Result[TValue]:
         """Create a typed success result."""
         return r[TValue].ok(value)
 
@@ -52,7 +53,7 @@ class FlextUtilitiesCollection:
         result: t.MutableRecursiveContainerMapping,
         key: str,
         value: t.RecursiveContainer,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Merge single key in deep merge strategy."""
         current_val = result.get(key)
         if (
@@ -180,7 +181,7 @@ class FlextUtilitiesCollection:
     def find(
         items: Sequence[T] | tuple[T, ...] | Mapping[str, T],
         predicate: Callable[[T], bool],
-    ) -> r[T]:
+    ) -> p.Result[T]:
         """Find first item matching predicate with generic type support.
 
         Returns first item where predicate returns True, or None.
@@ -240,7 +241,7 @@ class FlextUtilitiesCollection:
     def _merge_replace(
         other: t.RecursiveContainerMapping,
         base: t.RecursiveContainerMapping,
-    ) -> r[t.RecursiveContainerMapping]:
+    ) -> p.Result[t.RecursiveContainerMapping]:
         """Replace strategy: base values overwrite other."""
         result: t.MutableRecursiveContainerMapping = dict(other)
         result.update(base)
@@ -250,7 +251,7 @@ class FlextUtilitiesCollection:
     def _merge_filter_none(
         other: t.RecursiveContainerMapping,
         base: t.RecursiveContainerMapping,
-    ) -> r[t.RecursiveContainerMapping]:
+    ) -> p.Result[t.RecursiveContainerMapping]:
         """Filter-none strategy: skip None values from base."""
         result: t.MutableRecursiveContainerMapping = dict(other)
         for key, value in base.items():
@@ -262,7 +263,7 @@ class FlextUtilitiesCollection:
     def _merge_filter_empty(
         other: t.RecursiveContainerMapping,
         base: t.RecursiveContainerMapping,
-    ) -> r[t.RecursiveContainerMapping]:
+    ) -> p.Result[t.RecursiveContainerMapping]:
         """Filter-empty strategy: skip empty values from base."""
         result: t.MutableRecursiveContainerMapping = dict(other)
         for key, value in base.items():
@@ -274,7 +275,7 @@ class FlextUtilitiesCollection:
     def _merge_append(
         other: t.RecursiveContainerMapping,
         base: t.RecursiveContainerMapping,
-    ) -> r[t.RecursiveContainerMapping]:
+    ) -> p.Result[t.RecursiveContainerMapping]:
         """Append strategy: concatenate lists instead of replacing."""
         result: t.MutableRecursiveContainerMapping = dict(other)
         for key, value in base.items():
@@ -293,7 +294,7 @@ class FlextUtilitiesCollection:
     def _merge_deep(
         other: t.RecursiveContainerMapping,
         base: t.RecursiveContainerMapping,
-    ) -> r[t.RecursiveContainerMapping]:
+    ) -> p.Result[t.RecursiveContainerMapping]:
         """Deep strategy: recursively merge nested dicts."""
         result: t.MutableRecursiveContainerMapping = dict(other)
         for key, value in base.items():
@@ -329,7 +330,7 @@ class FlextUtilitiesCollection:
         base: t.RecursiveContainerMapping,
         *,
         strategy: str = "deep",
-    ) -> r[t.RecursiveContainerMapping]:
+    ) -> p.Result[t.RecursiveContainerMapping]:
         """Merge two dictionaries with configurable strategy.
 
         Strategies:
@@ -355,7 +356,7 @@ class FlextUtilitiesCollection:
         *,
         predicate: Callable[[T], bool] | None = None,
         on_error: str = "fail",
-    ) -> r[Sequence[U]]:
+    ) -> p.Result[Sequence[U]]:
         """Process items with optional filtering; on_error="skip" to skip failures."""
         results: MutableSequence[U] = []
         for item in items:

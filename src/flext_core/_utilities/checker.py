@@ -142,7 +142,7 @@ class FlextUtilitiesChecker:
     def _extract_message_type_from_handle(
         cls,
         handler_class: type,
-    ) -> r[t.TypeHintSpecifier]:
+    ) -> p.Result[t.TypeHintSpecifier]:
         """Extract message type from handle method annotations when generics are absent."""
         if not hasattr(handler_class, c.MethodName.HANDLE):
             return r[t.TypeHintSpecifier].fail(
@@ -176,7 +176,7 @@ class FlextUtilitiesChecker:
         parameter: inspect.Parameter,
         type_hints: Mapping[str, t.TypeHintSpecifier | None],
         param_name: str,
-    ) -> r[t.TypeHintSpecifier]:
+    ) -> p.Result[t.TypeHintSpecifier]:
         """Extract message type from parameter hints or signature annotation."""
         if param_name in type_hints:
             hint = type_hints[param_name]
@@ -202,7 +202,7 @@ class FlextUtilitiesChecker:
     def _get_method_signature(
         cls,
         handle_method: Callable[..., t.ModuleExport],
-    ) -> r[inspect.Signature]:
+    ) -> p.Result[inspect.Signature]:
         """Extract signature from handle method, wrapping errors in Result."""
         try:
             return r[inspect.Signature].ok(inspect.signature(handle_method))

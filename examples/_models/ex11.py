@@ -24,7 +24,7 @@ class Ex11HandlerLikeService(FlextSettings):
         """Check whether message type is handled."""
         return bool(message_type)
 
-    def handle(self, message: m.Command) -> r[str]:
+    def handle(self, message: m.Command) -> p.Result[str]:
         """Handle service message."""
         return r[str].ok(str(message))
 
@@ -62,10 +62,10 @@ class Ex11ProcessorProtocolBad(m.Value):
 class Ex11CommandBusStub(m.Value):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
-    def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
+    def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
         return r[t.RuntimeAtomic].ok(str(message))
 
-    def publish(self, _event: p.Routable | Sequence[p.Routable]) -> r[bool]:
+    def publish(self, _event: p.Routable | Sequence[p.Routable]) -> p.Result[bool]:
         return r[bool].ok(True)
 
     def register_handler(
@@ -73,6 +73,6 @@ class Ex11CommandBusStub(m.Value):
         _handler: t.HandlerLike,
         *,
         is_event: bool = False,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         del is_event
         return r[bool].ok(True)

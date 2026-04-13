@@ -8,13 +8,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from types import ModuleType
-from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.context import FlextProtocolsContext
 from flext_core._protocols.handler import FlextProtocolsHandler
 from flext_core._protocols.logging import FlextProtocolsLogging
-from flext_core._protocols.result import FlextProtocolsResult
 from flext_core._protocols.settings import FlextProtocolsSettings
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.containers import FlextTypingContainers
@@ -22,6 +21,7 @@ from flext_core._typings.containers import FlextTypingContainers
 if TYPE_CHECKING:
     from flext_core._models.container import FlextModelsContainer
     from flext_core._typings.services import FlextTypesServices
+    from flext_core.result import FlextResult
 
 
 class FlextProtocolsContainer:
@@ -83,7 +83,11 @@ class FlextProtocolsContainer:
             ...
 
     @runtime_checkable
-    class Container(FlextProtocolsBase.Base, Protocol):
+    class Container(
+        FlextProtocolsSettings.Configurable,
+        FlextProtocolsBase.Base,
+        Protocol,
+    ):
         """Dependency injection container protocol.
 
         Exposes a compact command-style DSL for DI registration, resolution,
@@ -104,6 +108,14 @@ class FlextProtocolsContainer:
             """Clear all services and factories."""
             ...
 
+        @override
+        def configure(
+            self,
+            settings: FlextTypesServices.FlatContainerMapping | None = None,
+        ) -> Self:
+            """Configure the container with validated flat overrides."""
+            ...
+
         def apply(
             self,
             settings: FlextTypesServices.FlatContainerMapping | None = None,
@@ -117,7 +129,7 @@ class FlextProtocolsContainer:
             name: str,
             *,
             type_cls: type[T],
-        ) -> FlextProtocolsResult.Result[T]: ...
+        ) -> FlextResult[T]: ...
 
         @overload
         def resolve(
@@ -125,7 +137,7 @@ class FlextProtocolsContainer:
             name: str,
             *,
             type_cls: None = None,
-        ) -> FlextProtocolsResult.Result[FlextTypesServices.RegisterableService]: ...
+        ) -> FlextResult[FlextTypesServices.RegisterableService]: ...
 
         def snapshot(self) -> FlextTypingContainers.ConfigMap:
             """Return the merged settings exposed by this container."""
@@ -163,7 +175,7 @@ class FlextProtocolsContainer:
             """Bind a lifecycle-managed resource factory."""
             ...
 
-        def drop(self, name: str) -> FlextProtocolsResult.Result[bool]:
+        def drop(self, name: str) -> FlextResult[bool]:
             """Remove a service, factory, or resource by name."""
             ...
 
@@ -180,7 +192,7 @@ class FlextProtocolsContainer:
 
         def dispatcher(
             self,
-        ) -> FlextProtocolsResult.Result[FlextProtocolsHandler.Dispatcher]:
+        ) -> FlextResult[FlextProtocolsHandler.Dispatcher]:
             """Resolve the canonical command bus / dispatcher service."""
             ...
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import sys
 from pathlib import Path
 from typing import override
 
@@ -182,7 +181,7 @@ class Ex02FlextSettings(Examples):
         """Exercise resolve_env_file and AutoSettings."""
         self.section("resolve_env_file_and_auto_settings")
         FlextSettings.reset_for_testing()
-        env_path = Path(sys.prefix) / "flext_settings_example.env"
+        env_path = Path(__file__).with_name("flext_settings_example.env")
         env_path.write_text("FLEXT_APP_NAME=from_env_file\n", encoding="utf-8")
         previous = self._set_env(c.ENV_FILE_ENV_VAR, str(env_path))
         try:

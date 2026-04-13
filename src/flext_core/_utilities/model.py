@@ -124,7 +124,7 @@ class FlextUtilitiesModel:
         cls,
         model_cls: t.ModelClass[T_Model],
         data: t.ModelCarrier | Mapping[str, t.ValueOrModel] | t.ConfigMap,
-    ) -> r[T_Model]:
+    ) -> p.Result[T_Model]:
         """Load a model from a mapping-like input using Pydantic validation."""
         return r[T_Model].create_from_callable(
             lambda: model_cls.model_validate(cls._normalize_model_input(data)),
@@ -203,7 +203,7 @@ class FlextUtilitiesModel:
         *,
         from_json: bool = False,
         strict: bool | None = None,
-    ) -> r[TValue]:
+    ) -> p.Result[TValue]:
         """Validate one value through a model class or TypeAdapter."""
         try:
             adapter = (

@@ -27,7 +27,7 @@ from typing import ClassVar, override
 import pytest
 
 from flext_tests import tm
-from tests import r, t, u
+from tests import p, r, t, u
 
 
 class Testu(u.Core.Tests.Contract):
@@ -144,7 +144,7 @@ class Testu(u.Core.Tests.Contract):
             """Create flaky operation that eventually succeeds."""
             attempt_count = [0]
 
-            def flaky_op() -> r[str]:
+            def flaky_op() -> p.Result[str]:
                 attempt_count[0] += 1
                 if attempt_count[0] < 2:
                     return r[str].fail("Temporary failure")
@@ -279,7 +279,7 @@ class Testu(u.Core.Tests.Contract):
     def test_reliability_retry_first_success(self) -> None:
         """Test retry that succeeds immediately."""
 
-        def op() -> r[str]:
+        def op() -> p.Result[str]:
             return r[str].ok("success")
 
         result: r[str] = u.retry(op, max_attempts=3)

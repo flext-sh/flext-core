@@ -8,7 +8,7 @@ import pytest
 from hypothesis import given, strategies as st
 from pydantic import ConfigDict, Field
 
-from flext_core import e, h, r, x
+from flext_core import e, h, p, r, x
 from flext_tests import tm
 from tests import c, m, t, u
 
@@ -21,7 +21,7 @@ class TestFlextHandlers:
             super().__init__(settings=settings)
 
         @override
-        def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+        def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
             if not isinstance(message, str):
                 return r[t.ValueOrModel].fail(
                     c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
@@ -35,7 +35,7 @@ class TestFlextHandlers:
             super().__init__(settings=settings)
 
         @override
-        def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+        def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
             return r[t.ValueOrModel].ok(f"processed_{message}")
 
     class FailingTestHandler(h[t.ValueOrModel, t.ValueOrModel]):
@@ -45,7 +45,7 @@ class TestFlextHandlers:
             super().__init__(settings=settings)
 
         @override
-        def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+        def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
             if not isinstance(message, str):
                 return r[t.ValueOrModel].fail(
                     c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
@@ -159,7 +159,7 @@ class TestFlextHandlers:
                 super().__init__(settings=settings)
 
             @override
-            def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+            def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
                 if not isinstance(message, int):
                     return r[t.ValueOrModel].fail(
                         c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
@@ -234,7 +234,7 @@ class TestFlextHandlers:
                 super().__init__(settings=settings)
 
             @override
-            def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+            def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
                 if not isinstance(message, dict):
                     return r[t.ValueOrModel].fail(
                         c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
@@ -281,7 +281,7 @@ class TestFlextHandlers:
                 return False
 
             @override
-            def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+            def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
                 if not isinstance(message, str):
                     return r[t.ValueOrModel].fail(
                         c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
@@ -308,12 +308,12 @@ class TestFlextHandlers:
                 super().__init__(settings=settings)
 
             @override
-            def validate_message(self, data: t.ValueOrModel) -> r[bool]:
+            def validate_message(self, data: t.ValueOrModel) -> p.Result[bool]:
                 _ = data
                 return r[bool].fail(c.Core.Tests.TestErrors.VALIDATION_FAILED_FOR_TEST)
 
             @override
-            def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+            def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
                 if not isinstance(message, str):
                     return r[t.ValueOrModel].fail(
                         c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
@@ -340,7 +340,7 @@ class TestFlextHandlers:
                 super().__init__(settings=settings)
 
             @override
-            def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+            def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
                 _ = message
                 msg = "Test exception in handler"
                 raise ValueError(msg)

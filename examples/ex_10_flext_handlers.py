@@ -8,9 +8,8 @@ from typing import ClassVar, override
 
 from pydantic import BaseModel
 
-from examples import Ex10ProtocolHandler, c, m, t, u
+from examples import Ex10ProtocolHandler, c, e, h, m, p, r, t, u
 from examples.shared import Examples
-from flext_core import e, h, r
 
 
 class _Message(m.Command):
@@ -36,7 +35,7 @@ class _NoArgs:
 
 class _NotImplementedPatternHandler(h[_Message, str]):
     @override
-    def handle(self, message: _Message) -> r[str]:
+    def handle(self, message: _Message) -> p.Result[str]:
         raise NotImplementedError
 
 
@@ -44,13 +43,13 @@ class _DemoHandler(h[_Message, str]):
     _expected_message_type: ClassVar[type | None] = _Message
 
     @override
-    def handle(self, message: _Message) -> r[str]:
+    def handle(self, message: _Message) -> p.Result[str]:
         if message.text == m.Examples.TriggerTokens.EXPLODE:
             raise RuntimeError(m.Examples.ErrorMessages.FORCED_BOOM)
         return r[str].ok(f"msg:{message.text}")
 
     @override
-    def validate_message(self, data: _Message) -> r[bool]:
+    def validate_message(self, data: _Message) -> p.Result[bool]:
         if data.text == "bad":
             return r[bool].fail("blocked")
         return r[bool].ok(True)

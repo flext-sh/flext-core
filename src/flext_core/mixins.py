@@ -108,68 +108,6 @@ class FlextMixins(m.ArbitraryTypesModel):
         ),
     ] = None
 
-    @staticmethod
-    def _clear_operation_context() -> None:
-        """Clear operation scope context (preserves request/application scopes)."""
-        _ = u.clear_scope(c.ContextScope.OPERATION)
-        FlextContext.Request.apply_operation_name("")
-
-    @staticmethod
-    def _propagate_context(operation_name: str) -> None:
-        """Propagate context for current operation using FlextContext."""
-        FlextContext.Request.apply_operation_name(operation_name)
-        _ = FlextContext.Utilities.ensure_correlation_id()
-
-    @staticmethod
-    def _with_operation_context(
-        operation_name: str,
-        **operation_data: t.Scalar,
-    ) -> None:
-        """Set operation context with level-based binding (DEBUG/ERROR/normal)."""
-        FlextMixins._propagate_context(operation_name)
-        if operation_data:
-            debug_data: t.ConfigMap = t.ConfigMap(
-                root={
-                    k: v for k, v in operation_data.items() if k in c.DEBUG_CONTEXT_KEYS
-                },
-            )
-            error_data: t.ConfigMap = t.ConfigMap(
-                root={
-                    k: v for k, v in operation_data.items() if k in c.ERROR_CONTEXT_KEYS
-                },
-            )
-            normal_data: t.ConfigMap = t.ConfigMap(
-                root={
-                    k: v
-                    for k, v in operation_data.items()
-                    if k not in c.DEBUG_CONTEXT_KEYS and k not in c.ERROR_CONTEXT_KEYS
-                },
-            )
-            all_context_data: t.ConfigMap = normal_data.model_copy()
-            if debug_data:
-                merged_debug: t.ConfigMap = all_context_data.model_copy()
-                merged_debug.update(debug_data.root)
-                all_context_data = merged_debug
-            if error_data:
-                merged_error: t.ConfigMap = all_context_data.model_copy()
-                merged_error.update(error_data.root)
-                all_context_data = merged_error
-            if all_context_data:
-                metadata_context: Mapping[str, t.RuntimeAtomic] = {
-                    key: u.normalize_to_container(value)
-                    for key, value in all_context_data.root.items()
-                }
-                _ = u.bind_global_context(**metadata_context)
-            if normal_data:
-                normal_metadata_context: Mapping[str, t.RuntimeAtomic] = {
-                    key: u.normalize_to_container(value)
-                    for key, value in normal_data.root.items()
-                }
-                _ = u.bind_context(
-                    c.ContextScope.OPERATION,
-                    **normal_metadata_context,
-                )
-
     @contextmanager
     def track(self, operation_name: str) -> Generator[Mapping[str, t.ValueOrModel]]:
         """Track operation performance with timing and automatic context cleanup."""
@@ -227,22 +165,8 @@ class FlextMixins(m.ArbitraryTypesModel):
                         metrics_map["avg_duration_ms"] = stats["avg_duration_ms"]
                     self._operation_stats[operation_name] = stats
         finally:
-            FlextMixins._clear_operation_context()
-
-    def _enrich_context(self, **context_data: t.Scalar) -> None:
-        """Log service information ONCE at initialization (not bound to context)."""
-        service_context: t.ConfigMap = t.ConfigMap(
-            root={
-                c.ContextKey.SERVICE_NAME: self.__class__.__name__,
-                c.ContextKey.SERVICE_MODULE: self.__class__.__module__,
-                **context_data,
-            },
-        )
-        self.logger.info(
-            c.LOG_SERVICE_INITIALIZED,
-            return_result=False,
-            **u.normalize_log_payload(service_context.root),
-        )
+            _ = u.clear_scope(c.ContextScope.OPERATION)
+            FlextContext.Request.apply_operation_name("")
 
     def _get_runtime(self) -> m.ServiceRuntime:
         """Return or create a runtime triple shared across mixin consumers."""
@@ -251,20 +175,6 @@ class FlextMixins(m.ArbitraryTypesModel):
             return runtime
         self._runtime = u.build_service_runtime(self)
         return self._runtime
-
-    @staticmethod
-    def _resolve_bootstrap_options(
-        instance: FlextMixins,
-    ) -> m.RuntimeBootstrapOptions | None:
-        """Load and validate bootstrap options from the mixin consumer."""
-        try:
-            return u.resolve_runtime_options(instance)
-        except (AttributeError, TypeError, RuntimeError, ValueError) as exc:
-            u.fetch_logger(__name__).warning(
-                c.LOG_RUNTIME_BOOTSTRAP_OPTIONS_LOAD_FAILED,
-                exc_info=exc,
-            )
-            return None
 
     def _init_service(self, service_name: str | None = None) -> None:
         """Initialize service with automatic container registration."""
@@ -285,44 +195,7 @@ class FlextMixins(m.ArbitraryTypesModel):
                     error=register_result.error or c.ERR_SERVICE_REGISTRATION_FAILED,
                 )
 
-    def _log_settings_once(
-        self,
-        settings: t.ConfigMap,
-        message: str = "Configuration loaded",
-    ) -> None:
-        """Log configuration ONCE without binding to context."""
-        settings_typed: t.ConfigMap = t.ConfigMap(root=dict(settings))
-        self.logger.info(
-            message,
-            **u.normalize_log_payload(settings_typed.root),
-        )
-
-    def _log_with_context(self, level: str, message: str, **extra: t.Scalar) -> None:
-        """Log message with automatic context data inclusion."""
-        correlation_id = FlextContext.Correlation.resolve_correlation_id()
-        operation_name = FlextContext.Request.resolve_operation_name()
-        context_data: t.ConfigMap = t.ConfigMap(
-            root={
-                c.ContextKey.CORRELATION_ID: u.normalize_to_container(
-                    correlation_id or "",
-                ),
-                c.ContextKey.OPERATION_NAME: u.normalize_to_container(
-                    operation_name or "",
-                ),
-                **{k: u.normalize_to_container(v) for k, v in extra.items()},
-            },
-        )
-        log_method = (
-            getattr(self.logger, level)
-            if hasattr(self.logger, level)
-            else self.logger.info
-        )
-        _ = log_method(
-            message,
-            **u.normalize_log_payload(context_data.root),
-        )
-
-    def _register_in_container(self, service_name: str) -> r[bool]:
+    def _register_in_container(self, service_name: str) -> p.Result[bool]:
         """Register self in global container for service discovery."""
         container = self.container
         was_registered = container.has(service_name)

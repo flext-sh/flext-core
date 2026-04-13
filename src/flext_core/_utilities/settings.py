@@ -119,11 +119,8 @@ class FlextUtilitiesSettings:
         container: p.Container,
         name: str,
         factory: Callable[[], t.Scalar | t.ConfigMap | t.Dict],
-        *,
-        _cache: bool = False,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Register factory in DI container with optional caching."""
-        _ = _cache
         _ = container.factory(name, factory)
         resolved = container.resolve(name)
         if resolved.failure:

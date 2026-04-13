@@ -151,7 +151,7 @@ git push origin feature/amazing-feature
 
 ```python
 # ✅ CORRECT - Complete type annotations
-def process_data(data: t.RecursiveContainerMapping) -> r[ProcessedData]:
+def process_data(data: t.RecursiveContainerMapping) -> p.Result[ProcessedData]:
     """Process data with type safety."""
     if not data:
         return r[ProcessedData].fail("Data required")
@@ -168,7 +168,7 @@ def process_data(data):
 
 ```python
 # ✅ CORRECT - Use r for all operations
-def validate_and_process(data: dict) -> r[ProcessedData]:
+def validate_and_process(data: dict) -> p.Result[ProcessedData]:
     return (
         validate_data(data)
         .flat_map(transform_data)
@@ -241,7 +241,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t
@@ -326,7 +326,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t
@@ -338,7 +338,7 @@ class FlextNewlib:
     def __init__(self, settings: FlextNewlibSettings):
         self.settings = settings
 
-    def process(self, data: dict) -> r[dict]:
+    def process(self, data: dict) -> p.Result[dict]:
         """Process data using r pattern."""
         # Implementation here
         pass
@@ -402,7 +402,7 @@ poetry env info
 ### Code Documentation
 
 ```python
-def process_data(data: t.RecursiveContainerMapping) -> r[ProcessedData]:
+def process_data(data: t.RecursiveContainerMapping) -> p.Result[ProcessedData]:
     """
     Process data using the FLEXT pipeline.
 

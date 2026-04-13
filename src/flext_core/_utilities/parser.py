@@ -63,7 +63,7 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _coerce_to_bool(value: t.ValueOrModel) -> r[bool]:
+    def _coerce_to_bool(value: t.ValueOrModel) -> p.Result[bool]:
         """Coerce value to bool. Returns None if not coercible."""
         if FlextUtilitiesGuards.matches_type(value, str):
             normalized_val = FlextUtilitiesParser._parse_normalize_str(
@@ -80,7 +80,7 @@ class FlextUtilitiesParser:
         return r[bool].ok(bool(value))
 
     @staticmethod
-    def _coerce_to_float(value: t.ValueOrModel) -> r[float]:
+    def _coerce_to_float(value: t.ValueOrModel) -> p.Result[float]:
         """Coerce value to float. Returns None if not coercible."""
         if isinstance(value, (str, int)):
             return r[float].create_from_callable(
@@ -95,7 +95,7 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _coerce_to_int(value: t.ValueOrModel) -> r[int]:
+    def _coerce_to_int(value: t.ValueOrModel) -> p.Result[int]:
         """Coerce value to int. Returns None if not coercible."""
         if isinstance(value, (str, float)):
             return r[int].create_from_callable(
@@ -327,7 +327,7 @@ class FlextUtilitiesParser:
         default: T | None,
         default_factory: Callable[[], T] | None,
         error_msg: str,
-    ) -> r[T]:
+    ) -> p.Result[T]:
         """Return default or error for parse failures."""
         if default is not None:
             return r[T].ok(default)

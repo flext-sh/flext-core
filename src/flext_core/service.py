@@ -341,7 +341,7 @@ class FlextService[
                 continue
         return normalized or None
 
-    def execute(self) -> r[TDomainResult]:
+    def execute(self) -> p.Result[TDomainResult]:
         """Execute domain service logic.
 
         This is the core business logic method that must be implemented by all
@@ -410,7 +410,7 @@ class FlextService[
             "handler_count": len(self._discovered_handlers),
         }
 
-    def validate_business_rules(self) -> r[bool]:
+    def validate_business_rules(self) -> p.Result[bool]:
         """Validate business rules with extensible validation pipeline.
 
         Base method for business rule validation that can be overridden by subclasses
@@ -426,7 +426,7 @@ class FlextService[
 
         Example:
             >>> class ValidatedService(s[Data]):
-            ...     def validate_business_rules(self) -> r[bool]:
+            ...     def validate_business_rules(self) -> p.Result[bool]:
             ...         if not self.has_required_data():
             ...             return r[bool].fail("Missing required data")
             ...         return r[bool].ok(True)
@@ -434,7 +434,7 @@ class FlextService[
         """
         return r[bool].ok(True)
 
-    def ok[T: t.ValueOrModel | Sequence[t.ValueOrModel]](self, value: T) -> r[T]:
+    def ok[T: t.ValueOrModel | Sequence[t.ValueOrModel]](self, value: T) -> p.Result[T]:
         """Wrap a successful value into a result."""
         return r[T].ok(value)
 
@@ -442,7 +442,7 @@ class FlextService[
         self,
         operation: str,
         exc: Exception | str | None = None,
-    ) -> r[TDomainResult]:
+    ) -> p.Result[TDomainResult]:
         """Return a failure result for an operation that failed."""
         return e.fail_operation(operation, exc)
 
@@ -452,7 +452,7 @@ class FlextService[
         value: t.Scalar | None = None,
         *,
         error: Exception | str | None = None,
-    ) -> r[TDomainResult]:
+    ) -> p.Result[TDomainResult]:
         """Return a failure result for a field validation failure."""
         return e.fail_validation(field, value, error=error)
 

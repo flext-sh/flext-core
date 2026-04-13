@@ -80,13 +80,13 @@ def temp_file(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def flext_result_success() -> r[t.RecursiveContainerMapping]:
+def flext_result_success() -> p.Result[t.RecursiveContainerMapping]:
     """Successful r fixture available to all FLEXT projects."""
     return r[t.RecursiveContainerMapping].ok({"success": True})
 
 
 @pytest.fixture
-def flext_result_failure() -> r[str]:
+def flext_result_failure() -> p.Result[str]:
     """Failed r fixture available to all FLEXT projects."""
     return r[str].fail(c.Core.Tests.TestErrors.TEST_ERROR)
 

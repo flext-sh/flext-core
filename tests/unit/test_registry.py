@@ -17,7 +17,7 @@ class TestRegistryDsl:
         def __init__(self, route_name: str) -> None:
             self.message_type = route_name
 
-        def handle(self, message: p.Routable) -> r[str]:
+        def handle(self, message: p.Routable) -> p.Result[str]:
             route = (
                 message.command_type or message.query_type or message.event_type or ""
             )
@@ -35,7 +35,7 @@ class TestRegistryDsl:
         def publish(
             self,
             event: p.Routable | Sequence[p.Routable],
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             _ = event
             return r[bool].ok(True)
 
@@ -45,13 +45,13 @@ class TestRegistryDsl:
             handler: t.HandlerProtocolVariant,
             *,
             is_event: bool = False,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             _ = handler
             _ = is_event
             return r[bool].fail(self.error_message)
 
         @override
-        def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
+        def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
             _ = message
             return r[t.RuntimeAtomic].fail(self.error_message)
 
@@ -62,7 +62,7 @@ class TestRegistryDsl:
         def publish(
             self,
             event: p.Routable | Sequence[p.Routable],
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             _ = event
             return r[bool].ok(True)
 
@@ -72,13 +72,13 @@ class TestRegistryDsl:
             handler: t.HandlerProtocolVariant,
             *,
             is_event: bool = False,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             _ = handler
             _ = is_event
             return r[bool].ok(True)
 
         @override
-        def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
+        def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
             _ = message
             return r[t.RuntimeAtomic].ok(True)
 

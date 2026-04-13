@@ -94,11 +94,11 @@ abstract `handle()` method:
 
 ```python
 from flext_core import h
-from flext_core import r
+from flext_core import r, p
 
 
 class CreateUserHandler(h[CreateUserCommand, User]):
-    def handle(self, command: CreateUserCommand) -> r[User]:
+    def handle(self, command: CreateUserCommand) -> p.Result[User]:
         # Business logic
         user = User(name=command.name, email=command.email)
         return r[User].ok(user)
@@ -223,7 +223,7 @@ Handlers orchestrate while services execute domain logic:
 
 ```python
 class CreateUserHandler(h[CreateUserCommand, User]):
-    def handle(self, command: CreateUserCommand) -> r[User]:
+    def handle(self, command: CreateUserCommand) -> p.Result[User]:
         # Handler orchestrates
         validation_result = ValidateEmailService(email=command.email).execute()
         if validation_result.is_failure:
@@ -300,7 +300,7 @@ The current handler pattern uses manual metrics and context management:
 
 ```python
 class UpdateUserHandler(h[UpdateUserCommand, UserDto]):
-    def handle(self, command: UpdateUserCommand) -> r[UserDto]:
+    def handle(self, command: UpdateUserCommand) -> p.Result[UserDto]:
         # Manual metrics tracking
         self._metrics["commands_processed"] = (
             self._metrics.get("commands_processed", 0) + 1
@@ -323,7 +323,7 @@ The target pattern uses `x` infrastructure automatically:
 
 ```python
 class UpdateUserHandler(h[UpdateUserCommand, UserDto]):
-    def handle(self, command: UpdateUserCommand) -> r[UserDto]:
+    def handle(self, command: UpdateUserCommand) -> p.Result[UserDto]:
         # Automatic metrics via x.CQRS
         self.cqrs_metrics.record("commands_processed", 1)
 

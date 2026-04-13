@@ -10,8 +10,7 @@ from typing import cast, override
 
 import pytest
 
-import flext_core as core_mixins
-from flext_core import r, x
+from flext_core import p as core_p, r, x
 from flext_tests import tm
 from tests import m, p, t
 
@@ -33,7 +32,7 @@ class TestMixinsFullCoverage:
         return True
 
     @staticmethod
-    def _mock_register_fail(_name: str) -> r[bool]:
+    def _mock_register_fail(_name: str) -> p.Result[bool]:
         """Mock _register_in_container that returns failure."""
         return cast(
             "r[bool]",
@@ -41,19 +40,19 @@ class TestMixinsFullCoverage:
         )
 
     @staticmethod
-    def _validation_ok_true(v: t.RecursiveContainer) -> r[bool]:
+    def _validation_ok_true(v: t.RecursiveContainer) -> p.Result[bool]:
         """Validator that always returns ok(True)."""
         _ = v
         return r[bool].ok(True)
 
     @staticmethod
-    def _validation_ok_false(v: t.RecursiveContainer) -> r[bool]:
+    def _validation_ok_false(v: t.RecursiveContainer) -> p.Result[bool]:
         """Validator that always returns ok(False)."""
         _ = v
         return r[bool].ok(False)
 
     @staticmethod
-    def _validation_fail_no(v: t.RecursiveContainer) -> r[bool]:
+    def _validation_fail_no(v: t.RecursiveContainer) -> p.Result[bool]:
         """Validator that always returns fail('no')."""
         _ = v
         return r[bool].fail("no")
@@ -98,7 +97,7 @@ class TestMixinsFullCoverage:
         def resolve_settings(self) -> t.ConfigMap:
             return t.ConfigMap(root={})
 
-        def get(self, _key: str, **_kwargs: t.Scalar) -> r[t.RecursiveContainer]:
+        def get(self, _key: str, **_kwargs: t.Scalar) -> p.Result[t.RecursiveContainer]:
             return r[t.RecursiveContainer].fail("not implemented")
 
         @property
@@ -127,7 +126,7 @@ class TestMixinsFullCoverage:
             self,
             _key: str,
             _tp: type[t.RuntimeAtomic],
-        ) -> r[t.RuntimeAtomic]:
+        ) -> p.Result[t.RuntimeAtomic]:
             if self.success:
                 return r[t.RuntimeAtomic].ok(self.logger or "logger")
             return r[t.RuntimeAtomic].fail("missing")
@@ -137,13 +136,15 @@ class TestMixinsFullCoverage:
             _key: str,
             *,
             type_cls: type[t.RuntimeAtomic] | None = None,
-        ) -> r[t.RuntimeAtomic]:
+        ) -> p.Result[t.RuntimeAtomic]:
             _ = type_cls
             if self.success:
                 return r[t.RuntimeAtomic].ok(self.logger or "logger")
             return r[t.RuntimeAtomic].fail("missing")
 
-        def register_factory(self, key: str, factory: t.FactoryCallable) -> r[bool]:
+        def register_factory(
+            self, key: str, factory: t.FactoryCallable
+        ) -> p.Result[bool]:
             _ = key
             _ = factory
             msg = "register_factory path should not be used"
@@ -166,12 +167,7 @@ class TestMixinsFullCoverage:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        runtime_container = self._RuntimeContainer()
-        monkeypatch.setattr(
-            core_mixins.FlextContainer,
-            "create",
-            staticmethod(lambda: runtime_container),
-        )
+        _ = monkeypatch
 
         class _Service(x):
             @classmethod
@@ -199,7 +195,7 @@ class TestMixinsFullCoverage:
         )
         runtime = service._get_runtime()
         assert runtime is not None
-        tm.that(runtime_container.wired, none=False)
+        tm.that(runtime.container, is_=core_p.Container)
         with service.track("op") as metrics:
             cast("t.MutableRecursiveContainerMapping", metrics)["duration_ms"] = 2.0
         tm.that(service._operation_stats, has="op")
@@ -226,10 +222,10 @@ class TestMixinsFullCoverage:
         tm.ok(ok_register)
 
         class _AlreadyContainer:
-            def has_service(self, _name: str) -> bool:
+            def has(self, _name: str) -> bool:
                 return True
 
-            def register(
+            def bind(
                 self,
                 _name: str,
                 _value: t.RecursiveContainer,
@@ -244,12 +240,10 @@ class TestMixinsFullCoverage:
         tm.ok(service._register_in_container("svc"))
 
         class _FailContainer:
-            def has_service(self, _name: str) -> bool:
+            def has(self, _name: str) -> bool:
                 return False
 
-            def register(
-                self, _name: str, _value: t.RecursiveContainer
-            ) -> _FailContainer:
+            def bind(self, _name: str, _value: t.RecursiveContainer) -> _FailContainer:
                 return self
 
         monkeypatch.setattr(
@@ -259,27 +253,12 @@ class TestMixinsFullCoverage:
         )
         service._init_service("svc")
         x._logger_cache.clear()
-        monkeypatch.setattr(
-            core_mixins.FlextContainer,
-            "create",
-            staticmethod(
-                lambda: self._ContainerForLogger(True, logger="l"),
-            ),
-        )
         logger_from_di = _Service._get_or_create_logger()
         tm.that(logger_from_di, none=False)
-        monkeypatch.setattr(
-            core_mixins.FlextContainer,
-            "create",
-            staticmethod(lambda: self._ContainerForLogger(False)),
-        )
+        x._logger_cache.clear()
         logger_created = _Service._get_or_create_logger()
         tm.that(logger_created, none=False)
-        monkeypatch.setattr(
-            core_mixins.FlextContainer,
-            "create",
-            staticmethod(lambda: (_ for _ in ()).throw(RuntimeError("no container"))),
-        )
+        x._logger_cache.clear()
         logger_fallback = _Service._get_or_create_logger()
         tm.that(logger_fallback, none=False)
 
@@ -300,20 +279,11 @@ class TestMixinsFullCoverage:
             def _get_or_create_logger(cls) -> p.Logger:
                 return cast("p.Logger", cast("t.RecursiveContainer", _LocalLogger()))
 
-        service = _Service(
+        _ = _Service(
             settings_type=None,
             settings_overrides=None,
             initial_context=None,
         )
-        settings = t.ConfigMap(root={"k": "v"})
-        service._log_settings_once(settings, message="cfg")
-        service._with_operation_context(
-            "run",
-            params="k=v",
-            stack_trace="s",
-            normal="n",
-        )
-        service._clear_operation_context()
         mt = m.MetricsTracker()
         result_record = mt.record_metric("k", 1)
         tm.ok(result_record)
@@ -340,16 +310,7 @@ class TestMixinsFullCoverage:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        runtime_container = self._RuntimeContainer()
-
-        def _create_runtime_container() -> TestMixinsFullCoverage._RuntimeContainer:
-            return runtime_container
-
-        monkeypatch.setattr(
-            core_mixins.FlextContainer,
-            "create",
-            staticmethod(_create_runtime_container),
-        )
+        _ = monkeypatch
 
         class _WireService(x):
             @classmethod
@@ -364,7 +325,6 @@ class TestMixinsFullCoverage:
             settings_overrides=None,
             initial_context=None,
         )._get_runtime()
-        tm.that(runtime_container.wired, none=True)
 
         captured: t.MutableRecursiveContainerMapping = {}
 
@@ -384,10 +344,10 @@ class TestMixinsFullCoverage:
                     str, t.RecursiveContainer
                 ]()
 
-            def has_service(self, name: str) -> bool:
+            def has(self, name: str) -> bool:
                 return name in self._services
 
-            def register(self, name: str, value: t.RecursiveContainer) -> _RegContainer:
+            def bind(self, name: str, value: t.RecursiveContainer) -> _RegContainer:
                 self._services[name] = value
                 captured["name"] = name
                 captured["value"] = value
@@ -451,27 +411,6 @@ class TestMixinsFullCoverage:
         x._logger_cache.clear()
         logger_obj = _LoggerService._get_or_create_logger()
         tm.that(logger_obj, none=False)
-
-        class _BrokenContainer:
-            def get_typed(
-                self,
-                _key: str,
-                _tp: type[t.RuntimeAtomic],
-            ) -> r[t.RuntimeAtomic]:
-                msg = "boom"
-                raise RuntimeError(msg)
-
-        def _create_broken_container() -> _BrokenContainer:
-            return _BrokenContainer()
-
-        x._logger_cache.clear()
-        monkeypatch.setattr(
-            core_mixins.FlextContainer,
-            "create",
-            staticmethod(_create_broken_container),
-        )
-        fallback_logger = _LoggerService._get_or_create_logger()
-        tm.that(fallback_logger, none=False)
 
     def test_mixins_context_stack_pop_empty_stack_returns_empty(self) -> None:
         _ = self

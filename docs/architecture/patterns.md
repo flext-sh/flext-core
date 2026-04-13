@@ -27,16 +27,16 @@ Common architectural patterns used in FLEXT-Core and best practices for applying
 **Pattern:** Use `r[T]` for composable error handling.
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
-def validate_email(email: str) -> r[str]:
+def validate_email(email: str) -> p.Result[str]:
     if "@" not in email:
         return r[str].fail("Invalid email")
     return r[str].ok(email)
 
 
-def check_available(email: str) -> r[str]:
+def check_available(email: str) -> p.Result[str]:
     if email in reserved_emails:
         return r[str].fail("Email taken")
     return r[str].ok(email)
@@ -107,7 +107,7 @@ class Order(FlextModels.Entity):
 
 # Service - encapsulates business logic
 class OrderService(s):
-    def place_order(self, customer_id: str, items: list) -> r[Order]:
+    def place_order(self, customer_id: str, items: list) -> p.Result[Order]:
         # Business logic here
         pass
 ```
@@ -143,12 +143,12 @@ class GetUserQuery:
 dispatcher = FlextDispatcher()
 
 
-def create_user_handler(command: CreateUserCommand) -> r[User]:
+def create_user_handler(command: CreateUserCommand) -> p.Result[User]:
     # Create and return user
     ...
 
 
-def get_user_handler(query: GetUserQuery) -> r[User]:
+def get_user_handler(query: GetUserQuery) -> p.Result[User]:
     # Retrieve and return user (no modification)
     ...
 
@@ -180,7 +180,7 @@ class UserCreatedEvent:
 
 
 class UserService(s):
-    def create_user(self, name: str, email: str) -> r[User]:
+    def create_user(self, name: str, email: str) -> p.Result[User]:
         user = User(id="new", name=name, email=email)
 
         # Emit domain event
@@ -212,10 +212,10 @@ class EmailNotificationSubscriber:
 class UserRepository:
     """Port: abstraction for user persistence."""
 
-    def save(self, user: User) -> r[User]:
+    def save(self, user: User) -> p.Result[User]:
         raise NotImplementedError
 
-    def get_by_id(self, user_id: str) -> r[User]:
+    def get_by_id(self, user_id: str) -> p.Result[User]:
         raise NotImplementedError
 
 
@@ -223,11 +223,11 @@ class UserRepository:
 class PostgresUserRepository(UserRepository):
     """Adapter: PostgreSQL implementation."""
 
-    def save(self, user: User) -> r[User]:
+    def save(self, user: User) -> p.Result[User]:
         # PostgreSQL-specific implementation
         pass
 
-    def get_by_id(self, user_id: str) -> r[User]:
+    def get_by_id(self, user_id: str) -> p.Result[User]:
         # PostgreSQL query
         pass
 
@@ -237,7 +237,7 @@ class UserService(s):
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
-    def create_user(self, user: User) -> r[User]:
+    def create_user(self, user: User) -> p.Result[User]:
         return self.repository.save(user)
 ```
 
@@ -253,7 +253,7 @@ class UserService(s):
 **Pattern:** Implement multi-tier caching strategy.
 
 ```python
-from flext_core import r
+from flext_core import r, p
 import functools
 
 
@@ -262,7 +262,7 @@ class UserService:
         self.repository = repository
         self.cache = cache
 
-    def get_user(self, user_id: str) -> r[User]:
+    def get_user(self, user_id: str) -> p.Result[User]:
         """Get user with caching."""
         # Check cache first
         cached = self.cache.get(f"user:{user_id}")
@@ -292,10 +292,10 @@ class UserService:
 **Pattern:** Chain validations using r.
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
-def validate_password(password: str) -> r[str]:
+def validate_password(password: str) -> p.Result[str]:
     if len(password) < 8:
         return r[str].fail("Too short")
     if not any(c.isupper() for c in password):
@@ -305,13 +305,13 @@ def validate_password(password: str) -> r[str]:
     return r[str].ok(password)
 
 
-def validate_email(email: str) -> r[str]:
+def validate_email(email: str) -> p.Result[str]:
     if "@" not in email:
         return r[str].fail("Invalid email")
     return r[str].ok(email)
 
 
-def validate_username(username: str) -> r[str]:
+def validate_username(username: str) -> p.Result[str]:
     if len(username) < 3:
         return r[str].fail("Too short")
     if not username.isalnum():
@@ -320,7 +320,7 @@ def validate_username(username: str) -> r[str]:
 
 
 # Pipeline
-def register_user(username: str, email: str, password: str) -> r[dict]:
+def register_user(username: str, email: str, password: str) -> p.Result[dict]:
     return (
         validate_username(username)
         .flat_map(lambda u: validate_email(email).map(lambda e: (u, e)))
@@ -440,7 +440,7 @@ from abc import ABC, abstractmethod
 
 class UserFactory:
     @staticmethod
-    def create_user(user_type: str, **kwargs) -> r[User]:
+    def create_user(user_type: str, **kwargs) -> p.Result[User]:
         if user_type == "REDACTED_LDAP_BIND_PASSWORD":
             return r[User].ok(AdminUser(**kwargs))
         elif user_type == "regular":

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from tests import r, t, u
+from tests import p, r, t, u
 
 
 def test_ok_accepts_none() -> None:
@@ -42,14 +42,14 @@ def test_flow_through_short_circuits_on_failure() -> None:
     """flow_through must stop when a step fails."""
     visited: MutableSequence[int] = []
 
-    def step1(v: int) -> r[int]:
+    def step1(v: int) -> p.Result[int]:
         visited.append(v)
         return r[int].ok(v + 1)
 
-    def fail_step(_: int) -> r[int]:
+    def fail_step(_: int) -> p.Result[int]:
         return r[int].fail("stop")
 
-    def unreachable(_: int) -> r[int]:
+    def unreachable(_: int) -> p.Result[int]:
         visited.append(999)
         return r[int].ok(0)
 
@@ -93,7 +93,7 @@ def test_with_resource_cleanup_runs() -> None:
     def factory() -> MutableSequence[int]:
         return []
 
-    def op(resource: MutableSequence[int]) -> r[str]:
+    def op(resource: MutableSequence[int]) -> p.Result[str]:
         resource.append(1)
         return r[str].ok("done")
 

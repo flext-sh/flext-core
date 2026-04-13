@@ -87,7 +87,7 @@ class Ex04DispatchDsl(Examples):
             """Bind callable to FailingDelete command type."""
             self.message_type = Ex04FailingDelete
 
-        def __call__(self, message: p.Routable) -> r[str]:
+        def __call__(self, message: p.Routable) -> p.Result[str]:
             """Reject deletion to exercise dispatcher failure handling."""
             typed_message = Ex04FailingDelete.model_validate(message)
             return r[str].fail_op(

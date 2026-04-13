@@ -593,7 +593,7 @@ print(json.dumps(schemas, indent=2))
 Always wrap Pydantic validation in r:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 from pydantic import BaseModel, ValidationError
 
 
@@ -602,7 +602,7 @@ class UserModel(BaseModel):
     password: str
 
 
-def validate_user(data: dict) -> r[UserModel]:
+def validate_user(data: dict) -> p.Result[UserModel]:
     """Validate user data with r."""
     try:
         user = UserModel(**data)

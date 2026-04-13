@@ -206,10 +206,10 @@ class FlextResult[T](BaseModel):
         return self._result
 
     @classmethod
-    def _from_result_like[V](
+    def _from_result[V](
         cls,
-        source: p.ResultLike[V],
-    ) -> FlextResult[V]:
+        source: p.Result[V],
+    ) -> Self:
         if source.success:
             return FlextResult[V].ok(source.value)
         return FlextResult[V].fail(
@@ -316,7 +316,7 @@ class FlextResult[T](BaseModel):
             if error_data is not None
             else cls._exception_error_data(exception)
         )
-        result: Self = cls(
+        result = cls(
             error_code=resolved_error_code,
             error_data=resolved_error_data,
             error=error_msg,
@@ -425,23 +425,23 @@ class FlextResult[T](BaseModel):
             value: Value to wrap (any T, including None when T allows it)
 
         """
-        result: Self = cls(value=value, success=True)
+        result = cls(value=value, success=True)
         result._result = Success(value)
         return result
 
     @classmethod
     def from_result[V](
         cls,
-        source: p.ResultLike[V],
+        source: p.Result[V],
     ) -> FlextResult[V]:
         """Normalize any structural FLEXT result into FlextResult."""
-        return FlextResult[V]._from_result_like(source)
+        return FlextResult[V]._from_result(source)
 
     @classmethod
     def traverse[V, U](
         cls,
         items: Sequence[V],
-        func: Callable[[V], FlextResult[U]],
+        func: Callable[[V], p.Result[U]],
         *,
         fail_fast: bool = True,
     ) -> FlextResult[Sequence[U]]:
@@ -471,20 +471,20 @@ class FlextResult[T](BaseModel):
                     )
                 results.append(result.value)
             return FlextResult[Sequence[U]](value=results, success=True)
-        all_results = [func(item) for item in items]
+        all_results = [FlextResult[U].from_result(func(item)) for item in items]
         return cls.accumulate_errors(*all_results)
 
     @classmethod
     def with_resource[R, U](
         cls,
         factory: Callable[[], R],
-        op: Callable[[R], FlextResult[U]],
+        op: Callable[[R], p.Result[U]],
         cleanup: Callable[[R], None] | None = None,
     ) -> FlextResult[U]:
         """Resource management with automatic cleanup."""
         resource = factory()
         try:
-            return op(resource)
+            return FlextResult[U].from_result(op(resource))
         finally:
             if cleanup:
                 cleanup(resource)
@@ -543,7 +543,7 @@ class FlextResult[T](BaseModel):
 
         return wrapper
 
-    def filter(self, predicate: Callable[[T], bool]) -> FlextResult[T]:
+    def filter(self, predicate: Callable[[T], bool]) -> Self:
         """Filter success value based on predicate.
 
         If successful and predicate returns True, returns self unchanged.
@@ -572,7 +572,7 @@ class FlextResult[T](BaseModel):
 
     def flat_map[U](
         self,
-        func: Callable[[T], p.ResultLike[U]],
+        func: Callable[[T], p.Result[U]],
     ) -> FlextResult[U]:
         """Chain operations returning a structural FLEXT result.
 
@@ -600,7 +600,7 @@ class FlextResult[T](BaseModel):
 
     def flow_through[U](
         self,
-        *funcs: Callable[[T | U], FlextResult[U]],
+        *funcs: Callable[[T | U], p.Result[U]],
     ) -> FlextResult[T] | FlextResult[U]:
         """Chain multiple operations in a pipeline.
 
@@ -627,9 +627,9 @@ class FlextResult[T](BaseModel):
             if current.success:
                 result_value = current.value
                 if result_value is not None:
-                    inner = func(result_value)
+                    inner = FlextResult[U].from_result(func(result_value))
                     if inner.success:
-                        current = FlextResult[U].ok(inner.value)
+                        current = inner
                     else:
                         current = FlextResult[U].fail(
                             inner.error or "",
@@ -683,7 +683,7 @@ class FlextResult[T](BaseModel):
 
     def lash(
         self,
-        func: Callable[[str], FlextResult[T]],
+        func: Callable[[str], p.Result[T]],
     ) -> FlextResult[T]:
         """Apply recovery function on failure.
 
@@ -702,7 +702,7 @@ class FlextResult[T](BaseModel):
         """
         if self.failure:
             inner_result = func(self.error or "")
-            return FlextResult[T]._from_result_like(inner_result)
+            return FlextResult[T]._from_result(inner_result)
         return self
 
     def map[U](self, func: Callable[[T], U]) -> FlextResult[U]:

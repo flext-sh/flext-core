@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import MutableSequence
-from types import SimpleNamespace
+from collections.abc import Callable, MutableSequence
 from typing import Annotated, ClassVar, cast
 
 import pytest
@@ -68,12 +67,12 @@ class TestDecoratorsFullCoverage:
 
         class _Container:
             @staticmethod
-            def get(_name: str) -> r[str]:
+            def resolve(_name: str) -> p.Result[str]:
                 return r[str].ok("dep")
 
         monkeypatch.setattr(
             core_decorators.FlextContainer,
-            "create",
+            "shared",
             lambda: _Container(),
         )
 
@@ -135,7 +134,14 @@ class TestDecoratorsFullCoverage:
     ) -> None:
         _ = self
 
-        def _execute_retry_loop(*_args: t.Scalar, **_kwargs: t.Scalar) -> Exception:
+        def _execute_retry_loop(
+            _call: Callable[[], str],
+            _func_name: str,
+            _logger: p.Logger,
+            *,
+            retry_settings: m.RetryConfiguration,
+        ) -> Exception:
+            _ = retry_settings
             return ValueError("failed")
 
         def _handle_retry_exhaustion(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
@@ -189,48 +195,28 @@ class TestDecoratorsFullCoverage:
         monkeypatch.setattr(core_decorators_module.time, "sleep", _sleep)
         calls = {"n": 0}
 
-        def flaky(*_args: t.Scalar, **_kwargs: t.Scalar) -> str:
+        def flaky() -> str:
             calls["n"] += 1
             msg = "nope"
             raise ValueError(msg)
 
         cfg = m.RetryConfiguration.model_validate(
             {
-                "max_attempts": 2,
+                "max_retries": 2,
                 "initial_delay_seconds": 0.01,
                 "exponential_backoff": False,
+                "retry_on_exceptions": [],
+                "retry_on_status_codes": [],
             },
         )
         result_exc = d._execute_retry_loop(
             flaky,
-            (),
-            {},
+            "flaky",
             cast("p.Logger", fake_logger),
             retry_settings=cfg,
         )
         tm.that(result_exc, is_=Exception)
         tm.that(calls["n"], eq=2)
-
-        def _fake_retry_config(**_kw: t.RecursiveContainer) -> SimpleNamespace:
-            return SimpleNamespace(
-                max_retries=0,
-                initial_delay_seconds=0.1,
-                exponential_backoff=False,
-            )
-
-        monkeypatch.setattr(
-            core_decorators.m,
-            "RetryConfiguration",
-            _fake_retry_config,
-        )
-        result_none = d._execute_retry_loop(
-            lambda *_args, **_kwargs: "x",
-            (),
-            {},
-            cast("p.Logger", fake_logger),
-            retry_settings=None,
-        )
-        tm.that(result_none, is_=RuntimeError)
 
     def test_handle_retry_exhaustion_falsey_exception_reaches_timeout_error(
         self,
@@ -260,7 +246,7 @@ class TestDecoratorsFullCoverage:
         fake_logger = self._FakeLogger()
         _ = FlextContext.Variables.CorrelationId.set("cid-existing")
 
-        def _bind_context(*_args: t.Scalar, **_kwargs: t.Scalar) -> r[bool]:
+        def _bind_context(*_args: t.Scalar, **_kwargs: t.Scalar) -> p.Result[bool]:
             return r[bool].fail("bind-fail", error_code="E_BIND")
 
         monkeypatch.setattr(
@@ -277,13 +263,13 @@ class TestDecoratorsFullCoverage:
         tm.that(cid, eq="cid-existing")
         tm.that(len(fake_logger.warning_calls), gt=0)
 
-    def test_clear_operation_scope_and_handle_log_result_paths(
+    def test_clear_operation_scope_logs_warning_on_failure(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         fake_logger = self._FakeLogger()
 
-        def _clear_scope(_scope: str) -> r[bool]:
+        def _clear_scope(_scope: str) -> p.Result[bool]:
             return r[bool].fail("clear-fail", error_code="E_CLR")
 
         monkeypatch.setattr(
@@ -296,42 +282,7 @@ class TestDecoratorsFullCoverage:
             function_name="fn",
             operation="op",
         )
-        d._handle_log_result(
-            result=r[bool].fail("x", error_code="E1"),
-            logger=cast("p.Logger", fake_logger),
-            fallback_message="fallback",
-            kwargs=t.ConfigMap(root={"extra": {"k": "v"}}),
-        )
-        d._handle_log_result(
-            result=r[bool].fail("y", error_code="E2"),
-            logger=cast("p.Logger", fake_logger),
-            fallback_message="fallback2",
-            kwargs=t.ConfigMap(root={"extra": "not-a-dict"}),
-        )
-        tm.that(len(fake_logger.warning_calls), eq=0)
-
-    def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        class _NoFallback:
-            logger: None = None
-
-        d._handle_log_result(
-            result=r[bool].fail("x"),
-            logger=cast("p.Logger", _NoFallback()),
-            fallback_message="m",
-            kwargs=t.ConfigMap(root={"extra": {"k": "v"}}),
-        )
-        fake_logger = self._FakeLogger()
-
-        d._handle_log_result(
-            result=r[bool].fail("x", error_code="E"),
-            logger=cast("p.Logger", fake_logger),
-            fallback_message="fallback",
-            kwargs=t.ConfigMap(root={"extra": {"k": "v"}}),
-        )
-        tm.that(len(fake_logger.warning_calls), eq=0)
+        tm.that(len(fake_logger.warning_calls), gt=0)
 
     def test_timeout_covers_exception_timeout_branch(self) -> None:
         @d.timeout(timeout_seconds=0.001, error_code="TMO")
@@ -376,7 +327,7 @@ class TestDecoratorsFullCoverage:
         tm.that(fn_standard(), eq=43)
         fn_railway()
 
-    def test_with_correlation_with_context_track_operation_and_factory(
+    def test_with_correlation_with_context_log_operation_and_factory(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
@@ -401,10 +352,10 @@ class TestDecoratorsFullCoverage:
         tm.that(fn(), eq="ok")
         tm.that(ensure_calls, eq=[1])
 
-        def _bind_global_context(**_kwargs: t.Scalar) -> r[bool]:
+        def _bind_global_context(**_kwargs: t.Scalar) -> p.Result[bool]:
             return r[bool].fail("bind", error_code="B")
 
-        def _unbind_global_context(*_keys: str) -> r[bool]:
+        def _unbind_global_context(*_keys: str) -> p.Result[bool]:
             return r[bool].fail("unbind", error_code="U")
 
         def _bind_operation_context(**_kwargs: t.Scalar) -> None:
@@ -435,7 +386,7 @@ class TestDecoratorsFullCoverage:
             _clear_operation_scope,
         )
 
-        @d.track_operation("tracked", track_correlation=True)
+        @d.log_operation("tracked", ensure_correlation=True)
         def tracked() -> str:
             return "done"
 
@@ -498,7 +449,7 @@ class TestDecoratorsFullCoverage:
         _ = self
 
         @d.railway()
-        def already_result() -> r[int]:
+        def already_result() -> p.Result[int]:
             return r[int].ok(1)
 
         tm.ok(already_result())
@@ -512,7 +463,14 @@ class TestDecoratorsFullCoverage:
         tm.fail(fail_result)
         fake_logger = self._FakeLogger()
 
-        def _execute_retry_loop(*_args: t.Scalar, **_kwargs: t.Scalar) -> str:
+        def _execute_retry_loop(
+            _call: Callable[[], str],
+            _func_name: str,
+            _logger: p.Logger,
+            *,
+            retry_settings: m.RetryConfiguration,
+        ) -> str:
+            _ = retry_settings
             return "done"
 
         def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
@@ -547,22 +505,23 @@ class TestDecoratorsFullCoverage:
         monkeypatch.setattr(core_decorators_module.time, "sleep", _sleep)
         calls = {"n": 0}
 
-        def always_fails(*_args: t.Scalar, **_kwargs: t.Scalar) -> str:
+        def always_fails() -> str:
             calls["n"] += 1
             msg = "fail"
             raise KeyError(msg)
 
         cfg = m.RetryConfiguration.model_validate(
             {
-                "max_attempts": 2,
+                "max_retries": 2,
                 "initial_delay_seconds": 0.01,
                 "exponential_backoff": True,
+                "retry_on_exceptions": [],
+                "retry_on_status_codes": [],
             },
         )
         result = d._execute_retry_loop(
             always_fails,
-            (),
-            {},
+            "always_fails",
             cast("p.Logger", fake_logger),
             retry_settings=cfg,
         )

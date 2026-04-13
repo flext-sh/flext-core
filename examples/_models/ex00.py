@@ -6,7 +6,7 @@ from pydantic import Field, field_validator
 
 from examples import c
 from examples._models.errors import ExamplesFlextCoreModelsErrors as _err
-from flext_core import m, r, t
+from flext_core import m, p, r, t
 
 
 class ExamplesFlextCoreModelsEx00:
@@ -19,7 +19,7 @@ class ExamplesFlextCoreModelsEx00:
         email: str = Field(min_length=1)
         status: c.Status = c.Status.ACTIVE
 
-        def activate(self) -> r[None]:
+        def activate(self) -> p.Result[None]:
             """Activate user once."""
             if self.status == c.Status.ACTIVE:
                 return r[None].fail("Already active")

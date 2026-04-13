@@ -62,7 +62,7 @@ class Order(m.AggregateRoot):
     items: Sequence[OrderItem]
     total: Decimal
 
-    def add_item(self, item: OrderItem) -> r[bool]:
+    def add_item(self, item: OrderItem) -> p.Result[bool]:
         if item.quantity <= 0:
             return r[bool].fail("Quantity must be positive")
         self.items.append(item)
@@ -93,7 +93,7 @@ class UserCreated(s.Event):
 class UserService(s[str]):
     """Domain service with command and event handlers."""
 
-    def handle_create_user(self, command: CreateUser) -> r[str]:
+    def handle_create_user(self, command: CreateUser) -> p.Result[str]:
         if not command.email:
             return r[str].fail("Email required")
 
@@ -101,7 +101,7 @@ class UserService(s[str]):
         self.add_domain_event(UserCreated(user_id=user_id))
         return r[str].ok(user_id)
 
-    def handle_user_created(self, event: UserCreated) -> r[bool]:
+    def handle_user_created(self, event: UserCreated) -> p.Result[bool]:
         # Perform read-side updates or notifications
         return r[bool].ok(True)
 

@@ -11,7 +11,7 @@ class TestDispatcherDI:
     class _Handler:
         message_type = "di_route"
 
-        def handle(self, message: p.Routable) -> r[str]:
+        def handle(self, message: p.Routable) -> p.Result[str]:
             route = message.command_type or ""
             return r[str].ok(f"handled:{route}")
 

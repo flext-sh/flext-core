@@ -50,10 +50,10 @@ poetry add flext-core
 Replace exception handling with `r` for predictable control flow.
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
-def divide(a: int, b: int) -> r[float]:
+def divide(a: int, b: int) -> p.Result[float]:
     if b == 0:
         return r[float].fail("Division by zero")
     return r[float].ok(a / b)
@@ -109,7 +109,7 @@ class CreateUser:
 
 
 # 2. Define a Handler
-def handle_create_user(cmd: CreateUser) -> r[str]:
+def handle_create_user(cmd: CreateUser) -> p.Result[str]:
     # Business logic here...
     return r[str].ok(f"User {cmd.username} created")
 

@@ -14,7 +14,7 @@ from __future__ import annotations
 import uuid
 
 from flext_core import FlextContainer
-from tests import c, e, r, t, u
+from tests import c, e, p, r, t, u
 
 
 class TestCompleteFlextSystemIntegration:
@@ -79,7 +79,7 @@ class TestCompleteFlextSystemIntegration:
         assert failure_result.error == "erro_de_processamento"
         assert failure_result.unwrap_or("") == ""
 
-        def operacao_que_pode_falhar(data: str) -> r[str]:
+        def operacao_que_pode_falhar(data: str) -> p.Result[str]:
             if "invalido" in data:
                 return r[str].fail("dados_invalidos")
             return r[str].ok(f"validado_{data}")
@@ -160,7 +160,7 @@ class TestCompleteFlextSystemIntegration:
 
         def processar_dados_usuario(
             dados: t.StrMapping,
-        ) -> r[t.StrMapping]:
+        ) -> p.Result[t.StrMapping]:
             """Função que simula processamento completo usando todo o sistema.
 
             Returns:
@@ -209,15 +209,15 @@ class TestCompleteFlextSystemIntegration:
         assert resultado_recuperado.success is True
         assert resultado_recuperado.value == "valor_recuperado"
 
-        def operacao_1(data: str) -> r[str]:
+        def operacao_1(data: str) -> p.Result[str]:
             return r[str].ok(f"etapa1_{data}")
 
-        def operacao_2(data: str) -> r[str]:
+        def operacao_2(data: str) -> p.Result[str]:
             if "erro" in data:
                 return r[str].fail("erro_na_etapa2")
             return r[str].ok(f"etapa2_{data}")
 
-        def operacao_3(data: str) -> r[str]:
+        def operacao_3(data: str) -> p.Result[str]:
             return r[str].ok(f"final_{data}")
 
         pipeline_sucesso = (

@@ -6,7 +6,7 @@ from typing import cast
 from pydantic import BaseModel, ValidationError
 
 from flext_tests import tm
-from tests import r, t
+from tests import p, r, t
 
 
 class TestResultExceptionCarrying:
@@ -247,7 +247,7 @@ class TestResultExceptionCarrying:
         exc = ValueError("item error")
         items = [1, 2, 3]
 
-        def process_with_failure(value: int) -> r[int]:
+        def process_with_failure(value: int) -> p.Result[int]:
             if value == 2:
                 return r[int].fail("error", exception=exc)
             return r[int].ok(value * 2)
@@ -261,7 +261,7 @@ class TestResultExceptionCarrying:
         exc2 = TypeError("error 2")
         items = [1, 2, 3]
 
-        def process_with_failures(value: int) -> r[int]:
+        def process_with_failures(value: int) -> p.Result[int]:
             if value == 1:
                 return r[int].fail("error 1", exception=exc1)
             if value == 3:

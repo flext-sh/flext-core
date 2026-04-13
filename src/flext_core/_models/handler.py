@@ -308,7 +308,7 @@ class FlextModelsHandler:
             self,
             name: str,
             value: t.MetadataAttributeValue,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             """Record a named metric value in the tracker."""
             raw_state = self._context.metrics_state
             state: t.Dict = (
@@ -334,7 +334,7 @@ class FlextModelsHandler:
                 return self._stack[-1]
             return None
 
-        def pop_context(self) -> r[t.ScalarMapping]:
+        def pop_context(self) -> p.Result[t.ScalarMapping]:
             """Pop and return the top context from the stack as a scalar dict."""
             if self._stack:
                 popped = self._stack.pop()
@@ -347,7 +347,7 @@ class FlextModelsHandler:
         def push_context(
             self,
             ctx: FlextModelsHandler.ExecutionContext | t.RecursiveContainerMapping,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             """Push an execution context or mapping onto the context stack."""
             if isinstance(ctx, FlextModelsHandler.ExecutionContext):
                 self._stack.append(ctx)
@@ -460,14 +460,14 @@ class FlextModelsHandler:
                 ),
             )
 
-        def pop_context(self) -> r[t.ScalarMapping]:
+        def pop_context(self) -> p.Result[t.ScalarMapping]:
             """Pop handler context from the runtime stack."""
             return self.context_stack.pop_context()
 
         def push_context(
             self,
             ctx: FlextModelsHandler.ExecutionContext | t.RecursiveContainerMapping,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             """Push handler context onto the runtime stack."""
             return self.context_stack.push_context(ctx)
 
@@ -475,7 +475,7 @@ class FlextModelsHandler:
             self,
             name: str,
             value: t.MetadataAttributeValue,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             """Record a metric via the bound metrics tracker."""
             return self.metrics_tracker.record_metric(name, value)
 

@@ -6,9 +6,8 @@ import types
 from collections.abc import MutableSequence
 from typing import override
 
-from flext_core import h, r, s
 from flext_tests import tm
-from tests import c, m, p
+from tests import c, h, m, p, r, s
 
 
 class TestHandlerDecoratorDiscovery:
@@ -18,7 +17,7 @@ class TestHandlerDecoratorDiscovery:
 
         class Service:
             @h.handler(command=CreateCommand, priority=10)
-            def handle_user(self, cmd: CreateCommand) -> r[str]:
+            def handle_user(self, cmd: CreateCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("handled")
 
@@ -28,7 +27,7 @@ class TestHandlerDecoratorDiscovery:
 
         class Service:
             @h.handler(command=CreateCommand)
-            def handle_user(self, cmd: CreateCommand) -> r[str]:
+            def handle_user(self, cmd: CreateCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("handled")
 
@@ -48,7 +47,7 @@ class TestHandlerDecoratorDiscovery:
                 timeout=5.0,
                 middleware=middleware_types,
             )
-            def handle_user(self, cmd: CreateCommand) -> r[str]:
+            def handle_user(self, cmd: CreateCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("handled")
 
@@ -64,7 +63,7 @@ class TestHandlerDecoratorDiscovery:
 
         class Service:
             @h.handler(command=CreateCommand)
-            def handle_user(self, cmd: CreateCommand) -> r[str]:
+            def handle_user(self, cmd: CreateCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("handled")
 
@@ -77,7 +76,7 @@ class TestHandlerDecoratorDiscovery:
         class CreateCommand:
             pass
 
-        def original_handler(self: s, cmd: CreateCommand) -> r[str]:
+        def original_handler(self: s, cmd: CreateCommand) -> p.Result[str]:
             _ = self
             _ = cmd
             return r[str].ok("handled")
@@ -97,17 +96,17 @@ class TestHandlerDecoratorDiscovery:
 
         class Service:
             @h.handler(command=CreateCommand, priority=100)
-            def handle_create(self, cmd: CreateCommand) -> r[str]:
+            def handle_create(self, cmd: CreateCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("create")
 
             @h.handler(command=DeleteCommand, priority=50)
-            def handle_delete(self, cmd: DeleteCommand) -> r[str]:
+            def handle_delete(self, cmd: DeleteCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("delete")
 
             @h.handler(command=QueryCommand, priority=10)
-            def handle_query(self, cmd: QueryCommand) -> r[str]:
+            def handle_query(self, cmd: QueryCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("query")
 
@@ -127,7 +126,7 @@ class TestHandlerDecoratorDiscovery:
 
         class ServiceWithHandler:
             @h.handler(command=str)
-            def handle(self, cmd: str) -> r[str]:
+            def handle(self, cmd: str) -> p.Result[str]:
                 return r[str].ok(cmd)
 
         tm.that(not h.Discovery.scan_class(ServiceWithoutHandlers), eq=True)
@@ -141,7 +140,7 @@ class TestHandlerDecoratorDiscovery:
 
         class OrderService:
             @h.handler(command=EventPublished, priority=25)
-            def handle_event(self, event: EventPublished) -> r[str]:
+            def handle_event(self, event: EventPublished) -> p.Result[str]:
                 return r[str].ok(f"processed_{event.event_id}")
 
         handlers = h.Discovery.scan_class(OrderService)
@@ -163,11 +162,11 @@ class TestHandlerDecoratorDiscovery:
         module = types.ModuleType("decorated_module")
 
         @h.handler(command=CreateCommand, priority=100)
-        def handle_user_create_globally(cmd: CreateCommand) -> r[str]:
+        def handle_user_create_globally(cmd: CreateCommand) -> p.Result[str]:
             return r[str].ok(f"global_create_{cmd.name}")
 
         @h.handler(command=DeleteCommand, priority=50)
-        def handle_user_delete_globally(cmd: DeleteCommand) -> r[str]:
+        def handle_user_delete_globally(cmd: DeleteCommand) -> p.Result[str]:
             return r[str].ok(f"global_delete_{cmd.user_id}")
 
         setattr(module, "handle_user_create_globally", handle_user_create_globally)
@@ -186,12 +185,12 @@ class TestHandlerDecoratorDiscovery:
         module = types.ModuleType("private_check_module")
 
         @h.handler(command=CreateCommand)
-        def _private_handler(cmd: CreateCommand) -> r[str]:
+        def _private_handler(cmd: CreateCommand) -> p.Result[str]:
             _ = cmd
             return r[str].ok("private")
 
         @h.handler(command=CreateCommand)
-        def public_handler(cmd: CreateCommand) -> r[str]:
+        def public_handler(cmd: CreateCommand) -> p.Result[str]:
             _ = cmd
             return r[str].ok("public")
 
@@ -211,13 +210,13 @@ class TestHandlerDecoratorDiscovery:
 
         class BaseService:
             @h.handler(command=CreateCommand, priority=10)
-            def handle_create(self, cmd: CreateCommand) -> r[str]:
+            def handle_create(self, cmd: CreateCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("created")
 
         class DerivedService(BaseService):
             @h.handler(command=DeleteCommand, priority=5)
-            def handle_delete(self, cmd: DeleteCommand) -> r[str]:
+            def handle_delete(self, cmd: DeleteCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("deleted")
 
@@ -232,7 +231,7 @@ class TestHandlerDecoratorDiscovery:
 
         class Service:
             @h.handler(command=CreateCommand, timeout=None)
-            def handle(self, cmd: CreateCommand) -> r[str]:
+            def handle(self, cmd: CreateCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("ok")
 
@@ -249,7 +248,7 @@ class TestHandlerDecoratorDiscovery:
         class Service:
             @h.handler(command=CreateCommand, priority=10)
             @h.handler(command=DeleteCommand, priority=20)
-            def handle(self, cmd: DeleteCommand) -> r[str]:
+            def handle(self, cmd: DeleteCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("ok")
 
@@ -264,11 +263,11 @@ class TestHandlerDecoratorDiscovery:
 
         class Service(s[str]):
             @h.handler(command=CreateCommand, priority=10)
-            def handle_user_create(self, cmd: CreateCommand) -> r[str]:
+            def handle_user_create(self, cmd: CreateCommand) -> p.Result[str]:
                 return r[str].ok(f"created_{cmd.name}")
 
             @override
-            def execute(self) -> r[str]:
+            def execute(self) -> p.Result[str]:
                 return r[str].ok("executed")
 
         handlers = h.Discovery.scan_class(Service)

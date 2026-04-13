@@ -7,8 +7,8 @@ from decimal import Decimal
 
 from pydantic import EmailStr, Field, computed_field, field_validator
 
-from examples import c, t
-from flext_core import m, r
+from examples import c, p, r, t
+from flext_core import m
 
 
 class Ex03Email(m.Value):
@@ -30,7 +30,7 @@ class Ex03Money(m.Value):
             return value
         return c.Currency(value)
 
-    def add(self, other: Ex03Money) -> r[Ex03Money]:
+    def add(self, other: Ex03Money) -> p.Result[Ex03Money]:
         """Add money with same currency."""
         if self.currency != other.currency:
             return r[Ex03Money].fail("currency mismatch")
@@ -68,14 +68,14 @@ class Ex03Order(m.AggregateRoot):
     items: Sequence[t.ConfigMap] = Field(default_factory=_new_order_items)
     status: c.Status = c.Status.ACTIVE
 
-    def add_item(self, item: Ex03OrderItem) -> r[Ex03Order]:
+    def add_item(self, item: Ex03OrderItem) -> p.Result[Ex03Order]:
         """Append item to order."""
         item_payload = t.ConfigMap(root=item.model_dump())
         return r[Ex03Order].ok(
             self.model_copy(update={"items": [*self.items, item_payload]}),
         )
 
-    def confirm(self) -> r[Ex03Order]:
+    def confirm(self) -> p.Result[Ex03Order]:
         """Confirm order."""
         if not self.items:
             return r[Ex03Order].fail("order has no items")

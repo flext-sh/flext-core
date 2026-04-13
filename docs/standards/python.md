@@ -44,7 +44,7 @@ FLEXT-Core enforces **zero-tolerance** quality standards. These are non-negotiab
 
 ```python
 # ✅ CORRECT
-def get_user(user_id: str) -> r[User]:
+def get_user(user_id: str) -> p.Result[User]:
     """Get user by ID."""
     pass
 
@@ -124,7 +124,7 @@ def very_long_function_name(
     parameter_one: str,
     parameter_two: int,
     parameter_three: bool,
-) -> r[dict]:
+) -> p.Result[dict]:
     """Function with many parameters."""
     pass
 
@@ -132,7 +132,7 @@ def very_long_function_name(
 # ❌ WRONG - Exceeds 79 chars
 def very_long_function_name(
     parameter_one: str, parameter_two: int, parameter_three: bool
-) -> r[dict]:
+) -> p.Result[dict]:
     pass
 ```
 
@@ -148,10 +148,10 @@ from typing import TypeVar
 import pydantic
 import structlog
 
-from flext_core import r, FlextContainer
+from flext_core import r, p, FlextContainer
 
 # ❌ WRONG - Mixed order
-from flext_core import r
+from flext_core import r, p
 import os
 import pydantic
 from datetime import datetime
@@ -198,7 +198,7 @@ def create_user(
     name: str,
     email: str,
     age: int,
-) -> r[User]:
+) -> p.Result[User]:
     """Create new user with validation.
 
     Args:
@@ -223,7 +223,7 @@ def create_user(
 
 
 # ❌ WRONG - Missing docstring
-def create_user(name: str, email: str, age: int) -> r[User]:
+def create_user(name: str, email: str, age: int) -> p.Result[User]:
     pass
 
 
@@ -260,7 +260,7 @@ class User(FlextModels.Entity):
 
 ```python
 # ✅ CORRECT - Return r
-def validate_email(email: str) -> r[str]:
+def validate_email(email: str) -> p.Result[str]:
     if "@" not in email:
         return r[str].fail("Invalid email")
     return r[str].ok(email)

@@ -144,9 +144,9 @@ One paragraph explaining what this feature does and why use it.
 
 ```python
 # ✅ CORRECT - Complete, working example
-from flext_core import r
+from flext_core import r, p
 
-def divide(a: float, b: float) -> r[float]:
+def divide(a: float, b: float) -> p.Result[float]:
     """Divide two numbers safely."""
     if b == 0:
         return r[float].fail("Division by zero")
@@ -165,7 +165,7 @@ else:
 
 ```python
 # ✅ CORRECT - Only r
-from flext_core import r
+from flext_core import r, p
 
 # ❌ WRONG - Unnecessary imports
 from flext_core import (

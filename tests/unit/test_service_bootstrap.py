@@ -39,7 +39,7 @@ class TestServiceBootstrap:
             )
 
         @override
-        def execute(self) -> r[bool]:
+        def execute(self) -> p.Result[bool]:
             """Execute service logic."""
             return r[bool].ok(True)
 

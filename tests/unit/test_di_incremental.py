@@ -292,7 +292,7 @@ class TestDIIncremental:
                 )
 
             @override
-            def execute(self) -> r[str]:
+            def execute(self) -> p.Result[str]:
                 return r[str].ok("test")
 
         service = TestService()

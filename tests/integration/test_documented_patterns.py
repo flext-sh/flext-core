@@ -360,7 +360,7 @@ class TestDocumentedPatterns:
             user_id: str = ""
 
             @override
-            def execute(self) -> r[m.Core.Tests.User]:
+            def execute(self) -> p.Result[m.Core.Tests.User]:
                 return r[m.Core.Tests.User].ok(
                     m.Core.Tests.User(
                         unique_id=self.user_id,

@@ -436,7 +436,7 @@ Use domain events (emitted from aggregates, published by infrastructure) for cro
 
 ```python
 class OrderService(s):
-    def place_order(self, order: Order) -> r[Order]:
+    def place_order(self, order: Order) -> p.Result[Order]:
         # Business logic
         order.place()
         # Emit event for subscribers

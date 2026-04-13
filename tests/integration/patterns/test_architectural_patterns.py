@@ -16,8 +16,8 @@ from typing import Self
 
 import pytest
 
-from flext_core import FlextModelsDomainEvent, r
-from tests import c, t, u
+from flext_core import FlextModelsDomainEvent
+from tests import c, p, r, t, u
 
 
 class _UserCreatedEvent(FlextModelsDomainEvent.Entry):
@@ -48,7 +48,7 @@ class TestArchitecturalPatterns:
             """Factory for creating different types of services."""
 
             @staticmethod
-            def create_service(service_type: str) -> r[t.StrMapping]:
+            def create_service(service_type: str) -> p.Result[t.StrMapping]:
                 """Create service based on type."""
                 if service_type == "email":
                     return r[t.StrMapping].ok({
@@ -104,7 +104,7 @@ class TestArchitecturalPatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> r[t.RecursiveContainerMapping]:
+            def build(self) -> p.Result[t.RecursiveContainerMapping]:
                 """Build the configuration."""
                 if not self._config:
                     return r[t.RecursiveContainerMapping].fail(
@@ -146,12 +146,12 @@ class TestArchitecturalPatterns:
                 self._data: MutableMapping[str, t.RuntimeAtomic] = {}
                 self._query_count = 0
 
-            def save(self, entity_id: str, data: t.RuntimeAtomic) -> r[bool]:
+            def save(self, entity_id: str, data: t.RuntimeAtomic) -> p.Result[bool]:
                 """Save entity to repository."""
                 self._data[entity_id] = data
                 return r[bool].ok(True)
 
-            def find_by_id(self, entity_id: str) -> r[t.RuntimeAtomic]:
+            def find_by_id(self, entity_id: str) -> p.Result[t.RuntimeAtomic]:
                 """Find entity by ID."""
                 self._query_count += 1
                 if entity_id in self._data:
@@ -221,12 +221,12 @@ class TestArchitecturalPatterns:
                     FlextModelsDomainEvent.Entry
                 ] = []
 
-            def handle_user_created(self, event: _UserCreatedEvent) -> r[bool]:
+            def handle_user_created(self, event: _UserCreatedEvent) -> p.Result[bool]:
                 """Handle user created event."""
                 self.processed_events.append(event)
                 return r[bool].ok(True)
 
-            def handle_user_updated(self, event: _UserUpdatedEvent) -> r[bool]:
+            def handle_user_updated(self, event: _UserUpdatedEvent) -> p.Result[bool]:
                 """Handle user updated event."""
                 self.processed_events.append(event)
                 return r[bool].ok(True)

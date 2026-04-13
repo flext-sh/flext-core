@@ -16,14 +16,14 @@ from examples import (
     u,
 )
 from examples.shared import Examples
-from flext_core import FlextContext, FlextService, FlextSettings, e, r, s
+from flext_core import FlextContext, FlextService, FlextSettings, e, p, r, s
 
 
 class _EchoService(s[str]):
     """Simple typed service implementation for execute()."""
 
     @override
-    def execute(self) -> r[str]:
+    def execute(self) -> p.Result[str]:
         return r[str].ok("echo:ok")
 
 
@@ -31,7 +31,7 @@ class _FailingService(s[str]):
     """Service returning failed result to exercise result property failure path."""
 
     @override
-    def execute(self) -> r[str]:
+    def execute(self) -> p.Result[str]:
         return self.fail_op("execute failing service", "boom-service")
 
 
@@ -39,11 +39,11 @@ class _RuleService(s[str]):
     """Service overriding business-rule validation."""
 
     @override
-    def execute(self) -> r[str]:
+    def execute(self) -> p.Result[str]:
         return r[str].ok("rules")
 
     @override
-    def validate_business_rules(self) -> r[bool]:
+    def validate_business_rules(self) -> p.Result[bool]:
         return e.fail_validation("business_rule", "invalid-rule", error="E_RULE")
 
 
@@ -51,11 +51,11 @@ class _ValidationCrashService(s[str]):
     """Service raising from validate_business_rules() to test valid() guard."""
 
     @override
-    def execute(self) -> r[str]:
+    def execute(self) -> p.Result[str]:
         return r[str].ok("no-op")
 
     @override
-    def validate_business_rules(self) -> r[bool]:
+    def validate_business_rules(self) -> p.Result[bool]:
         msg = m.Examples.ErrorMessages.RULE_CRASH
         raise RuntimeError(msg)
 
@@ -76,7 +76,7 @@ class _DeclarativeService(s[str]):
         return self._execute_count
 
     @override
-    def execute(self) -> r[str]:
+    def execute(self) -> p.Result[str]:
         self._execute_count += 1
         return r[str].ok(f"auto:{self._execute_count}")
 
@@ -105,7 +105,7 @@ class _RuntimeFactoryService(s[str]):
         )
 
     @override
-    def execute(self) -> r[str]:
+    def execute(self) -> p.Result[str]:
         return r[str].ok("factory")
 
 
@@ -168,7 +168,7 @@ class Ex11FlextService(Examples):
         self.check("track.has_operation_count", "operation_count" in metrics)
         self.check("track.has_success_rate", "success_rate" in metrics)
 
-        def _to_even(num: int) -> r[int]:
+        def _to_even(num: int) -> p.Result[int]:
             if num % 2 == 0:
                 return r[int].ok(num)
             return r[int].fail(f"odd:{num}")

@@ -268,7 +268,7 @@ class FlextContext(m.ArbitraryTypesModel):
             _ = u.bind_global_context(**{key: normalized})
 
     @staticmethod
-    def _validate_update_inputs(key: str, value: t.ValueOrModel) -> r[bool]:
+    def _validate_update_inputs(key: str, value: t.ValueOrModel) -> p.Result[bool]:
         """Validate inputs for set operation.
 
         Args:
@@ -444,7 +444,9 @@ class FlextContext(m.ArbitraryTypesModel):
             },
         )
 
-    def get(self, key: str, scope: str = c.ContextScope.GLOBAL) -> r[t.RuntimeAtomic]:
+    def get(
+        self, key: str, scope: str = c.ContextScope.GLOBAL
+    ) -> p.Result[t.RuntimeAtomic]:
         """Get a value from the context.
 
         Fast fail: Returns r[t.Container] - fails if key not found.
@@ -496,7 +498,7 @@ class FlextContext(m.ArbitraryTypesModel):
         normalized = u.normalize_to_container(value)
         return r[t.RuntimeAtomic].ok(normalized)
 
-    def resolve_metadata(self, key: str) -> r[t.RuntimeAtomic]:
+    def resolve_metadata(self, key: str) -> p.Result[t.RuntimeAtomic]:
         """Get metadata from the context.
 
         Fast fail: Returns r[t.RuntimeAtomic] - fails if key not found.
@@ -704,7 +706,7 @@ class FlextContext(m.ArbitraryTypesModel):
         value: t.RuntimeAtomic,
         *,
         scope: str = ...,
-    ) -> r[bool]: ...
+    ) -> p.Result[bool]: ...
 
     @overload
     def set(
@@ -713,7 +715,7 @@ class FlextContext(m.ArbitraryTypesModel):
         value: None = ...,
         *,
         scope: str = ...,
-    ) -> r[bool]: ...
+    ) -> p.Result[bool]: ...
 
     def set(
         self,
@@ -721,7 +723,7 @@ class FlextContext(m.ArbitraryTypesModel):
         value: t.RuntimeAtomic | None = None,
         *,
         scope: str = c.ContextScope.GLOBAL,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Set one or many values in the context.
 
         Supports two calling conventions:
@@ -765,7 +767,7 @@ class FlextContext(m.ArbitraryTypesModel):
             },
         )
 
-    def validate_context(self) -> r[bool]:
+    def validate_context(self) -> p.Result[bool]:
         """Validate the context data.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -917,7 +919,7 @@ class FlextContext(m.ArbitraryTypesModel):
         self._state, scope_var = self._state.resolve_scope_var(scope)
         return scope_var
 
-    def _apply_bulk(self, data: t.ConfigMap, scope: str) -> r[bool]:
+    def _apply_bulk(self, data: t.ConfigMap, scope: str) -> p.Result[bool]:
         """Set multiple values in the context from a ConfigMap."""
         if not data:
             return r[bool].ok(True)
@@ -960,7 +962,7 @@ class FlextContext(m.ArbitraryTypesModel):
         key: str,
         value: t.ValueOrModel | None,
         scope: str,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Set a single key-value pair in the context."""
         if value is None:
             return r[bool].fail_op(
@@ -1187,7 +1189,7 @@ class FlextContext(m.ArbitraryTypesModel):
         def register_service(
             service_name: str,
             service: t.RegisterableService,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             """Register service in global container using r.
 
             Provides unified service registration pattern across the ecosystem

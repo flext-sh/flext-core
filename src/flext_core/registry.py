@@ -192,7 +192,7 @@ class FlextRegistry(s[bool]):
         return u.parse_or_default(c.CommonStatus, str(value), c.CommonStatus.ACTIVE)
 
     @override
-    def execute(self) -> r[bool]:
+    def execute(self) -> p.Result[bool]:
         """Validate registry is properly initialized.
 
         Returns:
@@ -230,7 +230,7 @@ class FlextRegistry(s[bool]):
         name: str,
         *,
         scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-    ) -> r[t.RuntimeAtomic | None]:
+    ) -> p.Result[t.RuntimeAtomic | None]:
         """Get a registered plugin by category and name.
 
         Returns:
@@ -260,7 +260,7 @@ class FlextRegistry(s[bool]):
         category: str,
         *,
         scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-    ) -> r[t.StrSequence]:
+    ) -> p.Result[t.StrSequence]:
         """List all plugins in a category.
 
         Args:
@@ -280,48 +280,17 @@ class FlextRegistry(s[bool]):
         self,
         name: str,
         service: t.RegistrablePlugin,
-        metadata: t.ConfigMap | m.Metadata | None = None,
-    ) -> r[bool]:
-        """Register a service component with optional metadata.
-
-        Delegates to the container's register method for dependency injection.
-        Metadata is currently stored for future use but not actively used.
+    ) -> p.Result[bool]:
+        """Register a service component in the runtime container.
 
         Args:
             name: Service name for later retrieval
             service: Service instance to register
-            metadata: Optional metadata (dict or m.Metadata)
 
         Returns:
             r[bool]: Success (True) if registered or failure with error details.
 
         """
-        validated_metadata: t.ConfigMap | None = None
-        if metadata is not None:
-            raw_metadata: Mapping[str, t.MetadataOrValue | t.ModelCarrier]
-            if isinstance(metadata, m.Metadata):
-                raw_metadata = metadata.attributes
-            else:
-                raw_metadata = metadata.root
-            normalized_root: MutableMapping[str, t.ValueOrModel] = {}
-            for k, v in raw_metadata.items():
-                if isinstance(v, t.CONTAINER_TYPES) or u.base_model(v):
-                    normalized_root[k] = v
-                elif isinstance(v, (list, dict, tuple)):
-                    normalized_root[k] = str(v)
-                else:
-                    normalized_root[k] = str(v) if v is not None else ""
-            validated_metadata = t.ConfigMap(root=normalized_root)
-        if validated_metadata is not None:
-            metadata_dict = validated_metadata
-            metadata_keys_str: str = ",".join(metadata_dict.keys())
-            self.logger.debug(
-                "Registering service with metadata",
-                operation="with_service",
-                service_name=name,
-                has_metadata=True,
-                metadata_keys=metadata_keys_str,
-            )
         was_registered = self.container.has(name)
         _ = self.container.bind(name, service)
         if was_registered or self.container.has(name):
@@ -334,7 +303,7 @@ class FlextRegistry(s[bool]):
     def register_bindings(
         self,
         bindings: Mapping[t.RegistryBindingKey, t.HandlerProtocolVariant],
-    ) -> r[m.RegistrySummary]:
+    ) -> p.Result[m.RegistrySummary]:
         """Register message-to-handler bindings.
 
         Args:
@@ -363,8 +332,7 @@ class FlextRegistry(s[bool]):
     def register_handler(
         self,
         handler: t.HandlerProtocolVariant,
-        _metadata: t.ConfigMap | m.Metadata | None = None,
-    ) -> r[m.RegistrationDetails]:
+    ) -> p.Result[m.RegistrationDetails]:
         """Register a handler instance or callable.
 
         Re-registration is ignored and treated as success to guarantee
@@ -421,7 +389,7 @@ class FlextRegistry(s[bool]):
     def register_handlers(
         self,
         handlers: Sequence[t.HandlerProtocolVariant],
-    ) -> r[m.RegistrySummary]:
+    ) -> p.Result[m.RegistrySummary]:
         """Register multiple handlers in batch.
 
         Args:
@@ -454,7 +422,7 @@ class FlextRegistry(s[bool]):
             c.RegistrationScope.INSTANCE,
             c.RegistrationScope.CLASS,
         ] = c.RegistrationScope.INSTANCE,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Register a plugin with optional validation.
 
         Args:
@@ -516,7 +484,7 @@ class FlextRegistry(s[bool]):
             c.RegistrationScope.INSTANCE,
             c.RegistrationScope.CLASS,
         ] = c.RegistrationScope.INSTANCE,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Unregister a plugin.
 
         Args:
@@ -583,7 +551,7 @@ class FlextRegistry(s[bool]):
     def _finalize_summary(
         self,
         summary: m.RegistrySummary,
-    ) -> r[m.RegistrySummary]:
+    ) -> p.Result[m.RegistrySummary]:
         """Finalize summary based on error state.
 
         Returns:

@@ -113,7 +113,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t
@@ -166,14 +166,14 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t
 from flext_core import u
 
 
-def process_ldif_data(content: str) -> r[str, Exception]:
+def process_ldif_data(content: str) -> p.Result[str, Exception]:
     # Parse LDIF
     parse_result = ldif.parse(content)
     if parse_result.is_failure:
@@ -219,7 +219,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import u
 from flext_core import s
 from flext_core import t
@@ -239,11 +239,11 @@ class GetUserQuery:
 
 
 class UserService:
-    def create_user(self, cmd: CreateUserCommand) -> r[str, Exception]:
+    def create_user(self, cmd: CreateUserCommand) -> p.Result[str, Exception]:
         # Create user logic
         return r.success(f"User {cmd.username} created")
 
-    def get_user(self, query: GetUserQuery) -> r[str, Exception]:
+    def get_user(self, query: GetUserQuery) -> p.Result[str, Exception]:
         # Get user logic
         return r.success(f"User {query.user_id} data")
 

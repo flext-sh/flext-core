@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import override
 
 from examples import c, t
-from flext_core import r, s
+from flext_core import d, p, r, s, u
 
 
 class DatabaseService(s[t.ConfigMap]):
@@ -27,19 +27,19 @@ class DatabaseService(s[t.ConfigMap]):
     db_config: t.ConfigMap
 
     @override
-    def execute(self) -> r[t.ConfigMap]:
+    @d.log_operation("database_query")
+    def execute(self) -> p.Result[t.ConfigMap]:
         """Execute database operations.
 
         Returns:
             r[dict]: Operation results
 
         """
-        self._with_operation_context(
-            "database_query",
+        self.logger.info(
+            "Executing database query",
             operation_type="select",
             table="users",
         )
-        self.logger.info("Executing database query")
         results = t.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
         return r[t.ConfigMap].ok(results)
 
@@ -52,7 +52,10 @@ class DatabaseService(s[t.ConfigMap]):
 
         """
         super().model_post_init(__context)
-        self._log_settings_once(self.db_config, message="Database configuration loaded")
+        self.logger.info(
+            "Database configuration loaded",
+            **u.normalize_log_payload(self.db_config.root),
+        )
 
 
 class MigrationService(s[t.ConfigMap]):
@@ -80,22 +83,25 @@ class MigrationService(s[t.ConfigMap]):
                 "max_workers": 4,
             },
         )
-        self._log_settings_once(settings, message="Migration configuration loaded")
+        self.logger.info(
+            "Migration configuration loaded",
+            **u.normalize_log_payload(settings.root),
+        )
 
     @override
-    def execute(self) -> r[t.ConfigMap]:
+    @d.log_operation("migration_process")
+    def execute(self) -> p.Result[t.ConfigMap]:
         """Execute migration.
 
         Returns:
             r[dict]: Migration results
 
         """
-        self._with_operation_context(
-            "migration_process",
+        self.logger.info(
+            "Starting migration process",
             total_entries=1000,
             batch_count=10,
         )
-        self.logger.info("Starting migration process")
         self.logger.info("Processing batch 1 of 10")
         self.logger.info("Processing batch 2 of 10")
         return r[t.ConfigMap].ok(t.ConfigMap(root={"migrated": 1000, "failed": 0}))

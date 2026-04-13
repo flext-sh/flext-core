@@ -23,7 +23,7 @@ from typing import Any
 import pytest
 from tests import test_framework
 
-from flext_core import r, u
+from flext_core import r, p, u
 
 
 @pytest.mark.skip(reason="Template placeholder - replace TEMPLATE with actual module")
@@ -136,7 +136,7 @@ class TestTEMPLATECategory:
         """Test TEMPLATE error propagation through r chain."""
 
         # Create failing operation
-        def failing_operation() -> r[str]:
+        def failing_operation() -> p.Result[str]:
             return r[str].fail("Simulated failure")
 
         # Chain operations (railway-oriented programming)

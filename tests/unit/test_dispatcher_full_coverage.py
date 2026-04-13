@@ -36,7 +36,7 @@ class TestDispatcherFullCoverage:
 
         message_type = "sample_command"
 
-        def handle(self, message: p.Routable) -> r[str]:
+        def handle(self, message: p.Routable) -> p.Result[str]:
             payload = getattr(message, "payload", "")
             return r[str].ok(f"handled:{payload}")
 
@@ -51,7 +51,7 @@ class TestDispatcherFullCoverage:
         def handle(
             self,
             message: TestDispatcherFullCoverage._SampleQuery,
-        ) -> r[t.ConfigMap]:
+        ) -> p.Result[t.ConfigMap]:
             query_id = getattr(message, "query_id", None)
             return r[t.ConfigMap].ok(
                 t.ConfigMap(root={"result": "data", "id": str(query_id)}),
@@ -65,7 +65,7 @@ class TestDispatcherFullCoverage:
 
         message_type = "sample_event"
 
-        def handle(self, message: p.Routable) -> r[bool]:
+        def handle(self, message: p.Routable) -> p.Result[bool]:
             _ = message
             return r[bool].ok(True)
 
@@ -79,7 +79,7 @@ class TestDispatcherFullCoverage:
         def can_handle(self, msg_type: type) -> bool:
             return msg_type is TestDispatcherFullCoverage._SampleCommand
 
-        def handle(self, message: p.Routable) -> r[str]:
+        def handle(self, message: p.Routable) -> p.Result[str]:
             _ = message
             return r[str].ok("ok")
 

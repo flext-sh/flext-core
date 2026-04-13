@@ -6,7 +6,7 @@ from typing import override
 
 import pytest
 
-from tests import e, r, s
+from tests import e, p, r, s
 
 
 class RuntimeCloneService(s[str]):
@@ -15,11 +15,11 @@ class RuntimeCloneService(s[str]):
     flag: bool = True
 
     @override
-    def execute(self) -> r[str]:
+    def execute(self) -> p.Result[str]:
         return r[str].ok("run")
 
     @override
-    def validate_business_rules(self) -> r[bool]:
+    def validate_business_rules(self) -> p.Result[bool]:
         if not self.flag:
             return r[bool].fail("bad flag")
         return r[bool].ok(True)
@@ -30,12 +30,12 @@ def test_valid_handles_validation_exception() -> None:
 
     class RaisingValidationService(s[str]):
         @override
-        def validate_business_rules(self) -> r[bool]:
+        def validate_business_rules(self) -> p.Result[bool]:
             msg = "boom"
             raise RuntimeError(msg)
 
         @override
-        def execute(self) -> r[str]:
+        def execute(self) -> p.Result[str]:
             return r[str].ok("x")
 
     service = RaisingValidationService()
@@ -47,7 +47,7 @@ def test_result_property_raises_on_failure() -> None:
 
     class FailingOnResultService(s[str]):
         @override
-        def execute(self) -> r[str]:
+        def execute(self) -> p.Result[str]:
             return r[str].fail("fail_exec")
 
     service = FailingOnResultService()

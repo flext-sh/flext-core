@@ -62,11 +62,11 @@ user_result = dispatcher.dispatch(GetUserQuery("user-123"))
 
 ```python
 from flext_core import h
-from flext_core import r
+from flext_core import r, p
 
 
 class CreateUserHandler(h[CreateUserCommand, bool]):
-    def handle(self, message: CreateUserCommand) -> r[bool]:
+    def handle(self, message: CreateUserCommand) -> p.Result[bool]:
         if "@" not in message.email:
             return r[bool].fail("Invalid email")
         # Business logic here
@@ -108,13 +108,13 @@ summary = registry.register_handlers([
 
 ```python
 from flext_core import d
-from flext_core import r
+from flext_core import r, p
 
 
 @d.retry(attempts=3)
 @d.timeout(seconds=2)
 @d.inject
-def handle_create_user(cmd: CreateUserCommand, logger) -> r[bool]:
+def handle_create_user(cmd: CreateUserCommand, logger) -> p.Result[bool]:
     logger.info("creating user", user=cmd.name)
     return r[bool].ok(True)
 ```

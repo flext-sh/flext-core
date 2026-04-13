@@ -59,7 +59,7 @@ class CreateUserService(s[User]):
     name: str
     email: str
 
-    def execute(self) -> r[User]:
+    def execute(self) -> p.Result[User]:
         user = User(name=self.name, email=self.email)
         return r[User].ok(user)
 ```
@@ -133,7 +133,7 @@ class AutoUserService(s[User]):
     name: str
     email: str
 
-    def execute(self) -> r[User]:
+    def execute(self) -> p.Result[User]:
         return r[User].ok(User(name=self.name, email=self.email))
 
 
@@ -171,7 +171,7 @@ All properties are **lazy-loaded** – no overhead if unused.
 class ProcessOrderService(s[Order]):
     order_id: str
 
-    def execute(self) -> r[Order]:
+    def execute(self) -> p.Result[Order]:
         # Logging (via x)
         self.logger.info(f"Processing order {self.order_id}")
 
@@ -196,7 +196,7 @@ ______________________________________________________________________
 Chain services using `flat_map`:
 
 ```python
-def process_user(name: str, email: str) -> r[User]:
+def process_user(name: str, email: str) -> p.Result[User]:
     return (
         ValidateEmailService(email=email)
         .execute()
@@ -238,11 +238,11 @@ Services are called by CQRS handlers for domain operations:
 
 ```python
 from flext_core import h
-from flext_core import r
+from flext_core import r, p
 
 
 class CreateUserHandler(h[CreateUserCommand, User]):
-    def handle(self, command: CreateUserCommand) -> r[User]:
+    def handle(self, command: CreateUserCommand) -> p.Result[User]:
         # Handler orchestrates, service executes
         return CreateUserService(
             name=command.name,

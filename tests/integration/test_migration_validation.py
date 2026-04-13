@@ -44,7 +44,7 @@ class TestMigrationValidation:
     def test_flext_result_value_access_pattern(self) -> None:
         """Verify .value access pattern works correctly."""
 
-        def process_user(user_id: str) -> r[t.StrMapping]:
+        def process_user(user_id: str) -> p.Result[t.StrMapping]:
             if not user_id:
                 return r[t.StrMapping].fail("User ID required")
             user_data: t.StrMapping = {"id": user_id, "name": "Alice"}
@@ -59,7 +59,7 @@ class TestMigrationValidation:
     def test_flext_result_error_handling(self) -> None:
         """Verify error handling patterns continue working."""
 
-        def validate_email(email: str) -> r[str]:
+        def validate_email(email: str) -> p.Result[str]:
             if "@" not in email:
                 return r[str].fail("Invalid email format")
             return r[str].ok(email)
@@ -109,7 +109,7 @@ class TestMigrationValidation:
                 super().model_post_init(__context)
 
             @override
-            def execute(self, **_kwargs: t.Scalar) -> r[None]:
+            def execute(self, **_kwargs: t.Scalar) -> p.Result[None]:
                 """Execute method required by s abstract class."""
                 return r[None].ok(None)
 
@@ -117,7 +117,7 @@ class TestMigrationValidation:
                 self,
                 username: str,
                 email: str,
-            ) -> r[t.StrMapping]:
+            ) -> p.Result[t.StrMapping]:
                 """Create user with validation."""
                 if not username or not email:
                     return r[t.StrMapping].fail("Username and email required")
@@ -202,7 +202,7 @@ class TestMigrationValidation:
             def process_data(
                 self,
                 data: t.StrMapping,
-            ) -> r[t.RecursiveContainerMapping]:
+            ) -> p.Result[t.RecursiveContainerMapping]:
                 """Typical data processing method."""
                 if not data:
                     return r[t.RecursiveContainerMapping].fail("Data required")

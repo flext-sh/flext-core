@@ -34,7 +34,7 @@ def _create_entities_batch(
     values: Sequence[t.Core.Tests.TestobjectSerializable],
     entity_class: Callable[..., m.Core.Tests.DomainTestEntity],
     remove_ids: Sequence[bool] | None = None,
-) -> r[Sequence[m.Core.Tests.DomainTestEntity]]:
+) -> p.Result[Sequence[m.Core.Tests.DomainTestEntity]]:
     return u.Core.Tests.create_test_entities_batch(
         names=names,
         values=values,

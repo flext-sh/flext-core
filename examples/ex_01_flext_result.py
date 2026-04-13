@@ -7,7 +7,7 @@ from typing import override
 
 from examples import m, t
 from examples.shared import Examples
-from flext_core import r
+from flext_core import p, r
 
 
 class Ex01r(Examples):
@@ -21,7 +21,7 @@ class Ex01r(Examples):
         """Exercise collection helpers and resource management wrapper."""
         self.section("collections_and_resource")
 
-        def to_even(n: int) -> r[int]:
+        def to_even(n: int) -> p.Result[int]:
             if n % 2 == 0:
                 return r[int].ok(n)
             return r[int].fail(f"odd:{n}")

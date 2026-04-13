@@ -12,7 +12,7 @@ class _Handler(h[t.ValueOrModel, t.ValueOrModel]):
     """Simple handler used by public registry scenarios."""
 
     @override
-    def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+    def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
         return r[t.ValueOrModel].ok(message)
 
 
@@ -26,7 +26,7 @@ class _FalseyDispatcher(p.Dispatcher):
     def publish(
         self,
         event: p.Routable | Sequence[p.Routable],
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         _ = event
         return r[bool].ok(True)
 
@@ -36,13 +36,13 @@ class _FalseyDispatcher(p.Dispatcher):
         handler: t.HandlerProtocolVariant,
         *,
         is_event: bool = False,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         _ = handler
         _ = is_event
         return r[bool].ok(True)
 
     @override
-    def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
+    def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
         _ = message
         return r[t.RuntimeAtomic].fail(c.Core.Tests.TestErrors.DISPATCHER_UNCONFIGURED)
 
@@ -54,7 +54,7 @@ class _FailDispatcher(p.Dispatcher):
     def publish(
         self,
         event: p.Routable | Sequence[p.Routable],
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         _ = event
         return r[bool].ok(True)
 
@@ -64,13 +64,13 @@ class _FailDispatcher(p.Dispatcher):
         handler: t.HandlerProtocolVariant,
         *,
         is_event: bool = False,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         _ = handler
         _ = is_event
         return r[bool].fail(c.Core.Tests.TestErrors.DISPATCHER_FAIL)
 
     @override
-    def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
+    def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
         _ = message
         return r[t.RuntimeAtomic].fail(c.Core.Tests.TestErrors.DISPATCHER_FAIL)
 
@@ -82,7 +82,7 @@ class _OkDispatcher(p.Dispatcher):
     def publish(
         self,
         event: p.Routable | Sequence[p.Routable],
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         _ = event
         return r[bool].ok(True)
 
@@ -92,13 +92,13 @@ class _OkDispatcher(p.Dispatcher):
         handler: t.HandlerProtocolVariant,
         *,
         is_event: bool = False,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         _ = handler
         _ = is_event
         return r[bool].ok(True)
 
     @override
-    def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
+    def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
         _ = message
         return r[t.RuntimeAtomic].ok(True)
 
@@ -192,13 +192,9 @@ def test_registry_plugin_scopes_roundtrip_via_public_api() -> None:
     ).failure
 
 
-def test_registry_register_public_service_with_metadata() -> None:
+def test_registry_register_public_service() -> None:
     registry = u.build_registry(dispatcher=_OkDispatcher())
-    registration = registry.register(
-        "service-name",
-        "service-value",
-        metadata=m.Metadata(attributes={"role": "worker"}),
-    )
+    registration = registry.register("service-name", "service-value")
     assert registration.success
     duplicate_registration = registry.register("service-name", "service-value")
     assert duplicate_registration.success

@@ -610,7 +610,7 @@ class FlextLogger(FlextRuntime):
             return t.ConfigMap(root={})
 
     @classmethod
-    def bind_context(cls, scope: str, **context: t.RuntimeData) -> r[bool]:
+    def bind_context(cls, scope: str, **context: t.RuntimeData) -> p.Result[bool]:
         """Bind context variables to a specific scope.
 
         Args:
@@ -655,7 +655,9 @@ class FlextLogger(FlextRuntime):
             return cls._fail_logging_operation(f"bind context for scope '{scope}'", exc)
 
     @classmethod
-    def bind_context_for_level(cls, level: str, **context: t.RuntimeData) -> r[bool]:
+    def bind_context_for_level(
+        cls, level: str, **context: t.RuntimeData
+    ) -> p.Result[bool]:
         """Bind context variables that only appear in logs at specified level or higher.
 
         Args:
@@ -688,7 +690,7 @@ class FlextLogger(FlextRuntime):
             return cls._fail_logging_operation(f"bind context for level {level}", exc)
 
     @classmethod
-    def bind_global_context(cls, **context: t.RuntimeData) -> r[bool]:
+    def bind_global_context(cls, **context: t.RuntimeData) -> p.Result[bool]:
         """Bind context globally using structlog contextvars.
 
         Args:
@@ -706,7 +708,7 @@ class FlextLogger(FlextRuntime):
             return cls._fail_logging_operation("bind global context", exc)
 
     @classmethod
-    def clear_global_context(cls) -> r[bool]:
+    def clear_global_context(cls) -> p.Result[bool]:
         """Clear global logging context and cached scoped bindings."""
         try:
             cls.structlog().contextvars.clear_contextvars()
@@ -717,7 +719,7 @@ class FlextLogger(FlextRuntime):
             return cls._fail_logging_operation("clear global context", exc)
 
     @classmethod
-    def clear_scope(cls, scope: str) -> r[bool]:
+    def clear_scope(cls, scope: str) -> p.Result[bool]:
         """Clear all context variables for a specific scope.
 
         Args:
@@ -806,7 +808,7 @@ class FlextLogger(FlextRuntime):
         return logger
 
     @classmethod
-    def unbind_global_context(cls, *keys: str) -> r[bool]:
+    def unbind_global_context(cls, *keys: str) -> p.Result[bool]:
         """Unbind specific keys from global context.
 
         Args:
@@ -985,7 +987,7 @@ class FlextLogger(FlextRuntime):
             )
 
     @staticmethod
-    def _fail_logging_operation(operation: str, exc: Exception) -> r[bool]:
+    def _fail_logging_operation(operation: str, exc: Exception) -> p.Result[bool]:
         """Return the canonical failed result for a logger operation."""
         return e.fail_operation(operation, exc)
 

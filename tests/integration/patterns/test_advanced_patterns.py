@@ -18,7 +18,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import r
+from flext_core import p, r
 from tests import m, t, u
 
 TestFunction = Callable[..., None]
@@ -622,7 +622,7 @@ class TestAdvancedPatterns:
                 self.call_count = 0
                 self.states = ["processing", "completed", "error"]
 
-            def process(self, _data: str) -> r[t.StrMapping]:
+            def process(self, _data: str) -> p.Result[t.StrMapping]:
                 """Process data with state transitions."""
                 self.call_count += 1
                 if self.call_count == 1:

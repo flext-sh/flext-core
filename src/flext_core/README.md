@@ -87,7 +87,7 @@ from flext_core import x
 from flext_core import FlextModels
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import r
+from flext_core import r, p
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -124,7 +124,7 @@ class User(FlextModels.Entity):
     name: str
     email: str
 
-    def validate(self) -> r[bool]:
+    def validate(self) -> p.Result[bool]:
         if "@" not in self.email:
             return r[bool].fail("Invalid email")
         return r[bool].ok(True)

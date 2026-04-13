@@ -101,7 +101,7 @@ ______________________________________________________________________
 Monadic success/failure handling used across services, handlers, and decorators.
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 result = (
     r[int].ok(10).map(lambda value: value * 2).map(lambda value: f"Result: {value}")
@@ -166,7 +166,7 @@ from flext_core import h  # h alias
 
 ```python
 # Result operations
-def process(value: str) -> r[str]:
+def process(value: str) -> p.Result[str]:
     if not value:
         return r[str].fail("Empty value")
     return r[str].ok(value.upper())

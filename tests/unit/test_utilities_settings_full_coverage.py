@@ -22,14 +22,14 @@ class TestUtilitiesSettingsFullCoverage:
             _name: str,
             _instance: t.RecursiveContainer,
             **_kwargs: t.Scalar,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             return r[bool].ok(True)
 
         def register_factory(
             self,
             _name: str,
             _factory: Callable[[], t.RecursiveContainer],
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             return r[bool].ok(True)
 
     class _ContainerFail:
@@ -38,14 +38,14 @@ class TestUtilitiesSettingsFullCoverage:
             _name: str,
             _instance: t.RecursiveContainer,
             **_kwargs: t.Scalar,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             return r[bool].fail("reg fail")
 
         def register_factory(
             self,
             _name: str,
             _factory: Callable[[], t.RecursiveContainer],
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             return r[bool].fail("fac fail")
 
     class _ContainerRaise:
@@ -54,7 +54,7 @@ class TestUtilitiesSettingsFullCoverage:
             _name: str,
             _instance: t.RecursiveContainer,
             **_kwargs: t.Scalar,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             msg = "reg ex"
             raise RuntimeError(msg)
 
@@ -62,7 +62,7 @@ class TestUtilitiesSettingsFullCoverage:
             self,
             _name: str,
             _factory: Callable[[], t.RecursiveContainer],
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             msg = "fac ex"
             raise RuntimeError(msg)
 

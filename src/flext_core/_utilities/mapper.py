@@ -183,7 +183,7 @@ class FlextUtilitiesMapper:
         return FlextUtilitiesMapper._apply_strip_empty(step, strip_empty=strip_empty)
 
     @staticmethod
-    def _success_value_result(value: t.PresentValueOrModel) -> r[t.ValueOrModel]:
+    def _success_value_result(value: t.PresentValueOrModel) -> p.Result[t.ValueOrModel]:
         """Create a successful mapper result with concrete value typing."""
         return r[t.ValueOrModel].ok(value)
 
@@ -242,7 +242,7 @@ class FlextUtilitiesMapper:
     def _resolve_raw_value(
         raw: t.ValueOrModel | None,
         key_part: str,
-    ) -> r[t.ValueOrModel]:
+    ) -> p.Result[t.ValueOrModel]:
         """Wrap a raw value into a Result: fail on None, narrow containers, stringify rest."""
         if raw is None:
             marker = "found_none:"
@@ -258,7 +258,7 @@ class FlextUtilitiesMapper:
     def _extract_get_value(
         current: t.ValueOrModel | None,
         key_part: str,
-    ) -> r[t.ValueOrModel]:
+    ) -> p.Result[t.ValueOrModel]:
         """Get raw value from dict/object/model, returning found_none or not-found failures."""
         if isinstance(current, Mapping):
             mapping_obj: Mapping[str, t.ValueOrModel] = current
@@ -320,7 +320,7 @@ class FlextUtilitiesMapper:
     def _extract_handle_array_index(
         current: t.ValueOrModel,
         array_match: str,
-    ) -> r[t.ValueOrModel]:
+    ) -> p.Result[t.ValueOrModel]:
         """Handle array indexing with negative index support."""
         raw: t.ValueOrModel = current
         if isinstance(current, t.ObjectList):
@@ -494,7 +494,7 @@ class FlextUtilitiesMapper:
         *,
         default: t.ValueOrModel | None,
         required: bool,
-    ) -> r[t.ValueOrModel]:
+    ) -> p.Result[t.ValueOrModel]:
         """Return fail (required) or ok(default) / fail (no default) for extract paths."""
         if required:
             return r[t.ValueOrModel].fail_op("extract required path", msg)
@@ -577,7 +577,7 @@ class FlextUtilitiesMapper:
         default: t.ValueOrModel | None = None,
         required: bool = False,
         separator: str = ".",
-    ) -> r[t.ValueOrModel]:
+    ) -> p.Result[t.ValueOrModel]:
         """Extract nested value via dot-notation path with array index support (e.g. "user.addresses[0].city")."""
         try:
             parts = path.split(separator)
@@ -669,7 +669,7 @@ class FlextUtilitiesMapper:
         key_mapping: t.StrMapping,
         *,
         keep_unmapped: bool = True,
-    ) -> r[t.MutableRecursiveContainerMapping]:
+    ) -> p.Result[t.MutableRecursiveContainerMapping]:
         """Rename dict keys using old_key->new_key mapping."""
 
         def _map_keys() -> t.MutableRecursiveContainerMapping:
@@ -821,7 +821,7 @@ class FlextUtilitiesMapper:
         map_keys: t.StrMapping | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
-    ) -> r[t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping]:
+    ) -> p.Result[t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping]:
         """Apply normalize/strip_none/strip_empty/map_keys/filter_keys/exclude_keys to a dict."""
         coerced_source = FlextUtilitiesMapper._coerce_source_to_container_mapping(
             source,

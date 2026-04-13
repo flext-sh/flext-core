@@ -7,7 +7,7 @@ from typing import override
 
 from examples import c, m, t, u
 from examples.shared import Examples
-from flext_core import FlextSettings, r, x
+from flext_core import FlextSettings, p, r, x
 
 
 class Ex05FlextMixins(Examples):
@@ -44,7 +44,7 @@ class Ex05FlextMixins(Examples):
             """Report capability for handler protocol."""
             return bool(message_type)
 
-        def handle(self, message: m.Command) -> r[str]:
+        def handle(self, message: m.Command) -> p.Result[str]:
             """Handle data and return result."""
             return r[str].ok(str(message))
 
@@ -100,7 +100,7 @@ class Ex05FlextMixins(Examples):
         self.check("ensure_result.raw", raw_str)
         self.check("ensure_result.existing", existing_str)
 
-        def _to_even(value: int) -> r[int]:
+        def _to_even(value: int) -> p.Result[int]:
             if value % 2 == 0:
                 return r[int].ok(value)
             return r[int].fail(f"odd:{value}")

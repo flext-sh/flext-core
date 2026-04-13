@@ -175,7 +175,7 @@ def create_service_that_might_fail():
     return ServiceInstance()
 
 
-def safe_factory() -> r[t.RecursiveContainer]:
+def safe_factory() -> p.Result[t.RecursiveContainer]:
     """Wrap potentially-failing factory."""
     try:
         service = create_service_that_might_fail()
@@ -227,10 +227,10 @@ if result.is_success:
 ### Pattern 1: Application Initialization
 
 ```python
-from flext_core import FlextContainer, r, FlextSettings, FlextLogger
+from flext_core import FlextContainer, r, p, FlextSettings, FlextLogger
 
 
-def initialize_application() -> r[bool]:
+def initialize_application() -> p.Result[bool]:
     """Initialize all application services."""
     container = FlextContainer.get_global()
 
@@ -284,14 +284,14 @@ class PaymentService:
         self.logger = logger
         self.settings = settings
 
-    def process_payment(self, amount: float) -> r[dict]:
+    def process_payment(self, amount: float) -> p.Result[dict]:
         """Process payment with dependencies."""
         self.logger.info(f"Processing payment: {amount}")
         # Use self.db, self.settings
         return r[dict].ok({"status": "complete"})
 
 
-def resolve_payment_service() -> r[PaymentService]:
+def resolve_payment_service() -> p.Result[PaymentService]:
     """Resolve PaymentService with all dependencies."""
     container = FlextContainer.get_global()
 
@@ -373,10 +373,10 @@ assert result1.value is result2.value
 ### Pattern 4: Conditional Service Registration
 
 ```python
-from flext_core import FlextContainer, r, FlextSettings
+from flext_core import FlextContainer, r, p, FlextSettings
 
 
-def setup_services_based_on_config() -> r[bool]:
+def setup_services_based_on_config() -> p.Result[bool]:
     """Register services conditionally based on configuration."""
     container = FlextContainer.get_global()
 
@@ -411,7 +411,7 @@ class DatabaseConnection:
         self.url = url
         self.connected = False
 
-    def connect(self) -> r[bool]:
+    def connect(self) -> p.Result[bool]:
         """Establish connection."""
         print(f"Connecting to {self.url}")
         self.connected = True
@@ -423,7 +423,7 @@ class DatabaseConnection:
         self.connected = False
 
 
-def setup_database_lifecycle() -> r[bool]:
+def setup_database_lifecycle() -> p.Result[bool]:
     """Setup database with lifecycle management."""
     container = FlextContainer.get_global()
     config_result = FlextSettings.load()
@@ -512,7 +512,7 @@ result = (
 from flext_core import FlextContainer, r
 
 
-def validate_all_services() -> r[bool]:
+def validate_all_services() -> p.Result[bool]:
     """Validate that all registered services work correctly."""
     container = FlextContainer.get_global()
 
@@ -578,7 +578,9 @@ ServiceName = t.ServiceName
 ServiceType = t.ServiceType
 
 
-def get_service(name: ServiceName, type_cls: type[ServiceType]) -> r[ServiceType]:
+def get_service(
+    name: ServiceName, type_cls: type[ServiceType]
+) -> p.Result[ServiceType]:
     container = FlextContainer.get_global()
     return container.get_typed(name, type_cls)
 ```
@@ -595,7 +597,7 @@ class UserHandler:
     def __init__(self, container: FlextContainer):
         self.container = container
 
-    def create_user(self, user_data: dict) -> r[dict]:
+    def create_user(self, user_data: dict) -> p.Result[dict]:
         """Create user using injected services."""
         # Get dependencies from container
         db_result = self.container.get("database")

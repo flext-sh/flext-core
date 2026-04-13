@@ -413,6 +413,13 @@ class FlextContainer(p.ContainerLifecycle):
         self._services.clear()
         self._factories.clear()
         self._resources.clear()
+        self._config = FlextSettings.fetch_global()
+        self.register_core_services()
+
+    @override
+    def configure(self, settings: t.FlatContainerMapping | None = None) -> Self:
+        """Configure the container with flat validated overrides."""
+        return self.apply(settings)
 
     @override
     def apply(self, settings: t.FlatContainerMapping | None = None) -> Self:
@@ -473,10 +480,12 @@ class FlextContainer(p.ContainerLifecycle):
         if _is_service_of_type(service, cls):
             return r[T].ok(service)
         type_name = cls.__name__
-        return e.fail_type_mismatch(
-            type_name,
-            type(service).__name__,
-            service_name=type_name,
+        return r[T].from_result(
+            e.fail_type_mismatch(
+                type_name,
+                type(service).__name__,
+                service_name=type_name,
+            )
         )
 
     @overload
@@ -542,17 +551,21 @@ class FlextContainer(p.ContainerLifecycle):
                 KeyError,
                 AttributeError,
             ) as exc:
-                return e.fail_operation("resolve factory service", exc)
+                return r[t.RegisterableService].from_result(
+                    e.fail_operation("resolve factory service", exc)
+                )
         if name in self._resources:
             try:
                 resource_registration = self._resources[name]
                 resource_callable: t.ResourceCallable = resource_registration.factory
                 resolved = resource_callable()
                 if not u.registerable_service(resolved):
-                    return e.fail_type_mismatch(
-                        "registerable service",
-                        resolved.__class__.__name__,
-                        service_name=name,
+                    return r[t.RegisterableService].from_result(
+                        e.fail_type_mismatch(
+                            "registerable service",
+                            resolved.__class__.__name__,
+                            service_name=name,
+                        )
                     )
                 if type_cls is not None:
                     return self._narrow_service(resolved, type_cls)
@@ -564,8 +577,10 @@ class FlextContainer(p.ContainerLifecycle):
                 KeyError,
                 AttributeError,
             ) as exc:
-                return e.fail_operation("resolve resource service", exc)
-        return e.fail_not_found("service", name)
+                return r[t.RegisterableService].from_result(
+                    e.fail_operation("resolve resource service", exc)
+                )
+        return r[t.RegisterableService].from_result(e.fail_not_found("service", name))
 
     @override
     def snapshot(self) -> t.ConfigMap:
@@ -1016,7 +1031,7 @@ class FlextContainer(p.ContainerLifecycle):
             delattr(self._di_resources, name)
         if removed:
             return r[bool].ok(True)
-        return e.fail_not_found("service", name)
+        return r[bool].from_result(e.fail_not_found("service", name))
 
     @override
     def wire(
@@ -1039,14 +1054,18 @@ class FlextContainer(p.ContainerLifecycle):
         """Resolve the canonical dispatcher / command bus."""
         result = self.resolve(c.ServiceName.COMMAND_BUS)
         if result.failure:
-            return e.fail_not_found("dispatcher", c.ServiceName.COMMAND_BUS)
+            return r[p.Dispatcher].from_result(
+                e.fail_not_found("dispatcher", c.ServiceName.COMMAND_BUS)
+            )
         candidate = result.value
         if isinstance(candidate, p.Dispatcher):
             return r[p.Dispatcher].ok(candidate)
-        return e.fail_type_mismatch(
-            "dispatcher",
-            candidate.__class__.__name__,
-            service_name=c.ServiceName.COMMAND_BUS,
+        return r[p.Dispatcher].from_result(
+            e.fail_type_mismatch(
+                "dispatcher",
+                candidate.__class__.__name__,
+                service_name=c.ServiceName.COMMAND_BUS,
+            )
         )
 
 

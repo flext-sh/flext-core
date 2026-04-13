@@ -13,7 +13,7 @@ import concurrent.futures
 import time
 from typing import Annotated, override
 
-from flext_core import FlextModelsBase as m, FlextUtilitiesPydantic as up, c, r, t
+from flext_core import FlextModelsBase as m, FlextUtilitiesPydantic as up, c, p, r, t
 
 
 class FlextModelsDispatcher:
@@ -190,7 +190,7 @@ class FlextModelsDispatcher:
                 if time.time() - rec.opened_at >= self.recovery_timeout:
                     self.transition_to_half_open(message_type)
 
-        def check_before_dispatch(self, message_type: str) -> r[bool]:
+        def check_before_dispatch(self, message_type: str) -> p.Result[bool]:
             """Return a result indicating whether dispatch can proceed.
 
             Returns:
@@ -405,7 +405,7 @@ class FlextModelsDispatcher:
         def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
             self.jitter_factor = max(0.0, min(self.jitter_factor, 1.0))
 
-        def check_rate_limit(self, message_type: str) -> r[bool]:
+        def check_rate_limit(self, message_type: str) -> p.Result[bool]:
             """Return whether dispatch is allowed under the current rate window.
 
             Returns:

@@ -150,13 +150,13 @@ src/flext_core/
 
 ```python
 # ✅ CORRECT - Direct imports (import only what you need)
-from flext_core import r, s, FlextModels
+from flext_core import r, p, s, FlextModels
 
 # ❌ WRONG - Star imports in production
 from flext_core import *
 
 # ❌ WRONG - Relative imports in public APIs
-from .result import r
+from .result import r, p
 ```
 
 ## 🔧 Development Workflow
@@ -236,7 +236,7 @@ pytest tests/unit/test_container.py::TestFlextContainer::test_singleton -v
 
 ```python
 # ✅ CORRECT - Type hints, proper naming
-def process_user(user_id: str) -> r[User]:
+def process_user(user_id: str) -> p.Result[User]:
     """Process user with validation."""
     if not user_id:
         return r[User].fail("User ID required")
@@ -258,7 +258,7 @@ def do_stuff(x):
 
 ```python
 # ✅ CORRECT - Always return r
-def create_user(name: str, email: str) -> r[User]:
+def create_user(name: str, email: str) -> p.Result[User]:
     if not name or not email:
         return r[User].fail("Name and email required")
 
@@ -303,7 +303,7 @@ class Order(FlextModels.AggregateRoot):
     items: Sequence[OrderItem]
     total: Decimal
 
-    def add_item(self, item: OrderItem) -> r[bool]:
+    def add_item(self, item: OrderItem) -> p.Result[bool]:
         if self.status != OrderStatus.PENDING:
             return r[bool].fail("Can only modify pending orders")
 

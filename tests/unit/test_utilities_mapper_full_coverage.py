@@ -14,7 +14,6 @@ from typing import Annotated, Never, Protocol, cast, override
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core import r
 from flext_tests import tm
 from tests import p, t, u
 
@@ -118,7 +117,7 @@ class _TransformCallable(Protocol):
         self,
         source: BadMapping,
         **kwargs: t.StrMapping,
-    ) -> r[t.RecursiveContainerMapping]: ...
+    ) -> p.Result[t.RecursiveContainerMapping]: ...
 
 
 class _MapDictKeysCallable(Protocol):
@@ -128,7 +127,7 @@ class _MapDictKeysCallable(Protocol):
         key_map: t.StrMapping,
         *,
         keep_unmapped: bool = True,
-    ) -> r[t.RecursiveContainerMapping]: ...
+    ) -> p.Result[t.RecursiveContainerMapping]: ...
 
 
 def _extract_field_obj(item: AttrObject, field_name: str) -> t.RecursiveContainer:
@@ -204,7 +203,7 @@ def _build_apply_group_obj(
 def _transform_obj(
     source: BadMapping,
     **kwargs: t.StrMapping,
-) -> r[t.RecursiveContainerMapping]:
+) -> p.Result[t.RecursiveContainerMapping]:
     fn: _TransformCallable = getattr(u, "transform")
     return fn(source, **kwargs)
 
@@ -214,7 +213,7 @@ def _map_dict_keys_obj(
     key_map: t.StrMapping,
     *,
     keep_unmapped: bool = True,
-) -> r[t.RecursiveContainerMapping]:
+) -> p.Result[t.RecursiveContainerMapping]:
     fn: _MapDictKeysCallable = getattr(u, "map_dict_keys")
     return fn(source, key_map, keep_unmapped=keep_unmapped)
 

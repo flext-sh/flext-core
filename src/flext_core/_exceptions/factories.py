@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextExceptionsTemplate, c, m, r, t
+from flext_core import FlextExceptionsTemplate, c, m, p, r, t
 
 
 class FlextExceptionsFactories:
@@ -44,7 +44,7 @@ class FlextExceptionsFactories:
         *,
         error_code: str | None = None,
         result_type: type[TResult] | None = None,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical operation-error message.
 
         Usage::
@@ -76,7 +76,7 @@ class FlextExceptionsFactories:
         *,
         error_code: str | None = None,
         result_type: type[TResult] | None = None,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical not-found message.
 
         Usage::
@@ -108,7 +108,7 @@ class FlextExceptionsFactories:
         service_name: str | None = None,
         error_code: str | None = None,
         result_type: type[TResult] | None = None,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical type-mismatch message.
 
         Usage::
@@ -141,7 +141,7 @@ class FlextExceptionsFactories:
         error_code: str | None = None,
         error: Exception | str | None = None,
         result_type: type[TResult] | None = None,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical validation-failed message.
 
         Usage::
@@ -183,7 +183,7 @@ class FlextExceptionsFactories:
         error: Exception | str | None = None,
         error_code: str | None = None,
         result_type: type[TResult] | None = None,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical configuration-error message.
 
         Usage::
@@ -217,7 +217,7 @@ class FlextExceptionsFactories:
         error: Exception | str | None = None,
         error_code: str | None = None,
         result_type: type[TResult] | None = None,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical connection-error message.
 
         Usage::
@@ -246,7 +246,7 @@ class FlextExceptionsFactories:
         *,
         error_code: str | None = None,
         result_type: type[TResult] | None = None,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical timeout message.
 
         Usage::
@@ -278,7 +278,7 @@ class FlextExceptionsFactories:
         error: Exception | str | None = None,
         error_code: str | None = None,
         result_type: type[TResult] | None = None,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authentication-error message.
 
         Usage::
@@ -311,7 +311,7 @@ class FlextExceptionsFactories:
         *,
         error_code: str | None = None,
         result_type: type[TResult] | None = None,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authorization-error message.
 
         Usage::
@@ -343,7 +343,7 @@ class FlextExceptionsFactories:
         *,
         error_code: str | None = None,
         result_type: type[TResult] | None = None,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical conflict message.
 
         Usage::
@@ -375,7 +375,7 @@ class FlextExceptionsFactories:
         *,
         error_code: str | None = None,
         result_type: type[TResult] | None = None,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical rate-limit message.
 
         Usage::
@@ -407,7 +407,7 @@ class FlextExceptionsFactories:
         *,
         error_code: str | None = None,
         result_type: type[TResult] | None = None,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical circuit-breaker message.
 
         Usage::

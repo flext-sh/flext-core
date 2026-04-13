@@ -51,7 +51,7 @@ class TestService:
         _call_count: int = PrivateAttr(default_factory=lambda: 0)
 
         @override
-        def execute(self) -> r[bool]:
+        def execute(self) -> p.Result[bool]:
             """Execute user query service.
 
             Business Rule: Returns bool to indicate service availability and readiness.
@@ -66,7 +66,7 @@ class TestService:
                 return r[bool].fail("User service unavailable")
             return r[bool].ok(True)
 
-        def get_user(self, user_id: str) -> r[TestService.UserServiceEntity]:
+        def get_user(self, user_id: str) -> p.Result[TestService.UserServiceEntity]:
             """Get user by ID.
 
             Args:
@@ -127,13 +127,13 @@ class TestService:
         _should_fail: bool = PrivateAttr(default=False)
 
         @override
-        def execute(self) -> r[str]:
+        def execute(self) -> p.Result[str]:
             """Execute notification service."""
             if self._should_fail:
                 return r[str].fail("Notification service unavailable")
             return r[str].ok("sent")
 
-        def send(self, email: str) -> r[str]:
+        def send(self, email: str) -> p.Result[str]:
             """Send notification.
 
             Args:
@@ -202,13 +202,13 @@ class TestService:
         _should_fail_shutdown: bool = PrivateAttr(default=False)
 
         @override
-        def execute(self) -> r[str]:
+        def execute(self) -> p.Result[str]:
             """Execute lifecycle service."""
             if self._initialized:
                 return r[str].ok("initialized")
             return r[str].ok("ready")
 
-        def initialize(self, settings: TestService.ServiceConfig) -> r[str]:
+        def initialize(self, settings: TestService.ServiceConfig) -> p.Result[str]:
             """Initialize service with settings model.
 
             Args:
@@ -233,7 +233,7 @@ class TestService:
             """
             return self._initialized and (not self._shutdown_called)
 
-        def shutdown(self) -> r[str]:
+        def shutdown(self) -> p.Result[str]:
             """Shutdown service.
 
             Returns:

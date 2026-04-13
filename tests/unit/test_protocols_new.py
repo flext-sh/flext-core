@@ -319,6 +319,8 @@ class TestFlextProtocols:
             "error_data",
             "exception",
             "unwrap",
+            "unwrap_or",
+            "unwrap_or_else",
         ]
         for attr in expected_attrs:
             tm.that(
@@ -610,7 +612,7 @@ class TestFlextProtocols:
             def handle(
                 self,
                 message: p.Routable,
-            ) -> r[t.RuntimeAtomic] | t.Container | t.ModelCarrier | None:
+            ) -> p.Result[t.RuntimeAtomic] | t.Container | t.ModelCarrier | None:
                 return None
 
         instance = _as_protocol_subject(_HandleImpl())
@@ -623,7 +625,7 @@ class TestFlextProtocols:
             def execute(
                 self,
                 message: p.Routable,
-            ) -> r[t.RuntimeAtomic] | t.Container | t.ModelCarrier | None:
+            ) -> p.Result[t.RuntimeAtomic] | t.Container | t.ModelCarrier | None:
                 return None
 
         instance = _as_protocol_subject(_ExecImpl())

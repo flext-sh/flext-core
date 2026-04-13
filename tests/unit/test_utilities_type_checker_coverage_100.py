@@ -28,7 +28,7 @@ import pytest
 
 from flext_core import h
 from flext_tests import tm
-from tests import r, t, u
+from tests import p, r, t, u
 
 TMessage = TypeVar("TMessage")
 
@@ -51,14 +51,14 @@ class TestuTypeChecker:
         """Handler for string messages."""
 
         @override
-        def handle(self, message: str) -> r[str]:
+        def handle(self, message: str) -> p.Result[str]:
             return r[str].ok(f"Processed: {message}")
 
     class IntHandler(h[int, int]):
         """Handler for integer messages."""
 
         @override
-        def handle(self, message: int) -> r[int]:
+        def handle(self, message: int) -> p.Result[int]:
             return r[int].ok(message * 2)
 
     class DictHandler(
@@ -73,7 +73,7 @@ class TestuTypeChecker:
         def handle(
             self,
             message: t.MutableRecursiveContainerMapping,
-        ) -> r[t.MutableRecursiveContainerMapping]:
+        ) -> p.Result[t.MutableRecursiveContainerMapping]:
             result: t.MutableRecursiveContainerMapping = {"processed": True, **message}
             return r[t.MutableRecursiveContainerMapping].ok(result)
 
@@ -81,7 +81,7 @@ class TestuTypeChecker:
         """Handler for t.RecursiveContainer messages."""
 
         @override
-        def handle(self, message: t.RecursiveContainer) -> r[t.Container]:
+        def handle(self, message: t.RecursiveContainer) -> p.Result[t.Container]:
             if isinstance(message, (str, int, float, bool)):
                 return r[t.Container].ok(message)
             return r[t.Container].fail("unsupported message")

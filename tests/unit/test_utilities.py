@@ -26,7 +26,7 @@ import pytest
 from hypothesis import given, strategies as st
 
 from flext_tests import tm
-from tests import c, r, t, u
+from tests import c, p, r, t, u
 
 
 class Testu(u.Core.Tests.Contract):
@@ -227,7 +227,7 @@ class Testu(u.Core.Tests.Contract):
     def test_reliability_retry_immediate_success(self) -> None:
         """Test retry with immediate success."""
 
-        def quick_success() -> r[str]:
+        def quick_success() -> p.Result[str]:
             return r[str].ok("success")
 
         result: r[str] = u.retry(
@@ -241,7 +241,7 @@ class Testu(u.Core.Tests.Contract):
         """Test retry with eventual success."""
         call_count = [0]
 
-        def flaky_op() -> r[str]:
+        def flaky_op() -> p.Result[str]:
             call_count[0] += 1
             if call_count[0] < 3:
                 return r[str].fail("Temporary failure")

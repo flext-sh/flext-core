@@ -29,7 +29,7 @@ from typing import cast
 import pytest
 
 from flext_tests import tm
-from tests import r, t
+from tests import p, r, t
 
 
 class TestrCoverage:
@@ -193,7 +193,7 @@ class TestrCoverage:
     def test_flat_map_success(self) -> None:
         """Test flat_map chaining results."""
 
-        def double_in_result(x: int) -> r[int]:
+        def double_in_result(x: int) -> p.Result[int]:
             return r[int].ok(x * 2)
 
         result = r[int].ok(5).flat_map(double_in_result)
@@ -203,7 +203,7 @@ class TestrCoverage:
     def test_flat_map_failure_propagates(self) -> None:
         """Test that flat_map propagates failure from inner result."""
 
-        def failing_op(x: int) -> r[str]:
+        def failing_op(x: int) -> p.Result[str]:
             return r[str].fail("Inner failed")
 
         result = r[int].ok(5).flat_map(failing_op)
@@ -213,7 +213,7 @@ class TestrCoverage:
     def test_flat_map_initial_failure_skips(self) -> None:
         """Test that flat_map skips on initial failure."""
 
-        def double_in_result(x: int) -> r[int]:
+        def double_in_result(x: int) -> p.Result[int]:
             return r[int].ok(x * 2)
 
         result = r[int].fail("error").flat_map(double_in_result)
@@ -252,7 +252,7 @@ class TestrCoverage:
     def test_lash_recovery_on_failure(self) -> None:
         """Test lash recovers from failure."""
 
-        def recovery(error: str) -> r[str]:
+        def recovery(error: str) -> p.Result[str]:
             return r[str].ok(f"Recovered from: {error}")
 
         failed: r[str] = r[str].fail("error")
@@ -265,7 +265,7 @@ class TestrCoverage:
     def test_lash_skips_on_success(self) -> None:
         """Test that lash skips on success."""
 
-        def recovery(error: str) -> r[str]:
+        def recovery(error: str) -> p.Result[str]:
             return r[str].fail("recovery failed")
 
         result = r[str].ok("test").lash(recovery)
@@ -274,7 +274,7 @@ class TestrCoverage:
     def test_lash_failure_in_recovery(self) -> None:
         """Test that lash failure in recovery returns new failure."""
 
-        def failing_recovery(error: str) -> r[str]:
+        def failing_recovery(error: str) -> p.Result[str]:
             return r[str].fail("recovery also failed")
 
         failed: r[str] = r[str].fail("original")
@@ -284,10 +284,10 @@ class TestrCoverage:
     def test_flow_through_chain_success(self) -> None:
         """Test flow_through chains multiple operations."""
 
-        def double(x: int) -> r[int]:
+        def double(x: int) -> p.Result[int]:
             return r[int].ok(x * 2)
 
-        def add_ten(x: int) -> r[int]:
+        def add_ten(x: int) -> p.Result[int]:
             return r[int].ok(x + 10)
 
         result = r[int].ok(5).flow_through(double, add_ten)
@@ -297,12 +297,12 @@ class TestrCoverage:
     def test_flow_through_stops_on_failure(self) -> None:
         """Test flow_through stops processing on failure."""
 
-        def double(x: str) -> r[str]:
+        def double(x: str) -> p.Result[str]:
             if x.isdigit():
                 return r[str].ok(str(int(x) * 2))
             return r[str].fail("Not a numeric string")
 
-        def add_ten(x: str) -> r[str]:
+        def add_ten(x: str) -> p.Result[str]:
             return r[str].fail("Should not reach here")
 
         result = r[str].ok("test").flow_through(double, add_ten)
@@ -365,7 +365,7 @@ class TestrCoverage:
     def test_traverse_success(self) -> None:
         """Test traverse with successful mapping."""
 
-        def double(x: int) -> r[int]:
+        def double(x: int) -> p.Result[int]:
             return r[int].ok(x * 2)
 
         items = [1, 2, 3]
@@ -375,7 +375,7 @@ class TestrCoverage:
     def test_traverse_failure_propagates(self) -> None:
         """Test traverse stops on first failure."""
 
-        def double(x: int) -> r[int]:
+        def double(x: int) -> p.Result[int]:
             if x == 2:
                 return r[int].fail("Found 2")
             return r[int].ok(x * 2)
@@ -406,7 +406,7 @@ class TestrCoverage:
             resources_created.append(resource)
             return resource
 
-        def operation(resource: t.ConfigMap) -> r[str]:
+        def operation(resource: t.ConfigMap) -> p.Result[str]:
             return r[str].ok("success")
 
         result = r[str].with_resource(factory, operation)
@@ -420,7 +420,7 @@ class TestrCoverage:
         def factory() -> t.ConfigMap:
             return t.ConfigMap(root={"id": 1})
 
-        def operation(resource: t.ConfigMap) -> r[str]:
+        def operation(resource: t.ConfigMap) -> p.Result[str]:
             return r[str].ok("success")
 
         def cleanup(resource: t.ConfigMap) -> None:
@@ -508,7 +508,7 @@ class TestrCoverage:
         def double(x: int) -> int:
             return x * 2
 
-        def add_three(x: int) -> r[int]:
+        def add_three(x: int) -> p.Result[int]:
             return r[int].ok(x + 3)
 
         def is_gt_10(x: int) -> bool:

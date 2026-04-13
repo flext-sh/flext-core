@@ -12,7 +12,7 @@ from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer
-from tests import d, e, r, u
+from tests import d, e, p, r, u
 
 
 @pytest.fixture(autouse=True)
@@ -356,7 +356,7 @@ class TestFlextDecorators:
 
     def test_railway_with_existing_result(self) -> None:
         @d.railway()
-        def returns_result() -> r[str]:
+        def returns_result() -> p.Result[str]:
             return r[str].ok("already_wrapped")
 
         result = returns_result()

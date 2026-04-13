@@ -12,7 +12,7 @@ from typing import override
 
 from pydantic import Field
 
-from tests import c, h, m, r, t
+from tests import c, h, m, p, r, t
 
 
 class TestPatternsCommands:
@@ -37,7 +37,7 @@ class TestPatternsCommands:
                 },
             )
 
-        def validate_command(self) -> r[bool]:
+        def validate_command(self) -> p.Result[bool]:
             """Validate command data."""
             if not self.username:
                 return r[bool].fail(c.Core.Tests.TestErrors.USERNAME_REQUIRED)
@@ -73,7 +73,7 @@ class TestPatternsCommands:
                 },
             )
 
-        def validate_command(self) -> r[bool]:
+        def validate_command(self) -> p.Result[bool]:
             """Validate command data."""
             if not self.target_user_id:
                 return r[bool].fail(c.Core.Tests.TestErrors.TARGET_USER_ID_REQUIRED)
@@ -88,7 +88,7 @@ class TestPatternsCommands:
             """Get command payload."""
             return m.Core.Tests.CommandPayloadDict.model_validate(obj={})
 
-        def validate_command(self) -> r[bool]:
+        def validate_command(self) -> p.Result[bool]:
             """Fail validation intentionally."""
             return r[bool].fail(c.Core.Tests.TestErrors.COMMAND_ALWAYS_FAILS)
 
@@ -125,7 +125,7 @@ class TestPatternsCommands:
         def validate_message(
             self,
             data: t.ValueOrModel,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             """Validate command using command's validate_command method."""
             if not isinstance(data, TestPatternsCommands.CreateUserCommand):
                 return r[bool].fail(c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE)
@@ -135,7 +135,7 @@ class TestPatternsCommands:
         def handle(
             self,
             message: t.ValueOrModel,
-        ) -> r[t.ValueOrModel]:
+        ) -> p.Result[t.ValueOrModel]:
             """Handle the create user command."""
             if not isinstance(message, TestPatternsCommands.CreateUserCommand):
                 return r[t.ValueOrModel].fail(
@@ -152,7 +152,7 @@ class TestPatternsCommands:
         def handle_command(
             self,
             command: TestPatternsCommands.CreateUserCommand,
-        ) -> r[t.ValueOrModel]:
+        ) -> p.Result[t.ValueOrModel]:
             """Handle the create user command (alias for handle)."""
             return self.handle(command)
 
@@ -188,7 +188,7 @@ class TestPatternsCommands:
         def validate_message(
             self,
             data: t.ValueOrModel,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             """Validate command using command's validate_command method."""
             if not isinstance(data, TestPatternsCommands.UpdateUserCommand):
                 return r[bool].fail(c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE)
@@ -198,7 +198,7 @@ class TestPatternsCommands:
         def handle(
             self,
             message: t.ValueOrModel,
-        ) -> r[t.ValueOrModel]:
+        ) -> p.Result[t.ValueOrModel]:
             """Handle the update user command."""
             if not isinstance(message, TestPatternsCommands.UpdateUserCommand):
                 return r[t.ValueOrModel].fail(
@@ -218,7 +218,7 @@ class TestPatternsCommands:
         def handle_command(
             self,
             command: TestPatternsCommands.UpdateUserCommand,
-        ) -> r[t.ValueOrModel]:
+        ) -> p.Result[t.ValueOrModel]:
             """Handle the update user command (alias for handle)."""
             return self.handle(command)
 
@@ -241,14 +241,14 @@ class TestPatternsCommands:
         def validate_message(
             self,
             data: t.ValueOrModel,
-        ) -> r[bool]:
+        ) -> p.Result[bool]:
             """Validate command using command's validate_command method."""
             if not isinstance(data, TestPatternsCommands.FailingCommand):
                 return r[bool].fail(c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE)
             return data.validate_command()
 
         @override
-        def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+        def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
             """Fail to handle command intentionally."""
             if not isinstance(message, TestPatternsCommands.FailingCommand):
                 return r[t.ValueOrModel].fail(
@@ -262,7 +262,7 @@ class TestPatternsCommands:
         def handle_command(
             self,
             command: TestPatternsCommands.FailingCommand,
-        ) -> r[t.ValueOrModel]:
+        ) -> p.Result[t.ValueOrModel]:
             """Fail to handle command intentionally (alias for handle)."""
             return self.handle(command)
 

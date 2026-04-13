@@ -42,7 +42,7 @@ class FlextUtilitiesResultHelpers:
         *,
         default: T | None = None,
         catch: type[Exception] | tuple[type[Exception], ...] = Exception,
-    ) -> r[T]:
+    ) -> p.Result[T]:
         """Call function and catch exceptions, returning result or default.
 
         Args:

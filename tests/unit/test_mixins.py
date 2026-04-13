@@ -5,12 +5,9 @@ Scope: x - all nested mixin classes
 
 Tests x functionality including:
 - Container mixin (_register_in_container)
-- Context mixin (context property, _propagate_context, correlation IDs)
-- Logging mixin (_log_with_context)
+- Context mixin (context property, correlation IDs)
 - Metrics mixin (track context manager)
-- Service mixin (_init_service, _enrich_context, _with_operation_context)
-- ModelConversion nested class (to_dict conversions)
-- ResultHandling nested class (ensure_result wrapping)
+- Service mixin (_init_service)
 
 Uses Python 3.13 patterns, u, FlextConstants,
 and aggressive parametrization for DRY testing.
@@ -41,12 +38,9 @@ class TestFlextMixinsNestedClasses:
 
         CONTAINER_REGISTER = "container_register"
         CONTEXT_PROPERTY = "context_property"
-        CONTEXT_PROPAGATE = "context_propagate"
         CONTEXT_CORRELATION = "context_correlation"
-        LOGGING_WITH_CONTEXT = "logging_with_context"
         METRICS_TRACK = "metrics_track"
         SERVICE_INIT = "service_init"
-        SERVICE_ENRICH = "service_enrich"
 
     @unique
     class ModelConversionScenarioType(StrEnum):
@@ -130,16 +124,8 @@ class TestFlextMixinsNestedClasses:
                 scenario_type=self.ServiceMixinScenarioType.CONTEXT_PROPERTY,
             ),
             self.ServiceMixinScenario(
-                name="context_propagate",
-                scenario_type=self.ServiceMixinScenarioType.CONTEXT_PROPAGATE,
-            ),
-            self.ServiceMixinScenario(
                 name="context_correlation_id",
                 scenario_type=self.ServiceMixinScenarioType.CONTEXT_CORRELATION,
-            ),
-            self.ServiceMixinScenario(
-                name="logging_with_context",
-                scenario_type=self.ServiceMixinScenarioType.LOGGING_WITH_CONTEXT,
             ),
             self.ServiceMixinScenario(
                 name="metrics_track",
@@ -148,11 +134,6 @@ class TestFlextMixinsNestedClasses:
             self.ServiceMixinScenario(
                 name="service_init_service",
                 scenario_type=self.ServiceMixinScenarioType.SERVICE_INIT,
-                needs_init=True,
-            ),
-            self.ServiceMixinScenario(
-                name="service_enrich_context",
-                scenario_type=self.ServiceMixinScenarioType.SERVICE_ENRICH,
                 needs_init=True,
             ),
         ]
@@ -201,43 +182,17 @@ class TestFlextMixinsNestedClasses:
             _ = u.Core.Tests.assert_success(result)
         elif scenario.scenario_type == self.ServiceMixinScenarioType.CONTEXT_PROPERTY:
             assert isinstance(service.context, p.Context)
-        elif scenario.scenario_type == self.ServiceMixinScenarioType.CONTEXT_PROPAGATE:
-            service._propagate_context("test_operation")
         elif (
             scenario.scenario_type == self.ServiceMixinScenarioType.CONTEXT_CORRELATION
         ):
             FlextContext.Correlation.apply_correlation_id("test-123")
             assert FlextContext.Correlation.resolve_correlation_id() == "test-123"
-        elif (
-            scenario.scenario_type == self.ServiceMixinScenarioType.LOGGING_WITH_CONTEXT
-        ):
-            service._log_with_context("info", "Test message", extra_data="value")
         elif scenario.scenario_type == self.ServiceMixinScenarioType.METRICS_TRACK:
             assert service.run_process() == "done"
         elif scenario.scenario_type == self.ServiceMixinScenarioType.SERVICE_INIT:
             assert all(
                 hasattr(service, attr) for attr in ["logger", "container", "settings"]
             )
-        elif scenario.scenario_type == self.ServiceMixinScenarioType.SERVICE_ENRICH:
-            service._enrich_context(version="1.0.0", team="test")
-
-    def test_service_mixin_with_operation_context(self) -> None:
-        """Test Service mixin operation context workflow."""
-
-        class MyService(x):
-            """Test service with operation context."""
-
-            def __init__(self) -> None:
-                super().__init__(
-                    settings_type=None,
-                    settings_overrides=None,
-                    initial_context=None,
-                )
-                self._init_service()
-
-        service = MyService()
-        service._with_operation_context("process_order", order_id="123")
-        service._clear_operation_context()
 
 
 __all__: list[str] = ["TestFlextMixinsNestedClasses"]

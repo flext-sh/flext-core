@@ -35,7 +35,7 @@ class TestContainerFullCoverage:
         container: p.Container,
         name: str,
         type_cls: type[t.RegisterableService],
-    ) -> r[t.RegisterableService]:
+    ) -> p.Result[t.RegisterableService]:
         typed_get = cast("Callable[..., r[t.RegisterableService]]", container.resolve)
         return typed_get(name, type_cls=type_cls)
 

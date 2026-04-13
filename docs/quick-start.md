@@ -50,10 +50,10 @@ FLEXT-Core provides three foundational patterns:
 Instead of exceptions, operations return either success or failure:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
-def validate_email(email: str) -> r[str]:
+def validate_email(email: str) -> p.Result[str]:
     """Returns success or failure, never raises exceptions."""
     if "@" not in email:
         return r[str].fail("Invalid email")
@@ -122,23 +122,23 @@ print(f"Created: {user.name}")
 Chain validations together:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
-def validate_password(password: str) -> r[str]:
+def validate_password(password: str) -> p.Result[str]:
     if len(password) < 8:
         return r[str].fail("Password too short")
     return r[str].ok(password)
 
 
-def validate_username(username: str) -> r[str]:
+def validate_username(username: str) -> p.Result[str]:
     if len(username) < 3:
         return r[str].fail("Username too short")
     return r[str].ok(username)
 
 
 # Chain validations (railway pattern)
-def register_user(username: str, password: str) -> r[dict]:
+def register_user(username: str, password: str) -> p.Result[dict]:
     return validate_username(username).flat_map(
         lambda u: validate_password(password).map(
             lambda p: {"username": u, "password": p}
@@ -158,13 +158,13 @@ else:
 ### Use Case 2: Service with Dependency Injection
 
 ```python
-from flext_core import s, r, FlextContainer
+from flext_core import s, r, p, FlextContainer
 
 
 class EmailService(s):
     """Example service."""
 
-    def send_welcome_email(self, email: str) -> r[str]:
+    def send_welcome_email(self, email: str) -> p.Result[str]:
         """Send welcome email."""
         if not email:
             return r[str].fail("Email required")
@@ -212,7 +212,7 @@ class Order(FlextModels.Entity):
 class OrderService(s):
     """Service with business logic."""
 
-    def create_order(self, customer_id: str, items: Sequence[dict]) -> r[Order]:
+    def create_order(self, customer_id: str, items: Sequence[dict]) -> p.Result[Order]:
         """Create order with validation."""
         if not customer_id:
             return r[Order].fail("Customer ID required")
@@ -249,7 +249,7 @@ else:
 Route commands through the dispatcher to keep orchestration and side effects consistent:
 
 ```python
-from flext_core import FlextDispatcher, FlextRegistry, r, s
+from flext_core import FlextDispatcher, FlextRegistry, r, p, s
 
 
 class CreateUser(s.Command):
@@ -259,7 +259,7 @@ class CreateUser(s.Command):
 class UserService(s):
     """Domain service implementing the command handler."""
 
-    def handle_create_user(self, command: CreateUser) -> r[str]:
+    def handle_create_user(self, command: CreateUser) -> p.Result[str]:
         if not command.email:
             return r[str].fail("Email required")
         # persist user and raise domain event here
@@ -282,7 +282,7 @@ if result.is_success:
 
 ```python
 # Return r instead of raising exceptions
-def operation() -> r[str]:
+def operation() -> p.Result[str]:
     if something_wrong:
         return r[str].fail("Error message")
     return r[str].ok("Success value")
@@ -342,7 +342,7 @@ assert result.value == result.data == "test"
 
 ```python
 import pytest
-from flext_core import r
+from flext_core import r, p
 
 
 def test_validation_success():
@@ -394,7 +394,7 @@ A: They're identical - both access the success value. `.data` is legacy, `.value
 A: r works with async/await normally:
 
 ```python
-async def get_user_async(user_id: str) -> r[User]:
+async def get_user_async(user_id: str) -> p.Result[User]:
     if not user_id:
         return r[User].fail("User ID required")
     user = await fetch_from_database(user_id)

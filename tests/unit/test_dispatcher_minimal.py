@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from tests import c, m, r, t, u
+from tests import c, m, p, r, t, u
 
 
 class TestDispatcherMinimal:
@@ -67,7 +67,7 @@ class TestDispatcherMinimal:
     class _BareHandler:
         """Callable handler lacking routing attributes — should fail registration."""
 
-        def __call__(self, msg: m.Command) -> r[str]:
+        def __call__(self, msg: m.Command) -> p.Result[str]:
             _ = msg
             return r[str].ok("bare")
 

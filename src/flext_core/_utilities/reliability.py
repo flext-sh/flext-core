@@ -16,13 +16,13 @@ from collections.abc import Callable
 
 from pydantic import Field
 
-from flext_core import FlextModelsBase, FlextUtilitiesArgs, c, r, t
+from flext_core import FlextUtilitiesArgs, c, m, p, r, t
 
 
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
-    class RetryOptions(FlextModelsBase.FlexibleInternalModel):
+    class RetryOptions(m.FlexibleInternalModel):
         """Configuration options for retry logic."""
 
         max_attempts: int | None = Field(
@@ -47,7 +47,7 @@ class FlextUtilitiesReliability:
         )
 
     @staticmethod
-    def flow_result[T](result: r[T], *funcs: Callable[[T], r[T]]) -> r[T]:
+    def flow_result[T](result: r[T], *funcs: Callable[[T], r[T]]) -> p.Result[T]:
         """Chain multiple operations on p.Result.
 
         Applies each function in sequence, short-circuiting on failure.
@@ -90,7 +90,7 @@ class FlextUtilitiesReliability:
         operation: Callable[[], r[TResult]],
         options: FlextUtilitiesReliability.RetryOptions | None = None,
         **kwargs: t.ValueOrModel,
-    ) -> r[TResult]:
+    ) -> p.Result[TResult]:
         """Execute an operation with retry logic using railway patterns.
 
         Args:

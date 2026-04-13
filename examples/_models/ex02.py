@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from examples import c, t
-from flext_core import FlextSettings, m, r
+from examples import c, p, r, t
+from flext_core import FlextSettings, m
 
 
 class Ex02TestConfig(FlextSettings):
@@ -21,10 +21,10 @@ class Ex02DatabaseService(m.Value):
     settings: t.ConfigMap
     status: c.CommonStatus = c.CommonStatus.PENDING
 
-    def connect(self) -> r[bool]:
+    def connect(self) -> p.Result[bool]:
         return r[bool].ok(True)
 
-    def query(self, sql: str) -> r[t.ConfigMap]:
+    def query(self, sql: str) -> p.Result[t.ConfigMap]:
         if "INVALID" in sql:
             return r[t.ConfigMap].fail("invalid query")
         return r[t.ConfigMap].ok(t.ConfigMap(root={"rows": 1}))
@@ -36,7 +36,7 @@ class Ex02CacheService(m.Value):
     settings: t.ConfigMap
     status: c.CommonStatus = c.CommonStatus.PENDING
 
-    def set(self, key: str, value: str) -> r[bool]:
+    def set(self, key: str, value: str) -> p.Result[bool]:
         if not key:
             return r[bool].fail("missing key")
         if not value:
@@ -50,7 +50,7 @@ class Ex02EmailService(m.Value):
     settings: t.ConfigMap
     status: c.CommonStatus = c.CommonStatus.PENDING
 
-    def send(self, to: str, subject: str, body: str) -> r[bool]:
+    def send(self, to: str, subject: str, body: str) -> p.Result[bool]:
         if not to or not subject or (not body):
             return r[bool].fail("invalid email payload")
         return r[bool].ok(True)

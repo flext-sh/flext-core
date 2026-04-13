@@ -165,7 +165,7 @@ class TestDiServicesAccess:
                 )
 
             @override
-            def execute(self) -> r[str]:
+            def execute(self) -> p.Result[str]:
                 app_name = self.settings.app_name
                 tm.that(app_name, eq="service_app", msg="Settings must be accessible")
                 logger_result = self.container.resolve("logger")

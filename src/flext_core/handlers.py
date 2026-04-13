@@ -79,7 +79,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             handler_mode=handler_mode_literal,
         )
 
-    def __call__(self, message: MessageT_contra) -> r[ResultT]:
+    def __call__(self, message: MessageT_contra) -> p.Result[ResultT]:
         """Callable interface for seamless dispatcher integration."""
         return self.handle(message)
 
@@ -158,7 +158,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             e.ValidationError: If invalid mode is provided
 
         Example:
-            >>> def my_handler(msg: str) -> r[str]:
+            >>> def my_handler(msg: str) -> p.Result[str]:
             ...     return r[str].ok(f"processed_{msg}")
             >>> handler = FlextHandlers.create_from_callable(my_handler)
             >>> result = handler.handle("test")
@@ -179,7 +179,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 self._handler_fn = handler_fn
 
             @override
-            def handle(self, message: t.Scalar) -> r[t.Scalar]:
+            def handle(self, message: t.Scalar) -> p.Result[t.Scalar]:
                 """Execute the wrapped callable."""
                 if isinstance(message, tuple):
                     return r[t.Scalar].fail_op(
@@ -266,7 +266,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         Example:
             >>> @FlextHandlers.handler(command=CreateUserCommand, priority=10)
-            ... def handle_create_user(self, cmd: CreateUserCommand) -> r[User]:
+            ... def handle_create_user(self, cmd: CreateUserCommand) -> p.Result[User]:
             ...     return r[User].ok(self._create(cmd))
 
         """
@@ -328,7 +328,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         self,
         message: MessageT_contra,
         operation: str = c.DEFAULT_HANDLER_MODE,
-    ) -> r[ResultT]:
+    ) -> p.Result[ResultT]:
         """Dispatch message through the handler execution pipeline.
 
         Public method that executes the full handler pipeline including
@@ -348,7 +348,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """
         return self._run_pipeline(message, operation)
 
-    def execute(self, message: MessageT_contra) -> r[ResultT]:
+    def execute(self, message: MessageT_contra) -> p.Result[ResultT]:
         """Execute handler with complete validation and error handling pipeline.
 
         Implements the railway-oriented programming pattern by first validating
@@ -384,7 +384,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             )
         return self.handle(message)
 
-    def handle(self, message: MessageT_contra) -> r[ResultT]:
+    def handle(self, message: MessageT_contra) -> p.Result[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.
 
         This is the core business logic method that must be implemented by all
@@ -405,7 +405,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         _ = message
         raise NotImplementedError
 
-    def pop_context(self) -> r[t.ConfigMap]:
+    def pop_context(self) -> p.Result[t.ConfigMap]:
         """Pop execution context from the local handler stack."""
         result = self._runtime_state.pop_context()
         if result.failure:
@@ -418,15 +418,17 @@ class FlextHandlers[MessageT_contra, ResultT](x):
     def push_context(
         self,
         ctx: m.ExecutionContext | t.RecursiveContainerMapping,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Push execution context onto the local handler stack."""
         return self._runtime_state.push_context(ctx)
 
-    def record_metric(self, name: str, value: t.MetadataAttributeValue) -> r[bool]:
+    def record_metric(
+        self, name: str, value: t.MetadataAttributeValue
+    ) -> p.Result[bool]:
         """Record a metric value in the current handler state."""
         return self._runtime_state.record_metric(name, value)
 
-    def validate_message(self, data: MessageT_contra) -> r[bool]:
+    def validate_message(self, data: MessageT_contra) -> p.Result[bool]:
         """Validate input data using extensible validation pipeline.
 
         Base validation method that can be overridden by subclasses to implement
@@ -477,7 +479,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         self,
         message: MessageT_contra,
         operation: str = c.DEFAULT_HANDLER_MODE,
-    ) -> r[ResultT]:
+    ) -> p.Result[ResultT]:
         """Run the handler execution pipeline (internal).
 
         Internal implementation that executes the full handler pipeline including

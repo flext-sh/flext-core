@@ -13,7 +13,7 @@ from __future__ import annotations
 import contextlib
 from collections.abc import MutableSequence, Sequence
 
-from flext_core import c, e, p, r, t, u
+from flext_core import c, p, r, t, u
 
 
 class FlextDispatcher:
@@ -41,7 +41,7 @@ class FlextDispatcher:
             MutableSequence[tuple[t.HandlerProtocolVariant, t.RoutedHandlerCallable]]
         ] = {}
 
-    def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
+    def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
         """Dispatch a CQRS message to its registered handler.
 
         Args:
@@ -53,10 +53,10 @@ class FlextDispatcher:
         """
         try:
             route_name = u.resolve_message_route(message)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError) as exc:
             return r[t.RuntimeAtomic].fail_op(
                 "dispatch message",
-                e,
+                exc,
                 error_code=c.ErrorCode.COMMAND_PROCESSING_FAILED.value,
             )
         handler_entry = self._handlers.get(route_name)
@@ -78,30 +78,7 @@ class FlextDispatcher:
         _, resolved_handler = handler_entry
         return self._execute_handler(resolved_handler, message, route_name)
 
-    def dispatch_typed[DispatchValueT](
-        self,
-        message: p.Routable,
-        expected_type: type[DispatchValueT],
-    ) -> r[DispatchValueT]:
-        """Dispatch a message and return a strongly typed payload.
-
-        This is the canonical ergonomic API for examples and application code that
-        expects a concrete payload type and should avoid ad-hoc narrowing logic.
-        """
-
-        def _coerce(value: t.RuntimeAtomic) -> r[DispatchValueT]:
-            if isinstance(value, expected_type):
-                return r[DispatchValueT].ok(value)
-            if u.pydantic_model(value):
-                return e.fail_type_mismatch(
-                    expected_type.__name__,
-                    value.__class__.__name__,
-                )
-            return u.parse(value, expected_type)
-
-        return self.dispatch(message).flat_map(_coerce)
-
-    def publish(self, event: p.Routable | Sequence[p.Routable]) -> r[bool]:
+    def publish(self, event: p.Routable | Sequence[p.Routable]) -> p.Result[bool]:
         """Publish events to all registered subscribers.
 
         Args:
@@ -112,8 +89,8 @@ class FlextDispatcher:
 
         """
         if isinstance(event, Sequence):
-            for e in event:
-                _ = self.publish(e)
+            for evt in event:
+                _ = self.publish(evt)
             return r[bool].ok(True)
         route_name = u.resolve_message_route(event)
         handlers = self._event_subscribers.get(route_name, [])
@@ -138,7 +115,7 @@ class FlextDispatcher:
         handler: t.HandlerProtocolVariant,
         *,
         is_event: bool = False,
-    ) -> r[bool]:
+    ) -> p.Result[bool]:
         """Register a handler for a specific message type.
 
         Args:
@@ -213,7 +190,7 @@ class FlextDispatcher:
         resolved_handler: t.RoutedHandlerCallable,
         message: p.Routable,
         route_name: str,
-    ) -> r[t.RuntimeAtomic]:
+    ) -> p.Result[t.RuntimeAtomic]:
         """Execute a handler against a message."""
         dispatch_result = r[t.RuntimeAtomic]
         try:

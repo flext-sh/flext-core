@@ -15,12 +15,10 @@ from flext_core import (
     FlextProtocolsResult,
     FlextTypesCore,
     FlextTypingBase,
-    FlextTypingContainers,
 )
 
 if TYPE_CHECKING:
     from flext_core import (
-        FlextModelsBase,
         FlextModelsHandler,
         FlextModelsRegistry,
         FlextTypesServices,
@@ -42,19 +40,13 @@ class FlextProtocolsRegistry:
             self,
             name: str,
             service: FlextTypesServices.RegistrablePlugin,
-            metadata: FlextTypingContainers.ConfigMap
-            | FlextModelsBase.Metadata
-            | None = None,
         ) -> FlextProtocolsResult.Result[bool]:
-            """Register a service component with optional metadata."""
+            """Register a service component."""
             ...
 
         def register_handler(
             self,
             handler: FlextTypesServices.HandlerProtocolVariant,
-            _metadata: FlextTypingContainers.ConfigMap
-            | FlextModelsBase.Metadata
-            | None = None,
         ) -> FlextProtocolsResult.Result[FlextModelsHandler.RegistrationDetails]:
             """Register a handler instance or callable."""
             ...

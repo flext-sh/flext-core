@@ -34,7 +34,7 @@ class Ex09FlextDecorators(Examples):
         self._demo_retry()
         self._demo_timeout()
         self._demo_log_operation()
-        self._demo_track_operation()
+        self._demo_operation_context()
         self._demo_track_performance()
         self._demo_with_context()
         self._demo_with_correlation()
@@ -336,13 +336,13 @@ class Ex09FlextDecorators(Examples):
             self.check("timeout.failure.type", type(exc).__name__ == "TimeoutError")
             self.check("timeout.failure.error_code", exc.error_code == "E_TIMEOUT")
 
-    def _demo_track_operation(self) -> None:
-        """Exercise track_operation with correlation on and off."""
-        self.section("track_operation")
+    def _demo_operation_context(self) -> None:
+        """Exercise log_operation context with correlation on and off."""
+        self.section("operation_context")
         FlextContext.Utilities.clear_context()
         with_corr_operation = self.rand_str(12)
 
-        @d.track_operation(with_corr_operation, track_correlation=True)
+        @d.log_operation(with_corr_operation, ensure_correlation=True)
         def tracked_with_correlation() -> tuple[str | None, str | None]:
             """Return operation and correlation while inside decorator scope."""
             return (
@@ -353,7 +353,7 @@ class Ex09FlextDecorators(Examples):
         with_corr = tracked_with_correlation()
         FlextContext.Utilities.clear_context()
 
-        @d.track_operation(track_correlation=False)
+        @d.log_operation(ensure_correlation=False)
         def tracked_without_correlation() -> tuple[str | None, str | None]:
             """Return operation and correlation when correlation is not forced."""
             return (
@@ -363,15 +363,15 @@ class Ex09FlextDecorators(Examples):
 
         without_corr = tracked_without_correlation()
         self.check(
-            "track_operation.with_corr.operation",
+            "operation_context.with_corr.operation",
             with_corr[0] == with_corr_operation,
         )
-        self.check("track_operation.with_corr.has_corr", with_corr[1] is not None)
+        self.check("operation_context.with_corr.has_corr", with_corr[1] is not None)
         self.check(
-            "track_operation.no_corr.operation",
+            "operation_context.no_corr.operation",
             without_corr[0] == "tracked_without_correlation",
         )
-        self.check("track_operation.no_corr.has_corr", without_corr[1] is not None)
+        self.check("operation_context.no_corr.has_corr", without_corr[1] is not None)
 
     def _demo_track_performance(self) -> None:
         """Exercise track_performance with named and default operation names."""

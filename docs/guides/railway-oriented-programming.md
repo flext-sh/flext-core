@@ -74,7 +74,7 @@ When an operation fails, execution automatically switches to the failure track a
 #### Success Case
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 # Wrap successful data
 result: r[str] = r[str].ok("Hello, World!")
@@ -91,7 +91,7 @@ result = r[bool].ok(True)  # Represents successful completion
 #### Failure Case
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 # Simple error
 result: r[str] = r[str].fail("Operation failed")
@@ -118,7 +118,7 @@ result = r[dict].fail(
 ### Checking Result State
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 result = r[int].ok(42)
 
@@ -148,7 +148,7 @@ if result.is_failure:
 Three ways to extract the success value (all raise on failure):
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 result = r[str].ok("value")
 
@@ -180,17 +180,17 @@ The power of ROP is **composability**. Chain operations without exception handli
 `flat_map` is the monadic bind operator. It takes a function that returns a `r` and chains operations:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
-def validate_email(email: str) -> r[str]:
+def validate_email(email: str) -> p.Result[str]:
     """Validate email format."""
     if "@" not in email:
         return r[str].fail("Invalid email: missing @")
     return r[str].ok(email)
 
 
-def check_domain(email: str) -> r[str]:
+def check_domain(email: str) -> p.Result[str]:
     """Check if domain exists."""
     domain = email.split("@")[1]
     if domain == "invalid.com":
@@ -198,7 +198,7 @@ def check_domain(email: str) -> r[str]:
     return r[str].ok(email)
 
 
-def send_verification(email: str) -> r[str]:
+def send_verification(email: str) -> p.Result[str]:
     """Send verification email."""
     # Pretend to send email
     return r[str].ok(f"Verification sent to {email}")
@@ -231,7 +231,7 @@ else:
 `map` transforms the success value while keeping the railway structure:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 result: r[str] = r[str].ok("hello")
 
@@ -260,7 +260,7 @@ assert result.is_failure
 `filter` applies a predicate. Failure if predicate is false:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
 def is_adult(age: int) -> bool:
@@ -280,7 +280,7 @@ result = (
 assert result.is_failure
 
 # With custom error message
-from flext_core import r
+from flext_core import r, p
 
 result = r[int].ok(16).filter(is_adult, failure_message="User must be 18 or older")
 assert result.is_failure
@@ -292,10 +292,10 @@ assert "18 or older" in result.error
 `recover` applies a function to transform errors back into successes with fallback values:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
-def fetch_user(user_id: str) -> r[dict]:
+def fetch_user(user_id: str) -> p.Result[dict]:
     """Simulate database fetch that might fail."""
     if user_id == "missing":
         return r[dict].fail("User not found", error_code="NOT_FOUND")
@@ -329,10 +329,10 @@ assert result.value["id"] == "guest"
 `map_error` transforms error messages while keeping the failure state:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
-def parse_config(settings: str) -> r[dict]:
+def parse_config(settings: str) -> p.Result[dict]:
     """Parse configuration that might fail."""
     if not settings.startswith("{"):
         return r[dict].fail("Invalid JSON format")
@@ -361,7 +361,7 @@ assert result.error == "[ERROR] ORIGINAL ERROR"
 `safe_call` wraps functions that might raise exceptions, converting them to r:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 import json
 
 
@@ -401,10 +401,10 @@ assert result.value == 5.0
 `from_exception` explicitly converts exceptions to r failures:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
-def risky_operation() -> r[str]:
+def risky_operation() -> p.Result[str]:
     """Perform risky operation, converting exceptions to failures."""
     try:
         # Some operation that might raise
@@ -435,14 +435,14 @@ except json.JSONDecodeError as e:
 `or_else` provides an alternative r if the first one fails:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
-def fetch_primary() -> r[dict]:
+def fetch_primary() -> p.Result[dict]:
     return r[dict].fail("Primary unavailable")
 
 
-def fetch_backup() -> r[dict]:
+def fetch_backup() -> p.Result[dict]:
     return r[dict].ok({"source": "backup", "data": "value"})
 
 
@@ -453,7 +453,7 @@ assert result.value["source"] == "backup"
 
 
 # Success case (or_else is skipped)
-def fetch_primary_success() -> r[dict]:
+def fetch_primary_success() -> p.Result[dict]:
     return r[dict].ok({"source": "primary"})
 
 
@@ -476,7 +476,7 @@ assert result.is_success
 ### Pattern 1: Form Validation
 
 ```python
-from flext_core import r
+from flext_core import r, p
 from pydantic import BaseModel, Field
 
 
@@ -486,7 +486,7 @@ class UserRegistration(BaseModel):
     username: str = Field(min_length=3, max_length=20)
 
 
-def validate_registration(data: dict) -> r[UserRegistration]:
+def validate_registration(data: dict) -> p.Result[UserRegistration]:
     """Validate user registration with r."""
     try:
         user = UserRegistration(**data)
@@ -499,7 +499,7 @@ def validate_registration(data: dict) -> r[UserRegistration]:
         )
 
 
-def check_username_available(user: UserRegistration) -> r[UserRegistration]:
+def check_username_available(user: UserRegistration) -> p.Result[UserRegistration]:
     """Check if username is available."""
     # Pretend to check database
     if user.username.lower() == "REDACTED_LDAP_BIND_PASSWORD":
@@ -510,7 +510,7 @@ def check_username_available(user: UserRegistration) -> r[UserRegistration]:
     return r[UserRegistration].ok(user)
 
 
-def create_user(user: UserRegistration) -> r[dict]:
+def create_user(user: UserRegistration) -> p.Result[dict]:
     """Create user in database."""
     return r[dict].ok({
         "id": "user_123",
@@ -539,10 +539,10 @@ else:
 ### Pattern 2: API Call with Fallbacks
 
 ```python
-from flext_core import r, t
+from flext_core import r, p, t
 
 
-def fetch_primary_data(key: str) -> r[dict]:
+def fetch_primary_data(key: str) -> p.Result[dict]:
     """Try fetching from primary API."""
     # Simulate API call that might fail
     if key == "missing":
@@ -553,7 +553,7 @@ def fetch_primary_data(key: str) -> r[dict]:
     return r[dict].ok({"source": "primary", "value": key})
 
 
-def fetch_backup_data(key: str) -> r[dict]:
+def fetch_backup_data(key: str) -> p.Result[dict]:
     """Fallback to backup API."""
     return r[dict].ok({
         "source": "backup",
@@ -561,7 +561,7 @@ def fetch_backup_data(key: str) -> r[dict]:
     })
 
 
-def fetch_data_with_fallback(key: str) -> r[dict]:
+def fetch_data_with_fallback(key: str) -> p.Result[dict]:
     """Fetch data with fallback to backup API."""
     primary = fetch_primary_data(key)
 
@@ -584,11 +584,11 @@ print(result.value)  # {"source": "backup", "value": "missing_backup"}
 ### Pattern 3: Database Transaction
 
 ```python
-from flext_core import r
+from flext_core import r, p
 from decimal import Decimal
 
 
-def validate_transaction(amount: Decimal, account_id: str) -> r[dict]:
+def validate_transaction(amount: Decimal, account_id: str) -> p.Result[dict]:
     """Validate transaction parameters."""
     if amount <= 0:
         return r[dict].fail(
@@ -598,7 +598,7 @@ def validate_transaction(amount: Decimal, account_id: str) -> r[dict]:
     return r[dict].ok({"amount": amount, "account_id": account_id})
 
 
-def check_balance(tx_data: dict) -> r[dict]:
+def check_balance(tx_data: dict) -> p.Result[dict]:
     """Check if account has sufficient balance."""
     # Simulate database check
     balance = Decimal("1000")
@@ -615,7 +615,7 @@ def check_balance(tx_data: dict) -> r[dict]:
     return r[dict].ok(tx_data)
 
 
-def execute_transaction(tx_data: dict) -> r[dict]:
+def execute_transaction(tx_data: dict) -> p.Result[dict]:
     """Execute the transaction."""
     # Simulate database update
     return r[dict].ok({
@@ -644,12 +644,12 @@ else:
 ### Pattern 4: Configuration Loading
 
 ```python
-from flext_core import r
+from flext_core import r, p
 import os
 import json
 
 
-def load_config_file(path: str) -> r[dict]:
+def load_config_file(path: str) -> p.Result[dict]:
     """Load and parse JSON settings file."""
     try:
         if not os.path.exists(path):
@@ -674,7 +674,7 @@ def load_config_file(path: str) -> r[dict]:
         )
 
 
-def validate_config_schema(settings: dict) -> r[dict]:
+def validate_config_schema(settings: dict) -> p.Result[dict]:
     """Validate required settings fields."""
     required = ["database_url", "api_key", "log_level"]
     missing = [field for field in required if field not in settings]
@@ -689,7 +689,7 @@ def validate_config_schema(settings: dict) -> r[dict]:
     return r[dict].ok(settings)
 
 
-def apply_defaults(settings: dict) -> r[dict]:
+def apply_defaults(settings: dict) -> p.Result[dict]:
     """Apply default values for optional fields."""
     defaults = {
         "debug": False,
@@ -726,12 +726,12 @@ else:
 ### Combining Multiple Results
 
 ```python
-from flext_core import r
+from flext_core import r, p
 from typing import Sequence
 
 
 # Scenario: Process multiple items, fail on first error
-def validate_all_items(items: t.StrSequence) -> r[t.StrSequence]:
+def validate_all_items(items: t.StrSequence) -> p.Result[t.StrSequence]:
     """Validate each item, short-circuit on first failure."""
     return r.traverse(
         items,
@@ -752,10 +752,10 @@ assert result.value == ["valid", "item", "check"]
 ### Error Recovery
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
-def parse_int(value: str) -> r[int]:
+def parse_int(value: str) -> p.Result[int]:
     """Parse string to int."""
     try:
         return r[int].ok(int(value))
@@ -778,7 +778,7 @@ assert result.value == 0  # Recovered with default
 ### Resource Management
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 
 def create_connection():
@@ -791,7 +791,7 @@ def close_connection(conn):
     print(f"Closing connection {conn['id']}")
 
 
-def use_connection(conn) -> r[dict]:
+def use_connection(conn) -> p.Result[dict]:
     """Use the connection."""
     if conn["id"] == 123:
         return r[dict].ok({"result": "success", "id": conn["id"]})
@@ -818,7 +818,7 @@ FLEXT decorators integrate seamlessly with r for automated error handling, retri
 Automatically retry operations that return r:
 
 ```python
-from flext_core import r, d
+from flext_core import r, p, d
 
 
 @d.retry(max_attempts=3, delay_seconds=1.0, backoff_strategy="exponential")
@@ -845,7 +845,7 @@ else:
 Enforce timeouts on long-running operations:
 
 ```python
-from flext_core import r, d
+from flext_core import r, p, d
 
 
 @d.timeout(timeout_seconds=30.0)
@@ -871,7 +871,7 @@ if result.is_failure and "timed out" in result.error:
 Combine multiple decorators for robust operations:
 
 ```python
-from flext_core import r, d, FlextLogger
+from flext_core import r, p, d, FlextLogger
 
 logger = u.fetch_logger(__name__)
 
@@ -946,7 +946,7 @@ if result.is_success:
 r integrates naturally with decorators:
 
 ```python
-from flext_core import r, d
+from flext_core import r, p, d
 
 
 @d.railway(error_code="VALIDATION_ERROR")
@@ -969,7 +969,7 @@ def process_order(order: dict) -> dict:
 
 
 # Chain with railway composition
-def create_and_process_order(order_data: dict) -> r[dict]:
+def create_and_process_order(order_data: dict) -> p.Result[dict]:
     """Complete order flow with railway + decorators."""
     return (
         r
@@ -1007,7 +1007,7 @@ def process_user(data: dict):
 
 
 # ✅ CORRECT - Railway pattern
-def process_user(data: dict) -> r[dict]:
+def process_user(data: dict) -> p.Result[dict]:
     if "email" not in data:
         return r[dict].fail("Email required")  # Railway pattern
     return r[dict].ok({"user": data})
@@ -1059,7 +1059,7 @@ result = (
 
 
 # ✅ CORRECT - Functions return r with wrapped value
-def transform(data) -> r[dict]:
+def transform(data) -> p.Result[dict]:
     result = process(data)
     return r[dict].ok(result)  # Wrap in r
 ```
@@ -1069,7 +1069,7 @@ def transform(data) -> r[dict]:
 `r` maintains two API access methods for backward compatibility:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 
 result = r[str].ok("value")
 

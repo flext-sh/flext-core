@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import Callable, MutableSequence, Sequence
 from typing import Final
 
-from tests import r, u
+from tests import p, r, u
 
 
 class TestFlextUtilitiesReliability:
@@ -39,7 +39,7 @@ class TestFlextUtilitiesReliability:
             """Create retry operation that succeeds after N attempts."""
             attempts: MutableSequence[int] = []
 
-            def op() -> r[int]:
+            def op() -> p.Result[int]:
                 attempts.append(len(attempts))
                 if len(attempts) >= success_after:
                     return r[int].ok(success_value)

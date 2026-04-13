@@ -28,7 +28,7 @@ import pytest
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import r
+from flext_core import p, r
 from flext_tests import tm
 from tests import t, u
 
@@ -464,10 +464,10 @@ class Testr:
     def test_flow_through(self) -> None:
         """Test flow_through chains multiple operations."""
 
-        def add_one(x: int) -> r[int]:
+        def add_one(x: int) -> p.Result[int]:
             return r[int].ok(x + 1)
 
-        def multiply_two(x: int) -> r[int]:
+        def multiply_two(x: int) -> p.Result[int]:
             return r[int].ok(x * 2)
 
         result = r[int].ok(5)
@@ -478,13 +478,13 @@ class Testr:
     def test_flow_through_failure(self) -> None:
         """Test flow_through stops on first failure."""
 
-        def add_one(x: int) -> r[int]:
+        def add_one(x: int) -> p.Result[int]:
             return r[int].ok(x + 1)
 
-        def fail_op(_x: int) -> r[int]:
+        def fail_op(_x: int) -> p.Result[int]:
             return r[int].fail("error")
 
-        def multiply_two(x: int) -> r[int]:
+        def multiply_two(x: int) -> p.Result[int]:
             return r[int].ok(x * 2)
 
         result = r[int].ok(5)
@@ -558,7 +558,7 @@ class Testr:
             resource_created.append("created")
             return ["resource"]
 
-        def op(resource: MutableSequence[str]) -> r[str]:
+        def op(resource: MutableSequence[str]) -> p.Result[str]:
             resource.append("used")
             return r[str].ok("success")
 
@@ -629,7 +629,7 @@ class Testr:
         """Test flat_map inner function returns Failure."""
         result = r[int].ok(5)
 
-        def failing_func(_value: int) -> r[str]:
+        def failing_func(_value: int) -> p.Result[str]:
             return r[str].fail("flat_map failed")
 
         bound = result.flat_map(failing_func)
@@ -650,13 +650,13 @@ class Testr:
     def test_flow_through_stops_on_failure(self) -> None:
         """Test flow_through stops when function returns failure."""
 
-        def add_one(x: int) -> r[int]:
+        def add_one(x: int) -> p.Result[int]:
             return r[int].ok(x + 1)
 
-        def fail_op(_x: int) -> r[int]:
+        def fail_op(_x: int) -> p.Result[int]:
             return r[int].fail("stopped")
 
-        def never_called(_x: int) -> r[int]:
+        def never_called(_x: int) -> p.Result[int]:
             return r[int].ok(999)
 
         result = r[int].ok(5)
@@ -785,7 +785,7 @@ class Testr:
     def test_left_unit_law(self, x: int) -> None:
         """Monad left unit: ok(x).flat_map(f) == f(x)."""
 
-        def f(v: int) -> r[int]:
+        def f(v: int) -> p.Result[int]:
             return r[int].ok(v * 4)
 
         left = r[int].ok(x).flat_map(f)

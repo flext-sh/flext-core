@@ -13,18 +13,12 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable, Mapping, MutableMapping
+from collections.abc import Callable
 from contextlib import suppress
-from datetime import datetime
 from functools import wraps
-from pathlib import Path
-from typing import Literal, NoReturn, ParamSpec, TypeIs, TypeVar, overload
+from typing import Literal, NoReturn, TypeIs, overload
 
-from flext_core import FlextContainer, FlextContext, c, e, m, p, r, t, u
-
-P = ParamSpec("P")
-R = TypeVar("R")
-T = TypeVar("T")
+from flext_core import FlextContainer, FlextContext, P, R, T, c, e, m, p, r, t, u
 
 
 class FlextDecorators:
@@ -123,6 +117,7 @@ class FlextDecorators:
         operation_name: str | None = None,
         *,
         track_perf: bool = False,
+        ensure_correlation: bool = True,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically log operation execution with structured logging.
 
@@ -161,7 +156,7 @@ class FlextDecorators:
                     operation=op_name,
                     logger=logger,
                     function_name=func.__name__,
-                    ensure_correlation=True,
+                    ensure_correlation=ensure_correlation,
                 )
                 start_time = time.perf_counter() if track_perf else 0.0
                 try:
@@ -253,8 +248,10 @@ class FlextDecorators:
                     effective_error_code: str = (
                         str(error_code) if error_code is not None else "OPERATION_ERROR"
                     )
-                    return e.fail_operation(
-                        func.__name__, exc, error_code=effective_error_code
+                    error_msg = f"{func.__name__} failed: {type(exc).__name__}: {exc}"
+                    return r[T].fail(
+                        error_msg,
+                        error_code=effective_error_code,
                     )
 
             return wrapper
@@ -323,55 +320,21 @@ class FlextDecorators:
                     "retry_on_exceptions": [],
                     "retry_on_status_codes": [],
                 })
-                try:
-                    retry_args: tuple[t.ValueOrModel, ...] = tuple(
-                        str(a.model_dump())
-                        if isinstance(a, m.BaseModel)
-                        else u.normalize_to_container(a)
-                        if isinstance(a, (str, int, float, bool, datetime, Path))
-                        else str(a)
-                        if a is not None
-                        else ""
-                        for a in args
-                    )
-                    retry_kwargs: MutableMapping[str, t.ValueOrModel] = {}
-                    for key, value in kwargs.items():
-                        if isinstance(value, m.BaseModel):
-                            retry_kwargs[str(key)] = str(value.model_dump())
-                        elif isinstance(value, (str, int, float, bool, datetime, Path)):
-                            retry_kwargs[str(key)] = u.normalize_to_container(value)
-                        elif value is not None:
-                            retry_kwargs[str(key)] = str(value)
-                    retry_result = FlextDecorators._execute_retry_loop(
-                        func,
-                        retry_args,
-                        retry_kwargs,
-                        logger,
-                        retry_settings=retry_settings,
-                    )
-                    if isinstance(retry_result, Exception):
-                        FlextDecorators._handle_retry_exhaustion(
-                            retry_result,
-                            func,
-                            attempts,
-                            error_code,
-                            logger,
-                        )
-                    return retry_result
-                except (
-                    AttributeError,
-                    TypeError,
-                    ValueError,
-                    RuntimeError,
-                    KeyError,
-                ) as exc:
+                retry_result = FlextDecorators._execute_retry_loop(
+                    lambda: func(*args, **kwargs),
+                    func.__name__,
+                    logger,
+                    retry_settings=retry_settings,
+                )
+                if isinstance(retry_result, Exception):
                     FlextDecorators._handle_retry_exhaustion(
-                        exc,
+                        retry_result,
                         func,
                         attempts,
                         error_code,
                         logger,
                     )
+                return retry_result
 
             return wrapper
 
@@ -419,47 +382,23 @@ class FlextDecorators:
         """Clear operation scope and log if cleanup fails."""
         clear_result = u.clear_scope(c.ContextScope.OPERATION)
         if clear_result.failure:
-            FlextDecorators._handle_log_result(
-                result=clear_result,
-                logger=logger,
-                fallback_message="operation_context_clear_failed",
-                kwargs={
-                    "extra": {
-                        "function": function_name,
-                        c.HandlerType.OPERATION: operation,
-                    },
-                },
+            logger.warning(
+                "operation_context_clear_failed",
+                function=function_name,
+                operation=operation,
+                error=clear_result.error or "",
+                error_code=clear_result.error_code or "",
             )
 
     @staticmethod
     def _execute_retry_loop(
-        func: Callable[..., R],
-        args: tuple[t.ValueOrModel, ...],
-        kwargs: Mapping[str, t.ValueOrModel],
+        call: Callable[[], R],
+        func_name: str,
         logger: p.Logger,
         *,
-        retry_settings: m.RetryConfiguration | None = None,
+        retry_settings: m.RetryConfiguration,
     ) -> R | Exception:
-        """Execute retry loop and return last exception.
-
-        Uses RetryConfiguration model to reduce parameter count from 8 to 5.
-
-        Args:
-            func: Function to execute
-            args: Function positional arguments
-            kwargs: Function keyword arguments
-            logger: Logger instance
-            retry_settings: RetryConfiguration instance (Pydantic v2)
-
-        Returns:
-            Function result on success
-
-        """
-        if retry_settings is None:
-            retry_settings = m.RetryConfiguration(
-                retry_on_exceptions=[],
-                retry_on_status_codes=[],
-            )
+        """Execute retry loop with closure; return last exception on exhaustion."""
         attempts = retry_settings.max_retries
         delay = retry_settings.initial_delay_seconds
         strategy = (
@@ -474,13 +413,13 @@ class FlextDecorators:
                 if attempt > 1:
                     logger.info(
                         "retry_attempt",
-                        function=func.__name__,
+                        function=func_name,
                         attempt=attempt,
                         max_attempts=attempts,
                         delay_seconds=current_delay,
                     )
                     time.sleep(current_delay)
-                return func(*args, **kwargs)
+                return call()
             except (
                 AttributeError,
                 TypeError,
@@ -491,7 +430,7 @@ class FlextDecorators:
                 last_exception = exc
                 logger.warning(
                     "operation_failed_retrying",
-                    function=func.__name__,
+                    function=func_name,
                     attempt=attempt,
                     max_attempts=attempts,
                     error=str(exc),
@@ -507,25 +446,6 @@ class FlextDecorators:
             msg = c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
             return RuntimeError(msg)
         return last_exception
-
-    @staticmethod
-    def _handle_log_result(
-        *,
-        result: r[bool] | p.Result[bool],
-        logger: p.Logger,
-        fallback_message: str,
-        kwargs: t.ConfigMap | p.ConfigObject | Mapping[str, t.ValueOrModel],
-    ) -> None:
-        """Ensure FlextLogger call results are handled for diagnostics."""
-        if not result.failure:
-            return
-        fallback_logger = FlextDecorators._resolve_fallback_logger(logger)
-        if fallback_logger is None:
-            return
-        warning_context = FlextDecorators._flatten_settings_kwargs(kwargs)
-        warning_context["log_error"] = result.error or ""
-        warning_context["log_error_code"] = result.error_code or ""
-        fallback_logger.warning(fallback_message, **warning_context)
 
     @staticmethod
     def _handle_retry_exhaustion(
@@ -554,31 +474,6 @@ class FlextDecorators:
             attempts=attempts,
             original_error=str(last_exception),
         ) from last_exception
-
-    @staticmethod
-    def _flatten_settings_kwargs(
-        kwargs: t.ConfigMap | p.ConfigObject | Mapping[str, t.ValueOrModel],
-    ) -> MutableMapping[str, t.Container]:
-        """Flatten one mapping into a flat warning-context dict."""
-        context: MutableMapping[str, t.Container] = {}
-        for key, value in kwargs.items():
-            if key == "extra" and u.dict_like(value):
-                extra_items: Mapping[str, t.ValueOrModel]
-                if isinstance(value, t.ConfigMap):
-                    extra_items = value.root
-                else:
-                    extra_items = {str(k): v for k, v in value.items()}
-                for extra_key, extra_value in extra_items.items():
-                    if isinstance(extra_value, (str, int, float, bool, datetime, Path)):
-                        context[f"extra_{extra_key}"] = extra_value
-                    else:
-                        context[f"extra_{extra_key}"] = str(extra_value)
-                continue
-            if isinstance(value, t.CONTAINER_TYPES):
-                context[str(key)] = value
-                continue
-            context[str(key)] = str(value)
-        return context
 
     @staticmethod
     def _has_flext_logger(
@@ -695,16 +590,6 @@ class FlextDecorators:
             duration_seconds=duration,
             original_error=original_str,
         ) from original_error
-
-    @staticmethod
-    def _resolve_fallback_logger(logger: p.Logger) -> p.Logger | None:
-        """Extract fallback logger from logger wrapper."""
-        if FlextDecorators._has_flext_logger(logger):
-            return logger.logger
-        candidate: p.Logger | None = getattr(logger, "logger", None)
-        if isinstance(candidate, p.Logger):
-            return candidate
-        return None
 
     @overload
     @staticmethod
@@ -874,72 +759,6 @@ class FlextDecorators:
                             original_error=exc,
                         )
                     raise
-
-            return wrapper
-
-        return decorator
-
-    @staticmethod
-    def track_operation(
-        operation_name: str | None = None,
-        *,
-        track_correlation: bool = True,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Decorator to track operation execution with u.Integration.
-
-        Combines correlation ID management and structured logging using
-        u.Integration pattern (Layer 0.5). Performance tracking
-        happens automatically via u.Integration.
-        No circular imports - uses structlog directly.
-
-        Args:
-            operation_name: Name for the operation (defaults to function name)
-            track_correlation: Ensure correlation ID exists (default: True)
-
-        Returns:
-            Decorated function with comprehensive operation tracking
-
-        """
-
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-
-            @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                op_name: str = (
-                    operation_name if operation_name is not None else func.__name__
-                )
-                logger_carrier: FlextDecorators._LoggerCarrier | None = None
-                if args:
-                    first_arg_raw = args[0]
-                    if isinstance(
-                        first_arg_raw, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)
-                    ) or FlextDecorators._has_flext_logger(first_arg_raw):
-                        logger_carrier = first_arg_raw
-                logger = FlextDecorators._resolve_logger(
-                    logger_carrier,
-                    func_module=func.__module__,
-                )
-                correlation_id = FlextDecorators._bind_operation_context(
-                    operation=op_name,
-                    logger=logger,
-                    function_name=func.__name__,
-                    ensure_correlation=track_correlation,
-                )
-                if track_correlation and correlation_id is None:
-                    logger.warning(
-                        "correlation_id_missing",
-                        function=func.__name__,
-                        operation=op_name,
-                    )
-                try:
-                    return func(*args, **kwargs)
-                finally:
-                    with suppress(Exception):
-                        FlextDecorators._clear_operation_scope(
-                            logger=logger,
-                            function_name=func.__name__,
-                            operation=op_name,
-                        )
 
             return wrapper
 

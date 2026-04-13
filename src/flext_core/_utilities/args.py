@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_core import c, e, m, r, t
+from flext_core import c, e, m, p, r, t
 
 
 class FlextUtilitiesArgs:
@@ -22,7 +22,7 @@ class FlextUtilitiesArgs:
         model_cls: type[M],
         *,
         allow_empty: bool = True,
-    ) -> r[M]:
+    ) -> p.Result[M]:
         """Parse kwargs directly into a Pydantic model with detailed error collection.
 
         Args:
@@ -54,7 +54,7 @@ class FlextUtilitiesArgs:
         model_cls: type[M],
         *,
         allow_empty: bool = True,
-    ) -> r[M]:
+    ) -> p.Result[M]:
         """Resolve options from a pre-instantiated model or kwargs concisely.
 
         Reduces boilerplate by returning an r[M] which callers can unwrap_or()

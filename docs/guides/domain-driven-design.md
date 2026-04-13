@@ -377,7 +377,7 @@ except ValueError as e:
 Domain events capture important state changes inside aggregates. FLEXT surfaces domain events through `FlextModels.DomainEvent` and dispatcher publishing so other bounded contexts can react without direct coupling:
 
 ```python
-from flext_core import r
+from flext_core import r, p
 from flext_core import FlextDispatcher
 from flext_core import h
 from flext_core import FlextModels
@@ -389,7 +389,7 @@ class InventoryAdjusted(FlextModels.DomainEvent):
 
 
 class InventoryAdjustedHandler(h[InventoryAdjusted, bool]):
-    def handle(self, message: InventoryAdjusted) -> r[bool]:
+    def handle(self, message: InventoryAdjusted) -> p.Result[bool]:
         # Side-effect: notify downstream system or persist projection
         return r[bool].ok(True)
 
@@ -507,7 +507,7 @@ class Order(FlextModels.AggregateRoot):
         if self.total.amount != calculated_total:
             raise ValueError("Order total calculation mismatch")
 
-    def add_line(self, line: OrderLine) -> r[bool]:
+    def add_line(self, line: OrderLine) -> p.Result[bool]:
         """Add line to order."""
         if self.status != OrderStatus.PENDING:
             return r[bool].fail(
@@ -527,7 +527,7 @@ class Order(FlextModels.AggregateRoot):
                 error_code="ORDER_INVARIANT_VIOLATION",
             )
 
-    def remove_line(self, line_id: str) -> r[bool]:
+    def remove_line(self, line_id: str) -> p.Result[bool]:
         """Remove line from order."""
         if self.status != OrderStatus.PENDING:
             return r[bool].fail(
@@ -547,7 +547,7 @@ class Order(FlextModels.AggregateRoot):
                 error_code="ORDER_INVARIANT_VIOLATION",
             )
 
-    def confirm(self) -> r[bool]:
+    def confirm(self) -> p.Result[bool]:
         """Confirm order (transition to confirmed state)."""
         if self.status != OrderStatus.PENDING:
             return r[bool].fail(
@@ -559,7 +559,7 @@ class Order(FlextModels.AggregateRoot):
         self.updated_at = datetime.now()
         return r[bool].ok(True)
 
-    def ship(self) -> r[bool]:
+    def ship(self) -> p.Result[bool]:
         """Ship order (transition to shipped state)."""
         if self.status != OrderStatus.CONFIRMED:
             return r[bool].fail(
@@ -690,7 +690,7 @@ class User(FlextModels.AggregateRoot):
     created_at: datetime
     last_login_at: datetime | None = None
 
-    def login(self, plain_password: str) -> r[bool]:
+    def login(self, plain_password: str) -> p.Result[bool]:
         """Attempt to login."""
         if not self.is_active:
             return r[bool].fail(
@@ -715,7 +715,7 @@ class User(FlextModels.AggregateRoot):
         self.last_login_at = datetime.now()
         return r[bool].ok(True)
 
-    def deactivate(self) -> r[bool]:
+    def deactivate(self) -> p.Result[bool]:
         """Deactivate user account."""
         if not self.is_active:
             return r[bool].fail(
@@ -726,7 +726,7 @@ class User(FlextModels.AggregateRoot):
         self.is_active = False
         return r[bool].ok(True)
 
-    def verify_email(self) -> r[bool]:
+    def verify_email(self) -> p.Result[bool]:
         """Mark email as verified."""
         if self.is_verified:
             return r[bool].fail(
@@ -774,7 +774,7 @@ class User(FlextModels.Entity):
     username: str
     email: str
 
-    def update_email(self, new_email: str) -> r[bool]:
+    def update_email(self, new_email: str) -> p.Result[bool]:
         """Update user email with validation."""
         if not new_email or "@" not in new_email:
             return r[bool].fail(
@@ -805,7 +805,7 @@ else:
 Commands represent requests to **change state**. They always return `r`:
 
 ```python
-from flext_core import FlextModels, r, s
+from flext_core import FlextModels, r, p, s
 from dataclasses import dataclass
 
 
@@ -832,7 +832,7 @@ class DeleteUserCommand:
 class UserCommandService(s):
     """Handles all user write operations."""
 
-    def handle_create_user(self, cmd: CreateUserCommand) -> r[dict]:
+    def handle_create_user(self, cmd: CreateUserCommand) -> p.Result[dict]:
         """Execute create user command."""
         # Validate business rules
         if not "@" in cmd.email:
@@ -850,7 +850,7 @@ class UserCommandService(s):
             "username": user.username,
         })
 
-    def handle_update_email(self, cmd: UpdateUserEmailCommand) -> r[bool]:
+    def handle_update_email(self, cmd: UpdateUserEmailCommand) -> p.Result[bool]:
         """Execute update email command."""
         # Load aggregate
         user = self._load_user(cmd.user_id)
@@ -901,7 +901,7 @@ class UserQueryService(s):
         super().__init__()
         self.user_repository = user_repository
 
-    def handle_get_user(self, query: GetUserByIdQuery) -> r[dict]:
+    def handle_get_user(self, query: GetUserByIdQuery) -> p.Result[dict]:
         """Execute get user by ID query."""
         user = self.user_repository.find_by_id(query.user_id)
         if not user:
@@ -914,7 +914,7 @@ class UserQueryService(s):
             "created_at": user.created_at,
         })
 
-    def handle_list_users(self, query: ListUsersQuery) -> r[list]:
+    def handle_list_users(self, query: ListUsersQuery) -> p.Result[list]:
         """Execute list users query with pagination."""
         users = self.user_repository.list(limit=query.limit, offset=query.offset)
 
@@ -927,7 +927,7 @@ class UserQueryService(s):
             for u in users
         ])
 
-    def handle_search_users(self, query: SearchUsersQuery) -> r[list]:
+    def handle_search_users(self, query: SearchUsersQuery) -> p.Result[list]:
         """Execute search users query."""
         users = self.user_repository.search_by_username(query.username)
         if not users:
@@ -1040,7 +1040,7 @@ class Order:
 class ShoppingCart(FlextModels.Entity):
     items: Sequence[CartItem]
 
-    def add_item(self, item: CartItem) -> r[bool]:
+    def add_item(self, item: CartItem) -> p.Result[bool]:
         if len(self.items) >= 100:
             return r[bool].fail("Cart is full")
         self.items.append(item)

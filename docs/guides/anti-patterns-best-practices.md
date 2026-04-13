@@ -85,10 +85,10 @@ except ValueError as e:
 
 ```python
 # ✅ CORRECT - Railway pattern
-from flext_core import r
+from flext_core import r, p
 
 
-def validate_user(data: dict) -> r[User]:
+def validate_user(data: dict) -> p.Result[User]:
     """Returns r wrapping success or failure."""
     if "email" not in data:
         return r[User].fail("Email is required")
@@ -140,10 +140,10 @@ def load_config() -> dict:
 
 ```python
 # ✅ CORRECT - Explicit error handling
-from flext_core import r
+from flext_core import r, p
 
 
-def load_config() -> r[dict]:
+def load_config() -> p.Result[dict]:
     """Loads settings with explicit error handling."""
     try:
         with open("settings.json") as f:
@@ -350,7 +350,7 @@ Layer 4: FlextSettings, FlextLogger (imports all lower layers)
 ```python
 # ✅ CORRECT - Respect hierarchy
 # settings.py (Layer 4) - can import from all lower layers
-from flext_core import r
+from flext_core import r, p
 from flext_core import FlextConstants
 
 # result.py (Layer 1) - imports only from Layer 0
@@ -457,28 +457,28 @@ class FlextMeltano:
 class MeltanoConfig:
     """Handles configuration only."""
 
-    def load(self, path: str) -> r[dict]:
+    def load(self, path: str) -> p.Result[dict]:
         pass
 
 
 class MeltanoValidator:
     """Handles validation only."""
 
-    def validate_config(self, settings: dict) -> r[bool]:
+    def validate_config(self, settings: dict) -> p.Result[bool]:
         pass
 
 
 class MeltanoStreamManager:
     """Handles stream operations."""
 
-    def load_streams(self, settings: dict) -> r[list]:
+    def load_streams(self, settings: dict) -> p.Result[list]:
         pass
 
 
 class MeltanoExecutor:
     """Handles execution (tap, target, dbt)."""
 
-    def run_tap(self, settings: dict) -> r[bool]:
+    def run_tap(self, settings: dict) -> p.Result[bool]:
         pass
 ```
 
@@ -609,7 +609,7 @@ except ValidationError as e:
 
 ```python
 # ✅ CORRECT - r for validation
-from flext_core import r
+from flext_core import r, p
 from pydantic import BaseModel, ValidationError
 
 
@@ -618,7 +618,7 @@ class User(BaseModel):
     age: int
 
 
-def create_user(data: dict) -> r[User]:
+def create_user(data: dict) -> p.Result[User]:
     """Create user with r validation."""
     try:
         user = User(**data)

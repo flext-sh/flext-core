@@ -107,7 +107,7 @@ $ grep -n "raise.*Error" src/flext_core/models.py | head -5
 
 ```python
 @classmethod
-def ok(cls, data: T_co) -> r[T_co]:
+def ok(cls, data: T_co) -> p.Result[T_co]:
     """Create successful result wrapping data."""
     return cls._success(data)
 ```
@@ -148,7 +148,7 @@ def fail(
     error: str,
     error_code: str | None = None,
     error_data: t.RecursiveContainerMapping | None = None,
-) -> r[Never]:
+) -> p.Result[Never]:
     """Create failed result with error message and optional code/data."""
     return cls._failure(error, error_code, error_data)
 ```
@@ -200,7 +200,7 @@ T = TypeVar("T")
 **Source Code Evidence** (container.py:574):
 
 ```python
-def get_typedT -> r[T]:
+def get_typedT -> p.Result[T]:
     """Get service with type checking and inference.
 
     Returns r[T] with proper type information.
@@ -251,7 +251,7 @@ ______________________________________________________________________
 ROOT IMPORT PATTERN (ECOSYSTEM STANDARD)
 
 ✅ CORRECT - Always use root imports:
-    from flext_core import r, FlextContainer
+    from flext_core import r, p, FlextContainer
 
 ❌ FORBIDDEN - Never use internal module imports (for ecosystem):
     from flext_core import r  # Breaks ecosystem
@@ -372,7 +372,7 @@ container.py:1032: # For new code, use FlextContainer() directly
 **Source Code Evidence** (container.py:491):
 
 ```python
-def get(self, identifier: str) -> r[t.RecursiveContainer]:
+def get(self, identifier: str) -> p.Result[t.RecursiveContainer]:
     """Get service with r error handling.
 
     Returns r wrapping service or error.

@@ -22,7 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import T_DomainResult
 from flext_tests import s, td
-from tests import c, h, m, r, t
+from tests import c, h, m, p, r, t
 
 
 class TestsFlextCoreServiceBase(s[T_DomainResult]):
@@ -39,7 +39,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
     """
 
     @override
-    def execute(self) -> r[T_DomainResult]:
+    def execute(self) -> p.Result[T_DomainResult]:
         """Execute domain service logic - must be implemented by subclasses."""
         msg = c.Core.Tests.TestErrors.SUBCLASSES_MUST_IMPLEMENT_EXECUTE
         raise NotImplementedError(msg)
@@ -207,7 +207,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
                 def handle(
                     self,
                     message: t.ValueOrModel,
-                ) -> r[t.ValueOrModel]:
+                ) -> p.Result[t.ValueOrModel]:
                     """Handle message with proper error handling."""
                     try:
                         if process_fn:
@@ -243,7 +243,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
 
             def always_succeed(
                 _msg: t.ValueOrModel,
-            ) -> r[t.ValueOrModel]:
+            ) -> p.Result[t.ValueOrModel]:
                 """Always return success with configured value."""
                 return r[t.ValueOrModel].ok(result_value)
 
@@ -275,7 +275,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
 
             def always_fail(
                 _msg: t.ValueOrModel,
-            ) -> r[t.ValueOrModel]:
+            ) -> p.Result[t.ValueOrModel]:
                 """Always return failure with configured error."""
                 return r[t.ValueOrModel].fail(error_message)
 
@@ -305,7 +305,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
 
             def transform(
                 msg: t.ValueOrModel,
-            ) -> r[t.ValueOrModel]:
+            ) -> p.Result[t.ValueOrModel]:
                 """Transform message with proper error handling."""
                 try:
                     result = transform_fn(msg)

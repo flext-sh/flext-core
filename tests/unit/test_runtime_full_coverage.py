@@ -28,7 +28,7 @@ from dependency_injector import containers, providers
 from pydantic import BaseModel
 
 from flext_tests import tm
-from tests import m, r, t, u
+from tests import m, p, r, t, u
 
 runtime_module = inspect.getmodule(u.configure_structlog)
 
@@ -475,12 +475,12 @@ def test_runtime_result_all_missed_branches() -> None:
         msg = "bad"
         raise ValueError(msg)
 
-    def _ok_plus_one(value: int | None) -> r[int | None]:
+    def _ok_plus_one(value: int | None) -> p.Result[int | None]:
         if value is None:
             return r[int | None].fail("none")
         return r[int | None].ok(value + 1)
 
-    def _ok_plus_two(value: int) -> r[int]:
+    def _ok_plus_two(value: int) -> p.Result[int]:
         return r[int].ok(value + 2)
 
     def _error_to_int(error: str) -> int:
@@ -939,13 +939,13 @@ def test_dependency_integration_and_wiring_paths() -> None:
 
 def test_runtime_result_remaining_paths() -> None:
 
-    def _ok_passthrough(value: int) -> r[int]:
+    def _ok_passthrough(value: int) -> p.Result[int]:
         return r[int].ok(value)
 
-    def _ok_inc(value: int) -> r[int]:
+    def _ok_inc(value: int) -> p.Result[int]:
         return r[int].ok(value + 1)
 
-    def _fail_boom(_value: int) -> r[int]:
+    def _fail_boom(_value: int) -> p.Result[int]:
         return r[int].fail("boom")
 
     success: r[int] = r[int].ok(3)

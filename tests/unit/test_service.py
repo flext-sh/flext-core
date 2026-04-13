@@ -8,7 +8,7 @@ from typing import ClassVar, override
 import pytest
 from pydantic import BaseModel, ConfigDict
 
-from tests import c, e, r, s
+from tests import c, e, p, r, s
 
 
 class UserData(BaseModel):
@@ -22,7 +22,7 @@ class UserService(s[UserData]):
     """Simple successful service."""
 
     @override
-    def execute(self) -> r[UserData]:
+    def execute(self) -> p.Result[UserData]:
         return r[UserData].ok(UserData(user_id=1, name="test_user"))
 
 
@@ -34,13 +34,13 @@ class ValidatingService(s[str]):
     min_length: int = 3
 
     @override
-    def validate_business_rules(self) -> r[bool]:
+    def validate_business_rules(self) -> p.Result[bool]:
         if len(self.value_input) < self.min_length:
             return r[bool].fail("Value is too short")
         return r[bool].ok(True)
 
     @override
-    def execute(self) -> r[str]:
+    def execute(self) -> p.Result[str]:
         if len(self.value_input) < self.min_length:
             return r[str].fail("Value is too short")
         return r[str].ok(f"Processed: {self.value_input}")
@@ -50,7 +50,7 @@ class FailingService(s[bool]):
     """Service that fails execution through r."""
 
     @override
-    def execute(self) -> r[bool]:
+    def execute(self) -> p.Result[bool]:
         return r[bool].fail(
             "Missing required data",
             error_code=c.ErrorCode.VALIDATION_ERROR,
@@ -67,14 +67,14 @@ class RaisingValidationService(s[str]):
     should_raise: bool = False
 
     @override
-    def validate_business_rules(self) -> r[bool]:
+    def validate_business_rules(self) -> p.Result[bool]:
         if self.should_raise:
             message = "validation exploded"
             raise ValueError(message)
         return r[bool].ok(True)
 
     @override
-    def execute(self) -> r[str]:
+    def execute(self) -> p.Result[str]:
         return r[str].ok("ok")
 
 

@@ -8,8 +8,7 @@ from typing import override
 import pytest
 from pydantic import BaseModel
 
-from flext_core import e, h, r
-from tests import c, m, t
+from tests import c, e, h, m, p, r, t
 
 
 class TestHandlersFullCoverage:
@@ -18,7 +17,7 @@ class TestHandlersFullCoverage:
             super().__init__(settings=settings)
 
         @override
-        def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+        def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
             if isinstance(message, (str, int, float, bool)):
                 return r[t.ValueOrModel].ok(message)
             return r[t.ValueOrModel].fail(c.Core.Tests.TestErrors.UNSUPPORTED_MESSAGE)
@@ -28,7 +27,7 @@ class TestHandlersFullCoverage:
             super().__init__(settings=settings)
 
         @override
-        def validate_message(self, data: t.ValueOrModel) -> r[bool]:
+        def validate_message(self, data: t.ValueOrModel) -> p.Result[bool]:
             _ = data
             return r[bool].ok(True)
 
@@ -37,7 +36,7 @@ class TestHandlersFullCoverage:
             super().__init__(settings=settings)
 
         @override
-        def validate_message(self, data: t.ValueOrModel) -> r[bool]:
+        def validate_message(self, data: t.ValueOrModel) -> p.Result[bool]:
             _ = data
             return r[bool].ok(True)
 

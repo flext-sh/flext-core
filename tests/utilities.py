@@ -7,7 +7,7 @@ from itertools import count
 from typing import ClassVar, override
 
 from flext_tests import u
-from tests import c, e, m, r, s, t
+from tests import c, e, m, p, r, s, t
 
 
 class TestsFlextCoreUtilities(u):
@@ -85,7 +85,7 @@ class TestsFlextCoreUtilities(u):
                 user_id: str = ""
 
                 @override
-                def execute(self) -> r[m.Core.Tests.User]:
+                def execute(self) -> p.Result[m.Core.Tests.User]:
                     if self.user_id in {"invalid", ""}:
                         return r[m.Core.Tests.User].fail(
                             c.Core.Tests.TestErrors.USER_NOT_FOUND
@@ -106,7 +106,7 @@ class TestsFlextCoreUtilities(u):
                 subject: str = ""
 
                 @override
-                def execute(self) -> r[m.Core.Tests.EmailResponse]:
+                def execute(self) -> p.Result[m.Core.Tests.EmailResponse]:
                     if "@" not in self.to:
                         return r[m.Core.Tests.EmailResponse].fail(
                             c.Core.Tests.TestErrors.INVALID_EMAIL
@@ -123,7 +123,7 @@ class TestsFlextCoreUtilities(u):
                 value: int = 0
 
                 @override
-                def execute(self) -> r[t.ConfigMap]:
+                def execute(self) -> p.Result[t.ConfigMap]:
                     if self.value < 0:
                         return r[t.ConfigMap].fail(
                             c.Core.Tests.TestErrors.VALUE_TOO_LOW
@@ -143,7 +143,7 @@ class TestsFlextCoreUtilities(u):
                 value: int = 0
 
                 @override
-                def execute(self) -> r[t.ConfigMap]:
+                def execute(self) -> p.Result[t.ConfigMap]:
                     match self.operation:
                         case "double":
                             return r[t.ConfigMap].ok(
@@ -199,7 +199,7 @@ class TestsFlextCoreUtilities(u):
             @staticmethod
             def execute_v1_pipeline(
                 case: m.Core.Tests.RailwayTestCase,
-            ) -> r[str | m.Core.Tests.User | m.Core.Tests.EmailResponse]:
+            ) -> p.Result[str | m.Core.Tests.User | m.Core.Tests.EmailResponse]:
                 """Execute the documented V1 railway pipeline."""
                 if not case.user_ids:
                     return r[str | m.Core.Tests.User | m.Core.Tests.EmailResponse].fail(
@@ -1090,7 +1090,7 @@ class TestsFlextCoreUtilities(u):
                 min_length: int = c.Core.Tests.TestValidation.MIN_LENGTH_DEFAULT
 
                 @override
-                def execute(self) -> r[str]:
+                def execute(self) -> p.Result[str]:
                     """Validate and return value."""
                     if len(self.value_input) < self.min_length:
                         return r[str].fail(
@@ -1104,7 +1104,7 @@ class TestsFlextCoreUtilities(u):
                 error_message: str = c.Core.Tests.Services.DEFAULT_ERROR_MESSAGE
 
                 @override
-                def execute(self) -> r[str]:
+                def execute(self) -> p.Result[str]:
                     """Always fails."""
                     return r[str].fail(self.error_message)
 
@@ -1668,7 +1668,7 @@ class TestsFlextCoreUtilities(u):
                     self.processed_items: MutableSequence[str] = []
                     self.call_count = 0
 
-                def process(self, input_data: str) -> r[str]:
+                def process(self, input_data: str) -> p.Result[str]:
                     """Process input data by prefixing with 'processed_'.
 
                     Args:
