@@ -61,7 +61,7 @@ class FlextUtilitiesCollection:
             and isinstance(current_val, dict)
             and isinstance(value, dict)
         ):
-            merged_result: r[t.RecursiveContainerMapping] = (
+            merged_result: p.Result[t.RecursiveContainerMapping] = (
                 FlextUtilitiesCollection.merge_mappings(
                     value,
                     current_val,
@@ -311,7 +311,7 @@ class FlextUtilitiesCollection:
 
     _MergeHandler = Callable[
         [t.RecursiveContainerMapping, t.RecursiveContainerMapping],
-        "r[t.RecursiveContainerMapping]",
+        "p.Result[t.RecursiveContainerMapping]",
     ]
 
     _MERGE_STRATEGIES: ClassVar[Mapping[str, _MergeHandler]] = {

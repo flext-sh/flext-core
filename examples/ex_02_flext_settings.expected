@@ -50,7 +50,7 @@ fetch_global.override.timeout_seconds: 55.0
 resolve_di_settings_provider.type: 'Singleton'
 
 [resolve_env_file_and_auto_settings]
-resolve_env_file.custom_path: '/home/marlonsc/flext/.venv/flext_settings_example.env'
+resolve_env_file.custom_path: '/home/marlonsc/flext/flext-core/examples/flext_settings_example.env'
 AutoSettings.create_settings.type: '_TestConfig'
 AutoSettings.create_settings.service_name: 'test-service'
 

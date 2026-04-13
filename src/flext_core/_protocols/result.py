@@ -1,6 +1,13 @@
 """FlextProtocolsResult - result and model-dump protocols.
 
 ISP-compliant split: 4 sub-protocols composed via MRO into Result facade.
+PEP 695 type parameters with automatic variance inference per protocol:
+- ResultObservable[T]: covariant (T in output positions only)
+- ResultUnwrappable[T]: invariant (T in both output and input positions)
+- ResultMonadic[T]: invariant (T consumed via callbacks)
+- ResultTappable[T]: invariant (T consumed via callbacks)
+- Result[T]: invariant (composed facade)
+
 Factories, type guards, context manager, and low-usage methods live ONLY
 on the concrete carrier (FlextResult), never on the protocol.
 
@@ -14,7 +21,6 @@ from collections.abc import Callable
 from typing import (
     Protocol,
     Self,
-    TypeVar,
     overload,
     override,
     runtime_checkable,
@@ -23,8 +29,6 @@ from typing import (
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.containers import FlextTypingContainers
-
-ResultValueT = TypeVar("ResultValueT", covariant=True)
 
 
 class FlextProtocolsResult:
@@ -35,7 +39,7 @@ class FlextProtocolsResult:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class ResultLike(Protocol[ResultValueT]):
+    class ResultLike[T](Protocol):
         """Minimal observable result contract for automatic narrowing."""
 
         @property
@@ -69,31 +73,27 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def value(self) -> ResultValueT:
+        def value(self) -> T:
             """Result value (available on success, strictly typed as T)."""
             ...
 
-        def unwrap(self) -> ResultValueT:
+        def unwrap(self) -> T:
             """Unwrap success value (raises on failure)."""
             ...
 
         @overload
-        def unwrap_or[DefaultT](self, default: DefaultT) -> ResultValueT | DefaultT: ...
-
-        def unwrap_or[DefaultT](self, default: DefaultT) -> ResultValueT | DefaultT:
+        def unwrap_or(self, default: T) -> T: ...
+        @overload
+        def unwrap_or[D](self, default: D) -> T | D: ...
+        def unwrap_or[D](self, default: D) -> T | D:
             """Return success value or the provided default."""
             ...
 
         @overload
-        def unwrap_or_else[DefaultT](
-            self,
-            func: Callable[[], DefaultT],
-        ) -> ResultValueT | DefaultT: ...
-
-        def unwrap_or_else[DefaultT](
-            self,
-            func: Callable[[], DefaultT],
-        ) -> ResultValueT | DefaultT:
+        def unwrap_or_else(self, func: Callable[[], T]) -> T: ...
+        @overload
+        def unwrap_or_else[D](self, func: Callable[[], D]) -> T | D: ...
+        def unwrap_or_else[D](self, func: Callable[[], D]) -> T | D:
             """Return success value or the result of the fallback callable."""
             ...
 
@@ -102,11 +102,12 @@ class FlextProtocolsResult:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class ResultObservable(Protocol[ResultValueT]):
+    class ResultObservable[T](Protocol):
         """Read-only observation of result state.
 
         Provides success/failure inspection and access to value, error,
         error_code, error_data, and exception properties.
+        T variance is automatically inferred as covariant (output-only).
         """
 
         @property
@@ -140,7 +141,7 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def value(self) -> ResultValueT:
+        def value(self) -> T:
             """Result value (available on success, strictly typed as T)."""
             ...
 
@@ -149,34 +150,31 @@ class FlextProtocolsResult:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class ResultUnwrappable(Protocol[ResultValueT]):
+    class ResultUnwrappable[T](Protocol):
         """Value extraction from result.
 
         Provides unwrap, unwrap_or, and unwrap_or_else for
         extracting the success value with different failure strategies.
+        T variance is automatically inferred as invariant (input + output).
         """
 
-        def unwrap(self) -> ResultValueT:
+        def unwrap(self) -> T:
             """Unwrap success value (raises materialized exception on failure)."""
             ...
 
         @overload
-        def unwrap_or[DefaultT](self, default: DefaultT) -> ResultValueT | DefaultT: ...
-
-        def unwrap_or[DefaultT](self, default: DefaultT) -> ResultValueT | DefaultT:
+        def unwrap_or(self, default: T) -> T: ...
+        @overload
+        def unwrap_or[D](self, default: D) -> T | D: ...
+        def unwrap_or[D](self, default: D) -> T | D:
             """Return success value or the provided default."""
             ...
 
         @overload
-        def unwrap_or_else[DefaultT](
-            self,
-            func: Callable[[], DefaultT],
-        ) -> ResultValueT | DefaultT: ...
-
-        def unwrap_or_else[DefaultT](
-            self,
-            func: Callable[[], DefaultT],
-        ) -> ResultValueT | DefaultT:
+        def unwrap_or_else(self, func: Callable[[], T]) -> T: ...
+        @overload
+        def unwrap_or_else[D](self, func: Callable[[], D]) -> T | D: ...
+        def unwrap_or_else[D](self, func: Callable[[], D]) -> T | D:
             """Return success value or the result of the fallback callable."""
             ...
 
@@ -185,17 +183,18 @@ class FlextProtocolsResult:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class ResultMonadic(Protocol[ResultValueT]):
+    class ResultMonadic[T](Protocol):
         """Monadic chaining operations on result.
 
         Provides map, flat_map, fold, and lash for composing
         result-returning operations in a railway-oriented style.
         All return types use the protocol (never the concrete carrier).
+        T variance is automatically inferred as invariant (consumed via callbacks).
         """
 
         def flat_map[U](
             self,
-            func: Callable[[ResultValueT], FlextProtocolsResult.Result[U]],
+            func: Callable[[T], FlextProtocolsResult.Result[U]],
         ) -> FlextProtocolsResult.Result[U]:
             """Chain operations that return structural FLEXT results."""
             ...
@@ -203,21 +202,21 @@ class FlextProtocolsResult:
         def fold[U](
             self,
             on_failure: Callable[[str], U],
-            on_success: Callable[[ResultValueT], U],
+            on_success: Callable[[T], U],
         ) -> U:
             """Reduce result into a single value."""
             ...
 
         def lash(
             self,
-            func: Callable[[str], FlextProtocolsResult.Result[ResultValueT]],
-        ) -> FlextProtocolsResult.Result[ResultValueT]:
+            func: Callable[[str], FlextProtocolsResult.Result[T]],
+        ) -> FlextProtocolsResult.Result[T]:
             """Recover from failure using another structural result."""
             ...
 
         def map[U](
             self,
-            func: Callable[[ResultValueT], U],
+            func: Callable[[T], U],
         ) -> FlextProtocolsResult.Result[U]:
             """Transform the success value."""
             ...
@@ -227,51 +226,46 @@ class FlextProtocolsResult:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class ResultTappable(Protocol[ResultValueT]):
+    class ResultTappable[T](Protocol):
         """Side-effect and error transform operations.
 
         Provides tap, tap_error, flow_through, map_error, and map_or
         for observing or transforming result state without consuming it.
+        T variance is automatically inferred as invariant (consumed via callbacks).
         """
 
-        def flow_through[U](
+        def flow_through(
             self,
-            *funcs: Callable[
-                [ResultValueT | U],
-                FlextProtocolsResult.Result[U],
-            ],
-        ) -> FlextProtocolsResult.Result[ResultValueT] | FlextProtocolsResult.Result[U]:
+            *funcs: Callable[[T], FlextProtocolsResult.Result[T]],
+        ) -> FlextProtocolsResult.Result[T]:
             """Apply multiple Result-returning steps in sequence."""
             ...
 
         def map_error(
             self,
             func: Callable[[str], str],
-        ) -> FlextProtocolsResult.Result[ResultValueT]:
+        ) -> FlextProtocolsResult.Result[T]:
             """Transform the failure message."""
             ...
 
         @overload
-        def map_or(self, default: None, func: None = None) -> ResultValueT | None: ...
-
+        def map_or(self, default: None, func: None = None) -> T | None: ...
         @overload
-        def map_or[U](self, default: U, func: None = None) -> ResultValueT | U: ...
-
+        def map_or[U](self, default: U, func: None = None) -> T | U: ...
         @overload
-        def map_or[U](self, default: U, func: Callable[[ResultValueT], U]) -> U: ...
-
+        def map_or[U](self, default: U, func: Callable[[T], U]) -> U: ...
         def map_or[U](
             self,
             default: U,
-            func: Callable[[ResultValueT], U] | None = None,
-        ) -> U | ResultValueT:
+            func: Callable[[T], U] | None = None,
+        ) -> U | T:
             """Map success value or return default."""
             ...
 
         def tap(
             self,
-            func: Callable[[ResultValueT], None],
-        ) -> FlextProtocolsResult.Result[ResultValueT]:
+            func: Callable[[T], None],
+        ) -> FlextProtocolsResult.Result[T]:
             """Apply a side effect to the success value."""
             ...
 
@@ -284,21 +278,23 @@ class FlextProtocolsResult:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Result(
-        ResultObservable[ResultValueT],
-        ResultUnwrappable[ResultValueT],
-        ResultMonadic[ResultValueT],
-        ResultTappable[ResultValueT],
+    class Result[T](
+        ResultObservable[T],
+        ResultUnwrappable[T],
+        ResultMonadic[T],
+        ResultTappable[T],
         FlextProtocolsBase.Base,
-        Protocol[ResultValueT],
+        Protocol,
     ):
         """Observable result contract for structural interop across FLEXT.
 
         Composed via MRO from 4 ISP sub-protocols:
-        - ``ResultObservable``: read-only state inspection
-        - ``ResultUnwrappable``: value extraction
-        - ``ResultMonadic``: map / flat_map / fold / lash
-        - ``ResultTappable``: tap / tap_error / flow_through / map_error / map_or
+        - ``ResultObservable``: read-only state inspection (covariant T)
+        - ``ResultUnwrappable``: value extraction (invariant T)
+        - ``ResultMonadic``: map / flat_map / fold / lash (invariant T)
+        - ``ResultTappable``: tap / tap_error / flow_through / map_error / map_or (invariant T)
+
+        T variance is automatically inferred as invariant (union of all sub-protocols).
 
         Factories (ok, fail, fail_exc, fail_op, ...), context manager,
         ``__or__``, type transforms, type guards, filter, recover, and safe

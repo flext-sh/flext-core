@@ -72,7 +72,7 @@ class FlextUtilitiesMapper:
     ) -> t.MutableRecursiveContainerMapping | t.RecursiveContainerMapping:
         """Apply map keys step."""
         if map_keys:
-            mapped_result: r[t.MutableRecursiveContainerMapping] = (
+            mapped_result: p.Result[t.MutableRecursiveContainerMapping] = (
                 FlextUtilitiesMapper.map_dict_keys(
                     result,
                     map_keys,
