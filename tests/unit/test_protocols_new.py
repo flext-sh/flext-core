@@ -241,7 +241,7 @@ class TestFlextProtocols:
         """Object with dispatch(message) satisfies p.DispatchableService."""
 
         class _Svc:
-            def dispatch(self, message: object, /) -> object:
+            def dispatch(self, message: p.Model, /) -> p.Model:
                 return message
 
         instance = _as_protocol_subject(_Svc())
@@ -615,7 +615,7 @@ class TestFlextProtocols:
             def handle(
                 self,
                 message: p.Routable,
-            ) -> p.Result[t.RuntimeAtomic] | t.Container | t.ModelCarrier | None:
+            ) -> p.Result[t.RuntimeAtomic] | t.RuntimeAtomic | None:
                 return None
 
         instance = _as_protocol_subject(_HandleImpl())
@@ -628,7 +628,7 @@ class TestFlextProtocols:
             def execute(
                 self,
                 message: p.Routable,
-            ) -> p.Result[t.RuntimeAtomic] | t.Container | t.ModelCarrier | None:
+            ) -> p.Result[t.RuntimeAtomic] | t.RuntimeAtomic | None:
                 return None
 
         instance = _as_protocol_subject(_ExecImpl())

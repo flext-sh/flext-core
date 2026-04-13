@@ -34,9 +34,10 @@ from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
 from flext_core import c, p, t
+from flext_core._protocols.result import FlextProtocolsResult
 
 
-class FlextResult[T](BaseModel, p.Result[T]):
+class FlextResult[T](BaseModel, FlextProtocolsResult.ResultMethods[T]):
     """Type-safe result with monadic helpers for operation composition.
 
     Provides success/failure handling with various conversion and operation
