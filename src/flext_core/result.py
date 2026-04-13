@@ -244,8 +244,8 @@ class FlextResult[T](BaseModel):
     @classmethod
     def accumulate_errors[ValueT](
         cls,
-        *results: FlextResult[ValueT],
-    ) -> FlextResult[Sequence[ValueT]]:
+        *results: p.Result[ValueT],
+    ) -> p.Result[Sequence[ValueT]]:
         """Collect all successes, fail if any failure with all errors combined."""
         successes: MutableSequence[ValueT] = []
         errors: MutableSequence[str] = []
@@ -263,7 +263,7 @@ class FlextResult[T](BaseModel):
         cls,
         func: Callable[[], V | None],
         error_code: str | None = None,
-    ) -> FlextResult[V]:
+    ) -> p.Result[V]:
         """Create result from callable, catching exceptions."""
         try:
             value = func()
@@ -393,7 +393,7 @@ class FlextResult[T](BaseModel):
     def from_validation[ModelT: t.ModelCarrier](
         data: t.ModelInput,
         model: t.ModelClass[ModelT],
-    ) -> FlextResult[ModelT]:
+    ) -> p.Result[ModelT]:
         """Create result from Pydantic validation.
 
         Validates data against a Pydantic model and returns a successful result
@@ -433,7 +433,7 @@ class FlextResult[T](BaseModel):
     def from_result[V](
         cls,
         source: p.Result[V],
-    ) -> FlextResult[V]:
+    ) -> p.Result[V]:
         """Normalize any structural FLEXT result into FlextResult."""
         return FlextResult[V]._from_result(source)
 
@@ -444,7 +444,7 @@ class FlextResult[T](BaseModel):
         func: Callable[[V], p.Result[U]],
         *,
         fail_fast: bool = True,
-    ) -> FlextResult[Sequence[U]]:
+    ) -> p.Result[Sequence[U]]:
         """Map over sequence with settingsurable failure handling.
 
         Args:
@@ -480,7 +480,7 @@ class FlextResult[T](BaseModel):
         factory: Callable[[], R],
         op: Callable[[R], p.Result[U]],
         cleanup: Callable[[R], None] | None = None,
-    ) -> FlextResult[U]:
+    ) -> p.Result[U]:
         """Resource management with automatic cleanup."""
         resource = factory()
         try:
@@ -513,7 +513,7 @@ class FlextResult[T](BaseModel):
         return isinstance(value, p.Result) and value.success
 
     @staticmethod
-    def safe[U, **PFunc](func: Callable[PFunc, U]) -> Callable[PFunc, FlextResult[U]]:
+    def safe[U, **PFunc](func: Callable[PFunc, U]) -> Callable[PFunc, p.Result[U]]:
         """Decorator to wrap function in FlextResult.
 
         Catches exceptions and returns FlextResult.fail() on error.
