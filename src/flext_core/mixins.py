@@ -324,23 +324,23 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     def _register_in_container(self, service_name: str) -> r[bool]:
         """Register self in global container for service discovery."""
-        try:
-            container = self.container
-            was_registered = container.has_service(service_name)
-            _ = container.register(service_name, self)
-            if was_registered or container.has_service(service_name):
-                return r[bool].ok(True)
-            raise RuntimeError(c.ERR_SERVICE_REGISTRATION_FAILED)
-        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
-            operation = "register service in container"
-            return r[bool].fail(
-                e.render_error_template(
-                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+        container = self.container
+        was_registered = container.has(service_name)
+        _ = container.bind(service_name, self)
+        if was_registered or container.has(service_name):
+            return r[bool].ok(True)
+        operation = "register service in container"
+        return r[bool].fail(
+            e.render_error_template(
+                c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                operation=operation,
+                error=c.ERR_SERVICE_REGISTRATION_FAILED,
+                params=m.OperationErrorParams(
                     operation=operation,
-                    error=exc,
-                    params=m.OperationErrorParams(operation=operation, reason=str(exc)),
+                    reason=c.ERR_SERVICE_REGISTRATION_FAILED,
                 ),
-            )
+            ),
+        )
 
 
 x = FlextMixins

@@ -41,7 +41,7 @@ class TestContainerMemory:
         """Benchmark memory usage of container singleton."""
         gc.collect()
         initial_memory = get_memory_usage()
-        FlextContainer.fetch_global()
+        FlextContainer.shared()
         gc.collect()
         after_creation = get_memory_usage()
         _ = after_creation - initial_memory
@@ -49,11 +49,11 @@ class TestContainerMemory:
     @pytest.mark.benchmark
     def test_memory_with_services(self) -> None:
         """Benchmark memory usage with registered services."""
-        container = FlextContainer.create()
+        container = FlextContainer.shared()
         gc.collect()
         initial_memory = get_memory_usage()
         for i in range(100):
-            _ = container.register(f"service_{i}", f"value_{i}")
+            _ = container.bind(f"service_{i}", f"value_{i}")
         gc.collect()
         after_registration = get_memory_usage()
         _ = after_registration - initial_memory
@@ -61,7 +61,7 @@ class TestContainerMemory:
     @pytest.mark.benchmark
     def test_memory_with_factories(self) -> None:
         """Benchmark memory usage with registered factories."""
-        container = FlextContainer.create()
+        container = FlextContainer.shared()
         gc.collect()
         initial_memory = get_memory_usage()
 
@@ -70,7 +70,7 @@ class TestContainerMemory:
             return lambda: f"value_{captured_i}"
 
         for i in range(100):
-            _ = container.register(f"factory_{i}", make_factory(i), kind="factory")
+            _ = container.factory(f"factory_{i}", make_factory(i))
         gc.collect()
         after_registration = get_memory_usage()
         _ = after_registration - initial_memory
@@ -78,12 +78,12 @@ class TestContainerMemory:
     @pytest.mark.benchmark
     def test_memory_after_clear_all(self) -> None:
         """Benchmark memory usage after clear_all()."""
-        container = FlextContainer.create()
+        container = FlextContainer.shared()
         for i in range(100):
-            _ = container.register(f"service_{i}", f"value_{i}")
+            _ = container.bind(f"service_{i}", f"value_{i}")
         gc.collect()
         before_clear = get_memory_usage()
-        container.clear_all()
+        container.clear()
         gc.collect()
         after_clear = get_memory_usage()
         _ = before_clear - after_clear
@@ -94,10 +94,10 @@ class TestContainerMemory:
         gc.collect()
         initial_memory = get_memory_usage()
         for _ in range(10):
-            container = FlextContainer.create()
+            container = FlextContainer.shared()
             for i in range(10):
-                _ = container.register(f"service_{i}", f"value_{i}")
-            container.clear_all()
+                _ = container.bind(f"service_{i}", f"value_{i}")
+            container.clear()
             del container
         gc.collect()
         final_memory = get_memory_usage()

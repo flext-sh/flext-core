@@ -358,8 +358,8 @@ class TestDecoratorsFullCoverage:
     ) -> None:
         _ = self
         _ = clean_container
-        di = FlextContainer.create()
-        _ = di.register("answer.service", 42)
+        di = FlextContainer.shared()
+        _ = di.bind("answer.service", 42)
 
         @d.combined(inject_deps={"dep": "answer.service"}, operation_name="std")
         def fn_standard(*, dep: int = 0) -> int:

@@ -86,9 +86,9 @@ class TestMigrationValidation:
             name: str = "test"
 
         test_service = TestService()
-        registration_result = container.register("test_migration_service", test_service)
+        registration_result = container.bind("test_migration_service", test_service)
         assert registration_result is container
-        resolution_result = container.get("test_migration_service")
+        resolution_result = container.resolve("test_migration_service")
         assert resolution_result.success
         service = resolution_result.value
         assert isinstance(service, TestService)

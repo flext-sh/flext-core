@@ -145,13 +145,13 @@ class TestCompleteFlextSystemIntegration:
     def _test_container_system(self) -> None:
         """Test container system (Dependency Injection)."""
         container = FlextContainer()
-        register_result = container.register("test_service", "test_value")
+        register_result = container.bind("test_service", "test_value")
         assert register_result is container
-        retrieved_service_result = container.get("test_service")
+        retrieved_service_result = container.resolve("test_service")
         assert retrieved_service_result.success is True
         retrieved_service = retrieved_service_result.value
         assert retrieved_service == "test_value"
-        not_found_result = container.get("servico_inexistente")
+        not_found_result = container.resolve("servico_inexistente")
         assert not_found_result.success is False
         assert not_found_result.error is not None
 

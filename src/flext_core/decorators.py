@@ -49,9 +49,7 @@ class FlextDecorators:
         if isinstance(first_arg, p.Logger):
             return first_arg
         if first_arg is not None and FlextDecorators._has_flext_logger(first_arg):
-            logger_value = first_arg.logger
-            if isinstance(logger_value, p.Logger):
-                return logger_value
+            return first_arg.logger
         module_name = (
             func_module
             if isinstance(func_module, str)
@@ -108,10 +106,10 @@ class FlextDecorators:
 
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                container = FlextContainer.create()
+                container = FlextContainer.shared()
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
-                        result = container.get(service_key)
+                        result = container.resolve(service_key)
                         if result.success:
                             kwargs[name] = result.value
                 return func(*args, **kwargs)

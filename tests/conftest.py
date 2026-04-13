@@ -35,7 +35,7 @@ def clean_container() -> p.Container:
     in isolation regardless of what other tests may have registered.
     """
     container = FlextContainer()
-    container.clear_all()
+    container.clear()
     return container
 
 

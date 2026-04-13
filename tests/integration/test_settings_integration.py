@@ -164,13 +164,13 @@ class TestFlextSettingsSingletonIntegration:
         """Reset singleton instances before each test."""
         FlextSettings.reset_for_testing()
         container = FlextContainer()
-        container.clear_all()
+        container.clear()
 
     def teardown_method(self) -> None:
         """Reset singleton instances after each test."""
         FlextSettings.reset_for_testing()
         container = FlextContainer()
-        container.clear_all()
+        container.clear()
 
     def test_singleton_pattern_with_factories(self) -> None:
         """Test that FlextSettings.fetch_global() returns the same instance."""
@@ -197,7 +197,7 @@ class TestFlextSettingsSingletonIntegration:
         """Test that FlextContainer uses the global settings singleton."""
         global_config = FlextSettings.fetch_global()
         container = FlextContainer()
-        config_result = container.get("settings")
+        config_result = container.resolve("settings")
         if config_result.success:
             retrieved_config = config_result.value
             assert retrieved_config is global_config

@@ -249,12 +249,3 @@ class FlextTypesServices:
         | FlextTypingContainers.ConfigMap
         | FlextTypingBase.ScalarList,
     ]
-
-    type RegistrationKwarg = (
-        RuntimeData
-        | FlextProtocolsSettings.Settings
-        | FlextProtocolsContext.Context
-        | Mapping[str, RegisterableService]
-        | Mapping[str, FactoryCallable]
-        | Mapping[str, ResourceCallable]
-    )

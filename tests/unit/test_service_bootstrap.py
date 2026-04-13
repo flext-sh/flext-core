@@ -78,7 +78,7 @@ class TestServiceBootstrap:
         """Test _create_runtime accepts services parameter."""
         test_service = {"test_key": "test_value"}
         runtime = self.ConcreteTestService._create_runtime(services=test_service)
-        service_result = runtime.container.get("test_key")
+        service_result = runtime.container.resolve("test_key")
         _ = u.Core.Tests.assert_success(service_result)
 
     def test_create_runtime_with_factories(self) -> None:
@@ -91,7 +91,7 @@ class TestServiceBootstrap:
         runtime = self.ConcreteTestService._create_runtime(
             runtime_options=m.RuntimeBootstrapOptions(factories=test_factories),
         )
-        factory_result = runtime.container.get("test_factory")
+        factory_result = runtime.container.resolve("test_factory")
         _ = u.Core.Tests.assert_success(factory_result)
 
     def test_create_runtime_with_resources(self) -> None:
@@ -104,7 +104,7 @@ class TestServiceBootstrap:
         runtime = self.ConcreteTestService._create_runtime(
             runtime_options=m.RuntimeBootstrapOptions(resources=test_resources),
         )
-        resource_result = runtime.container.get("test_resource")
+        resource_result = runtime.container.resolve("test_resource")
         _ = u.Core.Tests.assert_success(resource_result)
 
     def test_create_runtime_with_context(self) -> None:

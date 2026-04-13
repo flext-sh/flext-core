@@ -18,9 +18,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from types import ModuleType
 from typing import override
+
+import pytest
 
 from flext_core import (
     FlextContainer,
@@ -31,6 +33,16 @@ from flext_tests import tm
 from tests import m, p, r, s, t, u
 
 inject = u.DependencyIntegration.inject
+
+
+@pytest.fixture(autouse=True)
+def reset_flext_container_singleton() -> Generator[None]:
+    """Isolate FlextContainer singleton state across incremental DI tests."""
+    FlextContainer.reset_for_testing()
+    try:
+        yield
+    finally:
+        FlextContainer.reset_for_testing()
 
 
 class TestDIIncremental:
@@ -49,10 +61,10 @@ class TestDIIncremental:
 
     def test_create_container_with_real_execution(self) -> None:
         """Test create_container with real registration and resolution."""
-        container = FlextContainer.create()
-        _ = container.register("test_service", "test_value")
-        tm.that(container.has_service("test_service"), eq=True)
-        resolved = container.get("test_service")
+        container = FlextContainer.shared()
+        _ = container.bind("test_service", "test_value")
+        tm.that(container.has("test_service"), eq=True)
+        resolved = container.resolve("test_service")
         u.Core.Tests.assert_success_with_value(resolved, "test_value")
 
     def test_create_layered_bridge_with_config(self) -> None:
@@ -177,8 +189,8 @@ class TestDIIncremental:
     def test_wire_modules_real_execution(self) -> None:
         """Test container.wire_modules with real code."""
         container = FlextContainer()
-        _ = container.register("logger_name", "test_logger")
-        _ = container.register("log_level", "INFO")
+        _ = container.bind("logger_name", "test_logger")
+        _ = container.bind("log_level", "INFO")
         module = ModuleType("wired_module")
 
         @inject
@@ -189,7 +201,7 @@ class TestDIIncremental:
             return {"logger": name, "level": level}
 
         setattr(module, "log_message", log_message)
-        container.wire_modules(modules=[module])
+        container.wire(modules=[module])
         try:
             log_func: Callable[[], t.StrMapping] = module.log_message
             result = log_func()
@@ -200,15 +212,15 @@ class TestDIIncremental:
 
     def test_scoped_with_resources_real_execution(self) -> None:
         """Test container.scoped with resources real execution."""
-        container = FlextContainer(_context=FlextContext())
+        container = FlextContainer.shared(context=FlextContext())
         lifecycle = {"created": False, "closed": False}
 
         def resource_factory() -> t.BoolMapping:
             lifecycle["created"] = True
             return {"connected": True}
 
-        scoped = container.scoped(resources={"db": resource_factory})
-        result = scoped.get("db")
+        scoped = container.scope(resources={"db": resource_factory})
+        result = scoped.resolve("db")
         assert result.success
         assert result.value == {"connected": True}
         tm.that(lifecycle["created"], eq=True)
@@ -216,23 +228,23 @@ class TestDIIncremental:
 
     def test_scoped_with_services_and_factories(self) -> None:
         """Test scoped container with services and factories."""
-        container = FlextContainer(_context=FlextContext())
-        scoped = container.scoped(
+        container = FlextContainer.shared(context=FlextContext())
+        scoped = container.scope(
             services={"api_key": "secret_key"},
             factories={"token_gen": lambda: {"token": "abc123"}},
         )
-        service_result = scoped.get("api_key", type_cls=str)
+        service_result = scoped.resolve("api_key", type_cls=str)
         tm.ok(service_result)
         tm.that(service_result.value, eq="secret_key")
-        factory_result = scoped.get("token_gen")
+        factory_result = scoped.resolve("token_gen")
         assert factory_result.success
         assert factory_result.value == {"token": "abc123"}
 
     def test_scoped_with_config_override(self) -> None:
         """Test scoped container with settings override."""
-        container = FlextContainer(_context=FlextContext())
+        container = FlextContainer.shared(context=FlextContext())
         config_override = FlextSettings(app_name="scoped_app")
-        scoped = container.scoped(settings=config_override)
+        scoped = container.scope(settings=config_override)
         config_obj = scoped.settings
         tm.that(config_obj.app_name, eq="scoped_app")
 
@@ -249,7 +261,7 @@ class TestDIIncremental:
                 resources={"database": db_factory},
             ),
         )
-        db_result = runtime.container.get("database")
+        db_result = runtime.container.resolve("database")
         assert db_result.success
         assert db_result.value == {"connected": True}
         tm.that(lifecycle["created"], eq=True)
@@ -284,18 +296,18 @@ class TestDIIncremental:
                 return r[str].ok("test")
 
         service = TestService()
-        custom_result = service.container.get("custom_service", type_cls=str)
+        custom_result = service.container.resolve("custom_service", type_cls=str)
         tm.ok(custom_result)
         tm.that(custom_result.value, eq="custom_value")
-        factory_result = service.container.get("custom_factory")
+        factory_result = service.container.resolve("custom_factory")
         assert factory_result.success
         assert factory_result.value == {"custom": "data"}
 
     def test_handler_wiring_with_inject(self) -> None:
         """Test handler wiring with @inject decorator."""
         container = FlextContainer()
-        _ = container.register("custom_logger", "test_logger")
-        _ = container.register("db_pool", {"size": 10})
+        _ = container.bind("custom_logger", "test_logger")
+        _ = container.bind("db_pool", {"size": 10})
         handler_module = ModuleType("handler_module")
 
         @inject
@@ -306,7 +318,7 @@ class TestDIIncremental:
             return {"logger": logger_name, "pool_size": pool["size"]}
 
         setattr(handler_module, "process_request", process_request)
-        container.wire_modules(modules=[handler_module])
+        container.wire(modules=[handler_module])
         try:
             process_func: Callable[[], t.HeaderMapping] = handler_module.process_request
             result = process_func()
@@ -322,7 +334,7 @@ class TestDIIncremental:
     def test_multiple_wired_functions(self) -> None:
         """Test multiple functions wired to same container."""
         container = FlextContainer()
-        _ = container.register("shared_config", {"env": "test"})
+        _ = container.bind("shared_config", {"env": "test"})
         module = ModuleType("multi_function_module")
 
         @inject
@@ -339,7 +351,7 @@ class TestDIIncremental:
 
         setattr(module, "func1", func1)
         setattr(module, "func2", func2)
-        container.wire_modules(modules=[module])
+        container.wire(modules=[module])
         try:
             func1_wired: Callable[[], str] = getattr(module, "func1")
             func2_wired: Callable[[], bool] = getattr(module, "func2")
@@ -352,8 +364,8 @@ class TestDIIncremental:
     def test_nested_dependency_injection(self) -> None:
         """Test nested dependency injection scenarios."""
         container = FlextContainer()
-        _ = container.register("base_url", "https://api.example.com")
-        _ = container.register("api_version", "v1")
+        _ = container.bind("base_url", "https://api.example.com")
+        _ = container.bind("api_version", "v1")
         module = ModuleType("nested_module")
 
         @inject
@@ -373,8 +385,8 @@ class TestDIIncremental:
         setattr(module, "build_url", build_url)
         setattr(module, "api_call", api_call)
         url_result = build_url()
-        _ = container.register("built_url", url_result)
-        container.wire_modules(modules=[module])
+        _ = container.bind("built_url", url_result)
+        container.wire(modules=[module])
         try:
             api_call_func: Callable[[], t.StrMapping] = getattr(module, "api_call")
             result = api_call_func()
@@ -387,7 +399,7 @@ class TestDIIncremental:
     def test_wire_modules_with_packages(self) -> None:
         """Test wire_modules with packages parameter."""
         container = FlextContainer()
-        _ = container.register("test_value", "wired_value")
+        _ = container.bind("test_value", "wired_value")
         test_module = ModuleType("test_module")
 
         @inject
@@ -397,7 +409,7 @@ class TestDIIncremental:
             return value
 
         setattr(test_module, "test_func", test_func)
-        container.wire_modules(modules=[test_module])
+        container.wire(modules=[test_module])
         try:
             func: Callable[[], str] = getattr(test_module, "test_func")
             result = func()
@@ -408,12 +420,12 @@ class TestDIIncremental:
 
     def test_scoped_container_with_wiring(self) -> None:
         """Test scoped container preserves wiring."""
-        container = FlextContainer(_context=FlextContext())
-        _ = container.register("global_service", "global_value")
-        scoped = container.scoped(services={"scoped_service": "scoped_value"})
-        global_result = scoped.get("global_service", type_cls=str)
+        container = FlextContainer.shared(context=FlextContext())
+        _ = container.bind("global_service", "global_value")
+        scoped = container.scope(services={"scoped_service": "scoped_value"})
+        global_result = scoped.resolve("global_service", type_cls=str)
         tm.ok(global_result)
-        scoped_result = scoped.get("scoped_service", type_cls=str)
+        scoped_result = scoped.resolve("scoped_service", type_cls=str)
         tm.ok(scoped_result)
         tm.that(scoped_result.value, eq="scoped_value")
 
@@ -436,20 +448,20 @@ class TestDIIncremental:
             ),
         )
         tm.that(runtime.settings.app_name, eq="test_app")
-        static_result = runtime.container.get("static_service", type_cls=str)
+        static_result = runtime.container.resolve("static_service", type_cls=str)
         tm.ok(static_result)
         tm.that(static_result.value, eq="static_value")
-        factory_result = runtime.container.get("token_factory")
+        factory_result = runtime.container.resolve("token_factory")
         assert factory_result.success
         assert factory_result.value == {"token": "generated_token"}
-        resource_result = runtime.container.get("connection")
+        resource_result = runtime.container.resolve("connection")
         assert resource_result.success
         assert resource_result.value == {"connected": True}
 
     def test_container_wire_modules_with_classes(self) -> None:
         """Test container.wire_modules with classes parameter."""
         container = FlextContainer()
-        _ = container.register("injected_value", "test_injection")
+        _ = container.bind("injected_value", "test_injection")
 
         class TestClass:
             @inject
@@ -459,7 +471,7 @@ class TestDIIncremental:
             ) -> None:
                 self.value = value
 
-        container.wire_modules(classes=[TestClass])
+        container.wire(classes=[TestClass])
         try:
             instance = TestClass()
             tm.that(instance.value, eq="test_injection")
@@ -478,7 +490,7 @@ class TestDIIncremental:
             return missing
 
         setattr(module, "func_with_missing", func_with_missing)
-        container.wire_modules(modules=[module])
+        container.wire(modules=[module])
         try:
             func_with_missing_wired: Callable[[], str] = getattr(
                 module,
@@ -490,26 +502,26 @@ class TestDIIncremental:
 
     def test_resource_teardown_with_scoped_container(self) -> None:
         """Test resource teardown when scoped container is destroyed."""
-        container = FlextContainer(_context=FlextContext())
+        container = FlextContainer.shared(context=FlextContext())
         lifecycle = {"created": False, "destroyed": False}
 
         def resource_factory() -> t.BoolMapping:
             lifecycle["created"] = True
             return {"resource": True}
 
-        scoped = container.scoped(resources={"test_resource": resource_factory})
-        result = scoped.get("test_resource")
+        scoped = container.scope(resources={"test_resource": resource_factory})
+        result = scoped.resolve("test_resource")
         assert result.success
         assert result.value == {"resource": True}
         tm.that(lifecycle["created"], eq=True)
 
     def test_multiple_scoped_containers_isolation(self) -> None:
         """Test that multiple scoped containers are isolated."""
-        container = FlextContainer(_context=FlextContext())
-        scoped1 = container.scoped(services={"service": "value1"})
-        scoped2 = container.scoped(services={"service": "value2"})
-        result1 = scoped1.get("service", type_cls=str)
-        result2 = scoped2.get("service", type_cls=str)
+        container = FlextContainer.shared(context=FlextContext())
+        scoped1 = container.scope(services={"service": "value1"})
+        scoped2 = container.scope(services={"service": "value2"})
+        result1 = scoped1.resolve("service", type_cls=str)
+        result2 = scoped2.resolve("service", type_cls=str)
         value1: str = u.Core.Tests.assert_success(result1)
         value2: str = u.Core.Tests.assert_success(result2)
         tm.that(value1, is_=str)

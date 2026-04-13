@@ -24,7 +24,6 @@ from flext_core import (
     FlextUtilitiesGuardsTypeProtocol,
     FlextUtilitiesPydantic,
     T_Model,
-    c,
     e,
     p,
     r,
@@ -192,11 +191,10 @@ class FlextUtilitiesModel:
         Avoid direct Protocol subclass checks when runtime-checkable protocols
         include non-method members, which raises ``TypeError`` in ``issubclass``.
         """
-        try:
-            return issubclass(candidate, settings_base)
-        except TypeError:
-            fetch_global = getattr(candidate, "fetch_global", None)
-            return callable(fetch_global)
+        _ = settings_base
+        fetch_global = getattr(candidate, "fetch_global", None)
+        model_copy = getattr(candidate, "model_copy", None)
+        return callable(fetch_global) and callable(model_copy)
 
     @staticmethod
     def validate_value[TValue](
@@ -339,13 +337,8 @@ class FlextUtilitiesModel:
         explicit_dispatcher = runtime_options.dispatcher
         if isinstance(explicit_dispatcher, p.Dispatcher):
             return explicit_dispatcher
-        dispatcher_result = runtime_container.get(c.ServiceName.COMMAND_BUS)
-        if dispatcher_result.failure:
-            return None
-        dispatcher_candidate = dispatcher_result.value
-        if isinstance(dispatcher_candidate, p.Dispatcher):
-            return dispatcher_candidate
-        return None
+        dispatcher_result = runtime_container.dispatcher()
+        return None if dispatcher_result.failure else dispatcher_result.value
 
     @classmethod
     def build_dispatcher(cls) -> p.Dispatcher:
@@ -455,7 +448,7 @@ class FlextUtilitiesModel:
                 runtime_options.wire_classes,
             )
         )
-        runtime_container = container_type.create().scoped(
+        runtime_container = container_type.shared().scope(
             settings=runtime_settings,
             context=runtime_context,
             subproject=runtime_options.subproject,
@@ -464,9 +457,9 @@ class FlextUtilitiesModel:
             resources=runtime_options.resources,
         )
         if runtime_options.container_overrides:
-            runtime_container.configure(runtime_options.container_overrides)
+            runtime_container.apply(runtime_options.container_overrides)
         if wire_modules or wire_packages or wire_classes:
-            runtime_container.wire_modules(
+            runtime_container.wire(
                 modules=wire_modules,
                 packages=wire_packages,
                 classes=wire_classes,

@@ -19,7 +19,7 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import FlextModelsBase, FlextUtilitiesGenerators, c, p, r, t
+from flext_core import FlextModelsBase as m, FlextUtilitiesGenerators, c, p, r, t
 from flext_core.runtime import FlextRuntime
 
 
@@ -31,7 +31,7 @@ class FlextModelsCqrs:
     directly via FlextModelsCqrs.*
     """
 
-    class Command(FlextModelsBase.ArbitraryTypesModel):
+    class Command(m.ArbitraryTypesModel):
         """Base class for CQRS commands with validation."""
 
         tag: ClassVar[Literal["command"]] = "command"
@@ -80,7 +80,7 @@ class FlextModelsCqrs:
             """Query type identifier (always None for commands)."""
             return None
 
-    class Pagination(FlextModelsBase.FlexibleInternalModel):
+    class Pagination(m.FlexibleInternalModel):
         """Pagination model for query results."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -119,7 +119,7 @@ class FlextModelsCqrs:
             """Calculate offset from page and size."""
             return (self.page - 1) * self.size
 
-    class Query(FlextModelsBase.ArbitraryTypesModel):
+    class Query(m.ArbitraryTypesModel):
         """Query model for CQRS query operations."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -205,7 +205,7 @@ class FlextModelsCqrs:
                 return pagination_cls()
             return validate_result.value
 
-    class Handler(FlextModelsBase.ArbitraryTypesModel):
+    class Handler(m.ArbitraryTypesModel):
         """Handler configuration model."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -251,14 +251,14 @@ class FlextModelsCqrs:
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         metadata: Annotated[
-            FlextModelsBase.Metadata | None,
+            m.Metadata | None,
             Field(
                 default=None,
                 description="Handler metadata (Pydantic model)",
             ),
         ] = None
 
-    class Event(FlextModelsBase.ArbitraryTypesModel):
+    class Event(m.ArbitraryTypesModel):
         """Event model for CQRS event operations.
 
         Events represent domain events that occur as a result of command execution.

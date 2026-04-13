@@ -123,35 +123,15 @@ class FlextUtilitiesSettings:
         _cache: bool = False,
     ) -> r[bool]:
         """Register factory in DI container with optional caching."""
-        try:
-            _ = _cache
-            register_result = container.register(name, factory, kind="factory")
-            if isinstance(register_result, p.Result) and register_result.failure:
-                return e.fail_operation(
-                    "register config factory",
-                    register_result.error or c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
-                )
-            resolved = container.get(name)
-            if resolved.failure:
-                return e.fail_operation(
-                    "resolve registered config factory",
-                    resolved.error or c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
-                )
-            return r[bool].create_from_callable(lambda: True)
-        except (
-            AttributeError,
-            TypeError,
-            ValueError,
-            RuntimeError,
-            KeyError,
-        ) as exc:
+        _ = _cache
+        _ = container.factory(name, factory)
+        resolved = container.resolve(name)
+        if resolved.failure:
             return e.fail_operation(
-                "register config factory",
-                c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED_FOR_NAME.format(
-                    name=name,
-                    error=str(exc),
-                ),
+                "resolve registered config factory",
+                resolved.error or c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
             )
+        return r[bool].ok(True)
 
     @staticmethod
     def resolve_effective_log_level(

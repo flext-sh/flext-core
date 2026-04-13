@@ -241,7 +241,7 @@ class FlextRegistry(s[bool]):
         if scope == c.RegistrationScope.INSTANCE:
             if key not in self._state.registered_keys:
                 return e.fail_not_found(category, name)
-            raw_result = self.container.get(key)
+            raw_result = self.container.resolve(key)
             if raw_result.failure:
                 return e.fail_operation(
                     f"retrieve {category} '{name}'",
@@ -322,11 +322,14 @@ class FlextRegistry(s[bool]):
                 has_metadata=True,
                 metadata_keys=metadata_keys_str,
             )
-        try:
-            _ = self.container.register(name, service)
+        was_registered = self.container.has(name)
+        _ = self.container.bind(name, service)
+        if was_registered or self.container.has(name):
             return r[bool].ok(True)
-        except ValueError as exc:
-            return e.fail_operation("register service in registry", exc)
+        return r[bool].fail_op(
+            "register service in registry",
+            f"Service '{name}' was not registered",
+        )
 
     def register_bindings(
         self,
@@ -494,7 +497,7 @@ class FlextRegistry(s[bool]):
         if scope == c.RegistrationScope.INSTANCE:
             if key in self._state.registered_keys:
                 return r[bool].ok(True)
-            self.container.register(key, plugin)
+            self.container.bind(key, plugin)
             self._remember_registered_key(key)
             return r[bool].ok(True)
         cls = type(self)

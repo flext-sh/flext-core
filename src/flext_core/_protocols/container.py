@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.context import FlextProtocolsContext
+from flext_core._protocols.handler import FlextProtocolsHandler
 from flext_core._protocols.logging import FlextProtocolsLogging
 from flext_core._protocols.result import FlextProtocolsResult
 from flext_core._protocols.settings import FlextProtocolsSettings
@@ -82,11 +83,11 @@ class FlextProtocolsContainer:
             ...
 
     @runtime_checkable
-    class Container(FlextProtocolsSettings.Configurable, Protocol):
+    class Container(FlextProtocolsBase.Base, Protocol):
         """Dependency injection container protocol.
 
-        Extends FlextProtocolsSettings.Configurable to allow container configuration.
-        Implements configure() method from FlextProtocolsSettings.Configurable protocol.
+        Exposes a compact command-style DSL for DI registration, resolution,
+        scoping, and runtime integration.
         """
 
         @property
@@ -99,12 +100,19 @@ class FlextProtocolsContainer:
             """Execution context bound to the container."""
             ...
 
-        def clear_all(self) -> None:
+        def clear(self) -> None:
             """Clear all services and factories."""
             ...
 
+        def apply(
+            self,
+            settings: FlextTypesServices.FlatContainerMapping | None = None,
+        ) -> Self:
+            """Apply user configuration overrides to the container."""
+            ...
+
         @overload
-        def get[T: FlextTypesServices.RegisterableService](
+        def resolve[T: FlextTypesServices.RegisterableService](
             self,
             name: str,
             *,
@@ -112,36 +120,71 @@ class FlextProtocolsContainer:
         ) -> FlextProtocolsResult.Result[T]: ...
 
         @overload
-        def get(
+        def resolve(
             self,
             name: str,
             *,
             type_cls: None = None,
         ) -> FlextProtocolsResult.Result[FlextTypesServices.RegisterableService]: ...
 
-        def resolve_settings(self) -> FlextTypingContainers.ConfigMap:
+        def snapshot(self) -> FlextTypingContainers.ConfigMap:
             """Return the merged settings exposed by this container."""
             ...
 
-        def has_service(self, name: str) -> bool:
+        def has(self, name: str) -> bool:
             """Check if a service is registered."""
             ...
 
-        def list_services(self) -> FlextTypingBase.StrSequence:
+        def names(self) -> FlextTypingBase.StrSequence:
             """List all registered services."""
             ...
 
-        def register(
+        def bind(
             self,
             name: str,
             impl: FlextTypesServices.RegisterableService,
-            *,
-            kind: str = "service",
         ) -> Self:
-            """Register an implementation by kind."""
+            """Bind a concrete service instance or value."""
             ...
 
-        def scoped(
+        def factory(
+            self,
+            name: str,
+            impl: FlextTypesServices.FactoryCallable,
+        ) -> Self:
+            """Bind a factory callable."""
+            ...
+
+        def resource(
+            self,
+            name: str,
+            impl: FlextTypesServices.ResourceCallable,
+        ) -> Self:
+            """Bind a lifecycle-managed resource factory."""
+            ...
+
+        def drop(self, name: str) -> FlextProtocolsResult.Result[bool]:
+            """Remove a service, factory, or resource by name."""
+            ...
+
+        def logger(
+            self,
+            module_name: str | None = None,
+            *,
+            service_name: str | None = None,
+            service_version: str | None = None,
+            correlation_id: str | None = None,
+        ) -> FlextProtocolsLogging.Logger:
+            """Create a logger bound to the current container runtime."""
+            ...
+
+        def dispatcher(
+            self,
+        ) -> FlextProtocolsResult.Result[FlextProtocolsHandler.Dispatcher]:
+            """Resolve the canonical command bus / dispatcher service."""
+            ...
+
+        def scope(
             self,
             *,
             settings: FlextProtocolsSettings.Settings | None = None,
@@ -155,7 +198,7 @@ class FlextProtocolsContainer:
             """Create an isolated container scope with optional overrides."""
             ...
 
-        def wire_modules(
+        def wire(
             self,
             *,
             modules: Sequence[ModuleType] | None = None,
@@ -167,17 +210,6 @@ class FlextProtocolsContainer:
 
     class ContainerLifecycle(Container, Protocol):
         """Extended container contract for bootstrap and lifecycle operations."""
-
-        def create_module_logger(
-            self,
-            module_name: str | None = None,
-            *,
-            service_name: str | None = None,
-            service_version: str | None = None,
-            correlation_id: str | None = None,
-        ) -> FlextProtocolsLogging.Logger:
-            """Create a logger bound to the current container runtime."""
-            ...
 
         def initialize_di_components(self) -> None:
             """Initialize DI bridge and backing containers."""
@@ -214,29 +246,17 @@ class FlextProtocolsContainer:
             """Synchronize validated configuration into DI providers."""
             ...
 
-        def unregister(self, name: str) -> FlextProtocolsResult.Result[bool]:
-            """Remove a service, factory, or resource by name."""
-            ...
-
     @runtime_checkable
     class ContainerType[TContainer: Container = Container](Protocol):
         """Protocol for concrete container classes exposing canonical factories."""
 
         @classmethod
-        def create(
-            cls,
-            *,
-            auto_register_factories: bool = False,
-        ) -> TContainer:
-            """Create or return the canonical container instance."""
-            ...
-
-        @classmethod
-        def fetch_global(
+        def shared(
             cls,
             *,
             settings: FlextProtocolsSettings.Settings | None = None,
             context: FlextProtocolsContext.Context | None = None,
+            auto_register_factories: bool = False,
         ) -> TContainer:
             """Return the process-global container instance."""
             ...

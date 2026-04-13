@@ -40,32 +40,25 @@ class Ex08FlextContainer(Examples):
         fluent_factory_value = self.rand_str(10)
         fluent_resource_value = self.rand_str(10)
         max_factories = self.rand_int(1, 1000)
-        with_service_result = container.register(
-            fluent_service_name,
-            fluent_service_value,
+        with_service_result = container.bind(fluent_service_name, fluent_service_value)
+        with_factory_result = container.factory(
+            fluent_factory_name, lambda: fluent_factory_value
         )
-        with_factory_result = container.register(
-            fluent_factory_name,
-            lambda: fluent_factory_value,
-            kind="factory",
+        with_resource_result = container.resource(
+            fluent_resource_name, lambda: fluent_resource_value
         )
-        with_resource_result = container.register(
-            fluent_resource_name,
-            lambda: fluent_resource_value,
-            kind="resource",
-        )
-        with_settings_result = container.configure({"max_factories": max_factories})
+        with_settings_result = container.apply({"max_factories": max_factories})
         self.check("with_service.returns_self", with_service_result is container)
         self.check("with_factory.returns_self", with_factory_result is container)
         self.check("with_resource.returns_self", with_resource_result is container)
         self.check("with_settings.returns_self", with_settings_result is container)
         configured_max_services = self.rand_int(1, 1000)
         configured_factory_caching = self.rand_bool()
-        container.configure({
+        container.apply({
             "max_services": configured_max_services,
             "enable_factory_caching": configured_factory_caching,
         })
-        settings_map = container.resolve_settings()
+        settings_map = container.snapshot()
         max_services = settings_map["max_services"]
         enable_factory_caching = settings_map["enable_factory_caching"]
         max_services_num = max_services if isinstance(max_services, int) else -1
@@ -85,8 +78,8 @@ class Ex08FlextContainer(Examples):
         self.check(
             "with_service.get.value_matches",
             (
-                container.get(fluent_service_name, type_cls=str).value
-                if container.get(fluent_service_name, type_cls=str).success
+                container.resolve(fluent_service_name, type_cls=str).value
+                if container.resolve(fluent_service_name, type_cls=str).success
                 else ""
             )
             == fluent_service_value,
@@ -94,8 +87,8 @@ class Ex08FlextContainer(Examples):
         self.check(
             "with_factory.get.value_matches",
             (
-                container.get(fluent_factory_name, type_cls=str).value
-                if container.get(fluent_factory_name, type_cls=str).success
+                container.resolve(fluent_factory_name, type_cls=str).value
+                if container.resolve(fluent_factory_name, type_cls=str).success
                 else ""
             )
             == fluent_factory_value,
@@ -103,8 +96,8 @@ class Ex08FlextContainer(Examples):
         self.check(
             "with_resource.get.value_matches",
             (
-                container.get(fluent_resource_name, type_cls=str).value
-                if container.get(fluent_resource_name, type_cls=str).success
+                container.resolve(fluent_resource_name, type_cls=str).value
+                if container.resolve(fluent_resource_name, type_cls=str).success
                 else ""
             )
             == fluent_resource_value,
@@ -132,43 +125,43 @@ class Ex08FlextContainer(Examples):
         )
         self.check(
             "initialize_registrations.list_services_empty",
-            len(container.list_services()),
+            len(container.names()),
         )
         container.sync_config_to_di()
         container.register_existing_providers()
         container.register_core_services()
         self.check(
             "sync_settings_to_di.service_settings_present",
-            container.has_service("settings"),
+            container.has("settings"),
         )
         self.check(
             "register_core_services.logger_present",
-            container.has_service("logger"),
+            container.has("logger"),
         )
         self.check(
             "register_core_services.command_bus_present",
-            container.has_service("command_bus"),
+            container.has("command_bus"),
         )
-        logger_default = container.create_module_logger()
-        logger_custom = container.create_module_logger(f"examples.{self.rand_str(6)}")
+        logger_default = container.logger()
+        logger_custom = container.logger(f"examples.{self.rand_str(6)}")
         self.check("create_module_logger.default.type", type(logger_default).__name__)
         self.check("create_module_logger.custom.type", type(logger_custom).__name__)
         removable_name = f"svc.{self.rand_str(6)}"
         missing_remove_name = f"svc.{self.rand_str(6)}"
-        _ = container.register(removable_name, self.rand_int(1, 1000))
-        unregister_ok = container.unregister(removable_name)
-        unregister_missing = container.unregister(missing_remove_name)
+        _ = container.bind(removable_name, self.rand_int(1, 1000))
+        unregister_ok = container.drop(removable_name)
+        unregister_missing = container.drop(missing_remove_name)
         self.check("unregister.existing.success", unregister_ok.success)
         self.check("unregister.missing.failure", unregister_missing.failure)
-        container.clear_all()
-        self.check("clear_all.count", len(container.list_services()))
+        container.clear()
+        self.check("clear_all.count", len(container.names()))
         before_reset = root
         FlextContainer.reset_for_testing()
-        after_reset = FlextContainer.fetch_global(context=FlextContext())
+        after_reset = FlextContainer.shared(context=FlextContext())
         self.check("reset_singleton.new_instance", before_reset is not after_reset)
         self.check(
             "reset_singleton.fetch_global.same_after_reset",
-            after_reset is FlextContainer.fetch_global(),
+            after_reset is FlextContainer.shared(),
         )
 
     def _exercise_registration_and_resolution(self, container: p.Container) -> None:
@@ -183,20 +176,20 @@ class Ex08FlextContainer(Examples):
         missing_name = f"svc.{self.rand_str(6)}"
         bad_factory_name = f"svc.{self.rand_str(6)}"
         empty_name_value = self.rand_int(1, 1000)
-        register_ok = container.register(service_name, service_value)
-        service_before_dup = container.has_service(service_name)
-        register_dup = container.register(service_name, self.rand_int(1, 1000))
-        service_after_dup = container.has_service(service_name)
-        empty_before_register = container.has_service("")
-        register_empty = container.register("", empty_name_value)
-        empty_after_register = container.has_service("")
+        register_ok = container.bind(service_name, service_value)
+        service_before_dup = container.has(service_name)
+        register_dup = container.bind(service_name, self.rand_int(1, 1000))
+        service_after_dup = container.has(service_name)
+        empty_before_register = container.has("")
+        register_empty = container.bind("", empty_name_value)
+        empty_after_register = container.has("")
         self.check("register.service.returns_self", register_ok is container)
-        self.check("register.service.success", container.get(service_name).success)
+        self.check("register.service.success", container.resolve(service_name).success)
         self.check(
             "register.service.stored_value_matches",
             (
-                container.get(service_name, type_cls=int).value
-                if container.get(service_name, type_cls=int).success
+                container.resolve(service_name, type_cls=int).value
+                if container.resolve(service_name, type_cls=int).success
                 else -1
             )
             == service_value,
@@ -208,8 +201,8 @@ class Ex08FlextContainer(Examples):
             and service_after_dup
             and (
                 (
-                    container.get(service_name, type_cls=int).value
-                    if container.get(service_name, type_cls=int).success
+                    container.resolve(service_name, type_cls=int).value
+                    if container.resolve(service_name, type_cls=int).success
                     else -1
                 )
                 == service_value
@@ -229,36 +222,25 @@ class Ex08FlextContainer(Examples):
             factory_calls["count"] = int(factory_calls["count"]) + 1
             return int(factory_calls["count"])
 
-        register_factory_ok = container.register(
-            factory_name,
-            _factory_counter,
-            kind="factory",
-        )
-        register_factory_dup = container.register(
-            factory_name,
-            _factory_counter,
-            kind="factory",
-        )
+        register_factory_ok = container.factory(factory_name, _factory_counter)
+        register_factory_dup = container.factory(factory_name, _factory_counter)
 
         def _factory_raises() -> int:
             error_message = self.rand_str(10)
             raise RuntimeError(error_message)
 
-        register_factory_bad = container.register(
-            bad_factory_name,
-            _factory_raises,
-            kind="factory",
-        )
+        register_factory_bad = container.factory(bad_factory_name, _factory_raises)
         self.check("register.factory.returns_self", register_factory_ok is container)
-        self.check("register.factory.success", container.get(factory_name).success)
+        self.check("register.factory.success", container.resolve(factory_name).success)
         self.check(
             "register.factory.duplicate_failure",
-            register_factory_dup is container and container.get(factory_name).success,
+            register_factory_dup is container
+            and container.resolve(factory_name).success,
         )
         self.check(
             "register.factory.bad_registration_success",
             register_factory_bad is container
-            and container.get(bad_factory_name).success,
+            and container.resolve(bad_factory_name).success,
         )
         resource_calls = {"count": 0}
 
@@ -266,33 +248,28 @@ class Ex08FlextContainer(Examples):
             resource_calls["count"] = int(resource_calls["count"]) + 1
             return {self.rand_str(4): int(resource_calls["count"])}
 
-        register_resource_ok = container.register(
-            resource_name,
-            _resource_data,
-            kind="resource",
-        )
-        register_resource_dup = container.register(
-            resource_name,
-            _resource_data,
-            kind="resource",
-        )
+        register_resource_ok = container.resource(resource_name, _resource_data)
+        register_resource_dup = container.resource(resource_name, _resource_data)
         self.check("register.resource.returns_self", register_resource_ok is container)
-        self.check("register.resource.success", container.get(resource_name).success)
+        self.check(
+            "register.resource.success", container.resolve(resource_name).success
+        )
         self.check(
             "register.resource.duplicate_failure",
-            register_resource_dup is container and container.get(resource_name).success,
+            register_resource_dup is container
+            and container.resolve(resource_name).success,
         )
-        get_service = container.get(service_name)
-        get_factory = container.get(factory_name)
-        get_resource = container.get(resource_name)
-        get_missing = container.get(missing_name)
-        get_bad_factory = container.get(bad_factory_name)
+        get_service = container.resolve(service_name)
+        get_factory = container.resolve(factory_name)
+        get_resource = container.resolve(resource_name)
+        get_missing = container.resolve(missing_name)
+        get_bad_factory = container.resolve(bad_factory_name)
         self.check("get.service.success", get_service.success)
         self.check(
             "get.service.value_matches",
             (
-                container.get(service_name, type_cls=int).value
-                if container.get(service_name, type_cls=int).success
+                container.resolve(service_name, type_cls=int).value
+                if container.resolve(service_name, type_cls=int).success
                 else -1
             )
             == service_value,
@@ -301,8 +278,8 @@ class Ex08FlextContainer(Examples):
         self.check(
             "get.factory.value_first_call",
             (
-                container.get(factory_name, type_cls=int).value
-                if container.get(factory_name, type_cls=int).success
+                container.resolve(factory_name, type_cls=int).value
+                if container.resolve(factory_name, type_cls=int).success
                 else -1
             )
             == 1,
@@ -311,10 +288,10 @@ class Ex08FlextContainer(Examples):
         self.check("get.resource.call_count_is_one", resource_calls["count"] == 1)
         self.check("get.missing.failure", get_missing.failure)
         self.check("get.bad_factory.failure", get_bad_factory.failure)
-        get_typed_service = container.get(service_name, type_cls=int)
-        get_typed_service_bad = container.get(service_name, type_cls=str)
-        get_typed_factory = container.get(factory_name, type_cls=int)
-        get_typed_missing = container.get(missing_name, type_cls=int)
+        get_typed_service = container.resolve(service_name, type_cls=int)
+        get_typed_service_bad = container.resolve(service_name, type_cls=str)
+        get_typed_factory = container.resolve(factory_name, type_cls=int)
+        get_typed_missing = container.resolve(missing_name, type_cls=int)
         self.check("get_typed.service.success", get_typed_service.success)
         self.check(
             "get_typed.service.value_matches",
@@ -328,14 +305,14 @@ class Ex08FlextContainer(Examples):
         self.check("get_typed.factory.success", get_typed_factory.success)
         self.check(
             "get_typed.resource_via_get.success",
-            container.get(resource_name).success,
+            container.resolve(resource_name).success,
         )
         self.check("get_typed.missing.failure", get_typed_missing.failure)
-        self.check("has_service.service.true", container.has_service(service_name))
-        self.check("has_service.factory.true", container.has_service(factory_name))
-        self.check("has_service.resource.true", container.has_service(resource_name))
-        self.check("has_service.missing.false", container.has_service(missing_name))
-        service_list = list(container.list_services())
+        self.check("has_service.service.true", container.has(service_name))
+        self.check("has_service.factory.true", container.has(factory_name))
+        self.check("has_service.resource.true", container.has(resource_name))
+        self.check("has_service.missing.false", container.has(missing_name))
+        service_list = list(container.names())
         self.check("list_services.contains.service", service_name in service_list)
         self.check("list_services.contains.factory", factory_name in service_list)
         self.check("list_services.contains.resource", resource_name in service_list)
@@ -345,16 +322,16 @@ class Ex08FlextContainer(Examples):
         self.section("singleton_and_creation")
         FlextContainer.reset_for_testing()
         root_context = FlextContext()
-        root = FlextContainer.fetch_global(context=root_context)
+        root = FlextContainer.shared(context=root_context)
         self.check("fetch_global.type", type(root).__name__)
         self.check("fetch_global.context.type", type(root.context).__name__)
         self.check("fetch_global.settings.type", type(root.settings).__name__)
         self.check(
             "fetch_global.same_instance",
-            root is FlextContainer.fetch_global(),
+            root is FlextContainer.shared(),
         )
-        created_false = FlextContainer.create(auto_register_factories=False)
-        created_true = FlextContainer.create(auto_register_factories=True)
+        created_false = FlextContainer.shared(auto_register_factories=False)
+        created_true = FlextContainer.shared(auto_register_factories=True)
         self.check("create.false.same_instance", created_false is root)
         self.check("create.true.same_instance", created_true is root)
         random_ok_val = self.rand_int(1, 1000)
@@ -373,14 +350,14 @@ class Ex08FlextContainer(Examples):
         """Exercise wire_modules and scoped with all supported parameter styles."""
         self.section("wiring_and_scoped")
         this_module: ModuleType = sys.modules[__name__]
-        container.wire_modules(modules=[this_module])
-        container.wire_modules(packages=[])
-        container.wire_modules(classes=[_WireProbe])
+        container.wire(modules=[this_module])
+        container.wire(packages=[])
+        container.wire(classes=[_WireProbe])
         self.check("wire_modules.calls_completed", True)
-        scoped_default = container.scoped()
+        scoped_default = container.scope()
         subproject_alpha = self.rand_str(6)
         subproject_beta = self.rand_str(6)
-        scoped_subproject = container.scoped(subproject=subproject_alpha)
+        scoped_subproject = container.scope(subproject=subproject_alpha)
         explicit_context = FlextContext()
         explicit_settings = container.settings.model_copy(
             update={"app_name": f"scoped.{self.rand_str(8)}"},
@@ -391,7 +368,7 @@ class Ex08FlextContainer(Examples):
         scoped_service_value = self.rand_str(8)
         scoped_factory_value = self.rand_int(1, 1000)
         scoped_resource_value = self.rand_str(8)
-        scoped_full = container.scoped(
+        scoped_full = container.scope(
             settings=explicit_settings,
             context=explicit_context,
             subproject=subproject_beta,
@@ -406,13 +383,15 @@ class Ex08FlextContainer(Examples):
         self.check("scoped.default.new_instance", scoped_default is not container)
         self.check(
             "scoped.default.inherits_service",
-            scoped_default.has_service(self._registered_service_name),
+            scoped_default.has(self._registered_service_name),
         )
         self.check(
             "scoped.default.get_typed_service_matches",
             (
-                scoped_default.get(self._registered_service_name, type_cls=int).value
-                if scoped_default.get(
+                scoped_default.resolve(
+                    self._registered_service_name, type_cls=int
+                ).value
+                if scoped_default.resolve(
                     self._registered_service_name, type_cls=int
                 ).success
                 else -1
@@ -431,21 +410,21 @@ class Ex08FlextContainer(Examples):
         )
         self.check(
             "scoped.full.has_service",
-            scoped_full.has_service(scoped_service_name),
+            scoped_full.has(scoped_service_name),
         )
         self.check(
             "scoped.full.has_factory",
-            scoped_full.has_service(scoped_factory_name),
+            scoped_full.has(scoped_factory_name),
         )
         self.check(
             "scoped.full.has_resource",
-            scoped_full.has_service(scoped_resource_name),
+            scoped_full.has(scoped_resource_name),
         )
         self.check(
             "scoped.full.get_service_matches",
             (
-                scoped_full.get(scoped_service_name, type_cls=str).value
-                if scoped_full.get(scoped_service_name, type_cls=str).success
+                scoped_full.resolve(scoped_service_name, type_cls=str).value
+                if scoped_full.resolve(scoped_service_name, type_cls=str).success
                 else ""
             )
             == scoped_service_value,
@@ -453,15 +432,15 @@ class Ex08FlextContainer(Examples):
         self.check(
             "scoped.full.get_factory_matches",
             (
-                scoped_full.get(scoped_factory_name, type_cls=int).value
-                if scoped_full.get(scoped_factory_name, type_cls=int).success
+                scoped_full.resolve(scoped_factory_name, type_cls=int).value
+                if scoped_full.resolve(scoped_factory_name, type_cls=int).success
                 else -1
             )
             == scoped_factory_value,
         )
         self.check(
             "scoped.full.get_resource.success",
-            scoped_full.get(scoped_resource_name).success,
+            scoped_full.resolve(scoped_resource_name).success,
         )
         return scoped_full
 

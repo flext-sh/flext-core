@@ -50,8 +50,8 @@ class TestDiServicesAccess:
 
     def test_config_via_container_scoped(self) -> None:
         """Test FlextSettings accessible via scoped container."""
-        container = FlextContainer(_context=FlextContext())
-        scoped = container.scoped(settings=FlextSettings(app_name="scoped_config"))
+        container = FlextContainer.shared(context=FlextContext())
+        scoped = container.scope(settings=FlextSettings(app_name="scoped_config"))
         assert scoped.settings is not None
         assert isinstance(scoped.settings, p.Settings)
         assert scoped.settings.app_name == "scoped_config"
@@ -92,19 +92,16 @@ class TestDiServicesAccess:
     def test_logger_registration_in_container(self) -> None:
         """Test registering a public logger in the container for DI."""
         container = FlextContainer()
-        logger_result = container.get("logger")
+        logger_result = container.resolve("logger")
         assert logger_result.success
         assert callable(getattr(logger_result.value, "bind", None))
 
         custom_logger = u.create_module_logger("service_logger")
 
-        returned_container = container.register(
-            "custom_logger",
-            custom_logger,
-        )
+        returned_container = container.bind("custom_logger", custom_logger)
         assert returned_container is container
-        assert container.has_service("custom_logger")
-        custom_logger_result = container.get("custom_logger")
+        assert container.has("custom_logger")
+        custom_logger_result = container.resolve("custom_logger")
         assert custom_logger_result.success
         assert callable(getattr(custom_logger_result.value, "bind", None))
 
@@ -124,18 +121,15 @@ class TestDiServicesAccess:
 
     def test_context_registration_in_container(self) -> None:
         """Test registering FlextContext in container for DI."""
-        container = FlextContainer(_context=FlextContext())
-        context_result = container.get("context")
+        container = FlextContainer.shared(context=FlextContext())
+        context_result = container.resolve("context")
         assert context_result.success
         assert isinstance(context_result.value, p.Context)
         custom_context = FlextContext()
-        returned_container = container.register(
-            "custom_context",
-            custom_context,
-        )
+        returned_container = container.bind("custom_context", custom_context)
         assert returned_container is container
-        assert container.has_service("custom_context")
-        custom_context_result = container.get("custom_context")
+        assert container.has("custom_context")
+        custom_context_result = container.resolve("custom_context")
         assert custom_context_result.success
         assert isinstance(custom_context_result.value, p.Context)
         assert custom_context_result.value is custom_context
@@ -174,7 +168,7 @@ class TestDiServicesAccess:
             def execute(self) -> r[str]:
                 app_name = self.settings.app_name
                 tm.that(app_name, eq="service_app", msg="Settings must be accessible")
-                logger_result = self.container.get("logger")
+                logger_result = self.container.resolve("logger")
                 _ = u.Core.Tests.assert_success(logger_result)
                 logger = logger_result.value
                 assert logger is not None, "Logger must be accessible via DI"

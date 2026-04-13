@@ -281,7 +281,7 @@ class FlextConstantsErrors:
     ERR_CONTAINER_CONTEXT_NOT_INITIALIZED: Final[str] = (
         "Context not initialized. Provide context during container creation via "
         "FlextContainer(registration=m.ServiceRegistrationSpec(context=...)) or "
-        "FlextContainer.fetch_global(context=...)"
+        "FlextContainer.shared(context=...)"
     )
     ERR_CONTAINER_PROVIDE_HELPER_NOT_INITIALIZED: Final[str] = (
         "DI bridge Provide helper not initialized"

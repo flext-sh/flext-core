@@ -76,13 +76,14 @@ def test_public_validation_and_missing_value_paths() -> None:
 
 
 def test_service_namespace_register_fetch_and_scope() -> None:
-    container = FlextContainer(_context=FlextContext())
-    container.clear_all()
+    container = FlextContainer.shared(context=FlextContext())
+    container.clear()
     FlextContext.configure_container(container)
 
     tm.ok(FlextContext.Service.register_service("svc", "value"))
     fetched = FlextContext.Service.fetch_service("svc")
     tm.ok(fetched)
+    assert isinstance(fetched.value, str)
     tm.that(fetched.value, eq="value")
     tm.fail(FlextContext.Service.fetch_service("missing"))
 

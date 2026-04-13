@@ -36,7 +36,7 @@ class TestContainerFullCoverage:
         name: str,
         type_cls: type[t.RegisterableService],
     ) -> r[t.RegisterableService]:
-        typed_get = cast("Callable[..., r[t.RegisterableService]]", container.get)
+        typed_get = cast("Callable[..., r[t.RegisterableService]]", container.resolve)
         return typed_get(name, type_cls=type_cls)
 
     @staticmethod
@@ -89,7 +89,7 @@ class TestContainerFullCoverage:
         return None
 
     def test_create(self) -> None:
-        tm.that(FlextContainer.create(), is_=p.Container)
+        tm.that(FlextContainer.shared(), is_=p.Container)
 
     def test_create_auto_register_factories_path(
         self,
@@ -120,29 +120,26 @@ class TestContainerFullCoverage:
             staticmethod(_resolve_fake_module),
         )
 
-        def _register(
+        def _factory(
             self: p.Container,
             name: str,
             _impl: t.RegisterableService,
-            *,
-            kind: str = "service",
         ) -> p.Container:
-            if kind == "factory":
-                called.append(name)
+            called.append(name)
             return self
 
         monkeypatch.setattr(
             FlextContainer,
-            "register",
-            _register,
+            "factory",
+            _factory,
         )
-        created = FlextContainer.create(auto_register_factories=True)
+        created = FlextContainer.shared(auto_register_factories=True)
         tm.that(created, is_=p.Container)
         tm.that(called, has="x")
 
     def test_provide_property_paths(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _ = monkeypatch
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
 
         class ProvideBridge:
             @staticmethod
@@ -162,14 +159,14 @@ class TestContainerFullCoverage:
             "di_containers.DeclarativeContainer",
             cast("t.RecursiveContainer", NoProvideBridge()),
         )
-        with pytest.raises(RuntimeError, match="Provide helper not initialized"):
+        with pytest.raises(TypeError, match="Provide helper not initialized"):
             _ = c.provide
 
     def test_config_context_properties_and_defaults(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
         c._config = None
         with pytest.raises(RuntimeError):
             _ = c.settings
@@ -181,13 +178,13 @@ class TestContainerFullCoverage:
             "fetch_global",
             lambda: FlextSettings(),
         )
-        tm.that(c._get_default_config(), is_=p.Settings)
+        tm.that(core_container.FlextSettings.fetch_global(), is_=p.Settings)
 
     def test_initialize_di_components_error_paths(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
         bad_bridge = types.SimpleNamespace(settings="not-provider")
         monkeypatch.setattr(
             core_container.u.DependencyIntegration,
@@ -198,7 +195,7 @@ class TestContainerFullCoverage:
             c.initialize_di_components()
 
     def test_sync_config_namespace_paths(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
         c._config = FlextSettings()
         c._user_overrides = t.ConfigMap(root={})
         c._global_config = m.ContainerConfig(
@@ -224,7 +221,7 @@ class TestContainerFullCoverage:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
         c._services = {
             "svc": m.ServiceRegistration(name="svc", service="v", service_type="str"),
         }
@@ -242,7 +239,8 @@ class TestContainerFullCoverage:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        c = FlextContainer.create()
+        FlextContainer.reset_for_testing()
+        c = FlextContainer.shared()
         c._user_overrides = t.ConfigMap(root={})
         c._global_config = m.ContainerConfig(
             enable_singleton=True,
@@ -250,34 +248,34 @@ class TestContainerFullCoverage:
             max_services=100,
             max_factories=100,
         )
-        c.configure({"enable_factory_caching": True})
+        c.apply({"enable_factory_caching": True})
         tm.that(c._global_config.enable_factory_caching, eq=True)
-        c.register("res", lambda: "x", kind="resource")
+        c.resource("res", lambda: "x")
         tm.that(c._resources, has="res")
         monkeypatch.setattr(
             core_container.u.DependencyIntegration,
             "register_object",
             self._raise_register_object,
         )
-        c.register("x", "y")
+        c.bind("x", "y")
         monkeypatch.setattr(
             core_container.u.DependencyIntegration,
             "register_factory",
             self._raise_register_factory,
         )
-        c.register("x2", lambda: "v", kind="factory")
+        c.factory("x2", lambda: "v")
         setattr(c._di_resources, "dup", "normalized")
-        c.register("dup", lambda: "v", kind="resource")
+        c.resource("dup", lambda: "v")
         del c._di_resources.dup
         monkeypatch.setattr(
             core_container.u.DependencyIntegration,
             "register_resource",
             self._raise_register_resource,
         )
-        c.register("new", lambda: "v", kind="resource")
+        c.resource("new", lambda: "v")
 
     def test_get_and_get_typed_resource_factory_paths(self) -> None:
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
         typed_value_cls = self._typed_value_cls()
         c._factories = {
             "f": m.FactoryRegistration(
@@ -291,7 +289,7 @@ class TestContainerFullCoverage:
                 factory=lambda: (_ for _ in ()).throw(ValueError("x")),
             ),
         }
-        tm.fail(c.get("r"))
+        tm.fail(c.resolve("r"))
         c._factories = {"f2": m.FactoryRegistration(name="f2", factory=lambda: "abc")}
         tm.fail(self._get_with_type(c, "f2", typed_value_cls))
         c._resources = {"r2": m.ResourceRegistration(name="r2", factory=lambda: "abc")}
@@ -312,20 +310,20 @@ class TestContainerFullCoverage:
         tm.fail(self._get_with_type(c, "r3", typed_value_cls))
 
     def test_misc_unregistration_clear_and_reset(self) -> None:
-        c = FlextContainer.create()
-        _ = c.register("resx", lambda: "ok", kind="resource")
-        tm.that(c.create_module_logger(), ne=None)
-        tm.ok(c.unregister("resx"))
-        _ = c.register("r1", lambda: "ok", kind="resource")
-        c.clear_all()
+        c = FlextContainer.shared()
+        _ = c.resource("resx", lambda: "ok")
+        tm.that(c.logger(), ne=None)
+        tm.ok(c.drop("resx"))
+        _ = c.resource("r1", lambda: "ok")
+        c.clear()
         FlextContainer.reset_for_testing()
-        instance = FlextContainer.create()
+        instance = FlextContainer.shared()
         tm.that(instance._global_instance, is_=type(instance))
 
     def test_scoped_config_context_branches(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
         c._services = {}
         c._factories = {}
         c._resources = {}
@@ -352,9 +350,9 @@ class TestContainerFullCoverage:
         monkeypatch.setattr(
             FlextContainer, "_create_scoped_instance", _fake_create_scoped_instance
         )
-        _ = c.scoped(subproject="sub")
+        _ = c.scope(subproject="sub")
         tm.that(captured["settings"], is_=p.Settings)
-        _ = c.scoped(
+        _ = c.scope(
             settings=cast("p.Settings", m.Core.Tests.FalseSettings()),
             context=FlextContext(),
         )
@@ -365,6 +363,7 @@ class TestContainerFullCoverage:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         captured: MutableMapping[str, t.RegisterableService] = {}
+        FlextContainer.reset_for_testing()
 
         def factory_fn() -> int:
             return 7
@@ -388,33 +387,30 @@ class TestContainerFullCoverage:
             staticmethod(_resolve_fake_module),
         )
 
-        def capture_register(
+        def capture_factory(
             self: p.Container,
             name: str,
             impl: t.RegisterableService,
-            *,
-            kind: str = "service",
-            singleton: bool = False,
-            lazy: bool = True,
         ) -> p.Container:
-            _ = singleton
-            _ = lazy
-            if kind == "factory" and callable(impl):
+            if callable(impl):
                 captured[name] = impl
             return self
 
-        monkeypatch.setattr(FlextContainer, "register", capture_register)
-        _ = FlextContainer.create(auto_register_factories=True)
+        monkeypatch.setattr(FlextContainer, "factory", capture_factory)
+        _ = FlextContainer.shared(auto_register_factories=True)
         wrapper = cast(
             "Callable[..., t.RecursiveContainer]", captured["factory.captured"]
         )
         assert wrapper() == 7
-        assert wrapper(
-            _factory_config=types.SimpleNamespace(fn=123, name="factory.captured"),
-        ) == t.ConfigMap(root={})
+        assert (
+            wrapper(
+                _factory_config=types.SimpleNamespace(fn=123, name="factory.captured")
+            )
+            == 7
+        )
 
     def test_initialize_di_components_exposes_valid_runtime_providers(self) -> None:
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
         c.initialize_di_components()
         assert c._config_provider is not None
         assert c._base_config_provider is not None
@@ -424,7 +420,7 @@ class TestContainerFullCoverage:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
 
         class _NsAlpha(_BaseSettings):
             v: str = "ok"
@@ -455,17 +451,15 @@ class TestContainerFullCoverage:
             c._user_overrides = t.ConfigMap(root={})
             registered: MutableMapping[str, t.RegisterableService] = {}
 
-            def _register(
+            def _factory(
                 name: str,
                 impl: t.RegisterableService,
-                *,
-                kind: str = "service",
             ) -> p.Container:
-                if kind == "factory" and callable(impl):
+                if callable(impl):
                     registered[name] = impl
                 return c
 
-            monkeypatch.setattr(c, "register", _register)
+            monkeypatch.setattr(c, "factory", _factory)
             c.sync_config_to_di()
             alpha_factory = registered["settings.alpha"]
             assert callable(alpha_factory) and isinstance(
@@ -483,7 +477,7 @@ class TestContainerFullCoverage:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         typed_value_cls = self._typed_value_cls()
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
         c._services = {
             "s1": m.ServiceRegistration(name="s1", service="v", service_type="str"),
         }
@@ -501,14 +495,14 @@ class TestContainerFullCoverage:
         }
         c.register_existing_providers()
         c.register_core_services()
-        tm.that(c.has_service("context"), is_=bool)
-        c.wire_modules(modules=[])
-        assert c.get("r1").success
+        tm.that(c.has("context"), is_=bool)
+        c.wire(modules=[])
+        assert c.resolve("r1").success
         tm.ok(self._get_with_type(c, "f1", typed_value_cls))
         tm.ok(self._get_with_type(c, "r1", typed_value_cls))
 
     def test_create_scoped_instance_and_scoped_additional_branches(self) -> None:
-        base = FlextContainer.create()
+        base = FlextContainer.shared()
         scoped = FlextContainer._create_scoped_instance(
             registration=m.ServiceRegistrationSpec(
                 settings=FlextSettings(),
@@ -528,7 +522,7 @@ class TestContainerFullCoverage:
         tm.that(scoped, is_=p.Container)
         base._config = cast("p.Settings", m.Core.Tests.FalseSettings())
         base._context = FlextContext()
-        _ = base.scoped(
+        _ = base.scope(
             settings=FlextSettings(app_name="x"),
             services={"sx": "vx"},
             factories={"fx": lambda: "fv"},
@@ -536,53 +530,53 @@ class TestContainerFullCoverage:
         )
         base._config = cast("p.Settings", m.Core.Tests.FalseSettings())
         base._context = FlextContext()
-        _ = base.scoped()
+        _ = base.scope()
 
     def test_additional_container_branches_cover_fluent_and_lookup_paths(self) -> None:
         typed_value_cls = self._typed_value_cls()
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
         c._global_config = m.ContainerConfig(
             enable_singleton=True,
             enable_factory_caching=False,
             max_services=10,
             max_factories=10,
         )
-        global_instance = FlextContainer.fetch_global()
+        global_instance = FlextContainer.shared()
         tm.that(global_instance, is_=p.Container)
-        tm.that(c.configure({"enable_factory_caching": True}), eq=c)
-        c.register("svc-x", self.TypedValue(value="value"))
-        c.register("fac-x", lambda: "v", kind="factory")
-        tm.that(c.resolve_settings().root, ne=None)
-        c.register("", "x")
-        assert c.get("svc-x").success
-        tm.fail(c.get("missing-service"))
+        tm.that(c.apply({"enable_factory_caching": True}), eq=c)
+        c.bind("svc-x", self.TypedValue(value="value"))
+        c.factory("fac-x", lambda: "v")
+        tm.that(c.snapshot().root, ne=None)
+        c.bind("", "x")
+        assert c.resolve("svc-x").success
+        tm.fail(c.resolve("missing-service"))
         tm.ok(self._get_with_type(c, "svc-x", typed_value_cls))
         tm.fail(self._get_with_type(c, "missing-service", typed_value_cls))
 
     def test_additional_register_factory_and_unregister_paths(self) -> None:
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
         c._global_config = m.ContainerConfig(
             enable_singleton=True,
             enable_factory_caching=False,
             max_services=10,
             max_factories=10,
         )
-        c.register("fac-ok", lambda: 1, kind="factory")
-        c.register("fac-ok", lambda: 2, kind="factory")
-        c.register("fac-bad", 123, kind="factory")
-        _ = c.register("svc-remove", "v")
-        _ = c.register("res-remove", lambda: "r", kind="resource")
-        _ = c.register("fac-remove", lambda: "f", kind="factory")
-        tm.ok(c.unregister("svc-remove"))
-        tm.ok(c.unregister("fac-remove"))
-        tm.ok(c.unregister("res-remove"))
-        tm.fail(c.unregister("not-there"))
+        c.factory("fac-ok", lambda: 1)
+        c.factory("fac-ok", lambda: 2)
+        c.factory("fac-bad", cast("t.FactoryCallable", 123))
+        _ = c.bind("svc-remove", "v")
+        _ = c.resource("res-remove", lambda: "r")
+        _ = c.factory("fac-remove", lambda: "f")
+        tm.ok(c.drop("svc-remove"))
+        tm.ok(c.drop("fac-remove"))
+        tm.ok(c.drop("res-remove"))
+        tm.fail(c.drop("not-there"))
 
     def test_container_remaining_branch_paths_in_sync_factory_and_getters(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        c = FlextContainer.create()
+        c = FlextContainer.shared()
         c._global_config = m.ContainerConfig(
             enable_singleton=True,
             enable_factory_caching=False,
@@ -633,17 +627,15 @@ class TestContainerFullCoverage:
             c._config = cast("p.Settings", _CfgFallback())
             captured: MutableMapping[str, t.RegisterableService] = {}
 
-            def _capture_register(
+            def _capture_factory(
                 name: str,
                 impl: t.RegisterableService,
-                *,
-                kind: str = "service",
             ) -> p.Container:
-                if kind == "factory" and callable(impl):
+                if callable(impl):
                     captured[name] = impl
                 return c
 
-            monkeypatch.setattr(c, "register", _capture_register)
+            monkeypatch.setattr(c, "factory", _capture_factory)
             c.sync_config_to_di()
             c._config = cast("p.Settings", _CfgBadNamespace())
             c.sync_config_to_di()
@@ -658,7 +650,7 @@ class TestContainerFullCoverage:
             assert isinstance(
                 cast("Callable[[], BaseModel]", captured["settings.n4"])(), BaseModel
             )
-            c2 = FlextContainer.create()
+            c2 = FlextContainer.shared()
             c2._global_config = m.ContainerConfig(
                 enable_singleton=True,
                 enable_factory_caching=False,
@@ -671,7 +663,7 @@ class TestContainerFullCoverage:
                     factory=lambda: "value",
                 ),
             }
-            fac_call = c2.get("fac-call", type_cls=str)
+            fac_call = c2.resolve("fac-call", type_cls=str)
             tm.ok(fac_call)
             assert fac_call.value == "value"
             c2._factories = {
@@ -680,14 +672,14 @@ class TestContainerFullCoverage:
                     factory=lambda: (_ for _ in ()).throw(RuntimeError("boom")),
                 ),
             }
-            tm.fail(c2.get("boom"))
+            tm.fail(c2.resolve("boom"))
             c2._factories = {
                 "ok-factory": m.FactoryRegistration(
                     name="ok-factory",
                     factory=lambda: "ok",
                 ),
             }
-            assert c2.get("ok-factory").success
+            assert c2.resolve("ok-factory").success
             c2._services = {
                 "svc-int": m.ServiceRegistration(
                     name="svc-int",

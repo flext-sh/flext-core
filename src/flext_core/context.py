@@ -1016,15 +1016,12 @@ class FlextContext(m.ArbitraryTypesModel):
 
         Example:
             >>> from flext_core import FlextContainer
-            >>> FlextContext.configure_container(FlextContainer.fetch_global())
+            >>> FlextContext.configure_container(FlextContainer.shared())
             >>> container = FlextContext.resolve_container()
-            >>> result = container.get("service_name")
+            >>> result = container.resolve("service_name")
 
         """
-        if (
-            not cls._container_state.configured
-            or cls._container_state.container is None
-        ):
+        if cls._container_state.container is None:
             msg = c.ERR_RUNTIME_CONTAINER_NOT_INITIALIZED
             raise RuntimeError(msg)
         return cls._container_state.container
@@ -1164,7 +1161,7 @@ class FlextContext(m.ArbitraryTypesModel):
         """Service identification and lifecycle context management utilities."""
 
         @staticmethod
-        def fetch_service(service_name: str) -> r[t.Scalar]:
+        def fetch_service(service_name: str) -> p.Result[t.RegisterableService]:
             """Resolve service from global container using r.
 
             Provides unified service resolution pattern across the ecosystem
@@ -1184,21 +1181,7 @@ class FlextContext(m.ArbitraryTypesModel):
 
             """
             container: p.Container = FlextContext.resolve_container()
-            service_result = container.get(service_name)
-            if service_result.success:
-                service_value = service_result.value
-                if service_value is None:
-                    return r[t.Scalar].ok("")
-                if u.scalar(service_value):
-                    return r[t.Scalar].ok(service_value)
-                return r[t.Scalar].ok(str(service_value))
-            if service_result.error:
-                return r[t.Scalar].fail_op(
-                    "fetch service from context container",
-                    service_result.error,
-                    error_code=service_result.error_code,
-                )
-            return e.fail_not_found("service", service_name)
+            return container.resolve(service_name)
 
         @staticmethod
         def register_service(
@@ -1227,12 +1210,13 @@ class FlextContext(m.ArbitraryTypesModel):
 
             """
             container = FlextContext.resolve_container()
-            try:
-                # Type ignoring register until Pydantic vs arbitrary type unification is complete
-                _ = container.register(service_name, service)
+            _ = container.bind(service_name, service)
+            if container.has(service_name):
                 return r[bool].ok(True)
-            except ValueError as exc:
-                return e.fail_operation("register service in context container", exc)
+            return r[bool].fail_op(
+                "register service in context container",
+                f"Service '{service_name}' was not registered",
+            )
 
         @staticmethod
         @contextmanager

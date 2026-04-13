@@ -459,14 +459,14 @@ class Ex09FlextDecorators(Examples):
 
     def _setup_container(self) -> p.Container:
         """Register services used by decorator examples."""
-        container = FlextContainer.create()
+        container = FlextContainer.shared()
         FlextContext.Utilities.clear_context()
         self._token_service_name = f"svc.{self.rand_str(6)}"
         self._token_service_value = self.rand_str(12)
         self._flaky_service_name = f"svc.{self.rand_str(6)}"
         self._flaky_service_value = self.rand_str(12)
-        _ = container.register(self._token_service_name, self._token_service_value)
-        _ = container.register(self._flaky_service_name, self._flaky_service_value)
+        _ = container.bind(self._token_service_name, self._token_service_value)
+        _ = container.bind(self._flaky_service_name, self._flaky_service_value)
         return container
 
 

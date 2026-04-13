@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Self, override
 
-from flext_core import FlextModelsBase, c
+from flext_core import FlextModelsBase as m, c
 
 
 class FlextModelsBuilder:
@@ -17,7 +17,7 @@ class FlextModelsBuilder:
     class Builder:
         """Canonical builder DSL namespace exposed as ``m.Builder`` via MRO."""
 
-        class Base[StateT: FlextModelsBase.ContractModel, ProductT]:
+        class Base[StateT: m.ContractModel, ProductT]:
             """Canonical builder that evolves immutable state and delegates build()."""
 
             _state: StateT
@@ -49,7 +49,7 @@ class FlextModelsBuilder:
                 return self._set(**{field_name: (*current_values, value)})
 
             @staticmethod
-            def _model[ModelT: FlextModelsBase.ContractModel](
+            def _model[ModelT: m.ContractModel](
                 model_type: type[ModelT],
                 /,
                 **data: object,
@@ -57,7 +57,7 @@ class FlextModelsBuilder:
                 """Build one ContractModel payload for DSL composition."""
                 return model_type.model_validate(data)
 
-            def _append_model[ModelT: FlextModelsBase.ContractModel](
+            def _append_model[ModelT: m.ContractModel](
                 self,
                 field_name: str,
                 model_type: type[ModelT],
@@ -75,7 +75,7 @@ class FlextModelsBuilder:
                 """Build the final product from the current state."""
                 return self._build_product(self._state)
 
-        class Identity[StateT: FlextModelsBase.ContractModel](Base[StateT, StateT]):
+        class Identity[StateT: m.ContractModel](Base[StateT, StateT]):
             """Canonical builder for DSLs whose final product is the state model."""
 
             @override

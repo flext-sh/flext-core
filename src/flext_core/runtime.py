@@ -28,7 +28,6 @@ from pathlib import Path
 from types import ModuleType
 from typing import (
     ClassVar,
-    TypeVar,
     cast,
 )
 
@@ -36,9 +35,14 @@ import orjson
 from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from flext_core import FlextUtilitiesGenerators, FlextUtilitiesGuardsTypeCore, c, p, t
-
-T = TypeVar("T")
+from flext_core import (
+    FlextUtilitiesGenerators,
+    FlextUtilitiesGuardsTypeCore,
+    T,
+    c,
+    p,
+    t,
+)
 
 
 class FlextRuntime:

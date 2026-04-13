@@ -34,7 +34,7 @@ class TestCoverageContext:
             )
 
     def test_fetch_service_from_container(self) -> None:
-        container = FlextContainer(_context=FlextContext())
+        container = FlextContainer.shared(context=FlextContext())
         FlextContext.configure_container(container)
         test_service_obj = "test_service_value"
         FlextContext.Service.register_service("test_service", test_service_obj)
@@ -43,14 +43,14 @@ class TestCoverageContext:
         tm.that(result.value is test_service_obj, eq=True)
 
     def test_register_service(self) -> None:
-        container = FlextContainer(_context=FlextContext())
+        container = FlextContainer.shared(context=FlextContext())
         FlextContext.configure_container(container)
         service_obj = {"name": "test_service", "version": "1.0"}
         result = FlextContext.Service.register_service("my_service", service_obj)
         _ = u.Core.Tests.assert_success(result)
 
     def test_get_nonexistent_service(self) -> None:
-        container = FlextContainer(_context=FlextContext())
+        container = FlextContainer.shared(context=FlextContext())
         FlextContext.configure_container(container)
         result = FlextContext.Service.fetch_service("nonexistent_service_xyz")
         _ = u.Core.Tests.assert_failure(result)

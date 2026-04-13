@@ -175,7 +175,7 @@ class FlextProtocolsContext:
         @staticmethod
         def fetch_service(
             service_name: str,
-        ) -> FlextProtocolsResult.Result[FlextTypingBase.Scalar]:
+        ) -> FlextProtocolsResult.Result[FlextTypesServices.RegisterableService]:
             """Resolve a service from the configured container."""
             ...
 

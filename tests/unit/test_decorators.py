@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Sequence
+from collections.abc import Generator, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
@@ -11,7 +11,16 @@ import pytest
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_core import FlextContainer
 from tests import d, e, r, u
+
+
+@pytest.fixture(autouse=True)
+def reset_flext_container_singleton() -> Generator[None]:
+    """Isolate FlextContainer singleton state across decorator tests."""
+    FlextContainer.reset_for_testing()
+    yield
+    FlextContainer.reset_for_testing()
 
 
 class TestFlextDecorators:

@@ -46,9 +46,9 @@ class TestLibraryIntegration:
         entity_id = u.generate()
         assert isinstance(entity_id, str)
         assert entity_id
-        register_result = clean_container.register("test_service", test_value)
+        register_result = clean_container.bind("test_service", test_value)
         assert register_result is clean_container
-        service_result = clean_container.get("test_service")
+        service_result = clean_container.resolve("test_service")
         assert service_result.success is True
         assert service_result.value == test_value
         global_container = FlextContainer()
@@ -78,13 +78,9 @@ class TestLibraryIntegration:
             process_result = mock_external_service.process(input_data)
             return process_result.unwrap_or("")
 
-        register_result = clean_container.register(
-            "result_factory",
-            create_result,
-            kind="factory",
-        )
+        register_result = clean_container.factory("result_factory", create_result)
         assert register_result is clean_container
-        factory_result = clean_container.get("result_factory")
+        factory_result = clean_container.resolve("result_factory")
         assert factory_result.success is True
         result_value = factory_result.value
         assert isinstance(result_value, str)

@@ -547,13 +547,13 @@ class TestService:
             active=True,
         )
         user_service.set_user_data(user_id, user_entity)
-        _ = clean_container.register("user_service", user_service)
-        _ = clean_container.register("notification_service", notification_service)
-        user_service_result = clean_container.get(
+        _ = clean_container.bind("user_service", user_service)
+        _ = clean_container.bind("notification_service", notification_service)
+        user_service_result = clean_container.resolve(
             "user_service",
             type_cls=self.UserQueryService,
         )
-        notification_service_result = clean_container.get(
+        notification_service_result = clean_container.resolve(
             "notification_service",
             type_cls=self.NotificationService,
         )

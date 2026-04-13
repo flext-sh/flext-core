@@ -499,7 +499,7 @@ class TestFlextContext:
 
     def test_service_register_and_fetch_service(self) -> None:
         """Test Service.register_service and get_service."""
-        container = FlextContainer(_context=FlextContext())
+        container = FlextContainer.shared(context=FlextContext())
         FlextContext.configure_container(container)
         service_instance = {"service": "instance"}
         FlextContext.Service.register_service("test-service", service_instance)

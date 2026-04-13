@@ -62,7 +62,7 @@ class TestContainerPerformance:
             _, elapsed = TestContainerPerformance.PerformanceBenchmark.measure_time(
                 lambda: None,
             )
-            [container.register(f"service_{i}", f"value_{i}") for i in range(count)]
+            [container.bind(f"service_{i}", f"value_{i}") for i in range(count)]
             return elapsed
 
         @staticmethod
@@ -80,7 +80,7 @@ class TestContainerPerformance:
             _, elapsed = TestContainerPerformance.PerformanceBenchmark.measure_time(
                 lambda: None,
             )
-            [container.get(f"service_{i}") for i in range(count)]
+            [container.resolve(f"service_{i}") for i in range(count)]
             return elapsed
 
         @staticmethod
@@ -104,7 +104,7 @@ class TestContainerPerformance:
                 lambda: None,
             )
             for i in range(count):
-                container.register(f"factory_{i}", make_factory(i), kind="factory")
+                container.factory(f"factory_{i}", make_factory(i))
             return elapsed
 
         @staticmethod
@@ -128,7 +128,7 @@ class TestContainerPerformance:
                 lambda: None,
             )
             for i in range(count):
-                container.register(f"resource_{i}", make_resource(i), kind="resource")
+                container.resource(f"resource_{i}", make_resource(i))
             return elapsed
 
         @staticmethod
@@ -144,7 +144,7 @@ class TestContainerPerformance:
 
             """
             _, elapsed = TestContainerPerformance.PerformanceBenchmark.measure_time(
-                lambda: [container.has_service(f"service_{i}") for i in range(count)],
+                lambda: [container.has(f"service_{i}") for i in range(count)],
             )
             return elapsed
 
@@ -164,7 +164,7 @@ class TestContainerPerformance:
 
             """
             _, elapsed = TestContainerPerformance.PerformanceBenchmark.measure_time(
-                lambda: [container.list_services() for _ in range(iterations)],
+                lambda: [container.names() for _ in range(iterations)],
             )
             return elapsed
 
@@ -176,7 +176,7 @@ class TestContainerPerformance:
     )
     def test_register_performance(self, count: int) -> None:
         """Benchmark register() with different volumes."""
-        container = FlextContainer.create()
+        container = FlextContainer.shared()
         self.PerformanceBenchmark.benchmark_register(container, count)
 
     @pytest.mark.benchmark
@@ -187,23 +187,23 @@ class TestContainerPerformance:
     )
     def test_get_performance(self, count: int) -> None:
         """Benchmark get() with different volumes."""
-        container = FlextContainer.create()
+        container = FlextContainer.shared()
         for i in range(count):
-            _ = container.register(f"service_{i}", f"value_{i}")
+            _ = container.bind(f"service_{i}", f"value_{i}")
         self.PerformanceBenchmark.benchmark_get(container, count)
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize("count", [10, 100, 1000], ids=["10", "100", "1000"])
     def test_register_factory_performance(self, count: int) -> None:
         """Benchmark register_factory() with different volumes."""
-        container = FlextContainer.create()
+        container = FlextContainer.shared()
         _ = self.PerformanceBenchmark.benchmark_register_factory(container, count)
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize("count", [10, 100, 1000], ids=["10", "100", "1000"])
     def test_register_resource_performance(self, count: int) -> None:
         """Benchmark register_resource() with different volumes."""
-        container = FlextContainer.create()
+        container = FlextContainer.shared()
         _ = self.PerformanceBenchmark.benchmark_register_resource(container, count)
 
     @pytest.mark.benchmark
@@ -214,16 +214,16 @@ class TestContainerPerformance:
     )
     def test_has_service_performance(self, count: int) -> None:
         """Benchmark has_service() with different volumes."""
-        container = FlextContainer.create()
+        container = FlextContainer.shared()
         for i in range(count):
-            _ = container.register(f"service_{i}", f"value_{i}")
+            _ = container.bind(f"service_{i}", f"value_{i}")
         _ = self.PerformanceBenchmark.benchmark_has_service(container, count)
 
     @pytest.mark.benchmark
     def test_list_services_performance(self) -> None:
         """Benchmark list_services() with different service counts."""
         for count in [10, 100, 1000, 10000]:
-            container = FlextContainer.create()
+            container = FlextContainer.shared()
             for i in range(count):
-                _ = container.register(f"service_{i}", f"value_{i}")
+                _ = container.bind(f"service_{i}", f"value_{i}")
             self.PerformanceBenchmark.benchmark_list_services(container, iterations=100)

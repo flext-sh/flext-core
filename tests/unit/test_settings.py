@@ -23,7 +23,7 @@ from __future__ import annotations
 import os
 import threading
 import time
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Generator, MutableSequence, Sequence
 from pathlib import Path
 from typing import ClassVar, cast
 
@@ -33,6 +33,16 @@ from pydantic import ValidationError
 from flext_core import FlextSettings
 from flext_tests import tm
 from tests import c, p, t, u
+
+
+@pytest.fixture(autouse=True)
+def reset_flext_settings_singleton() -> Generator[None]:
+    """Isolate singleton state across settings tests."""
+    FlextSettings.reset_for_testing()
+    try:
+        yield
+    finally:
+        FlextSettings.reset_for_testing()
 
 
 class TestFlextSettings:

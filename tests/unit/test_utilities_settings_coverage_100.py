@@ -63,7 +63,7 @@ class TestFlextUtilitiesSettings:
             lambda: "factory-value",
         )
         assert register_result.success
-        resolved = container.get("unit_test_factory")
+        resolved = container.resolve("unit_test_factory")
         assert resolved.success
         assert resolved.value == "factory-value"
 
