@@ -53,7 +53,7 @@ All documented methods exist and line numbers are accurate:
    - r return type correct
    - Examples valid
 
-1. **register_factory()** - Line 389 ✅
+1. **factory()** - Line 389 ✅
 
    - Factory pattern documented
    - Lazy initialization explained
@@ -65,11 +65,11 @@ All documented methods exist and line numbers are accurate:
    - Returns r[t.RecursiveContainer]
    - Untyped retrieval pattern shown
 
-1. **get_typed()** - Line 574 ✅
+1. **resolve(..., type_cls=...)** - Line 529 ✅
 
    - Type-safe retrieval documented
    - Generic support explained
-   - v0.9.9 feature correctly noted
+   - Current API verified
 
 1. **batch_register()** - Line 613 ✅
 
@@ -155,7 +155,7 @@ Add migration guide from v0.9.8 to v0.9.9.
 
 Document when to use:
 
-- `register()` vs `register_factory()` - factory for expensive objects
+- `register()` vs `factory()` - factory for expensive objects
 - Singleton vs transient services
 - Batch operations for startup performance
 
@@ -177,14 +177,14 @@ Add a decision tree for choosing methods:
 ```
 
 Need a service?
-├─ Service always exists? → get_typed()
+├─ Service always exists? → resolve(name, type_cls=Type)
 ├─ Service might not exist? → get_with_fallback()
 ├─ Need to validate service? → validate_and_get()
 └─ Create if missing? → get_or_create()
 
 Registering services?
 ├─ Simple instance? → register()
-├─ Expensive creation? → register_factory()
+├─ Expensive creation? → factory()
 ├─ Multiple services? → batch_register()
 └─ Auto-detect dependencies? → auto_wire()
 

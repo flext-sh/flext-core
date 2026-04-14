@@ -69,7 +69,7 @@
 - [Viewing Decisions](#viewing-decisions)
 <!-- TOC END -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
+**Status**: Current | **Version**: 0.12.0-dev | **Date**: 2026-04-14
 
 Record of major architectural decisions made in FLEXT-Core development.
 
@@ -290,7 +290,7 @@ Layer 1 contracts example:
 r[T].ok(value)
 r[T].fail(error)
 r[T].value
-r[T].is_success
+r[T].success
 r[T].value  # `.data` remains available as a legacy alias
 ```
 

@@ -56,7 +56,7 @@ All 15 anti-patterns verified against actual FLEXT-Core implementation:
 | 2. Swallowing Errors             | Says: No `except: pass`         | Found: 0 occurrences                | ✅ FOLLOWED |
 | 3. Ignoring Error Info           | Says: Use error_code/error_data | Verified in result.py               | ✅ FOLLOWED |
 | 4. Using `Any` Type              | Says: Use specific types        | Found: 0 `` in src/            | ✅ FOLLOWED |
-| 5. Untyped Container             | Says: Use get_typed()           | Verified in container.py:574        | ✅ FOLLOWED |
+| 5. Untyped Container             | Says: Use resolve(..., type_cls=...) | Verified in container.py:529 | ✅ FOLLOWED |
 | 6. Type Ignores                  | Says: Fix root cause            | Minimal usage, all justified        | ✅ FOLLOWED |
 | 7. Circular Dependencies         | Says: Respect layer hierarchy   | Layer hierarchy enforced            | ✅ FOLLOWED |
 | 8. Multiple Exports              | Says: One class per module      | 28 Flext classes, 1 per module      | ✅ FOLLOWED |
@@ -194,14 +194,14 @@ T = TypeVar("T")
 
 **Guide Claims**:
 
-- ❌ Don't use `container.get()` without type information
-- ✅ Use `container.get_typed()`
+- ❌ Don't use `container.resolve()` without type information
+- ✅ Use `container.resolve(name, type_cls=Type)`
 
-**Source Code Evidence** (container.py:574):
+**Source Code Evidence** (container.py:529):
 
 ```python
-def get_typedT -> p.Result[T]:
-    """Get service with type checking and inference.
+def resolve(self, name: str, *, type_cls: type[T]) -> r[T]:
+    """Resolve service with runtime type narrowing.
 
     Returns r[T] with proper type information.
     """
@@ -209,7 +209,7 @@ def get_typedT -> p.Result[T]:
 
 **Verification**: ✅ ACCURATE
 
-- `get_typed()` method exists at line 574
+- `resolve(..., type_cls=...)` exists in container API
 - Provides type-safe service retrieval with generics
 - Documentation matches implementation
 
@@ -366,7 +366,7 @@ container.py:1032: # For new code, use FlextContainer() directly
 
 **Guide Claims**:
 
-- ❌ Don't assume service exists: `container.get("x").value`
+- ❌ Don't assume service exists: `container.resolve("x").value`
 - ✅ Check r before unwrapping
 
 **Source Code Evidence** (container.py:491):

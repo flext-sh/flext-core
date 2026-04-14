@@ -108,13 +108,13 @@ class UserService(s[str]):
 
 registry = FlextRegistry()
 service = UserService()
-registry.register_command(CreateUser, service.handle_create_user)
-registry.register_event(UserCreated, service.handle_user_created)
+registry.register_handler(CreateUser, service.handle_create_user)
+registry.register_handler(UserCreated, service.handle_user_created)
 
 result = FlextDispatcher(registry=registry).dispatch(
     CreateUser(email="user@example.com")
 )
-if result.is_success:
+if result.success:
     print(f"Created user: {result.value}")
 ```
 

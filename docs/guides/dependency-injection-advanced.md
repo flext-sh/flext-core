@@ -4,7 +4,7 @@
 - [Core Concepts](#core-concepts)
   - [Service Locator Pattern](#service-locator-pattern)
   - [Singleton Pattern](#singleton-pattern)
-  - [Type-Safe Resolution (v0.10.0+)](#type-safe-resolution-v0100)
+  - [Type-Safe Resolution (v0.12.0-dev+)](#type-safe-resolution-v0100)
 - [Getting Started](#getting-started)
   - [Global Container Access](#global-container-access)
   - [Registering Services](#registering-services)
@@ -46,7 +46,7 @@
 - [See Also](#see-also)
 <!-- TOC END -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Type-Safety**: Full Generic Support
+**Status**: Current | **Version**: 0.12.0-dev | **Type-Safety**: Full Generic Support
 
 FlextContainer is FLEXT's type-safe dependency injection container providing centralized service management, singleton pattern enforcement, and advanced DI features integrated with the r railway pattern.
 
@@ -83,7 +83,7 @@ container2 = FlextContainer.get_global()
 assert container1 is container2  # True - same instance
 ```
 
-### Type-Safe Resolution (v0.10.0+)
+### Type-Safe Resolution (v0.12.0-dev+)
 
 Modern FLEXT provides **generic type preservation** for safe service retrieval:
 
@@ -93,9 +93,9 @@ from flext_core import FlextContainer, FlextLogger
 container = FlextContainer.get_global()
 
 # Type-safe retrieval - type checker knows the exact type
-result = container.get_typed("logger", FlextLogger)
+result = container.resolve("logger", type_cls=FlextLogger)
 
-if result.is_success:
+if result.success:
     logger: FlextLogger = result.value  # Type is known
     logger.info("Message")  # IDE autocomplete works
 ```
@@ -127,9 +127,9 @@ container = FlextContainer.get_global()
 logger = u.fetch_logger(__name__)
 
 # Register it (wrapped in r)
-result = container.register("logger", logger)
+result = container.bind("logger", logger)
 
-if result.is_success:
+if result.success:
     print("✅ Logger registered")
 else:
     print(f"❌ Registration failed: {result.error}")
@@ -156,9 +156,9 @@ def create_database_connection():
 container = FlextContainer.get_global()
 
 # Register factory (creates new instance on each call)
-result = container.register_factory("database", create_database_connection)
+result = container.factory("database", create_database_connection)
 
-if result.is_success:
+if result.success:
     print("✅ Database factory registered")
 ```
 
@@ -185,7 +185,7 @@ def safe_factory() -> p.Result[t.RecursiveContainer]:
 
 
 container = FlextContainer.get_global()
-result = container.register_factory("safe_service", safe_factory)
+result = container.factory("safe_service", safe_factory)
 ```
 
 ### Retrieving Services
@@ -198,9 +198,9 @@ from flext_core import FlextContainer
 container = FlextContainer.get_global()
 
 # Get service (returns r[t.RecursiveContainer])
-result = container.get("logger")
+result = container.resolve("logger")
 
-if result.is_success:
+if result.success:
     logger = result.value
     logger.info("Logged message")
 else:
@@ -215,9 +215,9 @@ from flext_core import FlextContainer, FlextLogger
 container = FlextContainer.get_global()
 
 # Get service with type information (returns r[FlextLogger])
-result = container.get_typed("logger", FlextLogger)
+result = container.resolve("logger", type_cls=FlextLogger)
 
-if result.is_success:
+if result.success:
     logger: FlextLogger = result.value  # Type checker knows exact type
     logger.info("Message")
 ```
@@ -237,28 +237,28 @@ def initialize_application() -> p.Result[bool]:
     # Load configuration
     config_result = r[bool].ok(True).flat_map(lambda _: FlextSettings.load())
 
-    if config_result.is_failure:
+    if config_result.failure:
         return config_result
 
     settings = config_result.value
 
     # Register configuration
-    register_result = container.register("settings", settings)
-    if register_result.is_failure:
+    register_result = container.bind("settings", settings)
+    if register_result.failure:
         return register_result
 
     # Register logger
     logger = u.fetch_logger(settings.log_level)
-    logger_result = container.register("logger", logger)
-    if logger_result.is_failure:
+    logger_result = container.bind("logger", logger)
+    if logger_result.failure:
         return logger_result
 
     # Register database with factory
     def create_db():
         return DatabaseConnection(settings.database_url)
 
-    db_result = container.register_factory("database", create_db)
-    if db_result.is_failure:
+    db_result = container.factory("database", create_db)
+    if db_result.failure:
         return db_result
 
     logger.info("✅ Application initialized successfully")
@@ -267,7 +267,7 @@ def initialize_application() -> p.Result[bool]:
 
 # Usage
 app_init = initialize_application()
-if app_init.is_failure:
+if app_init.failure:
     print(f"Failed to initialize app: {app_init.error}")
     exit(1)
 ```
@@ -296,18 +296,18 @@ def resolve_payment_service() -> p.Result[PaymentService]:
     container = FlextContainer.get_global()
 
     # Get database
-    db_result = container.get("database")
-    if db_result.is_failure:
+    db_result = container.resolve("database")
+    if db_result.failure:
         return r[PaymentService].fail(f"No database: {db_result.error}")
 
     # Get logger
-    logger_result = container.get("logger")
-    if logger_result.is_failure:
+    logger_result = container.resolve("logger")
+    if logger_result.failure:
         return r[PaymentService].fail(f"No logger: {logger_result.error}")
 
     # Get settings
-    config_result = container.get("settings")
-    if config_result.is_failure:
+    config_result = container.resolve("settings")
+    if config_result.failure:
         return r[PaymentService].fail(f"No settings: {config_result.error}")
 
     # Construct service with resolved dependencies
@@ -322,7 +322,7 @@ def resolve_payment_service() -> p.Result[PaymentService]:
 
 # Usage
 service_result = resolve_payment_service()
-if service_result.is_success:
+if service_result.success:
     service = service_result.value
     result = service.process_payment(1000.00)
 ```
@@ -353,17 +353,17 @@ container = FlextContainer.get_global()
 
 # Register factory - service NOT created yet
 print("Registering factory...")
-container.register_factory("expensive", create_expensive_service)
+container.factory("expensive", create_expensive_service)
 print("Factory registered (service not created yet)")
 
 # First access - service is created
 print("Getting service...")
-result1 = container.get("expensive")
+result1 = container.resolve("expensive")
 print(f"First access: {result1.value.do_work()}")
 
 # Second access - same instance (singleton behavior)
 print("Getting service again...")
-result2 = container.get("expensive")
+result2 = container.resolve("expensive")
 print(f"Second access: {result2.value.do_work()}")
 
 # Both are the same instance
@@ -382,7 +382,7 @@ def setup_services_based_on_config() -> p.Result[bool]:
 
     # Load settings
     config_result = FlextSettings.load()
-    if config_result.is_failure:
+    if config_result.failure:
         return config_result
 
     settings = config_result.value
@@ -390,12 +390,12 @@ def setup_services_based_on_config() -> p.Result[bool]:
     # Conditional registration
     if settings.debug:
         # In debug mode: use mock services
-        _ = container.register("cache", MockCache())
-        _ = container.register("email_service", DebugEmailService())
+        _ = container.bind("cache", MockCache())
+        _ = container.bind("email_service", DebugEmailService())
     else:
         # In production: use real services
-        _ = container.register("cache", RedisCache(settings.redis_url))
-        _ = container.register("email_service", SendgridEmailService(settings.api_key))
+        _ = container.bind("cache", RedisCache(settings.redis_url))
+        _ = container.bind("email_service", SendgridEmailService(settings.api_key))
 
     return r[bool].ok(True)
 ```
@@ -428,7 +428,7 @@ def setup_database_lifecycle() -> p.Result[bool]:
     container = FlextContainer.get_global()
     config_result = FlextSettings.load()
 
-    if config_result.is_failure:
+    if config_result.failure:
         return config_result
 
     settings = config_result.value
@@ -438,21 +438,21 @@ def setup_database_lifecycle() -> p.Result[bool]:
 
     # Connect before registering
     connect_result = db.connect()
-    if connect_result.is_failure:
+    if connect_result.failure:
         return connect_result
 
     # Register in container
-    register_result = container.register("database", db)
+    register_result = container.bind("database", db)
 
     # Could register cleanup function for application shutdown
-    # container.register("_cleanup_db", lambda: db.disconnect())
+    # container.bind("_cleanup_db", lambda: db.disconnect())
 
     return register_result
 
 
 # Usage
 setup_result = setup_database_lifecycle()
-if setup_result.is_success:
+if setup_result.success:
     print("✅ Database setup complete")
 ```
 
@@ -472,7 +472,7 @@ result = container.batch_register([
     ("cache", CacheService()),
 ])
 
-if result.is_success:
+if result.success:
     print("✅ All services registered")
 else:
     print(f"❌ Batch failed: {result.error}")
@@ -488,12 +488,12 @@ container = FlextContainer.get_global()
 
 # Try primary service, fallback to alternative
 def resolve_with_fallback():
-    primary = container.get("primary_service")
-    if primary.is_success:
+    primary = container.resolve("primary_service")
+    if primary.success:
         return primary
 
     # If primary failed, try fallback
-    fallback = container.get("fallback_service")
+    fallback = container.resolve("fallback_service")
     return fallback
 
 
@@ -501,8 +501,8 @@ def resolve_with_fallback():
 result = (
     r[bool]
     .ok(True)
-    .flat_map(lambda _: container.get("primary_service"))
-    .lash(lambda _: container.get("fallback_service"))
+    .flat_map(lambda _: container.resolve("primary_service"))
+    .lash(lambda _: container.resolve("fallback_service"))
 )
 ```
 
@@ -520,9 +520,9 @@ def validate_all_services() -> p.Result[bool]:
     services_to_validate = ["logger", "database", "cache"]
 
     for service_name in services_to_validate:
-        service_result = container.get(service_name)
+        service_result = container.resolve(service_name)
 
-        if service_result.is_failure:
+        if service_result.failure:
             return r[bool].fail(
                 f"Service validation failed: {service_name}",
                 error_code="SERVICE_MISSING",
@@ -550,9 +550,9 @@ from flext_core import FlextContainer, FlextLogger
 container = FlextContainer.get_global()
 
 # CORRECT - Type checker knows exact type
-result: p.Result[FlextLogger] = container.get_typed("logger", FlextLogger)
+result: p.Result[FlextLogger] = container.resolve("logger", type_cls=FlextLogger)
 
-if result.is_success:
+if result.success:
     logger: FlextLogger = result.value
     logger.info("Message")  # IDE knows all methods
 ```
@@ -561,9 +561,9 @@ if result.is_success:
 
 ```python
 # WORKS but loses type information
-result = container.get("logger")  # Returns r[t.RecursiveContainer]
+result = container.resolve("logger")  # Returns r[t.RecursiveContainer]
 
-if result.is_success:
+if result.success:
     logger = result.value  # Type is t.RecursiveContainer
     # IDE can't help with autocomplete
 ```
@@ -582,7 +582,7 @@ def get_service(
     name: ServiceName, type_cls: type[ServiceType]
 ) -> p.Result[ServiceType]:
     container = FlextContainer.get_global()
-    return container.get_typed(name, type_cls)
+    return container.resolve(name, type_cls=type_cls)
 ```
 
 ## Common Patterns
@@ -600,10 +600,10 @@ class UserHandler:
     def create_user(self, user_data: dict) -> p.Result[dict]:
         """Create user using injected services."""
         # Get dependencies from container
-        db_result = self.container.get("database")
-        logger_result = self.container.get("logger")
+        db_result = self.container.resolve("database")
+        logger_result = self.container.resolve("logger")
 
-        if db_result.is_failure or logger_result.is_failure:
+        if db_result.failure or logger_result.failure:
             return r[dict].fail("Dependencies unavailable")
 
         db = db_result.value
@@ -635,15 +635,15 @@ class TestUserService(unittest.TestCase):
         self.container = FlextContainer()  # Create test instance
 
         # Register mock services
-        self.container.register("database", MockDatabase())
-        self.container.register("logger", MockLogger())
+        self.container.bind("database", MockDatabase())
+        self.container.bind("logger", MockLogger())
 
     def test_user_creation(self):
         """Test with mocked services."""
         handler = UserHandler(self.container)
         result = handler.create_user({"name": "Bob"})
 
-        assert result.is_success
+        assert result.success
         assert result.value["name"] == "Bob"
 ```
 
@@ -654,7 +654,7 @@ class TestUserService(unittest.TestCase):
 ```python
 # ✅ CORRECT - Always use global container
 container = FlextContainer.get_global()
-result = container.get("service")
+result = container.resolve("service")
 
 # ❌ WRONG - Creating multiple containers
 container1 = FlextContainer()
@@ -665,14 +665,14 @@ container2 = FlextContainer()  # Different instance!
 
 ```python
 # ✅ CORRECT - Always check r
-result = container.get("service")
-if result.is_success:
+result = container.resolve("service")
+if result.success:
     service = result.value
 else:
     print(f"Failed: {result.error}")
 
 # ❌ WRONG - Assuming success
-service = container.get("service").value  # May crash
+service = container.resolve("service").value  # May crash
 ```
 
 ### 3. Register Early
@@ -681,31 +681,31 @@ service = container.get("service").value  # May crash
 # ✅ CORRECT - Register during initialization
 def initialize():
     container = FlextContainer.get_global()
-    _ = container.register("logger", u.fetch_logger())
-    _ = container.register("settings", FlextSettings.load().value)
+    _ = container.bind("logger", u.fetch_logger())
+    _ = container.bind("settings", FlextSettings.load().value)
 
 
 initialize()
 
 # Later in code
 container = FlextContainer.get_global()
-logger_result = container.get("logger")
+logger_result = container.resolve("logger")
 
 
 # ❌ WRONG - Registering late, missing dependencies
 def some_random_function():
     container = FlextContainer.get_global()
-    _ = container.register("database", create_db())  # Too late!
+    _ = container.bind("database", create_db())  # Too late!
 ```
 
 ### 4. Type-Safe Retrieval
 
 ```python
 # ✅ CORRECT - Use get_typed for type safety
-result: p.Result[FlextLogger] = container.get_typed("logger", FlextLogger)
+result: p.Result[FlextLogger] = container.resolve("logger", type_cls=FlextLogger)
 
 # ⚠️ OK but less safe - Basic retrieval
-result: p.Result[t.RecursiveContainer] = container.get("logger")
+result: p.Result[t.RecursiveContainer] = container.resolve("logger")
 ```
 
 ## FlextDispatcher Reliability Settings
@@ -767,7 +767,7 @@ dispatcher = FlextDispatcher()
 
 # Dispatcher automatically applies circuit breaker to all operations
 result = dispatcher.dispatch(CreateUserCommand(name="Alice"))
-if result.is_failure and "circuit breaker" in result.error.lower():
+if result.failure and "circuit breaker" in result.error.lower():
     print("Circuit breaker is open - service temporarily unavailable")
 ```
 
@@ -792,7 +792,7 @@ dispatcher = FlextDispatcher()
 # Dispatcher enforces rate limits automatically
 for i in range(150):  # More than rate limit
     result = dispatcher.dispatch(GetUserQuery(user_id=str(i)))
-    if result.is_failure and "rate limit" in result.error.lower():
+    if result.failure and "rate limit" in result.error.lower():
         print(f"Rate limit exceeded at request {i}")
         break
 ```
@@ -842,7 +842,7 @@ dispatcher = FlextDispatcher()
 
 # Dispatcher enforces timeout on all operations
 result = dispatcher.dispatch(LongRunningCommand(data=large_data))
-if result.is_failure and "timeout" in result.error.lower():
+if result.failure and "timeout" in result.error.lower():
     print("Operation exceeded timeout limit")
 
 # Per-operation timeout override
@@ -937,18 +937,21 @@ Access dispatcher metrics to monitor reliability patterns:
 from flext_core import FlextDispatcher
 
 dispatcher = FlextDispatcher()
+success_count = 0
+failure_count = 0
 
 # Execute operations
 for _ in range(100):
-    dispatcher.dispatch(SomeCommand())
+    dispatch_result = dispatcher.dispatch(SomeCommand())
+    if dispatch_result.success:
+        success_count += 1
+    else:
+        failure_count += 1
 
-# Check metrics
-metrics = dispatcher.get_metrics()
-print(f"Total executions: {metrics.get('total_executions', 0)}")
-print(f"Circuit breaker opens: {metrics.get('circuit_breaker_opens', 0)}")
-print(f"Rate limit hits: {metrics.get('rate_limit_hits', 0)}")
-print(f"Retry attempts: {metrics.get('retry_attempts', 0)}")
-print(f"Timeout executions: {metrics.get('timeout_executions', 0)}")
+# Compute execution summary
+print(f"Total executions: {success_count + failure_count}")
+print(f"Successes: {success_count}")
+print(f"Failures: {failure_count}")
 ```
 
 ## Architecture Integration

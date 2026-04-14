@@ -28,7 +28,7 @@
 - [See Also](#see-also)
 <!-- TOC END -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Clean Architecture Foundation
+**Status**: Current | **Version**: 0.12.0-dev | **Pattern**: Clean Architecture Foundation
 
 FlextModels provides domain-driven design (DDD) patterns through semantic base classes for building rich domain models with proper entity and value t.RecursiveContainer semantics.
 
@@ -412,8 +412,8 @@ product = Product(sku="ABC", inventory=10)
 product.decrease_inventory(3)
 
 # Domain events collected on the aggregate can be emitted through the dispatcher
-dispatch_result = dispatcher.publish_events(product.commit_domain_events())
-assert dispatch_result.is_success
+dispatch_result = dispatcher.publish(product.commit_domain_events())
+assert dispatch_result.success
 ```
 
 Key points:
@@ -629,19 +629,19 @@ add_result = order.add_line(
     )
 )
 
-if add_result.is_success:
+if add_result.success:
     print(f"✅ Line added. New total: {order.total.amount}")
 else:
     print(f"❌ Failed to add line: {add_result.error}")
 
 # Confirm order
 confirm_result = order.confirm()
-if confirm_result.is_success:
+if confirm_result.success:
     print("✅ Order confirmed")
 
 # Ship order
 ship_result = order.ship()
-if ship_result.is_success:
+if ship_result.success:
     print("✅ Order shipped")
 ```
 
@@ -755,11 +755,11 @@ print(f"Login attempt: {login_result.error}")  # "User account is not verified"
 
 # Verify email
 verify_result = user.verify_email()
-print(f"Email verification: {verify_result.is_success}")  # True
+print(f"Email verification: {verify_result.success}")  # True
 
 # Now login works
 login_result = user.login("securepassword")
-print(f"Login: {login_result.is_success}")  # True
+print(f"Login: {login_result.success}")  # True
 ```
 
 ## Integration with r
@@ -790,7 +790,7 @@ class User(FlextModels.Entity):
 user = User(username="alice", email="alice@example.com")
 result = user.update_email("bob@example.com")
 
-if result.is_success:
+if result.success:
     print("✅ Email updated")
 else:
     print(f"❌ Failed: {result.error}")
@@ -859,7 +859,7 @@ class UserCommandService(s):
 
         # Execute business logic
         result = user.update_email(cmd.new_email)
-        if result.is_failure:
+        if result.failure:
             return result
 
         # Publish event
@@ -944,35 +944,36 @@ Separate services by responsibility and dispatch through a unified bus:
 from flext_core import FlextDispatcher
 
 # Setup dispatcher
-dispatcher = FlextDispatcher.get_global()
+dispatcher = FlextDispatcher()
 
 # Register command handlers
 command_service = UserCommandService()
-dispatcher.register_command("CreateUserCommand", command_service.handle_create_user)
-dispatcher.register_command(
-    "UpdateUserEmailCommand", command_service.handle_update_email
+dispatcher.register_handler(CreateUserCommand, command_service.handle_create_user)
+dispatcher.register_handler(
+    UpdateUserEmailCommand,
+    command_service.handle_update_email,
 )
 
 # Register query handlers
 query_service = UserQueryService(user_repository)
-dispatcher.register_query("GetUserByIdQuery", query_service.handle_get_user)
-dispatcher.register_query("ListUsersQuery", query_service.handle_list_users)
+dispatcher.register_handler("GetUserByIdQuery", query_service.handle_get_user)
+dispatcher.register_handler("ListUsersQuery", query_service.handle_list_users)
 
 # Usage: Execute command
 create_cmd = CreateUserCommand(
     username="alice", email="alice@example.com", password="secret"
 )
-result = dispatcher.dispatch_command(create_cmd)
+result = dispatcher.dispatch(create_cmd)
 
-if result.is_success:
+if result.success:
     user_id = result.value["user_id"]
     print(f"✅ Created user: {user_id}")
 
 # Usage: Execute query
 get_query = GetUserByIdQuery(user_id=user_id)
-result = dispatcher.dispatch_query(get_query)
+result = dispatcher.dispatch(get_query)
 
-if result.is_success:
+if result.success:
     user_data = result.value
     print(f"User: {user_data['username']}")
 ```

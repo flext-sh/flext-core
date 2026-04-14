@@ -106,7 +106,7 @@ objectClass: inetOrgPerson"""
 
         result = ldif.parse(content)
 
-        assert result.is_success
+        assert result.success
         entries = result.unwrap()
         assert len(entries) == 1
         assert entries[0].dn == "cn=test,dc=example,dc=com"
@@ -117,7 +117,7 @@ objectClass: inetOrgPerson"""
 
         result = ldif.parse(content)
 
-        assert result.is_failure
+        assert result.failure
         assert "parsing" in str(result.failure()).lower()
 ```
 
@@ -157,16 +157,16 @@ class TestLdifIntegration:
         # Register LDIF service
         settings = FlextLdifSettings(batch_size=100)
         ldif = ldif(settings=settings)
-        _ = container.register("ldif", ldif)
+        _ = container.bind("ldif", ldif)
 
         # Retrieve and use service
-        ldif_result = container.get("ldif")
-        assert ldif_result.is_success
+        ldif_result = container.resolve("ldif")
+        assert ldif_result.success
 
         ldif_service = ldif_result.unwrap()
         # Test LDIF operations
         result = ldif_service.parse("dn: test")
-        assert result.is_success
+        assert result.success
 ```
 
 ### End-to-End Tests
@@ -206,7 +206,7 @@ objectClass: inetOrgPerson"""
         result = ldif.migrate(input_dir, output_dir, "oid", "oud")
 
         # Verify migration
-        assert result.is_success
+        assert result.success
         report = result.unwrap()
         assert report.successful_entries > 0
         assert (output_dir / "test.ldif").exists()
@@ -334,7 +334,7 @@ def temp_directories(tmp_path):
 def test_ldif_parsing(ldif_service, sample_ldif_content):
     """Test LDIF parsing with fixtures."""
     result = ldif_service.parse(sample_ldif_content)
-    assert result.is_success
+    assert result.success
 
 
 def test_file_migration(ldif_service, temp_directories):
@@ -347,7 +347,7 @@ def test_file_migration(ldif_service, temp_directories):
 
     # Run migration
     result = ldif_service.migrate(input_dir, output_dir, "oid", "oud")
-    assert result.is_success
+    assert result.success
 ```
 
 ## Mocking and Stubbing
@@ -388,7 +388,7 @@ def test_with_mocked_dependency():
 
         # Verify mock was called
         mock_service.process.assert_called_once()
-        assert result.is_success
+        assert result.success
 ```
 
 ### Integration Test Stubbing
@@ -425,11 +425,11 @@ def test_with_stubbed_service():
     stub_service.process.return_value = r.ok("stubbed")
 
     # Register stub
-    _ = container.register("external_service", stub_service)
+    _ = container.bind("external_service", stub_service)
 
     # Test integration
     result = integration_function()
-    assert result.is_success
+    assert result.success
 ```
 
 ## Performance Testing
@@ -460,7 +460,7 @@ def test_concurrent_processing():
     end_time = time.time()
 
     # Verify all succeeded
-    assert all(result.is_success for result in results)
+    assert all(result.success for result in results)
 
     # Verify performance (should complete in < 1 second)
     assert (end_time - start_time) < 1.0
@@ -484,7 +484,7 @@ def test_memory_usage():
         large_content = "dn: test\ncn: test\n" * 10000
 
     result = ldif.parse(large_content)
-    assert result.is_success
+    assert result.success
 
     # Check memory usage (should not exceed 100MB)
     current_memory = process.memory_info().rss
@@ -539,7 +539,7 @@ def test_with_fixture():
 
     # Use fixture data in test
     result = process_ldif(ldif_content, config_data)
-    assert result.is_success
+    assert result.success
 ```
 
 ## Continuous Integration
@@ -640,7 +640,7 @@ class TestLdifMigration:
 def test_parse_result():
     result = ldif.parse(content)
 
-    assert result.is_success
+    assert result.success
     entries = result.unwrap()
     assert len(entries) == 1
     assert entries[0].dn == "cn=test,dc=example,dc=com"
@@ -660,13 +660,13 @@ def test_parse_result():
 def test_parse_valid_ldif():
     ldif = ldif()  # Fresh instance
     result = ldif.parse("dn: test")
-    assert result.is_success
+    assert result.success
 
 
 def test_parse_invalid_ldif():
     ldif = ldif()  # Fresh instance
     result = ldif.parse("invalid")
-    assert result.is_failure
+    assert result.failure
 
 
 # ❌ BAD - Dependent tests
@@ -675,12 +675,12 @@ ldif = ldif()  # Shared instance
 
 def test_parse_valid_ldif():
     result = ldif.parse("dn: test")
-    assert result.is_success
+    assert result.success
 
 
 def test_parse_invalid_ldif():
     result = ldif.parse("invalid")
-    assert result.is_failure
+    assert result.failure
 ```
 
 ## Troubleshooting

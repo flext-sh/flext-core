@@ -1,467 +1,354 @@
-# QUICK START
+# Quick Start — FLEXT-Core 0.12.0-dev
 
 <!-- TOC START -->
 - [Installation](#installation)
-- [Core Concepts (2 minutes)](#core-concepts-2-minutes)
-  - [1. Railway-Oriented Programming (r[T])](#1-railway-oriented-programming-rt)
-  - [2. Dependency Injection (FlextContainer)](#2-dependency-injection-flextcontainer)
-  - [3. Domain-Driven Design (FlextModels)](#3-domain-driven-design-flextmodels)
-- [Common Use Cases (3 minutes)](#common-use-cases-3-minutes)
-  - [Use Case 1: Validation Pipeline](#use-case-1-validation-pipeline)
-  - [Use Case 2: Service with Dependency Injection](#use-case-2-service-with-dependency-injection)
-  - [Use Case 3: Domain Models with Validation](#use-case-3-domain-models-with-validation)
-  - [Use Case 4: Dispatcher-Driven CQRS](#use-case-4-dispatcher-driven-cqrs)
-- [Key Patterns Cheat Sheet](#key-patterns-cheat-sheet)
-  - [Pattern 1: Success/Failure Handling](#pattern-1-successfailure-handling)
-  - [Pattern 2: Transform Values](#pattern-2-transform-values)
-  - [Pattern 3: Chain Operations](#pattern-3-chain-operations)
-  - [Pattern 4: Error Recovery](#pattern-4-error-recovery)
-  - [Pattern 5: Access Both APIs](#pattern-5-access-both-apis)
-- [Testing Example](#testing-example)
+- [Core Concepts (5 min)](#core-concepts-5-min)
+  - [1. Railway Results (`r[T]`)](#1-railway-results-rt)
+  - [2. Dependency Injection](#2-dependency-injection)
+  - [3. CQRS Dispatcher](#3-cqrs-dispatcher)
+  - [4. Services & Models](#4-services--models)
+- [Practical Examples](#practical-examples)
+- [Common Patterns](#common-patterns)
 - [Next Steps](#next-steps)
-- [Common Questions](#common-questions)
-- [Command Reference](#command-reference)
-- [Quick Reference](#quick-reference)
-- [Getting Help](#getting-help)
 <!-- TOC END -->
 
-**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
-
-Get started with FLEXT-Core in 5 minutes. This guide covers the essentials; see the full guides for deeper coverage and rationale.
+**Updated**: 2026-04-14 | **Python**: 3.13+ | **Status**: Current
 
 ## Installation
 
 ```bash
-# Add to your project
 poetry add flext-core
-
-# Or with pip
+# or
 pip install flext-core
 ```
 
-**Requirements**: Python 3.13+
+## Core Concepts (5 min)
 
-## Core Concepts (2 minutes)
+### 1. Railway Results (`r[T]`)
 
-FLEXT-Core provides three foundational patterns:
-
-### 1. Railway-Oriented Programming (r[T])
-
-Instead of exceptions, operations return either success or failure:
+Everything that can fail returns `r[T]` — a result carrier that eliminates exceptions in business logic.
 
 ```python
-from flext_core import r, p
+from flext_core import r
+
+# Success path
+success_result = r[int].ok(42)
+assert success_result.success == True
+assert success_result.unwrap() == 42
+
+# Failure path
+fail_result = r[int].fail("Something went wrong")
+assert fail_result.success == False
+assert fail_result.error == "Something went wrong"
+
+# Chain operations
+result = (
+    r[int]
+    .ok(10)
+    .map(lambda x: x * 2)  # Transform: 10 → 20
+    .flat_map(lambda x: r[int].ok(x + 5))  # Chain: 20 → 25
+    .unwrap_or(0)  # Extract or default
+)
+# result = 25
+```
+
+**Key Methods**:
+- `ok(value)`, `fail(error)` — Constructor
+- `success`, `error` — Inspect result
+- `map`, `flat_map`, `lash` — Transform/chain
+- `unwrap()`, `unwrap_or(default)`, `unwrap_type()` — Extract value
+
+### 2. Dependency Injection
+
+Register services once, resolve them anywhere with `FlextContainer`.
+
+```python
+from flext_core import FlextContainer, r
+
+# Get global singleton
+container = FlextContainer.get_global()
+
+# Register factory
+container.factory("db", lambda: MyDatabase("localhost"))
+
+# Resolve with error handling
+db_result = container.resolve("db")
+if db_result.success:
+    db = db_result.unwrap()
+    # Use db...
+else:
+    print(f"Error: {db_result.error}")
+
+# Scoped resolution (short-lived instances)
+with container.scope() as scoped:
+    service = scoped.resolve("service").unwrap()
+    # service exists only in this context
+```
+
+### 3. CQRS Dispatcher
+
+Route typed messages (commands/queries) to handlers automatically.
+
+```python
+from pydantic import BaseModel
+from flext_core import FlextDispatcher, r, m
 
 
-def validate_email(email: str) -> p.Result[str]:
-    """Returns success or failure, never raises exceptions."""
-    if "@" not in email:
-        return r[str].fail("Invalid email")
-    return r[str].ok(email)
+# 1. Define command
+class CreateUserCommand(m.Entity):
+    username: str
+    email: str
 
 
-# Safe value extraction
-result = validate_email("user@example.com")
-if result.is_success:
-    email = result.value
-    print(f"Valid: {email}")
+# 2. Define queries
+class GetUserQuery(m.Entity):
+    user_id: int
+
+
+# 3. Handle them
+def create_user_handler(cmd: CreateUserCommand) -> r[str]:
+    return r[str].ok(f"Created: {cmd.username}")
+
+
+def get_user_handler(q: GetUserQuery) -> r[dict]:
+    return r[dict].ok({"id": q.user_id, "name": "Alice"})
+
+
+# 4. Register & dispatch
+dispatcher = FlextDispatcher()
+dispatcher.register_handler(CreateUserCommand, create_user_handler)
+dispatcher.register_handler(GetUserQuery, get_user_handler)
+
+# Dispatch commands
+result = dispatcher.dispatch(
+    CreateUserCommand(username="alice", email="alice@example.com")
+)
+print(result.unwrap())  # "Created: alice"
+
+# Dispatch queries
+result = dispatcher.dispatch(GetUserQuery(user_id=1))
+print(result.unwrap())  # {"id": 1, "name": "Alice"}
+```
+
+### 4. Services & Models
+
+Create domain services with DI and entity models with validation.
+
+```python
+from pydantic import Field
+from flext_core import s, r, m, c
+
+
+# Define domain entity
+class User(m.Entity):
+    name: str = Field(..., min_length=1)
+    email: str = Field(..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
+
+
+# Create service with DI
+class UserService(s):
+    """User operations with dependency injection."""
+
+    def create_user(self, name: str, email: str) -> r[User]:
+        # Resolve database from container
+        db = self.container.resolve("database")
+        if not db.success:
+            return r[User].fail(db.error)
+
+        # Validate & create
+        try:
+            user = User(name=name, email=email)
+            db.unwrap().insert(user.model_dump())
+            return r[User].ok(user)
+        except Exception as e:
+            return r[User].fail_exc(e, error_code="USER_CREATION_FAILED")
+
+
+# Use service
+service = UserService()
+result = service.create_user("Alice", "alice@example.com")
+
+if result.success:
+    user = result.unwrap()
+    print(f"Created user: {user.name}")
 else:
     print(f"Error: {result.error}")
 ```
 
-### 2. Dependency Injection (FlextContainer)
+## Practical Examples
 
-Centralized service management with explicit lifecycles:
-
-```python
-from flext_core import FlextContainer, FlextLogger
-
-# Register services
-container = FlextContainer.get_global()
-logger = u.fetch_logger(__name__)
-container.register("logger", logger, singleton=True)
-
-# Use services
-logger_result = container.get("logger")
-if logger_result.is_success:
-    logger = logger_result.value
-    logger.info("Application started")
-```
-
-### 3. Domain-Driven Design (FlextModels)
-
-Model your business domain with explicit boundaries:
+### Example 1: Data Validation Pipeline
 
 ```python
-from flext_core import FlextModels
+from flext_core import r, u
 
 
-class Email(m.Value):
-    """Immutable value t.RecursiveContainer compared by value."""
-
-    address: str
-
-
-class User(FlextModels.Entity):
-    """Entity with identity."""
-
-    id: str
-    name: str
-    email: Email
+def validate_email(email: str) -> r[str]:
+    if "@" not in email:
+        return r[str].fail("Invalid email format")
+    return r[str].ok(email)
 
 
-# Use your models
-user = User(id="123", name="Alice", email=Email(address="alice@example.com"))
-print(f"Created: {user.name}")
-```
-
-## Common Use Cases (3 minutes)
-
-### Use Case 1: Validation Pipeline
-
-Chain validations together:
-
-```python
-from flext_core import r, p
+def validate_age(age: int) -> r[int]:
+    if age < 18:
+        return r[int].fail("Must be 18 or older")
+    return r[int].ok(age)
 
 
-def validate_password(password: str) -> p.Result[str]:
-    if len(password) < 8:
-        return r[str].fail("Password too short")
-    return r[str].ok(password)
-
-
-def validate_username(username: str) -> p.Result[str]:
-    if len(username) < 3:
-        return r[str].fail("Username too short")
-    return r[str].ok(username)
-
-
-# Chain validations (railway pattern)
-def register_user(username: str, password: str) -> p.Result[dict]:
-    return validate_username(username).flat_map(
-        lambda u: validate_password(password).map(
-            lambda p: {"username": u, "password": p}
-        )
+# Chain validations
+def validate_user_input(email: str, age: int) -> r[dict]:
+    return validate_email(email).flat_map(
+        lambda e: validate_age(age).map(lambda a: {"email": e, "age": a})
     )
 
 
-# Test it
-result = register_user("alice", "SecurePass123")
-if result.is_success:
-    data = result.value
-    print(f"Registered: {data['username']}")
-else:
-    print(f"Registration failed: {result.error}")
+result = validate_user_input("alice@example.com", 25)
+print(result.unwrap())  # {"email": "alice@example.com", "age": 25}
+
+result = validate_user_input("invalid", 15)
+print(result.error)  # "Must be 18 or older"
 ```
 
-### Use Case 2: Service with Dependency Injection
+### Example 2: Error Recovery
 
 ```python
-from flext_core import s, r, p, FlextContainer
+from flext_core import r
 
 
-class EmailService(s):
-    """Example service."""
-
-    def send_welcome_email(self, email: str) -> p.Result[str]:
-        """Send welcome email."""
-        if not email:
-            return r[str].fail("Email required")
-        # Send email logic here
-        return r[str].ok(f"Email sent to {email}")
+def fetch_user(user_id: int) -> r[dict]:
+    # Simulated failure
+    return r[dict].fail("User not found")
 
 
-# Register and use
-container = FlextContainer.get_global()
-email_service = EmailService()
-container.register("email_service", email_service, singleton=True)
+# Recover with default
+user = fetch_user(999).unwrap_or({"id": 0, "name": "Anonymous"})
+# user = {"id": 0, "name": "Anonymous"}
 
-# Retrieve and use
-service_result = container.get("email_service")
-if service_result.is_success:
-    service = service_result.value
-    send_result = service.send_welcome_email("user@example.com")
-    if send_result.is_success:
-        print(send_result.value)
+
+# Recover with recovery function
+def create_default_user(user_id: int) -> r[dict]:
+    return r[dict].ok({"id": user_id, "name": "Generated User"})
+
+
+result = (
+    fetch_user(999).lash(lambda _: create_default_user(999))  # Fallback on failure
+)
+print(result.unwrap())  # {"id": 999, "name": "Generated User"}
 ```
 
-### Use Case 3: Domain Models with Validation
+### Example 3: Structured Logging
+
+```python
+from flext_core import u
+
+# Get logger
+logger = u.fetch_logger("my_app")
+
+logger.info("User created", extra={"user_id": 123, "email": "alice@example.com"})
+logger.warning("High latency detected", extra={"ms": 5000})
+logger.error("Database connection failed", extra={"host": "localhost", "port": 5432})
+```
+
+### Example 4: Settings & Configuration
 
 ```python
 from pydantic import Field
-from flext_core import FlextModels, s, r
+from flext_core import FlextSettings
 
 
-class OrderItem(m.Value):
-    """Immutable order item."""
+class AppSettings(FlextSettings):
+    """Application configuration."""
 
-    product_id: str
-    quantity: int = Field(ge=1)  # >= 1
-    price: float = Field(gt=0)  # > 0
+    database_url: str = "sqlite://app.db"
+    debug: bool = False
+    log_level: str = "INFO"
 
-
-class Order(FlextModels.Entity):
-    """Order with identity."""
-
-    id: str
-    items: Sequence[OrderItem]
-    customer_id: str
+    class Config:
+        env_prefix = "FLEXT_APP_"  # Read: FLEXT_APP_DATABASE_URL, etc.
 
 
-class OrderService(s):
-    """Service with business logic."""
-
-    def create_order(self, customer_id: str, items: Sequence[dict]) -> p.Result[Order]:
-        """Create order with validation."""
-        if not customer_id:
-            return r[Order].fail("Customer ID required")
-
-        if not items:
-            return r[Order].fail("At least one item required")
-
-        # Create order
-        order_items = [OrderItem(**item) for item in items]
-        order = Order(id="ORD-001", items=order_items, customer_id=customer_id)
-
-        return r[Order].ok(order)
-
-
-# Use it
-service = OrderService()
-result = service.create_order(
-    customer_id="CUST-123",
-    items=[
-        {"product_id": "PROD-1", "quantity": 2, "price": 29.99},
-        {"product_id": "PROD-2", "quantity": 1, "price": 49.99},
-    ],
-)
-
-if result.is_success:
-    order = result.value
-    print(f"Order created: {order.entity_id} with {len(order.items)} items")
-else:
-    print(f"Order failed: {result.error}")
+# Load settings (from env or defaults)
+settings = FlextSettings.get_global()
+print(settings.database_url)  # From env or default
+print(settings.debug)  # From env or False
 ```
 
-### Use Case 4: Dispatcher-Driven CQRS
+## Common Patterns
 
-Route commands through the dispatcher to keep orchestration and side effects consistent:
+### Pattern: Batch Operations with Accumulation
 
 ```python
-from flext_core import FlextDispatcher, FlextRegistry, r, p, s
+from flext_core import r
 
 
-class CreateUser(s.Command):
-    """Command payload for creating users."""
+def process_items(items: list[str]) -> r[list[dict]]:
+    results = []
+    for item in items:
+        # For each item, validate and process
+        result = validate_and_process(item)  # Returns r[dict]
+        if result.success:
+            results.append(result.unwrap())
+        else:
+            # Fail fast on first error
+            return r[list[dict]].fail(result.error)
+
+    return r[list[dict]].ok(results)
 
 
-class UserService(s):
-    """Domain service implementing the command handler."""
+# Or accumulate errors
+def process_items_lenient(items: list[str]) -> r[dict]:
+    successes = []
+    failures = []
 
-    def handle_create_user(self, command: CreateUser) -> p.Result[str]:
-        if not command.email:
-            return r[str].fail("Email required")
-        # persist user and raise domain event here
-        return r[str].ok(command.email)
+    for item in items:
+        result = validate_and_process(item)
+        if result.success:
+            successes.append(result.unwrap())
+        else:
+            failures.append({"item": item, "error": result.error})
 
-
-registry = FlextRegistry()
-registry.register_command(CreateUser, UserService().handle_create_user)
-
-dispatcher = FlextDispatcher(registry=registry)
-result = dispatcher.dispatch(CreateUser(email="user@example.com"))
-
-if result.is_success:
-    print(f"Created: {result.value}")
+    return r[dict].ok({
+        "successful": successes,
+        "failed": failures,
+        "total": len(items),
+    })
 ```
 
-## Key Patterns Cheat Sheet
-
-### Pattern 1: Success/Failure Handling
+### Pattern: Conditional Logic
 
 ```python
-# Return r instead of raising exceptions
-def operation() -> p.Result[str]:
-    if something_wrong:
-        return r[str].fail("Error message")
-    return r[str].ok("Success value")
+from flext_core import r
 
 
-# Check result
-if result.is_success:
-    value = result.value
-else:
-    error = result.error
-```
+def process_order(order_id: int, is_premium: bool) -> r[str]:
+    # Get order
+    order = fetch_order(order_id)
+    if not order.success:
+        return r[str].fail(order.error)
 
-### Pattern 2: Transform Values
+    # Apply logic based on type
+    if is_premium:
+        result = apply_premium_discount(order.unwrap())
+    else:
+        result = apply_standard_discount(order.unwrap())
 
-```python
-# Use map() to transform success values
-result = (
-    r[int]
-    .ok(10)
-    .map(lambda x: x * 2)  # Transform to 20
-    .map(lambda x: f"Result: {x}")  # Transform to "Result: 20"
-)
-```
-
-### Pattern 3: Chain Operations
-
-```python
-# Use flat_map() to chain operations that return r
-result = (
-    get_user(user_id)  # Returns r[User]
-    .flat_map(lambda user: update_profile(user))  # Returns r[User]
-    .flat_map(lambda user: send_confirmation(user))  # Returns r[str]
-)
-```
-
-### Pattern 4: Error Recovery
-
-```python
-# Use map_error() to handle errors
-result = (
-    risky_operation().map_error(lambda err: f"Failed: {err}")  # Transform error
-)
-
-# Or provide fallback
-result = operation().unwrap_or("default value")
-```
-
-### Pattern 5: Access Both APIs
-
-```python
-# Both .data and .value work (backward compatibility)
-result = r[str].ok("test")
-assert result.value == result.data == "test"
-```
-
-## Testing Example
-
-```python
-import pytest
-from flext_core import r, p
-
-
-def test_validation_success():
-    """Test successful validation."""
-    result = validate_email("user@example.com")
-    assert result.is_success
-    assert result.value == "user@example.com"
-
-
-def test_validation_failure():
-    """Test failed validation."""
-    result = validate_email("invalid")
-    assert not result.is_success
-    assert "Invalid" in result.error
-
-
-def test_chained_operations():
-    """Test railway pattern chaining."""
-    result = r[int].ok(10).map(lambda x: x * 2).map(lambda x: x + 5)
-    assert result.is_success
-    assert result.value == 25
+    return result.map(lambda o: f"Order {o.id} processed")
 ```
 
 ## Next Steps
 
-- **Configuration**: Configuration Guide - Learn FlextSettings patterns
-- **Error Handling**: Error Handling Guide - Deep dive into railway patterns
-- **Testing**: Testing Guide - Testing with pytest and fixtures
-- **Architecture**: Clean Architecture - 5-layer patterns
-- **Patterns**: Architecture Patterns - 9 design patterns
-- **API Reference**: API Documentation - Complete API reference
-- **Troubleshooting**: Troubleshooting Guide - Common issues and fixes
+1. **Explore Modules**:
+   - `m.*` — Domain models & entities
+   - `c.*` — Global constants & error codes
+   - `p.*` — Protocol contracts
+   - `u.*` — Utility functions (guards, parsers, etc.)
 
-## Common Questions
+2. **Read Full Guides**: See [`docs/architecture/`](architecture/) for deeper dives
 
-**Q: Do I have to use r everywhere?**
-A: For business logic, yes. Railway pattern prevents error handling bugs. For external APIs, conversion at boundaries is fine.
+3. **Review Examples**: Check [`examples/`](../examples/) directory
 
-**Q: Can I use exceptions?**
-A: In infrastructure code (I/O, database), yes. But convert to r at domain layer boundaries.
+4. **Run Tests**: `make test` to see usage patterns in test suite
 
-**Q: Is FlextContainer a service locator anti-pattern?**
-A: No - it's the foundation for dependency injection. Dependency injection is preferred, but container can bootstrap services and provide global access.
+---
 
-**Q: What's the difference between .data and .value?**
-A: They're identical - both access the success value. `.data` is legacy, `.value` is current. Both work.
-
-**Q: How do I handle async operations?**
-A: r works with async/await normally:
-
-```python
-async def get_user_async(user_id: str) -> p.Result[User]:
-    if not user_id:
-        return r[User].fail("User ID required")
-    user = await fetch_from_database(user_id)
-    return r[User].ok(user)
-
-
-# Use it
-result = await get_user_async("123")
-if result.is_success:
-    user = result.value
-```
-
-**Q: Can I create custom exception types?**
-A: Yes, but prefer r for business errors. Custom exceptions for framework/infrastructure errors are fine.
-
-**Q: Where do I put my code?**
-A: Follow clean architecture layers:
-
-- **Domain**: Business logic (models, services, validation)
-- **Application**: Use cases (commands, queries, handlers)
-- **Infrastructure**: External dependencies (databases, APIs, settings)
-
-## Command Reference
-
-```bash
-# Run tests
-PYTHONPATH=src poetry run pytest tests/unit/ -v
-
-# Check types
-PYTHONPATH=src poetry run pyrefly check src/
-
-# Lint code
-ruff check .
-
-# Format code
-ruff format .
-
-# Full validation (recommended before commit)
-make validate
-```
-
-## Quick Reference
-
-| Task                    | Code                                   |
-| ----------------------- | -------------------------------------- |
-| **Return Success**      | `r[T].ok(value)`             |
-| **Return Error**        | `r[T].fail("error message")` |
-| **Check Success**       | `result.is_success`                    |
-| **Extract Value**       | `result.value`                         |
-| **Get Error**           | `result.error`                         |
-| **Transform Value**     | `result.map(lambda x: x * 2)`          |
-| **Chain Operations**    | `result.flat_map(next_operation)`      |
-| **Register Service**    | `container.register("name", service)`  |
-| **Get Service**         | `container.get("name")`                |
-| **Create Entity**       | `User(id="1", name="Alice")`           |
-| **Create Value Object** | `Email(address="alice@example.com")`   |
-
-## Getting Help
-
-- **Documentation**: See guides/ and api-reference/
-- **Troubleshooting**: See guides/troubleshooting.md
-- **Examples**: Check examples/ directory
-- **Issues**: Report bugs on GitHub
-
-______________________________________________________________________
-
-**Ready to dive deeper?** Start with the Configuration Guide to learn how to configure FLEXT-Core for your application.
-
-```
-```
+**Questions?** File an issue or check [CONTRIBUTING.md](../CONTRIBUTING.md).

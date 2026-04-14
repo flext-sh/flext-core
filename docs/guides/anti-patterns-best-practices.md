@@ -34,7 +34,7 @@
 - [See Also](#see-also)
 <!-- TOC END -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Focus**: Common FLEXT-Core mistakes and solutions
+**Status**: Current | **Version**: 0.12.0-dev | **Focus**: Common FLEXT-Core mistakes and solutions
 
 This guide documents common anti-patterns found in FLEXT ecosystem projects and their correct solutions. Every pattern includes code examples from the actual codebase.
 
@@ -99,7 +99,7 @@ def validate_user(data: dict) -> p.Result[User]:
 
 # Caller handles results
 result = validate_user(data)
-if result.is_success:
+if result.success:
     user = result.value
 else:
     print(f"Validation failed: {result.error}")
@@ -238,15 +238,15 @@ def process_data(
 
 
 # Or with generics
-class Container(Generic[T]):
+class GenericBox(Generic[T]):
     def process(self, data: T) -> T:
         """Generic preserves type."""
         return data
 
 
 # Type checker knows exact type when used
-container = Container[str]()
-result = container.process("hello")  # Type is str
+generic_box = GenericBox[str]()
+result = generic_box.process("hello")  # Type is str
 ```
 
 ### Anti-Pattern 5: Untyped Container Retrieval
@@ -258,7 +258,7 @@ result = container.process("hello")  # Type is str
 from flext_core import FlextContainer
 
 container = FlextContainer.get_global()
-logger = container.get("logger").value  # Type is t.RecursiveContainer
+logger = container.resolve("logger").value  # Type is t.RecursiveContainer
 logger.debug("Message")  # IDE doesn't know if debug() exists
 ```
 
@@ -271,8 +271,8 @@ from flext_core import FlextContainer, FlextLogger
 container = FlextContainer.get_global()
 
 # Type-safe retrieval
-result = container.get_typed("logger", FlextLogger)
-if result.is_success:
+result = container.resolve("logger", type_cls=FlextLogger)
+if result.success:
     logger: FlextLogger = result.value
     logger.debug("Message")  # IDE knows FlextLogger methods
 ```
@@ -494,12 +494,12 @@ ______________________________________________________________________
 # ❌ ANTI-PATTERN - Multiple containers
 def service_a():
     container = FlextContainer()  # New container
-    return container.get("logger")
+    return container.resolve("logger")
 
 
 def service_b():
     container = FlextContainer()  # DIFFERENT container!
-    return container.get("logger")
+    return container.resolve("logger")
 
 
 # service_a and service_b get different logger instances!
@@ -518,12 +518,12 @@ def service_b():
 # ✅ CORRECT - Global singleton
 def service_a():
     container = FlextContainer.get_global()  # Same instance
-    return container.get("logger")
+    return container.resolve("logger")
 
 
 def service_b():
     container = FlextContainer.get_global()  # Same instance!
-    return container.get("logger")
+    return container.resolve("logger")
 
 
 # Both get same logger instance
@@ -539,8 +539,8 @@ assert service_a() is service_b()
 from flext_core import FlextContainer
 
 container = FlextContainer.get_global()
-logger = container.get("logger").value  # May crash
-service = container.get("non_existent").value  # CRASH!
+logger = container.resolve("logger").value  # May crash
+service = container.resolve("non_existent").value  # CRASH!
 ```
 
 **Why it's wrong**:
@@ -559,8 +559,8 @@ from flext_core import FlextContainer
 container = FlextContainer.get_global()
 
 # Check result
-logger_result = container.get("logger")
-if logger_result.is_failure:
+logger_result = container.resolve("logger")
+if logger_result.failure:
     print(f"Logger not available: {logger_result.error}")
     return r[bool].fail("Logger unavailable")
 
@@ -633,7 +633,7 @@ def create_user(data: dict) -> p.Result[User]:
 
 # Usage
 result = create_user({"email": "invalid", "age": -5})
-if result.is_success:
+if result.success:
     user = result.value
 else:
     print(f"User creation failed: {result.error}")
@@ -830,7 +830,7 @@ ______________________________________________________________________
 ### Type Safety
 
 - ✅ Use specific types, not `Any`
-- ✅ Use `get_typed()` for container retrieval
+- ✅ Use `resolve(name, type_cls=Type)` for typed container retrieval
 - ✅ Add type hints to all parameters
 - ❌ Don't use `type: ignore` without justification
 - ❌ Don't lose type information
@@ -890,7 +890,7 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-**Updated**: 2025-12-07 | **Version**: 0.10.0 | **Based on**: Actual FLEXT ecosystem patterns and lessons learned
+**Updated**: 2026-04-14 | **Version**: 0.12.0-dev | **Based on**: Actual FLEXT ecosystem patterns and lessons learned
 
 ```
 ```

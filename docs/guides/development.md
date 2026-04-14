@@ -254,14 +254,14 @@ class TestDataProcessing:
         data = {"key": "value"}
         result = process_data(data)
 
-        assert result.is_success
+        assert result.success
         assert result.unwrap().key == "value"
 
     def test_process_invalid_data(self):
         """Test processing invalid data."""
         result = process_data(None)
 
-        assert result.is_failure
+        assert result.failure
         assert "Data required" in result.failure()
 ```
 
@@ -417,7 +417,7 @@ def process_data(data: t.RecursiveContainerMapping) -> p.Result[ProcessedData]:
 
     Example:
         >>> result = process_data({"key": "value"})
-        >>> if result.is_success:
+        >>> if result.success:
         ...     processed = result.unwrap()
     """
     # Implementation here

@@ -116,11 +116,11 @@ Lightweight DI container with explicit lifecycles that works cleanly with dispat
 from flext_core import FlextContainer, FlextLogger
 
 container = FlextContainer.get_global()
-container.register("logger", u.fetch_logger(__name__), singleton=True)
+container.bind("logger", u.fetch_logger(__name__))
 
-logger_result = container.get("logger")
-if logger_result.is_success:
-    logger = logger_result.value
+logger_result = container.resolve("logger")
+if logger_result.success:
+    logger = logger_result.unwrap()
     logger.info("Application started")
 ```
 

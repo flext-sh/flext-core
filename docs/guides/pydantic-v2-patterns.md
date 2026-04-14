@@ -25,7 +25,7 @@
 - [See Also](#see-also)
 <!-- TOC END -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Target**: flext-core and dependent projects
+**Status**: Current | **Version**: 0.12.0-dev | **Target**: flext-core and dependent projects
 
 This guide documents essential Pydantic v2 patterns used throughout the FLEXT ecosystem, with examples from the codebase.
 
@@ -617,7 +617,7 @@ def validate_user(data: dict) -> p.Result[UserModel]:
 
 # Usage
 result = validate_user({"email": "user@example.com", "password": "secret123"})
-if result.is_success:
+if result.success:
     user = result.value
 else:
     print(f"Validation failed: {result.error}")
@@ -721,7 +721,7 @@ ______________________________________________________________________
 
 **Example from FLEXT**: See `src/flext_core/settings.py` (423 lines) for comprehensive Pydantic v2 usage patterns in production code.
 
-**Updated**: 2025-12-07 | **Version**: 0.10.0 | **Pydantic**: v2.12.3+
+**Updated**: 2026-04-14 | **Version**: 0.12.0-dev | **Pydantic**: v2.12.3+
 
 ```
 ```

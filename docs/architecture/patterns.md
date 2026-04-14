@@ -18,7 +18,7 @@
 - [See Also](#see-also)
 <!-- TOC END -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
+**Status**: Current | **Version**: 0.12.0-dev | **Date**: 2026-04-14
 
 Common architectural patterns used in FLEXT-Core and best practices for applying them.
 
@@ -68,12 +68,12 @@ container = FlextContainer.get_global()
 
 # Register services
 logger = u.fetch_logger(__name__)
-container.register("logger", logger, singleton=True)
+container.bind("logger", logger)
 
 # Resolve services
-logger_result = container.get("logger")
-if logger_result.is_success:
-    logger = logger_result.value
+logger_result = container.resolve("logger")
+if logger_result.success:
+    logger = logger_result.unwrap()
     logger.info("Message")
 ```
 
@@ -273,7 +273,7 @@ class UserService:
         result = self.repository.get_by_id(user_id)
 
         # Cache on success
-        if result.is_success:
+        if result.success:
             user = result.value
             self.cache.set(f"user:{user_id}", user, ttl=3600)
 
@@ -331,7 +331,7 @@ def register_user(username: str, email: str, password: str) -> p.Result[dict]:
 
 # Test
 result = register_user("alice", "alice@example.com", "SecurePass123")
-if result.is_success:
+if result.success:
     print(f"✅ {result.value}")
 else:
     print(f"❌ {result.error}")
@@ -451,7 +451,7 @@ class UserFactory:
 
 # Usage
 result = UserFactory.create_user("REDACTED_LDAP_BIND_PASSWORD", name="Alice")
-if result.is_success:
+if result.success:
     REDACTED_LDAP_BIND_PASSWORD = result.value
 ```
 

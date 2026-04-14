@@ -37,7 +37,7 @@ FLEXT is an enterprise-grade data integration platform built with Python 3.13+ a
 - **Type Safety**: Full Pydantic v2 integration
 - **Enterprise Patterns**: CQRS, Railway-oriented programming, Dependency Injection
 - **Extensible**: Plugin architecture with flext-core patterns
-- **Production Ready**: Comprehensive testing, monitoring, and error handling
+- **Current**: Comprehensive testing, monitoring, and error handling
 
 ## Prerequisites
 
@@ -123,7 +123,7 @@ from flext_core import u
 container = FlextContainer()
 
 # Register services (example)
-# container.register(IService, ServiceImplementation())
+# container.bind(IService, ServiceImplementation())
 
 print("FLEXT application initialized!")
 ```
@@ -142,7 +142,7 @@ sn: user
 objectClass: inetOrgPerson"""
 
 result = ldif.parse(ldif_content)
-if result.is_success:
+if result.success:
     entries = result.unwrap()
     print(f"Successfully parsed {len(entries)} LDIF entries")
 else:
@@ -176,7 +176,7 @@ from flext_core import u
 def process_ldif_data(content: str) -> p.Result[str, Exception]:
     # Parse LDIF
     parse_result = ldif.parse(content)
-    if parse_result.is_failure:
+    if parse_result.failure:
         return r.failure(parse_result.failure())
 
     entries = parse_result.unwrap()
@@ -196,7 +196,7 @@ def process_entries(entries: list) -> str:
 
 # Usage
 result = process_ldif_data(ldif_content)
-if result.is_success:
+if result.success:
     print(f"Success: {result.unwrap()}")
 else:
     print(f"Error: {result.failure()}")

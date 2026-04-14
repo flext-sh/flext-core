@@ -30,7 +30,7 @@
 - [See Also](#see-also)
 <!-- TOC END -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Railway-Oriented Programming
+**Status**: Current | **Version**: 0.12.0-dev | **Pattern**: Railway-Oriented Programming
 
 Comprehensive guide to error handling strategies in FLEXT-Core using the railway-oriented programming pattern with r[T].
 
@@ -78,17 +78,17 @@ from flext_core import r, p
 result = r[str].ok("value")
 
 # Check success state
-if result.is_success:
+if result.success:
     value = result.value
     print(f"Success: {value}")
 
 # Check failure state
-if result.is_failure:
+if result.failure:
     error = result.error
     print(f"Error: {error}")
 
 # Alternative check
-if not result.is_success:
+if result.failure:
     print(f"Failed with: {result.error}")
 ```
 
@@ -109,7 +109,7 @@ value = result.unwrap_or(0)  # 42
 value = result.unwrap_or_else(lambda e: 0)  # 42
 
 # Both .data and .value work (backward compatibility)
-data = result.data  # 42
+data = result.value  # 42
 value = result.value  # 42
 ```
 
@@ -156,7 +156,7 @@ email_result = (
     .flat_map(send_confirmation)
 )
 
-if email_result.is_success:
+if email_result.success:
     print(f"✅ {email_result.value}")
 else:
     print(f"❌ {email_result.error}")
@@ -293,7 +293,7 @@ def register_user(username: str, email: str, password: str) -> p.Result[str]:
 
 # Test
 result = register_user("alice", "alice@example.com", "SecurePass123")
-if result.is_success:
+if result.success:
     print(f"✅ {result.value}")
 else:
     print(f"❌ {result.error}")
@@ -346,7 +346,7 @@ result = (
     .flat_map(repo.save_user)
 )
 
-if result.is_success:
+if result.success:
     print(f"✅ {result.value}")
 else:
     print(f"❌ {result.error}")
@@ -390,7 +390,7 @@ class ExternalService:
 service = ExternalService()
 
 result = service.get_user_data("123")
-if result.is_success:
+if result.success:
     print(f"User: {result.value}")
 else:
     print(f"Error: {result.error}")
@@ -413,7 +413,7 @@ def fallback_operation() -> p.Result[str]:
 # Try primary, fall back on failure
 result = risky_operation()
 
-if result.is_failure:
+if result.failure:
     result = fallback_operation()
 
 print(f"Result: {result.value}")  # "Fallback operation succeeded"
@@ -443,7 +443,7 @@ def process_items(items: List[str]) -> p.Result[List[str]]:
 
     for item in items:
         result = process_item(item)
-        if result.is_success:
+        if result.success:
             results.append(result.value)
         else:
             errors.append(result.error)
@@ -466,7 +466,7 @@ def process_item(item: str) -> p.Result[str]:
 
 # Usage
 result = process_items(["item1", "item2", "item3"])
-if result.is_success:
+if result.success:
     print(f"✅ Processed: {result.value}")
 else:
     print(f"❌ {result.error}")
@@ -492,7 +492,7 @@ def withdraw_from_account(amount: float, balance: float) -> p.Result[float]:
 
 # Usage
 result = withdraw_from_account(100, 50)
-if result.is_failure:
+if result.failure:
     print(f"Transaction failed: {result.error}")  # Clear, user-facing
 ```
 
@@ -548,10 +548,10 @@ result = (
 
 # ❌ WRONG - Messy error checking
 user_id = get_user_id()
-if user_id.is_failure:
+if user_id.failure:
     return user_id
 validation = validate_user(user_id.value)
-if validation.is_failure:
+if validation.failure:
     return validation
 # ... etc
 ```
@@ -578,7 +578,7 @@ def api_handler(request) -> dict:
     """Handle API request."""
     result = process_request(request)
 
-    if result.is_success:
+    if result.success:
         return {"status": "success", "data": result.value}
     else:
         logger.error(f"Request failed: {result.error}")

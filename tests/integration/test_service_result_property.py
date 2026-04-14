@@ -41,7 +41,6 @@ class TestServiceResultProperty:
     ) -> None:
         """V2: .result returns unwrapped domain result directly."""
         service = u.Core.Tests.ServiceTestCases.create_service(case)
-        assert isinstance(service, u.Core.Tests.GetUserService)
         user_raw = service.result
         assert isinstance(user_raw, m.Core.Tests.User)
         user = user_raw
@@ -57,7 +56,6 @@ class TestServiceResultProperty:
     ) -> None:
         """V2: Validation success returns unwrapped value."""
         service = u.Core.Tests.ServiceTestCases.create_service(case)
-        assert isinstance(service, u.Core.Tests.ValidatingService)
         result = service.result
         assert isinstance(result, str)
         assert case.input_value is not None
@@ -73,14 +71,13 @@ class TestServiceResultProperty:
     ) -> None:
         """V2: Validation failure raises exception."""
         service = u.Core.Tests.ServiceTestCases.create_service(case)
-        assert isinstance(service, u.Core.Tests.ValidatingService)
         with pytest.raises(e.BaseError) as exc_info:
             _ = service.result
         assert case.expected_error and case.expected_error in str(exc_info.value)
 
     def test_result_property_raises_on_failure(self) -> None:
         """V2: Failures raise exceptions immediately."""
-        service = u.Core.Tests.FailingService.model_construct(
+        service = u.Core.Tests.FailingService(
             error_message="Test error",
         )
         with pytest.raises(e.BaseError) as exc_info:
@@ -94,7 +91,6 @@ class TestServiceResultProperty:
     ) -> None:
         """V2: Type checkers infer correct type."""
         service = u.Core.Tests.ServiceTestCases.create_service(case)
-        assert isinstance(service, u.Core.Tests.GetUserService)
         user_raw = service.result
         assert isinstance(user_raw, m.Core.Tests.User)
         user = user_raw
@@ -107,7 +103,6 @@ class TestServiceResultProperty:
     ) -> None:
         """V2: Property is lazily evaluated (executes only when accessed)."""
         service = u.Core.Tests.ServiceTestCases.create_service(case)
-        assert isinstance(service, u.Core.Tests.GetUserService)
         user_raw = service.result
         assert isinstance(user_raw, m.Core.Tests.User)
         user = user_raw
@@ -120,17 +115,16 @@ class TestServiceResultProperty:
     ) -> None:
         """V1: .execute() continues to work."""
         service = u.Core.Tests.ServiceTestCases.create_service(case)
-        assert isinstance(service, u.Core.Tests.GetUserService)
         result = service.execute()
         assert isinstance(result, r)
-        _ = u.Core.Tests.assert_success(result)
+        assert result.success
         user = result.value
         assert isinstance(user, m.Core.Tests.User)
         assert user.id == case.input_value
 
     def test_v1_error_handling_with_flext_result(self) -> None:
         """V1: Error handling via r pattern."""
-        service = u.Core.Tests.FailingService.model_construct(
+        service = u.Core.Tests.FailingService(
             error_message="Test failure",
         )
         result = service.execute()
@@ -145,7 +139,6 @@ class TestServiceResultProperty:
     ) -> None:
         """V1: Railway pattern composition with map."""
         service = u.Core.Tests.ServiceTestCases.create_service(case)
-        assert isinstance(service, u.Core.Tests.GetUserService)
         result = (
             service
             .execute()
@@ -165,8 +158,6 @@ class TestServiceResultProperty:
         """V2 and V1 should return equivalent results."""
         service1 = u.Core.Tests.ServiceTestCases.create_service(case)
         service2 = u.Core.Tests.ServiceTestCases.create_service(case)
-        assert isinstance(service1, u.Core.Tests.GetUserService)
-        assert isinstance(service2, u.Core.Tests.GetUserService)
         user_v2_raw = service1.result
         assert isinstance(user_v2_raw, m.Core.Tests.User)
         user_v2 = user_v2_raw
@@ -185,7 +176,6 @@ class TestServiceResultProperty:
     ) -> None:
         """Verify .result is a Pydantic computed_field."""
         service = u.Core.Tests.ServiceTestCases.create_service(case)
-        assert isinstance(service, u.Core.Tests.GetUserService)
         user_raw = service.result
         assert isinstance(user_raw, m.Core.Tests.User)
         user = user_raw
@@ -198,7 +188,6 @@ class TestServiceResultProperty:
     ) -> None:
         """Computed fields behavior in model_dump."""
         service = u.Core.Tests.ServiceTestCases.create_service(case)
-        assert isinstance(service, u.Core.Tests.GetUserService)
         dump = service.model_dump(exclude={"access", "runtime"})
         assert "user_id" in dump
         user_raw = service.result
@@ -208,7 +197,7 @@ class TestServiceResultProperty:
 
     def test_property_behavior_edge_cases(self) -> None:
         """Test property behavior edge cases."""
-        service = u.Core.Tests.GetUserService.model_construct(user_id="prop")
+        service = u.Core.Tests.GetUserService(user_id="prop")
         user1 = service.result
         user2 = service.result
         assert isinstance(user1, m.Core.Tests.User)
@@ -220,18 +209,18 @@ class TestServiceResultProperty:
 
     def test_result_property_comprehensive_edge_cases(self) -> None:
         """Test comprehensive edge cases."""
-        user_result = u.Core.Tests.GetUserService.model_construct(
+        user_result = u.Core.Tests.GetUserService(
             user_id="edge",
         ).result
         assert isinstance(user_result, m.Core.Tests.User)
-        validation_result = u.Core.Tests.ValidatingService.model_construct(
+        validation_result = u.Core.Tests.ValidatingService(
             value_input="edge",
         ).result
         assert isinstance(validation_result, str)
         assert validation_result == "EDGE"
         with pytest.raises(e.BaseError):
-            u.Core.Tests.FailingService.model_construct(error_message="").result
-        service = u.Core.Tests.FailingService.model_construct(
+            u.Core.Tests.FailingService(error_message="").result
+        service = u.Core.Tests.FailingService(
             error_message="fail",
         )
         assert isinstance(service.execute(), r)

@@ -196,7 +196,7 @@ These are mentioned but need source verification:
 
 Need to search for:
 
-- Properties: `is_success`, `is_failure`, `value`, `error`, `error_code`, `error_data`
+- Properties: `success`, `failure`, `value`, `error`, `error_code`, `error_data`
 - Instance methods: `unwrap()`, `unwrap_or()`, `map_error()`, `recover()`, `tap()`
 - Operators: `__or__`, `__bool__`, `__iter__`
 

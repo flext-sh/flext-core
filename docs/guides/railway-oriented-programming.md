@@ -42,7 +42,7 @@
 - [See Also](#see-also)
 <!-- TOC END -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Coverage**: 100% type-safe
+**Status**: Current | **Version**: 0.12.0-dev | **Coverage**: 100% type-safe
 
 Railway-Oriented Programming (ROP) is a functional programming pattern that treats error handling as a first-class citizen. Instead of raising exceptions, operations return results that encapsulate either success or failure, enabling predictable error propagation through monadic composition.
 
@@ -123,21 +123,21 @@ from flext_core import r, p
 result = r[int].ok(42)
 
 # Check state with properties
-if result.is_success:
+if result.success:
     print(f"Success: {result.value}")
 
-if result.is_failure:
+if result.failure:
     print(f"Error: {result.error}")
 
 # Alternative names (same behavior)
 if result.success:
     print("Succeeded")
 
-if result.failed:
+if result.failure:
     print("Failed")
 
 # Access error details
-if result.is_failure:
+if result.failure:
     message = result.error  # str
     code = result.error_code  # str | None
     data = result.error_data  # t.RecursiveContainer
@@ -159,7 +159,7 @@ value = result.value  # Returns str, raises on failure
 value = result.value  # Returns str, raises on failure
 
 # 3. Via properties (safe)
-if result.is_success:
+if result.success:
     value = result.value  # Type-safe - we know it's success
 
 # All three throw ValidationError on failure:
@@ -213,7 +213,7 @@ result = (
     .flat_map(send_verification)  # If success, send email
 )
 
-if result.is_success:
+if result.success:
     print(f"✅ {result.value}")
 else:
     print(f"❌ {result.error}")
@@ -252,7 +252,7 @@ assert final.value == 6
 # map ignores failures (they pass through unchanged)
 failed = r[str].fail("Error")
 result = failed.map(str.upper)  # Still fails, map is skipped
-assert result.is_failure
+assert result.failure
 ```
 
 ### filter: Conditional Success
@@ -271,19 +271,19 @@ def is_adult(age: int) -> bool:
 result = (
     r[int].ok(25).filter(is_adult)  # Predicate passes
 )
-assert result.is_success and result.value == 25
+assert result.success and result.value == 25
 
 # Failure case
 result = (
     r[int].ok(16).filter(is_adult)  # Predicate fails
 )
-assert result.is_failure
+assert result.failure
 
 # With custom error message
 from flext_core import r, p
 
 result = r[int].ok(16).filter(is_adult, failure_message="User must be 18 or older")
-assert result.is_failure
+assert result.failure
 assert "18 or older" in result.error
 ```
 
@@ -306,7 +306,7 @@ def fetch_user(user_id: str) -> p.Result[dict]:
 result = fetch_user("missing").recover(
     lambda error: {"id": "guest", "name": "Guest User"}
 )
-assert result.is_success
+assert result.success
 assert result.value["name"] == "Guest User"  # Fallback used
 
 
@@ -341,7 +341,7 @@ def parse_config(settings: str) -> p.Result[dict]:
 
 # Transform error message
 result = parse_config("invalid").map_error(lambda e: f"Configuration error: {e}")
-assert result.is_failure
+assert result.failure
 assert "Configuration error" in result.error
 
 # Chain map_error
@@ -372,12 +372,12 @@ def parse_json_unsafe(text: str) -> dict:
 
 # Safe wrapper
 result = r[dict].safe_call(parse_json_unsafe, '{"valid": "json"}')
-assert result.is_success
+assert result.success
 assert result.value["valid"] == "json"
 
 # With invalid input
 result = r[dict].safe_call(parse_json_unsafe, "invalid json")
-assert result.is_failure
+assert result.failure
 assert "Expecting" in result.error  # JSONDecodeError message
 
 
@@ -387,10 +387,10 @@ def divide(a: int, b: int) -> float:
 
 
 result = r[float].safe_call(divide, 10, 0)
-assert result.is_failure  # Catches ZeroDivisionError
+assert result.failure  # Catches ZeroDivisionError
 
 result = r[float].safe_call(divide, 10, 2)
-assert result.is_success
+assert result.success
 assert result.value == 5.0
 ```
 
@@ -416,7 +416,7 @@ def risky_operation() -> p.Result[str]:
 
 
 result = risky_operation()
-assert result.is_failure
+assert result.failure
 assert "invalid literal" in result.error
 assert result.error_code == "PARSE_ERROR"
 
@@ -425,7 +425,7 @@ try:
     data = json.loads("{invalid json}")
 except json.JSONDecodeError as e:
     result = r[dict].from_exception(e, error_code="JSON_ERROR")
-    assert result.is_failure
+    assert result.failure
 ```
 
 **Source**: `src/flext_core/result.py`
@@ -448,7 +448,7 @@ def fetch_backup() -> p.Result[dict]:
 
 # Try primary, fallback to backup
 result = fetch_primary().or_else(lambda _: fetch_backup())
-assert result.is_success
+assert result.success
 assert result.value["source"] == "backup"
 
 
@@ -466,7 +466,7 @@ result = (
     .or_else(lambda _: fetch_primary())  # Still fails
     .or_else(lambda _: fetch_backup())  # This succeeds
 )
-assert result.is_success
+assert result.success
 ```
 
 **Source**: `src/flext_core/result.py`
@@ -528,7 +528,7 @@ result = (
     .flat_map(create_user)
 )
 
-if result.is_success:
+if result.success:
     print(f"✅ User created: {result.value}")
 else:
     print(f"❌ Registration failed: {result.error}")
@@ -566,7 +566,7 @@ def fetch_data_with_fallback(key: str) -> p.Result[dict]:
     primary = fetch_primary_data(key)
 
     # If primary succeeds, use it
-    if primary.is_success:
+    if primary.success:
         return primary
 
     # If primary fails, try backup
@@ -634,7 +634,7 @@ result = (
     .flat_map(execute_transaction)
 )
 
-if result.is_success:
+if result.success:
     tx = result.value
     print(f"✅ Transaction {tx['transaction_id']} completed")
 else:
@@ -712,7 +712,7 @@ result = (
     .flat_map(apply_defaults)
 )
 
-if result.is_success:
+if result.success:
     print("✅ Configuration loaded successfully")
     settings = result.value
 else:
@@ -742,10 +742,10 @@ def validate_all_items(items: t.StrSequence) -> p.Result[t.StrSequence]:
 
 
 result = validate_all_items(["valid", "item", "too"])  # Short "too" causes failure
-assert result.is_failure
+assert result.failure
 
 result = validate_all_items(["valid", "item", "check"])  # All valid
-assert result.is_success
+assert result.success
 assert result.value == ["valid", "item", "check"]
 ```
 
@@ -771,7 +771,7 @@ result = (
     .lash(lambda error: p.Result[int].ok(0))  # Use 0 as default
 )
 
-assert result.is_success
+assert result.success
 assert result.value == 0  # Recovered with default
 ```
 
@@ -805,7 +805,7 @@ result = r.with_resource(
     close_connection,
 )
 
-if result.is_success:
+if result.success:
     print(f"✅ {result.value}")
 ```
 
@@ -834,7 +834,7 @@ def fetch_user_data(user_id: str) -> dict:
 
 # Usage - result is automatically wrapped in r
 result = fetch_user_data("user_123")
-if result.is_success:
+if result.success:
     user = result.value
 else:
     print(f"Failed after retries: {result.error}")
@@ -862,7 +862,7 @@ def expensive_computation(data: Sequence[float]) -> float:
 
 # Usage - timeout protection automatic
 result = expensive_computation([1.0, 2.0, 3.0])
-if result.is_failure and "timed out" in result.error:
+if result.failure and "timed out" in result.error:
     print("Operation exceeded timeout")
 ```
 
@@ -896,7 +896,7 @@ def fetch_external_data(api_url: str) -> dict:
 # Usage - all infrastructure automatic
 result = fetch_external_data("https://api.example.com/data")
 
-if result.is_success:
+if result.success:
     data = result.value
     logger.info("Data fetched successfully", extra={"size": len(data)})
 else:
@@ -937,7 +937,7 @@ def process_order(order_data: dict) -> dict:
 
 # Usage - single decorator handles everything
 result = process_order({"order_id": "123", "items": [...]})
-if result.is_success:
+if result.success:
     print(f"Order processed: {result.value['order_id']}")
 ```
 
@@ -982,7 +982,7 @@ def create_and_process_order(order_data: dict) -> p.Result[dict]:
 
 # Usage
 result = create_and_process_order({"items": [...], "total": 100.0})
-if result.is_success:
+if result.success:
     print(f"✅ Order {result.value['id']} created")
 else:
     print(f"❌ {result.error}")
@@ -1033,11 +1033,11 @@ return r[dict].fail(
 # ❌ IMPERATIVE - Manual error checking
 def old_way(data):
     step1 = validate(data)
-    if not step1.is_success:
+    if step1.failure:
         return step1
 
     step2 = process(step1.value)
-    if not step2.is_success:
+    if step2.failure:
         return step2
 
     step3 = finalize(step2.value)
@@ -1075,7 +1075,7 @@ result = r[str].ok("value")
 
 # Both .value and .data access the same wrapped value
 assert result.value == "value"
-assert result.data == "value"  # Backward compatible alias
+assert result.value == "value"  # Backward compatible alias
 
 # Both raise ValidationError on failure
 failed = r[str].fail("Error")

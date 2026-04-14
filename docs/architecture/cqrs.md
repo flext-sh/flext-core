@@ -41,8 +41,8 @@
 - [Verification Commands](#verification-commands)
 <!-- TOC END -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
-**Python:** 3.13+ | **Pydantic:** 2.x
+**Status**: Current | **Version**: 0.12.0-dev | **Date**: 2026-04-14
+**Python**: 3.13+ | **Pydantic**: v2
 
 This document describes the Command Query Responsibility Segregation (CQRS)
 implementation in flext-core, including the handler pipeline, dispatcher
@@ -206,9 +206,9 @@ dispatch(message)
 dispatcher.register_handler(CreateUserCommand, handler)
 
 # Register with explicit mode
-dispatcher.register_command(CreateUserCommand, handler)
-dispatcher.register_query(GetUserQuery, handler)
-dispatcher.register_event(UserCreatedEvent, handler)
+dispatcher.register_handler(CreateUserCommand, handler)
+dispatcher.register_handler(GetUserQuery, handler)
+dispatcher.register_handler(UserCreatedEvent, handler)
 ```
 
 > **TODO(dispatcher.py::FlextDispatcher.**init**):** Accept `container` parameter
@@ -226,7 +226,7 @@ class CreateUserHandler(h[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> p.Result[User]:
         # Handler orchestrates
         validation_result = ValidateEmailService(email=command.email).execute()
-        if validation_result.is_failure:
+        if validation_result.failure:
             return r[User].fail(validation_result.error or "Validation failed")
 
         # Service executes domain logic
@@ -285,7 +285,7 @@ Target API:
 
 ```python
 container = FlextContainer.get_global()
-container.register("circuit_breaker", CustomCircuitBreaker())
+container.bind("circuit_breaker", CustomCircuitBreaker())
 
 dispatcher = FlextDispatcher(container=container)
 ```
@@ -354,8 +354,8 @@ ______________________________________________________________________
 | **Logging**               | Inconsistente, pouco usado                | `self.logger` automático                 |
 | **Tracking**              | Manual ou inexistente                     | `self.track()` automático                |
 | **Managers (Dispatcher)** | Hardcoded (700+ linhas)                   | Injetados via FlextContainer             |
-| **Circuit Breaker**       | `self._circuit_breaker` interno           | `container.get("circuit_breaker")`       |
-| **Rate Limiter**          | `self._rate_limiter` interno              | `container.get("rate_limiter")`          |
+| **Circuit Breaker**       | `self._circuit_breaker` interno           | `container.resolve("circuit_breaker")`       |
+| **Rate Limiter**          | `self._rate_limiter` interno              | `container.resolve("rate_limiter")`          |
 
 ### Timeline
 

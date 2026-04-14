@@ -1198,7 +1198,8 @@ class FlextContext(m.ArbitraryTypesModel):
 
             Returns:
                 Result containing the service instance or error.
-                Use get_typed() or type identity / MRO checks for type narrowing.
+                Use resolve(..., type_cls=...) or type identity / MRO checks
+                for type narrowing.
 
             Example:
                 >>> result = FlextContext.Service.fetch_service("logger")

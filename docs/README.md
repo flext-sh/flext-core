@@ -16,7 +16,7 @@ Comprehensive reference and guidance for FLEXT-Core, the dispatcher-first founda
 
 ## Scope and Compatibility
 
-- **Version:** 0.9.9
+- **Version:** 0.12.0-dev
 - **Python:** 3.13+ (per `pyproject.toml`)
 - **Architecture:** Dispatcher-centric CQRS with `r`, `FlextContainer`, `FlextDispatcher`, and DDD primitives.
 

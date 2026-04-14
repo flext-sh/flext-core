@@ -4,9 +4,8 @@
 - [Canonical Rules](#canonical-rules)
 - [Overview](#overview)
 - [Execution Patterns](#execution-patterns)
-  - [V1: Explicit Execution (✅ Production Ready)](#v1-explicit-execution-production-ready)
-  - [V2 Property: `.result` (🟡 Under Validation)](#v2-property-result-under-validation)
-  - [V2 Auto: `auto_execute` (🟡 Under Validation)](#v2-auto-autoexecute-under-validation)
+  - [V1: Explicit Execution (✅ Current)](#v1-explicit-execution-production-ready)
+    - [V2 Property: `.result` (✅ Available)](#v2-property-result-available)
 - [Infrastructure Properties](#infrastructure-properties)
   - [Example with Infrastructure](#example-with-infrastructure)
 - [Composition Patterns](#composition-patterns)
@@ -18,7 +17,7 @@
   - [Integration Testing](#integration-testing)
 - [Migration Guide](#migration-guide)
   - [From V1 to V2 Property](#from-v1-to-v2-property)
-  - [Gradual Adoption](#gradual-adoption)
+    - [Gradual Adoption](#gradual-adoption)
 - [Best Practices](#best-practices)
   - [DO ✅](#do)
   - [DON'T ❌](#dont)
@@ -27,15 +26,15 @@
 - [References](#references)
 <!-- TOC END -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Services
+**Status**: Current | **Version**: 0.12.0-dev | **Pattern**: Services
 
 **Version:** 1.0 (2025-12-03)\
 **Python:** 3.13+\
 **Pydantic:** 2.x\
-**Status:** V1 stable; V2 patterns under validation
+**Status:** V1 and V2 property pattern available
 
 This guide describes s usage patterns and the evolution from
-explicit execution (V1) to zero-ceremony patterns (V2).
+explicit execution (V1) to property-based access via `.result` (V2).
 
 ## Canonical Rules
 
@@ -68,7 +67,7 @@ ______________________________________________________________________
 
 ## Execution Patterns
 
-### V1: Explicit Execution (✅ Production Ready)
+### V1: Explicit Execution (✅ Current)
 
 The baseline pattern uses explicit method calls:
 
@@ -78,7 +77,7 @@ service = CreateUserService(name="Alice", email="alice@example.com")
 
 # Execute and handle result
 result = service.execute()
-if result.is_success:
+if result.success:
     user = result.value
     print(f"Created user: {user.name}")
 else:
@@ -98,10 +97,9 @@ else:
 - When explicit error handling is critical
 - Railway composition with `.flat_map()`
 
-### V2 Property: `.result` (🟡 Under Validation)
+### V2 Property: `.result` (✅ Available)
 
-> **Status:** Code implemented in `service.py:122-140`, tests exist in
-> `tests/unit/test_service_v2_patterns.py`. Run full test suite for validation.
+> **Status:** Implemented in `service.py` and available for use.
 
 The property pattern provides a shorthand:
 
@@ -119,37 +117,6 @@ except e.BaseError as e:
 - ✅ 68% reduction in code (7 chars vs 19)
 - ✅ Lazy evaluation (executes on first access)
 - ⚠️ Error handling via exceptions
-
-### V2 Auto: `auto_execute` (🟡 Under Validation)
-
-> **Status:** Code implemented in `service.py:58-113`, tests exist in
-> `tests/test_service_auto_execute.py`. Run full test suite for validation.
-
-The auto-execution pattern returns the value directly on instantiation:
-
-```python
-class AutoUserService(s[User]):
-    auto_execute: ClassVar[bool] = True  # Opt-in
-    name: str
-    email: str
-
-    def execute(self) -> p.Result[User]:
-        return r[User].ok(User(name=self.name, email=self.email))
-
-
-# Instantiation returns User directly (not service instance)
-user = AutoUserService(name="Alice", email="alice@example.com")
-print(f"Created user: {user.name}")
-```
-
-**Characteristics:**
-
-- ✅ 95% reduction in code (4 chars vs 19)
-- ✅ Zero ceremony – just instantiate
-- ⚠️ Opt-in via `auto_execute = True`
-- ⚠️ Error handling via exceptions
-
-______________________________________________________________________
 
 ## Infrastructure Properties
 
@@ -179,8 +146,8 @@ class ProcessOrderService(s[Order]):
         max_retries = self.settings.max_retry_attempts
 
         # Dependency resolution (via x)
-        repo_result = self.container.get("order_repository")
-        if repo_result.is_failure:
+        repo_result = self.container.resolve("order_repository")
+        if repo_result.failure:
             return r[Order].fail("Repository unavailable")
 
         repo = repo_result.value
@@ -263,7 +230,7 @@ def test_create_user_service_success():
     service = CreateUserService(name="Alice", email="alice@example.com")
     result = service.execute()
 
-    assert result.is_success
+    assert result.success
     user = result.value
     assert user.name == "Alice"
     assert user.email == "alice@example.com"
@@ -273,7 +240,7 @@ def test_create_user_service_invalid_email():
     service = CreateUserService(name="Alice", email="invalid")
     result = service.execute()
 
-    assert result.is_failure
+    assert result.failure
     assert "email" in result.error.lower()
 ```
 
@@ -281,12 +248,12 @@ def test_create_user_service_invalid_email():
 
 ```python
 def test_service_with_container(container: FlextContainer):
-    _ = container.register("email_validator", MockEmailValidator())
+    _ = container.bind("email_validator", MockEmailValidator())
 
     service = CreateUserService(name="Alice", email="alice@example.com")
     result = service.execute()
 
-    assert result.is_success
+    assert result.success
 ```
 
 ______________________________________________________________________
@@ -298,7 +265,7 @@ ______________________________________________________________________
 ```python
 # Before (V1)
 result = MyService(param="value").execute()
-if result.is_success:
+if result.success:
     value = result.value
 else:
     handle_error(result.error)
@@ -312,7 +279,7 @@ except e.BaseError as e:
 
 ### Gradual Adoption
 
-1. **New code:** Consider V2 patterns if tests pass
+1. **New code:** Consider V2 property pattern (`.result`) where exception-based flow is appropriate
 1. **Existing code:** Keep V1 (no changes required)
 1. **Critical paths:** Prefer V1 for explicit error handling
 
@@ -331,7 +298,7 @@ ______________________________________________________________________
 
 - Raise exceptions in `execute()` (use `r.fail()`)
 - Access infrastructure in `__init__` (properties are lazy)
-- Mix V1 and V2 patterns in the same module
+- Mix V1 and V2 property patterns without a clear convention in the same module
 
 ______________________________________________________________________
 

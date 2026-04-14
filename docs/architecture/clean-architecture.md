@@ -9,7 +9,7 @@
 - [Verification Commands](#verification-commands)
 <!-- TOC END -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
+**Status**: Current | **Version**: 0.12.0-dev | **Date**: 2026-04-14
 
 Canonical references:
 

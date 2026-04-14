@@ -214,7 +214,7 @@ def create_user(
 
     Example:
         >>> result = create_user("Alice", "alice@example.com", 25)
-        >>> if result.is_success:
+        >>> if result.success:
         ...     user = result.value
         ...     print(user.name)
     """
@@ -332,7 +332,7 @@ def test_validate():
 # ✅ CORRECT - One conceptual assertion
 def test_result_ok_creates_success():
     result = r[int].ok(42)
-    assert result.is_success
+    assert result.success
 
 
 def test_result_ok_contains_value():
@@ -343,9 +343,9 @@ def test_result_ok_contains_value():
 # ❌ WRONG - Multiple concepts
 def test_result():
     result = r[int].ok(42)
-    assert result.is_success
+    assert result.success
     assert result.value == 42
-    assert result.data == 42
+    assert result.value == 42
     assert result.value == 42
 ```
 

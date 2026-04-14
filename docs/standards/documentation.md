@@ -153,7 +153,7 @@ def divide(a: float, b: float) -> p.Result[float]:
     return r[float].ok(a / b)
 
 result = divide(10, 2)
-if result.is_success:
+if result.success:
     print(f"Result: {result.value}")
 else:
     print(f"Error: {result.error}")
@@ -589,7 +589,7 @@ Services can be registered with the container.
 ```python
 # ✅ CONSISTENT - Same style across all examples
 result = r[int].ok(42)
-if result.is_success:
+if result.success:
     value = result.value
 
 # ❌ INCONSISTENT - Different styles

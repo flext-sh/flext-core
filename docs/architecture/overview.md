@@ -9,7 +9,7 @@
 - [Verification Commands](#verification-commands)
 <!-- TOC END -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
+**Status**: Current | **Version**: 0.12.0-dev | **Date**: 2026-04-14
 
 FLEXT-Core implements CQRS on top of a clean-architecture skeleton. The outline
 below mirrors the `src/flext_core` layout (Python 3.13+, Pydantic v2) and

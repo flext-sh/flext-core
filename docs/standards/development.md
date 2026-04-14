@@ -36,7 +36,7 @@
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
-**FLEXT-Core Development Standards | Version: 0.9.9 | Status: Production Ready**
+**FLEXT-Core Development Standards | Version: 0.12.0-dev | Status: Current**
 
 This document outlines the development standards, patterns, and quality requirements for FLEXT-Core - the foundation library for the entire FLEXT ecosystem.
 
@@ -284,8 +284,8 @@ class UserService(s):
         self.logger = self._get_logger()
 
     def _get_logger(self) -> p.Logger:
-        result = self.container.get("logger")
-        return result.value if result.is_success else u.fetch_logger(__name__)
+        result = self.container.resolve("logger")
+        return result.value if result.success else u.fetch_logger(__name__)
 
 
 # ❌ WRONG - Manual DI or no DI
@@ -321,7 +321,7 @@ class Order:
 
 ### Versioning Strategy
 
-**Current State**: v0.9.9 Release Candidate → 1.0.0 Stable (October 2025)
+**Current State**: v0.12.0-dev Release Candidate → 1.0.0 Stable (October 2025)
 
 **Stability Guarantees:**
 
@@ -380,10 +380,10 @@ def test_flext_result_ok():
     """Test successful result creation."""
     result = r[str].ok("success")
 
-    assert result.is_success
-    assert not result.is_failure
+    assert result.success
+    assert not result.failure
     assert result.value == "success"
-    assert result.data == "success"  # Dual access
+    assert result.value == "success"  # Dual access
 ```
 
 **Integration Test Example:**
