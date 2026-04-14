@@ -25,7 +25,6 @@ from typing import ClassVar, cast, override
 import pytest
 import structlog
 from dependency_injector import containers, providers
-from pydantic import BaseModel
 
 from flext_tests import tm
 from tests import m, p, r, t, u
@@ -407,41 +406,33 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     setattr(fake_module, "PrintLoggerFactory", _print_logger_factory)
 
-    class ConfigNoAsync:
+    class ConfigNoAsync(m.Value):
         log_level: int = logging.INFO
         console_renderer: bool = True
-        additional_processors: (
-            MutableSequence[Callable[..., t.MutableConfigurationMapping]] | None
-        ) = None
-        wrapper_class_factory: Callable[..., t.Scalar] | None = None
-        logger_factory: Callable[..., t.Scalar] | None = None
+        additional_processors: t.ObjectList | None = None
+        wrapper_class_factory: t.Scalar | None = None
+        logger_factory: t.Scalar | None = None
         cache_logger_on_first_use: bool = True
         async_logging: bool = False
 
     _ = ConfigNoAsync  # referenced for pyright
-    u.configure_structlog(
-        settings=cast("BaseModel", cast("t.RecursiveContainer", ConfigNoAsync())),
-    )
+    u.configure_structlog(settings=ConfigNoAsync())
     tm.that(u._structlog_configured, eq=True)
     u._structlog_configured = False
     calls.clear()
     fake_module._print_access = 0
 
-    class ConfigAsyncFallback:
+    class ConfigAsyncFallback(m.Value):
         log_level: int = logging.INFO
         console_renderer: bool = True
-        additional_processors: (
-            MutableSequence[Callable[..., t.MutableConfigurationMapping]] | None
-        ) = None
-        wrapper_class_factory: Callable[..., t.Scalar] | None = None
-        logger_factory: Callable[..., t.Scalar] | None = None
+        additional_processors: t.ObjectList | None = None
+        wrapper_class_factory: t.Scalar | None = None
+        logger_factory: t.Scalar | None = None
         cache_logger_on_first_use: bool = True
         async_logging: bool = True
 
     _ = ConfigAsyncFallback  # referenced for pyright
-    u.configure_structlog(
-        settings=cast("BaseModel", cast("t.RecursiveContainer", ConfigAsyncFallback())),
-    )
+    u.configure_structlog(settings=ConfigAsyncFallback())
     tm.that(u._structlog_configured, eq=True)
 
 
@@ -523,7 +514,7 @@ def test_runtime_result_all_missed_branches() -> None:
     tm.that(filtered.error, eq="Value did not pass filter predicate")
     tm.that(failure.map_error(lambda err: f"{err}-alt").error, eq="e-alt")
     tm.that(
-        failure.lash(lambda _err: p.Result[int].ok(5)).value,
+        failure.lash(lambda _err: r[int].ok(5)).value,
         eq=5,
     )
     tm.that(failure.recover(lambda _err: 7).value, eq=7)
@@ -681,10 +672,10 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
         eq=True,
     )
 
-    class TraceModel(BaseModel):
+    class TraceModel(m.Value):
         key: str = "value"
 
-    trace_from_model = u.ensure_trace_context(TraceModel())
+    trace_from_model = u.ensure_trace_context(TraceModel().model_dump(mode="json"))
     tm.that(trace_from_model["key"], eq="value")
 
     # ensure_trace_context catches RuntimeError internally for bad mappings
@@ -708,7 +699,7 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     u.ensure_structlog_configured()
     tm.that(u.structlog_configured(), eq=True)
 
-    class BasicModel(BaseModel):
+    class BasicModel(m.Value):
         value: int = 1
 
     tm.that(u.base_model(BasicModel()), eq=True)
@@ -821,7 +812,7 @@ def test_configure_structlog_print_logger_factory_fallback(
             "async_logging": True,
         },
     )()
-    u.configure_structlog(settings=cast("BaseModel", cfg))
+    u.configure_structlog(settings=m.Value.model_validate(cfg.__dict__))
     tm.that(module.print_calls, gte=0)
 
 
@@ -932,7 +923,7 @@ def test_dependency_integration_and_wiring_paths() -> None:
     provider = providers.Configuration()
     u.DependencyIntegration.bind_configuration_provider(
         provider,
-        t.ConfigMap(root={"api": t.Dict(root={"url": "x"})}),
+        t.ConfigMap(root={"api": {"url": "x"}}),
     )
     tm.that(provider.api.url(), eq="x")
 
@@ -1031,7 +1022,7 @@ def test_model_helpers_remaining_paths() -> None:
         def __init__(self, unique_id: str) -> None:
             self.unique_id = unique_id
 
-    class ValueModel(BaseModel):
+    class ValueModel(m.Value):
         a: int = 0
 
     left = Entity("u-1")

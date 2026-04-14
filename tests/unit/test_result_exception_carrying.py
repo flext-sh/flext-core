@@ -3,10 +3,10 @@ from __future__ import annotations
 from collections.abc import Sequence, Sized
 from typing import cast
 
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
 from flext_tests import tm
-from tests import p, r, t
+from tests import m, p, r, t
 
 
 class TestResultExceptionCarrying:
@@ -18,7 +18,7 @@ class TestResultExceptionCarrying:
             msg = "no length"
             raise TypeError(msg)
 
-    class UserModel(BaseModel):
+    class UserModel(m.Value):
         """User model for testing."""
 
         name: str
@@ -68,7 +68,7 @@ class TestResultExceptionCarrying:
         tm.that(result.error, eq=error_msg)
         tm.that(result.error_data, none=False)
         if result.error_data is not None:
-            normalized_data = cast("BaseModel", result.error_data).model_dump()
+            normalized_data = cast("m.BaseModel", result.error_data).model_dump()
             tm.that(normalized_data.get("field"), eq="email")
             tm.that(normalized_data.get("reason"), eq="invalid format")
         tm.that(result.exception is exc, eq=True)
@@ -189,7 +189,7 @@ class TestResultExceptionCarrying:
         exc = TypeError("type error")
         result: p.Result[int] = r[int].fail("error", exception=exc)
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: p.Result[str].ok(str(value))
+            lambda value: r[str].ok(str(value))
         )
         tm.that(flat_mapped.failure, eq=True)
         tm.that(flat_mapped.exception is exc, eq=True)
@@ -197,7 +197,7 @@ class TestResultExceptionCarrying:
     def test_flat_map_success_no_exception(self) -> None:
         result: p.Result[int] = r[int].ok(5)
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: p.Result[str].ok(str(value))
+            lambda value: r[str].ok(str(value))
         )
         tm.that(flat_mapped.success, eq=True)
         tm.that(flat_mapped.value, eq="5")
@@ -207,9 +207,9 @@ class TestResultExceptionCarrying:
         exc = KeyError("missing key")
         result: p.Result[int] = r[int].fail("error", exception=exc)
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: p.Result[int].ok(value + 1),
+            lambda value: r[int].ok(value + 1),
         ).flat_map(
-            lambda value: p.Result[str].ok(str(value)),
+            lambda value: r[str].ok(str(value)),
         )
         tm.that(flat_mapped.failure, eq=True)
         tm.that(flat_mapped.exception is exc, eq=True)
@@ -232,7 +232,7 @@ class TestResultExceptionCarrying:
     def test_lash_propagates_exception(self) -> None:
         exc = RuntimeError("recovery needed")
         result: p.Result[int] = r[int].fail("error", exception=exc)
-        recovered = result.lash(lambda _: p.Result[int].ok(0))
+        recovered = result.lash(lambda _: r[int].ok(0))
         tm.that(recovered.success, eq=True)
         tm.that(recovered.value, eq=0)
 
@@ -241,7 +241,7 @@ class TestResultExceptionCarrying:
         result: p.Result[int] = r[int].fail("error", exception=exc)
         recovery_exc = RuntimeError("recovery failed")
         recovered: p.Result[int] = result.lash(
-            lambda error: p.Result[int].fail(
+            lambda error: r[int].fail(
                 f"recovery failed: {error}",
                 exception=recovery_exc,
             ),
@@ -322,7 +322,7 @@ class TestResultExceptionCarrying:
         final: p.Result[int] = (
             result
             .map(lambda value: value * 2)
-            .flat_map(lambda value: p.Result[int].ok(value + 1))
+            .flat_map(lambda value: r[int].ok(value + 1))
             .filter(lambda value: value > 5)
         )
         tm.that(final.success, eq=True)
@@ -335,7 +335,7 @@ class TestResultExceptionCarrying:
         final: p.Result[int] = (
             result
             .map(lambda value: value * 2)
-            .flat_map(lambda _: p.Result[int].fail("error", exception=exc))
+            .flat_map(lambda _: r[int].fail("error", exception=exc))
             .map(lambda value: value + 1)
         )
         tm.that(final.failure, eq=True)

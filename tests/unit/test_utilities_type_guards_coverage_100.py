@@ -8,7 +8,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_tests import tm
-from tests import t, u
+from tests import m, t, u
 
 
 class TestUtilitiesTypeGuardsCoverage100:
@@ -258,7 +258,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, eq=math.pi)
 
     def test_normalize_basemodel_passthrough(self) -> None:
-        class SampleModel(BaseModel):
+        class SampleModel(m.Value):
             name: str = "test"
 
         model = SampleModel()

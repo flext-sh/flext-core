@@ -336,9 +336,7 @@ class Ex10FlextHandlers(Examples):
             .get("handler_name", "-"),
         )
         di = u.DependencyIntegration
-        di_container = di.create_container(
-            settings=t.ConfigMap(root={"env": env_value})
-        )
+        di_container = di.create_container(settings={"env": env_value})
         self.check("di.bind_configuration_exists", hasattr(di_container, "settings"))
         self.check(
             "di.register_object",
@@ -442,13 +440,13 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "rr.flat_map",
             rr_ok.flat_map(
-                lambda n: p.Result[int].ok(n * rr_multiplier),
+                lambda n: r[int].ok(n * rr_multiplier),
             ).unwrap_or(-1)
             == rr_value * rr_multiplier,
         )
         self.check(
             "rr.and_then",
-            rr_ok.flat_map(lambda n: p.Result[int].ok(n - rr_delta)).unwrap_or(
+            rr_ok.flat_map(lambda n: r[int].ok(n - rr_delta)).unwrap_or(
                 -1,
             )
             == rr_value - rr_delta,
@@ -459,8 +457,7 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "rr.lash",
-            rr_fail.lash(lambda _err: p.Result[int].ok(rr_value)).unwrap_or(-1)
-            == rr_value,
+            rr_fail.lash(lambda _err: r[int].ok(rr_value)).unwrap_or(-1) == rr_value,
         )
         self.check(
             "rr.recover",

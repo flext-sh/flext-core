@@ -33,9 +33,7 @@ class FlextTypesServices:
     type ModelCarrier = FlextModelsPydantic.BaseModel
     type ProtocolModelCarrier = FlextProtocolsBase.Model
     type DomainModelCarrier = ModelCarrier | ProtocolModelCarrier
-    type ContainerCarrier = (
-        FlextTypingContainers.ConfigMap | FlextTypingContainers.Dict
-    )
+    type ContainerCarrier = FlextTypingContainers.ConfigMap | FlextTypingContainers.Dict
     type RecursiveMappingCarrier = FlextTypingBase.RecursiveContainerMapping
     type RecursiveSequenceCarrier = FlextTypingBase.RecursiveContainerList
     type RecursiveTupleCarrier = tuple[FlextTypingBase.RecursiveContainer, ...]
@@ -44,13 +42,8 @@ class FlextTypesServices:
     type LogValue = FlextTypesServices.LogArgument | Exception
     type LogResult = FlextProtocolsResult.Result[bool]
 
-    type ScalarOrModel = (
-        FlextTypingBase.Container | ModelCarrier
-    )
-    type ValueOrModel = (
-        FlextTypingBase.RecursiveContainer
-        | ModelCarrier
-    )
+    type ScalarOrModel = FlextTypingBase.Container | ModelCarrier
+    type ValueOrModel = FlextTypingBase.RecursiveContainer | ModelCarrier
     type PresentValueOrModel = (
         FlextTypingBase.Container
         | RecursiveMappingCarrier
@@ -59,16 +52,9 @@ class FlextTypesServices:
         | ModelCarrier
     )
     type RuntimeData = ValueOrModel | FlextTypesServices.MetadataValue
-    type RuntimeAtomic = (
-        FlextTypingBase.Container
-        | ModelCarrier
-    )
+    type RuntimeAtomic = FlextTypingBase.Container | ModelCarrier
 
-    type BootstrapInput = (
-        ModelCarrier
-        | RecursiveMappingCarrier
-        | None
-    )
+    type BootstrapInput = ModelCarrier | RecursiveMappingCarrier | None
 
     type RegisterableService = (
         FlextTypingBase.Container

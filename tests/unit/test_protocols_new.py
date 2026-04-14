@@ -202,7 +202,7 @@ class TestFlextProtocols:
     def test_pydantic_model_satisfies_has_model_dump(self) -> None:
         """Any Pydantic BaseModel satisfies p.HasModelDump."""
 
-        class _SampleModel(BaseModel):
+        class _SampleModel(m.Value):
             name: str = "test"
 
         instance = _as_protocol_subject(_SampleModel())
@@ -526,7 +526,7 @@ class TestFlextProtocols:
     def test_check_protocol_compliance_negative(self) -> None:
         """check_protocol_compliance returns False for non-conforming instance."""
 
-        class _Empty(BaseModel):
+        class _Empty(m.Value):
             pass
 
         result = u.check_protocol_compliance(_Empty(), p.Flushable)

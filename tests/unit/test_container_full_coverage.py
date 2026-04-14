@@ -641,13 +641,16 @@ class TestContainerFullCoverage:
             c._config = cast("p.Settings", _CfgGoodNamespace())
             c.sync_config_to_di()
             assert isinstance(
-                cast("Callable[[], m.BaseModel]", captured["settings.n2"])(), m.BaseModel
+                cast("Callable[[], m.BaseModel]", captured["settings.n2"])(),
+                m.BaseModel,
             )
             assert isinstance(
-                cast("Callable[[], m.BaseModel]", captured["settings.n3"])(), m.BaseModel
+                cast("Callable[[], m.BaseModel]", captured["settings.n3"])(),
+                m.BaseModel,
             )
             assert isinstance(
-                cast("Callable[[], m.BaseModel]", captured["settings.n4"])(), m.BaseModel
+                cast("Callable[[], m.BaseModel]", captured["settings.n4"])(),
+                m.BaseModel,
             )
             c2 = FlextContainer.shared()
             c2._global_config = m.ContainerConfig(

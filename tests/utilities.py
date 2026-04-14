@@ -50,36 +50,38 @@ class TestsFlextCoreUtilities(u):
                 ]
 
             @staticmethod
-            def multi_operation_cases() -> Sequence[tuple[str, int, t.ConfigMap]]:
+            def multi_operation_cases() -> Sequence[
+                tuple[str, int, t.RecursiveContainerMapping]
+            ]:
                 return [
                     (
                         "double",
                         5,
-                        t.ConfigMap(root={"operation": "double", "result": 10}),
+                        {"operation": "double", "result": 10},
                     ),
                     (
                         "square",
                         4,
-                        t.ConfigMap(root={"operation": "square", "result": 16}),
+                        {"operation": "square", "result": 16},
                     ),
                     (
                         "negate",
                         7,
-                        t.ConfigMap(root={"operation": "negate", "result": -7}),
+                        {"operation": "negate", "result": -7},
                     ),
                     (
                         "double",
                         0,
-                        t.ConfigMap(root={"operation": "double", "result": 0}),
+                        {"operation": "double", "result": 0},
                     ),
                     (
                         "square",
                         1,
-                        t.ConfigMap(root={"operation": "square", "result": 1}),
+                        {"operation": "square", "result": 1},
                     ),
                 ]
 
-            class GetUserService(s[m.Core.Tests.User]):
+            class GetUserService(s[m.BaseModel]):
                 """Service to get user."""
 
                 user_id: str = ""
@@ -99,7 +101,7 @@ class TestsFlextCoreUtilities(u):
                         ),
                     )
 
-            class SendEmailService(s[m.Core.Tests.EmailResponse]):
+            class SendEmailService(s[m.BaseModel]):
                 """Service to send email."""
 
                 to: str = ""
@@ -117,65 +119,59 @@ class TestsFlextCoreUtilities(u):
                         ),
                     )
 
-            class ValidationService(s[t.ConfigMap]):
+            class ValidationService(s[t.RecursiveContainerMapping]):
                 """Service to validate values."""
 
                 value: int = 0
 
                 @override
-                def execute(self) -> p.Result[t.ConfigMap]:
+                def execute(self) -> p.Result[t.RecursiveContainerMapping]:
                     if self.value < 0:
-                        return r[t.ConfigMap].fail(
+                        return r[t.RecursiveContainerMapping].fail(
                             c.Core.Tests.TestErrors.VALUE_TOO_LOW
                         )
                     if self.value > 100:
-                        return r[t.ConfigMap].fail(
+                        return r[t.RecursiveContainerMapping].fail(
                             c.Core.Tests.TestErrors.VALUE_TOO_HIGH
                         )
-                    return r[t.ConfigMap].ok(
-                        t.ConfigMap(root={"valid": True, "value": self.value}),
+                    return r[t.RecursiveContainerMapping].ok(
+                        {"valid": True, "value": self.value},
                     )
 
-            class MultiOperationService(s[t.ConfigMap]):
+            class MultiOperationService(s[t.RecursiveContainerMapping]):
                 """Service for multiple operations."""
 
                 operation: str = ""
                 value: int = 0
 
                 @override
-                def execute(self) -> p.Result[t.ConfigMap]:
+                def execute(self) -> p.Result[t.RecursiveContainerMapping]:
                     match self.operation:
                         case "double":
-                            return r[t.ConfigMap].ok(
-                                t.ConfigMap(
-                                    root={
-                                        "operation": "double",
-                                        "result": self.value * 2,
-                                    },
-                                ),
+                            return r[t.RecursiveContainerMapping].ok(
+                                {
+                                    "operation": "double",
+                                    "result": self.value * 2,
+                                },
                             )
                         case "square":
-                            return r[t.ConfigMap].ok(
-                                t.ConfigMap(
-                                    root={
-                                        "operation": "square",
-                                        "result": self.value**2,
-                                    },
-                                ),
+                            return r[t.RecursiveContainerMapping].ok(
+                                {
+                                    "operation": "square",
+                                    "result": self.value**2,
+                                },
                             )
                         case "negate":
-                            return r[t.ConfigMap].ok(
-                                t.ConfigMap(
-                                    root={"operation": "negate", "result": -self.value},
-                                ),
+                            return r[t.RecursiveContainerMapping].ok(
+                                {"operation": "negate", "result": -self.value},
                             )
                         case _:
-                            return r[t.ConfigMap].fail(
+                            return r[t.RecursiveContainerMapping].fail(
                                 f"Unknown operation: {self.operation}"
                             )
 
             @staticmethod
-            def value_lt_100(data: t.ConfigMap) -> bool:
+            def value_lt_100(data: t.RecursiveContainerMapping) -> bool:
                 value = data.get("value")
                 return isinstance(value, int) and value < 100
 
@@ -252,10 +248,14 @@ class TestsFlextCoreUtilities(u):
                 if not case.user_ids:
                     msg = c.Core.Tests.TestErrors.NO_USER_IDS_PROVIDED
                     raise e.BaseError(msg)
-                user: m.Core.Tests.User | str = TestsFlextCoreUtilities.Core.Tests.make(
+                raw_user = TestsFlextCoreUtilities.Core.Tests.make(
                     TestsFlextCoreUtilities.Core.Tests.GetUserService,
                     user_id=case.user_ids[0],
                 ).result
+                if not isinstance(raw_user, m.Core.Tests.User):
+                    msg = c.Core.Tests.TestErrors.USER_NOT_FOUND
+                    raise e.BaseError(msg)
+                user: m.Core.Tests.User | str = raw_user
                 for operation in case.operations:
                     if operation == "get_email":
                         user = (
@@ -265,13 +265,15 @@ class TestsFlextCoreUtilities(u):
                         )
                     elif operation == "send_email":
                         email_to = user if isinstance(user, str) else str(user)
-                        response_obj: m.Core.Tests.EmailResponse = (
-                            TestsFlextCoreUtilities.Core.Tests.make(
-                                TestsFlextCoreUtilities.Core.Tests.SendEmailService,
-                                to=email_to,
-                                subject="Test",
-                            ).result
-                        )
+                        raw_response = TestsFlextCoreUtilities.Core.Tests.make(
+                            TestsFlextCoreUtilities.Core.Tests.SendEmailService,
+                            to=email_to,
+                            subject="Test",
+                        ).result
+                        if not isinstance(raw_response, m.Core.Tests.EmailResponse):
+                            msg = c.Core.Tests.TestErrors.INVALID_EMAIL
+                            raise e.BaseError(msg)
+                        response_obj: m.Core.Tests.EmailResponse = raw_response
                         user = response_obj.status
                 return user
 

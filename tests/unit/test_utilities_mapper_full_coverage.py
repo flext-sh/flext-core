@@ -15,7 +15,7 @@ import pytest
 from pydantic import BaseModel, Field
 
 from flext_tests import tm
-from tests import p, t, u
+from tests import m, p, t, u
 
 
 class _PortModel(BaseModel):
@@ -392,7 +392,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[u]) -> None:
     tm.that(
         accessor(
             cast(
-                "t.ConfigMap | BaseModel",
+                "t.ConfigMap | Mapping[str, t.RuntimeAtomic] | m.BaseModel",
                 cast("p.AccessibleData", AttrObject(name="x", value=1)),
             ),
         ),

@@ -93,11 +93,11 @@ class Ex06FlextContext(Examples):
         with FlextContext.Service.service_context("orders", version="1.2.3"):
             self.check(
                 "service_context.name",
-                FlextContext.Variables.ServiceName.get() or "",
+                str(FlextContext.Variables.ServiceName.get() or ""),
             )
             self.check(
                 "service_context.version",
-                FlextContext.Variables.ServiceVersion.get() or "",
+                str(FlextContext.Variables.ServiceVersion.get() or ""),
             )
         self.check(
             "service_context.restored",

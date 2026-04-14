@@ -355,7 +355,9 @@ class FlextContext(m.ArbitraryTypesModel):
             A new FlextContext with the same data
 
         """
-        cloned: Self = self.__class__.model_validate({"initial_data": self.initial_data})
+        cloned: Self = self.__class__.model_validate({
+            "initial_data": self.initial_data
+        })
         for scope_name, ctx_var in self.iter_scope_vars().items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:

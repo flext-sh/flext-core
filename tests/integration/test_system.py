@@ -204,7 +204,7 @@ class TestCompleteFlextSystemIntegration:
         """Test error recovery scenarios."""
         resultado_com_erro: p.Result[str] = r[str].fail("erro_original")
         resultado_recuperado = resultado_com_erro.lash(
-            lambda _error: p.Result[str].ok("valor_recuperado"),
+            lambda _error: r[str].ok("valor_recuperado"),
         )
         assert resultado_recuperado.success is True
         assert resultado_recuperado.value == "valor_recuperado"

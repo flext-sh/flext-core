@@ -244,9 +244,7 @@ class Testr:
         elif op_type == self.ResultOperationType.FLAT_MAP:
             failure_raw = u.Core.Tests.create_failure_result(str(value))
             flat_map_result: p.Result[str] = failure_raw
-            flat_mapped = flat_map_result.flat_map(
-                lambda x: p.Result[str].ok(f"value_{x}")
-            )
+            flat_mapped = flat_map_result.flat_map(lambda x: r[str].ok(f"value_{x}"))
             u.Core.Tests.assert_failure_with_error(flat_mapped, str(value))
         elif op_type == self.ResultOperationType.ALT:
             if success:
@@ -264,9 +262,7 @@ class Testr:
             lash_result_base: p.Result[str] = (
                 r[str].ok(str(value)) if success else r[str].fail(str(value))
             )
-            lash_result = lash_result_base.lash(
-                lambda e: p.Result[str].ok(f"recovered_{e}")
-            )
+            lash_result = lash_result_base.lash(lambda e: r[str].ok(f"recovered_{e}"))
             if success:
                 u.Core.Tests.assert_success_with_value(lash_result, str(value))
             else:
@@ -302,7 +298,7 @@ class Testr:
             if not isinstance(value, int):
                 pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
-            flat_mapped = result.flat_map(lambda x: p.Result[str].ok(f"value_{x}"))
+            flat_mapped = result.flat_map(lambda x: r[str].ok(f"value_{x}"))
             expected = f"value_{value}"
             u.Core.Tests.assert_success_with_value(flat_mapped, expected)
         elif op_type == self.ResultOperationType.FILTER:
@@ -373,16 +369,12 @@ class Testr:
         res2 = res1.map(lambda x: x * 2)
         results.append(res2)
         res3 = res2.flat_map(
-            lambda x: (
-                p.Result[int].fail("Division by zero") if x == 0 else r[int].ok(x // 2)
-            ),
+            lambda x: r[int].fail("Division by zero") if x == 0 else r[int].ok(x // 2),
         )
         results.append(res3)
         u.Core.Tests.assert_success_with_value(res3, 10)
         res4 = res3.flat_map(
-            lambda x: (
-                p.Result[int].fail("Cannot process zero") if x == 0 else r[int].ok(x)
-            ),
+            lambda x: r[int].fail("Cannot process zero") if x == 0 else r[int].ok(x),
         )
         results.append(res4)
         u.Core.Tests.assert_result_chain(
@@ -503,7 +495,7 @@ class Testr:
     def test_traverse_success(self) -> None:
         """Test traverse maps over sequence successfully."""
         items = [1, 2, 3]
-        result = r.traverse(items, lambda x: p.Result[int].ok(x * 2))
+        result = r.traverse(items, lambda x: r[int].ok(x * 2))
         _ = u.Core.Tests.assert_success(result)
         tm.that(result.value, eq=[2, 4, 6])
 
@@ -512,7 +504,7 @@ class Testr:
         items = [1, 2, 3]
         result = r.traverse(
             items,
-            lambda x: p.Result[int].fail("error") if x == 2 else r[int].ok(x),
+            lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
         )
         _ = u.Core.Tests.assert_failure(result)
         tm.that(result.error, eq="error")
@@ -538,7 +530,7 @@ class Testr:
         items = [1, 2, 3]
         result = r.traverse(
             items,
-            lambda x: p.Result[int].fail("error") if x == 2 else r[int].ok(x),
+            lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
             fail_fast=True,
         )
         _ = u.Core.Tests.assert_failure(result)
@@ -549,7 +541,7 @@ class Testr:
         items = [1, 2, 3]
         result = r.traverse(
             items,
-            lambda x: p.Result[int].fail(f"error_{x}") if x in {2, 3} else r[int].ok(x),
+            lambda x: r[int].fail(f"error_{x}") if x in {2, 3} else r[int].ok(x),
             fail_fast=False,
         )
         _ = u.Core.Tests.assert_failure(result)

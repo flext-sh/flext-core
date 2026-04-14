@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 from logging import ERROR
-from typing import override
+from typing import cast, override
 
 from pydantic import BaseModel
 
@@ -176,14 +176,18 @@ class _Ex04Exercise(Ex04DispatchDsl):
         self.section("register_and_dispatch")
         dispatcher = u.build_dispatcher()
         self.check("constructor.protocol", isinstance(dispatcher, p.Dispatcher))
-        reg_handle = dispatcher.register_handler(self.CreateUserHandler())
+        reg_handle = dispatcher.register_handler(
+            cast("p.Handle", self.CreateUserHandler())
+        )
         self.check("register(Handle).is_success", reg_handle.success)
         reg_dispatch_msg = dispatcher.register_handler(
-            self.GetUserDispatcher(),
+            cast("p.DispatchMessage", self.GetUserDispatcher()),
             is_event=False,
         )
         self.check("register(DispatchMessage).is_success", reg_dispatch_msg.success)
-        reg_execute = dispatcher.register_handler(self.DeleteExecutor())
+        reg_execute = dispatcher.register_handler(
+            cast("p.Execute", self.DeleteExecutor())
+        )
         self.check("register(Execute).is_success", reg_execute.success)
         reg_callable = dispatcher.register_handler(self.PingCallable())
         self.check("register(callable).is_success", reg_callable.success)
@@ -204,7 +208,9 @@ class _Ex04Exercise(Ex04DispatchDsl):
         """Cover can_handle route discovery for dispatch fallback."""
         self.section("auto_discovery")
         dispatcher = u.build_dispatcher()
-        reg_auto = dispatcher.register_handler(self.AutoHandler())
+        reg_auto = dispatcher.register_handler(
+            cast("p.AutoDiscoverableHandler", self.AutoHandler()),
+        )
         self.check("register(can_handle).is_success", reg_auto.success)
         auto_r = dispatcher.dispatch(Ex04AutoCommand(payload="fallback"))
         self.check("dispatch(auto_discovery).is_success", auto_r.success)
@@ -234,9 +240,15 @@ class _Ex04Exercise(Ex04DispatchDsl):
         dispatcher = u.build_dispatcher()
         subscriber = self.UserCreatedSubscriber()
         audit_subscriber = self.AuditSubscriber()
-        reg_user = dispatcher.register_handler(subscriber, is_event=True)
+        reg_user = dispatcher.register_handler(
+            cast("p.Handle", subscriber),
+            is_event=True,
+        )
         self.check("register(event_subscriber).is_success", reg_user.success)
-        reg_audit = dispatcher.register_handler(audit_subscriber, is_event=True)
+        reg_audit = dispatcher.register_handler(
+            cast("p.DispatchMessage", audit_subscriber),
+            is_event=True,
+        )
         self.check("register(audit_subscriber).is_success", reg_audit.success)
         pub_one = dispatcher.publish(Ex04UserCreated(username="alice"))
         self.check("publish(single).is_success", pub_one.success)

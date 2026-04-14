@@ -393,7 +393,7 @@ class TestDecoratorsFullCoverage:
         tm.that(tracked(), eq="done")
 
         @d.factory(name="svc.factory", singleton=True, lazy=False)
-        def build(_value: BaseModel) -> BaseModel:
+        def build(_value: m.BaseModel) -> m.BaseModel:
             return t.ConfigMap(root={"v": 7})
 
         built = build(t.ConfigMap(root={"v": 1}))

@@ -42,7 +42,9 @@ class FlextModelsContextProxyVar:
         def get(self) -> t.ValueOrModel | t.ConfigMap | None:
             """Get current value from structlog context."""
             contextvars_data = structlog.contextvars.get_contextvars()
-            structlog_context: Mapping[str, t.ValueOrModel | t.ConfigMap] = contextvars_data
+            structlog_context: Mapping[str, t.ValueOrModel | t.ConfigMap] = (
+                contextvars_data
+            )
             if self._key not in structlog_context:
                 return self._default
             value = structlog_context[self._key]

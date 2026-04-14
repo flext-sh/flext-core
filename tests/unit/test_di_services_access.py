@@ -59,7 +59,7 @@ class TestDiServicesAccess:
     def test_config_injection_via_wiring(self) -> None:
         """Test injecting FlextSettings via @inject decorator."""
         di_container = u.DependencyIntegration.create_container(
-            settings=t.ConfigMap(root={"app_name": "injected_config"}),
+            settings={"app_name": "injected_config"},
         )
         module = ModuleType("config_injection_module")
 
@@ -183,7 +183,7 @@ class TestDiServicesAccess:
         """Test injecting multiple services via @inject."""
         services = {"logger_name": "test"}
         di_container = u.DependencyIntegration.create_container(
-            settings=t.ConfigMap(root={"app_name": "injected"}),
+            settings={"app_name": "injected"},
             services=services,
         )
         module = ModuleType("services_injection_module")

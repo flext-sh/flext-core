@@ -62,7 +62,7 @@ class TestFlextUtilitiesReliability:
     def test_retry_validation_error(self) -> None:
         """Test retry parameter validation."""
         result: p.Result[int] = u.retry(
-            lambda: p.Result[int].fail("fail"),
+            lambda: r[int].fail("fail"),
             max_attempts=self.Constants.MAX_ATTEMPTS_INVALID,
         )
         assert result.failure

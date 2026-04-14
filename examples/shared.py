@@ -75,7 +75,10 @@ class Examples:
         | datetime
         | Mapping[str, bool | str]
         | m.BaseModel
-        | MutableMapping[str, t.ValueOrModel],
+        | MutableMapping[str, t.ValueOrModel]
+        | t.ConfigMap
+        | t.RuntimeAtomic
+        | None,
     ) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         separator = m.Examples.LABEL_VALUE_SEPARATOR
@@ -136,7 +139,10 @@ class Examples:
         | datetime
         | Mapping[str, bool | str]
         | m.BaseModel
-        | MutableMapping[str, t.ValueOrModel],
+        | MutableMapping[str, t.ValueOrModel]
+        | t.ConfigMap
+        | t.RuntimeAtomic
+        | None,
     ) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
@@ -221,11 +227,9 @@ class Examples:
 
     @staticmethod
     def bind_probe(result_obj: p.Result[int], delta: int) -> int | str:
-        """Safely attempt ``result_obj.bind(lambda n: p.Result[int].ok(n + delta))``."""
+        """Safely attempt ``result_obj.bind(lambda n: r[int].ok(n + delta))``."""
         try:
-            return result_obj.flat_map(lambda n: p.Result[int].ok(n + delta)).unwrap_or(
-                -1
-            )
+            return result_obj.flat_map(lambda n: r[int].ok(n + delta)).unwrap_or(-1)
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             return f"{type(exc).__name__}:{exc}"
 

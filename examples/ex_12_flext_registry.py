@@ -90,13 +90,13 @@ class Ex12RegistryDsl(Examples):
             plugin_ns,
             plugin_name_b,
             plugin_value_b,
-            validate=lambda pval: p.Result[bool].ok(bool(pval)),
+            validate=lambda pval: r[bool].ok(bool(pval)),
         )
         plugin_validate_fail = registry.register_plugin(
             plugin_ns,
             plugin_bad_name,
             plugin_bad_value,
-            validate=lambda _pval: p.Result[bool].fail(invalid_error),
+            validate=lambda _pval: r[bool].fail(invalid_error),
         )
         plugin_validate_exc = registry.register_plugin(
             plugin_ns,
@@ -214,7 +214,6 @@ class Ex12RegistryDsl(Examples):
         svc_dict_name = f"svc.{self.rand_str(6)}"
         svc_meta_name = f"svc.{self.rand_str(6)}"
         bad_value = self.rand_str(4)
-        meta_dict = t.ConfigMap(root={"team": team_value, "version": version_value})
         meta_model = m.Metadata(attributes={"owner": owner_value, "enabled": True})
         reg_plain = registry.register(svc_plain_name, svc_plain_value)
         reg_meta_dict = registry.register(

@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import cast, override
+from typing import override
 
 import pytest
 
@@ -189,7 +189,7 @@ class TestDocumentedPatterns:
             u.Core.Tests
             .make(u.Core.Tests.GetUserService, user_id="123")
             .execute()
-            .flat_map(lambda user: p.Result[str].ok(user.email))
+            .flat_map(lambda user: r[str].ok(user.email))
             .flat_map(
                 lambda email: u.Core.Tests.make(
                     u.Core.Tests.SendEmailService,
@@ -287,9 +287,9 @@ class TestDocumentedPatterns:
         self,
         operation: str,
         value: int,
-        expected: t.ConfigMap,
+        expected: t.RecursiveContainerMapping,
     ) -> None:
-        result: t.ConfigMap = u.Core.Tests.make(
+        result: t.RecursiveContainerMapping = u.Core.Tests.make(
             u.Core.Tests.MultiOperationService,
             operation=operation,
             value=value,
@@ -394,7 +394,7 @@ class TestDocumentedPatterns:
         assert email_result.success
         message_id: str = str(email_result.value)
         assert message_id.startswith("msg-")
-        calc_result: t.ConfigMap = u.Core.Tests.make(
+        calc_result: t.RecursiveContainerMapping = u.Core.Tests.make(
             u.Core.Tests.MultiOperationService,
             operation="double",
             value=10,

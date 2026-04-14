@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
-from typing import cast
+from typing import cast, override
 
 from flext_tests import tm
 from tests import m, p, r, t
@@ -63,9 +63,7 @@ def test_map_flat_map_and_then_paths() -> None:
     flat_fail: p.Result[int] = r[int].ok(1).flat_map(lambda _: runtime_fail)
     tm.fail(flat_fail)
     tm.that(flat_fail.error, eq="inner")
-    and_then_ok: p.Result[str] = (
-        r[int].ok(3).flat_map(lambda v: p.Result[str].ok(str(v)))
-    )
+    and_then_ok: p.Result[str] = r[int].ok(3).flat_map(lambda v: r[str].ok(str(v)))
     tm.ok(and_then_ok)
     tm.that(and_then_ok.value, eq="3")
 
@@ -85,22 +83,60 @@ def test_recover_tap_and_tap_error_paths() -> None:
 
 
 def test_from_validation_and_to_model_paths() -> None:
-    success_result = r[m.Core.Tests._TargetModel].from_validation(
+    class _TargetModel(m.Value):
+        value: int
+
+    class _ErrorsModel(m.Value):
+        value: int
+
+        @override
+        @classmethod
+        def model_validate(
+            cls,
+            obj: t.RuntimeData,
+            *args: t.RuntimeData,
+            **kwargs: t.RuntimeData,
+        ) -> _ErrorsModel:
+            _ = args
+            _ = kwargs
+            if isinstance(obj, dict) and isinstance(obj.get("value"), int):
+                return cls(value=obj["value"])
+            msg = "bad value"
+            raise _ValidationLikeError(msg)
+
+    class _PlainErrorModel(m.Value):
+        value: int
+
+        @override
+        @classmethod
+        def model_validate(
+            cls,
+            obj: t.RuntimeData,
+            *args: t.RuntimeData,
+            **kwargs: t.RuntimeData,
+        ) -> _PlainErrorModel:
+            _ = obj
+            _ = args
+            _ = kwargs
+            msg = "plain boom"
+            raise ValueError(msg)
+
+    success_result = r[_TargetModel].from_validation(
         {"value": 10},
-        m.Core.Tests._TargetModel,
+        _TargetModel,
     )
     tm.ok(success_result)
     tm.that(success_result.value.value, eq=10)
-    err_result = r[m.Core.Tests._ErrorsModel].from_validation(
+    err_result = r[_ErrorsModel].from_validation(
         {"value": "x"},
-        m.Core.Tests._ErrorsModel,
+        _ErrorsModel,
     )
     tm.fail(err_result)
     tm.that((err_result.error or ""), has="Validation failed")
     tm.that((err_result.error or ""), has="bad value")
-    plain_result = r[m.Core.Tests._PlainErrorModel].from_validation(
+    plain_result = r[_PlainErrorModel].from_validation(
         {"value": "x"},
-        m.Core.Tests._PlainErrorModel,
+        _PlainErrorModel,
     )
     tm.fail(plain_result)
     tm.that((plain_result.error or ""), has="plain boom")
@@ -108,7 +144,7 @@ def test_from_validation_and_to_model_paths() -> None:
         r[t.IntMapping]
         .fail("already failed")
         .to_model(
-            m.Core.Tests._TargetModel,
+            _TargetModel,
         )
     )
     tm.fail(failure_to_model)
@@ -117,7 +153,7 @@ def test_from_validation_and_to_model_paths() -> None:
         r[t.IntMapping]
         .ok({"value": 9})
         .to_model(
-            m.Core.Tests._TargetModel,
+            _TargetModel,
         )
     )
     tm.ok(success_to_model)
@@ -126,7 +162,7 @@ def test_from_validation_and_to_model_paths() -> None:
         r[t.StrMapping]
         .ok({"value": "bad"})
         .to_model(
-            m.Core.Tests._TargetModel,
+            _TargetModel,
         )
     )
     tm.fail(invalid_to_model)

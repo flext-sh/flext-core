@@ -80,7 +80,7 @@ class Testu(u.Core.Tests.Contract):
             (
                 "abc123",
                 [
-                    lambda d: p.Result[bool].ok(True) if d else r[bool].fail("Empty"),
+                    lambda d: r[bool].ok(True) if d else r[bool].fail("Empty"),
                     lambda d: (
                         r[bool].ok(True) if d.isalnum() else r[bool].fail("Non-alnum")
                     ),
@@ -90,7 +90,7 @@ class Testu(u.Core.Tests.Contract):
             ),
             (
                 "test",
-                [lambda d: p.Result[bool].fail("First failed")],
+                [lambda d: r[bool].fail("First failed")],
                 False,
                 "First failed",
             ),
