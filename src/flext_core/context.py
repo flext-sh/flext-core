@@ -121,7 +121,9 @@ class FlextContext(m.ArbitraryTypesModel):
                     normalized[key] = None
                     continue
                 normalized_value = u.normalize_to_container(value)
-                if isinstance(normalized_value, (t.ConfigMap, t.Dict, t.ObjectList)) or u.pydantic_model(normalized_value):
+                if isinstance(
+                    normalized_value, (t.ConfigMap, t.Dict, t.ObjectList)
+                ) or u.pydantic_model(normalized_value):
                     metadata_normalized = u.normalize_to_container(
                         u.normalize_to_metadata(normalized_value),
                     )

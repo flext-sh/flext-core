@@ -210,7 +210,7 @@ class TestFlextContext:
         context1 = test_context
         context1.set("key1", "value1").value
         context1.set("key2", "value1").value
-        context2 = u.Core.Tests.create_test_context()
+        context2 = FlextContext.create()
         context2.set("key2", "value2").value
         context2.set("key3", "value3").value
         merged = context1.merge(context2)
@@ -557,7 +557,7 @@ class TestFlextContext:
         """Test merging context with another context."""
         context1 = test_context
         context1.set("key1", "value1").value
-        context2 = u.Core.Tests.create_test_context()
+        context2 = FlextContext.create()
         context2.set("key2", "value2").value
         merged = context1.merge(context2)
         u.Core.Tests.assert_context_get_success(merged, "key1", "value1")

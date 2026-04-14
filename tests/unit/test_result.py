@@ -223,14 +223,14 @@ class Testr:
             )
             u.Core.Tests.assert_success_with_value(creation_result, value)
         elif op_type == self.ResultOperationType.CREATION_FAILURE:
-            failure_result_raw = u.Core.Tests.create_failure_result(str(value))
+            failure_result_raw = r[str].fail(str(value))
             failure_result: p.Result[str] = failure_result_raw
             u.Core.Tests.assert_failure_with_error(failure_result, str(value))
         elif op_type == self.ResultOperationType.UNWRAP_OR:
             if success:
-                unwrap_result: p.Result[str] = u.Core.Tests.create_success_result(value)
+                unwrap_result: p.Result[str] = r[str].ok(value)
             else:
-                failure_raw = u.Core.Tests.create_failure_result(str(value))
+                failure_raw = r[str].fail(str(value))
                 unwrap_result = failure_raw
             default = "default"
             tm.that(
@@ -242,15 +242,15 @@ class Testr:
             mapped = map_result.map(lambda x: str(x) * 2)
             u.Core.Tests.assert_failure_with_error(mapped, str(value))
         elif op_type == self.ResultOperationType.FLAT_MAP:
-            failure_raw = u.Core.Tests.create_failure_result(str(value))
+            failure_raw = r[str].fail(str(value))
             flat_map_result: p.Result[str] = failure_raw
             flat_mapped = flat_map_result.flat_map(lambda x: r[str].ok(f"value_{x}"))
             u.Core.Tests.assert_failure_with_error(flat_mapped, str(value))
         elif op_type == self.ResultOperationType.ALT:
             if success:
-                result_alt: p.Result[str] = u.Core.Tests.create_success_result(value)
+                result_alt: p.Result[str] = r[str].ok(value)
             else:
-                failure_raw = u.Core.Tests.create_failure_result(str(value))
+                failure_raw = r[str].fail(str(value))
                 result_alt = failure_raw
             alt_result = result_alt.map_error(lambda e: f"alt_{e}")
             if success:
@@ -270,9 +270,9 @@ class Testr:
                 u.Core.Tests.assert_success_with_value(lash_result, expected)
         elif op_type == self.ResultOperationType.OR_OPERATOR:
             if success:
-                result_or: p.Result[str] = u.Core.Tests.create_success_result(value)
+                result_or: p.Result[str] = r[str].ok(value)
             else:
-                failure_raw = u.Core.Tests.create_failure_result(str(value))
+                failure_raw = r[str].fail(str(value))
                 result_or = failure_raw
             default = "default"
             tm.that(result_or | default, eq=value if success else default)
@@ -331,9 +331,7 @@ class Testr:
         """Test r with boolean values across all scenarios."""
         if scenario.operation_type == self.ResultOperationType.BOOL_CONVERSION:
             result = (
-                u.Core.Tests.create_success_result("value")
-                if scenario.value
-                else u.Core.Tests.create_failure_result("generic_error")
+                r[str].ok("value") if scenario.value else r[str].fail("generic_error")
             )
             tm.that(bool(result), eq=bool(scenario.value))
 

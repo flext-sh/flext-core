@@ -307,7 +307,7 @@ class TestFlextContainer:
     def test_get_nonexistent_service(self, clean_container: p.Container) -> None:
         """Test getting non-existent service using fixtures."""
         result: p.Result[t.RegisterableService] = clean_container.resolve("nonexistent")
-        u.Core.Tests.assert_result_failure_with_error(
+        u.Core.Tests.assert_failure_with_error(
             result,
             expected_error="not found",
         )
@@ -384,7 +384,7 @@ class TestFlextContainer:
     def test_get_typed_nonexistent(self, clean_container: p.Container) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
         result = clean_container.resolve("nonexistent", type_cls=dict)
-        u.Core.Tests.assert_result_failure_with_error(
+        u.Core.Tests.assert_failure_with_error(
             result,
             expected_error="not found",
         )

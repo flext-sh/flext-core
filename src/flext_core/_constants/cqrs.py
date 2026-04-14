@@ -133,6 +133,8 @@ class FlextConstantsCqrs:
         HEALTHY = "healthy"
         DEGRADED = "degraded"
         UNHEALTHY = "unhealthy"
+        UNKNOWN = "unknown"
+        ERROR = "error"
 
     @unique
     class SpecialStatus(StrEnum):

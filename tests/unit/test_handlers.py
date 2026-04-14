@@ -128,7 +128,7 @@ class TestFlextHandlers:
         )
         handler = self.FailingTestHandler(settings=settings)
         result = handler.handle("test_message")
-        u.Core.Tests.assert_result_failure_with_error(
+        u.Core.Tests.assert_failure_with_error(
             result,
             expected_error="Handler failed for: test_message",
         )
@@ -264,7 +264,7 @@ class TestFlextHandlers:
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.dispatch_message("test_message", operation="query")
-        u.Core.Tests.assert_result_failure_with_error(
+        u.Core.Tests.assert_failure_with_error(
             result,
             expected_error="Handler with mode 'command' cannot execute query pipelines",
         )
@@ -296,7 +296,7 @@ class TestFlextHandlers:
         )
         handler = RestrictiveHandler(settings=settings)
         result = handler.dispatch_message("test_message", operation="command")
-        u.Core.Tests.assert_result_failure_with_error(
+        u.Core.Tests.assert_failure_with_error(
             result,
             expected_error="Handler cannot handle message type str",
         )
@@ -328,7 +328,7 @@ class TestFlextHandlers:
         )
         handler = ValidationFailingHandler(settings=settings)
         result = handler.dispatch_message("test_message", operation="command")
-        u.Core.Tests.assert_result_failure_with_error(
+        u.Core.Tests.assert_failure_with_error(
             result,
             expected_error="Message validation failed: Validation failed for test",
         )
@@ -353,7 +353,7 @@ class TestFlextHandlers:
         )
         handler = ExceptionHandler(settings=settings)
         result = handler.dispatch_message("test_message", operation="command")
-        u.Core.Tests.assert_result_failure_with_error(
+        u.Core.Tests.assert_failure_with_error(
             result,
             expected_error="Critical handler failure: Test exception in handler",
         )
@@ -397,7 +397,7 @@ class TestFlextHandlers:
             handler_type=c.HandlerType.COMMAND,
         )
         result = handler.handle("test")
-        u.Core.Tests.assert_result_failure_with_error(
+        u.Core.Tests.assert_failure_with_error(
             result,
             expected_error="Handler failed",
         )
