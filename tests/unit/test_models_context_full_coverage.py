@@ -6,7 +6,6 @@ from typing import cast
 
 import pytest
 import structlog.contextvars
-from pydantic import BaseModel
 
 from flext_core import FlextModelsContextProxyVar
 from flext_tests import tm
@@ -82,13 +81,13 @@ def test_context_data_normalize_and_json_checks() -> None:
 def test_context_data_validate_dict_serializable_error_paths() -> None:
     with pytest.raises(ValueError) as exc_info:
         _ = m.ContextData.validate_dict_serializable(
-            cast("t.Dict | t.ConfigurationMapping | BaseModel | None", "123"),
+            cast("t.Dict | t.ConfigurationMapping | m.BaseModel | None", "123"),
         )
     tm.that(exc_info.value, none=False)
     with pytest.raises(TypeError) as exc_info2:
         _ = m.ContextData.validate_dict_serializable(
             cast(
-                "t.Dict | t.ConfigurationMapping | BaseModel | None",
+                "t.Dict | t.ConfigurationMapping | m.BaseModel | None",
                 cast("t.RecursiveContainer", _ModelWithNoCallableDump()),
             ),
         )
@@ -97,7 +96,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
     result = m.ContextData.validate_dict_serializable(metadata_input)
     tm.that(result, eq={"a": 1})
 
-    class _GoodModel(BaseModel):
+    class _GoodModel(m.BaseModel):
         b: int = 2
 
     result_b = m.ContextData.validate_dict_serializable(_GoodModel())
@@ -144,7 +143,7 @@ def test_context_export_serializable_and_validators() -> None:
     with pytest.raises(TypeError):
         _ = m.ContextExport.validate_dict_serializable(
             cast(
-                "t.Dict | t.ConfigurationMapping | BaseModel | None",
+                "t.Dict | t.ConfigurationMapping | m.BaseModel | None",
                 cast("t.RecursiveContainer", _ModelWithNoCallableDump()),
             ),
         )
@@ -179,7 +178,7 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
     with pytest.raises(ValueError):
         _ = m.ContextExport.validate_dict_serializable(
             cast(
-                "t.Dict | t.ConfigurationMapping | BaseModel | None",
+                "t.Dict | t.ConfigurationMapping | m.BaseModel | None",
                 "123",
             ),
         )
@@ -189,7 +188,7 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
     )
     tm.that(result_meta, eq={"m": 3})
 
-    class _GoodExportModel(BaseModel):
+    class _GoodExportModel(m.BaseModel):
         c: int = 4
 
     result_export = m.ContextExport.validate_dict_serializable(
@@ -204,7 +203,7 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
     stats_dict = m.normalize_to_mapping({"a": 1})
     tm.that(stats_dict, eq={"a": 1})
 
-    class StatsModel(BaseModel):
+    class StatsModel(m.BaseModel):
         a: int = 1
 
     stats_model = m.normalize_to_mapping(StatsModel())
@@ -212,15 +211,15 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
     with pytest.raises(ValueError, match="Cannot normalize"):
         _ = m.normalize_to_mapping(cast("t.ValueOrModel", "x"))
     exported = m.ContextExport(data={"k": "v"}, statistics={"sets": 1})
-    total_items = cast("int", exported.total_data_items)
+    total_items = exported.total_data_items
     tm.that(total_items, eq=1)
-    has_stats = cast("bool", exported.has_statistics)
+    has_stats = exported.has_statistics
     tm.that(has_stats is True, eq=True)
 
 
 def test_scope_data_validators_and_errors() -> None:
 
-    class ScopeModel(BaseModel):
+    class ScopeModel(m.BaseModel):
         a: int = 1
 
     result_none = m.normalize_to_mapping(None)
@@ -243,7 +242,7 @@ def test_scope_data_validators_and_errors() -> None:
 
 def test_statistics_and_custom_fields_validators() -> None:
 
-    class Payload(BaseModel):
+    class Payload(m.BaseModel):
         p: int = 2
 
     result_x1 = m.normalize_to_mapping({"x": 1})

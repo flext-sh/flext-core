@@ -34,7 +34,7 @@ class FlextModelsDomainEvent:
         """ConfigMap with equality support for domain event data."""
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: t.ValueOrModel) -> bool:
             if isinstance(other, dict):
                 return self.root == other
             if isinstance(other, Mapping):

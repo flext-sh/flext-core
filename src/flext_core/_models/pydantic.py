@@ -50,10 +50,14 @@ class FlextModelsPydantic:
         RootModel: Container model for single validated values/collections
     """
 
-    # Public Pydantic v2 model bases available via m.*
-    BaseModel = BaseModel
-    BaseSettings = BaseSettings
-    RootModel = RootModel
+    class BaseModel(BaseModel):
+        """Canonical BaseModel exported through the FLEXT models facade."""
+
+    class BaseSettings(BaseSettings):
+        """Canonical BaseSettings exported through the FLEXT models facade."""
+
+    class RootModel[RootValueT](RootModel[RootValueT]):
+        """Canonical RootModel exported through the FLEXT models facade."""
 
     # Annotation validators
     AfterValidator = AfterValidator

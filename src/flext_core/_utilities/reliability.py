@@ -47,7 +47,10 @@ class FlextUtilitiesReliability:
         )
 
     @staticmethod
-    def flow_result[T](result: r[T], *funcs: Callable[[T], r[T]]) -> p.Result[T]:
+    def flow_result[T](
+        result: p.Result[T],
+        *funcs: Callable[[T], p.Result[T]],
+    ) -> p.Result[T]:
         """Chain multiple operations on p.Result.
 
         Applies each function in sequence, short-circuiting on failure.
@@ -69,7 +72,7 @@ class FlextUtilitiesReliability:
             )
 
         """
-        current: r[T] = result
+        current: p.Result[T] = result
         for func in funcs:
             if current.failure:
                 return current
@@ -87,7 +90,7 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def retry[TResult](
-        operation: Callable[[], r[TResult]],
+        operation: Callable[[], p.Result[TResult]],
         options: FlextUtilitiesReliability.RetryOptions | None = None,
         **kwargs: t.ValueOrModel,
     ) -> p.Result[TResult]:
@@ -151,4 +154,4 @@ class FlextUtilitiesReliability:
         )
 
 
-__all__ = ["FlextUtilitiesReliability"]
+__all__: list[str] = ["FlextUtilitiesReliability"]

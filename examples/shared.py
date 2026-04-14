@@ -36,10 +36,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import ConfigDict
 
-from examples import SharedHandle, SharedPerson, m, t
-from flext_core import r
+from examples import SharedHandle, SharedPerson, m, p, r, t
 
 
 class Examples:
@@ -75,8 +74,8 @@ class Examples:
         | Path
         | datetime
         | Mapping[str, bool | str]
-        | BaseModel
-        | MutableMapping[str, t.RecursiveContainer | BaseModel],
+        | m.BaseModel
+        | MutableMapping[str, t.ValueOrModel],
     ) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         separator = m.Examples.LABEL_VALUE_SEPARATOR
@@ -136,8 +135,8 @@ class Examples:
         | Path
         | datetime
         | Mapping[str, bool | str]
-        | BaseModel
-        | MutableMapping[str, t.RecursiveContainer | BaseModel],
+        | m.BaseModel
+        | MutableMapping[str, t.ValueOrModel],
     ) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
@@ -221,16 +220,18 @@ class Examples:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
     @staticmethod
-    def bind_probe(result_obj: r[int], delta: int) -> int | str:
-        """Safely attempt ``result_obj.bind(lambda n: r[int].ok(n + delta))``."""
+    def bind_probe(result_obj: p.Result[int], delta: int) -> int | str:
+        """Safely attempt ``result_obj.bind(lambda n: p.Result[int].ok(n + delta))``."""
         try:
-            return result_obj.flat_map(lambda n: r[int].ok(n + delta)).unwrap_or(-1)
+            return result_obj.flat_map(lambda n: p.Result[int].ok(n + delta)).unwrap_or(
+                -1
+            )
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             return f"{type(exc).__name__}:{exc}"
 
     @staticmethod
     def bind_status(
-        value: r[t.Container] | t.Container,
+        value: p.Result[t.Container] | t.Container,
     ) -> t.ConfigMap | t.Container:
         """Return a summary ConfigMap when *value* is a ``r``."""
         match value:

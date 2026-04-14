@@ -321,4 +321,4 @@ class FlextUtilitiesChecker:
         raise TypeError(msg_type_error)
 
 
-__all__ = ["FlextUtilitiesChecker"]
+__all__: list[str] = ["FlextUtilitiesChecker"]

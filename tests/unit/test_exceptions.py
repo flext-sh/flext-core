@@ -7,7 +7,7 @@ from collections.abc import Callable, Sequence
 
 import pytest
 
-from tests import c, e, r, t
+from tests import c, e, p, r, t
 
 
 class TestExceptions:
@@ -41,7 +41,7 @@ class TestExceptions:
         assert attributes["new_field"] == "new_value"
 
     def test_fail_operation_returns_structured_failure(self) -> None:
-        result: r[bool] = e.fail_operation(
+        result: p.Result[bool] = e.fail_operation(
             "register service",
             ValueError("boom"),
         )
@@ -55,7 +55,7 @@ class TestExceptions:
         assert result.error_data["reason"] == "boom"
 
     def test_fail_not_found_returns_structured_failure(self) -> None:
-        result: r[bool] = e.fail_not_found(
+        result: p.Result[bool] = e.fail_not_found(
             "service",
             "command_bus",
         )
@@ -68,7 +68,7 @@ class TestExceptions:
         assert result.error_data["resource_id"] == "command_bus"
 
     def test_fail_type_mismatch_returns_structured_failure(self) -> None:
-        result: r[bool] = e.fail_type_mismatch(
+        result: p.Result[bool] = e.fail_type_mismatch(
             "Dispatcher",
             "str",
         )
@@ -81,7 +81,7 @@ class TestExceptions:
         assert result.error_data["actual_type"] == "str"
 
     def test_fail_validation_returns_structured_failure(self) -> None:
-        result: r[bool] = e.fail_validation(
+        result: p.Result[bool] = e.fail_validation(
             "name",
             "",
             error="empty",

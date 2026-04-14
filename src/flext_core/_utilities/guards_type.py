@@ -29,4 +29,4 @@ class FlextUtilitiesGuardsType(
     """
 
 
-__all__ = ["FlextUtilitiesGuardsType"]
+__all__: list[str] = ["FlextUtilitiesGuardsType"]

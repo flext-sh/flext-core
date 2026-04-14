@@ -6,9 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Self, override
 
-from flext_core import FlextModelsBase as m, c
+from flext_core import FlextModelsBase as m, c, t
 
 
 class FlextModelsBuilder:
@@ -35,7 +36,14 @@ class FlextModelsBuilder:
                 self._state = state
                 return self
 
-            def _set(self, **updates: object) -> Self:
+            def _set(
+                self,
+                **updates: (
+                    t.ValueOrModel
+                    | t.RecursiveContainer
+                    | Sequence[t.ValueOrModel | t.RecursiveContainer]
+                ),
+            ) -> Self:
                 """Apply one immutable ``model_copy(update=...)`` transition."""
                 return self._replace(self._state.model_copy(update=updates))
 
@@ -43,16 +51,22 @@ class FlextModelsBuilder:
                 """Set one tuple path field using immutable state updates."""
                 return self._set(**{field_name: tuple(parts)})
 
-            def _append(self, field_name: str, value: object) -> Self:
+            def _append(
+                self,
+                field_name: str,
+                value: t.RecursiveContainer,
+            ) -> Self:
                 """Append one value to a sequence field while preserving immutability."""
-                current_values = tuple(getattr(self._state, field_name))
+                current_values: tuple[t.RecursiveContainer, ...] = tuple(
+                    getattr(self._state, field_name)
+                )
                 return self._set(**{field_name: (*current_values, value)})
 
             @staticmethod
             def _model[ModelT: m.ContractModel](
                 model_type: type[ModelT],
                 /,
-                **data: object,
+                **data: t.ValueOrModel | t.RecursiveContainer,
             ) -> ModelT:
                 """Build one ContractModel payload for DSL composition."""
                 return model_type.model_validate(data)
@@ -62,10 +76,14 @@ class FlextModelsBuilder:
                 field_name: str,
                 model_type: type[ModelT],
                 /,
-                **data: object,
+                **data: t.ValueOrModel | t.RecursiveContainer,
             ) -> Self:
                 """Build and append one ContractModel item to a sequence field."""
-                return self._append(field_name, self._model(model_type, **data))
+                model_item = self._model(model_type, **data)
+                current_values: tuple[m.ContractModel, ...] = tuple(
+                    getattr(self._state, field_name)
+                )
+                return self._set(**{field_name: (*current_values, model_item)})
 
             def _build_product(self, state: StateT) -> ProductT:
                 """Build one product from state. Subclasses must implement it."""

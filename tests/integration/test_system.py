@@ -71,7 +71,7 @@ class TestCompleteFlextSystemIntegration:
         )
         assert pipeline_result.success is True
         assert str(pipeline_result.value) == "processado-DADOS-INICIAIS"
-        failure_result: r[str] = r[str].fail(
+        failure_result: p.Result[str] = r[str].fail(
             "erro_de_processamento",
         )
         assert failure_result.success is False
@@ -202,9 +202,9 @@ class TestCompleteFlextSystemIntegration:
 
     def _test_error_recovery(self) -> None:
         """Test error recovery scenarios."""
-        resultado_com_erro: r[str] = r[str].fail("erro_original")
+        resultado_com_erro: p.Result[str] = r[str].fail("erro_original")
         resultado_recuperado = resultado_com_erro.lash(
-            lambda _error: r[str].ok("valor_recuperado"),
+            lambda _error: p.Result[str].ok("valor_recuperado"),
         )
         assert resultado_recuperado.success is True
         assert resultado_recuperado.value == "valor_recuperado"

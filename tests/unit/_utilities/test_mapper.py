@@ -15,20 +15,20 @@ from collections.abc import Mapping
 from typing import Annotated, cast
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from flext_tests import tm
-from tests import t, u
+from tests import m, t, u
 
 
 class TestsFlextCoreUtilitiesMapper:
     """Tests for flext_core via the u facade."""
 
-    class Address(BaseModel):
+    class Address(m.BaseModel):
         city: Annotated[str, Field(description="City name")]
         zip_code: Annotated[str, Field(description="Zip code")]
 
-    class User(BaseModel):
+    class User(m.BaseModel):
         name: Annotated[str, Field(description="User name")]
         age: Annotated[int, Field(description="User age")]
         address: Annotated[
@@ -36,7 +36,7 @@ class TestsFlextCoreUtilitiesMapper:
             Field(description="User address"),
         ]
 
-    class Item(BaseModel):
+    class Item(m.BaseModel):
         label: Annotated[str, Field(description="Item label")]
         value: Annotated[int, Field(description="Item value")]
 
@@ -93,7 +93,7 @@ class TestsFlextCoreUtilitiesMapper:
     def test_extract_model_nested_dict(self) -> None:
         """Model with dict attribute - extract nested key."""
 
-        class WithData(BaseModel):
+        class WithData(m.BaseModel):
             data: Annotated[
                 t.RecursiveContainerMapping,
                 Field(description="Data dict"),

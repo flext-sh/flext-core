@@ -396,7 +396,11 @@ class TestDecoratorsFullCoverage:
         def build(_value: BaseModel) -> BaseModel:
             return t.ConfigMap(root={"v": 7})
 
-        tm.that(build(t.ConfigMap(root={"v": 1})), is_=t.ConfigMap)
+        built = build(t.ConfigMap(root={"v": 1}))
+        built_value = built.value if u.result_like(built) else built
+        tm.that(u.pydantic_model(built_value), eq=True)
+        if u.pydantic_model(built_value):
+            tm.that(built_value, is_=t.ConfigMap)
 
     def test_track_performance_success_and_failure_paths(
         self,
@@ -459,7 +463,7 @@ class TestDecoratorsFullCoverage:
             msg = "x"
             raise RuntimeError(msg)
 
-        fail_result: r[int] = fails()
+        fail_result: p.Result[int] = fails()
         tm.fail(fail_result)
         fake_logger = self._FakeLogger()
 

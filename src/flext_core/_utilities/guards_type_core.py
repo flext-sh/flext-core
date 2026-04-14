@@ -119,7 +119,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def dict_like(
-        value: t.RuntimeData,
+        value: t.ConfigMap | t.RuntimeData,
     ) -> TypeIs[t.ConfigMap | t.RecursiveContainerMapping]:
         """Check if value behaves like a mapping accepted by FLEXT containers."""
         match value:
@@ -225,7 +225,7 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def instance_of[T](value: object, type_cls: type[T]) -> TypeIs[T]:
+    def instance_of[T, TValue](value: TValue, type_cls: type[T]) -> bool:
         """Check if value is instance of type class (handles generics)."""
         return isinstance(value, getattr(type_cls, "__origin__", None) or type_cls)
 

@@ -218,4 +218,4 @@ class FlextMixins(m.ArbitraryTypesModel):
 
 x = FlextMixins
 
-__all__ = ["FlextMixins", "x"]
+__all__: list[str] = ["FlextMixins", "x"]

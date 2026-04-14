@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from types import MappingProxyType
-from typing import TypeIs
+from typing import TypeGuard, TypeIs
 
 from flext_core import FlextUtilitiesGuardsTypeModel, c, p, t
 
@@ -85,8 +85,8 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def handler_callable(
-        value: object,
-    ) -> TypeIs[t.HandlerCallable]:
+        value: t.GuardInput,
+    ) -> bool:
         """Narrow value to callable handler function."""
         return callable(value)
 
@@ -105,9 +105,9 @@ class FlextUtilitiesGuardsTypeProtocol:
         return callable(value)
 
     @staticmethod
-    def result_like(
-        value: t.GuardInput,
-    ) -> TypeIs[p.Result[t.RuntimeAtomic]]:
+    def result_like[TValue](
+        value: TValue,
+    ) -> TypeGuard[p.Result[t.RuntimeAtomic]]:
         """Narrow value to Result protocol."""
         return isinstance(value, p.Result)
 
@@ -276,4 +276,4 @@ class FlextUtilitiesGuardsTypeProtocol:
         )
 
 
-__all__ = ["FlextUtilitiesGuardsTypeProtocol"]
+__all__: list[str] = ["FlextUtilitiesGuardsTypeProtocol"]

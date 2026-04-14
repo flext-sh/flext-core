@@ -9,15 +9,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Annotated
 
-from pydantic import (
-    BaseModel,
-    BeforeValidator,
-    Field,
-    field_validator,
-)
+from pydantic import BeforeValidator, Field, field_validator
 
 from flext_core import (
     FlextModelsBase as m,
+    FlextModelsPydantic as mp,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     c,
@@ -71,7 +67,7 @@ class FlextModelsContextData:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: t.Dict | t.ScalarMapping | BaseModel | None,
+            v: t.Dict | t.ScalarMapping | mp.BaseModel | None,
         ) -> t.RecursiveContainerMapping:
             """Validate that data values are JSON-serializable."""
             working_value: t.RecursiveContainerMapping
@@ -203,4 +199,4 @@ class FlextModelsContextData:
             raise TypeError(msg)
 
 
-__all__ = ["FlextModelsContextData"]
+__all__: list[str] = ["FlextModelsContextData"]

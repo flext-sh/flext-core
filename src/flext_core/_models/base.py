@@ -255,7 +255,7 @@ class FlextModelsBase:
         """Value model with equality/hash by value."""
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: t.ValueOrModel) -> bool:
             if not isinstance(other, type(self)):
                 return NotImplemented
             return bool(self.model_dump() == other.model_dump())

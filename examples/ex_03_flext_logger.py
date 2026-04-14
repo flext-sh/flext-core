@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from examples import c, m, p, r, u
+from examples import c, m, p, u
 from examples.shared import Examples
 from flext_core import FlextContainer
 
@@ -15,7 +15,7 @@ class Ex03LoggingDsl(Examples):
     """Golden-file tests for the public logging DSL."""
 
     @staticmethod
-    def _logged(result: r[bool] | None) -> bool:
+    def _logged(result: p.ResultLike[bool] | None) -> bool:
         return True if result is None else result.success
 
     @override

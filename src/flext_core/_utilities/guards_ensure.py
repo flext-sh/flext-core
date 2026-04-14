@@ -208,4 +208,4 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             )
 
 
-__all__ = ["FlextUtilitiesGuardsEnsure"]
+__all__: list[str] = ["FlextUtilitiesGuardsEnsure"]

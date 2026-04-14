@@ -8,7 +8,7 @@ Tests DI functionality with real code execution:
 - DependencyIntegration methods (create_layered_bridge, register_object, register_factory, register_resource)
 - DI methods (wire_modules, scoped with resources)
 - Service bootstrap with DI (create_service_runtime)
-- Real wiring with @inject and Provide decorators
+- Real wiring with @u.DependencyIntegration.inject and Provide decorators
 - Resource lifecycle management
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -31,8 +31,6 @@ from flext_core import (
 )
 from flext_tests import tm
 from tests import m, p, r, s, t, u
-
-inject = u.DependencyIntegration.inject
 
 
 @pytest.fixture(autouse=True)
@@ -156,7 +154,7 @@ class TestDIIncremental:
         tm.that(lifecycle["closed"], eq=True)
 
     def test_wire_modules_with_inject(self) -> None:
-        """Test wire with @inject decorator real execution."""
+        """Test wire with @u.DependencyIntegration.inject decorator real execution."""
         di_container = u.DependencyIntegration.create_container()
         u.DependencyIntegration.register_object(
             di_container,
@@ -193,7 +191,7 @@ class TestDIIncremental:
         _ = container.bind("log_level", "INFO")
         module = ModuleType("wired_module")
 
-        @inject
+        @u.DependencyIntegration.inject
         def log_message(
             name: str = u.DependencyIntegration.Provide["logger_name"],
             level: str = u.DependencyIntegration.Provide["log_level"],
@@ -304,13 +302,13 @@ class TestDIIncremental:
         assert factory_result.value == {"custom": "data"}
 
     def test_handler_wiring_with_inject(self) -> None:
-        """Test handler wiring with @inject decorator."""
+        """Test handler wiring with @u.DependencyIntegration.inject decorator."""
         container = FlextContainer()
         _ = container.bind("custom_logger", "test_logger")
         _ = container.bind("db_pool", {"size": 10})
         handler_module = ModuleType("handler_module")
 
-        @inject
+        @u.DependencyIntegration.inject
         def process_request(
             logger_name: str = u.DependencyIntegration.Provide["custom_logger"],
             pool: t.IntMapping = u.DependencyIntegration.Provide["db_pool"],
@@ -337,13 +335,13 @@ class TestDIIncremental:
         _ = container.bind("shared_config", {"env": "test"})
         module = ModuleType("multi_function_module")
 
-        @inject
+        @u.DependencyIntegration.inject
         def func1(
             settings: t.StrMapping = u.DependencyIntegration.Provide["shared_config"],
         ) -> str:
             return settings["env"]
 
-        @inject
+        @u.DependencyIntegration.inject
         def func2(
             settings: t.StrMapping = u.DependencyIntegration.Provide["shared_config"],
         ) -> bool:
@@ -368,14 +366,14 @@ class TestDIIncremental:
         _ = container.bind("api_version", "v1")
         module = ModuleType("nested_module")
 
-        @inject
+        @u.DependencyIntegration.inject
         def build_url(
             base: str = u.DependencyIntegration.Provide["base_url"],
             version: str = u.DependencyIntegration.Provide["api_version"],
         ) -> str:
             return f"{base}/{version}"
 
-        @inject
+        @u.DependencyIntegration.inject
         def api_call(
             url: str = u.DependencyIntegration.Provide["built_url"],
             base: str = u.DependencyIntegration.Provide["base_url"],
@@ -402,7 +400,7 @@ class TestDIIncremental:
         _ = container.bind("test_value", "wired_value")
         test_module = ModuleType("test_module")
 
-        @inject
+        @u.DependencyIntegration.inject
         def test_func(
             value: str = u.DependencyIntegration.Provide["test_value"],
         ) -> str:
@@ -464,7 +462,7 @@ class TestDIIncremental:
         _ = container.bind("injected_value", "test_injection")
 
         class TestClass:
-            @inject
+            @u.DependencyIntegration.inject
             def __init__(
                 self,
                 value: str = u.DependencyIntegration.Provide["injected_value"],
@@ -483,7 +481,7 @@ class TestDIIncremental:
         container = FlextContainer()
         module = ModuleType("error_module")
 
-        @inject
+        @u.DependencyIntegration.inject
         def func_with_missing(
             missing: str = u.DependencyIntegration.Provide["nonexistent"],
         ) -> str:

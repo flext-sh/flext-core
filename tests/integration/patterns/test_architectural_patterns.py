@@ -143,20 +143,20 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize repository."""
                 super().__init__()
-                self._data: MutableMapping[str, t.RuntimeAtomic] = {}
+                self._data: MutableMapping[str, t.ConfigMap] = {}
                 self._query_count = 0
 
-            def save(self, entity_id: str, data: t.RuntimeAtomic) -> p.Result[bool]:
+            def save(self, entity_id: str, data: t.ConfigMap) -> p.Result[bool]:
                 """Save entity to repository."""
                 self._data[entity_id] = data
                 return r[bool].ok(True)
 
-            def find_by_id(self, entity_id: str) -> p.Result[t.RuntimeAtomic]:
+            def find_by_id(self, entity_id: str) -> p.Result[t.ConfigMap]:
                 """Find entity by ID."""
                 self._query_count += 1
                 if entity_id in self._data:
-                    return r[t.RuntimeAtomic].ok(self._data[entity_id])
-                return r[t.RuntimeAtomic].fail(
+                    return r[t.ConfigMap].ok(self._data[entity_id])
+                return r[t.ConfigMap].fail(
                     f"Entity not found: {entity_id}",
                 )
 
@@ -183,7 +183,7 @@ class TestArchitecturalPatterns:
         assert len(repo._data) == 1000, f"Expected 1000 entities, got {len(repo._data)}"
         start_time = time.perf_counter()
         for i in range(100):
-            query_result: r[t.RuntimeAtomic] = repo.find_by_id(f"entity_{i}")
+            query_result: p.Result[t.ConfigMap] = repo.find_by_id(f"entity_{i}")
             assert query_result.success, f"Query {i} should succeed"
             entity_data = query_result.value
             assert isinstance(entity_data, t.ConfigMap), (

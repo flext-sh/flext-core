@@ -37,27 +37,27 @@ class TestrCoverage:
 
     class _ResultAssertions:
         @staticmethod
-        def assert_success[T](result: r[T]) -> None:
-            assert isinstance(result, r)
+        def assert_success[T](result: p.Result[T]) -> None:
+            assert isinstance(result, p.Result)
             assert result.success
 
         @staticmethod
-        def assert_failure[T](result: r[T]) -> None:
-            assert isinstance(result, r)
+        def assert_failure[T](result: p.Result[T]) -> None:
+            assert isinstance(result, p.Result)
             assert not result.success
 
         @staticmethod
-        def assert_success_with_value[T](result: r[T], expected: T) -> None:
+        def assert_success_with_value[T](result: p.Result[T], expected: T) -> None:
             TestrCoverage._ResultAssertions.assert_success(result)
             assert result.value == expected
 
         @staticmethod
         def assert_failure_with_error[T](
-            result: r[T],
+            result: p.Result[T],
             expected_error: str,
         ) -> None:
             TestrCoverage._ResultAssertions.assert_failure(result)
-            assert isinstance(result, r)
+            assert isinstance(result, p.Result)
             assert result.error == expected_error
 
     @pytest.mark.parametrize(
@@ -90,7 +90,7 @@ class TestrCoverage:
 
     def test_fail_creates_failure_with_message(self) -> None:
         """Test creating failure results."""
-        result: r[str] = r[str].fail("Test error")
+        result: p.Result[str] = r[str].fail("Test error")
         self._ResultAssertions.assert_failure_with_error(
             result,
             expected_error="Test error",
@@ -98,14 +98,14 @@ class TestrCoverage:
 
     def test_fail_with_error_code(self) -> None:
         """Test creating failure with error code."""
-        result: r[str] = r[str].fail("Error", error_code="TEST_CODE")
+        result: p.Result[str] = r[str].fail("Error", error_code="TEST_CODE")
         self._ResultAssertions.assert_failure(result)
         tm.fail(result, code="TEST_CODE")
 
     def test_fail_with_error_data(self) -> None:
         """Test creating failure with error data."""
         error_data: t.ConfigMap = t.ConfigMap(root={"status": "failed", "count": 5})
-        result: r[str] = r[str].fail("Error", error_data=error_data)
+        result: p.Result[str] = r[str].fail("Error", error_data=error_data)
         self._ResultAssertions.assert_failure(result)
         tm.fail(
             result,
@@ -122,7 +122,7 @@ class TestrCoverage:
 
     def test_value_property_on_failure_raises(self) -> None:
         """Test that value property raises on failure."""
-        result: r[str] = r[str].fail("error")
+        result: p.Result[str] = r[str].fail("error")
         with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
             _ = result.value
 
@@ -133,7 +133,7 @@ class TestrCoverage:
 
     def test_error_property_on_failure(self) -> None:
         """Test accessing error on failure result."""
-        result: r[str] = r[str].fail("test_error")
+        result: p.Result[str] = r[str].fail("test_error")
         self._ResultAssertions.assert_failure_with_error(
             result,
             expected_error="test_error",
@@ -151,7 +151,7 @@ class TestrCoverage:
 
     def test_unwrap_failure_raises(self) -> None:
         """Test that unwrap raises on failure."""
-        result: r[str] = r[str].fail("error")
+        result: p.Result[str] = r[str].fail("error")
         with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
             result.value
 
@@ -162,7 +162,7 @@ class TestrCoverage:
 
     def test_unwrap_or_failure(self) -> None:
         """Test unwrap_or returns default on failure."""
-        result: r[str] = r[str].fail("error")
+        result: p.Result[str] = r[str].fail("error")
         tm.that(result.unwrap_or("default"), eq="default")
 
     def test_map_success(self) -> None:
@@ -235,13 +235,15 @@ class TestrCoverage:
 
     def test_filter_failure_skips_predicate(self) -> None:
         """Test that filter skips on failure."""
-        result: r[int] = r[int].fail("error").filter(lambda x: x > 3)
+        result: p.Result[int] = r[int].fail("error").filter(lambda x: x > 3)
         self._ResultAssertions.assert_failure(result)
         tm.fail(result, has="error")
 
     def test_alt_maps_error_message(self) -> None:
         """Test alt maps error message on failure."""
-        result: r[str] = r[str].fail("original").map_error(lambda e: f"Modified: {e}")
+        result: p.Result[str] = (
+            r[str].fail("original").map_error(lambda e: f"Modified: {e}")
+        )
         self._ResultAssertions.assert_failure_with_error(result, "Modified: original")
 
     def test_alt_skips_on_success(self) -> None:
@@ -255,8 +257,8 @@ class TestrCoverage:
         def recovery(error: str) -> p.Result[str]:
             return r[str].ok(f"Recovered from: {error}")
 
-        failed: r[str] = r[str].fail("error")
-        result: r[str] = failed.lash(recovery)
+        failed: p.Result[str] = r[str].fail("error")
+        result: p.Result[str] = failed.lash(recovery)
         self._ResultAssertions.assert_success_with_value(
             result,
             "Recovered from: error",
@@ -277,8 +279,8 @@ class TestrCoverage:
         def failing_recovery(error: str) -> p.Result[str]:
             return r[str].fail("recovery also failed")
 
-        failed: r[str] = r[str].fail("original")
-        result: r[str] = failed.lash(failing_recovery)
+        failed: p.Result[str] = r[str].fail("original")
+        result: p.Result[str] = failed.lash(failing_recovery)
         self._ResultAssertions.assert_failure_with_error(result, "recovery also failed")
 
     def test_flow_through_chain_success(self) -> None:
@@ -316,7 +318,7 @@ class TestrCoverage:
             return "success"
 
         wrapped_func = r.safe(success_func)
-        result: r[str] = wrapped_func()
+        result: p.Result[str] = wrapped_func()
         self._ResultAssertions.assert_success_with_value(result, "success")
 
     def test_safe_decorator_catches_exception(self) -> None:
@@ -327,7 +329,7 @@ class TestrCoverage:
             raise ValueError(error_msg)
 
         wrapped_func = r.safe(failing_func)
-        result: r[str] = wrapped_func()
+        result: p.Result[str] = wrapped_func()
         self._ResultAssertions.assert_failure(result)
         tm.fail(result, has=error_msg)
 
@@ -437,12 +439,12 @@ class TestrCoverage:
 
     def test_bool_failure_is_false(self) -> None:
         """Test that failure result is falsy."""
-        result: r[str] = r[str].fail("error")
+        result: p.Result[str] = r[str].fail("error")
         tm.that(not bool(result), eq=True)
 
     def test_or_operator(self) -> None:
         """Test | operator for default values."""
-        result: r[str] = r[str].fail("error")
+        result: p.Result[str] = r[str].fail("error")
         value = result | "default"
         tm.that(value, eq="default")
 
@@ -466,7 +468,7 @@ class TestrCoverage:
 
     def test_context_manager_exit_failure(self) -> None:
         """Test context manager __exit__ on failure."""
-        result: r[str] = r[str].fail("error")
+        result: p.Result[str] = r[str].fail("error")
         with result:
             self._ResultAssertions.assert_failure(result)
 
@@ -477,13 +479,13 @@ class TestrCoverage:
 
     def test_repr_failure(self) -> None:
         """Test __repr__ for failure."""
-        result: r[str] = r[str].fail("error")
+        result: p.Result[str] = r[str].fail("error")
         tm.that(repr(result), eq="r[T].fail('error')")
 
     def test_error_codes_metadata(self) -> None:
         """Test error code and error data metadata."""
         error_data: t.ConfigMap = t.ConfigMap(root={"details": "something"})
-        result: r[str] = r[str].fail(
+        result: p.Result[str] = r[str].fail(
             "Error",
             error_code="CODE_123",
             error_data=error_data,
@@ -492,7 +494,7 @@ class TestrCoverage:
 
     def test_empty_string_vs_none_error(self) -> None:
         """Test empty string error vs None."""
-        result: r[str] = r[str].fail("")
+        result: p.Result[str] = r[str].fail("")
         self._ResultAssertions.assert_failure_with_error(result, "")
 
     def test_large_value_handling(self) -> None:

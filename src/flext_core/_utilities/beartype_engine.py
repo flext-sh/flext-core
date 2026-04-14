@@ -12,6 +12,8 @@ from __future__ import annotations
 import typing
 from typing import get_args
 
+from flext_core._typings.services import FlextTypesServices
+
 
 class FlextUtilitiesBeartypeEngine:
     """Annotation inspection utilities.
@@ -21,7 +23,7 @@ class FlextUtilitiesBeartypeEngine:
     """
 
     @staticmethod
-    def contains_any(hint: object | None) -> bool:
+    def contains_any(hint: FlextTypesServices.TypeHintSpecifier | None) -> bool:
         """Recursively detect Any anywhere in a type hint.
 
         Catches Any and object at the top level, then walks nested args
@@ -40,7 +42,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def has_forbidden_collection_origin(
-        hint: object | None,
+        hint: FlextTypesServices.TypeHintSpecifier | None,
         forbidden: frozenset[str],
     ) -> tuple[bool, str]:
         """Detect dict[...]/list[...]/set[...] as annotation origin.
@@ -55,7 +57,9 @@ class FlextUtilitiesBeartypeEngine:
         return False, ""
 
     @staticmethod
-    def count_union_members(hint: object | None) -> int:
+    def count_union_members(
+        hint: FlextTypesServices.TypeHintSpecifier | None,
+    ) -> int:
         """Count non-None members in a union type."""
         args = get_args(hint)
         if not args:
@@ -63,7 +67,9 @@ class FlextUtilitiesBeartypeEngine:
         return sum(1 for a in args if a is not type(None))
 
     @staticmethod
-    def is_str_none_union(hint: object | None) -> bool:
+    def is_str_none_union(
+        hint: FlextTypesServices.TypeHintSpecifier | None,
+    ) -> bool:
         """Detect str | None union pattern."""
         args = get_args(hint)
         if not args:
@@ -71,7 +77,9 @@ class FlextUtilitiesBeartypeEngine:
         return str in args and type(None) in args
 
     @staticmethod
-    def alias_contains_any(alias_value: object | None) -> bool:
+    def alias_contains_any(
+        alias_value: FlextTypesServices.TypeHintSpecifier | None,
+    ) -> bool:
         """Check PEP 695 type alias __value__ for Any references.
 
         Walks recursively through the alias value and falls back to string

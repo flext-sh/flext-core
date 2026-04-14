@@ -9,9 +9,8 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from typing import cast
 
-from flext_core import r
 from flext_tests import tm
-from tests import m, t
+from tests import m, p, r, t
 
 
 class _ValidationLikeError(ValueError):
@@ -48,11 +47,11 @@ def test_map_flat_map_and_then_paths() -> None:
     mapped_fail = r[int].ok(2).map(lambda _: (_ for _ in ()).throw(ValueError("m")))
     tm.fail(mapped_fail)
     tm.that(mapped_fail.error, eq="m")
-    runtime_ok: r[int] = r[int].ok(20)
-    flat_ok: r[int] = r[int].ok(1).flat_map(lambda _: runtime_ok)
+    runtime_ok: p.Result[int] = r[int].ok(20)
+    flat_ok: p.Result[int] = r[int].ok(1).flat_map(lambda _: runtime_ok)
     tm.ok(flat_ok)
     tm.that(flat_ok.value, eq=20)
-    runtime_fail: r[int] = cast(
+    runtime_fail: p.Result[int] = cast(
         "r[int]",
         r(
             error="inner",
@@ -61,18 +60,20 @@ def test_map_flat_map_and_then_paths() -> None:
             error_data=None,
         ),
     )
-    flat_fail: r[int] = r[int].ok(1).flat_map(lambda _: runtime_fail)
+    flat_fail: p.Result[int] = r[int].ok(1).flat_map(lambda _: runtime_fail)
     tm.fail(flat_fail)
     tm.that(flat_fail.error, eq="inner")
-    and_then_ok: r[str] = r[int].ok(3).flat_map(lambda v: r[str].ok(str(v)))
+    and_then_ok: p.Result[str] = (
+        r[int].ok(3).flat_map(lambda v: p.Result[str].ok(str(v)))
+    )
     tm.ok(and_then_ok)
     tm.that(and_then_ok.value, eq="3")
 
 
 def test_recover_tap_and_tap_error_paths() -> None:
     tm.that(r[int].ok(1).recover(lambda _e: 99).value, eq=1)
-    failed_for_recover: r[int] = cast("r[int]", r.fail("bad"))
-    recovered: r[int] = failed_for_recover.recover(lambda _e: 42)
+    failed_for_recover: p.Result[int] = cast("r[int]", r.fail("bad"))
+    recovered: p.Result[int] = failed_for_recover.recover(lambda _e: 42)
     tm.ok(recovered)
     tm.that(recovered.value, eq=42)
     seen: MutableSequence[int] = []
@@ -133,18 +134,18 @@ def test_from_validation_and_to_model_paths() -> None:
 
 
 def test_lash_runtime_result_paths() -> None:
-    runtime_ok2: r[int] = r[int].ok(99)
-    failed_for_lash: r[int] = cast("r[int]", r.fail("x"))
-    lash_ok: r[int] = failed_for_lash.lash(lambda _e: runtime_ok2)
+    runtime_ok2: p.Result[int] = r[int].ok(99)
+    failed_for_lash: p.Result[int] = cast("r[int]", r.fail("x"))
+    lash_ok: p.Result[int] = failed_for_lash.lash(lambda _e: runtime_ok2)
     tm.ok(lash_ok)
     tm.that(lash_ok.value, eq=99)
-    runtime_fail2: r[int] = r(
+    runtime_fail2: p.Result[int] = r(
         error="recovery failed",
         success=False,
         error_code=None,
         error_data=None,
     )
-    failed_for_lash_2: r[int] = cast("r[int]", r.fail("x"))
-    lash_fail: r[int] = failed_for_lash_2.lash(lambda _e: runtime_fail2)
+    failed_for_lash_2: p.Result[int] = cast("r[int]", r.fail("x"))
+    lash_fail: p.Result[int] = failed_for_lash_2.lash(lambda _e: runtime_fail2)
     tm.fail(lash_fail)
     tm.that(lash_fail.error, eq="recovery failed")

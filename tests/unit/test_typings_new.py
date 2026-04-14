@@ -168,7 +168,13 @@ class TestFlextTypes:
 
     def test_t_model_bound(self) -> None:
         """T_Model is bound to BaseModel."""
-        tm.that(T_Model.__bound__, eq=BaseModel)
+        bound_type = T_Model.__bound__
+        tm.that(bound_type, not_=None)
+        if isinstance(bound_type, type):
+            tm.that(issubclass(bound_type, BaseModel), eq=True)
+            return
+        err = "T_Model.__bound__ must be a runtime type"
+        raise AssertionError(err)
 
     # -- Runtime type tuples --
 

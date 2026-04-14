@@ -123,4 +123,4 @@ class FlextModelsSettings:
     "Domain model configuration defaults.\n\n    Moved from FlextConstants.DOMAIN_MODEL_CONFIG because\n    constants.py cannot import ConfigDict from pydantic.\n\n    Use m.DOMAIN_MODEL_CONFIG instead of c.DOMAIN_MODEL_CONFIG.\n    "
 
 
-__all__ = ["FlextModelsSettings"]
+__all__: list[str] = ["FlextModelsSettings"]

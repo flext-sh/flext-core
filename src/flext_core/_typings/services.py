@@ -31,30 +31,49 @@ class FlextTypesServices:
 
     type RegistryDict[T] = MutableMapping[str, T]
     type ModelCarrier = FlextModelsPydantic.BaseModel
+    type ProtocolModelCarrier = FlextProtocolsBase.Model
+    type DomainModelCarrier = ModelCarrier | ProtocolModelCarrier
+    type ContainerCarrier = (
+        FlextTypingContainers.ConfigMap | FlextTypingContainers.Dict
+    )
+    type RecursiveMappingCarrier = FlextTypingBase.RecursiveContainerMapping
+    type RecursiveSequenceCarrier = FlextTypingBase.RecursiveContainerList
+    type RecursiveTupleCarrier = tuple[FlextTypingBase.RecursiveContainer, ...]
     type ModelClass[T: ModelCarrier] = type[T]
     type LogArgument = FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model
     type LogValue = FlextTypesServices.LogArgument | Exception
     type LogResult = FlextProtocolsResult.Result[bool]
 
-    type ScalarOrModel = FlextTypingBase.Container | ModelCarrier
-    type ValueOrModel = FlextTypingBase.RecursiveContainer | ModelCarrier
+    type ScalarOrModel = (
+        FlextTypingBase.Container | ModelCarrier
+    )
+    type ValueOrModel = (
+        FlextTypingBase.RecursiveContainer
+        | ModelCarrier
+    )
     type PresentValueOrModel = (
         FlextTypingBase.Container
-        | FlextTypingBase.RecursiveContainerMapping
-        | FlextTypingBase.RecursiveContainerList
-        | tuple[FlextTypingBase.RecursiveContainer, ...]
+        | RecursiveMappingCarrier
+        | RecursiveSequenceCarrier
+        | RecursiveTupleCarrier
         | ModelCarrier
     )
     type RuntimeData = ValueOrModel | FlextTypesServices.MetadataValue
-    type RuntimeAtomic = FlextTypingBase.Container | ModelCarrier
+    type RuntimeAtomic = (
+        FlextTypingBase.Container
+        | ModelCarrier
+    )
 
     type BootstrapInput = (
-        ModelCarrier | FlextTypingBase.RecursiveContainerMapping | None
+        ModelCarrier
+        | RecursiveMappingCarrier
+        | None
     )
 
     type RegisterableService = (
         FlextTypingBase.Container
         | ModelCarrier
+        | ContainerCarrier
         | FlextProtocolsLogging.Logger
         | Mapping[
             str,
@@ -63,7 +82,10 @@ class FlextTypesServices:
         | Sequence[FlextTypingBase.Container | FlextTypingBase.RecursiveContainer]
         | Callable[
             ...,
-            FlextTypingBase.Container | ModelCarrier | FlextProtocolsLogging.Logger,
+            FlextTypingBase.Container
+            | ModelCarrier
+            | ContainerCarrier
+            | FlextProtocolsLogging.Logger,
         ]
         | Callable[..., FlextTypesServices.RegisterableService]
     )
@@ -82,6 +104,7 @@ class FlextTypesServices:
     type ModelInput = (
         FlextTypingBase.RecursiveContainer
         | ModelCarrier
+        | FlextTypingContainers.ConfigMap
         | Mapping[
             str,
             FlextTypesServices.ValueOrModel,
@@ -98,11 +121,23 @@ class FlextTypesServices:
         | Mapping[str, FlextTypingBase.Scalar]
         | None
     )
-    type HandlerCallable = Callable[..., ModelCarrier | None]
-    type HandlerLike = Callable[..., ModelCarrier]
+    type HandlerCallable = Callable[
+        ...,
+        ModelCarrier | FlextProtocolsResult.ResultLike[RuntimeAtomic] | None,
+    ]
+    type HandlerLike = Callable[
+        ...,
+        ModelCarrier | FlextProtocolsResult.ResultLike[RuntimeAtomic],
+    ]
     type DispatchableHandler = (
         ModelCarrier
-        | Callable[..., ModelCarrier | FlextTypesServices.RuntimeAtomic | None]
+        | Callable[
+            ...,
+            ModelCarrier
+            | FlextTypesServices.RuntimeAtomic
+            | FlextProtocolsResult.ResultLike[FlextTypesServices.RuntimeAtomic]
+            | None,
+        ]
     )
     type HandlerProtocolVariant = (
         FlextTypesServices.DispatchableHandler
@@ -113,12 +148,15 @@ class FlextTypesServices:
     )
     type ResolvedHandlerCallable = Callable[
         ...,
-        ModelCarrier | FlextTypesServices.RuntimeAtomic | None,
+        ModelCarrier
+        | FlextTypesServices.RuntimeAtomic
+        | FlextProtocolsResult.ResultLike[FlextTypesServices.RuntimeAtomic]
+        | None,
     ]
     type RoutedHandlerCallable = Callable[
         [FlextProtocolsBase.Routable],
         FlextTypesServices.RuntimeAtomic
-        | FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]
+        | FlextProtocolsResult.ResultLike[FlextTypesServices.RuntimeAtomic]
         | None,
     ]
     type RegisteredHandler = tuple[
@@ -214,18 +252,19 @@ class FlextTypesServices:
     type GuardInput = (
         FlextTypingBase.Scalar
         | Path
-        | FlextTypingBase.RecursiveContainerList
+        | RecursiveSequenceCarrier
         | Mapping[str, FlextTypingBase.RecursiveContainer | ModelCarrier]
-        | tuple[FlextTypingBase.RecursiveContainer, ...]
+        | RecursiveTupleCarrier
         | tuple[type, ...]
         | set[FlextTypingBase.RecursiveContainer]
         | ModelCarrier
         | FlextTypingContainers.ConfigMap
+        | FlextTypingContainers.Dict
         | RegisterableService
         | FlextProtocolsContext.Context
         | FlextProtocolsSettings.Settings
         | FlextProtocolsHandler.Dispatcher
-        | FlextProtocolsResult.Result[RuntimeAtomic]
+        | FlextProtocolsResult.ResultLike[RuntimeAtomic]
         | None
     )
 

@@ -235,7 +235,7 @@ class FlextExceptionsHelpers:
                 error_context[key] = FlextRuntime.normalize_to_container(
                     FlextRuntime.normalize_to_metadata(attr_val),
                 )
-        resolved_fields: Mapping[str, FieldInfo] = resolved.__class__.model_fields
+        resolved_fields: Mapping[str, FieldInfo] = params_cls.__pydantic_fields__
         for key in param_keys:
             field_info = resolved_fields.get(key)
             if field_info is None:

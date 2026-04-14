@@ -107,7 +107,7 @@ class TestModule:
         tm.that(logger.new(a=1), none=False)
         with pytest.raises(KeyError):
             logger.unbind("a")
-        tm.that(logger.try_unbind("a"), none=False)
+        tm.that(logger.unbind("a", safe=True), none=False)
         logger.trace("%s %s", "a")
         logger.trace("x")
         tm.that(u._format_log_message("%s %s", "a"), ne="")

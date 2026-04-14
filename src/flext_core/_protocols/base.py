@@ -37,7 +37,7 @@ class FlextProtocolsBase:
             mode: str = "python",
             include: FlextTypesServices.IncEx | None = None,
             exclude: FlextTypesServices.IncEx | None = None,
-            context: object | None = None,
+            context: FlextTypesServices.MetadataInput = None,
             by_alias: bool | None = None,
             exclude_unset: bool = False,
             exclude_defaults: bool = False,
@@ -45,7 +45,13 @@ class FlextProtocolsBase:
             exclude_computed_fields: bool = False,
             round_trip: bool = False,
             warnings: bool | str = True,
-            fallback: Callable[[object], object] | None = None,
+            fallback: (
+                Callable[
+                    [FlextTypesServices.RuntimeAtomic],
+                    FlextTypesServices.RuntimeAtomic,
+                ]
+                | None
+            ) = None,
             serialize_as_any: bool = False,
         ) -> Mapping[str, object]:
             """Dump model to dictionary."""
@@ -53,13 +59,13 @@ class FlextProtocolsBase:
 
         @classmethod
         def model_validate(
-            cls,
-            obj: object,
+            cls: type[Self],
+            obj: FlextTypesServices.ModelInput,
             *,
             strict: bool | None = None,
-            extra: object | None = None,
+            extra: str | None = None,
             from_attributes: bool | None = None,
-            context: object | None = None,
+            context: FlextTypesServices.MetadataInput = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> Self:
@@ -83,13 +89,13 @@ class FlextProtocolsBase:
 
         @classmethod
         def model_validate(
-            cls,
-            obj: object,
+            cls: type[TModel],
+            obj: FlextTypesServices.ModelInput,
             *,
             strict: bool | None = None,
-            extra: object | None = None,
+            extra: str | None = None,
             from_attributes: bool | None = None,
-            context: object | None = None,
+            context: FlextTypesServices.MetadataInput = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> TModel:
@@ -155,7 +161,7 @@ class FlextProtocolsBase:
     class Lock(Protocol):
         """Protocol for lock-like synchronization primitives."""
 
-        def __enter__(self) -> object:
+        def __enter__(self) -> bool:
             """Context manager entry."""
             ...
 

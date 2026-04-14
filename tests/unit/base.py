@@ -88,7 +88,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
             self,
             process_fn: Callable[
                 [t.ValueOrModel],
-                r[t.ValueOrModel],
+                p.Result[t.ValueOrModel],
             ]
             | None = None,
         ) -> h[t.ValueOrModel, t.ValueOrModel]:
@@ -170,7 +170,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
             handler_type: c.HandlerType = c.HandlerType.COMMAND,
             process_fn: Callable[
                 [t.ValueOrModel],
-                r[t.ValueOrModel],
+                p.Result[t.ValueOrModel],
             ]
             | None = None,
         ) -> h[t.ValueOrModel, t.ValueOrModel]:

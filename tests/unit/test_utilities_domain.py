@@ -26,7 +26,7 @@ from typing import cast
 import pytest
 from pydantic import BaseModel
 
-from tests import c, m, p, r, t, u
+from tests import c, m, p, t, u
 
 
 def _create_entities_batch(
@@ -145,7 +145,7 @@ def _as_payload_map(
 
 def create_compare_entities_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
     """Create test cases for entity comparison using constants."""
-    entities_result: r[Sequence[m.Core.Tests.DomainTestEntity]] = (
+    entities_result: p.Result[Sequence[m.Core.Tests.DomainTestEntity]] = (
         _create_entities_batch(
             names=[
                 c.Core.Tests.TestDomain.ENTITY_NAME_ALICE,
@@ -241,7 +241,7 @@ def create_compare_entities_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
 
 def create_hash_entity_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
     """Create test cases for entity hashing using constants."""
-    entities_result: r[Sequence[m.Core.Tests.DomainTestEntity]] = (
+    entities_result: p.Result[Sequence[m.Core.Tests.DomainTestEntity]] = (
         _create_entities_batch(
             names=[
                 c.Core.Tests.TestDomain.ENTITY_NAME_ALICE,

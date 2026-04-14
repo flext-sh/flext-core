@@ -24,7 +24,7 @@ from flext_core import FlextSettings, c, e, m, p, r, t, u
 
 
 def _is_service_of_type[T: t.RegisterableService](
-    value: object,
+    value: t.RegisterableService,
     cls: type[T],
 ) -> TypeIs[T]:
     """TypeIs guard that narrows an object to T for pyright."""
@@ -59,11 +59,12 @@ class FlextContainer(p.ContainerLifecycle):
     _services: MutableMapping[str, m.ServiceRegistration]
     _factories: MutableMapping[str, m.FactoryRegistration]
     _resources: MutableMapping[str, m.ResourceRegistration]
+    _internal_registrations: set[str]
     _global_config: m.ContainerConfig
 
     @staticmethod
     def _require_settings(
-        settings: object,
+        settings: p.Settings | None,
         *,
         source: str,
     ) -> p.Settings:
@@ -74,7 +75,7 @@ class FlextContainer(p.ContainerLifecycle):
 
     @staticmethod
     def _require_context(
-        context: object,
+        context: p.Context | None,
         *,
         source: str,
     ) -> p.Context:
@@ -135,10 +136,41 @@ class FlextContainer(p.ContainerLifecycle):
         self.register_existing_providers()
         self.register_core_services()
 
-    def _bind_provider(self, name: str, provider: object) -> None:
+    def _bind_provider(
+        self,
+        name: str,
+        provider: p.ProviderLike[t.RegisterableService],
+    ) -> None:
         """Register a resolved DI provider on both bridge and container namespaces."""
         setattr(self._di_bridge, name, provider)
         setattr(self._di_container, name, provider)
+
+    @staticmethod
+    def _core_names() -> set[str]:
+        """Return reserved names for auto-registered core infrastructure."""
+        return {
+            str(c.Directory.CONFIG),
+            str(c.ServiceName.LOGGER),
+            str(c.ServiceName.COMMAND_BUS),
+            str(c.FIELD_CONTEXT),
+        }
+
+    def _has_internal_registration(self, name: str) -> bool:
+        """Return whether a name exists in explicit or internal DI state."""
+        return (
+            name in self._services
+            or name in self._factories
+            or name in self._resources
+            or hasattr(self._di_services, name)
+            or hasattr(self._di_resources, name)
+        )
+
+    def _clear_provider_registration(self, name: str) -> None:
+        """Remove an existing provider binding from DI namespaces if present."""
+        if hasattr(self._di_services, name):
+            delattr(self._di_services, name)
+        if hasattr(self._di_resources, name):
+            delattr(self._di_resources, name)
 
     def _update_registered_object_service(
         self,
@@ -406,14 +438,18 @@ class FlextContainer(p.ContainerLifecycle):
         singleton pattern - use reset_for_testing() for that.
 
         """
-        for name in self.names():
-            if hasattr(self._di_services, name):
-                delattr(self._di_services, name)
-            if hasattr(self._di_resources, name):
-                delattr(self._di_resources, name)
+        names_to_clear = {
+            *self._services.keys(),
+            *self._factories.keys(),
+            *self._resources.keys(),
+            *self._core_names(),
+        }
+        for name in names_to_clear:
+            self._clear_provider_registration(str(name))
         self._services.clear()
         self._factories.clear()
         self._resources.clear()
+        self._internal_registrations.clear()
         self._config = FlextSettings.fetch_global()
         self.register_core_services()
 
@@ -474,7 +510,7 @@ class FlextContainer(p.ContainerLifecycle):
 
     @staticmethod
     def _narrow_service[T: t.RegisterableService](
-        service: object,
+        service: t.RegisterableService,
         cls: type[T],
     ) -> r[T]:
         """Narrow a service object to a concrete type T via runtime checking."""
@@ -596,13 +632,11 @@ class FlextContainer(p.ContainerLifecycle):
 
     @override
     def has(self, name: str) -> bool:
-        """Return whether a service or factory is registered for ``name``."""
+        """Return whether a public service, factory, or resource is registered."""
         return (
-            name in self._services
-            or name in self._factories
-            or name in self._resources
-            or hasattr(self._di_services, name)
-            or hasattr(self._di_resources, name)
+            (name in self._services and name not in self._internal_registrations)
+            or (name in self._factories and name not in self._internal_registrations)
+            or (name in self._resources and name not in self._internal_registrations)
         )
 
     @override
@@ -650,6 +684,15 @@ class FlextContainer(p.ContainerLifecycle):
         self._services = dict(services) if services is not None else {}
         self._factories = dict(factories) if factories is not None else {}
         self._resources = dict(resources) if resources is not None else {}
+        self._internal_registrations = {
+            str(name)
+            for name in (
+                list(self._services.keys())
+                + list(self._factories.keys())
+                + list(self._resources.keys())
+            )
+            if str(name) in self._core_names()
+        }
         self._global_config = global_config or self._create_container_config()
         if isinstance(user_overrides, t.ConfigMap):
             user_overrides_map = user_overrides
@@ -678,17 +721,29 @@ class FlextContainer(p.ContainerLifecycle):
 
     @override
     def names(self) -> t.StrSequence:
-        """List the names of registered services and factories."""
-        return (
+        """List explicitly registered services, factories, and resources.
+
+        Auto-registered core infrastructure remains resolvable through the
+        container, but it is intentionally hidden from this public listing so
+        callers see only user-facing registrations.
+        """
+        registered_names = (
             list(self._services.keys())
             + list(self._factories.keys())
             + list(self._resources.keys())
         )
+        return [
+            name
+            for name in registered_names
+            if str(name) not in self._internal_registrations
+        ]
 
     def _bind_service(self, name: str, impl: t.RegisterableService) -> Self:
         """Register a concrete service instance under ``name``."""
         if not name or self.has(name):
             return self
+        self._clear_provider_registration(name)
+        self._internal_registrations.discard(name)
         registration = m.ServiceRegistration(
             name=name,
             service=impl,
@@ -708,6 +763,8 @@ class FlextContainer(p.ContainerLifecycle):
         """Register a factory callable under ``name``."""
         if not name or self.has(name):
             return self
+        self._clear_provider_registration(name)
+        self._internal_registrations.discard(name)
 
         def normalized_factory() -> t.RegisterableService:
             raw_result = impl()
@@ -741,6 +798,8 @@ class FlextContainer(p.ContainerLifecycle):
         """Register a resource factory under ``name``."""
         if not name or self.has(name):
             return self
+        self._clear_provider_registration(name)
+        self._internal_registrations.discard(name)
         self._resources[name] = m.ResourceRegistration(name=name, factory=impl)
         try:
             self._bind_provider(
@@ -799,29 +858,34 @@ class FlextContainer(p.ContainerLifecycle):
         - "context": Singleton instance (container.context property)
         - "container": Self-reference for nested resolution
 
-        Note: Uses has() which checks both dicts and DI container to avoid conflicts.
+        Note: Core bootstrap uses internal DI-aware checks so public registration
+        helpers can remain focused on user-defined names.
         """
         if (
-            not self.has(c.Directory.CONFIG)
+            not self._has_internal_registration(str(c.Directory.CONFIG))
             and self._config is not None
             and u.registerable_service(self._config)
         ):
             _ = self.bind(c.Directory.CONFIG, self._config)
-        if not self.has(c.ServiceName.LOGGER):
+            self._internal_registrations.add(str(c.Directory.CONFIG))
+        if not self._has_internal_registration(str(c.ServiceName.LOGGER)):
             _ = self.factory(
                 c.ServiceName.LOGGER,
                 lambda: u.fetch_logger(c.DEFAULT_LOGGER_MODULE),
             )
+            self._internal_registrations.add(str(c.ServiceName.LOGGER))
         if (
-            not self.has(c.FIELD_CONTEXT)
+            not self._has_internal_registration(str(c.FIELD_CONTEXT))
             and self._context is not None
             and u.registerable_service(self._context)
         ):
             _ = self.bind(c.FIELD_CONTEXT, self._context)
-        if not self.has(c.ServiceName.COMMAND_BUS):
+            self._internal_registrations.add(str(c.FIELD_CONTEXT))
+        if not self._has_internal_registration(str(c.ServiceName.COMMAND_BUS)):
             dispatcher = u.build_dispatcher()
             if u.registerable_service(dispatcher):
                 _ = self.bind(c.ServiceName.COMMAND_BUS, dispatcher)
+                self._internal_registrations.add(str(c.ServiceName.COMMAND_BUS))
 
     @override
     def register_existing_providers(self) -> None:

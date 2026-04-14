@@ -80,7 +80,7 @@ class Testu(u.Core.Tests.Contract):
             (
                 "abc123",
                 [
-                    lambda d: r[bool].ok(True) if d else r[bool].fail("Empty"),
+                    lambda d: p.Result[bool].ok(True) if d else r[bool].fail("Empty"),
                     lambda d: (
                         r[bool].ok(True) if d.isalnum() else r[bool].fail("Non-alnum")
                     ),
@@ -88,7 +88,12 @@ class Testu(u.Core.Tests.Contract):
                 True,
                 None,
             ),
-            ("test", [lambda d: r[bool].fail("First failed")], False, "First failed"),
+            (
+                "test",
+                [lambda d: p.Result[bool].fail("First failed")],
+                False,
+                "First failed",
+            ),
             ("test", [], True, None),
         ]
         TYPE_CHECKER_CASES: ClassVar[Sequence[tuple[tuple[type, ...], type, bool]]] = [
@@ -230,7 +235,7 @@ class Testu(u.Core.Tests.Contract):
         def quick_success() -> p.Result[str]:
             return r[str].ok("success")
 
-        result: r[str] = u.retry(
+        result: p.Result[str] = u.retry(
             quick_success,
             max_attempts=c.MAX_RETRY_ATTEMPTS,
         )
@@ -247,7 +252,7 @@ class Testu(u.Core.Tests.Contract):
                 return r[str].fail("Temporary failure")
             return r[str].ok("Success")
 
-        result: r[str] = u.retry(
+        result: p.Result[str] = u.retry(
             flaky_op,
             max_attempts=5,
             delay_seconds=c.DEFAULT_RETRY_DELAY_SECONDS,

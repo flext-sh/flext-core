@@ -492,7 +492,7 @@ class TestPatternsCommands:
     def test_success_result_creation(self) -> None:
         """Test creating successful command result."""
         result_data: t.RecursiveContainerMapping = {"id": "123", "username": "test"}
-        command_result: r[t.RecursiveContainerMapping] = r[
+        command_result: p.Result[t.RecursiveContainerMapping] = r[
             t.RecursiveContainerMapping
         ].ok(result_data)
         if not command_result.success:
@@ -506,7 +506,7 @@ class TestPatternsCommands:
     def test_failure_result_creation(self) -> None:
         """Test creating failed command result."""
         error_message = "Command execution failed"
-        command_result: r[bool] = r[bool].fail(error_message)
+        command_result: p.Result[bool] = r[bool].fail(error_message)
         if command_result.success:
             msg = f"Expected False, got {command_result.success}"
             raise AssertionError(msg)

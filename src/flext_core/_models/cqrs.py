@@ -328,4 +328,4 @@ class FlextModelsCqrs:
         raise NotImplementedError(c.ERR_CQRS_PARSE_MESSAGE_NOT_IMPLEMENTED)
 
 
-__all__ = ["FlextModelsCqrs"]
+__all__: list[str] = ["FlextModelsCqrs"]

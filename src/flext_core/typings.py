@@ -29,6 +29,7 @@ EnumT = TypeVar("EnumT", bound=StrEnum)
 MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
 P = ParamSpec("P")
 R = TypeVar("R")
+RootValueT = TypeVar("RootValueT")
 ResultT = TypeVar("ResultT")
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
@@ -80,6 +81,7 @@ __all__: list[str] = [
     "P",
     "R",
     "ResultT",
+    "RootValueT",
     "T",
     "TRuntime",
     "TV_co",

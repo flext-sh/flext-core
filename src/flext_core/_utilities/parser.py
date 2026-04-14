@@ -492,4 +492,4 @@ class FlextUtilitiesParser:
                 )
 
 
-__all__ = ["FlextUtilitiesParser"]
+__all__: list[str] = ["FlextUtilitiesParser"]

@@ -159,17 +159,25 @@ class Ex09FlextDecorators(Examples):
         self.check("factory.custom.singleton", getattr(custom_cfg, "singleton", None))
         self.check("factory.custom.lazy", getattr(custom_cfg, "lazy", None))
         default_result = factory_default(t.ConfigMap(root={}))
+        default_payload = (
+            default_result.value if u.result_like(default_result) else default_result
+        )
         self.check(
             "factory.default.call_matches",
-            default_result.model_dump().get("value") == default_value
-            if default_result is not None
+            u.pydantic_model(default_payload)
+            and default_payload.model_dump().get("value") == default_value
+            if default_payload is not None
             else False,
         )
         custom_result = factory_custom(t.ConfigMap(root={}))
+        custom_payload = (
+            custom_result.value if u.result_like(custom_result) else custom_result
+        )
         self.check(
             "factory.custom.call_matches",
-            custom_result.model_dump().get("value") == custom_value
-            if custom_result is not None
+            u.pydantic_model(custom_payload)
+            and custom_payload.model_dump().get("value") == custom_value
+            if custom_payload is not None
             else False,
         )
 

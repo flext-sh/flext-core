@@ -205,15 +205,15 @@ class TestsFlextCoreUtilities(u):
                     return r[str | m.Core.Tests.User | m.Core.Tests.EmailResponse].fail(
                         c.Core.Tests.TestErrors.NO_USER_IDS_PROVIDED,
                     )
-                user_result: r[m.Core.Tests.User] = (
+                user_result: p.Result[m.Core.Tests.User] = (
                     TestsFlextCoreUtilities.Core.Tests.make(
                         TestsFlextCoreUtilities.Core.Tests.GetUserService,
                         user_id=case.user_ids[0],
                     ).execute()
                 )
-                result: r[str | m.Core.Tests.User | m.Core.Tests.EmailResponse] = (
-                    user_result.map(lambda user: user)
-                )
+                result: p.Result[
+                    str | m.Core.Tests.User | m.Core.Tests.EmailResponse
+                ] = user_result.map(lambda user: user)
                 for operation in case.operations:
                     if operation == "get_email":
                         result = result.map(
@@ -224,12 +224,14 @@ class TestsFlextCoreUtilities(u):
                             ),
                         )
                     elif operation == "send_email":
-                        email_result: r[m.Core.Tests.EmailResponse] = result.flat_map(
-                            lambda email: TestsFlextCoreUtilities.Core.Tests.make(
-                                TestsFlextCoreUtilities.Core.Tests.SendEmailService,
-                                to=str(email),
-                                subject="Test",
-                            ).execute(),
+                        email_result: p.Result[m.Core.Tests.EmailResponse] = (
+                            result.flat_map(
+                                lambda email: TestsFlextCoreUtilities.Core.Tests.make(
+                                    TestsFlextCoreUtilities.Core.Tests.SendEmailService,
+                                    to=str(email),
+                                    subject="Test",
+                                ).execute(),
+                            )
                         )
                         result = email_result.map(lambda response: response)
                     elif operation == "get_status":

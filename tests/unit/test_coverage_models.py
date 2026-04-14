@@ -89,7 +89,7 @@ class TestCoverageModels:
                 return hash(self.code)
 
             @override
-            def __eq__(self, other: object) -> bool:
+            def __eq__(self, other: t.ValueOrModel) -> bool:
                 if not isinstance(other, ISBN):
                     return False
                 return self.code == other.code

@@ -137,7 +137,7 @@ class FlextProtocolsHandler:
             message: FlextProtocolsBase.Routable,
             operation: str = ...,
         ) -> (
-            FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]
+            FlextProtocolsResult.ResultLike[FlextTypesServices.RuntimeAtomic]
             | FlextTypesServices.RuntimeAtomic
             | None
         ): ...
@@ -150,7 +150,7 @@ class FlextProtocolsHandler:
             self,
             message: FlextProtocolsBase.Routable,
         ) -> (
-            FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]
+            FlextProtocolsResult.ResultLike[FlextTypesServices.RuntimeAtomic]
             | FlextTypesServices.RuntimeAtomic
             | None
         ): ...
@@ -163,7 +163,7 @@ class FlextProtocolsHandler:
             self,
             message: FlextProtocolsBase.Routable,
         ) -> (
-            FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]
+            FlextProtocolsResult.ResultLike[FlextTypesServices.RuntimeAtomic]
             | FlextTypesServices.RuntimeAtomic
             | None
         ): ...

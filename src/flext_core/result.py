@@ -33,10 +33,13 @@ from pydantic import (
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core import c, p, t
+from flext_core._protocols.logging import FlextProtocolsLogging
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core.constants import c
+from flext_core.typings import t
 
 
-class FlextResult[T](BaseModel, p.Result[T]):
+class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
     """Type-safe result with monadic helpers for operation composition.
 
     Provides success/failure handling with various conversion and operation
@@ -47,17 +50,48 @@ class FlextResult[T](BaseModel, p.Result[T]):
         arbitrary_types_allowed=True,
         frozen=False,
         populate_by_name=True,
+        serialize_by_alias=True,
     )
 
-    success: Annotated[bool, Field(default=True)]
-    error: Annotated[str | None, Field(default=None)]
-    error_code: Annotated[str | None, Field(default=None)]
-    error_data: Annotated[t.ConfigMap | None, Field(default=None)]
+    result_success: Annotated[bool, Field(default=True, alias="success")]
+    result_error: Annotated[str | None, Field(default=None, alias="error")]
+    result_error_code: Annotated[
+        str | None,
+        Field(default=None, alias="error_code"),
+    ]
+    result_error_data: Annotated[
+        t.ConfigMap | None,
+        Field(default=None, alias="error_data"),
+    ]
 
     _payload: T | None = PrivateAttr(default=None)
     _exception: BaseException | None = PrivateAttr(default=None)
     _result: Result[T, str] | None = PrivateAttr(default=None)
-    _result_logger: p.Logger | None = PrivateAttr(default=None)
+    _result_logger: FlextProtocolsLogging.Logger | None = PrivateAttr(default=None)
+
+    @property
+    @override
+    def success(self) -> bool:
+        """Public success flag backed by an aliased Pydantic field."""
+        return self.result_success
+
+    @property
+    @override
+    def error(self) -> str | None:
+        """Public error message backed by an aliased Pydantic field."""
+        return self.result_error
+
+    @property
+    @override
+    def error_code(self) -> str | None:
+        """Public error code backed by an aliased Pydantic field."""
+        return self.result_error_code
+
+    @property
+    @override
+    def error_data(self) -> t.ConfigMap | None:
+        """Public error metadata backed by an aliased Pydantic field."""
+        return self.result_error_data
 
     @override
     def __repr__(self) -> str:
@@ -126,7 +160,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
             return None
         if isinstance(error_data, t.ConfigMap):
             return error_data
-        if isinstance(error_data, p.HasModelDump):
+        if isinstance(error_data, FlextProtocolsResult.HasModelDump):
             dump = error_data.model_dump()
             return t.ConfigMap.model_validate(dump)
         return t.ConfigMap.model_validate(dict(error_data))
@@ -228,7 +262,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
     @classmethod
     def _from_result[V](
         cls,
-        source: p.Result[V],
+        source: FlextProtocolsResult.Result[V],
     ) -> FlextResult[V]:
         if source.success:
             return FlextResult[V].ok(source.value)
@@ -264,7 +298,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
     @classmethod
     def accumulate_errors[ValueT](
         cls,
-        *results: p.Result[ValueT],
+        *results: FlextProtocolsResult.Result[ValueT],
     ) -> FlextResult[Sequence[ValueT]]:
         """Collect all successes, fail if any failure with all errors combined."""
         successes: MutableSequence[ValueT] = []
@@ -452,7 +486,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
     @classmethod
     def from_result[V](
         cls,
-        source: p.Result[V],
+        source: FlextProtocolsResult.Result[V],
     ) -> FlextResult[V]:
         """Normalize any structural FLEXT result into FlextResult."""
         return FlextResult[V]._from_result(source)
@@ -461,7 +495,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
     def traverse[V, U](
         cls,
         items: Sequence[V],
-        func: Callable[[V], p.Result[U]],
+        func: Callable[[V], FlextProtocolsResult.Result[U]],
         *,
         fail_fast: bool = True,
     ) -> FlextResult[Sequence[U]]:
@@ -498,7 +532,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
     def with_resource[R, U](
         cls,
         factory: Callable[[], R],
-        op: Callable[[R], p.Result[U]],
+        op: Callable[[R], FlextProtocolsResult.Result[U]],
         cleanup: Callable[[R], None] | None = None,
     ) -> FlextResult[U]:
         """Resource management with automatic cleanup."""
@@ -594,8 +628,8 @@ class FlextResult[T](BaseModel, p.Result[T]):
     @override
     def flat_map[U](
         self,
-        func: Callable[[T], p.Result[U]],
-    ) -> p.Result[U]:
+        func: Callable[[T], FlextProtocolsResult.Result[U]],
+    ) -> FlextResult[U]:
         """Chain operations returning a Result (monadic bind).
 
         Applies func to the success value and returns its result directly.
@@ -609,7 +643,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
             The result from func on success, or failure propagated.
 
         Example:
-            result = r[int].ok(42).flat_map(lambda x: r[str].ok(str(x)))
+            result = r[int].ok(42).flat_map(lambda x: p.Result[str].ok(str(x)))
 
         """
         if self.failure:
@@ -624,8 +658,8 @@ class FlextResult[T](BaseModel, p.Result[T]):
     @override
     def flow_through(
         self,
-        *funcs: Callable[[T], p.Result[T]],
-    ) -> p.Result[T]:
+        *funcs: Callable[[T], FlextProtocolsResult.Result[T]],
+    ) -> FlextResult[T]:
         """Chain multiple operations in a homogeneous pipeline.
 
         Each func receives the previous success value and returns
@@ -696,8 +730,8 @@ class FlextResult[T](BaseModel, p.Result[T]):
     @override
     def lash(
         self,
-        func: Callable[[str], p.Result[T]],
-    ) -> p.Result[T]:
+        func: Callable[[str], FlextProtocolsResult.Result[T]],
+    ) -> FlextResult[T]:
         """Apply recovery function on failure.
 
         Applies func to the error message on failure and returns the result directly.
@@ -710,7 +744,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
             FlextResult[T]: Self if success, or result from func on failure.
 
         Example:
-            result = r[int].fail("error").lash(lambda e: r[int].ok(0))
+            result = r[int].fail("error").lash(lambda e: p.Result[int].ok(0))
 
         """
         if self.failure:
@@ -719,7 +753,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
         return self
 
     @override
-    def map[U](self, func: Callable[[T], U]) -> p.Result[U]:
+    def map[U](self, func: Callable[[T], U]) -> FlextResult[U]:
         """Transform success value using function.
 
         Applies func to the success value and wraps the result.
@@ -744,7 +778,10 @@ class FlextResult[T](BaseModel, p.Result[T]):
         return result
 
     @override
-    def map_error(self, func: Callable[[str], str]) -> p.Result[T]:
+    def map_error(
+        self,
+        func: Callable[[str], str],
+    ) -> FlextResult[T]:
         """Apply transformation function to error message on failure.
 
         Overrides RuntimeResult.map_error to return FlextResult for type consistency.
@@ -816,7 +853,10 @@ class FlextResult[T](BaseModel, p.Result[T]):
         return FlextResult[T | U].ok(fallback_value)
 
     @override
-    def tap(self, func: Callable[[T], None]) -> p.Result[T]:
+    def tap(
+        self,
+        func: Callable[[T], None],
+    ) -> FlextResult[T]:
         """Apply side effect to success value, return unchanged.
 
         Overrides RuntimeResult.tap to return FlextResult for type consistency.

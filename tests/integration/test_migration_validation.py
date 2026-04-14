@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import override
 
-from pydantic import BaseModel as PydanticBaseModel, PrivateAttr
+from pydantic import PrivateAttr
 
 from flext_core import (
     FlextContainer,
@@ -82,7 +82,7 @@ class TestMigrationValidation:
         """Verify service registration and resolution."""
         container = FlextContainer()
 
-        class TestService(PydanticBaseModel):
+        class TestService(m.BaseModel):
             name: str = "test"
 
         test_service = TestService()
@@ -170,7 +170,7 @@ class TestMigrationValidation:
         assert success.value == "test_value"
         assert success.value == "test_value"
         assert success.unwrap_or("default") == "test_value"
-        failure: r[str] = r[str].fail("test_error")
+        failure: p.Result[str] = r[str].fail("test_error")
         assert not failure.success
         assert failure.failure
         assert failure.error == "test_error"

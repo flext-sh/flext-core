@@ -174,7 +174,7 @@ class FlextUtilitiesEnforcement:
         for name, info in own.items():
             if info.annotation is object:
                 errors.append(
-                    f'Field "{name}": object is FORBIDDEN. Use a t.* type contract.',
+                    f'Field "{name}" is FORBIDDEN. Use a t.* type contract.',
                 )
         return errors
 

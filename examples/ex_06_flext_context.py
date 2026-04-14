@@ -81,7 +81,9 @@ class Ex06FlextContext(Examples):
         )
         self.check(
             "service.fetch.ok",
-            FlextContext.Service.fetch_service("demo-service").unwrap_or("missing"),
+            str(
+                FlextContext.Service.fetch_service("demo-service").unwrap_or("missing")
+            ),
         )
         self.check(
             "service.fetch.missing",

@@ -382,7 +382,7 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_container(
-        val: t.RuntimeData,
+        val: t.RuntimeData | t.ConfigMap,
     ) -> t.RuntimeAtomic:
         """Normalize any value to t.Container | BaseModel.
 
@@ -461,7 +461,7 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_metadata(
-        val: t.RuntimeData,
+        val: t.RuntimeData | t.ConfigMap,
     ) -> t.MetadataValue:
         """Normalize input into metadata-compatible scalar, list, or mapping values."""
         match val:
@@ -844,4 +844,4 @@ class FlextRuntime:
         return FlextUtilitiesGenerators.generate_id()
 
 
-__all__ = ["FlextRuntime"]
+__all__: list[str] = ["FlextRuntime"]

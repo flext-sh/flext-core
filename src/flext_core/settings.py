@@ -587,4 +587,4 @@ class FlextSettings(BaseSettings):
         )
 
 
-__all__ = ["FlextSettings"]
+__all__: list[str] = ["FlextSettings"]

@@ -8,13 +8,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, override, runtime_checkable
 
 from structlog.typing import BindableLogger
 
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.result import FlextProtocolsResult
 from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.containers import FlextTypingContainers
 
 if TYPE_CHECKING:
     from flext_core._typings.services import FlextTypesServices
@@ -31,6 +32,41 @@ class FlextProtocolsLogging:
         logging methods (debug, info, warning, error, etc.) that are
         available via __getattr__ at runtime.
         """
+
+        @property
+        def name(self) -> str:
+            """Logger name exposed by the public adapter."""
+            ...
+
+        @override
+        def bind(self, **new_values: FlextTypesServices.RuntimeData) -> Self:
+            """Bind context and return a logger preserving the public protocol."""
+            ...
+
+        @override
+        def new(self, **new_values: FlextTypesServices.RuntimeData) -> Self:
+            """Replace bound context and return a logger preserving the protocol."""
+            ...
+
+        @override
+        def unbind(self, *keys: str, safe: bool = False) -> Self:
+            """Remove bound keys and optionally ignore missing values."""
+            ...
+
+        @override
+        def try_unbind(self, *keys: str) -> Self:
+            """Compatibility helper for safe key removal."""
+            ...
+
+        def build_exception_context(
+            self,
+            *,
+            exception: Exception | None,
+            exc_info: bool,
+            context: Mapping[str, FlextTypesServices.RuntimeData | Exception],
+        ) -> FlextTypingContainers.ConfigMap:
+            """Build normalized structured exception context."""
+            ...
 
         def critical(
             self,

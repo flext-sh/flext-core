@@ -46,7 +46,7 @@ class FlextContext(m.ArbitraryTypesModel):
     _logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     @staticmethod
-    def _to_normalized(value: t.ValueOrModel) -> t.RecursiveContainer:
+    def _to_normalized(value: t.ValueOrModel | t.ConfigMap) -> t.RecursiveContainer:
         """Narrow ``Container | t.ModelCarrier`` to ``RecursiveContainer``.
 
         Pydantic model instances are converted via ``model_dump()`` so the result
@@ -58,10 +58,25 @@ class FlextContext(m.ArbitraryTypesModel):
             for k, v in raw.items():
                 container_val = u.normalize_to_container(v)
                 if u.pydantic_model(container_val):
+                    if isinstance(container_val, (t.ConfigMap, t.Dict)):
+                        nested: t.MutableRecursiveContainerMapping = {}
+                        for nk, nv in container_val.root.items():
+                            nested[str(nk)] = FlextContext._to_normalized(
+                                u.normalize_to_container(nv),
+                            )
+                        result[str(k)] = nested
+                        continue
                     result[str(k)] = str(container_val)
                 else:
                     result[str(k)] = container_val
             return result
+        if isinstance(value, (t.ConfigMap, t.Dict)):
+            normalized_root: t.MutableRecursiveContainerMapping = {}
+            for k, v in value.root.items():
+                normalized_root[str(k)] = FlextContext._to_normalized(
+                    u.normalize_to_container(v),
+                )
+            return normalized_root
         return value
 
     @staticmethod
@@ -268,7 +283,10 @@ class FlextContext(m.ArbitraryTypesModel):
             _ = u.bind_global_context(**{key: normalized})
 
     @staticmethod
-    def _validate_update_inputs(key: str, value: t.ValueOrModel) -> p.Result[bool]:
+    def _validate_update_inputs(
+        key: str,
+        value: t.ValueOrModel | t.ConfigMap,
+    ) -> p.Result[bool]:
         """Validate inputs for set operation.
 
         Args:
@@ -289,7 +307,7 @@ class FlextContext(m.ArbitraryTypesModel):
                 "validate context value",
                 c.ERR_CONTEXT_VALUE_CANNOT_BE_NONE,
             )
-        value_for_guard: t.RecursiveContainer = (
+        value_for_guard: t.RecursiveContainer | t.ConfigMap = (
             FlextContext._to_normalized(
                 u.normalize_to_container(
                     u.normalize_to_metadata(value),
@@ -337,7 +355,7 @@ class FlextContext(m.ArbitraryTypesModel):
             A new FlextContext with the same data
 
         """
-        cloned: Self = self.__class__(initial_data=self.initial_data)
+        cloned: Self = self.__class__.model_validate({"initial_data": self.initial_data})
         for scope_name, ctx_var in self.iter_scope_vars().items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
@@ -384,7 +402,7 @@ class FlextContext(m.ArbitraryTypesModel):
         if metadata_dict_export:
             normalized_metadata_map: MutableMapping[str, t.ValueOrModel] = {}
             for k, v in metadata_dict_export.items():
-                metadata_value: t.ValueOrModel = v
+                metadata_value: t.ValueOrModel | t.ConfigMap = v
                 if u.mapping(v):
                     metadata_value = t.ConfigMap(
                         root=dict(v),
@@ -632,7 +650,7 @@ class FlextContext(m.ArbitraryTypesModel):
     ) -> t.ConfigMap | None:
         """Extract a ConfigMap from any supported merge source."""
         match other:
-            case _ if isinstance(other, p.Context):
+            case _ if u.context(other):
                 exported_result = other.export(as_dict=True)
                 if u.pydantic_model(exported_result):
                     return None
@@ -676,7 +694,7 @@ class FlextContext(m.ArbitraryTypesModel):
         exported_map = self._extract_config_map(other)
         if exported_map is None:
             return self
-        if isinstance(other, p.Context):
+        if u.context(other):
             self._apply_scoped_merge(exported_map)
         else:
             self._update_contextvar(c.ContextScope.GLOBAL, exported_map)
@@ -979,7 +997,11 @@ class FlextContext(m.ArbitraryTypesModel):
             ctx_var = self._scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             updated = t.ConfigMap(root=dict(current))
-            updated[key] = value
+            normalized_value = u.normalize_to_container(value)
+            if isinstance(normalized_value, (t.ConfigMap, t.Dict)):
+                updated[key] = dict(normalized_value.root)
+            else:
+                updated[key] = normalized_value
             _ = ctx_var.set(updated)
             FlextContext._propagate_to_logger(key, value, scope)
             self._update_statistics(c.ContextOperation.SET.value)
@@ -1312,7 +1334,7 @@ class FlextContext(m.ArbitraryTypesModel):
                         u.normalize_to_metadata(operation_metadata_raw),
                     ),
                 )
-            raw_ctx: Mapping[str, t.ValueOrModel | None] = {
+            raw_ctx: Mapping[str, t.ValueOrModel | t.ConfigMap | None] = {
                 c.ContextKey.CORRELATION_ID: context_vars.Correlation.CORRELATION_ID.get(),
                 c.ContextKey.PARENT_CORRELATION_ID: context_vars.Correlation.PARENT_CORRELATION_ID.get(),
                 c.ContextKey.SERVICE_NAME: context_vars.Service.SERVICE_NAME.get(),

@@ -9,7 +9,7 @@ import pytest
 from tests import c, e, p, r, t
 
 type ErrorFactory = Callable[[], e.BaseError]
-type FailureFactory = Callable[[], r[bool]]
+type FailureFactory = Callable[[], p.Result[bool]]
 
 
 class TestCoverageExceptions:

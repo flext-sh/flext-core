@@ -73,4 +73,4 @@ class FlextModelsContextExport:
             return len(self.data)
 
 
-__all__ = ["FlextModelsContextExport"]
+__all__: list[str] = ["FlextModelsContextExport"]

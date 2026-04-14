@@ -57,15 +57,17 @@ class FlextUtilitiesResultHelpers:
             Exception: If raised exception is not in catch types.
 
         """
-        func_result = r[T].create_from_callable(func)
-        if func_result.success:
-            return func_result
-        exc = getattr(func_result, "_exception", None)
-        if exc is not None and not isinstance(exc, catch):
-            raise exc
-        if default is not None:
-            return r[T].ok(default)
-        return func_result
+        try:
+            value = func()
+        except catch as exc:
+            if default is not None:
+                return r[T].ok(default)
+            return r[T].fail(str(exc), exception=exc)
+        if value is None:
+            if default is not None:
+                return r[T].ok(default)
+            return r[T].fail("Callable returned None")
+        return r[T].ok(value)
 
     @staticmethod
     def expect_success[TValue](

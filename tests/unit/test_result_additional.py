@@ -26,7 +26,7 @@ def test_map_error_identity_and_transform() -> None:
     """map_error should short-circuit on success and transform failures."""
     success = r[int].ok(1)
     assert success.map_error(lambda msg: msg + "_x") is success
-    failure: r[int] = r[int].fail(
+    failure: p.Result[int] = r[int].fail(
         "bad",
         error_code="E1",
         error_data=t.ConfigMap(root={"k": "v"}),
@@ -80,7 +80,7 @@ def test_create_from_callable_and_repr() -> None:
     success_repr = repr(success_result)
     assert success_repr.startswith("r[T].ok(")
     assert "7" in success_repr
-    failure_result: r[int] = r[int].fail("oops")
+    failure_result: p.Result[int] = r[int].fail("oops")
     failure_repr = repr(failure_result)
     assert failure_repr.startswith("r[T].fail(")
     assert "oops" in failure_repr

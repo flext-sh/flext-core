@@ -46,7 +46,7 @@ This document outlines the development standards, patterns, and quality requirem
 
 **CORE RESPONSIBILITIES**:
 
-- ✅ **Railway Pattern Foundation**: r[T] with .data/.value compatibility
+- ✅ **Railway Pattern Foundation**: p.Result[T] with .data/.value compatibility
 - ✅ **Dependency Injection**: FlextContainer.get_global() with type safety
 - ✅ **Domain Models**: FlextModels.Entity/Value/AggregateRoot for DDD patterns
 - ✅ **Service Architecture**: s with Pydantic Generic[T] base

@@ -392,7 +392,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     _ = Config  # referenced for pyright
     u.configure_structlog(
-        settings=cast("BaseModel", cast("t.RecursiveContainer", Config()))
+        settings=cast("m.BaseModel", cast("t.RecursiveContainer", Config()))
     )
     tm.that(u.structlog_configured(), eq=True)
     tm.that(bool(calls), eq=True)
@@ -486,8 +486,8 @@ def test_runtime_result_all_missed_branches() -> None:
     def _error_to_int(error: str) -> int:
         return len(error)
 
-    success: r[int] = r[int].ok(1)
-    failure: r[int] = r[int].fail(
+    success: p.Result[int] = r[int].ok(1)
+    failure: p.Result[int] = r[int].fail(
         "e",
         error_code="E1",
         error_data=t.ConfigMap(root={"x": 1}),
@@ -523,7 +523,7 @@ def test_runtime_result_all_missed_branches() -> None:
     tm.that(filtered.error, eq="Value did not pass filter predicate")
     tm.that(failure.map_error(lambda err: f"{err}-alt").error, eq="e-alt")
     tm.that(
-        failure.lash(lambda _err: r[int].ok(5)).value,
+        failure.lash(lambda _err: p.Result[int].ok(5)).value,
         eq=5,
     )
     tm.that(failure.recover(lambda _err: 7).value, eq=7)
@@ -534,7 +534,7 @@ def test_runtime_result_all_missed_branches() -> None:
         def value(self) -> int | None:
             return None
 
-    none_success: r[int | None] = NoneValueResult(
+    none_success: p.Result[int | None] = NoneValueResult(
         success=True,
         error=None,
         error_code=None,
@@ -546,11 +546,11 @@ def test_runtime_result_all_missed_branches() -> None:
     none_ok = r[int | None].ok(None)
     tm.that(none_ok.success, eq=True)
     tm.that(none_ok.value, none=True)
-    none_error: r[int] = r[int].fail(
+    none_error: p.Result[int] = r[int].fail(
         None,
     )
     tm.that(none_error.error, eq="")
-    broken: r[int] = r(
+    broken: p.Result[int] = r(
         success=True,
         error=None,
         error_code=None,
@@ -698,8 +698,8 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
 
 
 def test_runtime_result_alias_compatibility() -> None:
-    rr: r[int] = r[int].ok(10)
-    wrapped: r[int] = r[int].ok(rr.value)
+    rr: p.Result[int] = r[int].ok(10)
+    wrapped: p.Result[int] = r[int].ok(rr.value)
     assert isinstance(wrapped, r)
 
 
@@ -948,8 +948,8 @@ def test_runtime_result_remaining_paths() -> None:
     def _fail_boom(_value: int) -> p.Result[int]:
         return r[int].fail("boom")
 
-    success: r[int] = r[int].ok(3)
-    failure: r[int] = r[int].fail(
+    success: p.Result[int] = r[int].ok(3)
+    failure: p.Result[int] = r[int].fail(
         "err",
         error_code="E2",
         error_data=t.ConfigMap(root={"k": "v"}),

@@ -12,13 +12,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 import pytest
 from pydantic import BaseModel
 
 from flext_tests import tm
-from tests import e, m, p, r, t, u
+from tests import e, m, p, r, u
+
+if TYPE_CHECKING:
+    from tests.protocols import TestsFlextCoreProtocols
+    from tests.typings import TestsFlextCoreTypes
 
 
 def _as_protocol_subject[T](value: T) -> T:
@@ -241,7 +245,11 @@ class TestFlextProtocols:
         """Object with dispatch(message) satisfies p.DispatchableService."""
 
         class _Svc:
-            def dispatch(self, message: p.Model, /) -> p.Model:
+            def dispatch(
+                self,
+                message: TestsFlextCoreProtocols.Model,
+                /,
+            ) -> TestsFlextCoreProtocols.Model:
                 return message
 
         instance = _as_protocol_subject(_Svc())
@@ -601,7 +609,7 @@ class TestFlextProtocols:
         class _Configurable:
             def configure(
                 self,
-                settings: t.FlatContainerMapping | None = None,
+                settings: TestsFlextCoreTypes.FlatContainerMapping | None = None,
             ) -> Self:
                 return self
 
@@ -614,8 +622,12 @@ class TestFlextProtocols:
         class _HandleImpl:
             def handle(
                 self,
-                message: p.Routable,
-            ) -> p.Result[t.RuntimeAtomic] | t.RuntimeAtomic | None:
+                message: TestsFlextCoreProtocols.Routable,
+            ) -> (
+                TestsFlextCoreProtocols.Result[TestsFlextCoreTypes.RuntimeAtomic]
+                | TestsFlextCoreTypes.RuntimeAtomic
+                | None
+            ):
                 return None
 
         instance = _as_protocol_subject(_HandleImpl())
@@ -627,8 +639,12 @@ class TestFlextProtocols:
         class _ExecImpl:
             def execute(
                 self,
-                message: p.Routable,
-            ) -> p.Result[t.RuntimeAtomic] | t.RuntimeAtomic | None:
+                message: TestsFlextCoreProtocols.Routable,
+            ) -> (
+                TestsFlextCoreProtocols.Result[TestsFlextCoreTypes.RuntimeAtomic]
+                | TestsFlextCoreTypes.RuntimeAtomic
+                | None
+            ):
                 return None
 
         instance = _as_protocol_subject(_ExecImpl())

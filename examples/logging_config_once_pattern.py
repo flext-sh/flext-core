@@ -21,7 +21,7 @@ from examples import c, t
 from flext_core import d, p, r, s, u
 
 
-class DatabaseService(s[t.ConfigMap]):
+class DatabaseService(s):
     """Example service showing settings log-once pattern."""
 
     db_config: t.ConfigMap
@@ -58,7 +58,7 @@ class DatabaseService(s[t.ConfigMap]):
         )
 
 
-class MigrationService(s[t.ConfigMap]):
+class MigrationService(s):
     """Example migration service with settings log-once pattern."""
 
     input_dir: str

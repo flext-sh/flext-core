@@ -17,7 +17,7 @@ from typing import ClassVar, Unpack, override
 
 from pydantic import ConfigDict
 
-from flext_core import c, e, m, p, r, t, u, x
+from flext_core import P, R, c, e, m, p, r, t, u, x
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):
@@ -249,7 +249,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         priority: int = c.DEFAULT_MAX_COMMAND_RETRIES,
         timeout: float | None = c.DEFAULT_TIMEOUT_SECONDS,
         middleware: Sequence[type[p.Middleware]] | None = None,
-    ) -> Callable[[t.HandlerCallable], t.HandlerCallable]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to mark methods as handlers for commands.
 
         Stores handler configuration as metadata on the decorated method,
@@ -271,7 +271,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         """
 
-        def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
+        def decorator(
+            func: Callable[P, R],
+        ) -> Callable[P, R]:
             """Apply handler configuration metadata to function.
 
             Only sets the attribute if not already set - innermost decorator wins.
@@ -641,23 +643,18 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 if not callable(func):
                     continue
                 settings: m.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
-                callable_func: Callable[..., t.RuntimeAtomic | None] = func
 
                 def narrowed_func(
                     message: t.RuntimeAtomic,
-                    captured_callable: Callable[
-                        ...,
-                        t.RuntimeAtomic | None,
-                    ] = callable_func,
-                    **kwargs: t.Scalar,
+                    function_name: str = name,
                 ) -> t.Scalar | None:
-                    fn_candidate = kwargs.get("fn", captured_callable)
-                    if not callable(fn_candidate):
-                        return ""
-                    result = fn_candidate(message)
+                    resolved_callable = getattr(module, function_name, None)
+                    if not callable(resolved_callable):
+                        return None
+                    result = resolved_callable(message)
                     if result is None:
                         return None
-                    if u.primitive(result):
+                    if isinstance(result, t.SCALAR_TYPES):
                         return result
                     return str(result)
 

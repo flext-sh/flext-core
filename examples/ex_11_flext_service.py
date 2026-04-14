@@ -357,14 +357,14 @@ class Ex11FlextService(Examples):
         )
         self.check(
             "RuntimeResult.flat_map",
-            rr_ok.flat_map(lambda num: r[int].ok(num * rr_mul)).unwrap_or(
+            rr_ok.flat_map(lambda num: p.Result[int].ok(num * rr_mul)).unwrap_or(
                 0,
             )
             == rr_value * rr_mul,
         )
         self.check(
             "RuntimeResult.and_then",
-            rr_ok.flat_map(lambda num: r[int].ok(num + rr_add)).unwrap_or(
+            rr_ok.flat_map(lambda num: p.Result[int].ok(num + rr_add)).unwrap_or(
                 0,
             )
             == rr_value + rr_add,
@@ -372,8 +372,8 @@ class Ex11FlextService(Examples):
         self.check(
             "RuntimeResult.flow_through",
             rr_ok.flow_through(
-                lambda num: r[int].ok(num + 1),
-                lambda num: r[int].ok(num * 2),
+                lambda num: p.Result[int].ok(num + 1),
+                lambda num: p.Result[int].ok(num * 2),
             ).unwrap_or(0)
             == (rr_value + 1) * 2,
         )
@@ -420,7 +420,7 @@ class Ex11FlextService(Examples):
         )
         self.check(
             "RuntimeResult.lash",
-            rr_fail.lash(lambda err: r[int].ok(len(err))).unwrap_or(0),
+            rr_fail.lash(lambda err: p.Result[int].ok(len(err))).unwrap_or(0),
         )
         self.check(
             "RuntimeResult.recover",

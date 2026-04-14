@@ -18,57 +18,57 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, cast
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from flext_tests import tm
 from tests import m, t, u
 
 
 class UtilitiesMapperCoverage100Namespace:
-    class SimpleObj(BaseModel):
+    class SimpleObj(m.Value):
         """Simple test t.RecursiveContainer."""
 
         name: Annotated[str, Field(description="Simple t.RecursiveContainer name")]
         value: Annotated[int, Field(description="Simple t.RecursiveContainer value")]
 
-    class _DoubleOp(BaseModel):
+    class _DoubleOp(m.BaseModel):
         def __call__(self, value: float | str) -> t.Numeric | str:
             if isinstance(value, (int, float)):
                 return value * 2
             return value
 
-    class _GreaterThanTwoOp(BaseModel):
+    class _GreaterThanTwoOp(m.BaseModel):
         def __call__(self, value: float | str) -> bool:
             if isinstance(value, (int, float)):
                 return value > 2
             return False
 
-    class _TimesTenOp(BaseModel):
+    class _TimesTenOp(m.BaseModel):
         def __call__(self, value: float | str) -> t.Numeric | str:
             if isinstance(value, (int, float)):
                 return value * 10
             return value
 
-    class _PlusFiveOp(BaseModel):
+    class _PlusFiveOp(m.BaseModel):
         def __call__(self, value: float | str) -> t.Numeric | str:
             if isinstance(value, (int, float)):
                 return value + 5
             return value
 
-    class _GroupLenOp(BaseModel):
+    class _GroupLenOp(m.BaseModel):
         def __call__(self, value: float | str) -> int:
             if isinstance(value, str):
                 return len(value)
             return 0
 
-    class _GetKeyAOp(BaseModel):
+    class _GetKeyAOp(m.BaseModel):
         def __call__(self, value: t.IntMapping | float | str) -> int:
             if isinstance(value, dict):
                 inner = value.get("a")
                 return inner if inner is not None else 0
             return 0
 
-    class _IntConvertOp(BaseModel):
+    class _IntConvertOp(m.BaseModel):
         """Converter that wraps int() builtin for type-safe convert testing."""
 
         def __call__(self, value: float | bool | str) -> int:
@@ -198,7 +198,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         @staticmethod
         def _to_json_safe(value: t.ValueOrModel) -> t.RecursiveContainer:
-            if isinstance(value, BaseModel):
+            if isinstance(value, m.Value):
                 return cast("t.RecursiveContainer", value.model_dump(mode="json"))
             if isinstance(value, Path):
                 return value.as_posix()
@@ -286,7 +286,7 @@ class UtilitiesMapperCoverage100Namespace:
         def test_model_dump_extraction(self) -> None:
             """Test extraction via model_dump."""
 
-            class Dumpable(BaseModel):
+            class Dumpable(m.BaseModel):
                 a: Annotated[int, Field(default=1, description="Dumpable value")] = 1
 
             obj = Dumpable()

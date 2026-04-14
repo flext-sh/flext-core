@@ -11,9 +11,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
-from tests import t, u
+from tests import m, t, u
 
 
 class TestUtilitiesDomainFullCoverage:
@@ -26,7 +26,7 @@ class TestUtilitiesDomainFullCoverage:
     def test_hash_with_hashable_non_primitive(self) -> None:
         """Hashable non-primitive value in model_dump is repr'd (line 156)."""
 
-        class EntityWithDate(BaseModel):
+        class EntityWithDate(m.Value):
             unique_id: str = "test"
             created: datetime = datetime(2025, 1, 1, tzinfo=UTC)
 
@@ -37,7 +37,7 @@ class TestUtilitiesDomainFullCoverage:
     def test_hash_with_non_hashable_value(self) -> None:
         """Non-hashable value in model_dump uses repr (line 159)."""
 
-        class EntityWithList(BaseModel):
+        class EntityWithList(m.Value):
             unique_id: str = "test"
             tags: t.StrSequence = Field(default_factory=lambda: ["a", "b"])
 

@@ -193,7 +193,7 @@ class FlextApiModels:
         data: t.RecursiveContainerMapping
 
     class Response(BaseModel):
-        result: r[t.RecursiveContainer]
+        result: p.Result[t.RecursiveContainer]
         status: int
 
 
@@ -353,7 +353,7 @@ class FlextNewlibModels:
         data: t.RecursiveContainerMapping
 
     class Response(BaseModel):
-        result: r[t.RecursiveContainer]
+        result: p.Result[t.RecursiveContainer]
 ```
 
 ### 3. Add to Workspace

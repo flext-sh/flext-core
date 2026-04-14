@@ -57,17 +57,17 @@ class Ex01r(Examples):
 
         success_resource = r[int].with_resource(
             make_handle,
-            lambda handle: r[int].ok(handle.value * 2),
+            lambda handle: p.Result[int].ok(handle.value * 2),
             cleanup=clean_handle,
         )
         failure_resource = r[int].with_resource(
             make_handle,
-            lambda _: r[int].fail("resource op failed"),
+            lambda _: p.Result[int].fail("resource op failed"),
             cleanup=clean_handle,
         )
         no_cleanup_resource = r[int].with_resource(
             make_handle,
-            lambda handle: r[int].ok(handle.value + 1),
+            lambda handle: p.Result[int].ok(handle.value + 1),
         )
         self.check("with_resource.success", success_resource.unwrap_or(-1))
         self.check("with_resource.failure", failure_resource.error)
@@ -85,7 +85,7 @@ class Ex01r(Examples):
         self.check("map.failure", fail_value.map(lambda value: value + 1).failure)
         self.check(
             "flat_map.success",
-            ok_value.flat_map(lambda value: r[int].ok(value * 2)).unwrap_or(-1),
+            ok_value.flat_map(lambda value: p.Result[int].ok(value * 2)).unwrap_or(-1),
         )
         self.check(
             "map_error.failure",
@@ -93,7 +93,7 @@ class Ex01r(Examples):
         )
         self.check(
             "lash.failure",
-            fail_value.lash(lambda err: r[int].ok(len(err))).unwrap_or(-1),
+            fail_value.lash(lambda err: p.Result[int].ok(len(err))).unwrap_or(-1),
         )
         valid_data: t.ScalarMapping = {"name": "Ada", "age": 30}
         invalid_data: t.ScalarMapping = {"name": "Ada", "age": "bad"}
@@ -263,19 +263,19 @@ class Ex01r(Examples):
         )
         self.check(
             "flat_map.success",
-            base_ok.flat_map(lambda n: r[int].ok(n * 2)).unwrap_or(-1),
+            base_ok.flat_map(lambda n: p.Result[int].ok(n * 2)).unwrap_or(-1),
         )
         self.check(
             "flat_map.failure",
-            base_ok.flat_map(lambda _: r[int].fail("flat failed")).error,
+            base_ok.flat_map(lambda _: p.Result[int].fail("flat failed")).error,
         )
         self.check(
             "flat_map_chain.success",
-            base_ok.flat_map(lambda n: r[int].ok(n - 2)).unwrap_or(-1),
+            base_ok.flat_map(lambda n: p.Result[int].ok(n - 2)).unwrap_or(-1),
         )
         self.check(
             "flat_map_chain.failure",
-            base_fail.flat_map(lambda n: r[int].ok(n)).failure,
+            base_fail.flat_map(lambda n: p.Result[int].ok(n)).failure,
         )
         bind_ok = self.bind_probe(base_ok, 3)
         bind_fail = self.bind_probe(base_fail, 3)
@@ -299,11 +299,11 @@ class Ex01r(Examples):
         )
         self.check(
             "lash.failure_recovered",
-            base_fail.lash(lambda e: r[int].ok(len(e))).unwrap_or(-1),
+            base_fail.lash(lambda e: p.Result[int].ok(len(e))).unwrap_or(-1),
         )
         self.check(
             "lash.success_unchanged",
-            base_ok.lash(lambda _: r[int].ok(99)).unwrap_or(-1),
+            base_ok.lash(lambda _: p.Result[int].ok(99)).unwrap_or(-1),
         )
         self.check("recover.failure", base_fail.recover(lambda e: len(e)).unwrap_or(-1))
         self.check("recover.success", base_ok.recover(lambda _: 0).unwrap_or(-1))

@@ -9,7 +9,6 @@ from typing import ClassVar, cast
 
 import pytest
 from dependency_injector import containers as di_containers
-from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
 import flext_core as _discovery_mod
@@ -20,7 +19,7 @@ from tests import m, p, r, t
 
 
 class TestContainerFullCoverage:
-    class TypedValue(BaseModel):
+    class TypedValue(m.BaseModel):
         value: str = ""
 
     @staticmethod
@@ -464,10 +463,10 @@ class TestContainerFullCoverage:
             alpha_factory = registered["settings.alpha"]
             assert callable(alpha_factory) and isinstance(
                 alpha_factory(),
-                BaseModel,
+                m.BaseModel,
             )
             beta_factory = registered["settings.beta"]
-            assert callable(beta_factory) and isinstance(beta_factory(), BaseModel)
+            assert callable(beta_factory) and isinstance(beta_factory(), m.BaseModel)
         finally:
             FlextSettings._namespace_registry.clear()
             FlextSettings._namespace_registry.update(original_registry)
@@ -642,13 +641,13 @@ class TestContainerFullCoverage:
             c._config = cast("p.Settings", _CfgGoodNamespace())
             c.sync_config_to_di()
             assert isinstance(
-                cast("Callable[[], BaseModel]", captured["settings.n2"])(), BaseModel
+                cast("Callable[[], m.BaseModel]", captured["settings.n2"])(), m.BaseModel
             )
             assert isinstance(
-                cast("Callable[[], BaseModel]", captured["settings.n3"])(), BaseModel
+                cast("Callable[[], m.BaseModel]", captured["settings.n3"])(), m.BaseModel
             )
             assert isinstance(
-                cast("Callable[[], BaseModel]", captured["settings.n4"])(), BaseModel
+                cast("Callable[[], m.BaseModel]", captured["settings.n4"])(), m.BaseModel
             )
             c2 = FlextContainer.shared()
             c2._global_config = m.ContainerConfig(

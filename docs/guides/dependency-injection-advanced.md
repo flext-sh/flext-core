@@ -550,7 +550,7 @@ from flext_core import FlextContainer, FlextLogger
 container = FlextContainer.get_global()
 
 # CORRECT - Type checker knows exact type
-result: r[FlextLogger] = container.get_typed("logger", FlextLogger)
+result: p.Result[FlextLogger] = container.get_typed("logger", FlextLogger)
 
 if result.is_success:
     logger: FlextLogger = result.value
@@ -702,10 +702,10 @@ def some_random_function():
 
 ```python
 # ✅ CORRECT - Use get_typed for type safety
-result: r[FlextLogger] = container.get_typed("logger", FlextLogger)
+result: p.Result[FlextLogger] = container.get_typed("logger", FlextLogger)
 
 # ⚠️ OK but less safe - Basic retrieval
-result: r[t.RecursiveContainer] = container.get("logger")
+result: p.Result[t.RecursiveContainer] = container.get("logger")
 ```
 
 ## FlextDispatcher Reliability Settings

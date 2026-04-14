@@ -6,12 +6,12 @@ from collections.abc import Mapping
 from typing import ClassVar, override
 
 import pytest
-from pydantic import BaseModel, ConfigDict
+from pydantic import ConfigDict
 
-from tests import c, e, p, r, s
+from tests import c, e, m, p, r, s
 
 
-class UserData(BaseModel):
+class UserData(m.Value):
     """Public result model used by service tests."""
 
     user_id: int

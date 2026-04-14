@@ -77,7 +77,7 @@ When an operation fails, execution automatically switches to the failure track a
 from flext_core import r, p
 
 # Wrap successful data
-result: r[str] = r[str].ok("Hello, World!")
+result: p.Result[str] = r[str].ok("Hello, World!")
 
 # Generic type inference
 result = r[str].ok("data")
@@ -94,7 +94,7 @@ result = r[bool].ok(True)  # Represents successful completion
 from flext_core import r, p
 
 # Simple error
-result: r[str] = r[str].fail("Operation failed")
+result: p.Result[str] = r[str].fail("Operation failed")
 
 # With structured error information
 result = r[float].fail(
@@ -233,10 +233,10 @@ else:
 ```python
 from flext_core import r, p
 
-result: r[str] = r[str].ok("hello")
+result: p.Result[str] = r[str].ok("hello")
 
 # Transform the success value
-transformed: r[int] = result.map(len)  # r[int]
+transformed: p.Result[int] = result.map(len)  # r[int]
 assert transformed.value == 5
 
 # Chain multiple transformations
@@ -768,7 +768,7 @@ result = (
     r[str]
     .ok("not-a-number")
     .flat_map(parse_int)
-    .lash(lambda error: r[int].ok(0))  # Use 0 as default
+    .lash(lambda error: p.Result[int].ok(0))  # Use 0 as default
 )
 
 assert result.is_success

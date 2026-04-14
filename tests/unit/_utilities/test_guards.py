@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from pydantic import BaseModel
 
 from flext_tests import tm
 from tests import m, r, t, u
@@ -18,7 +17,7 @@ from tests import m, r, t, u
 # ---------------------------------------------------------------------------
 
 
-class _SampleModel(BaseModel):
+class _SampleModel(m.BaseModel):
     name: str = "test"
 
 

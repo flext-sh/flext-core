@@ -858,4 +858,4 @@ class FlextDecorators:
 
 
 d = FlextDecorators
-__all__ = ["FlextDecorators", "d"]
+__all__: list[str] = ["FlextDecorators", "d"]

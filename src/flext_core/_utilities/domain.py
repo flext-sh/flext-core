@@ -170,7 +170,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def normalize_domain_event_data(
-        value: t.ValueOrModel | Mapping[str, t.ValueOrModel] | None,
+        value: t.ConfigMap | t.ValueOrModel | Mapping[str, t.ValueOrModel] | None,
     ) -> t.RecursiveContainerMapping:
         """Normalize domain event payloads into comparable plain mappings."""
         if value is None:
@@ -255,4 +255,4 @@ class FlextUtilitiesDomain:
         metadata.root["skip_reasons"] = reasons
 
 
-__all__ = ["FlextUtilitiesDomain"]
+__all__: list[str] = ["FlextUtilitiesDomain"]

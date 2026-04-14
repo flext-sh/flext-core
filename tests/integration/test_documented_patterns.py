@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import override
+from typing import cast, override
 
 import pytest
 
@@ -189,7 +189,7 @@ class TestDocumentedPatterns:
             u.Core.Tests
             .make(u.Core.Tests.GetUserService, user_id="123")
             .execute()
-            .flat_map(lambda user: r[str].ok(user.email))
+            .flat_map(lambda user: p.Result[str].ok(user.email))
             .flat_map(
                 lambda email: u.Core.Tests.make(
                     u.Core.Tests.SendEmailService,
@@ -356,7 +356,7 @@ class TestDocumentedPatterns:
         )
         assert v2_pipeline.success
 
-        class CustomService(s[m.Core.Tests.User]):
+        class CustomService(s):
             user_id: str = ""
 
             @override

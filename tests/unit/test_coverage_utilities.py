@@ -140,7 +140,9 @@ class Testu(u.Core.Tests.Contract):
             return Testu._CustomObject()
 
         @staticmethod
-        def create_flaky_operation() -> tuple[Sequence[int], Callable[[], r[str]]]:
+        def create_flaky_operation() -> tuple[
+            Sequence[int], Callable[[], p.Result[str]]
+        ]:
             """Create flaky operation that eventually succeeds."""
             attempt_count = [0]
 
@@ -282,14 +284,14 @@ class Testu(u.Core.Tests.Contract):
         def op() -> p.Result[str]:
             return r[str].ok("success")
 
-        result: r[str] = u.retry(op, max_attempts=3)
+        result: p.Result[str] = u.retry(op, max_attempts=3)
         assert result.success
         tm.that(result.value, eq="success")
 
     def test_reliability_retry_eventual_success(self) -> None:
         """Test retry with eventual success."""
         attempt_count, flaky_op = self.UtilityScenarios.create_flaky_operation()
-        result: r[str] = u.retry(
+        result: p.Result[str] = u.retry(
             flaky_op,
             max_attempts=3,
             delay_seconds=0.01,
