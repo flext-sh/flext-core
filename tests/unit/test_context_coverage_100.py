@@ -13,7 +13,7 @@ from collections import UserDict
 from collections.abc import Mapping
 
 import pytest
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
 from flext_core import FlextContext
 from flext_tests import tm
@@ -283,7 +283,7 @@ class TestContext100Coverage:
     def test_context_export_validate_dict_serializable_pydantic_model(self) -> None:
         """Test ContextExport.validate_dict_serializable with Pydantic model."""
 
-        class TestModel(BaseModel):
+        class TestModel(m.Value):
             field: str = "value"
 
         model = TestModel()
@@ -346,7 +346,7 @@ class TestContext100Coverage:
     def test_context_scope_data_validate_data_with_basemodel(self) -> None:
         """Test ContextScopeData._validate_data with BaseModel."""
 
-        class TestModel(BaseModel):
+        class TestModel(m.Value):
             field: str = "value"
 
         model = TestModel()
@@ -367,7 +367,7 @@ class TestContext100Coverage:
     def test_context_scope_data_validate_metadata_with_basemodel(self) -> None:
         """Test ContextScopeData._validate_metadata with BaseModel."""
 
-        class TestModel(BaseModel):
+        class TestModel(m.Value):
             field: str = "value"
 
         model = TestModel()
@@ -391,7 +391,7 @@ class TestContext100Coverage:
     def test_context_statistics_validate_operations_with_basemodel(self) -> None:
         """Test ContextStatistics._validate_operations with BaseModel."""
 
-        class TestModel(BaseModel):
+        class TestModel(m.Value):
             field: str = "value"
 
         model = TestModel()
@@ -413,7 +413,7 @@ class TestContext100Coverage:
     def test_context_metadata_validate_custom_fields_with_basemodel(self) -> None:
         """Test ContextMetadata._validate_custom_fields with BaseModel."""
 
-        class TestModel(BaseModel):
+        class TestModel(m.Value):
             field: str = "value"
 
         model = TestModel()

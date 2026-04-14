@@ -643,7 +643,7 @@ class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
             The result from func on success, or failure propagated.
 
         Example:
-            result = r[int].ok(42).flat_map(lambda x: p.Result[str].ok(str(x)))
+            result = r[int].ok(42).flat_map(lambda x: r[str].ok(str(x)))
 
         """
         if self.failure:
@@ -744,7 +744,7 @@ class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
             FlextResult[T]: Self if success, or result from func on failure.
 
         Example:
-            result = r[int].fail("error").lash(lambda e: p.Result[int].ok(0))
+            result = r[int].fail("error").lash(lambda e: r[int].ok(0))
 
         """
         if self.failure:

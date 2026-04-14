@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 from pydantic import Field
 
@@ -51,10 +53,10 @@ class TestDispatcherFullCoverage:
         def handle(
             self,
             message: TestDispatcherFullCoverage._SampleQuery,
-        ) -> p.Result[t.ConfigMap]:
+        ) -> p.Result[t.RecursiveContainerMapping]:
             query_id = getattr(message, "query_id", None)
-            return r[t.ConfigMap].ok(
-                t.ConfigMap(root={"result": "data", "id": str(query_id)}),
+            return r[t.RecursiveContainerMapping].ok(
+                {"result": "data", "id": str(query_id)},
             )
 
         def can_handle(self, message_type: type) -> bool:
@@ -158,8 +160,8 @@ class TestDispatcherFullCoverage:
         query = self._SampleQuery(query_id="query-1")
         result = dispatcher.dispatch(query)
         assert result.success
-        assert isinstance(result.value, t.ConfigMap)
-        assert result.value.root["result"] == "data"
+        assert isinstance(result.value, Mapping)
+        assert result.value["result"] == "data"
 
     def test_callable_registration_with_attribute(
         self,

@@ -249,18 +249,18 @@ class Ex07FlextExceptions(Examples):
         e.record_exception(e.ValidationError)
         e.record_exception(e.ValidationError)
         e.record_exception(e.ConfigurationError)
-        metric_map = e.resolve_metrics().root
-        self.check("metrics.total_exceptions", metric_map.get("total_exceptions", 0))
-        self.check("metrics.has_exception_counts", "exception_counts" in metric_map)
+        metrics = e.resolve_metrics_snapshot()
+        self.check("metrics.total_exceptions", metrics.total_exceptions)
+        self.check("metrics.has_exception_counts", bool(metrics.exception_counts))
         self.check(
             "metrics.summary_nonempty",
-            bool(metric_map.get("exception_counts_summary")),
+            bool(metrics.exception_counts_summary),
         )
-        self.check("metrics.unique_types", metric_map.get("unique_exception_types", 0))
+        self.check("metrics.unique_types", metrics.unique_exception_types)
         e.clear_metrics()
         self.check(
             "metrics.cleared_total",
-            e.resolve_metrics().root.get("total_exceptions", 0),
+            e.resolve_metrics_snapshot().total_exceptions,
         )
 
 

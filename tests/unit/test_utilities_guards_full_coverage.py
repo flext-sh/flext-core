@@ -146,7 +146,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
                 m.Core.Tests._Model.model_validate({"value": 1}),
             )
         ),
-        eq=True,
+        eq=False,
     )
 
 

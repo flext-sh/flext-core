@@ -686,7 +686,7 @@ class FlextUtilitiesMapper:
             _map_keys
         )
         return mapped_result.fold(
-            on_failure=lambda exc: p.Result[t.MutableRecursiveContainerMapping].fail_op(
+            on_failure=lambda exc: r[t.MutableRecursiveContainerMapping].fail_op(
                 "map dict keys",
                 e.render_error_template(
                     c.ERR_TEMPLATE_FAILED_TO_MAP_DICT_KEYS,

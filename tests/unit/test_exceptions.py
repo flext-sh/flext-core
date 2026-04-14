@@ -7,7 +7,7 @@ from collections.abc import Callable, Sequence
 
 import pytest
 
-from tests import c, e, p, r, t
+from tests import c, e, m, p, r
 
 
 class TestExceptions:
@@ -239,12 +239,11 @@ class TestExceptions:
         e.record_exception(e.ValidationError)
         e.record_exception(e.ValidationError)
         e.record_exception(e.TimeoutError)
-        metrics = e.resolve_metrics()
-        assert metrics["total_exceptions"] == 3
-        exception_counts = metrics["exception_counts"]
-        assert isinstance(exception_counts, t.ConfigMap)
-        assert exception_counts[e.ValidationError.__qualname__] == 2
-        assert exception_counts[e.TimeoutError.__qualname__] == 1
+        metrics = e.resolve_metrics_snapshot()
+        assert isinstance(metrics, m.ExceptionMetricsSnapshot)
+        assert metrics.total_exceptions == 3
+        assert metrics.exception_counts[e.ValidationError.__qualname__] == 2
+        assert metrics.exception_counts[e.TimeoutError.__qualname__] == 1
         e.clear_metrics()
-        cleared_metrics = e.resolve_metrics()
-        assert cleared_metrics["total_exceptions"] == 0
+        cleared_metrics = e.resolve_metrics_snapshot()
+        assert cleared_metrics.total_exceptions == 0

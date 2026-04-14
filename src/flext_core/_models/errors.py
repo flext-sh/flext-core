@@ -82,11 +82,11 @@ class FlextModelsErrors:
             ),
         ] = 0
         exception_counts: Annotated[
-            t.ConfigMap,
+            t.IntMapping,
             FlextUtilitiesPydantic.Field(
                 description="Per-exception occurrence totals keyed by type name."
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: t.ConfigMap(root={}))
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
         exception_counts_summary: Annotated[
             str,
             FlextUtilitiesPydantic.Field(
@@ -111,7 +111,9 @@ class FlextModelsErrors:
             return t.ConfigMap(
                 root={
                     "total_exceptions": self.total_exceptions,
-                    "exception_counts": self.exception_counts,
+                    "exception_counts": t.ConfigMap.model_validate(
+                        dict(self.exception_counts),
+                    ),
                     "exception_counts_summary": self.exception_counts_summary,
                     "unique_exception_types": self.unique_exception_types,
                 }
@@ -168,9 +170,7 @@ class FlextModelsErrors:
             """Build the validated public metrics snapshot."""
             return FlextModelsErrors.ExceptionMetricsSnapshot.model_validate({
                 "total_exceptions": self.total_exceptions,
-                "exception_counts": t.ConfigMap.model_validate(
-                    dict(self.exception_counts),
-                ),
+                "exception_counts": dict(self.exception_counts),
                 "exception_counts_summary": self.exception_counts_summary,
                 "unique_exception_types": self.unique_exception_types,
             })

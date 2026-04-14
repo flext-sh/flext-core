@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable, MutableSequence
+from collections.abc import Callable, Mapping, MutableSequence
 from typing import Annotated, ClassVar, cast
 
 import pytest
@@ -398,9 +398,12 @@ class TestDecoratorsFullCoverage:
 
         built = build(t.ConfigMap(root={"v": 1}))
         built_value = built.value if u.result_like(built) else built
-        tm.that(u.pydantic_model(built_value), eq=True)
-        if u.pydantic_model(built_value):
-            tm.that(built_value, is_=t.ConfigMap)
+        if isinstance(built_value, t.ConfigMap):
+            tm.that(built_value.root.get("v"), eq=7)
+        elif isinstance(built_value, Mapping):
+            tm.that(built_value.get("v"), eq=7)
+        else:
+            pytest.fail(f"Unexpected build() result type: {type(built_value)!r}")
 
     def test_track_performance_success_and_failure_paths(
         self,
@@ -463,7 +466,7 @@ class TestDecoratorsFullCoverage:
             msg = "x"
             raise RuntimeError(msg)
 
-        fail_result: p.Result[int] = fails()
+        fail_result = fails()
         tm.fail(fail_result)
         fake_logger = self._FakeLogger()
 

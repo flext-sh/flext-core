@@ -9,7 +9,6 @@ from typing import ClassVar, cast
 
 import pytest
 from dependency_injector import containers as di_containers
-from pydantic_settings import BaseSettings as _BaseSettings
 
 import flext_core as _discovery_mod
 import flext_core as core_container
@@ -206,7 +205,7 @@ class TestContainerFullCoverage:
         monkeypatch.setattr(
             type(c._config),
             "_namespace_registry",
-            {"x": cast("type[p.Settings]", _BaseSettings)},
+            {"x": cast("type[p.Settings]", FlextSettings)},
         )
 
         monkeypatch.setattr(
@@ -419,12 +418,12 @@ class TestContainerFullCoverage:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        c = FlextContainer.shared()
+        container = FlextContainer.shared()
 
-        class _NsAlpha(_BaseSettings):
+        class _NsAlpha(FlextSettings):
             v: str = "ok"
 
-        class _NsBeta(_BaseSettings):
+        class _NsBeta(FlextSettings):
             v: str = "ok2"
 
         # Register namespaces so FlextSettings.resolve_namespace_settings() finds them.
@@ -440,14 +439,14 @@ class TestContainerFullCoverage:
                     "beta": cast("type[p.Settings]", _NsBeta),
                 }
 
-            c._config = cast("p.Settings", _Cfg())
-            c._global_config = m.ContainerConfig(
+            container._config = cast("p.Settings", _Cfg())
+            container._global_config = m.ContainerConfig(
                 enable_singleton=True,
                 enable_factory_caching=False,
                 max_services=10,
                 max_factories=10,
             )
-            c._user_overrides = t.ConfigMap(root={})
+            container._user_overrides = t.ConfigMap(root={})
             registered: MutableMapping[str, t.RegisterableService] = {}
 
             def _factory(
@@ -456,17 +455,18 @@ class TestContainerFullCoverage:
             ) -> p.Container:
                 if callable(impl):
                     registered[name] = impl
-                return c
+                return container
 
-            monkeypatch.setattr(c, "factory", _factory)
-            c.sync_config_to_di()
+            monkeypatch.setattr(container, "factory", _factory)
+            container.sync_config_to_di()
             alpha_factory = registered["settings.alpha"]
-            assert callable(alpha_factory) and isinstance(
-                alpha_factory(),
-                m.BaseModel,
-            )
+            assert callable(alpha_factory)
+            with pytest.raises(TypeError, match="must be a Pydantic model"):
+                _ = alpha_factory()
             beta_factory = registered["settings.beta"]
-            assert callable(beta_factory) and isinstance(beta_factory(), m.BaseModel)
+            assert callable(beta_factory)
+            with pytest.raises(TypeError, match="must be a Pydantic model"):
+                _ = beta_factory()
         finally:
             FlextSettings._namespace_registry.clear()
             FlextSettings._namespace_registry.update(original_registry)
@@ -575,28 +575,28 @@ class TestContainerFullCoverage:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        c = FlextContainer.shared()
-        c._global_config = m.ContainerConfig(
+        container = FlextContainer.shared()
+        container._global_config = m.ContainerConfig(
             enable_singleton=True,
             enable_factory_caching=False,
             max_services=10,
             max_factories=10,
         )
-        c._user_overrides = t.ConfigMap(root={})
+        container._user_overrides = t.ConfigMap(root={})
 
         # --- _CfgNoMethod: namespace_registry without resolve_namespace_settings ---
         # n1 is NOT registered in FlextSettings, so resolve_namespace_settings returns None
         # and sync_config_to_di skips it (continue branch).
         class _CfgNoMethod(m.Core.Tests.FalseSettings):
             _namespace_registry: ClassVar[Mapping[str, type[p.Settings]]] = {
-                "n1": cast("type[p.Settings]", _BaseSettings),
+                "n1": cast("type[p.Settings]", FlextSettings),
             }
 
-        c._config = cast("p.Settings", _CfgNoMethod())
-        c.sync_config_to_di()
+        container._config = cast("p.Settings", _CfgNoMethod())
+        container.sync_config_to_di()
 
         # --- Create real BaseSettings subclasses for n2, n3, n4 ---
-        class _NsModel(_BaseSettings):
+        class _NsModel(FlextSettings):
             v: str = "x"
 
         # Register namespaces in FlextSettings._namespace_registry so that
@@ -623,7 +623,7 @@ class TestContainerFullCoverage:
                     "n4": cast("type[p.Settings]", _NsModel),
                 }
 
-            c._config = cast("p.Settings", _CfgFallback())
+            container._config = cast("p.Settings", _CfgFallback())
             captured: MutableMapping[str, t.RegisterableService] = {}
 
             def _capture_factory(
@@ -632,26 +632,21 @@ class TestContainerFullCoverage:
             ) -> p.Container:
                 if callable(impl):
                     captured[name] = impl
-                return c
+                return container
 
-            monkeypatch.setattr(c, "factory", _capture_factory)
-            c.sync_config_to_di()
-            c._config = cast("p.Settings", _CfgBadNamespace())
-            c.sync_config_to_di()
-            c._config = cast("p.Settings", _CfgGoodNamespace())
-            c.sync_config_to_di()
-            assert isinstance(
-                cast("Callable[[], m.BaseModel]", captured["settings.n2"])(),
-                m.BaseModel,
-            )
-            assert isinstance(
-                cast("Callable[[], m.BaseModel]", captured["settings.n3"])(),
-                m.BaseModel,
-            )
-            assert isinstance(
-                cast("Callable[[], m.BaseModel]", captured["settings.n4"])(),
-                m.BaseModel,
-            )
+            monkeypatch.setattr(container, "factory", _capture_factory)
+            container.sync_config_to_di()
+            container._config = cast("p.Settings", _CfgBadNamespace())
+            container.sync_config_to_di()
+            container._config = cast("p.Settings", _CfgGoodNamespace())
+            container.sync_config_to_di()
+            for namespace_key in ("settings.n2", "settings.n3", "settings.n4"):
+                namespace_factory = cast(
+                    "Callable[[], m.BaseModel]",
+                    captured[namespace_key],
+                )
+                with pytest.raises(TypeError, match="must be a Pydantic model"):
+                    _ = namespace_factory()
             c2 = FlextContainer.shared()
             c2._global_config = m.ContainerConfig(
                 enable_singleton=True,
@@ -691,10 +686,10 @@ class TestContainerFullCoverage:
             }
             tm.fail(self._get_with_type(c2, "svc-int", self._typed_value_cls()))
 
-            c._config = cast("p.Settings", _CfgFallback())
-            c.sync_config_to_di()
-            c._config = cast("p.Settings", _CfgBadNamespace())
-            c.sync_config_to_di()
+            container._config = cast("p.Settings", _CfgFallback())
+            container.sync_config_to_di()
+            container._config = cast("p.Settings", _CfgBadNamespace())
+            container.sync_config_to_di()
         finally:
             # Restore original registry
             FlextSettings._namespace_registry.clear()

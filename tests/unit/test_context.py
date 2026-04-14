@@ -111,7 +111,7 @@ class TestFlextContext:
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
         initial_data = t.ConfigMap(root={"user_id": "123", "session_id": "abc"})
-        context = FlextContext(**initial_data.root)
+        context = FlextContext.create(initial_data=initial_data)
         u.Core.Tests.assert_context_get_success(context, "user_id", "123")
         u.Core.Tests.assert_context_get_success(context, "session_id", "abc")
 

@@ -7,7 +7,7 @@ register(callable).is_success: True
 dispatch(command).is_success: True
 dispatch(command).value: 'created:alice'
 dispatch(query).is_success: True
-dispatch(query).value: ConfigMap
+dispatch(query).value: dict
 dispatch(execute).is_success: True
 dispatch(execute).value: 'deleted:alice'
 dispatch(callable).is_success: True

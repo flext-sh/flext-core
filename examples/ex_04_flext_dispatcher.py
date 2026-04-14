@@ -60,9 +60,7 @@ class Ex04DispatchDsl(Examples):
             """Return deterministic user payload for GetUser."""
             _ = operation
             typed_message = Ex04GetUser.model_validate(message)
-            return t.ConfigMap(
-                root={"state": "active", "username": typed_message.username},
-            )
+            return {"state": "active", "username": typed_message.username}
 
     class DeleteExecutor:
         """Execute handler for DeleteUser commands."""

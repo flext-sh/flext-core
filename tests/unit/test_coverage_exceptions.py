@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping, Sequence
 
 import pytest
 
-from tests import c, e, p, r, t
+from tests import c, e, m, p, r, t
 
 type ErrorFactory = Callable[[], e.BaseError]
 type FailureFactory = Callable[[], p.Result[bool]]
@@ -280,24 +280,21 @@ class TestCoverageExceptions:
         ):
             e.record_exception(exception_type)
 
-        metrics = e.resolve_metrics()
-        assert isinstance(metrics, t.ConfigMap)
-        assert metrics["total_exceptions"] == 5
-        assert metrics["unique_exception_types"] == 2
-        exception_counts = metrics["exception_counts"]
-        assert isinstance(exception_counts, t.ConfigMap)
-        assert exception_counts[e.ValidationError.__qualname__] == 2
-        assert exception_counts[e.TimeoutError.__qualname__] == 3
-        summary = metrics["exception_counts_summary"]
-        assert isinstance(summary, str)
+        metrics = e.resolve_metrics_snapshot()
+        assert isinstance(metrics, m.ExceptionMetricsSnapshot)
+        assert metrics.total_exceptions == 5
+        assert metrics.unique_exception_types == 2
+        assert metrics.exception_counts[e.ValidationError.__qualname__] == 2
+        assert metrics.exception_counts[e.TimeoutError.__qualname__] == 3
+        summary = metrics.exception_counts_summary
         assert "ValidationError:2" in summary
         assert "TimeoutError:3" in summary
 
         e.clear_metrics()
-        cleared = e.resolve_metrics()
-        assert cleared["total_exceptions"] == 0
-        assert cleared["unique_exception_types"] == 0
-        assert cleared["exception_counts_summary"] == ""
+        cleared = e.resolve_metrics_snapshot()
+        assert cleared.total_exceptions == 0
+        assert cleared.unique_exception_types == 0
+        assert cleared.exception_counts_summary == ""
 
     def test_result_fail_exc_reads_the_structured_error_surface(self) -> None:
         result = r[bool].fail_exc(

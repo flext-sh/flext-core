@@ -121,7 +121,7 @@ class FlextContext(m.ArbitraryTypesModel):
                     normalized[key] = None
                     continue
                 normalized_value = u.normalize_to_container(value)
-                if u.pydantic_model(normalized_value):
+                if isinstance(normalized_value, (t.ConfigMap, t.Dict, t.ObjectList)) or u.pydantic_model(normalized_value):
                     metadata_normalized = u.normalize_to_container(
                         u.normalize_to_metadata(normalized_value),
                     )
@@ -913,14 +913,12 @@ class FlextContext(m.ArbitraryTypesModel):
                 scopes[scope_name] = dict(scope_dict)
         return scopes
 
-    def _contextvar_data(self, scope: str) -> t.ConfigMap:
+    def _contextvar_data(self, scope: str) -> t.RecursiveContainerMapping:
         """Get all values from contextvar scope."""
         ctx_var = self._scope_var(scope)
         value = ctx_var.get()
-        return t.ConfigMap(
-            root=dict(
-                FlextContext._narrow_contextvar_to_configuration_dict(value).items(),
-            ),
+        return dict(
+            FlextContext._narrow_contextvar_to_configuration_dict(value).items(),
         )
 
     def _scope_var(

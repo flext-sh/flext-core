@@ -27,9 +27,14 @@ class FlextExceptionsMetrics:
         cls._metrics_state = cls._metrics_state.clear()
 
     @classmethod
+    def resolve_metrics_snapshot(cls) -> m.ExceptionMetricsSnapshot:
+        """Get the typed public metrics snapshot."""
+        return cls._metrics_state.snapshot()
+
+    @classmethod
     def resolve_metrics(cls) -> t.ConfigMap:
         """Get exception metrics and statistics."""
-        return cls._metrics_state.snapshot().to_config_map()
+        return cls.resolve_metrics_snapshot().to_config_map()
 
 
 __all__: list[str] = ["FlextExceptionsMetrics"]
