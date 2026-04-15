@@ -21,6 +21,84 @@ from flext_core import FlextContainer, FlextContext
 from tests import c, p, r, t, u
 
 
+class TestsFlextCore:
+    """Root facade for flext-core test infrastructure."""
+
+    class Core:
+        """flext-core test namespace."""
+
+        class Tests:
+            """Test utilities and helpers namespace."""
+
+            @staticmethod
+            def assert_validates(
+                model_class: type,
+                field_name: str,
+                value: t.RecursiveContainer,
+            ) -> t.RecursiveContainer:
+                """Validate a value against a model field and return the validated value.
+
+                Args:
+                    model_class: Pydantic model class to validate against
+                    field_name: Name of the field to validate
+                    value: Value to validate
+
+                Returns:
+                    The validated value
+
+                Raises:
+                    AssertionError: If validation fails
+
+                """
+                try:
+                    instance = model_class(**{field_name: value})
+                    return getattr(instance, field_name)
+                except (ValidationError, ValueError, TypeError) as e:
+                    pytest.fail(f"Validation failed for {field_name}={value}: {e}")
+
+            @staticmethod
+            def assert_rejects(
+                model_class: type,
+                field_name: str,
+                value: t.RecursiveContainer,
+                error_type: type[Exception] | None = None,
+            ) -> str:
+                """Assert that a value is rejected during validation.
+
+                Args:
+                    model_class: Pydantic model class to validate against
+                    field_name: Name of the field to validate
+                    value: Value that should be rejected
+                    error_type: Expected exception type (optional)
+
+                Returns:
+                    The error message from validation
+
+                Raises:
+                    AssertionError: If validation succeeds when it should fail
+
+                """
+                try:
+                    instance = model_class(**{field_name: value})
+                    pytest.fail(
+                        f"Expected validation to fail for {field_name}={value}, but got: {getattr(instance, field_name)}",
+                        pytrace=False,
+                    )
+                except (ValidationError, ValueError, TypeError) as e:
+                    error_msg = str(e)
+                    if error_type and (not isinstance(e, error_type)):
+                        pytest.fail(
+                            f"Expected {error_type.__name__}, but got {type(e).__name__}: {error_msg}",
+                            pytrace=False,
+                        )
+                    return error_msg
+
+
+# Centralized module-level aliases for conftest.py helper access
+assert_validates = TestsFlextCore.Core.Tests.assert_validates
+assert_rejects = TestsFlextCore.Core.Tests.assert_rejects
+
+
 @pytest.fixture
 def test_context() -> p.Context:
     """Provide FlextContext instance for testing."""
@@ -229,66 +307,3 @@ def valid_ranges() -> Sequence[tuple[int, int, int]]:
 def out_of_range() -> Sequence[tuple[int, int, int]]:
     """Out-of-range numeric values (value, min, max) for range validation."""
     return [(-1, 0, 10), (11, 0, 10), (100, 0, 50), (-100, 0, 10)]
-
-
-def assert_validates(
-    model_class: type,
-    field_name: str,
-    value: t.RecursiveContainer,
-) -> t.RecursiveContainer:
-    """Validate a value against a model field and return the validated value.
-
-    Args:
-        model_class: Pydantic model class to validate against
-        field_name: Name of the field to validate
-        value: Value to validate
-
-    Returns:
-        The validated value
-
-    Raises:
-        AssertionError: If validation fails
-
-    """
-    try:
-        instance = model_class(**{field_name: value})
-        return getattr(instance, field_name)
-    except (ValidationError, ValueError, TypeError) as e:
-        pytest.fail(f"Validation failed for {field_name}={value}: {e}")
-
-
-def assert_rejects(
-    model_class: type,
-    field_name: str,
-    value: t.RecursiveContainer,
-    error_type: type[Exception] | None = None,
-) -> str:
-    """Assert that a value is rejected during validation.
-
-    Args:
-        model_class: Pydantic model class to validate against
-        field_name: Name of the field to validate
-        value: Value that should be rejected
-        error_type: Expected exception type (optional)
-
-    Returns:
-        The error message from validation
-
-    Raises:
-        AssertionError: If validation succeeds when it should fail
-
-    """
-    try:
-        instance = model_class(**{field_name: value})
-        pytest.fail(
-            f"Expected validation to fail for {field_name}={value}, but got: {getattr(instance, field_name)}",
-            pytrace=False,
-        )
-    except (ValidationError, ValueError, TypeError) as e:
-        error_msg = str(e)
-        if error_type and (not isinstance(e, error_type)):
-            pytest.fail(
-                f"Expected {error_type.__name__}, but got {type(e).__name__}: {error_msg}",
-                pytrace=False,
-            )
-        return error_msg
