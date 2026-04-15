@@ -10,9 +10,8 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import p as core_p, r, x
 from flext_tests import tm
-from tests import m, p, t
+from tests import m, p, r, t, x
 
 
 class TestMixinsFullCoverage:
@@ -195,7 +194,7 @@ class TestMixinsFullCoverage:
         )
         runtime = service._get_runtime()
         assert runtime is not None
-        tm.that(runtime.container, is_=core_p.Container)
+        tm.that(runtime.container, is_=p.Container)
         with service.track("op") as metrics:
             cast("t.MutableRecursiveContainerMapping", metrics)["duration_ms"] = 2.0
         tm.that(service._operation_stats, has="op")

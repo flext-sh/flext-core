@@ -7,7 +7,6 @@ from typing import cast
 import pytest
 import structlog.contextvars
 
-from flext_core import FlextModelsContextProxyVar
 from flext_tests import tm
 from tests import m, t
 
@@ -23,7 +22,7 @@ def test_to_general_value_dict_removed() -> None:
 
 def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
     structlog.contextvars.clear_contextvars()
-    proxy = FlextModelsContextProxyVar.StructlogProxyContextVar(
+    proxy = m.StructlogProxyContextVar(
         "proxy_key",
         default="def",
     )
@@ -49,7 +48,7 @@ def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
 def test_structlog_proxy_context_var_default_when_key_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    proxy = FlextModelsContextProxyVar.StructlogProxyContextVar(
+    proxy = m.StructlogProxyContextVar(
         "missing_key",
         default="d",
     )

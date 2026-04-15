@@ -11,8 +11,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import r
-from tests import c, m, t, u
+from tests import c, m, r, t, u
 
 
 def test_entity_comparable_map_and_bulk_validation_paths() -> None:

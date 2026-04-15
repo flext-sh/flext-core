@@ -5,13 +5,13 @@ from __future__ import annotations
 from tests import ExamplesFlextCoreModelsErrors, ExamplesFlextCoreModelsOutput
 
 from examples import SharedHandle, SharedPerson
-from flext_core import FlextModels, c
+from flext_core import m
 
 
 class ExamplesFlextCoreModels(
     ExamplesFlextCoreModelsErrors,
     ExamplesFlextCoreModelsOutput,
-    FlextModels,
+    m,
 ):
     """Public examples model facade extending flext-core models."""
 
@@ -30,4 +30,4 @@ class ExamplesFlextCoreModels(
 
 m = ExamplesFlextCoreModels
 
-__all__: list[str] = ["ExamplesFlextCoreModels", "c", "m"]
+__all__: list[str] = ["ExamplesFlextCoreModels", "m"]

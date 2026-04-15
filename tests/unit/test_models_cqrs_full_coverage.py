@@ -8,7 +8,6 @@ from types import ModuleType
 import pytest
 from pydantic import TypeAdapter
 
-from flext_core import m as core_m
 from tests import c, m, u
 
 
@@ -117,7 +116,7 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
 
 
 def test_flext_message_type_alias_adapter() -> None:
-    adapter = TypeAdapter(core_m.FlextMessage.__value__)
+    adapter = TypeAdapter(m.FlextMessage.__value__)
     parsed = adapter.validate_python({"message_type": "command", "command_type": "run"})
     assert type(parsed).__name__ == "Command"
     assert parsed.message_type == "command"

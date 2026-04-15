@@ -28,9 +28,8 @@ import pytest
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import p, r
 from flext_tests import tm
-from tests import t, u
+from tests import p, r, t, u
 
 
 @unique

@@ -1,6 +1,6 @@
 """Tests for Pydantic v2 runtime enforcement across all Flext* layers.
 
-Verifies that FlextUtilitiesEnforcement check functions correctly
+Verifies that u check functions correctly
 detect violations. Tests call the check functions directly to avoid
 test-module auto-exemption.
 
@@ -17,16 +17,7 @@ import pytest
 from pydantic import Field
 from pydantic.warnings import PydanticDeprecatedSince20
 
-from flext_core import (
-    FlextConstants,
-    FlextModels,
-    FlextModelsNamespace,
-    FlextProtocols,
-    FlextTypes,
-    FlextUtilities,
-    FlextUtilitiesEnforcement,
-)
-from tests import TestsFlextCoreModels, c, m, p, t, u
+from tests import c, m, p, t, u
 
 
 class TestCheckNoAny:
@@ -39,8 +30,8 @@ class TestCheckNoAny:
             _flext_enforcement_exempt: ClassVar[bool] = True
             data: typing.Any = Field(default=None, description="d")
 
-        fields = FlextUtilitiesEnforcement.own_fields(_M)
-        errors = FlextUtilitiesEnforcement.check_no_any(fields)
+        fields = u.own_fields(_M)
+        errors = u.check_no_any(fields)
         assert len(errors) == 1
         assert "Any" in errors[0]
 
@@ -51,8 +42,8 @@ class TestCheckNoAny:
             _flext_enforcement_exempt: ClassVar[bool] = True
             name: str = Field(default="x", description="d")
 
-        fields = FlextUtilitiesEnforcement.own_fields(_M)
-        errors = FlextUtilitiesEnforcement.check_no_any(fields)
+        fields = u.own_fields(_M)
+        errors = u.check_no_any(fields)
         assert len(errors) == 0
 
 
@@ -66,8 +57,8 @@ class TestCheckNoBareCollections:
             _flext_enforcement_exempt: ClassVar[bool] = True
             data: dict[str, str] = Field(default_factory=dict, description="d")
 
-        fields = FlextUtilitiesEnforcement.own_fields(_M)
-        errors = FlextUtilitiesEnforcement.check_no_bare_collections(fields)
+        fields = u.own_fields(_M)
+        errors = u.check_no_bare_collections(fields)
         assert len(errors) == 1
         assert "dict" in errors[0]
 
@@ -78,8 +69,8 @@ class TestCheckNoBareCollections:
             _flext_enforcement_exempt: ClassVar[bool] = True
             items: list[str] = Field(default_factory=list, description="d")
 
-        fields = FlextUtilitiesEnforcement.own_fields(_M)
-        errors = FlextUtilitiesEnforcement.check_no_bare_collections(fields)
+        fields = u.own_fields(_M)
+        errors = u.check_no_bare_collections(fields)
         assert len(errors) == 1
         assert "list" in errors[0]
 
@@ -90,8 +81,8 @@ class TestCheckNoBareCollections:
             _flext_enforcement_exempt: ClassVar[bool] = True
             data: t.StrMapping = Field(default_factory=dict, description="d")
 
-        fields = FlextUtilitiesEnforcement.own_fields(_M)
-        errors = FlextUtilitiesEnforcement.check_no_bare_collections(fields)
+        fields = u.own_fields(_M)
+        errors = u.check_no_bare_collections(fields)
         assert len(errors) == 0
 
     def test_sequence_passes(self) -> None:
@@ -101,8 +92,8 @@ class TestCheckNoBareCollections:
             _flext_enforcement_exempt: ClassVar[bool] = True
             items: t.StrSequence = Field(default_factory=list, description="d")
 
-        fields = FlextUtilitiesEnforcement.own_fields(_M)
-        errors = FlextUtilitiesEnforcement.check_no_bare_collections(fields)
+        fields = u.own_fields(_M)
+        errors = u.check_no_bare_collections(fields)
         assert len(errors) == 0
 
 
@@ -121,7 +112,7 @@ class TestCheckNoV1Patterns:
 
                 name: str = Field(default="x", description="d")
 
-        errors = FlextUtilitiesEnforcement.check_no_v1_patterns(_M)
+        errors = u.check_no_v1_patterns(_M)
         assert len(errors) == 1
         assert "Pydantic v1" in errors[0]
 
@@ -136,8 +127,8 @@ class TestCheckFieldDescriptions:
             _flext_enforcement_exempt: ClassVar[bool] = True
             name: str = "test"
 
-        own = FlextUtilitiesEnforcement.own_fields(_M)
-        errors = FlextUtilitiesEnforcement.check_field_descriptions(_M, own=own)
+        own = u.own_fields(_M)
+        errors = u.check_field_descriptions(_M, own=own)
         assert len(errors) == 1
         assert "description" in errors[0]
 
@@ -148,8 +139,8 @@ class TestCheckFieldDescriptions:
             _flext_enforcement_exempt: ClassVar[bool] = True
             name: str = Field(default="test", description="A name")
 
-        own = FlextUtilitiesEnforcement.own_fields(_M)
-        errors = FlextUtilitiesEnforcement.check_field_descriptions(_M, own=own)
+        own = u.own_fields(_M)
+        errors = u.check_field_descriptions(_M, own=own)
         assert len(errors) == 0
 
 
@@ -163,7 +154,7 @@ class TestCheckExtraPolicy:
             _flext_enforcement_exempt: ClassVar[bool] = True
             name: str = Field(default="x", description="d")
 
-        errors = FlextUtilitiesEnforcement.check_extra_policy(_M)
+        errors = u.check_extra_policy(_M)
         assert len(errors) == 0
 
 
@@ -176,12 +167,12 @@ class TestExemptions:
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
 
-        assert FlextUtilitiesEnforcement.is_exempt(_M)
+        assert u.is_exempt(_M)
 
     def test_infrastructure_base_exempt(self) -> None:
         """Infrastructure base names are auto-exempt."""
-        assert FlextUtilitiesEnforcement.is_exempt(m.ArbitraryTypesModel)
-        assert FlextUtilitiesEnforcement.is_exempt(m.FrozenValueModel)
+        assert u.is_exempt(m.ArbitraryTypesModel)
+        assert u.is_exempt(m.FrozenValueModel)
 
     def test_test_module_exempt(self) -> None:
         """Classes in test modules are auto-exempt."""
@@ -190,7 +181,7 @@ class TestExemptions:
             pass
 
         # This class is defined in tests.unit.test_enforcement
-        assert FlextUtilitiesEnforcement.is_exempt(_M)
+        assert u.is_exempt(_M)
 
 
 class TestEnforcementMode:
@@ -209,13 +200,13 @@ class TestNamespacePrefixDerivation:
 
     def test_to_pascal_case_accepts_hyphenated_slug(self) -> None:
         """Hyphenated project slugs must normalize to a valid PascalCase prefix."""
-        assert FlextUtilitiesEnforcement._to_pascal_case("db-oracle") == "DbOracle"
+        assert u._to_pascal_case("db-oracle") == "DbOracle"
 
     def test_flext_core_uses_flext_prefix(self) -> None:
         """flext-core is the canonical exception and keeps the Flext prefix."""
         assert (
-            FlextUtilitiesEnforcement._derive_prefix_from_path(
-                FlextUtilitiesEnforcement,
+            u._derive_prefix_from_path(
+                u,
             )
             == "Flext"
         )
@@ -223,8 +214,8 @@ class TestNamespacePrefixDerivation:
     def test_flext_core_tests_namespace_is_core(self) -> None:
         """flext-core tests use Core as the inner namespace."""
         assert (
-            FlextUtilitiesEnforcement._derive_expected_namespace(
-                TestsFlextCoreModels,
+            u._derive_expected_namespace(
+                u.Core.Tests,
             )
             == "Core"
         )
@@ -254,7 +245,7 @@ class TestBaseModelCoverage:
 
 
 class TestConstantsEnforcement:
-    """Verify enforcement on FlextConstants subclasses."""
+    """Verify enforcement on c subclasses."""
 
     def test_mutable_list_detected(self) -> None:
         """List value in constants is flagged as HARD violation."""
@@ -262,7 +253,7 @@ class TestConstantsEnforcement:
         class _C:
             ITEMS: list[str] = ["a", "b"]
 
-        errors = FlextUtilitiesEnforcement.check_constants_no_mutable_values(_C)
+        errors = u.check_constants_no_mutable_values(_C)
         assert len(errors) == 1
         assert "mutable list" in errors[0]
 
@@ -272,7 +263,7 @@ class TestConstantsEnforcement:
         class _C:
             DATA: dict[str, int] = {"x": 1}
 
-        errors = FlextUtilitiesEnforcement.check_constants_no_mutable_values(_C)
+        errors = u.check_constants_no_mutable_values(_C)
         assert len(errors) == 1
         assert "mutable dict" in errors[0]
 
@@ -282,7 +273,7 @@ class TestConstantsEnforcement:
         class _C:
             ITEMS: Final[frozenset[str]] = frozenset({"a"})
 
-        errors = FlextUtilitiesEnforcement.check_constants_no_mutable_values(_C)
+        errors = u.check_constants_no_mutable_values(_C)
         assert len(errors) == 0
 
     def test_tuple_passes(self) -> None:
@@ -291,7 +282,7 @@ class TestConstantsEnforcement:
         class _C:
             ITEMS: Final[tuple[str, ...]] = ("a", "b")
 
-        errors = FlextUtilitiesEnforcement.check_constants_no_mutable_values(_C)
+        errors = u.check_constants_no_mutable_values(_C)
         assert len(errors) == 0
 
     def test_missing_final_annotation_detected(self) -> None:
@@ -300,7 +291,7 @@ class TestConstantsEnforcement:
         class _C:
             VALUE: int = 42
 
-        errors = FlextUtilitiesEnforcement.check_constants_final_hints(_C)
+        errors = u.check_constants_final_hints(_C)
         assert len(errors) == 1
         assert "Final" in errors[0]
 
@@ -310,7 +301,7 @@ class TestConstantsEnforcement:
         class _C:
             VALUE: Final[int] = 42
 
-        errors = FlextUtilitiesEnforcement.check_constants_final_hints(_C)
+        errors = u.check_constants_final_hints(_C)
         assert len(errors) == 0
 
     def test_classvar_annotation_passes(self) -> None:
@@ -319,7 +310,7 @@ class TestConstantsEnforcement:
         class _C:
             VALUE: ClassVar[int] = 42
 
-        errors = FlextUtilitiesEnforcement.check_constants_final_hints(_C)
+        errors = u.check_constants_final_hints(_C)
         assert len(errors) == 0
 
     def test_upper_case_passes(self) -> None:
@@ -328,7 +319,7 @@ class TestConstantsEnforcement:
         class _C:
             MY_VALUE: Final[int] = 42
 
-        errors = FlextUtilitiesEnforcement.check_constants_upper_case(_C)
+        errors = u.check_constants_upper_case(_C)
         assert len(errors) == 0
 
     def test_lower_case_detected(self) -> None:
@@ -337,7 +328,7 @@ class TestConstantsEnforcement:
         class _C:
             my_value: int = 42
 
-        errors = FlextUtilitiesEnforcement.check_constants_upper_case(_C)
+        errors = u.check_constants_upper_case(_C)
         assert len(errors) == 1
         assert "UPPER_CASE" in errors[0]
 
@@ -348,13 +339,13 @@ class TestConstantsEnforcement:
             class Inner:
                 BAD: list[str] = ["x"]
 
-        errors = FlextUtilitiesEnforcement.check_constants_no_mutable_values(_C)
+        errors = u.check_constants_no_mutable_values(_C)
         assert len(errors) == 1
         assert "Inner" in errors[0]
 
     def test_facade_has_enforced_namespace(self) -> None:
-        """FlextConstants facade inherits FlextModelsNamespace."""
-        assert issubclass(FlextConstants, FlextModelsNamespace)
+        """C facade inherits m."""
+        assert issubclass(c, m)
 
     def test_enforcement_constants_accessible(self) -> None:
         """New enforcement constants accessible via c.*."""
@@ -366,7 +357,7 @@ class TestConstantsEnforcement:
 
 
 class TestProtocolsEnforcement:
-    """Verify enforcement on FlextProtocols subclasses."""
+    """Verify enforcement on p subclasses."""
 
     def test_non_protocol_inner_class_detected(self) -> None:
         """Inner class that is not a Protocol is flagged."""
@@ -375,7 +366,7 @@ class TestProtocolsEnforcement:
             class NotProtocol:
                 pass
 
-        errors = FlextUtilitiesEnforcement.check_protocols_inner_classes(_P)
+        errors = u.check_protocols_inner_classes(_P)
         assert len(errors) == 1
         assert "Protocol subclass" in errors[0]
 
@@ -387,7 +378,7 @@ class TestProtocolsEnforcement:
             class Good(Protocol):
                 def method(self) -> None: ...
 
-        errors = FlextUtilitiesEnforcement.check_protocols_inner_classes(_P)
+        errors = u.check_protocols_inner_classes(_P)
         assert len(errors) == 0
 
     def test_non_runtime_checkable_detected(self) -> None:
@@ -397,7 +388,7 @@ class TestProtocolsEnforcement:
             class Bare(Protocol):
                 def method(self) -> None: ...
 
-        errors = FlextUtilitiesEnforcement.check_protocols_runtime_checkable(_P)
+        errors = u.check_protocols_runtime_checkable(_P)
         assert len(errors) == 1
         assert "runtime_checkable" in errors[0]
 
@@ -409,12 +400,12 @@ class TestProtocolsEnforcement:
             class Good(Protocol):
                 def method(self) -> None: ...
 
-        errors = FlextUtilitiesEnforcement.check_protocols_runtime_checkable(_P)
+        errors = u.check_protocols_runtime_checkable(_P)
         assert len(errors) == 0
 
     def test_facade_has_enforced_namespace(self) -> None:
-        """FlextProtocols facade inherits FlextModelsNamespace."""
-        assert issubclass(FlextProtocols, FlextModelsNamespace)
+        """P facade inherits m."""
+        assert issubclass(p, m)
 
 
 # ------------------------------------------------------------------ #
@@ -423,7 +414,7 @@ class TestProtocolsEnforcement:
 
 
 class TestTypesEnforcement:
-    """Verify enforcement on FlextTypes subclasses."""
+    """Verify enforcement on t subclasses."""
 
     def test_any_in_type_alias_detected(self) -> None:
         """Any in PEP 695 type alias is flagged."""
@@ -431,7 +422,7 @@ class TestTypesEnforcement:
         class _T:
             type Anything = typing.Any | str
 
-        errors = FlextUtilitiesEnforcement.check_types_no_any_in_aliases(_T)
+        errors = u.check_types_no_any_in_aliases(_T)
         assert len(errors) == 1
         assert "Any" in errors[0]
 
@@ -441,12 +432,12 @@ class TestTypesEnforcement:
         class _T:
             type Name = str | int
 
-        errors = FlextUtilitiesEnforcement.check_types_no_any_in_aliases(_T)
+        errors = u.check_types_no_any_in_aliases(_T)
         assert len(errors) == 0
 
     def test_facade_has_enforced_namespace(self) -> None:
-        """FlextTypes facade inherits FlextModelsNamespace."""
-        assert issubclass(FlextTypes, FlextModelsNamespace)
+        """T facade inherits m."""
+        assert issubclass(t, m)
 
 
 # ------------------------------------------------------------------ #
@@ -455,7 +446,7 @@ class TestTypesEnforcement:
 
 
 class TestUtilitiesEnforcement:
-    """Verify enforcement on FlextUtilities subclasses."""
+    """Verify enforcement on u subclasses."""
 
     def test_instance_method_detected(self) -> None:
         """Regular instance method is flagged."""
@@ -464,7 +455,7 @@ class TestUtilitiesEnforcement:
             def my_method(self, x: int) -> str:
                 return str(x)
 
-        errors = FlextUtilitiesEnforcement.check_utilities_method_types(_U)
+        errors = u.check_utilities_method_types(_U)
         assert len(errors) == 1
         assert "staticmethod" in errors[0]
 
@@ -476,7 +467,7 @@ class TestUtilitiesEnforcement:
             def my_method(x: int) -> str:
                 return str(x)
 
-        errors = FlextUtilitiesEnforcement.check_utilities_method_types(_U)
+        errors = u.check_utilities_method_types(_U)
         assert len(errors) == 0
 
     def test_classmethod_passes(self) -> None:
@@ -487,12 +478,12 @@ class TestUtilitiesEnforcement:
             def my_method(cls, x: int) -> str:
                 return str(x)
 
-        errors = FlextUtilitiesEnforcement.check_utilities_method_types(_U)
+        errors = u.check_utilities_method_types(_U)
         assert len(errors) == 0
 
     def test_facade_has_enforced_namespace(self) -> None:
-        """FlextUtilities facade inherits FlextModelsNamespace."""
-        assert issubclass(FlextUtilities, FlextModelsNamespace)
+        """U facade inherits m."""
+        assert issubclass(u, m)
 
 
 # ------------------------------------------------------------------ #
@@ -504,22 +495,20 @@ class TestAllLayerIntegration:
     """Verify all facades fire enforcement on subclasses."""
 
     def test_all_facades_inherit_enforced_namespace(self) -> None:
-        """All 5 facade classes inherit FlextModelsNamespace."""
+        """All 5 facade classes inherit m."""
         for facade in (
-            FlextConstants,
-            FlextProtocols,
-            FlextTypes,
-            FlextUtilities,
-            FlextModels,
+            c,
+            p,
+            t,
+            u,
+            m,
         ):
-            assert issubclass(facade, FlextModelsNamespace), (
-                f"{facade.__name__} missing FlextModelsNamespace in MRO"
-            )
+            assert issubclass(facade, m), f"{facade.__name__} missing m in MRO"
 
     def test_downstream_projects_load_cleanly(self) -> None:
         """Flext-core facades load without any violations."""
         assert c.__name__ == "TestsFlextCoreConstants"
-        assert m.__name__ == "TestsFlextCoreModels"
+        assert m.__name__ == "u.Core.Tests"
         assert p.__name__ == "TestsFlextCoreProtocols"
         assert t.__name__ == "TestsFlextCoreTypes"
         assert u.__name__ == "TestsFlextCoreUtilities"
@@ -527,4 +516,4 @@ class TestAllLayerIntegration:
     def test_exempt_flag_works_across_layers(self) -> None:
         """_flext_enforcement_exempt disables layer checks."""
         target = type("_ExemptCls", (), {"_flext_enforcement_exempt": True})
-        assert FlextUtilitiesEnforcement._is_layer_exempt(target)
+        assert u._is_layer_exempt(target)

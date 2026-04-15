@@ -8,9 +8,8 @@ import pytest
 from hypothesis import given, strategies as st
 from pydantic import ConfigDict, Field
 
-from flext_core import e, h, p, r, x
 from flext_tests import tm
-from tests import c, m, t, u
+from tests import c, e, h, m, p, r, t, u, x
 
 
 class TestFlextHandlers:
