@@ -7,6 +7,7 @@ from logging import ERROR
 from typing import cast, override
 
 from pydantic import BaseModel
+from tests import Examples
 
 from examples import (
     Ex04AutoCommand,
@@ -23,7 +24,6 @@ from examples import (
     t,
     u,
 )
-from examples.shared import Examples
 
 
 class Ex04DispatchDsl(Examples):

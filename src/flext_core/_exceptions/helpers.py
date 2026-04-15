@@ -12,13 +12,13 @@ from pydantic import ValidationError as PydanticValidationError
 from pydantic.fields import FieldInfo
 
 from flext_core import (
+    FlextRuntime,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     c,
     m,
     t,
 )
-from flext_core.runtime import FlextRuntime
 
 
 class FlextExceptionsHelpers:

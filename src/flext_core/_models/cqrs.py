@@ -19,8 +19,15 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import FlextModelsBase as m, FlextUtilitiesGenerators, c, p, r, t
-from flext_core.runtime import FlextRuntime
+from flext_core import (
+    FlextModelsBase as m,
+    FlextRuntime,
+    FlextUtilitiesGenerators,
+    c,
+    p,
+    r,
+    t,
+)
 
 
 class FlextModelsCqrs:

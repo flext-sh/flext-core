@@ -16,9 +16,7 @@ from collections.abc import Callable
 from types import TracebackType
 from typing import Protocol, Self, overload, override, runtime_checkable
 
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.containers import FlextTypingContainers
+from flext_core import FlextModelsPydantic, FlextTypingBase, FlextTypingContainers
 
 
 class FlextProtocolsResult:

@@ -13,17 +13,19 @@ from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
 from typing import TypeAliasType
 
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.container import FlextProtocolsContainer
-from flext_core._protocols.context import FlextProtocolsContext
-from flext_core._protocols.handler import FlextProtocolsHandler
-from flext_core._protocols.logging import FlextProtocolsLogging
-from flext_core._protocols.result import FlextProtocolsResult
-from flext_core._protocols.service import FlextProtocolsService
-from flext_core._protocols.settings import FlextProtocolsSettings
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.containers import FlextTypingContainers
+from flext_core import (
+    FlextModelsPydantic,
+    FlextProtocolsBase,
+    FlextProtocolsContainer,
+    FlextProtocolsContext,
+    FlextProtocolsHandler,
+    FlextProtocolsLogging,
+    FlextProtocolsResult,
+    FlextProtocolsService,
+    FlextProtocolsSettings,
+    FlextTypingBase,
+    FlextTypingContainers,
+)
 
 
 class FlextTypesServices:

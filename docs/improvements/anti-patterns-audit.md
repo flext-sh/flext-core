@@ -1,31 +1,5 @@
 # Anti-Patterns and Best Practices Guide - Audit Report
 
-<!-- TOC START -->
-- [Audit Summary](#audit-summary)
-  - [✅ Guide Accuracy: 10/10](#guide-accuracy-1010)
-  - [✅ Verified Against Source Code](#verified-against-source-code)
-- [Detailed Findings](#detailed-findings)
-  - [Category 1: Error Handling Anti-Patterns (3 patterns)](#category-1-error-handling-anti-patterns-3-patterns)
-  - [Category 2: Type Safety Anti-Patterns (3 patterns)](#category-2-type-safety-anti-patterns-3-patterns)
-  - [Category 3: Architecture Anti-Patterns (3 patterns)](#category-3-architecture-anti-patterns-3-patterns)
-  - [Category 4: Dependency Injection Anti-Patterns (2 patterns)](#category-4-dependency-injection-anti-patterns-2-patterns)
-  - [Category 5: Model Anti-Patterns (2 patterns)](#category-5-model-anti-patterns-2-patterns)
-  - [Category 6: Configuration Anti-Patterns (2 patterns)](#category-6-configuration-anti-patterns-2-patterns)
-- [Cross-Reference Verification](#cross-reference-verification)
-  - [Internal Links ✅](#internal-links)
-  - [External References ✅](#external-references)
-- [Evidence Summary](#evidence-summary)
-  - [Quantitative Metrics](#quantitative-metrics)
-  - [Qualitative Assessment](#qualitative-assessment)
-- [Recommendations](#recommendations)
-  - [High Priority](#high-priority)
-  - [Medium Priority](#medium-priority)
-  - [Low Priority](#low-priority)
-- [Accuracy Assessment](#accuracy-assessment)
-- [Completeness Assessment](#completeness-assessment)
-- [Conclusion](#conclusion)
-<!-- TOC END -->
-
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 **Document**: `docs/guides/anti-patterns-best-practices.md`
@@ -61,7 +35,7 @@ All 15 anti-patterns verified against actual FLEXT-Core implementation:
 | 7. Circular Dependencies         | Says: Respect layer hierarchy   | Layer hierarchy enforced            | ✅ FOLLOWED |
 | 8. Multiple Exports              | Says: One class per module      | 28 Flext classes, 1 per module      | ✅ FOLLOWED |
 | 9. God Objects                   | Says: Decompose                 | models.py has 1 main class + nested | ✅ FOLLOWED |
-| 10. Multiple Containers          | Says: Use get_global()          | Pattern enforced                    | ✅ FOLLOWED |
+| 10. Multiple Containers          | Says: Use FlextContainer()      | Pattern enforced                    | ✅ FOLLOWED |
 | 11. Not Checking Results         | Says: Check r         | Pattern enforced                    | ✅ FOLLOWED |
 | 12. Validation w/o Result        | Says: Wrap in r       | Implemented in models.py            | ✅ FOLLOWED |
 | 13. Mutable Value Objects        | Says: frozen=True               | Found 4 frozen=True uses            | ✅ FOLLOWED |
@@ -343,7 +317,7 @@ ______________________________________________________________________
 **Guide Claims**:
 
 - ❌ Don't use `FlextContainer()` (creates new instance)
-- ✅ Use `FlextContainer.get_global()` (singleton)
+- ✅ Use `FlextContainer()` (singleton)
 
 **Source Code Evidence**:
 
@@ -359,7 +333,7 @@ container.py:1032: # For new code, use FlextContainer() directly
 **Verification**: ✅ ACCURATE
 
 - Direct instantiation only in docstrings and internal implementation
-- Public API enforces `get_global()` pattern
+- Public API enforces the `FlextContainer()` singleton pattern
 - Singleton pattern is enforced
 
 #### Anti-Pattern 11: Not Checking Container Results ✅
@@ -538,7 +512,7 @@ BaseSettings usage: Yes (settings.py:39)
 Pydantic validation: Yes (all fields)
 
 # Container Pattern
-get_global() enforcement: Yes (singleton pattern)
+FlextContainer() singleton enforcement: Yes
 Type-safe retrieval: Yes (get_typed at line 574)
 ```
 

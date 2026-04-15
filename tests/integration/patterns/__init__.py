@@ -12,6 +12,19 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".test_patterns_commands": ("test_patterns_commands",),
         ".test_patterns_logging": ("test_patterns_logging",),
         ".test_patterns_testing": ("test_patterns_testing",),
+        "flext_core": (
+            "c",
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "u",
+            "x",
+        ),
     },
 )
 

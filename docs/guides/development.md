@@ -240,7 +240,7 @@ from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
-from flext_core import FlextRegistry
+from flext_core import u
 from flext_core import r, p
 from flext_core import u
 from flext_core import s
@@ -325,7 +325,7 @@ from flext_core import x
 from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
-from flext_core import FlextRegistry
+from flext_core import u
 from flext_core import r, p
 from flext_core import u
 from flext_core import s

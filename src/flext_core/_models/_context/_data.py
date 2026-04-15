@@ -14,12 +14,12 @@ from pydantic import BeforeValidator, Field, field_validator
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsPydantic as mp,
+    FlextRuntime,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     c,
     t,
 )
-from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsContextData:

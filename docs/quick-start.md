@@ -71,8 +71,8 @@ Register services once, resolve them anywhere with `FlextContainer`.
 ```python
 from flext_core import FlextContainer, r
 
-# Get global singleton
-container = FlextContainer.get_global()
+# Get singleton container
+container = FlextContainer()
 
 # Register factory
 container.factory("db", lambda: MyDatabase("localhost"))
@@ -97,7 +97,7 @@ Route typed messages (commands/queries) to handlers automatically.
 
 ```python
 from pydantic import BaseModel
-from flext_core import FlextDispatcher, r, m
+from flext_core import FlextDispatcher, m, r, u
 
 
 # 1. Define command
@@ -121,18 +121,16 @@ def get_user_handler(q: GetUserQuery) -> r[dict]:
 
 
 # 4. Register & dispatch
-dispatcher = FlextDispatcher()
-dispatcher.register_handler(CreateUserCommand, create_user_handler)
-dispatcher.register_handler(GetUserQuery, get_user_handler)
+registry = u.build_registry(auto_discover_handlers=True)
 
 # Dispatch commands
-result = dispatcher.dispatch(
+result = registry.dispatch(
     CreateUserCommand(username="alice", email="alice@example.com")
 )
 print(result.unwrap())  # "Created: alice"
 
 # Dispatch queries
-result = dispatcher.dispatch(GetUserQuery(user_id=1))
+result = registry.dispatch(GetUserQuery(user_id=1))
 print(result.unwrap())  # {"id": 1, "name": "Alice"}
 ```
 
@@ -274,7 +272,7 @@ class AppSettings(FlextSettings):
 
 
 # Load settings (from env or defaults)
-settings = FlextSettings.get_global()
+settings = FlextSettings.fetch_global()
 print(settings.database_url)  # From env or default
 print(settings.debug)  # From env or False
 ```
@@ -357,4 +355,4 @@ def process_order(order_id: int, is_premium: bool) -> r[str]:
 
 ---
 
-**Questions?** File an issue or check [CONTRIBUTING.md](../CONTRIBUTING.md).
+**Questions?** File an issue or check [the contribution guide](development/contributing.md).

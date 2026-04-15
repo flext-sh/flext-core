@@ -321,6 +321,4 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
             )
 
 
-s = TestsFlextCoreServiceBase
-
-__all__: list[str] = ["TestsFlextCoreServiceBase", "s"]
+__all__: list[str] = ["TestsFlextCoreServiceBase"]

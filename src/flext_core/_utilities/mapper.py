@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import cast
 
 from flext_core import (
+    FlextRuntime,
     FlextUtilitiesCollection,
     FlextUtilitiesGuards,
     FlextUtilitiesGuardsTypeCore,
@@ -25,7 +26,6 @@ from flext_core import (
     r,
     t,
 )
-from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesMapper:

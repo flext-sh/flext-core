@@ -88,6 +88,19 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "SharedHandle",
             "SharedPerson",
         ),
+        "flext_core": (
+            "c",
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "u",
+            "x",
+        ),
     },
 )
 

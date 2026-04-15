@@ -405,21 +405,20 @@ class Product(FlextModels.AggregateRoot):
         self.add_domain_event(InventoryAdjusted(sku=self.sku, quantity=quantity))
 
 
-dispatcher = FlextDispatcher()
-dispatcher.register_handler(InventoryAdjusted, InventoryAdjustedHandler())
+registry = u.build_registry(auto_discover_handlers=True)
 
 product = Product(sku="ABC", inventory=10)
 product.decrease_inventory(3)
 
 # Domain events collected on the aggregate can be emitted through the dispatcher
-dispatch_result = dispatcher.publish(product.commit_domain_events())
+dispatch_result = registry.publish(product.commit_domain_events())
 assert dispatch_result.success
 ```
 
 Key points:
 
 - Aggregates collect domain events via `add_domain_event` and return them with `get_domain_events` or `commit_domain_events`.
-- `FlextDispatcher.register_handler` accepts command, query, or event handlers; event handlers can subclass `h` for validation and telemetry.
+- `@h.handler(...)` and `u.build_registry(auto_discover_handlers=True)` provide the public registration flow for command, query, and event handlers.
 - `publish_event` / `publish_events` reuse the dispatcher pipeline, so middleware (logging, retries, timeouts) is applied consistently across commands, queries, and domain events.
 
 ## Real-World Examples
@@ -941,29 +940,42 @@ class UserQueryService(s):
 Separate services by responsibility and dispatch through a unified bus:
 
 ```python
-from flext_core import FlextDispatcher
+from flext_core import h, u
 
-# Setup dispatcher
-dispatcher = FlextDispatcher()
+# Setup registry
+registry = u.build_registry(auto_discover_handlers=True)
 
-# Register command handlers
 command_service = UserCommandService()
-dispatcher.register_handler(CreateUserCommand, command_service.handle_create_user)
-dispatcher.register_handler(
-    UpdateUserEmailCommand,
-    command_service.handle_update_email,
-)
 
-# Register query handlers
+
+@h.handler(CreateUserCommand)
+def create_user_handler(command: CreateUserCommand) -> p.Result[dict]:
+    return command_service.handle_create_user(command)
+
+
+@h.handler(UpdateUserEmailCommand)
+def update_email_handler(command: UpdateUserEmailCommand) -> p.Result[bool]:
+    return command_service.handle_update_email(command)
+
+
 query_service = UserQueryService(user_repository)
-dispatcher.register_handler("GetUserByIdQuery", query_service.handle_get_user)
-dispatcher.register_handler("ListUsersQuery", query_service.handle_list_users)
+
+
+@h.handler(GetUserByIdQuery)
+def get_user_handler(query: GetUserByIdQuery) -> p.Result[dict]:
+    return query_service.handle_get_user(query)
+
+
+@h.handler(ListUsersQuery)
+def list_users_handler(query: ListUsersQuery) -> p.Result[list]:
+    return query_service.handle_list_users(query)
+
 
 # Usage: Execute command
 create_cmd = CreateUserCommand(
     username="alice", email="alice@example.com", password="secret"
 )
-result = dispatcher.dispatch(create_cmd)
+result = registry.dispatch(create_cmd)
 
 if result.success:
     user_id = result.value["user_id"]

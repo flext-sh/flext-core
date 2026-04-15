@@ -1,35 +1,5 @@
 # Error Handling Guide
 
-<!-- TOC START -->
-- [Canonical Rules](#canonical-rules)
-- [Overview](#overview)
-- [Core Concepts](#core-concepts)
-  - [r[T] - The Foundation](#rt-the-foundation)
-  - [Checking Result State](#checking-result-state)
-  - [Extracting Values Safely](#extracting-values-safely)
-- [Railway-Oriented Programming](#railway-oriented-programming)
-  - [The Railway Pattern](#the-railway-pattern)
-  - [Monadic Operations](#monadic-operations)
-- [Practical Error Handling Patterns](#practical-error-handling-patterns)
-  - [Pattern 1: Validation Pipeline](#pattern-1-validation-pipeline)
-  - [Pattern 2: Database Operations](#pattern-2-database-operations)
-  - [Pattern 3: External Service Calls](#pattern-3-external-service-calls)
-  - [Pattern 4: Error Recovery](#pattern-4-error-recovery)
-  - [Pattern 5: Batch Operations](#pattern-5-batch-operations)
-- [Error Types and Categorization](#error-types-and-categorization)
-  - [Domain Errors (Business Logic)](#domain-errors-business-logic)
-  - [System Errors (Infrastructure)](#system-errors-infrastructure)
-- [Best Practices](#best-practices)
-  - [1. Always Return r from Operations That Can Fail](#1-always-return-r-from-operations-that-can-fail)
-  - [2. Chain Operations with flat_map](#2-chain-operations-with-flatmap)
-  - [3. Use Meaningful Error Messages](#3-use-meaningful-error-messages)
-  - [4. Handle Errors at Application Boundaries](#4-handle-errors-at-application-boundaries)
-  - [5. Log Errors Appropriately](#5-log-errors-appropriately)
-- [Summary](#summary)
-- [Next Steps](#next-steps)
-- [See Also](#see-also)
-<!-- TOC END -->
-
 **Status**: Current | **Version**: 0.12.0-dev | **Pattern**: Railway-Oriented Programming
 
 Comprehensive guide to error handling strategies in FLEXT-Core using the railway-oriented programming pattern with r[T].

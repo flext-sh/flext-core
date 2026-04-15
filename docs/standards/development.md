@@ -47,7 +47,7 @@ This document outlines the development standards, patterns, and quality requirem
 **CORE RESPONSIBILITIES**:
 
 - ✅ **Railway Pattern Foundation**: p.Result[T] with .data/.value compatibility
-- ✅ **Dependency Injection**: FlextContainer.get_global() with type safety
+- ✅ **Dependency Injection**: FlextContainer() with type safety
 - ✅ **Domain Models**: FlextModels.Entity/Value/AggregateRoot for DDD patterns
 - ✅ **Service Architecture**: s with Pydantic Generic[T] base
 - ✅ **Type Safety**: Complete type annotations for ecosystem-wide consistency
@@ -119,7 +119,7 @@ Inner layers know NOTHING about outer layers.
 
    - FlextDispatcher - Message routing
    - h - Handler registry
-   - FlextRegistry - Component management
+  - `u.build_registry()` - Component management
 
 1. **Infrastructure Layer** (All Layers):
 
@@ -280,7 +280,7 @@ def create_user(name: str, email: str) -> User:
 class UserService(s):
     def __init__(self) -> None:
         super().__init__()
-        self.container = FlextContainer.get_global()
+        self.container = FlextContainer()
         self.logger = self._get_logger()
 
     def _get_logger(self) -> p.Logger:
@@ -391,8 +391,8 @@ def test_flext_result_ok():
 ```python
 def test_container_singleton():
     """Test container singleton behavior."""
-    container1 = FlextContainer.get_global()
-    container2 = FlextContainer.get_global()
+    container1 = FlextContainer()
+    container2 = FlextContainer()
 
     assert container1 is container2  # Same instance
 ```

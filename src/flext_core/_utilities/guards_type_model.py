@@ -11,8 +11,13 @@ class FlextUtilitiesGuardsTypeModel:
     """Pydantic and data model type guards."""
 
     @staticmethod
-    def base_model(value: t.GuardInput | p.Model) -> TypeIs[t.ModelCarrier]:
-        """Narrow a broad runtime value to the canonical model carrier alias."""
+    def base_model(value: t.GuardInput | p.Model) -> TypeIs[t.DomainModelCarrier]:
+        """Narrow a broad runtime value to the canonical domain model carrier alias.
+
+        Returns TypeIs[t.DomainModelCarrier] so that on the False branch both
+        BaseModel and p.Model protocol instances are narrowed out, preventing
+        pyright reportGeneralTypeIssues on downstream isinstance checks.
+        """
         return isinstance(value, FlextModelsPydantic.BaseModel)
 
     @staticmethod

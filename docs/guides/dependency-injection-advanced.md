@@ -76,9 +76,9 @@ FlextContainer is itself a singleton - only one instance exists per application:
 ```python
 from flext_core import FlextContainer
 
-# Get the global container (same instance)
-container1 = FlextContainer.get_global()
-container2 = FlextContainer.get_global()
+# Get the singleton container (same instance)
+container1 = FlextContainer()
+container2 = FlextContainer()
 
 assert container1 is container2  # True - same instance
 ```
@@ -90,7 +90,7 @@ Modern FLEXT provides **generic type preservation** for safe service retrieval:
 ```python
 from flext_core import FlextContainer, FlextLogger
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # Type-safe retrieval - type checker knows the exact type
 result = container.resolve("logger", type_cls=FlextLogger)
@@ -107,11 +107,11 @@ if result.success:
 ```python
 from flext_core import FlextContainer
 
-# Get the global singleton container
-container = FlextContainer.get_global()
+# Get the singleton container
+container = FlextContainer()
 
 # Every call returns the same instance
-assert FlextContainer.get_global() is container
+assert FlextContainer() is container
 ```
 
 ### Registering Services
@@ -121,7 +121,7 @@ assert FlextContainer.get_global() is container
 ```python
 from flext_core import FlextContainer, FlextLogger
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # Create service instance
 logger = u.fetch_logger(__name__)
@@ -153,7 +153,7 @@ def create_database_connection():
     }
 
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # Register factory (creates new instance on each call)
 result = container.factory("database", create_database_connection)
@@ -184,7 +184,7 @@ def safe_factory() -> p.Result[t.RecursiveContainer]:
         return r.fail(str(e))
 
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 result = container.factory("safe_service", safe_factory)
 ```
 
@@ -195,7 +195,7 @@ result = container.factory("safe_service", safe_factory)
 ```python
 from flext_core import FlextContainer
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # Get service (returns r[t.RecursiveContainer])
 result = container.resolve("logger")
@@ -212,7 +212,7 @@ else:
 ```python
 from flext_core import FlextContainer, FlextLogger
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # Get service with type information (returns r[FlextLogger])
 result = container.resolve("logger", type_cls=FlextLogger)
@@ -232,7 +232,7 @@ from flext_core import FlextContainer, r, p, FlextSettings, FlextLogger
 
 def initialize_application() -> p.Result[bool]:
     """Initialize all application services."""
-    container = FlextContainer.get_global()
+    container = FlextContainer()
 
     # Load configuration
     config_result = r[bool].ok(True).flat_map(lambda _: FlextSettings.load())
@@ -293,7 +293,7 @@ class PaymentService:
 
 def resolve_payment_service() -> p.Result[PaymentService]:
     """Resolve PaymentService with all dependencies."""
-    container = FlextContainer.get_global()
+    container = FlextContainer()
 
     # Get database
     db_result = container.resolve("database")
@@ -349,7 +349,7 @@ def create_expensive_service():
     return ExpensiveService()
 
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # Register factory - service NOT created yet
 print("Registering factory...")
@@ -378,7 +378,7 @@ from flext_core import FlextContainer, r, p, FlextSettings
 
 def setup_services_based_on_config() -> p.Result[bool]:
     """Register services conditionally based on configuration."""
-    container = FlextContainer.get_global()
+    container = FlextContainer()
 
     # Load settings
     config_result = FlextSettings.load()
@@ -425,7 +425,7 @@ class DatabaseConnection:
 
 def setup_database_lifecycle() -> p.Result[bool]:
     """Setup database with lifecycle management."""
-    container = FlextContainer.get_global()
+    container = FlextContainer()
     config_result = FlextSettings.load()
 
     if config_result.failure:
@@ -463,7 +463,7 @@ if setup_result.success:
 ```python
 from flext_core import FlextContainer
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # Batch register multiple services (stops at first failure)
 result = container.batch_register([
@@ -483,7 +483,7 @@ else:
 ```python
 from flext_core import FlextContainer
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 
 # Try primary service, fallback to alternative
@@ -514,7 +514,7 @@ from flext_core import FlextContainer, r
 
 def validate_all_services() -> p.Result[bool]:
     """Validate that all registered services work correctly."""
-    container = FlextContainer.get_global()
+    container = FlextContainer()
 
     # Get and validate critical services
     services_to_validate = ["logger", "database", "cache"]
@@ -547,7 +547,7 @@ def validate_all_services() -> p.Result[bool]:
 ```python
 from flext_core import FlextContainer, FlextLogger
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # CORRECT - Type checker knows exact type
 result: p.Result[FlextLogger] = container.resolve("logger", type_cls=FlextLogger)
@@ -581,7 +581,7 @@ ServiceType = t.ServiceType
 def get_service(
     name: ServiceName, type_cls: type[ServiceType]
 ) -> p.Result[ServiceType]:
-    container = FlextContainer.get_global()
+    container = FlextContainer()
     return container.resolve(name, type_cls=type_cls)
 ```
 
@@ -617,7 +617,7 @@ class UserHandler:
 
 
 # Usage
-container = FlextContainer.get_global()
+container = FlextContainer()
 handler = UserHandler(container)
 result = handler.create_user({"name": "Alice"})
 ```
@@ -652,8 +652,8 @@ class TestUserService(unittest.TestCase):
 ### 1. Use Global Singleton
 
 ```python
-# ✅ CORRECT - Always use global container
-container = FlextContainer.get_global()
+# ✅ CORRECT - Always use the singleton container
+container = FlextContainer()
 result = container.resolve("service")
 
 # ❌ WRONG - Creating multiple containers
@@ -680,7 +680,7 @@ service = container.resolve("service").value  # May crash
 ```python
 # ✅ CORRECT - Register during initialization
 def initialize():
-    container = FlextContainer.get_global()
+    container = FlextContainer()
     _ = container.bind("logger", u.fetch_logger())
     _ = container.bind("settings", FlextSettings.load().value)
 
@@ -688,13 +688,13 @@ def initialize():
 initialize()
 
 # Later in code
-container = FlextContainer.get_global()
+container = FlextContainer()
 logger_result = container.resolve("logger")
 
 
 # ❌ WRONG - Registering late, missing dependencies
 def some_random_function():
-    container = FlextContainer.get_global()
+    container = FlextContainer()
     _ = container.bind("database", create_db())  # Too late!
 ```
 

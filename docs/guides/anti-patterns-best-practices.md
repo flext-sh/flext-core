@@ -257,7 +257,7 @@ result = generic_box.process("hello")  # Type is str
 # ❌ ANTI-PATTERN - Lost type information
 from flext_core import FlextContainer
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 logger = container.resolve("logger").value  # Type is t.RecursiveContainer
 logger.debug("Message")  # IDE doesn't know if debug() exists
 ```
@@ -268,7 +268,7 @@ logger.debug("Message")  # IDE doesn't know if debug() exists
 # ✅ CORRECT - Type preserved
 from flext_core import FlextContainer, FlextLogger
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # Type-safe retrieval
 result = container.resolve("logger", type_cls=FlextLogger)
@@ -517,12 +517,12 @@ def service_b():
 ```python
 # ✅ CORRECT - Global singleton
 def service_a():
-    container = FlextContainer.get_global()  # Same instance
+    container = FlextContainer()  # Same instance
     return container.resolve("logger")
 
 
 def service_b():
-    container = FlextContainer.get_global()  # Same instance!
+    container = FlextContainer()  # Same instance!
     return container.resolve("logger")
 
 
@@ -538,7 +538,7 @@ assert service_a() is service_b()
 # ❌ ANTI-PATTERN - No error handling
 from flext_core import FlextContainer
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 logger = container.resolve("logger").value  # May crash
 service = container.resolve("non_existent").value  # CRASH!
 ```
@@ -556,7 +556,7 @@ service = container.resolve("non_existent").value  # CRASH!
 # ✅ CORRECT - Explicit error handling
 from flext_core import FlextContainer
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # Check result
 logger_result = container.resolve("logger")
@@ -845,7 +845,7 @@ ______________________________________________________________________
 
 ### Dependency Injection
 
-- ✅ Use `FlextContainer.get_global()`
+- ✅ Use `FlextContainer()`
 - ✅ Check `r` before using services
 - ✅ Register services during initialization
 - ❌ Don't create multiple containers

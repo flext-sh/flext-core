@@ -14,14 +14,16 @@ from collections.abc import Mapping
 from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.container import FlextProtocolsContainer
-from flext_core._protocols.context import FlextProtocolsContext
-from flext_core._protocols.handler import FlextProtocolsHandler
-from flext_core._protocols.logging import FlextProtocolsLogging
-from flext_core._protocols.registry import FlextProtocolsRegistry
-from flext_core._protocols.result import FlextProtocolsResult
-from flext_core._protocols.settings import FlextProtocolsSettings
+from flext_core import (
+    FlextProtocolsBase,
+    FlextProtocolsContainer,
+    FlextProtocolsContext,
+    FlextProtocolsHandler,
+    FlextProtocolsLogging,
+    FlextProtocolsRegistry,
+    FlextProtocolsResult,
+    FlextProtocolsSettings,
+)
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase

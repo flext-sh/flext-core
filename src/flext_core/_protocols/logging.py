@@ -12,10 +12,12 @@ from typing import TYPE_CHECKING, Protocol, Self, override, runtime_checkable
 
 from structlog.typing import BindableLogger
 
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.result import FlextProtocolsResult
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.containers import FlextTypingContainers
+from flext_core import (
+    FlextProtocolsBase,
+    FlextProtocolsResult,
+    FlextTypingBase,
+    FlextTypingContainers,
+)
 
 if TYPE_CHECKING:
     from flext_core._typings.services import FlextTypesServices

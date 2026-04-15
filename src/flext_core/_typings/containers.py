@@ -17,9 +17,7 @@ from collections.abc import (
 )
 from typing import Annotated, override
 
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core import FlextModelsPydantic, FlextTypingBase, FlextUtilitiesPydantic
 
 
 class FlextTypingContainers:

@@ -20,12 +20,12 @@ from typing import Annotated, ClassVar, Self, override
 from flext_core import (
     FlextConstantsPydantic,
     FlextModelsPydantic,
+    FlextRuntime,
     FlextUtilitiesEnforcement,
     FlextUtilitiesPydantic,
     c,
     t,
 )
-from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsBase:

@@ -43,7 +43,7 @@ ______________________________________________________________________
 
 ### application.md (Layer 3)
 
-- **Strengths**: Now centered on `FlextDispatcher`, `h`, `FlextRegistry`, and `d` with lean import lists and working dispatcher snippets.
+- **Strengths**: Now centered on `FlextDispatcher`, `h`, `u.build_registry()`, and `d` with lean import lists and working dispatcher snippets.
 - **Gaps**: Call out dispatcher reliability settings (`DispatcherConfig`), caching defaults, and decorator composition (e.g., `@retry` + `@timeout`).
 - **Action**: Remove any straggling references to the retired `FlextBus` and to non-existent `FlextProcessors` modules.
 

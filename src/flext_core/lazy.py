@@ -285,7 +285,9 @@ class FlextLazy(BaseModel):
 
 
 lazy = FlextLazy()
+"""Shared ``FlextLazy`` singleton used by package-level lazy exports."""
 build_lazy_import_map = lazy.build_map
+"""Convenience alias for building flat lazy import maps."""
 lazy_getattr = lazy.get
 cleanup_submodule_namespace = lazy.cleanup
 merge_lazy_imports = lazy.merge

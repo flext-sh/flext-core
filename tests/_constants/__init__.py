@@ -13,9 +13,24 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".loggings": ("TestsFlextCoreConstantsLoggings",),
         ".other": ("TestsFlextCoreConstantsOther",),
         ".result": ("TestsFlextCoreConstantsResult",),
-        ".services": ("TestsFlextCoreConstantsServices",),
+        ".services": (
+            "TestsFlextCoreConstantsServices",
+            "c",
+        ),
         ".settings": ("TestsFlextCoreConstantsSettings",),
         ".strings": ("TestsFlextCoreConstantsStrings",),
+        "flext_core": (
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "u",
+            "x",
+        ),
     },
 )
 

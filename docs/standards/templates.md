@@ -1,90 +1,5 @@
 # Documentation Templates
 
-<!-- TOC START -->
-- [Feature Guide Template](#feature-guide-template)
-- [Overview - Feature Guide Template](#overview-feature-guide-template)
-- [Basic Usage - Feature Guide Template](#basic-usage-feature-guide-template)
-  - [Simple Example](#simple-example)
-  - [Common Patterns - Feature Guide Template](#common-patterns-feature-guide-template)
-- [API Reference - Feature Guide Template](#api-reference-feature-guide-template)
-  - [Method/Class 1](#methodclass-1)
-  - [Method/Class 2](#methodclass-2)
-- [Best Practices - Feature Guide Template](#best-practices-feature-guide-template)
-  - [✅ DO](#do)
-  - [❌ DON'T](#dont)
-- [Common Issues - Feature Guide Template](#common-issues-feature-guide-template)
-  - [Issue: [Problem Description]](#issue-problem-description)
-  - [Issue: [Problem Description]](#issue-problem-description)
-- [Advanced Topics - Feature Guide Template](#advanced-topics-feature-guide-template)
-- [Summary - Feature Guide Template](#summary-feature-guide-template)
-- [See Also - Feature Guide Template](#see-also-feature-guide-template)
-- [API Reference Template](#api-reference-template)
-- [[Class/Module Name] - API Reference Template](#classmodule-name-api-reference-template)
-  - [Class Methods - API Reference Template](#class-methods-api-reference-template)
-  - [Properties - API Reference Template](#properties-api-reference-template)
-- [Quality Metrics - API Reference Template](#quality-metrics-api-reference-template)
-- [Usage Examples - API Reference Template](#usage-examples-api-reference-template)
-  - [Complete Example - API Reference Template](#complete-example-api-reference-template)
-- [See Also - API Reference Template](#see-also-api-reference-template)
-- [Troubleshooting Template](#troubleshooting-template)
-- [[Category of Issues] - Troubleshooting Template](#category-of-issues-troubleshooting-template)
-  - [Issue: [Problem Description] - Troubleshooting Template](#issue-problem-description-troubleshooting-template)
-- [[Another Category] - Troubleshooting Template](#another-category-troubleshooting-template)
-  - [Issue: [Problem Description] - Troubleshooting Template (Category 2)](#issue-problem-description-troubleshooting-template-category-2)
-- [Architecture Decision Record (ADR) Template](#architecture-decision-record-adr-template)
-- [ADR-[Number]: [Title]](#adr-number-title)
-  - [Problem - ADR Template](#problem-adr-template)
-  - [Decision - ADR Template](#decision-adr-template)
-  - [Rationale - ADR Template](#rationale-adr-template)
-  - [Alternatives Considered - ADR Template](#alternatives-considered-adr-template)
-  - [Consequences - ADR Template](#consequences-adr-template)
-  - [Related Decisions - ADR Template](#related-decisions-adr-template)
-- [Best Practices Guide Template](#best-practices-guide-template)
-- [Principle 1: [Name] - Best Practices Guide Template](#principle-1-name-best-practices-guide-template)
-- [Principle 2: [Name] - Best Practices Guide Template](#principle-2-name-best-practices-guide-template)
-- [Common Patterns - Best Practices Guide Template](#common-patterns-best-practices-guide-template)
-  - [Pattern 1: [Name] - Best Practices Guide Template](#pattern-1-name-best-practices-guide-template)
-  - [Pattern 2: [Name] - Best Practices Guide Template](#pattern-2-name-best-practices-guide-template)
-- [Common Mistakes - Best Practices Guide Template](#common-mistakes-best-practices-guide-template)
-  - [Mistake 1: [What people get wrong] - Best Practices Guide Template](#mistake-1-what-people-get-wrong-best-practices-guide-template)
-- [Summary - Best Practices Guide Template](#summary-best-practices-guide-template)
-- [Quick Reference Card Template](#quick-reference-card-template)
-- [Installation - Quick Reference Card Template](#installation-quick-reference-card-template)
-- [Basic Setup - Quick Reference Card Template](#basic-setup-quick-reference-card-template)
-- [Common Tasks - Quick Reference Card Template](#common-tasks-quick-reference-card-template)
-  - [Task 1 - Quick Reference Card Template](#task-1-quick-reference-card-template)
-  - [Task 2 - Quick Reference Card Template](#task-2-quick-reference-card-template)
-- [Common Issues - Quick Reference Card Template](#common-issues-quick-reference-card-template)
-- [Resources - Quick Reference Card Template](#resources-quick-reference-card-template)
-- [Configuration Documentation Template](#configuration-documentation-template)
-- [Overview - Configuration Documentation Template](#overview-configuration-documentation-template)
-- [Configuration Methods - Configuration Documentation Template](#configuration-methods-configuration-documentation-template)
-  - [Method 1: Configuration File - Configuration Documentation Template](#method-1-configuration-file-configuration-documentation-template)
-  - [Method 2: Environment Variables - Configuration Documentation Template](#method-2-environment-variables-configuration-documentation-template)
-  - [Method 3: Programmatic - Configuration Documentation Template](#method-3-programmatic-configuration-documentation-template)
-- [Configuration Options - Configuration Documentation Template](#configuration-options-configuration-documentation-template)
-  - [option_name - Configuration Documentation Template](#optionname-configuration-documentation-template)
-- [Environment-Specific - Configuration Documentation Template](#environment-specific-configuration-documentation-template)
-  - [Development - Configuration Documentation Template](#development-configuration-documentation-template)
-  - [Production - Configuration Documentation Template](#production-configuration-documentation-template)
-- [Complete Example - Configuration Documentation Template](#complete-example-configuration-documentation-template)
-- [Comparison Alternatives Template](#comparison-alternatives-template)
-- [[Feature A] Details - Comparison/Alternatives Template](#feature-a-details-comparisonalternatives-template)
-- [[Feature B] Details - Comparison/Alternatives Template](#feature-b-details-comparisonalternatives-template)
-- [[Feature C] Details - Comparison/Alternatives Template](#feature-c-details-comparisonalternatives-template)
-- [Decision Matrix - Comparison/Alternatives Template](#decision-matrix-comparisonalternatives-template)
-- [Implementation Guide Template](#implementation-guide-template)
-- [Step 1: [Name] - Implementation Guide Template](#step-1-name-implementation-guide-template)
-- [Step 2: [Name] - Implementation Guide Template](#step-2-name-implementation-guide-template)
-- [Step 3: [Name] - Implementation Guide Template](#step-3-name-implementation-guide-template)
-- [Verification - Implementation Guide Template](#verification-implementation-guide-template)
-- [Troubleshooting - Implementation Guide Template](#troubleshooting-implementation-guide-template)
-- [What's Next - Implementation Guide Template](#whats-next-implementation-guide-template)
-- [Tips for Using Templates](#tips-for-using-templates)
-- [Example: Using the Feature Guide Template](#example-using-the-feature-guide-template)
-- [Maintenance](#maintenance)
-<!-- TOC END -->
-
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 Reusable templates for creating consistent FLEXT-Core documentation.
@@ -688,8 +603,6 @@ Expected output:
 - Next feature
 - Related topic
 
-```
-
 ## Tips for Using Templates
 
 1. **Copy the template** to create new documentation
@@ -710,4 +623,3 @@ See Configuration Guide as a real example of the Feature Guide Template.
 - Update existing templates based on feedback
 - Keep examples current and working
 - Review template usage quarterly
-```

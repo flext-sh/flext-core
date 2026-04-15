@@ -163,11 +163,16 @@ ______________________________________________________________________
 The dispatcher initializes reliability managers internally:
 
 ```python
-from flext_core import FlextDispatcher
+from flext_core import h, u
 
-dispatcher = FlextDispatcher()
-dispatcher.register_handler(CreateUserCommand, CreateUserHandler())
-result = dispatcher.dispatch(CreateUserCommand(name="Alice", email="alice@example.com"))
+
+@h.handler(CreateUserCommand)
+def create_user_handler(command: CreateUserCommand) -> User:
+    return CreateUserHandler().handle(command).unwrap()
+
+
+registry = u.build_registry(auto_discover_handlers=True)
+result = registry.dispatch(CreateUserCommand(name="Alice", email="alice@example.com"))
 ```
 
 ### Reliability Patterns
@@ -202,13 +207,22 @@ dispatch(message)
 ### Handler Registration
 
 ```python
-# Register by message type
-dispatcher.register_handler(CreateUserCommand, handler)
+@h.handler(CreateUserCommand)
+def create_user_handler(command: CreateUserCommand) -> User:
+    return handler.handle(command).unwrap()
 
-# Register with explicit mode
-dispatcher.register_handler(CreateUserCommand, handler)
-dispatcher.register_handler(GetUserQuery, handler)
-dispatcher.register_handler(UserCreatedEvent, handler)
+
+@h.handler(GetUserQuery)
+def get_user_handler(query: GetUserQuery) -> User:
+    return handler.handle(query).unwrap()
+
+
+@h.handler(UserCreatedEvent)
+def user_created_handler(event: UserCreatedEvent) -> bool:
+    return handler.handle(event).unwrap()
+
+
+registry = u.build_registry(auto_discover_handlers=True)
 ```
 
 > **TODO(dispatcher.py::FlextDispatcher.**init**):** Accept `container` parameter
@@ -284,7 +298,7 @@ class x:
 Target API:
 
 ```python
-container = FlextContainer.get_global()
+container = FlextContainer()
 container.bind("circuit_breaker", CustomCircuitBreaker())
 
 dispatcher = FlextDispatcher(container=container)

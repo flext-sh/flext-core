@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import override
 
+from tests import Examples
+
 from examples import Ex12CommandA, Ex12CommandB, c, m, p, r, t, u
-from examples.shared import Examples
 from flext_core import h
 
 

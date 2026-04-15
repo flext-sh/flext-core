@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import typing as _t
 
-from flext_core.lazy import (
+from flext_core import (
     build_lazy_import_map,
     install_lazy_exports,
     merge_lazy_imports,
@@ -34,13 +34,6 @@ if _t.TYPE_CHECKING:
     from tests.unit._utilities.test_guards import TestFlextUtilitiesGuards
     from tests.unit._utilities.test_mapper import TestsFlextCoreUtilitiesMapper
     from tests.unit.base import TestsFlextCoreServiceBase
-    from tests.unit.typings import (
-        InputPayloadMap,
-        SampleValue,
-        SetGetExpectedValue,
-        SetGetInputValue,
-        TestCaseMap,
-    )
     from tests.utilities import TestsFlextCoreUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
@@ -91,10 +84,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         },
     ),
     exclude_names=(
-        "FlextDispatcher",
-        "FlextLogger",
-        "FlextRegistry",
-        "FlextRuntime",
         "cleanup_submodule_namespace",
         "install_lazy_exports",
         "lazy_getattr",
@@ -110,14 +99,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
-    "InputPayloadMap",
-    "SampleValue",
-    "SetGetExpectedValue",
-    "SetGetInputValue",
     "T",
     "T_co",
     "T_contra",
-    "TestCaseMap",
     "TestFlextModelsEntity",
     "TestFlextModelsExceptionParams",
     "TestFlextUtilitiesGuards",

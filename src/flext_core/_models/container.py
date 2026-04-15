@@ -20,13 +20,13 @@ from flext_core import (
     FlextConstantsPydantic as cp,
     FlextModelsBase as m,
     FlextModelsPydantic as mp,
+    FlextRuntime,
     FlextTypesPydantic as tp,
     FlextUtilitiesPydantic as up,
     c,
     p,
     t,
 )
-from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsContainer:

@@ -1,39 +1,5 @@
 # Contributing to FLEXT-Core
 
-<!-- TOC START -->
-- [Code of Conduct](#code-of-conduct)
-- [Canonical Rules](#canonical-rules)
-- [Quick Start](#quick-start)
-  - [Prerequisites](#prerequisites)
-  - [Development Setup](#development-setup)
-- [How to Contribute](#how-to-contribute)
-  - [1. Reporting Issues](#1-reporting-issues)
-  - [2. Suggesting Features](#2-suggesting-features)
-- [Problem Statement](#problem-statement)
-- [Proposed Solution](#proposed-solution)
-- [Use Cases](#use-cases)
-- [Alternatives Considered](#alternatives-considered)
-  - [3. Submitting Pull Requests](#3-submitting-pull-requests)
-- [Development Workflow](#development-workflow)
-  - [Quality Assurance Pipeline](#quality-assurance-pipeline)
-  - [Testing](#testing)
-  - [Code Quality Standards](#code-quality-standards)
-  - [Debugging and Troubleshooting](#debugging-and-troubleshooting)
-  - [Documentation Updates](#documentation-updates)
-- [Architecture Guidelines](#architecture-guidelines)
-  - [Adding New Features](#adding-new-features)
-  - [Code Organization](#code-organization)
-- [Review Process](#review-process)
-  - [PR Review Checklist](#pr-review-checklist)
-  - [Approval Process](#approval-process)
-- [Community Guidelines](#community-guidelines)
-  - [Communication](#communication)
-  - [Recognition](#recognition)
-- [Getting Help](#getting-help)
-  - [Resources](#resources)
-  - [Support Levels](#support-levels)
-<!-- TOC END -->
-
 Thank you for your interest in contributing to FLEXT-Core! This guide provides comprehensive instructions for contributing to the project.
 
 ## Code of Conduct
@@ -204,7 +170,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 **Best Practices:**
 
 - Use `r[T]` for all operations that can fail
-- Register services with `FlextContainer.get_global()`
+- Register services with `FlextContainer()`
 - Follow DDD patterns with `FlextModels.Entity/Value/AggregateRoot`
 - Use `FlextLogger` with context propagation
 - Write tests using `flext_tests` infrastructure (no mocks)
@@ -287,7 +253,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 - Use CQRS patterns with `FlextDispatcher`
 - Implement handlers for commands/queries
 - Add middleware for cross-cutting concerns
-- Register components in `FlextRegistry`
+- Register components with `u.build_registry()`
 
 **4. Infrastructure Layer Changes**
 
@@ -330,7 +296,7 @@ from flext_core import h
 from flext_core import x
 from flext_core import FlextModels
 from flext_core import p
-from flext_core import FlextRegistry
+from flext_core import u
 from flext_core import r, p
 from flext_core import u
 from flext_core import s

@@ -89,7 +89,7 @@ Manages service registration and resolution with type safety:
 ```python
 from flext_core import FlextContainer
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # Register factory
 container.factory("database", lambda: MyDatabase())
@@ -120,15 +120,14 @@ from flext_core import FlextDispatcher, m
 
 dispatcher = FlextDispatcher()
 
-# Register handler
-dispatcher.register_handler(CreateUserCommand, handle_create_user)
+# Register handlers declaratively with @h.handler(...) and build a registry
+# when you want automatic discovery.
 
 # Dispatch
 result = dispatcher.dispatch(CreateUserCommand(username="alice"))
 ```
 
 **Key Methods**:
-- `register_handler(message_type, handler)` — Register handler
 - `dispatch(message)` → `r[T]` — Execute handler
 - `publish(event)` → `r[bool]` — Publish events
 
@@ -194,7 +193,7 @@ class MySettings(FlextSettings):
         env_prefix = "MY_APP_"
 
 
-settings = FlextSettings.get_global()
+settings = FlextSettings.fetch_global()
 ```
 
 **Features**:

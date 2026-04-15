@@ -10,6 +10,19 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".test_container_memory": ("test_container_memory",),
         ".test_container_performance": ("test_container_performance",),
         ".test_lazy_performance": ("test_lazy_performance",),
+        "flext_core": (
+            "c",
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "u",
+            "x",
+        ),
     },
 )
 

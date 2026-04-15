@@ -10,14 +10,16 @@ from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.context import FlextProtocolsContext
-from flext_core._protocols.handler import FlextProtocolsHandler
-from flext_core._protocols.logging import FlextProtocolsLogging
-from flext_core._protocols.result import FlextProtocolsResult
-from flext_core._protocols.settings import FlextProtocolsSettings
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.containers import FlextTypingContainers
+from flext_core import (
+    FlextProtocolsBase,
+    FlextProtocolsContext,
+    FlextProtocolsHandler,
+    FlextProtocolsLogging,
+    FlextProtocolsResult,
+    FlextProtocolsSettings,
+    FlextTypingBase,
+    FlextTypingContainers,
+)
 
 if TYPE_CHECKING:
     from flext_core._models.container import FlextModelsContainer

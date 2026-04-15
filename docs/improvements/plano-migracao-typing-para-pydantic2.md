@@ -1,25 +1,6 @@
 # Plano objetivo: padronização e desduplicação de modelos (OO + MRO)
 
 
-<!-- TOC START -->
-- [Contexto aplicado (flext-sh/flext)](#contexto-aplicado-flext-shflext)
-- [1) Problema atual (direto ao ponto)](#1-problema-atual-direto-ao-ponto)
-  - [Evidências principais no código](#evidncias-principais-no-cdigo)
-- [2) Princípios mandatórios (YAGNI, DRY, SOLID)](#2-princpios-mandatrios-yagni-dry-solid)
-- [3) Alvo arquitetural](#3-alvo-arquitetural)
-- [3.1 Camadas](#31-camadas)
-- [3.2 Regras de aceitação para novo modelo público](#32-regras-de-aceitao-para-novo-modelo-pblico)
-- [4) Plano de execução em 4 fases](#4-plano-de-execuo-em-4-fases)
-- [Fase A — Inventário objetivo (2 dias)](#fase-a-inventrio-objetivo-2-dias)
-- [Fase B — Canonicalização da API pública (3–4 dias)](#fase-b-canonicalizao-da-api-pblica-34-dias)
-- [Fase C — Normalização por intenção (4–5 dias)](#fase-c-normalizao-por-inteno-45-dias)
-- [Fase D — Guardrails permanentes (2 dias)](#fase-d-guardrails-permanentes-2-dias)
-- [5) Backlog inicial (ordem recomendada)](#5-backlog-inicial-ordem-recomendada)
-- [6) Métricas de sucesso](#6-mtricas-de-sucesso)
-- [7) Anti-padrões proibidos](#7-anti-padres-proibidos)
-- [8) Resultado esperado em 30 dias](#8-resultado-esperado-em-30-dias)
-<!-- TOC END -->
-
 ## Contexto aplicado (flext-sh/flext)
 
 Este plano foi ajustado considerando o contexto do ecossistema FLEXT (AGENTS/CLAUDE):

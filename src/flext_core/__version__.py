@@ -57,9 +57,6 @@ class FlextVersion:
     def resolve_version_info(cls) -> tuple[int | str, ...]:
         """Get package version as comparison-friendly tuple.
 
-        Args:
-            None.
-
         Returns:
             tuple[int | str, ...]: Version tuple for comparison.
 
@@ -73,9 +70,6 @@ class FlextVersion:
     @classmethod
     def resolve_version_string(cls) -> str:
         """Get package version as human-readable string.
-
-        Args:
-            None.
 
         Returns:
             str: Semantic version string.

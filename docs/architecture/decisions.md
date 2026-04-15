@@ -245,7 +245,7 @@ Need centralized service management accessible from anywhere without passing thr
 
 ### Decision - ADR-005
 
-Implement `FlextContainer.get_global()` singleton for service registration and resolution.
+Implement the `FlextContainer()` singleton for service registration and resolution.
 
 ### Rationale - ADR-005
 

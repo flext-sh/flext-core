@@ -64,7 +64,7 @@ result = (
 ```python
 from flext_core import FlextContainer, FlextLogger
 
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # Register services
 logger = u.fetch_logger(__name__)
@@ -153,9 +153,8 @@ def get_user_handler(query: GetUserQuery) -> p.Result[User]:
     ...
 
 
-dispatcher.register_handler(CreateUserCommand, create_user_handler)
-dispatcher.register_handler(GetUserQuery, get_user_handler)
-result = dispatcher.dispatch(CreateUserCommand("Alice", "alice@example.com"))
+registry = u.build_registry(auto_discover_handlers=True)
+result = registry.dispatch(CreateUserCommand("Alice", "alice@example.com"))
 ```
 
 **Benefits:**
@@ -363,7 +362,7 @@ def guarded_handler(message):
     return handle(message)
 
 
-dispatcher.register_handler(MessageType, guarded_handler)
+registry = u.build_registry(auto_discover_handlers=True)
 ```
 
 **Benefits:**
@@ -381,7 +380,7 @@ dispatcher.register_handler(MessageType, guarded_handler)
 # ❌ AVOID - Service Locator
 class UserService:
     def get_logger(self):
-        return FlextContainer.get_global().get("logger").value
+        return FlextContainer().get("logger").value
 
 
 # ✅ PREFER - Dependency Injection

@@ -12,7 +12,7 @@ from __future__ import annotations
 import typing
 from typing import get_args
 
-from flext_core._typings.services import FlextTypesServices
+from flext_core import FlextTypesServices
 
 
 class FlextUtilitiesBeartypeEngine:
