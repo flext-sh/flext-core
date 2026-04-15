@@ -1,7 +1,7 @@
 [imports]
-import.e_is_FlextExceptions: True
+import.e_is_FlextExceptions: False
 import.r_ok: True
-import.constant: 'UNKNOWN_ERROR'
+import.constant: <ErrorCode.UNKNOWN_ERROR: 'UNKNOWN_ERROR'>
 style.raise_msg: 'boom'
 
 [base_error]

@@ -494,10 +494,10 @@ class Ex11FlextService(Examples):
         self.check("create_runtime.full.settings", type(runtime_full.settings).__name__)
 
         payload = _Payload(text=payload_text, count=payload_count)
-        self.check("to_dict.none", t.ConfigMap(root={}).root)
+        self.check("to_dict.none", t.ConfigMap(root={}))
         self.check(
             "to_dict.mapping",
-            t.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}).root,
+            t.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}),
         )
         self.check("to_dict.model", payload.model_dump())
 
@@ -580,4 +580,4 @@ class Ex11FlextService(Examples):
 
 
 if __name__ == "__main__":
-    Ex11FlextService(__file__).run()
+    Ex11FlextService(caller_file=__file__).run()

@@ -85,7 +85,9 @@ if _t.TYPE_CHECKING:
     from examples._models.output import ExamplesFlextCoreModelsOutput
     from examples._models.shared import SharedHandle, SharedPerson
     from examples.models import ExamplesFlextCoreModels, m
-    from flext_core import c, d, e, h, p, r, s, t, u, x
+    from examples.shared import Examples
+    from examples.typings import ExamplesFlextCoreTypes, t
+    from flext_core import c, d, e, h, p, r, s, u, x
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._models",),
     build_lazy_import_map(
@@ -94,6 +96,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "ExamplesFlextCoreModels",
                 "m",
             ),
+            ".typings": (
+                "ExamplesFlextCoreTypes",
+                "t",
+            ),
+            ".shared": ("Examples",),
             "flext_core": (
                 "c",
                 "d",
@@ -102,7 +109,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "p",
                 "r",
                 "s",
-                "t",
                 "u",
                 "x",
             ),
@@ -176,12 +182,14 @@ __all__: list[str] = [
     "Ex14GetUserQuery",
     "Ex14UserDTO",
     "ExSettingsAppSettings",
+    "Examples",
     "ExamplesFlextCoreModels",
     "ExamplesFlextCoreModelsErrors",
     "ExamplesFlextCoreModelsEx00",
     "ExamplesFlextCoreModelsEx01",
     "ExamplesFlextCoreModelsEx05",
     "ExamplesFlextCoreModelsOutput",
+    "ExamplesFlextCoreTypes",
     "SharedHandle",
     "SharedPerson",
     "c",

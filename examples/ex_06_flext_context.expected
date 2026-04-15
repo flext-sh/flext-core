@@ -20,7 +20,7 @@ iter_scope_vars: 'global,session,user'
 clear.keys: 0
 
 [container_and_service]
-runtime.class: 'u'
+runtime.class: 'FlextUtilities'
 configure_resolve_container.same: True
 raise.msg: 'boom'
 service.register.ok: True

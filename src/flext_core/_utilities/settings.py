@@ -18,11 +18,13 @@ from flext_core import FlextUtilitiesGuardsTypeModel, c, e, p, r, t
 class FlextUtilitiesSettings:
     """Settings utilities for parameter access and manipulation."""
 
+    type _ResolvedParameter = t.ValueOrModel | p.Model | None
+
     @staticmethod
     def _duck_dump_get_parameter(
         obj: p.HasModelDump | p.Model | p.Base,
         parameter: str,
-    ) -> tuple[bool, t.ValueOrModel]:
+    ) -> tuple[bool, FlextUtilitiesSettings._ResolvedParameter]:
         """Get parameter from duck-typed model_dump() result.
 
         Instead of iterating the dump dict (which has Unknown types from getattr),
@@ -75,7 +77,7 @@ class FlextUtilitiesSettings:
     def _try_get_attr(
         obj: p.HasModelDump | p.Model | p.Base,
         parameter: str,
-    ) -> tuple[bool, t.ValueOrModel]:
+    ) -> tuple[bool, FlextUtilitiesSettings._ResolvedParameter]:
         """Try direct attribute access, returning (found, value) tuple."""
         obj_vars: t.RecursiveContainerMapping = (
             vars(obj) if hasattr(obj, "__dict__") else {}
@@ -89,7 +91,7 @@ class FlextUtilitiesSettings:
     def _try_get_from_dict_like(
         obj: Mapping[str, t.ValueOrModel],
         parameter: str,
-    ) -> tuple[bool, t.ValueOrModel]:
+    ) -> tuple[bool, FlextUtilitiesSettings._ResolvedParameter]:
         """Try dict-like key lookup, returning (found, value) tuple."""
         if parameter in obj:
             return (True, obj[parameter])
@@ -99,7 +101,7 @@ class FlextUtilitiesSettings:
     def _try_get_from_duck_model_dump(
         obj: p.HasModelDump | p.Model | p.Base,
         parameter: str,
-    ) -> tuple[bool, t.ValueOrModel]:
+    ) -> tuple[bool, FlextUtilitiesSettings._ResolvedParameter]:
         try:
             return FlextUtilitiesSettings._duck_dump_get_parameter(obj, parameter)
         except (AttributeError, TypeError, ValueError, RuntimeError):
@@ -110,7 +112,7 @@ class FlextUtilitiesSettings:
     def _try_get_from_model_dump(
         obj: p.HasModelDump,
         parameter: str,
-    ) -> tuple[bool, t.ValueOrModel]:
+    ) -> tuple[bool, FlextUtilitiesSettings._ResolvedParameter]:
         """Try model_dump() field lookup, returning (found, value) tuple."""
         return FlextUtilitiesSettings._try_get_from_duck_model_dump(obj, parameter)
 

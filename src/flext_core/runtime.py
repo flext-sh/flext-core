@@ -396,6 +396,10 @@ class FlextRuntime:
         match val:
             case None:
                 return ""
+            case t.ConfigMap():
+                entries = [(k, v) for k, v in val.root.items()]
+                normalized_mapping = FlextRuntime._normalize_dict_entries(entries)
+                return cast("t.RuntimeAtomic", t.Dict(root=normalized_mapping))
             case BaseModel():
                 return val
             case Path():
@@ -407,17 +411,19 @@ class FlextRuntime:
                     entries = [(k, v) for k, v in val.root.items()]
                 else:
                     entries = [(str(k), v) for k, v in val.items()]
-                return t.Dict(root=FlextRuntime._normalize_dict_entries(entries))
+                normalized_mapping = FlextRuntime._normalize_dict_entries(entries)
+                return cast("t.RuntimeAtomic", t.Dict(root=normalized_mapping))
             case _ if FlextUtilitiesGuardsTypeCore.list_like(val):
-                normalized_list: t.FlatContainerList = [
-                    item
-                    for v in val
-                    if isinstance(
-                        item := FlextRuntime.normalize_to_container(v),
-                        (str, int, float, bool, datetime, Path),
-                    )
-                ]
-                return t.ObjectList(root=normalized_list)
+                normalized_list: list[t.RecursiveContainer] = []
+                for item_raw in val:
+                    item = FlextRuntime.normalize_to_container(item_raw)
+                    if isinstance(item, (t.ConfigMap, t.Dict)):
+                        normalized_list.append(str(item.root))
+                    elif isinstance(item, t.ObjectList):
+                        normalized_list.append(str(list(item.root)))
+                    elif isinstance(item, (str, int, float, bool, datetime, Path)):
+                        normalized_list.append(item)
+                return cast("t.RuntimeAtomic", t.ObjectList(root=normalized_list))
             case _:
                 return str(val)
 

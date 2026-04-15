@@ -133,7 +133,12 @@ class Ex01r(Examples):
         )
         self.check("fail.error", failed.error)
         self.check("fail.error_code", failed.error_code)
-        self.check("fail.error_data", failed.error_data)
+        self.check(
+            "fail.error_data",
+            failed.error_data
+            if failed.error_data is not None
+            else t.ConfigMap(root={}),
+        )
 
         @r.safe
         def parse_int(value: str) -> int:
@@ -175,7 +180,12 @@ class Ex01r(Examples):
         self.check("prop.success.value_readable", success.value == "value")
         self.check("prop.failure.error", failure.error)
         self.check("prop.failure.error_code", failure.error_code)
-        self.check("prop.failure.error_data", failure.error_data)
+        self.check(
+            "prop.failure.error_data",
+            failure.error_data
+            if failure.error_data is not None
+            else t.ConfigMap(root={}),
+        )
         self.check("unwrap.success", success.unwrap())
         try:
             _ = failure.unwrap()

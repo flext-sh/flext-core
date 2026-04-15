@@ -390,16 +390,16 @@ ruff format --check src/
 ```python
 # ✅ CORRECT
 def add_user(
-    users: Sequence[User],
+    users: list[User],
     user: User,
-) -> Sequence[User]:
+) -> list[User]:
     new_users = users.copy()
     new_users.append(user)
     return new_users
 
 
 # ❌ WRONG - Mutable default
-def add_user(users: Sequence[User] = []) -> Sequence[User]:
+def add_user(users: list[User] = []) -> list[User]:
     users.append(user)  # Changes default!
     return users
 ```

@@ -71,7 +71,8 @@ class TestUtilitiesParserFullCoverage:
         scenario: m.Core.Tests.PublicParseCase,
     ) -> None:
         result = u.parse(scenario.input_value, scenario.target)
-        payload = tm.ok(result)
+        tm.ok(result, is_=scenario.target)
+        payload = result.value
         assert isinstance(payload, scenario.target)
         assert isinstance(payload, BaseModel)
         tm.that(payload.model_dump(), eq=scenario.expected_data)

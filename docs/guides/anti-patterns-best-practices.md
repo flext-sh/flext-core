@@ -186,7 +186,7 @@ from flext_core import FlextConstants
 
 result = r[dict].fail(
     "Database connection failed after 3 retries",
-    error_code=FlextConstants.DATABASE_ERROR,
+    error_code="DATABASE_ERROR",
     error_data={
         "host": "db.example.com",
         "port": 5432,
@@ -209,7 +209,7 @@ ______________________________________________________________________
 from typing import Any
 
 
-def process_data(data):
+def process_data(data: Any) -> Any:
     """Returns Any - type checker can't help."""
     return data.something()  # IDE doesn't know what methods are available
 ```
@@ -418,7 +418,7 @@ from flext_core import FlextModels
 **Problem**: Single class doing too much.
 
 ```python
-# ❌ ANTI-PATTERN - God t.RecursiveContainer (3,000+ lines)
+# ❌ ANTI-PATTERN - God object (3,000+ lines)
 class FlextMeltano:
     """Everything in one class - settings, validation, services, streams..."""
 

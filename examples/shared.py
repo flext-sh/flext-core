@@ -12,7 +12,7 @@ script subclasses.  Through MRO each subclass inherits:
 
 Usage (inside an ``ex_*.py`` file)::
 
-    from .shared import Examples
+    from examples import Examples
 
 
     class Ex01r(Examples):
@@ -31,17 +31,17 @@ from __future__ import annotations
 import hashlib
 import string
 import sys
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
 
 from pydantic import ConfigDict
 
-from examples import SharedHandle, SharedPerson, m, p, r, t
+from examples import m, p, r, t, u
 
 
-class Examples:
+class Examples(m.BaseModel):
     """Base class for golden-file example scripts.
 
     Subclass once per ``ex_*.py`` module.  Implement ``exercise()`` to
@@ -53,11 +53,13 @@ class Examples:
 
     SEED: int = 42
 
+    caller_file: Path
+    _results: MutableSequence[str] = u.PrivateAttr(default_factory=list)
+    _counter: int = u.PrivateAttr(default_factory=lambda: 0)
+
     def __init__(self, caller_file: str) -> None:
         """Initialise with the caller's ``__file__`` for golden-file resolution."""
-        self._results: MutableSequence[str] = []
-        self._caller = Path(caller_file)
-        self._counter = 0
+        super().__init__(caller_file=Path(caller_file))
 
     def _next_unit_float(self) -> float:
         payload = f"{self.SEED}:{self._counter}".encode()
@@ -70,15 +72,7 @@ class Examples:
     def check(
         self,
         label: str,
-        value: t.RecursiveContainer
-        | Path
-        | datetime
-        | Mapping[str, bool | str]
-        | m.BaseModel
-        | MutableMapping[str, t.ValueOrModel]
-        | t.ConfigMap
-        | t.RuntimeAtomic
-        | None,
+        value: t.Examples.ExampleRenderable,
     ) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         separator = m.Examples.LABEL_VALUE_SEPARATOR
@@ -134,15 +128,7 @@ class Examples:
 
     def ser(
         self,
-        v: t.RecursiveContainer
-        | Path
-        | datetime
-        | Mapping[str, bool | str]
-        | m.BaseModel
-        | MutableMapping[str, t.ValueOrModel]
-        | t.ConfigMap
-        | t.RuntimeAtomic
-        | None,
+        v: t.Examples.ExampleRenderable,
     ) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
@@ -151,6 +137,8 @@ class Examples:
         """
         if v is None:
             return "None"
+        if isinstance(v, r):
+            return "Result"
         if isinstance(v, bool):
             return str(v)
         if isinstance(v, int | float):
@@ -175,7 +163,7 @@ class Examples:
         * If it does not exist → generates it and prints ``GENERATED``.
         """
         actual = "\n".join(self._results).strip() + "\n"
-        expected_path = self._caller.with_suffix(".expected")
+        expected_path = self.caller_file.with_suffix(".expected")
         checks = sum(
             1
             for line in self._results
@@ -188,18 +176,18 @@ class Examples:
                 _ = sys.stdout.write(
                     pass_template.format(
                         kind=m.Examples.OutputKind.PASS,
-                        stem=self._caller.stem,
+                        stem=self.caller_file.stem,
                         checks=checks,
                     ),
                 )
                 return
-            actual_path = self._caller.with_suffix(".actual")
+            actual_path = self.caller_file.with_suffix(".actual")
             _ = actual_path.write_text(actual, encoding="utf-8")
             fail_template = m.Examples.TEMPLATE_BY_KIND[m.Examples.OutputKind.FAIL]
             _ = sys.stdout.write(
                 fail_template.format(
                     kind=m.Examples.OutputKind.FAIL,
-                    stem=self._caller.stem,
+                    stem=self.caller_file.stem,
                     expected_name=expected_path.name,
                     actual_name=actual_path.name,
                 ),
@@ -217,10 +205,10 @@ class Examples:
             ),
         )
 
-    class Person(SharedPerson):
+    class Person(m.Examples.Person):
         """Tiny Pydantic model used across several examples."""
 
-    class Handle(SharedHandle):
+    class Handle(m.Examples.Handle):
         """Tiny model used to exercise ``with_resource``."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
@@ -235,17 +223,7 @@ class Examples:
 
     @staticmethod
     def bind_status(
-        value: p.Result[t.Container] | t.Container,
-    ) -> t.ConfigMap | t.Container:
+        value: t.Container,
+    ) -> t.Container:
         """Return a summary ConfigMap when *value* is a ``r``."""
-        match value:
-            case r() as result:
-                return t.ConfigMap(
-                    root={
-                        "is_success": result.success,
-                        "error": result.error,
-                        "unwrap_or": result.unwrap_or(-1),
-                    },
-                )
-            case _:
-                return value
+        return value

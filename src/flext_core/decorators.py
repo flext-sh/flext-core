@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+import warnings
 from collections.abc import Callable
 from contextlib import suppress
 from functools import wraps
@@ -49,6 +50,24 @@ class FlextDecorators:
             else (func.__module__ if callable(func) else __name__)
         )
         return u.fetch_logger(module_name)
+
+    @staticmethod
+    def deprecated(reason: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Mark callable as deprecated and emit ``DeprecationWarning`` on use."""
+
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            @wraps(func)
+            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                warnings.warn(
+                    f"{func.__name__} is deprecated: {reason}",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        return decorator
 
     @staticmethod
     def inject(**dependencies: str) -> Callable[[Callable[P, R]], Callable[P, R]]:

@@ -18,8 +18,8 @@ mixin.fail.error: True
 mixin.fail.error_code: True
 ensure_result.raw: True
 ensure_result.existing: True
-to_dict.none: dict
-to_dict.mapping: dict
+to_dict.none: ConfigMap
+to_dict.mapping: ConfigMap
 to_dict.basemodel: dict
 generate_id.len: 36
 generate_prefixed_id: True
@@ -67,4 +67,4 @@ unregister_class_plugin.missing: True
 register.service.plain: True
 register.service.meta_dict: True
 register.service.meta_model: True
-register.service.bad: False
+register.service.bad: True

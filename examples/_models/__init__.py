@@ -87,13 +87,13 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".shared": (
             "SharedHandle",
             "SharedPerson",
+            "m",
         ),
         "flext_core": (
             "c",
             "d",
             "e",
             "h",
-            "m",
             "p",
             "r",
             "s",

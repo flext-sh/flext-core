@@ -17,6 +17,7 @@ import pytest
 from pydantic import Field
 from pydantic.warnings import PydanticDeprecatedSince20
 
+from flext_core import FlextModelsNamespace
 from tests import c, m, p, t, u
 
 
@@ -345,7 +346,7 @@ class TestConstantsEnforcement:
 
     def test_facade_has_enforced_namespace(self) -> None:
         """C facade inherits m."""
-        assert issubclass(c, m)
+        assert issubclass(c, FlextModelsNamespace)
 
     def test_enforcement_constants_accessible(self) -> None:
         """New enforcement constants accessible via c.*."""
@@ -405,7 +406,7 @@ class TestProtocolsEnforcement:
 
     def test_facade_has_enforced_namespace(self) -> None:
         """P facade inherits m."""
-        assert issubclass(p, m)
+        assert issubclass(p, FlextModelsNamespace)
 
 
 # ------------------------------------------------------------------ #
@@ -437,7 +438,7 @@ class TestTypesEnforcement:
 
     def test_facade_has_enforced_namespace(self) -> None:
         """T facade inherits m."""
-        assert issubclass(t, m)
+        assert issubclass(t, FlextModelsNamespace)
 
 
 # ------------------------------------------------------------------ #
@@ -483,7 +484,7 @@ class TestUtilitiesEnforcement:
 
     def test_facade_has_enforced_namespace(self) -> None:
         """U facade inherits m."""
-        assert issubclass(u, m)
+        assert issubclass(u, FlextModelsNamespace)
 
 
 # ------------------------------------------------------------------ #
@@ -496,19 +497,16 @@ class TestAllLayerIntegration:
 
     def test_all_facades_inherit_enforced_namespace(self) -> None:
         """All 5 facade classes inherit m."""
-        for facade in (
-            c,
-            p,
-            t,
-            u,
-            m,
-        ):
-            assert issubclass(facade, m), f"{facade.__name__} missing m in MRO"
+        for facade in (c, p, t, u):
+            assert issubclass(
+                facade,
+                FlextModelsNamespace,
+            ), f"{facade.__name__} missing FlextModelsNamespace in MRO"
 
     def test_downstream_projects_load_cleanly(self) -> None:
         """Flext-core facades load without any violations."""
         assert c.__name__ == "TestsFlextCoreConstants"
-        assert m.__name__ == "u.Core.Tests"
+        assert m.__name__ == "TestsFlextCoreModels"
         assert p.__name__ == "TestsFlextCoreProtocols"
         assert t.__name__ == "TestsFlextCoreTypes"
         assert u.__name__ == "TestsFlextCoreUtilities"

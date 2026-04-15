@@ -221,4 +221,4 @@ class Ex03LoggingDsl(Examples):
 
 
 if __name__ == "__main__":
-    Ex03LoggingDsl(__file__).run()
+    Ex03LoggingDsl(caller_file=__file__).run()

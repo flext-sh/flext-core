@@ -226,8 +226,8 @@ class Ex06FlextContext(Examples):
             cleared_context.get(c.ContextKey.CORRELATION_ID) or "",
         )
         ensured = FlextContext.Utilities.ensure_correlation_id()
-        self.check("utilities.ensure_correlation_id.non_empty", ensured)
+        self.check("utilities.ensure_correlation_id.non_empty", bool(ensured))
 
 
 if __name__ == "__main__":
-    Ex06FlextContext(__file__).run()
+    Ex06FlextContext(caller_file=__file__).run()

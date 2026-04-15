@@ -92,7 +92,7 @@ export VIRTUAL_ENV := $(ACTIVE_VENV)
 
 # Go tooling/caches (zero-settings defaults for make targets).
 GO_TOOLS_BIN ?= $(WORKSPACE_ROOT)/.tools/bin
-GO_CACHE_ROOT ?= /tmp/flext-go-cache
+GO_CACHE_ROOT ?= $(if $(XDG_CACHE_HOME),$(XDG_CACHE_HOME)/flext/go,$(WORKSPACE_ROOT)/.cache/go)
 GO_BUILD_CACHE ?= $(GO_CACHE_ROOT)/build
 GO_MOD_CACHE ?= $(GO_CACHE_ROOT)/mod
 GO_LINT_CACHE ?= $(GO_CACHE_ROOT)/golangci-lint

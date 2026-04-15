@@ -338,10 +338,10 @@ class Ex12RegistryDsl(Examples):
             "ensure_result.existing",
             r[int].ok(ensured_existing).unwrap_or(0) == ensured_existing,
         )
-        self.check("to_dict.none", t.ConfigMap(root={}).root)
+        self.check("to_dict.none", t.ConfigMap(root={}))
         self.check(
             "to_dict.mapping",
-            t.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}).root,
+            t.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}),
         )
         self.check(
             "to_dict.basemodel",
@@ -359,4 +359,4 @@ class Ex12RegistryDsl(Examples):
 
 
 if __name__ == "__main__":
-    Ex12RegistryDsl(__file__).run()
+    Ex12RegistryDsl(caller_file=__file__).run()

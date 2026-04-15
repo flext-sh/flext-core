@@ -808,7 +808,7 @@ from flext_core import r, p, d
 
 @d.timeout(timeout_seconds=30.0)
 @d.railway(error_code="TIMEOUT_ERROR")
-def expensive_computation(data: Sequence[float]) -> float:
+def expensive_computation(data: list[float]) -> float:
     """Compute result with timeout protection."""
     # If computation exceeds 30 seconds, @timeout raises TimeoutError
     # @railway converts it to r.fail("Operation timed out")

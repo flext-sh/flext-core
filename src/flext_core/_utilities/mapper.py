@@ -516,7 +516,7 @@ class FlextUtilitiesMapper:
         path_context: str,
         default: t.ValueOrModel | None,
         required: bool,
-    ) -> tuple[t.ValueOrModel | None, r[t.ValueOrModel] | None]:
+    ) -> tuple[t.ValueOrModel | None, p.Result[t.ValueOrModel] | None]:
         """Resolve one path segment; returns (next_current, None) or (None, early_result)."""
         found_none_prefix = "found_none:"
         key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(part)
@@ -591,11 +591,12 @@ class FlextUtilitiesMapper:
                         for k, v in data.items()
                     },
                 )
-                current = FlextRuntime.normalize_to_container(config_map)
+                current = cast("t.ValueOrModel", config_map)
             else:
                 model_dump_attr = getattr(data, "model_dump", None)
                 if callable(model_dump_attr):
-                    current = FlextRuntime.normalize_to_container(
+                    current = cast(
+                        "t.ValueOrModel",
                         t.ConfigMap.model_validate(model_dump_attr()),
                     )
                 elif isinstance(data, p.ValidatorSpec):

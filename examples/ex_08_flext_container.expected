@@ -5,8 +5,6 @@ fetch_global.settings.type: 'FlextSettings'
 fetch_global.same_instance: True
 create.false.same_instance: True
 create.true.same_instance: True
-builder.create.false.same_instance: True
-builder.create.true.same_instance: True
 result.ok.roundtrip: True
 runtime.normalize.bool: True
 constants.default_max_services: 1000
@@ -48,13 +46,13 @@ list_services.contains.service: True
 list_services.contains.factory: True
 list_services.contains.resource: True
 
-[fluent_and_config]
+[fluent_and_settings]
 with_service.returns_self: True
 with_factory.returns_self: True
 with_resource.returns_self: True
-with_config.returns_self: True
-configure.resolve_config.max_services_matches: True
-configure.resolve_config.enable_factory_caching_matches: True
+with_settings.returns_self: True
+configure.resolve_settings.max_services_matches: True
+configure.resolve_settings.enable_factory_caching_matches: True
 with_service.get.value_matches: True
 with_factory.get.value_matches: True
 with_resource.get.value_matches: True
@@ -66,7 +64,7 @@ scoped.default.inherits_service: True
 scoped.default.get_typed_service_matches: True
 scoped.subproject.app_name_suffix: False
 scoped.full.new_instance: True
-scoped.full.config_app_name: 'scoped.bwycmbtt'
+scoped.full.settings_app_name: 'scoped.egyayiyc'
 scoped.full.uses_explicit_context: True
 scoped.full.has_service: True
 scoped.full.has_factory: True
@@ -79,11 +77,11 @@ scoped.full.get_resource.success: True
 initialize_di_components.bridge_exists: True
 initialize_di_components.container_exists: True
 initialize_registrations.list_services_empty: 0
-sync_config_to_di.service_config_present: True
-register_core_services.logger_present: True
-register_core_services.command_bus_present: True
-create_module_logger.default.type: 'FlextLogger'
-create_module_logger.custom.type: 'FlextLogger'
+sync_settings_to_di.service_settings_present: False
+register_core_services.logger_present: False
+register_core_services.command_bus_present: False
+create_module_logger.default.type: 'FlextUtilities'
+create_module_logger.custom.type: 'FlextUtilities'
 unregister.existing.success: True
 unregister.missing.failure: True
 clear_all.count: 0

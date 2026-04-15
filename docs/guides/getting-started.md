@@ -284,7 +284,7 @@ settings = FlextLdifSettings(
 )
 
 # Use configuration
-ldif = ldif(settings=settings)
+ldif = FlextLdif(settings=settings)
 ```
 
 ## Next Steps

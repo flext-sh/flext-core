@@ -17,8 +17,8 @@ class _WireProbe:
 class Ex08FlextContainer(Examples):
     """Exercise FlextContainer public APIs."""
 
-    _registered_service_name: str
-    _registered_service_value: int
+    _registered_service_name: str = u.PrivateAttr(default_factory=str)
+    _registered_service_value: int = u.PrivateAttr(default_factory=int)
 
     @override
     def exercise(self) -> None:
@@ -445,4 +445,4 @@ class Ex08FlextContainer(Examples):
 
 
 if __name__ == "__main__":
-    Ex08FlextContainer(__file__).run()
+    Ex08FlextContainer(caller_file=__file__).run()

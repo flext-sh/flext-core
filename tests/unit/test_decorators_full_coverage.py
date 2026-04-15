@@ -392,14 +392,17 @@ class TestDecoratorsFullCoverage:
 
         tm.that(tracked(), eq="done")
 
+        class _FactoryPayload(m.BaseModel):
+            v: int
+
         @d.factory(name="svc.factory", singleton=True, lazy=False)
         def build(_value: m.BaseModel) -> m.BaseModel:
-            return t.ConfigMap(root={"v": 7})
+            return _FactoryPayload(v=7)
 
         built = build(t.ConfigMap(root={"v": 1}))
         built_value = built.value if u.result_like(built) else built
-        if isinstance(built_value, t.ConfigMap):
-            tm.that(built_value.root.get("v"), eq=7)
+        if isinstance(built_value, _FactoryPayload):
+            tm.that(built_value.v, eq=7)
         elif isinstance(built_value, Mapping):
             tm.that(built_value.get("v"), eq=7)
         else:

@@ -477,7 +477,7 @@ address = Address(
 ## Pattern 9: Discriminated Unions for Polymorphism
 
 ```python
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal, Sequence, Union
 from pydantic import Discriminator, Field, BaseModel
 
 

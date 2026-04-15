@@ -6,13 +6,11 @@ from collections.abc import Sequence
 from types import ModuleType
 from typing import ClassVar, override
 
-from pydantic import BaseModel
-
 from examples import Ex10ProtocolHandler, Examples, c, e, h, m, p, r, t, u
 
 
 class _Message(m.Command):
-    text: str
+    text: str = u.Field(description="Demo message text payload")
 
 
 class _DerivedMessage(_Message):
@@ -20,11 +18,11 @@ class _DerivedMessage(_Message):
 
 
 class _PayloadModel(m.Value):
-    text: str
+    text: str = u.Field(description="Demo payload text value")
 
 
 class _Entity(m.Value):
-    unique_id: str
+    unique_id: str = u.Field(description="Unique identifier for demo entity")
 
 
 class _NoArgs:
@@ -87,7 +85,7 @@ class Ex10FlextHandlers(Examples):
             "callable.named.name_matches",
             named_h.handler_name == named_handler_name,
         )
-        self.check("callable.named.mode", named_h.mode.value)
+        self.check("callable.named.mode", named_h.mode)
         self.check(
             "callable.named.value_matches",
             named_h.handle(probe_named).unwrap_or("-") == f"named:{probe_named}",
@@ -96,7 +94,7 @@ class Ex10FlextHandlers(Examples):
             lambda message: f"enum:{message}",
             mode=c.HandlerType.EVENT,
         )
-        self.check("callable.mode_enum", mode_enum_h.mode.value)
+        self.check("callable.mode_enum", mode_enum_h.mode)
         self.check(
             "callable.mode_enum.value_matches",
             mode_enum_h.handle(probe_enum).unwrap_or("-") == f"enum:{probe_enum}",
@@ -105,7 +103,7 @@ class Ex10FlextHandlers(Examples):
             lambda message: f"str:{message}",
             mode="query",
         )
-        self.check("callable.mode_str", mode_str_h.mode.value)
+        self.check("callable.mode_str", mode_str_h.mode)
         self.check(
             "callable.mode_str.value_matches",
             mode_str_h.handle(probe_str).unwrap_or("-") == f"str:{probe_str}",
@@ -120,7 +118,7 @@ class Ex10FlextHandlers(Examples):
             ),
         )
         self.check("callable.handler_settings.name", settings_h.handler_name)
-        self.check("callable.handler_settings.mode", settings_h.mode.value)
+        self.check("callable.handler_settings.mode", settings_h.mode)
         self.check(
             "callable.handler_settings.name_matches",
             settings_h.handler_name == cfg_handler_name,
@@ -145,12 +143,12 @@ class Ex10FlextHandlers(Examples):
         class _Service:
             @staticmethod
             @h.handler(_Message, priority=2)
-            def high(_message: BaseModel) -> BaseModel:
+            def high(_message: m.BaseModel) -> m.BaseModel:
                 return _PayloadModel(text="high")
 
             @staticmethod
             @h.handler(_Message, priority=1, timeout=3.0, middleware=[])
-            def low(_message: BaseModel) -> BaseModel:
+            def low(_message: m.BaseModel) -> m.BaseModel:
                 return _PayloadModel(text="low")
 
         class_scan = h.Discovery.scan_class(_Service)
@@ -161,11 +159,11 @@ class Ex10FlextHandlers(Examples):
         module = ModuleType("ex10_handlers_module")
 
         @h.handler(_Message, priority=mod_priority)
-        def mod_handler(message: BaseModel) -> BaseModel:
+        def mod_handler(message: m.BaseModel) -> m.BaseModel:
             text = message.model_dump().get("text", "")
             return _PayloadModel(text=f"module:{text}")
 
-        def plain_function(_message: BaseModel) -> BaseModel:
+        def plain_function(_message: m.BaseModel) -> m.BaseModel:
             return _PayloadModel(text="plain")
 
         setattr(module, "mod_handler", mod_handler)
@@ -204,7 +202,7 @@ class Ex10FlextHandlers(Examples):
         handler: _DemoHandler = _DemoHandler()
         self.check("handler.handler_name", handler.handler_name)
         self.check("handler.name_matches", bool(handler.handler_name))
-        self.check("handler.mode", handler.mode.value)
+        self.check("handler.mode", handler.mode)
         self.check(
             "validate.none.failure",
             handler.validate_message(_Message(text="")).failure is False,
@@ -480,7 +478,7 @@ class Ex10FlextHandlers(Examples):
             "mixin.ensure_result.result",
             r[int].ok(ensured_result).unwrap_or(-1) == ensured_result,
         )
-        self.check("mixin.to_dict", t.ConfigMap(root={dict_key: dict_value}).root)
+        self.check("mixin.to_dict", t.ConfigMap(root={dict_key: dict_value}))
         generated_a = u.generate_id()
         generated_b = u.generate_id()
         self.check(
@@ -587,4 +585,4 @@ class Ex10FlextHandlers(Examples):
 
 
 if __name__ == "__main__":
-    Ex10FlextHandlers(__file__).run()
+    Ex10FlextHandlers(caller_file=__file__).run()

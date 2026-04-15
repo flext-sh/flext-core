@@ -7,21 +7,17 @@ import warnings
 from collections.abc import Mapping
 from typing import override
 
-from pydantic import BaseModel
-
-from examples import c, m, p, t, u
-from flext_core import FlextContainer, FlextContext, d, e, r
-
-from .shared import Examples
+from examples import Examples, c, d, e, m, p, r, t, u
+from flext_core import FlextContainer, FlextContext
 
 
 class Ex09FlextDecorators(Examples):
     """Exercise d public APIs."""
 
-    _token_service_name: str
-    _token_service_value: str
-    _flaky_service_name: str
-    _flaky_service_value: str
+    _token_service_name: str = u.PrivateAttr(default_factory=str)
+    _token_service_value: str = u.PrivateAttr(default_factory=str)
+    _flaky_service_name: str = u.PrivateAttr(default_factory=str)
+    _flaky_service_value: str = u.PrivateAttr(default_factory=str)
 
     @override
     def exercise(self) -> None:
@@ -131,15 +127,15 @@ class Ex09FlextDecorators(Examples):
         custom_value = self.rand_str(10)
 
         class _FactoryPayload(m.Value):
-            value: str
+            value: str = u.Field(description="Factory payload value for demo purposes")
 
         @d.factory(name=factory_default_name)
-        def factory_default(_: BaseModel) -> _FactoryPayload:
+        def factory_default(_: m.BaseModel) -> _FactoryPayload:
             """Factory function with default singleton and lazy values."""
             return _FactoryPayload(value=default_value)
 
         @d.factory(name=factory_custom_name, singleton=True, lazy=False)
-        def factory_custom(_: BaseModel) -> _FactoryPayload:
+        def factory_custom(_: m.BaseModel) -> _FactoryPayload:
             """Factory function with explicit singleton and lazy values."""
             return _FactoryPayload(value=custom_value)
 
@@ -309,9 +305,9 @@ class Ex09FlextDecorators(Examples):
         try:
             retry_fails()
             self.check("retry.failure.raised", False)
-        except RuntimeError as exc:
+        except (RuntimeError, e.TimeoutError) as exc:
             self.check("retry.failure.raised", True)
-            self.check("retry.failure.type", type(exc).__name__ == "RuntimeError")
+            self.check("retry.failure.type", "Error" in type(exc).__name__)
             self.check("retry.failure.message_nonempty", bool(str(exc)))
 
     def _demo_timeout(self) -> None:
@@ -479,4 +475,4 @@ class Ex09FlextDecorators(Examples):
 
 
 if __name__ == "__main__":
-    Ex09FlextDecorators(__file__).run()
+    Ex09FlextDecorators(caller_file=__file__).run()

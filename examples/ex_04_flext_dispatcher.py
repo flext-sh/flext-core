@@ -6,8 +6,6 @@ from collections.abc import MutableSequence
 from logging import ERROR
 from typing import cast, override
 
-from pydantic import BaseModel
-
 from examples import (
     Ex04AutoCommand,
     Ex04CreateUser,
@@ -38,7 +36,7 @@ class Ex04DispatchDsl(Examples):
             """Bind handler to CreateUser message type."""
             self.message_type = Ex04CreateUser
 
-        def handle(self, message: p.Routable) -> t.Container | BaseModel:
+        def handle(self, message: p.Routable) -> t.ScalarOrModel:
             """Create a deterministic response for CreateUser."""
             typed_message = Ex04CreateUser.model_validate(message)
             return f"created:{typed_message.username}"
@@ -56,11 +54,11 @@ class Ex04DispatchDsl(Examples):
             self,
             message: p.Routable,
             operation: str = "dispatch_message",
-        ) -> t.Container | BaseModel:
+        ) -> str:
             """Return deterministic user payload for GetUser."""
             _ = operation
             typed_message = Ex04GetUser.model_validate(message)
-            return {"state": "active", "username": typed_message.username}
+            return f"active:{typed_message.username}"
 
     class DeleteExecutor:
         """Execute handler for DeleteUser commands."""
@@ -71,7 +69,7 @@ class Ex04DispatchDsl(Examples):
             """Bind executor to DeleteUser command type."""
             self.message_type = Ex04DeleteUser
 
-        def execute(self, message: p.Routable) -> t.Container | BaseModel:
+        def execute(self, message: p.Routable) -> t.ScalarOrModel:
             """Create deterministic deletion output."""
             typed_message = Ex04DeleteUser.model_validate(message)
             return f"deleted:{typed_message.username}"
@@ -114,7 +112,7 @@ class Ex04DispatchDsl(Examples):
             """Report support for AutoCommand class or instance."""
             return bool(message)
 
-        def handle(self, message: p.Routable) -> t.Container | BaseModel:
+        def handle(self, message: p.Routable) -> t.ScalarOrModel:
             """Handle discovered command and return a synthetic payload."""
             typed_message = Ex04AutoCommand.model_validate(message)
             return f"auto:{typed_message.payload}"
@@ -129,7 +127,7 @@ class Ex04DispatchDsl(Examples):
             self.message_type = "user_created"
             self.events: MutableSequence[str] = []
 
-        def handle(self, message: p.Routable) -> t.Container | BaseModel:
+        def handle(self, message: p.Routable) -> t.ScalarOrModel:
             """Store event entries when receiving UserCreated."""
             typed_message = Ex04UserCreated.model_validate(message)
             self.events.append(f"user:{typed_message.username}")
@@ -149,7 +147,7 @@ class Ex04DispatchDsl(Examples):
             self,
             message: p.Routable,
             operation: str = "dispatch_message",
-        ) -> t.Container | BaseModel:
+        ) -> t.ScalarOrModel:
             """Store audit entries when receiving UserCreated."""
             _ = operation
             typed_message = Ex04UserCreated.model_validate(message)
@@ -263,4 +261,4 @@ class _Ex04Exercise(Ex04DispatchDsl):
 
 
 if __name__ == "__main__":
-    _Ex04Exercise(__file__).run()
+    _Ex04Exercise(caller_file=__file__).run()

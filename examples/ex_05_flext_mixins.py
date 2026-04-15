@@ -50,7 +50,11 @@ class Ex05FlextMixins(Examples):
     class HandlerBad(m.Value):
         """Non-handler for negative ``handler`` check."""
 
-        marker: str = "bad"
+        marker: str = u.Field(
+            "bad",
+            description="Marker for negative handler",
+            validate_default=True,
+        )
 
     class GoodProcessor(m.Value):
         """Processor satisfying ``p.HasModelDump`` + process + validate."""
@@ -177,4 +181,4 @@ class Ex05FlextMixins(Examples):
 
 
 if __name__ == "__main__":
-    Ex05FlextMixins(__file__).run()
+    Ex05FlextMixins(caller_file=__file__).run()

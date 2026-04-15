@@ -165,7 +165,7 @@ if result.success:
 #### Safe Factory Registration
 
 ```python
-from flext_core import FlextContainer, r
+from flext_core import FlextContainer, p, r, t
 
 
 def create_service_that_might_fail():

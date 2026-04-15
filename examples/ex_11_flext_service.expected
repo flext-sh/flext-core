@@ -28,8 +28,8 @@ auto_execute.execute_count_after_result: 1
 create_runtime.default.context: 'FlextContext'
 create_runtime.full.container: 'FlextContainer'
 create_runtime.full.settings: 'FlextSettings'
-to_dict.none: dict
-to_dict.mapping: dict
+to_dict.none: ConfigMap
+to_dict.mapping: ConfigMap
 to_dict.model: dict
 model_dump.type: 'dict'
 model_dump.has_result: True

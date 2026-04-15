@@ -264,4 +264,4 @@ class Ex07FlextExceptions(Examples):
 
 
 if __name__ == "__main__":
-    Ex07FlextExceptions(__file__).run()
+    Ex07FlextExceptions(caller_file=__file__).run()

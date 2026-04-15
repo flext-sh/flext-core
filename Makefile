@@ -40,7 +40,15 @@ base.mk: Makefile
 			--project-name $(PROJECT_NAME) --output $@; \
 	else \
 		echo "==> flext-infra not found. Bootstrapping standalone environment..."; \
-		$(MAKE) _bootstrap-venv; \
+		if [ ! -d "$(BOOTSTRAP_VENV)" ]; then \
+			echo "==> Creating virtual environment with $(PYTHON_CMD)..."; \
+			if [ -z "$(PYTHON_CMD)" ]; then \
+				echo "ERROR: Python $(PYTHON_VERSION) not found. Install it first."; \
+				exit 1; \
+			fi; \
+			$(PYTHON_CMD) -m venv $(BOOTSTRAP_VENV); \
+			$(BOOTSTRAP_PIP) install -q -U pip; \
+		fi; \
 		$(BOOTSTRAP_PIP) install -q flext-infra; \
 		$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_BASEMK_GROUP) generate \
 			--project-name $(PROJECT_NAME) --output $@; \
