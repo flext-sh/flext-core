@@ -33,10 +33,10 @@ from pydantic import (
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core import FlextProtocolsLogging, FlextProtocolsResult, c, t
+from flext_core import FlextProtocolsLogging, FlextProtocolsResult as p, c, t
 
 
-class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
+class FlextResult[T](BaseModel, p.Result[T]):
     """Type-safe result with monadic helpers for operation composition.
 
     Provides success/failure handling with various conversion and operation
@@ -157,7 +157,7 @@ class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
             return None
         if isinstance(error_data, t.ConfigMap):
             return error_data
-        if isinstance(error_data, FlextProtocolsResult.HasModelDump):
+        if isinstance(error_data, p.HasModelDump):
             dump = error_data.model_dump()
             return t.ConfigMap.model_validate(dump)
         return t.ConfigMap.model_validate(dict(error_data))
@@ -259,7 +259,7 @@ class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
     @classmethod
     def _from_result[V](
         cls,
-        source: FlextProtocolsResult.Result[V],
+        source: p.Result[V],
     ) -> FlextResult[V]:
         if source.success:
             return FlextResult[V].ok(source.value)
@@ -295,7 +295,7 @@ class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
     @classmethod
     def accumulate_errors[ValueT](
         cls,
-        *results: FlextProtocolsResult.Result[ValueT],
+        *results: p.Result[ValueT],
     ) -> FlextResult[Sequence[ValueT]]:
         """Collect all successes, fail if any failure with all errors combined."""
         successes: MutableSequence[ValueT] = []
@@ -483,7 +483,7 @@ class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
     @classmethod
     def from_result[V](
         cls,
-        source: FlextProtocolsResult.Result[V],
+        source: p.Result[V],
     ) -> FlextResult[V]:
         """Normalize any structural FLEXT result into FlextResult."""
         return FlextResult[V]._from_result(source)
@@ -492,7 +492,7 @@ class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
     def traverse[V, U](
         cls,
         items: Sequence[V],
-        func: Callable[[V], FlextProtocolsResult.Result[U]],
+        func: Callable[[V], p.Result[U]],
         *,
         fail_fast: bool = True,
     ) -> FlextResult[Sequence[U]]:
@@ -529,7 +529,7 @@ class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
     def with_resource[R, U](
         cls,
         factory: Callable[[], R],
-        op: Callable[[R], FlextProtocolsResult.Result[U]],
+        op: Callable[[R], p.Result[U]],
         cleanup: Callable[[R], None] | None = None,
     ) -> FlextResult[U]:
         """Resource management with automatic cleanup."""
@@ -625,7 +625,7 @@ class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
     @override
     def flat_map[U](
         self,
-        func: Callable[[T], FlextProtocolsResult.Result[U]],
+        func: Callable[[T], p.Result[U]],
     ) -> FlextResult[U]:
         """Chain operations returning a Result (monadic bind).
 
@@ -655,7 +655,7 @@ class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
     @override
     def flow_through(
         self,
-        *funcs: Callable[[T], FlextProtocolsResult.Result[T]],
+        *funcs: Callable[[T], p.Result[T]],
     ) -> FlextResult[T]:
         """Chain multiple operations in a homogeneous pipeline.
 
@@ -727,7 +727,7 @@ class FlextResult[T](BaseModel, FlextProtocolsResult.Result[T]):
     @override
     def lash(
         self,
-        func: Callable[[str], FlextProtocolsResult.Result[T]],
+        func: Callable[[str], p.Result[T]],
     ) -> FlextResult[T]:
         """Apply recovery function on failure.
 

@@ -18,8 +18,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import p, r
-from tests import m, t, u
+from tests import m, p, t, u, r
 
 TestFunction = Callable[..., None]
 
