@@ -7,11 +7,11 @@ from collections.abc import MutableSequence, Sequence
 from typing import ClassVar, override
 
 from pydantic import PrivateAttr
-from tests import Examples
 
 from examples import (
     Ex11EntityStub as _EntityStub,
     Ex11Payload as _Payload,
+    Examples,
     m,
     t,
     u,

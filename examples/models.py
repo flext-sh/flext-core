@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from tests import ExamplesFlextCoreModelsErrors, ExamplesFlextCoreModelsOutput
-
-from examples import SharedHandle, SharedPerson
+from examples import (
+    ExamplesFlextCoreModelsErrors,
+    ExamplesFlextCoreModelsOutput,
+    SharedHandle,
+    SharedPerson,
+)
 from flext_core import m
 
 

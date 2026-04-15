@@ -7,9 +7,8 @@ from types import ModuleType
 from typing import ClassVar, override
 
 from pydantic import BaseModel
-from tests import Examples
 
-from examples import Ex10ProtocolHandler, c, e, h, m, p, r, t, u
+from examples import Ex10ProtocolHandler, Examples, c, e, h, m, p, r, t, u
 
 
 class _Message(m.Command):

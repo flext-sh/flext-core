@@ -12,7 +12,7 @@ from __future__ import annotations
 import typing
 from typing import get_args
 
-from flext_core import FlextTypesServices
+from flext_core import FlextTypesServices as t
 
 
 class FlextUtilitiesBeartypeEngine:
@@ -23,7 +23,7 @@ class FlextUtilitiesBeartypeEngine:
     """
 
     @staticmethod
-    def contains_any(hint: FlextTypesServices.TypeHintSpecifier | None) -> bool:
+    def contains_any(hint: t.TypeHintSpecifier | None) -> bool:
         """Recursively detect Any anywhere in a type hint.
 
         Catches Any and object at the top level, then walks nested args
@@ -42,7 +42,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def has_forbidden_collection_origin(
-        hint: FlextTypesServices.TypeHintSpecifier | None,
+        hint: t.TypeHintSpecifier | None,
         forbidden: frozenset[str],
     ) -> tuple[bool, str]:
         """Detect dict[...]/list[...]/set[...] as annotation origin.
@@ -58,7 +58,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def count_union_members(
-        hint: FlextTypesServices.TypeHintSpecifier | None,
+        hint: t.TypeHintSpecifier | None,
     ) -> int:
         """Count non-None members in a union type."""
         args = get_args(hint)
@@ -68,7 +68,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def is_str_none_union(
-        hint: FlextTypesServices.TypeHintSpecifier | None,
+        hint: t.TypeHintSpecifier | None,
     ) -> bool:
         """Detect str | None union pattern."""
         args = get_args(hint)
@@ -78,7 +78,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def alias_contains_any(
-        alias_value: FlextTypesServices.TypeHintSpecifier | None,
+        alias_value: t.TypeHintSpecifier | None,
     ) -> bool:
         """Check PEP 695 type alias __value__ for Any references.
 

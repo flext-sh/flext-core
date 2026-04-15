@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from pydantic import Field, field_validator
-from tests import ExamplesFlextCoreModelsErrors as _err
 
-from examples import c
+from examples import ExamplesFlextCoreModelsErrors as _err, c
 from flext_core import m, p, r, t
 
 

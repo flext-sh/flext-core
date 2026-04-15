@@ -18,7 +18,7 @@ from typing import cast
 
 import pytest
 
-from tests import m, p, t, u, r
+from tests import m, p, r, t, u
 
 TestFunction = Callable[..., None]
 

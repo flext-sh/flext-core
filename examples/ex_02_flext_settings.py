@@ -6,9 +6,7 @@ import os
 from pathlib import Path
 from typing import override
 
-from tests import Examples
-
-from examples import c, u
+from examples import Examples, c, u
 from flext_core import FlextSettings
 
 
