@@ -6,9 +6,15 @@
   - [1. Railway Results (`r[T]`)](#1-railway-results-rt)
   - [2. Dependency Injection](#2-dependency-injection)
   - [3. CQRS Dispatcher](#3-cqrs-dispatcher)
-  - [4. Services & Models](#4-services--models)
+  - [4. Services & Models](#4-services-models)
 - [Practical Examples](#practical-examples)
+  - [Example 1: Data Validation Pipeline](#example-1-data-validation-pipeline)
+  - [Example 2: Error Recovery](#example-2-error-recovery)
+  - [Example 3: Structured Logging](#example-3-structured-logging)
+  - [Example 4: Settings & Configuration](#example-4-settings-configuration)
 - [Common Patterns](#common-patterns)
+  - [Pattern: Batch Operations with Accumulation](#pattern-batch-operations-with-accumulation)
+  - [Pattern: Conditional Logic](#pattern-conditional-logic)
 - [Next Steps](#next-steps)
 <!-- TOC END -->
 

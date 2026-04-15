@@ -2,7 +2,7 @@
 
 <!-- TOC START -->
 - [Overview](#overview)
-- [h](#flexthandlers)
+- [h](#h)
   - [Current Implementation (V1)](#current-implementation-v1)
   - [Execution Pipeline](#execution-pipeline)
   - [Handler Configuration](#handler-configuration)
@@ -12,11 +12,11 @@
   - [Reliability Patterns](#reliability-patterns)
   - [Dispatch Flow](#dispatch-flow)
   - [Handler Registration](#handler-registration)
-- [Integration with s](#integration-with-flextservice)
+- [Integration with s](#integration-with-s)
 - [Modernization Roadmap - Phase Overview](#modernization-roadmap-phase-overview)
   - [Current State (V1) - Phase Overview](#current-state-v1-phase-overview)
   - [Planned Phases](#planned-phases)
-  - [Phase 1: x.CQRS](#phase-1-flextmixinscqrs)
+  - [Phase 1: x.CQRS](#phase-1-xcqrs)
   - [Phase 2: Dispatcher DI](#phase-2-dispatcher-di)
 - [Handler Patterns](#handler-patterns)
   - [V1 Handler (Current Production)](#v1-handler-current-production)

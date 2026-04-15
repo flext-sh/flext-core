@@ -1,3 +1,7 @@
+<!-- TOC START -->
+- [Next Pages](#next-pages)
+<!-- TOC END -->
+
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 # flext-core API Overview
@@ -7,11 +11,11 @@
 - Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
 - Project class: `platform`
 - Keywords: `clean-architecture`, `ddd`, `enterprise`, `flext`, `modern`, `solid`
-- Main facades: `FlextConstants`, `FlextContainer`, `FlextContext`, `d`, `FlextDispatcher`, `e`, `h`, `FlextLogger` (+11 more)
+- Main facades: `FlextConstants`, `FlextConstantsBase`, `FlextConstantsCqrs`, `FlextConstantsDomain`, `FlextConstantsEnforcement`, `FlextConstantsErrors`, `FlextConstantsInfrastructure`, `FlextConstantsMixins` (+95 more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `BaseModel`, `FlextConstants`, `FlextContainer`, `FlextContext`, `d`, `FlextDispatcher`, `e`, `h`, `FlextLogger`, `x` (+10 more)
-- Exported module shortcuts: `constants`, `container`, `context`, `decorators`, `dispatcher`, `exceptions`, `handlers`, `lazy` (+11 more)
-- Generated module pages: `19`
+- Public symbol exports: `TV`, `EnumT`, `FlextConstants`, `FlextConstantsBase`, `FlextConstantsCqrs`, `FlextConstantsDomain`, `FlextConstantsEnforcement`, `FlextConstantsErrors`, `FlextConstantsInfrastructure`, `FlextConstantsMixins` (+112 more)
+- Exported module shortcuts: _none_
+- Generated module pages: `1`
 
 ## Next Pages
 

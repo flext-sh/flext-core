@@ -4,7 +4,7 @@
 - [FlextDispatcher - Unified CQRS Dispatcher](#flextdispatcher-unified-cqrs-dispatcher)
 - [h - CQRS Handler Base](#h-cqrs-handler-base)
 - [FlextRegistry - Handler Registration Utilities](#flextregistry-handler-registration-utilities)
-- [d - Cross-Cutting Concerns](#flextdecorators-cross-cutting-concerns)
+- [d - Cross-Cutting Concerns](#d-cross-cutting-concerns)
 - [Quick Start Checklist](#quick-start-checklist)
 - [Verification Commands](#verification-commands)
 <!-- TOC END -->

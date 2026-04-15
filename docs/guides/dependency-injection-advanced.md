@@ -4,7 +4,7 @@
 - [Core Concepts](#core-concepts)
   - [Service Locator Pattern](#service-locator-pattern)
   - [Singleton Pattern](#singleton-pattern)
-  - [Type-Safe Resolution (v0.12.0-dev+)](#type-safe-resolution-v0100)
+  - [Type-Safe Resolution (v0.12.0-dev+)](#type-safe-resolution-v0120-dev)
 - [Getting Started](#getting-started)
   - [Global Container Access](#global-container-access)
   - [Registering Services](#registering-services)

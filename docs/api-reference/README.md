@@ -1,3 +1,9 @@
+<!-- TOC START -->
+- [Source of Truth](#source-of-truth)
+- [Generated Pages](#generated-pages)
+- [Surface Summary](#surface-summary)
+<!-- TOC END -->
+
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 # flext-core API Reference
@@ -19,7 +25,7 @@ This section is generated from public exports and real docstrings.
 
 ## Surface Summary
 
-- Primary facades: `FlextConstants`, `FlextContainer`, `FlextContext`, `d`, `FlextDispatcher`, `e` (+13 more)
-- Generated module pages: `19`
+- Primary facades: `FlextConstants`, `FlextConstantsBase`, `FlextConstantsCqrs`, `FlextConstantsDomain`, `FlextConstantsEnforcement`, `FlextConstantsErrors` (+97 more)
+- Generated module pages: `1`
 
 - [Back to project docs](../index.md)

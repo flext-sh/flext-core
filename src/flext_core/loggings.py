@@ -27,6 +27,7 @@ from collections.abc import (
 from contextlib import suppress
 from pathlib import Path
 from typing import ClassVar, Self, override
+from warnings import deprecated
 
 import structlog
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
@@ -38,6 +39,7 @@ from flext_core import (
     FlextUtilitiesCollection,
     FlextUtilitiesGenerators,
     FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
     c,
     e,
     p,
@@ -889,7 +891,7 @@ class FlextLogger(FlextRuntime):
             return str(value)
         if value is None:
             return ""
-        if isinstance(value, p.Model):
+        if FlextUtilitiesGuardsTypeModel.base_model(value):
             return str(value.model_dump())
         if FlextUtilitiesGuardsTypeCore.scalar(value) or isinstance(value, Path):
             return value
@@ -909,7 +911,7 @@ class FlextLogger(FlextRuntime):
             return ""
         if isinstance(value, Exception):
             return str(value)
-        if isinstance(value, p.Model):
+        if FlextUtilitiesGuardsTypeModel.base_model(value):
             return str(value.model_dump())
         if isinstance(value, (list, tuple, dict, Mapping)):
             return str(value)
@@ -1183,6 +1185,7 @@ class FlextLogger(FlextRuntime):
         bound_logger = self.logger.unbind(*keys)
         return self.__class__.create_bound_logger(self.name, bound_logger)
 
+    @deprecated("use unbind(*keys, safe=True) instead")
     def try_unbind(self, *keys: str) -> Self:
         """Unbind keys in safe mode (deprecated compatibility helper)."""
         warnings.warn(

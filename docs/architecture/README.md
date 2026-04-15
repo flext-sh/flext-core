@@ -1,5 +1,24 @@
 # FLEXT-Core Architecture
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Dependency Flow (Inward-Only)](#dependency-flow-inward-only)
+- [Core Modules](#core-modules)
+  - [Result Handling (`result.py`)](#result-handling-resultpy)
+  - [Dependency Injection (`container.py`)](#dependency-injection-containerpy)
+  - [CQRS Dispatcher (`dispatcher.py`)](#cqrs-dispatcher-dispatcherpy)
+  - [Domain Services (`service.py`)](#domain-services-servicepy)
+  - [Domain Models (`models.py`)](#domain-models-modelspy)
+  - [Configuration (`settings.py`)](#configuration-settingspy)
+  - [Protocols (`protocols.py`)](#protocols-protocolspy)
+  - [Utilities (`utilities.py`)](#utilities-utilitiespy)
+  - [Constants (`constants.py`)](#constants-constantspy)
+  - [Exceptions (`exceptions.py`)](#exceptions-exceptionspy)
+- [Lazy Loading System](#lazy-loading-system)
+- [See Also](#see-also)
+<!-- TOC END -->
+
 **Status**: Current (2026-04-14) | **Python**: 3.13+ | **Version**: 0.12.0-dev
 
 ## Overview

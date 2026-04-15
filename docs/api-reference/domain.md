@@ -3,7 +3,7 @@
 <!-- TOC START -->
 - [Domain Models](#domain-models)
   - [FlextModels — DDD Base Classes {#flextmodels}](#flextmodels-ddd-base-classes-flextmodels)
-  - [s — Service Base](#flextservice-service-base)
+  - [s — Service Base](#s-service-base)
 - [Verification Commands](#verification-commands)
 <!-- TOC END -->
 
