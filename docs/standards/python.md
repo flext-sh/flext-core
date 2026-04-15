@@ -49,7 +49,7 @@ def get_user(user_id: str) -> p.Result[User]:
     pass
 
 
-def process_items(items: t.StrSequence, multiplier: int = 1) -> Sequence[int]:
+def process_items(items: Sequence[str], multiplier: int = 1) -> Sequence[int]:
     """Process items."""
     return [len(item) * multiplier for item in items]
 

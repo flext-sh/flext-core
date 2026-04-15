@@ -21,6 +21,11 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("handled")
 
+        settings: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        tm.that(settings is not None, eq=True)
+        tm.that(settings.command is CreateCommand, eq=True)
+        tm.that(settings.priority, eq=10)
+
     def test_decorator_metadata_contains_command_type(self) -> None:
         class CreateCommand:
             pass

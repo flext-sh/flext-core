@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from pydantic import Field, field_validator
-
 from examples import ExamplesFlextCoreModelsErrors as _err, c
-from flext_core import m, p, r, t
+from flext_core import m, p, r, t, u
 
 
 class ExamplesFlextCoreModelsEx00:
@@ -14,8 +12,8 @@ class ExamplesFlextCoreModelsEx00:
     class Ex00UserProfile(m.Entity):
         """User profile transport model."""
 
-        name: str = Field(min_length=1)
-        email: str = Field(min_length=1)
+        name: str = u.Field(min_length=1)
+        email: str = u.Field(min_length=1)
         status: c.Status = c.Status.ACTIVE
 
         def activate(self) -> p.Result[None]:
@@ -27,10 +25,10 @@ class ExamplesFlextCoreModelsEx00:
     class Ex00UserInput(m.Value):
         """Raw user input model."""
 
-        name: str = Field(min_length=1)
-        email: str = Field(min_length=1)
+        name: str = u.Field(min_length=1)
+        email: str = u.Field(min_length=1)
 
-        @field_validator("name", "email", mode="before")
+        @u.field_validator("name", "email", mode="before")
         @classmethod
         def validate_non_empty_text(cls, value: t.RuntimeData) -> str:
             """Validate text input."""

@@ -6,8 +6,6 @@ import sys
 from collections.abc import MutableSequence, Sequence
 from typing import ClassVar, override
 
-from pydantic import PrivateAttr
-
 from examples import (
     Ex11EntityStub as _EntityStub,
     Ex11Payload as _Payload,
@@ -64,7 +62,7 @@ class _DeclarativeService(s[str]):
     """Declarative auto_execute service pattern."""
 
     auto_execute: ClassVar[bool] = True
-    _execute_count: int = PrivateAttr(default=0)
+    _execute_count: int = u.PrivateAttr(default=0)
 
     def __init__(self) -> None:
         super().__init__()

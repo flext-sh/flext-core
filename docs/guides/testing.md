@@ -146,7 +146,7 @@ from flext_core import u
 from flext_core import s
 from flext_core import t
 from flext_core import u
-from flext_ldif import ldif, FlextLdifSettings
+from flext_ldif import ldif as build_ldif, FlextLdifSettings
 
 
 class TestLdifIntegration:
@@ -156,8 +156,8 @@ class TestLdifIntegration:
 
         # Register LDIF service
         settings = FlextLdifSettings(batch_size=100)
-        ldif = ldif(settings=settings)
-        _ = container.bind("ldif", ldif)
+        ldif_service = build_ldif(settings=settings)
+        _ = container.bind("ldif", ldif_service)
 
         # Retrieve and use service
         ldif_result = container.resolve("ldif")
@@ -176,7 +176,7 @@ Test complete workflows and user scenarios:
 ```python
 import pytest
 from pathlib import Path
-from flext_ldif import ldif, FlextLdifSettings
+from flext_ldif import ldif as build_ldif, FlextLdifSettings
 
 
 class TestLdifMigration:
@@ -202,8 +202,8 @@ objectClass: inetOrgPerson"""
             source_server="oid", target_server="oud", preserve_oid_modifiers=True
         )
 
-        ldif = ldif(settings=settings)
-        result = ldif.migrate(input_dir, output_dir, "oid", "oud")
+        ldif_service = build_ldif(settings=settings)
+        result = ldif_service.migrate(input_dir, output_dir, "oid", "oud")
 
         # Verify migration
         assert result.success
@@ -292,7 +292,7 @@ pytest -n 4
 ```python
 import pytest
 from pathlib import Path
-from flext_ldif import ldif, FlextLdifSettings
+from flext_ldif import ldif as build_ldif, FlextLdifSettings
 
 
 @pytest.fixture
@@ -304,7 +304,7 @@ def ldif_config():
 @pytest.fixture
 def ldif_service(ldif_config):
     """Provide LDIF service instance."""
-    return ldif(settings=ldif_config)
+    return build_ldif(settings=ldif_config)
 
 
 @pytest.fixture
@@ -657,29 +657,32 @@ def test_parse_result():
 
 ```python
 # ✅ GOOD - Independent tests
+from flext_ldif import ldif as build_ldif
+
+
 def test_parse_valid_ldif():
-    ldif = ldif()  # Fresh instance
-    result = ldif.parse("dn: test")
+    ldif_service = build_ldif()  # Fresh instance
+    result = ldif_service.parse("dn: test")
     assert result.success
 
 
 def test_parse_invalid_ldif():
-    ldif = ldif()  # Fresh instance
-    result = ldif.parse("invalid")
+    ldif_service = build_ldif()  # Fresh instance
+    result = ldif_service.parse("invalid")
     assert result.failure
 
 
 # ❌ BAD - Dependent tests
-ldif = ldif()  # Shared instance
+shared_ldif = build_ldif()  # Shared instance
 
 
 def test_parse_valid_ldif():
-    result = ldif.parse("dn: test")
+    result = shared_ldif.parse("dn: test")
     assert result.success
 
 
 def test_parse_invalid_ldif():
-    result = ldif.parse("invalid")
+    result = shared_ldif.parse("invalid")
     assert result.failure
 ```
 

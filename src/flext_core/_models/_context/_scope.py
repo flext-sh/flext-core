@@ -30,7 +30,7 @@ class FlextModelsContextScope:
         scope_name: Annotated[
             t.NonEmptyStr,
             FlextUtilitiesPydantic.Field(description="Name of the scope"),
-        ] = ""
+        ] = c.ContextScope.GLOBAL
         scope_type: Annotated[
             str,
             FlextUtilitiesPydantic.Field(

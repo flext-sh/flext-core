@@ -427,7 +427,7 @@ class FlextUtilitiesMapper:
                     field_value = FlextUtilitiesMapper._get_numeric_field(item, field)
                 elif isinstance(item, Mapping):
                     field_value = FlextUtilitiesMapper._get_numeric_field(
-                        cast("t.RecursiveContainerMapping", item),
+                        item,  # Mapping satisfies t.RecursiveContainerMapping
                         field,
                     )
                 else:

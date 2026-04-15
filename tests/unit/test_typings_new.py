@@ -529,6 +529,8 @@ class TestFlextTypes:
 
     def test_object_list_default_empty(self) -> None:
         """t.ObjectList defaults to empty list."""
+        default_factory = t.ObjectList.model_fields["root"].default_factory
+        tm.that(default_factory is not None, eq=True)
         ol = t.ObjectList(root=[])
         tm.that(len(ol.root), eq=0)
 

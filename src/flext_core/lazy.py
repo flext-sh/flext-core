@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import importlib
 import sys
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING
 
@@ -161,7 +161,7 @@ class FlextLazy(BaseModel):
         self,
         name: str,
         lazy_imports: LazyImportMap,
-        module_globals: dict[str, object],
+        module_globals: MutableMapping[str, object],
         module_name: str,
     ) -> object:
         """Resolve one lazy symbol and cache it."""
@@ -247,7 +247,7 @@ class FlextLazy(BaseModel):
     def install(
         self,
         module_name: str,
-        module_globals: dict[str, object],
+        module_globals: MutableMapping[str, object],
         lazy_imports: LazyImportMap,
         all_exports: t.StrSequence | None = None,
         *,

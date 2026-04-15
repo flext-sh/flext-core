@@ -2,25 +2,23 @@
 
 from __future__ import annotations
 
-from pydantic import Field, field_validator
-
 from examples import ExamplesFlextCoreModelsErrors as _err, c
-from flext_core import FlextSettings, t
+from flext_core import FlextSettings, t, u
 
 
 class ExSettingsAppSettings(FlextSettings):
     """Application settings model for settings examples."""
 
-    database_url: str = Field(
+    database_url: str = u.Field(
         default=f"postgresql://{c.LOCALHOST}:5432/testdb",
         min_length=1,
     )
-    api_timeout: float = Field(default=c.DEFAULT_TIMEOUT_SECONDS, gt=0)
-    debug: bool = Field(default=False)
-    max_workers: int = Field(default=4, ge=1)
-    log_level: c.LogLevel = Field(default=c.LogLevel.INFO)
+    api_timeout: float = u.Field(default=c.DEFAULT_TIMEOUT_SECONDS, gt=0)
+    debug: bool = u.Field(default=False)
+    max_workers: int = u.Field(default=4, ge=1)
+    log_level: c.LogLevel = u.Field(default=c.LogLevel.INFO)
 
-    @field_validator("database_url", mode="before")
+    @u.field_validator("database_url", mode="before")
     @classmethod
     def normalize_database_url(cls, value: t.RuntimeData) -> str:
         """Normalize and validate database URL."""

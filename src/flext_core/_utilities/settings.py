@@ -60,6 +60,7 @@ class FlextUtilitiesSettings:
     @staticmethod
     def resolve_env_file() -> str:
         """Resolve .env file path from FLEXT_ENV_FILE env var."""
+        # Bootstrap: resolves env file before FlextSettings exists (AGENTS.md §2.6 exception)
         custom_env_file = os.environ.get(c.ENV_FILE_ENV_VAR)
         if custom_env_file:
             custom_path = Path(custom_env_file)

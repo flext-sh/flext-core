@@ -5,9 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import ClassVar
 
-from pydantic import ConfigDict
-
-from examples import p, t
+from examples import c, p, t
 from flext_core import m, r
 
 
@@ -53,7 +51,7 @@ class Ex10ContextPayload(m.Value):
 
 
 class Ex10ProtocolHandler(m.Value):
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+    model_config: ClassVar[c.ConfigDict] = c.ConfigDict(frozen=False)
 
     def handle(self, message: m.Command) -> p.Result[str]:
         return r[str].ok(str(message))
@@ -63,7 +61,7 @@ class Ex10ProtocolHandler(m.Value):
 
 
 class Ex10ServiceStub(m.Value):
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+    model_config: ClassVar[c.ConfigDict] = c.ConfigDict(frozen=False)
 
     @property
     def valid(self) -> bool:
@@ -80,7 +78,7 @@ class Ex10ServiceStub(m.Value):
 
 
 class Ex10CommandBusStub(m.Value):
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+    model_config: ClassVar[c.ConfigDict] = c.ConfigDict(frozen=False)
 
     def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
         return r[t.RuntimeAtomic].ok(str(message))

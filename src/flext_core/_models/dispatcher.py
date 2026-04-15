@@ -180,13 +180,21 @@ class FlextModelsDispatcher:
             )
         )
 
+        def _resolve_breaker_record(
+            self,
+            message_type: str,
+        ) -> FlextModelsDispatcher.CircuitBreakerStateRecord:
+            """Resolve breaker state record lazily without eager default construction."""
+            record = self._breakers.get(message_type)
+            if record is None:
+                record = FlextModelsDispatcher.CircuitBreakerStateRecord()
+                self._breakers[message_type] = record
+            return record
+
         def attempt_reset(self, message_type: str) -> None:
             """Attempt recovery if circuit is open."""
             if self.resolve_open(message_type):
-                rec = self._breakers.setdefault(
-                    message_type,
-                    FlextModelsDispatcher.CircuitBreakerStateRecord(),
-                )
+                rec = self._resolve_breaker_record(message_type)
                 if time.time() - rec.opened_at >= self.recovery_timeout:
                     self.transition_to_half_open(message_type)
 
@@ -225,10 +233,7 @@ class FlextModelsDispatcher:
                 Current failure count for the message type.
 
             """
-            return self._breakers.setdefault(
-                message_type,
-                FlextModelsDispatcher.CircuitBreakerStateRecord(),
-            ).failures
+            return self._resolve_breaker_record(message_type).failures
 
         @up.computed_field()
         @property
@@ -278,10 +283,7 @@ class FlextModelsDispatcher:
                 Current circuit breaker state for the message type.
 
             """
-            return self._breakers.setdefault(
-                message_type,
-                FlextModelsDispatcher.CircuitBreakerStateRecord(),
-            ).state
+            return self._resolve_breaker_record(message_type).state
 
         def resolve_open(self, message_type: str) -> bool:
             """Check if circuit breaker is open for message type.
@@ -294,10 +296,7 @@ class FlextModelsDispatcher:
 
         def record_failure(self, message_type: str) -> None:
             """Record failed operation and update state."""
-            rec = self._breakers.setdefault(
-                message_type,
-                FlextModelsDispatcher.CircuitBreakerStateRecord(),
-            )
+            rec = self._resolve_breaker_record(message_type)
             rec.failures += 1
             if rec.state == c.CircuitBreakerState.HALF_OPEN:
                 rec.recovery_failures += 1
@@ -310,10 +309,7 @@ class FlextModelsDispatcher:
 
         def record_success(self, message_type: str) -> None:
             """Record successful operation and update state."""
-            rec = self._breakers.setdefault(
-                message_type,
-                FlextModelsDispatcher.CircuitBreakerStateRecord(),
-            )
+            rec = self._resolve_breaker_record(message_type)
             rec.total_successes += 1
             if rec.state == c.CircuitBreakerState.HALF_OPEN:
                 rec.success_count += 1
@@ -346,10 +342,7 @@ class FlextModelsDispatcher:
 
         def transition_to_state(self, message_type: str, new_state: str) -> None:
             """Transition to specified state."""
-            rec = self._breakers.setdefault(
-                message_type,
-                FlextModelsDispatcher.CircuitBreakerStateRecord(),
-            )
+            rec = self._resolve_breaker_record(message_type)
             rec.state = new_state
             if new_state == c.CircuitBreakerState.CLOSED:
                 rec.failures = 0

@@ -303,12 +303,6 @@ class TestFlextUtilitiesGuards:
         tm.that(u.matches_type(42, (int, float)), eq=True)
         tm.that(u.matches_type("x", (int, float)), eq=False)
 
-    def test_is_type_invalid_spec_returns_false(self) -> None:
-        """Non-type, non-string, non-tuple spec should return False."""
-        spec: t.GuardInput = 123
-        if isinstance(spec, type):
-            tm.that(u.matches_type("x", spec), eq=False)
-
     # -----------------------------------------------------------------------
     # is_type — dict_non_empty / list_non_empty
     # -----------------------------------------------------------------------

@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import typing
 from collections.abc import Mapping
 from typing import Annotated, override
 
@@ -41,7 +40,7 @@ class FlextModelsDomainEvent:
                 other_mapping = type(self)(
                     root=dict(
                         FlextUtilitiesDomain.normalize_domain_event_data(
-                            typing.cast("Mapping[str, t.ValueOrModel]", other),
+                            other,
                         ),
                     ),
                 ).root

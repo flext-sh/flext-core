@@ -218,11 +218,16 @@ logger.info("This works automatically!")
 
 For custom configuration, you can still call `u.configure_structlog()` explicitly before creating loggers.
 
+```python
+from flext_core import FlextLogger, u
+
+_ = u.configure_structlog()
+logger = FlextLogger.create_module_logger(__name__)
+```
+
 ## See Also
 
 - Service Patterns Guide - Using logging in services
 - Error Handling Guide - Logging errors and exceptions
 - Testing Guide - Testing with structured logging
 
-```
-```

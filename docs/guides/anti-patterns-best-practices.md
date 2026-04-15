@@ -644,7 +644,7 @@ else:
 **Problem**: Value objects that can be modified.
 
 ```python
-# ❌ ANTI-PATTERN - Mutable value t.RecursiveContainer
+# ❌ ANTI-PATTERN - Mutable value object
 from flext_core import FlextModels
 
 
@@ -672,7 +672,7 @@ if money1 == money2:
 **Solution**: Mark value objects as frozen
 
 ```python
-# ✅ CORRECT - Immutable value t.RecursiveContainer
+# ✅ CORRECT - Immutable value object
 from flext_core import FlextModels
 from pydantic import ConfigDict
 from decimal import Decimal
@@ -687,7 +687,7 @@ class Money(FlextModels.Value):
 money = Money(amount=Decimal("100"), currency="USD")
 money.amount = Decimal(
     "50"
-)  # TypeError: frozen t.RecursiveContainer cannot be modified
+)  # TypeError: frozen value object cannot be modified
 
 # Now safe - value objects can't be modified
 ```

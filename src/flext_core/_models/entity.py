@@ -111,9 +111,9 @@ class FlextModelsEntity:
                 return r[FlextModelsDomainEvent.Entry].fail(
                     c.ERR_DOMAIN_EVENT_NAME_REQUIRED,
                 )
-            if len(self.domain_events) >= c.HTTP_STATUS_MIN:
+            if len(self.domain_events) >= c.MAX_UNCOMMITTED_EVENTS:
                 return r[FlextModelsDomainEvent.Entry].fail(
-                    f"Cannot add event: would exceed max events limit of {c.HTTP_STATUS_MIN}",
+                    f"Cannot add event: would exceed max events limit of {c.MAX_UNCOMMITTED_EVENTS}",
                 )
             data_map = FlextModelsDomainEvent.ComparableConfigMap(
                 root=dict(FlextUtilitiesDomain.normalize_domain_event_data(data)),
@@ -156,9 +156,9 @@ class FlextModelsEntity:
                 )
             event_items = list(events)
             total_after = len(self.domain_events) + len(event_items)
-            if total_after > c.HTTP_STATUS_MIN:
+            if total_after > c.MAX_UNCOMMITTED_EVENTS:
                 return r[Sequence[FlextModelsDomainEvent.Entry]].fail(
-                    f"Cannot add {len(events)} events: would exceed max events limit of {c.HTTP_STATUS_MIN}",
+                    f"Cannot add {len(events)} events: would exceed max events limit of {c.MAX_UNCOMMITTED_EVENTS}",
                 )
             for event_type, _ in event_items:
                 if not event_type:
@@ -203,8 +203,9 @@ class FlextModelsEntity:
 
         @override
         def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
-            """Post-initialization hook to set updated_at timestamp."""
-            self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
+            """Post-initialization hook to set updated_at timestamp when absent."""
+            if self.updated_at is None:
+                self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
 
     class Value(FlextModelsBase.ContractModel):
         """Base class for value objects - immutable and compared by value."""
@@ -244,8 +245,8 @@ class FlextModelsEntity:
                         error=invariant_result.error or "invariant check failed",
                     ),
                 )
-            if len(self.domain_events) > c.HTTP_STATUS_MIN:
-                max_events = c.HTTP_STATUS_MIN
+            if len(self.domain_events) > c.MAX_UNCOMMITTED_EVENTS:
+                max_events = c.MAX_UNCOMMITTED_EVENTS
                 event_count = len(self.domain_events)
                 raise ValueError(
                     c.ERR_ENTITY_TOO_MANY_DOMAIN_EVENTS.format(

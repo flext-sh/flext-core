@@ -197,7 +197,7 @@ class TestsFlextCoreUtilitiesMapper:
     # ── narrow_to_container ────────────────────────────────────────
 
     def test_narrow_none(self) -> None:
-        tm.that(u.normalize_to_container(None), none=True)
+        tm.that(u.normalize_to_container(None), eq="")
 
     def test_narrow_string(self) -> None:
         tm.that(u.normalize_to_container("hello"), eq="hello")
@@ -207,26 +207,35 @@ class TestsFlextCoreUtilitiesMapper:
 
     def test_narrow_dict(self) -> None:
         result = u.normalize_to_container({"a": 1})
-        tm.that(result, is_=dict)
+        tm.that(result, is_=t.Dict)
+        if isinstance(result, t.Dict):
+            tm.that(result.root, kv={"a": 1})
 
     def test_narrow_list(self) -> None:
         result = u.normalize_to_container([1, 2, 3])
-        tm.that(result, is_=list)
+        tm.that(result, is_=t.ObjectList)
+        if isinstance(result, t.ObjectList):
+            tm.that(list(result.root), eq=[1, 2, 3])
 
     def test_narrow_pydantic_model(self) -> None:
         item = self.Item(label="test", value=5)
         result = u.normalize_to_container(item)
-        tm.that(result, is_=dict)
-        tm.that(result, kv={"label": "test", "value": 5})
+        tm.that(result, is_=self.Item)
+        if isinstance(result, self.Item):
+            tm.that(result.model_dump(), kv={"label": "test", "value": 5})
 
     def test_narrow_ordered_dict(self) -> None:
         od: OrderedDict[str, int] = OrderedDict([("a", 1), ("b", 2)])
         result = u.normalize_to_container(od)
-        tm.that(result, is_=dict)
+        tm.that(result, is_=t.Dict)
+        if isinstance(result, t.Dict):
+            tm.that(result.root, kv={"a": 1, "b": 2})
 
     def test_narrow_tuple_becomes_list(self) -> None:
         result = u.normalize_to_container((1, 2, 3))
-        tm.that(result, is_=list)
+        tm.that(result, is_=t.ObjectList)
+        if isinstance(result, t.ObjectList):
+            tm.that(list(result.root), eq=[1, 2, 3])
 
     # ── prop ───────────────────────────────────────────────────────
 

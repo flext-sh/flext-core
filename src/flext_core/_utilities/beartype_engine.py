@@ -87,5 +87,5 @@ class FlextUtilitiesBeartypeEngine:
         """
         try:
             return FlextUtilitiesBeartypeEngine.contains_any(alias_value)
-        except Exception:
+        except (TypeError, AttributeError, RuntimeError, RecursionError):
             return "Any" in str(alias_value)

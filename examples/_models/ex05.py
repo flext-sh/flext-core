@@ -5,10 +5,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import ClassVar, override
 
-from pydantic import ConfigDict, Field, field_validator
-
-from examples import t
-from flext_core import m
+from examples import c, t
+from flext_core import m, u
 
 
 class ExamplesFlextCoreModelsEx05:
@@ -25,7 +23,7 @@ class ExamplesFlextCoreModelsEx05:
         status: ExamplesFlextCoreModelsEx05.Ex05StatusEnum
         age: int
 
-        @field_validator("status", mode="before")
+        @u.field_validator("status", mode="before")
         @classmethod
         def normalize_status(
             cls,
@@ -36,14 +34,14 @@ class ExamplesFlextCoreModelsEx05:
             return ExamplesFlextCoreModelsEx05.Ex05StatusEnum(value)
 
     class Ex05HandlerBad(m.Value):
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+        model_config: ClassVar[c.ConfigDict] = c.ConfigDict(frozen=False)
 
     class Ex05HandlerLike(m.Value):
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
-        data: t.ConfigMap = Field(default_factory=lambda: t.ConfigMap(root={}))
+        model_config: ClassVar[c.ConfigDict] = c.ConfigDict(frozen=False)
+        data: t.ConfigMap = u.Field(default_factory=lambda: t.ConfigMap(root={}))
 
     class Ex05GoodProcessor(m.Value):
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+        model_config: ClassVar[c.ConfigDict] = c.ConfigDict(frozen=False)
 
         def process(self) -> bool:
             return True
@@ -57,7 +55,7 @@ class ExamplesFlextCoreModelsEx05:
             return cls.model_validate(value)
 
     class Ex05BadProcessor(m.Value):
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+        model_config: ClassVar[c.ConfigDict] = c.ConfigDict(frozen=False)
 
 
 # Module-level re-exports for package __init__.py API

@@ -29,7 +29,7 @@ All 15 anti-patterns verified against actual FLEXT-Core implementation:
 | 1. Exceptions for Business Logic | Says: Use r           | Found: 1,121 r usages     | ✅ FOLLOWED |
 | 2. Swallowing Errors             | Says: No `except: pass`         | Found: 0 occurrences                | ✅ FOLLOWED |
 | 3. Ignoring Error Info           | Says: Use error_code/error_data | Verified in result.py               | ✅ FOLLOWED |
-| 4. Using `Any` Type              | Says: Use specific types        | Found: 0 `` in src/            | ✅ FOLLOWED |
+| 4. Using `Any` Type              | Says: Use specific types        | Found: 0 `Any` in src/         | ✅ FOLLOWED |
 | 5. Untyped Container             | Says: Use resolve(..., type_cls=...) | Verified in container.py:529 | ✅ FOLLOWED |
 | 6. Type Ignores                  | Says: Fix root cause            | Minimal usage, all justified        | ✅ FOLLOWED |
 | 7. Circular Dependencies         | Says: Respect layer hierarchy   | Layer hierarchy enforced            | ✅ FOLLOWED |
@@ -147,13 +147,13 @@ ______________________________________________________________________
 
 ```bash
 # Search for Any type usage
-$ grep -n "" src/flext_core/*.py
-# NO RESULTS - No Any type usage in source code
+$ grep -nE ":\s*Any\b|->\s*Any\b" src/flext_core/*.py
+# NO RESULTS - No Any usage in type annotations
 ```
 
 **Verification**: ✅ ACCURATE
 
-- ZERO usage of `` type in source files
+- ZERO usage of `Any` in type annotations across source files
 - Codebase uses strict typing with generics (r[T], TypeVar, etc.)
 
 **Counter-Example** (typings.py defines TypeVars, not Any):
@@ -228,7 +228,7 @@ ROOT IMPORT PATTERN (ECOSYSTEM STANDARD)
     from flext_core import r, p, FlextContainer
 
 ❌ FORBIDDEN - Never use internal module imports (for ecosystem):
-    from flext_core import r  # Breaks ecosystem
+    from flext_core.result import r  # Breaks ecosystem
 """
 ```
 
@@ -300,13 +300,13 @@ $ wc -l src/flext_core/*.py | sort -nr | head -5
 - 3,617 lines BUT only ONE top-level class: `FlextModels`
 - Contains many nested classes (Value, Entity, AggregateRoot, Command, Query, etc.)
 - Each nested class is focused (Single Responsibility Principle)
-- This is the CORRECT pattern, not a god t.RecursiveContainer
+- This is the CORRECT pattern, not a god object
 
 **Verification**: ✅ ACCURATE
 
 - Guide uses "3,000+ lines" as example, not absolute rule
 - models.py follows FLEXT pattern (one main class with nested helpers)
-- Not a god t.RecursiveContainer - focused domain model collection
+- Not a god object - focused domain model collection
 
 ______________________________________________________________________
 

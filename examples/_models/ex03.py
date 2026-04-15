@@ -5,16 +5,14 @@ from __future__ import annotations
 from collections.abc import Sequence
 from decimal import Decimal
 
-from pydantic import EmailStr, Field, computed_field, field_validator
-
 from examples import c, p, r, t
-from flext_core import m
+from flext_core import m, u
 
 
 class Ex03Email(m.Value):
     """Email value t.RecursiveContainer model."""
 
-    address: EmailStr
+    address: t.EmailStr
 
 
 class Ex03Money(m.Value):
@@ -23,7 +21,7 @@ class Ex03Money(m.Value):
     amount: Decimal
     currency: c.Currency = c.Currency.USD
 
-    @field_validator("currency", mode="before")
+    @u.field_validator("currency", mode="before")
     @classmethod
     def normalize_currency(cls, value: str | c.Currency) -> c.Currency:
         if isinstance(value, c.Currency):
@@ -53,7 +51,7 @@ class Ex03OrderItem(m.Value):
     product_id: str
     name: str
     price: Ex03Money
-    quantity: int = Field(ge=1)
+    quantity: int = u.Field(ge=1)
 
 
 def _new_order_items() -> Sequence[t.ConfigMap]:
@@ -65,7 +63,7 @@ class Ex03Order(m.AggregateRoot):
     """Domain order aggregate."""
 
     customer_id: str
-    items: Sequence[t.ConfigMap] = Field(default_factory=_new_order_items)
+    items: Sequence[t.ConfigMap] = u.Field(default_factory=_new_order_items)
     status: c.Status = c.Status.ACTIVE
 
     def add_item(self, item: Ex03OrderItem) -> p.Result[Ex03Order]:
@@ -81,12 +79,12 @@ class Ex03Order(m.AggregateRoot):
             return r[Ex03Order].fail("order has no items")
         return r[Ex03Order].ok(self)
 
-    @computed_field
+    @u.computed_field
     def total_items(self) -> int:
         """Compute number of items."""
         return len(self.items)
 
-    @computed_field
+    @u.computed_field
     def total_amount(self) -> float:
         """Compute aggregate order amount."""
         return float(len(self.items))

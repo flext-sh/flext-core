@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-from pydantic import Field
-
 from examples import c, p, r, t
-from flext_core import FlextSettings, m
+from flext_core import FlextSettings, m, u
 
 
 class Ex02TestConfig(FlextSettings):
     """Settings model used by Ex02 settings golden tests."""
 
-    service_name: str = Field(default="example-service")
-    feature_enabled: bool = Field(default=True)
+    service_name: str = u.Field(default="example-service")
+    feature_enabled: bool = u.Field(default=True)
 
 
 class Ex02DatabaseService(m.Value):

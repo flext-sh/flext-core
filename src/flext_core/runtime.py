@@ -361,24 +361,18 @@ class FlextRuntime:
     @classmethod
     def normalize_metadata_input(cls, value: t.MetadataInput) -> p.Metadata:
         """Normalize metadata input into the bound metadata model."""
-        metadata_cls = cast("type[BaseModel]", cls._require_metadata_model())
+        metadata_cls = cls._require_metadata_model()
         if value is None:
-            return cast(
-                "p.Metadata",
-                metadata_cls.model_validate({c.FIELD_ATTRIBUTES: {}}),
-            )
+            return metadata_cls.model_validate({c.FIELD_ATTRIBUTES: {}})
         if isinstance(value, metadata_cls):
-            return cast("p.Metadata", value)
+            return value
         if not isinstance(value, Mapping):
             msg = (
                 "metadata must be None, dict, or bound metadata model, got "
                 f"{value.__class__.__name__}"
             )
             raise TypeError(msg)
-        return cast(
-            "p.Metadata",
-            metadata_cls.model_validate({c.FIELD_ATTRIBUTES: dict(value)}),
-        )
+        return metadata_cls.model_validate({c.FIELD_ATTRIBUTES: dict(value)})
 
     @staticmethod
     def normalize_to_container(

@@ -18,7 +18,7 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextContainer, FlextContext
-from tests import c, p, r, t, u
+from tests import c, r, u
 
 
 class TestsFlextCore:
@@ -34,8 +34,8 @@ class TestsFlextCore:
             def assert_validates(
                 model_class: type,
                 field_name: str,
-                value: t.RecursiveContainer,
-            ) -> t.RecursiveContainer:
+                value: object,
+            ) -> object:
                 """Validate a value against a model field and return the validated value.
 
                 Args:
@@ -60,7 +60,7 @@ class TestsFlextCore:
             def assert_rejects(
                 model_class: type,
                 field_name: str,
-                value: t.RecursiveContainer,
+                value: object,
                 error_type: type[Exception] | None = None,
             ) -> str:
                 """Assert that a value is rejected during validation.
@@ -100,13 +100,13 @@ assert_rejects = TestsFlextCore.Core.Tests.assert_rejects
 
 
 @pytest.fixture
-def test_context() -> p.Context:
+def test_context() -> FlextContext:
     """Provide FlextContext instance for testing."""
     return FlextContext()
 
 
 @pytest.fixture
-def clean_container() -> p.Container:
+def clean_container() -> FlextContainer:
     """Provide a clean FlextContainer instance for testing.
 
     Creates a container and clears all registered services for testing
@@ -118,15 +118,15 @@ def clean_container() -> p.Container:
 
 
 @pytest.fixture
-def mock_external_service() -> u.Core.Tests.FunctionalExternalService:
+def mock_external_service() -> object:
     """Provide mock external service for integration tests."""
     return u.Core.Tests.FunctionalExternalService()
 
 
 @pytest.fixture
-def sample_data() -> t.RecursiveContainerMapping:
+def sample_data() -> object:
     """Provide sample test data for integration tests."""
-    result: t.RecursiveContainerMapping = {
+    result = {
         "string": "test_value",
         "integer": 42,
         "float": math.pi,
@@ -158,13 +158,13 @@ def temp_file(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def flext_result_success() -> p.Result[t.RecursiveContainerMapping]:
+def flext_result_success() -> object:
     """Successful r fixture available to all FLEXT projects."""
-    return r[t.RecursiveContainerMapping].ok({"success": True})
+    return r[dict].ok({"success": True})
 
 
 @pytest.fixture
-def flext_result_failure() -> p.Result[str]:
+def flext_result_failure() -> object:
     """Failed r fixture available to all FLEXT projects."""
     return r[str].fail(c.Core.Tests.TestErrors.TEST_ERROR)
 
@@ -200,7 +200,7 @@ def invalid_port_numbers() -> Sequence[int]:
 
 
 @pytest.fixture
-def valid_uris() -> t.StrSequence:
+def valid_uris() -> Sequence[str]:
     """Valid URIs for UriString validation."""
     return [
         "http://localhost",
@@ -217,7 +217,7 @@ def valid_uris() -> t.StrSequence:
 
 
 @pytest.fixture
-def invalid_uris() -> t.StrSequence:
+def invalid_uris() -> Sequence[str]:
     """Invalid URIs for UriString validation."""
     return [
         "",
@@ -231,7 +231,7 @@ def invalid_uris() -> t.StrSequence:
 
 
 @pytest.fixture
-def valid_hostnames() -> t.StrSequence:
+def valid_hostnames() -> Sequence[str]:
     """Valid hostnames for HostnameStr validation."""
     return [
         "localhost",
@@ -247,7 +247,7 @@ def valid_hostnames() -> t.StrSequence:
 
 
 @pytest.fixture
-def invalid_hostnames() -> t.StrSequence:
+def invalid_hostnames() -> Sequence[str]:
     """Invalid hostnames for HostnameStr validation."""
     return [
         "",
@@ -262,7 +262,7 @@ def invalid_hostnames() -> t.StrSequence:
 
 
 @pytest.fixture
-def valid_strings() -> t.StrSequence:
+def valid_strings() -> Sequence[str]:
     """Valid non-empty strings for string validation."""
     return [
         "a",
@@ -279,13 +279,13 @@ def valid_strings() -> t.StrSequence:
 
 
 @pytest.fixture
-def empty_strings() -> t.StrSequence:
+def empty_strings() -> Sequence[str]:
     """Empty strings for validation."""
     return [""]
 
 
 @pytest.fixture
-def whitespace_strings() -> t.StrSequence:
+def whitespace_strings() -> Sequence[str]:
     """Whitespace-only strings for validation."""
     return [" ", "   ", "\t", "\n", "  \t  "]
 

@@ -23,14 +23,6 @@ from dependency_injector import containers as di_containers, providers as di_pro
 from flext_core import FlextSettings, c, e, m, p, r, t, u
 
 
-def _is_service_of_type[T: t.RegisterableService](
-    value: t.RegisterableService,
-    cls: type[T],
-) -> TypeIs[T]:
-    """TypeIs guard that narrows an object to T for pyright."""
-    return isinstance(value, cls)
-
-
 class FlextContainer(p.ContainerLifecycle):
     """Singleton container that exposes DI registration and resolution helpers.
 
@@ -509,12 +501,20 @@ class FlextContainer(p.ContainerLifecycle):
         return u.fetch_logger(module_name or c.DEFAULT_LOGGER_MODULE)
 
     @staticmethod
+    def _is_service_of_type[T: t.RegisterableService](
+        value: t.RegisterableService,
+        cls: type[T],
+    ) -> TypeIs[T]:
+        """TypeIs guard that narrows an object to T for pyright."""
+        return isinstance(value, cls)
+
+    @staticmethod
     def _narrow_service[T: t.RegisterableService](
         service: t.RegisterableService,
         cls: type[T],
     ) -> r[T]:
         """Narrow a service object to a concrete type T via runtime checking."""
-        if _is_service_of_type(service, cls):
+        if FlextContainer._is_service_of_type(service, cls):
             return r[T].ok(service)
         type_name = cls.__name__
         return r[T].from_result(

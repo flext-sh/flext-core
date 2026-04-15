@@ -5,10 +5,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import ClassVar, override
 
-from pydantic import ConfigDict, Field
-
-from examples import p, t
-from flext_core import FlextSettings, m, r
+from examples import c, p, t
+from flext_core import FlextSettings, m, r, u
 
 
 class Ex11HandlerLikeService(FlextSettings):
@@ -35,8 +33,8 @@ class Ex11Payload(m.Value):
 
 
 class Ex11HandlerLike(m.Value):
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
-    data: t.ConfigMap = Field(default_factory=lambda: t.ConfigMap(root={}))
+    model_config: ClassVar[c.ConfigDict] = c.ConfigDict(frozen=False)
+    data: t.ConfigMap = u.Field(default_factory=lambda: t.ConfigMap(root={}))
 
     def handle(self) -> str:
         return "ok"
@@ -47,7 +45,7 @@ class Ex11EntityStub(m.Value):
 
 
 class Ex11ProcessorProtocolGood(m.Value):
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+    model_config: ClassVar[c.ConfigDict] = c.ConfigDict(frozen=False)
     status: str = "ok"
 
     def process(self) -> str:
@@ -55,12 +53,12 @@ class Ex11ProcessorProtocolGood(m.Value):
 
 
 class Ex11ProcessorProtocolBad(m.Value):
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+    model_config: ClassVar[c.ConfigDict] = c.ConfigDict(frozen=False)
     status: str = "bad"
 
 
 class Ex11CommandBusStub(m.Value):
-    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+    model_config: ClassVar[c.ConfigDict] = c.ConfigDict(frozen=False)
 
     def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
         return r[t.RuntimeAtomic].ok(str(message))

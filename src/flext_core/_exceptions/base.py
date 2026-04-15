@@ -87,11 +87,8 @@ class FlextExceptionsBase:
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize base error with message and optional metadata."""
-            declared_params_cls = type(self)._params_cls
-            if (
-                type(self) is not FlextExceptionsBase.BaseError
-                and declared_params_cls is not None
-            ):
+            declared_params_cls = self.__class__._params_cls
+            if declared_params_cls is not None:
                 resolved_error_code = (
                     str(getattr(type(self), "_default_error_code", error_code))
                     if error_code == c.ErrorCode.UNKNOWN_ERROR

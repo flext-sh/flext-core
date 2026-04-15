@@ -684,8 +684,7 @@ else:
 ### Combining Multiple Results
 
 ```python
-from flext_core import r, p
-from typing import Sequence
+from flext_core import p, r, t
 
 
 # Scenario: Process multiple items, fail on first error

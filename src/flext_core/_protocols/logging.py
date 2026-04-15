@@ -200,6 +200,18 @@ class FlextProtocolsLogging:
             """Version string."""
             ...
 
+        @classmethod
+        def model_validate(
+            cls,
+            obj: Mapping[str, FlextTypingBase.Scalar | Mapping[str, FlextTypingBase.Scalar | Sequence[FlextTypingBase.Scalar]] | Sequence[FlextTypingBase.Scalar] | None] | Self,
+            *,
+            strict: bool | None = None,
+            from_attributes: bool | None = None,
+            context: Mapping[str, FlextTypingBase.Scalar] | None = None,
+        ) -> Self:
+            """Validate and create metadata from input data."""
+            ...
+
     @runtime_checkable
     class Connection(FlextProtocolsBase.Base, Protocol):
         """External system connection protocol."""
