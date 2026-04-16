@@ -31,7 +31,49 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from flext_core import __version__, c, e, m, p, t, u
+import os
+from pathlib import Path
+
+from flext_core import __version__, c, p, t
+from flext_core._models.exception_params import FlextModelsExceptionParams
+from flext_core._models.settings import FlextModelsSettings
+from flext_core.exceptions import e
+
+
+def _resolve_env_file_bootstrap() -> str:
+    """Resolve .env file path from FLEXT_ENV_FILE env var.
+
+    Bootstrap-layer inline function (AGENTS.md §2.6 exception).
+    Avoids circular import of FlextUtilitiesSettings during settings initialization.
+    """
+    custom_env_file = os.environ.get(c.ENV_FILE_ENV_VAR)
+    if custom_env_file:
+        custom_path = Path(custom_env_file)
+        if custom_path.exists():
+            return str(custom_path.resolve())
+        return custom_env_file
+    default_path = Path.cwd() / c.ENV_FILE_DEFAULT
+    if default_path.exists():
+        return str(default_path.resolve())
+    return c.ENV_FILE_DEFAULT
+
+
+def _validate_database_url_scheme_bootstrap(url: str) -> None:
+    """Validate database URL scheme is postgresql://, mysql://, or sqlite://.
+
+    Bootstrap-layer inline validator (AGENTS.md §2.6 exception).
+    """
+    if url and not url.startswith(("postgresql://", "mysql://", "sqlite://")):
+        raise ValueError(c.ERR_CONFIG_INVALID_DB_URL_SCHEME)
+
+
+def _validate_trace_requires_debug_bootstrap(*, trace: bool, debug: bool) -> None:
+    """Validate that trace mode requires debug mode.
+
+    Bootstrap-layer inline validator (AGENTS.md §2.6 exception).
+    """
+    if trace and not debug:
+        raise ValueError(c.ERR_CONFIG_TRACE_REQUIRES_DEBUG)
 
 
 class FlextSettings(BaseSettings):
@@ -57,7 +99,7 @@ class FlextSettings(BaseSettings):
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_prefix=c.ENV_PREFIX,
         env_nested_delimiter=c.ENV_NESTED_DELIMITER,
-        env_file=u.resolve_env_file(),
+        env_file=_resolve_env_file_bootstrap(),
         env_file_encoding=c.DEFAULT_ENCODING,
         case_sensitive=False,
         extra=c.EXTRA_CONFIG_IGNORE,
@@ -99,137 +141,104 @@ class FlextSettings(BaseSettings):
         sources.extend([dotenv_settings, file_secret_settings])
         return tuple(sources)
 
-    app_name: Annotated[
-        str,
-        Field(default=c.DEFAULT_APP_NAME, description="Application name"),
-    ]
-    version: Annotated[
-        str,
-        Field(default=__version__, description="Application version"),
-    ]
-    debug: Annotated[bool, Field(default=False, description="Enable debug mode")]
-    trace: Annotated[bool, Field(default=False, description="Enable trace mode")]
-    log_level: Annotated[
-        c.LogLevel,
-        Field(default=c.LogLevel.INFO, description="Log level"),
-    ]
+    app_name: Annotated[str, Field(description="Application name")] = c.DEFAULT_APP_NAME
+    version: Annotated[str, Field(description="Application version")] = __version__
+    debug: Annotated[bool, Field(description="Enable debug mode")] = False
+    trace: Annotated[bool, Field(description="Enable trace mode")] = False
+    log_level: Annotated[c.LogLevel, Field(description="Log level")] = c.LogLevel.INFO
     async_logging: Annotated[
         bool,
         Field(
-            default=True,
             description="Enable asynchronous buffered logging for performance",
         ),
-    ]
-    enable_caching: Annotated[
-        bool,
-        Field(default=c.ASYNC_ENABLED, description="Enable caching"),
-    ]
-    cache_ttl: Annotated[
-        t.PositiveInt,
-        Field(default=c.CACHE_TTL, description="Cache TTL"),
-    ]
-    database_url: Annotated[
-        str,
-        Field(default=c.DATABASE_URL, description="Database URL"),
-    ]
+    ] = True
+    enable_caching: Annotated[bool, Field(description="Enable caching")] = (
+        c.ASYNC_ENABLED
+    )
+    cache_ttl: Annotated[t.PositiveInt, Field(description="Cache TTL")] = c.CACHE_TTL
+    database_url: Annotated[str, Field(description="Database URL")] = c.DATABASE_URL
     database_pool_size: Annotated[
         t.PositiveInt,
         Field(
-            default=c.DEFAULT_PAGE_SIZE,
             description="Database pool size",
         ),
-    ]
+    ] = c.DEFAULT_PAGE_SIZE
     circuit_breaker_threshold: Annotated[
         t.PositiveInt,
         Field(
-            default=c.BACKUP_COUNT,
             description="Circuit breaker threshold",
         ),
-    ]
+    ] = c.BACKUP_COUNT
     rate_limit_max_requests: Annotated[
         t.PositiveInt,
         Field(
-            default=c.HTTP_STATUS_MIN,
             description="Rate limit max requests",
         ),
-    ]
+    ] = c.HTTP_STATUS_MIN
     rate_limit_window_seconds: Annotated[
         t.PositiveInt,
         Field(
-            default=c.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
             description="Rate limit window",
         ),
-    ]
+    ] = c.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT
     retry_delay: Annotated[
         t.PositiveInt,
         Field(
-            default=c.DEFAULT_RETRY_DELAY_SECONDS,
             description="Retry delay",
         ),
-    ]
+    ] = c.DEFAULT_RETRY_DELAY_SECONDS
     max_retry_attempts: Annotated[
         t.RetryCount,
         Field(
-            default=c.MAX_RETRY_ATTEMPTS,
             description="Max retry attempts",
         ),
-    ]
+    ] = c.MAX_RETRY_ATTEMPTS
     enable_timeout_executor: Annotated[
-        bool,
-        Field(default=True, description="Enable timeout executor"),
-    ]
+        bool, Field(description="Enable timeout executor")
+    ] = True
     dispatcher_enable_logging: Annotated[
         bool,
         Field(
-            default=c.ASYNC_ENABLED,
             description="Enable dispatcher logging",
         ),
-    ]
+    ] = c.ASYNC_ENABLED
     dispatcher_auto_context: Annotated[
         bool,
         Field(
-            default=c.ASYNC_ENABLED,
             description="Auto context in dispatcher",
         ),
-    ]
+    ] = c.ASYNC_ENABLED
     dispatcher_timeout_seconds: Annotated[
         t.PositiveTimeout,
         Field(
-            default=c.DEFAULT_TIMEOUT_SECONDS,
             description="Dispatcher timeout",
         ),
-    ]
+    ] = c.DEFAULT_TIMEOUT_SECONDS
     dispatcher_enable_metrics: Annotated[
         bool,
         Field(
-            default=c.ASYNC_ENABLED,
             description="Enable dispatcher metrics",
         ),
-    ]
+    ] = c.ASYNC_ENABLED
     executor_workers: Annotated[
-        t.WorkerCount,
-        Field(default=c.DEFAULT_MAX_WORKERS, description="Executor workers"),
-    ]
+        t.WorkerCount, Field(description="Executor workers")
+    ] = c.DEFAULT_MAX_WORKERS
     timeout_seconds: Annotated[
-        t.PositiveTimeout,
-        Field(default=c.DEFAULT_TIMEOUT_SECONDS, description="Default timeout"),
-    ]
-    max_workers: Annotated[
-        t.WorkerCount,
-        Field(default=c.DEFAULT_MAX_WORKERS, description="Max workers"),
-    ]
-    max_batch_size: Annotated[
-        t.BatchSize,
-        Field(default=c.MAX_ITEMS, description="Max batch size"),
-    ]
-    api_key: Annotated[str | None, Field(default=None, description="API key")]
+        t.PositiveTimeout, Field(description="Default timeout")
+    ] = c.DEFAULT_TIMEOUT_SECONDS
+    max_workers: Annotated[t.WorkerCount, Field(description="Max workers")] = (
+        c.DEFAULT_MAX_WORKERS
+    )
+    max_batch_size: Annotated[t.BatchSize, Field(description="Max batch size")] = (
+        c.MAX_ITEMS
+    )
+    api_key: Annotated[str | None, Field(description="API key")] = None
     exception_failure_level: Annotated[
         c.FailureLevel,
         Field(
-            default=c.FAILURE_LEVEL_DEFAULT,
             description="Exception failure level",
         ),
-    ]
+    ] = c.FAILURE_LEVEL_DEFAULT
     _di_provider: t.Scalar | None = PrivateAttr(default=None)
 
     def __new__(cls, **_kwargs: t.SettingsValue) -> Self:
@@ -371,7 +380,7 @@ class FlextSettings(BaseSettings):
         """Validate settings.
 
         Business Rule: Validates settings consistency after model initialization.
-        Delegates to ``u`` validation utilities for database URL scheme
+        Delegates to bootstrap validation utilities for database URL scheme
         and trace/debug consistency checks.
 
         Returns:
@@ -381,14 +390,16 @@ class FlextSettings(BaseSettings):
             ValueError: If settings are invalid
 
         """
-        u.validate_database_url_scheme(self.database_url)
-        u.validate_trace_requires_debug(
+        _validate_database_url_scheme_bootstrap(self.database_url)
+        _validate_trace_requires_debug_bootstrap(
             trace=self.trace,
             debug=self.debug,
         )
         return self
 
-    AutoSettings: ClassVar[type[m.AutoSettings]] = m.AutoSettings
+    AutoSettings: ClassVar[type[FlextModelsSettings.AutoSettings]] = (
+        FlextModelsSettings.AutoSettings
+    )
 
     _namespace_registry: ClassVar[MutableMapping[str, t.SettingsClass]] = {}
     _context_overrides: ClassVar[t.ScopedScalarRegistry] = {}
@@ -558,7 +569,7 @@ class FlextSettings(BaseSettings):
         """
         settings_class_raw = self._namespace_registry.get(namespace)
         if settings_class_raw is None:
-            params = m.ConfigurationErrorParams(
+            params = FlextModelsExceptionParams.ConfigurationErrorParams(
                 config_key=namespace,
                 config_source="namespace_registry",
             )
@@ -572,7 +583,7 @@ class FlextSettings(BaseSettings):
         settings_instance = settings_class_raw()
         if isinstance(settings_instance, settings_type):
             return settings_instance
-        params = m.TypeErrorParams(
+        params = FlextModelsExceptionParams.TypeErrorParams(
             expected_type=settings_type.__name__,
             actual_type=settings_instance.__class__.__name__,
         )
