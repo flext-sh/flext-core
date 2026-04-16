@@ -25,31 +25,36 @@ class RuntimeCloneService(s[str]):
         return r[bool].ok(True)
 
 
-def test_valid_handles_validation_exception() -> None:
-    """Valid should return False when validation raises exceptions."""
+class TestServiceAdditional:
+    """Additional coverage tests for flext_core service flows."""
 
-    class RaisingValidationService(s[str]):
-        @override
-        def validate_business_rules(self) -> p.Result[bool]:
-            msg = "boom"
-            raise RuntimeError(msg)
+    def test_valid_handles_validation_exception(self) -> None:
+        """Valid should return False when validation raises exceptions."""
 
-        @override
-        def execute(self) -> p.Result[str]:
-            return r[str].ok("x")
+        class RaisingValidationService(s[str]):
+            @override
+            def validate_business_rules(self) -> p.Result[bool]:
+                msg = "boom"
+                raise RuntimeError(msg)
 
-    service = RaisingValidationService()
-    assert service.valid() is False
+            @override
+            def execute(self) -> p.Result[str]:
+                return r[str].ok("x")
+
+        service = RaisingValidationService()
+        assert service.valid() is False
+
+    def test_result_property_raises_on_failure(self) -> None:
+        """Result property should raise BaseError on failed execution."""
+
+        class FailingOnResultService(s[str]):
+            @override
+            def execute(self) -> p.Result[str]:
+                return r[str].fail("fail_exec")
+
+        service = FailingOnResultService()
+        with pytest.raises(e.BaseError, match="fail_exec"):
+            _ = service.result
 
 
-def test_result_property_raises_on_failure() -> None:
-    """Result property should raise BaseError on failed execution."""
-
-    class FailingOnResultService(s[str]):
-        @override
-        def execute(self) -> p.Result[str]:
-            return r[str].fail("fail_exec")
-
-    service = FailingOnResultService()
-    with pytest.raises(e.BaseError, match="fail_exec"):
-        _ = service.result
+__all__: list[str] = ["TestServiceAdditional"]

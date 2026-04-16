@@ -22,6 +22,7 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
     Sequence,
+    Set as AbstractSet,
 )
 from datetime import UTC, datetime
 from pathlib import Path
@@ -33,7 +34,7 @@ from typing import (
 
 import orjson
 from dependency_injector import containers, providers, wiring
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import (
     FlextUtilitiesGenerators,
@@ -346,7 +347,7 @@ class FlextRuntime:
                     validated_items.append(model_cls.model_validate(dict(value)))
                 else:
                     validated_items.append(model_cls.model_validate(value))
-            except ValidationError as exc:
+            except c.ValidationError as exc:
                 item_errors.extend(
                     f"{index}.{'.'.join(str(part) for part in err.get('loc', ()))}: {err.get('msg', 'validation error')}"
                     for err in exc.errors()
@@ -461,9 +462,11 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_metadata(
-        val: t.RuntimeData | t.ConfigMap,
+        val: t.RuntimeData | t.ConfigMap | AbstractSet[t.Scalar],
     ) -> t.MetadataValue:
         """Normalize input into metadata-compatible scalar, list, or mapping values."""
+        if isinstance(val, AbstractSet):
+            return str(val)
         match val:
             case None:
                 return ""

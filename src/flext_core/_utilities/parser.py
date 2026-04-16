@@ -17,12 +17,12 @@ from enum import StrEnum
 from pydantic import Field
 
 from flext_core import (
+    FlextModelsBase,
     FlextUtilitiesArgs,
     FlextUtilitiesGuards,
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesModel,
     c,
-    m,
     p,
     r,
     t,
@@ -38,27 +38,27 @@ class FlextUtilitiesParser:
 
     """
 
-    class ParseOptions[T](m.FlexibleInternalModel):
+    class ParseOptions[T](FlextModelsBase.FlexibleInternalModel):
         """Options controlling parsing behavior for string-to-type conversion."""
 
         strict: bool | None = Field(
-            default=None,
+            None,
             description="Reject coercions; fail on type mismatch",
         )
         case_insensitive: bool | None = Field(
-            default=None,
+            None,
             description="Normalize case before parsing",
         )
         default: T | None = Field(
-            default=None,
+            None,
             description="Fallback value when parsing fails",
         )
         default_factory: Callable[[], T] | None = Field(
-            default=None,
+            None,
             description="Factory producing fallback value",
         )
         field_name: str | None = Field(
-            default=None,
+            None,
             description="Source field name for error context",
         )
 

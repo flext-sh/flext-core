@@ -13,7 +13,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING, Protocol
+
 from flext_tests import p
+from tests import t
+
+if TYPE_CHECKING:
+    from tests import AttrObject, BadMapping, TestsFlextCoreModelsMixins
 
 
 class TestsFlextCoreProtocols(p):
@@ -34,6 +41,93 @@ class TestsFlextCoreProtocols(p):
 
         class Tests(p.Tests):
             """flext-core test protocols namespace."""
+
+            class ExtractFieldCallable(Protocol):
+                """Protocol for _extract_field_value callable."""
+
+                def __call__(
+                    self, item: AttrObject, field_name: str
+                ) -> t.RecursiveContainer: ...
+
+            class TakeCallable(Protocol):
+                """Protocol for take callable."""
+
+                def __call__(
+                    self,
+                    data_or_items: TestsFlextCoreModelsMixins.MaybeModel
+                    | TestsFlextCoreModelsMixins.PortModel
+                    | int,
+                    key_or_index: int | str,
+                    *,
+                    default: str | None = None,
+                ) -> (
+                    t.RecursiveContainerMapping
+                    | t.RecursiveContainerList
+                    | t.RecursiveContainer
+                ): ...
+
+            class BuildApplyConvertCallable(Protocol):
+                """Protocol for _op_convert callable."""
+
+                def __call__(
+                    self,
+                    current: tuple[str, ...] | str | int,
+                    operations: Mapping[str, t.MapperInput],
+                    default_val: t.RecursiveContainer,
+                    on_error: str,
+                ) -> t.RecursiveContainer: ...
+
+            class ExtractTransformOptionsCallable(Protocol):
+                """Protocol for _extract_transform_options callable."""
+
+                def __call__(
+                    self,
+                    transform_opts: Mapping[str, t.MapperInput],
+                ) -> tuple[
+                    bool,
+                    bool,
+                    bool,
+                    t.StrMapping | None,
+                    set[str] | None,
+                    set[str] | None,
+                ]: ...
+
+            class BuildApplyOpCallable(Protocol):
+                """Protocol for op callable (sort/unique/slice/group)."""
+
+                def __call__(
+                    self,
+                    current: tuple[str, str]
+                    | tuple[int, int, int]
+                    | Sequence[TestsFlextCoreModelsMixins.GroupModel],
+                    operations: Mapping[str, t.MapperInput],
+                    default_val: t.RecursiveContainer,
+                    on_error: str,
+                ) -> (
+                    t.RecursiveContainerMapping
+                    | t.RecursiveContainerList
+                    | t.RecursiveContainer
+                ): ...
+
+            class TransformCallable(Protocol):
+                """Protocol for transform callable."""
+
+                def __call__(
+                    self,
+                    source: BadMapping,
+                    **kwargs: t.StrMapping,
+                ) -> p.Result[t.RecursiveContainerMapping]: ...
+
+            class MapDictKeysCallable(Protocol):
+                """Protocol for map_dict_keys callable."""
+
+                def __call__(
+                    self,
+                    source: TestsFlextCoreModelsMixins.BadItems,
+                    key_map: t.StrMapping,
+                    *,
+                    keep_unmapped: bool = True,
+                ) -> p.Result[t.RecursiveContainerMapping]: ...
 
 
 p = TestsFlextCoreProtocols

@@ -36,7 +36,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
 
-from examples import c, m, p, r, t, u
+from examples import m, p, r, t, u
 
 
 class Examples(m.BaseModel):
@@ -209,7 +209,7 @@ class Examples(m.BaseModel):
     class Handle(m.Examples.Handle):
         """Tiny model used to exercise ``with_resource``."""
 
-        model_config: ClassVar[c.ConfigDict] = c.ConfigDict(frozen=False)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
     @staticmethod
     def bind_probe(result_obj: p.Result[int], delta: int) -> int | str:

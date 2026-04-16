@@ -19,7 +19,7 @@ from collections.abc import Callable
 
 import pytest
 
-from tests import FlextContainer
+from flext_core import FlextContainer
 
 
 def get_memory_usage() -> int:

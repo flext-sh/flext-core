@@ -8,10 +8,8 @@ from datetime import datetime
 from typing import Annotated, override
 
 import pytest
-from pydantic import ValidationError
 
-from flext_core import FlextModelsCqrs
-from flext_tests import tm
+from flext_tests import e, tm
 from tests import m, t, u
 
 
@@ -51,7 +49,7 @@ class TestCoverageModels:
             y: float
 
         point = Point(x=1.0, y=2.0)
-        with pytest.raises(ValidationError):
+        with pytest.raises(e.PydanticValidationError):
             setattr(point, "x", 3.0)
 
     def test_value_object_equality_by_value(self) -> None:
@@ -78,7 +76,7 @@ class TestCoverageModels:
 
         email = Email(address="USER@EXAMPLE.COM")
         tm.that(email.address, eq="user@example.com")
-        with pytest.raises(ValidationError):
+        with pytest.raises(e.PydanticValidationError):
             Email(address="notanemail")
 
     def test_value_object_hashable(self) -> None:
@@ -145,7 +143,7 @@ class TestCoverageModels:
 
         user = User(email="user@example.com", username="alice", domain_events=[])
         tm.that(user.username, eq="alice")
-        with pytest.raises(ValidationError):
+        with pytest.raises(e.PydanticValidationError):
             User(email="user@example.com", username="ab", domain_events=[])
 
     def test_entity_model_dump_serialization(self) -> None:
@@ -238,7 +236,7 @@ class TestCoverageModels:
             command_id="cmd-test-3",
         )
         tm.that(math.isclose(cmd.amount, 100.0), eq=True)
-        with pytest.raises(ValidationError):
+        with pytest.raises(e.PydanticValidationError):
             DepositCommand(account_id="ACC-001", amount=-50.0, command_id="cmd-test-4")
 
     def test_query_creation(self) -> None:
@@ -248,9 +246,9 @@ class TestCoverageModels:
                 qualname=GetUserQuery.__qualname__,
                 models_module_name="flext_core",
                 attribute_name="Pagination",
-                fallback=FlextModelsCqrs.Pagination,
+                fallback=m.Pagination,
             )
-            is FlextModelsCqrs.Pagination
+            is m.Pagination
         )
         query = GetUserQuery(
             filters=t.Dict(root={"user_id": "USER-001"}),
@@ -369,7 +367,7 @@ class TestCoverageModels:
 
         entity = ValidatedEntity(email="user@example.com", age=30, domain_events=[])
         tm.that(entity.age, eq=30)
-        with pytest.raises(ValidationError):
+        with pytest.raises(e.PydanticValidationError):
             ValidatedEntity(email="user@example.com", age=200, domain_events=[])
 
     def test_multiple_field_validation(self) -> None:

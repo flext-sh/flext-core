@@ -11,8 +11,9 @@ import pytest
 
 import flext_core as _discovery_mod
 import flext_core as core_container
+from flext_core import FlextContainer, FlextContext, FlextSettings
 from flext_tests import tm
-from tests import FlextContainer, FlextContext, FlextSettings, m, p, r, t
+from tests import m, p, t
 
 
 class TestContainerFullCoverage:
@@ -21,7 +22,7 @@ class TestContainerFullCoverage:
 
     @staticmethod
     def _typed_value_cls() -> type[t.RegisterableService]:
-        cls: type[t.RegisterableService] = TestContainerFullCoverage.TypedValue  # type: ignore[assignment]
+        cls: type[t.RegisterableService] = TestContainerFullCoverage.TypedValue
         return cls
 
     @staticmethod
@@ -30,7 +31,7 @@ class TestContainerFullCoverage:
         name: str,
         type_cls: type[t.RegisterableService],
     ) -> p.Result[t.RegisterableService]:
-        typed_get: Callable[..., r[t.RegisterableService]] = container.resolve  # type: ignore[assignment]
+        typed_get: Callable[..., p.Result[t.RegisterableService]] = container.resolve
         return typed_get(name, type_cls=type_cls)
 
     @staticmethod
@@ -143,10 +144,10 @@ class TestContainerFullCoverage:
         class NoProvideBridge:
             provide: ClassVar[None] = None
 
-        c._di_bridge = ProvideBridge()  # type: ignore[assignment]
+        setattr(c, "_di_bridge", ProvideBridge())
         result = c.provide("x")
         assert result == "x"
-        c._di_bridge = NoProvideBridge()  # type: ignore[assignment]
+        setattr(c, "_di_bridge", NoProvideBridge())
         with pytest.raises(TypeError, match="Provide helper not initialized"):
             _ = c.provide
 
@@ -195,7 +196,7 @@ class TestContainerFullCoverage:
         monkeypatch.setattr(
             type(c._config),
             "_namespace_registry",
-            {"x": FlextSettings},  # type: ignore[dict-item]
+            {"x": FlextSettings},
         )
 
         monkeypatch.setattr(
@@ -219,7 +220,7 @@ class TestContainerFullCoverage:
         setattr(c._di_services, "fac", "normalized")
         setattr(c._di_resources, "res", "normalized")
         c.register_existing_providers()
-        c._config = m.Core.Tests.FalseSettings()  # type: ignore[assignment]
+        c._config = m.Core.Tests.FalseSettings()
         c._context = None
         c.register_core_services()
 
@@ -340,7 +341,7 @@ class TestContainerFullCoverage:
         )
         _ = c.scope(subproject="sub")
         tm.that(captured["settings"], is_=p.Settings)
-        false_settings: p.Settings = m.Core.Tests.FalseSettings()  # type: ignore[assignment]
+        false_settings: p.Settings = m.Core.Tests.FalseSettings()
         _ = c.scope(
             settings=false_settings,
             context=FlextContext(),
@@ -387,7 +388,9 @@ class TestContainerFullCoverage:
 
         monkeypatch.setattr(FlextContainer, "factory", capture_factory)
         _ = FlextContainer.shared(auto_register_factories=True)
-        wrapper: Callable[..., t.RecursiveContainer] = captured["factory.captured"]  # type: ignore[assignment]
+        wrapper_raw = captured["factory.captured"]
+        assert callable(wrapper_raw)
+        wrapper: Callable[..., t.RegisterableService] = wrapper_raw
         assert wrapper() == 7
         assert (
             wrapper(
@@ -417,18 +420,18 @@ class TestContainerFullCoverage:
 
         # Register namespaces so FlextSettings.resolve_namespace_settings() finds them.
         original_registry = dict(FlextSettings._namespace_registry)
-        FlextSettings._namespace_registry["alpha"] = _NsAlpha  # type: ignore[assignment]
-        FlextSettings._namespace_registry["beta"] = _NsBeta  # type: ignore[assignment]
+        FlextSettings._namespace_registry["alpha"] = _NsAlpha
+        FlextSettings._namespace_registry["beta"] = _NsBeta
 
         try:
 
             class _Cfg(m.Core.Tests.FalseSettings):
                 _namespace_registry: ClassVar[Mapping[str, type[p.Settings]]] = {
-                    "alpha": _NsAlpha,  # type: ignore[dict-item]
-                    "beta": _NsBeta,  # type: ignore[dict-item]
+                    "alpha": _NsAlpha,
+                    "beta": _NsBeta,
                 }
 
-            container._config = _Cfg()  # type: ignore[assignment]
+            container._config = _Cfg()
             container._global_config = m.ContainerConfig(
                 enable_singleton=True,
                 enable_factory_caching=False,
@@ -508,7 +511,7 @@ class TestContainerFullCoverage:
             ),
         )
         tm.that(scoped, is_=p.Container)
-        base._config = m.Core.Tests.FalseSettings()  # type: ignore[assignment]
+        base._config = m.Core.Tests.FalseSettings()
         base._context = FlextContext()
         _ = base.scope(
             settings=FlextSettings(app_name="x"),
@@ -516,7 +519,7 @@ class TestContainerFullCoverage:
             factories={"fx": lambda: "fv"},
             resources={"rx": lambda: "rv"},
         )
-        base._config = m.Core.Tests.FalseSettings()  # type: ignore[assignment]
+        base._config = m.Core.Tests.FalseSettings()
         base._context = FlextContext()
         _ = base.scope()
 
@@ -551,8 +554,7 @@ class TestContainerFullCoverage:
         )
         c.factory("fac-ok", lambda: 1)
         c.factory("fac-ok", lambda: 2)
-        bad_factory: t.FactoryCallable = 123  # type: ignore[assignment]
-        c.factory("fac-bad", bad_factory)
+        c.factory("fac-bad", 123)
         _ = c.bind("svc-remove", "v")
         _ = c.resource("res-remove", lambda: "r")
         _ = c.factory("fac-remove", lambda: "f")
@@ -579,10 +581,10 @@ class TestContainerFullCoverage:
         # and sync_config_to_di skips it (continue branch).
         class _CfgNoMethod(m.Core.Tests.FalseSettings):
             _namespace_registry: ClassVar[Mapping[str, type[p.Settings]]] = {
-                "n1": FlextSettings,  # type: ignore[dict-item]
+                "n1": FlextSettings,
             }
 
-        container._config = _CfgNoMethod()  # type: ignore[assignment]
+        container._config = _CfgNoMethod()
         container.sync_config_to_di()
 
         # --- Create real BaseSettings subclasses for n2, n3, n4 ---
@@ -592,28 +594,28 @@ class TestContainerFullCoverage:
         # Register namespaces in FlextSettings._namespace_registry so that
         # sync_config_to_di -> FlextSettings.resolve_namespace_settings() finds them.
         original_registry = dict(FlextSettings._namespace_registry)
-        FlextSettings._namespace_registry["n2"] = _NsModel  # type: ignore[assignment]
-        FlextSettings._namespace_registry["n3"] = _NsModel  # type: ignore[assignment]
-        FlextSettings._namespace_registry["n4"] = _NsModel  # type: ignore[assignment]
+        FlextSettings._namespace_registry["n2"] = _NsModel
+        FlextSettings._namespace_registry["n3"] = _NsModel
+        FlextSettings._namespace_registry["n4"] = _NsModel
 
         try:
 
             class _CfgFallback(m.Core.Tests.FalseSettings):
                 _namespace_registry: ClassVar[Mapping[str, type[p.Settings]]] = {
-                    "n2": _NsModel,  # type: ignore[dict-item]
+                    "n2": _NsModel,
                 }
 
             class _CfgBadNamespace(m.Core.Tests.FalseSettings):
                 _namespace_registry: ClassVar[Mapping[str, type[p.Settings]]] = {
-                    "n3": _NsModel,  # type: ignore[dict-item]
+                    "n3": _NsModel,
                 }
 
             class _CfgGoodNamespace(m.Core.Tests.FalseSettings):
                 _namespace_registry: ClassVar[Mapping[str, type[p.Settings]]] = {
-                    "n4": _NsModel,  # type: ignore[dict-item]
+                    "n4": _NsModel,
                 }
 
-            container._config = _CfgFallback()  # type: ignore[assignment]
+            container._config = _CfgFallback()
             captured: MutableMapping[str, t.RegisterableService] = {}
 
             def _capture_factory(
@@ -626,12 +628,14 @@ class TestContainerFullCoverage:
 
             monkeypatch.setattr(container, "factory", _capture_factory)
             container.sync_config_to_di()
-            container._config = _CfgBadNamespace()  # type: ignore[assignment]
+            container._config = _CfgBadNamespace()
             container.sync_config_to_di()
-            container._config = _CfgGoodNamespace()  # type: ignore[assignment]
+            container._config = _CfgGoodNamespace()
             container.sync_config_to_di()
             for namespace_key in ("settings.n2", "settings.n3", "settings.n4"):
-                namespace_factory: Callable[[], m.BaseModel] = captured[namespace_key]  # type: ignore[assignment]
+                ns_factory_raw = captured[namespace_key]
+                assert callable(ns_factory_raw)
+                namespace_factory: Callable[..., t.RegisterableService] = ns_factory_raw
                 with pytest.raises(TypeError, match="must be a Pydantic model"):
                     _ = namespace_factory()
             c2 = FlextContainer.shared()
@@ -673,9 +677,9 @@ class TestContainerFullCoverage:
             }
             tm.fail(self._get_with_type(c2, "svc-int", self._typed_value_cls()))
 
-            container._config = _CfgFallback()  # type: ignore[assignment]
+            container._config = _CfgFallback()
             container.sync_config_to_di()
-            container._config = _CfgBadNamespace()  # type: ignore[assignment]
+            container._config = _CfgBadNamespace()
             container.sync_config_to_di()
         finally:
             # Restore original registry

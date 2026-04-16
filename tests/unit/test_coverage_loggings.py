@@ -75,62 +75,62 @@ class TestCoverageLoggings:
 
     def test_create_service_logger(self) -> None:
         """Test creating a service logger through the public logging DSL."""
-        logger = u.fetch_logger("user-service")
-        tm.that(logger, none=False)
+        u.fetch_logger("user-service")
+        tm.that(u.logger, none=False)
 
     def test_create_service_logger_with_version(self) -> None:
         """Test creating service logger with version via bind."""
-        logger = u.fetch_logger("auth-service").bind(version="2.0.0")
-        tm.that(logger, none=False)
+        u.fetch_logger("auth-service").bind(version="2.0.0")
+        tm.that(u.logger, none=False)
 
     def test_create_service_logger_with_correlation_id(self) -> None:
         """Test creating service logger with correlation ID via bind."""
-        logger = u.fetch_logger("payment-service").bind(correlation_id="flext-abc123")
-        tm.that(logger, none=False)
+        u.fetch_logger("payment-service").bind(correlation_id="flext-abc123")
+        tm.that(u.logger, none=False)
 
     def test_create_module_logger(self) -> None:
         """Test creating module logger."""
-        logger = u.create_module_logger("myapp.services")
-        tm.that(logger, none=False)
+        u.create_module_logger("myapp.services")
+        tm.that(u.logger, none=False)
 
     def test_create_module_logger_dunder_name(self) -> None:
         """Test creating module logger with __name__."""
         module_name = __name__
-        logger = u.create_module_logger(module_name)
-        tm.that(logger, none=False)
+        u.create_module_logger(module_name)
+        tm.that(u.logger, none=False)
 
     def test_fetch_logger(self) -> None:
         """Test creating logger via constructor (fetch_logger pattern)."""
-        logger = u.fetch_logger("default_logger")
-        tm.that(logger, none=False)
+        u.fetch_logger("default_logger")
+        tm.that(u.logger, none=False)
 
     def test_logger_init_with_name(self) -> None:
         """Test initializing logger with name."""
-        logger = u.create_module_logger("test_module")
-        tm.that(logger, none=False)
+        u.create_module_logger("test_module")
+        tm.that(u.logger, none=False)
 
     def test_logger_init_with_service_context(self) -> None:
         """Test initializing logger with service context."""
-        logger = u.create_module_logger(
+        u.create_module_logger(
             "service_logger",
         ).bind(service_name="my-service", service_version="1.0.0")
-        tm.that(logger, none=False)
+        tm.that(u.logger, none=False)
 
     def test_logger_name_property(self) -> None:
         """Test logger name property."""
-        logger = u.create_module_logger("test")
-        tm.that(logger, none=False)
+        u.create_module_logger("test")
+        tm.that(u.logger, none=False)
 
     def test_bind_creates_new_instance(self) -> None:
         """Test bind creates new logger instance."""
         logger1 = make_result_logger("test")
-        logger2 = logger1.bind(request_id="123")
-        tm.that(logger2, none=False)
+        logger1.bind(request_id="123")
+        tm.that(u.logger2, none=False)
 
     def test_bind_chaining(self) -> None:
         """Test chaining multiple bind calls."""
-        logger = make_result_logger("test").bind(a="1").bind(b="2").bind(c="3")
-        tm.that(logger, none=False)
+        make_result_logger("test").bind(a="1").bind(b="2").bind(c="3")
+        tm.that(u.logger, none=False)
 
     def test_trace_logging(self) -> None:
         """Test trace level logging.
@@ -140,9 +140,9 @@ class TestCoverageLoggings:
         2. Trace logging executes without errors
         3. Result indicates success
         """
-        logger = u.create_module_logger("test")
-        tm.that(logger, none=False)
-        assert_log_result_success(logger.trace("Test trace message"))
+        u.create_module_logger("test")
+        tm.that(u.logger, none=False)
+        assert_log_result_success(u.logger.trace("Test trace message"))
 
     def test_debug_logging(self) -> None:
         """Test debug level logging.
@@ -152,9 +152,9 @@ class TestCoverageLoggings:
         2. Debug logging executes without errors
         3. Result indicates success
         """
-        logger = make_result_logger("test")
-        tm.that(logger, none=False)
-        assert_log_result_success(logger.debug("Test debug message"))
+        make_result_logger("test")
+        tm.that(u.logger, none=False)
+        assert_log_result_success(u.logger.debug("Test debug message"))
 
     def test_debug_with_context(self) -> None:
         """Test debug logging with context.
@@ -165,7 +165,7 @@ class TestCoverageLoggings:
         3. Logging succeeds with context data
         """
         logger = make_result_logger("test")
-        tm.that(logger, none=False)
+        tm.that(u.logger, none=False)
         assert_log_result_success(
             logger.debug("Debug with context", user_id="123", action="login"),
         )
@@ -179,9 +179,9 @@ class TestCoverageLoggings:
         3. Result indicates success
         4. Message is processed correctly
         """
-        logger = make_result_logger("test")
-        tm.that(logger, none=False)
-        assert_log_result_success(logger.info("Test info message"))
+        u.logger = make_result_logger("test")
+        tm.that(u.logger, none=False)
+        assert_log_result_success(u.logger.info("Test info message"))
 
     def test_info_with_context(self) -> None:
         """Test info logging with context.
@@ -192,7 +192,7 @@ class TestCoverageLoggings:
         3. Logging succeeds with context data
         """
         logger = make_result_logger("test")
-        tm.that(logger, none=False)
+        tm.that(u.logger, none=False)
         assert_log_result_success(
             logger.info("Info with context", status="completed", duration="0.5s"),
         )
@@ -205,9 +205,9 @@ class TestCoverageLoggings:
         2. Warning logging executes without errors
         3. Result indicates success
         """
-        logger = make_result_logger("test")
-        tm.that(logger, none=False)
-        assert_log_result_success(logger.warning("Test warning message"))
+        make_result_logger("test")
+        tm.that(u.logger, none=False)
+        assert_log_result_success(u.logger.warning("Test warning message"))
 
     def test_warning_with_context(self) -> None:
         """Test warning logging with context.
@@ -218,7 +218,7 @@ class TestCoverageLoggings:
         3. Logging succeeds with context data
         """
         logger = make_result_logger("test")
-        tm.that(logger, none=False)
+        tm.that(u.logger, none=False)
         assert_log_result_success(
             logger.warning("Warning with context", retry_count=3, delay="1s"),
         )
@@ -231,9 +231,9 @@ class TestCoverageLoggings:
         2. Error logging executes without errors
         3. Result indicates success
         """
-        logger = make_result_logger("test")
-        tm.that(logger, none=False)
-        assert_log_result_success(logger.error("Test error message"))
+        make_result_logger("test")
+        tm.that(u.logger, none=False)
+        assert_log_result_success(u.logger.error("Test error message"))
 
     def test_error_with_context(self) -> None:
         """Test error logging with context.
@@ -244,7 +244,7 @@ class TestCoverageLoggings:
         3. Logging succeeds with context data
         """
         logger = make_result_logger("test")
-        tm.that(logger, none=False)
+        tm.that(u.logger, none=False)
         assert_log_result_success(
             logger.error("Error with context", error_code="ERR_001", user_id="456"),
         )
@@ -257,9 +257,9 @@ class TestCoverageLoggings:
         2. Critical logging executes without errors
         3. Result indicates success
         """
-        logger = make_result_logger("test")
-        tm.that(logger, none=False)
-        assert_log_result_success(logger.critical("Test critical message"))
+        make_result_logger("test")
+        tm.that(u.logger, none=False)
+        assert_log_result_success(u.logger.critical("Test critical message"))
 
     def test_critical_with_context(self) -> None:
         """Test critical logging with context.
@@ -270,7 +270,7 @@ class TestCoverageLoggings:
         3. Logging succeeds with context data
         """
         logger = make_result_logger("test")
-        tm.that(logger, none=False)
+        tm.that(u.logger, none=False)
         assert_log_result_success(
             logger.critical(
                 "Critical with context",
@@ -287,9 +287,9 @@ class TestCoverageLoggings:
         2. Formatted message is processed correctly
         3. Logging succeeds with formatted message
         """
-        logger = make_result_logger("test")
-        tm.that(logger, none=False)
-        assert_log_result_success(logger.info("User %s logged in", "john"))
+        make_result_logger("test")
+        tm.that(u.logger, none=False)
+        assert_log_result_success(u.logger.info("User %s logged in", "john"))
 
     def test_logging_with_invalid_formatting(self) -> None:
         """Test logging with invalid format string.
@@ -299,9 +299,9 @@ class TestCoverageLoggings:
         2. Formatting arguments are processed
         3. Logging succeeds even with complex formatting
         """
-        logger = make_result_logger("test")
-        tm.that(logger, none=False)
-        assert_log_result_success(logger.info("Message with %s and %d", "arg1", 42))
+        make_result_logger("test")
+        tm.that(u.logger, none=False)
+        assert_log_result_success(u.logger.info("Message with %s and %d", "arg1", 42))
 
     def test_exception_logging_with_exception_object(self) -> None:
         """Test logging with exception t.RecursiveContainer.
@@ -312,7 +312,7 @@ class TestCoverageLoggings:
         3. Logging succeeds with exception context
         """
         logger = make_result_logger("test")
-        tm.that(logger, none=False)
+        tm.that(u.logger, none=False)
         msg = "Test error"
         exception_obj: ValueError | None = None
         try:
@@ -334,15 +334,15 @@ class TestCoverageLoggings:
         2. Exception context is included in log
         3. Logging succeeds with exception info
         """
-        logger = make_result_logger("test")
-        tm.that(logger, none=False)
+        make_result_logger("test")
+        tm.that(u.logger, none=False)
         msg = "Test error"
         exception_obj: RuntimeError | None = None
         try:
             raise RuntimeError(msg)
         except RuntimeError as e:
             exception_obj = e
-            assert_log_result_success(logger.exception("Operation failed"))
+            assert_log_result_success(u.logger.exception("Operation failed"))
         tm.that(exception_obj, none=False)
         tm.that(exception_obj, is_=RuntimeError)
         tm.that(str(exception_obj), eq=msg)
@@ -355,9 +355,9 @@ class TestCoverageLoggings:
         2. Error logging works outside try/except blocks
         3. Logging succeeds without exception info
         """
-        logger = make_result_logger("test")
-        tm.that(logger, none=False)
-        assert_log_result_success(logger.error("No exception context"))
+        make_result_logger("test")
+        tm.that(u.logger, none=False)
+        assert_log_result_success(u.logger.error("No exception context"))
 
     def test_exception_logging_with_context(self) -> None:
         """Test exception logging with additional context.
@@ -368,7 +368,7 @@ class TestCoverageLoggings:
         3. Logging succeeds with exception and context data
         """
         logger = make_result_logger("test")
-        tm.that(logger, none=False)
+        tm.that(u.logger, none=False)
         msg = "Test error"
         exception_obj: OSError | None = None
         try:
@@ -389,13 +389,13 @@ class TestCoverageLoggings:
 
     def test_logging_with_empty_message(self) -> None:
         """Test logging with empty message."""
-        logger = make_result_logger("test")
-        assert_log_result_success(logger.info(""))
+        make_result_logger("test")
+        assert_log_result_success(u.logger.info(""))
 
     def test_logging_with_none_context_values(self) -> None:
         """Test logging with None context values."""
-        logger = make_result_logger("test")
-        assert_log_result_success(logger.info("Message", context_key=""))
+        make_result_logger("test")
+        assert_log_result_success(u.logger.info("Message", context_key=""))
 
     def test_logging_with_large_context(self) -> None:
         """Test logging with large context dictionary."""

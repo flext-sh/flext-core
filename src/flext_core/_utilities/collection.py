@@ -326,7 +326,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def merge_mappings(
-        other: t.RecursiveContainerMapping,
+        other: t.RecursiveContainerMapping | None,
         base: t.RecursiveContainerMapping,
         *,
         strategy: str = "deep",
@@ -342,6 +342,9 @@ class FlextUtilitiesCollection:
         - "filter_empty": Skip empty values (None, "", [], {}) from base
         - "filter_both": Same as filter_empty (alias)
         """
+        if other is None:
+            msg = "merge_mappings requires an iterable mapping for 'other', got None"
+            raise TypeError(msg)
         handler = FlextUtilitiesCollection._MERGE_STRATEGIES.get(strategy)
         if handler is None:
             return r[t.RecursiveContainerMapping].fail(

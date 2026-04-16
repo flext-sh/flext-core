@@ -11,51 +11,35 @@ from __future__ import annotations
 
 from collections import UserDict
 from collections.abc import MutableSequence, Sequence
-from typing import Never, cast, overload, override
+from typing import overload, override
 
 import structlog
 
 from flext_tests import tm
-from tests import p, t, u
+from tests import m, p, t, u
 
 
 class TestRuntimeCoverage100:
     """Tests for dict_like runtime coverage."""
 
     def test_is_dict_like_with_exception_on_items(self) -> None:
-        """Test dict_like when items() raises AttributeError."""
+        """Test dict_like when value is a non-Mapping model (not dict-like)."""
 
-        class BadDictLike:
-            def keys(self) -> t.StrSequence:
-                return list[str]()
+        class BadDictLike(m.Value):
+            pass
 
-            def items(self) -> Never:
-                msg = "items not available"
-                raise AttributeError(msg)
-
-            def get(self, key: str) -> None:
-                return None
-
-        obj = BadDictLike()
-        result = u.dict_like(cast("t.RecursiveContainer", obj))
+        obj: t.RuntimeData = BadDictLike()
+        result = u.dict_like(obj)
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_exception_on_items_typeerror(self) -> None:
-        """Test dict_like when items() raises TypeError."""
+        """Test dict_like when value is a non-Mapping model (not dict-like)."""
 
-        class BadDictLike:
-            def keys(self) -> t.StrSequence:
-                return list[str]()
+        class BadDictLike(m.Value):
+            flag: bool = False
 
-            def items(self) -> Never:
-                msg = "items failed"
-                raise TypeError(msg)
-
-            def get(self, key: str) -> None:
-                return None
-
-        obj = BadDictLike()
-        result = u.dict_like(cast("t.RecursiveContainer", obj))
+        obj: t.RuntimeData = BadDictLike()
+        result = u.dict_like(obj)
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_userdict(self) -> None:
@@ -65,55 +49,43 @@ class TestRuntimeCoverage100:
         tm.that(result, eq=True)
 
     def test_is_dict_like_with_missing_attributes(self) -> None:
-        """Test dict_like with t.RecursiveContainer missing required attributes."""
+        """Test dict_like with Pydantic model (not a Mapping)."""
 
-        class NotDictLike:
+        class NotDictLike(m.Value):
             pass
 
-        obj = NotDictLike()
-        result = u.dict_like(cast("t.RecursiveContainer", obj))
+        obj: t.RuntimeData = NotDictLike()
+        result = u.dict_like(obj)
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_missing_keys(self) -> None:
-        """Test dict_like with t.RecursiveContainer missing keys attribute."""
+        """Test dict_like with Pydantic model (not a Mapping)."""
 
-        class NotDictLike:
-            def items(self) -> Sequence[tuple[str, str]]:
-                return []
+        class NotDictLike(m.Value):
+            value: str = ""
 
-            def get(self, key: str) -> None:
-                return None
-
-        obj = NotDictLike()
-        result = u.dict_like(cast("t.RecursiveContainer", obj))
+        obj: t.RuntimeData = NotDictLike()
+        result = u.dict_like(obj)
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_missing_items(self) -> None:
-        """Test dict_like with t.RecursiveContainer missing items attribute."""
+        """Test dict_like with Pydantic model (not a Mapping)."""
 
-        class NotDictLike:
-            def keys(self) -> t.StrSequence:
-                return list[str]()
+        class NotDictLike(m.Value):
+            count: int = 0
 
-            def get(self, key: str) -> None:
-                return None
-
-        obj = NotDictLike()
-        result = u.dict_like(cast("t.RecursiveContainer", obj))
+        obj: t.RuntimeData = NotDictLike()
+        result = u.dict_like(obj)
         tm.that(not result, eq=True)
 
     def test_is_dict_like_with_missing_get(self) -> None:
-        """Test dict_like with t.RecursiveContainer missing get attribute."""
+        """Test dict_like with Pydantic model (not a Mapping)."""
 
-        class NotDictLike:
-            def keys(self) -> t.StrSequence:
-                return list[str]()
+        class NotDictLike(m.Value):
+            name: str = ""
 
-            def items(self) -> Sequence[tuple[str, str]]:
-                return list[tuple[str, str]]()
-
-        obj = NotDictLike()
-        result = u.dict_like(cast("t.RecursiveContainer", obj))
+        obj: t.RuntimeData = NotDictLike()
+        result = u.dict_like(obj)
         tm.that(not result, eq=True)
 
     def test_extract_generic_args_with_type_mapping(self) -> None:

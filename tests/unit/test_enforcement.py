@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from typing import ClassVar, Final, Protocol, runtime_checkable
+from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
 
 import pytest
 from pydantic.warnings import PydanticDeprecatedSince20
@@ -28,7 +28,7 @@ class TestCheckNoAny:
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            data: typing.Any = m.Field(default=None, description="d")
+            data: Annotated[typing.Any, m.Field(description="d")] = None
 
         fields = u.own_fields(_M)
         errors = u.check_no_any(fields)
@@ -40,7 +40,7 @@ class TestCheckNoAny:
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            name: str = m.Field(default="x", description="d")
+            name: Annotated[str, m.Field(description="d")] = "x"
 
         fields = u.own_fields(_M)
         errors = u.check_no_any(fields)
@@ -110,7 +110,7 @@ class TestCheckNoV1Patterns:
                 class Config:
                     extra = "forbid"
 
-                name: str = m.Field(default="x", description="d")
+                name: Annotated[str, m.Field(description="d")] = "x"
 
         errors = u.check_no_v1_patterns(_M)
         assert len(errors) == 1
@@ -137,7 +137,7 @@ class TestCheckFieldDescriptions:
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            name: str = m.Field(default="test", description="A name")
+            name: Annotated[str, m.Field(description="A name")] = "test"
 
         own = u.own_fields(_M)
         errors = u.check_field_descriptions(_M, own=own)
@@ -152,7 +152,7 @@ class TestCheckExtraPolicy:
 
         class _M(m.FlexibleInternalModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            name: str = m.Field(default="x", description="d")
+            name: Annotated[str, m.Field(description="d")] = "x"
 
         errors = u.check_extra_policy(_M)
         assert len(errors) == 0

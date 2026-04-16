@@ -12,7 +12,6 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_core import FlextContainer, FlextContext, FlextSettings
     from flext_tests import d, e, h, r, s, td, tf, tk, tm, tv, x
     from tests._constants.domain import TestsFlextCoreConstantsDomain
     from tests._constants.errors import TestsFlextCoreConstantsErrors
@@ -46,11 +45,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
-            "flext_core": (
-                "FlextContainer",
-                "FlextContext",
-                "FlextSettings",
-            ),
             "._constants.domain": ("TestsFlextCoreConstantsDomain",),
             "._constants.errors": ("TestsFlextCoreConstantsErrors",),
             "._constants.fixtures": ("TestsFlextCoreConstantsFixtures",),
@@ -122,9 +116,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
-    "FlextContainer",
-    "FlextContext",
-    "FlextSettings",
     "T",
     "T_co",
     "T_contra",

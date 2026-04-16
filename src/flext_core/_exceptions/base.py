@@ -11,7 +11,14 @@ import uuid
 from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, override
 
-from flext_core import FlextExceptionsHelpers, FlextRuntime, c, m, t
+from flext_core import (
+    FlextExceptionsHelpers,
+    FlextModelsBase as m,
+    FlextModelsErrors,
+    FlextRuntime,
+    c,
+    t,
+)
 
 
 class FlextExceptionsBase:
@@ -260,7 +267,7 @@ class FlextExceptionsBase:
                 }
             else:
                 filtered_attrs = {}
-            snapshot = m.StructuredErrorSnapshot.model_validate({
+            snapshot = FlextModelsErrors.StructuredErrorSnapshot.model_validate({
                 "error_type": type(self).__name__,
                 "message": self.message,
                 "error_code": self.error_code,

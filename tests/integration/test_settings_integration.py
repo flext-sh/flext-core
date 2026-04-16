@@ -21,7 +21,8 @@ from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import Annotated, ClassVar
 
-from tests import FlextContainer, FlextSettings, c, m, p, t, u
+from flext_core import FlextContainer, FlextSettings
+from tests import c, m, p, t, u
 
 
 class TestFlextSettingsSingletonIntegration:
@@ -48,10 +49,9 @@ class TestFlextSettingsSingletonIntegration:
         file_format: Annotated[
             str,
             m.Field(
-                default="json",
                 description="Configuration file format",
             ),
-        ]
+        ] = "json"
         env_vars: Annotated[
             t.StrMapping,
             m.Field(
@@ -59,8 +59,7 @@ class TestFlextSettingsSingletonIntegration:
             ),
         ] = m.Field(default_factory=dict)
         description: Annotated[
-            str,
-            m.Field(default="", description="Human-readable test description"),
+            str, m.Field(description="Human-readable test description")
         ] = ""
 
         def create_temp_file(self, temp_dir: Path) -> Path:
@@ -83,16 +82,13 @@ class TestFlextSettingsSingletonIntegration:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         thread_count: Annotated[
-            int,
-            m.Field(default=5, description="Number of concurrent threads"),
+            int, m.Field(description="Number of concurrent threads")
         ] = 5
         operations_per_thread: Annotated[
-            int,
-            m.Field(default=10, description="Operations per thread"),
+            int, m.Field(description="Operations per thread")
         ] = 10
         description: Annotated[
-            str,
-            m.Field(default="", description="Thread safety scenario description"),
+            str, m.Field(description="Thread safety scenario description")
         ] = ""
 
     class _ConfigTestFactories:

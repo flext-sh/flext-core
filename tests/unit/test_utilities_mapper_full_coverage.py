@@ -2,231 +2,42 @@
 
 from __future__ import annotations
 
-from collections import UserDict, UserList
+from collections import UserList
 from collections.abc import (
-    ItemsView,
     Iterator,
     Mapping,
     Sequence,
 )
-from typing import Annotated, Never, Protocol, cast, override
+from typing import Annotated, ClassVar, Never, override
 
 import pytest
 
 from flext_tests import tm
 from tests import m, p, t, u
 
+_PortModel = m.Core.Tests.PortModel
+_MaybeModel = m.Core.Tests.MaybeModel
+_GroupModel = m.Core.Tests.GroupModel
+_BadItems = m.Core.Tests.BadItems
+_BadIter = m.Core.Tests.BadIter
 
-class _PortModel(m.BaseModel):
-    """Model with port/nested for mapper take/extract tests."""
-
-    port: int = 0
-    nested: Annotated[
-        t.RecursiveContainerMapping,
-        m.Field(default_factory=dict),
-    ]
-
-
-class _MaybeModel(m.BaseModel):
-    """Model with optional field for take tests."""
-
-    x: str | None = None
-
-
-class _GroupModel(m.BaseModel):
-    """Model with optional kind for group tests."""
-
-    kind: str | None = None
-
-
-class _BadItems(UserDict[str, t.RecursiveContainer]):
-    """UserDict that explodes on items() for error-path testing."""
-
-    @override
-    def items(self) -> ItemsView[str, t.RecursiveContainer]:
-        """Items method."""
-        msg = "bad items"
-        raise RuntimeError(msg)
-
-
-class _BadIter(UserList[str]):
-    """UserList that explodes on __iter__ for error-path testing."""
-
-    @override
-    def __iter__(self) -> Iterator[str]:
-        """__iter__ method."""
-        msg = "bad iter"
-        raise RuntimeError(msg)
-
-
-class _ExtractFieldCallable(Protocol):
-    def __call__(self, item: AttrObject, field_name: str) -> t.RecursiveContainer: ...
-
-
-class _TakeCallable(Protocol):
-    def __call__(
-        self,
-        data_or_items: _MaybeModel | _PortModel | int,
-        key_or_index: int | str,
-        *,
-        default: str | None = None,
-    ) -> (
-        t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer
-    ): ...
-
-
-class _BuildApplyConvertCallable(Protocol):
-    def __call__(
-        self,
-        current: tuple[str, ...] | str | int,
-        operations: Mapping[str, t.MapperInput],
-        default_val: t.RecursiveContainer,
-        on_error: str,
-    ) -> t.RecursiveContainer: ...
-
-
-class _ExtractTransformOptionsCallable(Protocol):
-    def __call__(
-        self,
-        transform_opts: Mapping[str, t.MapperInput],
-    ) -> tuple[
-        bool,
-        bool,
-        bool,
-        t.StrMapping | None,
-        set[str] | None,
-        set[str] | None,
-    ]: ...
-
-
-class _BuildApplyOpCallable(Protocol):
-    def __call__(
-        self,
-        current: tuple[str, str] | tuple[int, int, int] | Sequence[_GroupModel],
-        operations: Mapping[str, t.MapperInput],
-        default_val: t.RecursiveContainer,
-        on_error: str,
-    ) -> (
-        t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer
-    ): ...
-
-
-class _TransformCallable(Protocol):
-    def __call__(
-        self,
-        source: BadMapping,
-        **kwargs: t.StrMapping,
-    ) -> p.Result[t.RecursiveContainerMapping]: ...
-
-
-class _MapDictKeysCallable(Protocol):
-    def __call__(
-        self,
-        source: _BadItems,
-        key_map: t.StrMapping,
-        *,
-        keep_unmapped: bool = True,
-    ) -> p.Result[t.RecursiveContainerMapping]: ...
-
-
-def _extract_field_obj(item: AttrObject, field_name: str) -> t.RecursiveContainer:
-    """Call _extract_field_value with arbitrary recursive container inputs."""
-    fn: _ExtractFieldCallable = getattr(u, "_extract_field_value")
-    return fn(item, field_name)
-
-
-def _take_obj(
-    data_or_items: _MaybeModel | _PortModel | int,
-    key_or_index: int | str,
-    *,
-    default: str | None = None,
-) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
-    fn: _TakeCallable = getattr(u, "take")
-    return fn(data_or_items, key_or_index, default=default)
-
-
-def _build_apply_convert_obj(
-    current: tuple[str, ...] | str | int,
-    operations: Mapping[str, t.MapperInput],
-) -> t.RecursiveContainer:
-    fn: _BuildApplyConvertCallable = getattr(u, "_op_convert")
-    return fn(current, operations, None, "stop")
-
-
-def _extract_transform_options_obj(
-    transform_opts: Mapping[str, t.MapperInput],
-) -> tuple[
-    bool,
-    bool,
-    bool,
-    t.StrMapping | None,
-    set[str] | None,
-    set[str] | None,
-]:
-    fn: _ExtractTransformOptionsCallable = getattr(u, "_extract_transform_options")
-    return fn(transform_opts)
-
-
-def _build_apply_sort_obj(
-    current: tuple[str, str],
-    operations: Mapping[str, t.MapperInput],
-) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
-    fn: _BuildApplyOpCallable = getattr(u, "_op_sort")
-    return fn(current, operations, None, "stop")
-
-
-def _build_apply_unique_obj(
-    current: tuple[int, int, int],
-    operations: Mapping[str, t.MapperInput],
-) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
-    fn: _BuildApplyOpCallable = getattr(u, "_op_unique")
-    return fn(current, operations, None, "stop")
-
-
-def _build_apply_slice_obj(
-    current: tuple[int, int, int],
-    operations: Mapping[str, t.MapperInput],
-) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
-    fn: _BuildApplyOpCallable = getattr(u, "_op_slice")
-    return fn(current, operations, None, "stop")
-
-
-def _build_apply_group_obj(
-    current: Sequence[_GroupModel],
-    operations: Mapping[str, t.MapperInput],
-) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
-    fn: _BuildApplyOpCallable = getattr(u, "_op_group")
-    return fn(current, operations, None, "stop")
-
-
-def _transform_obj(
-    source: BadMapping,
-    **kwargs: t.StrMapping,
-) -> p.Result[t.RecursiveContainerMapping]:
-    fn: _TransformCallable = getattr(u, "transform")
-    return fn(source, **kwargs)
-
-
-def _map_dict_keys_obj(
-    source: _BadItems,
-    key_map: t.StrMapping,
-    *,
-    keep_unmapped: bool = True,
-) -> p.Result[t.RecursiveContainerMapping]:
-    fn: _MapDictKeysCallable = getattr(u, "map_dict_keys")
-    return fn(source, key_map, keep_unmapped=keep_unmapped)
+_ExtractFieldCallable = p.Core.Tests.ExtractFieldCallable
+_TakeCallable = p.Core.Tests.TakeCallable
+_BuildApplyConvertCallable = p.Core.Tests.BuildApplyConvertCallable
+_ExtractTransformOptionsCallable = p.Core.Tests.ExtractTransformOptionsCallable
+_BuildApplyOpCallable = p.Core.Tests.BuildApplyOpCallable
+_TransformCallable = p.Core.Tests.TransformCallable
+_MapDictKeysCallable = p.Core.Tests.MapDictKeysCallable
 
 
 class AttrObject(m.BaseModel):
     """AttrObject class."""
 
-    name: Annotated[
-        str,
-        m.Field(default="name", description="Attribute recursive container name"),
-    ] = "name"
+    name: Annotated[str, m.Field(description="Attribute recursive container name")] = (
+        "name"
+    )
     value: Annotated[
-        int,
-        m.Field(default=1, description="Attribute recursive container value"),
+        int, m.Field(description="Attribute recursive container value")
     ] = 1
 
 
@@ -247,59 +58,6 @@ class BadBool:
         """__bool__ method."""
         msg = "cannot bool"
         raise ValueError(msg)
-
-
-def _parse_int(value: t.ValueOrModel) -> int:
-    return int(cast("str", value))
-
-
-def _plus_one(value: int) -> int:
-    return value + 1
-
-
-def _times_two(value: int) -> int:
-    return value * 2
-
-
-def _raise_value_error(_value: t.Scalar) -> Never:
-    msg = "x"
-    raise ValueError(msg)
-
-
-def _normalize_not_dict(_value: t.RecursiveContainer) -> str:
-    return "not-a-dict"
-
-
-def _negative(value: int) -> bool:
-    return value < 0
-
-
-_PYRIGHT_USED_HELPERS = (
-    _BadIter,
-    _extract_field_obj,
-    _take_obj,
-    _build_apply_convert_obj,
-    _extract_transform_options_obj,
-    _build_apply_sort_obj,
-    _build_apply_unique_obj,
-    _build_apply_slice_obj,
-    _build_apply_group_obj,
-    _transform_obj,
-    _map_dict_keys_obj,
-    _parse_int,
-    _plus_one,
-    _times_two,
-    _raise_value_error,
-    _normalize_not_dict,
-    _negative,
-)
-
-
-def test_bad_string_and_bad_bool_raise_value_error() -> None:
-    with pytest.raises(ValueError, match="cannot stringify"):
-        _ = str(BadString())
-    with pytest.raises(ValueError, match="cannot bool"):
-        _ = bool(BadBool())
 
 
 class ExplodingLenList(UserList[int]):
@@ -333,73 +91,211 @@ def mapper() -> type[u]:
     return u
 
 
-def test_extract_array_index_helpers(mapper: type[u]) -> None:
-    idx_result = mapper._extract_handle_array_index("x", "0")
-    tm.fail(idx_result)
-    tm.that(str(idx_result.error), has="Not a sequence")
-    idx_neg = mapper._extract_handle_array_index([1, 2], "-1")
-    tm.ok(idx_neg)
-    tm.that(idx_neg.value, eq=2)
-    idx_bad = mapper._extract_handle_array_index([1, 2], "bad")
-    tm.fail(idx_bad)
-    tm.that(str(idx_bad.error), has="Invalid index")
+class TestUtilitiesMapperFullCoverage:
+    _PYRIGHT_USED_HELPERS: ClassVar[tuple[object, ...]] = ()
 
+    @staticmethod
+    def _extract_field_obj(item: AttrObject, field_name: str) -> t.RecursiveContainer:
+        """Call _extract_field_value with arbitrary recursive container inputs."""
+        fn: _ExtractFieldCallable = getattr(u, "_extract_field_value")
+        return fn(item, field_name)
 
-def test_extract_error_paths_and_prop_accessor(mapper: type[u]) -> None:
-    res_none_intermediate = mapper.extract({"a": None}, "a.b")
-    tm.fail(res_none_intermediate)
-    tm.that(str(res_none_intermediate.error), has="default is None")
-    res_missing_key = mapper.extract({"a": 1}, "b")
-    tm.fail(res_missing_key)
-    tm.that(str(res_missing_key.error), has="default is None")
-    res_bad_index = mapper.extract({"a": [1]}, "a[bad]")
-    tm.fail(res_bad_index)
-    tm.that(str(res_bad_index.error), has="Array error")
-    res_terminal_none = mapper.extract({"a": None}, "a")
-    tm.ok(res_terminal_none)
-    tm.that(res_terminal_none.value, eq="")
+    @staticmethod
+    def _take_obj(
+        data_or_items: _MaybeModel | _PortModel | int,
+        key_or_index: int | str,
+        *,
+        default: str | None = None,
+    ) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
+        fn: _TakeCallable = getattr(u, "take")
+        return fn(data_or_items, key_or_index, default=default)
 
-    class NotGeneral:
-        @override
-        def __str__(self) -> str:
-            return "converted"
+    @staticmethod
+    def _build_apply_convert_obj(
+        current: tuple[str, ...] | str | int,
+        operations: Mapping[str, t.MapperInput],
+    ) -> t.RecursiveContainer:
+        fn: _BuildApplyConvertCallable = getattr(u, "_op_convert")
+        return fn(current, operations, None, "stop")
 
-    class Container:
-        field: NotGeneral = NotGeneral()
+    @staticmethod
+    def _extract_transform_options_obj(
+        transform_opts: Mapping[str, t.MapperInput],
+    ) -> tuple[
+        bool,
+        bool,
+        bool,
+        t.StrMapping | None,
+        set[str] | None,
+        set[str] | None,
+    ]:
+        fn: _ExtractTransformOptionsCallable = getattr(u, "_extract_transform_options")
+        return fn(transform_opts)
 
-    res_non_general = mapper.extract(
-        cast("p.AccessibleData", cast("object", Container())),
-        "field",
-    )
-    tm.fail(res_non_general)
-    tm.that(str(res_non_general.error), has="default is None")
+    @staticmethod
+    def _build_apply_sort_obj(
+        current: tuple[str, str],
+        operations: Mapping[str, t.MapperInput],
+    ) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
+        fn: _BuildApplyOpCallable = getattr(u, "_op_sort")
+        return fn(current, operations, None, "stop")
 
-    class ExplodingModelDump:
-        def __init__(self) -> None:
-            self.model_dump = lambda: (_ for _ in ()).throw(ValueError("boom"))
+    @staticmethod
+    def _build_apply_unique_obj(
+        current: tuple[int, int, int],
+        operations: Mapping[str, t.MapperInput],
+    ) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
+        fn: _BuildApplyOpCallable = getattr(u, "_op_unique")
+        return fn(current, operations, None, "stop")
 
-    res_exception = mapper.extract(
-        cast(
-            "p.AccessibleData",
-            cast("object", ExplodingModelDump()),
-        ),
-        "a",
-    )
-    tm.fail(res_exception)
-    tm.that(str(res_exception.error).lower(), has="extract failed")
-    accessor = mapper.prop("name")
-    tm.that(
-        accessor(
-            cast(
-                "t.ConfigMap | Mapping[str, t.RuntimeAtomic] | m.BaseModel",
-                cast("p.AccessibleData", AttrObject(name="x", value=1)),
+    @staticmethod
+    def _build_apply_slice_obj(
+        current: tuple[int, int, int],
+        operations: Mapping[str, t.MapperInput],
+    ) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
+        fn: _BuildApplyOpCallable = getattr(u, "_op_slice")
+        return fn(current, operations, None, "stop")
+
+    @staticmethod
+    def _build_apply_group_obj(
+        current: Sequence[_GroupModel],
+        operations: Mapping[str, t.MapperInput],
+    ) -> t.RecursiveContainerMapping | t.RecursiveContainerList | t.RecursiveContainer:
+        fn: _BuildApplyOpCallable = getattr(u, "_op_group")
+        return fn(current, operations, None, "stop")
+
+    @staticmethod
+    def _transform_obj(
+        source: BadMapping,
+        **kwargs: t.StrMapping,
+    ) -> p.Result[t.RecursiveContainerMapping]:
+        fn: _TransformCallable = getattr(u, "transform")
+        return fn(source, **kwargs)
+
+    @staticmethod
+    def _map_dict_keys_obj(
+        source: _BadItems,
+        key_map: t.StrMapping,
+        *,
+        keep_unmapped: bool = True,
+    ) -> p.Result[t.RecursiveContainerMapping]:
+        fn: _MapDictKeysCallable = getattr(u, "map_dict_keys")
+        return fn(source, key_map, keep_unmapped=keep_unmapped)
+
+    @staticmethod
+    def _parse_int(value: t.ValueOrModel) -> int:
+        assert isinstance(value, str)
+        return int(value)
+
+    @staticmethod
+    def _plus_one(value: int) -> int:
+        return value + 1
+
+    @staticmethod
+    def _times_two(value: int) -> int:
+        return value * 2
+
+    @staticmethod
+    def _raise_value_error(_value: t.Scalar) -> Never:
+        msg = "x"
+        raise ValueError(msg)
+
+    @staticmethod
+    def _normalize_not_dict(_value: t.RecursiveContainer) -> str:
+        return "not-a-dict"
+
+    @staticmethod
+    def _negative(value: int) -> bool:
+        return value < 0
+
+    def test_bad_string_and_bad_bool_raise_value_error(self) -> None:
+        with pytest.raises(ValueError, match="cannot stringify"):
+            _ = str(BadString())
+        with pytest.raises(ValueError, match="cannot bool"):
+            _ = bool(BadBool())
+
+    def test_extract_array_index_helpers(self, mapper: type[u]) -> None:
+        idx_result = mapper._extract_handle_array_index("x", "0")
+        tm.fail(idx_result)
+        tm.that(str(idx_result.error), has="Not a sequence")
+        idx_neg = mapper._extract_handle_array_index([1, 2], "-1")
+        tm.ok(idx_neg)
+        tm.that(idx_neg.value, eq=2)
+        idx_bad = mapper._extract_handle_array_index([1, 2], "bad")
+        tm.fail(idx_bad)
+        tm.that(str(idx_bad.error), has="Invalid index")
+
+    def test_extract_error_paths_and_prop_accessor(self, mapper: type[u]) -> None:
+        res_none_intermediate = mapper.extract({"a": None}, "a.b")
+        tm.fail(res_none_intermediate)
+        tm.that(str(res_none_intermediate.error), has="default is None")
+        res_missing_key = mapper.extract({"a": 1}, "b")
+        tm.fail(res_missing_key)
+        tm.that(str(res_missing_key.error), has="default is None")
+        res_bad_index = mapper.extract({"a": [1]}, "a[bad]")
+        tm.fail(res_bad_index)
+        tm.that(str(res_bad_index.error), has="Array error")
+        res_terminal_none = mapper.extract({"a": None}, "a")
+        tm.ok(res_terminal_none)
+        tm.that(res_terminal_none.value, eq="")
+
+        class NotGeneral:
+            @override
+            def __str__(self) -> str:
+                return "converted"
+
+        class Container:
+            field: NotGeneral = NotGeneral()
+
+        extract_fn = getattr(mapper, "extract")
+        res_non_general = extract_fn(
+            Container(),
+            "field",
+        )
+        tm.fail(res_non_general)
+        tm.that(str(res_non_general.error), has="default is None")
+
+        class ExplodingModelDump:
+            def __init__(self) -> None:
+                self.model_dump = lambda: (_ for _ in ()).throw(ValueError("boom"))
+
+        res_exception = extract_fn(
+            ExplodingModelDump(),
+            "a",
+        )
+        tm.fail(res_exception)
+        tm.that(str(res_exception.error).lower(), has="extract failed")
+        accessor = mapper.prop("name")
+        tm.that(
+            accessor(
+                AttrObject(name="x", value=1),
             ),
-        ),
-        eq="x",
-    )
-    tm.that(
-        mapper.prop("missing")(
-            cast("t.ConfigModelInput", cast("t.RecursiveContainer", {"a": 1})),
-        ),
-        eq="",
-    )
+            eq="x",
+        )
+        tm.that(
+            mapper.prop("missing")(
+                {"a": 1},
+            ),
+            eq="",
+        )
+
+
+TestUtilitiesMapperFullCoverage._PYRIGHT_USED_HELPERS = (
+    _BadIter,
+    TestUtilitiesMapperFullCoverage._extract_field_obj,
+    TestUtilitiesMapperFullCoverage._take_obj,
+    TestUtilitiesMapperFullCoverage._build_apply_convert_obj,
+    TestUtilitiesMapperFullCoverage._extract_transform_options_obj,
+    TestUtilitiesMapperFullCoverage._build_apply_sort_obj,
+    TestUtilitiesMapperFullCoverage._build_apply_unique_obj,
+    TestUtilitiesMapperFullCoverage._build_apply_slice_obj,
+    TestUtilitiesMapperFullCoverage._build_apply_group_obj,
+    TestUtilitiesMapperFullCoverage._transform_obj,
+    TestUtilitiesMapperFullCoverage._map_dict_keys_obj,
+    TestUtilitiesMapperFullCoverage._parse_int,
+    TestUtilitiesMapperFullCoverage._plus_one,
+    TestUtilitiesMapperFullCoverage._times_two,
+    TestUtilitiesMapperFullCoverage._raise_value_error,
+    TestUtilitiesMapperFullCoverage._normalize_not_dict,
+    TestUtilitiesMapperFullCoverage._negative,
+)

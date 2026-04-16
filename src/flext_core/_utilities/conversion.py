@@ -11,7 +11,9 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 
-from flext_core import FlextRuntime, c, m, t
+from pydantic import BaseModel
+
+from flext_core import FlextRuntime, c, t
 
 
 class FlextUtilitiesConversion:
@@ -122,7 +124,7 @@ class FlextUtilitiesConversion:
         normalized: t.MutableFlatContainerMapping = {}
         for key, value in payload.items():
             atomic = FlextRuntime.normalize_to_container(value)
-            if isinstance(atomic, m.BaseModel):
+            if isinstance(atomic, BaseModel):
                 normalized[str(key)] = atomic.model_dump_json()
             else:
                 normalized[str(key)] = atomic

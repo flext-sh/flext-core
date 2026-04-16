@@ -211,7 +211,7 @@ from flext_core import u
 try:
     settings = FlextSettings()
     print("Configuration valid")
-except ValidationError as e:
+except c.ValidationError as e:
     print(f"Configuration error: {e}")
 ```
 
@@ -479,7 +479,7 @@ def safe_operation(data: dict) -> p.Result[dict]:
         # Your operation here
         result = process_data(data)
         return r.ok(result)
-    except ValidationError as e:
+    except c.ValidationError as e:
         logger.error(f"Validation error: {e}")
         return r.fail(f"Validation failed: {e}")
     except Exception as e:
@@ -555,11 +555,11 @@ def debug_ldif_processing(content: str):
 
 ### FLEXT Core Errors
 
-| Error Code  | Description                     | Solution                                     |
-| ----------- | ------------------------------- | -------------------------------------------- |
-| `FLEXT_001` | Configuration validation failed | Check environment variables and settings files |
-| `FLEXT_002` | Dependency injection failed     | Verify service registration in container     |
-| `FLEXT_003` | Type validation failed          | Fix type annotations and data types          |
+| Error Code  | Description                     | Solution                                         |
+| ----------- | ------------------------------- | ------------------------------------------------ |
+| `FLEXT_001` | Configuration validation failed | Check environment variables and settings files   |
+| `FLEXT_002` | Dependency injection failed     | Verify service registration in container         |
+| `FLEXT_003` | Type validation failed          | Fix type annotations and data types              |
 
 ### LDIF Processing Errors
 

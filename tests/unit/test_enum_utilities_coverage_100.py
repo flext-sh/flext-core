@@ -53,12 +53,10 @@ class TestEnumUtilitiesCoverage:
             m.Field(description="Whether parse should succeed"),
         ]
         expected_status: Annotated[
-            StrEnum | None,
-            m.Field(default=None, description="Expected parsed enum status"),
+            StrEnum | None, m.Field(description="Expected parsed enum status")
         ] = None
         expected_error: Annotated[
-            str | None,
-            m.Field(default=None, description="Expected error message fragment"),
+            str | None, m.Field(description="Expected error message fragment")
         ] = None
 
     class ParseOrDefaultScenario(m.BaseModel):

@@ -13,14 +13,11 @@ from __future__ import annotations
 from collections.abc import MutableMapping, Sequence
 from importlib import import_module
 from types import ModuleType
-from typing import ClassVar, override
+from typing import Annotated, ClassVar, override
 
 from pydantic import (
     ConfigDict,
-    Field,
     PrivateAttr,
-    ValidationError,
-    computed_field,
     field_validator,
 )
 
@@ -48,46 +45,62 @@ class FlextService[
         validate_assignment=True,
     )
     # --- Service Bootstrap Configuration ---
-    subproject: str | None = Field(
-        default=None,
-        exclude=True,
-        description="Subproject name used to scope configuration and wiring.",
-    )
-    services: t.ServiceMap | None = Field(
-        default=None,
-        exclude=True,
-        description="Named services to register in the dependency container.",
-    )
-    factories: t.FactoryMap | None = Field(
-        default=None,
-        exclude=True,
-        description="Named factory callables to register in the dependency container.",
-    )
-    resources: t.ResourceMap | None = Field(
-        default=None,
-        exclude=True,
-        description="Named lifecycle resources to register in the dependency container.",
-    )
-    container_overrides: t.ScalarMapping | None = Field(
-        default=None,
-        exclude=True,
-        description="Provider overrides applied to the dependency container.",
-    )
-    wire_modules: Sequence[ModuleType] | None = Field(
-        default=None,
-        exclude=True,
-        description="Modules to wire for dependency-injector resolution.",
-    )
-    wire_packages: t.StrSequence | None = Field(
-        default=None,
-        exclude=True,
-        description="Package names to consider for dependency wiring.",
-    )
-    wire_classes: Sequence[type] | None = Field(
-        default=None,
-        exclude=True,
-        description="Classes whose modules are wired for dependency resolution.",
-    )
+    subproject: Annotated[
+        str | None,
+        m.Field(
+            exclude=True,
+            description="Subproject name used to scope configuration and wiring.",
+        ),
+    ] = None
+    services: Annotated[
+        t.ServiceMap | None,
+        m.Field(
+            exclude=True,
+            description="Named services to register in the dependency container.",
+        ),
+    ] = None
+    factories: Annotated[
+        t.FactoryMap | None,
+        m.Field(
+            exclude=True,
+            description="Named factory callables to register in the dependency container.",
+        ),
+    ] = None
+    resources: Annotated[
+        t.ResourceMap | None,
+        m.Field(
+            exclude=True,
+            description="Named lifecycle resources to register in the dependency container.",
+        ),
+    ] = None
+    container_overrides: Annotated[
+        t.ScalarMapping | None,
+        m.Field(
+            exclude=True,
+            description="Provider overrides applied to the dependency container.",
+        ),
+    ] = None
+    wire_modules: Annotated[
+        Sequence[ModuleType] | None,
+        m.Field(
+            exclude=True,
+            description="Modules to wire for dependency-injector resolution.",
+        ),
+    ] = None
+    wire_packages: Annotated[
+        t.StrSequence | None,
+        m.Field(
+            exclude=True,
+            description="Package names to consider for dependency wiring.",
+        ),
+    ] = None
+    wire_classes: Annotated[
+        Sequence[type] | None,
+        m.Field(
+            exclude=True,
+            description="Classes whose modules are wired for dependency resolution.",
+        ),
+    ] = None
 
     _context: p.Context | None = PrivateAttr(default=None)
     _settings: p.Settings | None = PrivateAttr(default=None)
@@ -178,7 +191,7 @@ class FlextService[
                 else []
             )
 
-    @computed_field(repr=False)
+    @u.computed_field(repr=False)
     @property
     def result(self) -> TDomainResult:
         """Get the execution result, raising exception on failure."""
@@ -265,7 +278,7 @@ class FlextService[
         """Service-scoped execution context."""
         return u.require_initialized(self._context, "Context")
 
-    @computed_field(repr=False)
+    @u.computed_field(repr=False)
     def runtime(self) -> m.ServiceRuntime:
         """View of the runtime triple for this service instance."""
         return u.require_initialized(self._runtime, "Runtime")
@@ -337,7 +350,7 @@ class FlextService[
             try:
                 m.ServiceRegistration(name=str(name), service=service)
                 normalized[str(name)] = service
-            except ValidationError:
+            except c.ValidationError:
                 continue
         return normalized or None
 

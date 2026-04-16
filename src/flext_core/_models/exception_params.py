@@ -13,11 +13,11 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_core import (
+    FlextModelsBase as m,
     FlextModelsPydantic,
     FlextUtilitiesPydantic,
     t,
 )
-from flext_core._models.base import FlextModelsBase as m
 
 
 class FlextModelsExceptionParams:

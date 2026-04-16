@@ -24,10 +24,7 @@ class TestService:
         unique_id: Annotated[str, m.Field(description="Unique user identifier")]
         name: Annotated[str, m.Field(description="User display name")]
         email: Annotated[str, m.Field(description="User email address")]
-        active: Annotated[
-            bool,
-            m.Field(default=True, description="Whether user is active"),
-        ] = True
+        active: Annotated[bool, m.Field(description="Whether user is active")] = True
 
     class UserQueryService(s[bool]):
         """Real user query service using s.
@@ -46,7 +43,7 @@ class TestService:
         _users: MutableMapping[str, TestService.UserServiceEntity] = m.PrivateAttr(
             default_factory=lambda: dict[str, TestService.UserServiceEntity](),
         )
-        _should_fail: bool = m.PrivateAttr(default=False)
+        _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)
         _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
 
         @override
@@ -123,7 +120,7 @@ class TestService:
             default_factory=lambda: list[str](),
         )
         _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
-        _should_fail: bool = m.PrivateAttr(default=False)
+        _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)
 
         @override
         def execute(self) -> p.Result[str]:
@@ -194,11 +191,13 @@ class TestService:
     class LifecycleService(s[str]):
         """Real lifecycle service using s with settings model."""
 
-        _initialized: bool = m.PrivateAttr(default=False)
-        _service_config: TestService.ServiceConfig | None = m.PrivateAttr(default=None)
-        _shutdown_called: bool = m.PrivateAttr(default=False)
-        _should_fail_init: bool = m.PrivateAttr(default=False)
-        _should_fail_shutdown: bool = m.PrivateAttr(default=False)
+        _initialized: bool = m.PrivateAttr(default_factory=lambda: False)
+        _service_config: TestService.ServiceConfig | None = m.PrivateAttr(
+            default_factory=lambda: None
+        )
+        _shutdown_called: bool = m.PrivateAttr(default_factory=lambda: False)
+        _should_fail_init: bool = m.PrivateAttr(default_factory=lambda: False)
+        _should_fail_shutdown: bool = m.PrivateAttr(default_factory=lambda: False)
 
         @override
         def execute(self) -> p.Result[str]:

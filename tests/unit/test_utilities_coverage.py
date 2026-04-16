@@ -24,14 +24,13 @@ class TestUtilitiesCoverage:
         """Placeholder test to ensure module is recognized by coverage tools."""
         assert True
 
+    def test_utilities_get_method_coverage(self) -> None:
+        """Test ConfigMap.get() method for line 401 coverage."""
+        test_data = t.ConfigMap(root={"key": "value", "other": 456})
+        result = test_data.root.get("key")
+        assert result == "value"
+        result = test_data.root.get("missing", "fallback")
+        assert result == "fallback"
+
 
 __all__: list[str] = ["TestUtilitiesCoverage"]
-
-
-def test_utilities_get_method_coverage() -> None:
-    """Test ConfigMap.get() method for line 401 coverage."""
-    test_data = t.ConfigMap(root={"key": "value", "other": 456})
-    result = test_data.root.get("key")
-    assert result == "value"
-    result = test_data.root.get("missing", "fallback")
-    assert result == "fallback"

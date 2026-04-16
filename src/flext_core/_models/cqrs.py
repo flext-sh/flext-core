@@ -30,6 +30,49 @@ from flext_core import (
 )
 
 
+class _CqrsPagination(m.FlexibleInternalModel):
+    """Pagination model for query results.
+
+    Defined at module level so it can be referenced in Query annotations
+    without forward-reference issues (Pydantic can resolve it statically).
+    Exposed as FlextModelsCqrs.Pagination.
+    """
+
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        json_schema_extra={
+            "title": "Pagination",
+            "description": "Pagination model for query results with computed fields",
+        },
+    )
+    page: Annotated[
+        t.PositiveInt,
+        Field(
+            description="Page number (1-based indexing)",
+            examples=[1, 2, 10, 100],
+        ),
+    ] = c.DEFAULT_RETRY_DELAY_SECONDS
+    size: Annotated[
+        t.PositiveInt,
+        Field(
+            le=c.MAX_PAGE_SIZE,
+            description="Number of items per page (max 1000)",
+            examples=[10, 20, 50, 100],
+        ),
+    ] = c.DEFAULT_PAGE_SIZE
+
+    @computed_field
+    @property
+    def limit(self) -> int:
+        """Get limit (same as size)."""
+        return self.size
+
+    @computed_field
+    @property
+    def offset(self) -> int:
+        """Calculate offset from page and size."""
+        return (self.page - 1) * self.size
+
+
 class FlextModelsCqrs:
     """CQRS pattern container class.
 
@@ -45,7 +88,6 @@ class FlextModelsCqrs:
         message_type: Annotated[
             Literal["command"],
             Field(
-                default="command",
                 frozen=True,
                 description="Message type discriminator (always 'command')",
             ),
@@ -53,7 +95,6 @@ class FlextModelsCqrs:
         command_type: Annotated[
             t.NonEmptyStr,
             Field(
-                default=c.DEFAULT_COMMAND_TYPE,
                 description="Command type identifier",
             ),
         ] = c.DEFAULT_COMMAND_TYPE
@@ -72,7 +113,6 @@ class FlextModelsCqrs:
         issuer_id: Annotated[
             t.NonEmptyStr | None,
             Field(
-                default=None,
                 description="Identity of the principal that issued this command.",
             ),
         ] = None
@@ -87,44 +127,7 @@ class FlextModelsCqrs:
             """Query type identifier (always None for commands)."""
             return None
 
-    class Pagination(m.FlexibleInternalModel):
-        """Pagination model for query results."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            json_schema_extra={
-                "title": "Pagination",
-                "description": "Pagination model for query results with computed fields",
-            },
-        )
-        page: Annotated[
-            t.PositiveInt,
-            Field(
-                default=c.DEFAULT_RETRY_DELAY_SECONDS,
-                description="Page number (1-based indexing)",
-                examples=[1, 2, 10, 100],
-            ),
-        ] = c.DEFAULT_RETRY_DELAY_SECONDS
-        size: Annotated[
-            t.PositiveInt,
-            Field(
-                default=c.DEFAULT_PAGE_SIZE,
-                le=c.MAX_PAGE_SIZE,
-                description="Number of items per page (max 1000)",
-                examples=[10, 20, 50, 100],
-            ),
-        ] = c.DEFAULT_PAGE_SIZE
-
-        @computed_field
-        @property
-        def limit(self) -> int:
-            """Get limit (same as size)."""
-            return self.size
-
-        @computed_field
-        @property
-        def offset(self) -> int:
-            """Calculate offset from page and size."""
-            return (self.page - 1) * self.size
+    Pagination = _CqrsPagination
 
     class Query(m.ArbitraryTypesModel):
         """Query model for CQRS query operations."""
@@ -139,7 +142,6 @@ class FlextModelsCqrs:
         message_type: Annotated[
             Literal["query"],
             Field(
-                default="query",
                 frozen=True,
                 description="Message type discriminator",
             ),
@@ -152,7 +154,7 @@ class FlextModelsCqrs:
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
         ] = Field(default_factory=t.Dict)
-        pagination: FlextModelsCqrs.Pagination | t.Dict = Field(
+        pagination: _CqrsPagination | t.Dict = Field(
             default_factory=t.Dict,
             description="Pagination settings controlling page number and page size for query results.",
             title="Pagination",
@@ -173,7 +175,6 @@ class FlextModelsCqrs:
         query_type: Annotated[
             str | None,
             Field(
-                default=None,
                 description="Query type identifier for dispatcher routing.",
             ),
         ] = None
@@ -200,7 +201,7 @@ class FlextModelsCqrs:
                 qualname=cls.__qualname__,
                 models_module_name="flext_core",
                 attribute_name="Pagination",
-                fallback=FlextModelsCqrs.Pagination,
+                fallback=_CqrsPagination,
             )
             normalized_input = FlextRuntime.normalize_model_input_mapping(v)
             if normalized_input is None:
@@ -232,35 +233,30 @@ class FlextModelsCqrs:
         handler_type: Annotated[
             c.HandlerType,
             Field(
-                default=c.HandlerType.COMMAND,
                 description="Handler type",
             ),
         ] = c.HandlerType.COMMAND
         handler_mode: Annotated[
             c.HandlerType,
             Field(
-                default=c.HandlerType.COMMAND,
                 description="Handler mode",
             ),
         ] = c.HandlerType.COMMAND
         command_timeout: Annotated[
             int,
             Field(
-                default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Command timeout from c (default). Models use Config values in initialization.",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         max_command_retries: Annotated[
             int,
             Field(
-                default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Maximum retry attempts from c (default). Models use Config values in initialization.",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         metadata: Annotated[
             m.Metadata | None,
             Field(
-                default=None,
                 description="Handler metadata (Pydantic model)",
             ),
         ] = None
@@ -276,7 +272,6 @@ class FlextModelsCqrs:
         message_type: Annotated[
             Literal["event"],
             Field(
-                default="event",
                 frozen=True,
                 description="Message type discriminator (always 'event')",
             ),

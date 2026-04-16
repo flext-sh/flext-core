@@ -8,10 +8,10 @@ from time import perf_counter
 
 import pytest
 from hypothesis import given, settings, strategies as st
-from pydantic_settings import SettingsConfigDict
 
+from flext_core import FlextSettings
 from flext_tests import tf, tm
-from tests import FlextSettings, c, t, u
+from tests import c, m, t, u
 
 
 class TestFlextSettingsCoverage:
@@ -36,7 +36,7 @@ class TestFlextSettingsCoverage:
 
     def test_register_namespace_and_get_namespace(self) -> None:
         class DemoNamespace(FlextSettings):
-            model_config = SettingsConfigDict(
+            model_config = m.SettingsConfigDict(
                 env_prefix="FLEXT_DEMO_",
                 extra="ignore",
             )

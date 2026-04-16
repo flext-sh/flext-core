@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import time
 
+from flext_core import FlextContainer, FlextContext
 from flext_tests import tm
-from tests import FlextContainer, FlextContext, m, t, u
+from tests import m, t, u
 
 
 class TestCoverageContext:

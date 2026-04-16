@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
-from typing import cast
 
 import pytest
 
@@ -142,7 +141,7 @@ class TestAdvancedPatterns:
                 return str(value)
 
             given_mapped_raw = u.map_dict_keys(
-                cast("t.RecursiveContainerMapping", self._given),
+                self._given,
                 {k: str(k) for k in self._given},
                 keep_unmapped=True,
             ).value
@@ -153,7 +152,7 @@ class TestAdvancedPatterns:
                 key: convert_dict_value(value) for key, value in given_mapped.items()
             }
             when_mapped_raw = u.map_dict_keys(
-                cast("t.RecursiveContainerMapping", self._when),
+                self._when,
                 {k: str(k) for k in self._when},
                 keep_unmapped=True,
             ).value
@@ -162,7 +161,7 @@ class TestAdvancedPatterns:
                 key: convert_dict_value(value) for key, value in when_mapped.items()
             }
             then_mapped_raw = u.map_dict_keys(
-                cast("t.RecursiveContainerMapping", self._then),
+                self._then,
                 {k: str(k) for k in self._then},
                 keep_unmapped=True,
             ).value

@@ -9,22 +9,24 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import ClassVar
 
+from pydantic import ValidationError as _PydanticValidationError
+
 from flext_core import (
     FlextExceptionsBase,
     FlextExceptionsHelpers,
+    FlextModelsExceptionParams as m,
     FlextRuntime,
     c,
-    m,
     t,
 )
-
-_BaseError = FlextExceptionsBase.BaseError
 
 
 class FlextExceptionsTypes(FlextExceptionsBase):
     """All typed FLEXT exception subclasses."""
 
-    class ValidationError(_BaseError):
+    PydanticValidationError: type[_PydanticValidationError] = _PydanticValidationError
+
+    class ValidationError(FlextExceptionsBase.BaseError):
         """Exception raised for input validation failures."""
 
         field: str | None = None
@@ -35,7 +37,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         )
         _param_keys: ClassVar[frozenset[str]] = frozenset({"field", "value"})
 
-    class ConfigurationError(_BaseError):
+    class ConfigurationError(FlextExceptionsBase.BaseError):
         """Exception raised for configuration-related errors."""
 
         config_key: str | None = None
@@ -49,7 +51,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             "config_source",
         })
 
-    class ConnectionError(_BaseError):
+    class ConnectionError(FlextExceptionsBase.BaseError):
         """Exception raised for network and connection failures."""
 
         host: str | None = None
@@ -65,7 +67,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             "timeout",
         })
 
-    class TimeoutError(_BaseError):
+    class TimeoutError(FlextExceptionsBase.BaseError):
         """Exception raised for operation timeout errors."""
 
         timeout_seconds: t.Numeric | None = None
@@ -104,7 +106,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
                 extra_kwargs=extra_kwargs,
             )
 
-    class AuthenticationError(_BaseError):
+    class AuthenticationError(FlextExceptionsBase.BaseError):
         """Exception raised for authentication failures."""
 
         auth_method: str | None = None
@@ -118,7 +120,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             c.ContextKey.USER_ID,
         })
 
-    class AuthorizationError(_BaseError):
+    class AuthorizationError(FlextExceptionsBase.BaseError):
         """Exception raised for permission and authorization failures."""
 
         user_id: str | None = None
@@ -134,7 +136,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             "permission",
         })
 
-    class NotFoundError(_BaseError):
+    class NotFoundError(FlextExceptionsBase.BaseError):
         """Exception raised when a resource is not found."""
 
         resource_type: str | None = None
@@ -152,7 +154,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             c.FIELD_METADATA,
         })
 
-    class ConflictError(_BaseError):
+    class ConflictError(FlextExceptionsBase.BaseError):
         """Exception raised for resource conflicts."""
 
         resource_type: str | None = None
@@ -168,7 +170,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             "conflict_reason",
         })
 
-    class RateLimitError(_BaseError):
+    class RateLimitError(FlextExceptionsBase.BaseError):
         """Exception raised when rate limits are exceeded."""
 
         limit: int | None = None
@@ -184,7 +186,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             "retry_after",
         })
 
-    class CircuitBreakerError(_BaseError):
+    class CircuitBreakerError(FlextExceptionsBase.BaseError):
         """Exception raised when circuit breaker is open."""
 
         service_name: str | None = None
@@ -232,7 +234,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
                 extra_kwargs=extra_kwargs,
             )
 
-    class TypeError(_BaseError):
+    class TypeError(FlextExceptionsBase.BaseError):
         """Exception raised for type mismatch errors."""
 
         expected_type: type | None = None
@@ -376,7 +378,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             )
             return FlextExceptionsHelpers.safe_optional_str(qualname_value)
 
-    class OperationError(_BaseError):
+    class OperationError(FlextExceptionsBase.BaseError):
         """Exception raised for general operation failures."""
 
         operation: str | None
@@ -387,7 +389,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         )
         _param_keys: ClassVar[frozenset[str]] = frozenset({"operation", "reason"})
 
-    class AttributeAccessError(_BaseError):
+    class AttributeAccessError(FlextExceptionsBase.BaseError):
         """Exception raised for attribute access errors."""
 
         attribute_name: str | None

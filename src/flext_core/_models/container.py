@@ -17,7 +17,6 @@ from datetime import UTC, datetime
 from typing import Annotated, ClassVar
 
 from flext_core import (
-    FlextConstantsPydantic as cp,
     FlextModelsBase as m,
     FlextModelsPydantic as mp,
     FlextRuntime,
@@ -270,7 +269,7 @@ class FlextModelsContainer:
         Deferred to TIER 1 to avoid circular imports with p/t.
         """
 
-        model_config: ClassVar[cp.ConfigDict] = cp.ConfigDict(
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
             strict=True,
             arbitrary_types_allowed=True,
         )

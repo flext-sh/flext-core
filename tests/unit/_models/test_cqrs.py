@@ -11,7 +11,6 @@ from __future__ import annotations
 import sys
 from collections.abc import Callable
 from types import ModuleType
-from typing import cast
 
 import pytest
 from pydantic import ValidationError
@@ -189,7 +188,8 @@ class TestsFlextCoreModelsCqrs:
             "filters": {},
         })
         tm.that(parsed.pagination, is_=m.Pagination)
-        pag = cast("m.Pagination", parsed.pagination)
+        assert isinstance(parsed.pagination, m.Pagination)
+        pag = parsed.pagination
         tm.that(pag.page, eq=4)
         tm.that(pag.size, eq=20)
 
@@ -199,14 +199,16 @@ class TestsFlextCoreModelsCqrs:
             "filters": {},
         })
         tm.that(parsed.pagination, is_=m.Pagination)
-        pag = cast("m.Pagination", parsed.pagination)
+        assert isinstance(parsed.pagination, m.Pagination)
+        pag = parsed.pagination
         tm.that(pag.page, eq=3)
         tm.that(pag.size, eq=15)
 
     def test_query_validate_pagination_none_defaults(self) -> None:
         defaulted = m.Query.model_validate({"pagination": None, "filters": {}})
         tm.that(defaulted.pagination, is_=m.Pagination)
-        pag = cast("m.Pagination", defaulted.pagination)
+        assert isinstance(defaulted.pagination, m.Pagination)
+        pag = defaulted.pagination
         tm.that(pag.page, eq=c.DEFAULT_RETRY_DELAY_SECONDS)
         tm.that(pag.size, eq=c.DEFAULT_PAGE_SIZE)
 
@@ -214,7 +216,8 @@ class TestsFlextCoreModelsCqrs:
         pag = m.Pagination(page=7, size=30)
         query = m.Query(pagination=pag)
         tm.that(query.pagination, is_=m.Pagination)
-        pag = cast("m.Pagination", query.pagination)
+        assert isinstance(query.pagination, m.Pagination)
+        pag = query.pagination
         tm.that(pag.page, eq=7)
         tm.that(pag.size, eq=30)
 
@@ -224,7 +227,8 @@ class TestsFlextCoreModelsCqrs:
             "filters": {},
         })
         tm.that(parsed.pagination, is_=m.Pagination)
-        pag = cast("m.Pagination", parsed.pagination)
+        assert isinstance(parsed.pagination, m.Pagination)
+        pag = parsed.pagination
         tm.that(pag.page, eq=5)
         tm.that(pag.size, eq=12)
 

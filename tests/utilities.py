@@ -7,7 +7,7 @@ from itertools import count
 from typing import ClassVar, override
 
 from flext_tests import u
-from tests import c, e, m, p, r, s, t
+from tests import c, e, h, m, p, r, s, t
 
 
 class TestsFlextCoreUtilities(u):
@@ -18,6 +18,117 @@ class TestsFlextCoreUtilities(u):
 
         class Tests(u.Tests):
             """flext-core test utilities namespace."""
+
+            # --- from test_registry_full_coverage.py ---
+
+            class Handler(h[t.ValueOrModel, t.ValueOrModel]):
+                """Simple handler used by public registry scenarios."""
+
+                @override
+                def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
+                    return r[t.ValueOrModel].ok(message)
+
+            class FalseyDispatcher(p.Dispatcher):
+                """Dispatcher that is present but reports itself as unavailable."""
+
+                def __bool__(self) -> bool:
+                    """Return False to indicate dispatcher is unavailable."""
+                    return False
+
+                @override
+                def publish(
+                    self,
+                    event: p.Routable | Sequence[p.Routable],
+                ) -> p.Result[bool]:
+                    _ = event
+                    return r[bool].ok(True)
+
+                @override
+                def register_handler(
+                    self,
+                    handler: t.HandlerProtocolVariant,
+                    *,
+                    is_event: bool = False,
+                ) -> p.Result[bool]:
+                    _ = handler
+                    _ = is_event
+                    return r[bool].ok(True)
+
+                @override
+                def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
+                    _ = message
+                    return r[t.RuntimeAtomic].fail(
+                        c.Core.Tests.TestErrors.DISPATCHER_UNCONFIGURED
+                    )
+
+            class FailDispatcher(p.Dispatcher):
+                """Dispatcher that rejects public handler registration."""
+
+                @override
+                def publish(
+                    self,
+                    event: p.Routable | Sequence[p.Routable],
+                ) -> p.Result[bool]:
+                    _ = event
+                    return r[bool].ok(True)
+
+                @override
+                def register_handler(
+                    self,
+                    handler: t.HandlerProtocolVariant,
+                    *,
+                    is_event: bool = False,
+                ) -> p.Result[bool]:
+                    _ = handler
+                    _ = is_event
+                    return r[bool].fail(c.Core.Tests.TestErrors.DISPATCHER_FAIL)
+
+                @override
+                def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
+                    _ = message
+                    return r[t.RuntimeAtomic].fail(
+                        c.Core.Tests.TestErrors.DISPATCHER_FAIL
+                    )
+
+            class OkDispatcher(p.Dispatcher):
+                """Dispatcher that accepts public registry operations."""
+
+                @override
+                def publish(
+                    self,
+                    event: p.Routable | Sequence[p.Routable],
+                ) -> p.Result[bool]:
+                    _ = event
+                    return r[bool].ok(True)
+
+                @override
+                def register_handler(
+                    self,
+                    handler: t.HandlerProtocolVariant,
+                    *,
+                    is_event: bool = False,
+                ) -> p.Result[bool]:
+                    _ = handler
+                    _ = is_event
+                    return r[bool].ok(True)
+
+                @override
+                def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
+                    _ = message
+                    return r[t.RuntimeAtomic].ok(True)
+
+            class BadModelDump(m.BaseModel):
+                """BaseModel whose model_dump raises — tests error path in domain utilities.
+
+                Overrides model_dump to always raise, exercising the exception-handling
+                code path in domain utility comparison functions.
+                """
+
+                def model_dump(
+                    self, **_kwargs: t.Scalar
+                ) -> dict[str, t.Core.Tests.TestobjectSerializable]:
+                    msg = "Bad model_dump"
+                    raise RuntimeError(msg)
 
             @staticmethod
             def success_cases() -> Sequence[tuple[str, str]]:

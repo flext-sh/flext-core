@@ -204,7 +204,10 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def matches_type(
         value: t.GuardInput,
-        type_spec: str | type | tuple[type, ...],
+        type_spec: str
+        | type
+        | tuple[type, ...]
+        | t.Scalar,  # Scalar arm handles invalid spec at runtime
     ) -> bool:
         """Check if value matches a type spec (string name, type, or tuple of types)."""
         if isinstance(type_spec, str):
@@ -233,6 +236,9 @@ class FlextUtilitiesGuardsTypeProtocol:
             return False
         if isinstance(type_spec, tuple):
             return isinstance(value, type_spec)
+        if not isinstance(type_spec, type):
+            # type_spec is a non-type scalar (e.g. int value 123) — invalid spec
+            return False
         if type_spec in FlextUtilitiesGuardsTypeProtocol._get_protocol_type_map():
             return FlextUtilitiesGuardsTypeProtocol._check_protocol(
                 value,

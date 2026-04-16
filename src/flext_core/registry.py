@@ -14,7 +14,7 @@ import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Annotated, ClassVar, Literal, Self, override
 
-from pydantic import Field, PrivateAttr
+from pydantic import PrivateAttr
 
 from flext_core import c, e, h, m, p, r, s, t, u
 
@@ -38,8 +38,7 @@ class FlextRegistry(s[bool]):
 
     dispatcher: Annotated[
         p.Dispatcher | None,
-        Field(
-            default=None,
+        m.Field(
             exclude=True,
             description="The dispatcher instance for executing handlers.",
         ),

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence, Sized
-from typing import cast
 
 from pydantic import ValidationError
 
@@ -68,7 +67,8 @@ class TestResultExceptionCarrying:
         tm.that(result.error, eq=error_msg)
         tm.that(result.error_data, none=False)
         if result.error_data is not None:
-            normalized_data = cast("m.BaseModel", result.error_data).model_dump()
+            assert hasattr(result.error_data, "model_dump")
+            normalized_data = result.error_data.model_dump()
             tm.that(normalized_data.get("field"), eq="email")
             tm.that(normalized_data.get("reason"), eq="invalid format")
         tm.that(result.exception is exc, eq=True)

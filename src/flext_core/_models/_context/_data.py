@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Annotated
 
-from pydantic import BeforeValidator, Field, field_validator
+from pydantic import BeforeValidator, field_validator
 
 from flext_core import (
     FlextModelsBase as m,
@@ -108,16 +108,16 @@ class FlextModelsContextData:
 
         data: Annotated[
             t.Dict,
-            Field(
+            mp.Field(
                 description="Initial context data as key-value pairs",
             ),
-        ] = Field(default_factory=t.Dict)
+        ] = mp.Field(default_factory=t.Dict)
         metadata: Annotated[
             m.Metadata | t.Dict | None,
             BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_metadata_before(v),
             ),
-            Field(
+            mp.Field(
                 default=None,
                 description="Context metadata (creation info, source, etc.)",
             ),

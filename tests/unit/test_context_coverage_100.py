@@ -15,8 +15,9 @@ from collections.abc import Mapping
 import pytest
 from pydantic import ValidationError
 
+from flext_core import FlextContext
 from flext_tests import tm
-from tests import FlextContext, c, m, p, t, u
+from tests import c, m, p, t, u
 
 
 class TestContext100Coverage:

@@ -23,7 +23,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Annotated, ClassVar, Final, Self, overload
 
-from pydantic import Field, PrivateAttr
+from pydantic import PrivateAttr
 
 from flext_core import c, e, m, p, r, t, u
 
@@ -85,8 +85,8 @@ class FlextContext(m.ArbitraryTypesModel):
 
     initial_data: Annotated[
         m.ContextData | t.ConfigMap | None,
-        Field(default=None, description="Initial data for context scopes."),
-    ]
+        m.Field(description="Initial data for context scopes."),
+    ] = None
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(

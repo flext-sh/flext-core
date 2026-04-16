@@ -6,7 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+    Set as AbstractSet,
+)
 from datetime import date, time
 from enum import Enum
 from pathlib import Path
@@ -241,14 +247,28 @@ class FlextTypesServices:
         FlextTypingBase.Scalar
         | Path
         | RecursiveSequenceCarrier
+        | Sequence[AbstractSet[FlextTypingBase.RecursiveContainer]]
         | Mapping[str, FlextTypingBase.RecursiveContainer | ModelCarrier]
+        | Mapping[
+            str,
+            AbstractSet[FlextTypingBase.RecursiveContainer]
+            | FlextTypingBase.RecursiveContainer,
+        ]
+        | Mapping[
+            int | str,
+            AbstractSet[FlextTypingBase.RecursiveContainer]
+            | FlextTypingBase.RecursiveContainer
+            | ModelCarrier,
+        ]
         | RecursiveTupleCarrier
         | tuple[type, ...]
-        | set[FlextTypingBase.RecursiveContainer]
+        | AbstractSet[FlextTypingBase.RecursiveContainer]
+        | type
         | ModelCarrier
         | FlextTypingContainers.ConfigMap
         | FlextTypingContainers.Dict
         | RegisterableService
+        | Callable[..., FlextTypingBase.RecursiveContainer]
         | FlextProtocolsContext.Context
         | FlextProtocolsSettings.Settings
         | FlextProtocolsHandler.Dispatcher

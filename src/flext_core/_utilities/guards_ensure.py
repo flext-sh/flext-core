@@ -13,14 +13,14 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     """Ensure-style guard utility methods for data validation and normalization."""
 
     _EQUALITY_OPS: ClassVar[
-        Mapping[str, Callable[[t.RecursiveContainer, t.RecursiveContainer], bool]]
+        Mapping[str, Callable[[t.GuardInput, t.GuardInput], bool]]
     ] = {
         "eq": lambda val, cmp: val == cmp,
         "ne": lambda val, cmp: val != cmp,
     }
 
     _MEMBERSHIP_OPS: ClassVar[
-        Mapping[str, Callable[[t.RecursiveContainer, t.RecursiveContainerList], bool]]
+        Mapping[str, Callable[[t.GuardInput, t.RecursiveContainerList], bool]]
     ] = {
         "in_": lambda val, cmp: val in cmp,
         "not_in": lambda val, cmp: val not in cmp,
@@ -34,7 +34,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     }
 
     @staticmethod
-    def _resolve_numeric(value: t.RecursiveContainer) -> t.Numeric:
+    def _resolve_numeric(value: t.GuardInput) -> t.Numeric:
         """Extract numeric value (raw for numbers, len for sized types)."""
         if isinstance(value, (int, float)):
             return value
@@ -72,18 +72,18 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def _check_iterable_contains(
-        value: t.RecursiveContainer,
-        contains: t.RecursiveContainer,
+        value: t.GuardInput,
+        contains: t.GuardInput,
     ) -> bool:
         """Check if iterable value contains the target."""
         if isinstance(value, (str, bytes, list, tuple, set, frozenset, dict)):
-            iterable_value: Iterable[t.RecursiveContainer] = value
+            iterable_value: Iterable[t.GuardInput] = value
             return any(item == contains for item in iterable_value)
         return False
 
     @staticmethod
     def chk(
-        value: t.RecursiveContainer,
+        value: t.GuardInput,
         spec: FlextModelsCollections.GuardCheckSpec | None = None,
         **criteria: t.GuardInput,
     ) -> bool:

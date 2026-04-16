@@ -15,6 +15,7 @@ from typing import Annotated, ClassVar, Self
 
 from flext_core import (
     FlextModelsBase as m,
+    FlextModelsPydantic as mp,
     FlextUtilitiesPydantic,
     c,
     p,
@@ -116,7 +117,7 @@ class FlextModelsHandler:
 
         """
 
-        model_config: ClassVar[c.ConfigDict] = c.ConfigDict(
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
             json_schema_extra={
                 "title": "RegistrationDetails",
                 "description": "Handler registration tracking details",
@@ -171,7 +172,7 @@ class FlextModelsHandler:
             default_factory=lambda: None,
         )
 
-        model_config: ClassVar[c.ConfigDict] = c.ConfigDict(
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
             json_schema_extra={
                 "title": "HandlerExecutionContext",
                 "description": "Handler execution context for tracking performance and state",
@@ -486,7 +487,7 @@ class FlextModelsHandler:
     class DecoratorConfig(m.ArbitraryTypesModel):
         """Configuration extracted from @FlextHandlers.handler() decorator."""
 
-        model_config: ClassVar[c.ConfigDict] = c.ConfigDict(
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
             frozen=True,
             arbitrary_types_allowed=True,
         )

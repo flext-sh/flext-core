@@ -13,10 +13,11 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from typing import Annotated
 
 from pydantic import Field
 
-from flext_core import FlextUtilitiesArgs, c, m, p, r, t
+from flext_core import FlextModelsBase as m, FlextUtilitiesArgs, c, p, r, t
 
 
 class FlextUtilitiesReliability:
@@ -25,26 +26,36 @@ class FlextUtilitiesReliability:
     class RetryOptions(m.FlexibleInternalModel):
         """Configuration options for retry logic."""
 
-        max_attempts: int | None = Field(
-            default=None,
-            description="Maximum number of retry attempts",
-        )
-        delay: float | None = Field(
-            default=None,
-            description="Initial delay between retries in seconds",
-        )
-        delay_seconds: float | None = Field(
-            default=None,
-            description="Alias for delay in seconds",
-        )
-        backoff_multiplier: float | None = Field(
-            default=None,
-            description="Multiplier for exponential backoff",
-        )
-        retry_on: tuple[type[Exception], ...] | None = Field(
-            default=None,
-            description="Exception types to retry on",
-        )
+        max_attempts: Annotated[
+            int | None,
+            Field(
+                description="Maximum number of retry attempts",
+            ),
+        ] = None
+        delay: Annotated[
+            float | None,
+            Field(
+                description="Initial delay between retries in seconds",
+            ),
+        ] = None
+        delay_seconds: Annotated[
+            float | None,
+            Field(
+                description="Alias for delay in seconds",
+            ),
+        ] = None
+        backoff_multiplier: Annotated[
+            float | None,
+            Field(
+                description="Multiplier for exponential backoff",
+            ),
+        ] = None
+        retry_on: Annotated[
+            tuple[type[Exception], ...] | None,
+            Field(
+                description="Exception types to retry on",
+            ),
+        ] = None
 
     @staticmethod
     def flow_result[T](

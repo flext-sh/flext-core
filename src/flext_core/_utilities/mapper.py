@@ -11,9 +11,10 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from itertools import starmap
 from pathlib import Path
-from typing import cast
 
 from flext_core import (
+    FlextModelsExceptionParams,
+    FlextModelsPydantic,
     FlextRuntime,
     FlextUtilitiesCollection,
     FlextUtilitiesGuards,
@@ -21,7 +22,6 @@ from flext_core import (
     FlextUtilitiesGuardsTypeModel,
     c,
     e,
-    m,
     p,
     r,
     t,
@@ -89,7 +89,7 @@ class FlextUtilitiesMapper:
         """Normalize a component recursively for consistent representation."""
         if isinstance(
             component,
-            m.BaseModel,
+            FlextModelsPydantic.BaseModel,
         ) and FlextUtilitiesGuardsTypeModel.pydantic_model(component):
             return {
                 str(key): FlextUtilitiesMapper._normalize_component(value)
@@ -194,7 +194,7 @@ class FlextUtilitiesMapper:
         """Normalize protocol-accessible values to canonical runtime/container shapes."""
         if value is None:
             return ""
-        if isinstance(value, m.BaseModel):
+        if isinstance(value, FlextModelsPydantic.BaseModel):
             return value
         model_dump_attr = getattr(value, "model_dump", None)
         if callable(model_dump_attr):
@@ -256,7 +256,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_get_value(
-        current: t.ValueOrModel | None,
+        current: t.ValueOrModel | t.ContainerCarrier | None,
         key_part: str,
     ) -> p.Result[t.ValueOrModel]:
         """Get raw value from dict/object/model, returning found_none or not-found failures."""
@@ -401,7 +401,7 @@ class FlextUtilitiesMapper:
         field_name: str,
     ) -> t.Numeric | None:
         """Extract a numeric field value from a model or mapping-like object."""
-        if isinstance(item, m.BaseModel):
+        if isinstance(item, FlextModelsPydantic.BaseModel):
             val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)
             return val_raw if isinstance(val_raw, (int, float)) else None
         val = item.get(field_name)
@@ -423,7 +423,7 @@ class FlextUtilitiesMapper:
         else:
             numeric_values = []
             for item in items_list:
-                if isinstance(item, m.BaseModel):
+                if isinstance(item, FlextModelsPydantic.BaseModel):
                     field_value = FlextUtilitiesMapper._get_numeric_field(item, field)
                 elif isinstance(item, Mapping):
                     field_value = FlextUtilitiesMapper._get_numeric_field(
@@ -510,7 +510,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_resolve_path_part(
-        current: t.ValueOrModel | None,
+        current: t.ValueOrModel | t.ContainerCarrier | None,
         part: str,
         *,
         path_context: str,
@@ -581,8 +581,8 @@ class FlextUtilitiesMapper:
         """Extract nested value via dot-notation path with array index support (e.g. "user.addresses[0].city")."""
         try:
             parts = path.split(separator)
-            current: t.ValueOrModel | None = None
-            if isinstance(data, m.BaseModel):
+            current: t.ValueOrModel | t.ContainerCarrier | None = None
+            if isinstance(data, FlextModelsPydantic.BaseModel):
                 current = data
             elif isinstance(data, Mapping):
                 config_map = t.ConfigMap(
@@ -591,14 +591,12 @@ class FlextUtilitiesMapper:
                         for k, v in data.items()
                     },
                 )
-                current = cast("t.ValueOrModel", config_map)
+                current = config_map
             else:
                 model_dump_attr = getattr(data, "model_dump", None)
                 if callable(model_dump_attr):
-                    current = cast(
-                        "t.ValueOrModel",
-                        t.ConfigMap.model_validate(model_dump_attr()),
-                    )
+                    result_map = t.ConfigMap.model_validate(model_dump_attr())
+                    current = result_map
                 elif isinstance(data, p.ValidatorSpec):
                     current = str(data)
                 elif data is None or isinstance(
@@ -636,7 +634,10 @@ class FlextUtilitiesMapper:
                 return FlextUtilitiesMapper._success_value_result(current)
             return FlextUtilitiesMapper._success_value_result(str(current))
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as exc:
-            params = m.OperationErrorParams(operation="extract", reason=str(exc))
+            params = FlextModelsExceptionParams.OperationErrorParams(
+                operation="extract",
+                reason=str(exc),
+            )
             return r[t.ValueOrModel].fail_op(
                 "extract path",
                 e.render_error_template(
@@ -693,7 +694,7 @@ class FlextUtilitiesMapper:
                     c.ERR_TEMPLATE_FAILED_TO_MAP_DICT_KEYS,
                     operation="map dict keys",
                     error=exc,
-                    params=m.OperationErrorParams(
+                    params=FlextModelsExceptionParams.OperationErrorParams(
                         operation="map dict keys",
                         reason=str(exc),
                     ),
@@ -735,7 +736,7 @@ class FlextUtilitiesMapper:
         if (
             isinstance(data_or_items, (t.ConfigMap, t.Dict, Mapping))
             and FlextUtilitiesGuardsTypeModel.configuration_mapping(data_or_items)
-        ) or (isinstance(data_or_items, m.BaseModel)):
+        ) or (isinstance(data_or_items, FlextModelsPydantic.BaseModel)):
             data = data_or_items
         else:
             return fallback

@@ -1,7 +1,14 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Callable, Iterator, Mapping, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    ItemsView,
+    Iterator,
+    Mapping,
+    MutableSequence,
+    Sequence,
+)
 from typing import Annotated, ClassVar, Never, Self, override
 
 from flext_tests import m
@@ -43,7 +50,7 @@ class TestsFlextCoreModelsMixins:
             )
         )
 
-    class _ValidationLikeError(Exception):
+    class _ValidationLikeError(ValueError):
         """Validation-like error for tests."""
 
         def errors(self) -> Sequence[t.RecursiveContainerMapping]:
@@ -152,7 +159,7 @@ class TestsFlextCoreModelsMixins:
         )
 
         name: str = "default_settings"
-        timeout: Annotated[int, m.Field(default=30, ge=0)] = 30
+        timeout: Annotated[int, m.Field(ge=0)] = 30
         enabled: bool = True
 
     class InvalidModelForTest(m.BaseModel):
@@ -287,37 +294,52 @@ class TestsFlextCoreModelsMixins:
         data: str = ""
         count: int
 
-    class CustomEntity:
-        """Custom entity with settingsurable ID attribute."""
+    class CustomEntity(m.BaseModel):
+        """Custom entity with configurable ID attribute."""
 
-        def __init__(self, custom_id: str | None = None) -> None:
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+
+        custom_id: str | None = None
+
+        def __init__(self, custom_id: str | None = None, **kwargs: t.Scalar) -> None:
             """Initialize custom entity with ID."""
-            self.custom_id = custom_id
+            super().__init__(custom_id=custom_id, **kwargs)
 
-    class SimpleValue:
-        """Simple value object without model_dump."""
+    class SimpleValue(m.BaseModel):
+        """Simple value object — tests behavior when model_dump is absent at runtime."""
 
-        def __init__(self, data: str) -> None:
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+
+        data: str = ""
+
+        def __init__(self, data: str = "", **kwargs: t.Scalar) -> None:
             """Initialize simple value object."""
-            self.data = data
+            super().__init__(data=data, **kwargs)
 
-    class ComplexValue:
-        """TestsFlextModels.Value object with non-hashable attributes."""
+    class ComplexValue(m.BaseModel):
+        """Value object with non-hashable attributes."""
 
-        def __init__(self, data: str, items: t.StrSequence) -> None:
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+
+        data: str = ""
+        items: t.StrSequence = []
+
+        def __init__(
+            self, data: str = "", items: t.StrSequence | None = None, **kwargs: t.Scalar
+        ) -> None:
             """Initialize complex value with non-hashable items."""
-            self.data = data
-            self.items = items  # list is not hashable
+            super().__init__(data=data, items=items or [], **kwargs)
 
-    class NoDict:
-        """Object without __dict__, using __slots__."""
+    class NoDict(m.BaseModel):
+        """Model for testing value-comparison fallback paths in domain utilities."""
 
-        __slots__ = ("value",)
-        value: int
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
-        def __init__(self, value: int) -> None:
-            """Initialize t.RecursiveContainer without __dict__."""
-            object.__setattr__(self, "value", value)
+        value: int = 0
+
+        def __init__(self, value: int = 0, **kwargs: t.Scalar) -> None:
+            """Initialize model for domain utility edge-case testing."""
+            super().__init__(value=value, **kwargs)
 
         @override
         def __repr__(self) -> str:
@@ -380,7 +402,7 @@ class TestsFlextCoreModelsMixins:
         remove_empty: bool = True
         validator: Callable[[str], bool] | None = None
         use_legacy: bool = False
-        description: Annotated[str, m.Field(default="", exclude=True)] = ""
+        description: Annotated[str, m.Field(exclude=True)] = ""
 
     class SplitEscapeCase(m.BaseModel):
         """Test case for split_on_char_with_escape method."""
@@ -392,7 +414,7 @@ class TestsFlextCoreModelsMixins:
         escape_char: str = "\\"
         expected: t.StrSequence | None = None
         expected_error: str | None = None
-        description: Annotated[str, m.Field(default="", exclude=True)] = ""
+        description: Annotated[str, m.Field(exclude=True)] = ""
 
     class NormalizeWhitespaceCase(m.BaseModel):
         """Test case for normalize_whitespace method."""
@@ -404,7 +426,7 @@ class TestsFlextCoreModelsMixins:
         replacement: str = " "
         expected: str | None = None
         expected_error: str | None = None
-        description: Annotated[str, m.Field(default="", exclude=True)] = ""
+        description: Annotated[str, m.Field(exclude=True)] = ""
 
     class RegexPipelineCase(m.BaseModel):
         """Test case for apply_regex_pipeline method."""
@@ -415,7 +437,7 @@ class TestsFlextCoreModelsMixins:
         patterns: Sequence[tuple[str, str] | tuple[str, str, int]]
         expected: str | None = None
         expected_error: str | None = None
-        description: Annotated[str, m.Field(default="", exclude=True)] = ""
+        description: Annotated[str, m.Field(exclude=True)] = ""
 
     class ObjectKeyCase(m.BaseModel):
         """Test case for get_object_key method."""
@@ -428,7 +450,7 @@ class TestsFlextCoreModelsMixins:
         obj: t.ContainerValue
         expected_contains: t.StrSequence | None = None
         expected_exact: str | None = None
-        description: Annotated[str, m.Field(default="", exclude=True)] = ""
+        description: Annotated[str, m.Field(exclude=True)] = ""
 
     class AutomatedTestScenario(m.BaseModel):
         """Pydantic v2 model for automated test scenarios."""
@@ -702,39 +724,32 @@ class TestsFlextCoreModelsMixins:
         service_type: Annotated[
             str | None,
             m.Field(
-                default=None,
                 description="Service type for factory-driven tests",
             ),
         ] = None
         input_value: Annotated[
-            str | None,
-            m.Field(default=None, description="Primary service input"),
+            str | None, m.Field(description="Primary service input")
         ] = None
         user_id: Annotated[
-            str | None,
-            m.Field(default=None, description="User identifier for documented tests"),
+            str | None, m.Field(description="User identifier for documented tests")
         ] = None
         expected_success: Annotated[
             bool,
             m.Field(
-                default=True,
                 description="Whether service call is expected to succeed",
             ),
         ] = True
         expected_error: Annotated[
             str | None,
             m.Field(
-                default=None,
                 description="Expected error substring for failure cases",
             ),
         ] = None
         description: Annotated[
-            str,
-            m.Field(default="", description="Human-readable test case description"),
+            str, m.Field(description="Human-readable test case description")
         ] = ""
         extra_param: Annotated[
-            int,
-            m.Field(default=3, description="Auxiliary numeric parameter"),
+            int, m.Field(description="Auxiliary numeric parameter")
         ] = 3
 
     class RailwayTestCase(m.BaseModel):
@@ -751,20 +766,17 @@ class TestsFlextCoreModelsMixins:
             m.Field(description="Pipeline operations to execute"),
         ] = m.Field(default_factory=list)
         expected_pipeline_length: Annotated[
-            int,
-            m.Field(default=1, description="Expected number of pipeline stages"),
+            int, m.Field(description="Expected number of pipeline stages")
         ] = 1
         should_fail_at: Annotated[
             int | None,
             m.Field(
-                default=None,
                 description="Optional pipeline step expected to fail",
             ),
         ] = None
         description: Annotated[
             str,
             m.Field(
-                default="",
                 description="Human-readable railway test case description",
             ),
         ] = ""
@@ -785,34 +797,29 @@ class TestsFlextCoreModelsMixins:
         input_params: Annotated[
             t.RecursiveContainer | None,
             m.Field(
-                default=None,
                 description="Optional validator parameters for scenario execution",
             ),
         ] = None
         should_succeed: Annotated[
             bool,
             m.Field(
-                default=True,
                 description="Whether scenario expects validation success",
             ),
         ] = True
         expected_value: Annotated[
             t.RecursiveContainer | None,
             m.Field(
-                default=None,
                 description="Expected normalized value when validation succeeds",
             ),
         ] = None
         expected_error_contains: Annotated[
             str | None,
             m.Field(
-                default=None,
                 description="Expected error substring when validation fails",
             ),
         ] = None
         description: Annotated[
-            str | None,
-            m.Field(default=None, description="Human-readable scenario description"),
+            str | None, m.Field(description="Human-readable scenario description")
         ] = None
 
     class ParserScenario(m.BaseModel):
@@ -826,24 +833,20 @@ class TestsFlextCoreModelsMixins:
         expected_output: Annotated[
             t.RecursiveContainer | None,
             m.Field(
-                default=None,
                 description="Expected parsed output for successful scenarios",
             ),
         ] = None
         should_succeed: Annotated[
             bool,
             m.Field(
-                default=True,
                 description="Whether parser scenario expects success",
             ),
         ] = True
         error_contains: Annotated[
-            str | None,
-            m.Field(default=None, description="Expected parser error substring"),
+            str | None, m.Field(description="Expected parser error substring")
         ] = None
         description: Annotated[
-            str | None,
-            m.Field(default=None, description="Human-readable scenario description"),
+            str | None, m.Field(description="Human-readable scenario description")
         ] = None
 
     class PublicParseCase(m.BaseModel):
@@ -864,28 +867,24 @@ class TestsFlextCoreModelsMixins:
             m.Field(description="Public target type passed to u.parse()"),
         ]
         options: Annotated[
-            m.BaseModel | None,
-            m.Field(default=None, description="Optional ParseOptions instance"),
+            m.BaseModel | None, m.Field(description="Optional ParseOptions instance")
         ] = None
         should_succeed: Annotated[
-            bool,
-            m.Field(default=True, description="Whether parsing should succeed"),
+            bool, m.Field(description="Whether parsing should succeed")
         ] = True
         expected_value: Annotated[
             t.ValueOrModel | None,
-            m.Field(default=None, description="Expected parsed scalar or enum value"),
+            m.Field(description="Expected parsed scalar or enum value"),
         ] = None
         expected_data: Annotated[
             Mapping[str, t.ContainerValue] | None,
-            m.Field(default=None, description="Expected parsed model_dump payload"),
+            m.Field(description="Expected parsed model_dump payload"),
         ] = None
         error_contains: Annotated[
-            str | None,
-            m.Field(default=None, description="Expected failure error substring"),
+            str | None, m.Field(description="Expected failure error substring")
         ] = None
         description: Annotated[
-            str | None,
-            m.Field(default=None, description="Human-readable scenario description"),
+            str | None, m.Field(description="Human-readable scenario description")
         ] = None
 
     class ReliabilityScenario(m.BaseModel):
@@ -910,13 +909,11 @@ class TestsFlextCoreModelsMixins:
         should_succeed: Annotated[
             bool,
             m.Field(
-                default=True,
                 description="Whether scenario expects successful outcome",
             ),
         ] = True
         description: Annotated[
-            str | None,
-            m.Field(default=None, description="Human-readable scenario description"),
+            str | None, m.Field(description="Human-readable scenario description")
         ] = None
 
     class FalseSettings:
@@ -926,6 +923,16 @@ class TestsFlextCoreModelsMixins:
         timeout_seconds: float = 1.0
         dispatcher_auto_context: bool = False
         dispatcher_enable_logging: bool = False
+
+        @classmethod
+        def fetch_global(
+            cls,
+            *,
+            overrides: t.ScalarMapping | None = None,
+        ) -> Self:
+            """Return a new instance for testing."""
+            _ = overrides
+            return cls()
 
         def model_copy(
             self,
@@ -946,42 +953,36 @@ class TestsFlextCoreModelsMixins:
         user_id: Annotated[
             str,
             m.Field(
-                default="test_user_123",
                 description="Default test user identifier",
             ),
         ] = "test_user_123"
         session_id: Annotated[
             str,
             m.Field(
-                default="test_session_123",
                 description="Default test session identifier",
             ),
         ] = "test_session_123"
         service_name: Annotated[
             str,
             m.Field(
-                default="test_service",
                 description="Default test service name",
             ),
         ] = "test_service"
         operation_id: Annotated[
             str,
             m.Field(
-                default="test_operation",
                 description="Default test operation identifier",
             ),
         ] = "test_operation"
         request_id: Annotated[
             str,
             m.Field(
-                default="test-request-456",
                 description="Default test request identifier",
             ),
         ] = "test-request-456"
         correlation_id: Annotated[
             str,
             m.Field(
-                default="test-corr-123",
                 description="Default test correlation identifier",
             ),
         ] = "test-corr-123"
@@ -994,57 +995,48 @@ class TestsFlextCoreModelsMixins:
         module_name: Annotated[
             str,
             m.Field(
-                default="test_module",
                 description="Default test module name",
             ),
         ] = "test_module"
         handler_name: Annotated[
             str,
             m.Field(
-                default="test_handler",
                 description="Default test handler name",
             ),
         ] = "test_handler"
-        chain_name: Annotated[
-            str,
-            m.Field(default="test_chain", description="Default test chain name"),
-        ] = "test_chain"
+        chain_name: Annotated[str, m.Field(description="Default test chain name")] = (
+            "test_chain"
+        )
         command_type: Annotated[
             str,
             m.Field(
-                default="test_command",
                 description="Default test command type",
             ),
         ] = "test_command"
-        query_type: Annotated[
-            str,
-            m.Field(default="test_query", description="Default test query type"),
-        ] = "test_query"
+        query_type: Annotated[str, m.Field(description="Default test query type")] = (
+            "test_query"
+        )
         logger_name: Annotated[
             str,
             m.Field(
-                default="test_logger",
                 description="Default test logger name",
             ),
         ] = "test_logger"
         app_name: Annotated[
             str,
             m.Field(
-                default="test-app",
                 description="Default test application name",
             ),
         ] = "test-app"
         validation_app: Annotated[
             str,
             m.Field(
-                default="validation-test",
                 description="Default validation test application name",
             ),
         ] = "validation-test"
         source_service: Annotated[
             str,
             m.Field(
-                default="test_service",
                 description="Default source service name",
             ),
         ] = "test_service"
@@ -1057,35 +1049,30 @@ class TestsFlextCoreModelsMixins:
         error_code: Annotated[
             str,
             m.Field(
-                default="TEST_ERROR_001",
                 description="Default test error code",
             ),
         ] = "TEST_ERROR_001"
         validation_error: Annotated[
             str,
             m.Field(
-                default="test_error",
                 description="Default validation error message",
             ),
         ] = "test_error"
         operation_error: Annotated[
             str,
             m.Field(
-                default="Op failed",
                 description="Default operation error message",
             ),
         ] = "Op failed"
         settings_error: Annotated[
             str,
             m.Field(
-                default="Settings failed",
                 description="Default configuration error message",
             ),
         ] = "Settings failed"
         timeout_error: Annotated[
             str,
             m.Field(
-                default="Operation timeout",
                 description="Default timeout error message",
             ),
         ] = "Operation timeout"
@@ -1095,55 +1082,45 @@ class TestsFlextCoreModelsMixins:
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        field_name: Annotated[
-            str,
-            m.Field(default="test_field", description="Default test field name"),
-        ] = "test_field"
-        config_key: Annotated[
-            str,
-            m.Field(default="test_key", description="Default test settings key"),
-        ] = "test_key"
-        username: Annotated[
-            str,
-            m.Field(default="test_user", description="Default test username"),
-        ] = "test_user"
-        email: Annotated[
-            str,
-            m.Field(default="test@example.com", description="Default test email"),
-        ] = "test@example.com"
-        password: Annotated[
-            str,
-            m.Field(default="test_pass", description="Default test password"),
-        ] = "test_pass"
+        field_name: Annotated[str, m.Field(description="Default test field name")] = (
+            "test_field"
+        )
+        config_key: Annotated[str, m.Field(description="Default test settings key")] = (
+            "test_key"
+        )
+        username: Annotated[str, m.Field(description="Default test username")] = (
+            "test_user"
+        )
+        email: Annotated[str, m.Field(description="Default test email")] = (
+            "test@example.com"
+        )
+        password: Annotated[str, m.Field(description="Default test password")] = (
+            "test_pass"
+        )
         string_value: Annotated[
             str,
             m.Field(
-                default="test_value",
                 description="Default test string value",
             ),
         ] = "test_value"
-        input_data: Annotated[
-            str,
-            m.Field(default="test_input", description="Default test input data"),
-        ] = "test_input"
+        input_data: Annotated[str, m.Field(description="Default test input data")] = (
+            "test_input"
+        )
         request_data: Annotated[
             str,
             m.Field(
-                default="test_request",
                 description="Default test request data",
             ),
         ] = "test_request"
         result_data: Annotated[
             str,
             m.Field(
-                default="test_result",
                 description="Default test result data",
             ),
         ] = "test_result"
-        message: Annotated[
-            str,
-            m.Field(default="test_message", description="Default test message"),
-        ] = "test_message"
+        message: Annotated[str, m.Field(description="Default test message")] = (
+            "test_message"
+        )
 
     class PatternData(m.BaseModel):
         """Test patterns and formats."""
@@ -1153,21 +1130,18 @@ class TestsFlextCoreModelsMixins:
         slug_input: Annotated[
             str,
             m.Field(
-                default="Test_String",
                 description="Input value for slug conversion tests",
             ),
         ] = "Test_String"
         slug_expected: Annotated[
             str,
             m.Field(
-                default="test_string",
                 description="Expected slug conversion output",
             ),
         ] = "test_string"
         uuid_format: Annotated[
             str,
             m.Field(
-                default="550e8400-e29b-41d4-a716-446655440000",
                 description="Sample UUID format for tests",
             ),
         ] = "550e8400-e29b-41d4-a716-446655440000"
@@ -1177,19 +1151,200 @@ class TestsFlextCoreModelsMixins:
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        port: Annotated[
-            int,
-            m.Field(default=8080, description="Default test port"),
-        ] = 8080
-        timeout: Annotated[
-            int,
-            m.Field(default=30, description="Default timeout in seconds"),
-        ] = 30
-        retry_count: Annotated[
-            int,
-            m.Field(default=3, description="Default retry count"),
-        ] = 3
-        batch_size: Annotated[
-            int,
-            m.Field(default=100, description="Default test batch size"),
-        ] = 100
+        port: Annotated[int, m.Field(description="Default test port")] = 8080
+        timeout: Annotated[int, m.Field(description="Default timeout in seconds")] = 30
+        retry_count: Annotated[int, m.Field(description="Default retry count")] = 3
+        batch_size: Annotated[int, m.Field(description="Default test batch size")] = 100
+
+    # --- from test_container.py ---
+
+    class ServiceScenario(m.BaseModel):
+        """Test scenario for service registration and retrieval."""
+
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+            frozen=True,
+            arbitrary_types_allowed=True,
+        )
+        name: Annotated[str, m.Field(description="Service scenario name")]
+        service: Annotated[
+            t.Primitives, m.Field(description="Service value to register")
+        ]
+        description: Annotated[str, m.Field(description="Scenario description")] = ""
+
+    class TypedRetrievalScenario(m.BaseModel):
+        """Test scenario for typed service retrieval."""
+
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+            frozen=True,
+            arbitrary_types_allowed=True,
+        )
+        name: Annotated[str, m.Field(description="Typed retrieval scenario name")]
+        service: Annotated[
+            t.Primitives, m.Field(description="Registered service value")
+        ]
+        expected_type: Annotated[type, m.Field(description="Expected service type")]
+        should_pass: Annotated[
+            bool,
+            m.Field(description="Whether typed retrieval should succeed"),
+        ]
+        description: Annotated[str, m.Field(description="Scenario description")] = ""
+
+    class ContainerScenarios:
+        """Centralized container test scenarios using c."""
+
+        SERVICE_SCENARIOS: ClassVar[
+            Sequence[t.RecursiveContainer]
+        ] = []  # populated after class definition
+        TYPED_RETRIEVAL_SCENARIOS: ClassVar[
+            Sequence[t.RecursiveContainer]
+        ] = []  # populated after class definition
+        CONFIG_SCENARIOS: ClassVar[Sequence[t.ScalarMapping]] = [
+            {"enable_singleton": False, "max_services": 8},
+            {"invalid_key": "value", "another_invalid": 42},
+            {},
+        ]
+
+    # --- from test_utilities_guards.py and test_utilities_guards_full_coverage.py ---
+
+    class GuardSampleModel(m.BaseModel):
+        """Sample model for guard testing."""
+
+        name: str = "test"
+
+    class NoModelDump:
+        """Object without model_dump — should fail is_pydantic_model."""
+
+    class LoggerLike(m.BaseModel):
+        """Partial logger-like object for testing rejection by logger protocol check.
+
+        Extends BaseModel to satisfy GuardInput typing. Intentionally omits
+        required Logger protocol methods (name, bind, new, unbind, etc.) so that
+        matches_type(instance, 'logger') returns False.
+        """
+
+        model_config: m.ConfigDict = m.ConfigDict(arbitrary_types_allowed=True)
+
+        def debug(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+            return None
+
+        def info(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+            return None
+
+        def warning(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+            return None
+
+        def error(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+            return None
+
+        def exception(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+            return None
+
+    # --- from test_models_context_full_coverage.py ---
+
+    class ModelWithNoCallableDump:
+        """Model with non-callable model_dump attribute."""
+
+        model_dump = "bad"
+
+    # --- from test_utilities_mapper_full_coverage.py ---
+
+    class PortModel(m.BaseModel):
+        """Model with port/nested for mapper take/extract tests."""
+
+        port: int = 0
+        nested: Annotated[
+            t.RecursiveContainerMapping,
+            m.Field(default_factory=dict),
+        ]
+
+    class MaybeModel(m.BaseModel):
+        """Model with optional field for take tests."""
+
+        x: str | None = None
+
+    class GroupModel(m.BaseModel):
+        """Model with optional kind for group tests."""
+
+        kind: str | None = None
+
+    class BadItems(UserDict[str, t.RecursiveContainer]):
+        """UserDict that explodes on items() for error-path testing."""
+
+        @override
+        def items(self) -> ItemsView[str, t.RecursiveContainer]:
+            """Items method."""
+            msg = "bad items"
+            raise RuntimeError(msg)
+
+    class BadIter(UserList[str]):
+        """UserList that explodes on __iter__ for error-path testing."""
+
+        @override
+        def __iter__(self) -> Iterator[str]:
+            """__iter__ method."""
+            msg = "bad iter"
+            raise RuntimeError(msg)
+
+    # --- from test_architectural_patterns.py ---
+
+    class UserCreatedEvent(m.DomainEvent):
+        """Domain event for user creation using FlextModels foundation."""
+
+        user_id: str
+        user_name: str
+        timestamp: float
+
+    class UserUpdatedEvent(m.DomainEvent):
+        """Domain event for user updates."""
+
+        user_id: str
+        old_name: str
+        new_name: str
+        timestamp: float
+
+
+# Populate ContainerScenarios after class is fully defined to allow forward references
+_svc_scenarios: Sequence[TestsFlextCoreModelsMixins.ServiceScenario] = [
+    TestsFlextCoreModelsMixins.ServiceScenario(
+        name="test_service",
+        service="test_service_value",
+        description="Simple string service",
+    ),
+    TestsFlextCoreModelsMixins.ServiceScenario(
+        name="service_instance",
+        service=42,
+        description="Integer service instance",
+    ),
+    TestsFlextCoreModelsMixins.ServiceScenario(
+        name="string_service",
+        service="test_value",
+        description="String service",
+    ),
+]
+TestsFlextCoreModelsMixins.ContainerScenarios.SERVICE_SCENARIOS = _svc_scenarios
+_typed_scenarios: Sequence[TestsFlextCoreModelsMixins.TypedRetrievalScenario] = [
+    TestsFlextCoreModelsMixins.TypedRetrievalScenario(
+        name="dict_service",
+        service="test_dict_service",
+        expected_type=str,
+        should_pass=True,
+        description="String service",
+    ),
+    TestsFlextCoreModelsMixins.TypedRetrievalScenario(
+        name="string_service",
+        service="test_string",
+        expected_type=str,
+        should_pass=True,
+        description="String service",
+    ),
+    TestsFlextCoreModelsMixins.TypedRetrievalScenario(
+        name="list_service",
+        service=123,
+        expected_type=int,
+        should_pass=True,
+        description="Integer service for typed retrieval",
+    ),
+]
+TestsFlextCoreModelsMixins.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS = (
+    _typed_scenarios
+)

@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import copy
 from datetime import UTC, datetime, timedelta
-from typing import cast
 
 import pytest
 from pydantic import ValidationError
@@ -92,7 +91,8 @@ class TestsFlextCoreModelsBase:
         naive = datetime(2026, 6, 1, 12, 0, 0, tzinfo=UTC).replace(tzinfo=None)
         result = u.ensure_utc_datetime(naive)
         tm.that(result, none=False)
-        tm.that(cast("datetime", result).tzinfo, eq=UTC)
+        assert isinstance(result, datetime)
+        tm.that(result.tzinfo, eq=UTC)
 
     def test_runtime_ensure_utc_datetime_none(self) -> None:
         result = u.ensure_utc_datetime(None)

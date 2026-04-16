@@ -581,7 +581,7 @@ ______________________________________________________________________
 from pydantic import BaseModel
 
 
-class User(BaseModel):
+class User(m.BaseModel):
     email: str
     age: int
 
@@ -601,7 +601,7 @@ class User(BaseModel):
 # Usage - Pydantic raises ValidationError
 try:
     user = User(email="invalid", age=-5)
-except ValidationError as e:
+except c.ValidationError as e:
     print(f"Validation failed: {e}")
 ```
 
@@ -613,7 +613,7 @@ from flext_core import r, p
 from pydantic import BaseModel, ValidationError
 
 
-class User(BaseModel):
+class User(m.BaseModel):
     email: str
     age: int
 
@@ -623,7 +623,7 @@ def create_user(data: dict) -> p.Result[User]:
     try:
         user = User(**data)
         return r[User].ok(user)
-    except ValidationError as e:
+    except c.ValidationError as e:
         return r[User].fail(
             f"User validation failed: {e}",
             error_code="USER_VALIDATION_ERROR",
@@ -789,9 +789,9 @@ from pydantic_settings import BaseSettings
 
 
 class AppConfig(BaseSettings):
-    timeout: int = Field(gt=0, description="Timeout in seconds")
-    log_level: str = Field(pattern="^(DEBUG|INFO|WARNING|ERROR)$")
-    api_key: str = Field(min_length=1, description="API key required")
+    timeout: int = m.Field(gt=0, description="Timeout in seconds")
+    log_level: str = m.Field(pattern="^(DEBUG|INFO|WARNING|ERROR)$")
+    api_key: str = m.Field(min_length=1, description="API key required")
 
     @field_validator("timeout")
     @classmethod
@@ -808,7 +808,7 @@ try:
         log_level="INVALID",  # Invalid
         api_key="",  # Invalid
     )
-except ValidationError as e:
+except c.ValidationError as e:
     print(f"Config validation failed:\n{e}")
     # Clear errors, easy to fix
 ```

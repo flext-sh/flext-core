@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from pydantic import (
     VERSION,
-    BaseConfig,
     ConfigDict,
     PydanticDeprecatedSince20,
     PydanticDeprecatedSince26,
@@ -44,7 +43,6 @@ from pydantic_core import (
     SchemaError,
     ValidationError as CoreValidationError,
 )
-from pydantic_settings import SettingsConfigDict
 
 
 class FlextConstantsPydantic:
@@ -54,10 +52,8 @@ class FlextConstantsPydantic:
     Use c.* instead.
     """
 
-    # Configuration
-    BaseConfig = BaseConfig
+    # Configuration type
     ConfigDict = ConfigDict
-    SettingsConfigDict = SettingsConfigDict
 
     # Exceptions (pydantic v2)
     ValidationError = ValidationError

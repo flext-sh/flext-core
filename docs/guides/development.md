@@ -189,20 +189,20 @@ def validate_and_process(data: dict) -> ProcessedData:
 ```python
 # ✅ CORRECT - Use [Project]Models pattern
 class FlextApiModels:
-    class Request(BaseModel):
+    class Request(m.BaseModel):
         data: t.RecursiveContainerMapping
 
-    class Response(BaseModel):
+    class Response(m.BaseModel):
         result: p.Result[t.RecursiveContainer]
         status: int
 
 
 # ❌ WRONG - Scattered model definitions
-class ApiRequest(BaseModel):
+class ApiRequest(m.BaseModel):
     data: t.RecursiveContainerMapping
 
 
-class ApiResponse(BaseModel):
+class ApiResponse(m.BaseModel):
     result
 ```
 
@@ -346,13 +346,13 @@ class FlextNewlib:
 
 # Models class
 class FlextNewlibModels:
-    class Config(BaseModel):
+    class Config(m.BaseModel):
         setting: str = "default"
 
-    class Request(BaseModel):
+    class Request(m.BaseModel):
         data: t.RecursiveContainerMapping
 
-    class Response(BaseModel):
+    class Response(m.BaseModel):
         result: p.Result[t.RecursiveContainer]
 ```
 

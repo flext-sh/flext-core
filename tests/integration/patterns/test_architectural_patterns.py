@@ -16,25 +16,10 @@ from typing import Self
 
 import pytest
 
-from flext_core import FlextModelsDomainEvent
-from tests import c, p, r, t, u
+from tests import c, m, p, r, t, u
 
-
-class _UserCreatedEvent(FlextModelsDomainEvent.Entry):
-    """Domain event for user creation using FlextModels foundation."""
-
-    user_id: str
-    user_name: str
-    timestamp: float
-
-
-class _UserUpdatedEvent(FlextModelsDomainEvent.Entry):
-    """Domain event for user updates."""
-
-    user_id: str
-    old_name: str
-    new_name: str
-    timestamp: float
+_UserCreatedEvent = m.Core.Tests.UserCreatedEvent
+_UserUpdatedEvent = m.Core.Tests.UserUpdatedEvent
 
 
 class TestArchitecturalPatterns:
@@ -217,9 +202,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize handler."""
                 super().__init__()
-                self.processed_events: MutableSequence[
-                    FlextModelsDomainEvent.Entry
-                ] = []
+                self.processed_events: MutableSequence[m.DomainEvent] = []
 
             def handle_user_created(self, event: _UserCreatedEvent) -> p.Result[bool]:
                 """Handle user created event."""

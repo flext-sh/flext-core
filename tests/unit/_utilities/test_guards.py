@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
 
 import pytest
 
@@ -17,13 +16,8 @@ from tests import m, r, t, u
 # ---------------------------------------------------------------------------
 
 
-class _SampleModel(m.BaseModel):
-    name: str = "test"
-
-
-class _NoModelDump:
-    """Object without model_dump — should fail is_pydantic_model."""
-
+_SampleModel = m.Core.Tests.GuardSampleModel
+_NoModelDump = m.Core.Tests.NoModelDump
 
 _PYRIGHT_USED_CLASSES = (_NoModelDump,)
 
@@ -189,10 +183,12 @@ class TestFlextUtilitiesGuards:
 
     def test_is_container_rejects_set_inside_list(self) -> None:
         """Sets are not containers — list containing a set should fail."""
-        tm.that(u.container(cast("t.GuardInput", [{1, 2}])), eq=False)
+        bad_set: t.GuardInput = [{1, 2}]
+        tm.that(u.container(bad_set), eq=False)
 
     def test_is_container_rejects_set_in_mapping_value(self) -> None:
-        tm.that(u.container(cast("t.GuardInput", {"k": {1}})), eq=False)
+        bad_mapping: t.GuardInput = {"k": {1}}
+        tm.that(u.container(bad_mapping), eq=False)
 
     # -----------------------------------------------------------------------
     # is_object_list / is_object_tuple
@@ -565,13 +561,13 @@ class TestFlextUtilitiesGuards:
     def test_resolve_numeric_with_sized_object(self) -> None:
         """Objects with __len__ get resolved via len()."""
 
-        class _Sized:
+        class _Sized(m.BaseModel):
             def __len__(self) -> int:
                 return 7
 
         tm.that(
             u.chk(
-                cast("t.RecursiveContainer", _Sized()),
+                _Sized(),
                 **m.GuardCheckSpec(gte=7, lte=7).model_dump(),
             ),
             eq=True,
@@ -580,12 +576,12 @@ class TestFlextUtilitiesGuards:
     def test_resolve_numeric_fallback_to_zero(self) -> None:
         """Objects without len or numeric value resolve to 0."""
 
-        class _NoLen:
+        class _NoLen(m.BaseModel):
             pass
 
         tm.that(
             u.chk(
-                cast("t.RecursiveContainer", _NoLen()),
+                _NoLen(),
                 **m.GuardCheckSpec(gte=0, lte=0).model_dump(),
             ),
             eq=True,

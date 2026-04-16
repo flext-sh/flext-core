@@ -527,4 +527,4 @@ class TestDIIncremental:
         tm.that(value2, is_=str)
         tm.that(value1, eq="value1")
         tm.that(value2, eq="value2")
-        tm.that(value1, ne=value2)
+        tm.that(value1, ne="value2")

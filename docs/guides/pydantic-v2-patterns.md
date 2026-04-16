@@ -60,30 +60,30 @@ FLEXT projects use **pure Pydantic v2 patterns** (no v1 compatibility layer):
 ```python
 from pydantic import BaseModel, Field
 
-class User(BaseModel):
+class User(m.BaseModel):
     """User model with field constraints."""
-    user_id: str = Field(
+    user_id: str = m.Field(
         description="Unique user identifier",
         example="user_001",
     )
-    username: str = Field(
+    username: str = m.Field(
         min_length=3,
         max_length=20,
         description="Username (3-20 characters)",
         example="alice",
     )
-    email: str = Field(
+    email: str = m.Field(
         pattern=r'^[^@]+@[^@]+\.[^@]+$',
         description="User email address",
         example="alice@example.com",
     )
-    age: int = Field(
+    age: int = m.Field(
         ge=0,
         le=150,
         description="User age (0-150)",
         example=30,
     )
-    is_active: bool = Field(
+    is_active: bool = m.Field(
         default=True,
         description="Whether user is active",
     )
@@ -113,7 +113,7 @@ user3 = User.model_validate_json('{"user_id": "..."}')
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ApiResponse(BaseModel):
+class ApiResponse(m.BaseModel):
     """API response with strict configuration."""
 
     model_config = ConfigDict(
@@ -141,15 +141,15 @@ class ApiResponse(BaseModel):
         },
     )
 
-    status: str = Field(
+    status: str = m.Field(
         pattern="^(success|error)$",
         description="Response status",
     )
-    data: dict | None = Field(
+    data: dict | None = m.Field(
         default=None,
         description="Response data",
     )
-    error: str | None = Field(
+    error: str | None = m.Field(
         default=None,
         description="Error message if status is error",
     )
@@ -165,12 +165,12 @@ class ApiResponse(BaseModel):
 from pydantic import BaseModel, Field, field_validator
 
 
-class Product(BaseModel):
+class Product(m.BaseModel):
     """Product with field validation."""
 
-    name: str = Field(min_length=1)
-    price: float = Field(gt=0)  # Positive number
-    sku: str = Field(min_length=5, max_length=20)
+    name: str = m.Field(min_length=1)
+    price: float = m.Field(gt=0)  # Positive number
+    sku: str = m.Field(min_length=5, max_length=20)
 
     @field_validator("name")
     @classmethod
@@ -207,9 +207,9 @@ product = Product(
 from pydantic import field_validator, mode
 
 
-class Config(BaseModel):
-    timeout: int = Field(gt=0, le=3600)
-    retries: int = Field(ge=0, le=10)
+class Config(m.BaseModel):
+    timeout: int = m.Field(gt=0, le=3600)
+    retries: int = m.Field(ge=0, le=10)
 
     @field_validator("timeout", mode="before")
     @classmethod
@@ -252,7 +252,7 @@ settings = Config(
 from pydantic import field_validator
 
 
-class DateRange(BaseModel):
+class DateRange(m.BaseModel):
     start_date: date
     end_date: date
 
@@ -271,7 +271,7 @@ class DateRange(BaseModel):
 from pydantic import BaseModel, model_validator
 
 
-class PasswordChange(BaseModel):
+class PasswordChange(m.BaseModel):
     """Password change with cross-field validation."""
 
     current_password: str
@@ -301,20 +301,20 @@ class PasswordChange(BaseModel):
 from pydantic import BaseModel, computed_field
 
 
-class Person(BaseModel):
+class Person(m.BaseModel):
     """Person with computed derived properties."""
 
     first_name: str
     last_name: str
     birth_year: int
 
-    @computed_field
+    @u.computed_field
     @property
     def full_name(self) -> str:
         """Computed: full name."""
         return f"{self.first_name} {self.last_name}"
 
-    @computed_field
+    @u.computed_field
     @property
     def age(self) -> int:
         """Computed: age based on birth year."""
@@ -346,15 +346,19 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 
 # Define semantic types
-UserId = Annotated[str, Field(description="Unique user identifier", example="user_001")]
-Email = Annotated[
-    str, Field(pattern=r"^[^@]+@[^@]+\.[^@]+$", description="Email address")
+UserId = Annotated[
+    str, m.Field(description="Unique user identifier", example="user_001")
 ]
-PositiveInt = Annotated[int, Field(gt=0, description="Positive integer")]
-PortNumber = Annotated[int, Field(ge=1, le=65535, description="Network port (1-65535)")]
+Email = Annotated[
+    str, m.Field(pattern=r"^[^@]+@[^@]+\.[^@]+$", description="Email address")
+]
+PositiveInt = Annotated[int, m.Field(gt=0, description="Positive integer")]
+PortNumber = Annotated[
+    int, m.Field(ge=1, le=65535, description="Network port (1-65535)")
+]
 
 
-class ServiceConfig(BaseModel):
+class ServiceConfig(m.BaseModel):
     """Service configuration using semantic types."""
 
     service_id: UserId
@@ -393,13 +397,13 @@ class Settings(BaseSettings):
     )
 
     # Simple fields
-    app_name: str = Field(default="MyApp", env="APP_NAME")
-    debug: bool = Field(default=False, env="DEBUG")
-    log_level: str = Field(default="INFO", env="LOG_LEVEL")
+    app_name: str = m.Field(default="MyApp", env="APP_NAME")
+    debug: bool = m.Field(default=False, env="DEBUG")
+    log_level: str = m.Field(default="INFO", env="LOG_LEVEL")
 
     # Sensitive fields
-    database_url: SecretStr = Field(env="DATABASE_URL")
-    api_key: SecretStr = Field(env="API_KEY")
+    database_url: SecretStr = m.Field(env="DATABASE_URL")
+    api_key: SecretStr = m.Field(env="API_KEY")
 
     # Nested settings
     class Database(BaseSettings):
@@ -407,7 +411,7 @@ class Settings(BaseSettings):
         port: int = 5432
         name: str
 
-    database: Database = Field(default_factory=Database)
+    database: Database = m.Field(default_factory=Database)
 
 
 # Usage - automatically loads from environment
@@ -449,11 +453,11 @@ def validate_country_code(code: str) -> str:
 
 CountryCode = Annotated[
     str,
-    Field(description="ISO 3166-1 alpha-2 country code"),
+    m.Field(description="ISO 3166-1 alpha-2 country code"),
 ]
 
 
-class Address(BaseModel):
+class Address(m.BaseModel):
     street: str
     city: str
     postal_code: str
@@ -481,7 +485,7 @@ from typing import Annotated, Literal, Sequence, Union
 from pydantic import Discriminator, Field, BaseModel
 
 
-class Tap(BaseModel):
+class Tap(m.BaseModel):
     """Source tap configuration."""
 
     type: Literal["tap"] = "tap"
@@ -489,7 +493,7 @@ class Tap(BaseModel):
     connector: str
 
 
-class Target(BaseModel):
+class Target(m.BaseModel):
     """Destination target configuration."""
 
     type: Literal["target"] = "target"
@@ -497,7 +501,7 @@ class Target(BaseModel):
     connector: str
 
 
-class Dbt(BaseModel):
+class Dbt(m.BaseModel):
     """Data transformation configuration."""
 
     type: Literal["dbt"] = "dbt"
@@ -512,7 +516,7 @@ ComponentConfig = Annotated[
 ]
 
 
-class Pipeline(BaseModel):
+class Pipeline(m.BaseModel):
     """Pipeline with multiple component types."""
 
     components: Sequence[ComponentConfig]
@@ -546,13 +550,13 @@ from pydantic import BaseModel
 from pydantic.json_schema import models_json_schema
 
 
-class User(BaseModel):
+class User(m.BaseModel):
     name: str
     email: str
     age: int
 
 
-class Product(BaseModel):
+class Product(m.BaseModel):
     name: str
     price: float
 
@@ -597,7 +601,7 @@ from flext_core import r, p
 from pydantic import BaseModel, ValidationError
 
 
-class UserModel(BaseModel):
+class UserModel(m.BaseModel):
     email: str
     password: str
 
@@ -607,7 +611,7 @@ def validate_user(data: dict) -> p.Result[UserModel]:
     try:
         user = UserModel(**data)
         return r[UserModel].ok(user)
-    except ValidationError as e:
+    except c.ValidationError as e:
         return r[UserModel].fail(
             f"User validation failed: {e}",
             error_code="USER_VALIDATION_ERROR",
@@ -629,7 +633,7 @@ else:
 
    ```python
    # Good - includes description and example
-   name: str = Field(description="User name", example="Alice")
+   name: str = m.Field(description="User name", example="Alice")
 
    # Avoid - no documentation
    name: str
@@ -650,7 +654,7 @@ else:
 
 
    # Avoid - validation hidden in constraints
-   age: int = Field(ge=0)  # Only for simple cases
+   age: int = m.Field(ge=0)  # Only for simple cases
 ````
 
 1. **Use ConfigDict for strict validation**
@@ -672,7 +676,7 @@ else:
 
    ```python
    # Good - automatically included in serialization
-   @computed_field
+   @u.computed_field
    @property
    def full_name(self) -> str:
        return f"{self.first_name} {self.last_name}"
@@ -698,7 +702,7 @@ else:
 
 - ✅ Use `@field_validator` for field-level validation
 - ✅ Use `@model_validator` for cross-field validation
-- ✅ Include `description` and `example` in Field()
+- ✅ Include `description` and `example` in m.Field()
 - ✅ Wrap Pydantic errors in r
 - ❌ Don't use exceptions for validation failures
 

@@ -10,7 +10,8 @@ from typing import Annotated, ClassVar
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from tests import FlextContainer, d, e, m, p, r, u
+from flext_core import FlextContainer
+from tests import d, e, m, p, r, u
 
 
 @pytest.fixture(autouse=True)

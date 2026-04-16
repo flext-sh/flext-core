@@ -253,7 +253,7 @@ try:
     settings = FlextSettings(
         log_level="INVALID_LEVEL"  # This will raise ValidationError
     )
-except ValidationError as e:
+except c.ValidationError as e:
     print(f"Configuration error: {e}")
 ```
 
@@ -378,14 +378,14 @@ class MyAppConfig(FlextSettings):
 ### 4. Document Configuration Options
 
 ```python
-class FlextLdifSettings(BaseModel):
+class FlextLdifSettings(m.BaseModel):
     """Configuration for LDIF processing."""
 
-    default_encoding: str = Field(
+    default_encoding: str = m.Field(
         default="utf-8", description="Default encoding for LDIF files"
     )
 
-    strict_validation: bool = Field(
+    strict_validation: bool = m.Field(
         default=True, description="Enable strict RFC validation"
     )
 ```

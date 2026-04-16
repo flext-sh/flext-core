@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 import warnings
 from collections.abc import Callable, Mapping, MutableSequence
-from typing import Annotated, ClassVar, cast
+from typing import Annotated, ClassVar
 
 import pytest
 
@@ -210,10 +210,11 @@ class TestDecoratorsFullCoverage:
                 "retry_on_status_codes": [],
             },
         )
-        result_exc = d._execute_retry_loop(
+        execute_retry_loop = getattr(d, "_execute_retry_loop")
+        result_exc = execute_retry_loop(
             flaky,
             "flaky",
-            cast("p.Logger", fake_logger),
+            fake_logger,
             retry_settings=cfg,
         )
         tm.that(result_exc, is_=Exception)
@@ -231,13 +232,14 @@ class TestDecoratorsFullCoverage:
         def fn(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             return None
 
+        handle_retry_exhaustion = getattr(d, "_handle_retry_exhaustion")
         with pytest.raises(e.TimeoutError):
-            d._handle_retry_exhaustion(
+            handle_retry_exhaustion(
                 FalseyError("x"),
                 fn,
                 2,
                 None,
-                cast("p.Logger", fake_logger),
+                fake_logger,
             )
 
     def test_bind_operation_context_without_ensure_correlation_and_bind_failure(
@@ -255,9 +257,10 @@ class TestDecoratorsFullCoverage:
             "bind_context",
             _bind_context,
         )
-        cid = d._bind_operation_context(
+        bind_operation_context = getattr(d, "_bind_operation_context")
+        cid = bind_operation_context(
             operation="op",
-            logger=cast("p.Logger", fake_logger),
+            logger=fake_logger,
             function_name="fn",
             ensure_correlation=False,
         )
@@ -278,8 +281,9 @@ class TestDecoratorsFullCoverage:
             "clear_scope",
             _clear_scope,
         )
-        d._clear_operation_scope(
-            logger=cast("p.Logger", fake_logger),
+        clear_operation_scope = getattr(d, "_clear_operation_scope")
+        clear_operation_scope(
+            logger=fake_logger,
             function_name="fn",
             operation="op",
         )
@@ -465,7 +469,9 @@ class TestDecoratorsFullCoverage:
 
         tm.ok(already_result())
 
-        @d.railway(error_code=cast("str", 123))
+        railway_fn = getattr(d, "railway")
+
+        @railway_fn(error_code="123")
         def fails() -> int:
             msg = "x"
             raise RuntimeError(msg)
@@ -530,10 +536,11 @@ class TestDecoratorsFullCoverage:
                 "retry_on_status_codes": [],
             },
         )
-        result = d._execute_retry_loop(
+        execute_retry_loop2 = getattr(d, "_execute_retry_loop")
+        result = execute_retry_loop2(
             always_fails,
             "always_fails",
-            cast("p.Logger", fake_logger),
+            fake_logger,
             retry_settings=cfg,
         )
         tm.that(result, is_=Exception)
@@ -542,13 +549,14 @@ class TestDecoratorsFullCoverage:
         def fn(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             return None
 
+        handle_retry_exhaustion2 = getattr(d, "_handle_retry_exhaustion")
         with pytest.raises(e.TimeoutError, match="failed after 2 attempts"):
-            d._handle_retry_exhaustion(
+            handle_retry_exhaustion2(
                 ValueError("last"),
                 fn,
                 2,
                 "ERR",
-                cast("p.Logger", fake_logger),
+                fake_logger,
             )
 
     def test_timeout_additional_success_and_reraise_timeout_paths(self) -> None:

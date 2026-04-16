@@ -9,11 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Annotated
 
-from pydantic import (
-    BeforeValidator,
-    Field,
-    computed_field,
-)
+from pydantic import BeforeValidator, Field, computed_field
 
 from flext_core import (
     FlextModelsBase as m,

@@ -13,8 +13,8 @@ from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import (
-    FlextConstantsPydantic as cp,
     FlextModelsBase as m,
+    FlextModelsPydantic as mp,
     FlextUtilitiesPydantic as up,
     t,
 )
@@ -189,7 +189,7 @@ class FlextModelsCollections:
         Non-frozen models are not hashable by design.
         """
 
-        model_config: ClassVar[cp.ConfigDict] = cp.ConfigDict(
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
             arbitrary_types_allowed=True,
             extra="forbid",
             validate_assignment=True,

@@ -16,9 +16,13 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core import FlextProtocolsBase, FlextProtocolsResult
 
 if TYPE_CHECKING:
-    from flext_core import FlextConstantsCqrs, FlextModelsHandler, FlextTypesServices
-    from flext_core._typings.base import FlextTypingBase
-    from flext_core._typings.containers import FlextTypingContainers
+    from flext_core import (
+        FlextConstantsCqrs,
+        FlextModelsHandler,
+        FlextTypesServices,
+        FlextTypingBase,
+        FlextTypingContainers,
+    )
 
 
 class FlextProtocolsHandler:

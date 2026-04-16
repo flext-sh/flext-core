@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from enum import StrEnum, unique
-from typing import NoReturn, cast, override
+from typing import NoReturn, override
 
 import pytest
 
@@ -35,10 +35,20 @@ class TestUtilitiesCollectionFullCoverage:
         def __len__(self) -> int:
             return 1
 
-    class _BadSequence:
+    class _BadSequence(Sequence[str]):
+        @override
         def __iter__(self) -> Iterator[str]:
             msg = "iter failed"
             raise TypeError(msg)
+
+        @override
+        def __getitem__(self, index: int | slice) -> str | Sequence[str]:
+            msg = "iter failed"
+            raise TypeError(msg)
+
+        @override
+        def __len__(self) -> int:
+            return 1
 
     class _BadCopyDict(UserDict[str, t.RecursiveContainer]):
         @override
@@ -68,31 +78,23 @@ class TestUtilitiesCollectionFullCoverage:
         assert isinstance(t.ConfigMap({"a": 1}), t.ConfigMap)
         not_found = u.find({"a": 1}, lambda value: value == 2)
         tm.fail(not_found)
-        nested = u._merge_deep_single_key(
-            cast(
-                "t.MutableRecursiveContainerMapping",
-                {"x": self._BadCopyDict({"a": 1})},
-            ),
-            "x",
-            cast("t.RecursiveContainer", {"b": 2}),
-        )
+        target: t.MutableRecursiveContainerMapping = {"x": self._BadCopyDict({"a": 1})}
+        nested = u._merge_deep_single_key(target, "x", {"b": 2})
         tm.ok(nested)
         deep = u.merge_mappings(
-            cast("t.RecursiveContainerMapping", {"x": self._BadCopyDict({"a": 1})}),
-            cast("t.RecursiveContainerMapping", {"x": {"b": 2}}),
+            {"x": self._BadCopyDict({"a": 1})},
+            {"x": {"b": 2}},
             strategy="deep",
         )
         tm.ok(deep)
         with pytest.raises(TypeError, match="iterable"):
             _ = u.merge_mappings(
-                cast("t.RecursiveContainerMapping", None),
+                None,
                 {"x": 1},
                 strategy="deep",
             )
 
     def test_process_outer_exception_and_coercion_branches(self) -> None:
+        bad_seq: t.StrSequence = self._BadSequence()
         with pytest.raises(TypeError, match="iter failed"):
-            _ = u.process(
-                cast("t.StrSequence", self._BadSequence()),
-                lambda x: x,
-            )
+            _ = u.process(bad_seq, lambda x: x)

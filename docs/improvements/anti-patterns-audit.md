@@ -228,7 +228,7 @@ ROOT IMPORT PATTERN (ECOSYSTEM STANDARD)
     from flext_core import r, p, FlextContainer
 
 ❌ FORBIDDEN - Never use internal module imports (for ecosystem):
-    from flext_core.result import r  # Breaks ecosystem
+    from flext_core import r  # Breaks ecosystem
 """
 ```
 
@@ -452,8 +452,8 @@ class FlextSettings(BaseSettings):
 ```python
 class FlextSettings(BaseSettings):
     # Pydantic automatically validates all fields
-    timeout: int = Field(gt=0)
-    log_level: str = Field(pattern="^(DEBUG|INFO|WARNING|ERROR)$")
+    timeout: int = m.Field(gt=0)
+    log_level: str = m.Field(pattern="^(DEBUG|INFO|WARNING|ERROR)$")
 ```
 
 **Verification**: ✅ ACCURATE

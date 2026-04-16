@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar, cast
+from typing import Annotated, ClassVar
 
 import pytest
 from hypothesis import given, settings, strategies as st
@@ -66,12 +66,11 @@ class Testr:
             m.Field(description="Input value for result operation"),
         ]
         is_success_expected: Annotated[
-            bool,
-            m.Field(default=True, description="Expected success state"),
+            bool, m.Field(description="Expected success state")
         ] = True
         expected_result: Annotated[
             t.RecursiveContainer | None,
-            m.Field(default=None, description="Optional expected result payload"),
+            m.Field(description="Optional expected result payload"),
         ] = None
 
         def __init__(
@@ -746,10 +745,7 @@ class Testr:
         )
         tm.that(
             response,
-            eq=cast(
-                "t.Core.Tests.TestobjectSerializable",
-                {"status": 200, "data": "hello"},
-            ),
+            eq={"status": 200, "data": "hello"},
         )
 
     @given(x=st.integers(min_value=-1000, max_value=1000))

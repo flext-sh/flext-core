@@ -145,8 +145,8 @@ from flext_core import s, r, m, c
 
 # Define domain entity
 class User(m.Entity):
-    name: str = Field(..., min_length=1)
-    email: str = Field(..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
+    name: str = m.Field(..., min_length=1)
+    email: str = m.Field(..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
 
 
 # Create service with DI

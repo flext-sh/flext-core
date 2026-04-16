@@ -16,7 +16,7 @@ import operator
 from collections.abc import Mapping, MutableSequence, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, cast
+from typing import Annotated
 
 from flext_tests import tm
 from tests import m, t, u
@@ -196,13 +196,13 @@ class UtilitiesMapperCoverage100Namespace:
 
         @staticmethod
         def _to_json_safe(value: t.ValueOrModel) -> t.RecursiveContainer:
-            if isinstance(value, m.Value):
-                return cast("t.RecursiveContainer", value.model_dump(mode="json"))
+            if isinstance(value, m.BaseModel):
+                return value.model_dump(mode="json")
             if isinstance(value, Path):
                 return value.as_posix()
             if isinstance(value, datetime):
                 return value.isoformat()
-            return cast("t.RecursiveContainer", value)
+            return value
 
         def test_to_str(self) -> None:
             """Test to_str."""
@@ -218,10 +218,7 @@ class UtilitiesMapperCoverage100Namespace:
             assert "obj" in res
             tm.that(
                 res["obj"],
-                eq=cast(
-                    "t.Core.Tests.TestobjectSerializable",
-                    {"name": "test", "value": 1},
-                ),
+                eq={"name": "test", "value": 1},
             )
 
         def test_convert_to_json_safe(self) -> None:
@@ -239,10 +236,7 @@ class UtilitiesMapperCoverage100Namespace:
 
             tm.that(
                 res["obj"],
-                eq=cast(
-                    "t.Core.Tests.TestobjectSerializable",
-                    {"name": "test", "value": 1},
-                ),
+                eq={"name": "test", "value": 1},
             )
             tm.that(res["path"], eq="/tmp/example")
             tm.that(res["when"], eq="2026-03-12T10:30:45+00:00")
@@ -254,10 +248,7 @@ class UtilitiesMapperCoverage100Namespace:
                 res[key] = self._to_json_safe(val)
             tm.that(
                 res["a"],
-                eq=cast(
-                    "t.Core.Tests.TestobjectSerializable",
-                    {"name": "test", "value": 1},
-                ),
+                eq={"name": "test", "value": 1},
             )
 
         def test_convert_list_to_json(self) -> None:
@@ -272,10 +263,7 @@ class UtilitiesMapperCoverage100Namespace:
                 res.append(item_dict)
             tm.that(
                 res[0]["a"],
-                eq=cast(
-                    "t.Core.Tests.TestobjectSerializable",
-                    {"name": "test", "value": 1},
-                ),
+                eq={"name": "test", "value": 1},
             )
 
     class TestuMapperAdvanced:
@@ -285,7 +273,7 @@ class UtilitiesMapperCoverage100Namespace:
             """Test extraction via model_dump."""
 
             class Dumpable(m.BaseModel):
-                a: Annotated[int, m.Field(default=1, description="Dumpable value")] = 1
+                a: Annotated[int, m.Field(description="Dumpable value")] = 1
 
             obj = Dumpable()
             tm.that(u.extract(obj, "a").value, eq=1)

@@ -438,10 +438,10 @@ from flext_core import r, p
 from pydantic import BaseModel, Field
 
 
-class UserRegistration(BaseModel):
-    email: str = Field(pattern=r"^[^@]+@[^@]+\.[^@]+$")
-    password: str = Field(min_length=8)
-    username: str = Field(min_length=3, max_length=20)
+class UserRegistration(m.BaseModel):
+    email: str = m.Field(pattern=r"^[^@]+@[^@]+\.[^@]+$")
+    password: str = m.Field(min_length=8)
+    username: str = m.Field(min_length=3, max_length=20)
 
 
 def validate_registration(data: dict) -> p.Result[UserRegistration]:

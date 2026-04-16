@@ -67,10 +67,7 @@ class TestModels:
             t.StrSequence,
             m.Field(description="Expected validation check labels"),
         ]
-        description: Annotated[
-            str,
-            m.Field(default="", description="Scenario description"),
-        ] = ""
+        description: Annotated[str, m.Field(description="Scenario description")] = ""
 
     class SampleAggregate(m.AggregateRoot):
         """Sample aggregate root for testing."""

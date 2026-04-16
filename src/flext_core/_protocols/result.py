@@ -326,49 +326,42 @@ class FlextProtocolsResult:
     class Result[T](ABC):
         """Nominal public result contract for direct static typing across FLEXT.
 
-        Structural helper protocols remain available for narrow consumers, while
-        concrete carriers inherit this ABC to avoid Protocol metaclass conflicts
-        with Pydantic models.
+        Nominal typing: FlextResult inherits from this ABC, so type checking
+        uses standard IS-A relationship rather than structural Protocol
+        conformance. This avoids pyrefly's recursive conformance issue with
+        Protocol self-references in monadic return types.
         """
 
         @property
         @abstractmethod
-        def error(self) -> str | None:
-            """Error message (available on failure, None on success)."""
+        def error(self) -> str | None: ...
 
         @property
         @abstractmethod
-        def error_code(self) -> str | None:
-            """Structured error code when available."""
+        def error_code(self) -> str | None: ...
 
         @property
         @abstractmethod
-        def error_data(self) -> FlextTypingContainers.ConfigMap | None:
-            """Structured error metadata when available."""
+        def error_data(self) -> FlextTypingContainers.ConfigMap | None: ...
 
         @property
         @abstractmethod
-        def success(self) -> bool:
-            """Success status (strict: True only when operation succeeded)."""
+        def success(self) -> bool: ...
 
         @property
         @abstractmethod
-        def exception(self) -> BaseException | None:
-            """Captured exception when available."""
+        def exception(self) -> BaseException | None: ...
 
         @property
         @abstractmethod
-        def failure(self) -> bool:
-            """Failure status (strict: not success)."""
+        def failure(self) -> bool: ...
 
         @property
         @abstractmethod
-        def value(self) -> T:
-            """Result value (available on success, strictly typed as T)."""
+        def value(self) -> T: ...
 
         @abstractmethod
-        def __enter__(self) -> Self:
-            """Context manager entry."""
+        def __enter__(self) -> Self: ...
 
         @abstractmethod
         def __exit__(
@@ -376,8 +369,7 @@ class FlextProtocolsResult:
             _exc_type: type[BaseException] | None,
             _exc_val: BaseException | None,
             _exc_tb: TracebackType | None,
-        ) -> None:
-            """Context manager exit."""
+        ) -> None: ...
 
         @overload
         def __or__(self, default: T) -> T: ...
@@ -386,82 +378,58 @@ class FlextProtocolsResult:
         def __or__[D](self, default: D) -> T | D: ...
 
         @abstractmethod
-        def __or__[D](self, default: D) -> T | D:
-            """Return the success value or a default via ``|`` syntax."""
+        def __or__[D](self, default: D) -> T | D: ...
 
         @abstractmethod
-        def unwrap(self) -> T:
-            """Unwrap success value (raises on failure)."""
+        def unwrap(self) -> T: ...
 
-        @overload
-        def unwrap_or(self, default: T) -> T: ...
-
-        @overload
+        @abstractmethod
         def unwrap_or[D](self, default: D) -> T | D: ...
 
         @abstractmethod
-        def unwrap_or[D](self, default: D) -> T | D:
-            """Return success value or the provided default."""
-
-        @overload
-        def unwrap_or_else(self, func: Callable[[], T]) -> T: ...
-
-        @overload
         def unwrap_or_else[D](self, func: Callable[[], D]) -> T | D: ...
-
-        @abstractmethod
-        def unwrap_or_else[D](self, func: Callable[[], D]) -> T | D:
-            """Return success value or the result of the fallback callable."""
 
         @abstractmethod
         def flat_map[U](
             self,
             func: Callable[[T], FlextProtocolsResult.Result[U]],
-        ) -> FlextProtocolsResult.Result[U]:
-            """Chain operations that return public FLEXT results."""
+        ) -> FlextProtocolsResult.Result[U]: ...
 
         @abstractmethod
         def fold[U](
             self,
             on_failure: Callable[[str], U],
             on_success: Callable[[T], U],
-        ) -> U:
-            """Reduce result into a single value."""
+        ) -> U: ...
 
         @abstractmethod
         def lash(
             self,
             func: Callable[[str], FlextProtocolsResult.Result[T]],
-        ) -> FlextProtocolsResult.Result[T]:
-            """Recover from failure using another public result."""
+        ) -> FlextProtocolsResult.Result[T]: ...
 
         @abstractmethod
         def map[U](
             self,
             func: Callable[[T], U],
-        ) -> FlextProtocolsResult.Result[U]:
-            """Transform the success value."""
+        ) -> FlextProtocolsResult.Result[U]: ...
 
         @abstractmethod
         def flow_through(
             self,
             *funcs: Callable[[T], FlextProtocolsResult.Result[T]],
-        ) -> FlextProtocolsResult.Result[T]:
-            """Apply multiple Result-returning steps in sequence."""
+        ) -> FlextProtocolsResult.Result[T]: ...
 
         @abstractmethod
         def map_error(
             self,
             func: Callable[[str], str],
-        ) -> FlextProtocolsResult.Result[T]:
-            """Transform the failure message."""
+        ) -> FlextProtocolsResult.Result[T]: ...
 
         @overload
         def map_or(self, default: None, func: None = None) -> T | None: ...
-
         @overload
         def map_or[U](self, default: U, func: None = None) -> T | U: ...
-
         @overload
         def map_or[U](self, default: U, func: Callable[[T], U]) -> U: ...
 
@@ -470,70 +438,60 @@ class FlextProtocolsResult:
             self,
             default: U,
             func: Callable[[T], U] | None = None,
-        ) -> U | T:
-            """Map success value or return default."""
+        ) -> U | T: ...
 
         @abstractmethod
         def tap(
             self,
             func: Callable[[T], None],
-        ) -> FlextProtocolsResult.Result[T]:
-            """Apply a side effect to the success value."""
+        ) -> FlextProtocolsResult.Result[T]: ...
 
         @abstractmethod
-        def tap_error(self, func: Callable[[str], None]) -> Self:
-            """Apply a side effect to the failure value."""
+        def tap_error(self, func: Callable[[str], None]) -> Self: ...
 
         @abstractmethod
         def filter(
             self,
             predicate: Callable[[T], bool],
-        ) -> FlextProtocolsResult.Result[T]:
-            """Keep the value only when the predicate passes."""
+        ) -> FlextProtocolsResult.Result[T]: ...
 
         @abstractmethod
         def recover[U](
             self,
             func: Callable[[str], U],
-        ) -> FlextProtocolsResult.Result[T | U]:
-            """Recover a failure into a success value."""
+        ) -> FlextProtocolsResult.Result[T | U]: ...
 
         @abstractmethod
         def to_model[U: FlextModelsPydantic.BaseModel](
             self,
             model: type[U],
-        ) -> FlextProtocolsResult.Result[U]:
-            """Convert the success payload into a validated model."""
+        ) -> FlextProtocolsResult.Result[U]: ...
 
         @abstractmethod
         def to_type[U](
             self,
             adapter: FlextModelsPydantic.TypeAdapter[U],
-        ) -> FlextProtocolsResult.Result[U]:
-            """Convert the success payload through a cached type adapter."""
+        ) -> FlextProtocolsResult.Result[U]: ...
 
         @abstractmethod
         def unwrap_model[U: FlextModelsPydantic.BaseModel](
             self,
             model: type[U],
-        ) -> U:
-            """Convert to a validated model and unwrap the result."""
+        ) -> U: ...
 
         @abstractmethod
         def unwrap_type[U](
             self,
             adapter: FlextModelsPydantic.TypeAdapter[U],
-        ) -> U:
-            """Convert through a type adapter and unwrap the result."""
+        ) -> U: ...
 
         @abstractmethod
-        def __bool__(self) -> bool:
-            """Boolean conversion based on success state."""
+        def __bool__(self) -> bool: ...
 
         @override
-        @abstractmethod
         def __repr__(self) -> str:
-            """Human-readable representation."""
+            """Default repr for Result ABC."""
+            return f"{type(self).__name__}(success={self.success})"
 
     # ------------------------------------------------------------------
     # Auxiliary protocols (unchanged)

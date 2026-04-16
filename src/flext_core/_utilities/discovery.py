@@ -13,7 +13,7 @@ import operator
 from collections.abc import MutableSequence, Sequence
 from types import ModuleType
 
-from flext_core import c, m, t
+from flext_core import FlextModelsContainer, c, t
 
 
 class FlextUtilitiesDiscovery:
@@ -22,7 +22,7 @@ class FlextUtilitiesDiscovery:
     @staticmethod
     def scan_module(
         module: ModuleType,
-    ) -> Sequence[tuple[str, m.FactoryDecoratorConfig]]:
+    ) -> Sequence[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]]:
         """Scan module for @factory()-decorated functions, sorted by name."""
         return sorted(
             [
@@ -34,7 +34,7 @@ class FlextUtilitiesDiscovery:
                 and hasattr(func, c.FACTORY_ATTR)
                 and isinstance(
                     (config_raw := vars(func).get(c.FACTORY_ATTR)),
-                    m.FactoryDecoratorConfig,
+                    FlextModelsContainer.FactoryDecoratorConfig,
                 )
             ],
             key=operator.itemgetter(0),

@@ -15,7 +15,6 @@ from __future__ import annotations
 import math
 import warnings
 from collections.abc import Sequence
-from typing import cast
 
 import pytest
 
@@ -38,10 +37,10 @@ class TestDeprecationWarnings:
         ]
         for val in test_cases:
             normalized_result = u.normalize_to_container(
-                cast("t.RuntimeData", val),
+                val,
             )
             strict_result = u.normalize_to_container(
-                cast("t.RuntimeData", val),
+                val,
             )
             tm.that(type(normalized_result), eq=type(strict_result))
 
@@ -77,12 +76,12 @@ class TestDeprecationWarnings:
     def test_normalize_to_container_unknown_becomes_str(self) -> None:
         """Unknown objects are converted to string representation."""
         result = u.normalize_to_container(
-            cast("t.RuntimeData", "normalized"),
+            "normalized",
         )
         tm.that(result, is_=str)
 
     def test_normalize_to_metadata_returns_metadata_value(self) -> None:
-        for val in cast("list[t.RecursiveContainer]", ["str", 42, None]):
+        for val in ["str", 42, None]:
             metadata = u.normalize_to_metadata(val)
             tm.that(metadata, is_=(str, int, float, bool, list, dict))
         list_meta = u.normalize_to_metadata([1])

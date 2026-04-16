@@ -16,7 +16,8 @@ from __future__ import annotations
 
 from pydantic import (
     AfterValidator,
-    BaseModel,
+    BaseConfig,
+    BaseModel as PydanticBaseModel,
     BeforeValidator,
     ConfigDict,
     Field,
@@ -27,7 +28,7 @@ from pydantic import (
     PlainSerializer,
     PlainValidator,
     PrivateAttr,
-    RootModel,
+    RootModel as PydanticRootModel,
     SkipValidation,
     TypeAdapter,
     WrapSerializer,
@@ -39,9 +40,10 @@ from pydantic_core import (
     SchemaValidator,
 )
 from pydantic_settings import (
-    BaseSettings,
+    BaseSettings as PydanticBaseSettings,
     EnvSettingsSource,
     PydanticBaseSettingsSource,
+    SettingsConfigDict,
 )
 
 
@@ -56,17 +58,20 @@ class FlextModelsPydantic:
         RootModel: Container model for single validated values/collections
     """
 
-    class BaseModel(BaseModel):
+    class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
-    class BaseSettings(BaseSettings):
+    class BaseSettings(PydanticBaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
-    class RootModel[RootValueT](RootModel[RootValueT]):
+    class RootModel[RootValueT](PydanticRootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
 
     # Pydantic field utilities
     ConfigDict = ConfigDict
+    BaseConfig = BaseConfig
+    SettingsConfigDict = SettingsConfigDict
+
     Field = Field
     PrivateAttr = PrivateAttr
     SkipValidation = SkipValidation

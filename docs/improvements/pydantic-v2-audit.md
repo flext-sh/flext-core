@@ -23,12 +23,12 @@ All 10 documented patterns verified against actual implementation:
 
 | Pattern                         | Guide Description              | Source Verification       | Status      |
 | ------------------------------- | ------------------------------ | ------------------------- | ----------- |
-| 1. Basic Model with Constraints | Field() with constraints       | Used throughout models.py | ✅ VERIFIED |
+| 1. Basic Model with Constraints | m.Field() with constraints       | Used throughout models.py | ✅ VERIFIED |
 | 2. ConfigDict for Settings      | model_config = ConfigDict()    | settings.py:178, models.py  | ✅ VERIFIED |
 | 3. Field Validators             | @field_validator decorator     | 20+ usages verified       | ✅ VERIFIED |
 | 4. Model Validators             | @model_validator decorator     | 10+ usages verified       | ✅ VERIFIED |
-| 5. Computed Fields              | @computed_field decorator      | 10 usages verified        | ✅ VERIFIED |
-| 6. Annotated Types              | Annotated[type, Field(...)]    | typings.py:311-350+       | ✅ VERIFIED |
+| 5. Computed Fields              | @u.computed_field decorator      | 10 usages verified        | ✅ VERIFIED |
+| 6. Annotated Types              | Annotated[type, m.Field(...)]    | typings.py:311-350+       | ✅ VERIFIED |
 | 7. BaseSettings                 | pydantic_settings.BaseSettings | settings.py:39              | ✅ VERIFIED |
 | 8. Custom Types                 | Field validators + Annotated   | models.py patterns        | ✅ VERIFIED |
 | 9. Discriminated Unions         | Discriminator()                | models.py:3582-3585       | ✅ VERIFIED |
@@ -168,7 +168,7 @@ models.py:1499: @model_validator(mode="after")
 
 **Guide Claims**:
 
-- Use `@computed_field` for derived properties
+- Use `@u.computed_field` for derived properties
 - Decorated as `@property`
 - Automatically included in serialization
 
@@ -177,20 +177,20 @@ models.py:1499: @model_validator(mode="after")
 ```bash
 $ grep -n "computed_field" src/flext_core/*.py
 settings.py:19:    computed_field,
-settings.py:574:  @computed_field
-settings.py:579:  @computed_field
-settings.py:588:  @computed_field
-settings.py:593:  @computed_field
+settings.py:574:  @u.computed_field
+settings.py:579:  @u.computed_field
+settings.py:588:  @u.computed_field
+settings.py:593:  @u.computed_field
 models.py:44:   computed_field,
-models.py:379:  @computed_field
-models.py:425:  @computed_field
-models.py:707:  @computed_field
-models.py:1008: @computed_field
+models.py:379:  @u.computed_field
+models.py:425:  @u.computed_field
+models.py:707:  @u.computed_field
+models.py:1008: @u.computed_field
 ```
 
 **Verification**: ✅ ACCURATE
 
-- 10 `@computed_field` decorators verified
+- 10 `@u.computed_field` decorators verified
 - Used in both settings.py (4 instances) and models.py (6 instances)
 - Pattern matches Pydantic v2 specifications
 
@@ -198,7 +198,7 @@ models.py:1008: @computed_field
 
 **Guide Claims**:
 
-- Define semantic types with `Annotated[type, Field(...)]`
+- Define semantic types with `Annotated[type, m.Field(...)]`
 - typings.py contains 30+ semantic types
 
 **Source Code Evidence** (typings.py:311-350):
@@ -299,7 +299,7 @@ $ grep -n "Discriminator" src/flext_core/models.py
 ```python
 # From models.py - Command class with Literal type
 class Command(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
-    message_type: Literal["command"] = Field(
+    message_type: Literal["command"] = m.Field(
         default="command",
         frozen=True,
         description="Message type discriminator - always 'command'",
@@ -307,8 +307,8 @@ class Command(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
 
 
 # Query class with different Literal
-class Query(BaseModel):
-    message_type: Literal["query"] = Field(
+class Query(m.BaseModel):
+    message_type: Literal["query"] = m.Field(
         default="query",
         frozen=True,
         description="Message type discriminator - always 'query'",
@@ -359,7 +359,7 @@ $ grep -rn "class Config:" src/flext_core/*.py
 - ✅ **71 Pydantic v2 pattern usages** (model_dump, model_validate, ConfigDict)
 - ✅ **20+ @field_validator decorators** (v2 only)
 - ✅ **10+ @model_validator decorators** (v2 only)
-- ✅ **10 @computed_field decorators** (v2 only)
+- ✅ **10 @u.computed_field decorators** (v2 only)
 - ✅ **5+ Annotated semantic types** defined
 - ✅ **Discriminator for polymorphism** implemented
 - ❌ **ZERO v1 patterns** (.dict, .JSON, .parse_obj, class Config, @validator)
@@ -377,7 +377,7 @@ ______________________________________________________________________
 | ConfigDict/ConfigDict | 2+          | settings.py, models.py | ✅ 100%  |
 | @field_validator              | 20+         | settings.py, models.py | ✅ 100%  |
 | @model_validator              | 10+         | settings.py, models.py | ✅ 100%  |
-| @computed_field               | 10          | settings.py, models.py | ✅ 100%  |
+| @u.computed_field               | 10          | settings.py, models.py | ✅ 100%  |
 | Annotated types               | 30+         | typings.py           | ✅ 100%  |
 | BaseSettings                  | 1           | settings.py            | ✅ 100%  |
 | Discriminator                 | 1           | models.py            | ✅ 100%  |
@@ -557,7 +557,7 @@ The Pydantic v2 Patterns guide is **EXCELLENT** and represents **gold standard**
 **Critical Discovery**: FLEXT-Core demonstrates **complete Pydantic v2 adoption** with:
 
 - 71+ v2 pattern usages
-- 40+ decorator usages (@field_validator, @model_validator, @computed_field)
+- 40+ decorator usages (@field_validator, @model_validator, @u.computed_field)
 - 30+ Annotated semantic types
 - **ZERO v1 legacy code**
 

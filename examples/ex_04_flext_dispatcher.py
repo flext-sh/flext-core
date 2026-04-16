@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 from logging import ERROR
-from typing import cast, override
+from typing import override
 
 from examples import (
     Ex04AutoCommand,
@@ -108,9 +108,9 @@ class Ex04DispatchDsl(Examples):
     class AutoHandler:
         """Auto-discovery handler selected through can_handle."""
 
-        def can_handle(self, message: type | p.Routable) -> bool:
-            """Report support for AutoCommand class or instance."""
-            return bool(message)
+        def can_handle(self, message_type: type) -> bool:
+            """Report support for AutoCommand message type."""
+            return message_type is Ex04AutoCommand
 
         def handle(self, message: p.Routable) -> t.ScalarOrModel:
             """Handle discovered command and return a synthetic payload."""
@@ -172,18 +172,17 @@ class _Ex04Exercise(Ex04DispatchDsl):
         self.section("register_and_dispatch")
         dispatcher = u.build_dispatcher()
         self.check("constructor.protocol", isinstance(dispatcher, p.Dispatcher))
-        reg_handle = dispatcher.register_handler(
-            cast("p.Handle", self.CreateUserHandler())
-        )
+        create_user_handler: p.Handle = self.CreateUserHandler()
+        reg_handle = dispatcher.register_handler(create_user_handler)
         self.check("register(Handle).is_success", reg_handle.success)
+        get_user_dispatcher: p.DispatchMessage = self.GetUserDispatcher()
         reg_dispatch_msg = dispatcher.register_handler(
-            cast("p.DispatchMessage", self.GetUserDispatcher()),
+            get_user_dispatcher,
             is_event=False,
         )
         self.check("register(DispatchMessage).is_success", reg_dispatch_msg.success)
-        reg_execute = dispatcher.register_handler(
-            cast("p.Execute", self.DeleteExecutor())
-        )
+        delete_executor: p.Execute = self.DeleteExecutor()
+        reg_execute = dispatcher.register_handler(delete_executor)
         self.check("register(Execute).is_success", reg_execute.success)
         reg_callable = dispatcher.register_handler(self.PingCallable())
         self.check("register(callable).is_success", reg_callable.success)
@@ -204,9 +203,8 @@ class _Ex04Exercise(Ex04DispatchDsl):
         """Cover can_handle route discovery for dispatch fallback."""
         self.section("auto_discovery")
         dispatcher = u.build_dispatcher()
-        reg_auto = dispatcher.register_handler(
-            cast("p.AutoDiscoverableHandler", self.AutoHandler()),
-        )
+        auto_handler: p.AutoDiscoverableHandler = self.AutoHandler()
+        reg_auto = dispatcher.register_handler(auto_handler)
         self.check("register(can_handle).is_success", reg_auto.success)
         auto_r = dispatcher.dispatch(Ex04AutoCommand(payload="fallback"))
         self.check("dispatch(auto_discovery).is_success", auto_r.success)
@@ -236,13 +234,15 @@ class _Ex04Exercise(Ex04DispatchDsl):
         dispatcher = u.build_dispatcher()
         subscriber = self.UserCreatedSubscriber()
         audit_subscriber = self.AuditSubscriber()
+        event_subscriber: p.Handle = subscriber
         reg_user = dispatcher.register_handler(
-            cast("p.Handle", subscriber),
+            event_subscriber,
             is_event=True,
         )
         self.check("register(event_subscriber).is_success", reg_user.success)
+        audit_handler: p.DispatchMessage = audit_subscriber
         reg_audit = dispatcher.register_handler(
-            cast("p.DispatchMessage", audit_subscriber),
+            audit_handler,
             is_event=True,
         )
         self.check("register(audit_subscriber).is_success", reg_audit.success)

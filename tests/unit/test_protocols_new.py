@@ -20,17 +20,16 @@ from flext_tests import tm
 from tests import e, m, p, r, u
 
 if TYPE_CHECKING:
-    from tests.protocols import TestsFlextCoreProtocols
-    from tests.typings import TestsFlextCoreTypes
-
-
-def _as_protocol_subject[T](value: T) -> T:
-    """Normalize a concrete sample to the canonical protocol-check subject type."""
-    return value
+    from tests import TestsFlextCoreProtocols, TestsFlextCoreTypes
 
 
 class TestFlextProtocols:
     """Tests for all protocol groups accessible via p.* facade."""
+
+    @staticmethod
+    def _as_protocol_subject[T](value: T) -> T:
+        """Normalize a concrete sample to the canonical protocol-check subject type."""
+        return value
 
     # ------------------------------------------------------------------
     # 1. Protocol existence & accessibility through facade
@@ -190,12 +189,12 @@ class TestFlextProtocols:
 
     def test_flext_result_satisfies_success_checkable(self) -> None:
         """R (via r[T]) satisfies p.SuccessCheckable."""
-        result = _as_protocol_subject(r[str].ok("hello"))
+        result = self._as_protocol_subject(r[str].ok("hello"))
         tm.that(u.check_protocol_compliance(result, p.SuccessCheckable), eq=True)
 
     def test_flext_result_satisfies_has_model_dump(self) -> None:
         """R satisfies p.HasModelDump (it's a BaseModel)."""
-        result = _as_protocol_subject(r[str].ok("hello"))
+        result = self._as_protocol_subject(r[str].ok("hello"))
         tm.that(u.check_protocol_compliance(result, p.HasModelDump), eq=True)
 
     def test_pydantic_model_satisfies_has_model_dump(self) -> None:
@@ -204,7 +203,7 @@ class TestFlextProtocols:
         class _SampleModel(m.Value):
             name: str = "test"
 
-        instance = _as_protocol_subject(_SampleModel())
+        instance = self._as_protocol_subject(_SampleModel())
         tm.that(u.check_protocol_compliance(instance, p.HasModelDump), eq=True)
 
     def test_flushable_conformance(self) -> None:
@@ -214,7 +213,7 @@ class TestFlextProtocols:
             def flush(self) -> None:
                 pass
 
-        instance = _as_protocol_subject(_Flusher())
+        instance = self._as_protocol_subject(_Flusher())
         tm.that(u.check_protocol_compliance(instance, p.Flushable), eq=True)
 
     def test_auto_discoverable_handler_conformance(self) -> None:
@@ -224,7 +223,7 @@ class TestFlextProtocols:
             def can_handle(self, message_type: type) -> bool:
                 return True
 
-        instance = _as_protocol_subject(_Handler())
+        instance = self._as_protocol_subject(_Handler())
         tm.that(
             u.check_protocol_compliance(instance, p.AutoDiscoverableHandler),
             eq=True,
@@ -237,7 +236,7 @@ class TestFlextProtocols:
             def __call__(self) -> str:
                 return "service"
 
-        instance = _as_protocol_subject(_Provider())
+        instance = self._as_protocol_subject(_Provider())
         tm.that(u.check_protocol_compliance(instance, p.ProviderLike), eq=True)
 
     def test_dispatchable_service_conformance(self) -> None:
@@ -251,7 +250,7 @@ class TestFlextProtocols:
             ) -> TestsFlextCoreProtocols.Model:
                 return message
 
-        instance = _as_protocol_subject(_Svc())
+        instance = self._as_protocol_subject(_Svc())
         tm.that(
             u.check_protocol_compliance(instance, p.DispatchableService),
             eq=True,
@@ -553,7 +552,7 @@ class TestFlextProtocols:
             def failure(self) -> bool:
                 return False
 
-        instance = _as_protocol_subject(_Outcome())
+        instance = self._as_protocol_subject(_Outcome())
         tm.that(u.check_protocol_compliance(instance, p.SuccessCheckable), eq=True)
 
     def test_structured_error_custom_implementation(self) -> None:
@@ -576,7 +575,7 @@ class TestFlextProtocols:
                 return domain == "VALIDATION"
 
         instance = _StructErr()
-        subject = _as_protocol_subject(instance)
+        subject = self._as_protocol_subject(instance)
         tm.that(u.check_protocol_compliance(subject, p.StructuredError), eq=True)
         tm.that(instance.error_domain, eq="VALIDATION")
         tm.that(instance.matches_error_domain("VALIDATION"), eq=True)
@@ -585,7 +584,7 @@ class TestFlextProtocols:
     def test_structured_error_concrete_exception_implementation(self) -> None:
         """Public exceptions must satisfy the same structured error protocol."""
         instance = e.ValidationError("Field required", field="email")
-        subject = _as_protocol_subject(instance)
+        subject = self._as_protocol_subject(instance)
 
         tm.that(u.check_protocol_compliance(subject, p.StructuredError), eq=True)
         tm.that(instance.error_domain, eq="VALIDATION")
@@ -599,7 +598,7 @@ class TestFlextProtocols:
             value: str = "AUTH"
             name: str = "AuthError"
 
-        instance = _as_protocol_subject(_ErrDomain())
+        instance = self._as_protocol_subject(_ErrDomain())
         tm.that(u.check_protocol_compliance(instance, p.ErrorDomainProtocol), eq=True)
 
     def test_configurable_custom_implementation(self) -> None:
@@ -612,7 +611,7 @@ class TestFlextProtocols:
             ) -> Self:
                 return self
 
-        instance = _as_protocol_subject(_Configurable())
+        instance = self._as_protocol_subject(_Configurable())
         tm.that(u.check_protocol_compliance(instance, p.Configurable), eq=True)
 
     def test_handle_protocol_custom_implementation(self) -> None:
@@ -629,7 +628,7 @@ class TestFlextProtocols:
             ):
                 return None
 
-        instance = _as_protocol_subject(_HandleImpl())
+        instance = self._as_protocol_subject(_HandleImpl())
         tm.that(u.check_protocol_compliance(instance, p.Handle), eq=True)
 
     def test_execute_protocol_custom_implementation(self) -> None:
@@ -646,7 +645,7 @@ class TestFlextProtocols:
             ):
                 return None
 
-        instance = _as_protocol_subject(_ExecImpl())
+        instance = self._as_protocol_subject(_ExecImpl())
         tm.that(u.check_protocol_compliance(instance, p.Execute), eq=True)
 
     # ------------------------------------------------------------------

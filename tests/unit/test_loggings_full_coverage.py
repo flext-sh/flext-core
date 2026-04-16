@@ -5,7 +5,7 @@ from __future__ import annotations
 import types
 from collections.abc import MutableSequence
 from pathlib import Path
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 import pytest
 
@@ -18,6 +18,8 @@ from tests import p, t, u
 
 class TestModule:
     class _FakeBindable:
+        name: str = "test"
+
         def __init__(self) -> None:
             self.calls: MutableSequence[
                 tuple[str, tuple[t.RecursiveContainer, ...], t.ScalarMapping]
@@ -27,7 +29,11 @@ class TestModule:
             self.calls.append(("bind", (), kwargs))
             return self
 
-        def unbind(self, *keys: str) -> TestModule._FakeBindable:
+        def new(self, **kwargs: t.Scalar) -> TestModule._FakeBindable:
+            self.calls.append(("new", (), kwargs))
+            return self
+
+        def unbind(self, *keys: str, safe: bool = False) -> TestModule._FakeBindable:
             self.calls.append(("unbind", keys, {}))
             return self
 
@@ -49,6 +55,26 @@ class TestModule:
 
         def critical(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
             self.calls.append(("critical", (message, *args), kwargs))
+
+        def exception(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
+            self.calls.append(("exception", (message, *args), kwargs))
+
+        def log(
+            self, level: str, message: str, *args: t.Scalar, **kwargs: t.Scalar
+        ) -> None:
+            self.calls.append(("log", (level, message, *args), kwargs))
+
+        def trace(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
+            self.calls.append(("trace", (message, *args), kwargs))
+
+        def build_exception_context(
+            self,
+            *,
+            exception: Exception | None,
+            exc_info: bool,
+            context: t.ScalarMapping,
+        ) -> t.ConfigMap:
+            return t.ConfigMap(root={})
 
     class _ContextVars:
         def __init__(self) -> None:
@@ -120,19 +146,18 @@ class TestModule:
             f_locals: ClassVar[t.RecursiveContainerMapping] = {}
             f_code = _Code()
 
+        extract_class_name = getattr(u, "_extract_class_name")
         tm.that(
-            u._extract_class_name(
-                cast("types.FrameType", cast("t.RecursiveContainer", _Frame())),
+            extract_class_name(
+                _Frame(),
             ),
             none=True,
         )
 
     def test_loggings_source_and_log_error_paths(self) -> None:
+        create_bound_logger = getattr(u, "create_bound_logger")
         fake = self._FakeBindable()
-        logger = u.create_bound_logger(
-            "x",
-            cast("p.Logger", cast("t.RecursiveContainer", fake)),
-        )
+        logger = create_bound_logger("x", fake)
 
         tm.that(u._caller_source_path(), none=True)
 
@@ -152,20 +177,17 @@ class TestModule:
             def exists(self) -> bool:
                 return False
 
+        find_workspace_root = getattr(u, "_find_workspace_root")
         tm.that(
-            u._find_workspace_root(
-                cast("Path", cast("t.RecursiveContainer", _NoMarkers(Path("/tmp")))),
+            find_workspace_root(
+                _NoMarkers(Path("/tmp")),
             ),
             none=True,
         )
-        logger_boom = u.create_bound_logger(
-            "x",
-            cast("p.Logger", cast("t.RecursiveContainer", self._FakeBindable())),
-        )
-        logger_boom._structlog_instance = cast(
-            "p.Logger",
-            cast("t.RecursiveContainer", self._FailingInfoBindable()),
-        )
+        boom_bindable = self._FakeBindable()
+        logger_boom = create_bound_logger("x", boom_bindable)
+        failing_bindable = self._FailingInfoBindable()
+        logger_boom._structlog_instance = failing_bindable
 
         failed = logger_boom._log("INFO", "msg")
         assert failed is not None
@@ -177,11 +199,9 @@ class TestModule:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        create_bound_logger = getattr(u, "create_bound_logger")
         fake = self._FakeBindable()
-        logger = u.create_bound_logger(
-            "x",
-            cast("p.Logger", cast("t.RecursiveContainer", fake)),
-        )
+        logger = create_bound_logger("x", fake)
 
         def _raise_cfg(_cls: type) -> p.Settings:
             msg = "cfg"
@@ -190,7 +210,7 @@ class TestModule:
         monkeypatch.setattr(
             FlextSettings,
             "fetch_global",
-            cast("t.RecursiveContainer", classmethod(_raise_cfg)),
+            classmethod(_raise_cfg),
         )
         tm.that(logger._should_include_stack_trace(), is_=bool)
         with_exception = logger.build_exception_context(
@@ -205,16 +225,11 @@ class TestModule:
             context={},
         )
         tm.that(with_exc_info, is_=t.ConfigMap)
-        broken = u.create_bound_logger(
-            "x",
-            cast("p.Logger", cast("t.RecursiveContainer", self._FakeBindable())),
-        )
+        broken_bindable = self._FakeBindable()
+        broken = create_bound_logger("x", broken_bindable)
 
         broken.exception("msg", exception=ValueError("x"), exc_info=True)
-        tracker = u.PerformanceTracker(
-            cast("p.Logger", cast("t.ProtocolSubject", logger)),
-            "op",
-        )
+        tracker = u.PerformanceTracker(logger, "op")
         with tracker:
             pass
         tracker.__exit__(RuntimeError, RuntimeError("x"), None)

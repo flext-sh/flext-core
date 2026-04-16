@@ -6,7 +6,7 @@ from collections.abc import (
     MutableSequence,
 )
 from types import SimpleNamespace
-from typing import cast, override
+from typing import override
 
 import pytest
 
@@ -33,10 +33,7 @@ class TestMixinsFullCoverage:
     @staticmethod
     def _mock_register_fail(_name: str) -> p.Result[bool]:
         """Mock _register_in_container that returns failure."""
-        return cast(
-            "r[bool]",
-            cast("t.RecursiveContainer", SimpleNamespace(failure=True, error=None)),
-        )
+        return r[bool].fail("mocked failure")
 
     @staticmethod
     def _validation_ok_true(v: t.RecursiveContainer) -> p.Result[bool]:
@@ -171,21 +168,22 @@ class TestMixinsFullCoverage:
         class _Service(x):
             @classmethod
             def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-                return cast(
-                    "p.RuntimeBootstrapOptions",
-                    cast(
-                        "t.RecursiveContainer",
-                        SimpleNamespace(
-                            settings_type=None,
-                            settings_overrides=None,
-                            context=None,
-                            services=None,
-                            wire_modules=["pkg"],
-                            resources={"res": lambda: "x"},
-                            factories={"fac": lambda: "y"},
-                        ),
-                    ),
-                )
+                opts = getattr(SimpleNamespace, "__new__")(SimpleNamespace)
+                opts.settings = None
+                opts.settings_type = None
+                opts.settings_overrides = None
+                opts.context = None
+                opts.dispatcher = None
+                opts.registry = None
+                opts.subproject = None
+                opts.services = None
+                opts.wire_modules = ["pkg"]
+                opts.wire_packages = None
+                opts.wire_classes = None
+                opts.resources = {"res": lambda: "x"}
+                opts.factories = {"fac": lambda: "y"}
+                opts.container_overrides = None
+                return opts
 
         service = _Service(
             settings_type=None,
@@ -196,7 +194,8 @@ class TestMixinsFullCoverage:
         assert runtime is not None
         tm.that(runtime.container, is_=p.Container)
         with service.track("op") as metrics:
-            cast("t.MutableRecursiveContainerMapping", metrics)["duration_ms"] = 2.0
+            assert isinstance(metrics, dict)
+            metrics["duration_ms"] = 2.0
         tm.that(service._operation_stats, has="op")
         try:
             with service.track("op_fail"):
@@ -276,7 +275,7 @@ class TestMixinsFullCoverage:
             @override
             @classmethod
             def _get_or_create_logger(cls) -> p.Logger:
-                return cast("p.Logger", cast("t.RecursiveContainer", _LocalLogger()))
+                return getattr(_LocalLogger, "__new__")(_LocalLogger)
 
         _ = _Service(
             settings_type=None,
@@ -314,10 +313,9 @@ class TestMixinsFullCoverage:
         class _WireService(x):
             @classmethod
             def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-                return cast(
-                    "p.RuntimeBootstrapOptions",
-                    cast("t.RecursiveContainer", {"wire_packages": ["pkg", 1]}),
-                )
+                wire_opts = getattr(dict, "__new__")(dict)
+                wire_opts["wire_packages"] = ["pkg", 1]
+                return wire_opts
 
         _ = _WireService(
             settings_type=None,
@@ -371,7 +369,7 @@ class TestMixinsFullCoverage:
             @override
             @classmethod
             def _get_or_create_logger(cls) -> p.Logger:
-                return cast("p.Logger", cast("t.RecursiveContainer", _WarnLogger()))
+                return getattr(_WarnLogger, "__new__")(_WarnLogger)
 
         class _LoggerService(x):
             pass

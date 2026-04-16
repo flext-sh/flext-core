@@ -11,7 +11,6 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 from datetime import UTC, datetime
-from typing import cast
 
 import pytest
 from pydantic import ValidationError
@@ -151,7 +150,8 @@ class TestFlextModelsEntity:
     def test_entity_updated_at_set_by_model_post_init(self) -> None:
         entity = m.Entity(unique_id="e-1")
         tm.that(entity.updated_at, is_=datetime)
-        tm.that(cast("datetime", entity.updated_at).tzinfo, eq=UTC)
+        assert isinstance(entity.updated_at, datetime)
+        tm.that(entity.updated_at.tzinfo, eq=UTC)
 
     # ── Entity identity equality ──────────────────────────────
 
@@ -255,9 +255,8 @@ class TestFlextModelsEntity:
 
     def test_add_domain_events_bulk_rejects_non_sequence(self) -> None:
         entity = m.Entity(unique_id="e-1")
-        result = entity.add_domain_events_bulk(
-            cast("Sequence[tuple[str, t.ConfigMap | None]]", "invalid")
-        )
+        add_bulk = getattr(entity, "add_domain_events_bulk")
+        result = add_bulk("invalid")
         tm.fail(result, has="must be a list or tuple")
 
     def test_add_domain_events_bulk_empty_event_type_fails(self) -> None:

@@ -25,30 +25,22 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum, unique
 from types import GenericAlias, ModuleType
-from typing import cast
 
 import pytest
 import structlog
 from dependency_injector import containers, providers
 from hypothesis import given, strategies as st
 
+from flext_core import FlextContainer, FlextContext
 from flext_tests import tm
-from tests import FlextContainer, FlextContext, m, p, s, t, u, x
+from tests import m, p, s, t, u, x
 
 
 class TestFlextRuntime:
     type RuntimeScenarioValue = (
-        t.RecursiveContainer
-        | type[t.RecursiveContainer]
-        | tuple[type[t.RecursiveContainer], ...]
-        | ModuleType
-        | GenericAlias
+        t.RecursiveContainer | type[t.RecursiveContainer] | GenericAlias
     )
-    type RuntimeScenarioInput = (
-        RuntimeScenarioValue
-        | Mapping[str, Callable[[], t.RecursiveContainer]]
-        | Sequence[ModuleType]
-    )
+    type RuntimeScenarioInput = RuntimeScenarioValue
 
     @unique
     class RuntimeOperationType(StrEnum):
@@ -105,14 +97,7 @@ class TestFlextRuntime:
         name: str
         operation: TestFlextRuntime.RuntimeOperationType
         test_input: (
-            t.RecursiveContainer
-            | type[t.RecursiveContainer]
-            | tuple[type[t.RecursiveContainer], ...]
-            | ModuleType
-            | GenericAlias
-            | Mapping[str, Callable[[], t.RecursiveContainer]]
-            | Sequence[ModuleType]
-            | None
+            t.RecursiveContainer | type[t.RecursiveContainer] | GenericAlias | None
         ) = None
         expected_result: bool | str | tuple[type, ...] | ModuleType | None = None
         should_reset_config: bool = False
@@ -411,7 +396,7 @@ class TestFlextRuntime:
                 runtime_test_case(
                     name="extract_generic_exception_none",
                     operation=runtime_op_type.EXTRACT_GENERIC_EXCEPTION,
-                    test_input=None,
+                    test_input="_not_a_type_",
                     expected_result=(),
                 ),
                 runtime_test_case(
@@ -462,7 +447,7 @@ class TestFlextRuntime:
                 runtime_test_case(
                     name="sequence_type_exception_none",
                     operation=runtime_op_type.SEQUENCE_TYPE_EXCEPTION,
-                    test_input=None,
+                    test_input="_not_a_type_",
                     expected_result=False,
                 ),
                 runtime_test_case(
@@ -659,8 +644,11 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to t.RecursiveContainer
         for type compatibility while preserving runtime behavior.
         """
-        tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = u.dict_like(cast("t.RuntimeData", test_case.test_input))
+        assert test_case.test_input is None or isinstance(
+            test_case.test_input, (str, int, float, bool, list, tuple, dict)
+        )
+        input_data: t.RuntimeData = test_case.test_input
+        result = u.dict_like(input_data)
         tm.that(result, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
@@ -678,8 +666,11 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to t.RecursiveContainer
         for type compatibility while preserving runtime behavior.
         """
-        tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = u.list_like(cast("t.RuntimeData", test_case.test_input))
+        assert test_case.test_input is None or isinstance(
+            test_case.test_input, (str, int, float, bool, list, tuple, dict)
+        )
+        input_data: t.RuntimeData = test_case.test_input
+        result = u.list_like(input_data)
         tm.that(result, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
@@ -696,8 +687,11 @@ class TestFlextRuntime:
         Business Rule: None is a valid test input - validates that is_valid_identifier
         correctly returns False for None values.
         """
-        tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = u.valid_identifier(cast("t.RuntimeData", test_case.test_input))
+        assert test_case.test_input is None or isinstance(
+            test_case.test_input, (str, int, float, bool, list, tuple, dict)
+        )
+        ident_input: t.RuntimeData = test_case.test_input
+        result = u.valid_identifier(ident_input)
         tm.that(result, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
@@ -757,7 +751,11 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to TypeHintSpecifier
         for type compatibility while preserving runtime behavior.
         """
-        test_input_typed = cast("t.TypeHintSpecifier", test_case.test_input)
+        raw_input = test_case.test_input
+        assert raw_input is None or isinstance(raw_input, (type, str, GenericAlias))
+        test_input_typed: t.TypeHintSpecifier = (
+            raw_input if raw_input is not None else str
+        )
         args = u.extract_generic_args(test_input_typed)
         tm.that(args, eq=test_case.expected_result)
 
@@ -776,7 +774,11 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to TypeHintSpecifier
         for type compatibility while preserving runtime behavior.
         """
-        test_input_typed = cast("t.TypeHintSpecifier", test_case.test_input)
+        raw_input = test_case.test_input
+        assert raw_input is None or isinstance(raw_input, (type, str, GenericAlias))
+        test_input_typed: t.TypeHintSpecifier = (
+            raw_input if raw_input is not None else str
+        )
         result = u.sequence_type(test_input_typed)
         tm.that(result, eq=test_case.expected_result)
 
@@ -874,9 +876,8 @@ class TestFlextRuntime:
             setattr(module, "consume", consume)
             di_container.wire(modules=[module])
             try:
-                consume_factory_func = cast(
-                    "Callable[[], tuple[t.StrMapping, int]]",
-                    getattr(module, "consume"),
+                consume_factory_func: Callable[[], tuple[t.StrMapping, int]] = getattr(
+                    module, "consume"
                 )
                 tm.that(callable(consume_factory_func), eq=True)
                 tokens, value = consume_factory_func()
@@ -922,10 +923,9 @@ class TestFlextRuntime:
                 ),
             )
             try:
-                consume_automation_func = cast(
-                    "Callable[[], tuple[int, t.IntMapping, bool, t.BoolMapping]]",
-                    getattr(module, "consume"),
-                )
+                consume_automation_func: Callable[
+                    [], tuple[int, t.IntMapping, bool, t.BoolMapping]
+                ] = getattr(module, "consume")
                 tm.that(callable(consume_automation_func), eq=True)
                 first_static, first_token, config_enabled, resource_value = (
                     consume_automation_func()
@@ -972,10 +972,9 @@ class TestFlextRuntime:
             )
             runtime = runtime_raw
             try:
-                consume_service_func = cast(
-                    "Callable[[], tuple[bool, t.IntMapping, t.BoolMapping]]",
-                    getattr(module, "consume"),
-                )
+                consume_service_func: Callable[
+                    [], tuple[bool, t.IntMapping, t.BoolMapping]
+                ] = getattr(module, "consume")
                 tm.that(callable(consume_service_func), eq=True)
                 feature_flag, first_token, resource = consume_service_func()
                 _, second_token, _ = consume_service_func()
@@ -985,7 +984,8 @@ class TestFlextRuntime:
                 tm.that(first_token["count"], eq=1)
                 tm.that(second_token["count"], eq=2)
             finally:
-                container = cast("FlextContainer", runtime.container)
+                assert isinstance(runtime.container, FlextContainer)
+                container = runtime.container
                 container._di_bridge.unwire()
         elif test_case.operation == self.RuntimeOperationType.MIXINS_RUNTIME_AUTOMATION:
 

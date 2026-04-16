@@ -124,7 +124,7 @@ class TestHandlersFullCoverage:
         decorator = h.handler(str)
 
         @decorator
-        def exposed(value: m.BaseModel) -> m.BaseModel:
+        def exposed(value: m.BaseModel) -> t.ConfigMap:
             _ = value
             return t.ConfigMap(root={"value": 123})
 

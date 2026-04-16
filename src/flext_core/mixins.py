@@ -23,7 +23,7 @@ from typing import (
     Unpack,
 )
 
-from pydantic import ConfigDict, Field, PrivateAttr
+from pydantic import ConfigDict, PrivateAttr
 
 from flext_core import FlextContainer, FlextContext, c, e, m, p, r, t, u
 
@@ -77,32 +77,28 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     settings_type: Annotated[
         type | None,
-        Field(
-            default=None,
+        m.Field(
             exclude=True,
             description="Settings class used to initialize the service.",
         ),
     ] = None
     runtime_settings: Annotated[
         p.Settings | None,
-        Field(
-            default=None,
+        m.Field(
             exclude=True,
             description="Pre-built settings instance used directly for the runtime.",
         ),
     ] = None
     settings_overrides: Annotated[
         t.RecursiveContainerMapping | None,
-        Field(
-            default=None,
+        m.Field(
             exclude=True,
             description="Settings overrides applied at instantiation.",
         ),
     ] = None
     initial_context: Annotated[
         p.Context | None,
-        Field(
-            default=None,
+        m.Field(
             exclude=True,
             description="Initial context for the service scope.",
         ),

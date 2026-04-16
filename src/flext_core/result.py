@@ -50,16 +50,10 @@ class FlextResult[T](BaseModel, p.Result[T]):
         serialize_by_alias=True,
     )
 
-    result_success: Annotated[bool, Field(default=True, alias="success")]
-    result_error: Annotated[str | None, Field(default=None, alias="error")]
-    result_error_code: Annotated[
-        str | None,
-        Field(default=None, alias="error_code"),
-    ]
-    result_error_data: Annotated[
-        t.ConfigMap | None,
-        Field(default=None, alias="error_data"),
-    ]
+    result_success: Annotated[bool, Field(alias="success")] = True
+    result_error: Annotated[str | None, Field(alias="error")] = None
+    result_error_code: Annotated[str | None, Field(alias="error_code")] = None
+    result_error_data: Annotated[t.ConfigMap | None, Field(alias="error_data")] = None
 
     _payload: T | None = PrivateAttr(default=None)
     _exception: BaseException | None = PrivateAttr(default=None)
@@ -295,7 +289,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
     @classmethod
     def accumulate_errors[ValueT](
         cls,
-        *results: p.Result[ValueT],
+        *results: FlextResult[ValueT],
     ) -> FlextResult[Sequence[ValueT]]:
         """Collect all successes, fail if any failure with all errors combined."""
         successes: MutableSequence[ValueT] = []

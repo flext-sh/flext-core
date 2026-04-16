@@ -30,8 +30,9 @@ from typing import Annotated, ClassVar
 import pytest
 from hypothesis import given, settings, strategies as st
 
+from flext_core import FlextContainer, FlextContext
 from flext_tests import tm
-from tests import FlextContainer, FlextContext, m, p, t, u
+from tests import m, p, t, u
 
 
 class TestFlextContext:
@@ -50,8 +51,7 @@ class TestFlextContext:
             m.Field(description="Context value under test"),
         ]
         expected_success: Annotated[
-            bool,
-            m.Field(default=True, description="Whether operation should succeed"),
+            bool, m.Field(description="Whether operation should succeed")
         ] = True
 
     class ContextScenarios:

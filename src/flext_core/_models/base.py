@@ -18,7 +18,6 @@ from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import (
-    FlextConstantsPydantic,
     FlextModelsPydantic,
     FlextRuntime,
     FlextUtilitiesEnforcement,
@@ -48,8 +47,8 @@ class FlextModelsBase:
     class ManagedModel(EnforcedModel):
         """Shared preset for assignment validation with forbidden extra fields."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 validate_assignment=True,
                 extra=c.EXTRA_CONFIG_FORBID,
             )
@@ -58,8 +57,8 @@ class FlextModelsBase:
     class EnumManagedModel(ManagedModel):
         """Shared preset for managed models that serialize enum values."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 use_enum_values=True,
             )
         )
@@ -67,8 +66,8 @@ class FlextModelsBase:
     class NormalizedModel(EnumManagedModel):
         """Shared preset for managed models with whitespace normalization."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 str_strip_whitespace=True,
             )
         )
@@ -76,8 +75,8 @@ class FlextModelsBase:
     class StrictManagedModel(NormalizedModel):
         """Shared preset for strict managed validation boundaries."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 strict=True,
                 validate_default=True,
             )
@@ -89,15 +88,15 @@ class FlextModelsBase:
     class FrozenModel(StrictModel):
         """Immutable strict domain model preset."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(frozen=True)
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True)
         )
 
     class ArbitraryTypesModel(EnumManagedModel):
         """Base model with arbitrary types support."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 arbitrary_types_allowed=True,
             )
         )
@@ -108,8 +107,8 @@ class FlextModelsBase:
     class FlexibleInternalModel(NormalizedModel):
         """Flexible internal model for domain logic."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 extra="ignore",
             )
         )
@@ -117,8 +116,8 @@ class FlextModelsBase:
     class ImmutableValueModel(ManagedModel):
         """Immutable value model for value objects."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 frozen=True,
             )
         )
@@ -126,16 +125,16 @@ class FlextModelsBase:
     class TaggedModel(EnforcedModel):
         """Base pattern for tagged discriminated unions."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(extra="forbid")
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(extra="forbid")
         )
         tag: ClassVar[str]
 
     class FlexibleModel(ArbitraryTypesModel):
         """Model for dynamic configuration - allows extra fields."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 extra="ignore",
             )
         )
@@ -143,8 +142,8 @@ class FlextModelsBase:
     class DynamicModel(FlexibleModel):
         """Dynamic domain model preset with string whitespace normalization."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 str_strip_whitespace=True,
             )
         )
@@ -152,15 +151,15 @@ class FlextModelsBase:
     class FrozenDynamicModel(DynamicModel):
         """Immutable dynamic domain model preset."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(frozen=True)
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True)
         )
 
     class Metadata(FlextModelsPydantic.BaseModel):
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 extra=c.EXTRA_CONFIG_FORBID,
                 frozen=True,
                 validate_assignment=True,
@@ -240,8 +239,8 @@ class FlextModelsBase:
     class ContractModel(StrictModel):
         """Immutable base model with strict validation."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 validate_return=True,
                 arbitrary_types_allowed=True,
                 ser_json_timedelta=c.SERIALIZATION_ISO8601,
@@ -267,8 +266,8 @@ class FlextModelsBase:
     class MutableConfiguredMixin:
         """Shared preset for mutable mixins with assignment validation."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 validate_assignment=True,
                 arbitrary_types_allowed=True,
             )
@@ -277,8 +276,8 @@ class FlextModelsBase:
     class NormalizedMutableConfiguredMixin(MutableConfiguredMixin):
         """Shared preset for mutable mixins with whitespace normalization."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
                 str_strip_whitespace=True,
             )
         )
@@ -370,8 +369,8 @@ class FlextModelsBase:
     class RetryConfigurationMixin(FlextModelsPydantic.BaseModel):
         """Mixin for shared retry configuration properties."""
 
-        model_config: ClassVar[FlextConstantsPydantic.ConfigDict] = (
-            FlextConstantsPydantic.ConfigDict(populate_by_name=True)
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(populate_by_name=True)
         )
         max_retries: Annotated[
             t.NonNegativeInt,

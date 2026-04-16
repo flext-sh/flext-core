@@ -52,34 +52,28 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
             m.Field(description="Unique handler identifier for test case"),
         ]
         handler_name: Annotated[
-            str | None,
-            m.Field(default=None, description="Optional display name for handler"),
+            str | None, m.Field(description="Optional display name for handler")
         ] = None
         handler_type: Annotated[
             c.HandlerType,
             m.Field(
-                default=c.HandlerType.COMMAND,
                 description="Handler type used for test case configuration",
             ),
         ] = c.HandlerType.COMMAND
         expected_result: Annotated[
             t.Container | None,
             m.Field(
-                default=None,
                 description="Expected handler result when execution succeeds",
             ),
         ] = None
         should_fail: Annotated[
-            bool,
-            m.Field(default=False, description="Whether test case expects failure"),
+            bool, m.Field(description="Whether test case expects failure")
         ] = False
         error_message: Annotated[
-            str | None,
-            m.Field(default=None, description="Expected error message for failures"),
+            str | None, m.Field(description="Expected error message for failures")
         ] = None
         description: Annotated[
-            str,
-            m.Field(default="", description="Human-readable test case description"),
+            str, m.Field(description="Human-readable test case description")
         ] = ""
 
         def create_handler(

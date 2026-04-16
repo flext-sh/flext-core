@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping, Sequence
-from typing import Annotated, ClassVar, cast, override
+from typing import Annotated, ClassVar, override
 
 import pytest
 
@@ -142,7 +142,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         if scenario.value == "has_items":
             value: t.RecursiveContainer = [1, 2, 3]
         elif scenario.value == "empty":
-            value = cast("t.RecursiveContainer", [])
+            value = []
         elif scenario.value in {"has_empty", "has_none"}:
             value = [""]
         else:
@@ -166,7 +166,7 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     def test_normalize_dict_to_pydantic_model(self) -> None:
         test_dict = {"key": "value", "num": 42}
-        result = u.normalize_to_metadata(cast("t.RuntimeData", test_dict))
+        result = u.normalize_to_metadata(test_dict)
         tm.that(result, is_=dict)
 
     def test_normalize_list_to_pydantic_model(self) -> None:
@@ -176,7 +176,7 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     def test_normalize_dict_with_primitives(self) -> None:
         test_dict = {"a": 1, "b": "test", "c": True}
-        result = u.normalize_to_metadata(cast("t.RuntimeData", test_dict))
+        result = u.normalize_to_metadata(test_dict)
         tm.that(result, is_=dict)
 
     def test_normalize_dict_with_nested_dict(self) -> None:
@@ -186,7 +186,7 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     def test_normalize_dict_with_list_value(self) -> None:
         test_dict = {"key": [1, 2, 3]}
-        result = u.normalize_to_metadata(cast("t.RuntimeData", test_dict))
+        result = u.normalize_to_metadata(test_dict)
         tm.that(result, is_=dict)
         assert isinstance(result, dict)
         tm.that(result["key"], is_=list)
@@ -200,17 +200,17 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     def test_normalize_list_with_primitives(self) -> None:
         test_list = ["a", 1, True]
-        result = u.normalize_to_metadata(cast("t.RuntimeData", test_list))
+        result = u.normalize_to_metadata(test_list)
         tm.that(result, is_=list)
 
     def test_normalize_list_with_nested_list(self) -> None:
         test_list: Sequence[t.RecursiveContainer] = [[1, 2], [3, 4]]
-        result = u.normalize_to_metadata(cast("t.RuntimeData", test_list))
+        result = u.normalize_to_metadata(test_list)
         tm.that(result, is_=list)
 
     def test_normalize_list_with_dict(self) -> None:
         test_list = [{"key": "value"}]
-        result = u.normalize_to_metadata(cast("t.RuntimeData", test_list))
+        result = u.normalize_to_metadata(test_list)
         tm.that(result, is_=list)
 
     def test_normalize_list_with_complex_items(self) -> None:
@@ -221,7 +221,7 @@ class TestUtilitiesTypeGuardsCoverage100:
             {"dict": "value"},
             [1, 2, 3],
         ]
-        result = u.normalize_to_metadata(cast("t.RuntimeData", test_list))
+        result = u.normalize_to_metadata(test_list)
         tm.that(result, is_=list)
 
     def test_normalize_tuple_to_pydantic_model(self) -> None:
@@ -237,7 +237,7 @@ class TestUtilitiesTypeGuardsCoverage100:
             "nested_list": [1, 2, {"inner": "dict"}],
             "complex": {"a": [1, 2]},
         }
-        result = u.normalize_to_metadata(cast("t.RuntimeData", test_dict))
+        result = u.normalize_to_metadata(test_dict)
         tm.that(result, is_=dict)
 
     def test_normalize_custom_object(self) -> None:
@@ -247,7 +247,8 @@ class TestUtilitiesTypeGuardsCoverage100:
                 return "custom_object"
 
         obj = CustomObject()
-        result = u.normalize_to_metadata(cast("t.RuntimeData", obj))
+        normalize_fn = getattr(u, "normalize_to_metadata")
+        result = normalize_fn(obj)
         tm.that(result, is_=str)
         tm.that(result, eq="custom_object")
 

@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import math
 from collections.abc import MutableSequence, Sequence
-from typing import cast
 
 import pytest
 
@@ -109,10 +108,7 @@ class TestrCoverage:
         self._ResultAssertions.assert_failure(result)
         tm.fail(
             result,
-            data=cast(
-                "t.Core.Tests.TestobjectSerializable",
-                {"status": "failed", "count": 5},
-            ),
+            data={"status": "failed", "count": 5},
         )
 
     def test_value_property_on_success(self) -> None:

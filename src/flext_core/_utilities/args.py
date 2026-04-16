@@ -10,14 +10,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_core import c, e, m, p, r, t
+from flext_core import FlextModelsPydantic as mp, c, e, p, r, t
 
 
 class FlextUtilitiesArgs:
     """Utilities for model-based option parsing."""
 
     @staticmethod
-    def parse_model[M: m.BaseModel](
+    def parse_model[M: mp.BaseModel](
         kwargs: Mapping[str, t.ValueOrModel],
         model_cls: type[M],
         *,
@@ -48,7 +48,7 @@ class FlextUtilitiesArgs:
             return e.fail_validation(error=exc)
 
     @staticmethod
-    def resolve_options[M: m.BaseModel](
+    def resolve_options[M: mp.BaseModel](
         options: M | None,
         kwargs: Mapping[str, t.ValueOrModel],
         model_cls: type[M],

@@ -115,7 +115,7 @@ class FlextUtilitiesEnforcement:
         model_type: type[mp.BaseModel],
         own: Mapping[str, FieldInfo],
     ) -> t.StrSequence:
-        """Require Field(description=...) on all public fields."""
+        """Require m.Field(description=...) on all public fields."""
         errors: MutableSequence[str] = []
         raw_annotation_map = vars(model_type).get("__annotations__", {})
         resolved_annotations = inspect.get_annotations(model_type, eval_str=False)
@@ -136,7 +136,7 @@ class FlextUtilitiesEnforcement:
                             break
             if not description:
                 errors.append(
-                    f'Field "{name}": Field() must include description="...".',
+                    f'Field "{name}": m.Field() must include description="...".',
                 )
         return errors
 
@@ -220,7 +220,7 @@ class FlextUtilitiesEnforcement:
     def check_no_mutable_field_defaults(
         own: Mapping[str, FieldInfo],
     ) -> t.StrSequence:
-        """Reject mutable defaults ([], {}, set()) — use Field(default_factory=...)."""
+        """Reject mutable defaults ([], {}, set()) — use m.Field(default_factory=...)."""
         errors: MutableSequence[str] = []
         for name, info in own.items():
             default = info.default
@@ -233,7 +233,7 @@ class FlextUtilitiesEnforcement:
                     type_name = "set"
                 errors.append(
                     f'Field "{name}": mutable default {type_name}() is FORBIDDEN. '
-                    f"Use Field(default_factory={type_name}).",
+                    f"Use m.Field(default_factory={type_name}).",
                 )
         return errors
 

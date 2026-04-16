@@ -14,13 +14,15 @@ from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 from flext_core import FlextTypingBase, FlextTypingContainers
 
 if TYPE_CHECKING:
-    from flext_core._models.context import FlextModelsContext
-    from flext_core._protocols.container import FlextProtocolsContainer
-    from flext_core._protocols.handler import FlextProtocolsHandler
-    from flext_core._protocols.registry import FlextProtocolsRegistry
-    from flext_core._protocols.result import FlextProtocolsResult
-    from flext_core._protocols.settings import FlextProtocolsSettings
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core import (
+        FlextModelsContext,
+        FlextProtocolsContainer,
+        FlextProtocolsHandler,
+        FlextProtocolsRegistry,
+        FlextProtocolsResult,
+        FlextProtocolsSettings,
+        FlextTypesServices,
+    )
 
 
 class FlextProtocolsContext:

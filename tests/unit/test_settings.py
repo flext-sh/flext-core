@@ -25,13 +25,14 @@ import threading
 import time
 from collections.abc import Generator, MutableSequence, Sequence
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from pydantic import ValidationError
 
+from flext_core import FlextSettings
 from flext_tests import tm
-from tests import FlextSettings, c, p, t, u
+from tests import c, p, t, u
 
 
 @pytest.fixture(autouse=True)
@@ -514,11 +515,9 @@ class TestFlextSettings:
                 class WrongType:
                     pass
 
-                wrong_instance = cast(
-                    "FlextSettings",
-                    cast("t.RecursiveContainer", WrongType()),
-                )
-                FlextSettings._instances[FlextSettings] = wrong_instance
+                wrong_instance = WrongType()
+                instances_dict = vars(FlextSettings)["_instances"]
+                instances_dict[FlextSettings] = wrong_instance
                 with pytest.raises(
                     TypeError,
                     match="Singleton instance is not of expected type",

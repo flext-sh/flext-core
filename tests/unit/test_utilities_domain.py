@@ -21,7 +21,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import cast
 
 import pytest
 
@@ -84,9 +83,10 @@ def _build_domain_test_entity(
     value: t.Core.Tests.TestobjectSerializable,
     **_kwargs: t.Core.Tests.TestobjectSerializable,
 ) -> m.Core.Tests.DomainTestEntity:
+    assert isinstance(value, int), f"Expected int value, got {type(value).__name__}"
     return m.Core.Tests.DomainTestEntity(
         name=name,
-        value=cast("int", value),
+        value=value,
         domain_events=[],
     )
 
@@ -137,7 +137,7 @@ def _as_test_payload(
 
 
 def _as_payload_map(
-    value: m.Core.Tests.InputPayloadMap,
+    value: Mapping[str, t.Core.Tests.TestobjectSerializable],
 ) -> Mapping[str, t.Core.Tests.TestobjectSerializable]:
     return value
 
@@ -192,50 +192,44 @@ def create_compare_entities_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
         "entity_a": alice_no_id,
         "entity_b": bob_entity,
     }
-    input_data_custom: m.Core.Tests.InputPayloadMap = cast(
-        "m.Core.Tests.InputPayloadMap",
-        {"entity_a": custom1, "entity_b": custom2},
-    )
-    return cast(
-        "Sequence[m.Core.Tests.TestCaseMap]",
-        [
-            u.Core.Tests.create_operation_test_case(
-                operation="compare_entities_by_id",
-                description="same_id",
-                input_data=_as_payload_map(input_data_same_id),
-                expected_result=True,
-                id_attr="unique_id",
-            ),
-            u.Core.Tests.create_operation_test_case(
-                operation="compare_entities_by_id",
-                description="different_id",
-                input_data=_as_payload_map(input_data_different_id),
-                expected_result=False,
-                id_attr="unique_id",
-            ),
-            u.Core.Tests.create_operation_test_case(
-                operation="compare_entities_by_id",
-                description="different_type",
-                input_data=_as_payload_map(input_data_different_type),
-                expected_result=False,
-                id_attr="unique_id",
-            ),
-            u.Core.Tests.create_operation_test_case(
-                operation="compare_entities_by_id",
-                description="no_id",
-                input_data=_as_payload_map(input_data_no_id),
-                expected_result=False,
-                id_attr="unique_id",
-            ),
-            u.Core.Tests.create_operation_test_case(
-                operation="compare_entities_by_id",
-                description="custom_id_attr",
-                input_data=_as_payload_map(input_data_custom),
-                expected_result=True,
-                id_attr="custom_id",
-            ),
-        ],
-    )
+    input_data_custom = {"entity_a": custom1, "entity_b": custom2}
+    return [
+        u.Core.Tests.create_operation_test_case(
+            operation="compare_entities_by_id",
+            description="same_id",
+            input_data=_as_payload_map(input_data_same_id),
+            expected_result=True,
+            id_attr="unique_id",
+        ),
+        u.Core.Tests.create_operation_test_case(
+            operation="compare_entities_by_id",
+            description="different_id",
+            input_data=_as_payload_map(input_data_different_id),
+            expected_result=False,
+            id_attr="unique_id",
+        ),
+        u.Core.Tests.create_operation_test_case(
+            operation="compare_entities_by_id",
+            description="different_type",
+            input_data=_as_payload_map(input_data_different_type),
+            expected_result=False,
+            id_attr="unique_id",
+        ),
+        u.Core.Tests.create_operation_test_case(
+            operation="compare_entities_by_id",
+            description="no_id",
+            input_data=_as_payload_map(input_data_no_id),
+            expected_result=False,
+            id_attr="unique_id",
+        ),
+        u.Core.Tests.create_operation_test_case(
+            operation="compare_entities_by_id",
+            description="custom_id_attr",
+            input_data=input_data_custom,
+            expected_result=True,
+            id_attr="custom_id",
+        ),
+    ]
 
 
 def create_hash_entity_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
@@ -265,36 +259,30 @@ def create_hash_entity_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
     custom = m.Core.Tests.CustomEntity(c.Core.Tests.TestDomain.CUSTOM_ID_1)
     input_data_with_id: m.Core.Tests.InputPayloadMap = {"entity": alice_entity}
     input_data_no_id: m.Core.Tests.InputPayloadMap = {"entity": alice_no_id}
-    input_data_custom: m.Core.Tests.InputPayloadMap = cast(
-        "m.Core.Tests.InputPayloadMap",
-        {"entity": custom},
-    )
-    return cast(
-        "Sequence[m.Core.Tests.TestCaseMap]",
-        [
-            u.Core.Tests.create_operation_test_case(
-                operation="hash_entity_by_id",
-                description="with_id",
-                input_data=_as_payload_map(input_data_with_id),
-                expected_result=_as_test_payload(int),
-                id_attr="unique_id",
-            ),
-            u.Core.Tests.create_operation_test_case(
-                operation="hash_entity_by_id",
-                description="no_id",
-                input_data=_as_payload_map(input_data_no_id),
-                expected_result=_as_test_payload(int),
-                id_attr="unique_id",
-            ),
-            u.Core.Tests.create_operation_test_case(
-                operation="hash_entity_by_id",
-                description="custom_id_attr",
-                input_data=_as_payload_map(input_data_custom),
-                expected_result=_as_test_payload(int),
-                id_attr="custom_id",
-            ),
-        ],
-    )
+    input_data_custom = {"entity": custom}
+    return [
+        u.Core.Tests.create_operation_test_case(
+            operation="hash_entity_by_id",
+            description="with_id",
+            input_data=_as_payload_map(input_data_with_id),
+            expected_result=_as_test_payload(int),
+            id_attr="unique_id",
+        ),
+        u.Core.Tests.create_operation_test_case(
+            operation="hash_entity_by_id",
+            description="no_id",
+            input_data=_as_payload_map(input_data_no_id),
+            expected_result=_as_test_payload(int),
+            id_attr="unique_id",
+        ),
+        u.Core.Tests.create_operation_test_case(
+            operation="hash_entity_by_id",
+            description="custom_id_attr",
+            input_data=input_data_custom,
+            expected_result=_as_test_payload(int),
+            id_attr="custom_id",
+        ),
+    ]
 
 
 def create_compare_value_objects_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
@@ -324,32 +312,27 @@ def create_compare_value_objects_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
     bad2 = u.Core.Tests.BadModelDump()
     no_dict1 = m.Core.Tests.NoDict(c.Core.Tests.TestDomain.VALUE_COUNT_5)
     no_dict2 = m.Core.Tests.NoDict(c.Core.Tests.TestDomain.VALUE_COUNT_5)
-    input_data_list: Sequence[m.Core.Tests.InputPayloadMap] = cast(
-        "Sequence[m.Core.Tests.InputPayloadMap]",
-        [
-            {"obj_a": value1, "obj_b": value1},
-            {"obj_a": value1, "obj_b": value2},
-            {"obj_a": value1, "obj_b": alice_entity},
-            {"obj_a": simple1, "obj_b": simple2},
-            {"obj_a": bad1, "obj_b": bad2},
-            {"obj_a": no_dict1, "obj_b": no_dict2},
+    input_data_list = [
+        {"obj_a": value1, "obj_b": value1},
+        {"obj_a": value1, "obj_b": value2},
+        {"obj_a": value1, "obj_b": alice_entity},
+        {"obj_a": simple1, "obj_b": simple2},
+        {"obj_a": bad1, "obj_b": bad2},
+        {"obj_a": no_dict1, "obj_b": no_dict2},
+    ]
+    batch_fn = getattr(u.Core.Tests, "create_batch_operation_test_cases")
+    return batch_fn(
+        operation="compare_value_objects_by_value",
+        descriptions=[
+            "same_values",
+            "different_values",
+            "different_type",
+            "no_model_dump",
+            "model_dump_exception",
+            "no_dict",
         ],
-    )
-    return cast(
-        "Sequence[m.Core.Tests.TestCaseMap]",
-        u.Core.Tests.create_batch_operation_test_cases(
-            operation="compare_value_objects_by_value",
-            descriptions=[
-                "same_values",
-                "different_values",
-                "different_type",
-                "no_model_dump",
-                "model_dump_exception",
-                "no_dict",
-            ],
-            input_data_list=input_data_list,
-            expected_results=[True, False, False, True, _as_test_payload(bool), True],
-        ),
+        input_data_list=input_data_list,
+        expected_results=[True, False, False, True, _as_test_payload(bool), True],
     )
 
 
@@ -368,36 +351,31 @@ def create_hash_value_object_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
         complex_items_list,
     )
     no_dict_obj = m.Core.Tests.NoDict(c.Core.Tests.TestDomain.VALUE_COUNT_5)
-    input_data_list_hash: Sequence[m.Core.Tests.InputPayloadMap] = cast(
-        "Sequence[m.Core.Tests.InputPayloadMap]",
-        [
-            {"obj": value_obj},
-            {"obj": simple_obj},
-            {"obj": bad_obj},
-            {"obj": complex_obj},
-            {"obj": no_dict_obj},
+    input_data_list_hash = [
+        {"obj": value_obj},
+        {"obj": simple_obj},
+        {"obj": bad_obj},
+        {"obj": complex_obj},
+        {"obj": no_dict_obj},
+    ]
+    batch_fn = getattr(u.Core.Tests, "create_batch_operation_test_cases")
+    return batch_fn(
+        operation="hash_value_object_by_value",
+        descriptions=[
+            "with_model_dump",
+            "no_model_dump",
+            "model_dump_exception",
+            "non_hashable_values",
+            "no_dict",
         ],
-    )
-    return cast(
-        "Sequence[m.Core.Tests.TestCaseMap]",
-        u.Core.Tests.create_batch_operation_test_cases(
-            operation="hash_value_object_by_value",
-            descriptions=[
-                "with_model_dump",
-                "no_model_dump",
-                "model_dump_exception",
-                "non_hashable_values",
-                "no_dict",
-            ],
-            input_data_list=input_data_list_hash,
-            expected_results=[
-                _as_test_payload(int),
-                _as_test_payload(int),
-                _as_test_payload(int),
-                _as_test_payload(int),
-                _as_test_payload(int),
-            ],
-        ),
+        input_data_list=input_data_list_hash,
+        expected_results=[
+            _as_test_payload(int),
+            _as_test_payload(int),
+            _as_test_payload(int),
+            _as_test_payload(int),
+            _as_test_payload(int),
+        ],
     )
 
 

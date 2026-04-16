@@ -23,7 +23,8 @@ from collections.abc import Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
-from tests import FlextContext, m, p, t, u, x
+from flext_core import FlextContext
+from tests import m, p, t, u, x
 
 
 class TestFlextMixinsNestedClasses:
@@ -67,13 +68,11 @@ class TestFlextMixinsNestedClasses:
         needs_init: Annotated[
             bool,
             m.Field(
-                default=False,
                 description="Whether service initialization is required",
             ),
         ] = False
         operation_context: Annotated[
-            str | None,
-            m.Field(default=None, description="Optional operation context name"),
+            str | None, m.Field(description="Optional operation context name")
         ] = None
 
     class ModelConversionScenario(m.BaseModel):

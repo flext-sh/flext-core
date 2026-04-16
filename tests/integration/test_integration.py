@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import __version__
-from tests import FlextContainer, p, r, t, u
+from flext_core import FlextContainer, __version__
+from tests import p, r, t, u
 
 pytestmark = [pytest.mark.integration]
 
@@ -54,7 +54,7 @@ class TestLibraryIntegration:
         global_container = FlextContainer()
         assert isinstance(global_container, p.Container)
 
-    @pytest.mark.integration
+    @pytest.mark.integrationunta
     @pytest.mark.core
     def test_flext_result_with_container(
         self,

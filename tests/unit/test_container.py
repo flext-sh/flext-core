@@ -22,14 +22,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Generator, Sequence
-from typing import Annotated, ClassVar
+from collections.abc import Callable, Generator
 
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import assume, given, settings, strategies as st
 
+from flext_core import FlextContainer, FlextContext, FlextSettings
 from flext_tests import tm
-from tests import FlextContainer, FlextContext, FlextSettings, c, m, p, t, u
+from tests import c, m, p, t, u
 
 
 @pytest.fixture(autouse=True)
@@ -42,92 +42,10 @@ def reset_flext_container_singleton() -> Generator[None]:
         FlextContainer.reset_for_testing()
 
 
-class _ServiceScenario(m.BaseModel):
-    """Test scenario for service registration and retrieval."""
-
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-        frozen=True,
-        arbitrary_types_allowed=True,
-    )
-    name: Annotated[str, m.Field(description="Service scenario name")]
-    service: Annotated[t.Primitives, m.Field(description="Service value to register")]
-    description: Annotated[
-        str,
-        m.Field(default="", description="Scenario description"),
-    ] = ""
-
-
-class _TypedRetrievalScenario(m.BaseModel):
-    """Test scenario for typed service retrieval."""
-
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-        frozen=True,
-        arbitrary_types_allowed=True,
-    )
-    name: Annotated[str, m.Field(description="Typed retrieval scenario name")]
-    service: Annotated[t.Primitives, m.Field(description="Registered service value")]
-    expected_type: Annotated[type, m.Field(description="Expected service type")]
-    should_pass: Annotated[
-        bool,
-        m.Field(description="Whether typed retrieval should succeed"),
-    ]
-    description: Annotated[
-        str,
-        m.Field(default="", description="Scenario description"),
-    ] = ""
-
-
-class _ContainerScenarios:
-    """Centralized container test scenarios using c."""
-
-    SERVICE_SCENARIOS: ClassVar[Sequence[_ServiceScenario]] = [
-        _ServiceScenario(
-            name="test_service",
-            service="test_service_value",
-            description="Simple string service",
-        ),
-        _ServiceScenario(
-            name="service_instance",
-            service=42,
-            description="Integer service instance",
-        ),
-        _ServiceScenario(
-            name="string_service",
-            service="test_value",
-            description="String service",
-        ),
-    ]
-    TYPED_RETRIEVAL_SCENARIOS: ClassVar[Sequence[_TypedRetrievalScenario]] = [
-        _TypedRetrievalScenario(
-            name="dict_service",
-            service="test_dict_service",
-            expected_type=str,
-            should_pass=True,
-            description="String service",
-        ),
-        _TypedRetrievalScenario(
-            name="string_service",
-            service="test_string",
-            expected_type=str,
-            should_pass=True,
-            description="String service",
-        ),
-        _TypedRetrievalScenario(
-            name="list_service",
-            service=123,
-            expected_type=int,
-            should_pass=True,
-            description="Integer service for typed retrieval",
-        ),
-    ]
-    CONFIG_SCENARIOS: ClassVar[Sequence[t.ScalarMapping]] = [
-        {"enable_singleton": False, "max_services": 8},
-        {"invalid_key": "value", "another_invalid": 42},
-        {},
-    ]
-
-
-ContainerScenarios = _ContainerScenarios
+_ServiceScenario = m.Core.Tests.ServiceScenario
+_TypedRetrievalScenario = m.Core.Tests.TypedRetrievalScenario
+_ContainerScenarios = m.Core.Tests.ContainerScenarios
+ContainerScenarios = m.Core.Tests.ContainerScenarios
 
 
 class TestFlextContainer:
@@ -646,6 +564,16 @@ class TestFlextContainer:
         assert ctx_result.success
         assert ctx_result.value == "unit"
 
+    _RESERVED_CONTAINER_ATTRS: frozenset[str] = frozenset({
+        "override",
+        "overridden",
+        "providers",
+        "reset_override",
+        "reset_last_overriding",
+        "set_providers",
+        "declarative_parent",
+    })
+
     @given(
         name=st.text(
             min_size=1,
@@ -658,6 +586,7 @@ class TestFlextContainer:
         """Property: register then get roundtrips for any valid name."""
         container = FlextContainer.shared()
         sanitized = "".join(ch for ch in name if ch.isalnum()) or "svc"
+        assume(sanitized not in self._RESERVED_CONTAINER_ATTRS)
 
         def dynamic_factory() -> str:
             return sanitized

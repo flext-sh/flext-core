@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar, cast
+from typing import Annotated, ClassVar
 
 import pytest
 
@@ -60,12 +60,10 @@ class TestUtilitiesCollectionCoverage:
             m.Field(description="Whether parsing should succeed"),
         ]
         expected_keys: Annotated[
-            t.StrSequence | None,
-            m.Field(default=None, description="Expected output keys"),
+            t.StrSequence | None, m.Field(description="Expected output keys")
         ] = None
         error_contains: Annotated[
-            str | None,
-            m.Field(default=None, description="Expected error message fragment"),
+            str | None, m.Field(description="Expected error message fragment")
         ] = None
 
     class CoerceDictScenario(m.BaseModel):
@@ -85,16 +83,13 @@ class TestUtilitiesCollectionCoverage:
             m.Field(description="Whether coercion should succeed"),
         ]
         expected_keys: Annotated[
-            t.StrSequence | None,
-            m.Field(default=None, description="Expected output keys"),
+            t.StrSequence | None, m.Field(description="Expected output keys")
         ] = None
         error_type: Annotated[
-            type[Exception] | None,
-            m.Field(default=None, description="Expected exception type"),
+            type[Exception] | None, m.Field(description="Expected exception type")
         ] = None
         error_contains: Annotated[
-            str | None,
-            m.Field(default=None, description="Expected error message fragment"),
+            str | None, m.Field(description="Expected error message fragment")
         ] = None
 
     class MapScenario(m.BaseModel):
@@ -174,7 +169,7 @@ class TestUtilitiesCollectionCoverage:
         ]
         mapper: Annotated[
             Callable[[t.RecursiveContainer], t.RecursiveContainer] | None,
-            m.Field(default=None, description="Optional mapping callable"),
+            m.Field(description="Optional mapping callable"),
         ] = None
 
     class CountScenario(m.BaseModel):
@@ -188,7 +183,7 @@ class TestUtilitiesCollectionCoverage:
         expected_count: Annotated[int, m.Field(description="Expected item count")]
         predicate: Annotated[
             Callable[[t.RecursiveContainer], bool] | None,
-            m.Field(default=None, description="Optional predicate filter"),
+            m.Field(description="Optional predicate filter"),
         ] = None
 
     class ProcessScenario(m.BaseModel):
@@ -207,21 +202,16 @@ class TestUtilitiesCollectionCoverage:
             t.RecursiveContainer,
             m.Field(description="Expected processing result"),
         ]
-        on_error: Annotated[
-            str,
-            m.Field(default="collect", description="Error handling mode"),
-        ] = "collect"
+        on_error: Annotated[str, m.Field(description="Error handling mode")] = "collect"
         predicate: Annotated[
             Callable[[t.RecursiveContainer], bool] | None,
-            m.Field(default=None, description="Optional predicate filter"),
+            m.Field(description="Optional predicate filter"),
         ] = None
         expected_failure: Annotated[
-            bool,
-            m.Field(default=False, description="Whether processing should fail"),
+            bool, m.Field(description="Whether processing should fail")
         ] = False
         error_contains: Annotated[
-            str | None,
-            m.Field(default=None, description="Expected error message fragment"),
+            str | None, m.Field(description="Expected error message fragment")
         ] = None
 
     class GroupScenario(m.BaseModel):
@@ -273,26 +263,20 @@ class TestUtilitiesCollectionCoverage:
             t.RecursiveContainer,
             m.Field(description="Expected batch result"),
         ]
-        size: Annotated[int, m.Field(default=100, description="Batch size")] = 100
-        on_error: Annotated[
-            str,
-            m.Field(default="collect", description="Error handling mode"),
-        ] = "collect"
+        size: Annotated[int, m.Field(description="Batch size")] = 100
+        on_error: Annotated[str, m.Field(description="Error handling mode")] = "collect"
         pre_validate: Annotated[
             Callable[..., bool] | None,
-            m.Field(default=None, description="Optional pre-validation callable"),
+            m.Field(description="Optional pre-validation callable"),
         ] = None
         flatten: Annotated[
-            bool,
-            m.Field(default=False, description="Whether to flatten nested results"),
+            bool, m.Field(description="Whether to flatten nested results")
         ] = False
         expected_failure: Annotated[
-            bool,
-            m.Field(default=False, description="Whether batch should fail"),
+            bool, m.Field(description="Whether batch should fail")
         ] = False
         error_contains: Annotated[
-            str | None,
-            m.Field(default=None, description="Expected error message fragment"),
+            str | None, m.Field(description="Expected error message fragment")
         ] = None
 
     globals()["FixtureStatus"] = FixtureStatus
@@ -313,35 +297,43 @@ class TestUtilitiesCollectionCoverage:
 
         @staticmethod
         def _double(value: t.RecursiveContainer) -> t.RecursiveContainer:
-            return cast("int", value) * 2
+            assert isinstance(value, int)
+            return value * 2
 
         @staticmethod
         def _upper(value: t.RecursiveContainer) -> t.RecursiveContainer:
-            return cast("str", value).upper()
+            assert isinstance(value, str)
+            return value.upper()
 
         @staticmethod
         def _is_even(value: t.RecursiveContainer) -> bool:
-            return cast("int", value) % 2 == 0
+            assert isinstance(value, int)
+            return value % 2 == 0
 
         @staticmethod
         def _is_odd(value: t.RecursiveContainer) -> bool:
-            return cast("int", value) % 2 != 0
+            assert isinstance(value, int)
+            return value % 2 != 0
 
         @staticmethod
         def _greater_than_two(value: t.RecursiveContainer) -> bool:
-            return cast("int", value) > 2
+            assert isinstance(value, int)
+            return value > 2
 
         @staticmethod
         def _greater_than_one(value: t.RecursiveContainer) -> bool:
-            return cast("int", value) > 1
+            assert isinstance(value, int)
+            return value > 1
 
         @staticmethod
         def _greater_than_ten(value: t.RecursiveContainer) -> bool:
-            return cast("int", value) > 10
+            assert isinstance(value, int)
+            return value > 10
 
         @staticmethod
         def _greater_than_fifteen(value: t.RecursiveContainer) -> bool:
-            return cast("int", value) > 15
+            assert isinstance(value, int)
+            return value > 15
 
         @staticmethod
         def _equals_two(value: t.RecursiveContainer) -> bool:
@@ -478,39 +470,39 @@ class TestUtilitiesCollectionCoverage:
                 FilterScenario(
                     name="list_filter",
                     items=[1, 2, 3, 4],
-                    predicate=lambda x: cast("int", x) % 2 == 0,
+                    predicate=lambda x: int(x) % 2 == 0,
                     expected_result=[2, 4],
                 ),
                 FilterScenario(
                     name="list_filter_map",
                     items=[1, 2, 3, 4],
-                    predicate=lambda x: cast("int", x) > 2,
-                    mapper=lambda x: cast("int", x) * 2,
+                    predicate=lambda x: int(x) > 2,
+                    mapper=lambda x: int(x) * 2,
                     expected_result=[6, 8],
                 ),
                 FilterScenario(
                     name="dict_filter",
                     items={"a": 1, "b": 2, "c": 3},
-                    predicate=lambda v: cast("int", v) % 2 != 0,
+                    predicate=lambda v: int(v) % 2 != 0,
                     expected_result={"a": 1, "c": 3},
                 ),
                 FilterScenario(
                     name="dict_filter_map",
                     items={"a": 1, "b": 4},
-                    predicate=lambda v: cast("int", v) > 2,
-                    mapper=lambda v: cast("int", v) * 2,
+                    predicate=lambda v: int(v) > 2,
+                    mapper=lambda v: int(v) * 2,
                     expected_result={"b": 8},
                 ),
                 FilterScenario(
                     name="list_filter_empty",
                     items=[1, 3, 5],
-                    predicate=lambda x: cast("int", x) > 10,
+                    predicate=lambda x: int(x) > 10,
                     expected_result=[],
                 ),
                 FilterScenario(
                     name="list_filter_all",
                     items=[2, 4, 6],
-                    predicate=lambda x: cast("int", x) % 2 == 0,
+                    predicate=lambda x: int(x) % 2 == 0,
                     expected_result=[2, 4, 6],
                 ),
             ]
@@ -521,19 +513,19 @@ class TestUtilitiesCollectionCoverage:
                 MapScenario(
                     name="map_list",
                     items=[1, 2, 3],
-                    mapper=lambda x: cast("int", x) * 2,
+                    mapper=lambda x: int(x) * 2,
                     expected_result=[2, 4, 6],
                 ),
                 MapScenario(
                     name="map_tuple",
                     items=(1, 2),
-                    mapper=lambda x: cast("int", x) + 1,
+                    mapper=lambda x: int(x) + 1,
                     expected_result=(2, 3),
                 ),
                 MapScenario(
                     name="map_dict",
                     items={"a": 1, "b": 2},
-                    mapper=lambda x: cast("int", x) * 10,
+                    mapper=lambda x: int(x) * 10,
                     expected_result={"a": 10, "b": 20},
                 ),
             ]
@@ -544,19 +536,19 @@ class TestUtilitiesCollectionCoverage:
                 FindScenario(
                     name="find_list_match",
                     items=[1, 2, 3],
-                    predicate=lambda x: cast("int", x) == 2,
+                    predicate=lambda x: x == 2,
                     expected_result=2,
                 ),
                 FindScenario(
                     name="find_dict_match",
                     items={"a": 1, "b": 4},
-                    predicate=lambda x: cast("int", x) == 4,
+                    predicate=lambda x: x == 4,
                     expected_result=4,
                 ),
                 FindScenario(
                     name="find_no_match",
                     items=[1, 3, 5],
-                    predicate=lambda x: cast("int", x) == 2,
+                    predicate=lambda x: x == 2,
                     expected_result=None,
                 ),
             ]
@@ -568,7 +560,7 @@ class TestUtilitiesCollectionCoverage:
                 CountScenario(
                     name="count_predicate",
                     items=[1, 2, 3, 4],
-                    predicate=lambda x: cast("int", x) % 2 == 0,
+                    predicate=lambda x: int(x) % 2 == 0,
                     expected_count=2,
                 ),
             ]
@@ -581,26 +573,26 @@ class TestUtilitiesCollectionCoverage:
                 ProcessScenario(
                     name="process_list",
                     items=[1, 2, 3],
-                    processor=lambda x: cast("int", x) * 2,
+                    processor=lambda x: int(x) * 2,
                     expected_result=[2, 4, 6],
                 ),
                 ProcessScenario(
                     name="process_list_skip",
                     items=[1, 2, 3],
-                    processor=lambda x: cast("int", x) * 2,
+                    processor=lambda x: int(x) * 2,
                     expected_result=[4, 6],
-                    predicate=lambda x: cast("int", x) > 1,
+                    predicate=lambda x: int(x) > 1,
                 ),
                 ProcessScenario(
                     name="process_strings",
                     items=["a", "b", "c"],
-                    processor=lambda x: cast("str", x).upper(),
+                    processor=lambda x: str(x).upper(),
                     expected_result=["A", "B", "C"],
                 ),
                 ProcessScenario(
                     name="process_empty",
                     items=[],
-                    processor=lambda x: cast("int", x) * 2,
+                    processor=lambda x: int(x) * 2,
                     expected_result=[],
                 ),
             ]

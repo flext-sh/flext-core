@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import cast
 
 import pytest
 
@@ -93,13 +92,8 @@ class TestUtilitiesSettingsFullCoverage:
         }
 
     def test_private_getters_exception_paths(self) -> None:
-        assert u._try_get_from_model_dump(
-            cast(
-                "p.HasModelDump",
-                cast("t.RecursiveContainer", m.Core.Tests._DumpErrorModel()),
-            ),
-            "missing",
-        ) == (False, None)
+        dump_err: p.HasModelDump = m.Core.Tests._DumpErrorModel()
+        assert u._try_get_from_model_dump(dump_err, "missing") == (False, None)
         assert u._try_get_from_duck_model_dump(self._DuckDumpError(), "value") == (
             False,
             None,

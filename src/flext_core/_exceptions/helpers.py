@@ -12,11 +12,11 @@ from pydantic import ValidationError as PydanticValidationError
 from pydantic.fields import FieldInfo
 
 from flext_core import (
+    FlextModelsBase as m,
     FlextRuntime,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     c,
-    m,
     t,
 )
 

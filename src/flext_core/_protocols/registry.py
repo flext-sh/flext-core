@@ -21,11 +21,13 @@ from flext_core import (
 )
 
 if TYPE_CHECKING:
-    from flext_core._models.handler import FlextModelsHandler
-    from flext_core._models.registry import FlextModelsRegistry
-    from flext_core._models.service import FlextModelsService
-    from flext_core._protocols.handler import FlextProtocolsHandler
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core import (
+        FlextModelsHandler,
+        FlextModelsRegistry,
+        FlextModelsService,
+        FlextProtocolsHandler,
+        FlextTypesServices,
+    )
 
 
 class FlextProtocolsRegistry:

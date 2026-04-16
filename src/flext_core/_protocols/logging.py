@@ -20,7 +20,7 @@ from flext_core import (
 )
 
 if TYPE_CHECKING:
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core import FlextTypesServices
 
 
 class FlextProtocolsLogging:
