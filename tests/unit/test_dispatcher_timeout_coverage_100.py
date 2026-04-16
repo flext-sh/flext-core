@@ -21,32 +21,32 @@ from concurrent.futures import Future
 from typing import Annotated, ClassVar
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import ValidationError
 
 from flext_tests import tm
 from tests import m
 
 
 class TestDispatcherTimeoutCoverage100:
-    class _TimeoutEnforcerScenario(BaseModel):
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+    class _TimeoutEnforcerScenario(m.BaseModel):
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        name: Annotated[str, Field(description="Timeout enforcer scenario name")]
+        name: Annotated[str, m.Field(description="Timeout enforcer scenario name")]
         use_timeout_executor: Annotated[
             bool,
-            Field(description="Whether timeout executor is enabled"),
+            m.Field(description="Whether timeout executor is enabled"),
         ]
         executor_workers: Annotated[
             int,
-            Field(description="Configured executor worker count"),
+            m.Field(description="Configured executor worker count"),
         ]
         expected_workers: Annotated[
             int,
-            Field(description="Expected resolved worker count"),
+            m.Field(description="Expected resolved worker count"),
         ]
         should_use_executor: Annotated[
             bool,
-            Field(description="Expected executor usage flag"),
+            m.Field(description="Expected executor usage flag"),
         ]
 
     _INIT_SCENARIOS: ClassVar[Sequence[_TimeoutEnforcerScenario]] = [

@@ -8,7 +8,6 @@ normalization helpers are not asserted here so coverage reflects public usage.
 from __future__ import annotations
 
 import pytest
-from pydantic import BaseModel
 
 from flext_tests import tm
 from tests import c, m, u
@@ -74,7 +73,7 @@ class TestUtilitiesParserFullCoverage:
         tm.ok(result, is_=scenario.target)
         payload = result.value
         assert isinstance(payload, scenario.target)
-        assert isinstance(payload, BaseModel)
+        assert isinstance(payload, m.BaseModel)
         tm.that(payload.model_dump(), eq=scenario.expected_data)
 
     @pytest.mark.parametrize(

@@ -10,13 +10,13 @@ from flext_core import m, u
 
 
 class Ex03Email(m.Value):
-    """Email value t.RecursiveContainer model."""
+    """Email value object model."""
 
     address: t.EmailStr
 
 
 class Ex03Money(m.Value):
-    """Money value t.RecursiveContainer model."""
+    """Money value object model."""
 
     amount: Decimal
     currency: c.Currency = c.Currency.USD
@@ -46,7 +46,7 @@ class Ex03User(m.Entity):
 
 
 class Ex03OrderItem(m.Value):
-    """Order item value t.RecursiveContainer."""
+    """Order item value object."""
 
     product_id: str
     name: str
@@ -79,12 +79,12 @@ class Ex03Order(m.AggregateRoot):
             return r[Ex03Order].fail("order has no items")
         return r[Ex03Order].ok(self)
 
-    @u.computed_field
+    @u.computed_field(return_type=int)
     def total_items(self) -> int:
         """Compute number of items."""
         return len(self.items)
 
-    @u.computed_field
+    @u.computed_field(return_type=float)
     def total_amount(self) -> float:
         """Compute aggregate order amount."""
         return float(len(self.items))

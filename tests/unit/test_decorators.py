@@ -9,10 +9,8 @@ from typing import Annotated, ClassVar
 
 import pytest
 from hypothesis import given, settings, strategies as st
-from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer
-from tests import d, e, p, r, u
+from tests import FlextContainer, d, e, m, p, r, u
 
 
 @pytest.fixture(autouse=True)
@@ -45,12 +43,12 @@ class TestFlextDecorators:
         COMBINED_BASIC = "combined_basic"
         COMBINED_WITH_RAILWAY = "combined_with_railway"
 
-    class DecoratorTestCase(BaseModel):
+    class DecoratorTestCase(m.BaseModel):
         """Test case for decorator."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Decorator test case name")]
-        operation: Annotated[str, Field(description="Decorator operation under test")]
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        name: Annotated[str, m.Field(description="Decorator test case name")]
+        operation: Annotated[str, m.Field(description="Decorator operation under test")]
 
     class TestService:
         """Service for testing."""
@@ -178,7 +176,7 @@ class TestFlextDecorators:
             assert process_data_missing() == "default"
         elif test_case.operation == self.DecoratorOperationType.INJECT_PROVIDED:
 
-            class TestServiceTyped(BaseModel):
+            class TestServiceTyped(m.BaseModel):
                 value: str
 
             @d.inject(service="service")

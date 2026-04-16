@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from pydantic import Field
-
 from tests import m, t, u
 
 
@@ -39,7 +37,7 @@ class TestUtilitiesDomainFullCoverage:
 
         class EntityWithList(m.Value):
             unique_id: str = "test"
-            tags: t.StrSequence = Field(default_factory=lambda: ["a", "b"])
+            tags: t.StrSequence = m.Field(default_factory=lambda: ["a", "b"])
 
         entity = EntityWithList(tags=["a", "b"])
         result = u.hash_value_object_by_value(entity)

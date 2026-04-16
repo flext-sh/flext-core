@@ -18,16 +18,22 @@ from pydantic import (
     AfterValidator,
     BaseModel,
     BeforeValidator,
+    ConfigDict,
+    Field,
     FieldSerializationInfo,
     GetCoreSchemaHandler,
     GetJsonSchemaHandler,
     GetPydanticSchema,
     PlainSerializer,
     PlainValidator,
+    PrivateAttr,
     RootModel,
+    SkipValidation,
     TypeAdapter,
     WrapSerializer,
     WrapValidator,
+    computed_field,
+    field_validator,
 )
 from pydantic_core import (
     SchemaValidator,
@@ -58,6 +64,14 @@ class FlextModelsPydantic:
 
     class RootModel[RootValueT](RootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
+
+    # Pydantic field utilities
+    ConfigDict = ConfigDict
+    Field = Field
+    PrivateAttr = PrivateAttr
+    SkipValidation = SkipValidation
+    computed_field = computed_field
+    field_validator = field_validator
 
     # Annotation validators
     AfterValidator = AfterValidator

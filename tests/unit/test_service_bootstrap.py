@@ -19,8 +19,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextContext
-from tests import m, p, r, s, u
+from tests import FlextContext, m, p, r, s, u
 
 
 class TestServiceBootstrap:

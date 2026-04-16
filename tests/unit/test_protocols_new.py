@@ -15,7 +15,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self
 
 import pytest
-from pydantic import BaseModel
 
 from flext_tests import tm
 from tests import e, m, p, r, u
@@ -516,7 +515,7 @@ class TestFlextProtocols:
     def test_check_protocol_compliance_positive(self) -> None:
         """check_protocol_compliance returns True for conforming instance."""
 
-        class _Flusher(BaseModel):
+        class _Flusher(m.BaseModel):
             def flush(self) -> None:
                 pass
 

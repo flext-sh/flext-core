@@ -10,8 +10,6 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableSequence
 from typing import override
 
-from pydantic import Field
-
 from tests import c, h, m, p, r, t
 
 
@@ -95,7 +93,7 @@ class TestPatternsCommands:
     class CreateUserCommandHandler(h[t.ValueOrModel, t.ValueOrModel]):
         """Test handler for CreateUserCommand."""
 
-        created_users: MutableSequence[t.RecursiveContainerMapping] = Field(
+        created_users: MutableSequence[t.RecursiveContainerMapping] = m.Field(
             default_factory=lambda: list[t.RecursiveContainerMapping](),
         )
 

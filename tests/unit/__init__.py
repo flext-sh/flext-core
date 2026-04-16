@@ -16,6 +16,12 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
+            "._models.test_base": ("TestsFlextCoreModelsBase",),
+            "._models.test_cqrs": ("TestsFlextCoreModelsCqrs",),
+            "._models.test_entity": ("TestFlextModelsEntity",),
+            "._models.test_exception_params": ("TestFlextModelsExceptionParams",),
+            "._utilities.test_guards": ("TestFlextUtilitiesGuards",),
+            "._utilities.test_mapper": ("TestsFlextCoreUtilitiesMapper",),
             ".base": ("TestsFlextCoreServiceBase",),
             ".test_beartype_engine": ("test_beartype_engine",),
             ".test_collections_coverage_100": ("test_collections_coverage_100",),

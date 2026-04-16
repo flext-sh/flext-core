@@ -62,7 +62,7 @@ class _DeclarativeService(s[str]):
     """Declarative auto_execute service pattern."""
 
     auto_execute: ClassVar[bool] = True
-    _execute_count: int = u.PrivateAttr(default=0)
+    _execute_count: int = u.PrivateAttr(default_factory=int)
 
     def __init__(self) -> None:
         super().__init__()

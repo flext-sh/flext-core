@@ -5,8 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextContainer
-from tests import c, u
+from tests import FlextContainer, c, u
 
 pytestmark = [pytest.mark.unit, pytest.mark.coverage]
 

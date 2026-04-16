@@ -20,7 +20,7 @@ from collections.abc import (
 from datetime import UTC, datetime
 from pathlib import Path
 from types import MappingProxyType
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 import pytest
 import structlog
@@ -74,15 +74,9 @@ def test_async_log_writer_paths() -> None:
             _ = timeout
             raise queue.Empty
 
-    forced = cast(
-        "u._AsyncLogWriter",
-        cast("t.RecursiveContainer", object.__new__(u._AsyncLogWriter)),
-    )
+    forced: u._AsyncLogWriter = object.__new__(u._AsyncLogWriter)  # type: ignore[assignment]
     forced.stream = stream
-    forced.queue = cast(
-        "queue.Queue[str | None]",
-        cast("t.RecursiveContainer", EmptyQueue()),
-    )
+    forced.queue = EmptyQueue()  # type: ignore[assignment]
     forced.stop_event = threading.Event()
     forced.stop_event.set()
     forced._worker()
@@ -122,15 +116,9 @@ def test_async_log_writer_paths() -> None:
             return None
 
     failing = FailingStream()
-    broken = cast(
-        "u._AsyncLogWriter",
-        cast("t.RecursiveContainer", object.__new__(u._AsyncLogWriter)),
-    )
+    broken: u._AsyncLogWriter = object.__new__(u._AsyncLogWriter)  # type: ignore[assignment]
     broken.stream = failing
-    broken.queue = cast(
-        "queue.Queue[str | None]",
-        cast("t.RecursiveContainer", SequenceQueue()),
-    )
+    broken.queue = SequenceQueue()  # type: ignore[assignment]
     broken.stop_event = threading.Event()
     broken._worker()
     tm.that(failing.messages, has="Error in async log writer\n")
@@ -150,15 +138,9 @@ def test_async_log_writer_paths() -> None:
         def task_done(self) -> None:
             return None
 
-    continue_writer = cast(
-        "u._AsyncLogWriter",
-        cast("t.RecursiveContainer", object.__new__(u._AsyncLogWriter)),
-    )
+    continue_writer: u._AsyncLogWriter = object.__new__(u._AsyncLogWriter)  # type: ignore[assignment]
     continue_writer.stream = stream
-    continue_writer.queue = cast(
-        "queue.Queue[str | None]",
-        cast("t.RecursiveContainer", EmptyThenSentinelQueue()),
-    )
+    continue_writer.queue = EmptyThenSentinelQueue()  # type: ignore[assignment]
     continue_writer.stop_event = threading.Event()
     continue_writer._worker()
 
@@ -192,18 +174,12 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
             self.join_timeout = timeout
 
     stream = FlushOnlyStream()
-    writer = cast(
-        "u._AsyncLogWriter",
-        cast("t.RecursiveContainer", object.__new__(u._AsyncLogWriter)),
-    )
+    writer: u._AsyncLogWriter = object.__new__(u._AsyncLogWriter)  # type: ignore[assignment]
     writer.stream = stream
-    writer.queue = cast(
-        "queue.Queue[str | None]",
-        cast("t.RecursiveContainer", FullQueue()),
-    )
+    writer.queue = FullQueue()  # type: ignore[assignment]
     writer.stop_event = threading.Event()
     thread = JoinRecorderThread()
-    writer.thread = cast("threading.Thread", cast("t.RecursiveContainer", thread))
+    writer.thread = thread  # type: ignore[assignment]
     writer.shutdown()
     tm.that(writer.stop_event.is_set(), eq=True)
     tm.that(thread.join_timeout, none=False)
@@ -244,21 +220,24 @@ def test_normalization_edge_branches() -> None:
         def __iter__(self) -> Iterator[str]:
             return iter(["x"])
 
+    dict_like_input: t.RuntimeData = DictLike()  # type: ignore[assignment]
     normalized_dict_like = u.normalize_to_container(
-        cast("t.RuntimeData", DictLike()),
+        dict_like_input,
     )
     tm.that(normalized_dict_like, is_=t.Dict)
     metadata_cfg = u.normalize_to_metadata(cfg)
     tm.that(metadata_cfg, is_=str)
+    dict_like_meta_input: t.RuntimeData = DictLike()  # type: ignore[assignment]
     metadata_dict_like = u.normalize_to_metadata(
-        cast("t.RuntimeData", DictLike()),
+        dict_like_meta_input,
     )
     tm.that(
         isinstance(metadata_dict_like, dict) and metadata_dict_like == {"x": 1},
         eq=True,
     )
+    list_meta_input: t.RuntimeData = ["a", "normalized"]
     metadata_list = u.normalize_to_metadata(
-        cast("t.RuntimeData", ["a", "normalized"]),
+        list_meta_input,
     )
     tm.that(metadata_list, is_=list)
 
@@ -390,9 +369,8 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging: bool = True
 
     _ = Config  # referenced for pyright
-    u.configure_structlog(
-        settings=cast("m.BaseModel", cast("t.RecursiveContainer", Config()))
-    )
+    config_settings: t.ModelCarrier = Config()  # type: ignore[assignment]
+    u.configure_structlog(settings=config_settings)
     tm.that(u.structlog_configured(), eq=True)
     tm.that(bool(calls), eq=True)
     u._structlog_configured = False
@@ -446,10 +424,7 @@ def test_reconfigure_and_reset_state_paths() -> None:
             self.called = True
 
     dummy = DummyWriter()
-    u._async_writer = cast(
-        "u._AsyncLogWriter",
-        cast("t.RecursiveContainer", dummy),
-    )
+    u._async_writer = dummy  # type: ignore[assignment]
     u._structlog_configured = True
     u.reconfigure_structlog(log_level=logging.DEBUG, console_renderer=True)
     tm.that(dummy.called, eq=True)
@@ -560,14 +535,14 @@ def test_model_support_and_hash_compare_paths() -> None:
         (
             u.compare_entities_by_id(
                 "a",
-                cast("t.RuntimeData", "normalized"),
+                "normalized",
             )
             is False
         ),
         eq=True,
     )
     tm.that(
-        (u.compare_entities_by_id(cast("t.RuntimeData", "normalized"), 3) is False),
+        (u.compare_entities_by_id("normalized", 3) is False),
         eq=True,
     )
 
@@ -577,11 +552,13 @@ def test_model_support_and_hash_compare_paths() -> None:
     class B:
         unique_id: str = "1"
 
+    entity_a: t.RuntimeData = A()  # type: ignore[assignment]
+    entity_b: t.RuntimeData = B()  # type: ignore[assignment]
     tm.that(
         (
             u.compare_entities_by_id(
-                cast("t.RuntimeData", A()),
-                cast("t.RuntimeData", B()),
+                entity_a,
+                entity_b,
             )
             is False
         ),
@@ -591,7 +568,7 @@ def test_model_support_and_hash_compare_paths() -> None:
     class _Opaque:
         pass
 
-    obj = cast("t.RuntimeData", _Opaque())
+    obj: t.RuntimeData = _Opaque()  # type: ignore[assignment]
     tm.that(
         u.hash_entity_by_id(obj),
         eq=hash(
@@ -602,7 +579,7 @@ def test_model_support_and_hash_compare_paths() -> None:
     tm.that(
         (
             u.compare_value_objects_by_value(
-                cast("t.RuntimeData", "normalized"),
+                "normalized",
                 1,
             )
             is False
@@ -621,21 +598,25 @@ def test_model_support_and_hash_compare_paths() -> None:
         def __repr__(self) -> str:
             return "same"
 
+    c_data: t.RuntimeData = C()  # type: ignore[assignment]
+    d_data: t.RuntimeData = D()  # type: ignore[assignment]
     tm.that(
         (
             u.compare_value_objects_by_value(
-                cast("t.RuntimeData", C()),
-                cast("t.RuntimeData", D()),
+                c_data,
+                d_data,
             )
             is False
         ),
         eq=True,
     )
+    c_data2: t.RuntimeData = C()  # type: ignore[assignment]
+    c_data3: t.RuntimeData = C()  # type: ignore[assignment]
     tm.that(
         (
             u.compare_value_objects_by_value(
-                cast("t.RuntimeData", C()),
-                cast("t.RuntimeData", C()),
+                c_data2,
+                c_data3,
             )
             is True
         ),
@@ -1025,19 +1006,19 @@ def test_model_helpers_remaining_paths() -> None:
     class ValueModel(m.Value):
         a: int = 0
 
-    left = Entity("u-1")
-    right = Entity("u-1")
+    left: t.RuntimeData = Entity("u-1")  # type: ignore[assignment]
+    right: t.RuntimeData = Entity("u-1")  # type: ignore[assignment]
     tm.that(
         (
             u.compare_entities_by_id(
-                cast("t.RuntimeData", left),
-                cast("t.RuntimeData", right),
+                left,
+                right,
             )
             is True
         ),
         eq=True,
     )
-    tm.that(u.hash_entity_by_id(cast("t.RuntimeData", left)), is_=int)
+    tm.that(u.hash_entity_by_id(left), is_=int)
     vm_a = ValueModel(a=1)
     vm_b = ValueModel(a=1)
     tm.that(u.compare_value_objects_by_value(vm_a, vm_b), eq=True)
@@ -1066,7 +1047,8 @@ def test_ensure_trace_context_dict_conversion_paths() -> None:
         "callable": lambda: 1,
         "other": type("Sentinel", (), {}),
     }
-    result = u.ensure_trace_context(cast("t.ConfigurationMapping", payload))
+    trace_input: t.ConfigurationMapping = payload  # type: ignore[assignment]
+    result = u.ensure_trace_context(trace_input)
     tm.that(result["str"], eq="x")
     tm.that(result["int"], eq="1")
     tm.that("trace_id" in result and "span_id" in result, eq=True)

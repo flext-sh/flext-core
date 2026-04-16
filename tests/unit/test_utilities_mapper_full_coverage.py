@@ -12,29 +12,28 @@ from collections.abc import (
 from typing import Annotated, Never, Protocol, cast, override
 
 import pytest
-from pydantic import BaseModel, Field
 
 from flext_tests import tm
 from tests import m, p, t, u
 
 
-class _PortModel(BaseModel):
+class _PortModel(m.BaseModel):
     """Model with port/nested for mapper take/extract tests."""
 
     port: int = 0
     nested: Annotated[
         t.RecursiveContainerMapping,
-        Field(default_factory=dict),
+        m.Field(default_factory=dict),
     ]
 
 
-class _MaybeModel(BaseModel):
+class _MaybeModel(m.BaseModel):
     """Model with optional field for take tests."""
 
     x: str | None = None
 
 
-class _GroupModel(BaseModel):
+class _GroupModel(m.BaseModel):
     """Model with optional kind for group tests."""
 
     kind: str | None = None
@@ -218,16 +217,16 @@ def _map_dict_keys_obj(
     return fn(source, key_map, keep_unmapped=keep_unmapped)
 
 
-class AttrObject(BaseModel):
+class AttrObject(m.BaseModel):
     """AttrObject class."""
 
     name: Annotated[
         str,
-        Field(default="name", description="Attribute recursive container name"),
+        m.Field(default="name", description="Attribute recursive container name"),
     ] = "name"
     value: Annotated[
         int,
-        Field(default=1, description="Attribute recursive container value"),
+        m.Field(default=1, description="Attribute recursive container value"),
     ] = 1
 
 

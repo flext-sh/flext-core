@@ -10,9 +10,8 @@ import pytest
 from hypothesis import given, settings, strategies as st
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextSettings
 from flext_tests import tf, tm
-from tests import c, t, u
+from tests import FlextSettings, c, t, u
 
 
 class TestFlextSettingsCoverage:

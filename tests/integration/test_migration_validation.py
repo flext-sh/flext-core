@@ -19,8 +19,6 @@ from __future__ import annotations
 
 from typing import override
 
-from pydantic import PrivateAttr
-
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -100,7 +98,7 @@ class TestMigrationValidation:
         class UserService(s[None]):
             """User service extending s."""
 
-            _logger: p.Logger = PrivateAttr(
+            _logger: p.Logger = u.PrivateAttr(
                 default_factory=lambda: u.fetch_logger(__name__),
             )
 

@@ -21,49 +21,46 @@ from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field
-
-from flext_core import FlextContainer, FlextSettings
-from tests import c, p, t, u
+from tests import FlextContainer, FlextSettings, c, m, p, t, u
 
 
 class TestFlextSettingsSingletonIntegration:
     """Test FlextSettings singleton pattern and integration with all modules using factories."""
 
-    class _ConfigTestCase(BaseModel):
+    class _ConfigTestCase(m.BaseModel):
         """Factory for configuration test cases."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        test_name: Annotated[str, Field(description="Configuration test case name")]
+        test_name: Annotated[str, m.Field(description="Configuration test case name")]
         config_data: Annotated[
             t.RecursiveContainerMapping,
-            Field(
+            m.Field(
                 description="Input configuration payload",
             ),
         ]
         expected_values: Annotated[
             t.RecursiveContainerMapping,
-            Field(
+            m.Field(
                 description="Expected effective values",
             ),
-        ] = Field(default_factory=dict)
+        ] = m.Field(default_factory=dict)
         file_format: Annotated[
             str,
-            Field(
+            m.Field(
                 default="json",
                 description="Configuration file format",
             ),
         ]
         env_vars: Annotated[
             t.StrMapping,
-            Field(
+            m.Field(
                 description="Environment variable overrides",
             ),
-        ] = Field(default_factory=dict)
+        ] = m.Field(default_factory=dict)
         description: Annotated[
             str,
-            Field(default="", description="Human-readable test description"),
+            m.Field(default="", description="Human-readable test description"),
         ] = ""
 
         def create_temp_file(self, temp_dir: Path) -> Path:
@@ -80,22 +77,22 @@ class TestFlextSettingsSingletonIntegration:
                 _ = file_path.write_text(content)
             return file_path
 
-    class _ThreadSafetyTest(BaseModel):
+    class _ThreadSafetyTest(m.BaseModel):
         """Factory for thread safety test configurations."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         thread_count: Annotated[
             int,
-            Field(default=5, description="Number of concurrent threads"),
+            m.Field(default=5, description="Number of concurrent threads"),
         ] = 5
         operations_per_thread: Annotated[
             int,
-            Field(default=10, description="Operations per thread"),
+            m.Field(default=10, description="Operations per thread"),
         ] = 10
         description: Annotated[
             str,
-            Field(default="", description="Thread safety scenario description"),
+            m.Field(default="", description="Thread safety scenario description"),
         ] = ""
 
     class _ConfigTestFactories:

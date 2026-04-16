@@ -13,21 +13,20 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated, override
 
 import pytest
-from pydantic import BaseModel, Field, PrivateAttr
 
 from tests import m, p, r, s, t, u
 
 
 class TestService:
-    class UserServiceEntity(BaseModel):
+    class UserServiceEntity(m.BaseModel):
         """Test user entity model using dataclass."""
 
-        unique_id: Annotated[str, Field(description="Unique user identifier")]
-        name: Annotated[str, Field(description="User display name")]
-        email: Annotated[str, Field(description="User email address")]
+        unique_id: Annotated[str, m.Field(description="Unique user identifier")]
+        name: Annotated[str, m.Field(description="User display name")]
+        email: Annotated[str, m.Field(description="User email address")]
         active: Annotated[
             bool,
-            Field(default=True, description="Whether user is active"),
+            m.Field(default=True, description="Whether user is active"),
         ] = True
 
     class UserQueryService(s[bool]):
@@ -44,11 +43,11 @@ class TestService:
         - This pattern separates status from data retrieval
         """
 
-        _users: MutableMapping[str, TestService.UserServiceEntity] = PrivateAttr(
+        _users: MutableMapping[str, TestService.UserServiceEntity] = m.PrivateAttr(
             default_factory=lambda: dict[str, TestService.UserServiceEntity](),
         )
-        _should_fail: bool = PrivateAttr(default=False)
-        _call_count: int = PrivateAttr(default_factory=lambda: 0)
+        _should_fail: bool = m.PrivateAttr(default=False)
+        _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
 
         @override
         def execute(self) -> p.Result[bool]:
@@ -120,11 +119,11 @@ class TestService:
     class NotificationService(s[str]):
         """Real notification service using s."""
 
-        _sent_notifications: MutableSequence[str] = PrivateAttr(
+        _sent_notifications: MutableSequence[str] = m.PrivateAttr(
             default_factory=lambda: list[str](),
         )
-        _call_count: int = PrivateAttr(default_factory=lambda: 0)
-        _should_fail: bool = PrivateAttr(default=False)
+        _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
+        _should_fail: bool = m.PrivateAttr(default=False)
 
         @override
         def execute(self) -> p.Result[str]:
@@ -195,11 +194,11 @@ class TestService:
     class LifecycleService(s[str]):
         """Real lifecycle service using s with settings model."""
 
-        _initialized: bool = PrivateAttr(default=False)
-        _service_config: TestService.ServiceConfig | None = PrivateAttr(default=None)
-        _shutdown_called: bool = PrivateAttr(default=False)
-        _should_fail_init: bool = PrivateAttr(default=False)
-        _should_fail_shutdown: bool = PrivateAttr(default=False)
+        _initialized: bool = m.PrivateAttr(default=False)
+        _service_config: TestService.ServiceConfig | None = m.PrivateAttr(default=None)
+        _shutdown_called: bool = m.PrivateAttr(default=False)
+        _should_fail_init: bool = m.PrivateAttr(default=False)
+        _should_fail_shutdown: bool = m.PrivateAttr(default=False)
 
         @override
         def execute(self) -> p.Result[str]:

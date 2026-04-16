@@ -28,7 +28,7 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import ValidationError
 
 from flext_tests import tm
 from tests import c, m, t, u
@@ -50,26 +50,26 @@ class TestModels:
         METADATA = "metadata"
         PAYLOAD = "payload"
 
-    class ModelCreationScenario(BaseModel):
+    class ModelCreationScenario(m.BaseModel):
         """Scenario for testing model creation."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         model_type: Annotated[
             TestModels.ModelType,
-            Field(description="Model type under creation test"),
+            m.Field(description="Model type under creation test"),
         ]
         field_data: Annotated[
             t.RecursiveContainerMapping,
-            Field(description="Model input payload"),
+            m.Field(description="Model input payload"),
         ]
         expected_checks: Annotated[
             t.StrSequence,
-            Field(description="Expected validation check labels"),
+            m.Field(description="Expected validation check labels"),
         ]
         description: Annotated[
             str,
-            Field(default="", description="Scenario description"),
+            m.Field(default="", description="Scenario description"),
         ] = ""
 
     class SampleAggregate(m.AggregateRoot):
@@ -114,7 +114,7 @@ class TestModels:
             name: str
             email: str
 
-            @field_validator("email")
+            @m.field_validator("email")
             @classmethod
             def validate_email(cls, v: str) -> str:
                 if "@" not in v:
@@ -304,7 +304,7 @@ class TestModels:
             name: str
             email: str
 
-            @field_validator("name")
+            @m.field_validator("name")
             @classmethod
             def validate_name(cls, v: str) -> str:
                 if not v:
@@ -312,7 +312,7 @@ class TestModels:
                     raise ValueError(error_msg)
                 return v
 
-            @field_validator("email")
+            @m.field_validator("email")
             @classmethod
             def validate_email(cls, v: str) -> str:
                 if "@" not in v:
@@ -726,7 +726,7 @@ class TestModels:
             handler_called: bool = False
             handler_data: Annotated[
                 t.RecursiveContainerMapping,
-                Field(default_factory=dict),
+                m.Field(default_factory=dict),
             ]
 
             def _apply_test_event(self, data: t.RecursiveContainerMapping) -> None:

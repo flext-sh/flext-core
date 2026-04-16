@@ -27,11 +27,9 @@ from typing import Annotated, ClassVar
 
 import pytest
 from hypothesis import given, settings, strategies as st
-from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, FlextContext, FlextSettings
 from flext_tests import tm
-from tests import c, p, t, u
+from tests import FlextContainer, FlextContext, FlextSettings, c, m, p, t, u
 
 
 @pytest.fixture(autouse=True)
@@ -44,38 +42,38 @@ def reset_flext_container_singleton() -> Generator[None]:
         FlextContainer.reset_for_testing()
 
 
-class _ServiceScenario(BaseModel):
+class _ServiceScenario(m.BaseModel):
     """Test scenario for service registration and retrieval."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
+    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
         frozen=True,
         arbitrary_types_allowed=True,
     )
-    name: Annotated[str, Field(description="Service scenario name")]
-    service: Annotated[t.Primitives, Field(description="Service value to register")]
+    name: Annotated[str, m.Field(description="Service scenario name")]
+    service: Annotated[t.Primitives, m.Field(description="Service value to register")]
     description: Annotated[
         str,
-        Field(default="", description="Scenario description"),
+        m.Field(default="", description="Scenario description"),
     ] = ""
 
 
-class _TypedRetrievalScenario(BaseModel):
+class _TypedRetrievalScenario(m.BaseModel):
     """Test scenario for typed service retrieval."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
+    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
         frozen=True,
         arbitrary_types_allowed=True,
     )
-    name: Annotated[str, Field(description="Typed retrieval scenario name")]
-    service: Annotated[t.Primitives, Field(description="Registered service value")]
-    expected_type: Annotated[type, Field(description="Expected service type")]
+    name: Annotated[str, m.Field(description="Typed retrieval scenario name")]
+    service: Annotated[t.Primitives, m.Field(description="Registered service value")]
+    expected_type: Annotated[type, m.Field(description="Expected service type")]
     should_pass: Annotated[
         bool,
-        Field(description="Whether typed retrieval should succeed"),
+        m.Field(description="Whether typed retrieval should succeed"),
     ]
     description: Annotated[
         str,
-        Field(default="", description="Scenario description"),
+        m.Field(default="", description="Scenario description"),
     ] = ""
 
 

@@ -14,7 +14,7 @@ from types import ModuleType
 from typing import cast
 
 import pytest
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import ValidationError
 
 from flext_tests import tm
 from tests import c, m, t, u
@@ -475,7 +475,7 @@ class TestsFlextCoreModelsCqrs:
     # ── FlextMessage discriminated union ───────────────────────
 
     def test_message_union_command(self) -> None:
-        adapter: TypeAdapter[m.FlextMessage] = TypeAdapter(m.FlextMessage)
+        adapter: m.TypeAdapter[m.FlextMessage] = m.TypeAdapter(m.FlextMessage)
         parsed = adapter.validate_python({
             "message_type": "command",
             "command_type": "run",
@@ -484,7 +484,7 @@ class TestsFlextCoreModelsCqrs:
         tm.that(parsed.message_type, eq="command")
 
     def test_message_union_query(self) -> None:
-        adapter: TypeAdapter[m.FlextMessage] = TypeAdapter(m.FlextMessage)
+        adapter: m.TypeAdapter[m.FlextMessage] = m.TypeAdapter(m.FlextMessage)
         parsed = adapter.validate_python({
             "message_type": "query",
         })
@@ -492,7 +492,7 @@ class TestsFlextCoreModelsCqrs:
         tm.that(parsed.message_type, eq="query")
 
     def test_message_union_event(self) -> None:
-        adapter: TypeAdapter[m.FlextMessage] = TypeAdapter(m.FlextMessage)
+        adapter: m.TypeAdapter[m.FlextMessage] = m.TypeAdapter(m.FlextMessage)
         parsed = adapter.validate_python({
             "message_type": "event",
             "event_type": "happened",
@@ -502,7 +502,7 @@ class TestsFlextCoreModelsCqrs:
         tm.that(parsed.message_type, eq="event")
 
     def test_message_union_invalid_type(self) -> None:
-        adapter: TypeAdapter[m.FlextMessage] = TypeAdapter(m.FlextMessage)
+        adapter: m.TypeAdapter[m.FlextMessage] = m.TypeAdapter(m.FlextMessage)
         with pytest.raises(ValidationError):
             adapter.validate_python({"message_type": "invalid"})
 
@@ -525,7 +525,7 @@ class TestsFlextCoreModelsCqrs:
     )
     def test_tag_class_var(
         self,
-        model_factory: Callable[[], BaseModel],
+        model_factory: Callable[[], m.BaseModel],
         expected_tag: str,
     ) -> None:
         model_factory()
@@ -546,7 +546,7 @@ class TestsFlextCoreModelsCqrs:
     )
     def test_cross_type_properties(
         self,
-        model_factory: Callable[[], BaseModel],
+        model_factory: Callable[[], m.BaseModel],
         has_command_type: bool,
         has_query_type: bool,
         has_event_type: bool,

@@ -18,7 +18,7 @@ DIAG ?= 0
 CHECK_GATES ?= 
 VALIDATE_GATES ?= 
 DOCS_PHASE ?= all
-FIX ?=
+FIX ?= 
 PR_ACTION ?= status
 PR_BASE ?= main
 PR_HEAD ?= 
@@ -31,15 +31,15 @@ PR_AUTO ?= 0
 PR_DELETE_BRANCH ?= 0
 PR_CHECKS_STRICT ?= 0
 PR_RELEASE_ON_MERGE ?= 1
-FILE ?=
-FILES ?=
+FILE ?= 
+FILES ?= 
 CHANGED_ONLY ?= 
-MATCH ?=
+MATCH ?= 
 RUFF_ARGS ?= 
 PYRIGHT_ARGS ?= 
 CHECK_ONLY ?= 
 FAIL_FAST ?= 
-VERBOSE ?=
+VERBOSE ?= 
 
 
 PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short

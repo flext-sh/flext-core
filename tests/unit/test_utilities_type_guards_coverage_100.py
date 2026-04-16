@@ -5,33 +5,32 @@ from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field
 
 from flext_tests import tm
 from tests import m, t, u
 
 
 class TestUtilitiesTypeGuardsCoverage100:
-    class TypeGuardScenario(BaseModel):
+    class TypeGuardScenario(m.BaseModel):
         """Scenario for type guard testing."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             frozen=True,
             arbitrary_types_allowed=True,
         )
         name: str
-        value: Annotated[t.Scalar, Field(default="")]
+        value: Annotated[t.Scalar, m.Field(default="")]
         expected_result: bool = True
 
-    class NormalizeScenario(BaseModel):
+    class NormalizeScenario(m.BaseModel):
         """Scenario for normalization testing."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             frozen=True,
             arbitrary_types_allowed=True,
         )
         name: str
-        value: Annotated[t.Scalar, Field(default="")]
+        value: Annotated[t.Scalar, m.Field(default="")]
         expected_type: type = str
         expected_value: t.Scalar | None = None
 

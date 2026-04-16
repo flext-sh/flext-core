@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pydantic import Field
-
 from flext_tests import tm
 from tests import m, t, u
 
@@ -21,13 +19,13 @@ class TestFlextModelsCollectionsCoverage100:
     class StatisticsItems(m.Statistics):
         """Statistics with items list."""
 
-        items: t.StrSequence = Field(default_factory=list)
+        items: t.StrSequence = m.Field(default_factory=list)
 
     class StatisticsMixed(m.Statistics):
         """Statistics with count, items, and name."""
 
         count: int = 0
-        items: t.StrSequence = Field(default_factory=list)
+        items: t.StrSequence = m.Field(default_factory=list)
         name: str = ""
 
     class StatisticsOptional(m.Statistics):

@@ -20,10 +20,9 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field
 
 from flext_tests import tm
-from tests import u
+from tests import m, u
 
 
 class TestEnumUtilitiesCoverage:
@@ -43,36 +42,36 @@ class TestEnumUtilitiesCoverage:
         MEDIUM = "medium"
         HIGH = "high"
 
-    class ParseScenario(BaseModel):
+    class ParseScenario(m.BaseModel):
         """Parse test scenario."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Parse scenario name")]
-        value: Annotated[str | StrEnum, Field(description="Input value to parse")]
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        name: Annotated[str, m.Field(description="Parse scenario name")]
+        value: Annotated[str | StrEnum, m.Field(description="Input value to parse")]
         expected_success: Annotated[
             bool,
-            Field(description="Whether parse should succeed"),
+            m.Field(description="Whether parse should succeed"),
         ]
         expected_status: Annotated[
             StrEnum | None,
-            Field(default=None, description="Expected parsed enum status"),
+            m.Field(default=None, description="Expected parsed enum status"),
         ] = None
         expected_error: Annotated[
             str | None,
-            Field(default=None, description="Expected error message fragment"),
+            m.Field(default=None, description="Expected error message fragment"),
         ] = None
 
-    class ParseOrDefaultScenario(BaseModel):
+    class ParseOrDefaultScenario(m.BaseModel):
         """Parse or default test scenario."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Parse or default scenario name")]
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        name: Annotated[str, m.Field(description="Parse or default scenario name")]
         value: Annotated[
             str | StrEnum | None,
-            Field(description="Input value to parse"),
+            m.Field(description="Input value to parse"),
         ]
-        default: Annotated[StrEnum, Field(description="Default enum value")]
-        expected: Annotated[StrEnum, Field(description="Expected output enum value")]
+        default: Annotated[StrEnum, m.Field(description="Default enum value")]
+        expected: Annotated[StrEnum, m.Field(description="Expected output enum value")]
 
     PARSE: ClassVar[Sequence[ParseScenario]] = [
         ParseScenario(

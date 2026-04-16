@@ -6,7 +6,6 @@ from collections.abc import Mapping
 from typing import ClassVar, override
 
 import pytest
-from pydantic import ConfigDict
 
 from tests import c, e, m, p, r, s
 
@@ -29,7 +28,7 @@ class UserService(s[UserData]):
 class ValidatingService(s[str]):
     """Service with public validation behavior."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(validate_assignment=True)
+    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(validate_assignment=True)
     value_input: str = "valid"
     min_length: int = 3
 

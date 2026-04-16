@@ -26,10 +26,9 @@ from typing import Annotated, ClassVar, cast
 
 import pytest
 from hypothesis import given, settings, strategies as st
-from pydantic import BaseModel, ConfigDict, Field
 
 from flext_tests import tm
-from tests import p, r, t, u
+from tests import m, p, r, t, u
 
 
 @unique
@@ -53,26 +52,26 @@ class ResultOperationType(StrEnum):
 class Testr:
     ResultOperationType = ResultOperationType
 
-    class ResultScenario(BaseModel):
+    class ResultScenario(m.BaseModel):
         """Generic result scenario for r tests."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Result scenario name")]
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        name: Annotated[str, m.Field(description="Result scenario name")]
         operation_type: Annotated[
             ResultOperationType,
-            Field(description="Result operation type"),
+            m.Field(description="Result operation type"),
         ]
         value: Annotated[
             t.RecursiveContainer,
-            Field(description="Input value for result operation"),
+            m.Field(description="Input value for result operation"),
         ]
         is_success_expected: Annotated[
             bool,
-            Field(default=True, description="Expected success state"),
+            m.Field(default=True, description="Expected success state"),
         ] = True
         expected_result: Annotated[
             t.RecursiveContainer | None,
-            Field(default=None, description="Optional expected result payload"),
+            m.Field(default=None, description="Optional expected result payload"),
         ] = None
 
         def __init__(

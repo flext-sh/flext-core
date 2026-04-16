@@ -23,10 +23,7 @@ from collections.abc import Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field
-
-from flext_core import FlextContext, x
-from tests import p, t, u
+from tests import FlextContext, m, p, t, u, x
 
 
 class TestFlextMixinsNestedClasses:
@@ -58,57 +55,57 @@ class TestFlextMixinsNestedClasses:
         EXISTING_RESULT = "existing_result"
         TYPE_PRESERVATION = "type_preservation"
 
-    class ServiceMixinScenario(BaseModel):
+    class ServiceMixinScenario(m.BaseModel):
         """Service mixin test scenario definition."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Service mixin scenario name")]
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        name: Annotated[str, m.Field(description="Service mixin scenario name")]
         scenario_type: Annotated[
             TestFlextMixinsNestedClasses.ServiceMixinScenarioType,
-            Field(description="Service mixin scenario type"),
+            m.Field(description="Service mixin scenario type"),
         ]
         needs_init: Annotated[
             bool,
-            Field(
+            m.Field(
                 default=False,
                 description="Whether service initialization is required",
             ),
         ] = False
         operation_context: Annotated[
             str | None,
-            Field(default=None, description="Optional operation context name"),
+            m.Field(default=None, description="Optional operation context name"),
         ] = None
 
-    class ModelConversionScenario(BaseModel):
+    class ModelConversionScenario(m.BaseModel):
         """ModelConversion test scenario definition."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Model conversion scenario name")]
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        name: Annotated[str, m.Field(description="Model conversion scenario name")]
         scenario_type: Annotated[
             TestFlextMixinsNestedClasses.ModelConversionScenarioType,
-            Field(description="Model conversion scenario type"),
+            m.Field(description="Model conversion scenario type"),
         ]
         input_value: Annotated[
             t.RecursiveContainer,
-            Field(description="Input value for conversion"),
+            m.Field(description="Input value for conversion"),
         ]
         expected_output: Annotated[
             t.ConfigMap,
-            Field(description="Expected conversion output"),
+            m.Field(description="Expected conversion output"),
         ]
 
-    class ResultHandlingScenario(BaseModel):
+    class ResultHandlingScenario(m.BaseModel):
         """ResultHandling test scenario definition."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Result handling scenario name")]
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        name: Annotated[str, m.Field(description="Result handling scenario name")]
         scenario_type: Annotated[
             TestFlextMixinsNestedClasses.ResultHandlingScenarioType,
-            Field(description="Result handling scenario type"),
+            m.Field(description="Result handling scenario type"),
         ]
         input_value: Annotated[
             t.RecursiveContainer,
-            Field(description="Input value for result handling"),
+            m.Field(description="Input value for result handling"),
         ]
 
     def _service_scenarios(

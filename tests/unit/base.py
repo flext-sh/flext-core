@@ -18,8 +18,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated, ClassVar, override
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from flext_core import T_DomainResult
 from flext_tests import s, td
 from tests import c, h, m, p, r, t
@@ -44,44 +42,44 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
         msg = c.Core.Tests.TestErrors.SUBCLASSES_MUST_IMPLEMENT_EXECUTE
         raise NotImplementedError(msg)
 
-    class HandlerTestCase(BaseModel):
+    class HandlerTestCase(m.BaseModel):
         """Factory for handler test case configurations."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         handler_id: Annotated[
             str,
-            Field(description="Unique handler identifier for test case"),
+            m.Field(description="Unique handler identifier for test case"),
         ]
         handler_name: Annotated[
             str | None,
-            Field(default=None, description="Optional display name for handler"),
+            m.Field(default=None, description="Optional display name for handler"),
         ] = None
         handler_type: Annotated[
             c.HandlerType,
-            Field(
+            m.Field(
                 default=c.HandlerType.COMMAND,
                 description="Handler type used for test case configuration",
             ),
         ] = c.HandlerType.COMMAND
         expected_result: Annotated[
             t.Container | None,
-            Field(
+            m.Field(
                 default=None,
                 description="Expected handler result when execution succeeds",
             ),
         ] = None
         should_fail: Annotated[
             bool,
-            Field(default=False, description="Whether test case expects failure"),
+            m.Field(default=False, description="Whether test case expects failure"),
         ] = False
         error_message: Annotated[
             str | None,
-            Field(default=None, description="Expected error message for failures"),
+            m.Field(default=None, description="Expected error message for failures"),
         ] = None
         description: Annotated[
             str,
-            Field(default="", description="Human-readable test case description"),
+            m.Field(default="", description="Human-readable test case description"),
         ] = ""
 
         def create_handler(

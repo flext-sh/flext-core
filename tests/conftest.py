@@ -15,88 +15,9 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
 
-from flext_core import FlextContainer, FlextContext
+from flext_core import FlextContainer, FlextContext, p
 from tests import c, r, u
-
-
-class TestsFlextCore:
-    """Root facade for flext-core test infrastructure."""
-
-    class Core:
-        """flext-core test namespace."""
-
-        class Tests:
-            """Test utilities and helpers namespace."""
-
-            @staticmethod
-            def assert_validates(
-                model_class: type,
-                field_name: str,
-                value: object,
-            ) -> object:
-                """Validate a value against a model field and return the validated value.
-
-                Args:
-                    model_class: Pydantic model class to validate against
-                    field_name: Name of the field to validate
-                    value: Value to validate
-
-                Returns:
-                    The validated value
-
-                Raises:
-                    AssertionError: If validation fails
-
-                """
-                try:
-                    instance = model_class(**{field_name: value})
-                    return getattr(instance, field_name)
-                except (ValidationError, ValueError, TypeError) as e:
-                    pytest.fail(f"Validation failed for {field_name}={value}: {e}")
-
-            @staticmethod
-            def assert_rejects(
-                model_class: type,
-                field_name: str,
-                value: object,
-                error_type: type[Exception] | None = None,
-            ) -> str:
-                """Assert that a value is rejected during validation.
-
-                Args:
-                    model_class: Pydantic model class to validate against
-                    field_name: Name of the field to validate
-                    value: Value that should be rejected
-                    error_type: Expected exception type (optional)
-
-                Returns:
-                    The error message from validation
-
-                Raises:
-                    AssertionError: If validation succeeds when it should fail
-
-                """
-                try:
-                    instance = model_class(**{field_name: value})
-                    pytest.fail(
-                        f"Expected validation to fail for {field_name}={value}, but got: {getattr(instance, field_name)}",
-                        pytrace=False,
-                    )
-                except (ValidationError, ValueError, TypeError) as e:
-                    error_msg = str(e)
-                    if error_type and (not isinstance(e, error_type)):
-                        pytest.fail(
-                            f"Expected {error_type.__name__}, but got {type(e).__name__}: {error_msg}",
-                            pytrace=False,
-                        )
-                    return error_msg
-
-
-# Centralized module-level aliases for conftest.py helper access
-assert_validates = TestsFlextCore.Core.Tests.assert_validates
-assert_rejects = TestsFlextCore.Core.Tests.assert_rejects
 
 
 @pytest.fixture
@@ -118,15 +39,17 @@ def clean_container() -> FlextContainer:
 
 
 @pytest.fixture
-def mock_external_service() -> object:
+def mock_external_service() -> u.Core.Tests.FunctionalExternalService:
     """Provide mock external service for integration tests."""
     return u.Core.Tests.FunctionalExternalService()
 
 
 @pytest.fixture
-def sample_data() -> object:
+def sample_data() -> dict[
+    str, str | int | float | bool | list[str] | dict[str, str] | None
+]:
     """Provide sample test data for integration tests."""
-    result = {
+    return {
         "string": "test_value",
         "integer": 42,
         "float": math.pi,
@@ -135,7 +58,6 @@ def sample_data() -> object:
         "list": ["item1", "item2"],
         "dict": {"key": "value"},
     }
-    return result
 
 
 @pytest.fixture
@@ -158,33 +80,15 @@ def temp_file(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def flext_result_success() -> object:
+def flext_result_success() -> p.Result[dict[str, bool]]:
     """Successful r fixture available to all FLEXT projects."""
-    return r[dict].ok({"success": True})
+    return r[dict[str, bool]].ok({"success": True})
 
 
 @pytest.fixture
-def flext_result_failure() -> object:
+def flext_result_failure() -> p.Result[str]:
     """Failed r fixture available to all FLEXT projects."""
     return r[str].fail(c.Core.Tests.TestErrors.TEST_ERROR)
-
-
-@pytest.fixture
-def validation_scenarios() -> type:
-    """Access to all centralized validation scenarios."""
-    return u.Core.Tests.ValidationScenarios
-
-
-@pytest.fixture
-def parser_scenarios() -> type:
-    """Access to all centralized parser scenarios."""
-    return u.Core.Tests.ParserScenarios
-
-
-@pytest.fixture
-def reliability_scenarios() -> type:
-    """Access to all centralized reliability scenarios."""
-    return u.Core.Tests.ReliabilityScenarios
 
 
 @pytest.fixture
@@ -294,16 +198,32 @@ def whitespace_strings() -> Sequence[str]:
 def valid_ranges() -> Sequence[tuple[int, int, int]]:
     """Valid numeric ranges (value, min, max) for range validation."""
     return [
-        (0, 0, 10),
         (5, 0, 10),
+        (0, 0, 10),
         (10, 0, 10),
-        (100, 0, 1000),
+        (100, 50, 150),
         (-5, -10, 0),
-        (-5, -10, 10),
     ]
 
 
 @pytest.fixture
-def out_of_range() -> Sequence[tuple[int, int, int]]:
-    """Out-of-range numeric values (value, min, max) for range validation."""
-    return [(-1, 0, 10), (11, 0, 10), (100, 0, 50), (-100, 0, 10)]
+def invalid_ranges() -> Sequence[tuple[int, int, int]]:
+    """Invalid numeric ranges (value, min, max) for range validation."""
+    return [
+        (-1, 0, 10),
+        (11, 0, 10),
+        (200, 50, 150),
+        (-15, -10, 0),
+    ]
+
+
+@pytest.fixture
+def valid_percentages() -> Sequence[float]:
+    """Valid percentages (0.0 to 1.0) for percentage validation."""
+    return [0.0, 0.5, 0.99, 1.0]
+
+
+@pytest.fixture
+def invalid_percentages() -> Sequence[float]:
+    """Invalid percentages for validation."""
+    return [-0.1, 1.1, 2.0, -1.0]

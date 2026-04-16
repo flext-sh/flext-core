@@ -15,7 +15,6 @@ from collections.abc import Mapping
 from typing import Annotated, cast
 
 import pytest
-from pydantic import Field
 
 from flext_tests import tm
 from tests import m, t, u
@@ -25,20 +24,20 @@ class TestsFlextCoreUtilitiesMapper:
     """Tests for flext_core via the u facade."""
 
     class Address(m.BaseModel):
-        city: Annotated[str, Field(description="City name")]
-        zip_code: Annotated[str, Field(description="Zip code")]
+        city: Annotated[str, m.Field(description="City name")]
+        zip_code: Annotated[str, m.Field(description="Zip code")]
 
     class User(m.BaseModel):
-        name: Annotated[str, Field(description="User name")]
-        age: Annotated[int, Field(description="User age")]
+        name: Annotated[str, m.Field(description="User name")]
+        age: Annotated[int, m.Field(description="User age")]
         address: Annotated[
             TestsFlextCoreUtilitiesMapper.Address,
-            Field(description="User address"),
+            m.Field(description="User address"),
         ]
 
     class Item(m.BaseModel):
-        label: Annotated[str, Field(description="Item label")]
-        value: Annotated[int, Field(description="Item value")]
+        label: Annotated[str, m.Field(description="Item label")]
+        value: Annotated[int, m.Field(description="Item value")]
 
     # ── extract: basic dict ────────────────────────────────────────
 
@@ -96,7 +95,7 @@ class TestsFlextCoreUtilitiesMapper:
         class WithData(m.BaseModel):
             data: Annotated[
                 t.RecursiveContainerMapping,
-                Field(description="Data dict"),
+                m.Field(description="Data dict"),
             ] = {"key": "val"}
 
         obj = WithData()

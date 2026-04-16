@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from flext_core import FlextContainer, FlextContext
 from flext_tests import tm
-from tests import c, m, p, t
+from tests import FlextContainer, FlextContext, c, m, p, t
 
 
 def test_create_overloads_and_auto_correlation() -> None:

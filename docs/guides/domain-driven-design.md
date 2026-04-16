@@ -30,7 +30,7 @@
 
 **Status**: Current | **Version**: 0.12.0-dev | **Pattern**: Clean Architecture Foundation
 
-FlextModels provides domain-driven design (DDD) patterns through semantic base classes for building rich domain models with proper entity and value t.RecursiveContainer semantics.
+FlextModels provides domain-driven design (DDD) patterns through semantic base classes for building rich domain models with proper entity and value object semantics.
 
 ## Core Concepts
 
@@ -70,7 +70,7 @@ from decimal import Decimal
 
 
 class Money(FlextModels.Value):
-    """Money is a value t.RecursiveContainer - represented by amount and currency."""
+    """Money is a value object - represented by amount and currency."""
 
     amount: Decimal
     currency: str  # "USD", "EUR", "GBP", etc.
@@ -108,20 +108,20 @@ from flext_core import FlextModels
 
 
 class Email(FlextModels.Value):
-    """Email address - value t.RecursiveContainer."""
+    """Email address - value object."""
 
     address: str
 
 
 class PhoneNumber(FlextModels.Value):
-    """Phone number - value t.RecursiveContainer."""
+    """Phone number - value object."""
 
     country_code: str
     number: str
 
 
 class Address(FlextModels.Value):
-    """Physical address - value t.RecursiveContainer."""
+    """Physical address - value object."""
 
     street: str
     city: str
@@ -258,7 +258,7 @@ class OrderItem(FlextModels.Entity):
 
 
 class ShippingInfo(FlextModels.Value):
-    """Shipping address - value t.RecursiveContainer."""
+    """Shipping address - value object."""
 
     address: str
     city: str
@@ -441,14 +441,14 @@ class OrderStatus(str, Enum):
 
 
 class Money(FlextModels.Value):
-    """Money value t.RecursiveContainer."""
+    """Money value object."""
 
     amount: Decimal
     currency: str = "USD"
 
 
 class Address(FlextModels.Value):
-    """Address value t.RecursiveContainer."""
+    """Address value object."""
 
     street: str
     city: str
@@ -653,7 +653,7 @@ import re
 
 
 class Email(FlextModels.Value):
-    """Email value t.RecursiveContainer."""
+    """Email value object."""
 
     address: str
 
@@ -664,7 +664,7 @@ class Email(FlextModels.Value):
 
 
 class Password(FlextModels.Value):
-    """Password value t.RecursiveContainer (hashed representation)."""
+    """Password value object (hashed representation)."""
 
     hash: str
 

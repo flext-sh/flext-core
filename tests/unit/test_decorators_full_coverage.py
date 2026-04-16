@@ -8,7 +8,6 @@ from collections.abc import Callable, Mapping, MutableSequence
 from typing import Annotated, ClassVar, cast
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field
 
 import flext_core as core_decorators
 import flext_core.decorators as core_decorators_module
@@ -45,9 +44,11 @@ class TestDecoratorsFullCoverage:
         def exception(self, message: str, **kwargs: t.Scalar) -> None:
             self.exception_calls.append((message, kwargs))
 
-    class _ObjWithLogger(BaseModel):
-        model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
-        logger: Annotated[p.Logger, Field(description="Logger instance holder")]
+    class _ObjWithLogger(m.BaseModel):
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+            arbitrary_types_allowed=True
+        )
+        logger: Annotated[p.Logger, m.Field(description="Logger instance holder")]
 
     def test_deprecated_wrapper_emits_warning_and_returns_value(self) -> None:
         @d.deprecated("old API")

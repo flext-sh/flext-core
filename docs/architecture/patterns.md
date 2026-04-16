@@ -456,7 +456,7 @@ if result.success:
 
 **Benefits:**
 
-- ✅ Encapsulates t.RecursiveContainer creation
+- ✅ Encapsulates object creation
 - ✅ Easy to add new types
 - ✅ Centralized creation logic
 

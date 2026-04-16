@@ -30,9 +30,8 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextSettings
 from flext_tests import tm
-from tests import c, p, t, u
+from tests import FlextSettings, c, p, t, u
 
 
 @pytest.fixture(autouse=True)

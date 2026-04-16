@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import pytest
-from pydantic import Field
 
 from tests import m, p, r, t, u
 
@@ -20,7 +19,7 @@ class TestDispatcherFullCoverage:
     class _SampleQuery(m.Query):
         """Refined sample query."""
 
-        pagination: m.Pagination | t.Dict = Field(default_factory=t.Dict)
+        pagination: m.Pagination | t.Dict = m.Field(default_factory=t.Dict)
         query_type: str | None = "sample_query"
 
     class _SampleEvent(m.Event):

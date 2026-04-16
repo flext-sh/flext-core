@@ -12,7 +12,7 @@ from datetime import UTC, datetime, timedelta
 from typing import cast
 
 import pytest
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
 from flext_tests import tm
 from tests import c, m, t, u
@@ -68,7 +68,7 @@ class TestsFlextCoreModelsBase:
             m.Metadata.model_validate({"attributes": 123})
 
     def test_metadata_attributes_accepts_basemodel(self) -> None:
-        class _Payload(BaseModel):
+        class _Payload(m.BaseModel):
             key: str = "val"
 
         meta = m.Metadata.model_validate({"attributes": _Payload()})

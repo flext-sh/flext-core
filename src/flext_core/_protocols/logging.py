@@ -203,7 +203,16 @@ class FlextProtocolsLogging:
         @classmethod
         def model_validate(
             cls,
-            obj: Mapping[str, FlextTypingBase.Scalar | Mapping[str, FlextTypingBase.Scalar | Sequence[FlextTypingBase.Scalar]] | Sequence[FlextTypingBase.Scalar] | None] | Self,
+            obj: Mapping[
+                str,
+                FlextTypingBase.Scalar
+                | Mapping[
+                    str, FlextTypingBase.Scalar | Sequence[FlextTypingBase.Scalar]
+                ]
+                | Sequence[FlextTypingBase.Scalar]
+                | None,
+            ]
+            | Self,
             *,
             strict: bool | None = None,
             from_attributes: bool | None = None,

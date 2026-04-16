@@ -18,8 +18,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, cast
 
-from pydantic import Field
-
 from flext_tests import tm
 from tests import m, t, u
 
@@ -28,8 +26,8 @@ class UtilitiesMapperCoverage100Namespace:
     class SimpleObj(m.Value):
         """Simple test t.RecursiveContainer."""
 
-        name: Annotated[str, Field(description="Simple t.RecursiveContainer name")]
-        value: Annotated[int, Field(description="Simple t.RecursiveContainer value")]
+        name: Annotated[str, m.Field(description="Simple t.RecursiveContainer name")]
+        value: Annotated[int, m.Field(description="Simple t.RecursiveContainer value")]
 
     class _DoubleOp(m.BaseModel):
         def __call__(self, value: float | str) -> t.Numeric | str:
@@ -287,7 +285,7 @@ class UtilitiesMapperCoverage100Namespace:
             """Test extraction via model_dump."""
 
             class Dumpable(m.BaseModel):
-                a: Annotated[int, Field(default=1, description="Dumpable value")] = 1
+                a: Annotated[int, m.Field(default=1, description="Dumpable value")] = 1
 
             obj = Dumpable()
             tm.that(u.extract(obj, "a").value, eq=1)

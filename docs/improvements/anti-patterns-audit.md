@@ -387,7 +387,7 @@ The guide shows wrapping pattern, and source code demonstrates both approaches:
 
 **Guide Claims**:
 
-- ❌ Don't allow value t.RecursiveContainer modification
+- ❌ Don't allow value object modification
 - ✅ Use `frozen=True`
 
 **Source Code Evidence** (models.py):

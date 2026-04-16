@@ -14,7 +14,6 @@ import typing
 from typing import ClassVar, Final, Protocol, runtime_checkable
 
 import pytest
-from pydantic import Field
 from pydantic.warnings import PydanticDeprecatedSince20
 
 from flext_core import FlextModelsNamespace
@@ -29,7 +28,7 @@ class TestCheckNoAny:
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            data: typing.Any = Field(default=None, description="d")
+            data: typing.Any = m.Field(default=None, description="d")
 
         fields = u.own_fields(_M)
         errors = u.check_no_any(fields)
@@ -41,7 +40,7 @@ class TestCheckNoAny:
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            name: str = Field(default="x", description="d")
+            name: str = m.Field(default="x", description="d")
 
         fields = u.own_fields(_M)
         errors = u.check_no_any(fields)
@@ -56,7 +55,7 @@ class TestCheckNoBareCollections:
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            data: dict[str, str] = Field(default_factory=dict, description="d")
+            data: dict[str, str] = m.Field(default_factory=dict, description="d")
 
         fields = u.own_fields(_M)
         errors = u.check_no_bare_collections(fields)
@@ -68,7 +67,7 @@ class TestCheckNoBareCollections:
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            items: list[str] = Field(default_factory=list, description="d")
+            items: list[str] = m.Field(default_factory=list, description="d")
 
         fields = u.own_fields(_M)
         errors = u.check_no_bare_collections(fields)
@@ -80,7 +79,7 @@ class TestCheckNoBareCollections:
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            data: t.StrMapping = Field(default_factory=dict, description="d")
+            data: t.StrMapping = m.Field(default_factory=dict, description="d")
 
         fields = u.own_fields(_M)
         errors = u.check_no_bare_collections(fields)
@@ -91,7 +90,7 @@ class TestCheckNoBareCollections:
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            items: t.StrSequence = Field(default_factory=list, description="d")
+            items: t.StrSequence = m.Field(default_factory=list, description="d")
 
         fields = u.own_fields(_M)
         errors = u.check_no_bare_collections(fields)
@@ -111,7 +110,7 @@ class TestCheckNoV1Patterns:
                 class Config:
                     extra = "forbid"
 
-                name: str = Field(default="x", description="d")
+                name: str = m.Field(default="x", description="d")
 
         errors = u.check_no_v1_patterns(_M)
         assert len(errors) == 1
@@ -138,7 +137,7 @@ class TestCheckFieldDescriptions:
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            name: str = Field(default="test", description="A name")
+            name: str = m.Field(default="test", description="A name")
 
         own = u.own_fields(_M)
         errors = u.check_field_descriptions(_M, own=own)
@@ -153,7 +152,7 @@ class TestCheckExtraPolicy:
 
         class _M(m.FlexibleInternalModel):
             _flext_enforcement_exempt: ClassVar[bool] = True
-            name: str = Field(default="x", description="d")
+            name: str = m.Field(default="x", description="d")
 
         errors = u.check_extra_policy(_M)
         assert len(errors) == 0

@@ -29,11 +29,9 @@ from typing import Annotated, ClassVar
 
 import pytest
 from hypothesis import given, settings, strategies as st
-from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, FlextContext
 from flext_tests import tm
-from tests import p, t, u
+from tests import FlextContainer, FlextContext, m, p, t, u
 
 
 class TestFlextContext:
@@ -41,19 +39,19 @@ class TestFlextContext:
     type SetGetExpectedValue = t.Primitives
     type NestedDictValue = Mapping[str, Mapping[str, Mapping[str, t.StrMapping]]]
 
-    class ContextOperationScenario(BaseModel):
+    class ContextOperationScenario(m.BaseModel):
         """Test scenario for context operations."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Context operation scenario name")]
-        key: Annotated[str, Field(description="Context key under test")]
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        name: Annotated[str, m.Field(description="Context operation scenario name")]
+        key: Annotated[str, m.Field(description="Context key under test")]
         value: Annotated[
             t.RecursiveContainer,
-            Field(description="Context value under test"),
+            m.Field(description="Context value under test"),
         ]
         expected_success: Annotated[
             bool,
-            Field(default=True, description="Whether operation should succeed"),
+            m.Field(default=True, description="Whether operation should succeed"),
         ] = True
 
     class ContextScenarios:

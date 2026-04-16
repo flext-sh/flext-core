@@ -9,9 +9,8 @@ from __future__ import annotations
 from datetime import UTC, datetime, tzinfo
 
 import pytest
-from pydantic import BaseModel
 
-from tests import u
+from tests import m, u
 
 
 class TestUtilitiesGeneratorsFullCoverage:
@@ -31,7 +30,7 @@ class TestUtilitiesGeneratorsFullCoverage:
             staticmethod(lambda: datetime(2026, 1, 1, tzinfo=UTC)),
         )
 
-        class _TraceModel(BaseModel):
+        class _TraceModel(m.BaseModel):
             value: int
 
         trace_payload = _TraceModel(value=9).model_dump(mode="json")

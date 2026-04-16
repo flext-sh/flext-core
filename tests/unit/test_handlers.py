@@ -6,7 +6,6 @@ from typing import Annotated, ClassVar, override
 
 import pytest
 from hypothesis import given, strategies as st
-from pydantic import ConfigDict, Field
 
 from flext_tests import tm
 from tests import c, e, h, m, p, r, t, u, x
@@ -54,10 +53,10 @@ class TestFlextHandlers:
     class HandlerTypeScenario(m.Value):
         """Scenario for handler types."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Handler type scenario name")]
-        handler_type: Annotated[c.HandlerType, Field(description="Type")]
-        handler_mode: Annotated[c.HandlerType, Field(description="Mode")]
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        name: Annotated[str, m.Field(description="Handler type scenario name")]
+        handler_type: Annotated[c.HandlerType, m.Field(description="Type")]
+        handler_mode: Annotated[c.HandlerType, m.Field(description="Mode")]
 
     HANDLER_TYPES: ClassVar[Sequence[HandlerTypeScenario]] = [
         HandlerTypeScenario(
@@ -544,8 +543,8 @@ class TestFlextHandlers:
 
     def test_handlers_dataclass_message_validation(self) -> None:
         class DataClassMessage(m.Value):
-            value: Annotated[str, Field(description="Message value")]
-            number: Annotated[int, Field(description="Message number")]
+            value: Annotated[str, m.Field(description="Message value")]
+            number: Annotated[int, m.Field(description="Message number")]
 
         settings = u.Core.Tests.create_handler_config(
             "test_dataclass_message",
@@ -558,7 +557,7 @@ class TestFlextHandlers:
 
     def test_handlers_slots_message_validation(self) -> None:
         class SlotsMessage(m.Value):
-            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
             value: str
             number: int
 

@@ -685,9 +685,7 @@ class Money(FlextModels.Value):
 
 
 money = Money(amount=Decimal("100"), currency="USD")
-money.amount = Decimal(
-    "50"
-)  # TypeError: frozen value object cannot be modified
+money.amount = Decimal("50")  # TypeError: frozen value object cannot be modified
 
 # Now safe - value objects can't be modified
 ```

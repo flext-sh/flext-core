@@ -6,7 +6,6 @@ from types import ModuleType
 from typing import override
 
 import pytest
-from pydantic import BaseModel
 
 from tests import c, e, h, m, p, r, t
 
@@ -125,7 +124,7 @@ class TestHandlersFullCoverage:
         decorator = h.handler(str)
 
         @decorator
-        def exposed(value: BaseModel) -> BaseModel:
+        def exposed(value: m.BaseModel) -> m.BaseModel:
             _ = value
             return t.ConfigMap(root={"value": 123})
 

@@ -4,8 +4,6 @@ from collections import UserDict, UserList
 from collections.abc import Callable, Iterator, Mapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Never, Self, override
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from flext_tests import m
 from tests import c, t
 
@@ -54,22 +52,22 @@ class TestsFlextCoreModelsMixins:
     type TestCaseMap = Mapping[str, t.Core.Tests.TestobjectSerializable]
     type InputPayloadMap = Mapping[str, t.Core.Tests.TestobjectSerializable]
 
-    class _MsgWithCommandId(BaseModel):
+    class _MsgWithCommandId(m.BaseModel):
         command_id: str = "cmd-1"
 
-    class _MsgWithMessageId(BaseModel):
+    class _MsgWithMessageId(m.BaseModel):
         message_id: str = "msg-1"
 
-    class SampleModel(BaseModel):
+    class SampleModel(m.BaseModel):
         """Sample model for testing."""
 
         name: str
         value: int
 
-    class _SvcModel(BaseModel):
+    class _SvcModel(m.BaseModel):
         value: str
 
-    class _BrokenDumpModel(BaseModel):
+    class _BrokenDumpModel(m.BaseModel):
         value: int = 1
 
         @override
@@ -87,7 +85,7 @@ class TestsFlextCoreModelsMixins:
                 return _broken_dump
             return super().__getattribute__(name)
 
-    class _ErrorsModel(BaseModel):
+    class _ErrorsModel(m.BaseModel):
         value: int
 
         @classmethod
@@ -107,7 +105,7 @@ class TestsFlextCoreModelsMixins:
             _ = obj
             raise TestsFlextCoreModelsMixins._ValidationLikeError
 
-    class _PlainErrorModel(BaseModel):
+    class _PlainErrorModel(m.BaseModel):
         value: int
 
         @classmethod
@@ -128,10 +126,10 @@ class TestsFlextCoreModelsMixins:
             msg = c.Core.Tests.TestErrors.PLAIN_BOOM
             raise RuntimeError(msg)
 
-    class _TargetModel(BaseModel):
+    class _TargetModel(m.BaseModel):
         value: int
 
-    class CacheTestModel(BaseModel):
+    class CacheTestModel(m.BaseModel):
         """Test model for cache key generation."""
 
         name: str
@@ -139,33 +137,33 @@ class TestsFlextCoreModelsMixins:
         tags: MutableSequence[str] = []
         meta: t.MutableStrMapping = {}
 
-    class NestedModel(BaseModel):
+    class NestedModel(m.BaseModel):
         """Nested Pydantic model for cache testing."""
 
         inner: TestsFlextCoreModelsMixins.CacheTestModel
         count: int
 
-    class SettingsModelForTest(BaseModel):
+    class SettingsModelForTest(m.BaseModel):
         """Test configuration model (mutable for set_parameter tests)."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
             extra="forbid",
         )
 
         name: str = "default_settings"
-        timeout: Annotated[int, Field(default=30, ge=0)] = 30
+        timeout: Annotated[int, m.Field(default=30, ge=0)] = 30
         enabled: bool = True
 
-    class InvalidModelForTest(BaseModel):
+    class InvalidModelForTest(m.BaseModel):
         """Model with invalid model_dump."""
 
         value: str = "test"
 
-    class SingletonClassForTest(BaseModel):
+    class SingletonClassForTest(m.BaseModel):
         """Test singleton class with Pydantic validation."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
             extra="forbid",
         )
@@ -191,10 +189,10 @@ class TestsFlextCoreModelsMixins:
             """Reset singleton instance for test isolation."""
             cls._instance = None
 
-    class BadSettingsForTest(BaseModel):
+    class BadSettingsForTest(m.BaseModel):
         """Settings that fails to instantiate."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
         )
 
@@ -204,13 +202,13 @@ class TestsFlextCoreModelsMixins:
             msg = c.Core.Tests.TestErrors.CANNOT_INSTANTIATE
             raise ValueError(msg)
 
-    class _DumpErrorModel(BaseModel):
+    class _DumpErrorModel(m.BaseModel):
         value: int = 1
 
-    class _Opts(BaseModel):
+    class _Opts(m.BaseModel):
         value: int = 1
 
-    class _FakeSettings(BaseModel):
+    class _FakeSettings(m.BaseModel):
         """Fake settings with model_copy support."""
 
         timeout: int = 10
@@ -219,45 +217,45 @@ class TestsFlextCoreModelsMixins:
         def data(self) -> t.RecursiveContainerMapping:
             return {"timeout": self.timeout}
 
-    class _Model(BaseModel):
+    class _Model(m.BaseModel):
         value: int
 
-    class _SampleEntity(BaseModel):
+    class _SampleEntity(m.BaseModel):
         """Test entity for domain utility tests."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
         unique_id: str = "test-123"
         name: str = "test"
 
-    class _FrozenEntity(BaseModel):
+    class _FrozenEntity(m.BaseModel):
         """Frozen entity for immutability tests."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         unique_id: str = "frozen-1"
 
-    class _GoodModel(BaseModel):
+    class _GoodModel(m.BaseModel):
         value: int = 7
 
-    class ComplexModel(BaseModel):
+    class ComplexModel(m.BaseModel):
         """Complex test model."""
 
         id: int
         data: t.RecursiveContainerMapping
         items: t.StrSequence
 
-    class _Cfg(BaseModel):
+    class _Cfg(m.BaseModel):
         x: int = 0
         y: str = "a"
 
-    class _BadCopyModel(BaseModel):
+    class _BadCopyModel(m.BaseModel):
         x: int = 1
 
-    class User(BaseModel):
+    class User(m.BaseModel):
         """Shared user model for tests."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
         id: str | None = None
         unique_id: str | None = None
@@ -265,10 +263,10 @@ class TestsFlextCoreModelsMixins:
         email: str
         active: bool = True
 
-    class EmailResponse(BaseModel):
+    class EmailResponse(m.BaseModel):
         """Shared email response model for tests."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         status: str
         message_id: str
@@ -276,15 +274,15 @@ class TestsFlextCoreModelsMixins:
     class DomainTestEntity(m.Entity):
         """Test entity for domain tests."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
         name: str
         value: t.ContainerValue
 
     class DomainTestValue(m.Value):
-        """Test value t.RecursiveContainer for domain tests."""
+        """Test value object for domain tests."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         data: str = ""
         count: int
@@ -297,14 +295,14 @@ class TestsFlextCoreModelsMixins:
             self.custom_id = custom_id
 
     class SimpleValue:
-        """Simple value t.RecursiveContainer without model_dump."""
+        """Simple value object without model_dump."""
 
         def __init__(self, data: str) -> None:
-            """Initialize simple value t.RecursiveContainer."""
+            """Initialize simple value object."""
             self.data = data
 
     class ComplexValue:
-        """TestsFlextModels.Value t.RecursiveContainer with non-hashable attributes."""
+        """TestsFlextModels.Value object with non-hashable attributes."""
 
         def __init__(self, data: str, items: t.StrSequence) -> None:
             """Initialize complex value with non-hashable items."""
@@ -356,19 +354,19 @@ class TestsFlextCoreModelsMixins:
     class NoSetattr:
         """Object without __setattr__."""
 
-    class ParseOptions(BaseModel):
+    class ParseOptions(m.BaseModel):
         """Test-local parse options after production model removal."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         strip: bool = True
         remove_empty: bool = True
         validator: Callable[[str], bool] | None = None
 
-    class ParseDelimitedCase(BaseModel):
+    class ParseDelimitedCase(m.BaseModel):
         """Test case for parse_delimited method."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             frozen=True,
             arbitrary_types_allowed=True,
         )
@@ -377,52 +375,52 @@ class TestsFlextCoreModelsMixins:
         delimiter: str
         expected: t.StrSequence | None = None
         expected_error: str | None = None
-        options: BaseModel | None = None
+        options: m.BaseModel | None = None
         strip: bool = True
         remove_empty: bool = True
         validator: Callable[[str], bool] | None = None
         use_legacy: bool = False
-        description: Annotated[str, Field(default="", exclude=True)] = ""
+        description: Annotated[str, m.Field(default="", exclude=True)] = ""
 
-    class SplitEscapeCase(BaseModel):
+    class SplitEscapeCase(m.BaseModel):
         """Test case for split_on_char_with_escape method."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         text: str
         split_char: str
         escape_char: str = "\\"
         expected: t.StrSequence | None = None
         expected_error: str | None = None
-        description: Annotated[str, Field(default="", exclude=True)] = ""
+        description: Annotated[str, m.Field(default="", exclude=True)] = ""
 
-    class NormalizeWhitespaceCase(BaseModel):
+    class NormalizeWhitespaceCase(m.BaseModel):
         """Test case for normalize_whitespace method."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         text: str
         pattern: str = r"\s+"
         replacement: str = " "
         expected: str | None = None
         expected_error: str | None = None
-        description: Annotated[str, Field(default="", exclude=True)] = ""
+        description: Annotated[str, m.Field(default="", exclude=True)] = ""
 
-    class RegexPipelineCase(BaseModel):
+    class RegexPipelineCase(m.BaseModel):
         """Test case for apply_regex_pipeline method."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         text: str
         patterns: Sequence[tuple[str, str] | tuple[str, str, int]]
         expected: str | None = None
         expected_error: str | None = None
-        description: Annotated[str, Field(default="", exclude=True)] = ""
+        description: Annotated[str, m.Field(default="", exclude=True)] = ""
 
-    class ObjectKeyCase(BaseModel):
+    class ObjectKeyCase(m.BaseModel):
         """Test case for get_object_key method."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             frozen=True,
             arbitrary_types_allowed=True,
         )
@@ -430,18 +428,18 @@ class TestsFlextCoreModelsMixins:
         obj: t.ContainerValue
         expected_contains: t.StrSequence | None = None
         expected_exact: str | None = None
-        description: Annotated[str, Field(default="", exclude=True)] = ""
+        description: Annotated[str, m.Field(default="", exclude=True)] = ""
 
-    class AutomatedTestScenario(BaseModel):
+    class AutomatedTestScenario(m.BaseModel):
         """Pydantic v2 model for automated test scenarios."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         description: str
         input: t.ContainerValue
         expected_success: bool
 
-    class StandardTestCaseModel(BaseModel):
+    class StandardTestCaseModel(m.BaseModel):
         """Standard operation case model for shared test utilities."""
 
         description: str
@@ -453,7 +451,7 @@ class TestsFlextCoreModelsMixins:
     class UtilityEntityModel(m.Entity):
         """Shared entity model for generic test fixtures."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
         name: str
         value: t.ContainerValue
@@ -461,14 +459,14 @@ class TestsFlextCoreModelsMixins:
     class UtilityValueModel(m.Value):
         """Shared value model for generic test fixtures."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         value: t.ContainerValue
 
-    class MockScenarioData(BaseModel):
+    class MockScenarioData(m.BaseModel):
         """Mock scenario test data."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         given: Mapping[str, t.Primitives]
         when: Mapping[str, t.Primitives]
@@ -476,19 +474,19 @@ class TestsFlextCoreModelsMixins:
         tags: t.StrSequence
         priority: str
 
-    class NestedDataDict(BaseModel):
+    class NestedDataDict(m.BaseModel):
         """Nested test data."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         key: str
         value: t.Primitives
         metadata: str
 
-    class FixtureDataDict(BaseModel):
+    class FixtureDataDict(m.BaseModel):
         """Test data for FlextTestBuilder."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         id: str
         correlation_id: str
@@ -503,44 +501,44 @@ class TestsFlextCoreModelsMixins:
             TestsFlextCoreModelsMixins.NestedDataDict,
         ]
 
-    class FixtureCaseDict(BaseModel):
+    class FixtureCaseDict(m.BaseModel):
         """Individual test case configuration."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         email: str
         input: str
 
-    class SuccessCaseDict(BaseModel):
+    class SuccessCaseDict(m.BaseModel):
         """Success test case."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         email: str
         input: str
 
-    class FailureCaseDict(BaseModel):
+    class FailureCaseDict(m.BaseModel):
         """Failure test case."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         email: str
         input: str
 
-    class SetupDataDict(BaseModel):
+    class SetupDataDict(m.BaseModel):
         """Setup data for test suite."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         initialization_step: str
         configuration_key: str
         configuration_value: str
         environment: str
 
-    class FixtureSuiteDict(BaseModel):
+    class FixtureSuiteDict(m.BaseModel):
         """Test suite configuration."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         suite_name: str
         scenario_count: int
@@ -550,28 +548,28 @@ class TestsFlextCoreModelsMixins:
             TestsFlextCoreModelsMixins.SetupDataDict,
         ]
 
-    class UserDataFixtureDict(BaseModel):
+    class UserDataFixtureDict(m.BaseModel):
         """User fixture data."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         username: str
         email: str
         status: str
 
-    class RequestDataFixtureDict(BaseModel):
+    class RequestDataFixtureDict(m.BaseModel):
         """Request fixture data."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         method: str
         path: str
         headers: t.StrMapping
 
-    class FixtureFixturesDict(BaseModel):
+    class FixtureFixturesDict(m.BaseModel):
         """Test fixtures configuration."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         user: Mapping[
             str,
@@ -582,57 +580,57 @@ class TestsFlextCoreModelsMixins:
             TestsFlextCoreModelsMixins.RequestDataFixtureDict,
         ]
 
-    class UserProfileDict(BaseModel):
+    class UserProfileDict(m.BaseModel):
         """User profile for property-based testing."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         id: str
         name: str
         email: str
 
-    class SettingsTestCaseDict(BaseModel):
+    class SettingsTestCaseDict(m.BaseModel):
         """Configuration test case."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         domain: str
         port: int
         timeout: float
         debug: bool
 
-    class PerformanceMetricsDict(BaseModel):
+    class PerformanceMetricsDict(m.BaseModel):
         """Performance metrics from testing."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         total_operations: int
         time_elapsed: float
         ops_per_second: float
         memory_peak_mb: float
 
-    class StressTestResultDict(BaseModel):
+    class StressTestResultDict(m.BaseModel):
         """Result from stress testing."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         iterations: int
         success_count: int
         failure_count: int
         average_time_ms: float
 
-    class AsyncPayloadDict(BaseModel):
+    class AsyncPayloadDict(m.BaseModel):
         """Async event payload."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         data: str
         status: str
 
-    class AsyncTestDataDict(BaseModel):
+    class AsyncTestDataDict(m.BaseModel):
         """Async test data."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         event_type: str
         timestamp: str
@@ -641,26 +639,26 @@ class TestsFlextCoreModelsMixins:
             TestsFlextCoreModelsMixins.AsyncPayloadDict,
         ]
 
-    class UserPayloadDict(BaseModel):
+    class UserPayloadDict(m.BaseModel):
         """User command payload."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         username: str
         email: str
 
-    class UpdateFieldDict(BaseModel):
+    class UpdateFieldDict(m.BaseModel):
         """Individual update field."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         field_name: str
         new_value: t.Primitives
 
-    class UpdatePayloadDict(BaseModel):
+    class UpdatePayloadDict(m.BaseModel):
         """Update command payload."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         target_user_id: str
         updates: Mapping[
@@ -668,257 +666,257 @@ class TestsFlextCoreModelsMixins:
             TestsFlextCoreModelsMixins.UpdateFieldDict,
         ]
 
-    class UserDataDict(BaseModel):
+    class UserDataDict(m.BaseModel):
         """User data response."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         id: str
         username: str
         email: str
         status: str
 
-    class UpdateResultDict(BaseModel):
+    class UpdateResultDict(m.BaseModel):
         """Update operation result."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         user_id: str
         updated_fields: t.StrSequence
         update_count: int
 
-    class CommandPayloadDict(BaseModel):
+    class CommandPayloadDict(m.BaseModel):
         """Generic command payload."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         id: str = ""
         username: str = ""
         email: str = ""
 
-    class ServiceTestCase(BaseModel):
+    class ServiceTestCase(m.BaseModel):
         """Test case for service."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         service_type: Annotated[
             str | None,
-            Field(
+            m.Field(
                 default=None,
                 description="Service type for factory-driven tests",
             ),
         ] = None
         input_value: Annotated[
             str | None,
-            Field(default=None, description="Primary service input"),
+            m.Field(default=None, description="Primary service input"),
         ] = None
         user_id: Annotated[
             str | None,
-            Field(default=None, description="User identifier for documented tests"),
+            m.Field(default=None, description="User identifier for documented tests"),
         ] = None
         expected_success: Annotated[
             bool,
-            Field(
+            m.Field(
                 default=True,
                 description="Whether service call is expected to succeed",
             ),
         ] = True
         expected_error: Annotated[
             str | None,
-            Field(
+            m.Field(
                 default=None,
                 description="Expected error substring for failure cases",
             ),
         ] = None
         description: Annotated[
             str,
-            Field(default="", description="Human-readable test case description"),
+            m.Field(default="", description="Human-readable test case description"),
         ] = ""
         extra_param: Annotated[
             int,
-            Field(default=3, description="Auxiliary numeric parameter"),
+            m.Field(default=3, description="Auxiliary numeric parameter"),
         ] = 3
 
-    class RailwayTestCase(BaseModel):
+    class RailwayTestCase(m.BaseModel):
         """Test case for railway pattern."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         user_ids: Annotated[
             t.StrSequence,
-            Field(description="User identifiers used in pipeline"),
+            m.Field(description="User identifiers used in pipeline"),
         ]
         operations: Annotated[
             t.StrSequence,
-            Field(description="Pipeline operations to execute"),
-        ] = Field(default_factory=list)
+            m.Field(description="Pipeline operations to execute"),
+        ] = m.Field(default_factory=list)
         expected_pipeline_length: Annotated[
             int,
-            Field(default=1, description="Expected number of pipeline stages"),
+            m.Field(default=1, description="Expected number of pipeline stages"),
         ] = 1
         should_fail_at: Annotated[
             int | None,
-            Field(
+            m.Field(
                 default=None,
                 description="Optional pipeline step expected to fail",
             ),
         ] = None
         description: Annotated[
             str,
-            Field(
+            m.Field(
                 default="",
                 description="Human-readable railway test case description",
             ),
         ] = ""
 
-    class ValidationScenario(BaseModel):
+    class ValidationScenario(m.BaseModel):
         """Single scenario for validation testing."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        name: Annotated[str, Field(description="Unique scenario name")]
+        name: Annotated[str, m.Field(description="Unique scenario name")]
         validator_type: Annotated[
-            str, Field(description="Validator category under test")
+            str, m.Field(description="Validator category under test")
         ]
         input_value: Annotated[
             t.RecursiveContainer,
-            Field(description="Input value passed to validator"),
+            m.Field(description="Input value passed to validator"),
         ]
         input_params: Annotated[
             t.RecursiveContainer | None,
-            Field(
+            m.Field(
                 default=None,
                 description="Optional validator parameters for scenario execution",
             ),
         ] = None
         should_succeed: Annotated[
             bool,
-            Field(
+            m.Field(
                 default=True,
                 description="Whether scenario expects validation success",
             ),
         ] = True
         expected_value: Annotated[
             t.RecursiveContainer | None,
-            Field(
+            m.Field(
                 default=None,
                 description="Expected normalized value when validation succeeds",
             ),
         ] = None
         expected_error_contains: Annotated[
             str | None,
-            Field(
+            m.Field(
                 default=None,
                 description="Expected error substring when validation fails",
             ),
         ] = None
         description: Annotated[
             str | None,
-            Field(default=None, description="Human-readable scenario description"),
+            m.Field(default=None, description="Human-readable scenario description"),
         ] = None
 
-    class ParserScenario(BaseModel):
+    class ParserScenario(m.BaseModel):
         """Single scenario for parser testing."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        name: Annotated[str, Field(description="Unique parser scenario name")]
-        parser_method: Annotated[str, Field(description="Parser method to execute")]
-        input_data: Annotated[str, Field(description="Raw parser input data")]
+        name: Annotated[str, m.Field(description="Unique parser scenario name")]
+        parser_method: Annotated[str, m.Field(description="Parser method to execute")]
+        input_data: Annotated[str, m.Field(description="Raw parser input data")]
         expected_output: Annotated[
             t.RecursiveContainer | None,
-            Field(
+            m.Field(
                 default=None,
                 description="Expected parsed output for successful scenarios",
             ),
         ] = None
         should_succeed: Annotated[
             bool,
-            Field(
+            m.Field(
                 default=True,
                 description="Whether parser scenario expects success",
             ),
         ] = True
         error_contains: Annotated[
             str | None,
-            Field(default=None, description="Expected parser error substring"),
+            m.Field(default=None, description="Expected parser error substring"),
         ] = None
         description: Annotated[
             str | None,
-            Field(default=None, description="Human-readable scenario description"),
+            m.Field(default=None, description="Human-readable scenario description"),
         ] = None
 
-    class PublicParseCase(BaseModel):
+    class PublicParseCase(m.BaseModel):
         """Data-driven public parser contract scenario."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
             frozen=True,
             arbitrary_types_allowed=True,
         )
 
-        name: Annotated[str, Field(description="Unique scenario name")]
+        name: Annotated[str, m.Field(description="Unique scenario name")]
         input_value: Annotated[
             t.ValueOrModel | None,
-            Field(description="Public value passed to u.parse()"),
+            m.Field(description="Public value passed to u.parse()"),
         ]
         target: Annotated[
             type[object],
-            Field(description="Public target type passed to u.parse()"),
+            m.Field(description="Public target type passed to u.parse()"),
         ]
         options: Annotated[
-            BaseModel | None,
-            Field(default=None, description="Optional ParseOptions instance"),
+            m.BaseModel | None,
+            m.Field(default=None, description="Optional ParseOptions instance"),
         ] = None
         should_succeed: Annotated[
             bool,
-            Field(default=True, description="Whether parsing should succeed"),
+            m.Field(default=True, description="Whether parsing should succeed"),
         ] = True
         expected_value: Annotated[
             t.ValueOrModel | None,
-            Field(default=None, description="Expected parsed scalar or enum value"),
+            m.Field(default=None, description="Expected parsed scalar or enum value"),
         ] = None
         expected_data: Annotated[
             Mapping[str, t.ContainerValue] | None,
-            Field(default=None, description="Expected parsed model_dump payload"),
+            m.Field(default=None, description="Expected parsed model_dump payload"),
         ] = None
         error_contains: Annotated[
             str | None,
-            Field(default=None, description="Expected failure error substring"),
+            m.Field(default=None, description="Expected failure error substring"),
         ] = None
         description: Annotated[
             str | None,
-            Field(default=None, description="Human-readable scenario description"),
+            m.Field(default=None, description="Human-readable scenario description"),
         ] = None
 
-    class ReliabilityScenario(BaseModel):
+    class ReliabilityScenario(m.BaseModel):
         """Single scenario for reliability testing (circuit breaker, retry)."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        name: Annotated[str, Field(description="Unique reliability scenario name")]
-        strategy: Annotated[str, Field(description="Reliability strategy under test")]
+        name: Annotated[str, m.Field(description="Unique reliability scenario name")]
+        strategy: Annotated[str, m.Field(description="Reliability strategy under test")]
         settings: Annotated[
             t.ConfigMap,
-            Field(description="Reliability configuration payload"),
+            m.Field(description="Reliability configuration payload"),
         ]
         simulate_failures: Annotated[
             int,
-            Field(description="Number of failures to simulate"),
+            m.Field(description="Number of failures to simulate"),
         ]
         expected_state: Annotated[
             str,
-            Field(description="Expected strategy terminal state"),
+            m.Field(description="Expected strategy terminal state"),
         ]
         should_succeed: Annotated[
             bool,
-            Field(
+            m.Field(
                 default=True,
                 description="Whether scenario expects successful outcome",
             ),
         ] = True
         description: Annotated[
             str | None,
-            Field(default=None, description="Human-readable scenario description"),
+            m.Field(default=None, description="Human-readable scenario description"),
         ] = None
 
     class FalseSettings:
@@ -940,258 +938,258 @@ class TestsFlextCoreModelsMixins:
         def model_dump(self) -> t.ScalarMapping:
             return dict[str, t.Scalar]()
 
-    class Identifiers(BaseModel):
+    class Identifiers(m.BaseModel):
         """Test identifiers and IDs."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         user_id: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_user_123",
                 description="Default test user identifier",
             ),
         ] = "test_user_123"
         session_id: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_session_123",
                 description="Default test session identifier",
             ),
         ] = "test_session_123"
         service_name: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_service",
                 description="Default test service name",
             ),
         ] = "test_service"
         operation_id: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_operation",
                 description="Default test operation identifier",
             ),
         ] = "test_operation"
         request_id: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test-request-456",
                 description="Default test request identifier",
             ),
         ] = "test-request-456"
         correlation_id: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test-corr-123",
                 description="Default test correlation identifier",
             ),
         ] = "test-corr-123"
 
-    class Names(BaseModel):
+    class Names(m.BaseModel):
         """Test module and component names."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         module_name: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_module",
                 description="Default test module name",
             ),
         ] = "test_module"
         handler_name: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_handler",
                 description="Default test handler name",
             ),
         ] = "test_handler"
         chain_name: Annotated[
             str,
-            Field(default="test_chain", description="Default test chain name"),
+            m.Field(default="test_chain", description="Default test chain name"),
         ] = "test_chain"
         command_type: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_command",
                 description="Default test command type",
             ),
         ] = "test_command"
         query_type: Annotated[
             str,
-            Field(default="test_query", description="Default test query type"),
+            m.Field(default="test_query", description="Default test query type"),
         ] = "test_query"
         logger_name: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_logger",
                 description="Default test logger name",
             ),
         ] = "test_logger"
         app_name: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test-app",
                 description="Default test application name",
             ),
         ] = "test-app"
         validation_app: Annotated[
             str,
-            Field(
+            m.Field(
                 default="validation-test",
                 description="Default validation test application name",
             ),
         ] = "validation-test"
         source_service: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_service",
                 description="Default source service name",
             ),
         ] = "test_service"
 
-    class ErrorData(BaseModel):
+    class ErrorData(m.BaseModel):
         """Test error codes and messages."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         error_code: Annotated[
             str,
-            Field(
+            m.Field(
                 default="TEST_ERROR_001",
                 description="Default test error code",
             ),
         ] = "TEST_ERROR_001"
         validation_error: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_error",
                 description="Default validation error message",
             ),
         ] = "test_error"
         operation_error: Annotated[
             str,
-            Field(
+            m.Field(
                 default="Op failed",
                 description="Default operation error message",
             ),
         ] = "Op failed"
         settings_error: Annotated[
             str,
-            Field(
+            m.Field(
                 default="Settings failed",
                 description="Default configuration error message",
             ),
         ] = "Settings failed"
         timeout_error: Annotated[
             str,
-            Field(
+            m.Field(
                 default="Operation timeout",
                 description="Default timeout error message",
             ),
         ] = "Operation timeout"
 
-    class Data(BaseModel):
+    class Data(m.BaseModel):
         """Test field names and data values."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         field_name: Annotated[
             str,
-            Field(default="test_field", description="Default test field name"),
+            m.Field(default="test_field", description="Default test field name"),
         ] = "test_field"
         config_key: Annotated[
             str,
-            Field(default="test_key", description="Default test settings key"),
+            m.Field(default="test_key", description="Default test settings key"),
         ] = "test_key"
         username: Annotated[
             str,
-            Field(default="test_user", description="Default test username"),
+            m.Field(default="test_user", description="Default test username"),
         ] = "test_user"
         email: Annotated[
             str,
-            Field(default="test@example.com", description="Default test email"),
+            m.Field(default="test@example.com", description="Default test email"),
         ] = "test@example.com"
         password: Annotated[
             str,
-            Field(default="test_pass", description="Default test password"),
+            m.Field(default="test_pass", description="Default test password"),
         ] = "test_pass"
         string_value: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_value",
                 description="Default test string value",
             ),
         ] = "test_value"
         input_data: Annotated[
             str,
-            Field(default="test_input", description="Default test input data"),
+            m.Field(default="test_input", description="Default test input data"),
         ] = "test_input"
         request_data: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_request",
                 description="Default test request data",
             ),
         ] = "test_request"
         result_data: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_result",
                 description="Default test result data",
             ),
         ] = "test_result"
         message: Annotated[
             str,
-            Field(default="test_message", description="Default test message"),
+            m.Field(default="test_message", description="Default test message"),
         ] = "test_message"
 
-    class PatternData(BaseModel):
+    class PatternData(m.BaseModel):
         """Test patterns and formats."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         slug_input: Annotated[
             str,
-            Field(
+            m.Field(
                 default="Test_String",
                 description="Input value for slug conversion tests",
             ),
         ] = "Test_String"
         slug_expected: Annotated[
             str,
-            Field(
+            m.Field(
                 default="test_string",
                 description="Expected slug conversion output",
             ),
         ] = "test_string"
         uuid_format: Annotated[
             str,
-            Field(
+            m.Field(
                 default="550e8400-e29b-41d4-a716-446655440000",
                 description="Sample UUID format for tests",
             ),
         ] = "550e8400-e29b-41d4-a716-446655440000"
 
-    class NumericValues(BaseModel):
+    class NumericValues(m.BaseModel):
         """Test port and numeric values."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         port: Annotated[
             int,
-            Field(default=8080, description="Default test port"),
+            m.Field(default=8080, description="Default test port"),
         ] = 8080
         timeout: Annotated[
             int,
-            Field(default=30, description="Default timeout in seconds"),
+            m.Field(default=30, description="Default timeout in seconds"),
         ] = 30
         retry_count: Annotated[
             int,
-            Field(default=3, description="Default retry count"),
+            m.Field(default=3, description="Default retry count"),
         ] = 3
         batch_size: Annotated[
             int,
-            Field(default=100, description="Default test batch size"),
+            m.Field(default=100, description="Default test batch size"),
         ] = 100

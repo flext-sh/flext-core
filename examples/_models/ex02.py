@@ -9,8 +9,8 @@ from flext_core import FlextSettings, m, u
 class Ex02TestConfig(FlextSettings):
     """Settings model used by Ex02 settings golden tests."""
 
-    service_name: str = u.Field(default="example-service")
-    feature_enabled: bool = u.Field(default=True)
+    service_name: str = u.Field(default_factory=lambda: "example-service")
+    feature_enabled: bool = u.Field(default_factory=lambda: True)
 
 
 class Ex02DatabaseService(m.Value):

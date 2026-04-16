@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Annotated, override
 
 import pytest
-from pydantic import Field, ValidationError, field_validator
+from pydantic import ValidationError
 
 from flext_core import FlextModelsCqrs
 from flext_tests import tm
@@ -22,17 +22,17 @@ class GetUserQuery(m.Query):
 class ListAccountsQuery(m.Query):
     """Query to list accounts."""
 
-    page: Annotated[int, Field()]
-    limit: Annotated[int, Field()]
+    page: Annotated[int, m.Field()]
+    limit: Annotated[int, m.Field()]
 
 
 class SearchProductsQuery(m.Query):
     """Query to search products."""
 
-    keyword: Annotated[str, Field()]
-    category: Annotated[str | None, Field(default=None)] = None
-    min_price: Annotated[float | None, Field(default=None)] = None
-    max_price: Annotated[float | None, Field(default=None)] = None
+    keyword: Annotated[str, m.Field()]
+    category: Annotated[str | None, m.Field(default=None)] = None
+    min_price: Annotated[float | None, m.Field(default=None)] = None
+    max_price: Annotated[float | None, m.Field(default=None)] = None
 
 
 class TestCoverageModels:
@@ -68,7 +68,7 @@ class TestCoverageModels:
         class Email(m.Value):
             address: str
 
-            @field_validator("address")
+            @m.field_validator("address")
             @classmethod
             def validate_email(cls, value: str) -> str:
                 if "@" not in value:
@@ -135,7 +135,7 @@ class TestCoverageModels:
             email: str
             username: str
 
-            @field_validator("username")
+            @m.field_validator("username")
             @classmethod
             def validate_username(cls, value: str) -> str:
                 if len(value) < 3:
@@ -224,7 +224,7 @@ class TestCoverageModels:
             account_id: str
             amount: float
 
-            @field_validator("amount")
+            @m.field_validator("amount")
             @classmethod
             def validate_amount(cls, value: float) -> float:
                 if value <= 0:
@@ -359,7 +359,7 @@ class TestCoverageModels:
             email: str
             age: int
 
-            @field_validator("age")
+            @m.field_validator("age")
             @classmethod
             def validate_age(cls, value: int) -> int:
                 if value < 0 or value > 150:
@@ -378,7 +378,7 @@ class TestCoverageModels:
             email: str
             bio: str | None = None
 
-            @field_validator("username")
+            @m.field_validator("username")
             @classmethod
             def validate_username(cls, value: str) -> str:
                 if len(value) < 3:
@@ -386,7 +386,7 @@ class TestCoverageModels:
                     raise ValueError(error_msg)
                 return value
 
-            @field_validator("email")
+            @m.field_validator("email")
             @classmethod
             def validate_email(cls, value: str) -> str:
                 if "@" not in value:

@@ -12,8 +12,6 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
-from pydantic import BaseModel
-
 from tests import m, p, t, u
 
 
@@ -25,7 +23,7 @@ class TestUtilitiesContextFullCoverage:
             self.runtime_dispatcher: p.Dispatcher | None = MagicMock(spec=p.Dispatcher)
             self.runtime_registry: p.Registry | None = MagicMock(spec=p.Registry)
             self.runtime_context: p.Context | None = MagicMock(spec=p.Context)
-            self.runtime_settings: BaseModel | None = m.Core.Tests._FakeSettings(
+            self.runtime_settings: m.BaseModel | None = m.Core.Tests._FakeSettings(
                 timeout=10,
             )
 
@@ -46,7 +44,7 @@ class TestUtilitiesContextFullCoverage:
             self.runtime_dispatcher: p.Dispatcher | None = None
             self.runtime_registry: p.Registry | None = None
             self.runtime_context: p.Context | None = None
-            self.runtime_settings: BaseModel | None = None
+            self.runtime_settings: m.BaseModel | None = None
 
     def test_create_str_proxy_basic(self) -> None:
         """Creates a StructlogProxyContextVar[str] with given key."""

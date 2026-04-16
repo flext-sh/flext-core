@@ -75,7 +75,7 @@ class FlextTypes(
     """Type system foundation for FLEXT ecosystem.
 
     Strictly tiered layers - Primitives subset Scalar subset Container.
-    ``t.RecursiveContainer`` and ``Any`` are strictly forbidden in domain state.
+    ``object`` and ``Any`` are strictly forbidden in domain state.
     ``None`` is **never** baked into definitions.
     """
 
