@@ -1,0 +1,79 @@
+tests/unit/test_enum_utilities_coverage_100.py
+  14776bb8a7569cd6 25,45,48-50,53,57,61,64,67-68,71
+examples/_models/ex03.py
+  h_9db9d35f50cf33 13,19,49,82,87
+tests/unit/test_protocols_new.py
+  14776bb8a7569cd6 518
+tests/integration/test_migration_validation.py
+  h_9db9d35f50cf33 101
+tests/unit/test_utilities_type_guards_coverage_100.py
+  14776bb8a7569cd6 14,17,22,25,28,33
+tests/unit/test_models_cqrs_full_coverage.py
+  14776bb8a7569cd6 118
+tests/unit/test_context.py
+  14776bb8a7569cd6 34,42,45-47,50,54
+tests/unit/test_enforcement.py
+  14776bb8a7569cd6 31,43,58,70,82,93,113,140,155
+tests/unit/test_utilities_context_full_coverage.py
+  14776bb8a7569cd6 26,47
+tests/fixtures/namespace_validator/typings.py
+  h_9db9d35f50cf33 8-9
+tests/unit/_models/test_cqrs.py
+  14776bb8a7569cd6 17,478,487,495,505,528,549
+tests/unit/test_models.py
+  14776bb8a7569cd6 31,53,56,60,64,68,72,117,307,315,729
+tests/unit/test_dispatcher_timeout_coverage_100.py
+  14776bb8a7569cd6 24,31-32,34,37,41,45,49
+tests/unit/test_runtime_full_coverage.py
+  h_9db9d35f50cf33 77,79,119,121,141,143,177,179,182,223,225
+  14776bb8a7569cd6 23,230,232,238,240,372-373,427,538,545,555-556,560-561,571,582,601-602,606-607,613-614,618-619,1009-1010,1014-1015,1021,1050-1051
+tests/conftest.py
+  h_9db9d35f50cf33 19,42,52,83,85,89
+  14776bb8a7569cd6 48-50,202,204,210-229
+examples/ex_11_flext_service.py
+  h_9db9d35f50cf33 65
+tests/unit/_models/test_base.py
+  14776bb8a7569cd6 15,71
+tests/unit/test_handlers_full_coverage.py
+  14776bb8a7569cd6 127
+tests/unit/test_utilities_domain_full_coverage.py
+  14776bb8a7569cd6 40
+tests/unit/test_typings_new.py
+  14776bb8a7569cd6 18,32,174
+tests/unit/test_handlers.py
+  14776bb8a7569cd6 56-59,546-547,560
+tests/unit/test_service.py
+  14776bb8a7569cd6 31
+examples/_models/ex02.py
+  h_9db9d35f50cf33 12-13
+examples/_models/exsettings.py
+  h_9db9d35f50cf33 13,19-21
+  14776bb8a7569cd6 16-18
+tests/unit/test_utilities_guards_full_coverage.py
+  14776bb8a7569cd6 148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "5770bd72ba8ddec69400e2c77bed090906bbd8aa",
+  "prompts": {
+    "14776bb8a7569cd6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "808a0355-ecdb-46fb-a4dd-7348401900ee",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 184,
+      "total_deletions": 276,
+      "accepted_lines": 138,
+      "overriden_lines": 41
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
