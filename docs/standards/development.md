@@ -119,7 +119,8 @@ Inner layers know NOTHING about outer layers.
 
    - FlextDispatcher - Message routing
    - h - Handler registry
-  - `u.build_registry()` - Component management
+
+- `u.build_registry()` - Component management
 
 1. **Infrastructure Layer** (All Layers):
 

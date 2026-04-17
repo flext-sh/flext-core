@@ -1,6 +1,5 @@
 # FLEXT-Core Architecture
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [Dependency Flow (Inward-Only)](#dependency-flow-inward-only)
@@ -75,6 +74,7 @@ result = r[int].ok(10).map(lambda x: x * 2).unwrap()
 ```
 
 **Key Methods**:
+
 - `ok(value)`, `fail(error)` — Constructor
 - `success`, `error`, `error_code`, `error_data` — Inspect
 - `map()`, `flat_map()`, `lash()` — Transform/chain
@@ -103,6 +103,7 @@ with container.scope() as scoped:
 ```
 
 **Features**:
+
 - Singleton pattern with double-checked locking
 - Factory, service, and resource registration
 - Scoped containers for short-lived instances
@@ -128,6 +129,7 @@ result = dispatcher.dispatch(CreateUserCommand(username="alice"))
 ```
 
 **Key Methods**:
+
 - `dispatch(message)` → `r[T]` — Execute handler
 - `publish(event)` → `r[bool]` — Publish events
 
@@ -154,6 +156,7 @@ class UserService(s):
 ```
 
 **Features**:
+
 - DI-aware via `self.container`
 - Pydantic v2 validation
 - Service bootstrap with factories/resources
@@ -166,6 +169,7 @@ class UserService(s):
 DDD building blocks with Pydantic v2:
 
 Types:
+
 - `m.Entity` — Domain object with identity
 - `m.Value` — Immutable value object
 - `m.AggregateRoot` — Consistency boundary
@@ -197,6 +201,7 @@ settings = FlextSettings.fetch_global()
 ```
 
 **Features**:
+
 - Singleton pattern with thread-safe initialization
 - Environment variable override via `env_prefix`
 - MRO-based fallback for inherited settings
@@ -278,6 +283,7 @@ from flext_core import m, r, c, p, u, e, s, h, d, t, x
 ```
 
 Six submódule trees auto-generate exports:
+
 - `_constants/` → 11 modules
 - `_exceptions/` → 6 modules  
 - `_models/` → 17 modules

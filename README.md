@@ -17,6 +17,7 @@
 <!-- TOC END -->
 
 **FLEXT-Core** is the foundational library for the FLEXT ecosystem, providing architectural primitives for enterprise Python 3.13+ applications. It enforces:
+
 - **Railway-Oriented Programming (ROP)**: Error handling as values via `r[T]`
 - **Dependency Injection (DI)**: Type-safe container with scoped lifetimes
 - **CQRS Dispatching**: Typed command/query routing with event support
@@ -240,6 +241,7 @@ FLEXT-Core is organized in **Inward-Only Dependency Flow** (`L3 -> L2 -> L1 -> L
 ### Lazy Loading & Exports
 
 FLEXT-Core exports 90+ symbols via automatic lazy loading:
+
 - `_constants/` → 11 submódules
 - `_exceptions/` → 6 submódules  
 - `_models/` → 17 submódules
@@ -262,6 +264,7 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 ### Documentation
 
 For more detailed information:
+
 - [Quick Start Guide](docs/quick-start.md)
 - [Architecture Overview](docs/architecture/README.md)
 - [API Reference](docs/api-reference/README.md)

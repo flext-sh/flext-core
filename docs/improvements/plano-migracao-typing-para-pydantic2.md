@@ -1,6 +1,5 @@
 # Plano objetivo: padronização e desduplicação de modelos (OO + MRO)
 
-
 ## Contexto aplicado (flext-sh/flext)
 
 Este plano foi ajustado considerando o contexto do ecossistema FLEXT (AGENTS/CLAUDE):

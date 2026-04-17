@@ -230,4 +230,3 @@ logger = FlextLogger.create_module_logger(__name__)
 - Service Patterns Guide - Using logging in services
 - Error Handling Guide - Logging errors and exceptions
 - Testing Guide - Testing with structured logging
-

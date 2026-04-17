@@ -50,6 +50,33 @@ class TestsFlextCoreModelsMixins:
             )
         )
 
+    class AttrObject(m.BaseModel):
+        """Simple model with name/value attributes for mapper tests."""
+
+        name: Annotated[
+            str, m.Field(description="Attribute recursive container name")
+        ] = "name"
+        value: Annotated[
+            int, m.Field(description="Attribute recursive container value")
+        ] = 1
+
+    class BadMapping(t.ContainerMappingBase):
+        """Mapping that raises on access — used for error-path testing."""
+
+        @override
+        def __getitem__(self, _key: str) -> t.RecursiveContainer:
+            msg = "get exploded"
+            raise TypeError(msg)
+
+        @override
+        def __iter__(self) -> Iterator[str]:
+            msg = "iter exploded"
+            raise TypeError(msg)
+
+        @override
+        def __len__(self) -> int:
+            return 1
+
     class _ValidationLikeError(ValueError):
         """Validation-like error for tests."""
 
@@ -1193,10 +1220,10 @@ class TestsFlextCoreModelsMixins:
         """Centralized container test scenarios using c."""
 
         SERVICE_SCENARIOS: ClassVar[
-            Sequence[t.RecursiveContainer]
+            Sequence[TestsFlextCoreModelsMixins.ServiceScenario]
         ] = []  # populated after class definition
         TYPED_RETRIEVAL_SCENARIOS: ClassVar[
-            Sequence[t.RecursiveContainer]
+            Sequence[TestsFlextCoreModelsMixins.TypedRetrievalScenario]
         ] = []  # populated after class definition
         CONFIG_SCENARIOS: ClassVar[Sequence[t.ScalarMapping]] = [
             {"enable_singleton": False, "max_services": 8},

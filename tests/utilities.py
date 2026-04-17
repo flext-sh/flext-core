@@ -124,6 +124,7 @@ class TestsFlextCoreUtilities(u):
                 code path in domain utility comparison functions.
                 """
 
+                @override
                 def model_dump(
                     self, **_kwargs: t.Scalar
                 ) -> dict[str, t.Core.Tests.TestobjectSerializable]:

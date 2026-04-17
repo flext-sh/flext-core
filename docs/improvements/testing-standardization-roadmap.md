@@ -1,6 +1,5 @@
 # Roadmap objetivo de padronização de testes (restante do projeto)
 
-
 **Meta única**: reduzir duplicação e aumentar confiabilidade dos testes sem overengineering, com entregas pequenas e verificáveis.
 
 ## Contexto consolidado (flext)

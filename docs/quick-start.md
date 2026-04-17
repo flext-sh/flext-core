@@ -59,6 +59,7 @@ result = (
 ```
 
 **Key Methods**:
+
 - `ok(value)`, `fail(error)` — Constructor
 - `success`, `error` — Inspect result
 - `map`, `flat_map`, `lash` — Transform/chain

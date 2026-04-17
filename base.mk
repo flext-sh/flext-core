@@ -339,8 +339,8 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 			rm -f "$$lint_log"; \
 		fi; \
 		if echo "$$gates" | grep -qw format; then \
-			if [ -n "$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*')" ]; then \
-				gofmt_diff=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*' -print0 | xargs -0 gofmt -l); \
+			if [ -n "$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*' ! -path './.cache/*')" ]; then \
+				gofmt_diff=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*' ! -path './.cache/*' -print0 | xargs -0 gofmt -l); \
 				if [ -n "$$gofmt_diff" ]; then \
 					echo "FAIL: gofmt"; \
 					printf '%s\n' "$$gofmt_diff"; \
@@ -353,17 +353,18 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 		fi; \
 		if echo "$$gates" | grep -qw markdown; then \
 			if git rev-parse --git-dir >/dev/null 2>&1; then \
-				md_files=$$(git ls-files -- '*.md' ':!vendor/'); \
+				md_files=$$(git ls-files -- '*.md' ':!vendor/' && git ls-files --others --exclude-standard -- '*.md' ':!vendor/'); \
 			else \
 				md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './reports/*' ! -path './.venv/*' ! -path './vendor/*' ! -path './node_modules/*' ! -path './dist/*' ! -path './build/*'); \
 			fi; \
+			md_files=$$(printf '%s\n' "$$md_files" | awk 'NF' | while IFS= read -r f; do [ -f "$$f" ] && printf '%s\n' "$$f"; done | sort -u); \
 			md_config=""; \
 			if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
 				md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
 			elif [ -f ".markdownlint.json" ]; then \
 				md_config="--config .markdownlint.json"; \
 			fi; \
-			if [ -n "$$md_files" ]; then echo "$$md_files" | xargs markdownlint $$md_config || { echo "FAIL: markdown"; exit 1; }; fi; \
+			if [ -n "$$md_files" ]; then echo "$$md_files" | xargs -r markdownlint $$md_config || { echo "FAIL: markdown"; exit 1; }; fi; \
 		fi; \
 		if echo "$$gates" | grep -qw go; then \
 			go vet ./... || { echo "FAIL: go"; exit 1; }; \
@@ -450,7 +451,7 @@ scan: ## Run all security checks
 
 fmt: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
-		go_files=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*'); \
+		go_files=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*' ! -path './.cache/*'); \
 		if [ -n "$$go_files" ]; then \
 			printf '%s\n' "$$go_files" | xargs gofmt -w; \
 			if command -v goimports >/dev/null 2>&1; then \
@@ -472,7 +473,7 @@ fmt: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
 			$(POETRY) run ruff format $$_fmt_target --quiet; \
 		fi; \
 		if [ -f go.mod ]; then \
-			go_files=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*'); \
+			go_files=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*' ! -path './.cache/*'); \
 			if [ -n "$$go_files" ]; then \
 				printf '%s\n' "$$go_files" | xargs gofmt -w; \
 			fi; \
@@ -483,6 +484,7 @@ fmt: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
 	else \
 		md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './.venv/*' ! -path './vendor/*' ! -path './node_modules/*' ! -path './dist/*' ! -path './build/*'); \
 	fi; \
+	md_files=$$(printf '%s\n' "$$md_files" | awk 'NF' | while IFS= read -r f; do [ -f "$$f" ] && printf '%s\n' "$$f"; done | sort -u); \
 	if [ -n "$$md_files" ]; then \
 		md_config=""; \
 		if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
@@ -490,7 +492,7 @@ fmt: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
 		elif [ -f ".markdownlint.json" ]; then \
 			md_config="--config .markdownlint.json"; \
 		fi; \
-		echo "$$md_files" | xargs markdownlint --fix $$md_config; \
+		echo "$$md_files" | xargs -r markdownlint --fix $$md_config; \
 	fi
 	$(Q)echo "Format complete: $(PROJECT_NAME)"
 

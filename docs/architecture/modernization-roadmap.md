@@ -1,6 +1,5 @@
 # Roadmap Objetivo de Modernização (Python 3.13, OO/MRO, Pydantic v2)
 
-
 ## Escopo
 
 Padronizar o restante do código para reduzir duplicação e lógica ad-hoc, sem compromisso de retrocompatibilidade, alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já documentadas no projeto.

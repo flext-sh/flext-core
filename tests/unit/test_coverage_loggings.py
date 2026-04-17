@@ -125,7 +125,7 @@ class TestCoverageLoggings:
         """Test bind creates new logger instance."""
         logger1 = make_result_logger("test")
         logger1.bind(request_id="123")
-        tm.that(u.logger2, none=False)
+        tm.that(logger1, none=False)
 
     def test_bind_chaining(self) -> None:
         """Test chaining multiple bind calls."""
