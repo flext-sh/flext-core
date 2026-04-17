@@ -1,7 +1,7 @@
 """Entity and DDD patterns for FLEXT ecosystem.
 
 TIER 1: Uses base.py (Tier 0) + constants, typings, protocols, runtime only.
-Imports FlextModelsBase and adds only DDD-specific data classes.
+Imports m and adds only DDD-specific data classes.
 
 The DomainEvent is defined in domain_event.py and imported here to
 avoid Pydantic forward-reference issues with nested class annotations.
@@ -20,9 +20,9 @@ import structlog
 from pydantic import BaseModel, Field, computed_field, model_validator
 
 from flext_core import (
-    FlextModelsBase,
+    FlextModelsBase as m,
     FlextModelsDomainEvent,
-    FlextUtilitiesDomain,
+    FlextUtilitiesDomain as u,
     FlextUtilitiesGenerators,
     c,
     p,
@@ -35,16 +35,16 @@ class FlextModelsEntity:
     """Entity and DDD pattern container class.
 
     This class acts as a namespace container for Entity and related DDD patterns.
-    Uses FlextModelsBase for all base classes (Tier 0).
+    Uses m for all base classes (Tier 0).
 
     DomainEvent is imported from FlextModelsDomainEvent to break
     the forward-reference cycle that Pydantic cannot resolve.
     """
 
     class Entity(
-        FlextModelsBase.TimestampedModel,
-        FlextModelsBase.IdentifiableMixin,
-        FlextModelsBase.VersionableMixin,
+        m.TimestampedModel,
+        m.IdentifiableMixin,
+        m.VersionableMixin,
     ):
         """Entity implementation - base class for domain entities with identity.
 
@@ -69,11 +69,11 @@ class FlextModelsEntity:
             """Identity-based equality for entities."""
             if not isinstance(other, BaseModel):
                 return NotImplemented
-            return FlextUtilitiesDomain.compare_entities_by_id(self, other)
+            return u.compare_entities_by_id(self, other)
 
         def __hash__(self) -> int:
             """Identity-based hash for entities."""
-            return FlextUtilitiesDomain.hash_entity_by_id(self)
+            return u.hash_entity_by_id(self)
 
         @computed_field
         @property
@@ -116,7 +116,7 @@ class FlextModelsEntity:
                     f"Cannot add event: would exceed max events limit of {c.MAX_UNCOMMITTED_EVENTS}",
                 )
             data_map = FlextModelsDomainEvent.ComparableConfigMap(
-                root=dict(FlextUtilitiesDomain.normalize_domain_event_data(data)),
+                root=dict(u.normalize_domain_event_data(data)),
             )
             event = FlextModelsDomainEvent.Entry(
                 event_type=event_type,
@@ -172,7 +172,7 @@ class FlextModelsEntity:
                     aggregate_id=self.unique_id,
                     data=FlextModelsDomainEvent.ComparableConfigMap(
                         root=dict(
-                            FlextUtilitiesDomain.normalize_domain_event_data(data),
+                            u.normalize_domain_event_data(data),
                         ),
                     ),
                 )
@@ -207,7 +207,7 @@ class FlextModelsEntity:
             if self.updated_at is None:
                 self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
 
-    class Value(FlextModelsBase.ContractModel):
+    class Value(m.ContractModel):
         """Base class for value objects - immutable and compared by value."""
 
         @override
@@ -215,11 +215,11 @@ class FlextModelsEntity:
             """Compare by value."""
             if not isinstance(other, BaseModel):
                 return NotImplemented
-            return FlextUtilitiesDomain.compare_value_objects_by_value(self, other)
+            return u.compare_value_objects_by_value(self, other)
 
         def __hash__(self) -> int:
             """Hash based on values for use in sets/dicts."""
-            return FlextUtilitiesDomain.hash_value_object_by_value(self)
+            return u.hash_value_object_by_value(self)
 
     class AggregateRoot(Entity):
         """Base class for aggregate roots - consistency boundaries."""

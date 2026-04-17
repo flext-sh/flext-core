@@ -14,10 +14,10 @@ from collections.abc import Mapping
 from typing import Annotated, override
 
 from flext_core import (
-    FlextModelsBase,
-    FlextModelsPydantic,
-    FlextUtilitiesDomain,
-    FlextUtilitiesPydantic,
+    FlextModelsBase as m,
+    FlextModelsPydantic as mp,
+    FlextUtilitiesDomain as u,
+    FlextUtilitiesPydantic as up,
     t,
 )
 
@@ -39,7 +39,7 @@ class FlextModelsDomainEvent:
             if isinstance(other, Mapping):
                 other_mapping = type(self)(
                     root=dict(
-                        FlextUtilitiesDomain.normalize_domain_event_data(
+                        u.normalize_domain_event_data(
                             other,
                         ),
                     ),
@@ -50,12 +50,12 @@ class FlextModelsDomainEvent:
         __hash__ = t.ConfigMap.__hash__
 
     class Entry(
-        FlextModelsBase.IdentifiableMixin,
-        FlextModelsBase.TimestampedModel,
+        m.IdentifiableMixin,
+        m.TimestampedModel,
     ):
         """Base class for domain events."""
 
-        message_type: str = FlextUtilitiesPydantic.Field(
+        message_type: str = up.Field(
             "event",
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
@@ -63,22 +63,20 @@ class FlextModelsDomainEvent:
         )
         event_type: Annotated[
             t.NonEmptyStr,
-            FlextUtilitiesPydantic.Field(
+            up.Field(
                 description="Domain event type identifier for subscriber routing."
             ),
         ]
         aggregate_id: Annotated[
             t.NonEmptyStr,
-            FlextUtilitiesPydantic.Field(
+            up.Field(
                 description="Identifier of the aggregate root that produced this event.",
             ),
         ]
         data: Annotated[
             t.ConfigMap,
-            FlextModelsPydantic.BeforeValidator(
-                FlextUtilitiesDomain.normalize_domain_event_data
-            ),
-        ] = FlextUtilitiesPydantic.Field(
+            mp.BeforeValidator(u.normalize_domain_event_data),
+        ] = up.Field(
             validate_default=True,
             description="Event data container",
             default_factory=lambda: FlextModelsDomainEvent.ComparableConfigMap(

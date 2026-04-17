@@ -44,7 +44,6 @@ if _t.TYPE_CHECKING:
     from flext_core._models.containers import FlextModelsContainers
     from flext_core._models.context import FlextModelsContext
     from flext_core._models.cqrs import FlextModelsCqrs
-    from flext_core._models.decorators import FlextModelsDecorators
     from flext_core._models.dispatcher import FlextModelsDispatcher
     from flext_core._models.domain_event import FlextModelsDomainEvent
     from flext_core._models.entity import FlextModelsEntity
@@ -194,7 +193,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._models.containers": ("FlextModelsContainers",),
             "._models.context": ("FlextModelsContext",),
             "._models.cqrs": ("FlextModelsCqrs",),
-            "._models.decorators": ("FlextModelsDecorators",),
             "._models.dispatcher": ("FlextModelsDispatcher",),
             "._models.domain_event": ("FlextModelsDomainEvent",),
             "._models.entity": ("FlextModelsEntity",),
@@ -387,7 +385,6 @@ __all__: list[str] = [
     "FlextModelsContextScope",
     "FlextModelsContextTokens",
     "FlextModelsCqrs",
-    "FlextModelsDecorators",
     "FlextModelsDispatcher",
     "FlextModelsDomainEvent",
     "FlextModelsEntity",

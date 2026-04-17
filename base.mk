@@ -6,7 +6,7 @@
 # =============================================================================
 
 # === CONFIGURATION (override before include) ===
-PROJECT_NAME ?= unnamed
+PROJECT_NAME ?= flext-core
 PYTHON_VERSION ?= 3.13
 SRC_DIR ?= src
 TESTS_DIR ?= tests
@@ -352,11 +352,22 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 			gosec ./... || { echo "FAIL: security"; exit 1; }; \
 		fi; \
 		if echo "$$gates" | grep -qw markdown; then \
-			if git rev-parse --git-dir >/dev/null 2>&1; then \
-				md_files=$$(git ls-files -- '*.md' ':!vendor/' && git ls-files --others --exclude-standard -- '*.md' ':!vendor/'); \
+			if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ] && [ -n "$(ALL_PROJECTS)" ]; then \
+				md_roots=". $(ALL_PROJECTS)"; \
 			else \
-				md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './reports/*' ! -path './.venv/*' ! -path './vendor/*' ! -path './node_modules/*' ! -path './dist/*' ! -path './build/*'); \
+				md_roots="."; \
 			fi; \
+			md_files=$$(for md_root in $$md_roots; do \
+				[ -d "$$md_root" ] || continue; \
+				if git -C "$$md_root" rev-parse --git-dir >/dev/null 2>&1; then \
+					md_prefix=""; \
+					if [ "$$md_root" != "." ]; then md_prefix="$$md_root/"; fi; \
+					git -C "$$md_root" ls-files -- '*.md' ':!vendor/' | sed "s#^#$$md_prefix#"; \
+					git -C "$$md_root" ls-files --others --exclude-standard -- '*.md' ':!vendor/' | sed "s#^#$$md_prefix#"; \
+				else \
+					find "$$md_root" -type f -name '*.md' ! -path '*/.git/*' ! -path '*/.reports/*' ! -path '*/reports/*' ! -path '*/.venv/*' ! -path '*/vendor/*' ! -path '*/node_modules/*' ! -path '*/dist/*' ! -path '*/build/*'; \
+				fi; \
+			done); \
 			md_files=$$(printf '%s\n' "$$md_files" | awk 'NF' | while IFS= read -r f; do [ -f "$$f" ] && printf '%s\n' "$$f"; done | sort -u); \
 			md_config=""; \
 			if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
@@ -479,11 +490,22 @@ fmt: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
 			fi; \
 		fi; \
 	fi
-	$(Q)if git rev-parse --git-dir >/dev/null 2>&1; then \
-		md_files=$$(git ls-files -- '*.md' ':!vendor/' && git ls-files --others --exclude-standard -- '*.md' ':!vendor/'); \
+	$(Q)if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ] && [ -n "$(ALL_PROJECTS)" ]; then \
+		md_roots=". $(ALL_PROJECTS)"; \
 	else \
-		md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './.venv/*' ! -path './vendor/*' ! -path './node_modules/*' ! -path './dist/*' ! -path './build/*'); \
+		md_roots="."; \
 	fi; \
+	md_files=$$(for md_root in $$md_roots; do \
+		[ -d "$$md_root" ] || continue; \
+		if git -C "$$md_root" rev-parse --git-dir >/dev/null 2>&1; then \
+			md_prefix=""; \
+			if [ "$$md_root" != "." ]; then md_prefix="$$md_root/"; fi; \
+			git -C "$$md_root" ls-files -- '*.md' ':!vendor/' | sed "s#^#$$md_prefix#"; \
+			git -C "$$md_root" ls-files --others --exclude-standard -- '*.md' ':!vendor/' | sed "s#^#$$md_prefix#"; \
+		else \
+			find "$$md_root" -type f -name '*.md' ! -path '*/.git/*' ! -path '*/.reports/*' ! -path '*/.venv/*' ! -path '*/vendor/*' ! -path '*/node_modules/*' ! -path '*/dist/*' ! -path '*/build/*'; \
+		fi; \
+	done); \
 	md_files=$$(printf '%s\n' "$$md_files" | awk 'NF' | while IFS= read -r f; do [ -f "$$f" ] && printf '%s\n' "$$f"; done | sort -u); \
 	if [ -n "$$md_files" ]; then \
 		md_config=""; \

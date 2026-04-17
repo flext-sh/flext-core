@@ -26,7 +26,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".containers": ("FlextModelsContainers",),
             ".context": ("FlextModelsContext",),
             ".cqrs": ("FlextModelsCqrs",),
-            ".decorators": ("FlextModelsDecorators",),
             ".dispatcher": ("FlextModelsDispatcher",),
             ".domain_event": ("FlextModelsDomainEvent",),
             ".entity": ("FlextModelsEntity",),

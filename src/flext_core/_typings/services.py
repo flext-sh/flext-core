@@ -179,14 +179,7 @@ class FlextTypesServices:
     type ContextHookMap = Mapping[str, Sequence[ContextHookCallable]]
 
     type SortableObjectType = str | int | float
-    type TypeHintSpecifier = (
-        type
-        | str
-        | UnionType
-        | GenericAlias
-        | TypeAliasType
-        | Callable[[FlextTypingBase.Scalar], FlextTypingBase.Scalar]
-    )
+    type TypeHintSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
     type ValueAdapter[T] = FlextModelsPydantic.TypeAdapter[T]
     type TypeOriginSpecifier = TypeHintSpecifier
     type GenericTypeArgument = str | type[FlextTypingBase.Scalar]

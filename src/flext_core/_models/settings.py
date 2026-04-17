@@ -18,7 +18,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextModelsBase as m, FlextModelsPydantic, c, p, t
+from flext_core import FlextModelsBase as m, FlextModelsPydantic as mp, c, p, t
 
 
 class FlextModelsSettings:
@@ -38,18 +38,18 @@ class FlextModelsSettings:
 
         settings_class: Annotated[
             type[p.SettingsType],
-            FlextModelsPydantic.Field(description="Settings class to instantiate"),
+            mp.Field(description="Settings class to instantiate"),
         ]
         env_prefix: Annotated[
             str,
-            FlextModelsPydantic.Field(
+            mp.Field(
                 default=c.ENV_PREFIX,
                 description="Environment variable prefix for settings resolution",
             ),
         ] = c.ENV_PREFIX
         env_file: Annotated[
             str | None,
-            FlextModelsPydantic.Field(
+            mp.Field(
                 default=None,
                 description="Path to .env file for environment variable loading",
             ),
@@ -66,7 +66,7 @@ class FlextModelsSettings:
 
         max_retries: Annotated[
             t.PositiveInt,
-            FlextModelsPydantic.Field(
+            mp.Field(
                 default=c.MAX_RETRY_ATTEMPTS,
                 le=c.MAX_RETRY_ATTEMPTS,
                 alias="max_attempts",
@@ -77,31 +77,31 @@ class FlextModelsSettings:
         ] = c.MAX_RETRY_ATTEMPTS
         exponential_backoff: Annotated[
             bool,
-            FlextModelsPydantic.Field(
+            mp.Field(
                 default=True,
                 description="Whether to use exponential backoff between retry attempts.",
             ),
         ] = True
         backoff_multiplier: Annotated[
             t.BackoffMultiplier,
-            FlextModelsPydantic.Field(
+            mp.Field(
                 default=c.DEFAULT_BACKOFF_MULTIPLIER,
                 description="Backoff multiplier for exponential backoff",
             ),
         ] = c.DEFAULT_BACKOFF_MULTIPLIER
         retry_on_exceptions: Annotated[
             Sequence[type[BaseException]],
-            FlextModelsPydantic.Field(
+            mp.Field(
                 description="Exception types to retry on",
             ),
-        ] = FlextModelsPydantic.Field(default_factory=list[type[BaseException]])
+        ] = mp.Field(default_factory=list[type[BaseException]])
         retry_on_status_codes: Annotated[
             Sequence[int],
-            FlextModelsPydantic.Field(
+            mp.Field(
                 max_length=c.HTTP_STATUS_MIN,
                 description="HTTP status codes to retry on",
             ),
-        ] = FlextModelsPydantic.Field(default_factory=list[int])
+        ] = mp.Field(default_factory=list[int])
 
         @model_validator(mode="after")
         def validate_delay_consistency(self) -> Self:
