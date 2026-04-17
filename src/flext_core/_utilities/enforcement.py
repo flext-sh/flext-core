@@ -290,7 +290,6 @@ class FlextUtilitiesEnforcement:
                 f"\n{model_type.__qualname__} violates Pydantic v2 HARD rules:\n"
                 + "\n".join(f"  - {e}" for e in hard_errors)
                 + "\n\nFix: See AGENTS.md § Code Style > Module Design."
-                + "\nExempt: _flext_enforcement_exempt: ClassVar[bool] = True"
             )
             warnings.warn(msg, UserWarning, stacklevel=3)
             if mode == "strict":
@@ -349,7 +348,6 @@ class FlextUtilitiesEnforcement:
             f"\n{qualname} violates FLEXT {layer} {severity} rules:\n"
             + "\n".join(f"  - {e}" for e in errors)
             + f"\n\nFix: See AGENTS.md § {layer} governance."
-            + "\nExempt: _flext_enforcement_exempt: ClassVar[bool] = True"
         )
         warnings.warn(msg, UserWarning, stacklevel=4)
         if mode == "strict":
@@ -874,7 +872,6 @@ class FlextUtilitiesEnforcement:
             f"\n{qualname} violates FLEXT {layer} namespace rules:\n"
             + "\n".join(f"  - {e}" for e in errors)
             + "\n\nFix: See AGENTS.md § Facades & Namespaces."
-            + "\nExempt: _flext_enforcement_exempt: ClassVar[bool] = True"
         )
         warnings.warn(msg, UserWarning, stacklevel=5)
         if mode == "strict":
