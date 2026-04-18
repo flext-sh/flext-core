@@ -7,7 +7,7 @@ from collections.abc import Callable, Sequence
 
 import pytest
 
-from tests import c, e, m, p, r
+from tests import c, e, m, p
 
 
 class TestExceptions:
@@ -94,22 +94,6 @@ class TestExceptions:
         assert result.error_data["field"] == "name"
         assert result.error_data["value"] == ""
         assert result.error_data["cause"] == "empty"
-
-    def test_result_from_exception_uses_public_error_surface(self) -> None:
-        error = e.ValidationError(
-            "Validation failed",
-            field="email",
-            value="bad",
-            correlation_id="corr-123",
-        )
-        result = r[bool].from_exception(error)
-        assert result.failure
-        assert result.error == "Validation failed"
-        assert result.error_code == c.ErrorCode.VALIDATION_ERROR
-        assert result.error_data is not None
-        assert result.error_data["field"] == "email"
-        assert result.error_data["value"] == "bad"
-        assert result.error_data["correlation_id"] == "corr-123"
 
     def test_declarative_error_supports_public_auto_correlation(self) -> None:
         error = e.ValidationError(

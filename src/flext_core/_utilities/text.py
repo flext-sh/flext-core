@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from flext_core import c
 
 
@@ -68,6 +70,11 @@ class FlextUtilitiesText:
 
         """
         return "".join(ch for ch in text.lower() if ch.isalnum())
+
+    @staticmethod
+    def write_file(path: str | Path, content: str, encoding: str = "utf-8") -> None:
+        """Write text content to a file path using explicit encoding."""
+        Path(path).write_text(content, encoding=encoding)
 
 
 __all__: list[str] = ["FlextUtilitiesText"]

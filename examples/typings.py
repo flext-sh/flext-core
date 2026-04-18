@@ -14,6 +14,8 @@ class ExamplesFlextCoreTypes(t):
 
         type ExampleRenderable = (
             t.ValueOrModel
+            | t.ScalarOrModel
+            | t.RuntimeAtomic
             | t.ConfigMap
             | p.ResultLike[t.RuntimeAtomic]
             | p.ResultLike[t.Container]

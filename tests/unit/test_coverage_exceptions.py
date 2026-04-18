@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping, Sequence
 
 import pytest
 
-from tests import c, e, m, p, r, t
+from tests import c, e, m, p, t
 
 type ErrorFactory = Callable[[], e.BaseError]
 type FailureFactory = Callable[[], p.Result[bool]]
@@ -295,21 +295,3 @@ class TestCoverageExceptions:
         assert cleared.total_exceptions == 0
         assert cleared.unique_exception_types == 0
         assert cleared.exception_counts_summary == ""
-
-    def test_result_fail_exc_reads_the_structured_error_surface(self) -> None:
-        result = r[bool].fail_exc(
-            e.ConnectionError(
-                "Connect failed",
-                host="db.internal",
-                port=5432,
-                correlation_id="corr-456",
-            ),
-        )
-
-        assert result.failure
-        assert result.error == "[CONNECTION_ERROR] Connect failed"
-        assert result.error_code == c.ErrorCode.CONNECTION_ERROR
-        assert result.error_data is not None
-        assert result.error_data["host"] == "db.internal"
-        assert result.error_data["port"] == 5432
-        assert result.error_data["correlation_id"] == "corr-456"

@@ -459,16 +459,6 @@ class FlextService[
         """Return a failure result for an operation that failed."""
         return e.fail_operation(operation, exc)
 
-    def fail_val(
-        self,
-        field: str | None = None,
-        value: t.Scalar | None = None,
-        *,
-        error: Exception | str | None = None,
-    ) -> p.Result[TDomainResult]:
-        """Return a failure result for a field validation failure."""
-        return e.fail_validation(field, value, error=error)
-
 
 s = FlextService
 __all__: list[str] = ["FlextService", "s"]

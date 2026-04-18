@@ -57,39 +57,6 @@ class FlextUtilitiesReliability:
             ),
         ] = None
 
-    @staticmethod
-    def flow_result[T](
-        result: p.Result[T],
-        *funcs: Callable[[T], p.Result[T]],
-    ) -> p.Result[T]:
-        """Chain multiple operations on p.Result.
-
-        Applies each function in sequence, short-circuiting on failure.
-        Railway-oriented programming pattern for composing result-returning operations.
-
-        Args:
-            result: Initial p.Result to chain
-            *funcs: Functions that take a value and return p.Result[T]
-
-        Returns:
-            Final p.Result after all operations or first failure
-
-        Example:
-            result = u.flow_result(
-                r[T].ok(user),
-                validate_user,
-                enrich_profile,
-                save_to_db,
-            )
-
-        """
-        current: p.Result[T] = result
-        for func in funcs:
-            if current.failure:
-                return current
-            current = func(current.value)
-        return current
-
     _RETRYABLE_EXCEPTIONS: tuple[type[Exception], ...] = (
         AttributeError,
         TypeError,
@@ -98,6 +65,23 @@ class FlextUtilitiesReliability:
         KeyError,
         OSError,
     )
+
+    @staticmethod
+    def try_[TResult](
+        operation: Callable[[], TResult],
+        catch: type[Exception] | tuple[type[Exception], ...] | None = None,
+    ) -> p.Result[TResult]:
+        """Execute a callable and capture configured exceptions as failed results."""
+        if catch is None:
+            handled = FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS
+        elif isinstance(catch, type):
+            handled = (catch,)
+        else:
+            handled = catch
+        try:
+            return r[TResult].ok(operation())
+        except handled as exc:
+            return r[TResult].fail_op("execute guarded operation", exc)
 
     @staticmethod
     def retry[TResult](

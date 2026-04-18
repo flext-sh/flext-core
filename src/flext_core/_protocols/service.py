@@ -26,7 +26,7 @@ from flext_core import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypesServices, FlextTypingBase
+    from flext_core import FlextTypesServices
 
 
 class FlextProtocolsService:
@@ -189,16 +189,6 @@ class FlextProtocolsService:
             exc: Exception | str | None = ...,
         ) -> FlextProtocolsResult.Result[T]:
             """Return a failure result for an operation that failed."""
-            ...
-
-        def fail_val(
-            self,
-            field: str | None = ...,
-            value: FlextTypingBase.Scalar | None = ...,
-            *,
-            error: Exception | str | None = ...,
-        ) -> FlextProtocolsResult.Result[T]:
-            """Return a failure result for a field validation failure."""
             ...
 
     @runtime_checkable

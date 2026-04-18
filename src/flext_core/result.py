@@ -26,7 +26,6 @@ from pydantic import (
     ConfigDict,
     Field,
     PrivateAttr,
-    TypeAdapter,
     ValidationError,
     computed_field,
 )
@@ -370,42 +369,6 @@ class FlextResult[T](BaseModel, p.Result[T]):
         result._result = Failure(error_msg)
         result._exception = exception
         return result
-
-    @classmethod
-    def from_exception[V](
-        cls: type[FlextResult[V]],
-        exception: BaseException,
-        *,
-        error: str | None = None,
-        error_code: str | None = None,
-        error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
-    ) -> FlextResult[V]:
-        """Create a failed result directly from an exception public surface."""
-        return cls.fail(
-            error if error is not None else cls._exception_message(exception),
-            error_code=error_code,
-            error_data=error_data,
-            exception=exception,
-        )
-
-    @classmethod
-    def fail_exc[V](
-        cls: type[FlextResult[V]],
-        exc: BaseException,
-    ) -> FlextResult[V]:
-        """Create failed result from a BaseException (e.BaseError or stdlib).
-
-        Usage::
-
-            return r[bool].fail_exc(exc)
-
-        """
-        return cls.fail(
-            str(exc),
-            error_code=cls._exception_error_code(exc),
-            error_data=cls._exception_error_data(exc),
-            exception=exc,
-        )
 
     @classmethod
     def fail_op[V](
@@ -909,47 +872,12 @@ class FlextResult[T](BaseModel, p.Result[T]):
             )
 
     @override
-    def to_type[U](self, adapter: TypeAdapter[U]) -> FlextResult[U]:
-        """Convert successful value using a cached Pydantic v2 TypeAdapter."""
-        if self.failure:
-            return FlextResult[U].fail(
-                self.error or "",
-                error_code=self.error_code,
-                error_data=self.error_data,
-                exception=self.exception,
-            )
-        try:
-            return FlextResult[U].ok(adapter.validate_python(self.value))
-        except (
-            ValidationError,
-            ValueError,
-            TypeError,
-            AttributeError,
-            RuntimeError,
-            Exception,
-        ) as e:
-            return FlextResult[U].fail(
-                f"Type conversion failed: {self._model_error_message(e)}",
-                exception=e,
-            )
-
-    @override
     def unwrap(self) -> T:
         """Unwrap the success value or raise RuntimeError."""
         if self.failure:
             msg = c.ERR_RESULT_CANNOT_UNWRAP.format(error=self.error)
             raise RuntimeError(msg)
         return self.value
-
-    @override
-    def unwrap_model[U: t.ModelCarrier](self, model: t.ModelClass[U]) -> U:
-        """Unwrap successful value after Pydantic model conversion."""
-        return self.to_model(model).unwrap()
-
-    @override
-    def unwrap_type[U](self, adapter: TypeAdapter[U]) -> U:
-        """Unwrap successful value after TypeAdapter conversion."""
-        return self.to_type(adapter).unwrap()
 
     @overload
     def unwrap_or(self, default: T) -> T: ...

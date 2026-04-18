@@ -298,27 +298,6 @@ class FlextProtocolsResult:
             """Convert the success payload into a validated model."""
             ...
 
-        def to_type[U](
-            self,
-            adapter: FlextModelsPydantic.TypeAdapter[U],
-        ) -> FlextProtocolsResult.Result[U]:
-            """Convert the success payload through a cached type adapter."""
-            ...
-
-        def unwrap_model[U: FlextModelsPydantic.BaseModel](
-            self,
-            model: type[U],
-        ) -> U:
-            """Convert to a validated model and unwrap the result."""
-            ...
-
-        def unwrap_type[U](
-            self,
-            adapter: FlextModelsPydantic.TypeAdapter[U],
-        ) -> U:
-            """Convert through a type adapter and unwrap the result."""
-            ...
-
     # ------------------------------------------------------------------
     # Facade: Result nominal contract (direct typing)
     # ------------------------------------------------------------------
@@ -466,24 +445,6 @@ class FlextProtocolsResult:
             self,
             model: type[U],
         ) -> FlextProtocolsResult.Result[U]: ...
-
-        @abstractmethod
-        def to_type[U](
-            self,
-            adapter: FlextModelsPydantic.TypeAdapter[U],
-        ) -> FlextProtocolsResult.Result[U]: ...
-
-        @abstractmethod
-        def unwrap_model[U: FlextModelsPydantic.BaseModel](
-            self,
-            model: type[U],
-        ) -> U: ...
-
-        @abstractmethod
-        def unwrap_type[U](
-            self,
-            adapter: FlextModelsPydantic.TypeAdapter[U],
-        ) -> U: ...
 
         @abstractmethod
         def __bool__(self) -> bool: ...

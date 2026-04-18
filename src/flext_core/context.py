@@ -542,7 +542,7 @@ class FlextContext(m.ArbitraryTypesModel):
             )
 
         normalized = u.normalize_to_container(value)
-        return r[t.RuntimeAtomic].ok(FlextRuntime.to_runtime_atomic(normalized))
+        return r[t.RuntimeAtomic].ok(normalized)
 
     def resolve_metadata(self, key: str) -> p.Result[t.RuntimeAtomic]:
         """Get metadata from the context.
@@ -577,9 +577,7 @@ class FlextContext(m.ArbitraryTypesModel):
                 c.ERR_CONTEXT_METADATA_KEY_NOT_FOUND.format(key=key),
             )
         raw_value: t.MetadataValue = self._state.metadata.attributes[key]
-        normalized_value = FlextRuntime.to_runtime_atomic(
-            u.normalize_to_container(raw_value),
-        )
+        normalized_value = u.normalize_to_container(raw_value)
         return r[t.RuntimeAtomic].ok(normalized_value)
 
     def has(self, key: str, scope: str = c.ContextScope.GLOBAL) -> bool:

@@ -371,20 +371,6 @@ class FlextUtilitiesParser:
         return normalized_value in normalized_result
 
     @staticmethod
-    def norm_join(
-        items: t.StrSequence,
-        *,
-        case: str | None = None,
-        sep: str = " ",
-    ) -> str:
-        """Normalize and join (builder: norm().join())."""
-        if case:
-            normalized = [FlextUtilitiesParser.norm_str(v, case=case) for v in items]
-        else:
-            normalized = list(items)
-        return sep.join(normalized)
-
-    @staticmethod
     def norm_str(
         value: t.ValueOrModel | None,
         *,

@@ -92,7 +92,6 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
     from flext_core._utilities.enum import FlextUtilitiesEnum
-    from flext_core._utilities.file_ops import FlextUtilitiesFileOps
     from flext_core._utilities.generators import FlextUtilitiesGenerators
     from flext_core._utilities.guards import FlextUtilitiesGuards
     from flext_core._utilities.guards_ensure import FlextUtilitiesGuardsEnsure
@@ -108,7 +107,6 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
     from flext_core._utilities.pydantic import FlextUtilitiesPydantic
     from flext_core._utilities.reliability import FlextUtilitiesReliability
-    from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
     from flext_core._utilities.settings import FlextUtilitiesSettings
     from flext_core._utilities.text import FlextUtilitiesText
     from flext_core.constants import FlextConstants, c
@@ -250,7 +248,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.domain": ("FlextUtilitiesDomain",),
             "._utilities.enforcement": ("FlextUtilitiesEnforcement",),
             "._utilities.enum": ("FlextUtilitiesEnum",),
-            "._utilities.file_ops": ("FlextUtilitiesFileOps",),
             "._utilities.generators": ("FlextUtilitiesGenerators",),
             "._utilities.guards": ("FlextUtilitiesGuards",),
             "._utilities.guards_ensure": ("FlextUtilitiesGuardsEnsure",),
@@ -456,7 +453,6 @@ __all__: list[str] = [
     "FlextUtilitiesDomain",
     "FlextUtilitiesEnforcement",
     "FlextUtilitiesEnum",
-    "FlextUtilitiesFileOps",
     "FlextUtilitiesGenerators",
     "FlextUtilitiesGuards",
     "FlextUtilitiesGuardsEnsure",
@@ -470,7 +466,6 @@ __all__: list[str] = [
     "FlextUtilitiesProjectMetadata",
     "FlextUtilitiesPydantic",
     "FlextUtilitiesReliability",
-    "FlextUtilitiesResultHelpers",
     "FlextUtilitiesSettings",
     "FlextUtilitiesText",
     "MessageT_contra",

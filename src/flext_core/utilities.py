@@ -25,7 +25,6 @@ from flext_core import (
     FlextUtilitiesDomain,
     FlextUtilitiesEnforcement,
     FlextUtilitiesEnum,
-    FlextUtilitiesFileOps,
     FlextUtilitiesGenerators,
     FlextUtilitiesGuards,
     FlextUtilitiesMapper,
@@ -34,7 +33,6 @@ from flext_core import (
     FlextUtilitiesProjectMetadata,
     FlextUtilitiesPydantic,
     FlextUtilitiesReliability,
-    FlextUtilitiesResultHelpers,
     FlextUtilitiesSettings,
     FlextUtilitiesText,
 )
@@ -55,7 +53,6 @@ class FlextUtilities(
     FlextUtilitiesDomain,
     FlextUtilitiesEnforcement,
     FlextUtilitiesEnum,
-    FlextUtilitiesFileOps,
     FlextUtilitiesGenerators,
     FlextUtilitiesGuards,
     FlextUtilitiesMapper,
@@ -64,7 +61,6 @@ class FlextUtilities(
     FlextUtilitiesProjectMetadata,
     FlextUtilitiesPydantic,
     FlextUtilitiesReliability,
-    FlextUtilitiesResultHelpers,
     FlextUtilitiesText,
     FlextModelsNamespace,
 ):

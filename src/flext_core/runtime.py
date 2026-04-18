@@ -113,24 +113,17 @@ class FlextRuntime:
     def to_plain_container(
         value: t.ValueOrModel | t.ConfigMap | t.Dict | t.ObjectList,
     ) -> t.RecursiveContainer:
-        """Flatten a runtime atomic value to plain Python types."""
+        """Flatten a runtime value to plain RecursiveContainer."""
         match value:
             case t.ConfigMap() | t.Dict():
-                result: dict[str, t.RecursiveContainer] = {
+                return {
                     str(k): FlextRuntime.to_plain_container(
                         FlextRuntime.normalize_to_container(v),
                     )
                     for k, v in value.root.items()
                 }
-                return result
             case t.ObjectList():
-                return list(value.root)
-            case bool() | str() | int() | float() | datetime() | Path():
-                return value
-            case None:
-                return ""
-            case BaseModel():
-                return str(value)
+                return [v for v in value.root]  # noqa: C416
             case dict():
                 return {
                     str(k): FlextRuntime.to_plain_container(
@@ -138,62 +131,19 @@ class FlextRuntime:
                     )
                     for k, v in value.items()
                 }
-            case list():
+            case list() | tuple():
                 return [
                     FlextRuntime.to_plain_container(
                         FlextRuntime.normalize_to_container(item),
                     )
                     for item in value
                 ]
-            case tuple():
-                return [
-                    FlextRuntime.to_plain_container(
-                        FlextRuntime.normalize_to_container(item),
-                    )
-                    for item in value
-                ]
-            case _:
-                return str(value)
-
-    @staticmethod
-    def to_runtime_atomic(
-        value: t.ValueOrModel,
-    ) -> t.RuntimeAtomic:
-        """Convert ValueOrModel to RuntimeAtomic for context/dispatcher boundaries.
-
-        Wraps recursive container types (Mapping, Sequence, tuple) into their
-        runtime-atomic counterparts (ConfigMap, ObjectList). Scalars and BaseModel
-        instances pass through unchanged.
-        """
-        match value:
-            case BaseModel():
+            case bool() | str() | int() | float() | datetime() | Path():
                 return value
-            case bool() | str() | int() | float() | Path():
-                return value
-            case datetime():
-                return value
-            case Mapping():
-                return t.ConfigMap(
-                    root={str(k): v for k, v in value.items()},
-                )
-            case Sequence():
-                container_items: Sequence[t.Container] = [
-                    item
-                    if isinstance(item, (str, int, float, bool, datetime, Path))
-                    else str(item)
-                    for item in value
-                ]
-                return t.ObjectList(root=container_items)
-            case tuple():
-                tuple_items: Sequence[t.Container] = [
-                    item
-                    if isinstance(item, (str, int, float, bool, datetime, Path))
-                    else str(item)
-                    for item in value
-                ]
-                return t.ObjectList(root=tuple_items)
             case None:
                 return ""
+            case _:
+                return str(value)
 
     @staticmethod
     def _normalize_dict_entries(
@@ -386,62 +336,6 @@ class FlextRuntime:
             msg = f"{subject} must be callable, got {value.__class__.__name__}"
             raise TypeError(msg)
         return value
-
-    @staticmethod
-    def validate_callable_sequence[TCallable](
-        values: Sequence[TCallable],
-        subject: str,
-    ) -> Sequence[TCallable]:
-        """Validate that every item in a sequence is callable."""
-        for value in values:
-            FlextRuntime.validate_callable_input(value, subject)
-        return values
-
-    @staticmethod
-    def validate_model_sequence[TModel: BaseModel](
-        values: Sequence[t.ValueOrModel],
-        model_cls: type[TModel],
-    ) -> Sequence[TModel]:
-        """Validate a heterogeneous input sequence into one Pydantic model type."""
-        validated_items: list[TModel] = []
-        item_errors: list[str] = []
-        for index, value in enumerate(values):
-            try:
-                if isinstance(value, model_cls):
-                    validated_items.append(value)
-                elif isinstance(value, BaseModel):
-                    validated_items.append(model_cls.model_validate(value.model_dump()))
-                elif isinstance(value, Mapping):
-                    validated_items.append(model_cls.model_validate(dict(value)))
-                else:
-                    validated_items.append(model_cls.model_validate(value))
-            except c.ValidationError as exc:
-                item_errors.extend(
-                    f"{index}.{'.'.join(str(part) for part in err.get('loc', ()))}: {err.get('msg', 'validation error')}"
-                    for err in exc.errors()
-                )
-        if item_errors:
-            msg = c.ERR_RUNTIME_BATCH_VALIDATION_FAILED.format(
-                errors="; ".join(item_errors),
-            )
-            raise TypeError(msg)
-        return validated_items
-
-    @classmethod
-    def normalize_metadata_input(cls, value: t.MetadataInput) -> p.Metadata:
-        """Normalize metadata input into the bound metadata model."""
-        metadata_cls = cls._require_metadata_model()
-        if value is None:
-            return metadata_cls.model_validate({c.FIELD_ATTRIBUTES: {}})
-        if isinstance(value, metadata_cls):
-            return value
-        if not isinstance(value, Mapping):
-            msg = (
-                "metadata must be None, dict, or bound metadata model, got "
-                f"{value.__class__.__name__}"
-            )
-            raise TypeError(msg)
-        return metadata_cls.model_validate({c.FIELD_ATTRIBUTES: dict(value)})
 
     @staticmethod
     def normalize_to_container(
