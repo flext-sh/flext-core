@@ -2,8 +2,9 @@
 
 Tier 0 module: imports nothing from flext-core. Owned solely by
 flext-core; every other reader/writer in the monorepo references this
-class via ``c.Project.*``. Duplication of these values in flext-infra,
-flext-tests, or any other subproject is forbidden by the
+class via the flat facade aliases (``c.ALIAS_TO_SUFFIX``,
+``c.TIER_FACADE_PREFIX``, etc.). Duplication of these values in
+flext-infra, flext-tests, or any other subproject is forbidden by the
 metadata-discipline enforcement rule.
 
 Architecture: Tier 0 — zero internal dependencies (safe from cycles).
@@ -20,80 +21,73 @@ from typing import ClassVar, Final
 
 
 class FlextConstantsProjectMetadata:
-    """Namespace holder for project-metadata constants SSOT.
+    """Canonical project-metadata constants SSOT.
 
-    The actual constants live under the nested ``Project`` class so that
-    ``FlextConstants`` can inherit this class via MRO and expose
-    ``c.Project.ALIAS_TO_SUFFIX`` (sub-namespace access) rather than
-    flat ``c.ALIAS_TO_SUFFIX``.
+    Inherited into ``FlextConstants`` via MRO so consumers access
+    every attribute flat on ``c.*`` (e.g. ``c.ALIAS_TO_SUFFIX``).
     """
 
     _flext_enforcement_exempt: ClassVar[bool] = True
 
-    class Project:
-        """Project-metadata constants — SSOT (accessible as ``c.Project.*``)."""
+    ALIAS_TO_SUFFIX: Final[Mapping[str, str]] = MappingProxyType(
+        {
+            "c": "Constants",
+            "d": "Decorators",
+            "e": "Exceptions",
+            "h": "Handlers",
+            "m": "Models",
+            "p": "Protocols",
+            "r": "Result",
+            "s": "Service",
+            "t": "Types",
+            "u": "Utilities",
+            "x": "Mixins",
+        }
+    )
 
-        _flext_enforcement_exempt: ClassVar[bool] = True
+    RUNTIME_ALIAS_NAMES: Final[frozenset[str]] = frozenset(ALIAS_TO_SUFFIX)
 
-        ALIAS_TO_SUFFIX: Final[Mapping[str, str]] = MappingProxyType(
-            {
-                "c": "Constants",
-                "d": "Decorators",
-                "e": "Exceptions",
-                "h": "Handlers",
-                "m": "Models",
-                "p": "Protocols",
-                "r": "Result",
-                "s": "Service",
-                "t": "Types",
-                "u": "Utilities",
-                "x": "Mixins",
-            }
-        )
+    TIER_FACADE_PREFIX: Final[Mapping[str, str]] = MappingProxyType(
+        {
+            "src": "Flext",
+            "tests": "TestsFlext",
+            "examples": "ExamplesFlext",
+            "scripts": "ScriptsFlext",
+            "docs": "DocsFlext",
+        }
+    )
 
-        RUNTIME_ALIAS_NAMES: Final[frozenset[str]] = frozenset(ALIAS_TO_SUFFIX)
+    SCAN_DIRECTORIES: Final[tuple[str, ...]] = tuple(TIER_FACADE_PREFIX)
 
-        TIER_FACADE_PREFIX: Final[Mapping[str, str]] = MappingProxyType(
-            {
-                "src": "Flext",
-                "tests": "TestsFlext",
-                "examples": "ExamplesFlext",
-                "scripts": "ScriptsFlext",
-                "docs": "DocsFlext",
-            }
-        )
+    TIER_SUB_NAMESPACE: Final[Mapping[str, str]] = MappingProxyType(
+        {
+            "src": "",
+            "tests": "Tests",
+            "examples": "Examples",
+            "scripts": "Scripts",
+            "docs": "Docs",
+        }
+    )
 
-        SCAN_DIRECTORIES: Final[tuple[str, ...]] = tuple(TIER_FACADE_PREFIX)
+    UNIVERSAL_ALIAS_PARENT_SOURCES: Final[Mapping[str, str]] = MappingProxyType(
+        {
+            "r": "flext_core",
+            "e": "flext_core",
+            "d": "flext_core",
+            "x": "flext_core",
+        }
+    )
 
-        TIER_SUB_NAMESPACE: Final[Mapping[str, str]] = MappingProxyType(
-            {
-                "src": "",
-                "tests": "Tests",
-                "examples": "Examples",
-                "scripts": "Scripts",
-                "docs": "Docs",
-            }
-        )
+    SPECIAL_NAME_OVERRIDES: Final[Mapping[str, str]] = MappingProxyType(
+        {
+            "flext": "FlextRoot",
+            "flext-core": "Flext",
+        }
+    )
 
-        UNIVERSAL_ALIAS_PARENT_SOURCES: Final[Mapping[str, str]] = MappingProxyType(
-            {
-                "r": "flext_core",
-                "e": "flext_core",
-                "d": "flext_core",
-                "x": "flext_core",
-            }
-        )
-
-        SPECIAL_NAME_OVERRIDES: Final[Mapping[str, str]] = MappingProxyType(
-            {
-                "flext": "FlextRoot",
-                "flext-core": "Flext",
-            }
-        )
-
-        MANAGED_PYPROJECT_KEYS: Final[tuple[str, ...]] = (
-            "tool.flext.project",
-            "tool.flext.namespace",
-            "tool.flext.docs",
-            "tool.flext.aliases",
-        )
+    MANAGED_PYPROJECT_KEYS: Final[tuple[str, ...]] = (
+        "tool.flext.project",
+        "tool.flext.namespace",
+        "tool.flext.docs",
+        "tool.flext.aliases",
+    )

@@ -1,4 +1,4 @@
-"""Tests for FlextTypingProjectMetadata PEP 695 aliases.
+"""Tests for FlextTypingProjectMetadata PEP 695 aliases (flat on ``t.*``).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,30 +13,30 @@ from flext_core._typings.project_metadata import (
 )
 
 _ALIAS_NAMES = (
-    "AliasName",
-    "TierName",
+    "ProjectAliasName",
+    "ProjectTierName",
     "ProjectName",
-    "PackageName",
-    "ClassStem",
-    "LibraryName",
-    "AliasToSuffixMap",
-    "TierFacadePrefixMap",
-    "AliasParentSourceMap",
-    "SpecialNameOverrideMap",
-    "ManagedKeyName",
-    "ManagedKeyTuple",
+    "ProjectPackageName",
+    "ProjectClassStem",
+    "ProjectLibraryName",
+    "ProjectAliasToSuffixMap",
+    "ProjectTierFacadePrefixMap",
+    "ProjectAliasParentSourceMap",
+    "ProjectSpecialNameOverrideMap",
+    "ProjectManagedKeyName",
+    "ProjectManagedKeyTuple",
 )
 
 
 @pytest.mark.parametrize("alias_name", _ALIAS_NAMES)
 def test_alias_is_defined(alias_name: str) -> None:
-    assert hasattr(tp.Project, alias_name), alias_name
+    assert hasattr(tp, alias_name), alias_name
 
 
 def test_alias_count_stable() -> None:
     declared = {
         name
-        for name in vars(tp.Project)
+        for name in vars(tp)
         if not name.startswith("_") and not name.endswith("__")
     }
     assert declared == set(_ALIAS_NAMES)

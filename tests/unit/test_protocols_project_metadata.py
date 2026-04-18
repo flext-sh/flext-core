@@ -1,4 +1,4 @@
-"""Tests for FlextProtocolsProjectMetadata protocols.
+"""Tests for FlextProtocolsProjectMetadata protocols (flat on ``p.*``).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -28,34 +28,34 @@ class _ConcreteTierNamer:
         return f"{tier}:{project_name}"
 
 
-class TestMetadataReaderProtocol:
-    def test_runtime_check_accepts_reader(self) -> None:
-        assert isinstance(_ConcreteReader(), pm.Project.MetadataReader)
+class TestProjectMetadataReaderProtocol:
+    def test_accepts_reader(self) -> None:
+        assert isinstance(_ConcreteReader(), pm.ProjectMetadataReader)
 
-    def test_runtime_check_rejects_unrelated(self) -> None:
+    def test_rejects_unrelated(self) -> None:
         class _Unrelated:
             pass
 
-        assert not isinstance(_Unrelated(), pm.Project.MetadataReader)
+        assert not isinstance(_Unrelated(), pm.ProjectMetadataReader)
 
 
-class TestClassStemDeriverProtocol:
-    def test_runtime_check_accepts_deriver(self) -> None:
-        assert isinstance(_ConcreteStemmer(), pm.Project.ClassStemDeriver)
+class TestProjectClassStemDeriverProtocol:
+    def test_accepts_deriver(self) -> None:
+        assert isinstance(_ConcreteStemmer(), pm.ProjectClassStemDeriver)
 
-    def test_runtime_check_rejects_unrelated(self) -> None:
+    def test_rejects_unrelated(self) -> None:
         class _Unrelated:
             pass
 
-        assert not isinstance(_Unrelated(), pm.Project.ClassStemDeriver)
+        assert not isinstance(_Unrelated(), pm.ProjectClassStemDeriver)
 
 
-class TestTierFacadeNamerProtocol:
-    def test_runtime_check_accepts_namer(self) -> None:
-        assert isinstance(_ConcreteTierNamer(), pm.Project.TierFacadeNamer)
+class TestProjectTierFacadeNamerProtocol:
+    def test_accepts_namer(self) -> None:
+        assert isinstance(_ConcreteTierNamer(), pm.ProjectTierFacadeNamer)
 
-    def test_runtime_check_rejects_unrelated(self) -> None:
+    def test_rejects_unrelated(self) -> None:
         class _Unrelated:
             pass
 
-        assert not isinstance(_Unrelated(), pm.Project.TierFacadeNamer)
+        assert not isinstance(_Unrelated(), pm.ProjectTierFacadeNamer)
