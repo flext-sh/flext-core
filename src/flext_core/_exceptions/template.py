@@ -29,16 +29,20 @@ class FlextExceptionsTemplate:
             model_fields: Mapping[str, FieldInfo] = params.__class__.model_fields
             params_dump = params.model_dump(exclude_none=True)
             for key, value in params_dump.items():
-                payload[str(key)] = FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(value),
+                payload[str(key)] = FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(value),
+                    ),
                 )
             for field_name, field_info in model_fields.items():
                 field_help = field_info.description or field_info.title
                 if isinstance(field_help, str) and field_help:
                     payload[f"{field_name}_description"] = field_help
         for key, value in values.items():
-            payload[str(key)] = FlextRuntime.normalize_to_container(
-                FlextRuntime.normalize_to_metadata(value),
+            payload[str(key)] = FlextRuntime.to_plain_container(
+                FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(value),
+                ),
             )
         return payload
 

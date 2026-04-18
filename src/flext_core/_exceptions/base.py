@@ -159,7 +159,7 @@ class FlextExceptionsBase:
                         normalized = FlextRuntime.normalize_to_container(
                             FlextRuntime.normalize_to_metadata(v),
                         )
-                        final_kwargs_dict[k] = FlextRuntime._to_plain_container(normalized)
+                        final_kwargs_dict[k] = FlextRuntime.to_plain_container(normalized)
             final_kwargs: t.ConfigMap = t.ConfigMap(root=final_kwargs_dict)
             self.correlation_id = (
                 f"exc_{uuid.uuid4().hex[:8]}"

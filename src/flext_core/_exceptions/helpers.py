@@ -228,8 +228,10 @@ class FlextExceptionsHelpers:
         for key in param_keys:
             attr_val = getattr(resolved, key, None)
             if attr_val is not None:
-                error_context[key] = FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(attr_val),
+                error_context[key] = FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(attr_val),
+                    ),
                 )
         resolved_fields: Mapping[str, FieldInfo] = params_cls.__pydantic_fields__
         for key in param_keys:
@@ -254,8 +256,10 @@ class FlextExceptionsHelpers:
         FlextExceptionsHelpers.merge_metadata_into_context(error_context, metadata_obj)
         for k, v in kwargs.items():
             if k not in {c.ContextKey.CORRELATION_ID, c.FIELD_METADATA}:
-                error_context[k] = FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(v),
+                error_context[k] = FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(v),
+                    ),
                 )
         return error_context
 
@@ -270,15 +274,19 @@ class FlextExceptionsHelpers:
         metadata_model = FlextExceptionsHelpers.safe_metadata(metadata_obj)
         if metadata_model is not None:
             for k, v in metadata_model.attributes.items():
-                context[k] = FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(v),
+                context[k] = FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(v),
+                    ),
                 )
             return
         metadata_map = FlextExceptionsHelpers.safe_settings_map(metadata_obj)
         if metadata_map is not None:
             for k, metadata_value in metadata_map.items():
-                context[k] = FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(metadata_value),
+                context[k] = FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(metadata_value),
+                    ),
                 )
 
     @staticmethod
