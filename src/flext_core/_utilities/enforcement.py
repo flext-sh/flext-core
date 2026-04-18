@@ -27,15 +27,15 @@ from flext_core import (
     FlextModelsPydantic as mp,
     FlextUtilitiesBeartypeEngine as ub,
 )
+from flext_core._constants.project_metadata import (
+    FlextConstantsProjectMetadata as _kpm,
+)
+from flext_core._utilities.project_metadata import (
+    FlextUtilitiesProjectMetadata as _ump,
+)
 
 if TYPE_CHECKING:
     from flext_core import t
-
-
-def _pascal(slug: str) -> str:
-    return "".join(
-        part.capitalize() for part in slug.replace("-", "_").split("_") if part
-    )
 
 
 class FlextUtilitiesEnforcement:
@@ -142,8 +142,8 @@ class FlextUtilitiesEnforcement:
     def _project(target: type) -> tuple[str, str] | None:
         """Return (derived_prefix, inner_namespace) or None if unknowable.
 
-        * Explicit overrides in ``c.ENFORCEMENT_NAMESPACE_SPECIAL_PREFIXES``
-          win over PascalCase derivation (``flext_core`` → ``Flext``;
+        * Explicit overrides in ``c.Project.SPECIAL_NAME_OVERRIDES`` (SSOT)
+          win over PascalCase derivation (``flext-core`` → ``Flext``;
           ``flext`` → ``FlextRoot``).
         * When a class lives under a top-level package ``tests`` /
           ``examples`` / ``scripts``, its facade prefix is that package's
@@ -155,29 +155,29 @@ class FlextUtilitiesEnforcement:
         if not top:
             return None
         src = FlextUtilitiesEnforcement._discover_src_package(target)
-        overrides: dict[str, str] = dict(c.ENFORCEMENT_NAMESPACE_SPECIAL_PREFIXES)
 
         def resolve_project_prefix() -> tuple[str, str]:
             key = src if src is not None else top
-            if key in overrides:
+            override = _kpm.Project.SPECIAL_NAME_OVERRIDES.get(key.replace("_", "-"))
+            if override is not None:
                 head, _, tail = key.partition("_")
-                return overrides[key], _pascal(tail or head)
+                return override, _ump.Project.pascalize(tail or head)
             if src is None:
-                return _pascal(top), _pascal(top)
+                return _ump.Project.pascalize(top), _ump.Project.pascalize(top)
             if top == src:
                 head, _, tail = src.partition("_")
-                return _pascal(src), _pascal(tail or head)
+                return _ump.Project.pascalize(src), _ump.Project.pascalize(tail or head)
             # Auxiliary root (tests/examples/scripts) — return raw project
             # prefix only; the outer code prepends the auxiliary prefix.
             head, _, tail = src.partition("_")
-            return _pascal(src), _pascal(tail or head)
+            return _ump.Project.pascalize(src), _ump.Project.pascalize(tail or head)
 
         project_prefix, namespace = resolve_project_prefix()
         # Workspace-level auxiliary roots (tests / examples / scripts) live
         # under a top-level module of that name and wear a prefix composed
         # of that module's PascalCase plus the project prefix.
         if top in {"tests", "examples", "scripts"} and top != (src or ""):
-            return _pascal(top) + project_prefix, namespace
+            return _ump.Project.pascalize(top) + project_prefix, namespace
         return project_prefix, namespace
 
     # ------------------------------------------------------------------

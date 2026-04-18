@@ -150,12 +150,6 @@ class FlextConstantsEnforcement:
     ENFORCEMENT_NAMESPACE_MODE: Final[EnforcementMode] = EnforcementMode.WARN
     """Separate mode for namespace checks — see EnforcementMode."""
 
-    ENFORCEMENT_NAMESPACE_SPECIAL_PREFIXES: Final[tuple[tuple[str, str], ...]] = (
-        ("flext_core", "Flext"),
-        ("flext", "FlextRoot"),
-    )
-    """Package→prefix overrides. flext_core→Flext, flext→FlextRoot."""
-
     ENFORCEMENT_NAMESPACE_FACADE_ROOTS: Final[frozenset[str]] = frozenset({
         "FlextConstants",
         "FlextProtocols",

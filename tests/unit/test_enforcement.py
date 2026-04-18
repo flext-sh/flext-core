@@ -405,7 +405,7 @@ class TestClassPrefixScope:
 
 
 class TestProjectPrefixOverrides:
-    """``ENFORCEMENT_NAMESPACE_SPECIAL_PREFIXES`` honored (flext_core→Flext)."""
+    """``c.Project.SPECIAL_NAME_OVERRIDES`` honored (flext-core→Flext)."""
 
     def test_flext_core_override_returns_flext(self) -> None:
         """flext_core is the single src package that maps to ``Flext``."""

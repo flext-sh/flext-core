@@ -176,6 +176,7 @@ if _t.TYPE_CHECKING:
         TestProjectModel,
         TestToolFlextModel,
     )
+    from tests.unit.test_project_metadata_facade_access import TestFacadeProjectAccess
     from tests.unit.test_protocols_new import TestFlextProtocols
     from tests.unit.test_protocols_project_metadata import (
         TestClassStemDeriverProtocol,
@@ -453,6 +454,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestProjectModel",
                 "TestToolFlextModel",
             ),
+            ".unit.test_project_metadata_facade_access": ("TestFacadeProjectAccess",),
             ".unit.test_protocols_new": ("TestFlextProtocols",),
             ".unit.test_protocols_project_metadata": (
                 "TestClassStemDeriverProtocol",
@@ -634,6 +636,7 @@ __all__: list[str] = [
     "TestExamplesExecution",
     "TestExceptions",
     "TestFacadeAccessibility",
+    "TestFacadeProjectAccess",
     "TestFalsePositiveSkips",
     "TestFieldRules",
     "TestFlextConstants",

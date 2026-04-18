@@ -139,6 +139,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestProjectModel",
                 "TestToolFlextModel",
             ),
+            ".test_project_metadata_facade_access": ("TestFacadeProjectAccess",),
             ".test_protocols_new": ("TestFlextProtocols",),
             ".test_protocols_project_metadata": (
                 "TestClassStemDeriverProtocol",

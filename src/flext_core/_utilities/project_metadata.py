@@ -52,6 +52,18 @@ class FlextUtilitiesProjectMetadata:
             return project_name.replace("-", "_")
 
         @staticmethod
+        def pascalize(slug: str) -> str:
+            """Simple kebab/snake → PascalCase (no project-name override lookup).
+
+            Use this when the input is a Python package segment or an
+            arbitrary identifier — NOT a full kebab-case project name.
+            For project names use ``derive_class_stem`` which additionally
+            applies ``SPECIAL_NAME_OVERRIDES`` (flext → FlextRoot etc.).
+            """
+            parts = slug.replace("-", "_").split("_")
+            return "".join(part[:1].upper() + part[1:] for part in parts if part)
+
+        @staticmethod
         def derive_class_stem(project_name: str) -> str:
             """Return the canonical PascalCase class stem for a project name."""
             if not project_name:
@@ -60,8 +72,7 @@ class FlextUtilitiesProjectMetadata:
             override = _k.Project.SPECIAL_NAME_OVERRIDES.get(project_name)
             if override is not None:
                 return override
-            parts = project_name.replace("-", "_").split("_")
-            return "".join(part[:1].upper() + part[1:] for part in parts if part)
+            return FlextUtilitiesProjectMetadata.Project.pascalize(project_name)
 
         @staticmethod
         def derive_tier_facade_name(project_name: str, tier: str) -> str:
