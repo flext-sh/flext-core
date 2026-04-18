@@ -20,8 +20,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
+import re
 from collections.abc import Mapping
 from enum import EnumType
+from pathlib import Path
 from types import UnionType
 from typing import TYPE_CHECKING, Annotated, Any, Union, get_args, get_origin
 
@@ -508,7 +510,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def check_no_concrete_namespace_import(
-        _target: type,
+        target: type,
     ) -> Mapping[str, str] | None:
         """R1, R3: Reject bare Flext* class imports in canonical files.
 
@@ -517,72 +519,200 @@ class FlextUtilitiesBeartypeEngine:
         ``FlextXxxYyy`` classes. Only permitted exception: Pattern-B utilities
         must import FlextPeerXxx concrete class for second parent.
         """
-        # Runtime placeholder — actual AST check lives in enforcement.py
-        return _NO_VIOLATION
+        try:
+            src_file = inspect.getfile(target)
+            filename = Path(src_file).name
+            if filename not in c.ENFORCEMENT_CANONICAL_FILES:
+                return _NO_VIOLATION
+
+            source = Path(src_file).read_text(encoding="utf-8")
+
+            flext_imports = re.findall(r"from\s+(flext_\w+)\s+import\s+([^#\n]+)", source)
+            for _module, imports_str in flext_imports:
+                imports = [i.strip() for i in imports_str.split(",")]
+                for imp in imports:
+                    if imp.startswith("Flext") and " as " not in imp:
+                        return {"file": filename, "import": imp}
+
+            return _NO_VIOLATION
+        except (TypeError, OSError, AttributeError):
+            return _NO_VIOLATION
 
     @staticmethod
     def check_no_pydantic_consumer_import(
-        _target: type,
+        target: type,
     ) -> Mapping[str, str] | None:
         """R2: Reject bare pydantic imports in consumers.
 
         Only flext-core._* modules and flext-*._* base pyramids may import
         from pydantic. All consumer code must use u.*, m.* facades from parent.
         """
-        # Runtime placeholder — actual AST check lives in enforcement.py
-        return _NO_VIOLATION
+        try:
+            module_name = getattr(target, "__module__", "") or ""
+            if module_name.startswith("flext_core._"):
+                return _NO_VIOLATION
+            if any(module_name.startswith(f"{pkg}._") for pkg in ["flext_cli", "flext_web", "flext_meltano", "flext_ldap", "flext_api", "flext_auth", "flext_infra", "flext_tests", "flext_observability"]):
+                return _NO_VIOLATION
+
+            src_file = inspect.getfile(target)
+            source = Path(src_file).read_text(encoding="utf-8")
+
+            pydantic_imports = re.findall(
+                r"from\s+pydantic\s+import\s+([^#\n]+)",
+                source,
+            )
+            forbidden = {
+                "BaseModel",
+                "Field",
+                "ConfigDict",
+                "TypeAdapter",
+                "field_validator",
+                "model_validator",
+                "computed_field",
+                "PrivateAttr",
+                "AfterValidator",
+                "BeforeValidator",
+            }
+            for import_str in pydantic_imports:
+                imports = [i.strip() for i in import_str.split(",")]
+                for imp in imports:
+                    name = imp.split(" as ")[0].strip()
+                    if name in forbidden:
+                        return {"import": name, "package": module_name.split(".")[0]}
+
+            return _NO_VIOLATION
+        except (TypeError, OSError, AttributeError):
+            return _NO_VIOLATION
 
     @staticmethod
     def check_facade_base_is_alias_or_peer(
-        _target: type,
+        target: type,
     ) -> Mapping[str, str] | None:
         """R4, R5: Facade class bases must be alias or peer concrete class.
 
         Pattern A: class FlextXxxTypes(t):
         Pattern B: class FlextQualityTypes(t, FlextWebTypes):
         """
-        # Runtime placeholder — actual check lives in enforcement.py
+        if not target.__bases__:
+            return _NO_VIOLATION
+
+        first_base = target.__bases__[0]
+        first_name = getattr(first_base, "__name__", "")
+
+        if first_name in {"t", "m", "p", "c", "u", "r", "s", "x", "d", "e", "h"}:
+            return _NO_VIOLATION
+
+        if first_name.startswith("Flext"):
+            return {"base": first_name, "expected": "alias or FlextPeerXxx"}
+
         return _NO_VIOLATION
 
     @staticmethod
     def check_alias_first_multi_parent(
-        _target: type,
+        target: type,
     ) -> Mapping[str, str] | None:
         """R5: Multi-parent facades must have alias as first base.
 
         MRO C3 linearization requires alias (FlextCliTypes) before peer
         (FlextWebTypes) to avoid ambiguity resolution failures.
         """
-        # Runtime placeholder — actual check lives in enforcement.py
+        min_multi_parent = 2
+        if len(target.__bases__) < min_multi_parent:
+            return _NO_VIOLATION
+
+        first_base = target.__bases__[0]
+        first_name = getattr(first_base, "__name__", "")
+
+        aliases = {"t", "m", "p", "c", "u", "r", "s", "x", "d", "e", "h"}
+        if first_name not in aliases:
+            return {"bases": str(len(target.__bases__)), "first": first_name}
+
         return _NO_VIOLATION
 
     @staticmethod
     def check_alias_rebound_at_module_end(
-        _target: type,
+        target: type,
     ) -> Mapping[str, str] | None:
         """R6: Module must rebind the canonical alias at end-of-file.
 
         After class definition, module must end with: t = FlextXxxTypes
         to establish the public contract.
         """
-        # Runtime placeholder — actual check lives in enforcement.py
-        return _NO_VIOLATION
+        try:
+            src_file = inspect.getfile(target)
+            filename = Path(src_file).name
+            if filename not in c.ENFORCEMENT_CANONICAL_FILES:
+                return _NO_VIOLATION
+
+            source = Path(src_file).read_text(encoding="utf-8")
+
+            target_name = target.__name__
+            alias_char = None
+            if "Types" in target_name:
+                alias_char = "t"
+            elif "Models" in target_name:
+                alias_char = "m"
+            elif "Protocols" in target_name:
+                alias_char = "p"
+            elif "Constants" in target_name:
+                alias_char = "c"
+            elif "Utilities" in target_name:
+                alias_char = "u"
+
+            if not alias_char:
+                return _NO_VIOLATION
+
+            lines = source.strip().split("\n")
+            last_assign = None
+            for line in reversed(lines):
+                if "=" in line:
+                    last_assign = line.strip()
+                    break
+
+            if not last_assign:
+                return {"alias": alias_char, "class": target_name}
+
+            if f"{alias_char} = {target_name}" not in last_assign:
+                return {"alias": alias_char, "class": target_name}
+
+            return _NO_VIOLATION
+        except (TypeError, OSError, AttributeError):
+            return _NO_VIOLATION
 
     @staticmethod
     def check_no_redundant_inner_namespace(
-        _target: type,
+        target: type,
     ) -> Mapping[str, str] | None:
         """R8: No redundant inner namespace re-inheritance.
 
         If parent already exposes a namespace (e.g., t.Cli from FlextCliTypes),
         the child must NOT redefine it locally with empty body.
         """
-        # Runtime placeholder — actual check lives in enforcement.py
+        if "." not in target.__qualname__:
+            return _NO_VIOLATION
+
+        source_code = None
+        try:
+            src_file = inspect.getfile(target)
+            source_code = Path(src_file).read_text(encoding="utf-8")
+        except (TypeError, OSError, AttributeError):
+            return _NO_VIOLATION
+
+        if not source_code:
+            return _NO_VIOLATION
+
+        outer_name = target.__qualname__.split(".")[0]
+        inner_name = target.__name__
+        pattern = rf"class\s+{inner_name}\s*\([^)]*{outer_name}[^)]*\):\s*pass\s*$"
+
+        if re.search(pattern, source_code, re.MULTILINE):
+            return {"class": target.__qualname__}
+
         return _NO_VIOLATION
 
     @staticmethod
     def check_no_self_root_import_in_core_files(
-        _target: type,
+        target: type,
     ) -> Mapping[str, str] | None:
         """R7: Canonical files must not import aliases from own package.
 
@@ -590,24 +720,86 @@ class FlextUtilitiesBeartypeEngine:
         import aliases from the PARENT package, never from their own package.
         This prevents circular initialization during lazy loading.
         """
-        # Runtime placeholder — actual check lives in enforcement.py
-        return _NO_VIOLATION
+        try:
+            src_file = inspect.getfile(target)
+            filename = Path(src_file).name
+            if filename not in c.ENFORCEMENT_CANONICAL_FILES:
+                return _NO_VIOLATION
+
+            module_name = getattr(target, "__module__", "") or ""
+            package = module_name.split(".")[0]
+
+            source = Path(src_file).read_text(encoding="utf-8")
+
+            from_imports = re.findall(
+                rf"from\s+{re.escape(package)}\s+import\s+([cmptur])\b",
+                source,
+            )
+
+            if from_imports:
+                return {"package": package, "alias": from_imports[0]}
+
+            return _NO_VIOLATION
+        except (TypeError, OSError, AttributeError):
+            return _NO_VIOLATION
 
     @staticmethod
     def check_sibling_models_type_checking(
-        _target: type,
+        target: type,
     ) -> Mapping[str, str] | None:
         """R9: Sibling _models/* imports used only in annotations go under TYPE_CHECKING.
 
         If a class from _models/sibling.py is referenced only in an Annotated[...],
         that import must be guarded by `if TYPE_CHECKING:`.
         """
-        # Runtime placeholder — actual check lives in enforcement.py
-        return _NO_VIOLATION
+        try:
+            src_file = inspect.getfile(target)
+            if "_models" not in src_file:
+                return _NO_VIOLATION
+
+            source = Path(src_file).read_text(encoding="utf-8")
+
+            if "if TYPE_CHECKING:" not in source:
+                return _NO_VIOLATION
+
+            non_type_checking_section = source.split("if TYPE_CHECKING:")[0]
+            type_checking_section = source.split("if TYPE_CHECKING:")[1] if len(
+                source.split("if TYPE_CHECKING:")
+            ) > 1 else ""
+
+            non_tc_imports = re.findall(
+                r"from\s+\.(\w+)\s+import\s+([^#\n]+)",
+                non_type_checking_section,
+            )
+
+            for module, imports_str in non_tc_imports:
+                imports = [i.strip() for i in imports_str.split(",")]
+                for imp in imports:
+                    name = imp.split(" as ")[0].strip()
+                    if not name:
+                        continue
+
+                    used_in_annotation = re.search(
+                        rf"\bAnnotated\s*\[\s*[^]]*\b{re.escape(name)}\b",
+                        source,
+                    )
+                    if not used_in_annotation:
+                        continue
+
+                    in_type_checking = re.search(
+                        rf"from\s+\.{re.escape(module)}\s+import.*\b{re.escape(name)}\b",
+                        type_checking_section,
+                    )
+                    if not in_type_checking:
+                        return {"import": name, "module": module}
+
+            return _NO_VIOLATION
+        except (TypeError, OSError, AttributeError, IndexError):
+            return _NO_VIOLATION
 
     @staticmethod
     def check_utilities_explicit_class_when_self_ref(
-        _target: type,
+        target: type,
     ) -> Mapping[str, str] | None:
         """R10: utilities.py multi-parent must use explicit class base, not alias.
 
@@ -615,8 +807,36 @@ class FlextUtilitiesBeartypeEngine:
         local class, pyrefly requires the first base to be the explicit parent
         class name, not the alias, to properly resolve the MRO.
         """
-        # Runtime placeholder — actual check lives in enforcement.py
-        return _NO_VIOLATION
+        try:
+            src_file = inspect.getfile(target)
+            if not src_file.endswith("utilities.py"):
+                return _NO_VIOLATION
+
+            module_name = getattr(target, "__module__", "") or ""
+            package = module_name.split(".")[0]
+
+            if package in c.ENFORCEMENT_PATTERN_B_UTILITIES_WHITELIST:
+                return _NO_VIOLATION
+
+            min_multi_parent = 2
+            if len(target.__bases__) < min_multi_parent:
+                return _NO_VIOLATION
+
+            first_base = target.__bases__[0]
+            first_name = getattr(first_base, "__name__", "")
+
+            if first_name == "u":
+                source = Path(src_file).read_text(encoding="utf-8")
+
+                if re.search(r"\bu\.(\w+)\s*\(", source):
+                    return {
+                        "class": target.__name__,
+                        "first_base": "u",
+                    }
+
+            return _NO_VIOLATION
+        except (TypeError, OSError, AttributeError):
+            return _NO_VIOLATION
 
 
 __all__: list[str] = ["FlextUtilitiesBeartypeEngine"]

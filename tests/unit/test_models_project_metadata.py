@@ -67,11 +67,7 @@ class TestProjectMetadata:
             root=Path("/tmp/flext-ldif"),
         )
         with pytest.raises(ValidationError):
-            # Frozen Pydantic v2 instances raise on any attribute set;
-            # use setattr with a dynamic attribute name to exercise the
-            # runtime check without triggering static-analysis noise.
-            attr = "name"
-            setattr(meta, attr, "other")
+            setattr(meta, "name", "other")  # Frozen model rejects mutation
 
     def test_empty_name_rejected(self) -> None:
         with pytest.raises(ValidationError):
