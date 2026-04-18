@@ -13,12 +13,10 @@ from typing import TYPE_CHECKING, Protocol, Self, override, runtime_checkable
 from flext_core import (
     FlextProtocolsBase,
     FlextProtocolsResult,
-    FlextTypingBase,
-    FlextTypingContainers,
 )
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypesServices
+    from flext_core import t
 
 
 class FlextProtocolsLogging:
@@ -39,12 +37,12 @@ class FlextProtocolsLogging:
             ...
 
         @override
-        def bind(self, **new_values: FlextTypesServices.RuntimeData) -> Self:
+        def bind(self, **new_values: t.RuntimeData) -> Self:
             """Bind context and return a logger preserving the public protocol."""
             ...
 
         @override
-        def new(self, **new_values: FlextTypesServices.RuntimeData) -> Self:
+        def new(self, **new_values: t.RuntimeData) -> Self:
             """Replace bound context and return a logger preserving the protocol."""
             ...
 
@@ -58,53 +56,53 @@ class FlextProtocolsLogging:
             *,
             exception: Exception | None,
             exc_info: bool,
-            context: Mapping[str, FlextTypesServices.RuntimeData | Exception],
-        ) -> FlextTypingContainers.ConfigMap:
+            context: Mapping[str, t.RuntimeData | Exception],
+        ) -> t.ConfigMap:
             """Build normalized structured exception context."""
             ...
 
         def critical(
             self,
             msg: str,
-            *args: FlextTypesServices.LogValue,
-            **kw: FlextTypesServices.LogValue,
-        ) -> FlextTypesServices.LogResult:
+            *args: t.LogValue,
+            **kw: t.LogValue,
+        ) -> t.LogResult:
             """Log critical message."""
             ...
 
         def debug(
             self,
             msg: str,
-            *args: FlextTypesServices.LogValue,
-            **kw: FlextTypesServices.LogValue,
-        ) -> FlextTypesServices.LogResult:
+            *args: t.LogValue,
+            **kw: t.LogValue,
+        ) -> t.LogResult:
             """Log debug message."""
             ...
 
         def error(
             self,
             msg: str,
-            *args: FlextTypesServices.LogValue,
-            **kw: FlextTypesServices.LogValue,
-        ) -> FlextTypesServices.LogResult:
+            *args: t.LogValue,
+            **kw: t.LogValue,
+        ) -> t.LogResult:
             """Log error message."""
             ...
 
         def exception(
             self,
             msg: str,
-            *args: FlextTypesServices.LogValue,
-            **kw: FlextTypesServices.LogValue,
-        ) -> FlextTypesServices.LogResult:
+            *args: t.LogValue,
+            **kw: t.LogValue,
+        ) -> t.LogResult:
             """Log exception with traceback."""
             ...
 
         def info(
             self,
             msg: str,
-            *args: FlextTypesServices.LogValue,
-            **kw: FlextTypesServices.LogValue,
-        ) -> FlextTypesServices.LogResult:
+            *args: t.LogValue,
+            **kw: t.LogValue,
+        ) -> t.LogResult:
             """Log info message."""
             ...
 
@@ -112,27 +110,27 @@ class FlextProtocolsLogging:
             self,
             level: str,
             message: str,
-            *args: FlextTypesServices.LogValue,
-            **kw: FlextTypesServices.LogValue,
-        ) -> FlextTypesServices.LogResult:
+            *args: t.LogValue,
+            **kw: t.LogValue,
+        ) -> t.LogResult:
             """Log a message at an arbitrary level."""
             ...
 
         def trace(
             self,
             message: str,
-            *args: FlextTypesServices.LogValue,
-            **kwargs: FlextTypesServices.RuntimeData,
-        ) -> FlextTypesServices.LogResult:
+            *args: t.LogValue,
+            **kwargs: t.RuntimeData,
+        ) -> t.LogResult:
             """Log a trace/debug-level diagnostic message."""
             ...
 
         def warning(
             self,
             msg: str,
-            *args: FlextTypesServices.LogValue,
-            **kw: FlextTypesServices.LogValue,
-        ) -> FlextTypesServices.LogResult:
+            *args: t.LogValue,
+            **kw: t.LogValue,
+        ) -> t.LogResult:
             """Log warning message."""
             ...
 
@@ -171,9 +169,7 @@ class FlextProtocolsLogging:
             self,
         ) -> Mapping[
             str,
-            FlextTypingBase.Scalar
-            | Mapping[str, FlextTypingBase.Scalar | Sequence[FlextTypingBase.Scalar]]
-            | Sequence[FlextTypingBase.Scalar],
+            t.Scalar | Mapping[str, t.Scalar | Sequence[t.Scalar]] | Sequence[t.Scalar],
         ]:
             """Metadata attributes."""
             ...
@@ -198,18 +194,16 @@ class FlextProtocolsLogging:
             cls,
             obj: Mapping[
                 str,
-                FlextTypingBase.Scalar
-                | Mapping[
-                    str, FlextTypingBase.Scalar | Sequence[FlextTypingBase.Scalar]
-                ]
-                | Sequence[FlextTypingBase.Scalar]
+                t.Scalar
+                | Mapping[str, t.Scalar | Sequence[t.Scalar]]
+                | Sequence[t.Scalar]
                 | None,
             ]
             | Self,
             *,
             strict: bool | None = None,
             from_attributes: bool | None = None,
-            context: Mapping[str, FlextTypingBase.Scalar] | None = None,
+            context: Mapping[str, t.Scalar] | None = None,
         ) -> Self:
             """Validate and create metadata from input data."""
             ...
@@ -244,7 +238,7 @@ class FlextProtocolsLogging:
 
         """
 
-        def __call__(self, value: FlextTypingBase.Container) -> bool:
+        def __call__(self, value: t.Container) -> bool:
             """Validate value, return True if valid."""
             ...
 
@@ -271,7 +265,7 @@ class FlextProtocolsLogging:
         """Entry protocol (read-only)."""
 
         @property
-        def attributes(self) -> Mapping[str, FlextTypingBase.StrSequence]:
+        def attributes(self) -> Mapping[str, t.StrSequence]:
             """Entry attributes as immutable mapping."""
             ...
 
@@ -283,7 +277,7 @@ class FlextProtocolsLogging:
         def add_attribute(
             self,
             name: str,
-            values: FlextTypingBase.StrSequence,
+            values: t.StrSequence,
         ) -> Self:
             """Add attribute values, returning self for chaining."""
             ...
@@ -295,12 +289,12 @@ class FlextProtocolsLogging:
         def update_attribute(
             self,
             name: str,
-            values: FlextTypingBase.StrSequence,
+            values: t.StrSequence,
         ) -> Self:
             """Update attribute values, returning self for chaining."""
             ...
 
-        def to_dict(self) -> FlextTypingBase.ScalarMapping:
+        def to_dict(self) -> t.ScalarMapping:
             """Convert to dictionary representation."""
             ...
 
@@ -321,11 +315,11 @@ class FlextProtocolsLogging:
         def flush(self) -> None: ...
 
     type AccessibleData = (
-        FlextTypingBase.RecursiveContainer
+        t.RecursiveContainer
         | FlextProtocolsBase.Model
         | Mapping[
             str,
-            FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model,
+            t.RecursiveContainer | FlextProtocolsBase.Model,
         ]
         | FlextProtocolsResult.HasModelDump
         | FlextProtocolsLogging.ValidatorSpec

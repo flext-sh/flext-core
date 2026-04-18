@@ -14,9 +14,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from types import TracebackType
-from typing import Protocol, Self, overload, override, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
-from flext_core import FlextModelsPydantic, FlextTypingBase, FlextTypingContainers
+from flext_core import FlextModelsPydantic as mp
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class FlextProtocolsResult:
@@ -41,7 +44,7 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def error_data(self) -> FlextTypingContainers.ConfigMap | None:
+        def error_data(self) -> t.ConfigMap | None:
             """Structured error metadata when available."""
             ...
 
@@ -109,7 +112,7 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def error_data(self) -> FlextTypingContainers.ConfigMap | None:
+        def error_data(self) -> t.ConfigMap | None:
             """Error metadata with structured error context (optional)."""
             ...
 
@@ -291,7 +294,7 @@ class FlextProtocolsResult:
     class ResultConvertible[T](Protocol):
         """Conversion helpers from raw result payloads to validated types."""
 
-        def to_model[U: FlextModelsPydantic.BaseModel](
+        def to_model[U: mp.BaseModel](
             self,
             model: type[U],
         ) -> FlextProtocolsResult.Result[U]:
@@ -321,7 +324,7 @@ class FlextProtocolsResult:
 
         @property
         @abstractmethod
-        def error_data(self) -> FlextTypingContainers.ConfigMap | None: ...
+        def error_data(self) -> t.ConfigMap | None: ...
 
         @property
         @abstractmethod
@@ -441,7 +444,7 @@ class FlextProtocolsResult:
         ) -> FlextProtocolsResult.Result[T | U]: ...
 
         @abstractmethod
-        def to_model[U: FlextModelsPydantic.BaseModel](
+        def to_model[U: mp.BaseModel](
             self,
             model: type[U],
         ) -> FlextProtocolsResult.Result[U]: ...
@@ -465,7 +468,7 @@ class FlextProtocolsResult:
         Used for Pydantic model compatibility and serialization.
         """
 
-        def model_dump(self) -> FlextTypingBase.ScalarMapping:
+        def model_dump(self) -> t.ScalarMapping:
             """Dump model data to dictionary."""
             ...
 

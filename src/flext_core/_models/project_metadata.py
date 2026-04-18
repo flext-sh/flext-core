@@ -21,7 +21,7 @@ from typing import Annotated, Any, ClassVar
 from pydantic import Field, model_validator
 
 from flext_core import (
-    FlextConstantsProjectMetadata as _k,
+    FlextConstantsProjectMetadata as t,
     FlextModelsPydantic,
 )
 
@@ -91,7 +91,7 @@ class FlextModelsProjectMetadata:
         @property
         def class_stem(self) -> str:
             """Return the canonical PascalCase class stem (SSOT-derived)."""
-            override = _k.SPECIAL_NAME_OVERRIDES.get(self.name)
+            override = t.SPECIAL_NAME_OVERRIDES.get(self.name)
             if override is not None:
                 return override
             parts = self.name.replace("-", "_").split("_")
@@ -109,7 +109,7 @@ class FlextModelsProjectMetadata:
 
         def tier_facade_name(self, tier: str) -> str:
             """Build the tier-specific facade class name."""
-            prefix = _k.TIER_FACADE_PREFIX.get(tier)
+            prefix = t.TIER_FACADE_PREFIX.get(tier)
             if prefix is None:
                 msg = f"unknown tier: {tier!r}"
                 raise ValueError(msg)
@@ -142,10 +142,10 @@ class FlextModelsProjectMetadata:
         scan_dirs: Annotated[
             tuple[str, ...],
             Field(
-                default=_k.SCAN_DIRECTORIES,
+                default=t.SCAN_DIRECTORIES,
                 description="Top-level directories to scan for facades.",
             ),
-        ] = _k.SCAN_DIRECTORIES
+        ] = t.SCAN_DIRECTORIES
         include_dynamic_dirs: Annotated[
             bool,
             Field(
@@ -168,18 +168,18 @@ class FlextModelsProjectMetadata:
             if not isinstance(data, dict):
                 return data
             sources = dict(data.get("alias_parent_sources") or {})
-            unknown = set(sources) - set(_k.RUNTIME_ALIAS_NAMES)
+            unknown = set(sources) - set(t.RUNTIME_ALIAS_NAMES)
             if unknown:
                 msg = f"unknown alias(es): {sorted(unknown)}"
                 raise ValueError(msg)
-            for alias, canonical in _k.UNIVERSAL_ALIAS_PARENT_SOURCES.items():
+            for alias, canonical in t.UNIVERSAL_ALIAS_PARENT_SOURCES.items():
                 if alias in sources and sources[alias] != canonical:
                     msg = (
                         f"cannot override universal alias {alias!r}: "
                         f"must remain {canonical!r}"
                     )
                     raise ValueError(msg)
-            merged = {**_k.UNIVERSAL_ALIAS_PARENT_SOURCES, **sources}
+            merged = {**t.UNIVERSAL_ALIAS_PARENT_SOURCES, **sources}
             data["alias_parent_sources"] = dict(merged)
             return data
 
@@ -223,10 +223,10 @@ class FlextModelsProjectMetadata:
         scan_dirs: Annotated[
             tuple[str, ...],
             Field(
-                default=_k.SCAN_DIRECTORIES,
+                default=t.SCAN_DIRECTORIES,
                 description="Top-level directories to scan.",
             ),
-        ] = _k.SCAN_DIRECTORIES
+        ] = t.SCAN_DIRECTORIES
         include_dynamic_dirs: Annotated[
             bool,
             Field(

@@ -17,11 +17,9 @@ from flext_core import FlextProtocolsBase, FlextProtocolsResult
 
 if TYPE_CHECKING:
     from flext_core import (
-        FlextConstantsCqrs,
-        FlextModelsHandler,
-        FlextTypesServices,
-        FlextTypingBase,
-        FlextTypingContainers,
+        c,
+        m,
+        t,
     )
 
 
@@ -52,7 +50,7 @@ class FlextProtocolsHandler:
             ...
 
         @property
-        def mode(self) -> FlextConstantsCqrs.HandlerType:
+        def mode(self) -> c.HandlerType:
             """Handler mode (command, query, event, operation, saga)."""
             ...
 
@@ -106,24 +104,21 @@ class FlextProtocolsHandler:
 
         def push_context(
             self,
-            ctx: (
-                FlextModelsHandler.ExecutionContext
-                | FlextTypingBase.RecursiveContainerMapping
-            ),
+            ctx: (m.ExecutionContext | t.RecursiveContainerMapping),
         ) -> FlextProtocolsResult.Result[bool]:
             """Push execution context onto the local handler stack."""
             ...
 
         def pop_context(
             self,
-        ) -> FlextProtocolsResult.Result[FlextTypingContainers.ConfigMap]:
+        ) -> FlextProtocolsResult.Result[t.ConfigMap]:
             """Pop execution context from the local handler stack."""
             ...
 
         def record_metric(
             self,
             name: str,
-            value: FlextTypesServices.MetadataAttributeValue,
+            value: t.MetadataAttributeValue,
         ) -> FlextProtocolsResult.Result[bool]:
             """Record a metric value in the current handler state."""
             ...
@@ -141,9 +136,7 @@ class FlextProtocolsHandler:
             message: FlextProtocolsBase.Routable,
             operation: str = ...,
         ) -> (
-            FlextProtocolsResult.ResultLike[FlextTypesServices.RuntimeAtomic]
-            | FlextTypesServices.RuntimeAtomic
-            | None
+            FlextProtocolsResult.ResultLike[t.RuntimeAtomic] | t.RuntimeAtomic | None
         ): ...
 
     @runtime_checkable
@@ -154,9 +147,7 @@ class FlextProtocolsHandler:
             self,
             message: FlextProtocolsBase.Routable,
         ) -> (
-            FlextProtocolsResult.ResultLike[FlextTypesServices.RuntimeAtomic]
-            | FlextTypesServices.RuntimeAtomic
-            | None
+            FlextProtocolsResult.ResultLike[t.RuntimeAtomic] | t.RuntimeAtomic | None
         ): ...
 
     @runtime_checkable
@@ -167,9 +158,7 @@ class FlextProtocolsHandler:
             self,
             message: FlextProtocolsBase.Routable,
         ) -> (
-            FlextProtocolsResult.ResultLike[FlextTypesServices.RuntimeAtomic]
-            | FlextTypesServices.RuntimeAtomic
-            | None
+            FlextProtocolsResult.ResultLike[t.RuntimeAtomic] | t.RuntimeAtomic | None
         ): ...
 
     @runtime_checkable
@@ -192,7 +181,7 @@ class FlextProtocolsHandler:
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]:
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]:
             """Route a CQRS message to a registered handler."""
             ...
 
@@ -205,7 +194,7 @@ class FlextProtocolsHandler:
 
         def register_handler(
             self,
-            handler: FlextTypesServices.HandlerProtocolVariant,
+            handler: t.HandlerProtocolVariant,
             *,
             is_event: bool = False,
         ) -> FlextProtocolsResult.Result[bool]:
@@ -226,13 +215,13 @@ class FlextProtocolsHandler:
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]:
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]:
             """Dispatch a command to a registered handler."""
             ...
 
         def register_handler(
             self,
-            handler: FlextTypesServices.HandlerProtocolVariant,
+            handler: t.HandlerProtocolVariant,
             *,
             is_event: bool = False,
         ) -> FlextProtocolsResult.Result[bool]:

@@ -11,7 +11,7 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
-    from flext_core import FlextProtocolsResult, FlextTypesServices
+    from flext_core import FlextProtocolsResult, t
 
 
 class FlextProtocolsBase:
@@ -35,9 +35,9 @@ class FlextProtocolsBase:
             self,
             *,
             mode: str = "python",
-            include: FlextTypesServices.IncEx | None = None,
-            exclude: FlextTypesServices.IncEx | None = None,
-            context: FlextTypesServices.MetadataInput = None,
+            include: t.IncEx | None = None,
+            exclude: t.IncEx | None = None,
+            context: t.MetadataInput = None,
             by_alias: bool | None = None,
             exclude_unset: bool = False,
             exclude_defaults: bool = False,
@@ -47,8 +47,8 @@ class FlextProtocolsBase:
             warnings: bool | str = True,
             fallback: (
                 Callable[
-                    [FlextTypesServices.RuntimeAtomic],
-                    FlextTypesServices.RuntimeAtomic,
+                    [t.RuntimeAtomic],
+                    t.RuntimeAtomic,
                 ]
                 | None
             ) = None,
@@ -60,12 +60,12 @@ class FlextProtocolsBase:
         @classmethod
         def model_validate(
             cls: type[Self],
-            obj: FlextTypesServices.ModelInput,
+            obj: t.ModelInput,
             *,
             strict: bool | None = None,
             extra: str | None = None,
             from_attributes: bool | None = None,
-            context: FlextTypesServices.MetadataInput = None,
+            context: t.MetadataInput = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> Self:
@@ -90,12 +90,12 @@ class FlextProtocolsBase:
         @classmethod
         def model_validate(
             cls: type[TModel],
-            obj: FlextTypesServices.ModelInput,
+            obj: t.ModelInput,
             *,
             strict: bool | None = None,
             extra: str | None = None,
             from_attributes: bool | None = None,
-            context: FlextTypesServices.MetadataInput = None,
+            context: t.MetadataInput = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> TModel:
@@ -127,9 +127,9 @@ class FlextProtocolsBase:
 
         def execute(
             self,
-        ) -> FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]: ...
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]: ...
 
-        def service_info(self) -> FlextTypesServices.FlatContainerMapping: ...
+        def service_info(self) -> t.FlatContainerMapping: ...
 
     @runtime_checkable
     class ConfigObject(Protocol):
@@ -138,8 +138,8 @@ class FlextProtocolsBase:
         def get(
             self,
             key: str,
-            default: FlextTypesServices.RuntimeAtomic | None = None,
-        ) -> FlextTypesServices.RuntimeAtomic | None:
+            default: t.RuntimeAtomic | None = None,
+        ) -> t.RuntimeAtomic | None:
             """Fetch a configuration value by key."""
             ...
 
@@ -147,7 +147,7 @@ class FlextProtocolsBase:
             """Return known configuration keys."""
             ...
 
-        def items(self) -> Iterable[tuple[str, FlextTypesServices.RuntimeAtomic]]:
+        def items(self) -> Iterable[tuple[str, t.RuntimeAtomic]]:
             """Return key/value entries for configuration payloads."""
             ...
 

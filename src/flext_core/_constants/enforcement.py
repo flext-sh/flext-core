@@ -278,6 +278,13 @@ class FlextConstantsEnforcement:
             "mutable default {kind}() is FORBIDDEN",
             "Use m.Field(default_factory={kind}).",
         ),
+        "no_raw_collections_field_default": (
+            EnforcementCategory.FIELD,
+            EnforcementLayer.MODEL,
+            EnforcementSeverity.HARD_RULES,
+            "Field(default_factory={kind}) MUST use immutable equivalent",
+            "Use default_factory=tuple (not list), MappingProxyType (not dict), frozenset (not set).",
+        ),
         "no_str_none_empty": (
             EnforcementCategory.FIELD,
             EnforcementLayer.MODEL,

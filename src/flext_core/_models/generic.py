@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 from flext_core import (
     FlextModelsBase as m,
@@ -122,7 +122,13 @@ class FlextGenericModels:
         """Conversion progress tracking with error reporting.
 
         Used by: flext-ldif conversion, data transformations, ETL.
+
+        Enforcement exemption: progress tracker with intentionally mutable
+        ``converted``/``errors``/``warnings``/``skipped`` collectors — items
+        are appended as conversion proceeds.
         """
+
+        _flext_enforcement_exempt: ClassVar[bool] = True
 
         converted: Annotated[
             MutableSequence[t.ValueOrModel],

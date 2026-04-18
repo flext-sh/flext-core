@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Annotated, Self
 
 from flext_core import (
@@ -75,7 +76,7 @@ class FlextModelsContextMetadata:
             up.Field(
                 description="Custom metadata attributes for caller-specific tracing and context.",
             ),
-        ] = up.Field(default_factory=dict)
+        ] = up.Field(default_factory=lambda: MappingProxyType({}))
 
         @up.model_validator(mode="after")
         def validate_context_protocol(self) -> Self:
@@ -107,13 +108,13 @@ class FlextModelsContextMetadata:
             up.Field(
                 description="Domain payload values scoped to the current business context.",
             ),
-        ] = up.Field(default_factory=dict)
+        ] = up.Field(default_factory=lambda: MappingProxyType({}))
         domain_metadata: Annotated[
             t.RecursiveContainerMapping,
             up.Field(
                 description="Domain metadata attributes describing origin and processing state.",
             ),
-        ] = up.Field(default_factory=dict)
+        ] = up.Field(default_factory=lambda: MappingProxyType({}))
 
 
 __all__: list[str] = ["FlextModelsContextMetadata"]

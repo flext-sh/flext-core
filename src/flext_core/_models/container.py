@@ -85,7 +85,7 @@ class FlextModelsContainer:
             up.Field(
                 description="Service tags for categorization",
             ),
-        ] = up.Field(default_factory=list)
+        ] = up.Field(default_factory=tuple)
 
         @up.field_validator("service", mode="before")
         @classmethod

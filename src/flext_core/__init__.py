@@ -261,7 +261,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.project_metadata": ("FlextUtilitiesProjectMetadata",),
             "._utilities.pydantic": ("FlextUtilitiesPydantic",),
             "._utilities.reliability": ("FlextUtilitiesReliability",),
-            "._utilities.result_helpers": ("FlextUtilitiesResultHelpers",),
             "._utilities.settings": ("FlextUtilitiesSettings",),
             "._utilities.text": ("FlextUtilitiesText",),
             ".constants": (

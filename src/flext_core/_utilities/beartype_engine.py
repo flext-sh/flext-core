@@ -205,6 +205,24 @@ class FlextUtilitiesBeartypeEngine:
         return {"kind": kind}
 
     @staticmethod
+    def check_no_raw_collections_field_default(
+        info: FieldInfo,
+    ) -> Mapping[str, str] | None:
+        """Reject Field(default_factory=list/dict/set).
+
+        When a field uses ``default_factory`` pointing to a mutable
+        collection constructor, it should use the immutable equivalent
+        instead (tuple, MappingProxyType, frozenset).
+        """
+        factory = info.default_factory
+        if factory is None:
+            return _NO_VIOLATION
+        for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
+            if factory is kind:
+                return {"kind": kind.__name__}
+        return _NO_VIOLATION
+
+    @staticmethod
     def check_no_str_none_empty(
         info: FieldInfo,
     ) -> Mapping[str, str] | None:

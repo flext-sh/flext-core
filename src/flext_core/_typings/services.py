@@ -20,8 +20,8 @@ from types import GenericAlias, ModuleType, UnionType
 from typing import TypeAliasType
 
 from flext_core import (
-    FlextModelsPydantic,
-    FlextProtocolsBase,
+    FlextModelsPydantic as mp,
+    FlextProtocolsBase as p,
     FlextProtocolsContainer,
     FlextProtocolsContext,
     FlextProtocolsHandler,
@@ -29,7 +29,7 @@ from flext_core import (
     FlextProtocolsResult,
     FlextProtocolsService,
     FlextProtocolsSettings,
-    FlextTypingBase,
+    FlextTypingBase as t,
     FlextTypingContainers,
 )
 
@@ -38,22 +38,22 @@ class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
     type RegistryDict[T] = MutableMapping[str, T]
-    type ModelCarrier = FlextModelsPydantic.BaseModel
-    type ProtocolModelCarrier = FlextProtocolsBase.Model
+    type ModelCarrier = mp.BaseModel
+    type ProtocolModelCarrier = p.Model
     type DomainModelCarrier = ModelCarrier | ProtocolModelCarrier
     type ContainerCarrier = FlextTypingContainers.ConfigMap | FlextTypingContainers.Dict
-    type RecursiveMappingCarrier = FlextTypingBase.RecursiveContainerMapping
-    type RecursiveSequenceCarrier = FlextTypingBase.RecursiveContainerList
-    type RecursiveTupleCarrier = tuple[FlextTypingBase.RecursiveContainer, ...]
+    type RecursiveMappingCarrier = t.RecursiveContainerMapping
+    type RecursiveSequenceCarrier = t.RecursiveContainerList
+    type RecursiveTupleCarrier = tuple[t.RecursiveContainer, ...]
     type ModelClass[T: ModelCarrier] = type[T]
-    type LogArgument = FlextTypingBase.RecursiveContainer | FlextProtocolsBase.Model
+    type LogArgument = t.RecursiveContainer | p.Model
     type LogValue = FlextTypesServices.LogArgument | Exception
     type LogResult = FlextProtocolsResult.Result[bool]
 
-    type ScalarOrModel = FlextTypingBase.Container | ModelCarrier
-    type ValueOrModel = FlextTypingBase.RecursiveContainer | ModelCarrier
+    type ScalarOrModel = t.Container | ModelCarrier
+    type ValueOrModel = t.RecursiveContainer | ModelCarrier
     type PresentValueOrModel = (
-        FlextTypingBase.Container
+        t.Container
         | RecursiveMappingCarrier
         | RecursiveSequenceCarrier
         | RecursiveTupleCarrier
@@ -67,18 +67,18 @@ class FlextTypesServices:
     type BootstrapInput = ModelCarrier | RecursiveMappingCarrier | None
 
     type RegisterableService = (
-        FlextTypingBase.Container
+        t.Container
         | ModelCarrier
         | ContainerCarrier
         | FlextProtocolsLogging.Logger
         | Mapping[
             str,
-            FlextTypingBase.Container | FlextTypingBase.RecursiveContainer,
+            t.Container | t.RecursiveContainer,
         ]
-        | Sequence[FlextTypingBase.Container | FlextTypingBase.RecursiveContainer]
+        | Sequence[t.Container | t.RecursiveContainer]
         | Callable[
             ...,
-            FlextTypingBase.Container
+            t.Container
             | ModelCarrier
             | ContainerCarrier
             | FlextProtocolsLogging.Logger,
@@ -88,17 +88,17 @@ class FlextTypesServices:
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], RegisterableService]
     type MetadataValue = (
-        FlextTypingBase.Scalar
+        t.Scalar
         | Mapping[
             str,
-            FlextTypingBase.Scalar | Sequence[FlextTypingBase.Scalar],
+            t.Scalar | Sequence[t.Scalar],
         ]
-        | Sequence[FlextTypingBase.Scalar]
+        | Sequence[t.Scalar]
     )
-    type MetadataOrValue = MetadataValue | FlextTypingBase.RecursiveContainer
+    type MetadataOrValue = MetadataValue | t.RecursiveContainer
     type MetadataAttributeValue = MetadataValue
     type ModelInput = (
-        FlextTypingBase.RecursiveContainer
+        t.RecursiveContainer
         | ModelCarrier
         | FlextTypingContainers.ConfigMap
         | Mapping[
@@ -112,10 +112,7 @@ class FlextTypesServices:
         | Mapping[str, FlextTypesServices.RuntimeAtomic]
     )
     type MetadataInput = (
-        ModelCarrier
-        | FlextTypingContainers.ConfigMap
-        | Mapping[str, FlextTypingBase.Scalar]
-        | None
+        ModelCarrier | FlextTypingContainers.ConfigMap | Mapping[str, t.Scalar] | None
     )
     type HandlerCallable = Callable[
         ...,
@@ -150,7 +147,7 @@ class FlextTypesServices:
         | None,
     ]
     type RoutedHandlerCallable = Callable[
-        [FlextProtocolsBase.Routable],
+        [p.Routable],
         FlextTypesServices.RuntimeAtomic
         | FlextProtocolsResult.ResultLike[FlextTypesServices.RuntimeAtomic]
         | None,
@@ -172,44 +169,44 @@ class FlextTypesServices:
     type LoggerWrapperFactory = Callable[[], type[FlextProtocolsLogging.Logger]]
     type StructlogProcessor = Callable[
         ...,
-        FlextTypingBase.RecursiveContainerMapping,
+        t.RecursiveContainerMapping,
     ]
     type ContextHookCallable = Callable[
-        [FlextTypingBase.Scalar],
+        [t.Scalar],
         FlextTypesServices.ValueOrModel | None,
     ]
     type ContextHookMap = Mapping[str, Sequence[ContextHookCallable]]
 
     type SortableObjectType = str | int | float
     type TypeHintSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
-    type ValueAdapter[T] = FlextModelsPydantic.TypeAdapter[T]
+    type ValueAdapter[T] = mp.TypeAdapter[T]
     type TypeOriginSpecifier = TypeHintSpecifier
-    type GenericTypeArgument = str | type[FlextTypingBase.Scalar]
+    type GenericTypeArgument = str | type[t.Scalar]
     type MessageTypeSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
     type IncEx = set[str] | Mapping[str, set[str] | bool]
 
-    type LazyImportIndex = Mapping[str, str | FlextTypingBase.StrSequence]
-    type ConfigurationMapping = Mapping[str, FlextTypingBase.Scalar]
-    type ResultErrorData = Mapping[str, FlextTypingBase.Container]
-    type FlatContainerMapping = Mapping[str, FlextTypingBase.Container]
-    type MutableFlatContainerMapping = MutableMapping[str, FlextTypingBase.Container]
-    type MutableConfigurationMapping = MutableMapping[str, FlextTypingBase.Scalar]
+    type LazyImportIndex = Mapping[str, str | t.StrSequence]
+    type ConfigurationMapping = Mapping[str, t.Scalar]
+    type ResultErrorData = Mapping[str, t.Container]
+    type FlatContainerMapping = Mapping[str, t.Container]
+    type MutableFlatContainerMapping = MutableMapping[str, t.Container]
+    type MutableConfigurationMapping = MutableMapping[str, t.Scalar]
     type ScopedContainerRegistry = MutableMapping[
         str,
-        MutableMapping[str, FlextTypingBase.Container],
+        MutableMapping[str, t.Container],
     ]
     type ScopedScalarRegistry = MutableMapping[
         str,
-        MutableMapping[str, FlextTypingBase.Scalar],
+        MutableMapping[str, t.Scalar],
     ]
     type ServiceMap = Mapping[str, RegisterableService]
     type FactoryMap = Mapping[str, FactoryCallable]
     type ResourceMap = Mapping[str, ResourceCallable]
     type SettingsClass = type[FlextProtocolsSettings.Settings]
     type RuntimeModule = ModuleType
-    type LazyScalar = FlextTypingBase.Scalar | bytes | date | time
+    type LazyScalar = t.Scalar | bytes | date | time
     type LazyCollection = Mapping[str, LazyScalar] | Sequence[LazyScalar]
-    type ModuleExportValue = FlextTypingBase.Container | bytes | date | time
+    type ModuleExportValue = t.Container | bytes | date | time
     type ModuleExport = (
         ModuleExportValue
         | LazyCollection
@@ -219,52 +216,42 @@ class FlextTypesServices:
     )
     type LazyGetattr = Callable[[str], ModuleExport]
     type LazyDir = Callable[[], list[str]]
-    type LazyNamespaceValue = (
-        ModuleExport | FlextTypingBase.StrSequence | LazyGetattr | LazyDir
-    )
+    type LazyNamespaceValue = ModuleExport | t.StrSequence | LazyGetattr | LazyDir
 
     type ValidatorCallable = Callable[[ScalarOrModel | None], ScalarOrModel | None]
 
     type MapperCallable = Callable[
-        [FlextTypingBase.RecursiveContainer],
-        FlextTypingBase.RecursiveContainer,
+        [t.RecursiveContainer],
+        t.RecursiveContainer,
     ]
-    type MapperInput = MapperCallable | FlextTypingBase.RecursiveContainer
-    type StrictValue = (
-        FlextTypingBase.Scalar
-        | ConfigurationMapping
-        | Sequence[FlextTypingBase.Container]
-        | None
-    )
+    type MapperInput = MapperCallable | t.RecursiveContainer
+    type StrictValue = t.Scalar | ConfigurationMapping | Sequence[t.Container] | None
     type PaginationMeta = Mapping[str, int | bool]
 
     type GuardInput = (
-        FlextTypingBase.Scalar
+        t.Scalar
         | Path
         | RecursiveSequenceCarrier
-        | Sequence[AbstractSet[FlextTypingBase.RecursiveContainer]]
-        | Mapping[str, FlextTypingBase.RecursiveContainer | ModelCarrier]
+        | Sequence[AbstractSet[t.RecursiveContainer]]
+        | Mapping[str, t.RecursiveContainer | ModelCarrier]
         | Mapping[
             str,
-            AbstractSet[FlextTypingBase.RecursiveContainer]
-            | FlextTypingBase.RecursiveContainer,
+            AbstractSet[t.RecursiveContainer] | t.RecursiveContainer,
         ]
         | Mapping[
             int | str,
-            AbstractSet[FlextTypingBase.RecursiveContainer]
-            | FlextTypingBase.RecursiveContainer
-            | ModelCarrier,
+            AbstractSet[t.RecursiveContainer] | t.RecursiveContainer | ModelCarrier,
         ]
         | RecursiveTupleCarrier
         | tuple[type, ...]
-        | AbstractSet[FlextTypingBase.RecursiveContainer]
+        | AbstractSet[t.RecursiveContainer]
         | type
         | ModelCarrier
         | FlextTypingContainers.ConfigMap
         | FlextTypingContainers.Dict
         | FlextTypingContainers.ObjectList
         | RegisterableService
-        | Callable[..., FlextTypingBase.RecursiveContainer]
+        | Callable[..., t.RecursiveContainer]
         | FlextProtocolsContext.Context
         | FlextProtocolsSettings.Settings
         | FlextProtocolsHandler.Dispatcher
@@ -274,9 +261,9 @@ class FlextTypesServices:
 
     type ProtocolSubject = (
         GuardInput
-        | FlextProtocolsBase.Flushable
+        | p.Flushable
         | FlextProtocolsHandler.AutoDiscoverableHandler
-        | FlextProtocolsContainer.ProviderLike[ModelCarrier | FlextTypingBase.Container]
+        | FlextProtocolsContainer.ProviderLike[ModelCarrier | t.Container]
         | FlextProtocolsService.DispatchableService
         | FlextProtocolsResult.SuccessCheckable
         | FlextProtocolsResult.StructuredError
@@ -288,7 +275,5 @@ class FlextTypesServices:
 
     type UserOverridesMapping = Mapping[
         str,
-        FlextTypingBase.Scalar
-        | FlextTypingContainers.ConfigMap
-        | FlextTypingBase.ScalarList,
+        t.Scalar | FlextTypingContainers.ConfigMap | t.ScalarList,
     ]

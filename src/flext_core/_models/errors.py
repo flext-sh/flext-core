@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import Annotated, Self
 
 from flext_core import FlextModelsBase as m, FlextUtilitiesPydantic as up, t
@@ -72,7 +73,7 @@ class FlextModelsErrors:
         exception_counts: Annotated[
             t.IntMapping,
             up.Field(description="Per-exception occurrence totals keyed by type name."),
-        ] = up.Field(default_factory=dict)
+        ] = up.Field(default_factory=lambda: MappingProxyType({}))
         exception_counts_summary: Annotated[
             str,
             up.Field(description="Human-readable summary for logs and diagnostics."),
@@ -107,7 +108,7 @@ class FlextModelsErrors:
         exception_counts: Annotated[
             t.IntMapping,
             up.Field(description="Recorded counts keyed by exception type name."),
-        ] = up.Field(default_factory=dict)
+        ] = up.Field(default_factory=lambda: MappingProxyType({}))
 
         @up.computed_field()
         @property

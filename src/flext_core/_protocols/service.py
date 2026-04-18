@@ -26,7 +26,7 @@ from flext_core import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypesServices
+    from flext_core import t
 
 
 class FlextProtocolsService:
@@ -126,7 +126,7 @@ class FlextProtocolsService:
         def track(
             self,
             operation_name: str,
-        ) -> AbstractContextManager[Mapping[str, FlextTypesServices.ValueOrModel]]:
+        ) -> AbstractContextManager[Mapping[str, t.ValueOrModel]]:
             """Track operation performance with timing and context cleanup."""
             ...
 
@@ -165,7 +165,7 @@ class FlextProtocolsService:
             """Execute domain service logic."""
             ...
 
-        def service_info(self) -> FlextTypesServices.FlatContainerMapping:
+        def service_info(self) -> t.FlatContainerMapping:
             """Get service metadata and configuration information."""
             ...
 

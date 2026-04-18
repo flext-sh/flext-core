@@ -62,7 +62,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestUniversalAliasParentSources",
             ),
             ".test_container": ("TestFlextContainer",),
-            ".test_container_full_coverage": ("TestContainerFullCoverage",),
             ".test_context": ("TestFlextContext",),
             ".test_context_coverage_100": ("TestContext100Coverage",),
             ".test_context_full_coverage": ("TestContextFullCoverage",),

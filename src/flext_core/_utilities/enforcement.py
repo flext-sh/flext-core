@@ -461,6 +461,17 @@ class FlextUtilitiesEnforcement:
         return me.Report(violations=violations)
 
     @staticmethod
+    def _is_exempt(target: type) -> bool:
+        """Honour explicit ``_flext_enforcement_exempt`` opt-out.
+
+        Only set this marker on classes whose architecture intentionally
+        violates a specific rule (e.g., DDD entities whose event-sourcing
+        collectors are mutable by design). Exemption is declared on the
+        class itself (not inherited) so every subclass must re-affirm it.
+        """
+        return bool(target.__dict__.get("_flext_enforcement_exempt", False))
+
+    @staticmethod
     def run(model_type: type[mp.BaseModel]) -> None:
         """Pydantic ``__pydantic_init_subclass__`` hook.
 
@@ -471,6 +482,8 @@ class FlextUtilitiesEnforcement:
         if c.ENFORCEMENT_MODE is c.EnforcementMode.OFF:
             return
         if ub.is_function_local(model_type):
+            return
+        if FlextUtilitiesEnforcement._is_exempt(model_type):
             return
         report = FlextUtilitiesEnforcement.check(model_type)
         FlextUtilitiesEnforcement.emit(report)
@@ -484,6 +497,8 @@ class FlextUtilitiesEnforcement:
         if c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.OFF:
             return
         if ub.is_function_local(target):
+            return
+        if FlextUtilitiesEnforcement._is_exempt(target):
             return
         report = FlextUtilitiesEnforcement.check(target, layer=layer)
         FlextUtilitiesEnforcement.emit(

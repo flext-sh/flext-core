@@ -53,7 +53,15 @@ class FlextModelsEntity:
         - created_at/updated_at: Timestamps (from TimestampedModel)
         - version: Optimistic locking (from VersionableMixin)
         - domain_events: Event sourcing support
+
+        Enforcement exemption: DDD entities are intentionally mutable. The
+        ``domain_events`` collector is an in-process transient buffer; using
+        ``default_factory=list`` yields a fresh per-instance list (no shared
+        state) and is required by the event-sourcing API contract
+        (``add_domain_event``/``clear_domain_events``).
         """
+
+        _flext_enforcement_exempt: ClassVar[bool] = True
 
         domain_events: Annotated[
             MutableSequence[FlextModelsDomainEvent.Entry],

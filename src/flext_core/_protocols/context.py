@@ -11,17 +11,15 @@ from contextlib import AbstractContextManager
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
-from flext_core import FlextTypingBase, FlextTypingContainers
-
 if TYPE_CHECKING:
     from flext_core import (
-        FlextModelsContext,
         FlextProtocolsContainer,
         FlextProtocolsHandler,
         FlextProtocolsRegistry,
         FlextProtocolsResult,
         FlextProtocolsSettings,
-        FlextTypesServices,
+        m,
+        t,
     )
 
 
@@ -36,7 +34,7 @@ class FlextProtocolsContext:
             self,
             key: str,
             scope: str = ...,
-        ) -> FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]:
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]:
             """Get a context value by key and scope."""
             ...
 
@@ -44,15 +42,15 @@ class FlextProtocolsContext:
             """Check if a key exists in the given scope."""
             ...
 
-        def keys(self) -> FlextTypingBase.StrSequence:
+        def keys(self) -> t.StrSequence:
             """Return all keys across all scopes."""
             ...
 
-        def values(self) -> FlextTypingBase.RecursiveContainerList:
+        def values(self) -> t.RecursiveContainerList:
             """Return all values across all scopes."""
             ...
 
-        def items(self) -> Sequence[tuple[str, FlextTypingBase.RecursiveContainer]]:
+        def items(self) -> Sequence[tuple[str, t.RecursiveContainer]]:
             """Return all key-value pairs across all scopes."""
             ...
 
@@ -64,7 +62,7 @@ class FlextProtocolsContext:
         def set(
             self,
             key_or_data: str,
-            value: FlextTypesServices.RuntimeAtomic,
+            value: t.RuntimeAtomic,
             *,
             scope: str = ...,
         ) -> FlextProtocolsResult.Result[bool]: ...
@@ -72,7 +70,7 @@ class FlextProtocolsContext:
         @overload
         def set(
             self,
-            key_or_data: FlextTypingContainers.ConfigMap,
+            key_or_data: t.ConfigMap,
             value: None = ...,
             *,
             scope: str = ...,
@@ -80,8 +78,8 @@ class FlextProtocolsContext:
 
         def set(
             self,
-            key_or_data: str | FlextTypingContainers.ConfigMap,
-            value: FlextTypesServices.RuntimeAtomic | None = ...,
+            key_or_data: str | t.ConfigMap,
+            value: t.RuntimeAtomic | None = ...,
             *,
             scope: str = ...,
         ) -> FlextProtocolsResult.Result[bool]:
@@ -106,9 +104,7 @@ class FlextProtocolsContext:
 
         def merge(
             self,
-            other: Self
-            | FlextTypingContainers.ConfigMap
-            | FlextTypingBase.RecursiveContainerMapping,
+            other: Self | t.ConfigMap | t.RecursiveContainerMapping,
         ) -> Self:
             """Merge another context or mapping into this one."""
             ...
@@ -127,9 +123,7 @@ class FlextProtocolsContext:
             include_statistics: bool = ...,
             include_metadata: bool = ...,
             as_dict: bool = ...,
-        ) -> (
-            FlextModelsContext.ContextExport | FlextTypingBase.RecursiveContainerMapping
-        ):
+        ) -> m.ContextExport | t.RecursiveContainerMapping:
             """Export context state as the canonical context export model or dict."""
             ...
 
@@ -140,13 +134,11 @@ class FlextProtocolsContext:
         def resolve_metadata(
             self,
             key: str,
-        ) -> FlextProtocolsResult.Result[FlextTypesServices.RuntimeAtomic]:
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]:
             """Get a metadata value by key."""
             ...
 
-        def apply_metadata(
-            self, key: str, value: FlextTypesServices.MetadataValue
-        ) -> None:
+        def apply_metadata(self, key: str, value: t.MetadataValue) -> None:
             """Set a metadata value by key."""
             ...
 
@@ -176,14 +168,14 @@ class FlextProtocolsContext:
         @staticmethod
         def fetch_service(
             service_name: str,
-        ) -> FlextProtocolsResult.Result[FlextTypesServices.RegisterableService]:
+        ) -> FlextProtocolsResult.Result[t.RegisterableService]:
             """Resolve a service from the configured container."""
             ...
 
         @staticmethod
         def register_service(
             service_name: str,
-            service: FlextTypesServices.RegisterableService,
+            service: t.RegisterableService,
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a service through the configured container."""
             ...
@@ -231,7 +223,7 @@ class FlextProtocolsContext:
         @staticmethod
         def timed_operation(
             operation_name: str | None = None,
-        ) -> AbstractContextManager[FlextTypingContainers.ConfigMap]:
+        ) -> AbstractContextManager[t.ConfigMap]:
             """Create a timed operation scope."""
             ...
 
@@ -240,7 +232,7 @@ class FlextProtocolsContext:
         """Protocol for context serialization helpers."""
 
         @staticmethod
-        def export_full_context() -> FlextTypingBase.RecursiveContainerMapping:
+        def export_full_context() -> t.RecursiveContainerMapping:
             """Export the active global context variables."""
             ...
 
@@ -272,11 +264,11 @@ class FlextProtocolsContext:
         @classmethod
         def create(
             cls,
-            initial_data: FlextTypingContainers.ConfigMap | None = None,
+            initial_data: t.ConfigMap | None = None,
             *,
             operation_id: str | None = None,
             user_id: str | None = None,
-            metadata: FlextTypingContainers.ConfigMap | None = None,
+            metadata: t.ConfigMap | None = None,
             auto_correlation_id: bool = True,
         ) -> FlextProtocolsContext.Context:
             """Create a new context instance."""
@@ -301,17 +293,17 @@ class FlextProtocolsContext:
 
         settings: FlextProtocolsSettings.Settings | None
         settings_type: type | None
-        settings_overrides: FlextTypingBase.ScalarMapping | None
+        settings_overrides: t.ScalarMapping | None
         context: FlextProtocolsContext.Context | None
         dispatcher: FlextProtocolsHandler.Dispatcher | None
         registry: FlextProtocolsRegistry.Registry | None
         subproject: str | None
-        services: Mapping[str, FlextTypesServices.RegisterableService] | None
-        factories: Mapping[str, FlextTypesServices.FactoryCallable] | None
-        resources: Mapping[str, FlextTypesServices.ResourceCallable] | None
-        container_overrides: FlextTypingBase.ScalarMapping | None
+        services: Mapping[str, t.RegisterableService] | None
+        factories: Mapping[str, t.FactoryCallable] | None
+        resources: Mapping[str, t.ResourceCallable] | None
+        container_overrides: t.ScalarMapping | None
         wire_modules: Sequence[ModuleType | str] | None
-        wire_packages: FlextTypingBase.StrSequence | None
+        wire_packages: t.StrSequence | None
         wire_classes: Sequence[type] | None
 
 

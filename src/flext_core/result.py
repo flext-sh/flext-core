@@ -32,7 +32,10 @@ from pydantic import (
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core import FlextProtocolsLogging, FlextProtocolsResult as p, c, t
+from flext_core._protocols.logging import FlextProtocolsLogging
+from flext_core.constants import c
+from flext_core.protocols import FlextProtocolsResult as p
+from flext_core.typings import t
 
 
 class FlextResult[T](BaseModel, p.Result[T]):

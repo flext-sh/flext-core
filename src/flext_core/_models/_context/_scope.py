@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import contextvars
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Annotated, Self
 
 from flext_core import (
@@ -43,14 +44,14 @@ class FlextModelsContextScope:
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),
             FlextUtilitiesPydantic.Field(description="Scope data"),
-        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
         metadata: Annotated[
             t.RecursiveContainerMapping,
             FlextModelsPydantic.BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),
             FlextUtilitiesPydantic.Field(description="Scope metadata"),
-        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
 
     class ContextStatistics(FlextModelsBase.ArbitraryTypesModel):
         """Statistics tracking for context operations."""
@@ -95,7 +96,7 @@ class FlextModelsContextScope:
             FlextUtilitiesPydantic.Field(
                 description="Additional metric counters and timing values grouped by metric key.",
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
 
     class ContextRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Centralized mutable runtime state for `FlextContext`."""
@@ -113,7 +114,7 @@ class FlextModelsContextScope:
                 default_factory=dict,
                 description="Lifecycle hooks keyed by event name",
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
         statistics: Annotated[
             FlextModelsContextScope.ContextStatistics,
             FlextUtilitiesPydantic.Field(
@@ -142,7 +143,7 @@ class FlextModelsContextScope:
                 default_factory=dict,
                 description="ContextVar registry keyed by scope name",
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
 
         @FlextUtilitiesPydantic.computed_field()
         def inactive(self) -> bool:

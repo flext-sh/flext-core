@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Annotated
 
 from pydantic import BeforeValidator, Field, computed_field
@@ -33,7 +34,7 @@ class FlextModelsContextExport:
             Field(
                 description="All context data from all scopes",
             ),
-        ] = Field(default_factory=dict)
+        ] = Field(default_factory=lambda: MappingProxyType({}))
         metadata: Annotated[
             m.Metadata | t.Dict | None,
             BeforeValidator(
@@ -56,7 +57,7 @@ class FlextModelsContextExport:
             Field(
                 description="Usage statistics (operation counts, timing info)",
             ),
-        ] = Field(default_factory=dict)
+        ] = Field(default_factory=lambda: MappingProxyType({}))
 
         @computed_field
         @property

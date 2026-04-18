@@ -17,15 +17,17 @@ from collections.abc import (
 )
 from typing import Annotated, override
 
-from flext_core import FlextModelsPydantic, FlextTypingBase, FlextUtilitiesPydantic
+from flext_core import (
+    FlextModelsPydantic as mp,
+    FlextTypingBase as t,
+    FlextUtilitiesPydantic as up,
+)
 
 
 class FlextTypingContainers:
     """Container type system for FLEXT."""
 
-    class RootDictModel[DictValueT](
-        FlextModelsPydantic.RootModel[MutableMapping[str, DictValueT]]
-    ):
+    class RootDictModel[DictValueT](mp.RootModel[MutableMapping[str, DictValueT]]):
         """Dict-backed RootModel with full dict protocol.
 
         Wraps typed dict in Pydantic v2 validation, exposes all dict methods
@@ -78,14 +80,12 @@ class FlextTypingContainers:
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()
 
-    class ObjectList(
-        FlextModelsPydantic.RootModel[Sequence[FlextTypingBase.Container]]
-    ):
+    class ObjectList(mp.RootModel[Sequence[t.Container]]):
         """Ordered list of strongly-typed container values for batch operations."""
 
         root: Annotated[
-            Sequence[FlextTypingBase.Container],
-            FlextUtilitiesPydantic.Field(
+            Sequence[t.Container],
+            up.Field(
                 title="Object List",
                 description=(
                     "Ordered container values for batch operations "
@@ -93,56 +93,47 @@ class FlextTypingContainers:
                 ),
                 examples=[["item-1", 2, True]],
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=list)
+        ] = up.Field(default_factory=tuple)
 
-    class Dict(
-        RootDictModel[
-            FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel
-        ]
-    ):
+    class Dict(RootDictModel[t.RecursiveContainer | mp.BaseModel]):
         """Validated dict payload for requests, responses, and data transfer.
 
-        Type-safe MutableMapping[str, RecursiveContainer | BaseModel] with full dict protocol.
+        Type-safe MutableMapping[str, RecursiveContainer | BaseModel] with full
+        dict protocol. Intentionally mutable container — default_factory=dict
+        yields a fresh per-instance dict (no shared state).
         """
 
         root: Annotated[
             MutableMapping[
                 str,
-                FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel,
+                t.RecursiveContainer | mp.BaseModel,
             ],
-            FlextUtilitiesPydantic.Field(
+            up.Field(
                 title="Dictionary Payload",
                 description=(
                     "Dictionary payload storing strict container values "
                     "(scalar, BaseModel, or Path)."
                 ),
                 examples=[{"request_id": "req-123", "retry_count": 3, "dry_run": True}],
+                default_factory=dict,
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
+        ]
 
         @override
         def get(
             self,
             key: str,
-            default: (
-                FlextTypingBase.RecursiveContainer
-                | FlextModelsPydantic.BaseModel
-                | None
-            ) = None,
-        ) -> FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel | None:
+            default: (t.RecursiveContainer | mp.BaseModel | None) = None,
+        ) -> t.RecursiveContainer | mp.BaseModel | None:
             value = self.root.get(key, default)
             if isinstance(value, Mapping) and not isinstance(
                 value,
-                FlextModelsPydantic.BaseModel,
+                mp.BaseModel,
             ):
                 return dict(value)
             return value
 
-    class ConfigMap(
-        RootDictModel[
-            FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel
-        ]
-    ):
+    class ConfigMap(RootDictModel[t.RecursiveContainer | mp.BaseModel]):
         """Configuration container for settings and environment parameters.
 
         Semantically distinct Dict for configuration (not data).
