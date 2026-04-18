@@ -105,8 +105,8 @@ class FlextUtilitiesGuardsTypeProtocol:
         return callable(value)
 
     @staticmethod
-    def result_like[TValue](
-        value: TValue,
+    def result_like(
+        value: object,
     ) -> TypeGuard[p.Result[t.RuntimeAtomic]]:
         """Narrow value to Result protocol."""
         return isinstance(value, p.Result)

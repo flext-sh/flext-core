@@ -88,3 +88,10 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
     # Runtime tuples for isinstance checks (mirrors base.py CONTAINER_TYPES pattern)
     CONTAINER_VALUE_SCALAR_TYPES: tuple[type, ...] = FlextTypingBase.SCALAR_TYPES
     """Runtime tuple for ContainerValue leaf isinstance checks."""
+
+    class Enforcement:
+        """Type aliases for the runtime enforcement engine."""
+
+        type RuleTag = str
+        type RuleSpec = tuple[str, str, str, str]
+        type RuleTagSequence = Sequence[str]

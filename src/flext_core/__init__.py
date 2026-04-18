@@ -46,6 +46,7 @@ if _t.TYPE_CHECKING:
     from flext_core._models.cqrs import FlextModelsCqrs
     from flext_core._models.dispatcher import FlextModelsDispatcher
     from flext_core._models.domain_event import FlextModelsDomainEvent
+    from flext_core._models.enforcement import FlextModelsEnforcement
     from flext_core._models.entity import FlextModelsEntity
     from flext_core._models.errors import FlextModelsErrors
     from flext_core._models.exception_params import FlextModelsExceptionParams
@@ -195,6 +196,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._models.cqrs": ("FlextModelsCqrs",),
             "._models.dispatcher": ("FlextModelsDispatcher",),
             "._models.domain_event": ("FlextModelsDomainEvent",),
+            "._models.enforcement": ("FlextModelsEnforcement",),
             "._models.entity": ("FlextModelsEntity",),
             "._models.errors": ("FlextModelsErrors",),
             "._models.exception_params": ("FlextModelsExceptionParams",),
@@ -387,6 +389,7 @@ __all__: list[str] = [
     "FlextModelsCqrs",
     "FlextModelsDispatcher",
     "FlextModelsDomainEvent",
+    "FlextModelsEnforcement",
     "FlextModelsEntity",
     "FlextModelsErrors",
     "FlextModelsExceptionParams",

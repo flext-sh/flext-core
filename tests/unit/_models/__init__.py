@@ -11,19 +11,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".test_cqrs": ("TestsFlextCoreModelsCqrs",),
         ".test_entity": ("TestFlextModelsEntity",),
         ".test_exception_params": ("TestFlextModelsExceptionParams",),
-        "flext_core": (
-            "c",
-            "d",
-            "e",
-            "h",
-            "m",
-            "p",
-            "r",
-            "s",
-            "t",
-            "u",
-            "x",
-        ),
     },
 )
 

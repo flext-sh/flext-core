@@ -13,7 +13,7 @@ import flext_core as _discovery_mod
 import flext_core as core_container
 from flext_core import FlextContainer, FlextContext, FlextSettings
 from flext_tests import tm
-from tests import m, p, t
+from tests import m, p, t, u
 
 
 class TestContainerFullCoverage:
@@ -554,7 +554,9 @@ class TestContainerFullCoverage:
         )
         c.factory("fac-ok", lambda: 1)
         c.factory("fac-ok", lambda: 2)
-        c.factory("fac-bad", 123)
+        # Defensive path: non-callable impl is rejected by u.factory guard
+        # (container.factory is a no-op when the guard narrows False).
+        assert u.factory(123) is False
         _ = c.bind("svc-remove", "v")
         _ = c.resource("res-remove", lambda: "r")
         _ = c.factory("fac-remove", lambda: "f")

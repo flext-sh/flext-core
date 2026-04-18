@@ -15,11 +15,9 @@ class _ProtocolHandler:
         self._label = label
         self.message_type = message_type
 
-    @override
     def can_handle(self, message_type: type) -> bool:
         return message_type is self.message_type
 
-    @override
     def handle(self, message: p.Routable) -> p.Result[t.Scalar]:
         value = ""
         if isinstance(message, Ex12CommandA):

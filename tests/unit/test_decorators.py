@@ -14,14 +14,6 @@ from flext_core import FlextContainer
 from tests import d, e, m, p, r, u
 
 
-@pytest.fixture(autouse=True)
-def reset_flext_container_singleton() -> Generator[None]:
-    """Isolate FlextContainer singleton state across decorator tests."""
-    FlextContainer.reset_for_testing()
-    yield
-    FlextContainer.reset_for_testing()
-
-
 class TestFlextDecorators:
     @unique
     class DecoratorOperationType(StrEnum):
@@ -149,6 +141,14 @@ class TestFlextDecorators:
             operation=DecoratorOperationType.COMBINED_WITH_RAILWAY,
         ),
     ]
+
+    @staticmethod
+    @pytest.fixture(autouse=True)
+    def reset_flext_container_singleton() -> Generator[None]:
+        """Isolate FlextContainer singleton state across decorator tests."""
+        FlextContainer.reset_for_testing()
+        yield
+        FlextContainer.reset_for_testing()
 
     @pytest.mark.parametrize("test_case", INJECT_SCENARIOS, ids=lambda case: case.name)
     def test_inject_decorator(

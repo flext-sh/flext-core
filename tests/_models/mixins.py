@@ -14,10 +14,6 @@ from typing import Annotated, ClassVar, Never, Self, override
 from flext_tests import m
 from tests import c, t
 
-# Use `flext_tests` generic model base classes here to avoid a runtime circular import
-# through the tests package. `t` comes from tests.typings, which extends the generic test
-# typing definitions for flext-core.
-
 
 class TestsFlextCoreModelsMixins:
     """flext-core test models namespace."""
@@ -310,16 +306,19 @@ class TestsFlextCoreModelsMixins:
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
-        name: str
-        value: t.ContainerValue
+        name: Annotated[str, m.Field(description="Entity display name.")]
+        value: Annotated[
+            t.ContainerValue,
+            m.Field(description="Entity payload value."),
+        ]
 
     class DomainTestValue(m.Value):
         """Test value object for domain tests."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        data: str = ""
-        count: int
+        data: Annotated[str, m.Field(description="Value payload string.")] = ""
+        count: Annotated[int, m.Field(description="Occurrence counter.")]
 
     class CustomEntity(m.BaseModel):
         """Custom entity with configurable ID attribute."""
@@ -502,15 +501,21 @@ class TestsFlextCoreModelsMixins:
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
-        name: str
-        value: t.ContainerValue
+        name: Annotated[str, m.Field(description="Fixture entity name.")]
+        value: Annotated[
+            t.ContainerValue,
+            m.Field(description="Fixture entity payload."),
+        ]
 
     class UtilityValueModel(m.Value):
         """Shared value model for generic test fixtures."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        value: t.ContainerValue
+        value: Annotated[
+            t.ContainerValue,
+            m.Field(description="Fixture value payload."),
+        ]
 
     class MockScenarioData(m.BaseModel):
         """Mock scenario test data."""
@@ -1317,17 +1322,23 @@ class TestsFlextCoreModelsMixins:
     class UserCreatedEvent(m.DomainEvent):
         """Domain event for user creation using FlextModels foundation."""
 
-        user_id: str
-        user_name: str
-        timestamp: float
+        user_id: Annotated[str, m.Field(description="Identifier of the created user.")]
+        user_name: Annotated[str, m.Field(description="Name assigned to the new user.")]
+        timestamp: Annotated[
+            float,
+            m.Field(description="POSIX timestamp when the event fired."),
+        ]
 
     class UserUpdatedEvent(m.DomainEvent):
         """Domain event for user updates."""
 
-        user_id: str
-        old_name: str
-        new_name: str
-        timestamp: float
+        user_id: Annotated[str, m.Field(description="Identifier of the updated user.")]
+        old_name: Annotated[str, m.Field(description="Previous user name.")]
+        new_name: Annotated[str, m.Field(description="Updated user name.")]
+        timestamp: Annotated[
+            float,
+            m.Field(description="POSIX timestamp when the event fired."),
+        ]
 
 
 # Populate ContainerScenarios after class is fully defined to allow forward references

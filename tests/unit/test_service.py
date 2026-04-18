@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import ClassVar, override
+from typing import Annotated, ClassVar, override
 
 import pytest
 
-from tests import c, e, m, p, r, s
+from tests import c, e, m, p, r, s, u
 
 
 class UserData(m.Value):
@@ -29,8 +29,14 @@ class ValidatingService(s[str]):
     """Service with public validation behavior."""
 
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(validate_assignment=True)
-    value_input: str = "valid"
-    min_length: int = 3
+    value_input: Annotated[
+        str,
+        u.Field(description="Text value subjected to length validation."),
+    ] = "valid"
+    min_length: Annotated[
+        int,
+        u.Field(description="Minimum accepted length for value_input."),
+    ] = 3
 
     @override
     def validate_business_rules(self) -> p.Result[bool]:

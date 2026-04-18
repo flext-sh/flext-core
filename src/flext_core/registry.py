@@ -178,7 +178,9 @@ class FlextRegistry(s[bool]):
         """Safe conversion using centralized utilities."""
         if value is None:
             return None
-        if isinstance(value, t.CONTAINER_TYPES) or u.base_model(value):
+        if isinstance(value, t.CONTAINER_TYPES):
+            return value
+        if isinstance(value, m.BaseModel):
             return value
         return str(value)
 

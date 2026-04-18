@@ -17,7 +17,7 @@ from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self, override
 
 import structlog
-from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic import Field, computed_field, model_validator
 
 from flext_core import (
     FlextModelsBase as m,
@@ -65,9 +65,9 @@ class FlextModelsEntity:
         ]
 
         @override
-        def __eq__(self, other: t.ValueOrModel) -> bool:
+        def __eq__(self, other: object) -> bool:
             """Identity-based equality for entities."""
-            if not isinstance(other, BaseModel):
+            if not isinstance(other, m.EnforcedModel):
                 return NotImplemented
             return u.compare_entities_by_id(self, other)
 
@@ -211,9 +211,9 @@ class FlextModelsEntity:
         """Base class for value objects - immutable and compared by value."""
 
         @override
-        def __eq__(self, other: t.ValueOrModel) -> bool:
+        def __eq__(self, other: object) -> bool:
             """Compare by value."""
-            if not isinstance(other, BaseModel):
+            if not isinstance(other, m.EnforcedModel):
                 return NotImplemented
             return u.compare_value_objects_by_value(self, other)
 

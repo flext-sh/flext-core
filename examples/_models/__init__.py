@@ -33,6 +33,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "Ex04Ping",
             "Ex04UnknownQuery",
             "Ex04UserCreated",
+            "ExamplesFlextCoreModelsEx04",
         ),
         ".ex05": (
             "Ex05BadProcessor",
@@ -87,19 +88,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".shared": (
             "SharedHandle",
             "SharedPerson",
-            "m",
-        ),
-        "flext_core": (
-            "c",
-            "d",
-            "e",
-            "h",
-            "p",
-            "r",
-            "s",
-            "t",
-            "u",
-            "x",
         ),
     },
 )

@@ -8,7 +8,7 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import Annotated, ClassVar, Never, override
+from typing import ClassVar, Never, override
 
 import pytest
 
@@ -28,17 +28,6 @@ _ExtractTransformOptionsCallable = p.Core.Tests.ExtractTransformOptionsCallable
 _BuildApplyOpCallable = p.Core.Tests.BuildApplyOpCallable
 _TransformCallable = p.Core.Tests.TransformCallable
 _MapDictKeysCallable = p.Core.Tests.MapDictKeysCallable
-
-
-class AttrObject(m.BaseModel):
-    """AttrObject class."""
-
-    name: Annotated[str, m.Field(description="Attribute recursive container name")] = (
-        "name"
-    )
-    value: Annotated[
-        int, m.Field(description="Attribute recursive container value")
-    ] = 1
 
 
 class BadString:
@@ -95,7 +84,9 @@ class TestUtilitiesMapperFullCoverage:
     _PYRIGHT_USED_HELPERS: ClassVar[tuple[object, ...]] = ()
 
     @staticmethod
-    def _extract_field_obj(item: AttrObject, field_name: str) -> t.RecursiveContainer:
+    def _extract_field_obj(
+        item: m.Core.Tests.AttrObject, field_name: str
+    ) -> t.RecursiveContainer:
         """Call _extract_field_value with arbitrary recursive container inputs."""
         fn: _ExtractFieldCallable = getattr(u, "_extract_field_value")
         return fn(item, field_name)
@@ -166,7 +157,7 @@ class TestUtilitiesMapperFullCoverage:
 
     @staticmethod
     def _transform_obj(
-        source: BadMapping,
+        source: m.Core.Tests.BadMapping,
         **kwargs: t.StrMapping,
     ) -> p.Result[t.RecursiveContainerMapping]:
         fn: _TransformCallable = getattr(u, "transform")
@@ -268,7 +259,7 @@ class TestUtilitiesMapperFullCoverage:
         accessor = mapper.prop("name")
         tm.that(
             accessor(
-                AttrObject(name="x", value=1),
+                m.Core.Tests.AttrObject(name="x", value=1),
             ),
             eq="x",
         )

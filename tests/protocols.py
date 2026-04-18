@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_tests import p
 from tests import t
@@ -45,6 +45,7 @@ class TestsFlextCoreProtocols(p):
         class Tests(p.Tests):
             """flext-core test protocols namespace."""
 
+            @runtime_checkable
             class ExtractFieldCallable(Protocol):
                 """Protocol for _extract_field_value callable."""
 
@@ -52,6 +53,7 @@ class TestsFlextCoreProtocols(p):
                     self, item: AttrObject, field_name: str
                 ) -> t.RecursiveContainer: ...
 
+            @runtime_checkable
             class TakeCallable(Protocol):
                 """Protocol for take callable."""
 
@@ -69,6 +71,7 @@ class TestsFlextCoreProtocols(p):
                     | t.RecursiveContainer
                 ): ...
 
+            @runtime_checkable
             class BuildApplyConvertCallable(Protocol):
                 """Protocol for _op_convert callable."""
 
@@ -80,6 +83,7 @@ class TestsFlextCoreProtocols(p):
                     on_error: str,
                 ) -> t.RecursiveContainer: ...
 
+            @runtime_checkable
             class ExtractTransformOptionsCallable(Protocol):
                 """Protocol for _extract_transform_options callable."""
 
@@ -95,6 +99,7 @@ class TestsFlextCoreProtocols(p):
                     set[str] | None,
                 ]: ...
 
+            @runtime_checkable
             class BuildApplyOpCallable(Protocol):
                 """Protocol for op callable (sort/unique/slice/group)."""
 
@@ -112,6 +117,7 @@ class TestsFlextCoreProtocols(p):
                     | t.RecursiveContainer
                 ): ...
 
+            @runtime_checkable
             class TransformCallable(Protocol):
                 """Protocol for transform callable."""
 
@@ -121,6 +127,7 @@ class TestsFlextCoreProtocols(p):
                     **kwargs: t.StrMapping,
                 ) -> p.Result[t.RecursiveContainerMapping]: ...
 
+            @runtime_checkable
             class MapDictKeysCallable(Protocol):
                 """Protocol for map_dict_keys callable."""
 

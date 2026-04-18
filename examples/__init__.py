@@ -38,6 +38,7 @@ if _t.TYPE_CHECKING:
         Ex04Ping,
         Ex04UnknownQuery,
         Ex04UserCreated,
+        ExamplesFlextCoreModelsEx04,
     )
     from examples._models.ex05 import (
         Ex05BadProcessor,
@@ -84,6 +85,19 @@ if _t.TYPE_CHECKING:
     from examples._models.exsettings import ExSettingsAppSettings
     from examples._models.output import ExamplesFlextCoreModelsOutput
     from examples._models.shared import SharedHandle, SharedPerson
+    from examples.ex_01_flext_result import Ex01r
+    from examples.ex_02_flext_settings import Ex02FlextSettings
+    from examples.ex_03_flext_logger import Ex03LoggingDsl
+    from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
+    from examples.ex_05_flext_mixins import Ex05FlextMixins
+    from examples.ex_06_flext_context import Ex06FlextContext
+    from examples.ex_07_flext_exceptions import Ex07FlextExceptions
+    from examples.ex_08_flext_container import Ex08FlextContainer
+    from examples.ex_09_flext_decorators import Ex09FlextDecorators
+    from examples.ex_10_flext_handlers import Ex10FlextHandlers
+    from examples.ex_11_flext_service import Ex11FlextService
+    from examples.ex_12_flext_registry import Ex12RegistryDsl
+    from examples.logging_config_once_pattern import DatabaseService, MigrationService
     from examples.models import ExamplesFlextCoreModels, m
     from examples.shared import Examples
     from examples.typings import ExamplesFlextCoreTypes, t
@@ -118,6 +132,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "Ex04Ping",
                 "Ex04UnknownQuery",
                 "Ex04UserCreated",
+                "ExamplesFlextCoreModelsEx04",
             ),
             "._models.ex05": (
                 "Ex05BadProcessor",
@@ -173,6 +188,22 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "SharedHandle",
                 "SharedPerson",
             ),
+            ".ex_01_flext_result": ("Ex01r",),
+            ".ex_02_flext_settings": ("Ex02FlextSettings",),
+            ".ex_03_flext_logger": ("Ex03LoggingDsl",),
+            ".ex_04_flext_dispatcher": ("Ex04DispatchDsl",),
+            ".ex_05_flext_mixins": ("Ex05FlextMixins",),
+            ".ex_06_flext_context": ("Ex06FlextContext",),
+            ".ex_07_flext_exceptions": ("Ex07FlextExceptions",),
+            ".ex_08_flext_container": ("Ex08FlextContainer",),
+            ".ex_09_flext_decorators": ("Ex09FlextDecorators",),
+            ".ex_10_flext_handlers": ("Ex10FlextHandlers",),
+            ".ex_11_flext_service": ("Ex11FlextService",),
+            ".ex_12_flext_registry": ("Ex12RegistryDsl",),
+            ".logging_config_once_pattern": (
+                "DatabaseService",
+                "MigrationService",
+            ),
             ".models": (
                 "ExamplesFlextCoreModels",
                 "m",
@@ -211,11 +242,15 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
+    "DatabaseService",
+    "Ex01r",
     "Ex02CacheService",
     "Ex02DatabaseService",
     "Ex02EmailService",
+    "Ex02FlextSettings",
     "Ex02TestConfig",
     "Ex03Email",
+    "Ex03LoggingDsl",
     "Ex03Money",
     "Ex03Order",
     "Ex03OrderItem",
@@ -223,6 +258,7 @@ __all__: list[str] = [
     "Ex04AutoCommand",
     "Ex04CreateUser",
     "Ex04DeleteUser",
+    "Ex04DispatchDsl",
     "Ex04FailingDelete",
     "Ex04GetUser",
     "Ex04NoSubscriberEvent",
@@ -230,21 +266,27 @@ __all__: list[str] = [
     "Ex04UnknownQuery",
     "Ex04UserCreated",
     "Ex05BadProcessor",
+    "Ex05FlextMixins",
     "Ex05GoodProcessor",
     "Ex05HandlerBad",
     "Ex05HandlerLike",
     "Ex05StatusEnum",
     "Ex05UserModel",
+    "Ex06FlextContext",
     "Ex07CreateUserCommand",
     "Ex07DemoPlugin",
+    "Ex07FlextExceptions",
     "Ex07GetUserQuery",
     "Ex07UserCreatedEvent",
+    "Ex08FlextContainer",
     "Ex08Order",
     "Ex08User",
+    "Ex09FlextDecorators",
     "Ex10CommandBusStub",
     "Ex10ContextPayload",
     "Ex10DerivedMessage",
     "Ex10Entity",
+    "Ex10FlextHandlers",
     "Ex10Message",
     "Ex10ProcessorBad",
     "Ex10ProcessorGood",
@@ -252,6 +294,7 @@ __all__: list[str] = [
     "Ex10ServiceStub",
     "Ex11CommandBusStub",
     "Ex11EntityStub",
+    "Ex11FlextService",
     "Ex11HandlerLike",
     "Ex11HandlerLikeService",
     "Ex11Payload",
@@ -259,6 +302,7 @@ __all__: list[str] = [
     "Ex11ProcessorProtocolGood",
     "Ex12CommandA",
     "Ex12CommandB",
+    "Ex12RegistryDsl",
     "Ex14CreateUserCommand",
     "Ex14GetUserQuery",
     "Ex14UserDTO",
@@ -268,9 +312,11 @@ __all__: list[str] = [
     "ExamplesFlextCoreModelsErrors",
     "ExamplesFlextCoreModelsEx00",
     "ExamplesFlextCoreModelsEx01",
+    "ExamplesFlextCoreModelsEx04",
     "ExamplesFlextCoreModelsEx05",
     "ExamplesFlextCoreModelsOutput",
     "ExamplesFlextCoreTypes",
+    "MigrationService",
     "SharedHandle",
     "SharedPerson",
     "c",

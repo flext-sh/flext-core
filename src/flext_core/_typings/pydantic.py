@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import pydantic
 import pydantic_core
+from pydantic_core import core_schema
 
 
 class FlextTypesPydantic:
@@ -108,7 +109,6 @@ class FlextTypesPydantic:
     JsonValue = pydantic.JsonValue
     ImportString = pydantic.ImportString
     InstanceOf = pydantic.InstanceOf
-    PaymentCardNumber = pydantic.PaymentCardNumber
     Secret = pydantic.Secret
     SecretStr = pydantic.SecretStr
     SecretBytes = pydantic.SecretBytes
@@ -122,7 +122,7 @@ class FlextTypesPydantic:
     StringConstraints = pydantic.StringConstraints
     UrlConstraints = pydantic.UrlConstraints
     ErrorDetails = pydantic_core.ErrorDetails
-    ErrorType = pydantic_core.ErrorType
+    ErrorType = core_schema.ErrorType
     ErrorTypeInfo = pydantic_core.ErrorTypeInfo
     InitErrorDetails = pydantic_core.InitErrorDetails
 
@@ -138,6 +138,5 @@ class FlextTypesPydantic:
     SkipValidation = pydantic.SkipValidation
     AllowInfNan = pydantic.AllowInfNan
     Strict = pydantic.Strict
-    Extra = pydantic.Extra
     FailFast = pydantic.FailFast
     OnErrorOmit = pydantic.OnErrorOmit

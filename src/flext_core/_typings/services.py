@@ -183,7 +183,7 @@ class FlextTypesServices:
     type ValueAdapter[T] = FlextModelsPydantic.TypeAdapter[T]
     type TypeOriginSpecifier = TypeHintSpecifier
     type GenericTypeArgument = str | type[FlextTypingBase.Scalar]
-    type MessageTypeSpecifier = str | type
+    type MessageTypeSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
     type IncEx = set[str] | Mapping[str, set[str] | bool]
 
     type LazyImportIndex = Mapping[str, str | FlextTypingBase.StrSequence]

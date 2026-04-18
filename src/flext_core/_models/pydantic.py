@@ -16,7 +16,6 @@ from __future__ import annotations
 
 from pydantic import (
     AfterValidator,
-    BaseConfig,
     BaseModel as PydanticBaseModel,
     BeforeValidator,
     ConfigDict,
@@ -69,7 +68,6 @@ class FlextModelsPydantic:
 
     # Pydantic field utilities
     ConfigDict = ConfigDict
-    BaseConfig = BaseConfig
     SettingsConfigDict = SettingsConfigDict
 
     Field = Field

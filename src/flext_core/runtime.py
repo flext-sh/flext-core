@@ -37,6 +37,7 @@ from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel, ConfigDict
 
 from flext_core import (
+    FlextModelsPydantic as mp,
     FlextUtilitiesGenerators,
     FlextUtilitiesGuardsTypeCore,
     T,
@@ -110,7 +111,9 @@ class FlextRuntime:
         return providers
 
     @staticmethod
-    def _to_plain_container(value: t.RuntimeAtomic) -> t.RecursiveContainer:
+    def _to_plain_container(
+        value: t.RuntimeAtomic | t.ConfigMap | t.Dict | t.ObjectList,
+    ) -> t.RecursiveContainer:
         """Flatten a runtime atomic value to plain Python types."""
         match value:
             case t.ConfigMap() | t.Dict():
@@ -235,7 +238,7 @@ class FlextRuntime:
         """Normalize container registration payloads to canonical runtime types."""
         if isinstance(value, (str, int, float, bool, type(None))):
             return value
-        if isinstance(value, (BaseModel, Path)):
+        if isinstance(value, (mp.BaseModel, Path)):
             return value
         if callable(value):
             return value

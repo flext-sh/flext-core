@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
 from itertools import count
-from typing import ClassVar, override
+from typing import Annotated, ClassVar, override
 
 from flext_tests import u
 from tests import c, e, h, m, p, r, s, t
@@ -196,7 +196,10 @@ class TestsFlextCoreUtilities(u):
             class GetUserService(s[m.BaseModel]):
                 """Service to get user."""
 
-                user_id: str = ""
+                user_id: Annotated[
+                    str,
+                    u.Field(description="Identifier of the user to fetch."),
+                ] = ""
 
                 @override
                 def execute(self) -> p.Result[m.Core.Tests.User]:
@@ -216,8 +219,14 @@ class TestsFlextCoreUtilities(u):
             class SendEmailService(s[m.BaseModel]):
                 """Service to send email."""
 
-                to: str = ""
-                subject: str = ""
+                to: Annotated[
+                    str,
+                    u.Field(description="Destination email address."),
+                ] = ""
+                subject: Annotated[
+                    str,
+                    u.Field(description="Email subject line."),
+                ] = ""
 
                 @override
                 def execute(self) -> p.Result[m.Core.Tests.EmailResponse]:
@@ -234,7 +243,10 @@ class TestsFlextCoreUtilities(u):
             class ValidationService(s[t.RecursiveContainerMapping]):
                 """Service to validate values."""
 
-                value: int = 0
+                value: Annotated[
+                    int,
+                    u.Field(description="Integer value to validate."),
+                ] = 0
 
                 @override
                 def execute(self) -> p.Result[t.RecursiveContainerMapping]:
@@ -253,8 +265,14 @@ class TestsFlextCoreUtilities(u):
             class MultiOperationService(s[t.RecursiveContainerMapping]):
                 """Service for multiple operations."""
 
-                operation: str = ""
-                value: int = 0
+                operation: Annotated[
+                    str,
+                    u.Field(description="Operation name (double / square / ...)."),
+                ] = ""
+                value: Annotated[
+                    int,
+                    u.Field(description="Numeric operand for the operation."),
+                ] = 0
 
                 @override
                 def execute(self) -> p.Result[t.RecursiveContainerMapping]:
@@ -1202,8 +1220,14 @@ class TestsFlextCoreUtilities(u):
             class ValidatingService(s[str]):
                 """Service with validation."""
 
-                value_input: str
-                min_length: int = c.Core.Tests.TestValidation.MIN_LENGTH_DEFAULT
+                value_input: Annotated[
+                    str,
+                    u.Field(description="String input validated by business rules."),
+                ]
+                min_length: Annotated[
+                    int,
+                    u.Field(description="Minimum accepted input length."),
+                ] = c.Core.Tests.TestValidation.MIN_LENGTH_DEFAULT
 
                 @override
                 def execute(self) -> p.Result[str]:
@@ -1217,7 +1241,10 @@ class TestsFlextCoreUtilities(u):
             class FailingService(s[str]):
                 """Service that always fails."""
 
-                error_message: str = c.Core.Tests.Services.DEFAULT_ERROR_MESSAGE
+                error_message: Annotated[
+                    str,
+                    u.Field(description="Failure message emitted by execute()."),
+                ] = c.Core.Tests.Services.DEFAULT_ERROR_MESSAGE
 
                 @override
                 def execute(self) -> p.Result[str]:

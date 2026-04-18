@@ -1,8 +1,8 @@
-"""Tests for Pydantic v2 runtime enforcement across all Flext* layers.
+"""Tests for runtime enforcement — query ``u.check(target)`` reports.
 
-Verifies that u check functions correctly
-detect violations. Tests call the check functions directly to avoid
-test-module auto-exemption.
+Every legacy per-rule helper (``u.check_no_any``, ``u.is_exempt``, etc.)
+is gone. Tests assert over ``m.Report.violations`` filtered
+by ``layer`` / ``severity`` / message fragment.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,219 +11,276 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
+from abc import ABC, abstractmethod
+from typing import Annotated, Final, Protocol, runtime_checkable
 
 import pytest
 from pydantic.warnings import PydanticDeprecatedSince20
 
-from flext_core import FlextModelsNamespace
-from tests import c, m, p, t, u
+from flext_core import (
+    FlextModelsEnforcement,
+    FlextModelsNamespace,
+    FlextUtilitiesBeartypeEngine,
+    FlextUtilitiesEnforcement,
+)
+from tests import c, m, u
+from tests._models.mixins import TestsFlextCoreModelsMixins
 
 
-class TestCheckNoAny:
-    """Verify Any detection in model fields."""
+def _messages(
+    report: FlextModelsEnforcement.Report,
+    *,
+    fragment: str,
+) -> list[str]:
+    return [v.message for v in report.violations if fragment in v.message]
+
+
+class TestFieldRules:
+    """Model field-level rules — no_any, no_bare_collection, no_mutable_default, etc."""
 
     def test_any_field_detected(self) -> None:
-        """Any as field annotation is flagged."""
-
         class _M(m.ArbitraryTypesModel):
-            _flext_enforcement_exempt: ClassVar[bool] = True
             data: Annotated[typing.Any, m.Field(description="d")] = None
 
-        fields = u.own_fields(_M)
-        errors = u.check_no_any(fields)
-        assert len(errors) == 1
-        assert "Any" in errors[0]
+        assert _messages(u.check(_M), fragment="Any")
 
     def test_typed_field_passes(self) -> None:
-        """Str field is not flagged."""
-
         class _M(m.ArbitraryTypesModel):
-            _flext_enforcement_exempt: ClassVar[bool] = True
             name: Annotated[str, m.Field(description="d")] = "x"
 
-        fields = u.own_fields(_M)
-        errors = u.check_no_any(fields)
-        assert len(errors) == 0
-
-
-class TestCheckNoBareCollections:
-    """Verify bare dict/list/set detection in model fields."""
+        assert not _messages(u.check(_M), fragment="Any")
 
     def test_bare_dict_detected(self) -> None:
-        """dict[K,V] in field annotation is flagged."""
-
         class _M(m.ArbitraryTypesModel):
-            _flext_enforcement_exempt: ClassVar[bool] = True
             data: dict[str, str] = m.Field(default_factory=dict, description="d")
 
-        fields = u.own_fields(_M)
-        errors = u.check_no_bare_collections(fields)
-        assert len(errors) == 1
-        assert "dict" in errors[0]
+        assert _messages(u.check(_M), fragment="bare ")
 
     def test_bare_list_detected(self) -> None:
-        """list[X] in field annotation is flagged."""
-
         class _M(m.ArbitraryTypesModel):
-            _flext_enforcement_exempt: ClassVar[bool] = True
             items: list[str] = m.Field(default_factory=list, description="d")
 
-        fields = u.own_fields(_M)
-        errors = u.check_no_bare_collections(fields)
-        assert len(errors) == 1
-        assert "list" in errors[0]
+        assert _messages(u.check(_M), fragment="bare ")
 
     def test_mapping_passes(self) -> None:
-        """Mapping[K,V] is not flagged."""
-
         class _M(m.ArbitraryTypesModel):
-            _flext_enforcement_exempt: ClassVar[bool] = True
-            data: t.StrMapping = m.Field(default_factory=dict, description="d")
+            data: Annotated[
+                typing.Mapping[str, str],
+                m.Field(default_factory=dict, description="d"),
+            ]
 
-        fields = u.own_fields(_M)
-        errors = u.check_no_bare_collections(fields)
-        assert len(errors) == 0
+        assert not _messages(u.check(_M), fragment="bare ")
 
-    def test_sequence_passes(self) -> None:
-        """Sequence[X] is not flagged."""
-
+    def test_missing_description_detected(self) -> None:
         class _M(m.ArbitraryTypesModel):
-            _flext_enforcement_exempt: ClassVar[bool] = True
-            items: t.StrSequence = m.Field(default_factory=list, description="d")
+            name: str = "test"
 
-        fields = u.own_fields(_M)
-        errors = u.check_no_bare_collections(fields)
-        assert len(errors) == 0
+        assert _messages(u.check(_M), fragment="missing description")
+
+    def test_description_present_passes(self) -> None:
+        class _M(m.ArbitraryTypesModel):
+            name: Annotated[str, m.Field(description="A name")] = "test"
+
+        assert not _messages(u.check(_M), fragment="missing description")
 
 
-class TestCheckNoV1Patterns:
-    """Verify Pydantic v1 pattern detection."""
+class TestModelClassRules:
+    """Model-class rules — no_v1_config, extra_policy, value_not_frozen."""
 
     def test_v1_config_class_detected(self) -> None:
-        """Class Config inside model is flagged."""
         with pytest.warns(PydanticDeprecatedSince20):
 
             class _M(m.ArbitraryTypesModel):
-                _flext_enforcement_exempt: ClassVar[bool] = True
-
                 class Config:
                     extra = "forbid"
 
                 name: Annotated[str, m.Field(description="d")] = "x"
 
-        errors = u.check_no_v1_patterns(_M)
-        assert len(errors) == 1
-        assert "Pydantic v1" in errors[0]
-
-
-class TestCheckFieldDescriptions:
-    """Verify missing description detection."""
-
-    def test_missing_description_detected(self) -> None:
-        """Field without description is flagged."""
-
-        class _M(m.ArbitraryTypesModel):
-            _flext_enforcement_exempt: ClassVar[bool] = True
-            name: str = "test"
-
-        own = u.own_fields(_M)
-        errors = u.check_field_descriptions(_M, own=own)
-        assert len(errors) == 1
-        assert "description" in errors[0]
-
-    def test_description_present_passes(self) -> None:
-        """Field with description passes."""
-
-        class _M(m.ArbitraryTypesModel):
-            _flext_enforcement_exempt: ClassVar[bool] = True
-            name: Annotated[str, m.Field(description="A name")] = "test"
-
-        own = u.own_fields(_M)
-        errors = u.check_field_descriptions(_M, own=own)
-        assert len(errors) == 0
-
-
-class TestCheckExtraPolicy:
-    """Verify extra policy enforcement."""
+        assert _messages(u.check(_M), fragment="Pydantic v1")
 
     def test_flexible_internal_allows_ignore(self) -> None:
-        """FlexibleInternalModel subclass allows extra=ignore."""
-
         class _M(m.FlexibleInternalModel):
-            _flext_enforcement_exempt: ClassVar[bool] = True
             name: Annotated[str, m.Field(description="d")] = "x"
 
-        errors = u.check_extra_policy(_M)
-        assert len(errors) == 0
-
-
-class TestExemptions:
-    """Verify exemption mechanisms."""
-
-    def test_explicit_exempt_flag(self) -> None:
-        """_flext_enforcement_exempt = True makes is_exempt return True."""
-
-        class _M(m.ArbitraryTypesModel):
-            _flext_enforcement_exempt: ClassVar[bool] = True
-
-        assert u.is_exempt(_M)
-
-    def test_infrastructure_base_exempt(self) -> None:
-        """Infrastructure base names are auto-exempt."""
-        assert u.is_exempt(m.ArbitraryTypesModel)
-        assert u.is_exempt(m.FrozenValueModel)
-
-    def test_test_module_exempt(self) -> None:
-        """Classes in test modules are auto-exempt."""
-
-        class _M(m.ArbitraryTypesModel):
-            pass
-
-        # This class is defined in tests.unit.test_enforcement
-        assert u.is_exempt(_M)
+        assert not _messages(u.check(_M), fragment="extra")
 
 
 class TestEnforcementMode:
-    """Verify enforcement mode constant is accessible."""
+    def test_mode_default_is_warn(self) -> None:
+        assert c.ENFORCEMENT_MODE is c.EnforcementMode.WARN
 
-    def test_mode_is_warn(self) -> None:
-        """Current mode should be warn."""
-        assert c.ENFORCEMENT_MODE == "warn"
-
-    def test_enforcement_constants_accessible(self) -> None:
-        """All enforcement constants accessible via c.*."""
-
-
-class TestNamespacePrefixDerivation:
-    """Verify namespace prefix derivation normalizes project slugs."""
-
-    def test_to_pascal_case_accepts_hyphenated_slug(self) -> None:
-        """Hyphenated project slugs must normalize to a valid PascalCase prefix."""
-        assert u._to_pascal_case("db-oracle") == "DbOracle"
-
-    def test_flext_core_uses_flext_prefix(self) -> None:
-        """flext-core is the canonical exception and keeps the Flext prefix."""
-        assert (
-            u._derive_prefix_from_path(
-                u,
-            )
-            == "Flext"
+    def test_enforcement_rules_loaded(self) -> None:
+        assert len(c.ENFORCEMENT_RULES) > 0
+        assert all(
+            row[0] in c.EnforcementCategory for row in c.ENFORCEMENT_RULES.values()
         )
 
-    def test_flext_core_tests_namespace_is_core(self) -> None:
-        """flext-core tests use Core as the inner namespace."""
-        assert (
-            u._derive_expected_namespace(
-                u.Core.Tests,
-            )
-            == "Core"
+
+class TestProjectDiscovery:
+    def test_flext_core_uses_flext_override(self) -> None:
+        """``flext_core`` is the canonical src layer and overrides to ``Flext``."""
+        project = FlextUtilitiesEnforcement._project(FlextUtilitiesEnforcement)
+        assert project is not None
+        prefix, namespace = project
+        assert prefix == "Flext"
+        assert namespace == "Core"
+
+
+class TestConstantsLayerRules:
+    """Constants layer — const_mutable, const_lowercase."""
+
+    def test_mutable_list_detected(self) -> None:
+        class _CConstants:
+            ITEMS: list[str] = ["a", "b"]
+
+        assert _messages(
+            u.check(_CConstants, layer="constants"),
+            fragment="mutable constant",
+        )
+
+    def test_mutable_dict_detected(self) -> None:
+        class _CConstants:
+            DATA: dict[str, int] = {"x": 1}
+
+        assert _messages(
+            u.check(_CConstants, layer="constants"),
+            fragment="mutable constant",
+        )
+
+    def test_frozenset_passes(self) -> None:
+        class _CConstants:
+            ITEMS: Final[frozenset[str]] = frozenset({"a"})
+
+        assert not _messages(
+            u.check(_CConstants, layer="constants"),
+            fragment="mutable constant",
+        )
+
+    def test_tuple_passes(self) -> None:
+        class _CConstants:
+            ITEMS: Final[tuple[str, ...]] = ("a", "b")
+
+        assert not _messages(
+            u.check(_CConstants, layer="constants"),
+            fragment="mutable constant",
+        )
+
+    def test_lowercase_constant_detected(self) -> None:
+        class _CConstants:
+            my_value: int = 42
+
+        assert _messages(
+            u.check(_CConstants, layer="constants"),
+            fragment="UPPER_CASE",
+        )
+
+    def test_inner_namespace_mutable_detected(self) -> None:
+        class _CConstants:
+            class Inner:
+                BAD: list[str] = ["x"]
+
+        assert _messages(
+            u.check(_CConstants, layer="constants"),
+            fragment="mutable constant",
+        )
+
+
+class TestProtocolsLayerRules:
+    """Protocols layer — proto_inner_kind, proto_not_runtime."""
+
+    def test_non_protocol_inner_detected(self) -> None:
+        class _PProtocols:
+            class NotAProtocol:
+                pass
+
+        assert _messages(
+            u.check(_PProtocols, layer="protocols"),
+            fragment="Protocol",
+        )
+
+    def test_abc_passes(self) -> None:
+        class _PProtocols:
+            class SomeContract(ABC):
+                @abstractmethod
+                def do(self) -> None: ...
+
+        msgs = _messages(u.check(_PProtocols, layer="protocols"), fragment="Protocol")
+        assert not any("must be Protocol" in m for m in msgs)
+
+    def test_non_runtime_protocol_detected(self) -> None:
+        class _PProtocols:
+            class InnerProto(Protocol):
+                def do(self) -> None: ...
+
+        assert _messages(
+            u.check(_PProtocols, layer="protocols"),
+            fragment="runtime_checkable",
+        )
+
+    def test_runtime_protocol_passes(self) -> None:
+        class _PProtocols:
+            @runtime_checkable
+            class InnerProto(Protocol):
+                def do(self) -> None: ...
+
+        assert not _messages(
+            u.check(_PProtocols, layer="protocols"),
+            fragment="runtime_checkable",
+        )
+
+
+class TestTypesLayerRules:
+    """Types layer — alias_any."""
+
+    def test_alias_with_any_detected(self) -> None:
+        class _TTypes:
+            type BadAlias = typing.Any
+
+        assert _messages(u.check(_TTypes, layer="types"), fragment="Any in type alias")
+
+    def test_clean_alias_passes(self) -> None:
+        class _TTypes:
+            type GoodAlias = str
+
+        assert not _messages(
+            u.check(_TTypes, layer="types"), fragment="Any in type alias"
+        )
+
+
+class TestUtilitiesLayerRules:
+    """Utilities layer — utility_not_static."""
+
+    def test_instance_method_detected(self) -> None:
+        class _UUtilities:
+            def run(self) -> None: ...
+
+        assert _messages(
+            u.check(_UUtilities, layer="utilities"),
+            fragment="staticmethod",
+        )
+
+    def test_static_method_passes(self) -> None:
+        class _UUtilities:
+            @staticmethod
+            def run() -> None: ...
+
+        assert not _messages(
+            u.check(_UUtilities, layer="utilities"),
+            fragment="staticmethod",
+        )
+
+    def test_class_method_passes(self) -> None:
+        class _UUtilities:
+            @classmethod
+            def run(cls) -> None: ...
+
+        assert not _messages(
+            u.check(_UUtilities, layer="utilities"),
+            fragment="staticmethod",
         )
 
 
 class TestBaseModelCoverage:
-    """Verify all base models have enforcement hooks."""
-
     @pytest.mark.parametrize(
         "base_cls",
         [
@@ -236,281 +293,277 @@ class TestBaseModelCoverage:
         ],
     )
     def test_base_model_has_enforcement_hook(self, base_cls: type) -> None:
-        """Each base model class should have __pydantic_init_subclass__."""
+        assert hasattr(base_cls, "__pydantic_init_subclass__")
 
 
-# ------------------------------------------------------------------ #
-# Constants layer enforcement tests                                    #
-# ------------------------------------------------------------------ #
-
-
-class TestConstantsEnforcement:
-    """Verify enforcement on c subclasses."""
-
-    def test_mutable_list_detected(self) -> None:
-        """List value in constants is flagged as HARD violation."""
-
-        class _C:
-            ITEMS: list[str] = ["a", "b"]
-
-        errors = u.check_constants_no_mutable_values(_C)
-        assert len(errors) == 1
-        assert "mutable list" in errors[0]
-
-    def test_mutable_dict_detected(self) -> None:
-        """Dict value in constants is flagged."""
-
-        class _C:
-            DATA: dict[str, int] = {"x": 1}
-
-        errors = u.check_constants_no_mutable_values(_C)
-        assert len(errors) == 1
-        assert "mutable dict" in errors[0]
-
-    def test_frozenset_passes(self) -> None:
-        """Frozenset value is not flagged."""
-
-        class _C:
-            ITEMS: Final[frozenset[str]] = frozenset({"a"})
-
-        errors = u.check_constants_no_mutable_values(_C)
-        assert len(errors) == 0
-
-    def test_tuple_passes(self) -> None:
-        """Tuple value is not flagged."""
-
-        class _C:
-            ITEMS: Final[tuple[str, ...]] = ("a", "b")
-
-        errors = u.check_constants_no_mutable_values(_C)
-        assert len(errors) == 0
-
-    def test_missing_final_annotation_detected(self) -> None:
-        """Public attribute without Final/ClassVar is flagged."""
-
-        class _C:
-            VALUE: int = 42
-
-        errors = u.check_constants_final_hints(_C)
-        assert len(errors) == 1
-        assert "Final" in errors[0]
-
-    def test_final_annotation_passes(self) -> None:
-        """Attribute with Final passes."""
-
-        class _C:
-            VALUE: Final[int] = 42
-
-        errors = u.check_constants_final_hints(_C)
-        assert len(errors) == 0
-
-    def test_classvar_annotation_passes(self) -> None:
-        """Attribute with ClassVar passes."""
-
-        class _C:
-            VALUE: ClassVar[int] = 42
-
-        errors = u.check_constants_final_hints(_C)
-        assert len(errors) == 0
-
-    def test_upper_case_passes(self) -> None:
-        """UPPER_CASE name passes."""
-
-        class _C:
-            MY_VALUE: Final[int] = 42
-
-        errors = u.check_constants_upper_case(_C)
-        assert len(errors) == 0
-
-    def test_lower_case_detected(self) -> None:
-        """Lowercase name is flagged."""
-
-        class _C:
-            my_value: int = 42
-
-        errors = u.check_constants_upper_case(_C)
-        assert len(errors) == 1
-        assert "UPPER_CASE" in errors[0]
-
-    def test_inner_namespace_mutable_detected(self) -> None:
-        """Mutable value inside inner namespace class is caught recursively."""
-
-        class _C:
-            class Inner:
-                BAD: list[str] = ["x"]
-
-        errors = u.check_constants_no_mutable_values(_C)
-        assert len(errors) == 1
-        assert "Inner" in errors[0]
-
-    def test_facade_has_enforced_namespace(self) -> None:
-        """C facade inherits m."""
+class TestNamespaceInheritance:
+    def test_c_facade_inherits_namespace(self) -> None:
         assert issubclass(c, FlextModelsNamespace)
 
-    def test_enforcement_constants_accessible(self) -> None:
-        """New enforcement constants accessible via c.*."""
+
+class TestReportApi:
+    def test_empty_report_is_falsy(self) -> None:
+        report = m.Report()
+        assert not report
+        assert report.empty
+        assert len(report) == 0
+
+    def test_nonempty_report_is_truthy(self) -> None:
+        v = m.Violation(
+            qualname="X",
+            layer="Model",
+            severity="HARD rules",
+            message="boom",
+        )
+        report = m.Report(violations=[v])
+        assert report
+        assert not report.empty
+        assert len(report) == 1
+        assert report[0] == "boom"
+        assert "boom" in report
+
+    def test_merge_reports(self) -> None:
+        v = m.Violation(
+            qualname="X",
+            layer="Model",
+            severity="HARD rules",
+            message="a",
+        )
+        w = m.Violation(
+            qualname="X",
+            layer="Model",
+            severity="HARD rules",
+            message="b",
+        )
+        merged = u.merge_reports(
+            m.Report(violations=[v]),
+            m.Report(violations=[w]),
+        )
+        assert len(merged) == 2
 
 
-# ------------------------------------------------------------------ #
-# Protocols layer enforcement tests                                    #
-# ------------------------------------------------------------------ #
+class TestFalsePositiveSkips:
+    """Dynamic runtime-driven skips — no hardcoded name lists."""
+
+    def test_function_local_class_skipped(self) -> None:
+        """Classes defined inside functions carry ``<locals>`` in qualname."""
+
+        class _OuterScope:
+            def make(self) -> type:
+                class Inner:  # nested inside a method → `<locals>` qualname
+                    pass
+
+                return Inner
+
+        cls = _OuterScope().make()
+        assert "<locals>" in cls.__qualname__
+        # check returns empty report for function-local classes
+        report = u.check(cls)
+        assert all(v.layer != "namespace" for v in report.violations)
+
+    def test_private_underscore_class_skipped(self) -> None:
+        """Underscore-prefixed classes are implementation details, not facades."""
+
+        class _PrivateHelper:
+            pass
+
+        report = u.check(_PrivateHelper)
+        assert all(v.layer != "namespace" for v in report.violations)
+
+    def test_generic_bracket_specialization_skipped(self) -> None:
+        """Synthetic ``Foo[int]``-style names are Pydantic/Generic artifacts."""
+        # Build a synthetic target with bracketed name — mimicking what Pydantic
+        # generates for parameterized generic specializations.
+        fake = type("Foo[int]", (), {})
+        report = u.check(fake)
+        assert all(v.layer != "namespace" for v in report.violations)
 
 
-class TestProtocolsEnforcement:
-    """Verify enforcement on p subclasses."""
+class TestClassPrefixScope:
+    """``class_prefix`` applies only to top-level facades."""
 
-    def test_non_protocol_inner_class_detected(self) -> None:
-        """Inner class that is not a Protocol is flagged."""
+    def test_inner_class_qualname_exempts_prefix_check(self) -> None:
+        """Classes with ``.`` in qualname (nested) skip class_prefix."""
+        # Simulate a top-level class' inner class via a synthetic target whose
+        # qualname signals nesting without being function-local.
+        fake = type("InnerNs", (), {})
+        fake.__qualname__ = "Outer.InnerNs"  # signals nested position
+        fake.__module__ = "nonexistent_project"
+        report = u.check(fake)
+        assert not any(
+            "class name missing project prefix" in v.message for v in report.violations
+        )
 
-        class _P:
-            class NotProtocol:
+    def test_facade_root_exempt(self) -> None:
+        """Classes in ENFORCEMENT_NAMESPACE_FACADE_ROOTS skip prefix rule."""
+        fake = type("FlextModels", (), {})  # literal root name
+        fake.__module__ = "anything"
+        report = u.check(fake)
+        assert not any(
+            "class name missing project prefix" in v.message for v in report.violations
+        )
+
+
+class TestProjectPrefixOverrides:
+    """``ENFORCEMENT_NAMESPACE_SPECIAL_PREFIXES`` honored (flext_core→Flext)."""
+
+    def test_flext_core_override_returns_flext(self) -> None:
+        """flext_core is the single src package that maps to ``Flext``."""
+        project = FlextUtilitiesEnforcement._project(FlextUtilitiesEnforcement)
+        assert project is not None
+        prefix, _namespace = project
+        assert prefix == "Flext"
+
+    def test_tests_module_gets_tests_prefix_composition(self) -> None:
+        """Classes in ``tests.*`` carry ``Tests`` + project prefix (e.g. TestsFlext)."""
+        report = u.check(TestsFlextCoreModelsMixins)
+        namespace_msgs = [
+            v.message
+            for v in report.violations
+            if v.layer == "namespace" and "class name" in v.message
+        ]
+        # The class name IS "TestsFlextCoreModelsMixins" which starts with
+        # "TestsFlext" — the composed prefix — so no class_prefix violation.
+        assert not namespace_msgs
+
+
+class TestDetailSubstitution:
+    """Rule templates with ``{placeholders}`` get context filled in."""
+
+    def test_bare_collection_renders_kind(self) -> None:
+        class _M(m.ArbitraryTypesModel):
+            items: list[str] = m.Field(default_factory=list, description="d")
+
+        msgs = [v.message for v in u.check(_M).violations]
+        # The predicate supplies {"kind": "list", "replacement": "..."} which
+        # the engine interpolates into the rule's problem/fix templates.
+        assert any("bare list" in m for m in msgs)
+
+    def test_missing_description_keeps_field_location(self) -> None:
+        class _M(m.ArbitraryTypesModel):
+            undoc: str = "x"
+
+        msgs = [v.message for v in u.check(_M).violations]
+        assert any(
+            'Field "undoc"' in msg and "missing description" in msg for msg in msgs
+        )
+
+
+def _make_class(name: str, body: dict[str, object]) -> type:
+    """Build a synthetic top-level class (no ``<locals>`` in qualname)."""
+    cls = type(name, (), body)
+    cls.__qualname__ = name  # strip test-method qualname prefix
+    cls.__module__ = "flext_core.synthetic"
+    return cls
+
+
+class TestAccessorMethodBan:
+    """AGENTS.md §3.1 — public ``get_*``/``set_*``/``is_*`` methods forbidden."""
+
+    def test_get_prefix_flagged(self) -> None:
+        cls = _make_class("FlextCoreAccessedGet", {"get_user": lambda self: None})
+        msgs = [
+            v.message
+            for v in u.check(cls).violations
+            if 'accessor method "get_user"' in v.message
+        ]
+        assert msgs
+
+    def test_set_prefix_flagged(self) -> None:
+        cls = _make_class(
+            "FlextCoreAccessedSet",
+            {"set_config": lambda self, v: None},
+        )
+        msgs = [
+            v.message
+            for v in u.check(cls).violations
+            if 'accessor method "set_config"' in v.message
+        ]
+        assert msgs
+
+    def test_is_prefix_flagged(self) -> None:
+        cls = _make_class("FlextCoreAccessedIs", {"is_ready": lambda self: True})
+        msgs = [
+            v.message
+            for v in u.check(cls).violations
+            if 'accessor method "is_ready"' in v.message
+        ]
+        assert msgs
+
+    def test_fetch_prefix_allowed(self) -> None:
+        cls = _make_class(
+            "FlextCoreAccessedFetch",
+            {"fetch_remote": lambda self: None},
+        )
+        msgs = [
+            v.message
+            for v in u.check(cls).violations
+            if "accessor method" in v.message and "fetch_remote" in v.message
+        ]
+        assert not msgs
+
+
+class TestSettingsInheritance:
+    """AGENTS.md §2.6 — top-level ``*Settings`` must inherit FlextSettings."""
+
+    def test_top_level_missing_inheritance_flagged(self) -> None:
+        cls = _make_class("FlextWorkerSettings", {})
+        msgs = [
+            v.message
+            for v in u.check(cls).violations
+            if "must inherit FlextSettings" in v.message
+        ]
+        assert msgs
+
+    def test_nested_settings_namespace_exempt(self) -> None:
+        """Nested classes inside namespace containers are metadata, not settings."""
+        fake = type("AutoSettings", (), {})
+        fake.__qualname__ = "FlextModelsSettings.AutoSettings"
+        fake.__module__ = "flext_core._models.settings"
+        msgs = [
+            v.message
+            for v in u.check(fake).violations
+            if "must inherit FlextSettings" in v.message
+        ]
+        assert not msgs
+
+    def test_non_settings_name_exempt(self) -> None:
+        cls = _make_class("FlextCoreService", {})
+        msgs = [
+            v.message
+            for v in u.check(cls).violations
+            if "must inherit FlextSettings" in v.message
+        ]
+        assert not msgs
+
+
+class TestHasNestedNamespaceViaMro:
+    """``has_nested_namespace`` must walk the MRO, not just ``vars(cls)``."""
+
+    def test_direct_inner_class_detected(self) -> None:
+        class _DirectHolder:
+            class _SomeInner:
                 pass
 
-        errors = u.check_protocols_inner_classes(_P)
-        assert len(errors) == 1
-        assert "Protocol subclass" in errors[0]
+            class PublicInner:
+                pass
 
-    def test_protocol_inner_class_passes(self) -> None:
-        """Inner class that IS a Protocol passes."""
+        assert FlextUtilitiesBeartypeEngine.has_nested_namespace(_DirectHolder)
 
-        class _P:
-            @runtime_checkable
-            class Good(Protocol):
-                def method(self) -> None: ...
+    def test_inherited_inner_class_detected(self) -> None:
+        """A class without direct inner classes but inheriting them still qualifies."""
 
-        errors = u.check_protocols_inner_classes(_P)
-        assert len(errors) == 0
+        class _Parent:
+            class Nested:
+                pass
 
-    def test_non_runtime_checkable_detected(self) -> None:
-        """Protocol without @runtime_checkable is flagged."""
+        class _Empty(_Parent):
+            pass
 
-        class _P:
-            class Bare(Protocol):
-                def method(self) -> None: ...
+        assert FlextUtilitiesBeartypeEngine.has_nested_namespace(_Empty)
 
-        errors = u.check_protocols_runtime_checkable(_P)
-        assert len(errors) == 1
-        assert "runtime_checkable" in errors[0]
+    def test_plain_class_without_nested_returns_false(self) -> None:
+        class _Bare:
+            x: int = 1
 
-    def test_runtime_checkable_passes(self) -> None:
-        """Protocol with @runtime_checkable passes."""
-
-        class _P:
-            @runtime_checkable
-            class Good(Protocol):
-                def method(self) -> None: ...
-
-        errors = u.check_protocols_runtime_checkable(_P)
-        assert len(errors) == 0
-
-    def test_facade_has_enforced_namespace(self) -> None:
-        """P facade inherits m."""
-        assert issubclass(p, FlextModelsNamespace)
-
-
-# ------------------------------------------------------------------ #
-# Types layer enforcement tests                                        #
-# ------------------------------------------------------------------ #
-
-
-class TestTypesEnforcement:
-    """Verify enforcement on t subclasses."""
-
-    def test_any_in_type_alias_detected(self) -> None:
-        """Any in PEP 695 type alias is flagged."""
-
-        class _T:
-            type Anything = typing.Any | str
-
-        errors = u.check_types_no_any_in_aliases(_T)
-        assert len(errors) == 1
-        assert "Any" in errors[0]
-
-    def test_clean_type_alias_passes(self) -> None:
-        """Type alias without Any passes."""
-
-        class _T:
-            type Name = str | int
-
-        errors = u.check_types_no_any_in_aliases(_T)
-        assert len(errors) == 0
-
-    def test_facade_has_enforced_namespace(self) -> None:
-        """T facade inherits m."""
-        assert issubclass(t, FlextModelsNamespace)
-
-
-# ------------------------------------------------------------------ #
-# Utilities layer enforcement tests                                    #
-# ------------------------------------------------------------------ #
-
-
-class TestUtilitiesEnforcement:
-    """Verify enforcement on u subclasses."""
-
-    def test_instance_method_detected(self) -> None:
-        """Regular instance method is flagged."""
-
-        class _U:
-            def my_method(self, x: int) -> str:
-                return str(x)
-
-        errors = u.check_utilities_method_types(_U)
-        assert len(errors) == 1
-        assert "staticmethod" in errors[0]
-
-    def test_static_method_passes(self) -> None:
-        """@staticmethod passes."""
-
-        class _U:
-            @staticmethod
-            def my_method(x: int) -> str:
-                return str(x)
-
-        errors = u.check_utilities_method_types(_U)
-        assert len(errors) == 0
-
-    def test_classmethod_passes(self) -> None:
-        """@classmethod passes."""
-
-        class _U:
-            @classmethod
-            def my_method(cls, x: int) -> str:
-                return str(x)
-
-        errors = u.check_utilities_method_types(_U)
-        assert len(errors) == 0
-
-    def test_facade_has_enforced_namespace(self) -> None:
-        """U facade inherits m."""
-        assert issubclass(u, FlextModelsNamespace)
-
-
-# ------------------------------------------------------------------ #
-# Cross-layer integration tests                                        #
-# ------------------------------------------------------------------ #
-
-
-class TestAllLayerIntegration:
-    """Verify all facades fire enforcement on subclasses."""
-
-    def test_all_facades_inherit_enforced_namespace(self) -> None:
-        """All 5 facade classes inherit m."""
-        for facade in (c, p, t, u):
-            assert issubclass(
-                facade,
-                FlextModelsNamespace,
-            ), f"{facade.__name__} missing FlextModelsNamespace in MRO"
-
-    def test_downstream_projects_load_cleanly(self) -> None:
-        """Flext-core facades load without any violations."""
-        assert c.__name__ == "TestsFlextCoreConstants"
-        assert m.__name__ == "TestsFlextCoreModels"
-        assert p.__name__ == "TestsFlextCoreProtocols"
-        assert t.__name__ == "TestsFlextCoreTypes"
-        assert u.__name__ == "TestsFlextCoreUtilities"
-
-    def test_exempt_flag_works_across_layers(self) -> None:
-        """_flext_enforcement_exempt disables layer checks."""
-        target = type("_ExemptCls", (), {"_flext_enforcement_exempt": True})
-        assert u._is_layer_exempt(target)
+        assert not FlextUtilitiesBeartypeEngine.has_nested_namespace(_Bare)
