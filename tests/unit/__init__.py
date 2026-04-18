@@ -11,11 +11,28 @@ from flext_core.lazy import (
 
 _LAZY_IMPORTS = merge_lazy_imports(
     (
+        "._enforcement_integration_fixtures",
         "._models",
         "._utilities",
     ),
     build_lazy_import_map(
         {
+            "._enforcement_integration_fixtures.bad_module": (
+                "TestsFlextCoreBadAccessors",
+                "TestsFlextCoreBadAnyField",
+                "TestsFlextCoreBadBareCollection",
+                "TestsFlextCoreBadConstants",
+                "TestsFlextCoreBadFrozen",
+                "TestsFlextCoreBadInlineUnion",
+                "TestsFlextCoreBadMissingDesc",
+                "TestsFlextCoreBadMutableDefault",
+                "TestsFlextCoreBadWorkerSettings",
+            ),
+            "._enforcement_integration_fixtures.clean_module": (
+                "TestsFlextCoreCleanConstants",
+                "TestsFlextCoreCleanModels",
+                "TestsFlextCoreCleanProtocols",
+            ),
             "._models.test_base": ("TestsFlextCoreModelsBase",),
             "._models.test_cqrs": ("TestsFlextCoreModelsCqrs",),
             "._models.test_entity": ("TestFlextModelsEntity",),
@@ -81,6 +98,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestSettingsInheritance",
                 "TestTypesLayerRules",
                 "TestUtilitiesLayerRules",
+            ),
+            ".test_enforcement_integration": (
+                "TestBadModuleFiresExpectedRules",
+                "TestCleanModuleEmitsNothing",
             ),
             ".test_entity_coverage": ("TestEntityCoverageEdgeCases",),
             ".test_enum_utilities_coverage_100": ("TestEnumUtilitiesCoverage",),

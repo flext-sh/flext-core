@@ -1,9 +1,30 @@
-"""Integration fixtures for enforcement validator.
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Enforcement Integration Fixtures package."""
 
-Real modules that exercise every rule in ``c.ENFORCEMENT_RULES`` — imported
-by ``test_enforcement_integration.py`` to validate that the ``__pydantic_init_subclass__``
-hook actually fires the expected warnings on real code.
+from __future__ import annotations
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        ".bad_module": (
+            "TestsFlextCoreBadAccessors",
+            "TestsFlextCoreBadAnyField",
+            "TestsFlextCoreBadBareCollection",
+            "TestsFlextCoreBadConstants",
+            "TestsFlextCoreBadFrozen",
+            "TestsFlextCoreBadInlineUnion",
+            "TestsFlextCoreBadMissingDesc",
+            "TestsFlextCoreBadMutableDefault",
+            "TestsFlextCoreBadWorkerSettings",
+        ),
+        ".clean_module": (
+            "TestsFlextCoreCleanConstants",
+            "TestsFlextCoreCleanModels",
+            "TestsFlextCoreCleanProtocols",
+        ),
+    },
+)
+
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

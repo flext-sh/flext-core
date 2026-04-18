@@ -127,6 +127,13 @@ class FlextConstantsEnforcement:
         "__orig_bases__",
         "__class_getitem__",
         "__pydantic_complete__",
+        # Pydantic v2 class-level contract attributes — NOT constants,
+        # they are framework metadata owned by the BaseModel machinery.
+        "model_config",
+        "model_fields",
+        "model_computed_fields",
+        "model_extra",
+        "model_post_init",
     })
     """Class-level attributes to skip during constants enforcement."""
 

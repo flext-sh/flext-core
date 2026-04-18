@@ -39,7 +39,7 @@ if _t.TYPE_CHECKING:
     from tests.integration.test_examples_execution import TestExamplesExecution
     from tests.integration.test_integration import TestLibraryIntegration
     from tests.integration.test_migration_validation import TestMigrationValidation
-    from tests.integration.test_service import TestService
+    from tests.integration.test_service import TestServiceIntegration
     from tests.integration.test_service_result_property import TestServiceResultProperty
     from tests.integration.test_settings_integration import (
         TestFlextSettingsSingletonIntegration,
@@ -48,6 +48,22 @@ if _t.TYPE_CHECKING:
     from tests.models import TestsFlextCoreModels, m
     from tests.protocols import TestsFlextCoreProtocols, p
     from tests.typings import T, T_co, T_contra, TestsFlextCoreTypes, t
+    from tests.unit._enforcement_integration_fixtures.bad_module import (
+        TestsFlextCoreBadAccessors,
+        TestsFlextCoreBadAnyField,
+        TestsFlextCoreBadBareCollection,
+        TestsFlextCoreBadConstants,
+        TestsFlextCoreBadFrozen,
+        TestsFlextCoreBadInlineUnion,
+        TestsFlextCoreBadMissingDesc,
+        TestsFlextCoreBadMutableDefault,
+        TestsFlextCoreBadWorkerSettings,
+    )
+    from tests.unit._enforcement_integration_fixtures.clean_module import (
+        TestsFlextCoreCleanConstants,
+        TestsFlextCoreCleanModels,
+        TestsFlextCoreCleanProtocols,
+    )
     from tests.unit._models.test_base import TestsFlextCoreModelsBase
     from tests.unit._models.test_cqrs import TestsFlextCoreModelsCqrs
     from tests.unit._models.test_entity import TestFlextModelsEntity
@@ -114,6 +130,10 @@ if _t.TYPE_CHECKING:
         TestTypesLayerRules,
         TestUtilitiesLayerRules,
     )
+    from tests.unit.test_enforcement_integration import (
+        TestBadModuleFiresExpectedRules,
+        TestCleanModuleEmitsNothing,
+    )
     from tests.unit.test_entity_coverage import TestEntityCoverageEdgeCases
     from tests.unit.test_enum_utilities_coverage_100 import TestEnumUtilitiesCoverage
     from tests.unit.test_exceptions import TestExceptions
@@ -158,6 +178,7 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_service import (
         FailingService,
         RaisingValidationService,
+        TestService,
         UserData,
         UserService,
         ValidatingService,
@@ -258,7 +279,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".integration.test_examples_execution": ("TestExamplesExecution",),
             ".integration.test_integration": ("TestLibraryIntegration",),
             ".integration.test_migration_validation": ("TestMigrationValidation",),
-            ".integration.test_service": ("TestService",),
+            ".integration.test_service": ("TestServiceIntegration",),
             ".integration.test_service_result_property": ("TestServiceResultProperty",),
             ".integration.test_settings_integration": (
                 "TestFlextSettingsSingletonIntegration",
@@ -278,6 +299,22 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "T_contra",
                 "TestsFlextCoreTypes",
                 "t",
+            ),
+            ".unit._enforcement_integration_fixtures.bad_module": (
+                "TestsFlextCoreBadAccessors",
+                "TestsFlextCoreBadAnyField",
+                "TestsFlextCoreBadBareCollection",
+                "TestsFlextCoreBadConstants",
+                "TestsFlextCoreBadFrozen",
+                "TestsFlextCoreBadInlineUnion",
+                "TestsFlextCoreBadMissingDesc",
+                "TestsFlextCoreBadMutableDefault",
+                "TestsFlextCoreBadWorkerSettings",
+            ),
+            ".unit._enforcement_integration_fixtures.clean_module": (
+                "TestsFlextCoreCleanConstants",
+                "TestsFlextCoreCleanModels",
+                "TestsFlextCoreCleanProtocols",
             ),
             ".unit._models.test_base": ("TestsFlextCoreModelsBase",),
             ".unit._models.test_cqrs": ("TestsFlextCoreModelsCqrs",),
@@ -345,6 +382,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestTypesLayerRules",
                 "TestUtilitiesLayerRules",
             ),
+            ".unit.test_enforcement_integration": (
+                "TestBadModuleFiresExpectedRules",
+                "TestCleanModuleEmitsNothing",
+            ),
             ".unit.test_entity_coverage": ("TestEntityCoverageEdgeCases",),
             ".unit.test_enum_utilities_coverage_100": ("TestEnumUtilitiesCoverage",),
             ".unit.test_exceptions": ("TestExceptions",),
@@ -389,6 +430,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_service": (
                 "FailingService",
                 "RaisingValidationService",
+                "TestService",
                 "UserData",
                 "UserService",
                 "ValidatingService",
@@ -498,11 +540,13 @@ __all__: list[str] = [
     "TestAliasContainsAny",
     "TestArchitecturalPatterns",
     "TestAutomatedArchitecture",
+    "TestBadModuleFiresExpectedRules",
     "TestBaseModelCoverage",
     "TestBeartypeClawCompatibility",
     "TestBeartypeConf",
     "TestBuildLazyImportMap",
     "TestClassPrefixScope",
+    "TestCleanModuleEmitsNothing",
     "TestCompleteFlextSystemIntegration",
     "TestConstantsLayerRules",
     "TestContainerFullCoverage",
@@ -597,6 +641,7 @@ __all__: list[str] = [
     "TestService100Coverage",
     "TestServiceAdditional",
     "TestServiceBootstrap",
+    "TestServiceIntegration",
     "TestServiceResultProperty",
     "TestSettingsInheritance",
     "TestTypesLayerRules",
@@ -617,6 +662,18 @@ __all__: list[str] = [
     "TestUtilitiesTypeGuardsCoverage100",
     "Testr",
     "TestrCoverage",
+    "TestsFlextCoreBadAccessors",
+    "TestsFlextCoreBadAnyField",
+    "TestsFlextCoreBadBareCollection",
+    "TestsFlextCoreBadConstants",
+    "TestsFlextCoreBadFrozen",
+    "TestsFlextCoreBadInlineUnion",
+    "TestsFlextCoreBadMissingDesc",
+    "TestsFlextCoreBadMutableDefault",
+    "TestsFlextCoreBadWorkerSettings",
+    "TestsFlextCoreCleanConstants",
+    "TestsFlextCoreCleanModels",
+    "TestsFlextCoreCleanProtocols",
     "TestsFlextCoreConstants",
     "TestsFlextCoreConstantsDomain",
     "TestsFlextCoreConstantsErrors",

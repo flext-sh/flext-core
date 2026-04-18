@@ -17,7 +17,7 @@ import pytest
 from tests import m, p, r, s, t, u
 
 
-class TestService:
+class TestServiceIntegration:
     class UserServiceEntity(m.BaseModel):
         """Test user entity model using dataclass."""
 
@@ -40,8 +40,12 @@ class TestService:
         - This pattern separates status from data retrieval
         """
 
-        _users: MutableMapping[str, TestService.UserServiceEntity] = m.PrivateAttr(
-            default_factory=lambda: dict[str, TestService.UserServiceEntity](),
+        _users: MutableMapping[str, TestServiceIntegration.UserServiceEntity] = (
+            m.PrivateAttr(
+                default_factory=lambda: dict[
+                    str, TestServiceIntegration.UserServiceEntity
+                ](),
+            )
         )
         _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)
         _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
@@ -62,7 +66,9 @@ class TestService:
                 return r[bool].fail("User service unavailable")
             return r[bool].ok(True)
 
-        def get_user(self, user_id: str) -> p.Result[TestService.UserServiceEntity]:
+        def get_user(
+            self, user_id: str
+        ) -> p.Result[TestServiceIntegration.UserServiceEntity]:
             """Get user by ID.
 
             Args:
@@ -74,21 +80,25 @@ class TestService:
             """
             self._call_count += 1
             if self._should_fail:
-                return r[TestService.UserServiceEntity].fail("User service unavailable")
+                return r[TestServiceIntegration.UserServiceEntity].fail(
+                    "User service unavailable"
+                )
             if user_id in self._users:
-                return r[TestService.UserServiceEntity].ok(self._users[user_id])
-            default_user = TestService.UserServiceEntity(
+                return r[TestServiceIntegration.UserServiceEntity].ok(
+                    self._users[user_id]
+                )
+            default_user = TestServiceIntegration.UserServiceEntity(
                 unique_id=user_id,
                 name=f"User {user_id}",
                 email=f"user{user_id}@example.com",
                 active=True,
             )
-            return r[TestService.UserServiceEntity].ok(default_user)
+            return r[TestServiceIntegration.UserServiceEntity].ok(default_user)
 
         def set_user_data(
             self,
             user_id: str,
-            user: TestService.UserServiceEntity,
+            user: TestServiceIntegration.UserServiceEntity,
         ) -> None:
             """Set user data for testing.
 
@@ -181,8 +191,8 @@ class TestService:
         name: str,
         version: str,
         temp_dir: str,
-    ) -> TestService.ServiceConfig:
-        return TestService.ServiceConfig(
+    ) -> TestServiceIntegration.ServiceConfig:
+        return TestServiceIntegration.ServiceConfig(
             name=name,
             version=version,
             temp_dir=temp_dir,
@@ -192,7 +202,7 @@ class TestService:
         """Real lifecycle service using s with settings model."""
 
         _initialized: bool = m.PrivateAttr(default_factory=lambda: False)
-        _service_config: TestService.ServiceConfig | None = m.PrivateAttr(
+        _service_config: TestServiceIntegration.ServiceConfig | None = m.PrivateAttr(
             default_factory=lambda: None
         )
         _shutdown_called: bool = m.PrivateAttr(default_factory=lambda: False)
@@ -206,7 +216,9 @@ class TestService:
                 return r[str].ok("initialized")
             return r[str].ok("ready")
 
-        def initialize(self, settings: TestService.ServiceConfig) -> p.Result[str]:
+        def initialize(
+            self, settings: TestServiceIntegration.ServiceConfig
+        ) -> p.Result[str]:
             """Initialize service with settings model.
 
             Args:
@@ -269,7 +281,7 @@ class TestService:
             return self._initialized
 
         @property
-        def service_config(self) -> TestService.ServiceConfig | None:
+        def service_config(self) -> TestServiceIntegration.ServiceConfig | None:
             """Get service configuration."""
             return self._service_config
 

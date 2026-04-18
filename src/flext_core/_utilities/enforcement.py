@@ -93,8 +93,18 @@ class FlextUtilitiesEnforcement:
 
     @staticmethod
     def detect_layer(target: type) -> str | None:
+        """Infer the facade layer from the class name.
+
+        Matches the layer keyword (``Constants`` / ``Models`` / ``Protocols``
+        / ``Types`` / ``Utilities``) anywhere in the class name — not only
+        at the end — so composed facades such as ``FooConstantsSettings``
+        or ``FooProtocolsBase`` still get the correct layer routing.
+        Generic-specialization brackets (``Foo[Bar]``) are stripped first
+        so the search ignores type-parameter noise.
+        """
+        name = target.__name__.partition("[")[0]
         for suffix, layer in c.ENFORCEMENT_NAMESPACE_LAYER_MAP:
-            if target.__name__.endswith(suffix):
+            if suffix in name:
                 return layer
         return None
 
@@ -157,7 +167,10 @@ class FlextUtilitiesEnforcement:
             if top == src:
                 head, _, tail = src.partition("_")
                 return _pascal(src), _pascal(tail or head)
-            return _pascal(top) + _pascal(src), _pascal(top)
+            # Auxiliary root (tests/examples/scripts) — return raw project
+            # prefix only; the outer code prepends the auxiliary prefix.
+            head, _, tail = src.partition("_")
+            return _pascal(src), _pascal(tail or head)
 
         project_prefix, namespace = resolve_project_prefix()
         # Workspace-level auxiliary roots (tests / examples / scripts) live
@@ -265,8 +278,15 @@ class FlextUtilitiesEnforcement:
     def _namespace_items(
         target: type,
         tag: str,
+        effective_layer: str = "",
     ) -> Iterator[tuple[str, tuple[object, ...]]]:
-        """Yield ``(location, args)`` pairs per namespace rule tag."""
+        """Yield ``(location, args)`` pairs per namespace rule tag.
+
+        ``effective_layer`` is the layer inherited from the enclosing
+        ``check()`` call — when ``check()`` recurses into inner classes
+        (for recursive attr rules), the outer layer must be preserved so
+        cross-layer checks don't reset to "" on the inner target.
+        """
         # Dynamic context-based skips — no hardcoded name lists.
         # Pydantic/Generic specializations carry a bracketed ``__name__``
         # (``Foo[int]``) — synthetic runtime artifacts, never user facades.
@@ -294,10 +314,18 @@ class FlextUtilitiesEnforcement:
             return
 
         if tag in {"cross_strenum", "cross_protocol"}:
-            layer = FlextUtilitiesEnforcement.detect_layer(target) or ""
+            # Prefer the layer inherited from the enclosing check() — only
+            # fall back to the target's own detected layer when no context.
+            layer = (
+                effective_layer or FlextUtilitiesEnforcement.detect_layer(target) or ""
+            )
 
             def walk(node: type, path: str) -> Iterator[tuple[str, tuple[object, ...]]]:
                 for name, value in FlextUtilitiesEnforcement._iter_inner(node):
+                    # Skip re-assigned aliases (``Status = c.Status``) — they
+                    # belong to their defining module, not this walk target.
+                    if not ub.is_defined_inside(value, node.__qualname__):
+                        continue
                     full = f"{path}.{name}"
                     yield full, (value, layer)
                     if not isinstance(value, EnumType):
@@ -348,6 +376,10 @@ class FlextUtilitiesEnforcement:
         every row in ``c.ENFORCEMENT_RULES`` through here and pipes the
         result into :meth:`_apply_rule`.
         """
+        # Generic/Pydantic specializations (``Foo[Bar]``) are synthetic
+        # runtime artifacts shared across all categories — skip universally.
+        if "[" in target.__name__:
+            return
         if category is c.EnforcementCategory.FIELD:
             if is_model:
                 yield from FlextUtilitiesEnforcement._field_items(
@@ -367,7 +399,11 @@ class FlextUtilitiesEnforcement:
                 )
             return
         if category is c.EnforcementCategory.NAMESPACE:
-            yield from FlextUtilitiesEnforcement._namespace_items(target, tag)
+            yield from FlextUtilitiesEnforcement._namespace_items(
+                target,
+                tag,
+                effective_layer,
+            )
             return
         if category is c.EnforcementCategory.PROTOCOL_TREE:
             if effective_layer != c.EnforcementLayer.PROTOCOLS.lower():

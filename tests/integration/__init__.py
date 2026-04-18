@@ -23,7 +23,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_examples_execution": ("TestExamplesExecution",),
             ".test_integration": ("TestLibraryIntegration",),
             ".test_migration_validation": ("TestMigrationValidation",),
-            ".test_service": ("TestService",),
+            ".test_service": ("TestServiceIntegration",),
             ".test_service_result_property": ("TestServiceResultProperty",),
             ".test_settings_integration": ("TestFlextSettingsSingletonIntegration",),
             ".test_system": ("TestCompleteFlextSystemIntegration",),
