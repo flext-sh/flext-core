@@ -140,24 +140,14 @@ class FlextTypingContainers:
 
     class ConfigMap(
         RootDictModel[
-            FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel
+            FlextTypingBase.Container
+            | FlextModelsPydantic.BaseModel
+            | FlextTypingBase.RecursiveContainerMapping
+            | FlextTypingBase.RecursiveContainerList
         ]
     ):
         """Configuration container for settings and environment parameters.
 
         Semantically distinct Dict for configuration (not data).
+        Type allows nested structures and models via recursive container types.
         """
-
-        root: Annotated[
-            MutableMapping[
-                str,
-                FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel,
-            ],
-            FlextUtilitiesPydantic.Field(
-                title="Configuration Map",
-                description="Configuration entries keyed by normalized setting names.",
-                examples=[
-                    {"timeout_seconds": 30, "environment": "dev", "debug": False},
-                ],
-            ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=dict)

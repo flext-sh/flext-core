@@ -527,7 +527,9 @@ class FlextUtilitiesBeartypeEngine:
 
             source = Path(src_file).read_text(encoding="utf-8")
 
-            flext_imports = re.findall(r"from\s+(flext_\w+)\s+import\s+([^#\n]+)", source)
+            flext_imports = re.findall(
+                r"from\s+(flext_\w+)\s+import\s+([^#\n]+)", source
+            )
             for _module, imports_str in flext_imports:
                 imports = [i.strip() for i in imports_str.split(",")]
                 for imp in imports:
@@ -551,7 +553,20 @@ class FlextUtilitiesBeartypeEngine:
             module_name = getattr(target, "__module__", "") or ""
             if module_name.startswith("flext_core._"):
                 return _NO_VIOLATION
-            if any(module_name.startswith(f"{pkg}._") for pkg in ["flext_cli", "flext_web", "flext_meltano", "flext_ldap", "flext_api", "flext_auth", "flext_infra", "flext_tests", "flext_observability"]):
+            if any(
+                module_name.startswith(f"{pkg}._")
+                for pkg in [
+                    "flext_cli",
+                    "flext_web",
+                    "flext_meltano",
+                    "flext_ldap",
+                    "flext_api",
+                    "flext_auth",
+                    "flext_infra",
+                    "flext_tests",
+                    "flext_observability",
+                ]
+            ):
                 return _NO_VIOLATION
 
             src_file = inspect.getfile(target)
@@ -763,9 +778,11 @@ class FlextUtilitiesBeartypeEngine:
                 return _NO_VIOLATION
 
             non_type_checking_section = source.split("if TYPE_CHECKING:")[0]
-            type_checking_section = source.split("if TYPE_CHECKING:")[1] if len(
-                source.split("if TYPE_CHECKING:")
-            ) > 1 else ""
+            type_checking_section = (
+                source.split("if TYPE_CHECKING:")[1]
+                if len(source.split("if TYPE_CHECKING:")) > 1
+                else ""
+            )
 
             non_tc_imports = re.findall(
                 r"from\s+\.(\w+)\s+import\s+([^#\n]+)",

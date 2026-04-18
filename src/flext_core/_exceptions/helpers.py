@@ -111,21 +111,17 @@ class FlextExceptionsHelpers:
         excluded = excluded_keys or frozenset()
         context_map: t.ConfigMap = t.ConfigMap(root={})
         if context:
-            context_map.update({
-                k: FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(v),
-                )
-                for k, v in context.items()
-                if k not in excluded
-            })
+            for k, v in context.items():
+                if k not in excluded:
+                    context_map.root[k] = FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(v),
+                    )
         if extra_kwargs:
-            context_map.update({
-                k: FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(v),
-                )
-                for k, v in extra_kwargs.items()
-                if k not in excluded
-            })
+            for k, v in extra_kwargs.items():
+                if k not in excluded:
+                    context_map.root[k] = FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(v),
+                    )
         return context_map
 
     @staticmethod
@@ -137,21 +133,17 @@ class FlextExceptionsHelpers:
         """Build unnormalized parameter map for strict params validation."""
         param_map: t.ConfigMap = t.ConfigMap(root={})
         if context:
-            param_map.update({
-                k: FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(v),
-                )
-                for k, v in context.items()
-                if k in keys
-            })
+            for k, v in context.items():
+                if k in keys:
+                    param_map.root[k] = FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(v),
+                    )
         if extra_kwargs:
-            param_map.update({
-                k: FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(v),
-                )
-                for k, v in extra_kwargs.items()
-                if k in keys
-            })
+            for k, v in extra_kwargs.items():
+                if k in keys:
+                    param_map.root[k] = FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(v),
+                    )
         return param_map
 
     @staticmethod

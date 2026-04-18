@@ -10,7 +10,10 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".base": ("FlextConstantsBase",),
         ".cqrs": ("FlextConstantsCqrs",),
         ".domain": ("FlextConstantsDomain",),
-        ".enforcement": ("FlextConstantsEnforcement",),
+        ".enforcement": (
+            "FlextConstantsEnforcement",
+            "FlextMroViolation",
+        ),
         ".errors": ("FlextConstantsErrors",),
         ".infrastructure": ("FlextConstantsInfrastructure",),
         ".mixins": ("FlextConstantsMixins",),

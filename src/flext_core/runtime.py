@@ -380,8 +380,8 @@ class FlextRuntime:
     @staticmethod
     def normalize_to_container(
         val: t.RuntimeData | t.ConfigMap,
-    ) -> t.RecursiveContainer | t.ModelCarrier:
-        """Normalize any value to t.RecursiveContainer | BaseModel.
+    ) -> t.ValueOrModel:
+        """Normalize any value to ValueOrModel.
 
         Args:
             val: Value to normalize
@@ -395,8 +395,7 @@ class FlextRuntime:
                 return ""
             case t.ConfigMap():
                 entries = [(k, v) for k, v in val.root.items()]
-                normalized_mapping = FlextRuntime._normalize_dict_entries(entries)
-                return t.Dict(root=normalized_mapping)
+                return FlextRuntime._normalize_dict_entries(entries)
             case BaseModel():
                 return val
             case Path():
@@ -408,19 +407,18 @@ class FlextRuntime:
                     entries = [(k, v) for k, v in val.root.items()]
                 else:
                     entries = [(str(k), v) for k, v in val.items()]
-                normalized_mapping = FlextRuntime._normalize_dict_entries(entries)
-                return t.Dict(root=normalized_mapping)
+                return FlextRuntime._normalize_dict_entries(entries)
             case _ if FlextUtilitiesGuardsTypeCore.list_like(val):
                 normalized_list: list[t.RecursiveContainer] = []
                 for item_raw in val:
                     item = FlextRuntime.normalize_to_container(item_raw)
-                    if isinstance(item, (t.ConfigMap, t.Dict)):
-                        normalized_list.append(str(item.root))
-                    elif isinstance(item, t.ObjectList):
-                        normalized_list.append(str(list(item.root)))
+                    if isinstance(item, (dict, list)):
+                        normalized_list.append(str(item))
                     elif isinstance(item, (str, int, float, bool, datetime, Path)):
                         normalized_list.append(item)
-                return t.ObjectList(root=normalized_list)
+                    else:
+                        normalized_list.append(item)
+                return normalized_list
             case _:
                 return str(val)
 

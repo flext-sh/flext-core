@@ -16,7 +16,10 @@ if _t.TYPE_CHECKING:
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.domain import FlextConstantsDomain
-    from flext_core._constants.enforcement import FlextConstantsEnforcement
+    from flext_core._constants.enforcement import (
+        FlextConstantsEnforcement,
+        FlextMroViolation,
+    )
     from flext_core._constants.errors import FlextConstantsErrors
     from flext_core._constants.infrastructure import FlextConstantsInfrastructure
     from flext_core._constants.mixins import FlextConstantsMixins
@@ -171,7 +174,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._constants.base": ("FlextConstantsBase",),
             "._constants.cqrs": ("FlextConstantsCqrs",),
             "._constants.domain": ("FlextConstantsDomain",),
-            "._constants.enforcement": ("FlextConstantsEnforcement",),
+            "._constants.enforcement": (
+                "FlextConstantsEnforcement",
+                "FlextMroViolation",
+            ),
             "._constants.errors": ("FlextConstantsErrors",),
             "._constants.infrastructure": ("FlextConstantsInfrastructure",),
             "._constants.mixins": ("FlextConstantsMixins",),
@@ -411,6 +417,7 @@ __all__: list[str] = [
     "FlextModelsRegistry",
     "FlextModelsService",
     "FlextModelsSettings",
+    "FlextMroViolation",
     "FlextProtocols",
     "FlextProtocolsBase",
     "FlextProtocolsContainer",
