@@ -12,12 +12,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-import tomllib
 import warnings
 from collections.abc import Callable, Iterator, Mapping
 from enum import EnumType
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from pydantic.fields import FieldInfo
 
@@ -129,13 +128,8 @@ class FlextUtilitiesEnforcement:
                 for child in src.iterdir():
                     if child.is_dir() and (child / "__init__.py").exists():
                         return child.name
-            try:
-                with pyproject.open("rb") as fh:
-                    data = tomllib.load(fh)
-            except (OSError, tomllib.TOMLDecodeError):
-                return None
-            name = data.get("project", {}).get("name")
-            return name.replace("-", "_") if isinstance(name, str) else None
+            meta = _ump.read_project_metadata(parent)
+            return meta.package_name
         return None
 
     @staticmethod
@@ -227,9 +221,9 @@ class FlextUtilitiesEnforcement:
         items: Iterator[tuple[str, tuple[object, ...]]],
     ) -> list[me.Violation]:
         """Call ``ub.check_<tag>(*args)`` per item; emit violation on non-None."""
-        predicate = cast(
-            "Callable[..., Mapping[str, str] | None]",
-            getattr(ub, f"check_{tag}"),
+        predicate: Callable[..., Mapping[str, str] | None] = getattr(
+            ub,
+            f"check_{tag}",
         )
         return [
             FlextUtilitiesEnforcement._violation(tag, location, qualname, detail)
@@ -270,9 +264,8 @@ class FlextUtilitiesEnforcement:
         accept = FlextUtilitiesEnforcement._attr_filter(layer)
         qn = target.__qualname__
         for name, value in vars(target).items():
-            rc = cast("t.RecursiveContainer", value)
-            if accept(name, rc):
-                yield f"{qn}.{name}", (name, rc)
+            if accept(name, value):
+                yield f"{qn}.{name}", (name, value)
 
     @staticmethod
     def _namespace_items(
@@ -381,9 +374,9 @@ class FlextUtilitiesEnforcement:
         if "[" in target.__name__:
             return
         if category is c.EnforcementCategory.FIELD:
-            if is_model:
+            if is_model and issubclass(target, mp.BaseModel):
                 yield from FlextUtilitiesEnforcement._field_items(
-                    cast("type[mp.BaseModel]", target),
+                    target,
                     tag,
                 )
             return

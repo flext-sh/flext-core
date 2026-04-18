@@ -60,7 +60,12 @@ class FlextTypesServices:
         | ModelCarrier
     )
     type RuntimeData = ValueOrModel | FlextTypesServices.MetadataValue
-    type RuntimeAtomic = FlextTypingBase.Container | ModelCarrier
+    type RuntimeAtomic = (
+        FlextTypingBase.Container
+        | ModelCarrier
+        | ContainerCarrier
+        | FlextTypingContainers.ObjectList
+    )
 
     type BootstrapInput = ModelCarrier | RecursiveMappingCarrier | None
 

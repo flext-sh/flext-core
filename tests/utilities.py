@@ -307,10 +307,7 @@ class TestsFlextCoreUtilities(u):
 
             @staticmethod
             def make[T](service_type: type[T], **kwargs: t.Scalar) -> T:
-                instance = service_type()
-                for key, value in kwargs.items():
-                    object.__setattr__(instance, key, value)
-                return instance
+                return service_type(**kwargs)
 
             @staticmethod
             def create_user_service(

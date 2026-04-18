@@ -23,7 +23,7 @@ from typing import Annotated, ClassVar
 import pytest
 
 from flext_tests import tm
-from tests import m, r, t, u
+from tests import m, t, u
 
 
 class TestUtilitiesCollectionCoverage:
@@ -626,8 +626,6 @@ class TestUtilitiesCollectionCoverage:
     )
     def test_map(self, scenario: MapScenario) -> None:
         """Test map with various scenarios."""
-        if isinstance(scenario.items, r):
-            pytest.skip("Collection.map() does not handle r items")
         result = u.map(scenario.items, scenario.mapper)
         assert result == scenario.expected_result
 

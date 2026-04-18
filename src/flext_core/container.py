@@ -875,10 +875,9 @@ class FlextContainer(p.ContainerLifecycle):
         Note: Core bootstrap uses internal DI-aware checks so public registration
         helpers can remain focused on user-defined names.
         """
-        if (
-            not self._has_internal_registration(str(c.Directory.CONFIG))
-            and u.registerable_service(self._config)
-        ):
+        if not self._has_internal_registration(
+            str(c.Directory.CONFIG)
+        ) and u.registerable_service(self._config):
             _ = self.bind(c.Directory.CONFIG, self._config)
             self._internal_registrations.add(str(c.Directory.CONFIG))
         if not self._has_internal_registration(str(c.ServiceName.LOGGER)):
@@ -887,10 +886,9 @@ class FlextContainer(p.ContainerLifecycle):
                 lambda: u.fetch_logger(c.DEFAULT_LOGGER_MODULE),
             )
             self._internal_registrations.add(str(c.ServiceName.LOGGER))
-        if (
-            not self._has_internal_registration(str(c.FIELD_CONTEXT))
-            and u.registerable_service(self._context)
-        ):
+        if not self._has_internal_registration(
+            str(c.FIELD_CONTEXT)
+        ) and u.registerable_service(self._context):
             _ = self.bind(c.FIELD_CONTEXT, self._context)
             self._internal_registrations.add(str(c.FIELD_CONTEXT))
         if not self._has_internal_registration(str(c.ServiceName.COMMAND_BUS)):

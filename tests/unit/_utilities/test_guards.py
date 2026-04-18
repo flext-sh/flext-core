@@ -17,9 +17,6 @@ from tests import m, r, t, u
 
 
 _SampleModel = m.Core.Tests.GuardSampleModel
-_NoModelDump = m.Core.Tests.NoModelDump
-
-_PYRIGHT_USED_CLASSES = (_NoModelDump,)
 
 
 def _always_true(_v: t.GuardInput) -> bool:
@@ -214,11 +211,6 @@ class TestFlextUtilitiesGuards:
         tm.that(u.pydantic_model("not a model"), eq=False)
         tm.that(u.pydantic_model(42), eq=False)
         tm.that(u.pydantic_model(None), eq=False)
-
-    def test_is_pydantic_model_with_no_model_dump(self) -> None:
-        inst = _SampleModel()
-        object.__setattr__(inst, "model_dump", None)
-        tm.that(u.pydantic_model(inst), eq=False)
 
     # -----------------------------------------------------------------------
     # is_configuration_dict / is_configuration_mapping

@@ -379,23 +379,6 @@ class TestsFlextCoreModelsMixins:
             """Initialize mutable t.RecursiveContainer."""
             self.value = value
 
-    class ImmutableObj:
-        """Immutable t.RecursiveContainer with custom __setattr__."""
-
-        _frozen: bool = True
-
-        def __init__(self, value: int) -> None:
-            """Initialize immutable t.RecursiveContainer."""
-            object.__setattr__(self, "value", value)
-
-        @override
-        def __setattr__(self, name: str, value: t.ContainerValue) -> None:
-            """Prevent attribute setting if frozen."""
-            if self._frozen:
-                msg = c.Core.Tests.TestErrors.OBJECT_IS_FROZEN
-                raise AttributeError(msg)
-            object.__setattr__(self, name, value)
-
     class NoSettingsNoSetattr:
         """Object without model_config or __setattr__."""
 

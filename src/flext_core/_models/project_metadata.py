@@ -75,6 +75,13 @@ class FlextModelsProjectMetadata:
             str,
             Field(default="", description="Project homepage URL."),
         ] = ""
+        requires_python: Annotated[
+            str,
+            Field(
+                default="",
+                description="Extracted Python version from requires-python (e.g. '3.13').",
+            ),
+        ] = ""
 
         @property
         def package_name(self) -> str:
@@ -291,9 +298,7 @@ class FlextModelsProjectMetadata:
                 description="[tool.flext.project] sub-table.",
             ),
         ] = Field(
-            default_factory=lambda: (
-                FlextModelsProjectMetadata.ProjectToolFlextProject()
-            )
+            default_factory=lambda: FlextModelsProjectMetadata.ProjectToolFlextProject()
         )
         namespace: Annotated[
             FlextModelsProjectMetadata.ProjectToolFlextNamespace,
@@ -317,9 +322,7 @@ class FlextModelsProjectMetadata:
                 description="[tool.flext.docs] sub-table.",
             ),
         ] = Field(
-            default_factory=lambda: (
-                FlextModelsProjectMetadata.ProjectToolFlextDocs()
-            )
+            default_factory=lambda: FlextModelsProjectMetadata.ProjectToolFlextDocs()
         )
         aliases: Annotated[
             FlextModelsProjectMetadata.ProjectToolFlextAliases,
@@ -330,7 +333,5 @@ class FlextModelsProjectMetadata:
                 description="[tool.flext.aliases] sub-table.",
             ),
         ] = Field(
-            default_factory=lambda: (
-                FlextModelsProjectMetadata.ProjectToolFlextAliases()
-            )
+            default_factory=lambda: FlextModelsProjectMetadata.ProjectToolFlextAliases()
         )

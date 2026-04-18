@@ -502,5 +502,121 @@ class FlextUtilitiesBeartypeEngine:
                 return _NO_VIOLATION
         return {"name": target.__name__}
 
+    # -----------------------------------------------------------------------
+    # R1–R10 MRO compliance checks
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def check_no_concrete_namespace_import(
+        _target: type,
+    ) -> Mapping[str, str] | None:
+        """R1, R3: Reject bare Flext* class imports in canonical files.
+
+        Canonical files (typings, models, protocols, utilities, constants)
+        must import ONLY aliases (c, m, t, u, p) from parent, never concrete
+        ``FlextXxxYyy`` classes. Only permitted exception: Pattern-B utilities
+        must import FlextPeerXxx concrete class for second parent.
+        """
+        # Runtime placeholder — actual AST check lives in enforcement.py
+        return _NO_VIOLATION
+
+    @staticmethod
+    def check_no_pydantic_consumer_import(
+        _target: type,
+    ) -> Mapping[str, str] | None:
+        """R2: Reject bare pydantic imports in consumers.
+
+        Only flext-core._* modules and flext-*._* base pyramids may import
+        from pydantic. All consumer code must use u.*, m.* facades from parent.
+        """
+        # Runtime placeholder — actual AST check lives in enforcement.py
+        return _NO_VIOLATION
+
+    @staticmethod
+    def check_facade_base_is_alias_or_peer(
+        _target: type,
+    ) -> Mapping[str, str] | None:
+        """R4, R5: Facade class bases must be alias or peer concrete class.
+
+        Pattern A: class FlextXxxTypes(t):
+        Pattern B: class FlextQualityTypes(t, FlextWebTypes):
+        """
+        # Runtime placeholder — actual check lives in enforcement.py
+        return _NO_VIOLATION
+
+    @staticmethod
+    def check_alias_first_multi_parent(
+        _target: type,
+    ) -> Mapping[str, str] | None:
+        """R5: Multi-parent facades must have alias as first base.
+
+        MRO C3 linearization requires alias (FlextCliTypes) before peer
+        (FlextWebTypes) to avoid ambiguity resolution failures.
+        """
+        # Runtime placeholder — actual check lives in enforcement.py
+        return _NO_VIOLATION
+
+    @staticmethod
+    def check_alias_rebound_at_module_end(
+        _target: type,
+    ) -> Mapping[str, str] | None:
+        """R6: Module must rebind the canonical alias at end-of-file.
+
+        After class definition, module must end with: t = FlextXxxTypes
+        to establish the public contract.
+        """
+        # Runtime placeholder — actual check lives in enforcement.py
+        return _NO_VIOLATION
+
+    @staticmethod
+    def check_no_redundant_inner_namespace(
+        _target: type,
+    ) -> Mapping[str, str] | None:
+        """R8: No redundant inner namespace re-inheritance.
+
+        If parent already exposes a namespace (e.g., t.Cli from FlextCliTypes),
+        the child must NOT redefine it locally with empty body.
+        """
+        # Runtime placeholder — actual check lives in enforcement.py
+        return _NO_VIOLATION
+
+    @staticmethod
+    def check_no_self_root_import_in_core_files(
+        _target: type,
+    ) -> Mapping[str, str] | None:
+        """R7: Canonical files must not import aliases from own package.
+
+        typings.py, models.py, protocols.py, utilities.py, constants.py must
+        import aliases from the PARENT package, never from their own package.
+        This prevents circular initialization during lazy loading.
+        """
+        # Runtime placeholder — actual check lives in enforcement.py
+        return _NO_VIOLATION
+
+    @staticmethod
+    def check_sibling_models_type_checking(
+        _target: type,
+    ) -> Mapping[str, str] | None:
+        """R9: Sibling _models/* imports used only in annotations go under TYPE_CHECKING.
+
+        If a class from _models/sibling.py is referenced only in an Annotated[...],
+        that import must be guarded by `if TYPE_CHECKING:`.
+        """
+        # Runtime placeholder — actual check lives in enforcement.py
+        return _NO_VIOLATION
+
+    @staticmethod
+    def check_utilities_explicit_class_when_self_ref(
+        _target: type,
+    ) -> Mapping[str, str] | None:
+        """R10: utilities.py multi-parent must use explicit class base, not alias.
+
+        When a utilities.py method calls u.method() and u is rebound to the
+        local class, pyrefly requires the first base to be the explicit parent
+        class name, not the alias, to properly resolve the MRO.
+        """
+        # Runtime placeholder — actual check lives in enforcement.py
+        return _NO_VIOLATION
+
 
 __all__: list[str] = ["FlextUtilitiesBeartypeEngine"]

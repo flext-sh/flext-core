@@ -75,9 +75,7 @@ class TestDeriveTierFacadeName:
             ("flext-core", "tests", "TestsFlext"),
         ],
     )
-    def test_derives_facade(
-        self, project_name: str, tier: str, expected: str
-    ) -> None:
+    def test_derives_facade(self, project_name: str, tier: str, expected: str) -> None:
         assert up.derive_tier_facade_name(project_name, tier) == expected
 
     def test_unknown_tier_rejected(self) -> None:

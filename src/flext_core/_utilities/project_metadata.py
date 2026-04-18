@@ -61,14 +61,21 @@ class FlextUtilitiesProjectMetadata:
 
     @staticmethod
     def derive_class_stem(project_name: str) -> str:
-        """Return the canonical PascalCase class stem for a project name."""
+        """Return the canonical PascalCase class stem for a project name.
+
+        Accepts either kebab-case (``flext-core``) or snake-case
+        (``flext_core``) — inputs are normalized before the
+        ``SPECIAL_NAME_OVERRIDES`` lookup so that the SSOT is robust to
+        both Python package names and pyproject project names.
+        """
         if not project_name:
             msg = "empty project name"
             raise ValueError(msg)
-        override = _k.SPECIAL_NAME_OVERRIDES.get(project_name)
+        normalized = project_name.replace("_", "-").lower()
+        override = _k.SPECIAL_NAME_OVERRIDES.get(normalized)
         if override is not None:
             return override
-        return FlextUtilitiesProjectMetadata.pascalize(project_name)
+        return FlextUtilitiesProjectMetadata.pascalize(normalized)
 
     @staticmethod
     def derive_tier_facade_name(project_name: str, tier: str) -> str:
@@ -85,9 +92,7 @@ class FlextUtilitiesProjectMetadata:
     @staticmethod
     def _load_pyproject_toml(root: Path) -> Mapping[str, Any]:
         """Load and return the parsed pyproject.toml under ``root``."""
-        pyproject = (
-            root / FlextUtilitiesProjectMetadata.PYPROJECT_FILENAME
-        )
+        pyproject = root / FlextUtilitiesProjectMetadata.PYPROJECT_FILENAME
         if not pyproject.is_file():
             msg = (
                 f"{FlextUtilitiesProjectMetadata.PYPROJECT_FILENAME} "
@@ -117,13 +122,17 @@ class FlextUtilitiesProjectMetadata:
             license_text = str(license_field)
         authors_raw = project.get("authors") or ()
         authors = tuple(
-            str(entry.get("name", ""))
-            if isinstance(entry, Mapping)
-            else str(entry)
+            str(entry.get("name", "")) if isinstance(entry, Mapping) else str(entry)
             for entry in authors_raw
         )
         urls = project.get("urls") or {}
         url = str(urls.get("Homepage", "")) if isinstance(urls, Mapping) else ""
+        requires_python_raw = project.get("requires-python", "")
+        requires_python = (
+            str(requires_python_raw).lstrip(">= ").split(",")[0].split("<")[0].strip()
+            if requires_python_raw
+            else ""
+        )
         return _m.ProjectMetadata(
             name=str(project["name"]),
             version=str(project["version"]),
@@ -132,6 +141,7 @@ class FlextUtilitiesProjectMetadata:
             description=str(project.get("description", "")),
             authors=authors,
             url=url,
+            requires_python=requires_python,
         )
 
     @staticmethod

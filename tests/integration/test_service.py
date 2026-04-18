@@ -261,17 +261,6 @@ class TestServiceIntegration:
             fail_init: bool = False,
             fail_shutdown: bool = False,
         ) -> None:
-            """Set failure modes for testing.
-
-            Business Rule: Uses object.__setattr__ to modify PrivateAttr fields
-            in frozen Pydantic models. This is the correct pattern for mutable
-            state in frozen models per Pydantic v2 advanced usage.
-
-            Args:
-                fail_init: Whether initialization should fail.
-                fail_shutdown: Whether shutdown should fail.
-
-            """
             self._should_fail_init = fail_init
             self._should_fail_shutdown = fail_shutdown
 

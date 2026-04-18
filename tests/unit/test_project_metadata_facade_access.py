@@ -21,14 +21,14 @@ class TestFacadeFlatSsotAccess:
         assert "tool.flext.project" in c.MANAGED_PYPROJECT_KEYS
 
     def test_m_models_flat(self) -> None:
-        assert m.ProjectMetadata is not None  # type: ignore[truthy-bool]
-        assert m.ProjectNamespaceConfig is not None  # type: ignore[truthy-bool]
-        assert m.ProjectToolFlext is not None  # type: ignore[truthy-bool]
+        assert isinstance(m.ProjectMetadata, type)
+        assert isinstance(m.ProjectNamespaceConfig, type)
+        assert isinstance(m.ProjectToolFlext, type)
 
     def test_p_protocols_flat(self) -> None:
-        assert p.ProjectMetadataReader is not None  # type: ignore[truthy-bool]
-        assert p.ProjectClassStemDeriver is not None  # type: ignore[truthy-bool]
-        assert p.ProjectTierFacadeNamer is not None  # type: ignore[truthy-bool]
+        assert isinstance(p.ProjectMetadataReader, type)
+        assert isinstance(p.ProjectClassStemDeriver, type)
+        assert isinstance(p.ProjectTierFacadeNamer, type)
 
     def test_t_types_flat(self) -> None:
         assert hasattr(t, "ProjectAliasName")

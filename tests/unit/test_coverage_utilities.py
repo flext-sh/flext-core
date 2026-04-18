@@ -243,10 +243,8 @@ class Testu(u.Core.Tests.Contract):
         elif method_name == "generate_event_id":
             result = u.generate("event")
         else:
-            method = getattr(u, method_name, None)
-            if method is None:
-                pytest.skip(f"Method {method_name} not available")
-            result = method()
+            msg = f"Unhandled method_name in test: {method_name!r}"
+            raise AssertionError(msg)
         tm.that(result, is_=str)
         tm.that(len(result), gt=0)
         if prefix:

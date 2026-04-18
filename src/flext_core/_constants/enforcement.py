@@ -15,6 +15,16 @@ from types import MappingProxyType
 from typing import Final
 
 
+class FlextMroViolation(UserWarning):
+    """MRO namespace compliance violation (R1–R10 rules).
+
+    Emitted when a project violates canonical import shapes, facade patterns,
+    or namespace rules defined in AGENTS.md §2.2 and §4.
+
+    Route with: `python -W error::FlextMroViolation` to fail on MRO violations.
+    """
+
+
 class FlextConstantsEnforcement:
     """Constants governing Pydantic v2 enforcement behavior."""
 
@@ -109,7 +119,7 @@ class FlextConstantsEnforcement:
     """Derived view: collection names used by annotation-origin checks."""
 
     ENFORCEMENT_MUTABLE_RUNTIME_TYPES: Final[tuple[type, ...]] = tuple(
-        ENFORCEMENT_FORBIDDEN_COLLECTIONS
+        ENFORCEMENT_FORBIDDEN_COLLECTIONS,
     )
     """Derived view: concrete types used by ``isinstance`` checks."""
 
@@ -408,6 +418,70 @@ class FlextConstantsEnforcement:
             '"{name}" must inherit FlextSettings (AGENTS.md §2.6)',
             "Add FlextSettings to the MRO; remove BaseModel/BaseSettings bases.",
         ),
+        # R1–R10 MRO compliance rules
+        "no_concrete_namespace_import": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            "bare Flext* class import FORBIDDEN (R1, R3)",
+            "Import alias (t, m, c, u, p) from parent; use in class bases.",
+        ),
+        "no_pydantic_consumer_import": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            "bare pydantic import FORBIDDEN (R2)",
+            "Use u.Field(), m.BaseModel, m.ConfigDict, m.TypeAdapter, u.model_validator, u.field_validator, u.computed_field, u.PrivateAttr from parent facade.",
+        ),
+        "facade_base_is_alias_or_peer": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            "facade class base must be alias or peer concrete class (R4, R5)",
+            "Use class Base(t): for Pattern A; class Base(t, FlextPeerXxx): for Pattern B.",
+        ),
+        "alias_first_multi_parent": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            "multi-parent facade must have alias first in MRO (R5)",
+            "Order bases: alias first (t), then concrete peer (FlextPeerXxx).",
+        ),
+        "alias_rebound_at_module_end": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            "module must rebind alias at end (R6)",
+            "Add {rebind_form} as final statement (e.g., t = FlextxxxTypes).",
+        ),
+        "no_redundant_inner_namespace": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.BEST_PRACTICES,
+            "redundant inner namespace re-inheritance (R8)",
+            "Remove empty inner class — MRO already exposes it from parent.",
+        ),
+        "no_self_root_import_in_core_files": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            "same-package root import in canonical file (R7)",
+            "Import alias from parent package, not own package.",
+        ),
+        "sibling_models_type_checking": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.BEST_PRACTICES,
+            "sibling _models/* import used only in annotation must be TYPE_CHECKING (R9)",
+            "Wrap annotation-only imports under `if TYPE_CHECKING:`.",
+        ),
+        "utilities_explicit_class_when_self_ref": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.UTILITIES,
+            EnforcementSeverity.BEST_PRACTICES,
+            "utilities.py with self-referencing method must use explicit class base (R10)",
+            "Use class FlextXxxUtilities(FlextParentUtilities, FlextPeerUtilities): for parent (not alias).",
+        ),
     })
     """Rule registry: tag → (category, layer, severity, problem, fix)."""
 
@@ -415,3 +489,60 @@ class FlextConstantsEnforcement:
         "const_mutable",
     })
     """Tags that must recurse into inner namespace classes during scanning."""
+
+    ENFORCEMENT_CANONICAL_FILES: Final[frozenset[str]] = frozenset({
+        "typings.py",
+        "models.py",
+        "protocols.py",
+        "utilities.py",
+        "constants.py",
+    })
+    """The five canonical facade files per project (AGENTS.md §2.2)."""
+
+    ENFORCEMENT_PYDANTIC_ALLOWED_MODULES: Final[frozenset[str]] = frozenset({
+        "flext_core._models",
+        "flext_core._utilities",
+        "flext_core._protocols",
+        "flext_core._constants",
+        "flext_core._typings",
+    })
+    """Whitelist of modules permitted to import pydantic directly (R2 exemption)."""
+
+    ENFORCEMENT_MRO_ALIAS_MAP: Final[Mapping[str, frozenset[str]]] = MappingProxyType({
+        "flext_core": frozenset({
+            "c",
+            "m",
+            "t",
+            "u",
+            "p",
+            "r",
+            "s",
+            "x",
+            "d",
+            "e",
+            "h",
+        }),
+        "flext_cli": frozenset({"c", "m", "t", "u", "p", "r", "s"}),
+        "flext_web": frozenset({"c", "m", "t", "u", "p", "r", "s"}),
+        "flext_meltano": frozenset({"c", "m", "t", "u", "p", "r", "s"}),
+        "flext_api": frozenset({"c", "m", "t", "u", "p"}),
+        "flext_auth": frozenset({"c", "m", "t", "u", "p"}),
+        "flext_grpc": frozenset({"c", "m", "t", "u", "p"}),
+        "flext_infra": frozenset({"c", "m", "t", "u", "p"}),
+        "flext_tests": frozenset({"c", "m", "t", "u", "p"}),
+        "flext_plugin": frozenset({"c", "m", "t", "u", "p"}),
+        "flext_observability": frozenset({"c", "m", "t", "u", "p"}),
+        "flext_ldap": frozenset({"c", "m", "t", "u", "p"}),
+        "flext_ldif": frozenset({"c", "m", "t", "u", "p"}),
+        "flext_db_oracle": frozenset({"c", "m", "t", "u", "p"}),
+        "flext_oracle_oic": frozenset({"c", "m", "t", "u", "p"}),
+        "flext_oracle_wms": frozenset({"c", "m", "t", "u", "p"}),
+        "flext_quality": frozenset({"c", "m", "t", "u", "p"}),
+        "tests": frozenset({"c", "m", "t", "u", "p"}),
+    })
+    """Expected canonical aliases per project package."""
+
+    ENFORCEMENT_PATTERN_B_UTILITIES_WHITELIST: Final[frozenset[str]] = frozenset({
+        "flext_quality",
+    })
+    """Projects where utilities.py legitimately uses explicit-class base (R10)."""

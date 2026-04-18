@@ -17,32 +17,45 @@ if TYPE_CHECKING:
 
 
 class FlextVersion:
-    """Package version and metadata information.
+    """Package version and metadata — SSOT base class.
 
-    Provides version information and package metadata using standard library
-    metadata extraction.
+    Subclasses override only ``_metadata``.  ``__init_subclass__``
+    recomputes every derived attribute via MRO — zero duplication.
     """
 
     _metadata: PackageMetadata | t.StrMapping = metadata("flext-core")
-    __version__ = _metadata["Version"]
-    __version_info__ = tuple(
+
+    # -- Base-class derivation (inline; subclass derivation via __init_subclass__) --
+    __version__: str = str(_metadata["Version"])
+    __version_info__: tuple[int | str, ...] = tuple(
         int(part) if part.isdigit() else part for part in __version__.split(".")
     )
-    __title__ = _metadata["Name"]
-    __description__ = _metadata.get("Summary", "")
-    __author__ = _metadata.get("Author", "")
-    __author_email__ = _metadata.get("Author-Email", "")
-    __license__ = _metadata.get("License", "")
-    __url__ = _metadata.get("Home-Page", "")
+    __title__: str = str(_metadata.get("Name", ""))
+    __description__: str = str(_metadata.get("Summary", ""))
+    __author__: str = str(_metadata.get("Author", ""))
+    __author_email__: str = str(_metadata.get("Author-Email", ""))
+    __license__: str = str(_metadata.get("License", ""))
+    __url__: str = str(_metadata.get("Home-Page", ""))
+
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        """Recompute derived attributes when a subclass overrides ``_metadata``."""
+        super().__init_subclass__(**kwargs)
+        if "_metadata" in cls.__dict__:
+            m = cls._metadata
+            cls.__version__ = str(m["Version"])
+            cls.__version_info__ = tuple(
+                int(p) if p.isdigit() else p for p in cls.__version__.split(".")
+            )
+            cls.__title__ = str(m.get("Name", ""))
+            cls.__description__ = str(m.get("Summary", ""))
+            cls.__author__ = str(m.get("Author", ""))
+            cls.__author_email__ = str(m.get("Author-Email", ""))
+            cls.__license__ = str(m.get("License", ""))
+            cls.__url__ = str(m.get("Home-Page", ""))
 
     @classmethod
     def resolve_package_info(cls) -> t.StrMapping:
-        """Get comprehensive package information dictionary.
-
-        Returns:
-            t.StrMapping: Metadata including name, version, author, license, and url.
-
-        """
+        """Get comprehensive package information dictionary."""
         return {
             "name": cls.__title__,
             "version": cls.__version__,
@@ -55,44 +68,17 @@ class FlextVersion:
 
     @classmethod
     def resolve_version_info(cls) -> tuple[int | str, ...]:
-        """Get package version as comparison-friendly tuple.
-
-        Returns:
-            tuple[int | str, ...]: Version tuple for comparison.
-
-        Notes:
-            Each element is either an integer (numeric version-segment) or a
-            string (pre-release identifier).
-
-        """
+        """Get package version as comparison-friendly tuple."""
         return cls.__version_info__
 
     @classmethod
     def resolve_version_string(cls) -> str:
-        """Get package version as human-readable string.
-
-        Returns:
-            str: Semantic version string.
-
-        Notes:
-            This follows PEP 440 semantic versioning.
-
-        """
+        """Get package version as human-readable string."""
         return cls.__version__
 
     @classmethod
     def version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
-        """Check if current version meets minimum version requirement.
-
-        Args:
-            major: Major version to compare.
-            minor: Minor version to compare.
-            patch: Patch version to compare.
-
-        Returns:
-            bool: True if current version is greater or equal to provided version.
-
-        """
+        """Check if current version meets minimum version requirement."""
         return cls.__version_info__ >= (major, minor, patch)
 
 
