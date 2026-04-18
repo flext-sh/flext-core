@@ -151,24 +151,6 @@ class TestContainerFullCoverage:
         with pytest.raises(TypeError, match="Provide helper not initialized"):
             _ = c.provide
 
-    def test_config_context_properties_and_defaults(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        c = FlextContainer.shared()
-        c._config = None
-        with pytest.raises(RuntimeError):
-            _ = c.settings
-        c._context = None
-        with pytest.raises(RuntimeError):
-            _ = c.context
-        monkeypatch.setattr(
-            core_container.FlextSettings,
-            "fetch_global",
-            lambda: FlextSettings(),
-        )
-        tm.that(core_container.FlextSettings.fetch_global(), is_=p.Settings)
-
     def test_initialize_di_components_error_paths(
         self,
         monkeypatch: pytest.MonkeyPatch,
@@ -221,7 +203,7 @@ class TestContainerFullCoverage:
         setattr(c._di_resources, "res", "normalized")
         c.register_existing_providers()
         c._config = m.Core.Tests.FalseSettings()
-        c._context = None
+        # _context is now guaranteed to be non-None by valid-by-construction design
         c.register_core_services()
 
     def test_configure_with_resource_register_and_factory_error_paths(

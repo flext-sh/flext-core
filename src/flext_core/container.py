@@ -21,6 +21,7 @@ from typing import Self, TypeIs, overload, override
 from dependency_injector import containers as di_containers, providers as di_providers
 
 from flext_core import FlextSettings, c, e, m, p, r, t, u
+from flext_core.context import FlextContext
 
 
 class FlextContainer(p.ContainerLifecycle):
@@ -36,8 +37,8 @@ class FlextContainer(p.ContainerLifecycle):
 
     _global_instance: Self | None = None
     _global_lock: threading.RLock = threading.RLock()
-    _context: p.Context | None = None
-    _config: p.Settings | None = None
+    _context: p.Context
+    _config: p.Settings
     _user_overrides: t.ConfigMap
     containers: ModuleType
     providers: ModuleType
@@ -209,10 +210,16 @@ class FlextContainer(p.ContainerLifecycle):
     @property
     @override
     def settings(self) -> p.Settings:
-        """Return configuration bound to this container."""
-        if self._config is None:
-            error_msg = c.ERR_CONTAINER_CONFIG_NOT_INITIALIZED
-            raise RuntimeError(error_msg)
+        """Return configuration bound to this container.
+
+        The configuration is always initialized to a valid FlextSettings instance
+        during container initialization. It may be provided during container
+        initialization via the registration specification in `__init__` or
+        `shared()`, or the default FlextSettings.fetch_global() will be used.
+
+        Valid-by-construction design: This property never raises an error because
+        _config is guaranteed to be non-None after initialization.
+        """
         return self._config
 
     @property
@@ -220,21 +227,25 @@ class FlextContainer(p.ContainerLifecycle):
     def context(self) -> p.Context:
         """Return the execution context bound to this container.
 
-        The context must be provided during container initialization via the
-        registration specification in `__init__` or `shared()`. If no
-        context was provided, this property will raise an error.
+        The context is always initialized to a valid FlextContext instance
+        during container initialization. It may be provided during container
+        initialization via the registration specification in `__init__` or
+        `shared()`, or a default context will be created.
 
-        Raises:
-            RuntimeError: If context was not provided during initialization.
+        Valid-by-construction design: This property never raises an error because
+        _context is guaranteed to be non-None after initialization.
 
         Example:
             >>> container = FlextContainer.shared(context=my_context)
             >>> ctx = container.context  # Returns the provided context
+            >>> # Or if no context provided:
+            >>> container2 = FlextContainer.shared()
+            >>> ctx2 = container2.context  # Returns default FlextContext()
+
+        Returns:
+            The execution context (either provided or default).
 
         """
-        if self._context is None:
-            error_msg = c.ERR_CONTAINER_CONTEXT_NOT_INITIALIZED
-            raise RuntimeError(error_msg)
         return self._context
 
     @property
@@ -713,10 +724,13 @@ class FlextContainer(p.ContainerLifecycle):
             source="container settings",
         )
         self._config = config_instance
+        # Always guarantee context is initialized to valid-by-construction design.
+        # If no context was provided, create a default FlextContext instance.
+        # This eliminates untestable error states where context could be None.
         self._context = (
             self._require_context(context, source="container context")
             if context is not None
-            else None
+            else FlextContext()
         )
 
     @override
@@ -863,7 +877,6 @@ class FlextContainer(p.ContainerLifecycle):
         """
         if (
             not self._has_internal_registration(str(c.Directory.CONFIG))
-            and self._config is not None
             and u.registerable_service(self._config)
         ):
             _ = self.bind(c.Directory.CONFIG, self._config)
@@ -876,7 +889,6 @@ class FlextContainer(p.ContainerLifecycle):
             self._internal_registrations.add(str(c.ServiceName.LOGGER))
         if (
             not self._has_internal_registration(str(c.FIELD_CONTEXT))
-            and self._context is not None
             and u.registerable_service(self._context)
         ):
             _ = self.bind(c.FIELD_CONTEXT, self._context)

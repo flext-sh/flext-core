@@ -18,28 +18,38 @@ from typing import ClassVar, Protocol, runtime_checkable
 
 
 class FlextProtocolsProjectMetadata:
-    """Protocols for project-metadata services (Tier 1)."""
+    """Namespace holder for project-metadata protocols SSOT.
+
+    Protocols live under nested ``Project`` class so that ``FlextProtocols``
+    can inherit this class via MRO and expose ``p.Project.MetadataReader``
+    (sub-namespace access).
+    """
 
     _flext_enforcement_exempt: ClassVar[bool] = True
 
-    @runtime_checkable
-    class MetadataReader(Protocol):
-        """Reads project metadata from a project root directory.
+    class Project:
+        """Project-metadata protocols — SSOT (accessible as ``p.Project.*``)."""
 
-        Return type is object to avoid Tier 1 → Tier 3 dependency; callers
-        narrow to the concrete ``m.Project.Project`` model at use site.
-        """
+        _flext_enforcement_exempt: ClassVar[bool] = True
 
-        def read(self, root: Path) -> object: ...
+        @runtime_checkable
+        class MetadataReader(Protocol):
+            """Reads project metadata from a project root directory.
 
-    @runtime_checkable
-    class ClassStemDeriver(Protocol):
-        """Derives a PascalCase class stem from a kebab-case project name."""
+            Return type is object to avoid Tier 1 → Tier 3 dependency; callers
+            narrow to the concrete ``m.Project.Project`` model at use site.
+            """
 
-        def derive(self, project_name: str) -> str: ...
+            def read(self, root: Path) -> object: ...
 
-    @runtime_checkable
-    class TierFacadeNamer(Protocol):
-        """Builds tier-specific facade class names (src/tests/examples/...)."""
+        @runtime_checkable
+        class ClassStemDeriver(Protocol):
+            """Derives a PascalCase class stem from a kebab-case project name."""
 
-        def name_for(self, project_name: str, tier: str) -> str: ...
+            def derive(self, project_name: str) -> str: ...
+
+        @runtime_checkable
+        class TierFacadeNamer(Protocol):
+            """Builds tier-specific facade class names (src/tests/examples/...)."""
+
+            def name_for(self, project_name: str, tier: str) -> str: ...

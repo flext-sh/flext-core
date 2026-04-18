@@ -98,7 +98,7 @@ class TestReadProjectMetadata:
             """,
         )
         meta = up.read_project_metadata(root)
-        assert isinstance(meta, pm.Project)
+        assert isinstance(meta, pm.Project.Definition)
         assert meta.name == "flext-ldif"
         assert meta.class_stem == "FlextLdif"
 

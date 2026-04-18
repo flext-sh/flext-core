@@ -52,7 +52,7 @@ class FlextUtilitiesProjectMetadata:
         if not project_name:
             msg = "empty project name"
             raise ValueError(msg)
-        override = _k.SPECIAL_NAME_OVERRIDES.get(project_name)
+        override = _k.Project.SPECIAL_NAME_OVERRIDES.get(project_name)
         if override is not None:
             return override
         parts = project_name.replace("-", "_").split("_")
@@ -61,7 +61,7 @@ class FlextUtilitiesProjectMetadata:
     @staticmethod
     def derive_tier_facade_name(project_name: str, tier: str) -> str:
         """Build the tier-specific facade class name (src / tests / examples / ...)."""
-        prefix = _k.TIER_FACADE_PREFIX.get(tier)
+        prefix = _k.Project.TIER_FACADE_PREFIX.get(tier)
         if prefix is None:
             msg = f"unknown tier: {tier!r}"
             raise ValueError(msg)
@@ -84,7 +84,7 @@ class FlextUtilitiesProjectMetadata:
             return tomllib.load(stream)
 
     @staticmethod
-    def read_project_metadata(root: Path) -> _m.Project:
+    def read_project_metadata(root: Path) -> _m.Project.Definition:
         """Read canonical project metadata from a project's pyproject.toml."""
         data = FlextUtilitiesProjectMetadata._load_toml(root)
         project = dict(data.get("project") or {})
@@ -108,7 +108,7 @@ class FlextUtilitiesProjectMetadata:
         )
         urls = project.get("urls") or {}
         url = str(urls.get("Homepage", "")) if isinstance(urls, Mapping) else ""
-        return _m.Project(
+        return _m.Project.Definition(
             name=str(project["name"]),
             version=str(project["version"]),
             license=license_text,
@@ -119,19 +119,19 @@ class FlextUtilitiesProjectMetadata:
         )
 
     @staticmethod
-    def read_tool_flext_config(root: Path) -> _m.ToolFlext:
+    def read_tool_flext_config(root: Path) -> _m.Project.ToolFlext:
         """Read ``[tool.flext.*]`` tables from pyproject.toml as a validated config."""
         data = FlextUtilitiesProjectMetadata._load_toml(root)
         tool = data.get("tool") or {}
         tool_flext = tool.get("flext") if isinstance(tool, Mapping) else None
-        return _m.ToolFlext.model_validate(tool_flext or {})
+        return _m.Project.ToolFlext.model_validate(tool_flext or {})
 
     @staticmethod
-    def compose_namespace_config(root: Path) -> _m.Namespace:
+    def compose_namespace_config(root: Path) -> _m.Project.Namespace:
         """Build the effective namespace config for a project (metadata + overrides)."""
         meta = FlextUtilitiesProjectMetadata.read_project_metadata(root)
         cfg = FlextUtilitiesProjectMetadata.read_tool_flext_config(root)
-        return _m.Namespace(
+        return _m.Project.Namespace(
             project_name=meta.name,
             enabled=cfg.namespace.enabled,
             scan_dirs=cfg.namespace.scan_dirs,

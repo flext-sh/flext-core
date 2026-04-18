@@ -20,7 +20,7 @@ class TestProjectModel:
     """m.Project.Project: name/version/license + derived facade names."""
 
     def test_minimal_project(self) -> None:
-        meta = pm.Project(
+        meta = pm.Project.Definition(
             name="flext-ldif",
             version="0.12.0-dev",
             license="MIT",
@@ -32,7 +32,7 @@ class TestProjectModel:
         assert meta.tests_facade_name == "TestsFlextLdif"
 
     def test_flext_core_override(self) -> None:
-        meta = pm.Project(
+        meta = pm.Project.Definition(
             name="flext-core",
             version="0.12.0-dev",
             license="MIT",
@@ -43,7 +43,7 @@ class TestProjectModel:
         assert meta.tests_facade_name == "TestsFlext"
 
     def test_flext_root_override(self) -> None:
-        meta = pm.Project(
+        meta = pm.Project.Definition(
             name="flext",
             version="0.12.0-dev",
             license="MIT",
@@ -52,7 +52,7 @@ class TestProjectModel:
         assert meta.class_stem == "FlextRoot"
 
     def test_tier_facade_name_unknown_tier_raises(self) -> None:
-        meta = pm.Project(
+        meta = pm.Project.Definition(
             name="flext-ldif",
             version="0.12.0-dev",
             license="MIT",
@@ -62,7 +62,7 @@ class TestProjectModel:
             meta.tier_facade_name("nonsense")
 
     def test_frozen_rejects_mutation(self) -> None:
-        meta = pm.Project(
+        meta = pm.Project.Definition(
             name="flext-ldif",
             version="0.12.0-dev",
             license="MIT",
@@ -73,7 +73,7 @@ class TestProjectModel:
 
     def test_empty_name_rejected(self) -> None:
         with pytest.raises(ValidationError):
-            pm.Project(
+            pm.Project.Definition(
                 name="",
                 version="0.12.0-dev",
                 license="MIT",
@@ -85,13 +85,13 @@ class TestNamespaceModel:
     """m.Project.Namespace: alias parent source overrides."""
 
     def test_defaults_include_universal_sources(self) -> None:
-        cfg = pm.Namespace(project_name="flext-ldif")
+        cfg = pm.Project.Namespace(project_name="flext-ldif")
         assert cfg.alias_parent_sources["r"] == "flext_core"
         assert cfg.alias_parent_sources["e"] == "flext_core"
         assert cfg.enabled is True
 
     def test_custom_override_for_c(self) -> None:
-        cfg = pm.Namespace(
+        cfg = pm.Project.Namespace(
             project_name="flext-ldif",
             alias_parent_sources={"c": "flext_cli", "m": "flext_cli"},
         )
@@ -101,14 +101,14 @@ class TestNamespaceModel:
 
     def test_unknown_alias_rejected(self) -> None:
         with pytest.raises(ValidationError, match="unknown alias"):
-            pm.Namespace(
+            pm.Project.Namespace(
                 project_name="flext-ldif",
                 alias_parent_sources={"zz": "flext_core"},
             )
 
     def test_universal_override_rejected(self) -> None:
         with pytest.raises(ValidationError, match="universal"):
-            pm.Namespace(
+            pm.Project.Namespace(
                 project_name="flext-ldif",
                 alias_parent_sources={"r": "flext_ldif"},
             )
@@ -118,19 +118,19 @@ class TestToolFlextModel:
     """m.Project.ToolFlext + sub-tables."""
 
     def test_defaults_round_trip(self) -> None:
-        cfg = pm.ToolFlext()
+        cfg = pm.Project.ToolFlext()
         dumped = cfg.model_dump()
-        reloaded = pm.ToolFlext.model_validate(dumped)
+        reloaded = pm.Project.ToolFlext.model_validate(dumped)
         assert reloaded == cfg
 
     def test_custom_values(self) -> None:
-        cfg = pm.ToolFlext(
-            project=pm.ToolFlextProject(project_class="platform"),
-            namespace=pm.ToolFlextNamespace(
+        cfg = pm.Project.ToolFlext(
+            project=pm.Project.ToolFlextProject(project_class="platform"),
+            namespace=pm.Project.ToolFlextNamespace(
                 alias_parent_sources={"c": "flext_cli"},
             ),
-            docs=pm.ToolFlextDocs(project_class="platform", site_title="Platform"),
-            aliases=pm.ToolFlextAliases(overrides={"c": "FlextCliConstants"}),
+            docs=pm.Project.ToolFlextDocs(project_class="platform", site_title="Platform"),
+            aliases=pm.Project.ToolFlextAliases(overrides={"c": "FlextCliConstants"}),
         )
         assert cfg.project.project_class == "platform"
         assert cfg.namespace.alias_parent_sources["c"] == "flext_cli"
@@ -138,15 +138,15 @@ class TestToolFlextModel:
         assert cfg.aliases.overrides["c"] == "FlextCliConstants"
 
     def test_tool_flext_project_defaults(self) -> None:
-        sub = pm.ToolFlextProject()
+        sub = pm.Project.ToolFlextProject()
         assert sub.class_stem_override is None
         assert sub.project_class == "library"
 
     def test_tool_flext_docs_defaults(self) -> None:
-        sub = pm.ToolFlextDocs()
+        sub = pm.Project.ToolFlextDocs()
         assert sub.project_class == "library"
         assert sub.site_title is None
 
     def test_tool_flext_aliases_defaults(self) -> None:
-        sub = pm.ToolFlextAliases()
+        sub = pm.Project.ToolFlextAliases()
         assert sub.overrides == {}

@@ -30,32 +30,32 @@ class _ConcreteTierNamer:
 
 class TestMetadataReaderProtocol:
     def test_runtime_check_accepts_reader(self) -> None:
-        assert isinstance(_ConcreteReader(), pm.MetadataReader)
+        assert isinstance(_ConcreteReader(), pm.Project.MetadataReader)
 
     def test_runtime_check_rejects_unrelated(self) -> None:
         class _Unrelated:
             pass
 
-        assert not isinstance(_Unrelated(), pm.MetadataReader)
+        assert not isinstance(_Unrelated(), pm.Project.MetadataReader)
 
 
 class TestClassStemDeriverProtocol:
     def test_runtime_check_accepts_deriver(self) -> None:
-        assert isinstance(_ConcreteStemmer(), pm.ClassStemDeriver)
+        assert isinstance(_ConcreteStemmer(), pm.Project.ClassStemDeriver)
 
     def test_runtime_check_rejects_unrelated(self) -> None:
         class _Unrelated:
             pass
 
-        assert not isinstance(_Unrelated(), pm.ClassStemDeriver)
+        assert not isinstance(_Unrelated(), pm.Project.ClassStemDeriver)
 
 
 class TestTierFacadeNamerProtocol:
     def test_runtime_check_accepts_namer(self) -> None:
-        assert isinstance(_ConcreteTierNamer(), pm.TierFacadeNamer)
+        assert isinstance(_ConcreteTierNamer(), pm.Project.TierFacadeNamer)
 
     def test_runtime_check_rejects_unrelated(self) -> None:
         class _Unrelated:
             pass
 
-        assert not isinstance(_Unrelated(), pm.TierFacadeNamer)
+        assert not isinstance(_Unrelated(), pm.Project.TierFacadeNamer)
