@@ -68,7 +68,7 @@ class FlextContext(m.ArbitraryTypesModel):
                         continue
                     result[str(k)] = str(container_val)
                 else:
-                    result[str(k)] = r.to_plain_container(container_val)
+                    result[str(k)] = FlextRuntime.to_plain_container(container_val)
             return result
         if isinstance(value, (t.ConfigMap, t.Dict)):
             normalized_root: t.MutableRecursiveContainerMapping = {}
@@ -411,7 +411,7 @@ class FlextContext(m.ArbitraryTypesModel):
                     metadata_value = t.ConfigMap(
                         root=dict(v),
                     )
-                normalized_metadata_map[k] = r.to_plain_container(
+                normalized_metadata_map[k] = FlextRuntime.to_plain_container(
                     u.normalize_to_container(
                         u.normalize_to_metadata(metadata_value),
                     ),
@@ -1003,9 +1003,9 @@ class FlextContext(m.ArbitraryTypesModel):
             updated = t.ConfigMap(root=dict(current))
             normalized_value = u.normalize_to_container(value)
             if isinstance(normalized_value, (t.ConfigMap, t.Dict)):
-                updated[key] = r.to_plain_container(normalized_value)
+                updated[key] = FlextRuntime.to_plain_container(normalized_value)
             else:
-                updated[key] = r.to_plain_container(normalized_value)
+                updated[key] = FlextRuntime.to_plain_container(normalized_value)
             _ = ctx_var.set(updated)
             FlextContext._propagate_to_logger(key, value, scope)
             self._update_statistics(c.ContextOperation.SET.value)
