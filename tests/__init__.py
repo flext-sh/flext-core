@@ -85,6 +85,13 @@ if _t.TYPE_CHECKING:
         TestFlextModelsCollectionsCoverage100,
     )
     from tests.unit.test_constants_new import TestFlextConstants
+    from tests.unit.test_constants_project_metadata import (
+        TestAliasToSuffix,
+        TestManagedPyprojectKeys,
+        TestSpecialNameOverrides,
+        TestTierFacadePrefix,
+        TestUniversalAliasParentSources,
+    )
     from tests.unit.test_container import TestFlextContainer
     from tests.unit.test_container_full_coverage import TestContainerFullCoverage
     from tests.unit.test_context import TestFlextContext
@@ -164,7 +171,17 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_models_generic_full_coverage import (
         TestModelsGenericFullCoverage,
     )
+    from tests.unit.test_models_project_metadata import (
+        TestNamespaceModel,
+        TestProjectModel,
+        TestToolFlextModel,
+    )
     from tests.unit.test_protocols_new import TestFlextProtocols
+    from tests.unit.test_protocols_project_metadata import (
+        TestClassStemDeriverProtocol,
+        TestMetadataReaderProtocol,
+        TestTierFacadeNamerProtocol,
+    )
     from tests.unit.test_registry import TestRegistryDsl
     from tests.unit.test_registry_full_coverage import TestRegistryFullCoverage
     from tests.unit.test_result import Testr
@@ -223,6 +240,14 @@ if _t.TYPE_CHECKING:
     )
     from tests.unit.test_utilities_parser_full_coverage import (
         TestUtilitiesParserFullCoverage,
+    )
+    from tests.unit.test_utilities_project_metadata import (
+        TestComposeNamespaceConfig,
+        TestDeriveClassStem,
+        TestDerivePackageName,
+        TestDeriveTierFacadeName,
+        TestReadProjectMetadata,
+        TestReadToolFlextConfig,
     )
     from tests.unit.test_utilities_reliability import TestFlextUtilitiesReliability
     from tests.unit.test_utilities_settings_coverage_100 import (
@@ -337,6 +362,13 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestFlextModelsCollectionsCoverage100",
             ),
             ".unit.test_constants_new": ("TestFlextConstants",),
+            ".unit.test_constants_project_metadata": (
+                "TestAliasToSuffix",
+                "TestManagedPyprojectKeys",
+                "TestSpecialNameOverrides",
+                "TestTierFacadePrefix",
+                "TestUniversalAliasParentSources",
+            ),
             ".unit.test_container": ("TestFlextContainer",),
             ".unit.test_container_full_coverage": ("TestContainerFullCoverage",),
             ".unit.test_context": ("TestFlextContext",),
@@ -416,7 +448,17 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_models_generic_full_coverage": (
                 "TestModelsGenericFullCoverage",
             ),
+            ".unit.test_models_project_metadata": (
+                "TestNamespaceModel",
+                "TestProjectModel",
+                "TestToolFlextModel",
+            ),
             ".unit.test_protocols_new": ("TestFlextProtocols",),
+            ".unit.test_protocols_project_metadata": (
+                "TestClassStemDeriverProtocol",
+                "TestMetadataReaderProtocol",
+                "TestTierFacadeNamerProtocol",
+            ),
             ".unit.test_registry": ("TestRegistryDsl",),
             ".unit.test_registry_full_coverage": ("TestRegistryFullCoverage",),
             ".unit.test_result": ("Testr",),
@@ -475,6 +517,14 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".unit.test_utilities_parser_full_coverage": (
                 "TestUtilitiesParserFullCoverage",
+            ),
+            ".unit.test_utilities_project_metadata": (
+                "TestComposeNamespaceConfig",
+                "TestDeriveClassStem",
+                "TestDerivePackageName",
+                "TestDeriveTierFacadeName",
+                "TestReadProjectMetadata",
+                "TestReadToolFlextConfig",
             ),
             ".unit.test_utilities_reliability": ("TestFlextUtilitiesReliability",),
             ".unit.test_utilities_settings_coverage_100": (
@@ -538,6 +588,7 @@ __all__: list[str] = [
     "TestAccessorMethodBan",
     "TestAdvancedPatterns",
     "TestAliasContainsAny",
+    "TestAliasToSuffix",
     "TestArchitecturalPatterns",
     "TestAutomatedArchitecture",
     "TestBadModuleFiresExpectedRules",
@@ -546,8 +597,10 @@ __all__: list[str] = [
     "TestBeartypeConf",
     "TestBuildLazyImportMap",
     "TestClassPrefixScope",
+    "TestClassStemDeriverProtocol",
     "TestCleanModuleEmitsNothing",
     "TestCompleteFlextSystemIntegration",
+    "TestComposeNamespaceConfig",
     "TestConstantsLayerRules",
     "TestContainerFullCoverage",
     "TestContainerMemory",
@@ -564,6 +617,9 @@ __all__: list[str] = [
     "TestDecoratorsDiscoveryFullCoverage",
     "TestDecoratorsFullCoverage",
     "TestDeprecationWarnings",
+    "TestDeriveClassStem",
+    "TestDerivePackageName",
+    "TestDeriveTierFacadeName",
     "TestDetailSubstitution",
     "TestDiServicesAccess",
     "TestDispatcherDI",
@@ -611,7 +667,9 @@ __all__: list[str] = [
     "TestLibraryIntegration",
     "TestLoggingsErrorPaths",
     "TestLoggingsStrictReturns",
+    "TestManagedPyprojectKeys",
     "TestMergeLazyImports",
+    "TestMetadataReaderProtocol",
     "TestMigrationValidation",
     "TestMixinsFullCoverage",
     "TestModelClassRules",
@@ -623,12 +681,16 @@ __all__: list[str] = [
     "TestModelsGenericFullCoverage",
     "TestModule",
     "TestNamespaceInheritance",
+    "TestNamespaceModel",
     "TestPatternsCommands",
     "TestPatternsLogging",
     "TestPatternsTesting",
     "TestProjectDiscovery",
+    "TestProjectModel",
     "TestProjectPrefixOverrides",
     "TestProtocolsLayerRules",
+    "TestReadProjectMetadata",
+    "TestReadToolFlextConfig",
     "TestRegistryDsl",
     "TestRegistryFullCoverage",
     "TestReportApi",
@@ -644,8 +706,13 @@ __all__: list[str] = [
     "TestServiceIntegration",
     "TestServiceResultProperty",
     "TestSettingsInheritance",
+    "TestSpecialNameOverrides",
+    "TestTierFacadeNamerProtocol",
+    "TestTierFacadePrefix",
+    "TestToolFlextModel",
     "TestTypesLayerRules",
     "TestTypingsFullCoverage",
+    "TestUniversalAliasParentSources",
     "TestUtilitiesCollectionCoverage",
     "TestUtilitiesCollectionFullCoverage",
     "TestUtilitiesContextFullCoverage",

@@ -16,6 +16,7 @@ from flext_core import (
     FlextConstantsMixins,
     FlextConstantsOutput,
     FlextConstantsPlatform,
+    FlextConstantsProjectMetadata,
     FlextConstantsPydantic,
     FlextConstantsSettings,
     FlextConstantsValidation,
@@ -35,6 +36,7 @@ class FlextConstants(
     FlextConstantsOutput,
     FlextConstantsMixins,
     FlextConstantsEnforcement,
+    FlextConstantsProjectMetadata,
     FlextConstantsPydantic,
     FlextModelsNamespace,
 ):

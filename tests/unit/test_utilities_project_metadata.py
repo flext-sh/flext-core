@@ -38,11 +38,11 @@ class TestDeriveClassStem:
         ],
     )
     def test_derives_expected_stem(self, project_name: str, expected: str) -> None:
-        assert up.derive_class_stem(project_name) == expected
+        assert up.Project.derive_class_stem(project_name) == expected
 
     def test_empty_name_rejected(self) -> None:
         with pytest.raises(ValueError, match="empty"):
-            up.derive_class_stem("")
+            up.Project.derive_class_stem("")
 
 
 class TestDerivePackageName:
@@ -55,11 +55,11 @@ class TestDerivePackageName:
         ],
     )
     def test_derives_expected_package(self, project_name: str, expected: str) -> None:
-        assert up.derive_package_name(project_name) == expected
+        assert up.Project.derive_package_name(project_name) == expected
 
     def test_empty_name_rejected(self) -> None:
         with pytest.raises(ValueError, match="empty"):
-            up.derive_package_name("")
+            up.Project.derive_package_name("")
 
 
 class TestDeriveTierFacadeName:
@@ -78,11 +78,11 @@ class TestDeriveTierFacadeName:
     def test_derives_facade(
         self, project_name: str, tier: str, expected: str
     ) -> None:
-        assert up.derive_tier_facade_name(project_name, tier) == expected
+        assert up.Project.derive_tier_facade_name(project_name, tier) == expected
 
     def test_unknown_tier_rejected(self) -> None:
         with pytest.raises(ValueError, match="unknown tier"):
-            up.derive_tier_facade_name("flext-ldif", "nonsense")
+            up.Project.derive_tier_facade_name("flext-ldif", "nonsense")
 
 
 class TestReadProjectMetadata:
@@ -97,24 +97,24 @@ class TestReadProjectMetadata:
             description = "LDIF"
             """,
         )
-        meta = up.read_project_metadata(root)
+        meta = up.Project.read_project_metadata(root)
         assert isinstance(meta, pm.Project.Definition)
         assert meta.name == "flext-ldif"
         assert meta.class_stem == "FlextLdif"
 
     def test_missing_pyproject_raises(self, tmp_path: Path) -> None:
         with pytest.raises(FileNotFoundError):
-            up.read_project_metadata(tmp_path)
+            up.Project.read_project_metadata(tmp_path)
 
     def test_missing_name_raises(self, tmp_path: Path) -> None:
         root = _write_pyproject(tmp_path, '[project]\nversion="0.12.0"\n')
         with pytest.raises(ValueError, match=r"missing.*name"):
-            up.read_project_metadata(root)
+            up.Project.read_project_metadata(root)
 
     def test_missing_version_raises(self, tmp_path: Path) -> None:
         root = _write_pyproject(tmp_path, '[project]\nname="x"\n')
         with pytest.raises(ValueError, match=r"missing.*version"):
-            up.read_project_metadata(root)
+            up.Project.read_project_metadata(root)
 
     def test_spdx_license_dict(self, tmp_path: Path) -> None:
         root = _write_pyproject(
@@ -126,7 +126,7 @@ class TestReadProjectMetadata:
             license = {text = "MIT"}
             """,
         )
-        meta = up.read_project_metadata(root)
+        meta = up.Project.read_project_metadata(root)
         assert meta.license == "MIT"
 
 
@@ -141,7 +141,7 @@ class TestReadToolFlextConfig:
             license = "MIT"
             """,
         )
-        cfg = up.read_tool_flext_config(root)
+        cfg = up.Project.read_tool_flext_config(root)
         assert cfg.project.project_class == "library"
         assert cfg.namespace.enabled is True
 
@@ -161,7 +161,7 @@ class TestReadToolFlextConfig:
             alias_parent_sources = {c = "flext_cli"}
             """,
         )
-        cfg = up.read_tool_flext_config(root)
+        cfg = up.Project.read_tool_flext_config(root)
         assert cfg.project.project_class == "platform"
         assert cfg.namespace.alias_parent_sources["c"] == "flext_cli"
 
@@ -180,7 +180,7 @@ class TestComposeNamespaceConfig:
             alias_parent_sources = {c = "flext_cli"}
             """,
         )
-        ns = up.compose_namespace_config(root)
+        ns = up.Project.compose_namespace_config(root)
         assert ns.project_name == "flext-ldif"
         assert ns.alias_parent_sources["c"] == "flext_cli"
         assert ns.alias_parent_sources["r"] == "flext_core"

@@ -20,6 +20,7 @@ from flext_core import (
     FlextTypesPydantic,
     FlextTypesServices,
     FlextTypesTypeAdapters,
+    FlextTypingProjectMetadata,
 )
 
 if TYPE_CHECKING:
@@ -70,6 +71,7 @@ class FlextTypes(
     FlextTypesPydantic,
     FlextTypesServices,
     FlextTypesTypeAdapters,
+    FlextTypingProjectMetadata,
     FlextModelsNamespace,
 ):
     """Type system foundation for FLEXT ecosystem.

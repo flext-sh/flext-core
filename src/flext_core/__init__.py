@@ -22,6 +22,7 @@ if _t.TYPE_CHECKING:
     from flext_core._constants.mixins import FlextConstantsMixins
     from flext_core._constants.output import FlextConstantsOutput
     from flext_core._constants.platform import FlextConstantsPlatform
+    from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
     from flext_core._constants.pydantic import FlextConstantsPydantic
     from flext_core._constants.settings import FlextConstantsSettings
     from flext_core._constants.validation import FlextConstantsValidation
@@ -53,6 +54,7 @@ if _t.TYPE_CHECKING:
     from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.namespace import FlextModelsNamespace
+    from flext_core._models.project_metadata import FlextModelsProjectMetadata
     from flext_core._models.pydantic import FlextModelsPydantic
     from flext_core._models.registry import FlextModelsRegistry
     from flext_core._models.service import FlextModelsService
@@ -62,6 +64,7 @@ if _t.TYPE_CHECKING:
     from flext_core._protocols.context import FlextProtocolsContext
     from flext_core._protocols.handler import FlextProtocolsHandler
     from flext_core._protocols.logging import FlextProtocolsLogging
+    from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata
     from flext_core._protocols.pydantic import FlextProtocolsPydantic
     from flext_core._protocols.registry import FlextProtocolsRegistry
     from flext_core._protocols.result import FlextProtocolsResult
@@ -71,6 +74,7 @@ if _t.TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase
     from flext_core._typings.containers import FlextTypingContainers
     from flext_core._typings.core import FlextTypesCore
+    from flext_core._typings.project_metadata import FlextTypingProjectMetadata
     from flext_core._typings.pydantic import FlextTypesPydantic
     from flext_core._typings.services import FlextTypesServices
     from flext_core._typings.typeadapters import FlextTypesTypeAdapters
@@ -98,6 +102,7 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.mapper import FlextUtilitiesMapper
     from flext_core._utilities.model import FlextUtilitiesModel
     from flext_core._utilities.parser import FlextUtilitiesParser
+    from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
     from flext_core._utilities.pydantic import FlextUtilitiesPydantic
     from flext_core._utilities.reliability import FlextUtilitiesReliability
     from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
@@ -172,6 +177,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._constants.mixins": ("FlextConstantsMixins",),
             "._constants.output": ("FlextConstantsOutput",),
             "._constants.platform": ("FlextConstantsPlatform",),
+            "._constants.project_metadata": ("FlextConstantsProjectMetadata",),
             "._constants.pydantic": ("FlextConstantsPydantic",),
             "._constants.settings": ("FlextConstantsSettings",),
             "._constants.validation": ("FlextConstantsValidation",),
@@ -203,6 +209,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._models.generic": ("FlextGenericModels",),
             "._models.handler": ("FlextModelsHandler",),
             "._models.namespace": ("FlextModelsNamespace",),
+            "._models.project_metadata": ("FlextModelsProjectMetadata",),
             "._models.pydantic": ("FlextModelsPydantic",),
             "._models.registry": ("FlextModelsRegistry",),
             "._models.service": ("FlextModelsService",),
@@ -212,6 +219,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._protocols.context": ("FlextProtocolsContext",),
             "._protocols.handler": ("FlextProtocolsHandler",),
             "._protocols.logging": ("FlextProtocolsLogging",),
+            "._protocols.project_metadata": ("FlextProtocolsProjectMetadata",),
             "._protocols.pydantic": ("FlextProtocolsPydantic",),
             "._protocols.registry": ("FlextProtocolsRegistry",),
             "._protocols.result": ("FlextProtocolsResult",),
@@ -221,6 +229,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._typings.base": ("FlextTypingBase",),
             "._typings.containers": ("FlextTypingContainers",),
             "._typings.core": ("FlextTypesCore",),
+            "._typings.project_metadata": ("FlextTypingProjectMetadata",),
             "._typings.pydantic": ("FlextTypesPydantic",),
             "._typings.services": ("FlextTypesServices",),
             "._typings.typeadapters": ("FlextTypesTypeAdapters",),
@@ -246,6 +255,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.mapper": ("FlextUtilitiesMapper",),
             "._utilities.model": ("FlextUtilitiesModel",),
             "._utilities.parser": ("FlextUtilitiesParser",),
+            "._utilities.project_metadata": ("FlextUtilitiesProjectMetadata",),
             "._utilities.pydantic": ("FlextUtilitiesPydantic",),
             "._utilities.reliability": ("FlextUtilitiesReliability",),
             "._utilities.result_helpers": ("FlextUtilitiesResultHelpers",),
@@ -354,6 +364,7 @@ __all__: list[str] = [
     "FlextConstantsMixins",
     "FlextConstantsOutput",
     "FlextConstantsPlatform",
+    "FlextConstantsProjectMetadata",
     "FlextConstantsPydantic",
     "FlextConstantsSettings",
     "FlextConstantsValidation",
@@ -395,6 +406,7 @@ __all__: list[str] = [
     "FlextModelsExceptionParams",
     "FlextModelsHandler",
     "FlextModelsNamespace",
+    "FlextModelsProjectMetadata",
     "FlextModelsPydantic",
     "FlextModelsRegistry",
     "FlextModelsService",
@@ -405,6 +417,7 @@ __all__: list[str] = [
     "FlextProtocolsContext",
     "FlextProtocolsHandler",
     "FlextProtocolsLogging",
+    "FlextProtocolsProjectMetadata",
     "FlextProtocolsPydantic",
     "FlextProtocolsRegistry",
     "FlextProtocolsResult",
@@ -423,6 +436,7 @@ __all__: list[str] = [
     "FlextTypesTypeAdapters",
     "FlextTypingBase",
     "FlextTypingContainers",
+    "FlextTypingProjectMetadata",
     "FlextUtilities",
     "FlextUtilitiesArgs",
     "FlextUtilitiesBeartypeConf",
@@ -446,6 +460,7 @@ __all__: list[str] = [
     "FlextUtilitiesMapper",
     "FlextUtilitiesModel",
     "FlextUtilitiesParser",
+    "FlextUtilitiesProjectMetadata",
     "FlextUtilitiesPydantic",
     "FlextUtilitiesReliability",
     "FlextUtilitiesResultHelpers",
