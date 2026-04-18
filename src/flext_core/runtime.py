@@ -380,8 +380,8 @@ class FlextRuntime:
     @staticmethod
     def normalize_to_container(
         val: t.RuntimeData | t.ConfigMap,
-    ) -> t.RuntimeAtomic:
-        """Normalize any value to t.Container | BaseModel.
+    ) -> t.RecursiveContainer | t.ModelCarrier:
+        """Normalize any value to t.RecursiveContainer | BaseModel.
 
         Args:
             val: Value to normalize

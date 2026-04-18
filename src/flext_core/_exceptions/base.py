@@ -153,27 +153,12 @@ class FlextExceptionsBase:
             self.message = message
             self.error_code = error_code
             final_kwargs: t.ConfigMap = t.ConfigMap(root={})
-            if merged_kwargs:
-                final_kwargs.update({
-                    k: FlextRuntime.normalize_to_container(
-                        FlextRuntime.normalize_to_metadata(v),
-                    )
-                    for k, v in merged_kwargs.items()
-                })
-            if context:
-                final_kwargs.update({
-                    k: FlextRuntime.normalize_to_container(
-                        FlextRuntime.normalize_to_metadata(v),
-                    )
-                    for k, v in context.items()
-                })
-            if extra_kwargs:
-                final_kwargs.update({
-                    k: FlextRuntime.normalize_to_container(
-                        FlextRuntime.normalize_to_metadata(v),
-                    )
-                    for k, v in extra_kwargs.items()
-                })
+            for source_dict in (merged_kwargs, context, extra_kwargs):
+                if source_dict:
+                    for k, v in source_dict.items():
+                        final_kwargs.root[k] = FlextRuntime.normalize_to_container(
+                            FlextRuntime.normalize_to_metadata(v),
+                        )
             self.correlation_id = (
                 f"exc_{uuid.uuid4().hex[:8]}"
                 if auto_correlation and (not correlation_id)
