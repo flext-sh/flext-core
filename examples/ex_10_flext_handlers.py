@@ -6,7 +6,18 @@ from collections.abc import Sequence
 from types import ModuleType
 from typing import ClassVar, override
 
-from examples import Ex10ProtocolHandler, Examples, c, e, h, m, p, r, t, u
+from examples import (
+    Ex10ProtocolHandler,
+    ExamplesFlextCoreShared,
+    c,
+    e,
+    h,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 
 class _Message(m.Command):
@@ -52,7 +63,7 @@ class _DemoHandler(h[_Message, str]):
         return r[bool].ok(True)
 
 
-class Ex10FlextHandlers(Examples):
+class Ex10FlextHandlers(ExamplesFlextCoreShared):
     """Exercise h public API."""
 
     def demo_create_from_callable(self) -> None:

@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
 
 from flext_core import FlextModels, m, u
@@ -32,7 +33,10 @@ class TestsFlextCoreCleanModels:
                 ]
                 metadata: Annotated[
                     Mapping[str, str],
-                    u.Field(default_factory=dict, description="Attribute map."),
+                    u.Field(
+                        default_factory=lambda: MappingProxyType({}),
+                        description="Attribute map.",
+                    ),
                 ]
 
             class GoodFrozenValue(FlextModels.FrozenValueModel):

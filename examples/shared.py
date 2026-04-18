@@ -39,7 +39,7 @@ from typing import ClassVar
 from examples import m, p, r, t, u
 
 
-class Examples(m.BaseModel):
+class ExamplesFlextCoreShared(m.BaseModel):
     """Base class for golden-file example scripts.
 
     Subclass once per ``ex_*.py`` module.  Implement ``exercise()`` to
@@ -101,7 +101,7 @@ class Examples(m.BaseModel):
         span = (hi - lo) + 1
         return lo + int(self._next_unit_float() * span)
 
-    def rand_person(self) -> Examples.Person:
+    def rand_person(self) -> ExamplesFlextCoreShared.Person:
         """Return a ``Person`` with random name (6 chars) and age (1–99)."""
         return self.Person(name=self.rand_str(6), age=self.rand_int(1, 99))
 

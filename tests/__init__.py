@@ -31,7 +31,9 @@ if _t.TYPE_CHECKING:
     from tests.integration.patterns.test_architectural_patterns import (
         TestArchitecturalPatterns,
     )
-    from tests.integration.patterns.test_patterns_commands import TestPatternsCommands
+    from tests.integration.patterns.test_patterns_commands import (
+        TestsFlextCorePatternsCommands,
+    )
     from tests.integration.patterns.test_patterns_logging import TestPatternsLogging
     from tests.integration.patterns.test_patterns_testing import TestPatternsTesting
     from tests.integration.test_architecture import TestAutomatedArchitecture
@@ -39,7 +41,7 @@ if _t.TYPE_CHECKING:
     from tests.integration.test_examples_execution import TestExamplesExecution
     from tests.integration.test_integration import TestLibraryIntegration
     from tests.integration.test_migration_validation import TestMigrationValidation
-    from tests.integration.test_service import TestServiceIntegration
+    from tests.integration.test_service import TestsFlextCoreServiceIntegration
     from tests.integration.test_service_result_property import TestServiceResultProperty
     from tests.integration.test_settings_integration import (
         TestFlextSettingsSingletonIntegration,
@@ -82,7 +84,7 @@ if _t.TYPE_CHECKING:
         TestIsStrNoneUnion,
     )
     from tests.unit.test_collections_coverage_100 import (
-        TestFlextModelsCollectionsCoverage100,
+        TestsFlextCoreFlextModelsCollectionsCoverage100,
     )
     from tests.unit.test_constants_new import TestFlextConstants
     from tests.unit.test_constants_project_metadata import (
@@ -110,8 +112,10 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_di_incremental import TestDIIncremental
     from tests.unit.test_di_services_access import TestDiServicesAccess
     from tests.unit.test_dispatcher_di import TestDispatcherDI
-    from tests.unit.test_dispatcher_full_coverage import TestDispatcherFullCoverage
-    from tests.unit.test_dispatcher_minimal import TestDispatcherMinimal
+    from tests.unit.test_dispatcher_full_coverage import (
+        TestsFlextCoreDispatcherFullCoverage,
+    )
+    from tests.unit.test_dispatcher_minimal import TestsFlextCoreDispatcherMinimal
     from tests.unit.test_dispatcher_reliability import TestDispatcherReliability
     from tests.unit.test_dispatcher_timeout_coverage_100 import (
         TestDispatcherTimeoutCoverage100,
@@ -146,7 +150,7 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_handler_decorator_discovery import (
         TestHandlerDecoratorDiscovery,
     )
-    from tests.unit.test_handlers import TestFlextHandlers
+    from tests.unit.test_handlers import TestsFlextCoreFlextHandlers
     from tests.unit.test_handlers_full_coverage import TestHandlersFullCoverage
     from tests.unit.test_lazy_exports import (
         TestBuildLazyImportMap,
@@ -160,7 +164,9 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_mixins import TestFlextMixinsNestedClasses
     from tests.unit.test_mixins_full_coverage import TestMixinsFullCoverage
     from tests.unit.test_models import TestModels
-    from tests.unit.test_models_base_full_coverage import TestModelsBaseFullCoverage
+    from tests.unit.test_models_base_full_coverage import (
+        TestsFlextCoreModelsBaseFullCoverage,
+    )
     from tests.unit.test_models_container import TestFlextModelsContainer
     from tests.unit.test_models_context_full_coverage import (
         TestModelsContextFullCoverage,
@@ -187,7 +193,9 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_result import Testr
     from tests.unit.test_result_additional import TestResultAdditional
     from tests.unit.test_result_coverage_100 import TestrCoverage
-    from tests.unit.test_result_exception_carrying import TestResultExceptionCarrying
+    from tests.unit.test_result_exception_carrying import (
+        TestsFlextCoreResultExceptionCarrying,
+    )
     from tests.unit.test_result_full_coverage import TestResultFullCoverage
     from tests.unit.test_runtime import TestFlextRuntime
     from tests.unit.test_runtime_coverage_100 import TestRuntimeCoverage100
@@ -201,7 +209,7 @@ if _t.TYPE_CHECKING:
         ValidatingService,
     )
     from tests.unit.test_service_additional import TestServiceAdditional
-    from tests.unit.test_service_bootstrap import TestServiceBootstrap
+    from tests.unit.test_service_bootstrap import TestsFlextCoreServiceBootstrap
     from tests.unit.test_service_coverage_100 import TestService100Coverage
     from tests.unit.test_settings import TestFlextSettings
     from tests.unit.test_settings_coverage import TestFlextSettingsCoverage

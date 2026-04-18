@@ -13,18 +13,18 @@ from flext_tests import e, tm
 from tests import m, t, u
 
 
-class GetUserQuery(m.Query):
+class TestsFlextCoreCoverageModelsGetUserQuery(m.Query):
     """Query to get user."""
 
 
-class ListAccountsQuery(m.Query):
+class TestsFlextCoreCoverageModelsListAccountsQuery(m.Query):
     """Query to list accounts."""
 
     page: Annotated[int, m.Field()]
     limit: Annotated[int, m.Field()]
 
 
-class SearchProductsQuery(m.Query):
+class TestsFlextCoreCoverageModelsSearchProductsQuery(m.Query):
     """Query to search products."""
 
     keyword: Annotated[str, m.Field()]
@@ -242,15 +242,15 @@ class TestCoverageModels:
     def test_query_creation(self) -> None:
         assert (
             u.resolve_nested_model_class(
-                module_name=GetUserQuery.__module__,
-                qualname=GetUserQuery.__qualname__,
+                module_name=TestsFlextCoreCoverageModelsGetUserQuery.__module__,
+                qualname=TestsFlextCoreCoverageModelsGetUserQuery.__qualname__,
                 models_module_name="flext_core",
                 attribute_name="Pagination",
                 fallback=m.Pagination,
             )
             is m.Pagination
         )
-        query = GetUserQuery(
+        query = TestsFlextCoreCoverageModelsGetUserQuery(
             filters=t.Dict(root={"user_id": "USER-001"}),
             query_type="get_user",
             pagination=m.Pagination(),
@@ -261,7 +261,7 @@ class TestCoverageModels:
         tm.that(query.query_type, eq="get_user")
 
     def test_query_mutation_behavior(self) -> None:
-        query = ListAccountsQuery(
+        query = TestsFlextCoreCoverageModelsListAccountsQuery(
             page=1,
             limit=10,
             filters=t.Dict(root={}),
@@ -274,7 +274,7 @@ class TestCoverageModels:
         tm.that(query.page, ne=original_page)
 
     def test_query_with_filters(self) -> None:
-        query = SearchProductsQuery(
+        query = TestsFlextCoreCoverageModelsSearchProductsQuery(
             keyword="laptop",
             category="electronics",
             min_price=500.0,

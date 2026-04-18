@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import override
 
-from examples import Examples, c, m, p, u
+from examples import ExamplesFlextCoreShared, c, m, p, u
 from flext_core import FlextContainer
 
 u.configure_structlog()
 
 
-class Ex03LoggingDsl(Examples):
+class Ex03LoggingDsl(ExamplesFlextCoreShared):
     """Golden-file tests for the public logging DSL."""
 
     @staticmethod

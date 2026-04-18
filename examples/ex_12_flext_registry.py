@@ -4,7 +4,17 @@ from __future__ import annotations
 
 from typing import override
 
-from examples import Ex12CommandA, Ex12CommandB, Examples, c, m, p, r, t, u
+from examples import (
+    Ex12CommandA,
+    Ex12CommandB,
+    ExamplesFlextCoreShared,
+    c,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 from flext_core import h
 
 
@@ -32,7 +42,7 @@ def _discovered_handler(_message: m.Command) -> m.Command:
     return Ex12CommandA(value="decorated")
 
 
-class Ex12RegistryDsl(Examples):
+class Ex12RegistryDsl(ExamplesFlextCoreShared):
     """Exercise the canonical registry DSL public API."""
 
     @override

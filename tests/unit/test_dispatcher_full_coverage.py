@@ -9,7 +9,7 @@ import pytest
 from tests import m, p, r, t, u
 
 
-class TestDispatcherFullCoverage:
+class TestsFlextCoreDispatcherFullCoverage:
     class _SampleCommand(m.Command):
         """Refined sample command."""
 
@@ -42,7 +42,7 @@ class TestDispatcherFullCoverage:
             return r[str].ok(f"handled:{payload}")
 
         def can_handle(self, message_type: type) -> bool:
-            return message_type is TestDispatcherFullCoverage._SampleCommand
+            return message_type is TestsFlextCoreDispatcherFullCoverage._SampleCommand
 
     class _QueryHandler:
         """Query handler matching Handle."""
@@ -51,7 +51,7 @@ class TestDispatcherFullCoverage:
 
         def handle(
             self,
-            message: TestDispatcherFullCoverage._SampleQuery,
+            message: TestsFlextCoreDispatcherFullCoverage._SampleQuery,
         ) -> p.Result[t.RecursiveContainerMapping]:
             query_id = getattr(message, "query_id", None)
             return r[t.RecursiveContainerMapping].ok(
@@ -59,7 +59,7 @@ class TestDispatcherFullCoverage:
             )
 
         def can_handle(self, message_type: type) -> bool:
-            return message_type is TestDispatcherFullCoverage._SampleQuery
+            return message_type is TestsFlextCoreDispatcherFullCoverage._SampleQuery
 
     class _EventHandler:
         """Event handler matching Handle."""
@@ -72,13 +72,13 @@ class TestDispatcherFullCoverage:
 
         def can_handle(
             self,
-            message_type: type[TestDispatcherFullCoverage._SampleEvent],
+            message_type: type[TestsFlextCoreDispatcherFullCoverage._SampleEvent],
         ) -> bool:
-            return message_type is TestDispatcherFullCoverage._SampleEvent
+            return message_type is TestsFlextCoreDispatcherFullCoverage._SampleEvent
 
     class _PredicateHandler:
         def can_handle(self, msg_type: type) -> bool:
-            return msg_type is TestDispatcherFullCoverage._SampleCommand
+            return msg_type is TestsFlextCoreDispatcherFullCoverage._SampleCommand
 
         def handle(self, message: p.Routable) -> p.Result[str]:
             _ = message
@@ -166,7 +166,9 @@ class TestDispatcherFullCoverage:
         self,
         dispatcher: p.Dispatcher,
     ) -> None:
-        def func_handler(msg: TestDispatcherFullCoverage._SampleCommand) -> str:
+        def func_handler(
+            msg: TestsFlextCoreDispatcherFullCoverage._SampleCommand,
+        ) -> str:
             _ = msg
             return "func:ok"
 
@@ -184,7 +186,9 @@ class TestDispatcherFullCoverage:
         assert dispatcher.dispatch(self._UnroutedMessage()).failure
 
     def test_exception_handling_in_dispatch(self, dispatcher: p.Dispatcher) -> None:
-        def breaking_handler(msg: TestDispatcherFullCoverage._SampleCommand) -> str:
+        def breaking_handler(
+            msg: TestsFlextCoreDispatcherFullCoverage._SampleCommand,
+        ) -> str:
             _ = msg
             error_msg = "broken"
             raise ValueError(error_msg)

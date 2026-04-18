@@ -5,11 +5,11 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableSequence, Sequence
 from typing import override
 
-from examples import Examples, m, t
+from examples import ExamplesFlextCoreShared, m, t
 from flext_core import p, r
 
 
-class Ex01r(Examples):
+class Ex01r(ExamplesFlextCoreShared):
     """Golden-file tests for ``r`` / ``r`` public API."""
 
     def __init__(self) -> None:
@@ -47,10 +47,10 @@ class Ex01r(Examples):
         self.check("accumulate_errors.failure", acc_fail.error)
         cleaned_values: MutableSequence[int] = []
 
-        def make_handle() -> Examples.Handle:
+        def make_handle() -> ExamplesFlextCoreShared.Handle:
             return self.Handle(value=21)
 
-        def clean_handle(handle: Examples.Handle) -> None:
+        def clean_handle(handle: ExamplesFlextCoreShared.Handle) -> None:
             handle.cleaned = True
             cleaned_values.append(handle.value)
 
@@ -96,12 +96,12 @@ class Ex01r(Examples):
         )
         valid_data: t.ScalarMapping = {"name": "Ada", "age": 30}
         invalid_data: t.ScalarMapping = {"name": "Ada", "age": "bad"}
-        person_model = Examples.Person
-        from_validation_ok = r[Examples.Person].from_validation(
+        person_model = ExamplesFlextCoreShared.Person
+        from_validation_ok = r[ExamplesFlextCoreShared.Person].from_validation(
             valid_data,
             person_model,
         )
-        from_validation_fail = r[Examples.Person].from_validation(
+        from_validation_fail = r[ExamplesFlextCoreShared.Person].from_validation(
             invalid_data,
             person_model,
         )

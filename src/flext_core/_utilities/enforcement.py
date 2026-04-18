@@ -464,12 +464,26 @@ class FlextUtilitiesEnforcement:
     def _is_exempt(target: type) -> bool:
         """Honour explicit ``_flext_enforcement_exempt`` opt-out.
 
-        Only set this marker on classes whose architecture intentionally
-        violates a specific rule (e.g., DDD entities whose event-sourcing
-        collectors are mutable by design). Exemption is declared on the
-        class itself (not inherited) so every subclass must re-affirm it.
+        Exemption applies when either:
+
+        1. The class declares ``_flext_enforcement_exempt: ClassVar[bool] = True``
+           on itself (not inherited — opt-out is explicit per subclass).
+        2. The class lives inside a test fixture scope: the defining module
+           path begins with ``tests.`` (or ``tests`` is a top-level package
+           segment) AND the qualname contains a ``Tests`` container segment.
+           Test fixtures exercise production APIs but are not subject to
+           production model governance (mutable defaults, accessor method
+           naming, field-description requirements).
         """
-        return bool(target.__dict__.get("_flext_enforcement_exempt", False))
+        if target.__dict__.get("_flext_enforcement_exempt", False):
+            return True
+        module = getattr(target, "__module__", "") or ""
+        qualname = getattr(target, "__qualname__", "") or ""
+        if module.startswith(("tests.", "tests_")):
+            segments = qualname.split(".")
+            if any(seg.startswith("Tests") for seg in segments):
+                return True
+        return False
 
     @staticmethod
     def run(model_type: type[mp.BaseModel]) -> None:

@@ -5,8 +5,8 @@ from __future__ import annotations
 from examples import (
     ExamplesFlextCoreModelsErrors,
     ExamplesFlextCoreModelsOutput,
-    SharedHandle,
-    SharedPerson,
+    ExamplesFlextCoreSharedHandle,
+    ExamplesFlextCoreSharedPerson,
 )
 from flext_core import m
 
@@ -24,10 +24,10 @@ class ExamplesFlextCoreModels(
     ):
         """Examples namespace for shared example-domain models."""
 
-        class Person(SharedPerson):
+        class Person(ExamplesFlextCoreSharedPerson):
             """Shared person model used by public examples."""
 
-        class Handle(SharedHandle):
+        class Handle(ExamplesFlextCoreSharedHandle):
             """Shared resource-handle model used by public examples."""
 
 

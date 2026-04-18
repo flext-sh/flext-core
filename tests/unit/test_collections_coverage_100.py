@@ -4,7 +4,7 @@ from flext_tests import tm
 from tests import m, t, u
 
 
-class TestFlextModelsCollectionsCoverage100:
+class TestsFlextCoreFlextModelsCollectionsCoverage100:
     class ConfigFixture(m.Config):
         """Test configuration with timeout and retries."""
 
@@ -19,13 +19,13 @@ class TestFlextModelsCollectionsCoverage100:
     class StatisticsItems(m.Statistics):
         """Statistics with items list."""
 
-        items: t.StrSequence = m.Field(default_factory=list)
+        items: t.StrSequence = m.Field(default_factory=tuple)
 
     class StatisticsMixed(m.Statistics):
         """Statistics with count, items, and name."""
 
         count: int = 0
-        items: t.StrSequence = m.Field(default_factory=list)
+        items: t.StrSequence = m.Field(default_factory=tuple)
         name: str = ""
 
     class StatisticsOptional(m.Statistics):

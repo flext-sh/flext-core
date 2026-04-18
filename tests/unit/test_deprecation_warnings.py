@@ -24,7 +24,7 @@ from tests import m, t, u
 pytestmark = [pytest.mark.unit]
 
 
-class TestDeprecationWarnings:
+class TestsFlextCoreDeprecationWarnings:
     def test_normalize_to_container_functional_equivalence(self) -> None:
         test_cases: Sequence[t.RecursiveContainer] = [
             "str",
@@ -91,7 +91,11 @@ class TestDeprecationWarnings:
 
     def test_deprecated_class_warning(self) -> None:
         """warnings.deprecated emits DeprecationWarning on instantiation."""
-        legacy_base = type("LegacyBase", (m.Config,), {})
+        legacy_base = type(
+            "TestsFlextCoreDeprecatedLegacyBase",
+            (m.Config,),
+            {},
+        )
         legacy = warnings.deprecated("Use NewClass instead")(legacy_base)
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")

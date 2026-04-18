@@ -7,7 +7,7 @@ from collections.abc import MutableSequence
 from tests import c, m, p, r, t, u
 
 
-class TestDispatcherMinimal:
+class TestsFlextCoreDispatcherMinimal:
     class _EchoHandler:
         """Handler that echoes command_type back."""
 
@@ -41,12 +41,12 @@ class TestDispatcherMinimal:
         """Handler using can_handle for route resolution."""
 
         def can_handle(self, msg_type: type) -> bool:
-            return msg_type is TestDispatcherMinimal._AutoCommand
+            return msg_type is TestsFlextCoreDispatcherMinimal._AutoCommand
 
-        def handle(self, msg: TestDispatcherMinimal._AutoCommand) -> str:
+        def handle(self, msg: TestsFlextCoreDispatcherMinimal._AutoCommand) -> str:
             return f"auto:{msg.command_type}"
 
-        def __call__(self, msg: TestDispatcherMinimal._AutoCommand) -> str:
+        def __call__(self, msg: TestsFlextCoreDispatcherMinimal._AutoCommand) -> str:
             return self.handle(msg)
 
     class _EventSubscriber:

@@ -8,7 +8,7 @@ from flext_tests import tm
 from tests import m, p, r, t
 
 
-class TestResultExceptionCarrying:
+class TestsFlextCoreResultExceptionCarrying:
     class BrokenSized:
         """Sized t.RecursiveContainer that raises on __len__."""
 
@@ -282,9 +282,9 @@ class TestResultExceptionCarrying:
 
     def test_from_validation_carries_exception(self) -> None:
         invalid_data = {"name": "Alice", "age": "not_an_int"}
-        result = r[TestResultExceptionCarrying.UserModel].from_validation(
+        result = r[TestsFlextCoreResultExceptionCarrying.UserModel].from_validation(
             invalid_data,
-            TestResultExceptionCarrying.UserModel,
+            TestsFlextCoreResultExceptionCarrying.UserModel,
         )
         tm.that(result.failure, eq=True)
         tm.that(result.exception, none=False)

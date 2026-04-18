@@ -84,7 +84,10 @@ if _t.TYPE_CHECKING:
     )
     from examples._models.exsettings import ExSettingsAppSettings
     from examples._models.output import ExamplesFlextCoreModelsOutput
-    from examples._models.shared import SharedHandle, SharedPerson
+    from examples._models.shared import (
+        ExamplesFlextCoreSharedHandle,
+        ExamplesFlextCoreSharedPerson,
+    )
     from examples.ex_01_flext_result import Ex01r
     from examples.ex_02_flext_settings import Ex02FlextSettings
     from examples.ex_03_flext_logger import Ex03LoggingDsl
@@ -99,7 +102,7 @@ if _t.TYPE_CHECKING:
     from examples.ex_12_flext_registry import Ex12RegistryDsl
     from examples.logging_config_once_pattern import DatabaseService, MigrationService
     from examples.models import ExamplesFlextCoreModels, m
-    from examples.shared import Examples
+    from examples.shared import ExamplesFlextCoreShared
     from examples.typings import ExamplesFlextCoreTypes, t
     from flext_core import c, d, e, h, p, r, s, u, x
 _LAZY_IMPORTS = merge_lazy_imports(
@@ -185,8 +188,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._models.exsettings": ("ExSettingsAppSettings",),
             "._models.output": ("ExamplesFlextCoreModelsOutput",),
             "._models.shared": (
-                "SharedHandle",
-                "SharedPerson",
+                "ExamplesFlextCoreSharedHandle",
+                "ExamplesFlextCoreSharedPerson",
             ),
             ".ex_01_flext_result": ("Ex01r",),
             ".ex_02_flext_settings": ("Ex02FlextSettings",),
@@ -208,7 +211,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "ExamplesFlextCoreModels",
                 "m",
             ),
-            ".shared": ("Examples",),
+            ".shared": ("ExamplesFlextCoreShared",),
             ".typings": (
                 "ExamplesFlextCoreTypes",
                 "t",
@@ -307,7 +310,6 @@ __all__: list[str] = [
     "Ex14GetUserQuery",
     "Ex14UserDTO",
     "ExSettingsAppSettings",
-    "Examples",
     "ExamplesFlextCoreModels",
     "ExamplesFlextCoreModelsErrors",
     "ExamplesFlextCoreModelsEx00",
@@ -315,10 +317,11 @@ __all__: list[str] = [
     "ExamplesFlextCoreModelsEx04",
     "ExamplesFlextCoreModelsEx05",
     "ExamplesFlextCoreModelsOutput",
+    "ExamplesFlextCoreShared",
+    "ExamplesFlextCoreSharedHandle",
+    "ExamplesFlextCoreSharedPerson",
     "ExamplesFlextCoreTypes",
     "MigrationService",
-    "SharedHandle",
-    "SharedPerson",
     "c",
     "d",
     "e",

@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import override
 
-from examples import Examples, c, m, t, u
+from examples import ExamplesFlextCoreShared, c, m, t, u
 from flext_core import FlextContainer, FlextContext
 
 
-class Ex06FlextContext(Examples):
+class Ex06FlextContext(ExamplesFlextCoreShared):
     """Exercise FlextContext API with deterministic output checks."""
 
     @override

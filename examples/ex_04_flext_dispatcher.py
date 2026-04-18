@@ -16,7 +16,7 @@ from examples import (
     Ex04Ping,
     Ex04UnknownQuery,
     Ex04UserCreated,
-    Examples,
+    ExamplesFlextCoreShared,
     p,
     r,
     t,
@@ -24,7 +24,7 @@ from examples import (
 )
 
 
-class Ex04DispatchDsl(Examples):
+class Ex04DispatchDsl(ExamplesFlextCoreShared):
     """Golden-file tests for the canonical dispatcher DSL."""
 
     class CreateUserHandler:

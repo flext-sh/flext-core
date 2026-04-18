@@ -6,11 +6,11 @@ import os
 from pathlib import Path
 from typing import override
 
-from examples import Examples, c, u
+from examples import ExamplesFlextCoreShared, c, u
 from flext_core import FlextSettings
 
 
-class Ex02FlextSettings(Examples):
+class Ex02FlextSettings(ExamplesFlextCoreShared):
     """Golden-file tests for ``FlextSettings`` public API."""
 
     class _TestConfig(FlextSettings):

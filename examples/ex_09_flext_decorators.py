@@ -7,11 +7,11 @@ import warnings
 from collections.abc import Mapping
 from typing import override
 
-from examples import Examples, c, d, e, m, p, r, t, u
+from examples import ExamplesFlextCoreShared, c, d, e, m, p, r, t, u
 from flext_core import FlextContainer, FlextContext
 
 
-class Ex09FlextDecorators(Examples):
+class Ex09FlextDecorators(ExamplesFlextCoreShared):
     """Exercise d public APIs."""
 
     _token_service_name: str = u.PrivateAttr(default_factory=str)

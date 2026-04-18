@@ -220,7 +220,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestUtilitiesSettingsFullCoverage",
             ),
             ".test_utilities_text_full_coverage": ("TestUtilitiesTextFullCoverage",),
-            ".test_utilities_type_checker_coverage_100": ("TestuTypeChecker",),
+            ".test_utilities_type_checker_coverage_100": (
+                "TestsFlextCoreUtilitiesTypeChecker",
+            ),
             ".test_utilities_type_guards_coverage_100": (
                 "TestUtilitiesTypeGuardsCoverage100",
             ),

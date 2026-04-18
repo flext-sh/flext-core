@@ -6,7 +6,7 @@ import sys
 from types import ModuleType
 from typing import override
 
-from examples import Examples, c, p, t, u
+from examples import ExamplesFlextCoreShared, c, p, t, u
 from flext_core import FlextContainer, FlextContext, r
 
 
@@ -14,7 +14,7 @@ class _WireProbe:
     """Probe class used to exercise wire_modules(classes=...)."""
 
 
-class Ex08FlextContainer(Examples):
+class Ex08FlextContainer(ExamplesFlextCoreShared):
     """Exercise FlextContainer public APIs."""
 
     _registered_service_name: str = u.PrivateAttr(default_factory=str)

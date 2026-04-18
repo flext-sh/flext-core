@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import override
 
-from examples import Examples, c, m, t
+from examples import ExamplesFlextCoreShared, c, m, t
 from flext_core import e, r
 
 
-class Ex07FlextExceptions(Examples):
+class Ex07FlextExceptions(ExamplesFlextCoreShared):
     """Exercise e API with deterministic output checks."""
 
     @override

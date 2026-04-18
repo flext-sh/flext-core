@@ -9,7 +9,7 @@ import pytest
 from tests import e, p, r, s
 
 
-class RuntimeCloneService(s[str]):
+class TestsFlextCoreServiceAdditionalRuntimeCloneService(s[str]):
     """Service exposing runtime cloning for testing."""
 
     flag: bool = True
@@ -31,7 +31,7 @@ class TestServiceAdditional:
     def test_valid_handles_validation_exception(self) -> None:
         """Valid should return False when validation raises exceptions."""
 
-        class RaisingValidationService(s[str]):
+        class TestsFlextCoreServiceAdditionalRaisingValidationService(s[str]):
             @override
             def validate_business_rules(self) -> p.Result[bool]:
                 msg = "boom"
@@ -41,7 +41,7 @@ class TestServiceAdditional:
             def execute(self) -> p.Result[str]:
                 return r[str].ok("x")
 
-        service = RaisingValidationService()
+        service = TestsFlextCoreServiceAdditionalRaisingValidationService()
         assert service.valid() is False
 
     def test_result_property_raises_on_failure(self) -> None:

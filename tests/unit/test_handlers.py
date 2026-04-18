@@ -11,7 +11,7 @@ from flext_tests import tm
 from tests import c, e, h, m, p, r, t, u, x
 
 
-class TestFlextHandlers:
+class TestsFlextCoreFlextHandlers:
     class ConcreteTestHandler(h[t.ValueOrModel, t.ValueOrModel]):
         """Test handler for string messages."""
 

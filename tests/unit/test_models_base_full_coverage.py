@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from tests import c, m, r, t
 
 
-class TestModelsBaseFullCoverage:
+class TestsFlextCoreModelsBaseFullCoverage:
     class _FrozenValue(m.ContractModel):
         name: str
         count: int

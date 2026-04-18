@@ -34,7 +34,7 @@ from flext_tests import tm
 from tests import c, m, t, u
 
 
-class TestModels:
+class TestsFlextCoreModels:
     """Test suite for m using u and c."""
 
     @unique
@@ -56,7 +56,7 @@ class TestModels:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         model_type: Annotated[
-            TestModels.ModelType,
+            TestsFlextCoreModels.ModelType,
             m.Field(description="Model type under creation test"),
         ]
         field_data: Annotated[

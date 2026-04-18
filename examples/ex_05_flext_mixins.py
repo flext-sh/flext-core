@@ -5,11 +5,11 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import override
 
-from examples import Examples, c, m, t, u
+from examples import ExamplesFlextCoreShared, c, m, t, u
 from flext_core import FlextSettings, p, r, x
 
 
-class Ex05FlextMixins(Examples):
+class Ex05FlextMixins(ExamplesFlextCoreShared):
     """Golden-file tests for ``x`` (``x``) public API."""
 
     class DemoService(x):

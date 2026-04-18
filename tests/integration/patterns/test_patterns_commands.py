@@ -13,7 +13,7 @@ from typing import override
 from tests import c, h, m, p, r, t
 
 
-class TestPatternsCommands:
+class TestsFlextCorePatternsCommands:
     """Unified command-pattern test module with nested helpers and scenarios."""
 
     EXPECTED_BULK_SIZE = 2
@@ -115,7 +115,7 @@ class TestPatternsCommands:
         def can_handle(self, message_type: type) -> bool:
             """Check if can handle command."""
             return (
-                message_type == TestPatternsCommands.CreateUserCommand
+                message_type == TestsFlextCorePatternsCommands.CreateUserCommand
                 or str(message_type) == "create_user"
             )
 
@@ -125,7 +125,7 @@ class TestPatternsCommands:
             data: t.ValueOrModel,
         ) -> p.Result[bool]:
             """Validate command using command's validate_command method."""
-            if not isinstance(data, TestPatternsCommands.CreateUserCommand):
+            if not isinstance(data, TestsFlextCorePatternsCommands.CreateUserCommand):
                 return r[bool].fail(c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE)
             return data.validate_command()
 
@@ -135,7 +135,9 @@ class TestPatternsCommands:
             message: t.ValueOrModel,
         ) -> p.Result[t.ValueOrModel]:
             """Handle the create user command."""
-            if not isinstance(message, TestPatternsCommands.CreateUserCommand):
+            if not isinstance(
+                message, TestsFlextCorePatternsCommands.CreateUserCommand
+            ):
                 return r[t.ValueOrModel].fail(
                     c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE
                 )
@@ -149,7 +151,7 @@ class TestPatternsCommands:
 
         def handle_command(
             self,
-            command: TestPatternsCommands.CreateUserCommand,
+            command: TestsFlextCorePatternsCommands.CreateUserCommand,
         ) -> p.Result[t.ValueOrModel]:
             """Handle the create user command (alias for handle)."""
             return self.handle(command)
@@ -178,7 +180,7 @@ class TestPatternsCommands:
         def can_handle(self, message_type: type) -> bool:
             """Check if can handle command."""
             return (
-                message_type == TestPatternsCommands.UpdateUserCommand
+                message_type == TestsFlextCorePatternsCommands.UpdateUserCommand
                 or str(message_type) == "update_user"
             )
 
@@ -188,7 +190,7 @@ class TestPatternsCommands:
             data: t.ValueOrModel,
         ) -> p.Result[bool]:
             """Validate command using command's validate_command method."""
-            if not isinstance(data, TestPatternsCommands.UpdateUserCommand):
+            if not isinstance(data, TestsFlextCorePatternsCommands.UpdateUserCommand):
                 return r[bool].fail(c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE)
             return data.validate_command()
 
@@ -198,7 +200,9 @@ class TestPatternsCommands:
             message: t.ValueOrModel,
         ) -> p.Result[t.ValueOrModel]:
             """Handle the update user command."""
-            if not isinstance(message, TestPatternsCommands.UpdateUserCommand):
+            if not isinstance(
+                message, TestsFlextCorePatternsCommands.UpdateUserCommand
+            ):
                 return r[t.ValueOrModel].fail(
                     c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE
                 )
@@ -215,7 +219,7 @@ class TestPatternsCommands:
 
         def handle_command(
             self,
-            command: TestPatternsCommands.UpdateUserCommand,
+            command: TestsFlextCorePatternsCommands.UpdateUserCommand,
         ) -> p.Result[t.ValueOrModel]:
             """Handle the update user command (alias for handle)."""
             return self.handle(command)
@@ -231,7 +235,7 @@ class TestPatternsCommands:
         def can_handle(self, message_type: type) -> bool:
             """Check if can handle command."""
             return (
-                message_type == TestPatternsCommands.FailingCommand
+                message_type == TestsFlextCorePatternsCommands.FailingCommand
                 or str(message_type) == "failing"
             )
 
@@ -241,14 +245,14 @@ class TestPatternsCommands:
             data: t.ValueOrModel,
         ) -> p.Result[bool]:
             """Validate command using command's validate_command method."""
-            if not isinstance(data, TestPatternsCommands.FailingCommand):
+            if not isinstance(data, TestsFlextCorePatternsCommands.FailingCommand):
                 return r[bool].fail(c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE)
             return data.validate_command()
 
         @override
         def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
             """Fail to handle command intentionally."""
-            if not isinstance(message, TestPatternsCommands.FailingCommand):
+            if not isinstance(message, TestsFlextCorePatternsCommands.FailingCommand):
                 return r[t.ValueOrModel].fail(
                     c.Core.Tests.TestErrors.CANNOT_HANDLE_COMMAND_TYPE
                 )
@@ -259,7 +263,7 @@ class TestPatternsCommands:
 
         def handle_command(
             self,
-            command: TestPatternsCommands.FailingCommand,
+            command: TestsFlextCorePatternsCommands.FailingCommand,
         ) -> p.Result[t.ValueOrModel]:
             """Fail to handle command intentionally (alias for handle)."""
             return self.handle(command)
@@ -270,7 +274,7 @@ class TestPatternsCommands:
         username: str,
         email: str,
     ) -> CreateUserCommand:
-        return TestPatternsCommands.CreateUserCommand.model_validate(
+        return TestsFlextCorePatternsCommands.CreateUserCommand.model_validate(
             obj={"username": username, "email": email},
         )
 
@@ -280,7 +284,7 @@ class TestPatternsCommands:
         target_user_id: str,
         updates: t.RecursiveContainerMapping,
     ) -> UpdateUserCommand:
-        return TestPatternsCommands.UpdateUserCommand.model_validate(
+        return TestsFlextCorePatternsCommands.UpdateUserCommand.model_validate(
             obj={
                 "target_user_id": target_user_id,
                 "updates": updates,

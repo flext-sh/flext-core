@@ -10,22 +10,24 @@ import pytest
 from tests import c, e, m, p, r, s, u
 
 
-class UserData(m.Value):
+class TestsFlextCoreServiceUserData(m.Value):
     """Public result model used by service tests."""
 
     user_id: int
     name: str
 
 
-class UserService(s[UserData]):
+class TestsFlextCoreServiceUserService(s[TestsFlextCoreServiceUserData]):
     """Simple successful service."""
 
     @override
-    def execute(self) -> p.Result[UserData]:
-        return r[UserData].ok(UserData(user_id=1, name="test_user"))
+    def execute(self) -> p.Result[TestsFlextCoreServiceUserData]:
+        return r[TestsFlextCoreServiceUserData].ok(
+            TestsFlextCoreServiceUserData(user_id=1, name="test_user")
+        )
 
 
-class ValidatingService(s[str]):
+class TestsFlextCoreServiceValidatingService(s[str]):
     """Service with public validation behavior."""
 
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(validate_assignment=True)
@@ -51,7 +53,7 @@ class ValidatingService(s[str]):
         return r[str].ok(f"Processed: {self.value_input}")
 
 
-class FailingService(s[bool]):
+class TestsFlextCoreServiceFailingService(s[bool]):
     """Service that fails execution through r."""
 
     @override
@@ -66,7 +68,7 @@ class FailingService(s[bool]):
         )
 
 
-class RaisingValidationService(s[str]):
+class TestsFlextCoreServiceRaisingValidationService(s[str]):
     """Service whose validation raises and must be flattened by valid()."""
 
     should_raise: bool = False
@@ -87,7 +89,7 @@ class TestService:
     """Validate the public behavior of FlextService subclasses."""
 
     def test_service_creation_exposes_runtime_contract(self) -> None:
-        service = UserService(subproject="core-tests")
+        service = TestsFlextCoreServiceUserService(subproject="core-tests")
         assert isinstance(service, s)
         assert isinstance(service.model_config, Mapping)
         assert service.model_config.get("validate_assignment") is True
@@ -96,17 +98,21 @@ class TestService:
         assert service.container is not None
 
     def test_execute_returns_successful_result(self) -> None:
-        service = UserService()
+        service = TestsFlextCoreServiceUserService()
         result = service.execute()
         assert result.success
-        assert result.value == UserData(user_id=1, name="test_user")
+        assert result.value == TestsFlextCoreServiceUserData(
+            user_id=1, name="test_user"
+        )
 
     def test_result_property_unwraps_successful_execution(self) -> None:
-        service = UserService()
-        assert service.result == UserData(user_id=1, name="test_user")
+        service = TestsFlextCoreServiceUserService()
+        assert service.result == TestsFlextCoreServiceUserData(
+            user_id=1, name="test_user"
+        )
 
     def test_result_property_raises_structured_base_error_on_failure(self) -> None:
-        service = FailingService()
+        service = TestsFlextCoreServiceFailingService()
         with pytest.raises(e.BaseError) as captured:
             _ = service.result
         error = captured.value
@@ -116,30 +122,37 @@ class TestService:
         assert error.metadata.attributes["operation"] == "service execution"
 
     def test_default_business_rule_validation_is_successful(self) -> None:
-        service = UserService()
+        service = TestsFlextCoreServiceUserService()
         result = service.validate_business_rules()
         assert result.success
         assert result.value is True
 
     def test_valid_reflects_business_rule_result(self) -> None:
-        assert ValidatingService(value_input="valid").valid() is True
-        assert ValidatingService(value_input="x", min_length=2).valid() is False
+        assert (
+            TestsFlextCoreServiceValidatingService(value_input="valid").valid() is True
+        )
+        assert (
+            TestsFlextCoreServiceValidatingService(
+                value_input="x", min_length=2
+            ).valid()
+            is False
+        )
 
     def test_valid_returns_false_when_validation_raises(self) -> None:
-        service = RaisingValidationService(should_raise=True)
+        service = TestsFlextCoreServiceRaisingValidationService(should_raise=True)
         assert service.valid() is False
 
     def test_execute_exposes_validation_failure_without_exceptions(self) -> None:
-        service = ValidatingService(value_input="x", min_length=2)
+        service = TestsFlextCoreServiceValidatingService(value_input="x", min_length=2)
         result = service.execute()
         assert result.failure
         assert result.error == "Value is too short"
 
     def test_service_info_exposes_public_runtime_metadata(self) -> None:
-        service = UserService(subproject="core-tests")
+        service = TestsFlextCoreServiceUserService(subproject="core-tests")
         info = service.service_info()
-        assert info["service_name"] == "UserService"
-        assert info["service_module"] == UserService.__module__
+        assert info["service_name"] == "TestsFlextCoreServiceUserService"
+        assert info["service_module"] == TestsFlextCoreServiceUserService.__module__
         assert info["settings_class"] == service.settings.__class__.__name__
         assert info["app_name"] == service.settings.app_name
         assert info["version"] == service.settings.version
@@ -147,6 +160,6 @@ class TestService:
         assert info["handler_count"] == 0
 
     def test_service_model_dump_exposes_runtime_snapshot(self) -> None:
-        service = UserService()
+        service = TestsFlextCoreServiceUserService()
         payload = service.model_dump(mode="python")
         assert "runtime" in payload

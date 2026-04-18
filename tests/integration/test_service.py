@@ -17,7 +17,7 @@ import pytest
 from tests import m, p, r, s, t, u
 
 
-class TestServiceIntegration:
+class TestsFlextCoreServiceIntegration:
     class UserServiceEntity(m.BaseModel):
         """Test user entity model using dataclass."""
 
@@ -40,12 +40,12 @@ class TestServiceIntegration:
         - This pattern separates status from data retrieval
         """
 
-        _users: MutableMapping[str, TestServiceIntegration.UserServiceEntity] = (
-            m.PrivateAttr(
-                default_factory=lambda: dict[
-                    str, TestServiceIntegration.UserServiceEntity
-                ](),
-            )
+        _users: MutableMapping[
+            str, TestsFlextCoreServiceIntegration.UserServiceEntity
+        ] = m.PrivateAttr(
+            default_factory=lambda: dict[
+                str, TestsFlextCoreServiceIntegration.UserServiceEntity
+            ](),
         )
         _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)
         _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
@@ -68,7 +68,7 @@ class TestServiceIntegration:
 
         def get_user(
             self, user_id: str
-        ) -> p.Result[TestServiceIntegration.UserServiceEntity]:
+        ) -> p.Result[TestsFlextCoreServiceIntegration.UserServiceEntity]:
             """Get user by ID.
 
             Args:
@@ -80,25 +80,27 @@ class TestServiceIntegration:
             """
             self._call_count += 1
             if self._should_fail:
-                return r[TestServiceIntegration.UserServiceEntity].fail(
+                return r[TestsFlextCoreServiceIntegration.UserServiceEntity].fail(
                     "User service unavailable"
                 )
             if user_id in self._users:
-                return r[TestServiceIntegration.UserServiceEntity].ok(
+                return r[TestsFlextCoreServiceIntegration.UserServiceEntity].ok(
                     self._users[user_id]
                 )
-            default_user = TestServiceIntegration.UserServiceEntity(
+            default_user = TestsFlextCoreServiceIntegration.UserServiceEntity(
                 unique_id=user_id,
                 name=f"User {user_id}",
                 email=f"user{user_id}@example.com",
                 active=True,
             )
-            return r[TestServiceIntegration.UserServiceEntity].ok(default_user)
+            return r[TestsFlextCoreServiceIntegration.UserServiceEntity].ok(
+                default_user
+            )
 
         def set_user_data(
             self,
             user_id: str,
-            user: TestServiceIntegration.UserServiceEntity,
+            user: TestsFlextCoreServiceIntegration.UserServiceEntity,
         ) -> None:
             """Set user data for testing.
 
@@ -191,8 +193,8 @@ class TestServiceIntegration:
         name: str,
         version: str,
         temp_dir: str,
-    ) -> TestServiceIntegration.ServiceConfig:
-        return TestServiceIntegration.ServiceConfig(
+    ) -> TestsFlextCoreServiceIntegration.ServiceConfig:
+        return TestsFlextCoreServiceIntegration.ServiceConfig(
             name=name,
             version=version,
             temp_dir=temp_dir,
@@ -202,8 +204,8 @@ class TestServiceIntegration:
         """Real lifecycle service using s with settings model."""
 
         _initialized: bool = m.PrivateAttr(default_factory=lambda: False)
-        _service_config: TestServiceIntegration.ServiceConfig | None = m.PrivateAttr(
-            default_factory=lambda: None
+        _service_config: TestsFlextCoreServiceIntegration.ServiceConfig | None = (
+            m.PrivateAttr(default_factory=lambda: None)
         )
         _shutdown_called: bool = m.PrivateAttr(default_factory=lambda: False)
         _should_fail_init: bool = m.PrivateAttr(default_factory=lambda: False)
@@ -217,7 +219,7 @@ class TestServiceIntegration:
             return r[str].ok("ready")
 
         def initialize(
-            self, settings: TestServiceIntegration.ServiceConfig
+            self, settings: TestsFlextCoreServiceIntegration.ServiceConfig
         ) -> p.Result[str]:
             """Initialize service with settings model.
 
@@ -270,7 +272,9 @@ class TestServiceIntegration:
             return self._initialized
 
         @property
-        def service_config(self) -> TestServiceIntegration.ServiceConfig | None:
+        def service_config(
+            self,
+        ) -> TestsFlextCoreServiceIntegration.ServiceConfig | None:
             """Get service configuration."""
             return self._service_config
 

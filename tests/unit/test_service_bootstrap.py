@@ -23,7 +23,7 @@ from flext_core import FlextContext
 from tests import m, p, r, s, u
 
 
-class TestServiceBootstrap:
+class TestsFlextCoreServiceBootstrap:
     """Test service runtime bootstrap patterns."""
 
     class ConcreteTestService(s[bool]):

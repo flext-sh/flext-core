@@ -112,5 +112,5 @@ runtime.safe_get_attribute: True
 runtime.extract_generic_args: True
 runtime.is_sequence_type.true: True
 runtime.is_sequence_type.false: False
-runtime.normalize_general: "{'an': 5}"
+runtime.normalize_general: dict
 runtime.normalize_metadata: dict

@@ -780,7 +780,7 @@ class TestsFlextCoreModelsMixins:
         operations: Annotated[
             t.StrSequence,
             m.Field(description="Pipeline operations to execute"),
-        ] = m.Field(default_factory=list)
+        ] = m.Field(default_factory=tuple)
         expected_pipeline_length: Annotated[
             int, m.Field(description="Expected number of pipeline stages")
         ] = 1

@@ -87,6 +87,13 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.checker import FlextUtilitiesChecker
     from flext_core._utilities.collection import FlextUtilitiesCollection
     from flext_core._utilities.context import FlextUtilitiesContext
+    from flext_core._utilities.context_crud import FlextUtilitiesContextCrud
+    from flext_core._utilities.context_lifecycle import FlextUtilitiesContextLifecycle
+    from flext_core._utilities.context_normalization import (
+        FlextUtilitiesContextNormalization,
+    )
+    from flext_core._utilities.context_scope import FlextUtilitiesContextScope
+    from flext_core._utilities.context_tracing import FlextUtilitiesContextTracing
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
     from flext_core._utilities.domain import FlextUtilitiesDomain
@@ -101,6 +108,8 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.guards_type_protocol import (
         FlextUtilitiesGuardsTypeProtocol,
     )
+    from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
+    from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
     from flext_core._utilities.mapper import FlextUtilitiesMapper
     from flext_core._utilities.model import FlextUtilitiesModel
     from flext_core._utilities.parser import FlextUtilitiesParser
@@ -243,7 +252,16 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.checker": ("FlextUtilitiesChecker",),
             "._utilities.collection": ("FlextUtilitiesCollection",),
             "._utilities.context": ("FlextUtilitiesContext",),
+            "._utilities.context_normalization": (
+                "FlextUtilitiesContextNormalization",
+            ),
+            "._utilities.context_scope": ("FlextUtilitiesContextScope",),
+            "._utilities.context_crud": ("FlextUtilitiesContextCrud",),
+            "._utilities.context_lifecycle": ("FlextUtilitiesContextLifecycle",),
+            "._utilities.context_tracing": ("FlextUtilitiesContextTracing",),
             "._utilities.conversion": ("FlextUtilitiesConversion",),
+            "._utilities.logging_config": ("FlextUtilitiesLoggingConfig",),
+            "._utilities.logging_context": ("FlextUtilitiesLoggingContext",),
             "._utilities.discovery": ("FlextUtilitiesDiscovery",),
             "._utilities.domain": ("FlextUtilitiesDomain",),
             "._utilities.enforcement": ("FlextUtilitiesEnforcement",),
@@ -447,6 +465,11 @@ __all__: list[str] = [
     "FlextUtilitiesChecker",
     "FlextUtilitiesCollection",
     "FlextUtilitiesContext",
+    "FlextUtilitiesContextCrud",
+    "FlextUtilitiesContextLifecycle",
+    "FlextUtilitiesContextNormalization",
+    "FlextUtilitiesContextScope",
+    "FlextUtilitiesContextTracing",
     "FlextUtilitiesConversion",
     "FlextUtilitiesDiscovery",
     "FlextUtilitiesDomain",
@@ -459,6 +482,8 @@ __all__: list[str] = [
     "FlextUtilitiesGuardsTypeCore",
     "FlextUtilitiesGuardsTypeModel",
     "FlextUtilitiesGuardsTypeProtocol",
+    "FlextUtilitiesLoggingConfig",
+    "FlextUtilitiesLoggingContext",
     "FlextUtilitiesMapper",
     "FlextUtilitiesModel",
     "FlextUtilitiesParser",

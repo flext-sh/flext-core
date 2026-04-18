@@ -9,7 +9,7 @@ from typing import ClassVar, override
 from examples import (
     Ex11EntityStub as _EntityStub,
     Ex11Payload as _Payload,
-    Examples,
+    ExamplesFlextCoreShared,
     m,
     t,
     u,
@@ -114,7 +114,7 @@ class _TinyType:
         self.initialized = True
 
 
-class Ex11FlextService(Examples):
+class Ex11FlextService(ExamplesFlextCoreShared):
     """Exercise s public API."""
 
     def demo_mixins_and_runtime_methods(self) -> None:

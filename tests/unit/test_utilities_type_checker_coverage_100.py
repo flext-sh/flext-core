@@ -36,7 +36,7 @@ TMessage = TypeVar("TMessage")
 pytestmark = [pytest.mark.unit, pytest.mark.coverage]
 
 
-class TestuTypeChecker:
+class TestsFlextCoreUtilitiesTypeChecker:
     """Comprehensive tests for u."""
 
     @staticmethod
