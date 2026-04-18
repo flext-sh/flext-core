@@ -140,14 +140,10 @@ class FlextTypingContainers:
 
     class ConfigMap(
         RootDictModel[
-            FlextTypingBase.Container
-            | FlextModelsPydantic.BaseModel
-            | FlextTypingBase.RecursiveContainerMapping
-            | FlextTypingBase.RecursiveContainerList
+            FlextTypingBase.RecursiveContainer | FlextModelsPydantic.BaseModel
         ]
     ):
         """Configuration container for settings and environment parameters.
 
         Semantically distinct Dict for configuration (not data).
-        Type allows nested structures and models via recursive container types.
         """

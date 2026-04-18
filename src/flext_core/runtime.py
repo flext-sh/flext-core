@@ -112,7 +112,12 @@ class FlextRuntime:
     @staticmethod
     def _to_plain_container(
         value: t.RuntimeAtomic | t.ConfigMap | t.Dict | t.ObjectList,
-    ) -> t.RecursiveContainer:
+    ) -> (
+        t.Container
+        | mp.BaseModel
+        | t.RecursiveContainerMapping
+        | t.RecursiveContainerList
+    ):
         """Flatten a runtime atomic value to plain Python types."""
         match value:
             case t.ConfigMap() | t.Dict():
@@ -132,7 +137,7 @@ class FlextRuntime:
     @staticmethod
     def _normalize_dict_entries(
         items: Sequence[tuple[str, t.RuntimeData]],
-    ) -> MutableMapping[str, t.ValueOrModel]:
+    ) -> MutableMapping[str, t.RuntimeAtomic]:
         """Normalize key-value pairs for container dict construction."""
         result: MutableMapping[str, t.ValueOrModel] = {}
         for key, item in items:
@@ -380,14 +385,14 @@ class FlextRuntime:
     @staticmethod
     def normalize_to_container(
         val: t.RuntimeData | t.ConfigMap,
-    ) -> t.ValueOrModel:
-        """Normalize any value to ValueOrModel.
+    ) -> t.ValueOrModel | t.Dict | t.ObjectList:
+        """Normalize any value to ValueOrModel, Dict, or ObjectList.
 
         Args:
             val: Value to normalize
 
         Returns:
-            t.Container | BaseModel
+            RecursiveContainer | BaseModel
 
         """
         match val:
@@ -395,7 +400,8 @@ class FlextRuntime:
                 return ""
             case t.ConfigMap():
                 entries = [(k, v) for k, v in val.root.items()]
-                return FlextRuntime._normalize_dict_entries(entries)
+                normalized_mapping = FlextRuntime._normalize_dict_entries(entries)
+                return t.Dict(root=normalized_mapping)
             case BaseModel():
                 return val
             case Path():
@@ -407,18 +413,21 @@ class FlextRuntime:
                     entries = [(k, v) for k, v in val.root.items()]
                 else:
                     entries = [(str(k), v) for k, v in val.items()]
-                return FlextRuntime._normalize_dict_entries(entries)
+                normalized_mapping = FlextRuntime._normalize_dict_entries(entries)
+                return t.Dict(root=normalized_mapping)
             case _ if FlextUtilitiesGuardsTypeCore.list_like(val):
                 normalized_list: list[t.RecursiveContainer] = []
                 for item_raw in val:
                     item = FlextRuntime.normalize_to_container(item_raw)
-                    if isinstance(item, (dict, list)):
-                        normalized_list.append(str(item))
+                    if isinstance(item, t.Dict):
+                        normalized_list.append(str(item.root))
+                    elif isinstance(item, t.ObjectList):
+                        normalized_list.append(str(list(item.root)))
                     elif isinstance(item, (str, int, float, bool, datetime, Path)):
                         normalized_list.append(item)
                     else:
                         normalized_list.append(item)
-                return normalized_list
+                return t.ObjectList(root=normalized_list)
             case _:
                 return str(val)
 

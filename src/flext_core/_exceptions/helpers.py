@@ -113,15 +113,17 @@ class FlextExceptionsHelpers:
         if context:
             for k, v in context.items():
                 if k not in excluded:
-                    context_map.root[k] = FlextRuntime.normalize_to_container(
+                    normalized = FlextRuntime.normalize_to_container(
                         FlextRuntime.normalize_to_metadata(v),
                     )
+                    context_map.root[k] = FlextRuntime.to_plain_container(normalized)
         if extra_kwargs:
             for k, v in extra_kwargs.items():
                 if k not in excluded:
-                    context_map.root[k] = FlextRuntime.normalize_to_container(
+                    normalized = FlextRuntime.normalize_to_container(
                         FlextRuntime.normalize_to_metadata(v),
                     )
+                    context_map.root[k] = FlextRuntime.to_plain_container(normalized)
         return context_map
 
     @staticmethod
@@ -135,15 +137,17 @@ class FlextExceptionsHelpers:
         if context:
             for k, v in context.items():
                 if k in keys:
-                    param_map.root[k] = FlextRuntime.normalize_to_container(
+                    normalized = FlextRuntime.normalize_to_container(
                         FlextRuntime.normalize_to_metadata(v),
                     )
+                    param_map.root[k] = FlextRuntime.to_plain_container(normalized)
         if extra_kwargs:
             for k, v in extra_kwargs.items():
                 if k in keys:
-                    param_map.root[k] = FlextRuntime.normalize_to_container(
+                    normalized = FlextRuntime.normalize_to_container(
                         FlextRuntime.normalize_to_metadata(v),
                     )
+                    param_map.root[k] = FlextRuntime.to_plain_container(normalized)
         return param_map
 
     @staticmethod

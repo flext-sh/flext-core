@@ -70,7 +70,7 @@ class Examples(m.BaseModel):
     def check(
         self,
         label: str,
-        value: t.Examples.ExampleRenderable,
+        value: t.Examples.ExampleRenderable | None,
     ) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         separator = m.Examples.LABEL_VALUE_SEPARATOR
