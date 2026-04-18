@@ -20,10 +20,10 @@ from typing import Annotated, Any, ClassVar
 
 from pydantic import Field, model_validator
 
-from flext_core._constants.project_metadata import (
+from flext_core import (
     FlextConstantsProjectMetadata as _k,
+    FlextModelsPydantic,
 )
-from flext_core._models.pydantic import FlextModelsPydantic
 
 
 class FlextModelsProjectMetadata:

@@ -22,14 +22,10 @@ from pydantic.fields import FieldInfo
 
 from flext_core import (
     FlextConstantsEnforcement as c,
+    FlextConstantsProjectMetadata as _kpm,
     FlextModelsEnforcement as me,
     FlextModelsPydantic as mp,
     FlextUtilitiesBeartypeEngine as ub,
-)
-from flext_core._constants.project_metadata import (
-    FlextConstantsProjectMetadata as _kpm,
-)
-from flext_core._utilities.project_metadata import (
     FlextUtilitiesProjectMetadata as _ump,
 )
 

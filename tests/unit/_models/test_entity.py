@@ -291,8 +291,8 @@ class TestFlextModelsEntity:
         entity.add_domain_event("order_placed", {"item": "book"})
         tm.that(entity.applied, eq=["order_placed"])
 
-    def test_add_domain_event_handler_exception_suppressed(self) -> None:
-        """Apply handler exceptions are suppressed, event still added."""
+    def test_add_domain_event_handler_exception_propagated(self) -> None:
+        """Apply handler exceptions are propagated via Result.fail; event still recorded."""
 
         class _FailingEntity(m.Entity):
             def _apply_boom(self, data: t.RecursiveContainerMapping) -> None:
@@ -301,7 +301,7 @@ class TestFlextModelsEntity:
 
         entity = _FailingEntity(unique_id="e-1")
         result = entity.add_domain_event("boom")
-        tm.ok(result)
+        tm.fail(result)
         tm.that(len(entity.domain_events), eq=1)
 
     def test_add_domain_event_uses_data_event_type_for_handler(self) -> None:

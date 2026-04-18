@@ -114,7 +114,7 @@ class FlextUtilitiesGuardsTypeCore:
                 items_fn()
                 return True
         except (AttributeError, TypeError):
-            pass
+            return False
         return False
 
     @staticmethod

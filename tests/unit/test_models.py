@@ -740,7 +740,7 @@ class TestModels:
         assert aggregate.handler_data == {"event_type": "test_event", "key": "value"}
 
     def test_aggregate_root_domain_event_handler_error(self) -> None:
-        """Test domain event handler error handling."""
+        """Handler errors propagate via Result.fail (no bypass)."""
 
         class TestAggregate(m.AggregateRoot):
             name: str
@@ -757,7 +757,7 @@ class TestModels:
             "failing_event",
             t.ConfigMap(root={"data": "value"}),
         )
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_failure(result)
 
     def test_domain_event_model_creation(self) -> None:
         """Test DomainEvent model creation and properties."""

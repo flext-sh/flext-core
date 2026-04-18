@@ -37,10 +37,6 @@ class TestModule:
             self.calls.append(("unbind", keys, {}))
             return self
 
-        def try_unbind(self, *keys: str) -> TestModule._FakeBindable:
-            self.calls.append(("try_unbind", keys, {}))
-            return self
-
         def debug(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
             self.calls.append(("debug", (message, *args), kwargs))
 
@@ -234,8 +230,6 @@ class TestModule:
             pass
         tracker.__exit__(RuntimeError, RuntimeError("x"), None)
         assert logger.unbind("missing", safe=True) is not None
-        with pytest.warns(DeprecationWarning, match="try_unbind"):
-            assert logger.try_unbind("missing") is not None
 
 
 __all__: list[str] = ["TestModule"]

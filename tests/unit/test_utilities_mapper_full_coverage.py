@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections import UserList
+from collections import UserDict, UserList
 from collections.abc import (
     Iterator,
     Mapping,
@@ -59,9 +59,10 @@ class ExplodingLenList(UserList[int]):
         raise TypeError(msg)
 
 
-class BadMapping(t.ContainerMappingBase):
+class BadMapping(UserDict[str, t.RecursiveContainer]):
     @override
-    def __getitem__(self, _key: str) -> t.RecursiveContainer:
+    def __getitem__(self, key: str) -> t.RecursiveContainer:
+        _ = key
         msg = "get exploded"
         raise TypeError(msg)
 

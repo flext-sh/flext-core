@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants.project_metadata import (
+from flext_core import (
     FlextConstantsProjectMetadata as k,
 )
 

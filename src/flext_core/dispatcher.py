@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import contextlib
 from collections.abc import MutableSequence, Sequence
 
 from flext_core import c, p, r, t, u
@@ -151,13 +150,17 @@ class FlextDispatcher:
         if isinstance(handler_message_type, str):
             route_name = handler_message_type
         elif handler_message_type is not None:
-            with contextlib.suppress(TypeError, ValueError):
+            try:
                 route_name = u.resolve_message_route(handler_message_type)
+            except (TypeError, ValueError):
+                route_name = None
         if route_name is None and accepted_message_types:
             first_accepted = accepted_message_types[0]
             if isinstance(first_accepted, (str, type)):
-                with contextlib.suppress(TypeError, ValueError):
+                try:
                     route_name = u.resolve_message_route(first_accepted)
+                except (TypeError, ValueError):
+                    route_name = None
         if route_name is None:
             if isinstance(handler, p.AutoDiscoverableHandler):
                 self._auto_handlers.append((

@@ -188,16 +188,16 @@ class _Ex04Exercise(Ex04DispatchDsl):
         self.check("register(callable).is_success", reg_callable.success)
         create_r = dispatcher.dispatch(Ex04CreateUser(username="alice"))
         self.check("dispatch(command).is_success", create_r.success)
-        self.check("dispatch(command).value", create_r.value)
+        self.check("dispatch(command).result", create_r)
         get_r = dispatcher.dispatch(Ex04GetUser(username="alice"))
         self.check("dispatch(query).is_success", get_r.success)
-        self.check("dispatch(query).value", get_r.value)
+        self.check("dispatch(query).result", get_r)
         delete_r = dispatcher.dispatch(Ex04DeleteUser(username="alice"))
         self.check("dispatch(execute).is_success", delete_r.success)
-        self.check("dispatch(execute).value", delete_r.value)
+        self.check("dispatch(execute).result", delete_r)
         ping_r = dispatcher.dispatch(Ex04Ping(value="x"))
         self.check("dispatch(callable).is_success", ping_r.success)
-        self.check("dispatch(callable).value", ping_r.value)
+        self.check("dispatch(callable).result", ping_r)
 
     def _exercise_auto_discovery(self) -> None:
         """Cover can_handle route discovery for dispatch fallback."""
@@ -208,7 +208,7 @@ class _Ex04Exercise(Ex04DispatchDsl):
         self.check("register(can_handle).is_success", reg_auto.success)
         auto_r = dispatcher.dispatch(Ex04AutoCommand(payload="fallback"))
         self.check("dispatch(auto_discovery).is_success", auto_r.success)
-        self.check("dispatch(auto_discovery).value", auto_r.value)
+        self.check("dispatch(auto_discovery).result", auto_r)
 
     def _exercise_error_cases(self) -> None:
         """Cover registration and dispatch failure paths."""

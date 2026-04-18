@@ -56,11 +56,12 @@ class TestsFlextCoreModelsMixins:
             int, m.Field(description="Attribute recursive container value")
         ] = 1
 
-    class BadMapping(t.ContainerMappingBase):
+    class BadMapping(UserDict[str, t.RecursiveContainer]):
         """Mapping that raises on access — used for error-path testing."""
 
         @override
-        def __getitem__(self, _key: str) -> t.RecursiveContainer:
+        def __getitem__(self, key: str) -> t.RecursiveContainer:
+            _ = key
             msg = "get exploded"
             raise TypeError(msg)
 

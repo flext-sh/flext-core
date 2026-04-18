@@ -65,8 +65,8 @@ class FlextExceptionsHelpers:
         try:
             return m.Metadata.model_validate(value, from_attributes=True)
         except (PydanticValidationError, TypeError):
-            pass
-        dumped_map: Mapping[str, t.MetadataOrValue | None] | None = None
+            # Continue to fallback normalization paths for non-metadata inputs.
+            dumped_map: Mapping[str, t.MetadataOrValue | None] | None = None
         if FlextUtilitiesGuardsTypeModel.pydantic_model(value):
             dumped_candidate = value.model_dump()
             try:

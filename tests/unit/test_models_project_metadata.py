@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from flext_core._models.project_metadata import (
+from flext_core import (
     FlextModelsProjectMetadata as pm,
 )
 

@@ -5,7 +5,7 @@ Scope: Runtime bootstrap options, service runtime creation, auto-initialization
 
 Tests service bootstrap functionality with real implementations:
 - _runtime_bootstrap_options() method returns correct options
-- _create_runtime() creates ServiceRuntime with all components
+- create_runtime() creates ServiceRuntime with all components
 - _create_initial_runtime() uses bootstrap options
 - Config, context, container creation
 
@@ -51,7 +51,7 @@ class TestServiceBootstrap:
 
     def test_create_runtime_with_options(self) -> None:
         """Test _create_runtime creates ServiceRuntime with bootstrap options."""
-        runtime = self.ConcreteTestService._create_runtime(
+        runtime = self.ConcreteTestService.create_runtime(
             settings_overrides={"app_name": "runtime_app"},
             subproject="test",
         )
@@ -77,7 +77,7 @@ class TestServiceBootstrap:
     def test_create_runtime_with_services(self) -> None:
         """Test _create_runtime accepts services parameter."""
         test_service = {"test_key": "test_value"}
-        runtime = self.ConcreteTestService._create_runtime(services=test_service)
+        runtime = self.ConcreteTestService.create_runtime(services=test_service)
         service_result = runtime.container.resolve("test_key")
         _ = u.Core.Tests.assert_success(service_result)
 
@@ -88,7 +88,7 @@ class TestServiceBootstrap:
             return "factory_value"
 
         test_factories = {"test_factory": factory}
-        runtime = self.ConcreteTestService._create_runtime(
+        runtime = self.ConcreteTestService.create_runtime(
             runtime_options=m.RuntimeBootstrapOptions(factories=test_factories),
         )
         factory_result = runtime.container.resolve("test_factory")
@@ -101,7 +101,7 @@ class TestServiceBootstrap:
             return "resource_value"
 
         test_resources = {"test_resource": resource}
-        runtime = self.ConcreteTestService._create_runtime(
+        runtime = self.ConcreteTestService.create_runtime(
             runtime_options=m.RuntimeBootstrapOptions(resources=test_resources),
         )
         resource_result = runtime.container.resolve("test_resource")
@@ -110,13 +110,13 @@ class TestServiceBootstrap:
     def test_create_runtime_with_context(self) -> None:
         """Test _create_runtime accepts context parameter."""
         custom_context = FlextContext.create()
-        runtime = self.ConcreteTestService._create_runtime(context=custom_context)
+        runtime = self.ConcreteTestService.create_runtime(context=custom_context)
         assert runtime.context is custom_context
 
     def test_create_runtime_with_settings_overrides(self) -> None:
         """Test _create_runtime applies settings overrides."""
         settings_overrides = {"app_name": "override_app"}
-        runtime = self.ConcreteTestService._create_runtime(
+        runtime = self.ConcreteTestService.create_runtime(
             settings_overrides=settings_overrides,
         )
         assert runtime.settings.app_name == "override_app"

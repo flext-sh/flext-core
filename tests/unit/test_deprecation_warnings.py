@@ -63,15 +63,15 @@ class TestDeprecationWarnings:
         """None normalizes to empty string."""
         tm.that(u.normalize_to_container(None), eq="")
 
-    def test_normalize_to_container_dict_wraps_in_model(self) -> None:
-        """Nested dicts are wrapped in t.Dict RootModel."""
+    def test_normalize_to_container_dict_returns_plain_dict(self) -> None:
+        """Dicts are normalized to plain dict."""
         result = u.normalize_to_container({"key": "value"})
-        tm.that(result, is_=t.Dict)
+        tm.that(result, is_=dict)
 
-    def test_normalize_to_container_list_wraps_in_model(self) -> None:
-        """Nested lists are wrapped in t.ObjectList RootModel."""
+    def test_normalize_to_container_list_returns_plain_list(self) -> None:
+        """Lists are normalized to plain list."""
         result = u.normalize_to_container([1, 2, 3])
-        tm.that(result, is_=t.ObjectList)
+        tm.that(result, is_=list)
 
     def test_normalize_to_container_unknown_becomes_str(self) -> None:
         """Unknown objects are converted to string representation."""

@@ -21,6 +21,7 @@ from collections.abc import (
 )
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Annotated, ClassVar, Final, Self, overload
 
 from pydantic import PrivateAttr
@@ -121,18 +122,35 @@ class FlextContext(m.ArbitraryTypesModel):
                     normalized[key] = None
                     continue
                 normalized_value = u.normalize_to_container(value)
+                metadata_target: t.ValueOrModel | t.Dict | t.ObjectList = (
+                    normalized_value
+                )
+                if isinstance(normalized_value, dict):
+                    metadata_target = t.Dict(root=normalized_value)
+                elif isinstance(normalized_value, list):
+                    metadata_target = t.ObjectList(
+                        root=[
+                            v
+                            if isinstance(v, (str, int, float, bool, datetime, Path))
+                            else str(v)
+                            for v in normalized_value
+                        ],
+                    )
                 if isinstance(
-                    normalized_value, (t.ConfigMap, t.Dict, t.ObjectList)
-                ) or u.pydantic_model(normalized_value):
+                    metadata_target,
+                    (t.ConfigMap, t.Dict, t.ObjectList),
+                ) or u.pydantic_model(metadata_target):
                     metadata_normalized = u.normalize_to_container(
-                        u.normalize_to_metadata(normalized_value),
+                        u.normalize_to_metadata(metadata_target),
                     )
                     if isinstance(metadata_normalized, (*t.CONTAINER_TYPES,)):
                         normalized[key] = metadata_normalized
                     else:
                         normalized[key] = str(metadata_normalized)
                 else:
-                    normalized[key] = normalized_value
+                    normalized[key] = FlextRuntime.to_plain_container(
+                        normalized_value,
+                    )
             return normalized
         except (TypeError, ValueError, AttributeError, KeyError) as exc:
             FlextContext._logger.debug(
@@ -271,7 +289,11 @@ class FlextContext(m.ArbitraryTypesModel):
         return cls(initial_data=m.ContextData(data=t.Dict(root=data_map.root)))
 
     @staticmethod
-    def _propagate_to_logger(key: str, value: t.ValueOrModel, scope: str) -> None:
+    def _propagate_to_logger(
+        key: str,
+        value: t.RuntimeAtomic | t.ValueOrModel,
+        scope: str,
+    ) -> None:
         """Propagate context changes to the public logging DSL.
 
         Args:
@@ -287,7 +309,7 @@ class FlextContext(m.ArbitraryTypesModel):
     @staticmethod
     def _validate_update_inputs(
         key: str,
-        value: t.ValueOrModel | t.ConfigMap,
+        value: t.RuntimeAtomic | t.ValueOrModel | t.ConfigMap,
     ) -> p.Result[bool]:
         """Validate inputs for set operation.
 
@@ -309,7 +331,7 @@ class FlextContext(m.ArbitraryTypesModel):
                 "validate context value",
                 c.ERR_CONTEXT_VALUE_CANNOT_BE_NONE,
             )
-        value_for_guard: t.RecursiveContainer | t.ConfigMap = (
+        value_for_guard: t.RuntimeAtomic | t.RecursiveContainer | t.ConfigMap = (
             FlextContext._to_normalized(
                 u.normalize_to_container(
                     u.normalize_to_metadata(value),
@@ -520,7 +542,7 @@ class FlextContext(m.ArbitraryTypesModel):
             )
 
         normalized = u.normalize_to_container(value)
-        return r[t.RuntimeAtomic].ok(normalized)
+        return r[t.RuntimeAtomic].ok(FlextRuntime.to_runtime_atomic(normalized))
 
     def resolve_metadata(self, key: str) -> p.Result[t.RuntimeAtomic]:
         """Get metadata from the context.
@@ -555,8 +577,8 @@ class FlextContext(m.ArbitraryTypesModel):
                 c.ERR_CONTEXT_METADATA_KEY_NOT_FOUND.format(key=key),
             )
         raw_value: t.MetadataValue = self._state.metadata.attributes[key]
-        normalized_value: t.RuntimeAtomic = u.normalize_to_container(
-            raw_value,
+        normalized_value = FlextRuntime.to_runtime_atomic(
+            u.normalize_to_container(raw_value),
         )
         return r[t.RuntimeAtomic].ok(normalized_value)
 
@@ -972,8 +994,8 @@ class FlextContext(m.ArbitraryTypesModel):
         updated.update(data.root)
         _ = ctx_var.set(updated)
         if scope == c.ContextScope.GLOBAL:
-            normalized_context: Mapping[str, t.RuntimeAtomic] = {
-                key: u.normalize_to_container(value)
+            normalized_context: Mapping[str, t.RecursiveContainer] = {
+                key: FlextRuntime.to_plain_container(value)
                 for key, value in data.items()
                 if value is not None
             }
@@ -982,7 +1004,7 @@ class FlextContext(m.ArbitraryTypesModel):
     def _apply_single(
         self,
         key: str,
-        value: t.ValueOrModel | None,
+        value: t.RuntimeAtomic | None,
         scope: str,
     ) -> p.Result[bool]:
         """Set a single key-value pair in the context."""

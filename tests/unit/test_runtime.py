@@ -961,7 +961,7 @@ class TestFlextRuntime:
                 return (flag, token, resource)
 
             setattr(module, "consume", consume_service)
-            runtime_raw = s._create_runtime(
+            runtime_raw = s.create_runtime(
                 runtime_options=m.RuntimeBootstrapOptions(
                     settings_overrides={"app_name": "runtime-service"},
                     services={"feature_flag": True},

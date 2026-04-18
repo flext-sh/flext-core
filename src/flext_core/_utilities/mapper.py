@@ -740,11 +740,12 @@ class FlextUtilitiesMapper:
             data = data_or_items
         else:
             return fallback
-        value = FlextUtilitiesMapper.map_get(data, key, default=default)
-        if value is None:
+        raw_value = FlextUtilitiesMapper.map_get(data, key, default=default)
+        if raw_value is None:
             return fallback
-        if as_type is not None and not isinstance(value, as_type):
+        if as_type is not None and not isinstance(raw_value, as_type):
             return fallback
+        value: t.ValueOrModel = FlextRuntime.normalize_to_container(raw_value)
         return value
 
     @staticmethod

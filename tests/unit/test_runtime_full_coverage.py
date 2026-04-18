@@ -9,6 +9,7 @@ import logging
 import queue
 import threading
 import types
+from collections import UserDict
 from collections.abc import (
     Callable,
     Generator,
@@ -208,9 +209,9 @@ class TestRuntimeFullCoverage:
     def test_normalization_edge_branches(self) -> None:
         cfg = t.ConfigMap(root={"a": 1})
         normalized_cfg = u.normalize_to_container(cfg)
-        tm.that(normalized_cfg, is_=(t.ConfigMap, t.Dict))
+        tm.that(normalized_cfg, is_=dict)
 
-        class DictLike(t.ContainerMappingBase):
+        class DictLike(UserDict[str, int]):
             @override
             def __getitem__(self, key: str) -> int:
                 if key == "x":
@@ -229,7 +230,7 @@ class TestRuntimeFullCoverage:
         normalized_dict_like = u.normalize_to_container(
             dict_like_input,
         )
-        tm.that(normalized_dict_like, is_=t.Dict)
+        tm.that(normalized_dict_like, is_=dict)
         metadata_cfg = u.normalize_to_metadata(cfg)
         tm.that(metadata_cfg, is_=str)
         dict_like_meta_input: t.RuntimeData = DictLike()
@@ -692,9 +693,9 @@ class TestRuntimeFullCoverage:
         normalized_mapping = u.normalize_to_container(
             MappingProxyType({"k": "v"}),
         )
-        tm.that(normalized_mapping, is_=t.Dict)
+        tm.that(normalized_mapping, is_=dict)
         norm_list = u.normalize_to_container([1, "x"])
-        tm.that(norm_list, is_=t.ObjectList)
+        tm.that(norm_list, is_=list)
         # Path is Container, returned as-is
         tm.that(u.normalize_to_container(Path("/tmp")), eq=Path("/tmp"))
         tm.that(u.normalize_to_metadata(1), eq=1)

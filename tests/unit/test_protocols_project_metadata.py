@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core._protocols.project_metadata import (
+from flext_core import (
     FlextProtocolsProjectMetadata as pm,
 )
 

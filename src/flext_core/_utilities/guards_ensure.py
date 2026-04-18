@@ -49,7 +49,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                     if isinstance(length, int):
                         return length
             except (TypeError, AttributeError):
-                pass
+                return 0
         return 0
 
     @staticmethod

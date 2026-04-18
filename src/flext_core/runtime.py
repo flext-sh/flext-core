@@ -129,8 +129,71 @@ class FlextRuntime:
                 return value
             case None:
                 return ""
+            case BaseModel():
+                return str(value)
+            case dict():
+                return {
+                    str(k): FlextRuntime.to_plain_container(
+                        FlextRuntime.normalize_to_container(v),
+                    )
+                    for k, v in value.items()
+                }
+            case list():
+                return [
+                    FlextRuntime.to_plain_container(
+                        FlextRuntime.normalize_to_container(item),
+                    )
+                    for item in value
+                ]
+            case tuple():
+                return [
+                    FlextRuntime.to_plain_container(
+                        FlextRuntime.normalize_to_container(item),
+                    )
+                    for item in value
+                ]
             case _:
                 return str(value)
+
+    @staticmethod
+    def to_runtime_atomic(
+        value: t.ValueOrModel,
+    ) -> t.RuntimeAtomic:
+        """Convert ValueOrModel to RuntimeAtomic for context/dispatcher boundaries.
+
+        Wraps recursive container types (Mapping, Sequence, tuple) into their
+        runtime-atomic counterparts (ConfigMap, ObjectList). Scalars and BaseModel
+        instances pass through unchanged.
+        """
+        match value:
+            case BaseModel():
+                return value
+            case bool() | str() | int() | float() | Path():
+                return value
+            case datetime():
+                return value
+            case Mapping():
+                return t.ConfigMap(
+                    root={str(k): v for k, v in value.items()},
+                )
+            case Sequence():
+                container_items: Sequence[t.Container] = [
+                    item
+                    if isinstance(item, (str, int, float, bool, datetime, Path))
+                    else str(item)
+                    for item in value
+                ]
+                return t.ObjectList(root=container_items)
+            case tuple():
+                tuple_items: Sequence[t.Container] = [
+                    item
+                    if isinstance(item, (str, int, float, bool, datetime, Path))
+                    else str(item)
+                    for item in value
+                ]
+                return t.ObjectList(root=tuple_items)
+            case None:
+                return ""
 
     @staticmethod
     def _normalize_dict_entries(
@@ -382,7 +445,7 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_container(
-        val: t.RuntimeData | t.ConfigMap,
+        val: t.RuntimeData | t.ConfigMap | t.Dict | t.ObjectList,
     ) -> t.ValueOrModel:
         """Normalize any value to ValueOrModel (RecursiveContainer | BaseModel).
 
@@ -399,6 +462,11 @@ class FlextRuntime:
             case t.ConfigMap():
                 entries = [(k, v) for k, v in val.root.items()]
                 return FlextRuntime._normalize_dict_entries(entries)
+            case t.Dict():
+                entries = [(k, v) for k, v in val.root.items()]
+                return FlextRuntime._normalize_dict_entries(entries)
+            case t.ObjectList():
+                return [v for v in val.root]  # noqa: C416
             case BaseModel():
                 return val
             case Path():
@@ -412,10 +480,13 @@ class FlextRuntime:
                     entries = [(str(k), v) for k, v in val.items()]
                 return FlextRuntime._normalize_dict_entries(entries)
             case _ if FlextUtilitiesGuardsTypeCore.list_like(val):
-                normalized_list: list[t.RecursiveContainer] = []
+                normalized_list: list[t.Container] = []
                 for item_raw in val:
                     item = FlextRuntime.normalize_to_container(item_raw)
-                    normalized_list.append(FlextRuntime.to_plain_container(item))
+                    if isinstance(item, (str, int, float, bool, datetime, Path)):
+                        normalized_list.append(item)
+                    else:
+                        normalized_list.append(str(item))
                 return normalized_list
             case _:
                 return str(val)
@@ -460,7 +531,11 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_metadata(
-        val: t.RuntimeData | t.ConfigMap | AbstractSet[t.Scalar],
+        val: t.RuntimeData
+        | t.ConfigMap
+        | t.Dict
+        | t.ObjectList
+        | AbstractSet[t.Scalar],
     ) -> t.MetadataValue:
         """Normalize input into metadata-compatible scalar, list, or mapping values."""
         if isinstance(val, AbstractSet):

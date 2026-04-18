@@ -82,11 +82,11 @@ class _DeclarativeService(s[str]):
 class _RuntimeFactoryService(s[str]):
     @classmethod
     def create_runtime_default(cls) -> m.ServiceRuntime:
-        return cls._create_runtime()
+        return cls.create_runtime()
 
     @classmethod
     def create_runtime_full(cls) -> m.ServiceRuntime:
-        return cls._create_runtime(
+        return cls.create_runtime(
             runtime_options=m.RuntimeBootstrapOptions(
                 settings_type=FlextSettings,
                 settings_overrides={},

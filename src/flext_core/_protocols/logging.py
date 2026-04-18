@@ -10,8 +10,6 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING, Protocol, Self, override, runtime_checkable
 
-from structlog.typing import BindableLogger
-
 from flext_core import (
     FlextProtocolsBase,
     FlextProtocolsResult,
@@ -27,7 +25,7 @@ class FlextProtocolsLogging:
     """Protocols for logging, connection, validation, and entries."""
 
     @runtime_checkable
-    class Logger(BindableLogger, Protocol):
+    class Logger(Protocol):
         """Protocol for structlog logger with all logging methods.
 
         Extends BindableLogger to add explicit method signatures for
@@ -53,11 +51,6 @@ class FlextProtocolsLogging:
         @override
         def unbind(self, *keys: str, safe: bool = False) -> Self:
             """Remove bound keys and optionally ignore missing values."""
-            ...
-
-        @override
-        def try_unbind(self, *keys: str) -> Self:
-            """Compatibility helper for safe key removal."""
             ...
 
         def build_exception_context(

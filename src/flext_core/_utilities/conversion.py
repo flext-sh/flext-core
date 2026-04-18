@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
+from datetime import datetime
+from pathlib import Path
 
 from pydantic import BaseModel
 
@@ -61,8 +63,7 @@ class FlextUtilitiesConversion:
                 return str(int(float_value))
             return f"{float_value:.2f}"
         except c.ValidationError:
-            pass
-        return str(value)
+            return str(value)
 
     @staticmethod
     def to_str_list(
@@ -80,8 +81,7 @@ class FlextUtilitiesConversion:
             list_value = t.strict_json_list_adapter().validate_python(value)
             return [str(item) for item in list_value if item is not None]
         except c.ValidationError:
-            pass
-        return [str(value)]
+            return [str(value)]
 
     @staticmethod
     def to_int(value: t.ValueOrModel, *, default: int = 0) -> int:
@@ -127,7 +127,14 @@ class FlextUtilitiesConversion:
             if isinstance(atomic, BaseModel):
                 normalized[str(key)] = atomic.model_dump_json()
             else:
-                normalized[str(key)] = FlextRuntime.to_plain_container(atomic)
+                plain = FlextRuntime.to_plain_container(atomic)
+                normalized[str(key)] = (
+                    plain
+                    if isinstance(plain, (str, int, float, bool, datetime, Path))
+                    else str(plain)
+                    if plain is not None
+                    else ""
+                )
         return normalized
 
 

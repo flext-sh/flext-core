@@ -31,9 +31,10 @@ class Ex06FlextContext(Examples):
         payload = seed.iter_scope_vars()[c.ContextScope.GLOBAL].get()
         self.check(
             "set_all.success",
-            ctx.set(payload or t.ConfigMap(root={})).success,
+            bool(ctx.set(payload or t.ConfigMap(root={})).success),
         )
-        self.check("get.k1", ctx.get("k1").unwrap_or("missing"))
+        # Removed original check() call, keeping only str() wrapped version
+        self.check("get.k1", str(ctx.get("k1").unwrap_or("missing")))
         self.check("has.k2", ctx.has("k2"))
         ctx.remove("k2")
         self.check("remove.k2", ctx.has("k2"))
@@ -41,13 +42,14 @@ class Ex06FlextContext(Examples):
         self.check("values.count", len(ctx.values()))
         self.check("items.count", len(ctx.items()))
         merged = ctx.clone().merge(t.ConfigMap(root={"k4": "merged"}))
-        self.check("merge.get", merged.get("k4").unwrap_or("missing"))
-        self.check("clone.get", ctx.clone().get("k1").unwrap_or("missing"))
+        # Removed original check() call, keeping only str() wrapped version
+        self.check("merge.get", str(merged.get("k4").unwrap_or("missing")))
+        self.check("clone.get", str(ctx.clone().get("k1").unwrap_or("missing")))
         self.check("validate.success", ctx.validate_context().success)
         ctx.apply_metadata("meta_key", "meta_value")
         self.check(
             "resolve_metadata",
-            ctx.resolve_metadata("meta_key").unwrap_or("missing"),
+            str(ctx.resolve_metadata("meta_key").unwrap_or("missing")),
         )
         exported_min = ctx.export(as_dict=False)
         exported_full = ctx.export(

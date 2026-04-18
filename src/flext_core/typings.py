@@ -81,14 +81,6 @@ class FlextTypes(
     ``None`` is **never** baked into definitions.
     """
 
-    # Canonical settings-first names
-    SettingsMap = FlextTypesCore.ConfigMap
-    SettingsModelInput = FlextTypesServices.ConfigModelInput
-
-    # Compatibility aliases still consumed by downstream projects
-    ContainerMapping = FlextTypesCore.RecursiveContainerMapping
-    NormalizedValue = FlextTypesCore.RecursiveContainer
-
 
 t = FlextTypes
 

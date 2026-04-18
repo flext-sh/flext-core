@@ -19,10 +19,8 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, ClassVar
 
-from flext_core._constants.project_metadata import (
+from flext_core import (
     FlextConstantsProjectMetadata as _k,
-)
-from flext_core._models.project_metadata import (
     FlextModelsProjectMetadata as _m,
 )
 

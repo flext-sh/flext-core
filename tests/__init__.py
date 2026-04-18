@@ -93,7 +93,6 @@ if _t.TYPE_CHECKING:
         TestUniversalAliasParentSources,
     )
     from tests.unit.test_container import TestFlextContainer
-    from tests.unit.test_container_full_coverage import TestContainerFullCoverage
     from tests.unit.test_context import TestFlextContext
     from tests.unit.test_context_coverage_100 import TestContext100Coverage
     from tests.unit.test_context_full_coverage import TestContextFullCoverage
@@ -605,7 +604,6 @@ __all__: list[str] = [
     "TestCompleteFlextSystemIntegration",
     "TestComposeNamespaceConfig",
     "TestConstantsLayerRules",
-    "TestContainerFullCoverage",
     "TestContainerMemory",
     "TestContainerPerformance",
     "TestContainsAny",

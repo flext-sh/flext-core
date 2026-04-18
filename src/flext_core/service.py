@@ -292,7 +292,7 @@ class FlextService[
         return u.build_service_runtime(self)
 
     @classmethod
-    def _create_runtime(
+    def create_runtime(
         cls,
         runtime_options: m.RuntimeBootstrapOptions | None = None,
         **runtime_kwargs: t.RuntimeData,

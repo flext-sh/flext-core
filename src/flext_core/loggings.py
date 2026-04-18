@@ -18,7 +18,6 @@ import time
 import traceback
 import types
 import typing
-import warnings
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -27,7 +26,6 @@ from collections.abc import (
 from contextlib import suppress
 from pathlib import Path
 from typing import ClassVar, Self, override
-from warnings import deprecated
 
 import structlog
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
@@ -1189,17 +1187,6 @@ class FlextLogger:
             return self
         bound_logger = self.logger.unbind(*keys)
         return self.__class__.create_bound_logger(self.name, bound_logger)
-
-    @deprecated("use unbind(*keys, safe=True) instead")
-    def try_unbind(self, *keys: str) -> Self:
-        """Unbind keys in safe mode (deprecated compatibility helper)."""
-        warnings.warn(
-            "FlextLogger.try_unbind is deprecated; use unbind(*keys, safe=True). "
-            "Planned removal: v0.12.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.unbind(*keys, safe=True)
 
     def info(
         self,

@@ -11,10 +11,8 @@ from textwrap import dedent
 
 import pytest
 
-from flext_core._models.project_metadata import (
+from flext_core import (
     FlextModelsProjectMetadata as pm,
-)
-from flext_core._utilities.project_metadata import (
     FlextUtilitiesProjectMetadata as up,
 )
 

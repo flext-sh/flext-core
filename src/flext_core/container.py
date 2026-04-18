@@ -20,8 +20,7 @@ from typing import Self, TypeIs, overload, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 
-from flext_core import FlextSettings, c, e, m, p, r, t, u
-from flext_core.context import FlextContext
+from flext_core import FlextContext, FlextSettings, c, e, m, p, r, t, u
 
 
 class FlextContainer(p.ContainerLifecycle):

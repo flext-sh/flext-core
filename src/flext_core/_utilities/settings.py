@@ -106,8 +106,7 @@ class FlextUtilitiesSettings:
         try:
             return FlextUtilitiesSettings._duck_dump_get_parameter(obj, parameter)
         except (AttributeError, TypeError, ValueError, RuntimeError):
-            pass
-        return FlextUtilitiesSettings._NOT_FOUND
+            return FlextUtilitiesSettings._NOT_FOUND
 
     @staticmethod
     def _try_get_from_model_dump(

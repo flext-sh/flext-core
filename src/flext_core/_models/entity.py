@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import contextlib
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self, override
 
@@ -133,8 +132,13 @@ class FlextModelsEntity:
             handler_name = f"_apply_{handler_event_type}"
             handler = getattr(self, handler_name, None)
             if handler is not None and callable(handler):
-                with contextlib.suppress(Exception):
+                try:
                     _ = handler(data_map.root)
+                except (TypeError, ValueError, RuntimeError, AttributeError) as err:
+                    return r[FlextModelsDomainEvent.Entry].fail_op(
+                        "apply domain event",
+                        str(err),
+                    )
             return r[FlextModelsDomainEvent.Entry].ok(event)
 
         def add_domain_events_bulk(

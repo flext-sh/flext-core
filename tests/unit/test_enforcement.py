@@ -23,8 +23,7 @@ from flext_core import (
     FlextUtilitiesBeartypeEngine,
     FlextUtilitiesEnforcement,
 )
-from tests import c, m, u
-from tests._models.mixins import TestsFlextCoreModelsMixins
+from tests import TestsFlextCoreModelsMixins, c, m, u
 
 
 def _messages(

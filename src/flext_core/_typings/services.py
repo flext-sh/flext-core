@@ -265,6 +265,7 @@ class FlextTypesServices:
         | ModelCarrier
         | FlextTypingContainers.ConfigMap
         | FlextTypingContainers.Dict
+        | FlextTypingContainers.ObjectList
         | RegisterableService
         | Callable[..., FlextTypingBase.RecursiveContainer]
         | FlextProtocolsContext.Context

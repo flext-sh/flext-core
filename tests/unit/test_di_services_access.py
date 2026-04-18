@@ -43,7 +43,7 @@ class TestDiServicesAccess:
 
     def test_config_via_service_runtime(self) -> None:
         """Test FlextSettings accessible via s._create_runtime."""
-        runtime = s._create_runtime(settings_overrides={"app_name": "test_app"})
+        runtime = s.create_runtime(settings_overrides={"app_name": "test_app"})
         assert runtime.settings is not None
         assert isinstance(runtime.settings, p.Settings)
         assert runtime.settings.app_name == "test_app"
@@ -114,7 +114,7 @@ class TestDiServicesAccess:
     def test_context_via_service_runtime(self) -> None:
         """Test FlextContext accessible via s._create_runtime."""
         custom_context = FlextContext.create()
-        runtime = s._create_runtime(context=custom_context)
+        runtime = s.create_runtime(context=custom_context)
         assert runtime.context is not None
         assert isinstance(runtime.context, p.Context)
         assert runtime.context is custom_context
@@ -137,7 +137,7 @@ class TestDiServicesAccess:
     def test_all_services_via_service_runtime(self) -> None:
         """Test all services accessible via single service runtime."""
         custom_context = FlextContext.create()
-        runtime = s._create_runtime(
+        runtime = s.create_runtime(
             settings_overrides={"app_name": "integrated_app"},
             context=custom_context,
         )

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core._typings.project_metadata import (
+from flext_core import (
     FlextTypingProjectMetadata as tp,
 )
 

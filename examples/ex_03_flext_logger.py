@@ -143,7 +143,7 @@ class Ex03LoggingDsl(Examples):
         unbound = renewed.unbind("stage")
         self.check("unbind.protocol", isinstance(unbound, p.Logger))
         safe = unbound.unbind("missing", "component", safe=True)
-        self.check("try_unbind.protocol", isinstance(safe, p.Logger))
+        self.check("unbind_safe.protocol", isinstance(safe, p.Logger))
         self.check("with_result.protocol", isinstance(safe, p.Logger))
         self.check("trace.ok", self._logged(safe.trace("trace value=%s", 1, key="t")))
         self.check("debug.ok", self._logged(safe.debug("debug value=%s", 2, key="d")))

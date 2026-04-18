@@ -255,7 +255,7 @@ class TestDIIncremental:
             lifecycle["created"] = True
             return {"connected": True}
 
-        runtime = s._create_runtime(
+        runtime = s.create_runtime(
             runtime_options=m.RuntimeBootstrapOptions(
                 resources={"database": db_factory},
             ),
@@ -267,7 +267,7 @@ class TestDIIncremental:
 
     def test_create_service_runtime_with_wiring(self) -> None:
         """Test create_service_runtime with wire_modules."""
-        runtime = s._create_runtime(
+        runtime = s.create_runtime(
             runtime_options=m.RuntimeBootstrapOptions(
                 services={"api_key": "test_key"},
                 wire_modules=[sys.modules[__name__]],
@@ -437,7 +437,7 @@ class TestDIIncremental:
         def resource_factory() -> t.BoolMapping:
             return {"connected": True}
 
-        runtime = s._create_runtime(
+        runtime = s.create_runtime(
             runtime_options=m.RuntimeBootstrapOptions(
                 settings_overrides={"app_name": "test_app"},
                 services={"static_service": "static_value"},

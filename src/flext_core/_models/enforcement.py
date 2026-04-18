@@ -16,7 +16,7 @@ from typing import Annotated, ClassVar
 
 from pydantic import Field
 
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core import FlextModelsPydantic
 
 
 class FlextModelsEnforcement:
