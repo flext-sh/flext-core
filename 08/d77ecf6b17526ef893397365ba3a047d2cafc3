@@ -1,0 +1,79 @@
+tests/unit/test_enforcement.py
+  296b414eef766f82 408
+src/flext_core/_utilities/__init__.py
+  296b414eef766f82 32
+src/flext_core/_protocols/__init__.py
+  296b414eef766f82 15
+src/flext_core/_utilities/enforcement.py
+  296b414eef766f82 30-35,145-146,161-162,164
+src/flext_core/_models/__init__.py
+  296b414eef766f82 38
+src/flext_core/_constants/__init__.py
+  296b414eef766f82 19
+src/flext_core/_typings/__init__.py
+  296b414eef766f82 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "08d77ecf6b17526ef893397365ba3a047d2cafc3",
+  "prompts": {
+    "042872ef4e0005dc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5bfd9f1e-a74b-4952-b429-f2c6cb088948",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 503,
+      "overriden_lines": 0
+    },
+    "0a878efeda78eae7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "31c29af1-cfc4-49f8-add4-c9f69e2aef85",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    },
+    "14776bb8a7569cd6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "808a0355-ecdb-46fb-a4dd-7348401900ee",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    },
+    "296b414eef766f82": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bbaa066-3009-4a0f-b15f-d4253fbc34e7",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 12,
+      "accepted_lines": 19,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
