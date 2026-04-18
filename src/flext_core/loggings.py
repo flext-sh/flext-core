@@ -901,7 +901,10 @@ class FlextLogger:
             Path,
         ):
             return normalized
-        return normalized.model_dump_json()
+        flattened = FlextRuntime.to_plain_container(normalized)
+        if FlextUtilitiesGuardsTypeModel.base_model(flattened):
+            return str(flattened.model_dump())
+        return str(flattened)
 
     @staticmethod
     def _to_scalar_value(
@@ -1041,7 +1044,9 @@ class FlextLogger:
             context_dict["stack_trace"] = traceback.format_exc()
         for key, value in context.items():
             if not isinstance(value, BaseException):
-                context_dict[key] = FlextRuntime.normalize_to_container(value)
+                context_dict[key] = FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(value),
+                )
         return context_dict
 
     def critical(

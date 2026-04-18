@@ -25,7 +25,7 @@ from typing import Annotated, ClassVar, Final, Self, overload
 
 from pydantic import PrivateAttr
 
-from flext_core import c, e, m, p, r, t, u
+from flext_core import FlextRuntime, c, e, m, p, r, t, u
 
 
 class FlextContext(m.ArbitraryTypesModel):
@@ -68,7 +68,7 @@ class FlextContext(m.ArbitraryTypesModel):
                         continue
                     result[str(k)] = str(container_val)
                 else:
-                    result[str(k)] = container_val
+                    result[str(k)] = r.to_plain_container(container_val)
             return result
         if isinstance(value, (t.ConfigMap, t.Dict)):
             normalized_root: t.MutableRecursiveContainerMapping = {}
@@ -411,8 +411,10 @@ class FlextContext(m.ArbitraryTypesModel):
                     metadata_value = t.ConfigMap(
                         root=dict(v),
                     )
-                normalized_metadata_map[k] = u.normalize_to_container(
-                    u.normalize_to_metadata(metadata_value),
+                normalized_metadata_map[k] = r.to_plain_container(
+                    u.normalize_to_container(
+                        u.normalize_to_metadata(metadata_value),
+                    ),
                 )
             metadata_for_model = t.ConfigMap(root=normalized_metadata_map)
         statistics_mapping: t.Dict = t.Dict(
@@ -1001,9 +1003,9 @@ class FlextContext(m.ArbitraryTypesModel):
             updated = t.ConfigMap(root=dict(current))
             normalized_value = u.normalize_to_container(value)
             if isinstance(normalized_value, (t.ConfigMap, t.Dict)):
-                updated[key] = dict(normalized_value.root)
+                updated[key] = r.to_plain_container(normalized_value)
             else:
-                updated[key] = normalized_value
+                updated[key] = r.to_plain_container(normalized_value)
             _ = ctx_var.set(updated)
             FlextContext._propagate_to_logger(key, value, scope)
             self._update_statistics(c.ContextOperation.SET.value)

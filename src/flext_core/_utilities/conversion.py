@@ -127,7 +127,7 @@ class FlextUtilitiesConversion:
             if isinstance(atomic, BaseModel):
                 normalized[str(key)] = atomic.model_dump_json()
             else:
-                normalized[str(key)] = atomic
+                normalized[str(key)] = FlextRuntime.to_plain_container(atomic)
         return normalized
 
 
