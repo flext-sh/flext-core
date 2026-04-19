@@ -10,7 +10,6 @@ from typing import Annotated, ClassVar
 import pytest
 
 import flext_core as core_decorators
-import flext_core.decorators as core_decorators_module
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -193,7 +192,7 @@ class TestDecoratorsFullCoverage:
         def _sleep(_seconds: float) -> None:
             return None
 
-        monkeypatch.setattr(core_decorators_module.time, "sleep", _sleep)
+        monkeypatch.setattr(time, "sleep", _sleep)
         calls = {"n": 0}
 
         def flaky() -> str:
@@ -519,7 +518,7 @@ class TestDecoratorsFullCoverage:
         def _sleep(_seconds: float) -> None:
             return None
 
-        monkeypatch.setattr(core_decorators_module.time, "sleep", _sleep)
+        monkeypatch.setattr(time, "sleep", _sleep)
         calls = {"n": 0}
 
         def always_fails() -> str:
