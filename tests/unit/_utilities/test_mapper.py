@@ -361,8 +361,8 @@ class TestsFlextCoreUtilitiesMapper:
         tm.that(u.deep_eq({}, {}), eq=True)
 
     def test_deep_eq_nested_none_vs_none(self) -> None:
-        a: t.RecursiveContainerMapping = {"x": {"y": None}}
-        b: t.RecursiveContainerMapping = {"x": {"y": None}}
+        a: t.RecursiveContainerMapping = {"x": {"y": None, "z": 1}}
+        b: t.RecursiveContainerMapping = {"x": {"y": None, "z": 1}}
         tm.that(u.deep_eq(a, b), eq=True)
 
     @pytest.mark.parametrize(
