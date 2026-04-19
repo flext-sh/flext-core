@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Final
+from typing import ClassVar, Final
 
 from flext_core import c, m, t, u
 from flext_core._utilities.context_lifecycle import FlextUtilitiesContextLifecycle
@@ -19,7 +19,7 @@ from flext_core._utilities.context_lifecycle import FlextUtilitiesContextLifecyc
 class FlextUtilitiesContextTracing(FlextUtilitiesContextLifecycle):
     """Tracing, service, performance, and serialization inner classes for FlextContext."""
 
-    _container_state: m.ContextContainerState
+    _container_state: ClassVar[m.ContextContainerState]
 
     class Variables:
         """Context variables using structlog as single source of truth."""

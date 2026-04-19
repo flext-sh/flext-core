@@ -425,7 +425,7 @@ class FlextUtilitiesEnforcement:
         """
         violations: list[me.Violation] = []
         effective_layer = layer or FlextUtilitiesEnforcement.detect_layer(target) or ""
-        is_model = isinstance(target, type) and issubclass(target, mp.BaseModel)
+        is_model = issubclass(target, mp.BaseModel)
         qn = target.__qualname__
         for tag, row in c.ENFORCEMENT_RULES.items():
             category, rule_layer, *_ = row

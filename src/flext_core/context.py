@@ -155,6 +155,11 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
 
     _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
 
+    @staticmethod
+    def to_normalized(value: t.ValueOrModel | t.ConfigMap) -> t.RecursiveContainer:
+        """Normalize a runtime value to the canonical recursive container shape."""
+        return FlextUtilitiesContextTracing._to_normalized(value)  # noqa: SLF001
+
     @classmethod
     def resolve_container(cls) -> p.Container:
         """Get global container instance."""
@@ -315,7 +320,7 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
             operation_metadata_raw = context_vars.Performance.OPERATION_METADATA.get()
             operation_metadata_value: t.RecursiveContainer = ""
             if operation_metadata_raw is not None:
-                operation_metadata_value = FlextContext._to_normalized(
+                operation_metadata_value = FlextContext.to_normalized(
                     u.normalize_to_container(
                         u.normalize_to_metadata(operation_metadata_raw),
                     ),
@@ -337,7 +342,7 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
                 c.ContextKey.OPERATION_METADATA: operation_metadata_value,
             }
             return {
-                k: FlextContext._to_normalized(v)
+                k: FlextContext.to_normalized(v)
                 for k, v in raw_ctx.items()
                 if v is not None
             }

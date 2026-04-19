@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import TYPE_CHECKING, Protocol, Self, override, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core import (
     FlextProtocolsBase,
@@ -36,17 +36,14 @@ class FlextProtocolsLogging:
             """Logger name exposed by the public adapter."""
             ...
 
-        @override
         def bind(self, **new_values: t.RuntimeData) -> Self:
             """Bind context and return a logger preserving the public protocol."""
             ...
 
-        @override
         def new(self, **new_values: t.RuntimeData) -> Self:
             """Replace bound context and return a logger preserving the protocol."""
             ...
 
-        @override
         def unbind(self, *keys: str, safe: bool = False) -> Self:
             """Remove bound keys and optionally ignore missing values."""
             ...

@@ -103,22 +103,6 @@ class TestModule:
             raise AttributeError(msg)
 
     def test_loggings_instance_and_message_format_paths(self) -> None:
-        class _Config:
-            level = "WARNING"
-            service_name = "svc"
-            service_version = "1.0"
-            correlation_id = "cid"
-            force_new = True
-
-            def model_dump(self) -> t.ScalarMapping:
-                return {
-                    "log_level": self.level,
-                    "service_name": self.service_name,
-                    "service_version": self.service_version,
-                    "correlation_id": self.correlation_id,
-                    "force_new": self.force_new,
-                }
-
         logger = u.create_module_logger("x")
         logger = logger.bind(
             service_name="svc",

@@ -97,7 +97,7 @@ class TestUtilitiesGuardsFullCoverage:
             not self._matches_type_obj(logger_input, "logger"),
             eq=True,
         )
-        result_input: t.GuardInput = r[int].ok(1)
+        result_input: t.GuardInput = r[t.GuardInput].ok(1)
         tm.that(self._matches_type_obj(result_input, "result"), eq=True)
         tm.that(not self._matches_type_obj(plain_obj, "service"), eq=True)
         tm.that(not self._matches_type_obj(plain_obj, "middleware"), eq=True)
@@ -222,6 +222,7 @@ class TestUtilitiesGuardsFullCoverage:
                 raise TypeError(msg)
             return original_issubclass(cls, classinfo)
 
+        monkeypatch.setattr(builtins, "issubclass", _fake_issubclass)
         some_type_input: t.GuardInput = _SomeType
         tm.that(
             not self._matches_type_obj(some_type_input, "handler"),
@@ -313,6 +314,7 @@ class TestUtilitiesGuardsFullCoverage:
                 return False
             return original_isinstance(obj, classinfo)
 
+        monkeypatch.setattr(builtins, "isinstance", _patched_isinstance)
         tm.that(u.container(True), eq=True)
 
     def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
@@ -339,6 +341,8 @@ class TestUtilitiesGuardsFullCoverage:
                 raise TypeError(msg)
             return original_issubclass(cls, classinfo)
 
+        monkeypatch.setattr(builtins, "callable", _patched_callable)
+        monkeypatch.setattr(builtins, "issubclass", _patched_issubclass)
         candidate_input2: t.GuardInput = _Candidate
         tm.that(
             not self._matches_type_obj(candidate_input2, "handler"),
@@ -359,6 +363,7 @@ class TestUtilitiesGuardsFullCoverage:
                 return False
             return original_callable(value)
 
+        monkeypatch.setattr(builtins, "callable", _patched_callable)
         model_sub_input: t.GuardInput = _ModelSub
         tm.that(
             self._matches_type_obj(model_sub_input, "handler") is False,

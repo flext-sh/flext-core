@@ -117,19 +117,8 @@ class TestsFlextCoreUtilities(u):
                     _ = message
                     return r[t.RuntimeAtomic].ok(True)
 
-            class BadModelDump(m.BaseModel):
-                """BaseModel whose model_dump raises — tests error path in domain utilities.
-
-                Overrides model_dump to always raise, exercising the exception-handling
-                code path in domain utility comparison functions.
-                """
-
-                @override
-                def model_dump(
-                    self, **_kwargs: t.Scalar
-                ) -> dict[str, t.Core.Tests.TestobjectSerializable]:
-                    msg = "Bad model_dump"
-                    raise RuntimeError(msg)
+            class BadModelDump(m.Core.Tests.BadModelDump):
+                """Canonical bad model_dump object for domain utility error paths."""
 
             @staticmethod
             def success_cases() -> Sequence[tuple[str, str]]:

@@ -24,8 +24,8 @@ class TestPatternsLogging:
         return u.create_module_logger(name)
 
     @staticmethod
-    def assert_result_success[TResult: p.ResultLike[bool]](
-        result: TResult,
+    def assert_result_success(
+        result: p.ResultLike[bool],
         context: str,
     ) -> bool:
         assert result.success, f"{context}: Expected success, got {result.error!r}"

@@ -963,10 +963,7 @@ class FlextContainer(p.ContainerLifecycle):
 
         """
         settings_source = settings if settings is not None else self._config
-        if isinstance(settings_source, p.Settings):
-            base_config: p.Settings = settings_source.model_copy(deep=True)
-        else:
-            base_config = FlextSettings.fetch_global().model_copy(deep=True)
+        base_config: p.Settings = settings_source.model_copy(deep=True)
         if subproject and settings is None:
             base_config = base_config.model_copy(
                 update={"app_name": f"{base_config.app_name}.{subproject}"},

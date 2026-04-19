@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import UserDict, UserList
 from collections.abc import Iterator, Mapping, Sequence
 from enum import StrEnum, unique
-from typing import NoReturn, override
+from typing import NoReturn, overload, override
 
 import pytest
 
@@ -41,8 +41,15 @@ class TestUtilitiesCollectionFullCoverage:
             msg = "iter failed"
             raise TypeError(msg)
 
+        @overload
+        def __getitem__(self, index: int) -> str: ...
+
+        @overload
+        def __getitem__(self, index: slice) -> Sequence[str]: ...
+
         @override
         def __getitem__(self, index: int | slice) -> str | Sequence[str]:
+            _ = index
             msg = "iter failed"
             raise TypeError(msg)
 

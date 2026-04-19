@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, tzinfo
+from datetime import UTC, datetime
 
 import pytest
 
@@ -64,13 +64,6 @@ class TestUtilitiesGeneratorsFullCoverage:
         generated = u.generate(kind="id")
         assert isinstance(generated, str)
         assert generated
-        fixed_ts = datetime(2026, 1, 2, tzinfo=UTC)
-
-        class _FixedDatetime:
-            @staticmethod
-            def now(tz: tzinfo | None = None) -> datetime:
-                _ = tz
-                return fixed_ts
 
         custom = u.generate(
             kind="command",

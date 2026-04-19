@@ -182,6 +182,14 @@ class FlextLogger(FlextUtilitiesLoggingContext):
         bound_logger = self.logger.bind(**self._to_container_context(context))
         return self.__class__.create_bound_logger(self.name, bound_logger)
 
+    @classmethod
+    def to_container_context(
+        cls,
+        context: Mapping[str, t.LogValue | t.Container | t.ValueOrModel],
+    ) -> t.FlatContainerMapping:
+        """Public wrapper for context normalization used outside helper mixins."""
+        return cls._to_container_context(context)
+
     def build_exception_context(
         self,
         *,
@@ -507,12 +515,12 @@ class FlextLogger(FlextUtilitiesLoggingContext):
             if success:
                 _ = self.logger.info(
                     f"{self._operation_name} {status}",
-                    **FlextLogger._to_container_context(context.root),
+                    **FlextLogger.to_container_context(context.root),
                 )
             else:
                 _ = self.logger.error(
                     f"{self._operation_name} {status}",
-                    **FlextLogger._to_container_context(context.root),
+                    **FlextLogger.to_container_context(context.root),
                 )
 
 
