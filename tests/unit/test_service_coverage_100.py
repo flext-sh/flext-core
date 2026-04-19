@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_tests import tm
-from tests import p, r, s, t
+from flext_tests import r, s, tm
+from tests import p, t
 
 
 class TestService100Coverage:

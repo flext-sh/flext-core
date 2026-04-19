@@ -19,7 +19,7 @@ from typing import Annotated, ClassVar, Self, overload
 
 from pydantic import PrivateAttr
 
-from flext_core import c, m, p, r, t, u
+from flext_core import FlextRuntime, c, m, p, r, t, u
 from flext_core._utilities.context_tracing import FlextUtilitiesContextTracing
 
 
@@ -158,7 +158,7 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
     @staticmethod
     def to_normalized(value: t.ValueOrModel | t.ConfigMap) -> t.RecursiveContainer:
         """Normalize a runtime value to the canonical recursive container shape."""
-        return FlextUtilitiesContextTracing._to_normalized(value)  # noqa: SLF001
+        return FlextRuntime.to_plain_container(u.normalize_to_container(value))
 
     @classmethod
     def resolve_container(cls) -> p.Container:

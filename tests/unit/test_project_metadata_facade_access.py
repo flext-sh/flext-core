@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, m, p, t, u
+from tests import c, m, p, t, u
 
 
 class TestFacadeFlatSsotAccess:

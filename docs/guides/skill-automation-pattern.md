@@ -27,7 +27,7 @@ Create automations that are reproducible, script-first, and enforceable by CI-st
 
 For each new automation family, deliver all items below:
 
-1. One skill folder: `.claude/skills/<automation-name>/` containing:
+1. One skill folder: `.agents/skills/<automation-name>/` containing:
    - `SKILL.md` — canonical skill document
    - `rules.yml` — detection rules (ast-grep, ripgrep, or custom)
    - `rules/` — ast-grep rule files (if any)
@@ -75,27 +75,27 @@ The skill must follow the canonical format from `skill-format-universal` and inc
 ## Example (Current Pattern)
 
 Current repository implementation uses the **self-contained skill architecture**. Each skill
-folder (`.claude/skills/<skill>/`) owns its own `rules.yml`, `rules/` ast-grep files,
+folder (`.agents/skills/<skill>/`) owns its own `rules.yml`, `rules/` ast-grep files,
 `baseline.json`, and `report.json`. The generic runner `scripts/core/skill_validate.py`
 discovers and executes everything.
 
 **Dict/Any Policy Gate**:
 
-- Skill: `.claude/skills/flext-strict-typing/SKILL.md`
-- Rules: `.claude/skills/flext-strict-typing/rules.yml` (10 rules: 8 ast-grep + 2 ripgrep)
-- AST rules: `.claude/skills/flext-strict-typing/rules/*.yml`
-- Baseline: `.claude/skills/flext-strict-typing/baseline.json`
+- Skill: `.agents/skills/flext-strict-typing/SKILL.md`
+- Rules: `.agents/skills/flext-strict-typing/rules.yml` (10 rules: 8 ast-grep + 2 ripgrep)
+- AST rules: `.agents/skills/flext-strict-typing/rules/*.yml`
+- Baseline: `.agents/skills/flext-strict-typing/baseline.json`
 
 **Pydantic v2 Policy Gate**:
 
-- Skill: `.claude/skills/lib-pydantic-v2/SKILL.md`
-- Rules: `.claude/skills/lib-pydantic-v2/rules.yml` (8 ast-grep rules)
-- AST rules: `.claude/skills/lib-pydantic-v2/rules/*.yml`
-- Baseline: `.claude/skills/lib-pydantic-v2/baseline.json`
+- Skill: `.agents/skills/lib-pydantic-v2/SKILL.md`
+- Rules: `.agents/skills/lib-pydantic-v2/rules.yml` (8 ast-grep rules)
+- AST rules: `.agents/skills/lib-pydantic-v2/rules/*.yml`
+- Baseline: `.agents/skills/lib-pydantic-v2/baseline.json`
 
 **Generic runner**:
 
-- `scripts/core/skill_validate.py` — auto-discovers `.claude/skills/*/rules.yml`
+- `scripts/core/skill_validate.py` — auto-discovers `.agents/skills/*/rules.yml`
 
 ## Verification Commands
 

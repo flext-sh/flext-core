@@ -117,9 +117,6 @@ class TestsFlextCoreUtilities(u):
                     _ = message
                     return r[t.RuntimeAtomic].ok(True)
 
-            class BadModelDump(m.Core.Tests.BadModelDump):
-                """Canonical bad model_dump object for domain utility error paths."""
-
             @staticmethod
             def success_cases() -> Sequence[tuple[str, str]]:
                 return [

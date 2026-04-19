@@ -279,19 +279,6 @@ class TestUtilitiesCollectionCoverage:
             str | None, m.Field(description="Expected error message fragment")
         ] = None
 
-    globals()["FixtureStatus"] = FixtureStatus
-    globals()["FixturePriority"] = FixturePriority
-    globals()["ParseMappingScenario"] = ParseMappingScenario
-    globals()["CoerceDictScenario"] = CoerceDictScenario
-    globals()["MapScenario"] = MapScenario
-    globals()["FindScenario"] = FindScenario
-    globals()["FilterScenario"] = FilterScenario
-    globals()["CountScenario"] = CountScenario
-    globals()["ProcessScenario"] = ProcessScenario
-    globals()["GroupScenario"] = GroupScenario
-    globals()["ChunkScenario"] = ChunkScenario
-    globals()["BatchScenario"] = BatchScenario
-
     class CollectionUtilitiesScenarios:
         """Centralized collection utilities test scenarios."""
 
@@ -348,61 +335,64 @@ class TestUtilitiesCollectionCoverage:
             TestUtilitiesCollectionCoverage.ParseMappingScenario
         ]:
             return [
-                ParseMappingScenario(
+                TestUtilitiesCollectionCoverage.ParseMappingScenario(
                     name="valid_strings",
-                    enum_cls=FixtureStatus,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixtureStatus,
                     mapping={"user1": "active", "user2": "pending"},
                     expected_success=True,
                     expected_keys=["user1", "user2"],
                 ),
-                ParseMappingScenario(
+                TestUtilitiesCollectionCoverage.ParseMappingScenario(
                     name="valid_enums",
-                    enum_cls=FixtureStatus,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixtureStatus,
                     mapping={
-                        "user1": FixtureStatus.ACTIVE,
-                        "user2": FixtureStatus.PENDING,
+                        "user1": TestUtilitiesCollectionCoverage.FixtureStatus.ACTIVE,
+                        "user2": TestUtilitiesCollectionCoverage.FixtureStatus.PENDING,
                     },
                     expected_success=True,
                     expected_keys=["user1", "user2"],
                 ),
-                ParseMappingScenario(
+                TestUtilitiesCollectionCoverage.ParseMappingScenario(
                     name="mixed_strings_enums",
-                    enum_cls=FixtureStatus,
-                    mapping={"user1": "active", "user2": FixtureStatus.PENDING},
+                    enum_cls=TestUtilitiesCollectionCoverage.FixtureStatus,
+                    mapping={
+                        "user1": "active",
+                        "user2": TestUtilitiesCollectionCoverage.FixtureStatus.PENDING,
+                    },
                     expected_success=True,
                     expected_keys=["user1", "user2"],
                 ),
-                ParseMappingScenario(
+                TestUtilitiesCollectionCoverage.ParseMappingScenario(
                     name="empty_dict",
-                    enum_cls=FixtureStatus,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixtureStatus,
                     mapping={},
                     expected_success=True,
                     expected_keys=[],
                 ),
-                ParseMappingScenario(
+                TestUtilitiesCollectionCoverage.ParseMappingScenario(
                     name="invalid_string",
-                    enum_cls=FixtureStatus,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixtureStatus,
                     mapping={"user1": "invalid_status"},
                     expected_success=False,
                     error_contains="Invalid",
                 ),
-                ParseMappingScenario(
+                TestUtilitiesCollectionCoverage.ParseMappingScenario(
                     name="mixed_valid_invalid",
-                    enum_cls=FixtureStatus,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixtureStatus,
                     mapping={"user1": "active", "user2": "invalid"},
                     expected_success=False,
                     error_contains="Invalid",
                 ),
-                ParseMappingScenario(
+                TestUtilitiesCollectionCoverage.ParseMappingScenario(
                     name="single_valid",
-                    enum_cls=FixturePriority,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixturePriority,
                     mapping={"task1": "high"},
                     expected_success=True,
                     expected_keys=["task1"],
                 ),
-                ParseMappingScenario(
+                TestUtilitiesCollectionCoverage.ParseMappingScenario(
                     name="single_invalid",
-                    enum_cls=FixturePriority,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixturePriority,
                     mapping={"task1": "invalid_priority"},
                     expected_success=False,
                     error_contains="Invalid",
@@ -414,49 +404,49 @@ class TestUtilitiesCollectionCoverage:
             TestUtilitiesCollectionCoverage.CoerceDictScenario
         ]:
             return [
-                CoerceDictScenario(
+                TestUtilitiesCollectionCoverage.CoerceDictScenario(
                     name="valid_dict_strings",
-                    enum_cls=FixtureStatus,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixtureStatus,
                     value={"user1": "active", "user2": "pending"},
                     expected_success=True,
                     expected_keys=["user1", "user2"],
                 ),
-                CoerceDictScenario(
+                TestUtilitiesCollectionCoverage.CoerceDictScenario(
                     name="valid_dict_enums",
-                    enum_cls=FixtureStatus,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixtureStatus,
                     value={
-                        "user1": FixtureStatus.ACTIVE,
-                        "user2": FixtureStatus.PENDING,
+                        "user1": TestUtilitiesCollectionCoverage.FixtureStatus.ACTIVE,
+                        "user2": TestUtilitiesCollectionCoverage.FixtureStatus.PENDING,
                     },
                     expected_success=True,
                     expected_keys=["user1", "user2"],
                 ),
-                CoerceDictScenario(
+                TestUtilitiesCollectionCoverage.CoerceDictScenario(
                     name="empty_dict",
-                    enum_cls=FixtureStatus,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixtureStatus,
                     value={},
                     expected_success=True,
                     expected_keys=[],
                 ),
-                CoerceDictScenario(
+                TestUtilitiesCollectionCoverage.CoerceDictScenario(
                     name="invalid_type_int",
-                    enum_cls=FixtureStatus,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixtureStatus,
                     value=123,
                     expected_success=False,
                     error_type=TypeError,
                     error_contains="Expected dict",
                 ),
-                CoerceDictScenario(
+                TestUtilitiesCollectionCoverage.CoerceDictScenario(
                     name="invalid_type_list",
-                    enum_cls=FixtureStatus,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixtureStatus,
                     value=["active", "pending"],
                     expected_success=False,
                     error_type=TypeError,
                     error_contains="Expected dict",
                 ),
-                CoerceDictScenario(
+                TestUtilitiesCollectionCoverage.CoerceDictScenario(
                     name="invalid_string_in_dict",
-                    enum_cls=FixtureStatus,
+                    enum_cls=TestUtilitiesCollectionCoverage.FixtureStatus,
                     value={"user1": "active", "user2": "invalid_status"},
                     expected_success=False,
                     error_type=ValueError,
@@ -467,39 +457,39 @@ class TestUtilitiesCollectionCoverage:
         @staticmethod
         def filter_cases() -> Sequence[TestUtilitiesCollectionCoverage.FilterScenario]:
             return [
-                FilterScenario(
+                TestUtilitiesCollectionCoverage.FilterScenario(
                     name="list_filter",
                     items=[1, 2, 3, 4],
                     predicate=lambda x: int(x) % 2 == 0,
                     expected_result=[2, 4],
                 ),
-                FilterScenario(
+                TestUtilitiesCollectionCoverage.FilterScenario(
                     name="list_filter_map",
                     items=[1, 2, 3, 4],
                     predicate=lambda x: int(x) > 2,
                     mapper=lambda x: int(x) * 2,
                     expected_result=[6, 8],
                 ),
-                FilterScenario(
+                TestUtilitiesCollectionCoverage.FilterScenario(
                     name="dict_filter",
                     items={"a": 1, "b": 2, "c": 3},
                     predicate=lambda v: int(v) % 2 != 0,
                     expected_result={"a": 1, "c": 3},
                 ),
-                FilterScenario(
+                TestUtilitiesCollectionCoverage.FilterScenario(
                     name="dict_filter_map",
                     items={"a": 1, "b": 4},
                     predicate=lambda v: int(v) > 2,
                     mapper=lambda v: int(v) * 2,
                     expected_result={"b": 8},
                 ),
-                FilterScenario(
+                TestUtilitiesCollectionCoverage.FilterScenario(
                     name="list_filter_empty",
                     items=[1, 3, 5],
                     predicate=lambda x: int(x) > 10,
                     expected_result=[],
                 ),
-                FilterScenario(
+                TestUtilitiesCollectionCoverage.FilterScenario(
                     name="list_filter_all",
                     items=[2, 4, 6],
                     predicate=lambda x: int(x) % 2 == 0,
@@ -510,19 +500,19 @@ class TestUtilitiesCollectionCoverage:
         @staticmethod
         def map_cases() -> Sequence[TestUtilitiesCollectionCoverage.MapScenario]:
             return [
-                MapScenario(
+                TestUtilitiesCollectionCoverage.MapScenario(
                     name="map_list",
                     items=[1, 2, 3],
                     mapper=lambda x: int(x) * 2,
                     expected_result=[2, 4, 6],
                 ),
-                MapScenario(
+                TestUtilitiesCollectionCoverage.MapScenario(
                     name="map_tuple",
                     items=(1, 2),
                     mapper=lambda x: int(x) + 1,
                     expected_result=(2, 3),
                 ),
-                MapScenario(
+                TestUtilitiesCollectionCoverage.MapScenario(
                     name="map_dict",
                     items={"a": 1, "b": 2},
                     mapper=lambda x: int(x) * 10,
@@ -533,19 +523,19 @@ class TestUtilitiesCollectionCoverage:
         @staticmethod
         def find_cases() -> Sequence[TestUtilitiesCollectionCoverage.FindScenario]:
             return [
-                FindScenario(
+                TestUtilitiesCollectionCoverage.FindScenario(
                     name="find_list_match",
                     items=[1, 2, 3],
                     predicate=lambda x: x == 2,
                     expected_result=2,
                 ),
-                FindScenario(
+                TestUtilitiesCollectionCoverage.FindScenario(
                     name="find_dict_match",
                     items={"a": 1, "b": 4},
                     predicate=lambda x: x == 4,
                     expected_result=4,
                 ),
-                FindScenario(
+                TestUtilitiesCollectionCoverage.FindScenario(
                     name="find_no_match",
                     items=[1, 3, 5],
                     predicate=lambda x: x == 2,
@@ -556,8 +546,10 @@ class TestUtilitiesCollectionCoverage:
         @staticmethod
         def count_cases() -> Sequence[TestUtilitiesCollectionCoverage.CountScenario]:
             return [
-                CountScenario(name="count_list", items=[1, 2, 3, 4], expected_count=4),
-                CountScenario(
+                TestUtilitiesCollectionCoverage.CountScenario(
+                    name="count_list", items=[1, 2, 3, 4], expected_count=4
+                ),
+                TestUtilitiesCollectionCoverage.CountScenario(
                     name="count_predicate",
                     items=[1, 2, 3, 4],
                     predicate=lambda x: int(x) % 2 == 0,
@@ -570,26 +562,26 @@ class TestUtilitiesCollectionCoverage:
             TestUtilitiesCollectionCoverage.ProcessScenario
         ]:
             return [
-                ProcessScenario(
+                TestUtilitiesCollectionCoverage.ProcessScenario(
                     name="process_list",
                     items=[1, 2, 3],
                     processor=lambda x: int(x) * 2,
                     expected_result=[2, 4, 6],
                 ),
-                ProcessScenario(
+                TestUtilitiesCollectionCoverage.ProcessScenario(
                     name="process_list_skip",
                     items=[1, 2, 3],
                     processor=lambda x: int(x) * 2,
                     expected_result=[4, 6],
                     predicate=lambda x: int(x) > 1,
                 ),
-                ProcessScenario(
+                TestUtilitiesCollectionCoverage.ProcessScenario(
                     name="process_strings",
                     items=["a", "b", "c"],
                     processor=lambda x: str(x).upper(),
                     expected_result=["A", "B", "C"],
                 ),
-                ProcessScenario(
+                TestUtilitiesCollectionCoverage.ProcessScenario(
                     name="process_empty",
                     items=[],
                     processor=lambda x: int(x) * 2,
@@ -600,7 +592,7 @@ class TestUtilitiesCollectionCoverage:
         @staticmethod
         def group_cases() -> Sequence[TestUtilitiesCollectionCoverage.GroupScenario]:
             return [
-                GroupScenario(
+                TestUtilitiesCollectionCoverage.GroupScenario(
                     name="group_by_len",
                     items=["cat", "dog", "house"],
                     key=lambda x: len(x),
@@ -611,7 +603,7 @@ class TestUtilitiesCollectionCoverage:
         @staticmethod
         def chunk_cases() -> Sequence[TestUtilitiesCollectionCoverage.ChunkScenario]:
             return [
-                ChunkScenario(
+                TestUtilitiesCollectionCoverage.ChunkScenario(
                     name="chunk_list",
                     items=[1, 2, 3, 4, 5],
                     size=2,
@@ -624,7 +616,7 @@ class TestUtilitiesCollectionCoverage:
         CollectionUtilitiesScenarios.map_cases(),
         ids=lambda s: s.name,
     )
-    def test_map(self, scenario: MapScenario) -> None:
+    def test_map(self, scenario: TestUtilitiesCollectionCoverage.MapScenario) -> None:
         """Test map with various scenarios."""
         result = u.map(scenario.items, scenario.mapper)
         assert result == scenario.expected_result
@@ -634,7 +626,7 @@ class TestUtilitiesCollectionCoverage:
         CollectionUtilitiesScenarios.find_cases(),
         ids=lambda s: s.name,
     )
-    def test_find(self, scenario: FindScenario) -> None:
+    def test_find(self, scenario: TestUtilitiesCollectionCoverage.FindScenario) -> None:
         """Test find with various scenarios."""
         result = u.find(
             scenario.items,
@@ -651,7 +643,9 @@ class TestUtilitiesCollectionCoverage:
         CollectionUtilitiesScenarios.filter_cases(),
         ids=lambda s: s.name,
     )
-    def test_filter(self, scenario: FilterScenario) -> None:
+    def test_filter(
+        self, scenario: TestUtilitiesCollectionCoverage.FilterScenario
+    ) -> None:
         """Test filter with various scenarios."""
         result = u.filter(
             scenario.items,
@@ -665,7 +659,9 @@ class TestUtilitiesCollectionCoverage:
         CollectionUtilitiesScenarios.count_cases(),
         ids=lambda s: s.name,
     )
-    def test_count(self, scenario: CountScenario) -> None:
+    def test_count(
+        self, scenario: TestUtilitiesCollectionCoverage.CountScenario
+    ) -> None:
         """Test count with various scenarios."""
         result = u.count(scenario.items, scenario.predicate)
         assert result == scenario.expected_count
@@ -675,7 +671,9 @@ class TestUtilitiesCollectionCoverage:
         CollectionUtilitiesScenarios.process_cases(),
         ids=lambda s: s.name,
     )
-    def test_process(self, scenario: ProcessScenario) -> None:
+    def test_process(
+        self, scenario: TestUtilitiesCollectionCoverage.ProcessScenario
+    ) -> None:
         """Test process with various scenarios."""
         result = u.process(
             scenario.items,
@@ -711,21 +709,5 @@ class TestUtilitiesCollectionCoverage:
         tm.that(result.value["c"], eq=3)
         tm.that(result.value["b"], is_=dict)
 
-
-FixtureStatus = TestUtilitiesCollectionCoverage.FixtureStatus
-FixturePriority = TestUtilitiesCollectionCoverage.FixturePriority
-ParseMappingScenario = TestUtilitiesCollectionCoverage.ParseMappingScenario
-CoerceDictScenario = TestUtilitiesCollectionCoverage.CoerceDictScenario
-MapScenario = TestUtilitiesCollectionCoverage.MapScenario
-FindScenario = TestUtilitiesCollectionCoverage.FindScenario
-FilterScenario = TestUtilitiesCollectionCoverage.FilterScenario
-CountScenario = TestUtilitiesCollectionCoverage.CountScenario
-ProcessScenario = TestUtilitiesCollectionCoverage.ProcessScenario
-GroupScenario = TestUtilitiesCollectionCoverage.GroupScenario
-ChunkScenario = TestUtilitiesCollectionCoverage.ChunkScenario
-BatchScenario = TestUtilitiesCollectionCoverage.BatchScenario
-CollectionUtilitiesScenarios = (
-    TestUtilitiesCollectionCoverage.CollectionUtilitiesScenarios
-)
 
 __all__: list[str] = ["TestUtilitiesCollectionCoverage"]

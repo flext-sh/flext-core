@@ -9,8 +9,8 @@ from datetime import datetime
 import pytest
 from pydantic_core import ValidationError
 
-from flext_tests import tm
-from tests import c, m, r, t, u
+from flext_tests import r, tm
+from tests import c, m, t, u
 
 _LoggerLike = m.Core.Tests.LoggerLike
 
@@ -97,7 +97,7 @@ class TestUtilitiesGuardsFullCoverage:
             not self._matches_type_obj(logger_input, "logger"),
             eq=True,
         )
-        result_input: t.GuardInput = r[t.GuardInput].ok(1)
+        result_input: t.GuardInput = u.extract({"value": 1}, "value")
         tm.that(self._matches_type_obj(result_input, "result"), eq=True)
         tm.that(not self._matches_type_obj(plain_obj, "service"), eq=True)
         tm.that(not self._matches_type_obj(plain_obj, "middleware"), eq=True)

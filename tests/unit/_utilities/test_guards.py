@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from flext_tests import tm
-from tests import m, r, t, u
+from flext_tests import r, tm
+from tests import m, t, u
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -316,7 +316,8 @@ class TestFlextUtilitiesGuards:
     # -----------------------------------------------------------------------
 
     def test_is_type_result_protocol(self) -> None:
-        tm.that(u.matches_type(r[t.GuardInput].ok(1), "result"), eq=True)
+        sample_result = u.extract({"value": 1}, "value")
+        tm.that(u.matches_type(sample_result, "result"), eq=True)
         tm.that(u.matches_type("not a result", "result"), eq=False)
 
     def test_is_type_protocol_names_reject_plain_string(self) -> None:

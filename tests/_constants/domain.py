@@ -9,7 +9,7 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
-from flext_tests import c
+from tests import c
 
 
 class TestsFlextCoreConstantsDomain:

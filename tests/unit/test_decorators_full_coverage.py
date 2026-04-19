@@ -15,8 +15,8 @@ from flext_core import (
     FlextContainer,
     FlextContext,
 )
-from flext_tests import tm
-from tests import d, e, m, p, r, t, u
+from flext_tests import d, e, r, tm
+from tests import m, p, t, u
 
 
 class TestDecoratorsFullCoverage:

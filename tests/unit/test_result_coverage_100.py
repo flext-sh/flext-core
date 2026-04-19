@@ -27,8 +27,8 @@ from collections.abc import MutableSequence, Sequence
 
 import pytest
 
-from flext_tests import tm
-from tests import p, r, t
+from flext_tests import r, tm
+from tests import p, t
 
 
 class TestrCoverage:

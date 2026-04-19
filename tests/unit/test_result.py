@@ -27,8 +27,8 @@ from typing import Annotated, ClassVar
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from flext_tests import tm
-from tests import m, p, r, t, u
+from flext_tests import r, tm
+from tests import m, p, t, u
 
 
 @unique

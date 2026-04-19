@@ -16,8 +16,8 @@ from typing import TYPE_CHECKING, Self
 
 import pytest
 
-from flext_tests import tm
-from tests import e, m, p, r, u
+from flext_tests import e, r, tm
+from tests import m, p, u
 
 if TYPE_CHECKING:
     from tests import TestsFlextCoreProtocols, TestsFlextCoreTypes

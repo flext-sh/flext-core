@@ -27,8 +27,8 @@ from flext_core import (
     FlextModelsService,
     FlextSettings,
 )
-from flext_tests import tm
-from tests import p, r, s, t, u
+from flext_tests import r, s, tm
+from tests import p, t, u
 
 
 class TestDiServicesAccess:

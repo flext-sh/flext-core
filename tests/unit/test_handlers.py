@@ -7,8 +7,8 @@ from typing import Annotated, ClassVar, override
 import pytest
 from hypothesis import given, strategies as st
 
-from flext_tests import tm
-from tests import c, e, h, m, p, r, t, u, x
+from flext_tests import e, h, r, tm, x
+from tests import c, m, p, t, u
 
 
 class TestsFlextCoreFlextHandlers:

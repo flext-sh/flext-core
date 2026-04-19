@@ -9,8 +9,8 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import override
 
-from flext_tests import tm
-from tests import m, p, r, t
+from flext_tests import r, tm
+from tests import m, p, t
 
 _ValidationLikeError = m.Core.Tests._ValidationLikeError
 

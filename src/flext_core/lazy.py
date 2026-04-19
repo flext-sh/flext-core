@@ -6,7 +6,6 @@ import importlib
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from types import ModuleType
-from typing import TYPE_CHECKING
 
 from pydantic import (
     BaseModel,
@@ -17,14 +16,6 @@ from pydantic import (
     ValidationError,
     computed_field,
 )
-
-if TYPE_CHECKING:
-    from flext_core import t
-
-type LazyImportEntry = str | tuple[str, str]
-type LazyImportMap = Mapping[str, LazyImportEntry]
-type NormalizedMapCacheKey = tuple[str, int]
-type InstallCacheSignature = tuple[int, int, int, bool]
 
 
 class FlextLazy(BaseModel):
@@ -37,24 +28,24 @@ class FlextLazy(BaseModel):
     )
 
     module_cache: dict[str, ModuleType] = Field(default_factory=dict)
-    child_lazy_cache: dict[str, dict[str, LazyImportEntry]] = Field(
+    child_lazy_cache: dict[str, dict[str, str | tuple[str, str]]] = Field(
         default_factory=dict
     )
-    child_merge_cache: dict[tuple[str, ...], dict[str, LazyImportEntry]] = Field(
+    child_merge_cache: dict[tuple[str, ...], dict[str, str | tuple[str, str]]] = Field(
         default_factory=dict,
     )
-    normalized_map_cache: dict[NormalizedMapCacheKey, dict[str, LazyImportEntry]] = (
+    normalized_map_cache: dict[tuple[str, int], dict[str, str | tuple[str, str]]] = (
         Field(
             default_factory=dict,
         )
     )
-    install_cache: dict[str, InstallCacheSignature] = Field(default_factory=dict)
+    install_cache: dict[str, tuple[int, int, int, bool]] = Field(default_factory=dict)
 
     _import_module: Callable[[str], ModuleType] = PrivateAttr(
         default_factory=lambda: importlib.import_module,
     )
-    _map_adapter: TypeAdapter[dict[str, LazyImportEntry]] = PrivateAttr(
-        default_factory=lambda: TypeAdapter(dict[str, LazyImportEntry]),
+    _map_adapter: TypeAdapter[dict[str, str | tuple[str, str]]] = PrivateAttr(
+        default_factory=lambda: TypeAdapter(dict[str, str | tuple[str, str]]),
     )
     _alias_adapter: TypeAdapter[tuple[str, str]] = PrivateAttr(
         default_factory=lambda: TypeAdapter(tuple[str, str]),
@@ -75,15 +66,15 @@ class FlextLazy(BaseModel):
     def _norm_cache_key(
         self,
         module_path: str,
-        raw: LazyImportMap | None,
-    ) -> NormalizedMapCacheKey:
+        raw: Mapping[str, str | tuple[str, str]] | None,
+    ) -> tuple[str, int]:
         return (module_path, id(raw))
 
     def _norm_map(
         self,
         module_path: str,
-        raw: LazyImportMap | None,
-    ) -> dict[str, LazyImportEntry]:
+        raw: Mapping[str, str | tuple[str, str]] | None,
+    ) -> dict[str, str | tuple[str, str]]:
         cache_key = self._norm_cache_key(module_path, raw)
         cached = self.normalized_map_cache.get(cache_key)
         if cached is not None:
@@ -95,7 +86,7 @@ class FlextLazy(BaseModel):
             msg = f"module {module_path!r} has no valid _LAZY_IMPORTS mapping"
             raise TypeError(msg) from exc
 
-        out: dict[str, LazyImportEntry] = {}
+        out: dict[str, str | tuple[str, str]] = {}
         for name, entry in validated.items():
             if isinstance(entry, str):
                 out[name] = f"{module_path}{entry}" if entry.startswith(".") else entry
@@ -115,7 +106,7 @@ class FlextLazy(BaseModel):
         self.module_cache[module_path] = mod
         return mod
 
-    def _child_map(self, module_path: str) -> dict[str, LazyImportEntry]:
+    def _child_map(self, module_path: str) -> dict[str, str | tuple[str, str]]:
         cached = self.child_lazy_cache.get(module_path)
         if cached is not None:
             return cached
@@ -141,13 +132,13 @@ class FlextLazy(BaseModel):
 
     def build_map(
         self,
-        module_groups: Mapping[str, t.StrSequence] | None = None,
+        module_groups: Mapping[str, Sequence[str]] | None = None,
         *,
         alias_groups: Mapping[str, Sequence[tuple[str, str]]] | None = None,
         sort_keys: bool = True,
-    ) -> dict[str, LazyImportEntry]:
+    ) -> dict[str, str | tuple[str, str]]:
         """Build one flat lazy-import map."""
-        out: dict[str, LazyImportEntry] = {
+        out: dict[str, str | tuple[str, str]] = {
             name: module
             for module, names in (module_groups or {}).items()
             for name in names
@@ -160,7 +151,7 @@ class FlextLazy(BaseModel):
     def get(
         self,
         name: str,
-        lazy_imports: LazyImportMap,
+        lazy_imports: Mapping[str, str | tuple[str, str]],
         module_globals: MutableMapping[str, object],
         module_name: str,
     ) -> object:
@@ -204,7 +195,11 @@ class FlextLazy(BaseModel):
         module_globals[name] = value
         return value
 
-    def cleanup(self, module_name: str, lazy_imports: LazyImportMap) -> None:
+    def cleanup(
+        self,
+        module_name: str,
+        lazy_imports: Mapping[str, str | tuple[str, str]],
+    ) -> None:
         """Remove eager child module attrs."""
         current = sys.modules.get(module_name)
         if current is None:
@@ -221,17 +216,17 @@ class FlextLazy(BaseModel):
 
     def merge(
         self,
-        child_module_paths: t.StrSequence,
-        local_lazy_imports: LazyImportMap,
+        child_module_paths: Sequence[str],
+        local_lazy_imports: Mapping[str, str | tuple[str, str]],
         *,
-        exclude_names: t.StrSequence = (),
+        exclude_names: Sequence[str] = (),
         module_name: str | None = None,
-    ) -> dict[str, LazyImportEntry]:
+    ) -> dict[str, str | tuple[str, str]]:
         """Merge child lazy maps with local entries."""
         key = tuple(self._child_path(path, module_name) for path in child_module_paths)
         children = self.child_merge_cache.get(key)
         if children is None:
-            children = dict[str, LazyImportEntry]()
+            children = dict[str, str | tuple[str, str]]()
             for path in key:
                 for name, entry in self._child_map(path).items():
                     if name not in children or name.lower() != name:
@@ -248,13 +243,13 @@ class FlextLazy(BaseModel):
         self,
         module_name: str,
         module_globals: MutableMapping[str, object],
-        lazy_imports: LazyImportMap,
-        all_exports: t.StrSequence | None = None,
+        lazy_imports: Mapping[str, str | tuple[str, str]],
+        all_exports: Sequence[str] | None = None,
         *,
         publish_all: bool = True,
     ) -> None:
         """Install __getattr__/__dir__/__all__."""
-        pre_signature: InstallCacheSignature = (
+        pre_signature: tuple[int, int, int, bool] = (
             id(module_globals),
             id(lazy_imports),
             0 if all_exports is None else id(all_exports),

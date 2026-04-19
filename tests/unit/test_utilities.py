@@ -25,8 +25,8 @@ from typing import ClassVar
 import pytest
 from hypothesis import given, strategies as st
 
-from flext_tests import tm
-from tests import c, p, r, t, u
+from flext_tests import r, tm
+from tests import c, p, t, u
 
 
 class Testu(u.Core.Tests.Contract):

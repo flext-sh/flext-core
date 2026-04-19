@@ -26,9 +26,8 @@ from typing import TypeVar, get_origin, override
 
 import pytest
 
-from flext_core import h
-from flext_tests import tm
-from tests import p, r, t, u
+from flext_tests import h, r, tm
+from tests import p, t, u
 
 TMessage = TypeVar("TMessage")
 

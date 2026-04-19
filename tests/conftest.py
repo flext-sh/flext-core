@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextContainer, FlextContext, p
-from tests import c, r, u
+from flext_core import FlextContainer, FlextContext
+from tests import c, p, r, u
 
 
 @pytest.fixture

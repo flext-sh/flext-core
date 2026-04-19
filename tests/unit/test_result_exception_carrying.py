@@ -4,8 +4,8 @@ from collections.abc import Sequence, Sized
 
 from pydantic import ValidationError
 
-from flext_tests import tm
-from tests import m, p, r, t
+from flext_tests import r, tm
+from tests import m, p, t
 
 
 class TestsFlextCoreResultExceptionCarrying:

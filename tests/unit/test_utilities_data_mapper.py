@@ -14,10 +14,10 @@ from collections import UserDict
 from collections.abc import ItemsView
 from typing import override
 
-from flext_tests import tm
 from tests import (
     c,
     t,
+    tm,
     u,
 )
 

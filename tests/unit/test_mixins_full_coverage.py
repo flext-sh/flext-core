@@ -10,8 +10,8 @@ from typing import override
 
 import pytest
 
-from flext_tests import tm
-from tests import m, p, r, t, x
+from flext_tests import r, tm, x
+from tests import m, p, t
 
 
 class TestMixinsFullCoverage:
