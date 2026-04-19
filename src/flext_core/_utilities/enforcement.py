@@ -479,11 +479,21 @@ class FlextUtilitiesEnforcement:
             return True
         module = getattr(target, "__module__", "") or ""
         qualname = getattr(target, "__qualname__", "") or ""
-        if module.startswith(("tests.", "tests_")):
-            segments = qualname.split(".")
-            if any(seg.startswith("Tests") for seg in segments):
-                return True
-        return False
+        if not module.startswith(("tests.", "tests_")):
+            return False
+        # Dedicated enforcement-integration fixtures EXPECT to emit the
+        # full spectrum of violations (bad_module.py classes are the
+        # subject of the ``TestBadModuleFiresExpectedRules`` suite) —
+        # never exempt them.
+        if "_enforcement_integration_fixtures" in module:
+            return False
+        segments = qualname.split(".")
+        # Any ``Tests*`` / ``Test*`` segment (outer container OR the
+        # class itself) in a tests-scoped module: exempt. Test fixtures
+        # exercise production APIs but are not subject to production
+        # model governance (mutable defaults, accessor method naming,
+        # field-description requirements).
+        return any(seg.startswith(("Tests", "Test")) for seg in segments)
 
     @staticmethod
     def run(model_type: type[mp.BaseModel]) -> None:

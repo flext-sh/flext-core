@@ -12,6 +12,8 @@ from tests import e, p, r, s
 class TestsFlextCoreServiceAdditionalRuntimeCloneService(s[str]):
     """Service exposing runtime cloning for testing."""
 
+    __test__ = False
+
     flag: bool = True
 
     @override

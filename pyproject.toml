@@ -407,7 +407,7 @@ root = "tests"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
-addopts = [ "--markdown-check", "--strict-markers" ]
+addopts = [ "--markdown-docs", "--strict-markers" ]
 enable_assertion_pass_hook = true
 filterwarnings = [
   "ignore:Delete once deprecated functions are gone:DeprecationWarning:rope.base.project",

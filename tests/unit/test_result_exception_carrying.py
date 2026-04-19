@@ -418,4 +418,4 @@ class TestsFlextCoreResultExceptionCarrying:
             tm.that(result.exception, is_=type(exc))
 
 
-__all__: list[str] = ["TestResultExceptionCarrying"]
+__all__: list[str] = ["TestsFlextCoreResultExceptionCarrying"]

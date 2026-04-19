@@ -136,4 +136,4 @@ class TestsFlextCoreFlextModelsCollectionsCoverage100:
         tm.that(merged.color is False, eq=True)
 
 
-__all__: list[str] = ["TestFlextModelsCollectionsCoverage100"]
+__all__: list[str] = ["TestsFlextCoreFlextModelsCollectionsCoverage100"]

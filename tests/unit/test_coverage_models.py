@@ -16,9 +16,13 @@ from tests import m, t, u
 class TestsFlextCoreCoverageModelsGetUserQuery(m.Query):
     """Query to get user."""
 
+    __test__ = False
+
 
 class TestsFlextCoreCoverageModelsListAccountsQuery(m.Query):
     """Query to list accounts."""
+
+    __test__ = False
 
     page: Annotated[int, m.Field()]
     limit: Annotated[int, m.Field()]
@@ -26,6 +30,8 @@ class TestsFlextCoreCoverageModelsListAccountsQuery(m.Query):
 
 class TestsFlextCoreCoverageModelsSearchProductsQuery(m.Query):
     """Query to search products."""
+
+    __test__ = False
 
     keyword: Annotated[str, m.Field()]
     category: Annotated[str | None, m.Field(default=None)] = None

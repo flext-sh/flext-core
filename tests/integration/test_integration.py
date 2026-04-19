@@ -54,7 +54,7 @@ class TestLibraryIntegration:
         global_container = FlextContainer()
         assert isinstance(global_container, p.Container)
 
-    @pytest.mark.integrationunta
+    @pytest.mark.integration
     @pytest.mark.core
     def test_flext_result_with_container(
         self,

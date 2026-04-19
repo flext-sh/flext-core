@@ -13,12 +13,16 @@ from tests import c, e, m, p, r, s, u
 class TestsFlextCoreServiceUserData(m.Value):
     """Public result model used by service tests."""
 
+    __test__ = False
+
     user_id: int
     name: str
 
 
 class TestsFlextCoreServiceUserService(s[TestsFlextCoreServiceUserData]):
     """Simple successful service."""
+
+    __test__ = False
 
     @override
     def execute(self) -> p.Result[TestsFlextCoreServiceUserData]:
@@ -29,6 +33,8 @@ class TestsFlextCoreServiceUserService(s[TestsFlextCoreServiceUserData]):
 
 class TestsFlextCoreServiceValidatingService(s[str]):
     """Service with public validation behavior."""
+
+    __test__ = False
 
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(validate_assignment=True)
     value_input: Annotated[
@@ -56,6 +62,8 @@ class TestsFlextCoreServiceValidatingService(s[str]):
 class TestsFlextCoreServiceFailingService(s[bool]):
     """Service that fails execution through r."""
 
+    __test__ = False
+
     @override
     def execute(self) -> p.Result[bool]:
         return r[bool].fail(
@@ -70,6 +78,8 @@ class TestsFlextCoreServiceFailingService(s[bool]):
 
 class TestsFlextCoreServiceRaisingValidationService(s[str]):
     """Service whose validation raises and must be flattened by valid()."""
+
+    __test__ = False
 
     should_raise: bool = False
 

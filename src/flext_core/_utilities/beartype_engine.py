@@ -458,6 +458,8 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def check_proto_inner_kind(value: type) -> Mapping[str, str] | None:
+        if value.__dict__.get("_flext_enforcement_exempt", False):
+            return _NO_VIOLATION
         if FlextUtilitiesBeartypeEngine.is_runtime_protocol_target(value):
             return _NO_VIOLATION
         if FlextUtilitiesBeartypeEngine.has_nested_namespace(value):

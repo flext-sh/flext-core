@@ -9,7 +9,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".test_advanced_patterns": ("TestAdvancedPatterns",),
         ".test_architectural_patterns": ("TestArchitecturalPatterns",),
-        ".test_patterns_commands": ("TestPatternsCommands",),
+        ".test_patterns_commands": ("TestsFlextCorePatternsCommands",),
         ".test_patterns_logging": ("TestPatternsLogging",),
         ".test_patterns_testing": ("TestPatternsTesting",),
     },

@@ -22,7 +22,7 @@ from flext_tests import tm
 from tests import m, t, u
 
 
-class UtilitiesMapperCoverage100Namespace:
+class TestsFlextCoreUtilitiesMapperCoverage100Namespace:
     class SimpleObj(m.Value):
         """Simple test t.RecursiveContainer."""
 
@@ -297,9 +297,17 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(u.agg([], "v"), eq=0)
 
 
-SimpleObj = UtilitiesMapperCoverage100Namespace.SimpleObj
-TestuMapperExtract = UtilitiesMapperCoverage100Namespace.TestuMapperExtract
-TestuMapperAccessors = UtilitiesMapperCoverage100Namespace.TestuMapperAccessors
-TestuMapperUtils = UtilitiesMapperCoverage100Namespace.TestuMapperUtils
-TestuMapperConversions = UtilitiesMapperCoverage100Namespace.TestuMapperConversions
-TestuMapperAdvanced = UtilitiesMapperCoverage100Namespace.TestuMapperAdvanced
+SimpleObj = TestsFlextCoreUtilitiesMapperCoverage100Namespace.SimpleObj
+TestuMapperExtract = (
+    TestsFlextCoreUtilitiesMapperCoverage100Namespace.TestuMapperExtract
+)
+TestuMapperAccessors = (
+    TestsFlextCoreUtilitiesMapperCoverage100Namespace.TestuMapperAccessors
+)
+TestuMapperUtils = TestsFlextCoreUtilitiesMapperCoverage100Namespace.TestuMapperUtils
+TestuMapperConversions = (
+    TestsFlextCoreUtilitiesMapperCoverage100Namespace.TestuMapperConversions
+)
+TestuMapperAdvanced = (
+    TestsFlextCoreUtilitiesMapperCoverage100Namespace.TestuMapperAdvanced
+)

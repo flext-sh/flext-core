@@ -94,7 +94,7 @@ class TestsFlextCoreDeprecationWarnings:
         legacy_base = type(
             "TestsFlextCoreDeprecatedLegacyBase",
             (m.Config,),
-            {},
+            {"__module__": __name__},
         )
         legacy = warnings.deprecated("Use NewClass instead")(legacy_base)
         with warnings.catch_warnings(record=True) as caught:

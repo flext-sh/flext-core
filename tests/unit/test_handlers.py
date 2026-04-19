@@ -581,4 +581,4 @@ class TestsFlextCoreFlextHandlers:
         tm.ok(handler.execute("x"), eq="x")
 
 
-__all__: list[str] = ["TestFlextHandlers"]
+__all__: list[str] = ["TestsFlextCoreFlextHandlers"]

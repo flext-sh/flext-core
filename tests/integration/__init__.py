@@ -15,7 +15,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         {
             ".patterns.test_advanced_patterns": ("TestAdvancedPatterns",),
             ".patterns.test_architectural_patterns": ("TestArchitecturalPatterns",),
-            ".patterns.test_patterns_commands": ("TestPatternsCommands",),
+            ".patterns.test_patterns_commands": ("TestsFlextCorePatternsCommands",),
             ".patterns.test_patterns_logging": ("TestPatternsLogging",),
             ".patterns.test_patterns_testing": ("TestPatternsTesting",),
             ".test_architecture": ("TestAutomatedArchitecture",),
@@ -23,7 +23,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_examples_execution": ("TestExamplesExecution",),
             ".test_integration": ("TestLibraryIntegration",),
             ".test_migration_validation": ("TestMigrationValidation",),
-            ".test_service": ("TestServiceIntegration",),
+            ".test_service": ("TestsFlextCoreServiceIntegration",),
             ".test_service_result_property": ("TestServiceResultProperty",),
             ".test_settings_integration": ("TestFlextSettingsSingletonIntegration",),
             ".test_system": ("TestCompleteFlextSystemIntegration",),

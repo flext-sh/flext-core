@@ -9,7 +9,7 @@ from __future__ import annotations
 import contextvars
 from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
 from flext_core import (
     FlextModelsBase,
@@ -54,7 +54,13 @@ class FlextModelsContextScope:
         ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
 
     class ContextStatistics(FlextModelsBase.ArbitraryTypesModel):
-        """Statistics tracking for context operations."""
+        """Statistics tracking for context operations.
+
+        Enforcement exemption: counters and the ``operations`` map are
+        incremented throughout the context lifecycle; fresh per-instance.
+        """
+
+        _flext_enforcement_exempt: ClassVar[bool] = True
 
         sets: Annotated[
             t.NonNegativeInt,
@@ -96,7 +102,7 @@ class FlextModelsContextScope:
             FlextUtilitiesPydantic.Field(
                 description="Additional metric counters and timing values grouped by metric key.",
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
 
     class ContextRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Centralized mutable runtime state for `FlextContext`."""
