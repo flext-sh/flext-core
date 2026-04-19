@@ -26,8 +26,8 @@ import pytest
 import structlog
 from dependency_injector import containers, providers
 
-from flext_tests import r, tm
-from tests import m, p, t, u
+from flext_tests import tm
+from tests import m, p, r, t, u
 
 runtime_module = inspect.getmodule(u.configure_structlog)
 

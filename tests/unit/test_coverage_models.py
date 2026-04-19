@@ -9,8 +9,8 @@ from typing import Annotated, override
 
 import pytest
 
-from flext_tests import e, tm
-from tests import m, t, u
+from flext_tests import tm
+from tests import e, m, t, u
 
 
 class TestsFlextCoreCoverageModelsGetUserQuery(m.Query):

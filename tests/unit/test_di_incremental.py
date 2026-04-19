@@ -29,8 +29,8 @@ from flext_core import (
     FlextContext,
     FlextSettings,
 )
-from flext_tests import r, s, tm
-from tests import m, p, t, u
+from flext_tests import tm
+from tests import m, p, r, s, t, u
 
 
 @pytest.fixture(autouse=True)

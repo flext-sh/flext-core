@@ -6,8 +6,8 @@ import types
 from collections.abc import MutableSequence
 from typing import override
 
-from flext_tests import h, r, s, tm
-from tests import c, m, p
+from flext_tests import tm
+from tests import c, h, m, p, r, s
 
 
 class TestHandlerDecoratorDiscovery:

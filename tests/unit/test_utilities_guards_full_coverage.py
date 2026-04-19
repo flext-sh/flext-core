@@ -9,8 +9,8 @@ from datetime import datetime
 import pytest
 from pydantic_core import ValidationError
 
-from flext_tests import r, tm
-from tests import c, m, t, u
+from flext_tests import tm
+from tests import c, m, r, t, u
 
 _LoggerLike = m.Core.Tests.LoggerLike
 

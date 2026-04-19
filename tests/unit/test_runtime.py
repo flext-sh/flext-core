@@ -32,8 +32,8 @@ from dependency_injector import containers, providers
 from hypothesis import given, strategies as st
 
 from flext_core import FlextContainer, FlextContext
-from flext_tests import s, tm, x
-from tests import m, p, t, u
+from flext_tests import tm
+from tests import m, p, s, t, u, x
 
 
 class TestFlextRuntime:

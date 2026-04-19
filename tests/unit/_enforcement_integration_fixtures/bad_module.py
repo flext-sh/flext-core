@@ -15,7 +15,8 @@ from __future__ import annotations
 import typing
 from typing import Annotated, ClassVar
 
-from flext_core import FlextModels, FlextModelsNamespace, m, u
+from flext_core import FlextModels, FlextModelsNamespace
+from tests import m, u
 
 # --- Pydantic hook rules ------------------------------------------------
 

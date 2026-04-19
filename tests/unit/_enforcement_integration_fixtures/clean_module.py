@@ -12,7 +12,8 @@ from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
 
-from flext_core import FlextModels, m, u
+from flext_core import FlextModels
+from tests import m, u
 
 
 class TestsFlextCoreCleanModels:

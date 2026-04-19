@@ -26,8 +26,8 @@ from typing import ClassVar, override
 
 import pytest
 
-from flext_tests import r, tm
-from tests import p, t, u
+from flext_tests import tm
+from tests import p, r, t, u
 
 
 class Testu(u.Core.Tests.Contract):

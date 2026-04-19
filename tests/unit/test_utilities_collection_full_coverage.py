@@ -9,8 +9,8 @@ from typing import NoReturn, overload, override
 
 import pytest
 
-from flext_tests import r, tm
-from tests import c, t, u
+from flext_tests import tm
+from tests import c, r, t, u
 
 
 class TestUtilitiesCollectionFullCoverage:

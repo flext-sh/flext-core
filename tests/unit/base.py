@@ -19,8 +19,8 @@ from pathlib import Path
 from typing import Annotated, ClassVar, override
 
 from flext_core import T_DomainResult
-from flext_tests import h, r, s, td
-from tests import c, m, p, t
+from flext_tests import td
+from tests import c, h, m, p, r, s, t
 
 
 class TestsFlextCoreServiceBase(s[T_DomainResult]):
