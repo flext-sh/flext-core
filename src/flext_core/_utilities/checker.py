@@ -28,7 +28,7 @@ class FlextUtilitiesChecker:
 
     @staticmethod
     def _is_module_export_callable(
-        value: Callable[..., t.ModuleExport] | t.GuardInput,
+        value: Callable[..., t.ModuleExport] | t.GuardInput | None,
     ) -> TypeIs[Callable[..., t.ModuleExport]]:
         """Narrow value to callable returning module exports."""
         return callable(value)
@@ -68,10 +68,7 @@ class FlextUtilitiesChecker:
         expected_type: t.TypeHintSpecifier,
     ) -> bool:
         """Check if expected type is a canonical catch-all value contract."""
-        return expected_type in {
-            t.RecursiveContainer,
-            t.ValueOrModel,
-        }
+        return expected_type is t.ValueOrModel
 
     @classmethod
     def _evaluate_type_compatibility(
@@ -148,7 +145,7 @@ class FlextUtilitiesChecker:
             return r[t.TypeHintSpecifier].fail(
                 c.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD,
             )
-        handle_method_raw: t.GuardInput = getattr(
+        handle_method_raw: t.GuardInput | None = getattr(
             handler_class,
             c.MethodName.HANDLE,
             None,

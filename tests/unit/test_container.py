@@ -27,7 +27,7 @@ from collections.abc import Callable, Generator
 import pytest
 from hypothesis import assume, given, settings, strategies as st
 
-from flext_core import FlextContainer, FlextContext, FlextSettings
+from flext_core import FlextContainer, FlextSettings
 from flext_tests import tm
 from tests import c, m, p, t, u
 
@@ -380,7 +380,7 @@ class TestFlextContainer:
         settings_result = container.snapshot()
         tm.that(
             settings_result,
-            is_=t.ConfigMap,
+            is_=m.ConfigMap,
             none=False,
             msg="Container settings must be a ConfigMap",
         )
@@ -417,7 +417,7 @@ class TestFlextContainer:
         settings_result = container.snapshot()
         tm.that(
             settings_result,
-            is_=t.ConfigMap,
+            is_=m.ConfigMap,
             none=False,
             msg="resolve_settings must return a ConfigMap",
         )
@@ -438,7 +438,7 @@ class TestFlextContainer:
         settings = container.snapshot()
         tm.that(
             settings,
-            is_=t.ConfigMap,
+            is_=m.ConfigMap,
             none=False,
             msg="resolve_settings must return ConfigMap",
         )
@@ -554,7 +554,6 @@ class TestFlextContainer:
     ) -> None:
         """Test scoped container creation with FlextContext."""
         scoped = clean_container.scope(
-            context=FlextContext.create(),
             subproject="unit",
             services={"scoped_service": "scoped-value"},
         )

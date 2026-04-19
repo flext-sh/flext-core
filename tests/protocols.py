@@ -51,7 +51,7 @@ class TestsFlextCoreProtocols(p):
 
                 def __call__(
                     self, item: AttrObject, field_name: str
-                ) -> t.RecursiveContainer: ...
+                ) -> t.Container: ...
 
             @runtime_checkable
             class TakeCallable(Protocol):
@@ -65,11 +65,7 @@ class TestsFlextCoreProtocols(p):
                     key_or_index: int | str,
                     *,
                     default: str | None = None,
-                ) -> (
-                    t.RecursiveContainerMapping
-                    | t.RecursiveContainerList
-                    | t.RecursiveContainer
-                ): ...
+                ) -> Mapping[str, t.Container] | t.FlatContainerList | t.Container: ...
 
             @runtime_checkable
             class BuildApplyConvertCallable(Protocol):
@@ -79,9 +75,9 @@ class TestsFlextCoreProtocols(p):
                     self,
                     current: tuple[str, ...] | str | int,
                     operations: Mapping[str, t.MapperInput],
-                    default_val: t.RecursiveContainer,
+                    default_val: t.Container,
                     on_error: str,
-                ) -> t.RecursiveContainer: ...
+                ) -> t.Container: ...
 
             @runtime_checkable
             class ExtractTransformOptionsCallable(Protocol):
@@ -109,13 +105,9 @@ class TestsFlextCoreProtocols(p):
                     | tuple[int, int, int]
                     | Sequence[TestsFlextCoreModelsMixins.GroupModel],
                     operations: Mapping[str, t.MapperInput],
-                    default_val: t.RecursiveContainer,
+                    default_val: t.Container,
                     on_error: str,
-                ) -> (
-                    t.RecursiveContainerMapping
-                    | t.RecursiveContainerList
-                    | t.RecursiveContainer
-                ): ...
+                ) -> Mapping[str, t.Container] | t.FlatContainerList | t.Container: ...
 
             @runtime_checkable
             class TransformCallable(Protocol):
@@ -125,7 +117,7 @@ class TestsFlextCoreProtocols(p):
                     self,
                     source: BadMapping,
                     **kwargs: t.StrMapping,
-                ) -> p.Result[t.RecursiveContainerMapping]: ...
+                ) -> p.Result[Mapping[str, t.Container]]: ...
 
             @runtime_checkable
             class MapDictKeysCallable(Protocol):
@@ -137,7 +129,7 @@ class TestsFlextCoreProtocols(p):
                     key_map: t.StrMapping,
                     *,
                     keep_unmapped: bool = True,
-                ) -> p.Result[t.RecursiveContainerMapping]: ...
+                ) -> p.Result[Mapping[str, t.Container]]: ...
 
 
 p = TestsFlextCoreProtocols

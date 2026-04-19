@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
-from typing import TypeIs
+from collections.abc import Callable
+from typing import TypeGuard, TypeIs
 
-from flext_core import FlextModelsPydantic, FlextUtilitiesGuardsTypeCore, p, t
+from flext_core import (
+    FlextModelsContainers,
+    FlextModelsPydantic,
+    FlextUtilitiesGuardsTypeCore,
+    p,
+    t,
+)
 
 
 class FlextUtilitiesGuardsTypeModel:
@@ -32,24 +39,24 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def object_list(
-        value: t.RecursiveContainer,
-    ) -> TypeIs[t.RecursiveContainerList]:
-        """Narrow value to a recursive container list."""
+        value: t.GuardInput,
+    ) -> TypeIs[t.ObjectList]:
+        """Narrow value to a container list."""
         return isinstance(value, list)
 
     @staticmethod
     def object_tuple(
-        value: t.GuardInput,
-    ) -> TypeIs[tuple[t.RecursiveContainer, ...]]:
-        """Narrow value to a recursive container tuple."""
+        value: t.GuardInput | Callable[[t.Container], bool] | None,
+    ) -> TypeIs[tuple[t.Container, ...]]:
+        """Narrow value to a container tuple."""
         return isinstance(value, tuple)
 
     @staticmethod
     def configuration_dict(
         value: t.GuardInput,
-    ) -> TypeIs[t.Dict]:
+    ) -> TypeGuard[FlextModelsContainers.Dict]:
         """Check if value is a Dict model or mapping with container values."""
-        if isinstance(value, t.Dict):
+        if isinstance(value, FlextModelsContainers.Dict):
             for item_value in value.root.values():
                 if isinstance(
                     item_value,
@@ -62,9 +69,11 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def configuration_mapping(
         value: t.GuardInput,
-    ) -> TypeIs[t.ConfigMap]:
+    ) -> TypeGuard[FlextModelsContainers.ConfigMap]:
         """Check if value is a ConfigMap/Dict or mapping with container values."""
-        if isinstance(value, (t.ConfigMap, t.Dict)):
+        if isinstance(
+            value, (FlextModelsContainers.ConfigMap, FlextModelsContainers.Dict)
+        ):
             for item_value in value.root.values():
                 if isinstance(
                     item_value,
@@ -75,7 +84,9 @@ class FlextUtilitiesGuardsTypeModel:
         return FlextUtilitiesGuardsTypeCore.mapping(value)
 
     @staticmethod
-    def pydantic_model(value: t.GuardInput | p.Model) -> TypeIs[t.ModelCarrier]:
+    def pydantic_model(
+        value: t.GuardInput | p.Model | object | None,
+    ) -> TypeIs[t.ModelCarrier]:
         """Narrow value to the canonical Pydantic model carrier."""
         return (
             isinstance(value, FlextModelsPydantic.BaseModel)

@@ -85,11 +85,11 @@ class TestFlextMixinsNestedClasses:
             m.Field(description="Model conversion scenario type"),
         ]
         input_value: Annotated[
-            t.RecursiveContainer,
+            t.Container,
             m.Field(description="Input value for conversion"),
         ]
         expected_output: Annotated[
-            t.ConfigMap,
+            m.ConfigMap,
             m.Field(description="Expected conversion output"),
         ]
 
@@ -103,7 +103,7 @@ class TestFlextMixinsNestedClasses:
             m.Field(description="Result handling scenario type"),
         ]
         input_value: Annotated[
-            t.RecursiveContainer,
+            t.Container,
             m.Field(description="Input value for result handling"),
         ]
 

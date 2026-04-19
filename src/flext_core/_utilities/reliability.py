@@ -32,28 +32,10 @@ class FlextUtilitiesReliability:
                 description="Maximum number of retry attempts",
             ),
         ] = None
-        delay: Annotated[
-            float | None,
-            Field(
-                description="Initial delay between retries in seconds",
-            ),
-        ] = None
         delay_seconds: Annotated[
             float | None,
             Field(
-                description="Alias for delay in seconds",
-            ),
-        ] = None
-        backoff_multiplier: Annotated[
-            float | None,
-            Field(
-                description="Multiplier for exponential backoff",
-            ),
-        ] = None
-        retry_on: Annotated[
-            tuple[type[Exception], ...] | None,
-            Field(
-                description="Exception types to retry on",
+                description="Initial delay between retries in seconds",
             ),
         ] = None
 
@@ -110,17 +92,13 @@ class FlextUtilitiesReliability:
         if opts_res.failure:
             return r[TResult].fail(opts_res.error)
         opts = opts_res.value
-        delay_value = opts.delay if opts.delay is not None else opts.delay_seconds
         max_att = (
             opts.max_attempts if opts.max_attempts is not None else c.MAX_RETRY_ATTEMPTS
         )
         delay_sec = (
-            delay_value if delay_value is not None else c.DEFAULT_RETRY_DELAY_SECONDS
-        )
-        backoff = (
-            opts.backoff_multiplier
-            if opts.backoff_multiplier is not None
-            else c.DEFAULT_BACKOFF_MULTIPLIER
+            opts.delay_seconds
+            if opts.delay_seconds is not None
+            else c.DEFAULT_RETRY_DELAY_SECONDS
         )
         if max_att < c.DEFAULT_RETRY_DELAY_SECONDS:
             return r[TResult].fail(
@@ -134,12 +112,10 @@ class FlextUtilitiesReliability:
                     return result
                 last_error = result.error or "Unknown error"
             except FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS as e:
-                if opts.retry_on is not None and (not isinstance(e, opts.retry_on)):
-                    raise
                 last_error = str(e)
             if attempt < max_att - 1:
                 current_delay = min(
-                    delay_sec * backoff**attempt,
+                    delay_sec * c.DEFAULT_BACKOFF_MULTIPLIER**attempt,
                     c.DEFAULT_MAX_DELAY_SECONDS,
                 )
                 if current_delay > 0:

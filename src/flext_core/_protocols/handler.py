@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import FlextProtocolsBase, FlextProtocolsResult
@@ -18,7 +18,6 @@ from flext_core import FlextProtocolsBase, FlextProtocolsResult
 if TYPE_CHECKING:
     from flext_core import (
         c,
-        m,
         t,
     )
 
@@ -104,14 +103,14 @@ class FlextProtocolsHandler:
 
         def push_context(
             self,
-            ctx: (m.ExecutionContext | t.RecursiveContainerMapping),
+            ctx: Mapping[str, t.Container],
         ) -> FlextProtocolsResult.Result[bool]:
             """Push execution context onto the local handler stack."""
             ...
 
         def pop_context(
             self,
-        ) -> FlextProtocolsResult.Result[t.ConfigMap]:
+        ) -> FlextProtocolsResult.Result[t.FlatContainerMapping]:
             """Pop execution context from the local handler stack."""
             ...
 
@@ -135,9 +134,7 @@ class FlextProtocolsHandler:
             self,
             message: FlextProtocolsBase.Routable,
             operation: str = ...,
-        ) -> (
-            FlextProtocolsResult.ResultLike[t.RuntimeAtomic] | t.RuntimeAtomic | None
-        ): ...
+        ) -> FlextProtocolsResult.ResultLike[t.RuntimeData] | t.RuntimeData | None: ...
 
     @runtime_checkable
     class Handle(Protocol):
@@ -146,9 +143,7 @@ class FlextProtocolsHandler:
         def handle(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> (
-            FlextProtocolsResult.ResultLike[t.RuntimeAtomic] | t.RuntimeAtomic | None
-        ): ...
+        ) -> FlextProtocolsResult.ResultLike[t.RuntimeData] | t.RuntimeData | None: ...
 
     @runtime_checkable
     class Execute(Protocol):
@@ -157,9 +152,7 @@ class FlextProtocolsHandler:
         def execute(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> (
-            FlextProtocolsResult.ResultLike[t.RuntimeAtomic] | t.RuntimeAtomic | None
-        ): ...
+        ) -> FlextProtocolsResult.ResultLike[t.RuntimeData] | t.RuntimeData | None: ...
 
     @runtime_checkable
     class AutoDiscoverableHandler(Protocol):
@@ -181,7 +174,7 @@ class FlextProtocolsHandler:
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]:
+        ) -> FlextProtocolsResult.Result[t.RuntimeData]:
             """Route a CQRS message to a registered handler."""
             ...
 
@@ -215,7 +208,7 @@ class FlextProtocolsHandler:
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]:
+        ) -> FlextProtocolsResult.Result[t.RuntimeData]:
             """Dispatch a command to a registered handler."""
             ...
 

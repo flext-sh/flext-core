@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from examples import p
-from flext_core import t
+from flext_core import m, p, t
 
 
 class ExamplesFlextCoreTypes(t):
@@ -15,9 +14,9 @@ class ExamplesFlextCoreTypes(t):
         type ExampleRenderable = (
             t.ValueOrModel
             | t.ScalarOrModel
-            | t.RuntimeAtomic
-            | t.ConfigMap
-            | p.ResultLike[t.RuntimeAtomic]
+            | t.RuntimeData
+            | m.ConfigMap
+            | p.ResultLike[t.RuntimeData]
             | p.ResultLike[t.Container]
         )
 

@@ -9,7 +9,11 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_core import FlextModelsBase as m, FlextUtilitiesPydantic as up, t
+from flext_core import (
+    FlextModelsBase as m,
+    FlextUtilitiesPydantic as up,
+    t,
+)
 
 
 class FlextModelsErrors:
@@ -45,7 +49,7 @@ class FlextModelsErrors:
         attributes: Annotated[
             t.ConfigMap,
             up.Field(description="Flattenable metadata attributes exposed publicly."),
-        ] = up.Field(default_factory=lambda: t.ConfigMap(root={}))
+        ] = up.Field(default_factory=dict)
 
         @up.computed_field()
         @property
@@ -55,11 +59,13 @@ class FlextModelsErrors:
 
         def to_payload(self) -> t.ConfigMap:
             """Flatten the snapshot into the public payload shape."""
-            payload = t.ConfigMap.model_validate(
-                self.model_dump(exclude={"attributes"})
-            )
+            payload: dict[str, t.Container] = {
+                str(k): v
+                for k, v in self.model_dump(exclude={"attributes"}).items()
+                if isinstance(v, (str, int, float, bool))
+            }
             for key, value in self.attributes.items():
-                if key not in payload:
+                if key not in payload and isinstance(value, (str, int, float, bool)):
                     payload[key] = value
             return payload
 
@@ -90,17 +96,15 @@ class FlextModelsErrors:
             return self.total_exceptions > 0
 
         def to_config_map(self) -> t.ConfigMap:
-            """Expose the snapshot through the canonical config container."""
-            return t.ConfigMap(
-                root={
-                    "total_exceptions": self.total_exceptions,
-                    "exception_counts": t.ConfigMap.model_validate(
-                        dict(self.exception_counts),
-                    ),
-                    "exception_counts_summary": self.exception_counts_summary,
-                    "unique_exception_types": self.unique_exception_types,
-                }
-            )
+            """Expose the snapshot through the canonical flat config contract."""
+            payload: dict[str, t.Container] = {
+                "total_exceptions": self.total_exceptions,
+                "exception_counts_summary": self.exception_counts_summary,
+                "unique_exception_types": self.unique_exception_types,
+            }
+            for key, value in self.exception_counts.items():
+                payload[f"exception_counts.{key}"] = value
+            return payload
 
     class ExceptionMetricsState(m.StrictModel):
         """Mutable-through-copy runtime state for exception counters."""
@@ -131,16 +135,11 @@ class FlextModelsErrors:
                 for exception_name, count in self.exception_counts.items()
             )
 
-        @staticmethod
-        def resolve_exception_name(exception_type: type[BaseException]) -> str:
-            """Resolve the canonical registry key for an exception type."""
-            return exception_type.__qualname__
-
         def record_exception(self, exception_type: type[BaseException]) -> Self:
             """Return a new state with one additional recorded exception."""
-            exception_name = self.resolve_exception_name(exception_type)
+            name = exception_type.__qualname__
             counts = dict(self.exception_counts)
-            counts[exception_name] = counts.get(exception_name, 0) + 1
+            counts[name] = counts.get(name, 0) + 1
             return self.model_copy(update={"exception_counts": counts})
 
         def clear(self) -> Self:

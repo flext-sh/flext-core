@@ -97,27 +97,6 @@ class FlextModelsProjectMetadata:
             parts = self.name.replace("-", "_").split("_")
             return "".join(part[:1].upper() + part[1:] for part in parts if part)
 
-        @property
-        def src_facade_name(self) -> str:
-            """Return the src-tier facade class name (``FlextLdif``)."""
-            return self.tier_facade_name("src")
-
-        @property
-        def tests_facade_name(self) -> str:
-            """Return the tests-tier facade class name (``TestsFlextLdif``)."""
-            return self.tier_facade_name("tests")
-
-        def tier_facade_name(self, tier: str) -> str:
-            """Build the tier-specific facade class name."""
-            prefix = t.TIER_FACADE_PREFIX.get(tier)
-            if prefix is None:
-                msg = f"unknown tier: {tier!r}"
-                raise ValueError(msg)
-            stem = self.class_stem
-            if stem.startswith("Flext") and prefix.endswith("Flext"):
-                return prefix + stem[len("Flext") :]
-            return prefix + stem
-
     class ProjectNamespaceConfig(FlextModelsPydantic.BaseModel):
         """Effective namespace configuration for a project.
 

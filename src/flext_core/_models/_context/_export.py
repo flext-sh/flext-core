@@ -10,10 +10,11 @@ from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Annotated
 
-from pydantic import BeforeValidator, Field, computed_field
+from pydantic import BeforeValidator, Field
 
 from flext_core import (
     FlextModelsBase as m,
+    FlextModelsContainers,
     FlextModelsContextData,
     FlextModelsEntity,
     t,
@@ -30,13 +31,13 @@ class FlextModelsContextExport:
         """Typed snapshot returned by export_snapshot."""
 
         data: Annotated[
-            Mapping[str, t.ValueOrModel],
+            Mapping[str, t.RuntimeData],
             Field(
                 description="All context data from all scopes",
             ),
         ] = Field(default_factory=lambda: MappingProxyType({}))
         metadata: Annotated[
-            m.Metadata | t.Dict | None,
+            m.Metadata | FlextModelsContainers.Dict | None,
             BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_metadata_before(v),
             ),
@@ -46,7 +47,7 @@ class FlextModelsContextExport:
             ),
         ] = None
         statistics: Annotated[
-            t.RecursiveContainerMapping,
+            Mapping[str, t.Container],
             BeforeValidator(
                 lambda v: (
                     FlextModelsContextData.normalize_to_mapping(v)
@@ -58,16 +59,6 @@ class FlextModelsContextExport:
                 description="Usage statistics (operation counts, timing info)",
             ),
         ] = Field(default_factory=lambda: MappingProxyType({}))
-
-        @computed_field
-        @property
-        def has_statistics(self) -> bool:
-            return bool(self.statistics)
-
-        @computed_field
-        @property
-        def total_data_items(self) -> int:
-            return len(self.data)
 
 
 __all__: list[str] = ["FlextModelsContextExport"]

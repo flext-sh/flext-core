@@ -44,7 +44,7 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def error_data(self) -> t.ConfigMap | None:
+        def error_data(self) -> t.FlatContainerMapping | None:
             """Structured error metadata when available."""
             ...
 
@@ -112,7 +112,7 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def error_data(self) -> t.ConfigMap | None:
+        def error_data(self) -> t.FlatContainerMapping | None:
             """Error metadata with structured error context (optional)."""
             ...
 
@@ -308,10 +308,10 @@ class FlextProtocolsResult:
     class Result[T](ABC):
         """Nominal public result contract for direct static typing across FLEXT.
 
-        Nominal typing: FlextResult inherits from this ABC, so type checking
-        uses standard IS-A relationship rather than structural Protocol
-        conformance. This avoids pyrefly's recursive conformance issue with
-        Protocol self-references in monadic return types.
+        Pure ABC (not inheriting ResultLike Protocol) so Pydantic BaseModel
+        subclasses (FlextResult) can inherit without metaclass conflict
+        between ``_ProtocolMeta`` and ``ModelMetaclass``. ResultLike remains
+        available as a @runtime_checkable Protocol for structural isinstance.
         """
 
         @property
@@ -324,7 +324,7 @@ class FlextProtocolsResult:
 
         @property
         @abstractmethod
-        def error_data(self) -> t.ConfigMap | None: ...
+        def error_data(self) -> t.FlatContainerMapping | None: ...
 
         @property
         @abstractmethod
@@ -362,12 +362,15 @@ class FlextProtocolsResult:
         @abstractmethod
         def __or__[D](self, default: D) -> T | D: ...
 
+        @override
         @abstractmethod
         def unwrap(self) -> T: ...
 
+        @override
         @abstractmethod
         def unwrap_or[D](self, default: D) -> T | D: ...
 
+        @override
         @abstractmethod
         def unwrap_or_else[D](self, func: Callable[[], D]) -> T | D: ...
 

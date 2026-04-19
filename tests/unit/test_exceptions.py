@@ -165,15 +165,14 @@ class TestExceptions:
         assert isinstance(error, expected_type)
         assert error.message == "Test message"
 
-    def test_extract_common_kwargs_handles_correlation_and_metadata(self) -> None:
-        # extract_common_kwargs is still part of the public contract
-        corr, meta = e.extract_common_kwargs({
-            "correlation_id": "corr-001",
-            "metadata": {"scope": "service"},
-        })
-        assert corr == "corr-001"
-        # meta can be Mapping or m.Metadata — just verify scope is accessible
-        assert meta is not None
+    def test_base_error_handles_correlation_and_metadata(self) -> None:
+        err = e.BaseError(
+            "boom",
+            correlation_id="corr-001",
+            metadata={"scope": "service"},
+        )
+        assert err.correlation_id == "corr-001"
+        assert err.metadata.attributes.get("scope") == "service"
 
     def test_not_found_error_excludes_internal_context_keys_from_metadata(self) -> None:
         error = e.NotFoundError(

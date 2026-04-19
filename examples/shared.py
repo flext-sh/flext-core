@@ -85,9 +85,9 @@ class ExamplesFlextCoreShared(m.BaseModel):
         """Return a deterministic pseudo-random boolean."""
         return self._next_unit_float() >= 0.5
 
-    def rand_dict(self, n: int = 3) -> t.ConfigMap:
+    def rand_dict(self, n: int = 3) -> m.ConfigMap:
         """Return a ConfigMap with ``n`` random string keys → int values."""
-        return t.ConfigMap(
+        return m.ConfigMap(
             root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)},
         )
 
@@ -126,7 +126,7 @@ class ExamplesFlextCoreShared(m.BaseModel):
 
     def ser(
         self,
-        v: t.Examples.ExampleRenderable,
+        v: t.Examples.ExampleRenderable | None,
     ) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 

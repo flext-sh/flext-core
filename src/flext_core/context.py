@@ -56,9 +56,9 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
         if self.initial_data is not None:
             if isinstance(self.initial_data, m.ContextData):
                 context_data = self.initial_data
-            else:
+            elif isinstance(self.initial_data, dict):
                 context_data = m.ContextData(
-                    data=m.Dict(root=dict(self.initial_data)),
+                    data=dict(self.initial_data),
                 )
         metadata_model = (
             context_data.metadata.model_copy()
@@ -294,7 +294,10 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
             )
             start_token = FlextContext.Variables.OperationStartTime.set(start_time)
             metadata_token = FlextContext.Variables.OperationMetadata.set(
-                operation_metadata,
+                {
+                    c.MetadataKey.START_TIME: start_time.isoformat(),
+                    c.ContextKey.OPERATION_NAME: operation_name or "",
+                },
             )
             operation_token = None
             if operation_name:
@@ -323,25 +326,25 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
             """Export current context as flat dictionary of scalar values."""
             context_vars = FlextContext.Variables
             result: dict[str, t.Scalar] = {}
-            
+
             # Correlation metadata
             if (v := context_vars.Correlation.CORRELATION_ID.get()) is not None:
                 result[c.ContextKey.CORRELATION_ID] = str(v)
             if (v := context_vars.Correlation.PARENT_CORRELATION_ID.get()) is not None:
                 result[c.ContextKey.PARENT_CORRELATION_ID] = str(v)
-            
+
             # Service metadata
             if (v := context_vars.Service.SERVICE_NAME.get()) is not None:
                 result[c.ContextKey.SERVICE_NAME] = str(v)
             if (v := context_vars.Service.SERVICE_VERSION.get()) is not None:
                 result[c.ContextKey.SERVICE_VERSION] = str(v)
-            
+
             # Request metadata
             if (v := context_vars.Request.USER_ID.get()) is not None:
                 result[c.ContextKey.USER_ID] = str(v)
             if (v := context_vars.Request.REQUEST_ID.get()) is not None:
                 result[c.ContextKey.REQUEST_ID] = str(v)
-            
+
             # Operation/Performance metadata
             if (v := context_vars.Performance.OPERATION_NAME.get()) is not None:
                 result[c.ContextKey.OPERATION_NAME] = str(v)
@@ -349,7 +352,7 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
                 result[c.ContextKey.OPERATION_START_TIME] = (
                     v.isoformat() if isinstance(v, datetime) else str(v)
                 )
-            
+
             return result
 
     class Utilities:

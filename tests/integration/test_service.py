@@ -180,7 +180,7 @@ class TestsFlextCoreServiceIntegration:
             """Get call count."""
             return self._call_count
 
-    class ServiceConfig(m.Config):
+    class ServiceConfig(m.Value):
         """Service configuration model with required fields."""
 
         name: str

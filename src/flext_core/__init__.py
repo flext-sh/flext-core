@@ -54,7 +54,6 @@ if _t.TYPE_CHECKING:
     from flext_core._models.entity import FlextModelsEntity
     from flext_core._models.errors import FlextModelsErrors
     from flext_core._models.exception_params import FlextModelsExceptionParams
-    from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.namespace import FlextModelsNamespace
     from flext_core._models.project_metadata import FlextModelsProjectMetadata
@@ -220,7 +219,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._models.entity": ("FlextModelsEntity",),
             "._models.errors": ("FlextModelsErrors",),
             "._models.exception_params": ("FlextModelsExceptionParams",),
-            "._models.generic": ("FlextGenericModels",),
             "._models.handler": ("FlextModelsHandler",),
             "._models.namespace": ("FlextModelsNamespace",),
             "._models.project_metadata": ("FlextModelsProjectMetadata",),
@@ -401,7 +399,6 @@ __all__: list[str] = [
     "FlextExceptionsMetrics",
     "FlextExceptionsTemplate",
     "FlextExceptionsTypes",
-    "FlextGenericModels",
     "FlextHandlers",
     "FlextLazy",
     "FlextLogger",

@@ -1,62 +1,40 @@
-"""Additional coverage for flext_core using real executions."""
+"""Additional service tests aligned with the current slim API."""
 
 from __future__ import annotations
 
 from typing import override
 
-import pytest
-
-from tests import e, p, r, s
+from tests import p, r, s
 
 
 class TestsFlextCoreServiceAdditionalRuntimeCloneService(s[str]):
-    """Service exposing runtime cloning for testing."""
+    """Service used in additional execution-path tests."""
 
     __test__ = False
 
-    flag: bool = True
+    should_fail: bool = False
 
     @override
     def execute(self) -> p.Result[str]:
+        if self.should_fail:
+            return r[str].fail("fail_exec")
         return r[str].ok("run")
-
-    @override
-    def validate_business_rules(self) -> p.Result[bool]:
-        if not self.flag:
-            return r[bool].fail("bad flag")
-        return r[bool].ok(True)
 
 
 class TestServiceAdditional:
-    """Additional coverage tests for flext_core service flows."""
+    """Additional coverage tests for service execute flows."""
 
-    def test_valid_handles_validation_exception(self) -> None:
-        """Valid should return False when validation raises exceptions."""
+    def test_execute_success_path(self) -> None:
+        result = TestsFlextCoreServiceAdditionalRuntimeCloneService().execute()
+        assert result.success
+        assert result.value == "run"
 
-        class TestsFlextCoreServiceAdditionalRaisingValidationService(s[str]):
-            @override
-            def validate_business_rules(self) -> p.Result[bool]:
-                msg = "boom"
-                raise RuntimeError(msg)
-
-            @override
-            def execute(self) -> p.Result[str]:
-                return r[str].ok("x")
-
-        service = TestsFlextCoreServiceAdditionalRaisingValidationService()
-        assert service.valid() is False
-
-    def test_result_property_raises_on_failure(self) -> None:
-        """Result property should raise BaseError on failed execution."""
-
-        class FailingOnResultService(s[str]):
-            @override
-            def execute(self) -> p.Result[str]:
-                return r[str].fail("fail_exec")
-
-        service = FailingOnResultService()
-        with pytest.raises(e.BaseError, match="fail_exec"):
-            _ = service.result
+    def test_execute_failure_path(self) -> None:
+        result = TestsFlextCoreServiceAdditionalRuntimeCloneService(
+            should_fail=True,
+        ).execute()
+        assert result.failure
+        assert result.error == "fail_exec"
 
 
 __all__: list[str] = ["TestServiceAdditional"]

@@ -137,7 +137,7 @@ class Ex01r(ExamplesFlextCoreShared):
             "fail.error_data",
             failed.error_data
             if failed.error_data is not None
-            else t.ConfigMap(root={}),
+            else m.ConfigMap(root={}),
         )
 
         @r.safe
@@ -184,7 +184,7 @@ class Ex01r(ExamplesFlextCoreShared):
             "prop.failure.error_data",
             failure.error_data
             if failure.error_data is not None
-            else t.ConfigMap(root={}),
+            else m.ConfigMap(root={}),
         )
         self.check("unwrap.success", success.unwrap())
         try:

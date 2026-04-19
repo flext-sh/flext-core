@@ -12,8 +12,8 @@ from typing import Annotated, ClassVar
 
 from flext_core import (
     FlextModelsPydantic as mp,
-    FlextTypesCore,
-    FlextTypesServices,
+    FlextTypesCore as tc,
+    FlextTypesServices as ts,
     FlextTypingBase as t,
     FlextUtilitiesPydantic as up,
 )
@@ -30,23 +30,20 @@ class FlextTypesTypeAdapters:
         mp.TypeAdapter[Annotated[str, up.Field(strict=True)]] | None
     ] = None
     _metadata_map_adapter: ClassVar[
-        mp.TypeAdapter[Mapping[str, FlextTypesServices.MetadataValue]] | None
+        mp.TypeAdapter[Mapping[str, ts.MetadataValue]] | None
     ] = None
     _flat_container_mapping_adapter: ClassVar[
-        mp.TypeAdapter[FlextTypesServices.FlatContainerMapping] | None
+        mp.TypeAdapter[t.FlatContainerMapping] | None
     ] = None
     _tuple_container_adapter: ClassVar[
         mp.TypeAdapter[tuple[t.Container, ...]] | None
     ] = None
     _primitives_adapter: ClassVar[mp.TypeAdapter[t.Primitives] | None] = None
-    _dict_str_metadata_adapter: ClassVar[
-        mp.TypeAdapter[t.RecursiveContainerMapping] | None
-    ] = None
     _list_serializable_adapter: ClassVar[
-        mp.TypeAdapter[Sequence[FlextTypesCore.Serializable]] | None
+        mp.TypeAdapter[Sequence[tc.Serializable]] | None
     ] = None
     _tuple_serializable_adapter: ClassVar[
-        mp.TypeAdapter[tuple[FlextTypesCore.Serializable, ...]] | None
+        mp.TypeAdapter[tuple[tc.Serializable, ...]] | None
     ] = None
     _set_container_adapter: ClassVar[mp.TypeAdapter[set[t.Container]] | None] = None
     _set_str_adapter: ClassVar[mp.TypeAdapter[set[str]] | None] = None
@@ -54,27 +51,25 @@ class FlextTypesTypeAdapters:
     _sortable_dict_adapter: ClassVar[
         mp.TypeAdapter[
             Mapping[
-                FlextTypesServices.SortableObjectType,
-                FlextTypesCore.Serializable | None,
+                ts.SortableObjectType,
+                tc.Serializable | None,
             ]
         ]
         | None
     ] = None
     _strict_json_list_adapter: ClassVar[
-        mp.TypeAdapter[Sequence[FlextTypesServices.StrictValue]] | None
+        mp.TypeAdapter[Sequence[ts.StrictValue]] | None
     ] = None
     _bool_adapter: ClassVar[mp.TypeAdapter[bool] | None] = None
-    _int_adapter: ClassVar[mp.TypeAdapter[FlextTypesCore.IntegerValue] | None] = None
+    _int_adapter: ClassVar[mp.TypeAdapter[tc.IntegerValue] | None] = None
     _scalar_adapter: ClassVar[mp.TypeAdapter[t.Scalar] | None] = None
-    _float_adapter: ClassVar[mp.TypeAdapter[FlextTypesCore.FloatValue] | None] = None
-    _str_adapter: ClassVar[mp.TypeAdapter[FlextTypesCore.TextValue] | None] = None
-    _str_or_bytes_adapter: ClassVar[
-        mp.TypeAdapter[FlextTypesCore.TextOrBinaryContent] | None
-    ] = None
+    _float_adapter: ClassVar[mp.TypeAdapter[tc.FloatValue] | None] = None
+    _str_adapter: ClassVar[mp.TypeAdapter[tc.TextValue] | None] = None
+    _str_or_bytes_adapter: ClassVar[mp.TypeAdapter[tc.TextOrBinaryContent] | None] = (
+        None
+    )
     _enum_type_adapter: ClassVar[mp.TypeAdapter[type[StrEnum]] | None] = None
-    _serializable_adapter: ClassVar[
-        mp.TypeAdapter[FlextTypesCore.Serializable] | None
-    ] = None
+    _serializable_adapter: ClassVar[mp.TypeAdapter[tc.Serializable] | None] = None
     _primitive_metadata_mapping_adapter: ClassVar[
         mp.TypeAdapter[Mapping[str, t.Primitives]] | None
     ] = None
@@ -85,10 +80,10 @@ class FlextTypesTypeAdapters:
     @classmethod
     def metadata_map_adapter(
         cls,
-    ) -> mp.TypeAdapter[Mapping[str, FlextTypesServices.MetadataValue]]:
+    ) -> mp.TypeAdapter[Mapping[str, ts.MetadataValue]]:
         if cls._metadata_map_adapter is None:
             cls._metadata_map_adapter = mp.TypeAdapter(
-                Mapping[str, FlextTypesServices.MetadataValue],
+                Mapping[str, ts.MetadataValue],
             )
         return cls._metadata_map_adapter
 
@@ -105,10 +100,10 @@ class FlextTypesTypeAdapters:
     @classmethod
     def flat_container_mapping_adapter(
         cls,
-    ) -> mp.TypeAdapter[FlextTypesServices.FlatContainerMapping]:
+    ) -> mp.TypeAdapter[t.FlatContainerMapping]:
         if cls._flat_container_mapping_adapter is None:
             cls._flat_container_mapping_adapter = mp.TypeAdapter(
-                FlextTypesServices.FlatContainerMapping,
+                t.FlatContainerMapping,
             )
         return cls._flat_container_mapping_adapter
 
@@ -141,32 +136,22 @@ class FlextTypesTypeAdapters:
         return cls._primitives_adapter
 
     @classmethod
-    def dict_str_metadata_adapter(
-        cls,
-    ) -> mp.TypeAdapter[t.RecursiveContainerMapping]:
-        if cls._dict_str_metadata_adapter is None:
-            cls._dict_str_metadata_adapter = mp.TypeAdapter(
-                t.RecursiveContainerMapping,
-            )
-        return cls._dict_str_metadata_adapter
-
-    @classmethod
     def list_serializable_adapter(
         cls,
-    ) -> mp.TypeAdapter[Sequence[FlextTypesCore.Serializable]]:
+    ) -> mp.TypeAdapter[Sequence[tc.Serializable]]:
         if cls._list_serializable_adapter is None:
             cls._list_serializable_adapter = mp.TypeAdapter(
-                Sequence[FlextTypesCore.Serializable],
+                Sequence[tc.Serializable],
             )
         return cls._list_serializable_adapter
 
     @classmethod
     def tuple_serializable_adapter(
         cls,
-    ) -> mp.TypeAdapter[tuple[FlextTypesCore.Serializable, ...]]:
+    ) -> mp.TypeAdapter[tuple[tc.Serializable, ...]]:
         if cls._tuple_serializable_adapter is None:
             cls._tuple_serializable_adapter = mp.TypeAdapter(
-                tuple[FlextTypesCore.Serializable, ...],
+                tuple[tc.Serializable, ...],
             )
         return cls._tuple_serializable_adapter
 
@@ -197,15 +182,15 @@ class FlextTypesTypeAdapters:
         cls,
     ) -> mp.TypeAdapter[
         Mapping[
-            FlextTypesServices.SortableObjectType,
-            FlextTypesCore.Serializable | None,
+            ts.SortableObjectType,
+            tc.Serializable | None,
         ]
     ]:
         if cls._sortable_dict_adapter is None:
             cls._sortable_dict_adapter = mp.TypeAdapter(
                 Mapping[
-                    FlextTypesServices.SortableObjectType,
-                    FlextTypesCore.Serializable | None,
+                    ts.SortableObjectType,
+                    tc.Serializable | None,
                 ],
             )
         return cls._sortable_dict_adapter
@@ -213,10 +198,10 @@ class FlextTypesTypeAdapters:
     @classmethod
     def strict_json_list_adapter(
         cls,
-    ) -> mp.TypeAdapter[Sequence[FlextTypesServices.StrictValue]]:
+    ) -> mp.TypeAdapter[Sequence[ts.StrictValue]]:
         if cls._strict_json_list_adapter is None:
             cls._strict_json_list_adapter = mp.TypeAdapter(
-                Sequence[FlextTypesServices.StrictValue],
+                Sequence[ts.StrictValue],
             )
         return cls._strict_json_list_adapter
 
@@ -229,9 +214,9 @@ class FlextTypesTypeAdapters:
     @classmethod
     def int_adapter(
         cls,
-    ) -> mp.TypeAdapter[FlextTypesCore.IntegerValue]:
+    ) -> mp.TypeAdapter[tc.IntegerValue]:
         if cls._int_adapter is None:
-            cls._int_adapter = mp.TypeAdapter(FlextTypesCore.IntegerValue)
+            cls._int_adapter = mp.TypeAdapter(tc.IntegerValue)
         return cls._int_adapter
 
     @classmethod
@@ -243,15 +228,15 @@ class FlextTypesTypeAdapters:
     @classmethod
     def float_adapter(
         cls,
-    ) -> mp.TypeAdapter[FlextTypesCore.FloatValue]:
+    ) -> mp.TypeAdapter[tc.FloatValue]:
         if cls._float_adapter is None:
-            cls._float_adapter = mp.TypeAdapter(FlextTypesCore.FloatValue)
+            cls._float_adapter = mp.TypeAdapter(tc.FloatValue)
         return cls._float_adapter
 
     @classmethod
-    def str_adapter(cls) -> mp.TypeAdapter[FlextTypesCore.TextValue]:
+    def str_adapter(cls) -> mp.TypeAdapter[tc.TextValue]:
         if cls._str_adapter is None:
-            cls._str_adapter = mp.TypeAdapter(FlextTypesCore.TextValue)
+            cls._str_adapter = mp.TypeAdapter(tc.TextValue)
         return cls._str_adapter
 
     @classmethod
@@ -265,11 +250,9 @@ class FlextTypesTypeAdapters:
     @classmethod
     def str_or_bytes_adapter(
         cls,
-    ) -> mp.TypeAdapter[FlextTypesCore.TextOrBinaryContent]:
+    ) -> mp.TypeAdapter[tc.TextOrBinaryContent]:
         if cls._str_or_bytes_adapter is None:
-            cls._str_or_bytes_adapter = mp.TypeAdapter(
-                FlextTypesCore.TextOrBinaryContent
-            )
+            cls._str_or_bytes_adapter = mp.TypeAdapter(tc.TextOrBinaryContent)
         return cls._str_or_bytes_adapter
 
     @classmethod
@@ -281,9 +264,9 @@ class FlextTypesTypeAdapters:
     @classmethod
     def serializable_adapter(
         cls,
-    ) -> mp.TypeAdapter[FlextTypesCore.Serializable]:
+    ) -> mp.TypeAdapter[tc.Serializable]:
         if cls._serializable_adapter is None:
-            cls._serializable_adapter = mp.TypeAdapter(FlextTypesCore.Serializable)
+            cls._serializable_adapter = mp.TypeAdapter(tc.Serializable)
         return cls._serializable_adapter
 
     @classmethod

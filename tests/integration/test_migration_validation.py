@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import override
 
 from flext_core import (
@@ -200,16 +201,16 @@ class TestMigrationValidation:
             def process_data(
                 self,
                 data: t.StrMapping,
-            ) -> p.Result[t.RecursiveContainerMapping]:
+            ) -> p.Result[Mapping[str, t.Container]]:
                 """Typical data processing method."""
                 if not data:
-                    return r[t.RecursiveContainerMapping].fail("Data required")
+                    return r[Mapping[str, t.Container]].fail("Data required")
                 self.logger.info("Processing data", size=len(data))
-                processed: t.RecursiveContainerMapping = {
+                processed: Mapping[str, t.Container] = {
                     "original": str(data),
                     "processed": True,
                 }
-                return r[t.RecursiveContainerMapping].ok(processed)
+                return r[Mapping[str, t.Container]].ok(processed)
 
         app = ApplicationExample()
         result = app.process_data({"key": "value"})

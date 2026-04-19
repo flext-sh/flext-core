@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c, m, r, t, u
+from tests import c, m, r, u
 
 
 class TestModelsEntityFullCoverage:
@@ -17,9 +17,9 @@ class TestModelsEntityFullCoverage:
     def test_entity_comparable_map_and_bulk_validation_paths(self) -> None:
         assert c.ErrorCode.UNKNOWN_ERROR
         assert r[int].ok(1).success
-        assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
+        assert isinstance(m.ConfigMap(root={"k": 1}), m.ConfigMap)
         assert u.to_str(1) == "1"
-        cfg = m.ComparableConfigMap(root={"a": 1})
+        cfg = m.ConfigMap(root={"a": 1})
         assert (cfg == 1) is False
         with pytest.raises(
             TypeError,

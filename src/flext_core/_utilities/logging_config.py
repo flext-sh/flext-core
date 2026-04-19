@@ -161,11 +161,6 @@ class FlextUtilitiesLoggingConfig:
             cls.configure_structlog()
             cls._structlog_configured = True
 
-    @classmethod
-    def structlog_configured(cls) -> bool:
-        """Check if structlog has been configured."""
-        return cls._structlog_configured
-
     @staticmethod
     def _structlog_processor(
         value: typing.Callable[..., t.ValueOrModel] | t.Container | None,
@@ -183,14 +178,14 @@ class FlextUtilitiesLoggingConfig:
         *,
         log_level: int | None,
         console_renderer: bool,
-        additional_processors: Sequence[t.StructlogProcessor] | None,
+        additional_processors: Sequence[Processor] | None,
         wrapper_class_factory: t.LoggerWrapperFactory | None,
         logger_factory: t.LoggerFactory,
         cache_logger_on_first_use: bool,
     ) -> tuple[
         int,
         bool,
-        Sequence[t.StructlogProcessor] | None,
+        Sequence[Processor] | None,
         t.LoggerWrapperFactory | None,
         t.LoggerFactory,
         bool,
@@ -232,7 +227,7 @@ class FlextUtilitiesLoggingConfig:
         cls,
         *,
         console_renderer: bool,
-        additional_processors: Sequence[t.StructlogProcessor] | None,
+        additional_processors: Sequence[Processor] | None,
     ) -> list[Processor]:
         """Assemble the structlog processor chain."""
         processors: list[Processor] = [
@@ -290,7 +285,7 @@ class FlextUtilitiesLoggingConfig:
         settings: t.ModelCarrier | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[t.StructlogProcessor] | None = None,
+        additional_processors: Sequence[Processor] | None = None,
         wrapper_class_factory: t.LoggerWrapperFactory | None = None,
         logger_factory: t.LoggerFactory = None,
         cache_logger_on_first_use: bool = True,
@@ -337,32 +332,6 @@ class FlextUtilitiesLoggingConfig:
                 cache_logger_on_first_use=cache_logger_on_first_use,
             )
         cls._structlog_configured = True
-
-    @classmethod
-    def reconfigure_structlog(
-        cls,
-        *,
-        log_level: int | None = None,
-        console_renderer: bool = True,
-        additional_processors: Sequence[t.StructlogProcessor] | None = None,
-    ) -> None:
-        """Force reconfigure structlog (ignores is_configured checks)."""
-        structlog.reset_defaults()
-        if cls._async_writer is not None:
-            cls._async_writer.shutdown()
-            cls._async_writer = None
-        cls._structlog_configured = False
-        cls.configure_structlog(
-            log_level=log_level,
-            console_renderer=console_renderer,
-            additional_processors=additional_processors,
-        )
-
-    @classmethod
-    def reset_structlog_state_for_testing(cls) -> None:
-        """Reset structlog configuration state for testing purposes."""
-        structlog.reset_defaults()
-        cls._structlog_configured = False
 
     @staticmethod
     def level_based_context_filter(

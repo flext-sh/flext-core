@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar, override
 
 import pytest
@@ -81,7 +81,7 @@ class TestsFlextCoreFlextHandlers:
         ),
     ]
 
-    VALIDATION_TYPES: ClassVar[Sequence[tuple[str, t.RecursiveContainer]]] = [
+    VALIDATION_TYPES: ClassVar[Sequence[tuple[str, t.Container]]] = [
         ("str", "test_message"),
         ("int", 42),
         ("float", math.pi),
@@ -246,10 +246,7 @@ class TestsFlextCoreFlextHandlers:
             handler_mode=c.HandlerType.COMMAND,
         )
         handler = DictHandler(settings=settings)
-        dict_message: t.MutableRecursiveContainerMapping = {
-            "command_id": "cmd_123",
-            "data": "test_data",
-        }
+        dict_message = {"command_id": "cmd_123", "data": "test_data"}
         result = handler.execute(dict_message)
         _ = u.Core.Tests.assert_success(result)
 
@@ -468,7 +465,7 @@ class TestsFlextCoreFlextHandlers:
     def test_handlers_message_validation_types(
         self,
         type_name: str,
-        message: t.RecursiveContainer,
+        message: t.Container,
     ) -> None:
         settings = u.Core.Tests.create_handler_config(
             f"test_{type_name}_message",
@@ -493,7 +490,7 @@ class TestsFlextCoreFlextHandlers:
             "Test Push Context",
         )
         handler = self.ConcreteTestHandler(settings=settings)
-        context_typed: t.RecursiveContainerMapping = {
+        context_typed: Mapping[str, t.Container] = {
             "user_id": "123",
             "operation": "test",
         }
@@ -525,7 +522,7 @@ class TestsFlextCoreFlextHandlers:
             "Test None Message",
         )
         handler = self.ValidationTestHandler(settings=settings)
-        result = handler.validate_message(None)
+        result = handler.validate_message("")
         _ = u.Core.Tests.assert_failure(result)
 
     def test_handlers_pydantic_model_validation(self) -> None:

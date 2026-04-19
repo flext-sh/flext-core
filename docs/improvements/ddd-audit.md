@@ -17,7 +17,7 @@ ______________________________________________________________________
 
 - Entity, Value, and AggregateRoot samples use canonical `m.Value` (no stale `ValueObject` references remain).
 - Service examples return `r` and align with `service.py` signatures.
-- Layer references still mention `FlextBus` integration in historical notes.
+- Layer references still mention `FlextDispatcher` integration in historical notes.
 
 ## Recommended Actions
 

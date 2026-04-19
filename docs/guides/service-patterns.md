@@ -1,334 +1,49 @@
-# Service Patterns Guide
-
-<!-- TOC START -->
-- [Canonical Rules](#canonical-rules)
-- [Overview](#overview)
-- [Execution Patterns](#execution-patterns)
-  - [V1: Explicit Execution (✅ Current)](#v1-explicit-execution-current)
-  - [V2 Property: `.result` (✅ Available)](#v2-property-result-available)
-- [Infrastructure Properties](#infrastructure-properties)
-  - [Example with Infrastructure](#example-with-infrastructure)
-- [Composition Patterns](#composition-patterns)
-  - [Railway Composition](#railway-composition)
-  - [Service Factories](#service-factories)
-- [Integration with Handlers](#integration-with-handlers)
-- [Testing Services](#testing-services)
-  - [Unit Testing](#unit-testing)
-  - [Integration Testing](#integration-testing)
-- [Migration Guide](#migration-guide)
-  - [From V1 to V2 Property](#from-v1-to-v2-property)
-  - [Gradual Adoption](#gradual-adoption)
-- [Best Practices](#best-practices)
-  - [DO ✅](#do)
-  - [DON'T ❌](#dont)
-- [Next Steps](#next-steps)
-- [See Also](#see-also)
-- [References](#references)
-<!-- TOC END -->
-
-**Status**: Current | **Version**: 0.12.0-dev | **Pattern**: Services
-
-**Version:** 1.0 (2025-12-03)\
-**Python:** 3.13+\
-**Pydantic:** 2.x\
-**Status:** V1 and V2 property pattern available
-
-This guide describes s usage patterns and the evolution from
-explicit execution (V1) to property-based access via `.result` (V2).
-
-## Canonical Rules
-
-- Follow root governance in `AGENTS.md`.
-- Keep service examples returning `r[T]` and matching layer boundaries.
-- Keep runtime/DI guidance aligned with `dependency-injection-advanced.md`.
-
-______________________________________________________________________
+# Service Patterns
 
 ## Overview
 
-`s[T]` is the foundation for domain services in FLEXT-Core. A service
-is essentially a **Pydantic model with an `execute()` method** that returns
-`r[T]`.
+Service classes should keep orchestration explicit and failures modeled with `r[T]`.
+
+## Simple Service Pattern
 
 ```python
-from flext_core import s, r
+from flext_core import p, r, s
 
 
-class CreateUserService(s[User]):
-    name: str
-    email: str
+class CreateUserService(s):
+    def execute(self) -> p.Result[str]:
+        return r[str].ok("user_created")
 
-    def execute(self) -> p.Result[User]:
-        user = User(name=self.name, email=self.email)
-        return r[User].ok(user)
-```
 
-______________________________________________________________________
-
-## Execution Patterns
-
-### V1: Explicit Execution (✅ Current)
-
-The baseline pattern uses explicit method calls:
-
-```python
-# Instantiate service with parameters
-service = CreateUserService(name="Alice", email="alice@example.com")
-
-# Execute and handle result
+service = CreateUserService()
 result = service.execute()
-if result.success:
-    user = result.value
-    print(f"Created user: {user.name}")
-else:
-    print(f"Error: {result.error}")
+assert result.success
+assert result.value == "user_created"
 ```
 
-**Characteristics:**
-
-- ✅ Railway pattern explicit – full control over errors
-- ✅ Type-safe with `r[T]`
-- ✅ 100% backward compatible
-- ⚠️ Verbose (`.execute().value` on every use)
-
-**When to use:**
-
-- Existing codebases (32+ projects using this pattern)
-- When explicit error handling is critical
-- Railway composition with `.flat_map()`
-
-### V2 Property: `.result` (✅ Available)
-
-> **Status:** Implemented in `service.py` and available for use.
-
-The property pattern provides a shorthand:
+## Validate Before Execute
 
 ```python
-# V2 Property: Access result directly
-try:
-    user = CreateUserService(name="Alice", email="alice@example.com").result
-    print(f"Created user: {user.name}")
-except e.BaseError as e:
-    print(f"Error: {e}")
+from flext_core import p, r, s
+
+
+class ValidateThenCreateService(s):
+    username: str = ""
+
+    def execute(self) -> p.Result[str]:
+        if not self.username:
+            return r[str].fail("username_required")
+        return r[str].ok(self.username)
+
+
+assert ValidateThenCreateService(username="alice").execute().success
+assert ValidateThenCreateService(username="").execute().failure
 ```
 
-**Characteristics:**
-
-- ✅ 68% reduction in code (7 chars vs 19)
-- ✅ Lazy evaluation (executes on first access)
-- ⚠️ Error handling via exceptions
-
-## Infrastructure Properties
-
-s inherits from `x`, providing automatic access to
-infrastructure:
-
-| Property         | Type             | Description                    |
-| ---------------- | ---------------- | ------------------------------ |
-| `self.settings`    | `FlextSettings`  | Configuration singleton        |
-| `self.logger`    | `FlextLogger`    | Logger with context            |
-| `self.container` | `FlextContainer` | Dependency injection container |
-| `self.context`   | `FlextContext`   | Execution context (task-local) |
-
-All properties are **lazy-loaded** – no overhead if unused.
-
-### Example with Infrastructure
+## examples-backed service flows
 
 ```python
-class ProcessOrderService(s[Order]):
-    order_id: str
+from examples.ex_11_flext_service import Ex11FlextService
 
-    def execute(self) -> p.Result[Order]:
-        # Logging (via x)
-        self.logger.info(f"Processing order {self.order_id}")
-
-        # Configuration (via x)
-        max_retries = self.settings.max_retry_attempts
-
-        # Dependency resolution (via x)
-        repo_result = self.container.resolve("order_repository")
-        if repo_result.failure:
-            return r[Order].fail("Repository unavailable")
-
-        repo = repo_result.value
-        return repo.find_by_id(self.order_id)
-```
-
-______________________________________________________________________
-
-## Composition Patterns
-
-### Railway Composition
-
-Chain services using `flat_map`:
-
-```python
-def process_user(name: str, email: str) -> p.Result[User]:
-    return (
-        ValidateEmailService(email=email)
-        .execute()
-        .flat_map(lambda _: ValidateNameService(name=name).execute())
-        .flat_map(lambda _: CreateUserService(name=name, email=email).execute())
-    )
-```
-
-**Note**: Use `.flat_map()` for chaining operations. This is the standard FLEXT pattern and works seamlessly with all r operations.
-
-### Service Factories
-
-Create services dynamically:
-
-```python
-def create_notification_service(
-    channel: str,
-    message: str,
-) -> s[bool]:
-    match channel:
-        case "email":
-            return EmailNotificationService(message=message)
-        case "sms":
-            return SmsNotificationService(message=message)
-        case _:
-            return NoOpNotificationService(message=message)
-
-
-# Usage
-service = create_notification_service("email", "Hello!")
-result = service.execute()
-```
-
-______________________________________________________________________
-
-## Integration with Handlers
-
-Services are called by CQRS handlers for domain operations:
-
-```python
-from flext_core import h
-from flext_core import r, p
-
-
-class CreateUserHandler(h[CreateUserCommand, User]):
-    def handle(self, command: CreateUserCommand) -> p.Result[User]:
-        # Handler orchestrates, service executes
-        return CreateUserService(
-            name=command.name,
-            email=command.email,
-        ).execute()
-```
-
-See CQRS Architecture for handler details.
-
-______________________________________________________________________
-
-## Testing Services
-
-### Unit Testing
-
-```python
-def test_create_user_service_success():
-    service = CreateUserService(name="Alice", email="alice@example.com")
-    result = service.execute()
-
-    assert result.success
-    user = result.value
-    assert user.name == "Alice"
-    assert user.email == "alice@example.com"
-
-
-def test_create_user_service_invalid_email():
-    service = CreateUserService(name="Alice", email="invalid")
-    result = service.execute()
-
-    assert result.failure
-    assert "email" in result.error.lower()
-```
-
-### Integration Testing
-
-```python
-def test_service_with_container(container: FlextContainer):
-    _ = container.bind("email_validator", MockEmailValidator())
-
-    service = CreateUserService(name="Alice", email="alice@example.com")
-    result = service.execute()
-
-    assert result.success
-```
-
-______________________________________________________________________
-
-## Migration Guide
-
-### From V1 to V2 Property
-
-```python
-# Before (V1)
-result = MyService(param="value").execute()
-if result.success:
-    value = result.value
-else:
-    handle_error(result.error)
-
-# After (V2 Property)
-try:
-    value = MyService(param="value").result
-except e.BaseError as e:
-    handle_error(str(e))
-```
-
-### Gradual Adoption
-
-1. **New code:** Consider V2 property pattern (`.result`) where exception-based flow is appropriate
-1. **Existing code:** Keep V1 (no changes required)
-1. **Critical paths:** Prefer V1 for explicit error handling
-
-______________________________________________________________________
-
-## Best Practices
-
-### DO ✅
-
-- Keep services focused (single responsibility)
-- Return `r` from `execute()` (railway pattern)
-- Use lazy infrastructure properties (`self.settings`, `self.logger`)
-- Validate inputs early with `r.fail()`
-
-### DON'T ❌
-
-- Raise exceptions in `execute()` (use `r.fail()`)
-- Access infrastructure in `__init__` (properties are lazy)
-- Mix V1 and V2 property patterns without a clear convention in the same module
-
-______________________________________________________________________
-
-## Next Steps
-
-1. **Domain-Driven Design**: Explore DDD Patterns for entity and aggregate patterns
-1. **Dependency Injection**: See Advanced DI for service composition
-1. **Railway Patterns**: Review Railway-Oriented Programming for result composition
-1. **Error Handling**: Check Error Handling Guide for comprehensive error patterns
-1. **API Reference**: Review s API for complete API
-
-## See Also
-
-- Domain-Driven Design - DDD patterns with FlextModels
-- Dependency Injection Advanced - Service composition with DI
-- Railway-Oriented Programming - Result composition patterns
-- Error Handling Guide - Comprehensive error handling
-- API Reference: s - Complete service API
-- **FLEXT AGENTS.md**: Architecture principles and development workflow
-
-## References
-
-- `flext_core/service.py` – Service base class
-- `flext_core/mixins.py` – Infrastructure properties
-- `flext_core/result.py` – r monad
-- CQRS Architecture
-
-______________________________________________________________________
-
-**Example from FLEXT Ecosystem**: See `src/flext_tests/test_service.py` for comprehensive service pattern examples and test cases.
-
-```
+Ex11FlextService("docs/guides/service-patterns.md").exercise()
 ```

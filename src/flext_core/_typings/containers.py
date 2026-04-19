@@ -1,4 +1,4 @@
-"""FlextTypingContainers - Pydantic RootModel container types for payload handling.
+"""FlextTypingContainers - pure typing-only container aliases.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,138 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import typing
-from collections.abc import (
-    ItemsView,
-    KeysView,
-    Mapping,
-    MutableMapping,
-    Sequence,
-    ValuesView,
-)
-from typing import Annotated, override
+from collections.abc import Mapping, Sequence
 
-from flext_core import (
-    FlextModelsPydantic as mp,
-    FlextTypingBase as t,
-    FlextUtilitiesPydantic as up,
-)
+from flext_core import FlextTypingBase as t
 
 
 class FlextTypingContainers:
-    """Container type system for FLEXT."""
+    """Container aliases for type contracts only (no runtime behavior)."""
 
-    class RootDictModel[DictValueT](mp.RootModel[MutableMapping[str, DictValueT]]):
-        """Dict-backed RootModel with full dict protocol.
-
-        Wraps typed dict in Pydantic v2 validation, exposes all dict methods
-        (__getitem__, __setitem__, keys(), items(), get(), etc.).
-        """
-
-        def __getitem__(self, key: str) -> DictValueT:
-            return self.root[key]
-
-        def __setitem__(self, key: str, value: DictValueT) -> None:
-            self.root[key] = value
-
-        def __delitem__(self, key: str) -> None:
-            del self.root[key]
-
-        def __len__(self) -> int:
-            return len(self.root)
-
-        def __contains__(self, key: str) -> bool:
-            return key in self.root
-
-        def clear(self) -> None:
-            self.root.clear()
-
-        def get(self, key: str, default: DictValueT | None = None) -> DictValueT | None:
-            return self.root.get(key, default)
-
-        def items(self) -> ItemsView[str, DictValueT]:
-            return self.root.items()
-
-        def keys(self) -> KeysView[str]:
-            return self.root.keys()
-
-        def pop(self, key: str, default: DictValueT | None = None) -> DictValueT | None:
-            return self.root.pop(key, default)
-
-        def popitem(self) -> tuple[str, DictValueT]:
-            return self.root.popitem()
-
-        def setdefault(self, key: str, default: DictValueT) -> DictValueT:
-            return self.root.setdefault(key, default)
-
-        def update(self, other: Mapping[str, DictValueT]) -> None:
-            self.root.update(other)
-
-        @override
-        def __iter__(self) -> typing.Generator[tuple[str, DictValueT]]:
-            yield from self.root.items()
-
-        def values(self) -> ValuesView[DictValueT]:
-            return self.root.values()
-
-    class ObjectList(mp.RootModel[Sequence[t.Container]]):
-        """Ordered list of strongly-typed container values for batch operations."""
-
-        root: Annotated[
-            Sequence[t.Container],
-            up.Field(
-                title="Object List",
-                description=(
-                    "Ordered container values for batch operations "
-                    "(scalar, BaseModel, or Path)."
-                ),
-                examples=[["item-1", 2, True]],
-            ),
-        ] = up.Field(default_factory=tuple)
-
-    class Dict(RootDictModel[t.ContainerOrModel]):
-        """Validated dict payload for requests, responses, and data transfer.
-
-        Type-safe MutableMapping[str, RecursiveContainer | BaseModel] with full
-        dict protocol. Intentionally mutable container — default_factory=dict
-        yields a fresh per-instance dict (no shared state).
-        """
-
-        root: Annotated[
-            MutableMapping[
-                str,
-                t.ContainerOrModel,
-            ],
-            up.Field(
-                title="Dictionary Payload",
-                description=(
-                    "Dictionary payload storing strict container values "
-                    "(scalar, BaseModel, or Path)."
-                ),
-                examples=[{"request_id": "req-123", "retry_count": 3, "dry_run": True}],
-                default_factory=dict,
-            ),
-        ]
-
-        @override
-        def get(
-            self,
-            key: str,
-            default: (t.ContainerOrModel | None) = None,
-        ) -> t.ContainerOrModel | None:
-            value = self.root.get(key, default)
-            if isinstance(value, Mapping) and not isinstance(
-                value,
-                mp.BaseModel,
-            ):
-                return dict(value)
-            return value
-
-    class ConfigMap(RootDictModel[t.ContainerOrModel]):
-        """Configuration container for settings and environment parameters.
-
-        Semantically distinct Dict for configuration (not data).
-        """
+    type Dict = Mapping[str, t.Container]
+    type ConfigMap = Mapping[str, t.Container]
+    type ObjectList = Sequence[t.Container]
 
 
 __all__: list[str] = ["FlextTypingContainers"]

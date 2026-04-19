@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
+import ast
+from collections.abc import Generator, Mapping
 from pathlib import Path
 from time import perf_counter
 
@@ -15,6 +16,27 @@ from tests import c, m, t, u
 
 
 class TestFlextSettingsCoverage:
+    @staticmethod
+    def _extract_config_payload(value: m.ConfigMap) -> Mapping[str, object]:
+        payload: Mapping[str, object] = value.root
+        nested = payload.get("root")
+        if isinstance(nested, Mapping):
+            return nested
+
+        embedded = payload.get("value")
+        if isinstance(embedded, str) and embedded.startswith("root="):
+            raw = embedded.removeprefix("root=").strip()
+            try:
+                parsed = ast.literal_eval(raw)
+            except (ValueError, SyntaxError):
+                return payload
+            if isinstance(parsed, Mapping):
+                return parsed
+
+        if isinstance(embedded, Mapping):
+            return embedded
+        return payload
+
     @pytest.fixture(autouse=True)
     def _reset_settings_state(self) -> Generator[None]:
         FlextSettings.reset_for_testing()
@@ -64,28 +86,44 @@ class TestFlextSettingsCoverage:
     def test_create_and_read_config_file(self, tmp_path: Path) -> None:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
-        settings = t.ConfigMap(root={"app_name": "flext", "debug": True, "port": 8080})
-        config_path = files.create(settings, "settings.yaml", fmt=c.Tests.Format.YAML)
+        settings_payload: t.FlatContainerMapping = {
+            "app_name": "flext",
+            "debug": True,
+            "port": 8080,
+        }
+        config_path = files.create(
+            settings_payload,
+            "settings.yaml",
+            fmt=c.Tests.Format.YAML,
+        )
         tm.that(config_path.exists(), eq=True)
         read_result = files.read(config_path, fmt=c.Tests.Format.YAML)
         tm.ok(read_result)
-        tm.that(read_result.value, is_=t.ConfigMap)
-        if isinstance(read_result.value, t.ConfigMap):
-            tm.that(str(read_result.value.root.get("app_name")), eq="flext")
+        tm.that(read_result.value, is_=m.ConfigMap)
+        if isinstance(read_result.value, m.ConfigMap):
+            root_payload = self._extract_config_payload(read_result.value)
+            tm.that(str(root_payload.get("app_name")), eq="flext")
 
     def test_create_and_read_json_config(self, tmp_path: Path) -> None:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
-        payload = t.ConfigMap(
-            root={"name": "flext-core", "workers": 4, "enabled": True},
+        payload_mapping: t.FlatContainerMapping = {
+            "name": "flext-core",
+            "workers": 4,
+            "enabled": True,
+        }
+        config_path = files.create(
+            payload_mapping,
+            "settings.json",
+            fmt=c.Tests.Format.JSON,
         )
-        config_path = files.create(payload, "settings.json", fmt=c.Tests.Format.JSON)
         tm.that(config_path.exists(), eq=True)
         read_result = files.read(config_path, fmt=c.Tests.Format.JSON)
         tm.ok(read_result)
-        tm.that(read_result.value, is_=t.ConfigMap)
-        if isinstance(read_result.value, t.ConfigMap):
-            workers = read_result.value.root.get("workers")
+        tm.that(read_result.value, is_=m.ConfigMap)
+        if isinstance(read_result.value, m.ConfigMap):
+            root_payload = self._extract_config_payload(read_result.value)
+            workers = root_payload.get("workers")
             tm.that(workers, is_=int)
             if isinstance(workers, int):
                 tm.that(workers, eq=4)
@@ -93,12 +131,8 @@ class TestFlextSettingsCoverage:
     def test_compare_identical_files(self, tmp_path: Path) -> None:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
-        first = files.create(
-            t.ConfigMap(root={"x": 1}), "a.json", fmt=c.Tests.Format.JSON
-        )
-        second = files.create(
-            t.ConfigMap(root={"x": 1}), "b.json", fmt=c.Tests.Format.JSON
-        )
+        first = files.create({"x": 1}, "a.json", fmt=c.Tests.Format.JSON)
+        second = files.create({"x": 1}, "b.json", fmt=c.Tests.Format.JSON)
         result = files.compare(first, second)
         tm.ok(result)
         tm.that(result.value, eq=True)

@@ -40,8 +40,8 @@ class FlextModelsBuilder:
                 self,
                 **updates: (
                     t.ValueOrModel
-                    | t.RecursiveContainer
-                    | Sequence[t.ValueOrModel | t.RecursiveContainer]
+                    | t.Container
+                    | Sequence[t.ValueOrModel | t.Container]
                 ),
             ) -> Self:
                 """Apply one immutable ``model_copy(update=...)`` transition."""
@@ -54,10 +54,10 @@ class FlextModelsBuilder:
             def _append(
                 self,
                 field_name: str,
-                value: t.RecursiveContainer,
+                value: t.Container,
             ) -> Self:
                 """Append one value to a sequence field while preserving immutability."""
-                current_values: tuple[t.RecursiveContainer, ...] = tuple(
+                current_values: tuple[t.Container, ...] = tuple(
                     getattr(self._state, field_name)
                 )
                 return self._set(**{field_name: (*current_values, value)})
@@ -66,7 +66,7 @@ class FlextModelsBuilder:
             def _model[ModelT: m.ContractModel](
                 model_type: type[ModelT],
                 /,
-                **data: t.ValueOrModel | t.RecursiveContainer,
+                **data: t.ValueOrModel | t.Container,
             ) -> ModelT:
                 """Build one ContractModel payload for DSL composition."""
                 return model_type.model_validate(data)
@@ -76,7 +76,7 @@ class FlextModelsBuilder:
                 field_name: str,
                 model_type: type[ModelT],
                 /,
-                **data: t.ValueOrModel | t.RecursiveContainer,
+                **data: t.ValueOrModel | t.Container,
             ) -> Self:
                 """Build and append one ContractModel item to a sequence field."""
                 model_item = self._model(model_type, **data)

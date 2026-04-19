@@ -290,10 +290,6 @@ class FlextModelsBase:
             ),
         ] = FlextUtilitiesPydantic.Field(default_factory=lambda: str(uuid.uuid4()))
 
-        def regenerate_id(self) -> None:
-            """Regenerate the unique_id with a new UUID."""
-            self.unique_id = str(uuid.uuid4())
-
     class TimestampableMixin(MutableConfiguredMixin):
         """Mixin for timestamps with Pydantic v2 validation and serialization."""
 
@@ -324,10 +320,6 @@ class FlextModelsBase:
             """Serialize timestamps to ISO 8601 for JSON."""
             return value.isoformat() if value else None
 
-        def update_timestamp(self) -> None:
-            """Update the updated_at timestamp to current UTC time."""
-            self.updated_at = datetime.now(UTC)
-
         @FlextUtilitiesPydantic.model_validator(mode="after")
         def validate_timestamp_consistency(self) -> Self:
             """Validate timestamp consistency."""
@@ -346,10 +338,6 @@ class FlextModelsBase:
                 frozen=False,
             ),
         ] = c.DEFAULT_RETRY_DELAY_SECONDS
-
-        def increment_version(self) -> None:
-            """Increment the version number."""
-            self.version += 1
 
         @FlextUtilitiesPydantic.model_validator(mode="after")
         def validate_version_consistency(self) -> Self:

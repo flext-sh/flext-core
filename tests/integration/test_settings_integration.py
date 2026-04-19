@@ -35,13 +35,13 @@ class TestFlextSettingsSingletonIntegration:
 
         test_name: Annotated[str, m.Field(description="Configuration test case name")]
         config_data: Annotated[
-            t.RecursiveContainerMapping,
+            Mapping[str, t.Container],
             m.Field(
                 description="Input configuration payload",
             ),
         ]
         expected_values: Annotated[
-            t.RecursiveContainerMapping,
+            Mapping[str, t.Container],
             m.Field(
                 description="Expected effective values",
             ),
@@ -352,7 +352,7 @@ class TestFlextSettingsSingletonIntegration:
         This is critical for CLI integration and automatic configuration.
         """
         FlextSettings.reset_for_testing()
-        saved_env_vars: t.OptionalStrMapping = {
+        saved_env_vars: dict[str, str | None] = {
             "FLEXT_APP_NAME": os.environ.pop("FLEXT_APP_NAME", None),
             "FLEXT_LOG_LEVEL": os.environ.pop("FLEXT_LOG_LEVEL", None),
             "FLEXT_DEBUG": os.environ.pop("FLEXT_DEBUG", None),

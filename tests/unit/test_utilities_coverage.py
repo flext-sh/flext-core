@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests import t
+from tests import m
 
 
 class TestUtilitiesCoverage:
@@ -26,7 +26,7 @@ class TestUtilitiesCoverage:
 
     def test_utilities_get_method_coverage(self) -> None:
         """Test ConfigMap.get() method for line 401 coverage."""
-        test_data = t.ConfigMap(root={"key": "value", "other": 456})
+        test_data = m.ConfigMap(root={"key": "value", "other": 456})
         result = test_data.root.get("key")
         assert result == "value"
         result = test_data.root.get("missing", "fallback")

@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from contextlib import AbstractContextManager
 from importlib import import_module
 
 from flext_core import (
@@ -20,10 +19,8 @@ from flext_core import (
     FlextUtilitiesArgs,
     FlextUtilitiesDiscovery,
     FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesGuardsTypeProtocol,
     FlextUtilitiesPydantic,
-    T_Model,
     e,
     p,
     r,
@@ -69,30 +66,6 @@ class FlextUtilitiesModel:
         )
 
     @staticmethod
-    def safe_get_attribute(
-        obj: p.Base | Mapping[str, t.ValueOrModel] | type,
-        attr: str,
-        default: t.ValueOrModel | None = None,
-    ) -> t.ValueOrModel | None:
-        """Safe attribute access without raising AttributeError."""
-        return getattr(obj, attr) if hasattr(obj, attr) else default
-
-    @staticmethod
-    def _normalize_model_input(
-        data: t.ModelCarrier | Mapping[str, t.ValueOrModel] | t.ConfigMap,
-    ) -> Mapping[str, t.ValueOrModel]:
-        if FlextUtilitiesGuardsTypeModel.pydantic_model(data):
-            root_value = getattr(data, "root", None)
-            if isinstance(
-                root_value,
-                Mapping,
-            ) and FlextUtilitiesGuardsTypeCore.mapping(root_value):
-                return {str(key): value for key, value in root_value.items()}
-            dumped = data.model_dump()
-            return {str(key): value for key, value in dumped.items()}
-        return {str(key): value for key, value in data.items()}
-
-    @staticmethod
     def dump(
         model: t.ModelCarrier,
         options: FlextUtilitiesModel.ModelDumpOptions | None = None,
@@ -119,16 +92,17 @@ class FlextUtilitiesModel:
         opts_dict = opts.model_dump(exclude_none=True)
         return model.model_dump(**opts_dict)
 
-    @classmethod
-    def load(
-        cls,
-        model_cls: t.ModelClass[T_Model],
-        data: t.ModelCarrier | Mapping[str, t.ValueOrModel] | t.ConfigMap,
-    ) -> p.Result[T_Model]:
-        """Load a model from a mapping-like input using Pydantic validation."""
-        return r[T_Model].create_from_callable(
-            lambda: model_cls.model_validate(cls._normalize_model_input(data)),
-        )
+    # DEPRECATED: load method removed - depends on _normalize_model_input
+    # @classmethod
+    # def load(
+    #     cls,
+    #     model_cls: t.ModelClass[T_Model],
+    #     data: t.ModelCarrier | Mapping[str, t.ValueOrModel] | m.ConfigMap,
+    # ) -> p.Result[T_Model]:
+    #     """Load a model from a mapping-like input using Pydantic validation."""
+    #     return r[T_Model].create_from_callable(
+    #         lambda: model_cls.model_validate(cls._normalize_model_input(data)),
+    #     )
 
     @staticmethod
     def _settings_base() -> t.SettingsClass:
@@ -289,7 +263,9 @@ class FlextUtilitiesModel:
                         )
                     )
                 except FlextConstantsPydantic.ValidationError:
-                    sanitized_source = dict(source_dict)
+                    sanitized_source: dict[str, t.ValueOrModel | None] = dict(
+                        source_dict
+                    )
                     wire_packages_raw = sanitized_source.get("wire_packages")
                     if isinstance(wire_packages_raw, (list, tuple)):
                         has_only_strings = all(
@@ -484,17 +460,6 @@ class FlextUtilitiesModel:
             runtime_options, service_runtime
         )
         return service_runtime.model_copy(update={"registry": runtime_registry})
-
-    @staticmethod
-    def service_context_scope(
-        service_name: str,
-        version: str | None = None,
-    ) -> AbstractContextManager[None]:
-        """Wrap the canonical service context manager as one central DSL entrypoint."""
-        return FlextUtilitiesModel._context_type().Service.service_context(
-            service_name,
-            version,
-        )
 
 
 __all__: list[str] = ["FlextUtilitiesModel"]

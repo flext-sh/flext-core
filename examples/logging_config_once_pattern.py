@@ -17,18 +17,17 @@ from __future__ import annotations
 
 from typing import override
 
-from examples import c, t
-from flext_core import d, p, r, s, u
+from examples import c, d, m, p, r, s, t, u
 
 
 class DatabaseService(s):
     """Example service showing settings log-once pattern."""
 
-    db_config: t.ConfigMap
+    db_config: m.ConfigMap
 
     @override
     @d.log_operation("database_query")
-    def execute(self) -> p.Result[t.ConfigMap]:
+    def execute(self) -> p.Result[m.ConfigMap]:
         """Execute database operations.
 
         Returns:
@@ -40,8 +39,8 @@ class DatabaseService(s):
             operation_type="select",
             table="users",
         )
-        results = t.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
-        return r[t.ConfigMap].ok(results)
+        results = m.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
+        return r[m.ConfigMap].ok(results)
 
     @override
     def model_post_init(self, /, __context: t.ScalarMapping | None) -> None:
@@ -52,9 +51,13 @@ class DatabaseService(s):
 
         """
         super().model_post_init(__context)
+        normalized_db_config: t.FlatContainerMapping = {
+            str(key): u.to_plain_container(u.normalize_to_container(value))
+            for key, value in self.db_config.root.items()
+        }
         self.logger.info(
             "Database configuration loaded",
-            **u.normalize_log_payload(self.db_config.root),
+            **normalized_db_config,
         )
 
 
@@ -74,7 +77,7 @@ class MigrationService(s):
 
         """
         super().model_post_init(__context)
-        settings = t.ConfigMap(
+        settings = m.ConfigMap(
             root={
                 "input_dir": self.input_dir,
                 "output_dir": self.output_dir,
@@ -83,14 +86,18 @@ class MigrationService(s):
                 "max_workers": 4,
             },
         )
+        normalized_settings: t.FlatContainerMapping = {
+            str(key): u.to_plain_container(u.normalize_to_container(value))
+            for key, value in settings.root.items()
+        }
         self.logger.info(
             "Migration configuration loaded",
-            **u.normalize_log_payload(settings.root),
+            **normalized_settings,
         )
 
     @override
     @d.log_operation("migration_process")
-    def execute(self) -> p.Result[t.ConfigMap]:
+    def execute(self) -> p.Result[m.ConfigMap]:
         """Execute migration.
 
         Returns:
@@ -104,13 +111,13 @@ class MigrationService(s):
         )
         self.logger.info("Processing batch 1 of 10")
         self.logger.info("Processing batch 2 of 10")
-        return r[t.ConfigMap].ok(t.ConfigMap(root={"migrated": 1000, "failed": 0}))
+        return r[m.ConfigMap].ok(m.ConfigMap(root={"migrated": 1000, "failed": 0}))
 
 
 def main() -> None:
     """Demonstrate settings log-once pattern."""
     print("=== Example 1: Database Service ===")
-    db_config = t.ConfigMap(
+    db_config = m.ConfigMap(
         root={
             "host": c.LOCALHOST,
             "port": 5432,

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Sequence, Sized
+from collections.abc import (
+    Sequence,
+    Sized,
+)
 
 from pydantic import ValidationError
 
@@ -10,7 +13,7 @@ from tests import m, p, r, t
 
 class TestsFlextCoreResultExceptionCarrying:
     class BrokenSized:
-        """Sized t.RecursiveContainer that raises on __len__."""
+        """Sized t.Container that raises on __len__."""
 
         def __len__(self) -> int:
             """Raise TypeError on length call."""

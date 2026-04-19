@@ -36,6 +36,7 @@ from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel, ConfigDict
 
 from flext_core import (
+    FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
     FlextUtilitiesGenerators,
     FlextUtilitiesGuardsTypeCore,
@@ -110,34 +111,36 @@ class FlextRuntime:
         return providers
 
     @staticmethod
+    def to_scalar(item: t.GuardInput) -> t.Scalar:
+        """Coerce a guard input to ``t.Scalar`` (flat Container invariant)."""
+        return item if FlextUtilitiesGuardsTypeCore.scalar(item) else str(item)
+
+    @staticmethod
     def to_plain_container(
-        value: t.ValueOrModel | t.ConfigMap | t.Dict | t.ObjectList,
-    ) -> t.RecursiveContainer:
-        """Flatten a runtime value to plain RecursiveContainer."""
+        value: (
+            t.ValueOrModel
+            | Mapping[str, t.Container]
+            | mc.ConfigMap
+            | mc.Dict
+            | t.ObjectList
+        ),
+    ) -> t.Container:
+        """Flatten a runtime value to flat ``t.Container`` (Pydantic-native)."""
+        to_scalar = FlextRuntime.to_scalar
         match value:
-            case t.ConfigMap() | t.Dict():
+            case mc.ConfigMap() | mc.Dict():
+                return {str(k): to_scalar(v) for k, v in value.root.items()}
+            case mc.ObjectList():
+                return [to_scalar(v) for v in value.root]
+            case BaseModel():
                 return {
-                    str(k): FlextRuntime.to_plain_container(
-                        FlextRuntime.normalize_to_container(v),
-                    )
-                    for k, v in value.root.items()
+                    str(k): to_scalar(v)
+                    for k, v in value.model_dump(mode="python").items()
                 }
-            case t.ObjectList():
-                return [v for v in value.root]  # noqa: C416
             case dict():
-                return {
-                    str(k): FlextRuntime.to_plain_container(
-                        FlextRuntime.normalize_to_container(v),
-                    )
-                    for k, v in value.items()
-                }
+                return {str(k): to_scalar(v) for k, v in value.items()}
             case list() | tuple():
-                return [
-                    FlextRuntime.to_plain_container(
-                        FlextRuntime.normalize_to_container(item),
-                    )
-                    for item in value
-                ]
+                return [to_scalar(item) for item in value]
             case bool() | str() | int() | float() | datetime() | Path():
                 return value
             case None:
@@ -148,9 +151,9 @@ class FlextRuntime:
     @staticmethod
     def _normalize_dict_entries(
         items: Sequence[tuple[str, t.RuntimeData]],
-    ) -> dict[str, t.RecursiveContainer]:
+    ) -> dict[str, t.Container]:
         """Normalize key-value pairs for container dict construction."""
-        result: dict[str, t.RecursiveContainer] = {}
+        result: dict[str, t.Container] = {}
         for key, item in items:
             normalized = FlextRuntime.normalize_to_container(item)
             result[key] = FlextRuntime.to_plain_container(normalized)
@@ -192,12 +195,12 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_model_input_mapping(
-        value: BaseModel | t.Dict | t.ScalarMapping | None,
+        value: BaseModel | mc.Dict | t.ScalarMapping | None,
     ) -> Mapping[str, t.ValueOrModel] | None:
         """Normalize model-like input to a plain mapping."""
         if value is None:
             return None
-        if isinstance(value, t.Dict):
+        if isinstance(value, mc.Dict):
             return dict(value.root)
         if isinstance(value, BaseModel):
             return value.model_dump()
@@ -249,7 +252,7 @@ class FlextRuntime:
     @staticmethod
     def normalize_registerable_service(
         value: t.RegisterableService,
-    ) -> t.RegisterableService | t.ConfigMap | t.ObjectList:
+    ) -> t.RegisterableService | mc.ConfigMap | mc.ObjectList:
         """Normalize container registration payloads to canonical runtime types."""
         if isinstance(value, (str, int, float, bool, type(None))):
             return value
@@ -285,7 +288,7 @@ class FlextRuntime:
                         type_name=type(item),
                     )
                     raise TypeError(msg)
-            return t.ConfigMap(root=normalized_mapping)
+            return mc.ConfigMap(root=normalized_mapping)
         if isinstance(value, Sequence) and not isinstance(
             value,
             (str, bytes, bytearray),
@@ -315,7 +318,7 @@ class FlextRuntime:
                     )
                     raise TypeError(msg)
                 normalized_sequence.append(str(item))
-            return t.ObjectList(root=normalized_sequence)
+            return mc.ObjectList(root=normalized_sequence)
         if hasattr(value, "__dict__"):
             return value
         if hasattr(value, "bind") and hasattr(value, "info"):
@@ -339,8 +342,8 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_container(
-        val: t.RuntimeData | t.ConfigMap | t.Dict | t.ObjectList,
-    ) -> t.ValueOrModel:
+        val: t.RuntimeData | mc.ConfigMap | mc.Dict | t.ObjectList,
+    ) -> t.ValueOrModel | dict[str, t.Container]:
         """Normalize any value to ValueOrModel (RecursiveContainer | BaseModel).
 
         Args:
@@ -353,13 +356,13 @@ class FlextRuntime:
         match val:
             case None:
                 return ""
-            case t.ConfigMap():
+            case mc.ConfigMap():
                 entries = [(k, v) for k, v in val.root.items()]
                 return FlextRuntime._normalize_dict_entries(entries)
-            case t.Dict():
+            case mc.Dict():
                 entries = [(k, v) for k, v in val.root.items()]
                 return FlextRuntime._normalize_dict_entries(entries)
-            case t.ObjectList():
+            case mc.ObjectList():
                 return [v for v in val.root]  # noqa: C416
             case BaseModel():
                 return val
@@ -368,16 +371,16 @@ class FlextRuntime:
             case _ if FlextUtilitiesGuardsTypeCore.scalar(val):
                 return val
             case _ if FlextUtilitiesGuardsTypeCore.dict_like(val):
-                if isinstance(val, t.ConfigMap):
+                if isinstance(val, mc.ConfigMap):
                     entries = [(k, v) for k, v in val.root.items()]
                 else:
                     entries = [(str(k), v) for k, v in val.items()]
                 return FlextRuntime._normalize_dict_entries(entries)
             case _ if FlextUtilitiesGuardsTypeCore.list_like(val):
-                normalized_list: list[t.Container] = []
+                normalized_list: list[t.Scalar] = []
                 for item_raw in val:
                     item = FlextRuntime.normalize_to_container(item_raw)
-                    if isinstance(item, (str, int, float, bool, datetime, Path)):
+                    if isinstance(item, (str, int, float, bool, datetime)):
                         normalized_list.append(item)
                     else:
                         normalized_list.append(str(item))
@@ -426,8 +429,8 @@ class FlextRuntime:
     @staticmethod
     def normalize_to_metadata(
         val: t.RuntimeData
-        | t.ConfigMap
-        | t.Dict
+        | mc.ConfigMap
+        | mc.Dict
         | t.ObjectList
         | AbstractSet[t.Scalar],
     ) -> t.MetadataValue:
@@ -479,7 +482,7 @@ class FlextRuntime:
                 arbitrary_types_allowed=True,
             )
 
-            settings: t.ConfigMap | None = None
+            settings: mc.ConfigMap | None = None
             services: Mapping[str, t.RegisterableService] | None = None
             factories: Mapping[str, t.FactoryCallable] | None = None
             resources: Mapping[str, t.ResourceCallable] | None = None
@@ -532,7 +535,7 @@ class FlextRuntime:
                 case None:
                     return options_model.model_validate({})
                 case Mapping():
-                    return options_model.model_validate(dict(container_options))
+                    return options_model.model_validate(container_options)
                 case _:
                     return options_model.model_validate(
                         {
@@ -560,7 +563,8 @@ class FlextRuntime:
                 for field in cls._OPTION_FIELDS
             }
             merged["factory_cache"] = override_opts.factory_cache
-            return options_model.model_validate(merged)
+            merged_options: Mapping[str, t.RuntimeData] = dict(merged)
+            return options_model.model_validate(merged_options)
 
         @classmethod
         def _populate_container(
@@ -621,7 +625,7 @@ class FlextRuntime:
         @classmethod
         def create_layered_bridge(
             cls,
-            settings: t.ConfigMap | None = None,
+            settings: mc.ConfigMap | None = None,
         ) -> tuple[
             containers.DeclarativeContainer,
             containers.DynamicContainer,
@@ -639,7 +643,7 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration(
             di_container: containers.DynamicContainer,
-            settings: t.ConfigMap | None,
+            settings: mc.ConfigMap | None,
         ) -> providers.Configuration:
             """Bind configuration mapping to the DI container.
 
@@ -663,7 +667,7 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration_provider(
             configuration_provider: providers.Configuration,
-            settings: t.ConfigMap | None,
+            settings: mc.ConfigMap | None,
         ) -> providers.Configuration:
             """Bind configuration directly to an existing provider."""
             if settings:
@@ -775,21 +779,21 @@ class FlextRuntime:
             t.StrMapping: Enriched context with trace fields
 
         """
-        context_dict = t.ConfigMap(root={})
+        context_dict = mc.ConfigMap(root={})
         if isinstance(context, Mapping):
             parsed_context: MutableMapping[str, t.ValueOrModel] = {
                 str(k): str(v) for k, v in context.items()
             }
-            context_dict = t.ConfigMap(root=parsed_context)
+            context_dict = mc.ConfigMap(root=parsed_context)
         elif not isinstance(
             context,
             Mapping,
         ) and FlextUtilitiesGuardsTypeCore.scalar(context):
-            context_dict = t.ConfigMap(root={})
+            context_dict = mc.ConfigMap(root={})
         elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())
         else:
-            context_dict = t.ConfigMap(root={})
+            context_dict = mc.ConfigMap(root={})
         result: t.MutableStrMapping = {}
         for key, value in context_dict.items():
             result[key] = str(value)

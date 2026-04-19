@@ -11,8 +11,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pydantic import (
+    AfterValidator,
     Field,
+    PlainSerializer,
+    PlainValidator,
     PrivateAttr,
+    SkipValidation,
+    WrapSerializer,
+    WrapValidator,
     computed_field,
     create_model,
     field_serializer,
@@ -35,31 +41,33 @@ class FlextUtilitiesPydantic:
     """Runtime utilities: field helpers, validators, type adapters, JSON handlers.
 
     **NEVER import pydantic directly outside flext-core/src/.**
-    Use u.* instead.
+    Use u.* / up.* instead.
     """
 
-    # Field definition and private attributes
     Field = Field
     PrivateAttr = PrivateAttr
+    SkipValidation = SkipValidation
 
-    # Field and model decorators
     computed_field = computed_field
     field_validator = field_validator
     field_serializer = field_serializer
     model_validator = model_validator
     model_serializer = model_serializer
-    # root_validator = root_validator
-    # validator = validator
 
-    # Type adapters and model creation
+    AfterValidator = AfterValidator
+    BeforeValidator = mp.BeforeValidator
+    PlainValidator = PlainValidator
+    WrapValidator = WrapValidator
+    PlainSerializer = PlainSerializer
+    WrapSerializer = WrapSerializer
+
+    ConfigDict = mp.ConfigDict
     FieldSerializationInfo = mp.FieldSerializationInfo
     TypeAdapter = mp.TypeAdapter
     create_model = create_model
     validate_call = validate_call
-    # parse_obj_as = parse_obj_as
     with_config = with_config
 
-    # Schema and JSON utilities (from pydantic_core)
     from_json = from_json
     to_json = to_json
     to_jsonable_python = to_jsonable_python

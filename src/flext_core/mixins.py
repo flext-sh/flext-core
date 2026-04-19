@@ -32,8 +32,8 @@ class FlextMixins(m.ArbitraryTypesModel):
     """Composable behaviors for dispatcher-driven services and handlers."""
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _operation_stats: MutableMapping[str, t.ConfigMap] = PrivateAttr(
-        default_factory=dict[str, t.ConfigMap],
+    _operation_stats: MutableMapping[str, m.ConfigMap] = PrivateAttr(
+        default_factory=dict[str, m.ConfigMap],
     )
     _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
     _cache_lock: ClassVar[p.Lock] = threading.Lock()
@@ -90,7 +90,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         ),
     ] = None
     settings_overrides: Annotated[
-        t.RecursiveContainerMapping | None,
+        Mapping[str, t.Container] | None,
         m.Field(
             exclude=True,
             description="Settings overrides applied at instantiation.",
@@ -107,17 +107,18 @@ class FlextMixins(m.ArbitraryTypesModel):
     @contextmanager
     def track(self, operation_name: str) -> Generator[Mapping[str, t.ValueOrModel]]:
         """Track operation performance with timing and automatic context cleanup."""
-        stats: t.ConfigMap = self._operation_stats.get(
+        stats: m.ConfigMap = self._operation_stats.get(
             operation_name,
-            t.ConfigMap(
-                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0},
+            m.ConfigMap(
+                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0}
             ),
         )
         stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
                 metrics_map: MutableMapping[str, t.ValueOrModel] = {
-                    str(k): u.normalize_to_container(v) for k, v in metrics.items()
+                    str(k): u.to_plain_container(u.normalize_to_container(v))
+                    for k, v in metrics.items()
                 }
                 metrics_map["operation_count"] = stats["operation_count"]
                 try:

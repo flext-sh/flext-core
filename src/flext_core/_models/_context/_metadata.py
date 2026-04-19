@@ -110,7 +110,7 @@ class FlextModelsContextMetadata:
             ),
         ] = up.Field(default_factory=lambda: MappingProxyType({}))
         domain_metadata: Annotated[
-            t.RecursiveContainerMapping,
+            Mapping[str, t.Container],
             up.Field(
                 description="Domain metadata attributes describing origin and processing state.",
             ),

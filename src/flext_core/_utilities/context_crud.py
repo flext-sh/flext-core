@@ -9,11 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import contextvars
 from collections.abc import Mapping
 from typing import ClassVar, overload
 
-from flext_core import FlextRuntime, c, e, m, p, r, t, u
+from flext_core import c, e, m, p, r, t, u
 from flext_core._utilities.context_scope import FlextUtilitiesContextScope
 
 
@@ -26,7 +25,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
     @staticmethod
     def _propagate_to_logger(
         key: str,
-        value: t.RuntimeAtomic | t.ValueOrModel,
+        value: t.RuntimeData,
         scope: str,
     ) -> None:
         """Propagate context changes to the public logging DSL."""
@@ -37,7 +36,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
     @staticmethod
     def _validate_update_inputs(
         key: str,
-        value: t.RuntimeAtomic | t.ValueOrModel | t.ConfigMap,
+        value: t.RuntimeData,
     ) -> p.Result[bool]:
         """Validate inputs for set operation."""
         if not key:
@@ -50,19 +49,8 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
                 "validate context value",
                 c.ERR_CONTEXT_VALUE_CANNOT_BE_NONE,
             )
-        value_for_guard: t.RuntimeAtomic | t.RecursiveContainer | t.ConfigMap = (
-            FlextUtilitiesContextCrud._to_normalized(
-                u.normalize_to_container(
-                    u.normalize_to_metadata(value),
-                ),
-            )
-            if u.pydantic_model(value)
-            else value
-        )
-        if not isinstance(
-            value_for_guard,
-            (str, int, float, bool, list, dict, t.ConfigMap),
-        ):
+        value_for_guard = FlextUtilitiesContextCrud._to_normalized(value)
+        if not isinstance(value_for_guard, t.CONTAINER_AND_COLLECTION_TYPES):
             return r[bool].fail_op(
                 "validate context value serializable",
                 c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
@@ -74,7 +62,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
         if not self._state.active:
             return
         for scope_name, ctx_var in self._state.scope_vars.items():
-            _ = ctx_var.set(t.ConfigMap(root={}))
+            _ = ctx_var.set(m.ConfigMap(root={}))
             if scope_name == c.ContextScope.GLOBAL:
                 _ = u.clear_global_context()
         self._state = self._state.model_copy(
@@ -83,43 +71,43 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
 
     def get(
         self, key: str, scope: str = c.ContextScope.GLOBAL
-    ) -> p.Result[t.RuntimeAtomic]:
+    ) -> p.Result[t.RuntimeData]:
         """Get a value from the context.
 
         Fast fail: Returns r[t.Container] - fails if key not found.
         No fallback behavior - use r monadic operations for defaults.
         """
         if not self._state.active:
-            return r[t.RuntimeAtomic].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "get context value", c.ERR_CONTEXT_NOT_ACTIVE
             )
         scope_data = self._contextvar_data(scope)
         if key not in scope_data:
-            return r[t.RuntimeAtomic].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "resolve context key",
                 f"Context key '{key}' not found in scope '{scope}'",
             )
         value = scope_data[key]
         self._update_statistics(c.ContextOperation.GET.value)
         if value is None:
-            return r[t.RuntimeAtomic].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "resolve context key value",
                 f"Context key '{key}' has None value in scope '{scope}'",
             )
 
-        normalized = u.normalize_to_container(value)
-        return r[t.RuntimeAtomic].ok(normalized)
+        normalized = self._to_normalized(value)
+        return r[t.RuntimeData].ok(normalized)
 
-    def resolve_metadata(self, key: str) -> p.Result[t.RuntimeAtomic]:
+    def resolve_metadata(self, key: str) -> p.Result[t.RuntimeData]:
         """Get metadata from the context."""
         if key not in self._state.metadata.attributes:
-            return r[t.RuntimeAtomic].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "resolve context metadata",
                 c.ERR_CONTEXT_METADATA_KEY_NOT_FOUND.format(key=key),
             )
         raw_value: t.MetadataValue = self._state.metadata.attributes[key]
-        normalized_value = u.normalize_to_container(raw_value)
-        return r[t.RuntimeAtomic].ok(normalized_value)
+        normalized_value = self._to_normalized(raw_value)
+        return r[t.RuntimeData].ok(normalized_value)
 
     def has(self, key: str, scope: str = c.ContextScope.GLOBAL) -> bool:
         """Check if a key exists in the context."""
@@ -128,7 +116,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
         scope_data = self._contextvar_data(scope)
         return key in scope_data
 
-    def items(self) -> list[tuple[str, t.RecursiveContainer]]:
+    def items(self) -> list[tuple[str, t.Container]]:
         """Get all items (key-value pairs) in the context."""
         if not self._state.active:
             return []
@@ -140,12 +128,6 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
             ).items()
         ]
 
-    def iter_scope_vars(
-        self,
-    ) -> Mapping[str, contextvars.ContextVar[t.ConfigMap | None]]:
-        """Get scope context variables for iteration."""
-        return self._state.scope_vars
-
     def keys(self) -> t.StrSequence:
         """Get all keys in the context."""
         if not self._state.active:
@@ -156,12 +138,12 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
             all_keys.update(scope_dict.keys())
         return list(all_keys)
 
-    def values(self) -> t.RecursiveContainerList:
+    def values(self) -> t.FlatContainerList:
         """Get all values in the context."""
         if not self._state.active:
-            empty_values: t.RecursiveContainerList = []
+            empty_values: t.FlatContainerList = []
             return empty_values
-        all_values: t.MutableRecursiveContainerList = []
+        all_values: list[t.Container] = []
         for ctx_var in self._state.scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_values.extend(scope_dict.values())
@@ -176,7 +158,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
         if key in current:
             filtered = {k: v for k, v in current.items() if k != key}
             try:
-                _ = ctx_var.set(t.ConfigMap(root=dict(filtered)))
+                _ = ctx_var.set(m.ConfigMap(root=dict(filtered)))
             except (TypeError, ValueError, AttributeError) as exc:
                 self._logger.debug(
                     "Failed to validate context after removal",
@@ -188,7 +170,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
     def set(
         self,
         key_or_data: str,
-        value: t.RuntimeAtomic,
+        value: t.RuntimeData,
         *,
         scope: str = ...,
     ) -> p.Result[bool]: ...
@@ -196,7 +178,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
     @overload
     def set(
         self,
-        key_or_data: t.ConfigMap,
+        key_or_data: Mapping[str, t.Container],
         value: None = ...,
         *,
         scope: str = ...,
@@ -204,64 +186,43 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
 
     def set(
         self,
-        key_or_data: str | t.ConfigMap,
-        value: t.RuntimeAtomic | None = None,
+        key_or_data: str | Mapping[str, t.Container],
+        value: t.RuntimeData | None = None,
         *,
         scope: str = c.ContextScope.GLOBAL,
     ) -> p.Result[bool]:
         """Set one or many values in the context."""
         if not self._state.active:
             return r[bool].fail_op("set context value", c.ERR_CONTEXT_NOT_ACTIVE)
-        if isinstance(key_or_data, t.ConfigMap):
+        if not isinstance(key_or_data, str):
             return self._apply_bulk(key_or_data, scope)
         return self._apply_single(key_or_data, value, scope)
 
-    def apply_metadata(self, key: str, value: t.MetadataValue) -> None:
-        """Set metadata for the context."""
-        normalized_value: t.MetadataValue = u.normalize_to_metadata(value)
-        updated_attributes = dict(self._state.metadata.attributes)
-        updated_attributes[key] = normalized_value
-        self._state = self._state.model_copy(
-            update={
-                "metadata": self._state.metadata.model_copy(
-                    update={c.FIELD_ATTRIBUTES: updated_attributes},
-                ),
-            },
-        )
-
-    def validate_context(self) -> p.Result[bool]:
-        """Validate the context data."""
-        if not self._state.active:
-            return r[bool].fail_op("validate context", c.ERR_CONTEXT_NOT_ACTIVE)
-        for ctx_var in self._state.scope_vars.values():
-            try:
-                scope_dict = self._narrow_contextvar_to_configuration_dict(
-                    ctx_var.get(),
-                )
-            except TypeError as exc:
-                return e.fail_operation("validate context scope", exc)
-            for key in scope_dict:
-                if not key:
-                    return r[bool].fail_op(
-                        "validate context key",
-                        c.ERR_CONTEXT_INVALID_KEY_FOUND,
-                    )
-        return r[bool].ok(True)
-
-    def _apply_bulk(self, data: t.ConfigMap, scope: str) -> p.Result[bool]:
+    def _apply_bulk(
+        self,
+        data: Mapping[str, t.Container],
+        scope: str,
+    ) -> p.Result[bool]:
         """Set multiple values in the context from a ConfigMap."""
         if not data:
             return r[bool].ok(True)
         try:
             ctx_var = self._scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            updated = t.ConfigMap(root=dict(current))
-            updated.update(data.root)
-            _ = ctx_var.set(updated)
+            updated_payload: dict[str, t.RuntimeData] = {
+                str(k): self._to_normalized(v) for k, v in current.items()
+            }
+            updated_payload.update({
+                str(k): self._to_normalized(v) for k, v in data.items()
+            })
+            validated = t.flat_container_mapping_adapter().validate_python(
+                updated_payload,
+            )
+            _ = ctx_var.set(m.ConfigMap(root=validated))
             self._update_statistics(c.ContextOperation.SET.value)
             self._execute_hooks(
                 c.ContextOperation.SET.value,
-                t.ConfigMap(root={c.Directory.DATA: t.ConfigMap(root=data.root)}),
+                {c.Directory.DATA: self._to_normalized(dict(data))},
             )
             return r[bool].ok(True)
         except TypeError as exc:
@@ -270,7 +231,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
     def _apply_single(
         self,
         key: str,
-        value: t.RuntimeAtomic | None,
+        value: t.RuntimeData | None,
         scope: str,
     ) -> p.Result[bool]:
         """Set a single key-value pair in the context."""
@@ -291,18 +252,20 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
         try:
             ctx_var = self._scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            updated = t.ConfigMap(root=dict(current))
-            normalized_value = u.normalize_to_container(value)
-            if isinstance(normalized_value, (t.ConfigMap, t.Dict)):
-                updated[key] = FlextRuntime.to_plain_container(normalized_value)
-            else:
-                updated[key] = FlextRuntime.to_plain_container(normalized_value)
-            _ = ctx_var.set(updated)
+            normalized_value = self._to_normalized(value)
+            updated_payload: dict[str, t.RuntimeData] = {
+                str(k): self._to_normalized(v) for k, v in current.items()
+            }
+            updated_payload[key] = normalized_value
+            validated = t.flat_container_mapping_adapter().validate_python(
+                updated_payload,
+            )
+            _ = ctx_var.set(m.ConfigMap(root=validated))
             FlextUtilitiesContextCrud._propagate_to_logger(key, value, scope)
             self._update_statistics(c.ContextOperation.SET.value)
             self._execute_hooks(
                 c.ContextOperation.SET.value,
-                t.ConfigMap(root={"key": key, "value": value}),
+                {"key": key, "value": normalized_value},
             )
             return r[bool].ok(True)
         except TypeError as exc:

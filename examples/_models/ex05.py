@@ -5,8 +5,7 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import ClassVar, override
 
-from examples import t
-from flext_core import m, u
+from examples import m, u
 
 
 class ExamplesFlextCoreModelsEx05:
@@ -19,9 +18,11 @@ class ExamplesFlextCoreModelsEx05:
         INACTIVE = "inactive"
 
     class Ex05UserModel(m.Value):
-        name: str
-        status: ExamplesFlextCoreModelsEx05.Ex05StatusEnum
-        age: int
+        name: str = u.Field(description="User display name")
+        status: ExamplesFlextCoreModelsEx05.Ex05StatusEnum = u.Field(
+            description="User account status"
+        )
+        age: int = u.Field(description="User age in years")
 
         @u.field_validator("status", mode="before")
         @classmethod
@@ -38,7 +39,7 @@ class ExamplesFlextCoreModelsEx05:
 
     class Ex05HandlerLike(m.Value):
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
-        data: t.ConfigMap = u.Field(default_factory=lambda: t.ConfigMap(root={}))
+        data: m.ConfigMap = u.Field(default_factory=lambda: m.ConfigMap(root={}))
 
     class Ex05GoodProcessor(m.Value):
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
@@ -50,7 +51,7 @@ class ExamplesFlextCoreModelsEx05:
         @override
         def validate(
             cls,
-            value: t.ConfigMap,
+            value: m.ConfigMap,
         ) -> ExamplesFlextCoreModelsEx05.Ex05GoodProcessor:
             return cls.model_validate(value)
 

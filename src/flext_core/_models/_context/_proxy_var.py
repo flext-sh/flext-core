@@ -16,7 +16,7 @@ from flext_core import FlextModelsContextTokens, t
 class FlextModelsContextProxyVar:
     """Namespace for structlog proxy context variable."""
 
-    class StructlogProxyContextVar[T: t.ValueOrModel | t.ConfigMap]:
+    class StructlogProxyContextVar[T: t.ValueOrModel | t.FlatContainerMapping]:
         """ContextVar-like proxy using structlog as backend (single source of truth).
 
         Delegates ALL operations to structlog's contextvar storage ensuring
@@ -39,10 +39,10 @@ class FlextModelsContextProxyVar:
                     token.key: token.previous_value,
                 })
 
-        def get(self) -> t.ValueOrModel | t.ConfigMap | None:
+        def get(self) -> t.ValueOrModel | t.FlatContainerMapping | None:
             """Get current value from structlog context."""
             contextvars_data = structlog.contextvars.get_contextvars()
-            structlog_context: Mapping[str, t.ValueOrModel | t.ConfigMap] = (
+            structlog_context: Mapping[str, t.ValueOrModel | t.FlatContainerMapping] = (
                 contextvars_data
             )
             if self._key not in structlog_context:
@@ -59,7 +59,7 @@ class FlextModelsContextProxyVar:
                 _ = structlog.contextvars.bind_contextvars(**{self._key: value})
             else:
                 structlog.contextvars.unbind_contextvars(self._key)
-            prev_value: t.ValueOrModel | t.ConfigMap | None = current_value
+            prev_value: t.ValueOrModel | t.FlatContainerMapping | None = current_value
             return FlextModelsContextTokens.StructlogProxyToken(
                 key=self._key,
                 previous_value=prev_value,

@@ -32,7 +32,7 @@ from pydantic import ValidationError
 
 from flext_core import FlextSettings
 from flext_tests import tm
-from tests import c, p, t, u
+from tests import c, m, p, t, u
 
 
 @pytest.fixture(autouse=True)
@@ -86,7 +86,7 @@ class TestFlextSettings:
         settings = u.Core.Tests.create_test_config(**config_data)
         u.Core.Tests.assert_config_fields(
             settings,
-            t.ConfigMap(dict(config_data)),
+            m.ConfigMap(root=dict(config_data)),
         )
         tm.that(
             settings, is_=FlextSettings, msg="Settings must be FlextSettings instance"
@@ -102,7 +102,7 @@ class TestFlextSettings:
         settings = u.Core.Tests.create_test_config(**config_data)
         u.Core.Tests.assert_config_fields(
             settings,
-            t.ConfigMap(dict(config_data)),
+            m.ConfigMap(root=dict(config_data)),
         )
 
     def test_config_to_dict(self) -> None:

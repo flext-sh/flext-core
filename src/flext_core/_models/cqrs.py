@@ -24,7 +24,6 @@ from flext_core import (
     FlextRuntime,
     FlextUtilitiesGenerators,
     c,
-    p,
     r,
     t,
 )
@@ -117,16 +116,6 @@ class FlextModelsCqrs:
             ),
         ] = None
 
-        @property
-        def event_type(self) -> str | None:
-            """Event type identifier (always None for commands)."""
-            return None
-
-        @property
-        def query_type(self) -> str | None:
-            """Query type identifier (always None for commands)."""
-            return None
-
     Pagination = _CqrsPagination
 
     class Query(m.ArbitraryTypesModel):
@@ -147,15 +136,15 @@ class FlextModelsCqrs:
             ),
         ] = "query"
         filters: Annotated[
-            t.Dict,
+            t.ScalarMapping,
             Field(
                 description="Filter values that restrict which records are returned by the query.",
                 title="Query Filters",
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
-        ] = Field(default_factory=t.Dict)
-        pagination: _CqrsPagination | t.Dict = Field(
-            default_factory=t.Dict,
+        ] = Field(default_factory=dict)
+        pagination: _CqrsPagination | dict[str, t.Scalar] = Field(
+            default_factory=dict,
             description="Pagination settings controlling page number and page size for query results.",
             title="Pagination",
             examples=[{"page": 1, "size": 50}],
@@ -179,21 +168,11 @@ class FlextModelsCqrs:
             ),
         ] = None
 
-        @property
-        def command_type(self) -> str | None:
-            """Command type identifier (always None for queries)."""
-            return None
-
-        @property
-        def event_type(self) -> str | None:
-            """Event type identifier (always None for queries)."""
-            return None
-
         @field_validator("pagination", mode="before")
         @classmethod
         def validate_pagination(
             cls,
-            v: BaseModel | t.Dict | t.ScalarMapping | None,
+            v: BaseModel | dict[str, t.Scalar] | None,
         ) -> BaseModel:
             """Convert pagination to Pagination instance."""
             pagination_cls = FlextRuntime.resolve_nested_model_class(
@@ -278,16 +257,6 @@ class FlextModelsCqrs:
         ] = "event"
         event_type: Annotated[t.NonEmptyStr, Field(description="Event type identifier")]
 
-        @property
-        def command_type(self) -> str | None:
-            """Command type identifier (always None for events)."""
-            return None
-
-        @property
-        def query_type(self) -> str | None:
-            """Query type identifier (always None for events)."""
-            return None
-
         aggregate_id: Annotated[
             t.NonEmptyStr,
             Field(
@@ -307,27 +276,19 @@ class FlextModelsCqrs:
             ),
         )
         data: Annotated[
-            t.Dict,
+            t.ScalarMapping,
             Field(
                 description="Event payload data",
             ),
-        ] = Field(default_factory=t.Dict)
+        ] = Field(default_factory=dict)
         metadata: Annotated[
-            t.Dict,
+            t.ScalarMapping,
             Field(
                 description="Event metadata (timestamps, correlation IDs, etc.)",
             ),
-        ] = Field(default_factory=t.Dict)
+        ] = Field(default_factory=dict)
 
     type FlextMessage = t.MessageUnion[Command, Query, Event]
-
-    @staticmethod
-    def parse_message(
-        payload: p.Base | BaseModel | t.RecursiveContainerMapping,
-    ) -> FlextMessage:
-        """Parse a message payload into a FlextMessage instance."""
-        _ = payload
-        raise NotImplementedError(c.ERR_CQRS_PARSE_MESSAGE_NOT_IMPLEMENTED)
 
 
 __all__: list[str] = ["FlextModelsCqrs"]

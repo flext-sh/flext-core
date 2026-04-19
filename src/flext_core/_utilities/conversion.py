@@ -9,13 +9,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping
-from datetime import datetime
-from pathlib import Path
 
-from pydantic import BaseModel
-
-from flext_core import FlextRuntime, c, t
+from flext_core import c, t
 
 
 class FlextUtilitiesConversion:
@@ -115,27 +110,6 @@ class FlextUtilitiesConversion:
             except (ValueError, OverflowError):
                 return default
         return default
-
-    @staticmethod
-    def normalize_log_payload(
-        payload: Mapping[str, t.ValueOrModel],
-    ) -> t.FlatContainerMapping:
-        """Normalize payload to flat container types, stringifying model instances."""
-        normalized: t.MutableFlatContainerMapping = {}
-        for key, value in payload.items():
-            atomic = FlextRuntime.normalize_to_container(value)
-            if isinstance(atomic, BaseModel):
-                normalized[str(key)] = atomic.model_dump_json()
-            else:
-                plain = FlextRuntime.to_plain_container(atomic)
-                normalized[str(key)] = (
-                    plain
-                    if isinstance(plain, (str, int, float, bool, datetime, Path))
-                    else str(plain)
-                    if plain is not None
-                    else ""
-                )
-        return normalized
 
 
 __all__: list[str] = ["FlextUtilitiesConversion"]

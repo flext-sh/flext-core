@@ -55,11 +55,11 @@ class TestsFlextCoreModelsMixins:
             int, m.Field(description="Attribute recursive container value")
         ] = 1
 
-    class BadMapping(UserDict[str, t.RecursiveContainer]):
+    class BadMapping(UserDict[str, t.Container]):
         """Mapping that raises on access — used for error-path testing."""
 
         @override
-        def __getitem__(self, key: str) -> t.RecursiveContainer:
+        def __getitem__(self, key: str) -> t.Container:
             _ = key
             msg = "get exploded"
             raise TypeError(msg)
@@ -76,7 +76,7 @@ class TestsFlextCoreModelsMixins:
     class _ValidationLikeError(ValueError):
         """Validation-like error for tests."""
 
-        def errors(self) -> Sequence[t.RecursiveContainerMapping]:
+        def errors(self) -> Sequence[Mapping[str, t.Container]]:
             return [{"loc": ["value"], "msg": "bad value"}]
 
     type TestCaseMap = Mapping[str, t.Core.Tests.TestobjectSerializable]
@@ -122,12 +122,12 @@ class TestsFlextCoreModelsMixins:
         @override
         def model_validate(
             cls,
-            obj: t.RecursiveContainer,
+            obj: t.Container,
             *,
             strict: bool | None = None,
             extra: str | None = None,
             from_attributes: bool | None = None,
-            context: t.RecursiveContainerMapping | None = None,
+            context: Mapping[str, t.Container] | None = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> Never:
@@ -142,12 +142,12 @@ class TestsFlextCoreModelsMixins:
         @override
         def model_validate(
             cls,
-            obj: t.RecursiveContainer,
+            obj: t.Container,
             *,
             strict: bool | None = None,
             extra: str | None = None,
             from_attributes: bool | None = None,
-            context: t.RecursiveContainerMapping | None = None,
+            context: Mapping[str, t.Container] | None = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> Never:
@@ -244,7 +244,7 @@ class TestsFlextCoreModelsMixins:
         timeout: int = 10
 
         @property
-        def data(self) -> t.RecursiveContainerMapping:
+        def data(self) -> Mapping[str, t.Container]:
             return {"timeout": self.timeout}
 
     class _Model(m.BaseModel):
@@ -272,7 +272,7 @@ class TestsFlextCoreModelsMixins:
         """Complex test model."""
 
         id: int
-        data: t.RecursiveContainerMapping
+        data: Mapping[str, t.Container]
         items: t.StrSequence
 
     class _Cfg(m.BaseModel):
@@ -308,7 +308,7 @@ class TestsFlextCoreModelsMixins:
 
         name: Annotated[str, m.Field(description="Entity display name.")]
         value: Annotated[
-            t.ContainerValue,
+            t.Container,
             m.Field(description="Entity payload value."),
         ]
 
@@ -373,10 +373,10 @@ class TestsFlextCoreModelsMixins:
             return f"NoDict(value={self.value})"
 
     class MutableObj:
-        """Mutable t.RecursiveContainer for immutability testing."""
+        """Mutable t.Container for immutability testing."""
 
         def __init__(self, value: int) -> None:
-            """Initialize mutable t.RecursiveContainer."""
+            """Initialize mutable t.Container."""
             self.value = value
 
     class NoSettingsNoSetattr:
@@ -456,7 +456,7 @@ class TestsFlextCoreModelsMixins:
             arbitrary_types_allowed=True,
         )
 
-        obj: t.ContainerValue
+        obj: t.Container
         expected_contains: t.StrSequence | None = None
         expected_exact: str | None = None
         description: Annotated[str, m.Field(exclude=True)] = ""
@@ -467,15 +467,15 @@ class TestsFlextCoreModelsMixins:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         description: str
-        input: t.ContainerValue
+        input: t.Container
         expected_success: bool
 
     class StandardTestCaseModel(m.BaseModel):
         """Standard operation case model for shared test utilities."""
 
         description: str
-        input_data: t.ContainerValue
-        expected_result: t.ContainerValue
+        input_data: t.Container
+        expected_result: t.Container
         expected_success: bool = True
         error_contains: str | None = None
 
@@ -486,7 +486,7 @@ class TestsFlextCoreModelsMixins:
 
         name: Annotated[str, m.Field(description="Fixture entity name.")]
         value: Annotated[
-            t.ContainerValue,
+            t.Container,
             m.Field(description="Fixture entity payload."),
         ]
 
@@ -496,7 +496,7 @@ class TestsFlextCoreModelsMixins:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         value: Annotated[
-            t.ContainerValue,
+            t.Container,
             m.Field(description="Fixture value payload."),
         ]
 
@@ -806,11 +806,11 @@ class TestsFlextCoreModelsMixins:
             str, m.Field(description="Validator category under test")
         ]
         input_value: Annotated[
-            t.RecursiveContainer,
+            t.Container | None,
             m.Field(description="Input value passed to validator"),
         ]
         input_params: Annotated[
-            t.RecursiveContainer | None,
+            t.Container | None,
             m.Field(
                 description="Optional validator parameters for scenario execution",
             ),
@@ -822,7 +822,7 @@ class TestsFlextCoreModelsMixins:
             ),
         ] = True
         expected_value: Annotated[
-            t.RecursiveContainer | None,
+            t.Container | None,
             m.Field(
                 description="Expected normalized value when validation succeeds",
             ),
@@ -837,6 +837,45 @@ class TestsFlextCoreModelsMixins:
             str | None, m.Field(description="Human-readable scenario description")
         ] = None
 
+    class Operation(m.BaseModel):
+        """Generic operation progress model used by tests utilities."""
+
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+
+        success_count: Annotated[int, m.Field(description="Successful operations")]
+        failure_count: Annotated[int, m.Field(description="Failed operations")]
+        skipped_count: Annotated[int, m.Field(description="Skipped operations")]
+        metadata: Annotated[
+            Mapping[str, t.Container],
+            m.Field(description="Additional operation metadata"),
+        ] = m.Field(default_factory=dict)
+
+    class Conversion(m.BaseModel):
+        """Generic conversion progress model used by tests utilities."""
+
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+
+        converted: Annotated[
+            Sequence[t.Container],
+            m.Field(description="Converted records"),
+        ] = m.Field(default_factory=tuple)
+        errors: Annotated[
+            Sequence[str],
+            m.Field(description="Conversion errors"),
+        ] = m.Field(default_factory=tuple)
+        warnings: Annotated[
+            Sequence[str],
+            m.Field(description="Conversion warnings"),
+        ] = m.Field(default_factory=tuple)
+        skipped: Annotated[
+            Sequence[t.Container],
+            m.Field(description="Skipped records"),
+        ] = m.Field(default_factory=tuple)
+        metadata: Annotated[
+            Mapping[str, t.Container],
+            m.Field(description="Additional conversion metadata"),
+        ] = m.Field(default_factory=dict)
+
     class ParserScenario(m.BaseModel):
         """Single scenario for parser testing."""
 
@@ -846,7 +885,7 @@ class TestsFlextCoreModelsMixins:
         parser_method: Annotated[str, m.Field(description="Parser method to execute")]
         input_data: Annotated[str, m.Field(description="Raw parser input data")]
         expected_output: Annotated[
-            t.RecursiveContainer | None,
+            t.Container | None,
             m.Field(
                 description="Expected parsed output for successful scenarios",
             ),
@@ -892,7 +931,7 @@ class TestsFlextCoreModelsMixins:
             m.Field(description="Expected parsed scalar or enum value"),
         ] = None
         expected_data: Annotated[
-            Mapping[str, t.ContainerValue] | None,
+            Mapping[str, t.Container] | None,
             m.Field(description="Expected parsed model_dump payload"),
         ] = None
         error_contains: Annotated[
@@ -910,7 +949,7 @@ class TestsFlextCoreModelsMixins:
         name: Annotated[str, m.Field(description="Unique reliability scenario name")]
         strategy: Annotated[str, m.Field(description="Reliability strategy under test")]
         settings: Annotated[
-            t.ConfigMap,
+            m.ConfigMap,
             m.Field(description="Reliability configuration payload"),
         ]
         simulate_failures: Annotated[
@@ -1268,7 +1307,7 @@ class TestsFlextCoreModelsMixins:
 
         port: int = 0
         nested: Annotated[
-            t.RecursiveContainerMapping,
+            Mapping[str, t.Container],
             m.Field(default_factory=dict),
         ]
 
@@ -1282,11 +1321,11 @@ class TestsFlextCoreModelsMixins:
 
         kind: str | None = None
 
-    class BadItems(UserDict[str, t.RecursiveContainer]):
+    class BadItems(UserDict[str, t.Container]):
         """UserDict that explodes on items() for error-path testing."""
 
         @override
-        def items(self) -> ItemsView[str, t.RecursiveContainer]:
+        def items(self) -> ItemsView[str, t.Container]:
             """Items method."""
             msg = "bad items"
             raise RuntimeError(msg)

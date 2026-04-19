@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import m, t, u
+from examples import m, t, u
 
 
 class ExamplesFlextCoreModelsEx04:
@@ -20,7 +20,7 @@ class ExamplesFlextCoreModelsEx04:
         class Ex04GetUser(m.Query):
             """Query to get a user record by username in example 04."""
 
-            pagination: m.Pagination | t.Dict = u.Field(default_factory=t.Dict)
+            pagination: m.Pagination | m.Dict = u.Field(default_factory=m.Dict)
             query_type: str | None = "ex04_get_user"
             username: str
 

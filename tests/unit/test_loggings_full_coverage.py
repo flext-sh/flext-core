@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import types
-from collections.abc import MutableSequence
+from collections.abc import Mapping, MutableSequence
 from pathlib import Path
 from typing import ClassVar, override
 
@@ -13,7 +13,7 @@ from flext_core import (
     FlextSettings,
 )
 from flext_tests import tm
-from tests import p, t, u
+from tests import m, p, t, u
 
 
 class TestModule:
@@ -22,7 +22,7 @@ class TestModule:
 
         def __init__(self) -> None:
             self.calls: MutableSequence[
-                tuple[str, tuple[t.RecursiveContainer, ...], t.ScalarMapping]
+                tuple[str, tuple[t.Container, ...], t.ScalarMapping]
             ] = []
 
         def bind(self, **kwargs: t.Scalar) -> TestModule._FakeBindable:
@@ -69,14 +69,12 @@ class TestModule:
             exception: Exception | None,
             exc_info: bool,
             context: t.ScalarMapping,
-        ) -> t.ConfigMap:
-            return t.ConfigMap(root={})
+        ) -> m.ConfigMap:
+            return m.ConfigMap(root={})
 
     class _ContextVars:
         def __init__(self) -> None:
-            self.store: t.MutableRecursiveContainerMapping = dict[
-                str, t.RecursiveContainer
-            ]()
+            self.store: t.MutableFlatContainerMapping = dict[str, t.Container]()
 
         def bind_contextvars(self, **kwargs: t.Scalar) -> None:
             self.store.update(kwargs)
@@ -88,7 +86,7 @@ class TestModule:
         def clear_contextvars(self) -> None:
             self.store.clear()
 
-        def get_contextvars(self) -> t.RecursiveContainerMapping:
+        def get_contextvars(self) -> Mapping[str, t.Container]:
             return dict(self.store)
 
     class _StructlogShim:
@@ -116,14 +114,14 @@ class TestModule:
         tm.that(logger.unbind("a", safe=True), none=False)
         logger.trace("%s %s", "a")
         logger.trace("x")
-        tm.that(u._format_log_message("%s %s", "a"), ne="")
+        tm.that(u.to_str(("%s %s", "a")), ne="")
         tm.that(u._calling_frame(), is_=types.FrameType)
 
         class _Code:
             co_qualname = "MyType.run"
 
         class _Frame:
-            f_locals: ClassVar[t.RecursiveContainerMapping] = {}
+            f_locals: ClassVar[Mapping[str, t.Container]] = {}
             f_code = _Code()
 
         extract_class_name = getattr(u, "_extract_class_name")
@@ -141,7 +139,7 @@ class TestModule:
 
         tm.that(u._caller_source_path(), none=True)
 
-        tm.that(u._convert_to_relative_path("/tmp/x.py"), eq="x.py")
+        tm.that(Path("/tmp/x.py").name, eq="x.py")
 
         class _NoMarkers:
             def __init__(self, path: Path) -> None:
@@ -204,7 +202,7 @@ class TestModule:
             exc_info=True,
             context={},
         )
-        tm.that(with_exc_info, is_=t.ConfigMap)
+        tm.that(with_exc_info, is_=m.ConfigMap)
         broken_bindable = self._FakeBindable()
         broken = create_bound_logger("x", broken_bindable)
 

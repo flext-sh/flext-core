@@ -2,24 +2,31 @@
 
 from __future__ import annotations
 
-from flext_core import m
+from examples import m, u
 
 
-class Ex14CreateUserCommand(m.Command):
-    """Create user command payload."""
+class ExamplesFlextCoreModelsEx14:
+    """Example 14 model namespace."""
 
-    user_id: str
-    name: str
-    email: str
+    class Ex14CreateUserCommand(m.Command):
+        """Create user command payload."""
 
+        user_id: str = u.Field(
+            description="Unique identifier for the user being created."
+        )
+        name: str = u.Field(description="Full name of the user.")
+        email: str = u.Field(description="Email address of the user.")
 
-class Ex14GetUserQuery(m.Query):
-    """Get user query payload."""
+    class Ex14GetUserQuery(m.Query):
+        """Get user query payload."""
 
-    user_id: str
+        user_id: str = u.Field(
+            description="Unique identifier for the user to retrieve."
+        )
 
+    class Ex14UserDTO(m.Value):
+        """Data transfer object for user information."""
 
-class Ex14UserDTO(m.Value):
-    id: str
-    name: str
-    email: str
+        id: str = u.Field(description="Unique identifier for the user.")
+        name: str = u.Field(description="Full name of the user.")
+        email: str = u.Field(description="Email address of the user.")

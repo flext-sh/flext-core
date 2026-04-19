@@ -40,7 +40,7 @@ class FlextDispatcher:
             MutableSequence[tuple[t.HandlerProtocolVariant, t.RoutedHandlerCallable]]
         ] = {}
 
-    def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
+    def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeData]:
         """Dispatch a CQRS message to its registered handler.
 
         Args:
@@ -53,7 +53,7 @@ class FlextDispatcher:
         try:
             route_name = u.resolve_message_route(message)
         except (TypeError, ValueError) as exc:
-            return r[t.RuntimeAtomic].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "dispatch message",
                 exc,
                 error_code=c.ErrorCode.COMMAND_PROCESSING_FAILED.value,
@@ -69,7 +69,7 @@ class FlextDispatcher:
                     handler_entry = (auto_h, resolved_handler)
                     break
         if not handler_entry:
-            return r[t.RuntimeAtomic].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "resolve message handler",
                 f"No handler found for {route_name}",
                 error_code=c.ErrorCode.COMMAND_HANDLER_NOT_FOUND.value,
@@ -193,9 +193,9 @@ class FlextDispatcher:
         resolved_handler: t.RoutedHandlerCallable,
         message: p.Routable,
         route_name: str,
-    ) -> p.Result[t.RuntimeAtomic]:
+    ) -> p.Result[t.RuntimeData]:
         """Execute a handler against a message."""
-        dispatch_result = r[t.RuntimeAtomic]
+        dispatch_result = r[t.RuntimeData]
         try:
             raw_output = resolved_handler(message)
             if u.result_like(raw_output):
@@ -208,7 +208,7 @@ class FlextDispatcher:
                         if u.pydantic_model(error_data_value)
                         else None,
                     )
-                value: t.RuntimeAtomic | None = raw_output.value
+                value: t.RuntimeData | None = raw_output.value
                 if not u.container(value) and not u.pydantic_model(value):
                     return dispatch_result.fail_op(
                         "validate handler success payload",

@@ -1,14 +1,17 @@
+"""Example models for ex08."""
+
 from __future__ import annotations
 
-from examples import c
-from flext_core import m
+from examples import m
 
 
 class Ex08User(m.Entity):
     name: str
-    email: str
 
 
-class Ex08Order(m.AggregateRoot):
-    customer_id: str
-    status: c.Status = c.Status.ACTIVE
+class Ex08Order(m.Entity):
+    status: str = "active"
+
+
+class ExamplesFlextCoreModelsEx08(m):
+    """Examples namespace wrapper for ex08 models."""

@@ -18,8 +18,6 @@ from enum import EnumType
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pydantic.fields import FieldInfo
-
 from flext_core import (
     FlextConstantsEnforcement as c,
     FlextConstantsProjectMetadata as _kpm,
@@ -58,12 +56,6 @@ class FlextUtilitiesEnforcement:
                 problem=problem.format(**subs) if subs else problem,
                 fix=fix.format(**subs) if subs else fix,
             ),
-        )
-
-    @staticmethod
-    def merge_reports(*reports: me.Report) -> me.Report:
-        return me.Report(
-            violations=[v for r in reports for v in r.violations],
         )
 
     @staticmethod
@@ -175,17 +167,6 @@ class FlextUtilitiesEnforcement:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def own_fields(
-        model_type: type[mp.BaseModel],
-    ) -> Mapping[str, FieldInfo]:
-        own_ann = set(vars(model_type).get("__annotations__", {}))
-        return {
-            name: info
-            for name, info in model_type.model_fields.items()
-            if name in own_ann
-        }
-
-    @staticmethod
     def _iter_inner(target: type) -> Iterator[tuple[str, type]]:
         for name, value in vars(target).items():
             if isinstance(value, type) and not name.startswith("_"):
@@ -236,7 +217,10 @@ class FlextUtilitiesEnforcement:
         model_type: type[mp.BaseModel],
         tag: str,
     ) -> Iterator[tuple[str, tuple[object, ...]]]:
-        for name, info in FlextUtilitiesEnforcement.own_fields(model_type).items():
+        own_ann = set(vars(model_type).get("__annotations__", {}))
+        for name, info in model_type.model_fields.items():
+            if name not in own_ann:
+                continue
             args: tuple[object, ...] = (
                 (model_type, name, info) if tag == "missing_description" else (info,)
             )
@@ -245,7 +229,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def _attr_filter(
         layer: str,
-    ) -> Callable[[str, t.RecursiveContainer], bool]:
+    ) -> Callable[[str, t.Container], bool]:
         if layer == c.EnforcementLayer.CONSTANTS.lower():
             return ub.attr_accept_constants
         if layer == c.EnforcementLayer.UTILITIES.lower():

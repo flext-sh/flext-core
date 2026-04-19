@@ -34,7 +34,7 @@ class FlextProtocolsContext:
             self,
             key: str,
             scope: str = ...,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]:
+        ) -> FlextProtocolsResult.Result[t.RuntimeData]:
             """Get a context value by key and scope."""
             ...
 
@@ -46,11 +46,11 @@ class FlextProtocolsContext:
             """Return all keys across all scopes."""
             ...
 
-        def values(self) -> t.RecursiveContainerList:
+        def values(self) -> Sequence[t.Container]:
             """Return all values across all scopes."""
             ...
 
-        def items(self) -> Sequence[tuple[str, t.RecursiveContainer]]:
+        def items(self) -> Sequence[tuple[str, t.Container]]:
             """Return all key-value pairs across all scopes."""
             ...
 
@@ -62,7 +62,7 @@ class FlextProtocolsContext:
         def set(
             self,
             key_or_data: str,
-            value: t.RuntimeAtomic,
+            value: t.RuntimeData,
             *,
             scope: str = ...,
         ) -> FlextProtocolsResult.Result[bool]: ...
@@ -70,7 +70,7 @@ class FlextProtocolsContext:
         @overload
         def set(
             self,
-            key_or_data: t.ConfigMap,
+            key_or_data: t.FlatContainerMapping,
             value: None = ...,
             *,
             scope: str = ...,
@@ -78,8 +78,8 @@ class FlextProtocolsContext:
 
         def set(
             self,
-            key_or_data: str | t.ConfigMap,
-            value: t.RuntimeAtomic | None = ...,
+            key_or_data: str | t.FlatContainerMapping,
+            value: t.RuntimeData | None = ...,
             *,
             scope: str = ...,
         ) -> FlextProtocolsResult.Result[bool]:
@@ -104,13 +104,9 @@ class FlextProtocolsContext:
 
         def merge(
             self,
-            other: Self | t.ConfigMap | t.RecursiveContainerMapping,
+            other: Self | Mapping[str, t.RuntimeData] | Mapping[str, t.Container],
         ) -> Self:
             """Merge another context or mapping into this one."""
-            ...
-
-        def validate_context(self) -> FlextProtocolsResult.Result[bool]:
-            """Validate context state consistency."""
             ...
 
     @runtime_checkable
@@ -123,7 +119,7 @@ class FlextProtocolsContext:
             include_statistics: bool = ...,
             include_metadata: bool = ...,
             as_dict: bool = ...,
-        ) -> m.ContextExport | t.RecursiveContainerMapping:
+        ) -> m.ContextExport | Mapping[str, t.RuntimeData]:
             """Export context state as the canonical context export model or dict."""
             ...
 
@@ -134,7 +130,7 @@ class FlextProtocolsContext:
         def resolve_metadata(
             self,
             key: str,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]:
+        ) -> FlextProtocolsResult.Result[t.RuntimeData]:
             """Get a metadata value by key."""
             ...
 
@@ -223,7 +219,7 @@ class FlextProtocolsContext:
         @staticmethod
         def timed_operation(
             operation_name: str | None = None,
-        ) -> AbstractContextManager[t.ConfigMap]:
+        ) -> AbstractContextManager[t.FlatContainerMapping]:
             """Create a timed operation scope."""
             ...
 
@@ -232,7 +228,7 @@ class FlextProtocolsContext:
         """Protocol for context serialization helpers."""
 
         @staticmethod
-        def export_full_context() -> t.RecursiveContainerMapping:
+        def export_full_context() -> Mapping[str, t.Container]:
             """Export the active global context variables."""
             ...
 
@@ -264,11 +260,11 @@ class FlextProtocolsContext:
         @classmethod
         def create(
             cls,
-            initial_data: t.ConfigMap | None = None,
+            initial_data: t.FlatContainerMapping | None = None,
             *,
             operation_id: str | None = None,
             user_id: str | None = None,
-            metadata: t.ConfigMap | None = None,
+            metadata: t.FlatContainerMapping | None = None,
             auto_correlation_id: bool = True,
         ) -> FlextProtocolsContext.Context:
             """Create a new context instance."""

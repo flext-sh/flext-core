@@ -135,7 +135,7 @@ class FlextProtocolsRegistry:
             name: str,
             *,
             scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic | None]:
+        ) -> FlextProtocolsResult.Result[t.RuntimeData | None]:
             """Get a registered plugin by category and name."""
             ...
 

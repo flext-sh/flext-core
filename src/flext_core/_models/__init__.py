@@ -32,7 +32,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".entity": ("FlextModelsEntity",),
             ".errors": ("FlextModelsErrors",),
             ".exception_params": ("FlextModelsExceptionParams",),
-            ".generic": ("FlextGenericModels",),
             ".handler": ("FlextModelsHandler",),
             ".namespace": ("FlextModelsNamespace",),
             ".project_metadata": ("FlextModelsProjectMetadata",),

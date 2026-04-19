@@ -10,7 +10,7 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from pathlib import Path
 
-from flext_core import FlextModelsPydantic as mp, FlextTypesPydantic as tp
+from flext_core import FlextTypesPydantic as tp
 
 
 class FlextTypingBase:
@@ -19,30 +19,16 @@ class FlextTypingBase:
     type Numeric = int | float
     type Primitives = str | Numeric | bool
     type Scalar = Primitives | datetime
-    type Container = Scalar | Path
-    type OpaqueValue = object
-    type RecursiveContainerMapping = Mapping[str, FlextTypingBase.RecursiveContainer]
-    type RecursiveContainerList = Sequence[FlextTypingBase.RecursiveContainer]
-    type MutableRecursiveContainerMapping = MutableMapping[
-        str,
-        FlextTypingBase.RecursiveContainer,
-    ]
-    type MutableRecursiveContainerList = MutableSequence[
-        FlextTypingBase.RecursiveContainer,
-    ]
-    type RecursiveContainer = (
-        Container
-        | FlextTypingBase.RecursiveContainerMapping
-        | FlextTypingBase.RecursiveContainerList
-        | tuple[FlextTypingBase.RecursiveContainer, ...]
-        | None
-    )
+    type FlatScalarMapping = Mapping[str, Scalar]
+    type FlatScalarSequence = Sequence[Scalar]
+    type Container = Scalar | Path | FlatScalarMapping | FlatScalarSequence
+    type OpaqueValue = Container
     type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
     type MutableMappingKV[KeyT, ValueT] = dict[KeyT, ValueT]
     type SequenceOf[ItemT] = Sequence[ItemT]
     type MutableSequenceOf[ItemT] = list[ItemT]
     type SecretValue = tp.SecretStr | tp.SecretBytes
-    type SettingsValue = RecursiveContainer | SecretValue
+    type SettingsValue = Scalar | SecretValue
 
     # Flat (non-recursive) mapping/list aliases for high-frequency patterns
     type StrMapping = Mapping[str, str]
@@ -53,7 +39,9 @@ class FlextTypingBase:
     type MutableScalarMapping = MutableMapping[str, Scalar]
     type ScalarList = Sequence[Scalar]
     type FlatContainerList = Sequence[Container]
-
+    type MutableFlatContainerList = MutableSequence[Container]
+    type FlatContainerMapping = Mapping[str, Container]
+    type MutableFlatContainerMapping = MutableMapping[str, Container]
     type IntMapping = Mapping[str, int]
     type MutableIntMapping = MutableMapping[str, int]
     type BoolMapping = Mapping[str, bool]
@@ -67,37 +55,31 @@ class FlextTypingBase:
     type AttributeMapping = Mapping[str, str | MutableSequence[str]]
     type MutableAttributeMapping = MutableMapping[str, str | MutableSequence[str]]
     type ConfigValueMapping = Mapping[str, str | int | float]
-    type OptionalStrMapping = Mapping[str, str | None]
-    type MutableOptionalStrMapping = MutableMapping[str, str | None]
     type HeaderMapping = Mapping[str, int | str]
     type FeatureFlagMapping = Mapping[str, str | bool]
     type MutableFeatureFlagMapping = MutableMapping[str, str | bool]
-    type OptionalFeatureFlagMapping = Mapping[str, str | bool | None]
-    type MutableOptionalFeatureFlagMapping = MutableMapping[str, str | bool | None]
     type MutableHeaderMapping = MutableMapping[str, int | str]
     type MutableConfigValueMapping = MutableMapping[str, str | int | float]
-    type OptionalBoolMapping = Mapping[str, bool | None]
-    type MutableOptionalBoolMapping = MutableMapping[str, bool | None]
 
-    class ContainerMappingBase(Mapping[str, "FlextTypingBase.RecursiveContainer"]):
-        """Concrete base for Mapping[str, RecursiveContainer] inheritance.
+    class ContainerMappingBase(Mapping[str, Container]):
+        """Concrete base for Mapping[str, Container] inheritance.
 
         PEP 695 ``type X = ...`` aliases cannot be subclassed (CPython limitation).
         Use ``t.*Base`` classes when inheriting, ``t.*`` aliases for annotations.
         """
 
-    class ContainerListBase(Sequence["FlextTypingBase.RecursiveContainer"]):
-        """Concrete base for Sequence[RecursiveContainer] inheritance."""
+    class ContainerListBase(Sequence[Container]):
+        """Concrete base for Sequence[Container] inheritance."""
 
     class MutableContainerMappingBase(
-        MutableMapping[str, "FlextTypingBase.RecursiveContainer"],
+        MutableMapping[str, Container],
     ):
-        """Concrete base for MutableMapping[str, RecursiveContainer] inheritance."""
+        """Concrete base for MutableMapping[str, Container] inheritance."""
 
     class MutableContainerListBase(
-        MutableSequence["FlextTypingBase.RecursiveContainer"],
+        MutableSequence[Container],
     ):
-        """Concrete base for MutableSequence[RecursiveContainer] inheritance."""
+        """Concrete base for MutableSequence[Container] inheritance."""
 
     PRIMITIVES_TYPES: tuple[type[str], type[int], type[float], type[bool]] = (
         str,
@@ -145,5 +127,3 @@ class FlextTypingBase:
     ]
     type VariadicTuple[ItemT] = tuple[ItemT, ...]
     type IntPair = Pair[int, int]
-
-    type ContainerOrModel = RecursiveContainer | mp.BaseModel

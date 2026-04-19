@@ -141,7 +141,7 @@ class FlextModelsService:
     class DependencyContainerCreationOptions(m.ArbitraryTypesModel):
         """Options used to create and populate dependency container instances."""
 
-        settings: t.ConfigMap | None = up.Field(
+        settings: dict[str, t.ValueOrModel] | None = up.Field(
             None,
             title="Configuration",
             description="Optional configuration mapping bound to dependency container providers.",

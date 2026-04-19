@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import m
+from examples import m, u
 
 
 class ExamplesFlextCoreModelsEx01:
@@ -11,29 +11,39 @@ class ExamplesFlextCoreModelsEx01:
     class Ex01User(m.Entity):
         """Result demo user model."""
 
-        name: str
-        email: str
+        name: str = u.Field(description="User display name")
+        email: str = u.Field(description="User email address")
 
     class Ex01DemonstrationResult(m.Value):
         """Result demo summary model."""
 
-        demonstrations_completed: int
-        patterns_covered: tuple[str, ...]
-        completed_at: str
+        demonstrations_completed: int = u.Field(
+            description="Count of completed demonstrations"
+        )
+        patterns_covered: tuple[str, ...] = u.Field(
+            description="Tuple of covered pattern names"
+        )
+        completed_at: str = u.Field(description="ISO 8601 completion timestamp")
 
     class Ex01RunDemonstrationCommand(m.Command):
         """Result demo command model."""
 
-        operation: str = "demonstration"
+        operation: str = u.Field(
+            "demonstration",
+            description="Operation type",
+            validate_default=True,
+        )
 
     class Ex01ValidPersonPayload(m.Value):
         """Valid person payload model for demo validation."""
 
-        name: str
-        age: int
+        name: str = u.Field(description="Person name")
+        age: int = u.Field(description="Person age in years")
 
     class Ex01InvalidPersonPayload(m.Value):
         """Invalid person payload model (for failure path tests)."""
 
-        name: str
-        age: str
+        name: str = u.Field(description="Person name")
+        age: str = u.Field(
+            description="Invalid age (string instead of int) for testing"
+        )

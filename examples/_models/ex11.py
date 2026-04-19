@@ -1,76 +1,41 @@
-"""Example 11 service models."""
+"""Example models for ex11."""
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import ClassVar, override
-
-from examples import p, t
-from flext_core import FlextSettings, m, r, u
-
-
-class Ex11HandlerLikeService(FlextSettings):
-    """Service-like handler stub."""
-
-    @classmethod
-    @override
-    def validate(cls, value: t.ConfigMap) -> Ex11HandlerLikeService:
-        """Validate service payload."""
-        return cls.model_validate(value)
-
-    def can_handle(self, message_type: type) -> bool:
-        """Check whether message type is handled."""
-        return bool(message_type)
-
-    def handle(self, message: m.Command) -> p.Result[str]:
-        """Handle service message."""
-        return r[str].ok(str(message))
+from examples import m, p, r
+from flext_core import FlextSettings
 
 
 class Ex11Payload(m.Value):
     text: str
-    count: int
-
-
-class Ex11HandlerLike(m.Value):
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
-    data: t.ConfigMap = u.Field(default_factory=lambda: t.ConfigMap(root={}))
-
-    def handle(self) -> str:
-        return "ok"
 
 
 class Ex11EntityStub(m.Value):
     unique_id: str
 
 
-class Ex11ProcessorProtocolGood(m.Value):
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
-    status: str = "ok"
+class Ex11HandlerLikeService(FlextSettings):
+    enabled: bool = True
 
-    def process(self) -> str:
-        return "ok"
+
+class Ex11HandlerLike(m.BaseModel):
+    message_type: type = Ex11Payload
+
+    def handle(self, message: Ex11Payload) -> p.Result[str]:
+        return r[str].ok(message.text)
+
+
+class Ex11ProcessorProtocolGood(m.Value):
+    status: str = "ok"
 
 
 class Ex11ProcessorProtocolBad(m.Value):
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
     status: str = "bad"
 
 
-class Ex11CommandBusStub(m.Value):
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+class Ex11CommandBusStub(m.BaseModel):
+    pass
 
-    def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
-        return r[t.RuntimeAtomic].ok(str(message))
 
-    def publish(self, _event: p.Routable | Sequence[p.Routable]) -> p.Result[bool]:
-        return r[bool].ok(True)
-
-    def register_handler(
-        self,
-        _handler: t.HandlerLike,
-        *,
-        is_event: bool = False,
-    ) -> p.Result[bool]:
-        del is_event
-        return r[bool].ok(True)
+class ExamplesFlextCoreModelsEx11(m):
+    """Examples namespace wrapper for ex11 models."""

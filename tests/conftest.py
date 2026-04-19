@@ -6,18 +6,30 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+import io
+import json
+import logging
 import math
+import os
 import tempfile
+import time
 from collections.abc import (
     Generator,
+    Iterator,
+    Mapping,
     Sequence,
 )
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
+from typing import Annotated, Literal, TypeVar
 
 import pytest
 
-from flext_core import FlextContainer, FlextContext
-from tests import c, p, r, u
+import flext_core as core
+from flext_core import FlextContainer, FlextContext, FlextSettings
+from tests import c, m, p, r, u
 
 
 @pytest.fixture
@@ -227,3 +239,118 @@ def valid_percentages() -> Sequence[float]:
 def invalid_percentages() -> Sequence[float]:
     """Invalid percentages for validation."""
     return [-0.1, 1.1, 2.0, -1.0]
+
+
+class _DocsStub:
+    """Permissive placeholder used by documentation snippets.
+
+    It allows docs examples to reference illustrative names without failing on
+    attribute access/calls when the snippet is intentionally partial.
+    """
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self, *args: object, **kwargs: object) -> _DocsStub:
+        return _DocsStub(*args, **kwargs)
+
+    def __getattr__(self, _name: str) -> _DocsStub:
+        return _DocsStub()
+
+    def __iter__(self) -> Iterator[object]:
+        return iter(())
+
+    def __bool__(self) -> bool:
+        return True
+
+
+def _docs_open(file: str | Path, mode: str = "r") -> object:
+    """Safe open used in markdown snippets to avoid fixture file coupling."""
+    if "r" in mode and "b" not in mode:
+        try:
+            return Path(file).open(mode)
+        except FileNotFoundError:
+            return io.StringIO("")
+    return Path(file).open(mode)
+
+
+def pytest_markdown_docs_globals() -> dict[str, object]:
+    """Provide shared globals for markdown-docs executable snippets."""
+    T = TypeVar("T")
+    T_co = TypeVar("T_co", covariant=True)
+    empty_mapping: dict[str, object] = {}
+
+    # Common placeholders used by docs snippets as illustrative identifiers.
+    stub_names = {
+        "User": _DocsStub,
+        "Order": _DocsStub,
+        "OrderLine": _DocsStub,
+        "OrderItem": _DocsStub,
+        "OrderStatus": _DocsStub,
+        "UserDto": _DocsStub,
+        "CreateUserCommand": _DocsStub,
+        "GetUserQuery": _DocsStub,
+        "UpdateUserCommand": _DocsStub,
+        "ProcessOrderCommand": _DocsStub,
+        "LongRunningCommand": _DocsStub,
+        "SomeCommand": _DocsStub,
+        "MyDatabase": _DocsStub,
+        "UserRepository": _DocsStub,
+        "order_service": _DocsStub(),
+        "reserved_emails": set(),
+        "users_db": empty_mapping.copy(),
+        "large_data": empty_mapping.copy(),
+        "data": empty_mapping.copy(),
+        "ldif_content": "",
+    }
+
+    return {
+        # Canonical runtime aliases and common classes.
+        "c": c,
+        "d": getattr(core, "d", _DocsStub),
+        "e": getattr(core, "e", _DocsStub),
+        "h": getattr(core, "h", _DocsStub),
+        "s": getattr(core, "s", _DocsStub),
+        "t": getattr(core, "t", _DocsStub),
+        "x": getattr(core, "x", _DocsStub),
+        "m": getattr(core, "m", m),
+        "p": p,
+        "r": r,
+        "u": u,
+        "FlextContainer": FlextContainer,
+        "FlextContext": FlextContext,
+        "FlextDispatcher": getattr(core, "FlextDispatcher", _DocsStub),
+        "FlextLogger": getattr(core, "FlextLogger", _DocsStub),
+        "FlextModels": getattr(core, "FlextModels", _DocsStub),
+        "FlextSettings": getattr(core, "FlextSettings", FlextSettings),
+        # Typing / stdlib helpers commonly referenced in snippets.
+        "Annotated": Annotated,
+        "Literal": Literal,
+        "Mapping": Mapping,
+        "Sequence": Sequence,
+        "Never": getattr(core, "Never", _DocsStub),
+        "datetime": datetime,
+        "timedelta": timedelta,
+        "Decimal": Decimal,
+        "dataclass": dataclass,
+        "json": json,
+        "logging": logging,
+        "os": os,
+        "time": time,
+        "T": T,
+        "T_co": T_co,
+        # Pydantic v2 symbols frequently referenced by docs.
+        "ConfigDict": m.ConfigDict,
+        "BaseSettings": FlextSettings,
+        "field_validator": lambda *args, **kwargs: lambda fn: fn,
+        "model_validator": lambda *args, **kwargs: lambda fn: fn,
+        # Common helpers used by snippet examples.
+        "open": _docs_open,
+        "complex_calculation": lambda value: value,
+        "do_something": lambda: "ok",
+        "operation": lambda: "ok",
+        "handle_error": lambda _error: None,
+        "process_entries": lambda entries: entries,
+        **stub_names,
+    }

@@ -67,21 +67,10 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def context(
-        value: t.GuardInput,
+        value: t.GuardInput | None,
     ) -> TypeIs[p.Context]:
         """Narrow value to Context protocol."""
         return isinstance(value, p.Context)
-
-    @staticmethod
-    def check_protocol_compliance(
-        value: t.ProtocolSubject,
-        protocol: type,
-    ) -> bool:
-        """Check runtime protocol compliance via stdlib isinstance()."""
-        try:
-            return isinstance(value, protocol)
-        except TypeError:
-            return False
 
     @staticmethod
     def handler_callable(
@@ -106,8 +95,8 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def result_like(
-        value: object,
-    ) -> TypeGuard[p.Result[t.RuntimeAtomic]]:
+        value: t.GuardInput,
+    ) -> TypeGuard[p.Result[t.RuntimeData]]:
         """Narrow value to Result protocol."""
         return isinstance(value, p.Result)
 
@@ -158,11 +147,9 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def _check_dict_non_empty(value: t.GuardInput) -> bool:
-        """Check if value is a non-empty dict or ConfigMap."""
-        if isinstance(value, dict):
-            return value.__len__() > 0
-        if isinstance(value, t.ConfigMap):
-            return value.root.__len__() > 0
+        """Check if value is a non-empty mapping (dict or ConfigMap)."""
+        if isinstance(value, Mapping):
+            return len(value) > 0
         return False
 
     @staticmethod
@@ -193,13 +180,6 @@ class FlextUtilitiesGuardsTypeProtocol:
             return FlextUtilitiesGuardsTypeProtocol._get_protocol_specs()[name](value)
         except (TypeError, ValueError, AttributeError, RuntimeError):
             return False
-
-    @staticmethod
-    def _type_tuple(
-        value: t.GuardInput,
-    ) -> TypeIs[tuple[type, ...]]:
-        """Narrow value to tuple of types."""
-        return isinstance(value, tuple)
 
     @staticmethod
     def matches_type(
@@ -275,7 +255,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         }
 
     @staticmethod
-    def handler(obj: t.ProtocolSubject) -> bool:
+    def handler(obj: t.GuardInput) -> bool:
         """Check if obj satisfies p.Handle protocol with validate capability."""
         return isinstance(obj, p.Handle) and callable(
             getattr(obj, "validate", None),

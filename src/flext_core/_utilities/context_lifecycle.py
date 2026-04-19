@@ -9,10 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping
 from typing import ClassVar, Self
 
-from flext_core import FlextRuntime, c, m, p, t, u
+from flext_core import c, m, p, t, u
 from flext_core._utilities.context_crud import FlextUtilitiesContextCrud
 
 
@@ -21,7 +21,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     _logger: ClassVar[p.Logger]
     _state: m.ContextRuntimeState
-    initial_data: m.ContextData | t.ConfigMap | None
+    initial_data: m.ContextData | m.ConfigMap | None
 
     _MERGEABLE_SCOPES: ClassVar[frozenset[str]] = frozenset({
         c.ContextScope.GLOBAL,
@@ -35,89 +35,68 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         include_statistics: bool = False,
         include_metadata: bool = False,
         as_dict: bool = True,
-    ) -> m.ContextExport | t.RecursiveContainerMapping:
-        """Export context data for serialization or debugging."""
-        all_data: t.ConfigMap = t.ConfigMap(root={})
+    ) -> m.ContextExport | Mapping[str, t.RuntimeData]:
+        """Export context state using canonical Pydantic models."""
+        all_data: dict[str, t.RuntimeData] = {}
         all_scopes = self._scope_payloads()
-        all_data.update(dict(all_scopes))
-        stats_dict_export: t.ConfigMap | None = None
+        for scope_name, scope_payload in all_scopes.items():
+            all_data[scope_name] = self._normalize_mapping_payload(scope_payload)
+        stats_dict_export: dict[str, t.Container] = {}
         if include_statistics and self._state.statistics:
-            stats_dict_export = t.ConfigMap(root=self._state.statistics.model_dump())
-        metadata_dict_export: t.RecursiveContainerMapping | None = None
+            stats_dict_export = dict(
+                self._normalize_mapping_payload(
+                    self._state.statistics.model_dump(mode="python"),
+                ),
+            )
+        metadata_attributes: dict[str, t.MetadataValue] | None = None
         if include_metadata:
-            metadata_dict_export = self._metadata_map()
-        metadata_for_model: t.ConfigMap | None = None
-        if metadata_dict_export:
-            normalized_metadata_map: MutableMapping[str, t.ValueOrModel] = {}
-            for k, v in metadata_dict_export.items():
-                metadata_value: t.ValueOrModel | t.ConfigMap = v
-                if u.mapping(v):
-                    metadata_value = t.ConfigMap(
-                        root=dict(v),
-                    )
-                normalized_metadata_map[k] = FlextRuntime.to_plain_container(
-                    u.normalize_to_container(
-                        u.normalize_to_metadata(metadata_value),
-                    ),
-                )
-            metadata_for_model = t.ConfigMap(root=normalized_metadata_map)
-        statistics_mapping: t.Dict = t.Dict(
-            root=dict(stats_dict_export or t.ConfigMap(root={})),
-        )
+            metadata_attributes = {
+                str(k): u.normalize_to_metadata(self._to_normalized(v))
+                for k, v in self._metadata_map().items()
+            }
+        export_model = m.ContextExport.model_validate({
+            "data": dict(all_data),
+            "metadata": (
+                m.Metadata.model_validate({"attributes": metadata_attributes})
+                if metadata_attributes
+                else None
+            ),
+            "statistics": dict(stats_dict_export),
+        })
         if as_dict:
-            result_dict: t.MutableRecursiveContainerMapping = dict(all_scopes)
-            if include_statistics and stats_dict_export:
-                stats_items: t.RecursiveContainerMapping = {
-                    sk: self._to_normalized(sv) for sk, sv in stats_dict_export.items()
-                }
-                result_dict["statistics"] = stats_items
-            if include_metadata and metadata_dict_export:
-                metadata_container: t.ConfigMap = t.ConfigMap(
-                    root=dict(metadata_dict_export),
-                )
-                meta_items: t.RecursiveContainerMapping = {
-                    mk: self._to_normalized(mv) for mk, mv in metadata_container.items()
-                }
-                result_dict[c.FIELD_METADATA] = meta_items
-            return result_dict
-        metadata_root: t.ConfigMap | None = (
-            t.ConfigMap(
-                root={
-                    k: u.normalize_to_container(v)
-                    for k, v in metadata_for_model.items()
-                },
-            )
-            if metadata_for_model
-            else None
-        )
-        return m.ContextExport(
-            data=dict(all_data),
-            metadata=m.Metadata(
-                attributes={
-                    key: u.normalize_to_metadata(value)
-                    for key, value in metadata_root.items()
-                },
-            )
-            if metadata_root
-            else None,
-            statistics={
-                key: self._to_normalized(
-                    u.normalize_to_container(
-                        u.normalize_to_metadata(value),
-                    ),
-                )
-                for key, value in statistics_mapping.items()
-            },
-        )
+            return export_model.model_dump(mode="python")
+        return export_model
+
+    @staticmethod
+    def _normalize_mapping_payload(
+        source: (
+            Mapping[str, t.RuntimeData]
+            | Mapping[str, t.ValueOrModel]
+            | Mapping[str, t.Container]
+        ),
+    ) -> t.FlatContainerMapping:
+        """Normalize and validate mapping payloads through canonical adapters."""
+        normalized = {
+            str(k): FlextUtilitiesContextLifecycle._to_normalized(v)
+            for k, v in source.items()
+        }
+        return t.flat_container_mapping_adapter().validate_python(normalized)
 
     @staticmethod
     def _as_config_map(
-        source: Mapping[str, t.ValueOrModel] | t.RecursiveContainerMapping,
+        source: (
+            Mapping[str, t.RuntimeData]
+            | Mapping[str, t.ValueOrModel]
+            | Mapping[str, t.Container]
+        ),
         label: str,
-    ) -> t.ConfigMap | None:
-        """Try to wrap a mapping as ConfigMap, logging on failure."""
+    ) -> m.ConfigMap | None:
+        """Normalize an arbitrary mapping into a scope-compatible map."""
         try:
-            return t.ConfigMap(root=dict(source))
+            normalized_payload = (
+                FlextUtilitiesContextLifecycle._normalize_mapping_payload(source)
+            )
+            return m.ConfigMap(root=dict(normalized_payload))
         except (TypeError, ValueError, AttributeError) as exc:
             FlextUtilitiesContextLifecycle._logger.debug(
                 f"Context {label} validation failed",
@@ -127,23 +106,28 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     def _extract_config_map(
         self,
-        other: p.Context | t.ConfigMap | t.RecursiveContainerMapping,
-    ) -> t.ConfigMap | None:
+        other: p.Context | Mapping[str, t.RuntimeData] | Mapping[str, t.Container],
+    ) -> m.ConfigMap | None:
         """Extract a ConfigMap from any supported merge source."""
         match other:
-            case _ if u.context(other):
+            case _ if isinstance(other, p.Context):
                 exported_result = other.export(as_dict=True)
-                if u.pydantic_model(exported_result):
+                exported_payload: Mapping[str, t.RuntimeData] | None
+                if isinstance(exported_result, m.ContextExport):
+                    exported_payload = exported_result.model_dump(mode="python")
+                elif isinstance(exported_result, Mapping):
+                    exported_payload = exported_result
+                else:
+                    exported_payload = None
+                if exported_payload is None:
                     return None
-                return self._as_config_map(exported_result, "export payload")
-            case t.ConfigMap():
-                return other
+                return self._as_config_map(exported_payload, "export payload")
             case _ if isinstance(other, Mapping):
                 return self._as_config_map(other, "export payload")
             case _:
                 return None
 
-    def _apply_scoped_merge(self, exported_map: t.ConfigMap) -> None:
+    def _apply_scoped_merge(self, exported_map: m.ConfigMap) -> None:
         """Merge exported scopes from another FlextContext."""
         for scope_name, scope_payload in exported_map.items():
             if scope_name not in self._MERGEABLE_SCOPES:
@@ -156,7 +140,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     def merge(
         self,
-        other: p.Context | t.ConfigMap | t.RecursiveContainerMapping,
+        other: p.Context | Mapping[str, t.RuntimeData] | Mapping[str, t.Container],
     ) -> Self:
         """Merge another context or dictionary into this context."""
         if not self._state.active:
@@ -164,7 +148,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         exported_map = self._extract_config_map(other)
         if exported_map is None:
             return self
-        if u.context(other):
+        if isinstance(other, p.Context):
             self._apply_scoped_merge(exported_map)
         else:
             self._update_contextvar(c.ContextScope.GLOBAL, exported_map)

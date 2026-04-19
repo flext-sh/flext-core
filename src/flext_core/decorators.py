@@ -30,7 +30,7 @@ class FlextDecorators:
     `r`, `FlextContext`, the public logging DSL in `u`, and `FlextContainer`.
     """
 
-    type _LoggerCarrier = p.HasLogger | p.Logger | t.RuntimeAtomic | m.BaseModel
+    type _LoggerCarrier = p.HasLogger | p.Logger | t.RuntimeData | m.BaseModel
 
     @staticmethod
     def _resolve_logger(
@@ -136,7 +136,13 @@ class FlextDecorators:
                     first_arg_raw = args[0]
                     if isinstance(
                         first_arg_raw, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)
-                    ) or FlextDecorators._has_flext_logger(first_arg_raw):
+                    ) or (
+                        isinstance(
+                            first_arg_raw,
+                            (p.HasLogger,),
+                        )
+                        and FlextDecorators._has_flext_logger(first_arg_raw)
+                    ):
                         logger_carrier = first_arg_raw
                 logger = FlextDecorators._resolve_logger(
                     logger_carrier,
@@ -297,7 +303,13 @@ class FlextDecorators:
                     first_arg_raw = args[0]
                     if isinstance(
                         first_arg_raw, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)
-                    ) or FlextDecorators._has_flext_logger(first_arg_raw):
+                    ) or (
+                        isinstance(
+                            first_arg_raw,
+                            (p.HasLogger,),
+                        )
+                        and FlextDecorators._has_flext_logger(first_arg_raw)
+                    ):
                         logger_carrier = first_arg_raw
                 logger = FlextDecorators._resolve_logger(
                     logger_carrier,
@@ -467,7 +479,7 @@ class FlextDecorators:
 
     @staticmethod
     def _has_flext_logger(
-        value: t.OpaqueValue,
+        value: object | None,
     ) -> TypeIs[p.HasLogger]:
         if not hasattr(value, "logger"):
             return False
@@ -781,7 +793,13 @@ class FlextDecorators:
                     first_arg_raw = args[0]
                     if isinstance(
                         first_arg_raw, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)
-                    ) or FlextDecorators._has_flext_logger(first_arg_raw):
+                    ) or (
+                        isinstance(
+                            first_arg_raw,
+                            (p.HasLogger,),
+                        )
+                        and FlextDecorators._has_flext_logger(first_arg_raw)
+                    ):
                         logger_carrier = first_arg_raw
                 logger = FlextDecorators._resolve_logger(
                     logger_carrier,

@@ -106,7 +106,7 @@ class Ex03LoggingDsl(ExamplesFlextCoreShared):
         logger = u.create_module_logger("examples.ex_03.level")
         self.check(
             "bind_context_for_level.ok",
-            u.bind_context_for_level("INFO", level_tag="l1").success,
+            u.bind_context(c.ContextScope.OPERATION, level_tag="l1").success,
         )
         self.check(
             "level.info.ok",

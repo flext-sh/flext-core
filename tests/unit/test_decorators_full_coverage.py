@@ -178,8 +178,8 @@ class TestDecoratorsFullCoverage:
         logger = u.create_module_logger(__name__)
         owner = self._ObjWithLogger(logger=logger)
 
-        def target() -> None:
-            return None
+        def target() -> str:
+            return "ok"
 
         tm.that(d._resolve_logger(owner, func=target) is logger, eq=True)
 
@@ -403,8 +403,8 @@ class TestDecoratorsFullCoverage:
         def build(_value: m.BaseModel) -> m.BaseModel:
             return _FactoryPayload(v=7)
 
-        built = build(t.ConfigMap(root={"v": 1}))
-        built_value = built.value if u.result_like(built) else built
+        built = build(m.ConfigMap(root={"v": 1}))
+        built_value = built.value if hasattr(built, "value") else built
         if isinstance(built_value, _FactoryPayload):
             tm.that(built_value.v, eq=7)
         elif isinstance(built_value, Mapping):

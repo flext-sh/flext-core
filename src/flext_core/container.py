@@ -20,7 +20,7 @@ from typing import Self, TypeIs, overload, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 
-from flext_core import FlextContext, FlextSettings, c, e, m, p, r, t, u
+from flext_core import FlextContext, FlextRuntime, FlextSettings, c, e, m, p, r, t, u
 
 
 class FlextContainer(p.ContainerLifecycle):
@@ -38,7 +38,7 @@ class FlextContainer(p.ContainerLifecycle):
     _global_lock: threading.RLock = threading.RLock()
     _context: p.Context
     _config: p.Settings
-    _user_overrides: t.ConfigMap
+    _user_overrides: m.ConfigMap
     containers: ModuleType
     providers: ModuleType
     _di_bridge: di_containers.DeclarativeContainer
@@ -456,12 +456,12 @@ class FlextContainer(p.ContainerLifecycle):
         self.register_core_services()
 
     @override
-    def configure(self, settings: t.FlatContainerMapping | None = None) -> Self:
+    def configure(self, settings: Mapping[str, t.Container] | None = None) -> Self:
         """Configure the container with flat validated overrides."""
         return self.apply(settings)
 
     @override
-    def apply(self, settings: t.FlatContainerMapping | None = None) -> Self:
+    def apply(self, settings: Mapping[str, t.Container] | None = None) -> Self:
         """Apply user-provided overrides to container configuration.
 
         Args:
@@ -471,10 +471,11 @@ class FlextContainer(p.ContainerLifecycle):
         """
         if settings is None:
             return self
-        config_map: t.FlatContainerMapping = settings
+        config_map: Mapping[str, t.Container] = settings
         merged = self._user_overrides.model_copy()
         merged.update({
-            str(k): u.normalize_to_container(v) for k, v in config_map.items()
+            str(k): FlextRuntime.to_plain_container(u.normalize_to_container(v))
+            for k, v in config_map.items()
         })
         self._user_overrides = merged
         if applicable := {
@@ -630,14 +631,14 @@ class FlextContainer(p.ContainerLifecycle):
         return r[t.RegisterableService].from_result(e.fail_not_found("service", name))
 
     @override
-    def snapshot(self) -> t.ConfigMap:
+    def snapshot(self) -> m.ConfigMap:
         """Return the merged settings exposed by this container."""
         config_dict_raw = self._global_config.model_dump()
-        return t.ConfigMap(
+        return m.ConfigMap(
             root={
                 str(key): u.normalize_to_container(value)
                 for key, value in config_dict_raw.items()
-            },
+            }
         )
 
     @override
@@ -681,7 +682,12 @@ class FlextContainer(p.ContainerLifecycle):
         factories: Mapping[str, m.FactoryRegistration] | None = None,
         resources: Mapping[str, m.ResourceRegistration] | None = None,
         global_config: m.ContainerConfig | None = None,
-        user_overrides: t.UserOverridesMapping | t.ConfigMap | None = None,
+        user_overrides: (
+            t.UserOverridesMapping
+            | m.ConfigMap
+            | Mapping[str, m.ConfigMap | t.ScalarList | t.Scalar]
+            | None
+        ) = None,
         settings: p.Settings | None = None,
         context: p.Context | None = None,
     ) -> None:
@@ -704,19 +710,19 @@ class FlextContainer(p.ContainerLifecycle):
             if str(name) in self._core_names()
         }
         self._global_config = global_config or self._create_container_config()
-        if isinstance(user_overrides, t.ConfigMap):
+        if isinstance(user_overrides, m.ConfigMap):
             user_overrides_map = user_overrides
         elif user_overrides is not None:
-            user_overrides_map = t.ConfigMap(
+            user_overrides_map = m.ConfigMap(
                 root={
                     ok: list(ov)
                     if isinstance(ov, Sequence) and not isinstance(ov, str | bytes)
                     else ov
                     for ok, ov in user_overrides.items()
-                },
+                }
             )
         else:
-            user_overrides_map = t.ConfigMap(root={})
+            user_overrides_map = m.ConfigMap(root={})
         self._user_overrides = user_overrides_map
         config_instance = self._require_settings(
             settings if settings is not None else FlextSettings.fetch_global(),
@@ -726,11 +732,14 @@ class FlextContainer(p.ContainerLifecycle):
         # Always guarantee context is initialized to valid-by-construction design.
         # If no context was provided, create a default FlextContext instance.
         # This eliminates untestable error states where context could be None.
-        self._context = (
-            self._require_context(context, source="container context")
-            if context is not None
-            else FlextContext()
-        )
+        if context is not None:
+            self._context = self._require_context(context, source="container context")
+        else:
+            default_context = FlextContext()
+            if not isinstance(default_context, p.Context):
+                error_msg = "default context must implement p.Context"
+                raise TypeError(error_msg)
+            self._context = default_context
 
     @override
     def names(self) -> t.StrSequence:
@@ -1038,11 +1047,11 @@ class FlextContainer(p.ContainerLifecycle):
         - etc.
         """
         config_dict_raw = self._global_config.model_dump()
-        config_map = t.ConfigMap(
+        config_map = m.ConfigMap(
             root={
                 str(key): u.normalize_to_container(value)
                 for key, value in config_dict_raw.items()
-            },
+            }
         )
         _ = u.DependencyIntegration.bind_configuration(
             self._di_container,

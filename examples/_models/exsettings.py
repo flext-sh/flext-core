@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from examples import ExamplesFlextCoreModelsErrors as _err, c
-from flext_core import FlextSettings, t, u
+from examples import ExamplesFlextCoreModelsErrors as _err, c, t, u
+from flext_core import FlextSettings
 
 
 class ExSettingsAppSettings(FlextSettings):

@@ -9,7 +9,7 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final, Literal
 
-from tests import t
+from tests import m
 
 
 class TestsFlextCoreConstantsResult:
@@ -84,11 +84,13 @@ class TestsFlextCoreConstantsResult:
         MISSING_VALUE: Final[str] = "Missing value"
         INVALID_INDEX: Final[str] = "only supports indices 0 (data) and 1 (error)"
         CANNOT_ACCEPT_NONE: Final[str] = "cannot accept None"
-        TEST_DATA: Final[t.ConfigMap] = t.ConfigMap({
-            "key": "value",
-            "value": 5,
-        })
-        TEST_DICT: Final[t.ConfigMap] = t.ConfigMap({"key": "value"})
+        TEST_DATA: Final[m.ConfigMap] = m.ConfigMap(
+            root={
+                "key": "value",
+                "value": 5,
+            }
+        )
+        TEST_DICT: Final[m.ConfigMap] = m.ConfigMap(root={"key": "value"})
         TEST_LIST: Final[tuple[int, ...]] = (1, 2, 3)
         MAX_EXECUTION_TIME: Final[float] = 1.0
         ITERATION_COUNT: Final[int] = 1000

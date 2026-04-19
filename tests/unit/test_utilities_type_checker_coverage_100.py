@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict as BaseUserDict
-from collections.abc import MutableMapping
+from collections.abc import Mapping, MutableMapping
 from typing import TypeVar, get_origin, override
 
 import pytest
@@ -62,8 +62,8 @@ class TestsFlextCoreUtilitiesTypeChecker:
 
     class DictHandler(
         h[
-            t.MutableRecursiveContainerMapping,
-            t.MutableRecursiveContainerMapping,
+            t.MutableFlatContainerMapping,
+            t.MutableFlatContainerMapping,
         ],
     ):
         """Handler for dictionary messages."""
@@ -71,16 +71,16 @@ class TestsFlextCoreUtilitiesTypeChecker:
         @override
         def handle(
             self,
-            message: t.MutableRecursiveContainerMapping,
-        ) -> p.Result[t.MutableRecursiveContainerMapping]:
-            result: t.MutableRecursiveContainerMapping = {"processed": True, **message}
-            return r[t.MutableRecursiveContainerMapping].ok(result)
+            message: t.MutableFlatContainerMapping,
+        ) -> p.Result[t.MutableFlatContainerMapping]:
+            result: t.MutableFlatContainerMapping = {"processed": True, **message}
+            return r[t.MutableFlatContainerMapping].ok(result)
 
-    class ObjectHandler(h[t.RecursiveContainer, t.Container]):
-        """Handler for t.RecursiveContainer messages."""
+    class ObjectHandler(h[t.Container, t.Container]):
+        """Handler for t.Container messages."""
 
         @override
-        def handle(self, message: t.RecursiveContainer) -> p.Result[t.Container]:
+        def handle(self, message: t.Container) -> p.Result[t.Container]:
             if isinstance(message, (str, int, float, bool)):
                 return r[t.Container].ok(message)
             return r[t.Container].fail("unsupported message")
@@ -152,10 +152,10 @@ class TestsFlextCoreUtilitiesTypeChecker:
             assert origin in {dict, MutableMapping}
 
     def test_compute_accepted_message_types_object_handler(self) -> None:
-        """Test compute_accepted_message_types with t.RecursiveContainer handler (universal)."""
+        """Test compute_accepted_message_types with t.Container handler (universal)."""
         types = u.compute_accepted_message_types(self.ObjectHandler)
         tm.that(len(types), eq=1)
-        assert types[0] == t.RecursiveContainer
+        assert types[0] == t.Container
 
     def test_can_handle_message_type_exact_match(self) -> None:
         """Test can_handle_message_type with exact type match."""
@@ -164,8 +164,8 @@ class TestsFlextCoreUtilitiesTypeChecker:
         tm.that(not u.can_handle_message_type(accepted, int), eq=True)
 
     def test_can_handle_message_type_object_accepts_all(self) -> None:
-        """Test can_handle_message_type with t.RecursiveContainer type (universal)."""
-        accepted: tuple[t.TypeHintSpecifier, ...] = (t.RecursiveContainer,)
+        """Test can_handle_message_type with t.Container type (universal)."""
+        accepted: tuple[t.TypeHintSpecifier, ...] = (t.Container,)
         tm.that(u.can_handle_message_type(accepted, str), eq=True)
         tm.that(u.can_handle_message_type(accepted, int), eq=True)
         tm.that(u.can_handle_message_type(accepted, dict), eq=True)
@@ -175,7 +175,7 @@ class TestsFlextCoreUtilitiesTypeChecker:
         accepted: tuple[t.MessageTypeSpecifier, ...] = (self._message_type(dict),)
         tm.that(not u.can_handle_message_type(accepted, str), eq=True)
         tm.that(u.can_handle_message_type(accepted, dict), eq=True)
-        dict_type: type[t.RecursiveContainerMapping] = dict
+        dict_type: type[Mapping[str, t.Container]] = dict
         tm.that(u.can_handle_message_type(accepted, dict_type), eq=True)
 
     def test_can_handle_message_type_empty_accepted(self) -> None:
@@ -201,8 +201,8 @@ class TestsFlextCoreUtilitiesTypeChecker:
         tm.that(u._evaluate_type_compatibility(int, int), eq=True)
 
     def test_evaluate_type_compatibility_object_accepts_all(self) -> None:
-        """Test _evaluate_type_compatibility with t.RecursiveContainer type."""
-        object_type: t.TypeHintSpecifier = t.RecursiveContainer
+        """Test _evaluate_type_compatibility with t.Container type."""
+        object_type: t.TypeHintSpecifier = t.Container
         tm.that(u._evaluate_type_compatibility(object_type, str), eq=True)
         tm.that(u._evaluate_type_compatibility(object_type, int), eq=True)
         tm.that(u._evaluate_type_compatibility(object_type, dict), eq=True)
@@ -210,7 +210,7 @@ class TestsFlextCoreUtilitiesTypeChecker:
     def test_evaluate_type_compatibility_dict_types(self) -> None:
         """Test _evaluate_type_compatibility with dict types."""
         tm.that(u._evaluate_type_compatibility(self._type_origin(dict), dict), eq=True)
-        dict_type: type[t.RecursiveContainerMapping] = dict
+        dict_type: type[Mapping[str, t.Container]] = dict
         tm.that(
             u._evaluate_type_compatibility(self._type_origin(dict), dict_type),
             eq=True,
@@ -229,13 +229,13 @@ class TestsFlextCoreUtilitiesTypeChecker:
         tm.that(result_different, is_=bool)
 
     def test_check_object_type_compatibility_object_type(self) -> None:
-        """Test _check_object_type_compatibility with t.RecursiveContainer type."""
-        object_type: t.TypeHintSpecifier = t.RecursiveContainer
+        """Test _check_object_type_compatibility with t.Container type."""
+        object_type: t.TypeHintSpecifier = t.Container
         result = u._check_object_type_compatibility(object_type)
         tm.that(result, eq=True)
 
     def test_check_object_type_compatibility_non_object(self) -> None:
-        """Test _check_object_type_compatibility with non-t.RecursiveContainer type."""
+        """Test _check_object_type_compatibility with non-t.Container type."""
         result = u._check_object_type_compatibility(str)
         tm.that(not result, eq=True)
 
@@ -252,7 +252,7 @@ class TestsFlextCoreUtilitiesTypeChecker:
     def test_check_dict_compatibility_dict_subclass(self) -> None:
         """Test _check_dict_compatibility with dict subclass."""
 
-        class CustomDict(BaseUserDict[str, t.RecursiveContainer]):
+        class CustomDict(BaseUserDict[str, t.Container]):
             """Custom dict subclass."""
 
         result = u._check_dict_compatibility(

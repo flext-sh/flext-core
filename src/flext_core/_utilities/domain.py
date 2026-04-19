@@ -11,16 +11,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
-from datetime import datetime
-from pathlib import Path
-from typing import Literal
 
 from flext_core import (
     FlextModelsBase as m,
-    FlextModelsCollections,
+    FlextModelsContainers as mc,
+    FlextUtilitiesCollection,
     FlextUtilitiesGuards as u,
     c,
-    p,
     t,
 )
 
@@ -37,14 +34,7 @@ class FlextUtilitiesDomain:
         return obj_a.__class__ is obj_b.__class__
 
     @staticmethod
-    def _normalize_aggregated_metadata_value(
-        value: t.ValueOrModel,
-    ) -> t.MetadataValue | None:
-        """Convert dumped model values into canonical metadata values."""
-        return FlextModelsCollections.normalize_aggregated_metadata_value(value)
-
-    @staticmethod
-    def _get_obj_dict(obj: t.RuntimeData) -> t.RecursiveContainerMapping | None:
+    def _get_obj_dict(obj: t.RuntimeData) -> Mapping[str, t.Container] | None:
         """Extract __dict__ safely, returning None on failure."""
         try:
             return obj.__dict__
@@ -52,7 +42,7 @@ class FlextUtilitiesDomain:
             return None
 
     @staticmethod
-    def _to_hashable(value: t.RecursiveContainer) -> t.RecursiveContainer:
+    def _to_hashable(value: t.Container) -> t.Container:
         """Coerce a value to something hashable for dict-based hashing."""
         if isinstance(value, (str, int, float, bool, type(None))):
             return value
@@ -135,124 +125,29 @@ class FlextUtilitiesDomain:
         obj_dict = FlextUtilitiesDomain._get_obj_dict(obj)
         if obj_dict is None:
             return hash(repr(obj))
-        items: Sequence[t.Pair[str, t.RecursiveContainer]] = [
+        items: Sequence[t.Pair[str, t.Container]] = [
             (str(k), FlextUtilitiesDomain._to_hashable(v))
             for k, v in sorted(obj_dict.items())
         ]
         return hash(tuple(items))
 
     @staticmethod
-    def normalize_recursive_metadata_value(
-        item: t.MetadataOrValue | None,
-    ) -> t.RecursiveContainer:
-        """Normalize metadata-like values while preserving recursive shape."""
-        if item is None:
-            return None
-        if isinstance(item, (bool, str, int, float, datetime)):
-            return item
-        if isinstance(item, Mapping):
-            normalized_map: t.MutableRecursiveContainerMapping = {}
-            for key, value in item.items():
-                normalized_map[str(key)] = (
-                    FlextUtilitiesDomain.normalize_recursive_metadata_value(
-                        value if u.scalar(value) else str(value),
-                    )
-                )
-            return normalized_map
-        if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
-            return [
-                FlextUtilitiesDomain.normalize_recursive_metadata_value(
-                    value if u.scalar(value) else str(value),
-                )
-                for value in item
-            ]
-        return str(item)
-
-    @staticmethod
     def normalize_domain_event_data(
-        value: t.ConfigMap | t.ValueOrModel | Mapping[str, t.ValueOrModel] | None,
-    ) -> t.RecursiveContainerMapping:
+        value: mc.ConfigMap | Mapping[str, t.MetadataOrValue | None] | None,
+    ) -> Mapping[str, t.MetadataValue]:
         """Normalize domain event payloads into comparable plain mappings."""
         if value is None:
             return {}
-        if not isinstance(value, (t.ConfigMap, Mapping)):
-            msg = c.ERR_DOMAIN_EVENT_DATA_MUST_BE_DICT_OR_NONE
-            raise TypeError(msg)
-        raw_source = value.root if isinstance(value, t.ConfigMap) else value
-        typed_source = t.dict_str_metadata_adapter().validate_python(raw_source)
-        normalized: MutableMapping[str, t.RecursiveContainer] = {}
+        raw_source = value.root if isinstance(value, mc.ConfigMap) else value
+        typed_source = t.flat_container_mapping_adapter().validate_python(raw_source)
+        normalized: MutableMapping[str, t.MetadataValue] = {}
         for key, item in typed_source.items():
-            normalized[str(key)] = (
-                FlextUtilitiesDomain.normalize_recursive_metadata_value(item)
+            normalized_value = (
+                FlextUtilitiesCollection.normalize_aggregated_metadata_value(item)
             )
+            if normalized_value is not None:
+                normalized[str(key)] = normalized_value
         return normalized
-
-    @staticmethod
-    def aggregate_metadata_values(
-        existing: t.MetadataValue | None,
-        value: t.MetadataValue | None,
-    ) -> t.MetadataValue | None:
-        """Resolve metadata conflicts using stable aggregation rules."""
-        return FlextModelsCollections.aggregate_metadata_values(existing, value)
-
-    @staticmethod
-    def aggregate_dumped_models[
-        TModel: p.HasModelDump,
-    ](
-        items: Sequence[TModel],
-    ) -> Mapping[str, t.MetadataValue]:
-        """Aggregate dumped model fields into one comparable metadata mapping."""
-        if not items:
-            return {}
-        aggregated: MutableMapping[str, t.MetadataValue | None] = {}
-        for item in items:
-            for key, value in item.model_dump().items():
-                normalized_value = (
-                    FlextModelsCollections.normalize_aggregated_metadata_value(value)
-                )
-                aggregated[key] = FlextModelsCollections.aggregate_metadata_values(
-                    aggregated.get(key),
-                    normalized_value,
-                )
-        return {key: value for key, value in aggregated.items() if value is not None}
-
-    @staticmethod
-    def append_metadata_sequence_item(
-        metadata: t.Dict,
-        key: Literal["failed_items", "warning_items"],
-        item: t.ValueOrModel,
-    ) -> None:
-        """Append one normalized item to a metadata sequence bucket."""
-        raw_items = metadata.root.get(key)
-        result_list: t.MutableRecursiveContainerList = []
-        if isinstance(raw_items, list):
-            for raw_item in raw_items:
-                if isinstance(
-                    raw_item,
-                    (str, int, float, bool, datetime, Path, list, dict, tuple),
-                ):
-                    result_list.append(raw_item)
-                elif raw_item is not None:
-                    result_list.append(str(raw_item))
-        if isinstance(item, (str, int, float, bool, datetime, Path, list, dict, tuple)):
-            result_list.append(item)
-        elif item is not None:
-            result_list.append(str(item))
-        metadata.root[key] = result_list
-
-    @staticmethod
-    def upsert_skip_reason(
-        metadata: t.Dict,
-        item: t.ValueOrModel,
-        reason: str,
-    ) -> None:
-        """Store one skip reason keyed by the stringified item representation."""
-        raw_reasons = metadata.root.get("skip_reasons", {})
-        reasons: t.MutableStrMapping = {}
-        if isinstance(raw_reasons, Mapping):
-            reasons = {str(key): str(value) for key, value in raw_reasons.items()}
-        reasons[str(item)] = reason
-        metadata.root["skip_reasons"] = reasons
 
 
 __all__: list[str] = ["FlextUtilitiesDomain"]

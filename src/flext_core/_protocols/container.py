@@ -60,7 +60,7 @@ class FlextProtocolsContainer:
     class ContainerCreationOptions(FlextProtocolsBase.Base, Protocol):
         """Structural contract for DI container bootstrap options."""
 
-        settings: t.ConfigMap | None
+        settings: m.ConfigMap | None
         services: Mapping[str, t.RegisterableService] | None
         factories: Mapping[str, t.FactoryCallable] | None
         resources: Mapping[str, t.ResourceCallable] | None
@@ -76,7 +76,7 @@ class FlextProtocolsContainer:
         @classmethod
         def model_validate(
             cls,
-            obj: t.ModelInput,
+            obj: t.ModelInput | Mapping[str, t.RuntimeData],
         ) -> FlextProtocolsContainer.ContainerCreationOptions:
             """Validate arbitrary input into container creation options."""
             ...
@@ -143,7 +143,7 @@ class FlextProtocolsContainer:
             type_cls: None = None,
         ) -> FlextProtocolsResult.Result[t.RegisterableService]: ...
 
-        def snapshot(self) -> t.ConfigMap:
+        def snapshot(self) -> m.ConfigMap:
             """Return the merged settings exposed by this container."""
             ...
 
@@ -237,7 +237,12 @@ class FlextProtocolsContainer:
             factories: Mapping[str, m.FactoryRegistration] | None = None,
             resources: Mapping[str, m.ResourceRegistration] | None = None,
             global_config: m.ContainerConfig | None = None,
-            user_overrides: t.UserOverridesMapping | t.ConfigMap | None = None,
+            user_overrides: (
+                t.UserOverridesMapping
+                | m.ConfigMap
+                | Mapping[str, m.ConfigMap | t.ScalarList | t.Scalar]
+                | None
+            ) = None,
             settings: FlextProtocolsSettings.Settings | None = None,
             context: FlextProtocolsContext.Context | None = None,
         ) -> None:

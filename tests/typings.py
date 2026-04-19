@@ -43,12 +43,12 @@ class TestsFlextCoreTypes(t):
 
             type ServiceConfigMapping = Mapping[
                 str,
-                t.ContainerValue | MutableSequence[str],
+                t.Tests.TestobjectSerializable | MutableSequence[str],
             ]
             "Service configuration mapping specific to flext-core services."
             type HandlerConfigMapping = Mapping[
                 str,
-                t.ContainerValue | MutableSequence[str],
+                t.Tests.TestobjectSerializable | MutableSequence[str],
             ]
             "Handler configuration mapping specific to flext-core handlers."
 

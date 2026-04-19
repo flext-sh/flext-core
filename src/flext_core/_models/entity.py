@@ -12,20 +12,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableSequence, Sequence
-from typing import Annotated, ClassVar, Self, override
+from collections.abc import MutableSequence
+from typing import Annotated, ClassVar, override
 
-import structlog
-from pydantic import Field, computed_field, model_validator
+from pydantic import Field
 
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsDomainEvent,
     FlextUtilitiesDomain as u,
     FlextUtilitiesGenerators,
-    c,
-    p,
-    r,
     t,
 )
 
@@ -49,7 +45,6 @@ class FlextModelsEntity:
 
         Combines TimestampedModel, IdentifiableMixin, and VersionableMixin to provide:
         - unique_id: Unique identifier (from IdentifiableMixin)
-        - entity_id: Entity identifier property (alias for unique_id)
         - created_at/updated_at: Timestamps (from TimestampedModel)
         - version: Optimistic locking (from VersionableMixin)
         - domain_events: Event sourcing support
@@ -57,8 +52,7 @@ class FlextModelsEntity:
         Enforcement exemption: DDD entities are intentionally mutable. The
         ``domain_events`` collector is an in-process transient buffer; using
         ``default_factory=list`` yields a fresh per-instance list (no shared
-        state) and is required by the event-sourcing API contract
-        (``add_domain_event``/``clear_domain_events``).
+        state) and is required by the event-sourcing API contract.
         """
 
         _flext_enforcement_exempt: ClassVar[bool] = True
@@ -82,137 +76,6 @@ class FlextModelsEntity:
             """Identity-based hash for entities."""
             return u.hash_entity_by_id(self)
 
-        @computed_field
-        @property
-        def entity_id(self) -> str:
-            """Entity identifier property - alias for unique_id."""
-            return self.unique_id
-
-        @property
-        def logger(self) -> p.Logger:
-            """Get the shared structlog logger for entity instances."""
-            return structlog.get_logger(__name__)
-
-        @computed_field
-        @property
-        def uncommitted_events(self: Self) -> Sequence[FlextModelsDomainEvent.Entry]:
-            """Get uncommitted domain events without clearing them."""
-            return list(self.domain_events)
-
-        def add_domain_event(
-            self: Self,
-            event_type: str,
-            data: t.ConfigMap | Mapping[str, t.MetadataOrValue | None] | None = None,
-        ) -> p.Result[FlextModelsDomainEvent.Entry]:
-            """Add a domain event to this entity.
-
-            Args:
-                event_type: Type/name of the event
-                data: Event data mapping
-
-            Returns:
-                r with the created DomainEvent or error
-
-            """
-            if not event_type:
-                return r[FlextModelsDomainEvent.Entry].fail(
-                    c.ERR_DOMAIN_EVENT_NAME_REQUIRED,
-                )
-            if len(self.domain_events) >= c.MAX_UNCOMMITTED_EVENTS:
-                return r[FlextModelsDomainEvent.Entry].fail(
-                    f"Cannot add event: would exceed max events limit of {c.MAX_UNCOMMITTED_EVENTS}",
-                )
-            data_map = FlextModelsDomainEvent.ComparableConfigMap(
-                root=dict(u.normalize_domain_event_data(data)),
-            )
-            event = FlextModelsDomainEvent.Entry(
-                event_type=event_type,
-                aggregate_id=self.unique_id,
-                data=data_map,
-            )
-            self.domain_events.append(event)
-            handler_event_type_raw = data_map.get("event_type", event_type)
-            handler_event_type = (
-                handler_event_type_raw
-                if isinstance(handler_event_type_raw, str) and handler_event_type_raw
-                else event_type
-            )
-            handler_name = f"_apply_{handler_event_type}"
-            handler = getattr(self, handler_name, None)
-            if handler is not None and callable(handler):
-                try:
-                    _ = handler(data_map.root)
-                except (TypeError, ValueError, RuntimeError, AttributeError) as err:
-                    return r[FlextModelsDomainEvent.Entry].fail_op(
-                        "apply domain event",
-                        str(err),
-                    )
-            return r[FlextModelsDomainEvent.Entry].ok(event)
-
-        def add_domain_events_bulk(
-            self: Self,
-            events: Sequence[tuple[str, t.ConfigMap | None]],
-        ) -> p.Result[Sequence[FlextModelsDomainEvent.Entry]]:
-            """Add multiple domain events in bulk.
-
-            Args:
-                events: Sequence of (event_type, data) tuples
-
-            Returns:
-                r with list of created DomainEvents or error
-
-            """
-            if not isinstance(events, (list, tuple)):
-                return r[Sequence[FlextModelsDomainEvent.Entry]].fail(
-                    c.ERR_EVENTS_LIST_OR_TUPLE_REQUIRED,
-                )
-            event_items = list(events)
-            total_after = len(self.domain_events) + len(event_items)
-            if total_after > c.MAX_UNCOMMITTED_EVENTS:
-                return r[Sequence[FlextModelsDomainEvent.Entry]].fail(
-                    f"Cannot add {len(events)} events: would exceed max events limit of {c.MAX_UNCOMMITTED_EVENTS}",
-                )
-            for event_type, _ in event_items:
-                if not event_type:
-                    return r[Sequence[FlextModelsDomainEvent.Entry]].fail(
-                        c.ERR_EVENT_NAME_REQUIRED,
-                    )
-            created_events: MutableSequence[FlextModelsDomainEvent.Entry] = []
-            for event_type, data in event_items:
-                event = FlextModelsDomainEvent.Entry(
-                    event_type=event_type,
-                    aggregate_id=self.unique_id,
-                    data=FlextModelsDomainEvent.ComparableConfigMap(
-                        root=dict(
-                            u.normalize_domain_event_data(data),
-                        ),
-                    ),
-                )
-                self.domain_events.append(event)
-                created_events.append(event)
-            return r[Sequence[FlextModelsDomainEvent.Entry]].ok(created_events)
-
-        def clear_domain_events(
-            self: Self,
-        ) -> Sequence[FlextModelsDomainEvent.Entry]:
-            """Clear and return domain events."""
-            events = list(self.domain_events)
-            self.domain_events.clear()
-            return events
-
-        def mark_events_as_committed(
-            self: Self,
-        ) -> p.Result[Sequence[FlextModelsDomainEvent.Entry]]:
-            """Mark all uncommitted events as committed and return them.
-
-            Returns:
-                r with list of committed events
-
-            """
-            events = list(self.domain_events)
-            self.domain_events.clear()
-            return r[Sequence[FlextModelsDomainEvent.Entry]].ok(events)
-
         @override
         def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
             """Post-initialization hook to set updated_at timestamp when absent."""
@@ -234,39 +97,7 @@ class FlextModelsEntity:
             return u.hash_value_object_by_value(self)
 
     class AggregateRoot(Entity):
-        """Base class for aggregate roots - consistency boundaries."""
-
-        _invariants: ClassVar[Sequence[Callable[[], bool]]] = []
-
-        def check_invariants(self) -> None:
-            """Check all business invariants."""
-            for invariant in self._invariants:
-                if not invariant():
-                    raise ValueError(
-                        c.ERR_ENTITY_INVARIANT_VIOLATED.format(
-                            invariant_name=invariant.__name__,
-                        ),
-                    )
-
-        @model_validator(mode="after")
-        def validate_aggregate_consistency(self) -> Self:
-            invariant_result = r[None].ok(None).map(lambda _: self.check_invariants())
-            if invariant_result.failure:
-                raise ValueError(
-                    c.ERR_ENTITY_AGGREGATE_INVARIANT_FAILURE.format(
-                        error=invariant_result.error or "invariant check failed",
-                    ),
-                )
-            if len(self.domain_events) > c.MAX_UNCOMMITTED_EVENTS:
-                max_events = c.MAX_UNCOMMITTED_EVENTS
-                event_count = len(self.domain_events)
-                raise ValueError(
-                    c.ERR_ENTITY_TOO_MANY_DOMAIN_EVENTS.format(
-                        count=event_count,
-                        max=max_events,
-                    ),
-                )
-            return self
+        """Aggregate-root marker class (DDD consistency boundary)."""
 
 
 __all__: list[str] = ["FlextModelsEntity"]

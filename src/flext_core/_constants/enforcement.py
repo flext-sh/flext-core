@@ -102,7 +102,7 @@ class FlextConstantsEnforcement:
     """FLEXT infrastructure base class names exempt from enforcement checks."""
 
     ENFORCEMENT_FORBIDDEN_COLLECTIONS: Final[Mapping[type, str]] = MappingProxyType({
-        dict: "Mapping[K, V] or t.RecursiveContainerMapping",
+        dict: "Mapping[K, V] or Mapping[str, t.Container]",
         list: "Sequence[X] or t.RecursiveContainerList",
         set: "frozenset[X] or AbstractSet[X]",
     })

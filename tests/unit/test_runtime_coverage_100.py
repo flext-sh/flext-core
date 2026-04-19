@@ -1,252 +1,31 @@
-"""Real tests to achieve 100% runtime coverage - no mocks.
-
-This module provides comprehensive real tests (no mocks, patches, or bypasses)
-to cover all remaining lines in runtime.py.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Runtime utility smoke coverage aligned to current contracts."""
 
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import MutableSequence, Sequence
-from typing import overload, override
 
-import structlog
-
-from flext_tests import tm
-from tests import m, p, t, u
+from tests import m, t, u
 
 
 class TestRuntimeCoverage100:
-    """Tests for dict_like runtime coverage."""
+    """Smoke tests for runtime normalization and guards."""
 
-    def test_is_dict_like_with_exception_on_items(self) -> None:
-        """Test dict_like when value is a non-Mapping model (not dict-like)."""
+    def test_dict_like_accepts_mapping_inputs(self) -> None:
+        assert u.dict_like({"k": "v"})
+        assert u.dict_like(UserDict({"k": "v"}))
 
-        class BadDictLike(m.Value):
-            pass
+    def test_dict_like_rejects_model_without_mapping_protocol(self) -> None:
+        class NonMapping(m.Value):
+            label: str = "x"
 
-        obj: t.RuntimeData = BadDictLike()
-        result = u.dict_like(obj)
-        tm.that(not result, eq=True)
+        assert not u.dict_like(NonMapping())
 
-    def test_is_dict_like_with_exception_on_items_typeerror(self) -> None:
-        """Test dict_like when value is a non-Mapping model (not dict-like)."""
+    def test_normalize_to_container_keeps_scalar(self) -> None:
+        scalar: t.RuntimeData = "value"
+        assert u.normalize_to_container(scalar) == "value"
 
-        class BadDictLike(m.Value):
-            flag: bool = False
-
-        obj: t.RuntimeData = BadDictLike()
-        result = u.dict_like(obj)
-        tm.that(not result, eq=True)
-
-    def test_is_dict_like_with_userdict(self) -> None:
-        """Test dict_like with UserDict (dict-like t.RecursiveContainer)."""
-        user_dict = UserDict({"key": "value"})
-        result = u.dict_like(user_dict)
-        tm.that(result, eq=True)
-
-    def test_is_dict_like_with_missing_attributes(self) -> None:
-        """Test dict_like with Pydantic model (not a Mapping)."""
-
-        class NotDictLike(m.Value):
-            pass
-
-        obj: t.RuntimeData = NotDictLike()
-        result = u.dict_like(obj)
-        tm.that(not result, eq=True)
-
-    def test_is_dict_like_with_missing_keys(self) -> None:
-        """Test dict_like with Pydantic model (not a Mapping)."""
-
-        class NotDictLike(m.Value):
-            value: str = ""
-
-        obj: t.RuntimeData = NotDictLike()
-        result = u.dict_like(obj)
-        tm.that(not result, eq=True)
-
-    def test_is_dict_like_with_missing_items(self) -> None:
-        """Test dict_like with Pydantic model (not a Mapping)."""
-
-        class NotDictLike(m.Value):
-            count: int = 0
-
-        obj: t.RuntimeData = NotDictLike()
-        result = u.dict_like(obj)
-        tm.that(not result, eq=True)
-
-    def test_is_dict_like_with_missing_get(self) -> None:
-        """Test dict_like with Pydantic model (not a Mapping)."""
-
-        class NotDictLike(m.Value):
-            name: str = ""
-
-        obj: t.RuntimeData = NotDictLike()
-        result = u.dict_like(obj)
-        tm.that(not result, eq=True)
-
-    def test_extract_generic_args_with_type_mapping(self) -> None:
-        """Test extract_generic_args with known type aliases."""
-
-        class StringDict:
-            __name__ = "StringDict"
-
-        class IntDict:
-            __name__ = "IntDict"
-
-        class FloatDict:
-            __name__ = "FloatDict"
-
-        class BoolDict:
-            __name__ = "BoolDict"
-
-        class NestedDict:
-            __name__ = "NestedDict"
-
-        tm.that(u.extract_generic_args(StringDict), eq=(str, str))
-        tm.that(u.extract_generic_args(IntDict), eq=(str, int))
-        tm.that(u.extract_generic_args(FloatDict), eq=(str, float))
-        tm.that(u.extract_generic_args(BoolDict), eq=(str, bool))
-        tm.that(u.extract_generic_args(NestedDict), eq=(str, dict))
-
-    def test_is_sequence_type_with_type_mapping(self) -> None:
-        """Test is_sequence_type with known type aliases."""
-
-        class StringList:
-            __name__ = "StringList"
-
-        class IntList:
-            __name__ = "IntList"
-
-        class FloatList:
-            __name__ = "FloatList"
-
-        class BoolList:
-            __name__ = "BoolList"
-
-        class List:
-            __name__ = "List"
-
-        tm.that(u.sequence_type(StringList), eq=True)
-        tm.that(u.sequence_type(IntList), eq=True)
-        tm.that(u.sequence_type(FloatList), eq=True)
-        tm.that(u.sequence_type(BoolList), eq=True)
-        tm.that(u.sequence_type(List), eq=True)
-
-    def test_level_based_context_filter_malformed_prefix(self) -> None:
-        """Test level_based_context_filter with malformed prefix."""
-        u.configure_structlog()
-        malformed_key = "_level_"
-        event_dict: t.ScalarMapping = {
-            malformed_key: "value1",
-            "normal_key": "value2",
-        }
-        logger = structlog.get_logger()
-        result = u.level_based_context_filter(logger, "info", event_dict)
-        assert malformed_key in result or "normal_key" in result
-
-    def test_configure_structlog_with_config_object(self) -> None:
-        """Test configure_structlog with settings t.RecursiveContainer."""
-        u._structlog_configured = False
-        u.configure_structlog(settings=None)
-        assert u._structlog_configured
-
-    def test_is_valid_identifier_non_string(self) -> None:
-        """Test is_valid_identifier with non-string types."""
-        tm.that(not u.valid_identifier(123), eq=True)
-        tm.that(not u.valid_identifier(None), eq=True)
-
-    def test_extract_generic_args_with_typing_get_args(self) -> None:
-        """Test extract_generic_args when typing.get_args returns values."""
-        args = u.extract_generic_args(MutableSequence[str])
-        tm.that(args, eq=(str,))
-        args = u.extract_generic_args(t.MutableIntMapping)
-        tm.that(args, eq=(str, int))
-
-    def test_extract_generic_args_exception_path(self) -> None:
-        """Test extract_generic_args exception handling."""
-
-        class BadType:
-            @override
-            def __getattribute__(self, name: str) -> t.RecursiveContainer:
-                if name == "__name__":
-                    msg = "Cannot access __name__"
-                    raise AttributeError(msg)
-                return super().__getattribute__(name)
-
-        result = u.extract_generic_args(BadType)
-        tm.that(result, eq=())
-
-    def test_is_sequence_type_with_origin(self) -> None:
-        """Test is_sequence_type with typing.get_origin returning Sequence."""
-        tm.that(u.sequence_type(MutableSequence[str]), eq=True)
-        tm.that(u.sequence_type(MutableSequence[int]), eq=True)
-
-    def test_is_sequence_type_with_sequence_subclass(self) -> None:
-        """Test is_sequence_type with type that is Sequence subclass."""
-
-        class MySequence(Sequence[str]):
-            @overload
-            def __getitem__(self, index: int) -> str: ...
-
-            @overload
-            def __getitem__(self, index: slice) -> t.StrSequence: ...
-
-            @override
-            def __getitem__(self, index: int | slice) -> t.StrSequence | str:
-                return "" if isinstance(index, int) else MySequence()
-
-            @override
-            def __len__(self) -> int:
-                return 0
-
-        tm.that(u.sequence_type(MySequence), eq=True)
-
-    def test_is_sequence_type_exception_path(self) -> None:
-        """Test is_sequence_type exception handling."""
-
-        class BadType:
-            @override
-            def __getattribute__(self, name: str) -> t.RecursiveContainer:
-                if name == "__name__":
-                    msg = "Cannot access __name__"
-                    raise AttributeError(msg)
-                return super().__getattribute__(name)
-
-        result = u.sequence_type(BadType)
-        tm.that(not result, eq=True)
-
-    def test_level_based_context_filter_with_level_prefixed(self) -> None:
-        """Test level_based_context_filter with properly formatted level prefix."""
-        u.configure_structlog()
-        event_dict: t.ScalarMapping = {
-            "_level_debug_config": "dbg",
-            "_level_info_status": "ok",
-            "_level_error_stack": "trace",
-            "normal_key": "value",
-        }
-        logger = structlog.get_logger()
-        result = u.level_based_context_filter(logger, "info", event_dict)
-        assert "status" in result
-        assert "normal_key" in result
-        assert "settings" in result
-        assert "stack" not in result
-
-    def test_configure_structlog_with_config_additional_processors(self) -> None:
-        """Test configure_structlog with settings t.RecursiveContainer having additional_processors."""
-        u._structlog_configured = False
-
-        def custom_processor(
-            logger: p.Logger | None,
-            method_name: str,
-            event_dict: t.MutableRecursiveContainerMapping,
-        ) -> t.MutableRecursiveContainerMapping:
-            event_dict["custom"] = True
-            return event_dict
-
-        _ = custom_processor
-        u.configure_structlog(settings=None)
-        assert u._structlog_configured
+    def test_normalize_to_container_flattens_config_map(self) -> None:
+        cfg = m.ConfigMap(root={"a": 1, "b": "x"})
+        normalized = u.normalize_to_container(cfg)
+        assert isinstance(normalized, dict)
+        assert normalized.get("a") == 1

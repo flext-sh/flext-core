@@ -18,6 +18,7 @@ from typing import Annotated, ClassVar
 
 from flext_core import (
     FlextModelsBase as m,
+    FlextModelsContainers,
     FlextModelsPydantic as mp,
     FlextRuntime,
     FlextTypesPydantic as tp,
@@ -37,7 +38,7 @@ class FlextModelsContainer:
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
-        Replaces: t.ConfigMap for service tracking.
+        Replaces: m.ConfigMap for service tracking.
         """
 
         name: Annotated[
@@ -61,7 +62,7 @@ class FlextModelsContainer:
             ),
         ] = up.Field(default_factory=lambda: datetime.now(UTC))
         metadata: Annotated[
-            m.Metadata | t.ConfigMap | None,
+            m.Metadata | FlextModelsContainers.ConfigMap | None,
             mp.BeforeValidator(
                 lambda value: FlextRuntime.validate_metadata_model_input(
                     value,
@@ -92,7 +93,11 @@ class FlextModelsContainer:
         def validate_service(
             cls,
             value: t.RegisterableService,
-        ) -> t.RegisterableService | t.ConfigMap | t.ObjectList:
+        ) -> (
+            t.RegisterableService
+            | FlextModelsContainers.ConfigMap
+            | FlextModelsContainers.ObjectList
+        ):
             return FlextRuntime.normalize_registerable_service(value)
 
     class FactoryRegistration(
@@ -101,7 +106,7 @@ class FlextModelsContainer:
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
-        Replaces: t.ConfigMap for factory tracking.
+        Replaces: m.ConfigMap for factory tracking.
         """
 
         name: Annotated[
@@ -140,7 +145,7 @@ class FlextModelsContainer:
             ),
         ] = None
         metadata: Annotated[
-            m.Metadata | t.ConfigMap | None,
+            m.Metadata | FlextModelsContainers.ConfigMap | None,
             mp.BeforeValidator(
                 lambda value: FlextRuntime.validate_metadata_model_input(
                     value,
@@ -190,7 +195,7 @@ class FlextModelsContainer:
             ),
         ] = up.Field(default_factory=lambda: datetime.now(UTC))
         metadata: Annotated[
-            m.Metadata | t.ConfigMap | None,
+            m.Metadata | FlextModelsContainers.ConfigMap | None,
             mp.BeforeValidator(
                 lambda value: FlextRuntime.validate_metadata_model_input(
                     value,
@@ -206,7 +211,7 @@ class FlextModelsContainer:
     class ContainerConfig(m.FlexibleInternalModel):
         """Model for container configuration.
 
-        Replaces: t.ConfigMap for container configuration storage.
+        Replaces: m.ConfigMap for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 
@@ -317,7 +322,9 @@ class FlextModelsContainer:
             )
         )
         user_overrides: (
-            t.ConfigMap | Mapping[str, t.ConfigMap | t.ScalarList | t.Scalar] | None
+            FlextModelsContainers.ConfigMap
+            | Mapping[str, FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar]
+            | None
         ) = up.Field(
             None,
             title="User Overrides",

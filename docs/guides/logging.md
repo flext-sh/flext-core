@@ -1,232 +1,101 @@
 # Logging Guide
 
-<!-- TOC START -->
-- [Overview](#overview)
-- [Canonical Rules](#canonical-rules)
-- [3-Tier Context System](#3-tier-context-system)
-  - [1. Global Context](#1-global-context)
-  - [2. Scoped Context](#2-scoped-context)
-  - [3. Level Context](#3-level-context)
-- [Context Precedence](#context-precedence)
-- [Automatic Context Propagation](#automatic-context-propagation)
-- [Best Practices](#best-practices)
-- [Example: Request Handler Pattern](#example-request-handler-pattern)
-- [Auto-Configuration](#auto-configuration)
-- [See Also](#see-also)
-<!-- TOC END -->
-
 ## Overview
 
-FLEXT provides a comprehensive structured logging system built on `structlog` with automatic context propagation, scoped contexts, and level-based context management. This guide explains the 3-tier context system and how to use it effectively.
+FLEXT logging is built on `structlog` through `FlextLogger`. The logger supports:
 
-## Canonical Rules
+- Global context for app-wide metadata
+- Scoped context for request/operation data
+- Level-specific context for verbose diagnostics
 
-- Follow root governance in `AGENTS.md`.
-- Prefer structured examples that preserve context keys and correlation IDs.
-- Keep cross-links in sync with guide and API reference sections.
+All examples below are standalone and executable in markdown code-fence tests.
 
-## 3-Tier Context System
+## Global Context
 
-FLEXT logging implements a 3-tier context system that allows you to manage logging context at different levels of granularity:
-
-### 1. Global Context
-
-**Application-wide context via structlog contextvars**
-
-Global context is managed using `structlog.contextvars` and is automatically propagated to all log messages across the entire application. This is the broadest level of context and is ideal for application-wide metadata such as:
-
-- Application version
-- Deployment environment
-- Service instance ID
-- Global correlation IDs
-
-**Usage:**
+Use global context for metadata that should be present in all messages.
 
 ```python
-# Bind global context
-FlextLogger.Context.bind_global_context(
-    app_version="1.0.0", environment="production", service_id="flext-api-001"
-)
+from flext_core import FlextLogger
 
-# All subsequent log messages will include this context
+_ = FlextLogger.bind_global_context(service="flext-core", environment="dev")
 logger = FlextLogger.create_module_logger(__name__)
-logger.info("Application started")  # Includes global context
+_ = logger.info("application_started")
+
+_ = FlextLogger.unbind_global_context("service", "environment")
 ```
 
-**Unbinding:**
+Use `unbind_global_context` when you want to remove selected keys, or `clear_global_context` when you want a full reset.
 
 ```python
-# Unbind specific keys
-FlextLogger.Context.unbind_global_context("app_version")
+from flext_core import FlextLogger
 
-# Unbind all global context
-FlextLogger.Context.unbind_global_context()
+_ = FlextLogger.bind_global_context(trace_id="trace-001")
+_ = FlextLogger.clear_global_context()
 ```
 
-### 2. Scoped Context
+## Scoped Context
 
-**APPLICATION, REQUEST, OPERATION scopes**
-
-Scoped contexts provide isolation for different execution scopes. Each scope maintains its own context dictionary, allowing you to have different context values for different parts of your application.
-
-**Available Scopes:**
-
-- **APPLICATION**: Application-level context (long-lived, shared across requests)
-- **REQUEST**: Request-level context (per HTTP request, API call, etc.)
-- **OPERATION**: Operation-level context (per business operation, handler execution, etc.)
-
-**Usage:**
+Use `bind_context` to attach context to a logical scope (for example, a request id).
 
 ```python
-from flext_core import c
+from flext_core import FlextLogger
 
-# Bind context to APPLICATION scope
-FlextLogger.Context.bind_context(
-    scope=c.SCOPE_APPLICATION, user_id="user-123", tenant_id="tenant-456"
-)
+scope = "request"
+_ = FlextLogger.bind_context(scope=scope, request_id="req-123", user_id="u-42")
 
-# Bind context to REQUEST scope
-FlextLogger.Context.bind_context(
-    scope=c.SCOPE_REQUEST,
-    request_id="req-789",
-    http_method="POST",
-    endpoint="/api/users",
-)
-
-# Bind context to OPERATION scope
-FlextLogger.Context.bind_context(
-    scope=c.SCOPE_OPERATION,
-    operation_id="op-abc",
-    handler_name="CreateUserHandler",
-)
-
-# Log messages will include context from all active scopes
 logger = FlextLogger.create_module_logger(__name__)
-logger.info("Processing user creation")  # Includes all scoped contexts
+_ = logger.info("request_started")
+
+_ = FlextLogger.clear_scope(scope)
 ```
 
-**Unbinding:**
+`clear_scope` removes context associated with that scope.
+
+## Level Context
+
+Use level context to enrich only specific levels (for example, DEBUG diagnostics).
 
 ```python
-# Unbind specific keys from a scope
-FlextLogger.Context.unbind_context(scope=c.SCOPE_REQUEST, keys=["request_id"])
+from flext_core import FlextLogger
 
-# Unbind all context from a scope
-FlextLogger.Context.unbind_context(scope=c.SCOPE_OPERATION)
-```
-
-### 3. Level Context
-
-**DEBUG-only verbose logging**
-
-Level contexts allow you to add additional context that is only included in log messages at specific log levels. This is useful for verbose debugging information that you don't want to include in production logs.
-
-**Usage:**
-
-```python
-import logging
-
-# Bind context for DEBUG level only
-FlextLogger.Context.bind_context_for_level(
-    level=logging.DEBUG, internal_state="detailed-state-info", debug_trace="trace-123"
+_ = FlextLogger.bind_context_for_level(
+    level="debug",
+    internal_state="cache-miss",
+    debug_trace="trace-xyz",
 )
 
-# This context will only appear in DEBUG level messages
 logger = FlextLogger.create_module_logger(__name__)
-logger.debug("Debug message")  # Includes level context
-logger.info("Info message")  # Does NOT include level context
+_ = logger.debug("debug_message")
+_ = logger.info("info_message")
+
+_ = FlextLogger.clear_global_context()
 ```
 
-**Unbinding:**
+## Request Handler Pattern
+
+The typical flow is: bind request context, log, then clear scope in `finally`.
 
 ```python
-# Unbind specific keys from a level
-FlextLogger.Context.unbind_context_for_level(
-    level=logging.DEBUG, keys=["internal_state"]
-)
+from flext_core import FlextLogger
 
-# Unbind all context from a level
-FlextLogger.Context.unbind_context_for_level(level=logging.DEBUG)
-```
 
-## Context Precedence
+def handle_request(request_id: str, user_id: str) -> None:
+    scope = "request"
+    _ = FlextLogger.bind_context(scope=scope, request_id=request_id, user_id=user_id)
+    logger = FlextLogger.create_module_logger(__name__)
+    try:
+        _ = logger.info("request_processing")
+    finally:
+        _ = FlextLogger.clear_scope(scope)
 
-When multiple context sources are active, they are merged in the following order (later sources override earlier ones):
 
-1. **Global Context** (lowest priority)
-1. **Scoped Contexts** (APPLICATION, then REQUEST, then OPERATION)
-1. **Level Context** (only for matching log levels)
-1. **Message-specific context** (highest priority, passed directly to log methods)
-
-## Automatic Context Propagation
-
-All context is automatically propagated to log messages. You don't need to manually pass context to each log call:
-
-```python
-# Set context once
-FlextLogger.Context.bind_context(scope=c.SCOPE_REQUEST, request_id="req-123")
-
-# All log messages in this scope automatically include request_id
-logger = FlextLogger.create_module_logger(__name__)
-logger.info("Processing started")  # Automatically includes request_id
-logger.warning("Validation failed")  # Automatically includes request_id
-logger.error("Operation failed")  # Automatically includes request_id
+handle_request("req-99", "u-10")
 ```
 
 ## Best Practices
 
-1. **Use Global Context** for application-wide metadata that doesn't change
-1. **Use Scoped Context** for request/operation-specific data that should be isolated
-1. **Use Level Context** for verbose debugging information that shouldn't appear in production
-1. **Clean up context** when scopes end (e.g., unbind REQUEST context after request completes)
-1. **Use context managers** for automatic cleanup when available
-
-## Example: Request Handler Pattern
-
-```python
-from flext_core import c
-
-
-class UserHandler:
-    def __init__(self):
-        self.logger = FlextLogger.create_module_logger(__name__)
-
-    def handle_request(self, request_id: str, user_id: str):
-        # Bind REQUEST scope context
-        FlextLogger.Context.bind_context(
-            scope=c.SCOPE_REQUEST, request_id=request_id, user_id=user_id
-        )
-
-        try:
-            self.logger.info("Request started")
-            # ... process request ...
-            self.logger.info("Request completed")
-        finally:
-            # Clean up REQUEST scope context
-            FlextLogger.Context.unbind_context(scope=c.SCOPE_REQUEST)
-```
-
-## Auto-Configuration
-
-FLEXT automatically configures structlog on first logger creation. You don't need to manually call `u.configure_structlog()` unless you need custom configuration:
-
-```python
-# Automatic configuration - no manual setup required
-logger = FlextLogger.create_module_logger(__name__)
-logger.info("This works automatically!")
-```
-
-For custom configuration, you can still call `u.configure_structlog()` explicitly before creating loggers.
-
-```python
-from flext_core import FlextLogger, u
-
-_ = u.configure_structlog()
-logger = FlextLogger.create_module_logger(__name__)
-```
-
-## See Also
-
-- Service Patterns Guide - Using logging in services
-- Error Handling Guide - Logging errors and exceptions
-- Testing Guide - Testing with structured logging
+- Use global context for stable metadata (service, environment, version).
+- Use scoped context for per-request or per-operation values.
+- Use level context for diagnostic-only fields.
+- Always clear scoped context in `finally` blocks.
+- Keep context keys small and deterministic.

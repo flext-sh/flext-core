@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from itertools import count
 from typing import Annotated, ClassVar, override
 
@@ -55,9 +55,9 @@ class TestsFlextCoreUtilities(u):
                     return r[bool].ok(True)
 
                 @override
-                def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
+                def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeData]:
                     _ = message
-                    return r[t.RuntimeAtomic].fail(
+                    return r[t.RuntimeData].fail(
                         c.Core.Tests.TestErrors.DISPATCHER_UNCONFIGURED
                     )
 
@@ -84,9 +84,9 @@ class TestsFlextCoreUtilities(u):
                     return r[bool].fail(c.Core.Tests.TestErrors.DISPATCHER_FAIL)
 
                 @override
-                def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
+                def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeData]:
                     _ = message
-                    return r[t.RuntimeAtomic].fail(
+                    return r[t.RuntimeData].fail(
                         c.Core.Tests.TestErrors.DISPATCHER_FAIL
                     )
 
@@ -113,9 +113,9 @@ class TestsFlextCoreUtilities(u):
                     return r[bool].ok(True)
 
                 @override
-                def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeAtomic]:
+                def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeData]:
                     _ = message
-                    return r[t.RuntimeAtomic].ok(True)
+                    return r[t.RuntimeData].ok(True)
 
             @staticmethod
             def success_cases() -> Sequence[tuple[str, str]]:
@@ -149,7 +149,7 @@ class TestsFlextCoreUtilities(u):
 
             @staticmethod
             def multi_operation_cases() -> Sequence[
-                tuple[str, int, t.RecursiveContainerMapping]
+                tuple[str, int, Mapping[str, t.Container]]
             ]:
                 return [
                     (
@@ -226,7 +226,7 @@ class TestsFlextCoreUtilities(u):
                         ),
                     )
 
-            class ValidationService(s[t.RecursiveContainerMapping]):
+            class ValidationService(s[Mapping[str, t.Container]]):
                 """Service to validate values."""
 
                 value: Annotated[
@@ -235,20 +235,20 @@ class TestsFlextCoreUtilities(u):
                 ] = 0
 
                 @override
-                def execute(self) -> p.Result[t.RecursiveContainerMapping]:
+                def execute(self) -> p.Result[Mapping[str, t.Container]]:
                     if self.value < 0:
-                        return r[t.RecursiveContainerMapping].fail(
+                        return r[Mapping[str, t.Container]].fail(
                             c.Core.Tests.TestErrors.VALUE_TOO_LOW
                         )
                     if self.value > 100:
-                        return r[t.RecursiveContainerMapping].fail(
+                        return r[Mapping[str, t.Container]].fail(
                             c.Core.Tests.TestErrors.VALUE_TOO_HIGH
                         )
-                    return r[t.RecursiveContainerMapping].ok(
+                    return r[Mapping[str, t.Container]].ok(
                         {"valid": True, "value": self.value},
                     )
 
-            class MultiOperationService(s[t.RecursiveContainerMapping]):
+            class MultiOperationService(s[Mapping[str, t.Container]]):
                 """Service for multiple operations."""
 
                 operation: Annotated[
@@ -261,33 +261,33 @@ class TestsFlextCoreUtilities(u):
                 ] = 0
 
                 @override
-                def execute(self) -> p.Result[t.RecursiveContainerMapping]:
+                def execute(self) -> p.Result[Mapping[str, t.Container]]:
                     match self.operation:
                         case "double":
-                            return r[t.RecursiveContainerMapping].ok(
+                            return r[Mapping[str, t.Container]].ok(
                                 {
                                     "operation": "double",
                                     "result": self.value * 2,
                                 },
                             )
                         case "square":
-                            return r[t.RecursiveContainerMapping].ok(
+                            return r[Mapping[str, t.Container]].ok(
                                 {
                                     "operation": "square",
                                     "result": self.value**2,
                                 },
                             )
                         case "negate":
-                            return r[t.RecursiveContainerMapping].ok(
+                            return r[Mapping[str, t.Container]].ok(
                                 {"operation": "negate", "result": -self.value},
                             )
                         case _:
-                            return r[t.RecursiveContainerMapping].fail(
+                            return r[Mapping[str, t.Container]].fail(
                                 f"Unknown operation: {self.operation}"
                             )
 
             @staticmethod
-            def value_lt_100(data: t.RecursiveContainerMapping) -> bool:
+            def value_lt_100(data: Mapping[str, t.Container]) -> bool:
                 value = data.get("value")
                 return isinstance(value, int) and value < 100
 
@@ -361,10 +361,16 @@ class TestsFlextCoreUtilities(u):
                 if not case.user_ids:
                     msg = c.Core.Tests.TestErrors.NO_USER_IDS_PROVIDED
                     raise e.BaseError(msg)
-                raw_user = TestsFlextCoreUtilities.Core.Tests.make(
+                raw_user_result = TestsFlextCoreUtilities.Core.Tests.make(
                     TestsFlextCoreUtilities.Core.Tests.GetUserService,
                     user_id=case.user_ids[0],
-                ).result
+                ).execute()
+                if raw_user_result.failure:
+                    msg = (
+                        raw_user_result.error or c.Core.Tests.TestErrors.USER_NOT_FOUND
+                    )
+                    raise e.BaseError(msg)
+                raw_user = raw_user_result.unwrap_or(None)
                 if not isinstance(raw_user, m.Core.Tests.User):
                     msg = c.Core.Tests.TestErrors.USER_NOT_FOUND
                     raise e.BaseError(msg)
@@ -378,11 +384,18 @@ class TestsFlextCoreUtilities(u):
                         )
                     elif operation == "send_email":
                         email_to = user if isinstance(user, str) else str(user)
-                        raw_response = TestsFlextCoreUtilities.Core.Tests.make(
+                        raw_response_result = TestsFlextCoreUtilities.Core.Tests.make(
                             TestsFlextCoreUtilities.Core.Tests.SendEmailService,
                             to=email_to,
                             subject="Test",
-                        ).result
+                        ).execute()
+                        if raw_response_result.failure:
+                            msg = (
+                                raw_response_result.error
+                                or c.Core.Tests.TestErrors.INVALID_EMAIL
+                            )
+                            raise e.BaseError(msg)
+                        raw_response = raw_response_result.unwrap_or(None)
                         if not isinstance(raw_response, m.Core.Tests.EmailResponse):
                             msg = c.Core.Tests.TestErrors.INVALID_EMAIL
                             raise e.BaseError(msg)
@@ -1130,12 +1143,12 @@ class TestsFlextCoreUtilities(u):
                     m.Core.Tests.ReliabilityScenario(
                         name="retry_immediate_success",
                         strategy="retry",
-                        settings=t.ConfigMap(
+                        settings=m.ConfigMap(
                             root={
                                 "max_retries": 3,
                                 "backoff_type": "constant",
                                 "backoff_ms": 10,
-                            },
+                            }
                         ),
                         simulate_failures=0,
                         expected_state="success",
@@ -1145,12 +1158,12 @@ class TestsFlextCoreUtilities(u):
                     m.Core.Tests.ReliabilityScenario(
                         name="retry_after_one_failure",
                         strategy="retry",
-                        settings=t.ConfigMap(
+                        settings=m.ConfigMap(
                             root={
                                 "max_retries": 3,
                                 "backoff_type": "constant",
                                 "backoff_ms": 10,
-                            },
+                            }
                         ),
                         simulate_failures=1,
                         expected_state="success",
@@ -1160,12 +1173,12 @@ class TestsFlextCoreUtilities(u):
                     m.Core.Tests.ReliabilityScenario(
                         name="retry_exhausted",
                         strategy="retry",
-                        settings=t.ConfigMap(
+                        settings=m.ConfigMap(
                             root={
                                 "max_retries": 2,
                                 "backoff_type": "constant",
                                 "backoff_ms": 10,
-                            },
+                            }
                         ),
                         simulate_failures=5,
                         expected_state="exhausted",
@@ -1179,7 +1192,7 @@ class TestsFlextCoreUtilities(u):
                     m.Core.Tests.ReliabilityScenario(
                         name="circuit_initial_closed",
                         strategy="circuit_breaker",
-                        settings=t.ConfigMap(
+                        settings=m.ConfigMap(
                             root={"failure_threshold": 5, "timeout_ms": 1000}
                         ),
                         simulate_failures=0,
@@ -1190,7 +1203,7 @@ class TestsFlextCoreUtilities(u):
                     m.Core.Tests.ReliabilityScenario(
                         name="circuit_open_on_threshold",
                         strategy="circuit_breaker",
-                        settings=t.ConfigMap(
+                        settings=m.ConfigMap(
                             root={"failure_threshold": 2, "timeout_ms": 1000}
                         ),
                         simulate_failures=3,
@@ -1713,24 +1726,24 @@ class TestsFlextCoreUtilities(u):
                     success: int = 0,
                     failure: int = 0,
                     skipped: int = 0,
-                ) -> m.Operation:
+                ) -> m.Core.Tests.Operation:
                     """Create OperationProgress."""
-                    return m.Operation(
+                    return m.Core.Tests.Operation(
                         success_count=success,
                         failure_count=failure,
                         skipped_count=skipped,
-                        metadata=t.Dict({}),
+                        metadata={},
                     )
 
                 @staticmethod
-                def conversion_progress() -> m.Conversion:
+                def conversion_progress() -> m.Core.Tests.Conversion:
                     """Create ConversionProgress."""
-                    return m.Conversion(
+                    return m.Core.Tests.Conversion(
                         converted=[],
                         errors=[],
                         warnings=[],
                         skipped=[],
-                        metadata=t.Dict({}),
+                        metadata={},
                     )
 
             @staticmethod

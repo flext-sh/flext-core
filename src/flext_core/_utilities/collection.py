@@ -15,6 +15,7 @@ from collections.abc import (
     MutableSequence,
     Sequence,
 )
+from datetime import datetime
 from typing import ClassVar, overload
 
 from flext_core import (
@@ -29,6 +30,53 @@ from flext_core import (
 
 class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
+
+    @staticmethod
+    def normalize_aggregated_metadata_value(
+        value: t.ValueOrModel,
+    ) -> t.MetadataValue | None:
+        """Convert dumped model values into canonical metadata values."""
+        if value is None:
+            return None
+        if isinstance(value, (str, int, float, bool, datetime)):
+            return value
+        if isinstance(value, Mapping):
+            normalized_map: MutableMapping[str, t.Scalar | t.ScalarList] = {}
+            for key, item in value.items():
+                if isinstance(item, (str, int, float, bool, datetime)):
+                    normalized_map[str(key)] = item
+                    continue
+                if isinstance(item, Sequence) and not isinstance(
+                    item,
+                    (str, bytes, bytearray),
+                ):
+                    normalized_items: MutableSequence[t.Scalar] = []
+                    for nested_item in item:
+                        normalized_items.append(
+                            nested_item
+                            if isinstance(
+                                nested_item,
+                                (str, int, float, bool, datetime),
+                            )
+                            else str(nested_item),
+                        )
+                    normalized_map[str(key)] = normalized_items
+                    continue
+                normalized_map[str(key)] = str(item)
+            return normalized_map
+        if isinstance(value, Sequence) and not isinstance(
+            value,
+            (str, bytes, bytearray),
+        ):
+            normalized_sequence: MutableSequence[t.Scalar] = []
+            for item in value:
+                normalized_sequence.append(
+                    item
+                    if isinstance(item, (str, int, float, bool, datetime))
+                    else str(item),
+                )
+            return normalized_sequence
+        return str(value)
 
     @staticmethod
     def _ok_result[TValue](value: TValue) -> p.Result[TValue]:
@@ -50,30 +98,31 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_deep_single_key(
-        result: t.MutableRecursiveContainerMapping,
+        result: dict[str, t.Container],
         key: str,
-        value: t.RecursiveContainer,
+        value: t.Container,
     ) -> p.Result[bool]:
-        """Merge single key in deep merge strategy."""
+        """Merge single key in deep merge strategy.
+
+        Flat-mapping invariant: Container values stay flat (FlatScalarMapping),
+        so deep-merging two mappings collapses to a shallow key union — a
+        recursive merge would widen values beyond Container.
+        """
         current_val = result.get(key)
         if (
             current_val is not None
-            and isinstance(current_val, dict)
-            and isinstance(value, dict)
+            and isinstance(current_val, Mapping)
+            and isinstance(value, Mapping)
         ):
-            merged_result: p.Result[t.RecursiveContainerMapping] = (
-                FlextUtilitiesCollection.merge_mappings(
-                    value,
-                    current_val,
-                    strategy="deep",
-                )
-            )
-            if merged_result.success:
-                result[key] = merged_result.value
-                return FlextUtilitiesCollection._ok_result(True)
-            return r[bool].fail(
-                f"Failed to merge nested dict for key {key}: {merged_result.error}",
-            )
+            merged: dict[str, t.Scalar] = {}
+            for inner_key, inner_val in current_val.items():
+                if isinstance(inner_val, (str, int, float, bool, datetime)):
+                    merged[str(inner_key)] = inner_val
+            for inner_key, inner_val in value.items():
+                if isinstance(inner_val, (str, int, float, bool, datetime)):
+                    merged[str(inner_key)] = inner_val
+            result[key] = merged
+            return FlextUtilitiesCollection._ok_result(True)
         result[key] = value
         return FlextUtilitiesCollection._ok_result(True)
 
@@ -239,45 +288,45 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_replace(
-        other: t.RecursiveContainerMapping,
-        base: t.RecursiveContainerMapping,
-    ) -> p.Result[t.RecursiveContainerMapping]:
+        other: Mapping[str, t.Container],
+        base: Mapping[str, t.Container],
+    ) -> p.Result[Mapping[str, t.Container]]:
         """Replace strategy: base values overwrite other."""
-        result: t.MutableRecursiveContainerMapping = dict(other)
+        result: dict[str, t.Container] = dict(other)
         result.update(base)
         return FlextUtilitiesCollection._ok_result(result)
 
     @staticmethod
     def _merge_filter_none(
-        other: t.RecursiveContainerMapping,
-        base: t.RecursiveContainerMapping,
-    ) -> p.Result[t.RecursiveContainerMapping]:
+        other: Mapping[str, t.Container],
+        base: Mapping[str, t.Container],
+    ) -> p.Result[Mapping[str, t.Container]]:
         """Filter-none strategy: skip None values from base."""
-        result: t.MutableRecursiveContainerMapping = dict(other)
-        for key, value in base.items():
-            if value is not None:
-                result[key] = value
+        result: dict[str, t.Container] = dict(other)
+        result.update({k: v for k, v in base.items() if v is not None})
         return FlextUtilitiesCollection._ok_result(result)
 
     @staticmethod
     def _merge_filter_empty(
-        other: t.RecursiveContainerMapping,
-        base: t.RecursiveContainerMapping,
-    ) -> p.Result[t.RecursiveContainerMapping]:
+        other: Mapping[str, t.Container],
+        base: Mapping[str, t.Container],
+    ) -> p.Result[Mapping[str, t.Container]]:
         """Filter-empty strategy: skip empty values from base."""
-        result: t.MutableRecursiveContainerMapping = dict(other)
-        for key, value in base.items():
-            if not FlextUtilitiesCollection._is_empty_value(value):
-                result[key] = value
+        result: dict[str, t.Container] = dict(other)
+        result.update({
+            k: v
+            for k, v in base.items()
+            if not FlextUtilitiesCollection._is_empty_value(v)
+        })
         return FlextUtilitiesCollection._ok_result(result)
 
     @staticmethod
     def _merge_append(
-        other: t.RecursiveContainerMapping,
-        base: t.RecursiveContainerMapping,
-    ) -> p.Result[t.RecursiveContainerMapping]:
+        other: Mapping[str, t.Container],
+        base: Mapping[str, t.Container],
+    ) -> p.Result[Mapping[str, t.Container]]:
         """Append strategy: concatenate lists instead of replacing."""
-        result: t.MutableRecursiveContainerMapping = dict(other)
+        result: dict[str, t.Container] = dict(other)
         for key, value in base.items():
             current_val = result.get(key)
             if (
@@ -292,11 +341,11 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_deep(
-        other: t.RecursiveContainerMapping,
-        base: t.RecursiveContainerMapping,
-    ) -> p.Result[t.RecursiveContainerMapping]:
+        other: Mapping[str, t.Container],
+        base: Mapping[str, t.Container],
+    ) -> p.Result[Mapping[str, t.Container]]:
         """Deep strategy: recursively merge nested dicts."""
-        result: t.MutableRecursiveContainerMapping = dict(other)
+        result: dict[str, t.Container] = dict(other)
         for key, value in base.items():
             merge_result = FlextUtilitiesCollection._merge_deep_single_key(
                 result,
@@ -304,14 +353,14 @@ class FlextUtilitiesCollection:
                 value,
             )
             if merge_result.failure:
-                return r[t.RecursiveContainerMapping].fail(
+                return r[Mapping[str, t.Container]].fail(
                     merge_result.error or "Unknown error",
                 )
         return FlextUtilitiesCollection._ok_result(result)
 
     _MergeHandler = Callable[
-        [t.RecursiveContainerMapping, t.RecursiveContainerMapping],
-        "p.Result[t.RecursiveContainerMapping]",
+        [Mapping[str, t.Container], Mapping[str, t.Container]],
+        "p.Result[Mapping[str, t.Container]]",
     ]
 
     _MERGE_STRATEGIES: ClassVar[Mapping[str, _MergeHandler]] = {
@@ -326,11 +375,11 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def merge_mappings(
-        other: t.RecursiveContainerMapping | None,
-        base: t.RecursiveContainerMapping,
+        other: Mapping[str, t.Container] | None,
+        base: Mapping[str, t.Container],
         *,
         strategy: str = "deep",
-    ) -> p.Result[t.RecursiveContainerMapping]:
+    ) -> p.Result[Mapping[str, t.Container]]:
         """Merge two dictionaries with configurable strategy.
 
         Strategies:
@@ -347,7 +396,7 @@ class FlextUtilitiesCollection:
             raise TypeError(msg)
         handler = FlextUtilitiesCollection._MERGE_STRATEGIES.get(strategy)
         if handler is None:
-            return r[t.RecursiveContainerMapping].fail(
+            return r[Mapping[str, t.Container]].fail(
                 f"Unknown merge strategy: {strategy}",
             )
         return handler(other, base)

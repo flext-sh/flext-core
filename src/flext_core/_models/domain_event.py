@@ -10,11 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import Annotated, override
+from typing import Annotated
 
 from flext_core import (
     FlextModelsBase as m,
+    FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
     FlextUtilitiesDomain as u,
     FlextUtilitiesPydantic as up,
@@ -28,26 +28,6 @@ class FlextModelsDomainEvent:
     Contains DomainEvent and helper utilities for event data normalization.
     Split into its own module so Entity can import without forward references.
     """
-
-    class ComparableConfigMap(t.ConfigMap):
-        """ConfigMap with equality support for domain event data."""
-
-        @override
-        def __eq__(self, other: object) -> bool:
-            if isinstance(other, dict):
-                return self.root == other
-            if isinstance(other, Mapping):
-                other_mapping = type(self)(
-                    root=dict(
-                        u.normalize_domain_event_data(
-                            other,
-                        ),
-                    ),
-                ).root
-                return self.root == other_mapping
-            return super().__eq__(other)
-
-        __hash__ = t.ConfigMap.__hash__
 
     class Entry(
         m.IdentifiableMixin,
@@ -74,14 +54,12 @@ class FlextModelsDomainEvent:
             ),
         ]
         data: Annotated[
-            t.ConfigMap,
+            mc.ConfigMap,
             mp.BeforeValidator(u.normalize_domain_event_data),
         ] = up.Field(
             validate_default=True,
             description="Event data container",
-            default_factory=lambda: FlextModelsDomainEvent.ComparableConfigMap(
-                root={},
-            ),
+            default_factory=mc.ConfigMap,
         )
 
     DomainEvent = Entry

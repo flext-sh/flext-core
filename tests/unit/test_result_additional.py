@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from tests import p, r, t, u
+from tests import m, p, r, u
 
 
 class TestResultAdditional:
@@ -31,13 +31,13 @@ class TestResultAdditional:
         failure: p.Result[int] = r[int].fail(
             "bad",
             error_code="E1",
-            error_data=t.ConfigMap(root={"k": "v"}),
+            error_data=m.ConfigMap(root={"k": "v"}),
         )
         transformed = failure.map_error(lambda msg: f"{msg}_mapped")
         assert transformed.failure
         assert transformed.error is not None and "bad_mapped" in transformed.error
         assert transformed.error_code == "E1"
-        assert transformed.error_data == t.ConfigMap(root={"k": "v"})
+        assert transformed.error_data == m.ConfigMap(root={"k": "v"})
 
     def test_flow_through_short_circuits_on_failure(self) -> None:
         """flow_through must stop when a step fails."""

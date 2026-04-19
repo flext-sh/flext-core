@@ -38,24 +38,6 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     _level_contexts: ClassVar[t.ScopedContainerRegistry]
 
     @classmethod
-    def _global_context(cls) -> t.ConfigMap:
-        """Get current global context (internal use only)."""
-        try:
-            context_vars = cls.structlog().contextvars.get_contextvars()
-            context_map: t.FlatContainerMapping = (
-                {
-                    str(k): cls._to_container_value(v)
-                    for k, v in dict(context_vars).items()
-                }
-                if context_vars
-                else {}
-            )
-            context_obj: Mapping[str, t.ValueOrModel] = dict(context_map)
-            return t.ConfigMap(root=dict(context_obj))
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            return t.ConfigMap(root={})
-
-    @classmethod
     def bind_context(cls, scope: str, **context: t.RuntimeData) -> p.Result[bool]:
         """Bind context variables to a specific scope."""
         try:
@@ -67,10 +49,10 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             incoming_context: t.FlatContainerMapping = {
                 key: cls._to_container_value(value) for key, value in context.items()
             }
-            current_context_obj: t.RecursiveContainerMapping = dict(
+            current_context_obj: Mapping[str, t.Container] = dict(
                 current_context.items(),
             )
-            incoming_context_obj: t.RecursiveContainerMapping = dict(
+            incoming_context_obj: Mapping[str, t.Container] = dict(
                 incoming_context.items(),
             )
             merge_result = FlextUtilitiesCollection.merge_mappings(
@@ -88,35 +70,6 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return cls._fail_logging_operation(
                 f"bind context for scope '{scope}'",
-                exc,
-            )
-
-    @classmethod
-    def bind_context_for_level(
-        cls, level: str, **context: t.RuntimeData
-    ) -> p.Result[bool]:
-        """Bind context variables that only appear at specified level or higher."""
-        try:
-            level_lower = level.lower()
-            level_normalized = {
-                "debug": "debug",
-                "info": "info",
-                "warning": "warning",
-                c.WarningLevel.ERROR: c.WarningLevel.ERROR,
-                "critical": "critical",
-            }.get(level_lower, level_lower)
-            cls._level_contexts.setdefault(level_normalized, {})
-            normalized_context = cls._to_container_context(context)
-            prefixed_context = {
-                f"_level_{level_normalized}_{key}": value
-                for key, value in normalized_context.items()
-            }
-            cls._level_contexts[level_normalized].update(normalized_context)
-            cls.structlog().contextvars.bind_contextvars(**prefixed_context)
-            return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return cls._fail_logging_operation(
-                f"bind context for level {level}",
                 exc,
             )
 
@@ -166,7 +119,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def _to_container_value(
-        value: t.LogValue | t.Container | t.ValueOrModel,
+        value: t.LogValue | t.Container | t.ValueOrModel | t.RuntimeData,
     ) -> t.Container:
         """Normalize value to Container (internal helper)."""
         if isinstance(value, Exception):
@@ -190,7 +143,14 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def _to_scalar_value(
-        value: t.LogValue | t.Container | t.ValueOrModel | None,
+        value: (
+            t.LogValue
+            | t.Container
+            | t.ValueOrModel
+            | t.ContainerCarrier
+            | t.RuntimeData
+            | None
+        ),
     ) -> t.Scalar:
         if value is None:
             return ""
@@ -206,7 +166,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def _to_container_context(
-        context: Mapping[str, t.LogValue | t.Container | t.ValueOrModel],
+        context: Mapping[
+            str, t.LogValue | t.Container | t.ValueOrModel | t.RuntimeData
+        ],
     ) -> t.FlatContainerMapping:
         """Convert mapping to container context using normalization."""
         return {
@@ -217,28 +179,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     @classmethod
     def _to_scalar_context(
         cls,
-        context: Mapping[str, t.LogValue | t.Container | t.ValueOrModel | None],
+        context: Mapping[
+            str, t.LogValue | t.Container | t.ValueOrModel | t.RuntimeData | None
+        ],
     ) -> t.ScalarMapping:
         return {key: cls._to_scalar_value(value) for key, value in context.items()}
-
-    @staticmethod
-    def _convert_to_relative_path(filename: str) -> str:
-        """Convert absolute path to relative path from workspace root."""
-        try:
-            abs_path = Path(filename).resolve()
-            workspace_root = FlextUtilitiesLoggingContext._find_workspace_root(abs_path)
-            if workspace_root:
-                try:
-                    return str(abs_path.relative_to(workspace_root))
-                except ValueError:
-                    return Path(filename).name
-            return Path(filename).name
-        except (OSError, RuntimeError, TypeError, ValueError) as exc:
-            FlextUtilitiesLoggingContext._report_internal_logging_failure(
-                "convert_to_relative_path",
-                exc,
-            )
-            return Path(filename).name
 
     @staticmethod
     def _extract_class_name(frame: types.FrameType) -> str | None:
@@ -270,14 +215,6 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 break
             current = current.parent
         return None
-
-    @staticmethod
-    def _format_log_message(message: str, *args: t.LogValue) -> str:
-        """Format log message with % arguments."""
-        try:
-            return message % args if args else message
-        except (TypeError, ValueError):
-            return f"{message} | args={args!r}"
 
     @staticmethod
     def _caller_source_path() -> str | None:
@@ -349,16 +286,6 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 exc,
             )
             return True
-
-    @staticmethod
-    def resolve_log_level_from_settings() -> int:
-        """Resolve log level from default constant."""
-        default_log_level = c.DEFAULT_LEVEL.upper()
-        return int(
-            getattr(logging, default_log_level)
-            if hasattr(logging, default_log_level)
-            else logging.INFO,
-        )
 
 
 __all__: list[str] = ["FlextUtilitiesLoggingContext"]

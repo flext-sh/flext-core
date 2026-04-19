@@ -1,191 +1,54 @@
-# FLEXT Core
+# flext_core package README
 
-<!-- TOC START -->
+## Purpose
 
-- [Overview](#overview)
-- [Architecture](#architecture)
-  - [Foundation Layer](#foundation-layer)
-  - [Domain Layer](#domain-layer)
-  - [Application Layer](#application-layer)
-  - [Infrastructure Layer](#infrastructure-layer)
-- [Key Components](#key-components)
-- [Usage Examples](#usage-examples)
-  - [Basic Setup](#basic-setup)
-  - [Dependency Injection](#dependency-injection)
-  - [Domain Modeling](#domain-modeling)
-  - [Domain Events and Dispatcher Integration](#domain-events-and-dispatcher-integration)
-  - [CQRS Pattern](#cqrs-pattern)
-- [Dependencies](#dependencies)
-- [Extension Points](#extension-points)
+`flext_core` provides base contracts for result flow, settings, container wiring,
+and dispatcher-driven orchestration.
 
-<!-- TOC END -->
+## Minimal Runtime Examples
 
-**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+### Result
 
-FLEXT Core is a foundational framework providing core abstractions for building robust, maintainable applications following domain-driven design (DDD) and clean architecture principles.
+```python
+from flext_core import p, r
 
-## Overview
 
-This module provides the core infrastructure components used across the FLEXT ecosystem:
+def safe_divide(a: float, b: float) -> p.Result[float]:
+    if b == 0:
+        return r[float].fail("division_by_zero")
+    return r[float].ok(a / b)
 
-- **Railway-oriented error handling** with `r[T]`
-- **Dependency injection container** with type-safe service registration
-- **CQRS implementation** with command/query dispatcher and registry
-- **Domain modeling** with entities, value objects, aggregates, and domain events
-- **Structured logging** with context propagation
-- **Configuration management** with validation and environment support
-- **Context management** for distributed tracing and correlation
-- **Protocol definitions** for interface contracts
-- **Utility functions** for validation, serialization, and type checking
 
-## Architecture
+assert safe_divide(10, 2).success
+assert safe_divide(10, 0).failure
+```
 
-The framework is organized into logical layers:
-
-### Foundation Layer
-
-Core types and constants that have no dependencies on other framework modules.
-
-### Domain Layer
-
-Business logic abstractions including entities, value objects, services, and domain events.
-
-### Application Layer
-
-Use case coordination with CQRS patterns, command/query handlers, domain-event publishing, and application services.
-
-### Infrastructure Layer
-
-External concerns including logging, configuration, dependency injection, and context management.
-
-## Key Components
-
-| Component         | Description                                                |
-| ----------------- | ---------------------------------------------------------- |
-| `r[T]`            | Railway-oriented error handling with monadic operations    |
-| `FlextContainer`  | Dependency injection container with type-safe registration |
-| `FlextDispatcher` | Command/query dispatcher with reliability controls         |
-| `FlextContext`    | Hierarchical context management for tracing                |
-| `FlextLogger`     | Structured logging with automatic context propagation      |
-| `FlextSettings`   | Configuration management with Pydantic validation          |
-| `FlextModels`     | DDD patterns (Entity, Value, AggregateRoot)                |
-
-## Usage Examples
-
-### Basic Setup
+### Settings
 
 ```python
 from flext_core import FlextSettings
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import h
-from flext_core import x
-from flext_core import FlextModels
-from flext_core import p
-from flext_core import FlextRegistry
-from flext_core import r, p
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import t
-from flext_core import u
 
-# Create dispatcher/registry (registry optional for simple flows)
-dispatcher = FlextDispatcher()
-registry = FlextRegistry()
-
-# Railway-oriented error handling
-result = r.success("operation completed")
-if result.is_success:
-    data = result.value
+settings = FlextSettings.fetch_global()
+assert isinstance(settings.model_dump(), dict)
 ```
 
-### Dependency Injection
+### Container
 
 ```python
 from flext_core import FlextContainer
 
 container = FlextContainer()
-container.register("logger", FlextLogger.create_module_logger(__name__))
-logger_result = container.get("logger")
-assert logger_result.value is container.get("logger").value
+_ = container.bind("service", "ready")
+resolved = container.resolve("service")
+
+assert resolved.success
+assert resolved.value == "ready"
 ```
 
-### Domain Modeling
+### Dispatcher (examples-backed)
 
 ```python
-from flext_core import FlextModels
+from examples.ex_04_flext_dispatcher import _Ex04Exercise
 
-
-class User(FlextModels.Entity):
-    name: str
-    email: str
-
-    def validate(self) -> p.Result[bool]:
-        if "@" not in self.email:
-            return r[bool].fail("Invalid email")
-        return r[bool].ok(True)
+_Ex04Exercise("src/flext_core/README.md").exercise()
 ```
-
-### Domain Events and Dispatcher Integration
-
-Aggregate roots collect domain events that can be published through the dispatcher after a successful operation:
-
-```python
-from flext_core import FlextDispatcher
-from flext_core import FlextModels
-
-
-class InventoryAdjusted(FlextModels.DomainEvent):
-    sku: str
-    quantity: int
-
-
-class Product(FlextModels.AggregateRoot):
-    sku: str
-    inventory: int
-
-    def decrease_inventory(self, quantity: int) -> None:
-        if quantity > self.inventory:
-            raise ValueError("Insufficient inventory")
-        self.inventory -= quantity
-        self.add_domain_event(InventoryAdjusted(sku=self.sku, quantity=quantity))
-
-
-dispatcher = FlextDispatcher()
-product = Product(sku="ABC", inventory=10)
-product.decrease_inventory(3)
-
-# Publish events via dispatcher (with middleware/telemetry applied)
-dispatcher.publish_events(product.commit_domain_events())
-```
-
-### CQRS Pattern
-
-```python
-from flext_core import FlextDispatcher
-
-dispatcher = FlextDispatcher()
-dispatcher.register_handler(CreateUserCommand, create_user_handler)
-result = dispatcher.dispatch(CreateUserCommand(email="user@example.com"))
-```
-
-## Dependencies
-
-- **Runtime**: structlog, dependency-injector, pydantic, returns
-- **Type System**: typing, collections.abc
-- **Standards**: Follows PEP8, provides type hints for Python 3.8+
-
-## Extension Points
-
-The framework is designed for extension through:
-
-- **Custom handlers** inheriting from `h`
-- **Protocol implementations** for interface contracts
-- **Dispatcher middleware** for reliability, logging, or validation
-- **Mixin composition** for reusable behaviors
-
-All components integrate with the core infrastructure while maintaining clear separation of concerns.

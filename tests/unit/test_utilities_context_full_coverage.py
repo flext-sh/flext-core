@@ -77,6 +77,6 @@ class TestUtilitiesContextFullCoverage:
 
     def test_create_dict_proxy_with_default(self) -> None:
         """Creates proxy with dict default."""
-        default_val = t.ConfigMap(root={"key": "value"})
+        default_val = {"key": "value"}
         proxy = u.create_dict_proxy("metadata", default_val)
         assert proxy._default == default_val

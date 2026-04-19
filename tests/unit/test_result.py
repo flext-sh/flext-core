@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
@@ -62,14 +62,14 @@ class Testr:
             m.Field(description="Result operation type"),
         ]
         value: Annotated[
-            t.RecursiveContainer,
+            t.Container,
             m.Field(description="Input value for result operation"),
         ]
         is_success_expected: Annotated[
             bool, m.Field(description="Expected success state")
         ] = True
         expected_result: Annotated[
-            t.RecursiveContainer | None,
+            t.Container | None,
             m.Field(description="Optional expected result payload"),
         ] = None
 
@@ -77,10 +77,10 @@ class Testr:
             self,
             name: str,
             operation_type: ResultOperationType,
-            value: t.RecursiveContainer,
+            value: t.Container,
             *,
             is_success_expected: bool = True,
-            expected_result: t.RecursiveContainer | None = None,
+            expected_result: t.Container | None = None,
         ) -> None:
             super().__init__(
                 name=name,
@@ -383,7 +383,7 @@ class Testr:
 
         Replaces 10+ lines of manual test case creation.
         """
-        success_values: t.RecursiveContainerList = ["value1", "value2", "value3"]
+        success_values: t.FlatContainerList = ["value1", "value2", "value3"]
         failure_errors: t.StrSequence = ["error1", "error2"]
         error_codes: Sequence[str | None] = ["CODE1", None]
         cases = u.Core.Tests.create_parametrized_cases(
@@ -608,7 +608,7 @@ class Testr:
 
     def test_error_data_property(self) -> None:
         """Test error_data property."""
-        error_data = t.ConfigMap(root={"key": "value"})
+        error_data = m.ConfigMap(root={"key": "value"})
         result: p.Result[str] = r[str].fail("error", error_data=error_data)
         tm.that(result.error_data, eq=error_data)
         success = r[str].ok("test")
@@ -739,7 +739,7 @@ class Testr:
     def test_fold_different_return_types(self) -> None:
         """Test fold can return different types than input."""
         result: p.Result[str] = r[str].ok("hello")
-        response: t.RecursiveContainerMapping = result.fold(
+        response: Mapping[str, t.Container] = result.fold(
             on_success=lambda v: {"status": 200, "data": v},
             on_failure=lambda e: {"status": 400, "error": e},
         )

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from examples import ExamplesFlextCoreModelsErrors as _err, c
-from flext_core import m, p, r, t, u
+from examples import ExamplesFlextCoreModelsErrors as _err, c, m, p, t, u
+from flext_core import r
 
 
 class ExamplesFlextCoreModelsEx00:

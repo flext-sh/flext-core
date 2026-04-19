@@ -1,235 +1,30 @@
-"""Golden-file example for FlextContext public API."""
+"""Context example aligned to current public context API."""
 
 from __future__ import annotations
 
-from typing import override
-
-from examples import ExamplesFlextCoreShared, c, m, t, u
-from flext_core import FlextContainer, FlextContext
+from flext_core import FlextContext
 
 
-class Ex06FlextContext(ExamplesFlextCoreShared):
-    """Exercise FlextContext API with deterministic output checks."""
+def run() -> None:
+    """Set and read a value from context."""
+    ctx = FlextContext()
+    if not ctx.set("example", "context").success:
+        msg = "context set failed"
+        raise RuntimeError(msg)
+    value = ctx.get("example")
+    if not value.success:
+        msg = "context get failed"
+        raise RuntimeError(msg)
 
-    @override
-    def exercise(self) -> None:
-        self._exercise_core_context_methods()
-        self._exercise_container_and_service_methods()
-        self._exercise_variables_and_domains()
 
-    def _exercise_core_context_methods(self) -> None:
-        self.section("core_context_methods")
-        ctx = FlextContext.create(operation_id="op-demo", user_id="user-1")
-        _ = ctx.set("meta_from_create", "v")
-        self.check("create.instance", type(ctx).__name__)
-        self.check("create.has.operation", ctx.has(c.ContextKey.OPERATION_ID))
-        self.check("create.has.user", ctx.has(c.ContextKey.USER_ID))
-        self.check("set.success", (_ := ctx.set("k1", "v1")).success)
-        seed = FlextContext.create()
-        _ = seed.set("k2", 2)
-        _ = seed.set("k3", True)
-        payload = seed.iter_scope_vars()[c.ContextScope.GLOBAL].get()
-        self.check(
-            "set_all.success",
-            bool(ctx.set(payload or t.ConfigMap(root={})).success),
-        )
-        # Removed original check() call, keeping only str() wrapped version
-        self.check("get.k1", str(ctx.get("k1").unwrap_or("missing")))
-        self.check("has.k2", ctx.has("k2"))
-        ctx.remove("k2")
-        self.check("remove.k2", ctx.has("k2"))
-        self.check("keys.count", len(ctx.keys()))
-        self.check("values.count", len(ctx.values()))
-        self.check("items.count", len(ctx.items()))
-        merged = ctx.clone().merge(t.ConfigMap(root={"k4": "merged"}))
-        # Removed original check() call, keeping only str() wrapped version
-        self.check("merge.get", str(merged.get("k4").unwrap_or("missing")))
-        self.check("clone.get", str(ctx.clone().get("k1").unwrap_or("missing")))
-        self.check("validate.success", ctx.validate_context().success)
-        ctx.apply_metadata("meta_key", "meta_value")
-        self.check(
-            "resolve_metadata",
-            str(ctx.resolve_metadata("meta_key").unwrap_or("missing")),
-        )
-        exported_min = ctx.export(as_dict=False)
-        exported_full = ctx.export(
-            include_statistics=True,
-            include_metadata=True,
-            as_dict=False,
-        )
-        self.check("export.min.type", type(exported_min).__name__)
-        self.check("export.full.type", type(exported_full).__name__)
-        self.check("iter_scope_vars", ",".join(sorted(ctx.iter_scope_vars().keys())))
-        ctx.clear()
-        self.check("clear.keys", len(ctx.keys()))
+class Ex06FlextContext:
+    """Compatibility wrapper expected by examples package exports."""
 
-    def _exercise_container_and_service_methods(self) -> None:
-        self.section("container_and_service")
-        self.check("runtime.class", u.__name__)
-        container = FlextContainer()
-        _ = FlextContext.configure_container(container)
-        self.check(
-            "configure_resolve_container.same",
-            FlextContext.resolve_container() is container,
-        )
-        try:
-            raise ValueError(m.Examples.ErrorMessages.BOOM)
-        except ValueError as exc:
-            self.check("raise.msg", str(exc))
-        self.check(
-            "service.register.ok",
-            FlextContext.Service.register_service("demo-service", "svc").success,
-        )
-        self.check(
-            "service.fetch.ok",
-            str(
-                FlextContext.Service.fetch_service("demo-service").unwrap_or("missing")
-            ),
-        )
-        self.check(
-            "service.fetch.missing",
-            FlextContext.Service.fetch_service("missing").failure,
-        )
-        before_service_name = FlextContext.Variables.ServiceName.get()
-        with FlextContext.Service.service_context("orders", version="1.2.3"):
-            self.check(
-                "service_context.name",
-                str(FlextContext.Variables.ServiceName.get() or ""),
-            )
-            self.check(
-                "service_context.version",
-                str(FlextContext.Variables.ServiceVersion.get() or ""),
-            )
-        self.check(
-            "service_context.restored",
-            FlextContext.Variables.ServiceName.get() == before_service_name,
-        )
-
-    def _exercise_variables_and_domains(self) -> None:
-        self.section("variables_and_domains")
-        _ = FlextContext.create()
-        self.check(
-            "var.correlation_id",
-            type(FlextContext.Variables.Correlation.CORRELATION_ID).__name__,
-        )
-        self.check(
-            "var.parent_correlation_id",
-            type(FlextContext.Variables.Correlation.PARENT_CORRELATION_ID).__name__,
-        )
-        self.check(
-            "var.service_name",
-            type(FlextContext.Variables.Service.SERVICE_NAME).__name__,
-        )
-        self.check(
-            "var.service_version",
-            type(FlextContext.Variables.Service.SERVICE_VERSION).__name__,
-        )
-        self.check("var.user_id", type(FlextContext.Variables.Request.USER_ID).__name__)
-        self.check(
-            "var.request_id",
-            type(FlextContext.Variables.Request.REQUEST_ID).__name__,
-        )
-        self.check(
-            "var.request_timestamp",
-            type(FlextContext.Variables.Request.REQUEST_TIMESTAMP).__name__,
-        )
-        self.check(
-            "var.operation_name",
-            type(FlextContext.Variables.Performance.OPERATION_NAME).__name__,
-        )
-        self.check(
-            "var.operation_start",
-            type(FlextContext.Variables.Performance.OPERATION_START_TIME).__name__,
-        )
-        self.check(
-            "var.operation_metadata",
-            type(FlextContext.Variables.Performance.OPERATION_METADATA).__name__,
-        )
-        self.check(
-            "alias.correlation",
-            type(FlextContext.Variables.CorrelationId).__name__,
-        )
-        self.check(
-            "alias.parent_correlation",
-            type(FlextContext.Variables.ParentCorrelationId).__name__,
-        )
-        self.check(
-            "alias.service_name",
-            type(FlextContext.Variables.ServiceName).__name__,
-        )
-        self.check(
-            "alias.service_version",
-            type(FlextContext.Variables.ServiceVersion).__name__,
-        )
-        self.check("alias.user_id", type(FlextContext.Variables.UserId).__name__)
-        self.check("alias.request_id", type(FlextContext.Variables.RequestId).__name__)
-        self.check(
-            "alias.request_timestamp",
-            type(FlextContext.Variables.RequestTimestamp).__name__,
-        )
-        self.check(
-            "alias.operation_name",
-            type(FlextContext.Variables.OperationName).__name__,
-        )
-        self.check(
-            "alias.operation_start",
-            type(FlextContext.Variables.OperationStartTime).__name__,
-        )
-        self.check(
-            "alias.operation_metadata",
-            type(FlextContext.Variables.OperationMetadata).__name__,
-        )
-        FlextContext.Correlation.apply_correlation_id("cid-1")
-        self.check(
-            "correlation.resolve_apply",
-            FlextContext.Correlation.resolve_correlation_id() or "",
-        )
-        with FlextContext.Correlation.new_correlation(
-            "cid-2",
-            parent_id="cid-parent",
-        ) as corr_id:
-            self.check("correlation.new.value", corr_id)
-            self.check(
-                "correlation.new.current",
-                FlextContext.Correlation.resolve_correlation_id() or "",
-            )
-        FlextContext.Request.apply_operation_name("sync-users")
-        self.check(
-            "request.resolve_apply",
-            FlextContext.Request.resolve_operation_name() or "",
-        )
-        with FlextContext.Performance.timed_operation("bulk-sync") as op_meta:
-            self.check(
-                "timed_operation.has_start",
-                c.MetadataKey.START_TIME in op_meta,
-            )
-            self.check(
-                "timed_operation.has_name",
-                op_meta.get(c.ContextKey.OPERATION_NAME) or "",
-            )
-            full_context = FlextContext.Serialization.export_full_context()
-            self.check(
-                "serialization.has_correlation_key",
-                c.ContextKey.CORRELATION_ID in full_context,
-            )
-            self.check(
-                "serialization.has_operation_name",
-                full_context.get(c.ContextKey.OPERATION_NAME) or "",
-            )
-        self.check("timed_operation.has_end", c.MetadataKey.END_TIME in op_meta)
-        self.check(
-            "timed_operation.has_duration",
-            c.MetadataKey.DURATION_SECONDS in op_meta,
-        )
-        FlextContext.Utilities.clear_context()
-        cleared_context = FlextContext.Serialization.export_full_context()
-        self.check(
-            "utilities.clear_context.correlation",
-            cleared_context.get(c.ContextKey.CORRELATION_ID) or "",
-        )
-        ensured = FlextContext.Utilities.ensure_correlation_id()
-        self.check("utilities.ensure_correlation_id.non_empty", bool(ensured))
+    @staticmethod
+    def run() -> None:
+        """Run context example."""
+        run()
 
 
 if __name__ == "__main__":
-    Ex06FlextContext(caller_file=__file__).run()
+    run()

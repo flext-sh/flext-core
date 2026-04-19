@@ -88,8 +88,14 @@ Register and resolve services using `FlextContainer`.
 ```python
 from flext_core import FlextContainer, r
 
+
+class MyDatabase:
+    def insert(self, _row: dict[str, str]) -> None:
+        return None
+
+
 # Get global container
-container = FlextContainer.get_global()
+container = FlextContainer()
 
 # Register a factory
 container.factory("database", lambda: MyDatabase())
@@ -103,9 +109,9 @@ else:
     print(f"Failed to resolve: {db_result.error}")
 
 # Scoped container
-with container.scope() as scoped:
-    # Scoped services live only within this context
-    user_service = scoped.resolve("user_service").unwrap()
+scoped = container.scope(subproject="demo")
+scoped_result = scoped.resolve("database")
+assert scoped_result.success
 ```
 
 ### CQRS Dispatching
@@ -113,26 +119,10 @@ with container.scope() as scoped:
 Route commands and queries with the dispatcher.
 
 ```python
-from pydantic import BaseModel
-from flext_core import FlextDispatcher, r, m
+from examples.ex_04_flext_dispatcher import _Ex04Exercise
 
-
-# Define command
-class CreateUser(m.Entity):
-    username: str
-    email: str
-
-
-# Define handler
-def handle_create_user(cmd: CreateUser) -> r[str]:
-    return r[str].ok(f"User {cmd.username} created")
-
-
-# Dispatch
-dispatcher = FlextDispatcher()
-dispatcher.register_handler(CreateUser, handle_create_user)
-
-result = dispatcher.dispatch(CreateUser(username="alice", email="alice@example.com"))
+demo = _Ex04Exercise("README.md")
+demo.exercise()
 ```
 
 ### Services & Domain Logic
@@ -140,22 +130,16 @@ result = dispatcher.dispatch(CreateUser(username="alice", email="alice@example.c
 Create services with DI and result-bearing methods.
 
 ```python
-from flext_core import s, r, m
+from flext_core import r, s
 
 
 class UserService(s):
     """Domain service for user operations."""
 
     def create_user(self, username: str) -> r[str]:
-        # Access container
-        db = self.container.resolve("database").unwrap()
-
-        # Validate
         if not username:
             return r[str].fail("Username required")
 
-        # Execute
-        db.insert({"username": username})
         return r[str].ok(username)
 
 
@@ -169,7 +153,7 @@ result = svc.create_user("alice")
 Manage typed configuration with `FlextSettings`.
 
 ```python
-from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from flext_core import FlextSettings, c
 
 
@@ -180,12 +164,13 @@ class AppSettings(FlextSettings):
     debug: bool = False
     api_key: str = ""
 
-    class Config:
-        env_prefix = "FLEXT_APP_"  # Read from FLEXT_APP_DATABASE_URL, etc.
+    model_config = ConfigDict(
+        env_prefix="FLEXT_APP_"
+    )  # Read from FLEXT_APP_DATABASE_URL, etc.
 
 
 # Get settings singleton
-settings = FlextSettings.get_global()
+settings = FlextSettings.fetch_global()
 db_url = settings.database_url
 ```
 

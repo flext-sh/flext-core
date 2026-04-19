@@ -5,8 +5,6 @@ from __future__ import annotations
 from typing import override
 
 from examples import (
-    Ex12CommandA,
-    Ex12CommandB,
     ExamplesFlextCoreShared,
     c,
     m,
@@ -15,6 +13,7 @@ from examples import (
     t,
     u,
 )
+from examples._models.ex12 import Ex12CommandA, Ex12CommandB
 from flext_core import h
 
 
@@ -35,6 +34,21 @@ class _ProtocolHandler:
         elif isinstance(message, Ex12CommandB):
             value = str(message.amount)
         return r[t.Scalar].ok(f"{self._label}:{value}")
+
+    def __call__(self, message: p.Routable) -> p.Result[t.Scalar]:
+        """Callable adapter for registry handler protocols expecting callables."""
+        return self.handle(message)
+
+
+def _as_registry_handler(
+    handler: _ProtocolHandler,
+) -> t.HandlerProtocolVariant:
+    """Adapt protocol handlers to the registry callable contract."""
+
+    def _call(message: p.Routable) -> t.RuntimeAtomic:
+        return handler.handle(message).unwrap_or("")
+
+    return _call
 
 
 @h.handler(Ex12CommandA, priority=3)
@@ -82,8 +96,8 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
         invalid_error = self.rand_str(7)
         boom_message = self.rand_str(7)
         bindings_result = registry.register_bindings({
-            Ex12CommandA: handler_a,
-            custom_binding_name: handler_b,
+            Ex12CommandA: _as_registry_handler(handler_a),
+            custom_binding_name: _as_registry_handler(handler_b),
         })
         self.check("register_bindings.success", bindings_result.success)
         self.check(
@@ -256,10 +270,10 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
             handler_name=callable_name,
             mode=c.HandlerType.COMMAND,
         )
-        reg_one = registry.register_handler(handler_a)
-        reg_dup = registry.register_handler(handler_a)
-        reg_two = registry.register_handler(handler_b)
-        reg_mode = registry.register_handler(handler_a)
+        reg_one = registry.register_handler(_as_registry_handler(handler_a))
+        reg_dup = registry.register_handler(_as_registry_handler(handler_a))
+        reg_two = registry.register_handler(_as_registry_handler(handler_b))
+        reg_mode = registry.register_handler(_as_registry_handler(handler_a))
         self.check("register_handler.a.success", reg_one.success)
         self.check(
             "register_handler.a.id_present",
@@ -270,7 +284,11 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
         self.check("register_handler.mode.success", reg_mode.success)
         handler_mode_probe = handler_mode.handle(callable_prefix)
         self.check("create_from_callable.handle_success", handler_mode_probe.success)
-        batch = registry.register_handlers([handler_a, handler_b, handler_a])
+        batch = registry.register_handlers([
+            _as_registry_handler(handler_a),
+            _as_registry_handler(handler_b),
+            _as_registry_handler(handler_a),
+        ])
         self.check("register_handlers.success", batch.success)
         self.check(
             "register_handlers.registered_len",
@@ -346,10 +364,10 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
             "ensure_result.existing",
             r[int].ok(ensured_existing).unwrap_or(0) == ensured_existing,
         )
-        self.check("to_dict.none", t.ConfigMap(root={}))
+        self.check("to_dict.none", m.ConfigMap(root={}))
         self.check(
             "to_dict.mapping",
-            t.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}),
+            m.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}),
         )
         self.check(
             "to_dict.basemodel",

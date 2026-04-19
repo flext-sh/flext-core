@@ -32,10 +32,9 @@ from pydantic import (
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
+from flext_core import FlextModelsContainers as mc, c, t
 from flext_core._protocols.logging import FlextProtocolsLogging
-from flext_core.constants import c
 from flext_core.protocols import FlextProtocolsResult as p
-from flext_core.typings import t
 
 
 class FlextResult[T](BaseModel, p.Result[T]):
@@ -55,7 +54,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
     result_success: Annotated[bool, Field(alias="success")] = True
     result_error: Annotated[str | None, Field(alias="error")] = None
     result_error_code: Annotated[str | None, Field(alias="error_code")] = None
-    result_error_data: Annotated[t.ConfigMap | None, Field(alias="error_data")] = None
+    result_error_data: Annotated[mc.ConfigMap | None, Field(alias="error_data")] = None
 
     _payload: T | None = PrivateAttr(default=None)
     _exception: BaseException | None = PrivateAttr(default=None)
@@ -82,7 +81,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
 
     @property
     @override
-    def error_data(self) -> t.ConfigMap | None:
+    def error_data(self) -> mc.ConfigMap | None:
         """Public error metadata backed by an aliased Pydantic field."""
         return self.result_error_data
 
@@ -147,16 +146,16 @@ class FlextResult[T](BaseModel, p.Result[T]):
     @staticmethod
     def _validate_error_data(
         error_data: t.ResultErrorData | t.ConfigModelInput | None,
-    ) -> t.ConfigMap | None:
+    ) -> mc.ConfigMap | None:
         """Convert error_data to ConfigMap, matching RuntimeResult.fail() logic."""
         if error_data is None:
             return None
-        if isinstance(error_data, t.ConfigMap):
+        if isinstance(error_data, mc.ConfigMap):
             return error_data
         if isinstance(error_data, p.HasModelDump):
             dump = error_data.model_dump()
-            return t.ConfigMap.model_validate(dump)
-        return t.ConfigMap.model_validate(dict(error_data))
+            return mc.ConfigMap.model_validate(dump)
+        return mc.ConfigMap.model_validate(dict(error_data))
 
     @staticmethod
     def _exception_message(exception: BaseException | None) -> str | None:
@@ -180,7 +179,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
         return None
 
     @staticmethod
-    def _exception_error_data(exception: BaseException | None) -> t.ConfigMap | None:
+    def _exception_error_data(exception: BaseException | None) -> mc.ConfigMap | None:
         """Extract structured metadata attributes from an exception."""
         if exception is None:
             return None
@@ -189,7 +188,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
         if raw_attributes is None:
             return None
         try:
-            payload = t.ConfigMap.model_validate(raw_attributes)
+            payload = mc.ConfigMap.model_validate(raw_attributes)
         except ValidationError:
             return None
         correlation_id = getattr(exception, "correlation_id", None)
@@ -511,15 +510,19 @@ class FlextResult[T](BaseModel, p.Result[T]):
 
     @staticmethod
     def failed_result(
-        value: t.ProtocolSubject,
-    ) -> TypeIs[FlextResult[t.RecursiveContainer]]:
+        value: FlextResult[t.ValueOrModel]
+        | p.ResultLike[t.ValueOrModel]
+        | t.GuardInput,
+    ) -> TypeIs[FlextResult[t.ValueOrModel]]:
         """Return ``True`` when *value* is a failed runtime result."""
         return isinstance(value, FlextResult) and value.failure
 
     @staticmethod
     def successful_result(
-        value: t.ProtocolSubject,
-    ) -> TypeIs[FlextResult[t.RecursiveContainer]]:
+        value: FlextResult[t.ValueOrModel]
+        | p.ResultLike[t.ValueOrModel]
+        | t.GuardInput,
+    ) -> TypeIs[FlextResult[t.ValueOrModel]]:
         """Return ``True`` when *value* is a successful runtime result."""
         return isinstance(value, FlextResult) and value.success
 

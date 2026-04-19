@@ -18,6 +18,7 @@ from typing import ClassVar, Unpack, override
 from pydantic import ConfigDict
 
 from flext_core import P, R, c, e, m, p, r, t, u, x
+from flext_core._utilities.handler import FlextUtilitiesHandler
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):
@@ -74,7 +75,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             error_msg = c.ERR_HANDLER_INVALID_MODE.format(mode=handler_type)
             raise e.ValidationError(error_msg)
         handler_mode_literal = self._handler_type_to_literal(handler_type)
-        self._runtime_state = m.HandlerRuntimeState.create_for_handler(
+        self._runtime_state = FlextUtilitiesHandler.create_runtime_state(
             handler_name=self._config_model.handler_name,
             handler_mode=handler_mode_literal,
         )
@@ -407,28 +408,32 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         _ = message
         raise NotImplementedError
 
-    def pop_context(self) -> p.Result[t.ConfigMap]:
+    def pop_context(self) -> p.Result[m.ConfigMap]:
         """Pop execution context from the local handler stack."""
-        result = self._runtime_state.pop_context()
+        result = FlextUtilitiesHandler.pop_context(self._runtime_state)
         if result.failure:
-            return r[t.ConfigMap].fail_op(
+            return r[m.ConfigMap].fail_op(
                 "pop handler context",
                 result.error or c.ERR_HANDLER_FAILED,
             )
-        return r[t.ConfigMap].ok(t.ConfigMap(root=dict(result.value)))
+        return r[m.ConfigMap].ok(m.ConfigMap(root=dict(result.value)))
 
     def push_context(
         self,
-        ctx: m.ExecutionContext | t.RecursiveContainerMapping,
+        ctx: Mapping[str, t.Container],
     ) -> p.Result[bool]:
         """Push execution context onto the local handler stack."""
-        return self._runtime_state.push_context(ctx)
+        return FlextUtilitiesHandler.push_context(self._runtime_state, ctx)
 
     def record_metric(
         self, name: str, value: t.MetadataAttributeValue
     ) -> p.Result[bool]:
         """Record a metric value in the current handler state."""
-        return self._runtime_state.record_metric(name, value)
+        return FlextUtilitiesHandler.record_metric(
+            self._runtime_state.execution_context,
+            name,
+            value,
+        )
 
     def validate_message(self, data: MessageT_contra) -> p.Result[bool]:
         """Validate input data using extensible validation pipeline.
@@ -526,8 +531,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 error=error_detail,
             )
             return r[ResultT].fail_op("validate handler message", error_msg)
-        self._runtime_state.start_execution()
-        _ = self.push_context(self._runtime_state.execution_context)
+        self._runtime_state = FlextUtilitiesHandler.start_execution(self._runtime_state)
+        _ = self.push_context(self._runtime_state.execution_context.model_dump())
         try:
             result = self.handle(message)
             self._record_execution_metrics(success=result.success)
@@ -636,6 +641,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 if name.startswith("_"):
                     continue
                 func = getattr(module, name, None)
+                if func is None:
+                    continue
                 if not u.handler_callable(func):
                     continue
                 if not hasattr(func, c.HANDLER_ATTR):
@@ -645,7 +652,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 settings: m.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
 
                 def narrowed_func(
-                    message: t.RuntimeAtomic,
+                    message: t.RuntimeData,
                     function_name: str = name,
                 ) -> t.Scalar | None:
                     resolved_callable = getattr(module, function_name, None)

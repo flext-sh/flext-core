@@ -314,7 +314,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             actual_type: type | str | None,
             context: Mapping[str, t.MetadataValue] | None,
             extra_kwargs: Mapping[str, t.MetadataValue],
-        ) -> t.ConfigMap:
+        ) -> dict[str, t.MetadataValue]:
             """Build type context dictionary."""
             type_context = FlextExceptionsHelpers.build_context_map(
                 context,

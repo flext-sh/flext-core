@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Iterable, Mapping, Sized
+from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
 from typing import ClassVar
 
 from flext_core import FlextModelsCollections, FlextUtilitiesGuardsType, r, t
@@ -20,7 +20,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     }
 
     _MEMBERSHIP_OPS: ClassVar[
-        Mapping[str, Callable[[t.GuardInput, t.RecursiveContainerList], bool]]
+        Mapping[str, Callable[[t.GuardInput, Sequence[t.Container]], bool]]
     ] = {
         "in_": lambda val, cmp: val in cmp,
         "not_in": lambda val, cmp: val not in cmp,
@@ -111,7 +111,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 return False
         # Membership checks via dispatch
         for mem_op, mem_fn in FlextUtilitiesGuardsEnsure._MEMBERSHIP_OPS.items():
-            mem_val: t.RecursiveContainerList | None = getattr(guard_spec, mem_op, None)
+            mem_val: Sequence[t.Container] | None = getattr(guard_spec, mem_op, None)
             if mem_val is not None and not mem_fn(value, mem_val):
                 return False
         # Numeric/size checks via dispatch
@@ -140,17 +140,14 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         return True
 
     @staticmethod
-    def _to_container_or_str(value: t.RecursiveContainer) -> t.Container:
+    def _to_container_or_str(value: t.Container) -> t.Container:
         """Normalize a value to Container: pass through if already, else str()."""
         return value if FlextUtilitiesGuardsEnsure.container(value) else str(value)
 
     @staticmethod
     def _check_validator(
-        value: t.RecursiveContainer,
-        validator: Callable[[t.RecursiveContainer], bool]
-        | type
-        | tuple[type, ...]
-        | None,
+        value: t.Container,
+        validator: Callable[[t.Container], bool] | type | tuple[type, ...] | None,
     ) -> bool:
         """Evaluate validator against value. Returns True if guard passes."""
         if isinstance(validator, type):
@@ -169,7 +166,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def _guard_fallback(
-        default: t.RecursiveContainer | None,
+        default: t.Container | None,
         *,
         return_value: bool,
         fail_msg: str,
@@ -181,13 +178,13 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def guard(
-        value: t.RecursiveContainer,
-        validator: Callable[[t.RecursiveContainer], bool]
+        value: t.Container,
+        validator: Callable[[t.Container], bool]
         | type
         | tuple[type, ...]
         | None = None,
         *,
-        default: t.RecursiveContainer | None = None,
+        default: t.Container | None = None,
         return_value: bool = False,
     ) -> t.Container | bool | r[t.Container]:
         try:

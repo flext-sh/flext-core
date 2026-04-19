@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import contextvars
 from collections.abc import Mapping
+from datetime import datetime
+from pathlib import Path
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self
 
 from flext_core import (
     FlextModelsBase,
+    FlextModelsContainers,
     FlextModelsContextData,
     FlextModelsPydantic,
     FlextUtilitiesPydantic,
@@ -46,7 +49,7 @@ class FlextModelsContextScope:
             FlextUtilitiesPydantic.Field(description="Scope data"),
         ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
         metadata: Annotated[
-            t.RecursiveContainerMapping,
+            Mapping[str, t.Container],
             FlextModelsPydantic.BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),
@@ -91,7 +94,7 @@ class FlextModelsContextScope:
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         operations: Annotated[
-            t.RecursiveContainerMapping,
+            Mapping[str, t.MetadataValue],
             FlextModelsPydantic.BeforeValidator(
                 lambda v: (
                     FlextModelsContextData.normalize_to_mapping(v)
@@ -144,22 +147,14 @@ class FlextModelsContextScope:
             ),
         ] = False
         scope_vars: Annotated[
-            Mapping[str, contextvars.ContextVar[t.ConfigMap | None]],
+            Mapping[
+                str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
+            ],
             FlextUtilitiesPydantic.Field(
                 default_factory=dict,
                 description="ContextVar registry keyed by scope name",
             ),
         ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
-
-        @FlextUtilitiesPydantic.computed_field()
-        def inactive(self) -> bool:
-            """Expose inactive state as the inverse of `active`."""
-            return not self.active
-
-        @FlextUtilitiesPydantic.computed_field()
-        def scope_names(self) -> tuple[str, ...]:
-            """Expose configured scope names for debugging/export."""
-            return tuple(self.scope_vars)
 
         @classmethod
         def create_default(
@@ -167,23 +162,23 @@ class FlextModelsContextScope:
             metadata: FlextModelsBase.Metadata | None = None,
         ) -> Self:
             """Create default runtime state with canonical built-in scopes."""
-            global_scope_var: contextvars.ContextVar[t.ConfigMap | None] = (
-                contextvars.ContextVar(
-                    "flext_global_context",
-                    default=None,
-                )
+            global_scope_var: contextvars.ContextVar[
+                FlextModelsContainers.ConfigMap | None
+            ] = contextvars.ContextVar(
+                "flext_global_context",
+                default=None,
             )
-            user_scope_var: contextvars.ContextVar[t.ConfigMap | None] = (
-                contextvars.ContextVar(
-                    "flext_user_context",
-                    default=None,
-                )
+            user_scope_var: contextvars.ContextVar[
+                FlextModelsContainers.ConfigMap | None
+            ] = contextvars.ContextVar(
+                "flext_user_context",
+                default=None,
             )
-            session_scope_var: contextvars.ContextVar[t.ConfigMap | None] = (
-                contextvars.ContextVar(
-                    "flext_session_context",
-                    default=None,
-                )
+            session_scope_var: contextvars.ContextVar[
+                FlextModelsContainers.ConfigMap | None
+            ] = contextvars.ContextVar(
+                "flext_session_context",
+                default=None,
             )
             metadata_model = (
                 metadata.model_copy()
@@ -202,19 +197,21 @@ class FlextModelsContextScope:
         def resolve_scope_var(
             self,
             scope: str,
-        ) -> tuple[Self, contextvars.ContextVar[t.ConfigMap | None]]:
+        ) -> tuple[
+            Self, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
+        ]:
             """Resolve an existing scope var or create one immutably."""
             existing = self.scope_vars.get(scope)
             if existing is not None:
                 return self, existing
-            scope_var: contextvars.ContextVar[t.ConfigMap | None] = (
-                contextvars.ContextVar(
-                    f"flext_{scope}_context",
-                    default=None,
-                )
+            scope_var: contextvars.ContextVar[
+                FlextModelsContainers.ConfigMap | None
+            ] = contextvars.ContextVar(
+                f"flext_{scope}_context",
+                default=None,
             )
             updated_scope_vars: dict[
-                str, contextvars.ContextVar[t.ConfigMap | None]
+                str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
             ] = dict(self.scope_vars)
             updated_scope_vars[scope] = scope_var
             return self.model_copy(update={"scope_vars": updated_scope_vars}), scope_var
@@ -222,13 +219,20 @@ class FlextModelsContextScope:
         def with_operation_update(self, operation: str) -> Self:
             """Increment canonical statistics for the given operation."""
             counter_attr = f"{operation}s"
-            statistics_updates: dict[str, t.ValueOrModel] = {}
+            statistics_updates: dict[
+                str,
+                t.ValueOrModel | t.MetadataValue,
+            ] = {}
             current_statistics = self.statistics
             if counter_attr in type(current_statistics).model_fields:
                 current_counter = getattr(current_statistics, counter_attr)
                 if isinstance(current_counter, int):
                     statistics_updates[counter_attr] = current_counter + 1
-            operations = dict(current_statistics.operations)
+            operations: dict[str, t.Container] = {
+                str(key): value
+                for key, value in current_statistics.operations.items()
+                if isinstance(value, (str, int, float, bool, datetime, Path))
+            }
             current_operation_value = operations.get(operation)
             if isinstance(current_operation_value, int):
                 operations[operation] = current_operation_value + 1

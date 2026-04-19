@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from examples import ExamplesFlextCoreShared, c, m, t
+from examples import ExamplesFlextCoreShared, c, m
 from flext_core import e, r
 
 
@@ -31,7 +31,7 @@ class Ex07FlextExceptions(ExamplesFlextCoreShared):
         base = e.BaseError(
             "base boom",
             error_code="E_BASE",
-            context=t.ConfigMap(root={"scope": "demo"}),
+            context=m.ConfigMap(root={"scope": "demo"}),
             metadata=m.Metadata(attributes={"channel": "example"}),
             correlation_id="corr-base-1",
             auto_correlation=False,

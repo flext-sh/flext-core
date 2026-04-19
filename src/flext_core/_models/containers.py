@@ -1,7 +1,9 @@
-"""Container models for the FLEXT type system.
+"""Container RootModel wrappers for the FLEXT runtime.
 
-Pydantic RootModel-based container classes for dictionaries, lists, and validators.
-These are the concrete implementations exposed through FlextModels (``m.*``).
+Pydantic v2 ``RootModel`` + ``MutableMapping`` / ``Sequence`` ABCs.  Only
+the abstract hooks required by the ABCs are implemented - ``items``,
+``keys``, ``values``, ``get``, ``update``, ``__contains__`` etc. come for
+free from the ABCs.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,12 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    ItemsView,
-    Mapping,
-    ValuesView,
-)
-from typing import Annotated
+from collections.abc import Iterator, MutableMapping, Sequence
+from typing import Annotated, override
 
 from flext_core import (
     FlextModelsPydantic as mp,
@@ -24,15 +22,10 @@ from flext_core import (
 
 
 class FlextModelsContainers:
-    """Pydantic container models for the FLEXT type system.
-
-    Provides RootModel-based dict and list containers for type-safe
-    configuration, service maps, and validator collections.
-    Access via ``t.ConfigMap``, ``t.Dict``, etc.
-    """
+    """Pydantic RootModel container namespace."""
 
     class ValidatorCallable(mp.RootModel[FlextTypesServices.ValidatorCallable]):
-        """Callable validator container. Fixed types: ScalarValue | BaseModel."""
+        """Callable validator container rooted in a scalar-or-model transform."""
 
         root: Annotated[
             FlextTypesServices.ValidatorCallable,
@@ -45,41 +38,94 @@ class FlextModelsContainers:
 
         def __call__(
             self,
-            value: FlextTypesServices.ScalarOrModel | None,
-        ) -> FlextTypesServices.ScalarOrModel | None:
-            """Execute validator."""
+            value: FlextTypesServices.ScalarOrModel,
+        ) -> FlextTypesServices.ScalarOrModel:
             return self.root(value)
 
-    class _RootValidatorMapModel(
-        mp.RootModel[Mapping[str, FlextTypesServices.ValidatorCallable]],
+    class Dict(
+        mp.RootModel[dict[str, FlextTypesServices.ValueOrModel]],
+        MutableMapping[str, FlextTypesServices.ValueOrModel],
     ):
-        """Shared API for validator map containers."""
-
-        def items(self) -> ItemsView[str, FlextTypesServices.ValidatorCallable]:
-            """Get validator items."""
-            validated: Mapping[str, FlextTypesServices.ValidatorCallable] = {
-                key: value for key, value in self.root.items() if callable(value)
-            }
-            return validated.items()
-
-        def values(self) -> ValuesView[FlextTypesServices.ValidatorCallable]:
-            """Get validator values."""
-            validated: Mapping[str, FlextTypesServices.ValidatorCallable] = {
-                key: value for key, value in self.root.items() if callable(value)
-            }
-            return validated.values()
-
-    class FieldValidatorMap(_RootValidatorMapModel):
-        """Map of field validators."""
+        """Runtime dictionary container rooted in validated values."""
 
         root: Annotated[
-            Mapping[str, FlextTypesServices.ValidatorCallable],
-            up.Field(
-                title="Field Validator Map",
-                description="Field-level validators keyed by field name.",
-                examples=[{"email": "validate_email"}],
-            ),
-        ] = up.Field(default_factory=dict)
+            dict[str, FlextTypesServices.ValueOrModel],
+            up.Field(description="Validated runtime key-value mapping."),
+        ]
+
+        @override
+        def __iter__(self) -> Iterator[str]:
+            return iter(self.root)
+
+        @override
+        def __len__(self) -> int:
+            return len(self.root)
+
+        @override
+        def __getitem__(self, key: str) -> FlextTypesServices.ValueOrModel:
+            return self.root[key]
+
+        @override
+        def __setitem__(self, key: str, value: FlextTypesServices.ValueOrModel) -> None:
+            self.root[key] = value
+
+        @override
+        def __delitem__(self, key: str) -> None:
+            del self.root[key]
+
+    class ConfigMap(
+        mp.RootModel[dict[str, FlextTypesServices.ValueOrModel]],
+        MutableMapping[str, FlextTypesServices.ValueOrModel],
+    ):
+        """Runtime configuration mapping rooted in validated values."""
+
+        root: Annotated[
+            dict[str, FlextTypesServices.ValueOrModel],
+            up.Field(description="Validated runtime configuration mapping."),
+        ]
+
+        @override
+        def __iter__(self) -> Iterator[str]:
+            return iter(self.root)
+
+        @override
+        def __len__(self) -> int:
+            return len(self.root)
+
+        @override
+        def __getitem__(self, key: str) -> FlextTypesServices.ValueOrModel:
+            return self.root[key]
+
+        @override
+        def __setitem__(self, key: str, value: FlextTypesServices.ValueOrModel) -> None:
+            self.root[key] = value
+
+        @override
+        def __delitem__(self, key: str) -> None:
+            del self.root[key]
+
+    class ObjectList(
+        mp.RootModel[list[FlextTypesServices.ValueOrModel]],
+        Sequence[FlextTypesServices.ValueOrModel],
+    ):
+        """Runtime list container rooted in validated values."""
+
+        root: Annotated[
+            list[FlextTypesServices.ValueOrModel],
+            up.Field(description="Validated runtime sequence."),
+        ]
+
+        @override
+        def __iter__(self) -> Iterator[FlextTypesServices.ValueOrModel]:
+            return iter(self.root)
+
+        @override
+        def __len__(self) -> int:
+            return len(self.root)
+
+        @override
+        def __getitem__(self, index: int) -> FlextTypesServices.ValueOrModel:
+            return self.root[index]
 
 
 __all__: list[str] = ["FlextModelsContainers"]

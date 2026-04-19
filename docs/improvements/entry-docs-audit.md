@@ -24,7 +24,7 @@ ______________________________________________________________________
 1. **Layer 3 listing**
 
    - Update the Layer 3 bullet to reflect the current set: `h`, `FlextDispatcher`, `u.build_registry()`, and `d`.
-   - Remove `FlextBus` and `FlextProcessors`, which no longer exist in the package surface.
+   - Remove `FlextDispatcher` and `FlextProcessors`, which no longer exist in the package surface.
 
 1. **Landing copy**
 

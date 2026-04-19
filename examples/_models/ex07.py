@@ -2,29 +2,37 @@
 
 from __future__ import annotations
 
-from flext_core import m
+from examples import m, u
 
 
-class Ex07CreateUserCommand(m.Command):
-    """Create user command model."""
+class ExamplesFlextCoreModelsEx07:
+    """Example 07 model namespace."""
 
-    name: str
-    email: str
+    class Ex07CreateUserCommand(m.Command):
+        """Create user command model."""
+
+        name: str = u.Field(description="User display name")
+        email: str = u.Field(description="User email address")
+
+    class Ex07UserCreatedEvent(m.Event):
+        """User-created event model."""
+
+        event_type: str = u.Field(description="Event type identifier")
+        aggregate_id: str = u.Field(description="Aggregate root identifier")
+        name: str = u.Field(description="User name from event")
+
+    class Ex07GetUserQuery(m.Query):
+        """Get user query model."""
+
+        user_id: str = u.Field(description="User identifier to query")
+
+    class Ex07DemoPlugin(m.Value):
+        """Demo plugin model."""
+
+        name: str = u.Field(description="Plugin name")
 
 
-class Ex07UserCreatedEvent(m.Event):
-    """User-created event model."""
-
-    event_type: str
-    aggregate_id: str
-    name: str
-
-
-class Ex07GetUserQuery(m.Query):
-    """Get user query model."""
-
-    user_id: str
-
-
-class Ex07DemoPlugin(m.Value):
-    name: str
+Ex07CreateUserCommand = ExamplesFlextCoreModelsEx07.Ex07CreateUserCommand
+Ex07UserCreatedEvent = ExamplesFlextCoreModelsEx07.Ex07UserCreatedEvent
+Ex07GetUserQuery = ExamplesFlextCoreModelsEx07.Ex07GetUserQuery
+Ex07DemoPlugin = ExamplesFlextCoreModelsEx07.Ex07DemoPlugin

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from examples import (
-    ExamplesFlextCoreModelsErrors,
-    ExamplesFlextCoreModelsOutput,
+from examples._models.errors import ExamplesFlextCoreModelsErrors
+from examples._models.output import ExamplesFlextCoreModelsOutput
+from examples._models.shared import (
     ExamplesFlextCoreSharedHandle,
     ExamplesFlextCoreSharedPerson,
 )

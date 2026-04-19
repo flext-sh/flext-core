@@ -54,7 +54,7 @@ class FlextProtocolsLogging:
             exception: Exception | None,
             exc_info: bool,
             context: Mapping[str, t.RuntimeData | Exception],
-        ) -> t.ConfigMap:
+        ) -> t.FlatContainerMapping:
             """Build normalized structured exception context."""
             ...
 
@@ -312,11 +312,11 @@ class FlextProtocolsLogging:
         def flush(self) -> None: ...
 
     type AccessibleData = (
-        t.RecursiveContainer
+        t.Container
         | FlextProtocolsBase.Model
         | Mapping[
             str,
-            t.RecursiveContainer | FlextProtocolsBase.Model,
+            t.Container | FlextProtocolsBase.Model,
         ]
         | FlextProtocolsResult.HasModelDump
         | FlextProtocolsLogging.ValidatorSpec

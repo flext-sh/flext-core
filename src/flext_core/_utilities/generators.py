@@ -57,7 +57,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_prefixed_id(
         prefix: str,
-        *parts: t.RecursiveContainer,
+        *parts: t.Container,
         length: int = c.SHORT_UUID_LENGTH,
     ) -> str:
         """Generate {prefix}_{parts}_{uuid[:length]} formatted ID."""
@@ -69,12 +69,12 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _build_parts_list(
-        parts: tuple[t.RecursiveContainer, ...] | None,
+        parts: tuple[t.Container, ...] | None,
         *,
         include_timestamp: bool,
-    ) -> t.MutableRecursiveContainerList:
+    ) -> list[t.Container]:
         """Collect ID parts including optional timestamp prefix."""
-        all_parts: t.MutableRecursiveContainerList = []
+        all_parts: list[t.Container] = []
         if include_timestamp:
             all_parts.append(int(datetime.now(UTC).timestamp()))
         if parts:
@@ -84,7 +84,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_custom_separator_id(
         actual_prefix: str,
-        all_parts: t.MutableRecursiveContainerList,
+        all_parts: list[t.Container],
         separator: str,
         id_length: int,
     ) -> str:
@@ -100,7 +100,7 @@ class FlextUtilitiesGenerators:
         kind: str | None = None,
         *,
         prefix: str | None = None,
-        parts: tuple[t.RecursiveContainer, ...] | None = None,
+        parts: tuple[t.Container, ...] | None = None,
         length: int | None = None,
         include_timestamp: bool = False,
         separator: str = "_",

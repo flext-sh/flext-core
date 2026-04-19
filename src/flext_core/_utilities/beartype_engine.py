@@ -103,7 +103,7 @@ class FlextUtilitiesBeartypeEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def mutable_kind(value: t.RecursiveContainer) -> str | None:
+    def mutable_kind(value: t.Container) -> str | None:
         for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
             if isinstance(value, kind):
                 return kind.__name__
@@ -325,7 +325,7 @@ class FlextUtilitiesBeartypeEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def attr_accept_constants(name: str, value: t.RecursiveContainer) -> bool:
+    def attr_accept_constants(name: str, value: t.Container) -> bool:
         if name.startswith("_") or name in c.ENFORCEMENT_CONSTANTS_SKIP_ATTRS:
             return False
         if isinstance(value, (type, classmethod, staticmethod, property)):
@@ -350,7 +350,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_const_mutable(
         name: str,
-        value: t.RecursiveContainer,
+        value: t.Container,
     ) -> Mapping[str, str] | None:
         del name
         kind = FlextUtilitiesBeartypeEngine.mutable_kind(value)
@@ -361,7 +361,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_const_lowercase(
         name: str,
-        value: t.RecursiveContainer,
+        value: t.Container,
     ) -> Mapping[str, str] | None:
         del value
         return _BARE_VIOLATION if name != name.upper() else _NO_VIOLATION
@@ -369,7 +369,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_alias_any(
         name: str,
-        value: t.RecursiveContainer,
+        value: t.Container,
     ) -> Mapping[str, str] | None:
         del name
         if FlextUtilitiesBeartypeEngine.alias_contains_any(
@@ -381,7 +381,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_typeadapter_name(
         name: str,
-        value: t.RecursiveContainer,
+        value: t.Container,
     ) -> Mapping[str, str] | None:
         if type(value).__name__ != "TypeAdapter":
             return _NO_VIOLATION
@@ -392,7 +392,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_utility_not_static(
         name: str,
-        value: t.RecursiveContainer,
+        value: t.Container,
     ) -> Mapping[str, str] | None:
         del name
         if isinstance(value, (staticmethod, classmethod)):

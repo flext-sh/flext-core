@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Self
 
 import pytest
@@ -70,9 +70,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: t.MutableRecursiveContainerMapping = dict[
-                    str, t.RecursiveContainer
-                ]()
+                self._config: t.MutableFlatContainerMapping = dict[str, t.Container]()
 
             def with_database(self, host: str, port: int) -> Self:
                 """Add database configuration."""
@@ -89,13 +87,13 @@ class TestArchitecturalPatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> p.Result[t.RecursiveContainerMapping]:
+            def build(self) -> p.Result[Mapping[str, t.Container]]:
                 """Build the configuration."""
                 if not self._config:
-                    return r[t.RecursiveContainerMapping].fail(
+                    return r[Mapping[str, t.Container]].fail(
                         "Configuration cannot be empty",
                     )
-                return r[t.RecursiveContainerMapping].ok(dict(self._config))
+                return r[Mapping[str, t.Container]].ok(dict(self._config))
 
         config_result = (
             ConfigurationBuilder()
@@ -128,20 +126,20 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize repository."""
                 super().__init__()
-                self._data: MutableMapping[str, t.ConfigMap] = {}
+                self._data: MutableMapping[str, m.ConfigMap] = {}
                 self._query_count = 0
 
-            def save(self, entity_id: str, data: t.ConfigMap) -> p.Result[bool]:
+            def save(self, entity_id: str, data: m.ConfigMap) -> p.Result[bool]:
                 """Save entity to repository."""
                 self._data[entity_id] = data
                 return r[bool].ok(True)
 
-            def find_by_id(self, entity_id: str) -> p.Result[t.ConfigMap]:
+            def find_by_id(self, entity_id: str) -> p.Result[m.ConfigMap]:
                 """Find entity by ID."""
                 self._query_count += 1
                 if entity_id in self._data:
-                    return r[t.ConfigMap].ok(self._data[entity_id])
-                return r[t.ConfigMap].fail(
+                    return r[m.ConfigMap].ok(self._data[entity_id])
+                return r[m.ConfigMap].fail(
                     f"Entity not found: {entity_id}",
                 )
 
@@ -154,7 +152,7 @@ class TestArchitecturalPatterns:
         for i in range(1000):
             result = repo.save(
                 f"entity_{i}",
-                t.ConfigMap(root={"id": i, "name": f"Entity {i}"}),
+                m.ConfigMap(root={"id": i, "name": f"Entity {i}"}),
             )
             u.Core.Tests.assert_success(
                 result,
@@ -168,10 +166,10 @@ class TestArchitecturalPatterns:
         assert len(repo._data) == 1000, f"Expected 1000 entities, got {len(repo._data)}"
         start_time = time.perf_counter()
         for i in range(100):
-            query_result: p.Result[t.ConfigMap] = repo.find_by_id(f"entity_{i}")
+            query_result: p.Result[m.ConfigMap] = repo.find_by_id(f"entity_{i}")
             assert query_result.success, f"Query {i} should succeed"
             entity_data = query_result.value
-            assert isinstance(entity_data, t.ConfigMap), (
+            assert isinstance(entity_data, m.ConfigMap), (
                 f"Expected ConfigMap, got {type(entity_data)}"
             )
             assert entity_data.root.get("id") == i, f"Entity {i} should have id={i}"
@@ -241,19 +239,19 @@ class TestArchitecturalPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        observers: MutableSequence[t.MutableRecursiveContainerMapping] = []
+        observers: MutableSequence[t.MutableFlatContainerMapping] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
-        obs1: t.MutableRecursiveContainerMapping = {
+        obs1: t.MutableFlatContainerMapping = {
             "name": "Observer1",
-            "state": None,
+            "state": "",
         }
-        obs2: t.MutableRecursiveContainerMapping = {
+        obs2: t.MutableFlatContainerMapping = {
             "name": "Observer2",
-            "state": None,
+            "state": "",
         }
         observers.extend([obs1, obs2])
         notify_all("new_state")

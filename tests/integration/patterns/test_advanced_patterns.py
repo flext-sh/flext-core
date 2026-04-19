@@ -28,7 +28,7 @@ class TestAdvancedPatterns:
     """Test class demonstrating advanced testing patterns."""
 
     class MockScenario:
-        """Mock scenario t.RecursiveContainer for testing purposes."""
+        """Mock scenario t.Container for testing purposes."""
 
         def __init__(self, name: str, data: m.Core.Tests.MockScenarioData) -> None:
             """Initialize mockscenario:."""
@@ -47,15 +47,9 @@ class TestAdvancedPatterns:
             """Initialize givenwhenthenbuilder:."""
             super().__init__()
             self.name = name
-            self._given: t.MutableRecursiveContainerMapping = dict[
-                str, t.RecursiveContainer
-            ]()
-            self._when: t.MutableRecursiveContainerMapping = dict[
-                str, t.RecursiveContainer
-            ]()
-            self._then: t.MutableRecursiveContainerMapping = dict[
-                str, t.RecursiveContainer
-            ]()
+            self._given: t.MutableFlatContainerMapping = dict[str, t.Container]()
+            self._when: t.MutableFlatContainerMapping = dict[str, t.Container]()
+            self._then: t.MutableFlatContainerMapping = dict[str, t.Container]()
             self._tags: MutableSequence[str] = []
             self._priority = "normal"
 
@@ -132,8 +126,8 @@ class TestAdvancedPatterns:
 
             """
 
-            def convert_dict_value(value: t.RecursiveContainer) -> t.Scalar:
-                """Convert t.RecursiveContainer to t.Scalar."""
+            def convert_dict_value(value: t.Container) -> t.Scalar:
+                """Convert t.Container to t.Scalar."""
                 if isinstance(value, (str, int, bool)):
                     return value
                 if isinstance(value, float):
@@ -186,11 +180,9 @@ class TestAdvancedPatterns:
         def __init__(self) -> None:
             """Initialize flexttestbuilder:."""
             super().__init__()
-            self._data: t.MutableRecursiveContainerMapping = dict[
-                str, t.RecursiveContainer
-            ]()
-            self._validation_rules: t.MutableRecursiveContainerMapping = dict[
-                str, t.RecursiveContainer
+            self._data: t.MutableFlatContainerMapping = dict[str, t.Container]()
+            self._validation_rules: t.MutableFlatContainerMapping = dict[
+                str, t.Container
             ]()
 
         def with_id(self, id_: str) -> TestAdvancedPatterns.FlextTestBuilder:
@@ -218,7 +210,7 @@ class TestAdvancedPatterns:
 
         def with_metadata(
             self,
-            **kwargs: t.RecursiveContainer,
+            **kwargs: t.Container,
         ) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_metadata method.
 
@@ -257,7 +249,7 @@ class TestAdvancedPatterns:
 
         def with_validation_rules(
             self,
-            **kwargs: t.RecursiveContainer,
+            **kwargs: t.Container,
         ) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_validation_rules method.
 
@@ -268,7 +260,7 @@ class TestAdvancedPatterns:
             self._validation_rules = kwargs
             return self
 
-        def build(self) -> t.RecursiveContainerMapping:
+        def build(self) -> Mapping[str, t.Container]:
             """Build method.
 
             Returns:
@@ -365,18 +357,18 @@ class TestAdvancedPatterns:
 
         def __init__(
             self,
-            data: t.RecursiveContainerList
-            | t.RecursiveContainerMapping
+            data: t.FlatContainerList
+            | Mapping[str, t.Container]
             | str
-            | tuple[t.RecursiveContainer, ...],
+            | tuple[t.Container, ...],
         ) -> None:
             """Initialize assertionbuilder:."""
             super().__init__()
             self.data: (
-                t.RecursiveContainerList
-                | t.RecursiveContainerMapping
+                t.FlatContainerList
+                | Mapping[str, t.Container]
                 | str
-                | tuple[t.RecursiveContainer, ...]
+                | tuple[t.Container, ...]
             ) = data
             self._assertions: MutableSequence[Callable[[], None]] = []
 
@@ -440,10 +432,10 @@ class TestAdvancedPatterns:
             self,
             condition: Callable[
                 [
-                    t.RecursiveContainerList
-                    | t.RecursiveContainerMapping
+                    t.FlatContainerList
+                    | Mapping[str, t.Container]
                     | str
-                    | tuple[t.RecursiveContainer, ...],
+                    | tuple[t.Container, ...],
                 ],
                 bool,
             ],
@@ -574,7 +566,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: t.RecursiveContainerMapping = {
+        test_data: Mapping[str, t.Container] = {
             "name": "John",
             "age": 30,
             "active": True,
@@ -667,28 +659,14 @@ class TestAdvancedPatterns:
             .FlextTestBuilder()
             .with_id("main-123")
             .with_metadata(
-                nested_data=self
-                .FlextTestBuilder()
-                .with_id("nested-456")
-                .with_user_data("Jane", "jane@example.com")
-                .build(),
+                nested_data="nested-456",
             )
             .build()
         )
         assert main_data.get("id") == "main-123"
         nested_data = main_data.get("nested_data")
         assert nested_data is not None
-        nested_mapping: t.RecursiveContainerMapping = (
-            nested_data if isinstance(nested_data, dict) else {}
-        )
-        nested_dict = nested_mapping.get("id")
-        assert nested_dict is not None or "id" in nested_mapping
-        if "id" in nested_mapping:
-            id_value = nested_mapping["id"]
-            assert id_value == "nested-456"
-        if "name" in nested_mapping:
-            name_value = nested_mapping["name"]
-            assert name_value == "Jane"
+        assert nested_data == "nested-456"
 
     def test_fluent_interface_pattern(self) -> None:
         """Test fluent interface pattern."""

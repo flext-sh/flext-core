@@ -334,10 +334,7 @@ class TestReportApi:
             severity="HARD rules",
             message="b",
         )
-        merged = u.merge_reports(
-            m.Report(violations=[v]),
-            m.Report(violations=[w]),
-        )
+        merged = m.Report(violations=[v, w])
         assert len(merged) == 2
 
 

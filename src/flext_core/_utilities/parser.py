@@ -10,8 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import warnings
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from enum import StrEnum
 
 from pydantic import Field
@@ -334,41 +333,6 @@ class FlextUtilitiesParser:
         if default_factory is not None:
             return r[T].ok(default_factory())
         return r[T].fail(error_msg)
-
-    @staticmethod
-    def norm_in(
-        value: str,
-        items: p.HasModelDump | t.StrSequence | t.ConfigMap | t.FlatContainerMapping,
-        *,
-        case: str | None = None,
-    ) -> bool:
-        """Normalized membership check (builder: norm().in_())."""
-        items_to_check: t.StrSequence
-        match items:
-            case t.ConfigMap():
-                items_to_check = [str(k) for k in items.root]
-            case p.HasModelDump():
-                items_to_check = list(items.model_dump().keys())
-            case Mapping():
-                warnings.warn(
-                    "Passing raw Mapping to norm_in() is deprecated. "
-                    "Use t.ConfigMap or a canonical Pydantic model (p.HasModelDump) instead. "
-                    "Will be removed in v0.13.",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                items_to_check = [str(k) for k in items]
-            case Sequence():
-                items_to_check = [str(i) for i in items]
-            case _:
-                items_to_check = [str(items)]
-        selected_case = case or c.ParserCase.LOWER.value
-        normalized_value = FlextUtilitiesParser.norm_str(value, case=selected_case)
-        normalized_result = [
-            FlextUtilitiesParser.norm_str(item, case=selected_case)
-            for item in items_to_check
-        ]
-        return normalized_value in normalized_result
 
     @staticmethod
     def norm_str(

@@ -7,7 +7,7 @@ from types import ModuleType
 from typing import override
 
 from examples import ExamplesFlextCoreShared, c, p, t, u
-from flext_core import FlextContainer, FlextContext, r
+from flext_core import FlextContainer, r
 
 
 class _WireProbe:
@@ -120,7 +120,7 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
         )
         container.initialize_registrations(
             settings=root.settings.model_copy(deep=True),
-            context=FlextContext(),
+            context=root.context,
         )
         self.check(
             "initialize_registrations.list_services_empty",
@@ -156,7 +156,7 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
         self.check("clear_all.count", len(container.names()))
         before_reset = root
         FlextContainer.reset_for_testing()
-        after_reset = FlextContainer.shared(context=FlextContext())
+        after_reset = FlextContainer.shared()
         self.check("reset_singleton.new_instance", before_reset is not after_reset)
         self.check(
             "reset_singleton.fetch_global.same_after_reset",
@@ -320,8 +320,7 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
         """Exercise fetch_global/create entrypoints and singleton semantics."""
         self.section("singleton_and_creation")
         FlextContainer.reset_for_testing()
-        root_context = FlextContext()
-        root = FlextContainer.shared(context=root_context)
+        root = FlextContainer.shared()
         self.check("fetch_global.type", type(root).__name__)
         self.check("fetch_global.context.type", type(root.context).__name__)
         self.check("fetch_global.settings.type", type(root.settings).__name__)
@@ -357,7 +356,7 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
         subproject_alpha = self.rand_str(6)
         subproject_beta = self.rand_str(6)
         scoped_subproject = container.scope(subproject=subproject_alpha)
-        explicit_context = FlextContext()
+        explicit_context = container.context
         explicit_settings = container.settings.model_copy(
             update={"app_name": f"scoped.{self.rand_str(8)}"},
         )
@@ -374,9 +373,7 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             services={scoped_service_name: scoped_service_value},
             factories={scoped_factory_name: lambda: scoped_factory_value},
             resources={
-                scoped_resource_name: lambda: t.ConfigMap(
-                    root={"res": scoped_resource_value},
-                ),
+                scoped_resource_name: lambda: {"res": scoped_resource_value},
             },
         )
         self.check("scoped.default.new_instance", scoped_default is not container)

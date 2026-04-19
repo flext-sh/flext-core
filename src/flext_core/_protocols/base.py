@@ -37,7 +37,7 @@ class FlextProtocolsBase:
             mode: str = "python",
             include: t.IncEx | None = None,
             exclude: t.IncEx | None = None,
-            context: t.MetadataInput = None,
+            context: t.MetadataInput | None = None,
             by_alias: bool | None = None,
             exclude_unset: bool = False,
             exclude_defaults: bool = False,
@@ -47,8 +47,8 @@ class FlextProtocolsBase:
             warnings: bool | str = True,
             fallback: (
                 Callable[
-                    [t.RuntimeAtomic],
-                    t.RuntimeAtomic,
+                    [t.RuntimeData],
+                    t.RuntimeData,
                 ]
                 | None
             ) = None,
@@ -65,7 +65,7 @@ class FlextProtocolsBase:
             strict: bool | None = None,
             extra: str | None = None,
             from_attributes: bool | None = None,
-            context: t.MetadataInput = None,
+            context: t.MetadataInput | None = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> Self:
@@ -95,7 +95,7 @@ class FlextProtocolsBase:
             strict: bool | None = None,
             extra: str | None = None,
             from_attributes: bool | None = None,
-            context: t.MetadataInput = None,
+            context: t.MetadataInput | None = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> TModel:
@@ -127,7 +127,7 @@ class FlextProtocolsBase:
 
         def execute(
             self,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]: ...
+        ) -> FlextProtocolsResult.Result[t.RuntimeData]: ...
 
         def service_info(self) -> t.FlatContainerMapping: ...
 
@@ -138,8 +138,8 @@ class FlextProtocolsBase:
         def get(
             self,
             key: str,
-            default: t.RuntimeAtomic | None = None,
-        ) -> t.RuntimeAtomic | None:
+            default: t.RuntimeData | None = None,
+        ) -> t.RuntimeData | None:
             """Fetch a configuration value by key."""
             ...
 
@@ -147,7 +147,7 @@ class FlextProtocolsBase:
             """Return known configuration keys."""
             ...
 
-        def items(self) -> Iterable[tuple[str, t.RuntimeAtomic]]:
+        def items(self) -> Iterable[tuple[str, t.RuntimeData]]:
             """Return key/value entries for configuration payloads."""
             ...
 

@@ -67,7 +67,7 @@ class FlextRegistry(s[bool]):
 
     def __init_subclass__(
         cls,
-        **kwargs: t.Scalar | t.ConfigMap | t.ScalarList,
+        **kwargs: t.Scalar | m.ConfigMap | t.ScalarList,
     ) -> None:
         """Auto-create per-subclass class-level storage.
 
@@ -148,9 +148,6 @@ class FlextRegistry(s[bool]):
             dispatcher if isinstance(dispatcher, p.Dispatcher) else runtime.dispatcher
         )
         self.dispatcher = resolved_dispatcher
-        self._context = runtime.context
-        self._settings = runtime.settings
-        self._container = runtime.container
         self._state = self._state.model_copy(update={"dispatcher": resolved_dispatcher})
         self._runtime = runtime.model_copy(
             update={
@@ -168,13 +165,13 @@ class FlextRegistry(s[bool]):
     @staticmethod
     def _narrow_value(
         value: (
-            t.RecursiveContainer
+            t.Container
             | t.RegisterableService
             | t.RegistrablePlugin
             | t.ModelCarrier
             | None
         ),
-    ) -> t.RuntimeAtomic | None:
+    ) -> t.RuntimeData | None:
         """Safe conversion using centralized utilities."""
         if value is None:
             return None
@@ -184,11 +181,11 @@ class FlextRegistry(s[bool]):
             return value
         return str(value)
 
-    def _get_handler_mode(self, value: t.RuntimeAtomic) -> c.HandlerType:
+    def _get_handler_mode(self, value: t.RuntimeData) -> c.HandlerType:
         """Safe conversion to HandlerType."""
         return u.parse_or_default(c.HandlerType, str(value), c.HandlerType.COMMAND)
 
-    def _get_status(self, value: t.RuntimeAtomic) -> c.CommonStatus:
+    def _get_status(self, value: t.RuntimeData) -> c.CommonStatus:
         """Safe conversion to CommonStatus."""
         return u.parse_or_default(c.CommonStatus, str(value), c.CommonStatus.ACTIVE)
 
@@ -231,7 +228,7 @@ class FlextRegistry(s[bool]):
         name: str,
         *,
         scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-    ) -> p.Result[t.RuntimeAtomic | None]:
+    ) -> p.Result[t.RuntimeData | None]:
         """Get a registered plugin by category and name.
 
         Returns:
@@ -248,11 +245,11 @@ class FlextRegistry(s[bool]):
                     f"retrieve {category} '{name}'",
                     raw_result.error or c.CQRS_OPERATION_FAILED,
                 )
-            return r[t.RuntimeAtomic | None].ok(self._narrow_value(raw_result.value))
+            return r[t.RuntimeData | None].ok(self._narrow_value(raw_result.value))
         cls = type(self)
         if key not in cls._class_registered_keys:
             return e.fail_not_found(category, name)
-        return r[t.RuntimeAtomic | None].ok(
+        return r[t.RuntimeData | None].ok(
             self._narrow_value(cls._class_plugin_storage[key]),
         )
 
@@ -345,13 +342,13 @@ class FlextRegistry(s[bool]):
 
         """
         handler_id = str(getattr(handler, "handler_id", id(handler)))
-        status_raw: t.RuntimeAtomic = getattr(
+        status_raw: t.RuntimeData = getattr(
             handler,
             c.FIELD_STATUS,
             c.CommonStatus.ACTIVE,
         )
         status = self._get_status(status_raw)
-        handler_mode_raw: t.RuntimeAtomic = getattr(
+        handler_mode_raw: t.RuntimeData = getattr(
             handler,
             c.FIELD_HANDLER_MODE,
             getattr(handler, "mode", c.HandlerType.COMMAND),

@@ -22,6 +22,7 @@ from flext_core import (
     FlextRuntime,
     FlextUtilitiesGenerators,
     c,
+    m,
     p,
     r,
     t,
@@ -196,20 +197,13 @@ class FlextLogger(FlextUtilitiesLoggingContext):
         exception: Exception | None,
         exc_info: bool,
         context: Mapping[str, t.RuntimeData | Exception],
-    ) -> t.ConfigMap:
+    ) -> t.FlatContainerMapping:
         """Build normalized context payload for exception/error logging."""
         include_stack_trace = self._should_include_stack_trace()
-        context_dict: t.ConfigMap = t.ConfigMap(root={})
+        context_dict: dict[str, t.Container] = {}
         if exception is not None:
-            exception_data: t.ConfigMap = t.ConfigMap(
-                root={
-                    "exception_type": exception.__class__.__name__,
-                    "exception_message": str(exception),
-                },
-            )
-            merged_root: MutableMapping[str, t.ValueOrModel] = dict(context_dict.root)
-            merged_root.update(dict(exception_data.root))
-            context_dict = t.ConfigMap(root=merged_root)
+            context_dict["exception_type"] = exception.__class__.__name__
+            context_dict["exception_message"] = str(exception)
             if include_stack_trace:
                 context_dict["stack_trace"] = "".join(
                     traceback.format_exception(
@@ -281,18 +275,19 @@ class FlextLogger(FlextUtilitiesLoggingContext):
                     context_input[key] = value
                 else:
                     context_input[key] = FlextLogger._to_scalar_value(value)
-            context_dict = self.build_exception_context(
+            built_context = self.build_exception_context(
                 exception=resolved_exception,
                 exc_info=bool(exc_info_value),
                 context=context_input,
             )
+            context_dict: dict[str, t.Container] = dict(built_context)
             if resolved_exception is None and isinstance(raw_exception, BaseException):
                 context_dict["exception_type"] = raw_exception.__class__.__name__
                 context_dict["exception_message"] = str(raw_exception)
             _ = self.logger.error(
                 message,
                 *filtered_args,
-                **FlextLogger._to_scalar_context(context_dict.root),
+                **FlextLogger._to_scalar_context(context_dict),
             )
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
@@ -437,7 +432,7 @@ class FlextLogger(FlextUtilitiesLoggingContext):
         def track_domain_event(
             event_name: str,
             aggregate_id: str | None = None,
-            event_data: t.ConfigMap | None = None,
+            event_data: m.ConfigMap | None = None,
         ) -> None:
             """Track domain event with context correlation."""
             sl = FlextLogger.structlog()
@@ -502,12 +497,12 @@ class FlextLogger(FlextUtilitiesLoggingContext):
             elapsed = time.time() - self._start_time
             success = exc_type is None
             status = "success" if success else "failed"
-            context: t.ConfigMap = t.ConfigMap(
+            context: m.ConfigMap = m.ConfigMap(
                 root={
                     c.MetadataKey.DURATION_SECONDS: elapsed,
                     c.HandlerType.OPERATION: self._operation_name,
                     c.FIELD_STATUS: status,
-                },
+                }
             )
             if not success:
                 context["exception_type"] = exc_type.__name__ if exc_type else ""
