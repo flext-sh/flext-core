@@ -95,7 +95,7 @@ class FlextTypingContainers:
             ),
         ] = up.Field(default_factory=tuple)
 
-    class Dict(RootDictModel[t.RecursiveContainer | mp.BaseModel]):
+    class Dict(RootDictModel[t.ContainerOrModel]):
         """Validated dict payload for requests, responses, and data transfer.
 
         Type-safe MutableMapping[str, RecursiveContainer | BaseModel] with full
@@ -106,7 +106,7 @@ class FlextTypingContainers:
         root: Annotated[
             MutableMapping[
                 str,
-                t.RecursiveContainer | mp.BaseModel,
+                t.ContainerOrModel,
             ],
             up.Field(
                 title="Dictionary Payload",
@@ -123,8 +123,8 @@ class FlextTypingContainers:
         def get(
             self,
             key: str,
-            default: (t.RecursiveContainer | mp.BaseModel | None) = None,
-        ) -> t.RecursiveContainer | mp.BaseModel | None:
+            default: (t.ContainerOrModel | None) = None,
+        ) -> t.ContainerOrModel | None:
             value = self.root.get(key, default)
             if isinstance(value, Mapping) and not isinstance(
                 value,
@@ -133,7 +133,7 @@ class FlextTypingContainers:
                 return dict(value)
             return value
 
-    class ConfigMap(RootDictModel[t.RecursiveContainer | mp.BaseModel]):
+    class ConfigMap(RootDictModel[t.ContainerOrModel]):
         """Configuration container for settings and environment parameters.
 
         Semantically distinct Dict for configuration (not data).

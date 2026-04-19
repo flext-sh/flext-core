@@ -10,7 +10,7 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from pathlib import Path
 
-from flext_core import FlextTypesPydantic
+from flext_core import FlextModelsPydantic as mp, FlextTypesPydantic as tp
 
 
 class FlextTypingBase:
@@ -41,7 +41,7 @@ class FlextTypingBase:
     type MutableMappingKV[KeyT, ValueT] = dict[KeyT, ValueT]
     type SequenceOf[ItemT] = Sequence[ItemT]
     type MutableSequenceOf[ItemT] = list[ItemT]
-    type SecretValue = FlextTypesPydantic.SecretStr | FlextTypesPydantic.SecretBytes
+    type SecretValue = tp.SecretStr | tp.SecretBytes
     type SettingsValue = RecursiveContainer | SecretValue
 
     # Flat (non-recursive) mapping/list aliases for high-frequency patterns
@@ -145,3 +145,5 @@ class FlextTypingBase:
     ]
     type VariadicTuple[ItemT] = tuple[ItemT, ...]
     type IntPair = Pair[int, int]
+
+    type ContainerOrModel = RecursiveContainer | mp.BaseModel

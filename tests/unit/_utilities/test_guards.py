@@ -316,7 +316,7 @@ class TestFlextUtilitiesGuards:
     # -----------------------------------------------------------------------
 
     def test_is_type_result_protocol(self) -> None:
-        tm.that(u.matches_type(r[int].ok(1), "result"), eq=True)
+        tm.that(u.matches_type(r[t.GuardInput].ok(1), "result"), eq=True)
         tm.that(u.matches_type("not a result", "result"), eq=False)
 
     def test_is_type_protocol_names_reject_plain_string(self) -> None:

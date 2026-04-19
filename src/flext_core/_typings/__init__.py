@@ -9,7 +9,10 @@ _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".annotateds": ("FlextTypesAnnotateds",),
         ".base": ("FlextTypingBase",),
-        ".containers": ("FlextTypingContainers",),
+        ".containers": (
+            "ContainerOrModel",
+            "FlextTypingContainers",
+        ),
         ".core": ("FlextTypesCore",),
         ".project_metadata": ("FlextTypingProjectMetadata",),
         ".pydantic": ("FlextTypesPydantic",),

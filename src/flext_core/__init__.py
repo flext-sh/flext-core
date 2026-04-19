@@ -75,7 +75,7 @@ if _t.TYPE_CHECKING:
     from flext_core._protocols.settings import FlextProtocolsSettings
     from flext_core._typings.annotateds import FlextTypesAnnotateds
     from flext_core._typings.base import FlextTypingBase
-    from flext_core._typings.containers import FlextTypingContainers
+    from flext_core._typings.containers import ContainerOrModel, FlextTypingContainers
     from flext_core._typings.core import FlextTypesCore
     from flext_core._typings.project_metadata import FlextTypingProjectMetadata
     from flext_core._typings.pydantic import FlextTypesPydantic
@@ -240,7 +240,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._protocols.settings": ("FlextProtocolsSettings",),
             "._typings.annotateds": ("FlextTypesAnnotateds",),
             "._typings.base": ("FlextTypingBase",),
-            "._typings.containers": ("FlextTypingContainers",),
+            "._typings.containers": (
+                "ContainerOrModel",
+                "FlextTypingContainers",
+            ),
             "._typings.core": ("FlextTypesCore",),
             "._typings.project_metadata": ("FlextTypingProjectMetadata",),
             "._typings.pydantic": ("FlextTypesPydantic",),
@@ -373,6 +376,7 @@ install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
     "TV",
+    "ContainerOrModel",
     "EnumT",
     "FlextConstants",
     "FlextConstantsBase",
