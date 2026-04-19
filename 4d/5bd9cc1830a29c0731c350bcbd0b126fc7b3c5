@@ -1,0 +1,46 @@
+tests/unit/test_utilities_collection_full_coverage.py
+  h_9db9d35f50cf33 8,44-49,52
+tests/utilities.py
+  h_9db9d35f50cf33 120-121
+src/flext_core/container.py
+  h_9db9d35f50cf33 966
+tests/integration/patterns/test_patterns_logging.py
+  h_9db9d35f50cf33 27-28
+src/flext_core/context.py
+  h_9db9d35f50cf33 158-162,323,345
+src/flext_core/_utilities/enforcement.py
+  h_9db9d35f50cf33 428
+src/flext_core/_utilities/context_tracing.py
+  h_9db9d35f50cf33 13,22
+src/flext_core/loggings.py
+  h_9db9d35f50cf33 185-192,518,523
+tests/unit/test_utilities_guards_full_coverage.py
+  h_9db9d35f50cf33 100,225,317,344-345,366
+src/flext_core/_protocols/logging.py
+  h_9db9d35f50cf33 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "4d5bd9cc1830a29c0731c350bcbd0b126fc7b3c5",
+  "prompts": {
+    "2a008a39b1ce7c77": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "234d2634-32e6-47bf-99b1-de4c2dbf1d3c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
