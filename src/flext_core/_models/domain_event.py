@@ -16,7 +16,7 @@ from flext_core import (
     FlextModelsBase as m,
     FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
-    FlextUtilitiesDomain as u,
+    FlextUtilitiesCollection as u,
     FlextUtilitiesPydantic as up,
     t,
 )

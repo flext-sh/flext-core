@@ -12,18 +12,21 @@ from __future__ import annotations
 
 from collections.abc import (
     Mapping,
-    MutableMapping,
     Sequence,
 )
+from typing import TYPE_CHECKING
 
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsContainers as mc,
-    FlextUtilitiesCollection,
+    FlextModelsDomainEvent as mde,
     FlextUtilitiesGuards as u,
     c,
     t,
 )
+
+if TYPE_CHECKING:
+    from flext_core._protocols.base import FlextProtocolsBase as pb
 
 
 class FlextUtilitiesDomain:
@@ -136,22 +139,25 @@ class FlextUtilitiesDomain:
         return hash(tuple(items))
 
     @staticmethod
-    def normalize_domain_event_data(
-        value: mc.ConfigMap | Mapping[str, t.MetadataOrValue | None] | None,
-    ) -> Mapping[str, t.MetadataValue]:
-        """Normalize domain event payloads into comparable plain mappings."""
-        if value is None:
-            return {}
-        raw_source = value.root if isinstance(value, mc.ConfigMap) else value
-        typed_source = t.flat_container_mapping_adapter().validate_python(raw_source)
-        normalized: MutableMapping[str, t.MetadataValue] = {}
-        for key, item in typed_source.items():
-            normalized_value = (
-                FlextUtilitiesCollection.normalize_aggregated_metadata_value(item)
-            )
-            if normalized_value is not None:
-                normalized[str(key)] = normalized_value
-        return normalized
+    def add_domain_event(
+        entity: pb.HasDomainEvents,
+        event_type: str,
+        data: mc.ConfigMap | Mapping[str, t.MetadataOrValue | None] | None = None,
+        aggregate_id: str | None = None,
+    ) -> mde.Entry:
+        """Create a domain event and append it to the entity's event buffer.
+
+        Pass ``aggregate_id`` explicitly when the entity's stable identity
+        differs from ``unique_id`` (e.g. a surrogate ``id`` field). Pydantic's
+        ``BeforeValidator`` on ``Entry.data`` handles all normalization.
+        """
+        entry = mde.Entry(
+            event_type=event_type,
+            aggregate_id=aggregate_id if aggregate_id is not None else entity.unique_id,
+            data=data,
+        )
+        entity.domain_events.append(entry)
+        return entry
 
 
 __all__: list[str] = ["FlextUtilitiesDomain"]

@@ -26,10 +26,31 @@ from flext_core import (
     r,
     t,
 )
+from flext_core._models.containers import FlextModelsContainers as mc
 
 
 class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
+
+    @staticmethod
+    def normalize_domain_event_data(
+        value: mc.ConfigMap | Mapping[str, t.MetadataOrValue | None] | None,
+    ) -> Mapping[str, t.MetadataValue]:
+        """Normalize domain event payloads into plain flat mappings.
+
+        Moved from FlextUtilitiesDomain so the DomainEvent model can consume it
+        without creating a utility→model→utility cycle.
+        """
+        if value is None:
+            return {}
+        raw_source = value.root if isinstance(value, mc.ConfigMap) else value
+        typed_source = t.flat_container_mapping_adapter().validate_python(raw_source)
+        normalized: MutableMapping[str, t.MetadataValue] = {}
+        for key, item in typed_source.items():
+            nv = FlextUtilitiesCollection.normalize_aggregated_metadata_value(item)
+            if nv is not None:
+                normalized[str(key)] = nv
+        return normalized
 
     @staticmethod
     def normalize_aggregated_metadata_value(

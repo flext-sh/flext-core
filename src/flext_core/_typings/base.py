@@ -23,7 +23,7 @@ class FlextTypingBase:
 
     type Numeric = int | float
     type Primitives = str | Numeric | bool
-    type Scalar = Primitives | datetime
+    type Scalar = Primitives | bytes | datetime
     type JsonValue = tp.JsonValue
     type JsonMapping = Mapping[str, JsonValue]
     type JsonList = Sequence[JsonValue]
@@ -41,6 +41,8 @@ class FlextTypingBase:
     # Flat (non-recursive) mapping/list aliases for high-frequency patterns
     type StrMapping = Mapping[str, str]
     type MutableStrMapping = MutableMapping[str, str]
+    type OptionalStrMapping = Mapping[str, str | None]
+    type MutableOptionalStrMapping = MutableMapping[str, str | None]
     type StrSequence = Sequence[str]
 
     type ScalarMapping = Mapping[str, Scalar]
@@ -50,6 +52,22 @@ class FlextTypingBase:
     type MutableFlatContainerList = MutableSequence[Container]
     type FlatContainerMapping = Mapping[str, Container]
     type MutableFlatContainerMapping = MutableMapping[str, Container]
+    # Canonical consumer aliases (flat; no recursion — JsonValue carries depth)
+    type ContainerValue = Container
+    type ContainerValueMapping = FlatContainerMapping
+    type MutableContainerValueMapping = MutableFlatContainerMapping
+    type ContainerValueList = FlatContainerList
+    type MutableContainerValueList = MutableFlatContainerList
+    type RecursiveValue = JsonValue
+    type RecursiveContainerMapping = FlatContainerMapping
+    type MutableRecursiveContainerMapping = MutableFlatContainerMapping
+    type RecursiveContainerList = FlatContainerList
+    type MutableRecursiveContainerList = MutableFlatContainerList
+    type OptionalContainerValue = Container | None
+    type OptionalContainerValueMapping = FlatContainerMapping | None
+    type OptionalScalar = Scalar | None
+    type OptionalPrimitive = Primitives | None
+    type MutableOptionalFeatureFlagMapping = MutableMapping[str, str | bool | None]
     type IntMapping = Mapping[str, int]
     type MutableIntMapping = MutableMapping[str, int]
     type BoolMapping = Mapping[str, bool]

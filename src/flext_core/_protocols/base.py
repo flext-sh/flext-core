@@ -10,12 +10,13 @@ from collections.abc import (
     Callable,
     Iterable,
     Mapping,
+    MutableSequence,
 )
 from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
-    from flext_core import FlextProtocolsResult, t
+    from flext_core import FlextModelsDomainEvent, FlextProtocolsResult, t
 
 
 class FlextProtocolsBase:
@@ -176,6 +177,17 @@ class FlextProtocolsBase:
         ) -> None:
             """Context manager exit."""
             ...
+
+    @runtime_checkable
+    class HasDomainEvents(Protocol):
+        """Protocol for DDD aggregate roots that buffer uncommitted domain events.
+
+        Any entity that carries a ``domain_events`` list and an identity
+        satisfies this protocol. Use with ``u.add_domain_event`` utility.
+        """
+
+        unique_id: str
+        domain_events: MutableSequence[FlextModelsDomainEvent.Entry]
 
 
 __all__: list[str] = ["FlextProtocolsBase"]
