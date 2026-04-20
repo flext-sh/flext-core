@@ -1,0 +1,32 @@
+src/flext_core/settings.py
+  h_9db9d35f50cf33 49
+src/flext_core/_typings/base.py
+  h_9db9d35f50cf33 32
+src/flext_core/result.py
+  h_9db9d35f50cf33 28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "76e0a9a7d003d20495682b8b3a9108ad298e08ba",
+  "prompts": {
+    "376f82a5e64b61d4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c3fe1632-f119-41b5-bbd0-0fc56ae1884d",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 32,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
