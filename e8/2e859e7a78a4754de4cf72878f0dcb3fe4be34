@@ -1,0 +1,36 @@
+src/flext_core/_typings/base.py
+  376f82a5e64b61d4 26,44-45,55-70
+src/flext_core/_utilities/collection.py
+  376f82a5e64b61d4 29,35-54
+src/flext_core/_models/domain_event.py
+  376f82a5e64b61d4 19
+src/flext_core/_protocols/base.py
+  376f82a5e64b61d4 13,19,181-190
+src/flext_core/_utilities/domain.py
+  376f82a5e64b61d4 17,22,28-30,142-160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "e82e859e7a78a4754de4cf72878f0dcb3fe4be34",
+  "prompts": {
+    "376f82a5e64b61d4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c3fe1632-f119-41b5-bbd0-0fc56ae1884d",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 218,
+      "total_deletions": 135,
+      "accepted_lines": 132,
+      "overriden_lines": 2
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
