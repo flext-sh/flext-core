@@ -6,7 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import (
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from datetime import datetime
 from pathlib import Path
 
@@ -19,9 +24,12 @@ class FlextTypingBase:
     type Numeric = int | float
     type Primitives = str | Numeric | bool
     type Scalar = Primitives | datetime
+    type JsonValue = tp.JsonValue
+    type JsonMapping = Mapping[str, JsonValue]
+    type JsonList = Sequence[JsonValue]
     type FlatScalarMapping = Mapping[str, Scalar]
     type FlatScalarSequence = Sequence[Scalar]
-    type Container = Scalar | Path | FlatScalarMapping | FlatScalarSequence
+    type Container = Scalar | Path | FlatScalarMapping | FlatScalarSequence | JsonValue
     type OpaqueValue = Container
     type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
     type MutableMappingKV[KeyT, ValueT] = dict[KeyT, ValueT]

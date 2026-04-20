@@ -14,7 +14,7 @@ from typing import ClassVar
 
 from pydantic import ConfigDict
 
-from flext_core import p, t, x
+from flext_core import p, x
 
 
 class FlextService[TDomainResult: p.Base = p.Base](x):
@@ -63,11 +63,6 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
     # def fail_op(...) -> p.Result[TDomainResult]:
     #     """Return a failure result."""
     #     raise NotImplementedError
-
-    def __init__(self, **data: t.RuntimeData) -> None:
-        """Initialize service with data."""
-        _ = data
-        super().__init__()
 
 
 s = FlextService

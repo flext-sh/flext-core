@@ -9,6 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (
+    Mapping,
+)
+from types import MappingProxyType
 from typing import Annotated, ClassVar, Literal
 
 from pydantic import (
@@ -21,8 +25,8 @@ from pydantic import (
 
 from flext_core import (
     FlextModelsBase as m,
-    FlextRuntime,
-    FlextUtilitiesGenerators,
+    FlextRuntime as ur,
+    FlextUtilitiesGenerators as ug,
     c,
     r,
     t,
@@ -105,9 +109,7 @@ class FlextModelsCqrs:
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
-                "cmd"
-            ),
+            default_factory=lambda: ug.generate_prefixed_id("cmd"),
         )
         issuer_id: Annotated[
             t.NonEmptyStr | None,
@@ -136,19 +138,21 @@ class FlextModelsCqrs:
             ),
         ] = "query"
         filters: Annotated[
-            t.ScalarMapping,
+            Mapping[str, t.Scalar],
             Field(
                 description="Filter values that restrict which records are returned by the query.",
                 title="Query Filters",
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
-        ] = Field(default_factory=dict)
-        pagination: _CqrsPagination | dict[str, t.Scalar] = Field(
-            default_factory=dict,
-            description="Pagination settings controlling page number and page size for query results.",
-            title="Pagination",
-            examples=[{"page": 1, "size": 50}],
-        )
+        ] = Field(default_factory=lambda: MappingProxyType({}))
+        pagination: Annotated[
+            _CqrsPagination,
+            Field(
+                description="Pagination settings controlling page number and page size for query results.",
+                title="Pagination",
+                examples=[{"page": 1, "size": 50}],
+            ),
+        ] = Field(default_factory=_CqrsPagination)
         query_id: Annotated[
             t.NonEmptyStr,
             Field(
@@ -157,7 +161,7 @@ class FlextModelsCqrs:
                 examples=["query_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
+            default_factory=lambda: ug.generate_prefixed_id(
                 "query",
             ),
         )
@@ -172,17 +176,17 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: BaseModel | dict[str, t.Scalar] | None,
+            v: BaseModel | Mapping[str, t.Scalar] | None,
         ) -> BaseModel:
             """Convert pagination to Pagination instance."""
-            pagination_cls = FlextRuntime.resolve_nested_model_class(
+            pagination_cls = ur.resolve_nested_model_class(
                 module_name=cls.__module__,
                 qualname=cls.__qualname__,
                 models_module_name="flext_core",
                 attribute_name="Pagination",
                 fallback=_CqrsPagination,
             )
-            normalized_input = FlextRuntime.normalize_model_input_mapping(v)
+            normalized_input = ur.normalize_model_input_mapping(v)
             if normalized_input is None:
                 return pagination_cls()
             validate_result = r[BaseModel].create_from_callable(
@@ -271,22 +275,20 @@ class FlextModelsCqrs:
                 examples=["evt_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
-                "evt"
-            ),
+            default_factory=lambda: ug.generate_prefixed_id("evt"),
         )
         data: Annotated[
-            t.ScalarMapping,
+            Mapping[str, t.Scalar],
             Field(
                 description="Event payload data",
             ),
-        ] = Field(default_factory=dict)
+        ] = Field(default_factory=lambda: MappingProxyType({}))
         metadata: Annotated[
-            t.ScalarMapping,
+            Mapping[str, t.Scalar],
             Field(
                 description="Event metadata (timestamps, correlation IDs, etc.)",
             ),
-        ] = Field(default_factory=dict)
+        ] = Field(default_factory=lambda: MappingProxyType({}))
 
     type FlextMessage = t.MessageUnion[Command, Query, Event]
 

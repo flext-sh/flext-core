@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from examples import m, t, u
+from flext_core import m, t, u
 
 
 class ExamplesFlextCoreModelsEx04:

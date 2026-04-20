@@ -11,7 +11,10 @@ import inspect
 import time
 import traceback
 import types
-from collections.abc import Mapping, MutableMapping
+from collections.abc import (
+    Mapping,
+    MutableMapping,
+)
 from contextlib import suppress
 from typing import ClassVar, Self
 
@@ -19,23 +22,23 @@ import structlog
 from structlog.typing import Context
 
 from flext_core import (
-    FlextRuntime,
-    FlextUtilitiesGenerators,
+    FlextModelsContainers as mc,
+    FlextRuntime as ur,
+    FlextUtilitiesGenerators as ug,
     c,
-    m,
     p,
     r,
     t,
 )
-from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
+from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
 
 
-class FlextLogger(FlextUtilitiesLoggingContext):
+class FlextLogger(ulc):
     """Context-aware logger tuned for dispatcher-centric CQRS flows.
 
     Composed via MRO from:
     - FlextUtilitiesLoggingConfig — structlog configuration, async writer, processors
-    - FlextUtilitiesLoggingContext — context binding, value normalization, source paths
+    - ulc — context binding, value normalization, source paths
     """
 
     _scoped_contexts: ClassVar[t.ScopedContainerRegistry] = {}
@@ -216,8 +219,8 @@ class FlextLogger(FlextUtilitiesLoggingContext):
             context_dict["stack_trace"] = traceback.format_exc()
         for key, value in context.items():
             if not isinstance(value, BaseException):
-                context_dict[key] = FlextRuntime.to_plain_container(
-                    FlextRuntime.normalize_to_container(value),
+                context_dict[key] = ur.to_plain_container(
+                    ur.normalize_to_container(value),
                 )
         return context_dict
 
@@ -417,7 +420,7 @@ class FlextLogger(FlextUtilitiesLoggingContext):
                     service_version=service_version,
                 )
             if enable_context_correlation:
-                correlation_id = f"flext-{FlextUtilitiesGenerators.generate_id().replace('-', '')[:12]}"
+                correlation_id = f"flext-{ug.generate_id().replace('-', '')[:12]}"
                 _ = sl.contextvars.bind_contextvars(
                     correlation_id=correlation_id,
                 )
@@ -432,7 +435,7 @@ class FlextLogger(FlextUtilitiesLoggingContext):
         def track_domain_event(
             event_name: str,
             aggregate_id: str | None = None,
-            event_data: m.ConfigMap | None = None,
+            event_data: mc.ConfigMap | None = None,
         ) -> None:
             """Track domain event with context correlation."""
             sl = FlextLogger.structlog()
@@ -497,7 +500,7 @@ class FlextLogger(FlextUtilitiesLoggingContext):
             elapsed = time.time() - self._start_time
             success = exc_type is None
             status = "success" if success else "failed"
-            context: m.ConfigMap = m.ConfigMap(
+            context: mc.ConfigMap = mc.ConfigMap(
                 root={
                     c.MetadataKey.DURATION_SECONDS: elapsed,
                     c.HandlerType.OPERATION: self._operation_name,

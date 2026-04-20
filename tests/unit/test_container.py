@@ -22,7 +22,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Generator
+from collections.abc import (
+    Callable,
+    Generator,
+)
 
 import pytest
 from hypothesis import assume, given, settings, strategies as st

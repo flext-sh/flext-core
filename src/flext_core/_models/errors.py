@@ -49,7 +49,7 @@ class FlextModelsErrors:
         attributes: Annotated[
             t.ConfigMap,
             up.Field(description="Flattenable metadata attributes exposed publicly."),
-        ] = up.Field(default_factory=dict)
+        ] = up.Field(default_factory=lambda: MappingProxyType({}))
 
         @up.computed_field()
         @property

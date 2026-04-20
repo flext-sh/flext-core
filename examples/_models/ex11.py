@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from examples import m, p, r
-from flext_core import FlextSettings
+from flext_core import FlextSettings, m, p, r
 
 
 class Ex11Payload(m.Value):

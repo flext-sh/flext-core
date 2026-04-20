@@ -12,7 +12,10 @@ from __future__ import annotations
 import sys
 import textwrap
 import typing
-from collections.abc import Mapping, Sequence
+from collections.abc import (
+    Mapping,
+    Sequence,
+)
 from pathlib import Path
 
 import pytest

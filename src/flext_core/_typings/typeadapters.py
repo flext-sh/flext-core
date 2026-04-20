@@ -6,7 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    Sequence,
+)
 from enum import StrEnum
 from typing import Annotated, ClassVar
 
@@ -76,6 +80,8 @@ class FlextTypesTypeAdapters:
     _structlog_processor_adapter: ClassVar[
         mp.TypeAdapter[Callable[..., t.Container]] | None
     ] = None
+    _json_value_adapter: ClassVar[mp.TypeAdapter[t.JsonValue] | None] = None
+    _json_mapping_adapter: ClassVar[mp.TypeAdapter[t.JsonMapping] | None] = None
 
     @classmethod
     def metadata_map_adapter(
@@ -86,6 +92,18 @@ class FlextTypesTypeAdapters:
                 Mapping[str, ts.MetadataValue],
             )
         return cls._metadata_map_adapter
+
+    @classmethod
+    def json_value_adapter(cls) -> mp.TypeAdapter[t.JsonValue]:
+        if cls._json_value_adapter is None:
+            cls._json_value_adapter = mp.TypeAdapter(t.JsonValue)
+        return cls._json_value_adapter
+
+    @classmethod
+    def json_mapping_adapter(cls) -> mp.TypeAdapter[t.JsonMapping]:
+        if cls._json_mapping_adapter is None:
+            cls._json_mapping_adapter = mp.TypeAdapter(t.JsonMapping)
+        return cls._json_mapping_adapter
 
     @classmethod
     def strict_string_adapter(

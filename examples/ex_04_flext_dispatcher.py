@@ -24,3 +24,4 @@ if __name__ == "__main__":
     if not result.success:
         msg = "dispatcher example failed"
         raise RuntimeError(msg)
+    print("PASS: ex_04_flext_dispatcher")

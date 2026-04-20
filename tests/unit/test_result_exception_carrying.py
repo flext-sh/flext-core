@@ -70,10 +70,8 @@ class TestsFlextCoreResultExceptionCarrying:
         tm.that(result.error, eq=error_msg)
         tm.that(result.error_data, none=False)
         if result.error_data is not None:
-            assert hasattr(result.error_data, "model_dump")
-            normalized_data = result.error_data.model_dump()
-            tm.that(normalized_data.get("field"), eq="email")
-            tm.that(normalized_data.get("reason"), eq="invalid format")
+            tm.that(result.error_data.get("field"), eq="email")
+            tm.that(result.error_data.get("reason"), eq="invalid format")
         tm.that(result.exception is exc, eq=True)
 
     def test_fail_with_none_error_and_exception(self) -> None:

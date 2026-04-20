@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import ast
-from collections.abc import Generator, Mapping
+from collections.abc import (
+    Generator,
+    Mapping,
+)
 from pathlib import Path
 from time import perf_counter
 

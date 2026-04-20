@@ -6,12 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    Sequence,
+)
 from pathlib import Path
 from types import MappingProxyType
 from typing import TypeGuard, TypeIs
 
-from flext_core import FlextUtilitiesGuardsTypeModel, c, p, t
+from flext_core import FlextUtilitiesGuardsTypeModel as ugm, c, p, t
 
 
 class FlextUtilitiesGuardsTypeProtocol:
@@ -94,10 +98,10 @@ class FlextUtilitiesGuardsTypeProtocol:
         return callable(value)
 
     @staticmethod
-    def result_like(
-        value: t.GuardInput,
+    def result_like[TValue](
+        value: TValue,
     ) -> TypeGuard[p.Result[t.RuntimeData]]:
-        """Narrow value to Result protocol."""
+        """Narrow any value to Result protocol (runtime isinstance check)."""
         return isinstance(value, p.Result)
 
     @staticmethod
@@ -111,7 +115,7 @@ class FlextUtilitiesGuardsTypeProtocol:
             return True
         if isinstance(value, Sequence):
             return not isinstance(value, (str, bytes, bytearray))
-        if FlextUtilitiesGuardsTypeModel.pydantic_model(value):
+        if ugm.pydantic_model(value):
             return True
         if callable(value):
             return True
@@ -203,7 +207,7 @@ class FlextUtilitiesGuardsTypeProtocol:
                     "dict_non_empty",
                     "list_non_empty",
                 }:
-                    if FlextUtilitiesGuardsTypeModel.pydantic_model(value):
+                    if ugm.pydantic_model(value):
                         return False
                     return FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
                         type_name,

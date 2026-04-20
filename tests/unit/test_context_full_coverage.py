@@ -7,7 +7,8 @@ from flext_core import FlextContext
 
 class TestContextFullCoverage:
     def test_create_and_get_context_value(self) -> None:
-        ctx = FlextContext(user_id="u1")
+        ctx = FlextContext()
+        assert ctx.set("user_id", "u1").success
         result = ctx.get("user_id")
         assert result.success
         assert result.value == "u1"

@@ -11,7 +11,12 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import PrivateAttr
@@ -48,22 +53,15 @@ class FlextRegistry(s[bool]):
     def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
         """Post-initialization hook for registry.
 
-        Calls parent model_post_init for runtime setup, then resolves
-        the dispatcher from the centralized service runtime DSL.
+        Initializes dispatcher state without triggering recursive runtime
+        build (registry IS part of the runtime triple — building it here
+        would recurse via ``build_service_runtime → build_registry``).
         """
         super().model_post_init(__context)
-        runtime_model = u.require_initialized(self._runtime, "Runtime")
         resolved_dispatcher = (
             self.dispatcher if isinstance(self.dispatcher, p.Dispatcher) else None
         )
-        if resolved_dispatcher is None:
-            resolved_dispatcher = runtime_model.dispatcher
         self._state = m.RegistryState(dispatcher=resolved_dispatcher)
-        self._runtime = runtime_model.model_copy(
-            update={
-                "dispatcher": resolved_dispatcher,
-            },
-        )
 
     def __init_subclass__(
         cls,
@@ -111,20 +109,16 @@ class FlextRegistry(s[bool]):
 
         """
         if runtime is None:
-            instance = cls(dispatcher=dispatcher)
+            instance = cls(dispatcher=dispatcher or u.build_dispatcher())
         else:
-            resolved_dispatcher = (
+            resolved = (
                 dispatcher
                 if isinstance(dispatcher, p.Dispatcher)
                 else runtime.dispatcher
             )
             instance = cls(
-                initial_context=runtime.context,
-                dispatcher=resolved_dispatcher,
-            ).configure_runtime(
-                runtime,
-                dispatcher=resolved_dispatcher,
-            )
+                initial_context=runtime.context, dispatcher=resolved
+            ).configure_runtime(runtime, dispatcher=resolved)
         if auto_discover_handlers:
             frame = inspect.currentframe()
             if frame and frame.f_back:

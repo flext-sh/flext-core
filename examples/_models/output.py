@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import (
+    Mapping,
+)
 from enum import StrEnum
 from re import Pattern, compile as re_compile
 from types import MappingProxyType

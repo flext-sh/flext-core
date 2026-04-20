@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable
+from collections.abc import (
+    Callable,
+)
 from contextlib import suppress
 from functools import wraps
 from typing import Literal, NoReturn, TypeIs, overload

@@ -16,7 +16,10 @@ from __future__ import annotations
 import importlib
 import sys
 import warnings
-from collections.abc import Iterator, Sequence
+from collections.abc import (
+    Iterator,
+    Sequence,
+)
 
 import pytest
 

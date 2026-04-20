@@ -11,7 +11,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import ItemsView
+from collections.abc import (
+    ItemsView,
+)
 from typing import override
 
 from flext_tests import tm

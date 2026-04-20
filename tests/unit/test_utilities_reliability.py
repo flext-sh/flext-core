@@ -12,7 +12,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    MutableSequence,
+    Sequence,
+)
 from typing import Final
 
 from tests import p, r, u

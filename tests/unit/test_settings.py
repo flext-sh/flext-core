@@ -23,7 +23,11 @@ from __future__ import annotations
 import os
 import threading
 import time
-from collections.abc import Generator, MutableSequence, Sequence
+from collections.abc import (
+    Generator,
+    MutableSequence,
+    Sequence,
+)
 from pathlib import Path
 from typing import ClassVar
 
@@ -32,7 +36,7 @@ from pydantic import ValidationError
 
 from flext_core import FlextSettings
 from flext_tests import tm
-from tests import c, m, p, t, u
+from tests import c, p, t, u
 
 
 @pytest.fixture(autouse=True)
@@ -84,10 +88,7 @@ class TestFlextSettings:
     def test_settings_initialization(self, config_data: t.FeatureFlagMapping) -> None:
         """Test settings initialization with various values."""
         settings = u.Core.Tests.create_test_config(**config_data)
-        u.Core.Tests.assert_config_fields(
-            settings,
-            m.ConfigMap(root=dict(config_data)),
-        )
+        u.Core.Tests.assert_config_fields(settings, config_data)
         tm.that(
             settings, is_=FlextSettings, msg="Settings must be FlextSettings instance"
         )
@@ -100,10 +101,7 @@ class TestFlextSettings:
             "debug": False,
         }
         settings = u.Core.Tests.create_test_config(**config_data)
-        u.Core.Tests.assert_config_fields(
-            settings,
-            m.ConfigMap(root=dict(config_data)),
-        )
+        u.Core.Tests.assert_config_fields(settings, config_data)
 
     def test_config_to_dict(self) -> None:
         """Test settings conversion to dictionary."""
@@ -215,9 +213,9 @@ class TestFlextSettings:
             msg="FlextSettings() must return same singleton instance",
         )
         tm.that(
-            config1.model_dump(),
-            eq=config2.model_dump(),
-            msg="Singleton configs must have same model_dump",
+            config1.model_dump_json() == config2.model_dump_json(),
+            eq=True,
+            msg="Singleton configs must have identical JSON serialization",
         )
 
     def test_config_thread_safety(self) -> None:

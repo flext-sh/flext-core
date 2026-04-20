@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import importlib
 import sys
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from types import ModuleType
 
 from pydantic import (

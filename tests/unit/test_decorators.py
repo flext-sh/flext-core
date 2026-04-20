@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Generator, Sequence
+from collections.abc import (
+    Generator,
+    Sequence,
+)
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 

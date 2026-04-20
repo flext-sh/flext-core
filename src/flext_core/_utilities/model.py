@@ -8,58 +8,62 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import (
+    Mapping,
+)
 from importlib import import_module
 
 from flext_core import (
-    FlextConstantsPydantic,
-    FlextModelsBase,
-    FlextModelsPydantic,
-    FlextModelsService,
-    FlextUtilitiesArgs,
-    FlextUtilitiesDiscovery,
-    FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesGuardsTypeProtocol,
-    FlextUtilitiesPydantic,
+    FlextModelsBase as m,
+    FlextModelsPydantic as mp,
+    FlextModelsService as ms,
+    FlextUtilitiesArgs as ua,
+    FlextUtilitiesDiscovery as ud,
+    FlextUtilitiesPydantic as up,
+    c,
     e,
     p,
     r,
     t,
+)
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ugc
+from flext_core._utilities.guards_type_protocol import (
+    FlextUtilitiesGuardsTypeProtocol as ugp,
 )
 
 
 class FlextUtilitiesModel:
     """Utilities for Pydantic model initialization."""
 
-    class ModelDumpOptions(FlextModelsBase.FlexibleInternalModel):
+    class ModelDumpOptions(m.FlexibleInternalModel):
         """Options controlling Pydantic model_dump() serialization behavior."""
 
-        by_alias: bool | None = FlextUtilitiesPydantic.Field(
+        by_alias: bool | None = up.Field(
             None,
             description="Serialize using field aliases",
             validate_default=True,
         )
-        exclude_none: bool | None = FlextUtilitiesPydantic.Field(
+        exclude_none: bool | None = up.Field(
             None,
             description="Exclude None-valued fields",
             validate_default=True,
         )
-        exclude_unset: bool | None = FlextUtilitiesPydantic.Field(
+        exclude_unset: bool | None = up.Field(
             None,
             description="Exclude fields not explicitly set",
             validate_default=True,
         )
-        exclude_defaults: bool | None = FlextUtilitiesPydantic.Field(
+        exclude_defaults: bool | None = up.Field(
             None,
             description="Exclude fields matching defaults",
             validate_default=True,
         )
-        include: set[str] | None = FlextUtilitiesPydantic.Field(
+        include: set[str] | None = up.Field(
             None,
             description="Whitelist of field names to include",
             validate_default=True,
         )
-        exclude: set[str] | None = FlextUtilitiesPydantic.Field(
+        exclude: set[str] | None = up.Field(
             None,
             description="Blacklist of field names to exclude",
             validate_default=True,
@@ -84,7 +88,7 @@ class FlextUtilitiesModel:
             Dictionary representation of the model.
 
         """
-        opts = FlextUtilitiesArgs.resolve_options(
+        opts = ua.resolve_options(
             options,
             kwargs,
             FlextUtilitiesModel.ModelDumpOptions,
@@ -181,9 +185,7 @@ class FlextUtilitiesModel:
         """Validate one value through a model class or TypeAdapter."""
         try:
             adapter = (
-                target
-                if isinstance(target, FlextModelsPydantic.TypeAdapter)
-                else FlextModelsPydantic.TypeAdapter(target)
+                target if isinstance(target, mp.TypeAdapter) else mp.TypeAdapter(target)
             )
             if from_json:
                 if not isinstance(data, (str, bytes, bytearray)):
@@ -194,7 +196,7 @@ class FlextUtilitiesModel:
                 return r[TValue].ok(adapter.validate_json(data, strict=strict))
             return r[TValue].ok(adapter.validate_python(data, strict=strict))
         except (
-            FlextConstantsPydantic.ValidationError,
+            c.ValidationError,
             TypeError,
             ValueError,
             AttributeError,
@@ -242,43 +244,38 @@ class FlextUtilitiesModel:
     def resolve_runtime_options(
         cls,
         source: (
-            FlextModelsService.RuntimeBootstrapOptions
-            | Mapping[str, t.ValueOrModel]
-            | p.Base
-            | None
+            ms.RuntimeBootstrapOptions | Mapping[str, t.ValueOrModel] | p.Base | None
         ) = None,
         **overrides: t.ValueOrModel,
-    ) -> FlextModelsService.RuntimeBootstrapOptions:
+    ) -> ms.RuntimeBootstrapOptions:
         """Resolve runtime options from models, mappings, or service instances."""
-        resolved = FlextModelsService.RuntimeBootstrapOptions()
+        resolved = ms.RuntimeBootstrapOptions()
         if source is not None:
-            if isinstance(source, FlextModelsService.RuntimeBootstrapOptions):
+            if isinstance(source, ms.RuntimeBootstrapOptions):
                 resolved = source
             elif isinstance(source, Mapping):
                 source_dict = dict(source)
                 try:
-                    resolved = (
-                        FlextModelsService.RuntimeBootstrapOptions.model_validate(
-                            source_dict,
-                        )
+                    resolved = ms.RuntimeBootstrapOptions.model_validate(
+                        source_dict,
                     )
-                except FlextConstantsPydantic.ValidationError:
+                except c.ValidationError:
                     sanitized_source: dict[str, t.ValueOrModel | None] = dict(
                         source_dict
                     )
                     wire_packages_raw = sanitized_source.get("wire_packages")
                     if isinstance(wire_packages_raw, (list, tuple)):
-                        has_only_strings = all(
-                            isinstance(wire_pkg, str) for wire_pkg in wire_packages_raw
-                        )
-                        if has_only_strings:
-                            sanitized_source["wire_packages"] = list(wire_packages_raw)
+                        normalized_wire_packages: list[str] = [
+                            wire_pkg
+                            for wire_pkg in wire_packages_raw
+                            if isinstance(wire_pkg, str)
+                        ]
+                        if len(normalized_wire_packages) == len(wire_packages_raw):
+                            sanitized_source["wire_packages"] = normalized_wire_packages
                         else:
                             sanitized_source["wire_packages"] = None
-                    resolved = (
-                        FlextModelsService.RuntimeBootstrapOptions.model_validate(
-                            sanitized_source,
-                        )
+                    resolved = ms.RuntimeBootstrapOptions.model_validate(
+                        sanitized_source,
                     )
             else:
                 options_resolver = getattr(source, "_runtime_bootstrap_options", None)
@@ -290,14 +287,12 @@ class FlextUtilitiesModel:
                 if source_updates:
                     resolved = resolved.model_copy(update=source_updates)
         if overrides:
-            override_options = (
-                FlextModelsService.RuntimeBootstrapOptions.model_validate(
-                    overrides,
-                )
+            override_options = ms.RuntimeBootstrapOptions.model_validate(
+                overrides,
             )
             override_updates = {
                 field: getattr(override_options, field)
-                for field in FlextModelsService.RuntimeBootstrapOptions.model_fields
+                for field in ms.RuntimeBootstrapOptions.model_fields
                 if getattr(override_options, field) is not None
             }
             if override_updates:
@@ -306,7 +301,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def _resolve_runtime_dispatcher(
-        runtime_options: FlextModelsService.RuntimeBootstrapOptions,
+        runtime_options: ms.RuntimeBootstrapOptions,
         runtime_container: p.Container,
     ) -> p.Dispatcher | None:
         """Resolve the dispatcher from explicit options or the built container."""
@@ -331,7 +326,7 @@ class FlextUtilitiesModel:
         cls,
         dispatcher: p.Dispatcher | None = None,
         *,
-        runtime: FlextModelsService.ServiceRuntime | None = None,
+        runtime: ms.ServiceRuntime | None = None,
         auto_discover_handlers: bool = False,
     ) -> p.Registry:
         """Materialize the canonical registry implementation behind `p.Registry`."""
@@ -350,8 +345,8 @@ class FlextUtilitiesModel:
     @classmethod
     def _resolve_runtime_registry(
         cls,
-        runtime_options: FlextModelsService.RuntimeBootstrapOptions,
-        runtime: FlextModelsService.ServiceRuntime,
+        runtime_options: ms.RuntimeBootstrapOptions,
+        runtime: ms.ServiceRuntime,
     ) -> p.Registry:
         """Resolve the registry from explicit options or the shared runtime DSL."""
         explicit_registry = runtime_options.registry
@@ -363,13 +358,10 @@ class FlextUtilitiesModel:
     def build_service_runtime(
         cls,
         source: (
-            FlextModelsService.RuntimeBootstrapOptions
-            | Mapping[str, t.ValueOrModel]
-            | p.Base
-            | None
+            ms.RuntimeBootstrapOptions | Mapping[str, t.ValueOrModel] | p.Base | None
         ) = None,
         **overrides: t.ValueOrModel,
-    ) -> FlextModelsService.ServiceRuntime:
+    ) -> ms.ServiceRuntime:
         """Materialize settings, context, and container from one runtime specification."""
         runtime_options = cls.resolve_runtime_options(source, **overrides)
         context_type = cls._context_type()
@@ -388,7 +380,7 @@ class FlextUtilitiesModel:
             {
                 key: value
                 for key, value in runtime_options.settings_overrides.items()
-                if FlextUtilitiesGuardsTypeCore.scalar(value)
+                if ugc.scalar(value)
             }
             if runtime_options.settings_overrides is not None
             else None
@@ -409,20 +401,16 @@ class FlextUtilitiesModel:
             runtime_settings = runtime_settings_candidate
         runtime_context = (
             runtime_options.context
-            if FlextUtilitiesGuardsTypeProtocol.context(runtime_options.context)
+            if ugp.context(runtime_options.context)
             else context_type.create()
         )
-        bootstrap_services = (
-            FlextUtilitiesGuardsTypeProtocol.filter_registerable_services(
-                runtime_options.services,
-            )
+        bootstrap_services = ugp.filter_registerable_services(
+            runtime_options.services,
         )
-        wire_modules, wire_packages, wire_classes = (
-            FlextUtilitiesDiscovery.resolve_wire_targets(
-                runtime_options.wire_modules,
-                runtime_options.wire_packages,
-                runtime_options.wire_classes,
-            )
+        wire_modules, wire_packages, wire_classes = ud.resolve_wire_targets(
+            runtime_options.wire_modules,
+            runtime_options.wire_packages,
+            runtime_options.wire_classes,
         )
         runtime_container = container_type.shared().scope(
             settings=runtime_settings,
@@ -443,14 +431,14 @@ class FlextUtilitiesModel:
         runtime_container_context = getattr(runtime_container, "context", None)
         resolved_context = (
             runtime_container_context
-            if FlextUtilitiesGuardsTypeProtocol.context(runtime_container_context)
+            if ugp.context(runtime_container_context)
             else runtime_context
         )
         runtime_dispatcher = cls._resolve_runtime_dispatcher(
             runtime_options,
             runtime_container,
         )
-        service_runtime = FlextModelsService.ServiceRuntime(
+        service_runtime = ms.ServiceRuntime(
             settings=runtime_settings,
             context=resolved_context,
             container=runtime_container,

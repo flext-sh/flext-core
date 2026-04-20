@@ -12,7 +12,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import MutableSequence, Sequence
+from collections.abc import (
+    MutableSequence,
+    Sequence,
+)
 from typing import Annotated, ClassVar
 
 from flext_core import (

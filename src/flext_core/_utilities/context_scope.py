@@ -10,7 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextvars
-from collections.abc import Mapping, MutableMapping
+from collections.abc import (
+    Mapping,
+    MutableMapping,
+)
 from datetime import datetime
 from typing import ClassVar
 

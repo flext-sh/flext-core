@@ -28,3 +28,4 @@ class Ex11FlextService:
 
 if __name__ == "__main__":
     ExampleService.run()
+    print("PASS: ex_11_flext_service")

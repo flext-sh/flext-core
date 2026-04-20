@@ -8,7 +8,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableSequence,
+    Sequence,
+)
 from itertools import starmap
 from pathlib import Path
 

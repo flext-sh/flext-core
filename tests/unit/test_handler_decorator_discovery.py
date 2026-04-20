@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import types
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from typing import override
 
 from flext_tests import tm

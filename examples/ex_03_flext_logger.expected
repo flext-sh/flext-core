@@ -42,7 +42,7 @@ warning.ok: True
 error.ok: True
 critical.ok: True
 log.ok: True
-build_exception_context.type: 'ConfigMap'
+build_exception_context.type: 'dict'
 exception.ok: True
 
 [performance_tracker]

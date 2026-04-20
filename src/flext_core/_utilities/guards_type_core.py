@@ -10,7 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import (
+    Mapping,
+    Sequence,
+)
 from pathlib import Path
 from typing import TypeIs
 
@@ -141,7 +144,7 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def instance_of[T](value: t.GuardInput, type_cls: type[T]) -> bool:
+    def instance_of[T](value: t.GuardInput | T, type_cls: type[T]) -> bool:
         """Check if value is instance of type class (handles generics)."""
         return isinstance(value, getattr(type_cls, "__origin__", None) or type_cls)
 

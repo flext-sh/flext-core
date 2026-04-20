@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable, Mapping, MutableSequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableSequence,
+)
 from typing import Annotated, ClassVar
 
 import pytest

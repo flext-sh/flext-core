@@ -9,7 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    MutableSequence,
+    Sequence,
+)
 from types import TracebackType
 from typing import (
     Annotated,
@@ -33,7 +37,7 @@ from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
 from flext_core import FlextModelsContainers as mc, c, t
-from flext_core._protocols.logging import FlextProtocolsLogging
+from flext_core._protocols.logging import FlextProtocolsLogging as pl
 from flext_core.protocols import FlextProtocolsResult as p
 
 
@@ -59,7 +63,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
     _payload: T | None = PrivateAttr(default=None)
     _exception: BaseException | None = PrivateAttr(default=None)
     _result: Result[T, str] | None = PrivateAttr(default=None)
-    _result_logger: FlextProtocolsLogging.Logger | None = PrivateAttr(default=None)
+    _result_logger: pl.Logger | None = PrivateAttr(default=None)
 
     @property
     @override
@@ -81,9 +85,26 @@ class FlextResult[T](BaseModel, p.Result[T]):
 
     @property
     @override
-    def error_data(self) -> mc.ConfigMap | None:
-        """Public error metadata backed by an aliased Pydantic field."""
-        return self.result_error_data
+    def error_data(self) -> t.FlatContainerMapping | None:
+        """Public error metadata; Pydantic-native dump to flat Mapping."""
+        data = self.result_error_data
+        if data is None:
+            return None
+        normalized_raw: dict[str, t.Container] = {
+            str(key): (
+                value.model_dump(mode="json") if isinstance(value, BaseModel) else value
+            )
+            for key, value in data.root.items()
+        }
+        try:
+            return t.flat_container_mapping_adapter().validate_python(normalized_raw)
+        except ValidationError:
+            return {
+                str(key): (
+                    value if isinstance(value, (str, int, float, bool)) else str(value)
+                )
+                for key, value in normalized_raw.items()
+            }
 
     @override
     def __repr__(self) -> str:

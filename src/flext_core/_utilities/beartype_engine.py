@@ -21,7 +21,9 @@ from __future__ import annotations
 
 import inspect
 import re
-from collections.abc import Mapping
+from collections.abc import (
+    Mapping,
+)
 from enum import EnumType
 from pathlib import Path
 from types import UnionType

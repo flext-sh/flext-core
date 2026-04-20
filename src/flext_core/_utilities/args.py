@@ -8,7 +8,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import (
+    Mapping,
+)
 
 from flext_core import c, e, p, r, t
 
@@ -17,9 +19,9 @@ class FlextUtilitiesArgs:
     """Utilities for model-based option parsing."""
 
     @staticmethod
-    def parse_model[M: p.Model](
+    def parse_model[M: t.ModelCarrier](
         kwargs: Mapping[str, t.ValueOrModel],
-        model_cls: p.ModelType[M],
+        model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
     ) -> p.Result[M]:
@@ -48,10 +50,10 @@ class FlextUtilitiesArgs:
             return e.fail_validation(error=exc)
 
     @staticmethod
-    def resolve_options[M: p.Model](
+    def resolve_options[M: t.ModelCarrier](
         options: M | None,
         kwargs: Mapping[str, t.ValueOrModel],
-        model_cls: p.ModelType[M],
+        model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
     ) -> p.Result[M]:

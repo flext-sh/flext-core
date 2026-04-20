@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import (
+    Mapping,
+    MutableSequence,
+    Sequence,
+)
 from itertools import count
 from typing import Annotated, ClassVar, override
 

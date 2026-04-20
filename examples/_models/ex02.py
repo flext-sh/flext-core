@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from examples import c, m, p, r, u
-from flext_core import FlextSettings
+from flext_core import FlextSettings, c, m, p, r, u
 
 
 class ExamplesFlextCoreSettingsEx02TestConfig(FlextSettings):

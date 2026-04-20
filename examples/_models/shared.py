@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from examples import m, u
+from flext_core import m, u
 
 
 class ExamplesFlextCoreSharedPerson(m.Value):

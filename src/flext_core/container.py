@@ -14,7 +14,12 @@ from __future__ import annotations
 import inspect
 import sys
 import threading
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from types import FrameType, ModuleType
 from typing import Self, TypeIs, overload, override
 

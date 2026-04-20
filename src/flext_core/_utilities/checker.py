@@ -11,7 +11,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableSequence,
+    Sequence,
+)
 from typing import TypeIs, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel

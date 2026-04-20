@@ -12,7 +12,7 @@ from collections.abc import (
     MutableMapping,
     Sequence,
 )
-from datetime import date, time
+from datetime import date, time, tzinfo
 from enum import Enum
 from types import GenericAlias, ModuleType, UnionType
 from typing import TypeAliasType
@@ -20,13 +20,13 @@ from typing import TypeAliasType
 from flext_core import (
     FlextModelsPydantic as mp,
     FlextProtocolsBase as p,
-    FlextProtocolsContainer,
-    FlextProtocolsContext,
-    FlextProtocolsHandler,
-    FlextProtocolsLogging,
-    FlextProtocolsRegistry,
-    FlextProtocolsResult,
-    FlextProtocolsSettings,
+    FlextProtocolsContainer as pc,
+    FlextProtocolsContext as pcx,
+    FlextProtocolsHandler as ph,
+    FlextProtocolsLogging as pl,
+    FlextProtocolsRegistry as pr,
+    FlextProtocolsResult as prt,
+    FlextProtocolsSettings as ps,
     FlextTypingBase as t,
 )
 
@@ -34,6 +34,13 @@ from flext_core import (
 class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
+    type JsonValue = t.JsonValue
+    type JsonMapping = Mapping[str, t.JsonValue]
+    type JsonSequence = Sequence[t.JsonValue]
+    type JsonLikeValue = JsonValue
+    type JsonLikeMapping = JsonMapping
+    type JsonLikeSequence = JsonSequence
+    type JsonPayload = t.JsonValue | mp.BaseModel
     type RegistryDict[T] = MutableMapping[str, T]
     type ModelCarrier = mp.BaseModel
     type ProtocolModelCarrier = p.Model
@@ -43,7 +50,7 @@ class FlextTypesServices:
     type ModelClass[T: ModelCarrier] = type[T]
     type LogArgument = t.Container | p.Model
     type LogValue = FlextTypesServices.LogArgument | Exception
-    type LogResult = FlextProtocolsResult.Result[bool]
+    type LogResult = prt.Result[bool]
     type MetadataValue = t.Scalar | Mapping[str, t.Container] | Sequence[t.Container]
     type MetadataOrValue = MetadataValue | t.Container
     type MetadataAttributeValue = MetadataValue
@@ -56,15 +63,12 @@ class FlextTypesServices:
         t.Container
         | ModelCarrier
         | ContainerCarrier
-        | FlextProtocolsLogging.Logger
+        | pl.Logger
         | Mapping[str, t.Container]
         | Sequence[t.Container]
         | Callable[
             ...,
-            t.Container
-            | ModelCarrier
-            | ContainerCarrier
-            | FlextProtocolsLogging.Logger,
+            t.Container | ModelCarrier | ContainerCarrier | pl.Logger,
         ]
     )
     type FactoryCallable = Callable[[], RegisterableService]
@@ -80,29 +84,27 @@ class FlextTypesServices:
 
     type HandlerCallable = Callable[
         ...,
-        ModelCarrier | FlextProtocolsResult.ResultLike[ScalarOrModel],
+        ModelCarrier | prt.ResultLike[ScalarOrModel],
     ]
     type HandlerLike = Callable[
         ...,
-        ModelCarrier | FlextProtocolsResult.ResultLike[ScalarOrModel],
+        ModelCarrier | prt.ResultLike[ScalarOrModel],
     ]
     type DispatchableHandler = (
         ModelCarrier
         | Callable[
             ...,
-            ModelCarrier
-            | RuntimeAtomic
-            | FlextProtocolsResult.ResultLike[RuntimeAtomic],
+            ModelCarrier | RuntimeAtomic | prt.ResultLike[RuntimeAtomic],
         ]
     )
     type HandlerProtocolVariant = DispatchableHandler
     type ResolvedHandlerCallable = Callable[
         ...,
-        ModelCarrier | RuntimeAtomic | FlextProtocolsResult.ResultLike[RuntimeAtomic],
+        ModelCarrier | RuntimeAtomic | prt.ResultLike[RuntimeAtomic],
     ]
     type RoutedHandlerCallable = Callable[
         [p.Routable],
-        RuntimeAtomic | FlextProtocolsResult.ResultLike[RuntimeAtomic],
+        RuntimeAtomic | prt.ResultLike[RuntimeAtomic],
     ]
     type RegisteredHandler = tuple[
         HandlerProtocolVariant,
@@ -114,8 +116,8 @@ class FlextTypesServices:
         tuple[FlextTypesServices.MessageTypeSpecifier, ...],
     ]
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
-    type LoggerFactory = Callable[..., FlextProtocolsLogging.OutputLogger] | None
-    type LoggerWrapperFactory = Callable[[], type[FlextProtocolsLogging.Logger]]
+    type LoggerFactory = Callable[..., pl.OutputLogger] | None
+    type LoggerWrapperFactory = Callable[[], type[pl.Logger]]
 
     type SortableObjectType = str | int | float
     type TypeHintSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
@@ -137,7 +139,7 @@ class FlextTypesServices:
         str,
         MutableMapping[str, t.Scalar],
     ]
-    type SettingsClass = type[FlextProtocolsSettings.Settings]
+    type SettingsClass = type[ps.Settings]
     type RuntimeModule = ModuleType
     type LazyScalar = t.Scalar | bytes | date | time
     type LazyCollection = Mapping[str, LazyScalar] | Sequence[LazyScalar]
@@ -184,16 +186,18 @@ class FlextTypesServices:
         | GenericAlias
         | UnionType
         | TypeAliasType
-        | FlextProtocolsContainer.Container
-        | FlextProtocolsContext.Context
-        | FlextProtocolsHandler.Dispatcher
-        | FlextProtocolsHandler.Handle
-        | FlextProtocolsHandler.Middleware
-        | FlextProtocolsLogging.Logger
-        | FlextProtocolsLogging.HasLogger
-        | FlextProtocolsRegistry.Registry
-        | FlextProtocolsResult.ResultLike[RuntimeAtomic]
-        | FlextProtocolsSettings.Settings
+        | tzinfo
+        | frozenset[str]
+        | pc.Container
+        | pcx.Context
+        | ph.Dispatcher
+        | ph.Handle
+        | ph.Middleware
+        | pl.Logger
+        | pl.HasLogger
+        | pr.Registry
+        | prt.ResultLike[RuntimeAtomic]
+        | ps.Settings
     )
 
     type UserOverridesMapping = Mapping[

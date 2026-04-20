@@ -59,7 +59,7 @@ class FlextModelsDomainEvent:
         ] = up.Field(
             validate_default=True,
             description="Event data container",
-            default_factory=mc.ConfigMap,
+            default_factory=lambda: mc.ConfigMap(root={}),
         )
 
     DomainEvent = Entry

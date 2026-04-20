@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from tests import p, u
+from tests import m, p, t, u
 
 
 class TestDispatcherDI:
     """Test dispatcher materialization without touching internals."""
 
     def test_dispatcher_builder_returns_protocol_aligned_dispatcher(self) -> None:
-        """The dispatcher DSL returns a usable dispatcher protocol instance."""
+        """Dispatcher DSL yields a usable p.Dispatcher instance."""
         dispatcher = u.build_dispatcher()
         assert isinstance(dispatcher, p.Dispatcher)
-        assert dispatcher.register_handler(lambda _message: "handled").success
+        handle: t.DispatchableHandler = lambda _m: "handled"  # noqa: E731
+        handle.message_type = m.Command  # type: ignore[attr-defined]
+        assert dispatcher.register_handler(handle).success

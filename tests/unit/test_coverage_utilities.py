@@ -19,7 +19,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    MutableMapping,
+    Sequence,
+)
 from dataclasses import dataclass
 from enum import StrEnum, unique
 from typing import ClassVar, override

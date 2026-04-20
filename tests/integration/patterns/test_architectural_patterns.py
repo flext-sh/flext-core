@@ -11,7 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import (
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+)
 from typing import Self
 
 import pytest

@@ -17,7 +17,9 @@ import sys
 import threading
 import types
 import typing
-from collections.abc import Sequence
+from collections.abc import (
+    Sequence,
+)
 from contextlib import suppress
 from typing import ClassVar, override
 

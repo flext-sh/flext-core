@@ -13,7 +13,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    MutableSequence,
+    Sequence,
+)
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, ClassVar, override

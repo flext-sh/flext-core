@@ -2,7 +2,7 @@
 ok.value: 10
 fail.error: 'boom'
 fail.error_code: 'E_DEMO'
-fail.error_data: ConfigMap
+fail.error_data: dict
 safe.success.unwrap_or: 42
 safe.failure.error: "invalid literal for int() with base 10: 'x'"
 create_from_callable.success: 'created'
@@ -22,7 +22,7 @@ prop.success.value: 'value'
 prop.success.value_readable: True
 prop.failure.error: 'missing'
 prop.failure.error_code: 'E_PROP'
-prop.failure.error_data: ConfigMap
+prop.failure.error_data: dict
 unwrap.success: 'value'
 unwrap.failure.raises: True
 unwrap.failure.type: 'RuntimeError'

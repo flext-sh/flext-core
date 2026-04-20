@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import ClassVar, override
 
-from examples import m, u
+from flext_core import m, u
 
 
 class ExamplesFlextCoreModelsEx05:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from examples import m, u
+from flext_core import m, u
 
 
 class Ex12CommandA(m.Command):

@@ -38,8 +38,8 @@ from pydantic import BaseModel, ConfigDict
 from flext_core import (
     FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
-    FlextUtilitiesGenerators,
-    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGenerators as ug,
+    FlextUtilitiesGuardsTypeCore as ugc,
     T,
     c,
     p,
@@ -111,20 +111,12 @@ class FlextRuntime:
         return providers
 
     @staticmethod
-    def to_scalar(item: t.GuardInput) -> t.Scalar:
-        """Coerce a guard input to ``t.Scalar`` (flat Container invariant)."""
-        return item if FlextUtilitiesGuardsTypeCore.scalar(item) else str(item)
+    def to_scalar[TItem](item: TItem) -> t.Scalar:
+        """Coerce any runtime value to ``t.Scalar`` (flat Container invariant)."""
+        return item if isinstance(item, t.SCALAR_TYPES) else str(item)
 
     @staticmethod
-    def to_plain_container(
-        value: (
-            t.ValueOrModel
-            | Mapping[str, t.Container]
-            | mc.ConfigMap
-            | mc.Dict
-            | t.ObjectList
-        ),
-    ) -> t.Container:
+    def to_plain_container[TValue](value: TValue) -> t.Container:
         """Flatten a runtime value to flat ``t.Container`` (Pydantic-native)."""
         to_scalar = FlextRuntime.to_scalar
         match value:
@@ -137,7 +129,7 @@ class FlextRuntime:
                     str(k): to_scalar(v)
                     for k, v in value.model_dump(mode="python").items()
                 }
-            case dict():
+            case Mapping():
                 return {str(k): to_scalar(v) for k, v in value.items()}
             case list() | tuple():
                 return [to_scalar(item) for item in value]
@@ -368,15 +360,15 @@ class FlextRuntime:
                 return val
             case Path():
                 return val
-            case _ if FlextUtilitiesGuardsTypeCore.scalar(val):
+            case _ if ugc.scalar(val):
                 return val
-            case _ if FlextUtilitiesGuardsTypeCore.dict_like(val):
+            case _ if ugc.dict_like(val):
                 if isinstance(val, mc.ConfigMap):
                     entries = [(k, v) for k, v in val.root.items()]
                 else:
                     entries = [(str(k), v) for k, v in val.items()]
                 return FlextRuntime._normalize_dict_entries(entries)
-            case _ if FlextUtilitiesGuardsTypeCore.list_like(val):
+            case _ if ugc.list_like(val):
                 normalized_list: list[t.Scalar] = []
                 for item_raw in val:
                     item = FlextRuntime.normalize_to_container(item_raw)
@@ -392,7 +384,7 @@ class FlextRuntime:
     def _normalize_to_metadata_scalar(val: t.RuntimeData) -> t.Primitives:
         if val is None:
             return ""
-        if FlextUtilitiesGuardsTypeCore.primitive(val):
+        if ugc.primitive(val):
             return val
         if isinstance(val, datetime):
             return val.isoformat()
@@ -414,11 +406,11 @@ class FlextRuntime:
                 return str(v)
             case BaseModel():
                 return v.model_dump_json()
-            case _ if FlextUtilitiesGuardsTypeCore.scalar(v):
+            case _ if ugc.scalar(v):
                 return v
-            case _ if FlextUtilitiesGuardsTypeCore.list_like(v):
+            case _ if ugc.list_like(v):
                 return [FlextRuntime._normalize_to_metadata_scalar(item) for item in v]
-            case _ if FlextUtilitiesGuardsTypeCore.dict_like(v):
+            case _ if ugc.dict_like(v):
                 inner: MutableMapping[str, t.Primitives] = {}
                 for ik, iv in v.items():
                     inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
@@ -446,14 +438,14 @@ class FlextRuntime:
                 return val.model_dump_json()
             case datetime():
                 return val
-            case _ if FlextUtilitiesGuardsTypeCore.primitive(val):
+            case _ if ugc.primitive(val):
                 return val
-            case _ if FlextUtilitiesGuardsTypeCore.dict_like(val):
+            case _ if ugc.dict_like(val):
                 normalized: MutableMapping[str, t.Scalar | t.ScalarList] = {}
                 for k, v in val.items():
                     normalized[str(k)] = FlextRuntime._normalize_metadata_dict_value(v)
                 return normalized
-            case _ if FlextUtilitiesGuardsTypeCore.list_like(val):
+            case _ if ugc.list_like(val):
                 return [
                     FlextRuntime._normalize_to_metadata_scalar(item) for item in val
                 ]
@@ -788,7 +780,7 @@ class FlextRuntime:
         elif not isinstance(
             context,
             Mapping,
-        ) and FlextUtilitiesGuardsTypeCore.scalar(context):
+        ) and ugc.scalar(context):
             context_dict = mc.ConfigMap(root={})
         elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())
@@ -810,12 +802,12 @@ class FlextRuntime:
     @staticmethod
     def generate_datetime_utc() -> datetime:
         """Generate current UTC datetime for runtime-scoped timestamps."""
-        return FlextUtilitiesGenerators.generate_datetime_utc()
+        return ug.generate_datetime_utc()
 
     @staticmethod
     def generate_id() -> str:
         """Generate unique ID for runtime-scoped correlation and tracing."""
-        return FlextUtilitiesGenerators.generate_id()
+        return ug.generate_id()
 
 
 __all__: list[str] = ["FlextRuntime"]

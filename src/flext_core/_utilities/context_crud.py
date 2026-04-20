@@ -9,14 +9,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import (
+    Mapping,
+)
 from typing import ClassVar, overload
 
 from flext_core import c, e, m, p, r, t, u
-from flext_core._utilities.context_scope import FlextUtilitiesContextScope
+from flext_core._utilities.context_scope import FlextUtilitiesContextScope as ucs
 
 
-class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
+class FlextUtilitiesContextCrud(ucs):
     """CRUD operations on context scopes for FlextContext."""
 
     _logger: ClassVar[p.Logger]
@@ -108,6 +110,19 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextScope):
         raw_value: t.MetadataValue = self._state.metadata.attributes[key]
         normalized_value = self._to_normalized(raw_value)
         return r[t.RuntimeData].ok(normalized_value)
+
+    def apply_metadata(self, key: str, value: t.MetadataValue) -> None:
+        """Set metadata via Pydantic immutable copy DSL."""
+        meta = self._state.metadata
+        self._state = self._state.model_copy(
+            update={
+                "metadata": meta.model_copy(
+                    update={
+                        "attributes": {**meta.attributes, key: value},
+                    }
+                ),
+            }
+        )
 
     def has(self, key: str, scope: str = c.ContextScope.GLOBAL) -> bool:
         """Check if a key exists in the context."""

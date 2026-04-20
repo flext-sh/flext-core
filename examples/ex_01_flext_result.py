@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import (
+    Mapping,
+    MutableSequence,
+    Sequence,
+)
 from typing import override
 
 from examples import ExamplesFlextCoreShared, m, t

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping, Sequence
+from collections.abc import (
+    Mapping,
+    Sequence,
+)
 from typing import Annotated, ClassVar, override
 
 import pytest
@@ -31,6 +34,14 @@ class TestsFlextCoreFlextHandlers:
 
         def __init__(self, *, settings: m.Handler | None = None) -> None:
             super().__init__(settings=settings)
+
+        @override
+        def validate_message(self, data: t.ValueOrModel) -> p.Result[bool]:
+            return (
+                r[bool].ok(True)
+                if data
+                else r[bool].fail(c.Core.Tests.TestErrors.VALIDATION_FAILED_FOR_TEST)
+            )
 
         @override
         def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:

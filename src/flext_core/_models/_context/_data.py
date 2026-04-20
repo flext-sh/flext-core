@@ -6,7 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import (
+    Mapping,
+)
+from types import MappingProxyType
 from typing import Annotated
 
 from pydantic import BeforeValidator, field_validator
@@ -26,23 +29,23 @@ class FlextModelsContextData:
     def normalize_to_mapping(
         v: t.ValueOrModel,
     ) -> Mapping[str, t.Scalar]:
-        """Convert value to flat mapping with scalar values only."""
+        """Convert value to an immutable flat mapping with scalar values only."""
         if v is None:
-            return {}
-        if isinstance(v, dict):
-            return {
+            return MappingProxyType({})
+        if isinstance(v, Mapping):
+            return MappingProxyType({
                 str(k): str(val)
                 if not isinstance(val, (str, int, float, bool))
                 else val
                 for k, val in v.items()
-            }
+            })
         if isinstance(v, mp.BaseModel):
-            return {
+            return MappingProxyType({
                 str(k): str(val)
                 if not isinstance(val, (str, int, float, bool))
                 else val
                 for k, val in v.model_dump().items()
-            }
+            })
         msg = c.ERR_CONTEXT_CANNOT_NORMALIZE_TYPE_TO_MAPPING.format(
             type_name=type(v).__name__,
         )
@@ -71,30 +74,30 @@ class FlextModelsContextData:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: dict[str, t.Scalar] | mp.BaseModel | None,
-        ) -> dict[str, t.Scalar]:
+            v: Mapping[str, t.Scalar] | mp.BaseModel | None,
+        ) -> Mapping[str, t.Scalar]:
             """Validate that data values are JSON-serializable."""
             if v is None:
-                return {}
-            if isinstance(v, dict):
-                return {
+                return MappingProxyType({})
+            if isinstance(v, Mapping):
+                return MappingProxyType({
                     str(k): (
                         str(val)
                         if not isinstance(val, (str, int, float, bool))
                         else val
                     )
                     for k, val in v.items()
-                }
+                })
             if isinstance(v, mp.BaseModel):
-                return {
+                return MappingProxyType({
                     str(k): (
                         str(val)
                         if not isinstance(val, (str, int, float, bool))
                         else val
                     )
                     for k, val in v.model_dump().items()
-                }
-            return {}
+                })
+            return MappingProxyType({})
 
     class ContextData(
         SerializableDataValidatorMixin,
@@ -103,11 +106,11 @@ class FlextModelsContextData:
         """Lightweight container for initializing context state."""
 
         data: Annotated[
-            dict[str, t.Scalar],
+            Mapping[str, t.Scalar],
             mp.Field(
                 description="Initial context data as key-value pairs",
             ),
-        ] = mp.Field(default_factory=dict)
+        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
         metadata: Annotated[
             m.Metadata | dict[str, t.Scalar] | None,
             BeforeValidator(

@@ -11,7 +11,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator, MutableMapping, Sequence
+from collections.abc import (
+    Iterator,
+    MutableMapping,
+    Sequence,
+)
 from typing import Annotated, override
 
 from flext_core import (

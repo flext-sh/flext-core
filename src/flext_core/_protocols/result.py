@@ -12,7 +12,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import (
+    Callable,
+)
 from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 

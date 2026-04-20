@@ -11,8 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextvars
 import time
-from collections.abc import Generator, Mapping
+from collections.abc import (
+    Generator,
+    Mapping,
+)
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Annotated, ClassVar, Self
@@ -41,7 +45,7 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
     _logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     initial_data: Annotated[
-        m.ContextData | m.ConfigMap | None,
+        m.ContextData | t.Container | None,
         m.Field(description="Initial data for context scopes."),
     ] = None
 
@@ -57,8 +61,12 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
             if isinstance(self.initial_data, m.ContextData):
                 context_data = self.initial_data
             elif isinstance(self.initial_data, dict):
+                normalized_data: dict[str, t.Scalar] = {
+                    str(key): u.to_scalar(raw_value)
+                    for key, raw_value in self.initial_data.items()
+                }
                 context_data = m.ContextData(
-                    data=dict(self.initial_data),
+                    data=normalized_data,
                 )
         metadata_model = (
             context_data.metadata.model_copy()
@@ -66,13 +74,6 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
             else m.Metadata()
         )
         self._state = m.ContextRuntimeState.create_default(metadata=metadata_model)
-        if context_data.data:
-            # DEPRECATED: context data initialization removed - depends on m.ConfigMap
-            # self._update_contextvar(
-            #     c.ContextScope.GLOBAL,
-            #     m.ConfigMap(root=context_data.data.root),
-            # )
-            pass
 
     # DEPRECATED: create overloads and method removed - depends on m.ConfigMap which is no longer available
     # @overload
@@ -137,22 +138,24 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
     #     return cls(initial_data=m.ContextData(data=m.Dict(root=data_map.root)))
 
     def clone(self) -> Self:
-        """Create a clone of this context."""
+        """Create a clone of this context with independent scope storage."""
         cloned: Self = self.__class__.model_validate({
             "initial_data": self.initial_data
         })
-        # DEPRECATED: clone logic removed - depends on m.ConfigMap
-        # for scope_name, ctx_var in self.iter_scope_vars().items():
-        #     scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-        #     if scope_dict:
-        #         cloned.set(
-        #             m.ConfigMap(root=dict(scope_dict)),
-        #             scope=scope_name,
-        #         )
+        new_vars: dict[str, contextvars.ContextVar[m.ConfigMap | None]] = {}
+        for scope_name, ctx_var in self._state.scope_vars.items():
+            current = ctx_var.get()
+            new_var: contextvars.ContextVar[m.ConfigMap | None] = (
+                contextvars.ContextVar(f"{scope_name}_clone", default=None)
+            )
+            if current is not None:
+                _ = new_var.set(current.model_copy())
+            new_vars[scope_name] = new_var
         cloned._state = cloned._state.model_copy(
             update={
                 "metadata": self._state.metadata.model_copy(),
                 "statistics": self._state.statistics.model_copy(),
+                "scope_vars": new_vars,
             },
         )
         return cloned
@@ -164,6 +167,11 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
     # def to_normalized(value: t.ValueOrModel | m.ConfigMap) -> t.Container:
     #     """Normalize a runtime value to the canonical recursive container shape."""
     #     return FlextRuntime.to_plain_container(u.normalize_to_container(value))
+
+    @classmethod
+    def create(cls, **_: t.RuntimeData) -> Self:
+        """Factory: build a default context; kwargs reserved for future use."""
+        return cls()
 
     @classmethod
     def resolve_container(cls) -> p.Container:
@@ -286,18 +294,16 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
             """Create timed operation context with performance tracking."""
             start_time = u.generate_datetime_utc()
             start_perf = time.perf_counter()
+            metadata_payload: t.FlatContainerMapping = {
+                c.MetadataKey.START_TIME: start_time.isoformat(),
+                c.ContextKey.OPERATION_NAME: operation_name or "",
+            }
             operation_metadata: m.ConfigMap = m.ConfigMap(
-                root={
-                    c.MetadataKey.START_TIME: start_time.isoformat(),
-                    c.ContextKey.OPERATION_NAME: operation_name,
-                }
+                root=dict(metadata_payload),
             )
             start_token = FlextContext.Variables.OperationStartTime.set(start_time)
             metadata_token = FlextContext.Variables.OperationMetadata.set(
-                {
-                    c.MetadataKey.START_TIME: start_time.isoformat(),
-                    c.ContextKey.OPERATION_NAME: operation_name or "",
-                },
+                metadata_payload,
             )
             operation_token = None
             if operation_name:
@@ -323,35 +329,44 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
 
         @staticmethod
         def export_full_context() -> Mapping[str, t.Scalar]:
-            """Export current context as flat dictionary of scalar values."""
+            """Export current context as a flat dictionary of scalar values."""
             context_vars = FlextContext.Variables
+
+            # Build context dictionary with direct scalar access
             result: dict[str, t.Scalar] = {}
 
-            # Correlation metadata
-            if (v := context_vars.Correlation.CORRELATION_ID.get()) is not None:
-                result[c.ContextKey.CORRELATION_ID] = str(v)
-            if (v := context_vars.Correlation.PARENT_CORRELATION_ID.get()) is not None:
-                result[c.ContextKey.PARENT_CORRELATION_ID] = str(v)
+            # Correlation IDs (strings)
+            if (corr_id := context_vars.Correlation.CORRELATION_ID.get()) is not None:
+                result[c.ContextKey.CORRELATION_ID] = str(corr_id)
+            if (
+                parent_corr := context_vars.Correlation.PARENT_CORRELATION_ID.get()
+            ) is not None:
+                result[c.ContextKey.PARENT_CORRELATION_ID] = str(parent_corr)
 
-            # Service metadata
-            if (v := context_vars.Service.SERVICE_NAME.get()) is not None:
-                result[c.ContextKey.SERVICE_NAME] = str(v)
-            if (v := context_vars.Service.SERVICE_VERSION.get()) is not None:
-                result[c.ContextKey.SERVICE_VERSION] = str(v)
+            # Service metadata (strings)
+            if (svc_name := context_vars.Service.SERVICE_NAME.get()) is not None:
+                result[c.ContextKey.SERVICE_NAME] = str(svc_name)
+            if (svc_version := context_vars.Service.SERVICE_VERSION.get()) is not None:
+                result[c.ContextKey.SERVICE_VERSION] = str(svc_version)
 
-            # Request metadata
-            if (v := context_vars.Request.USER_ID.get()) is not None:
-                result[c.ContextKey.USER_ID] = str(v)
-            if (v := context_vars.Request.REQUEST_ID.get()) is not None:
-                result[c.ContextKey.REQUEST_ID] = str(v)
+            # Request metadata (strings)
+            if (user_id := context_vars.Request.USER_ID.get()) is not None:
+                result[c.ContextKey.USER_ID] = str(user_id)
+            if (req_id := context_vars.Request.REQUEST_ID.get()) is not None:
+                result[c.ContextKey.REQUEST_ID] = str(req_id)
 
-            # Operation/Performance metadata
-            if (v := context_vars.Performance.OPERATION_NAME.get()) is not None:
-                result[c.ContextKey.OPERATION_NAME] = str(v)
-            if (v := context_vars.Performance.OPERATION_START_TIME.get()) is not None:
-                result[c.ContextKey.OPERATION_START_TIME] = (
-                    v.isoformat() if isinstance(v, datetime) else str(v)
-                )
+            # Performance metadata
+            if (op_name := context_vars.Performance.OPERATION_NAME.get()) is not None:
+                result[c.ContextKey.OPERATION_NAME] = str(op_name)
+
+            # Operation start time as ISO string
+            if (
+                op_start := context_vars.Performance.OPERATION_START_TIME.get()
+            ) is not None:
+                if isinstance(op_start, datetime):
+                    result[c.ContextKey.OPERATION_START_TIME] = op_start.isoformat()
+                else:
+                    result[c.ContextKey.OPERATION_START_TIME] = str(op_start)
 
             return result
 

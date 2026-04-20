@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import types
-from collections.abc import Mapping, MutableSequence
+from collections.abc import (
+    Mapping,
+    MutableSequence,
+)
 from pathlib import Path
 from typing import ClassVar, override
 
@@ -202,7 +205,7 @@ class TestModule:
             exc_info=True,
             context={},
         )
-        tm.that(with_exc_info, is_=m.ConfigMap)
+        tm.that(with_exc_info, is_=dict)
         broken_bindable = self._FakeBindable()
         broken = create_bound_logger("x", broken_bindable)
 

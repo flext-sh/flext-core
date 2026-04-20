@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import (
+    Callable,
+)
 
-from examples import m, p, r, t
+from flext_core import m, p, r, t
 
 
 class Ex10Message(m.Command):

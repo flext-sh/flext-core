@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from examples import m
+from flext_core import m
 
 
 class Ex03Email(m.Value):

@@ -10,7 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from collections.abc import MutableSequence, Sequence
+from collections.abc import (
+    MutableSequence,
+    Sequence,
+)
 from types import ModuleType
 
 from flext_core import FlextModelsContainer, c, t

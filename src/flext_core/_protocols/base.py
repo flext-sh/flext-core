@@ -6,7 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import (
+    Callable,
+    Iterable,
+    Mapping,
+)
 from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
@@ -84,8 +88,6 @@ class FlextProtocolsBase:
     @runtime_checkable
     class ModelType[TModel: Model](Protocol):
         """Protocol for Pydantic-compatible model classes."""
-
-        model_fields: Mapping[str, object]
 
         @classmethod
         def model_validate(

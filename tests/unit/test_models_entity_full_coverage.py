@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from tests import c, m, r, u
 
@@ -21,10 +22,7 @@ class TestModelsEntityFullCoverage:
         assert u.to_str(1) == "1"
         cfg = m.ConfigMap(root={"a": 1})
         assert (cfg == 1) is False
-        with pytest.raises(
-            TypeError,
-            match="Domain event data must be a dictionary or None",
-        ):
+        with pytest.raises(ValidationError):
             m.DomainEvent.model_validate(
                 {
                     "event_type": "evt",
@@ -33,9 +31,7 @@ class TestModelsEntityFullCoverage:
                 },
             )
         entry = m.Entity(unique_id="e1")
-        add_bulk = getattr(entry, "add_domain_events_bulk")
-        bad = add_bulk("invalid")
-        assert bad.failure
+        assert not hasattr(entry, "add_domain_events_bulk")
 
 
 __all__: list[str] = ["TestModelsEntityFullCoverage"]

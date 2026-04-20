@@ -334,7 +334,12 @@ class FlextUtilitiesCollection:
                 and isinstance(current_val, list)
                 and isinstance(value, list)
             ):
-                result[key] = current_val + value
+                try:
+                    result[key] = t.json_value_adapter().validate_python(
+                        [*current_val, *value],
+                    )
+                except c.ValidationError:
+                    result[key] = value
             else:
                 result[key] = value
         return FlextUtilitiesCollection._ok_result(result)

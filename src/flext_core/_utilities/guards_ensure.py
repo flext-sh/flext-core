@@ -3,7 +3,13 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
+from collections.abc import (
+    Callable,
+    Iterable,
+    Mapping,
+    Sequence,
+    Sized,
+)
 from typing import ClassVar
 
 from flext_core import FlextModelsCollections, FlextUtilitiesGuardsType, r, t

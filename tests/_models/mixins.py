@@ -810,7 +810,7 @@ class TestsFlextCoreModelsMixins:
             m.Field(description="Input value passed to validator"),
         ]
         input_params: Annotated[
-            t.Container | None,
+            t.RuntimeData | None,
             m.Field(
                 description="Optional validator parameters for scenario execution",
             ),
