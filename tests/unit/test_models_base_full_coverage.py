@@ -5,8 +5,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
-from pydantic import ValidationError
 
+from pydantic import ValidationError
 from tests import c, m, r
 
 

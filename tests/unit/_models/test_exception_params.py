@@ -12,9 +12,9 @@ from __future__ import annotations
 import math
 
 import pytest
-from pydantic import ValidationError
-
 from flext_tests import tm
+
+from pydantic import ValidationError
 from tests import m, t
 
 

@@ -28,10 +28,10 @@ from collections.abc import (
 )
 
 import pytest
+from flext_tests import tm
 from hypothesis import assume, given, settings, strategies as st
 
 from flext_core import FlextContainer, FlextSettings
-from flext_tests import tm
 from tests import c, m, p, t, u
 
 

@@ -17,8 +17,6 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, override
 
-from pydantic import Field
-
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsDomainEvent,
@@ -26,6 +24,7 @@ from flext_core import (
     FlextUtilitiesGenerators,
     t,
 )
+from pydantic import Field
 
 
 class FlextModelsEntity:

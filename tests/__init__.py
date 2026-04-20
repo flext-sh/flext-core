@@ -13,6 +13,7 @@ from flext_core.lazy import (
 
 if _t.TYPE_CHECKING:
     from flext_tests import d, e, h, r, s, td, tf, tk, tm, tv, x
+
     from tests._constants.domain import TestsFlextCoreConstantsDomain
     from tests._constants.errors import TestsFlextCoreConstantsErrors
     from tests._constants.fixtures import TestsFlextCoreConstantsFixtures

@@ -10,9 +10,8 @@ from collections.abc import (
     Mapping,
 )
 
-from pydantic.fields import FieldInfo
-
 from flext_core import FlextModels as m, FlextRuntime, c, t
+from pydantic.fields import FieldInfo
 
 
 class FlextExceptionsTemplate:

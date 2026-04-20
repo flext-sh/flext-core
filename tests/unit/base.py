@@ -22,8 +22,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated, ClassVar, override
 
-from flext_core import T_DomainResult
 from flext_tests import td
+
+from flext_core import T_DomainResult
 from tests import c, h, m, p, r, s, t
 
 

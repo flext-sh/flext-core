@@ -28,8 +28,8 @@ from collections.abc import (
 from typing import TypeVar, get_origin, override
 
 import pytest
-
 from flext_tests import tm
+
 from tests import h, p, r, t, u
 
 TMessage = TypeVar("TMessage")

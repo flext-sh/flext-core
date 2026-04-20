@@ -14,13 +14,12 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Final, Self
 
+from flext_core import FlextModelsBase as m, FlextModelsPydantic as mp, c, p, t
 from pydantic import (
     AliasChoices,
     ConfigDict,
     model_validator,
 )
-
-from flext_core import FlextModelsBase as m, FlextModelsPydantic as mp, c, p, t
 
 
 class FlextModelsSettings:

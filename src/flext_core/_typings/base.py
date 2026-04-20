@@ -29,7 +29,7 @@ class FlextTypingBase:
     type JsonList = Sequence[JsonValue]
     type FlatScalarMapping = Mapping[str, Scalar]
     type FlatScalarSequence = Sequence[Scalar]
-    type Container = Scalar | Path | FlatScalarMapping | FlatScalarSequence | JsonValue
+    type Container = Scalar | Path | JsonValue
     type OpaqueValue = Container
     type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
     type MutableMappingKV[KeyT, ValueT] = dict[KeyT, ValueT]

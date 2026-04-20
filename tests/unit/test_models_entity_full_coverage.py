@@ -7,8 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
 
+from pydantic import ValidationError
 from tests import c, m, r, u
 
 

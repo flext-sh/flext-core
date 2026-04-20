@@ -29,8 +29,8 @@ from enum import StrEnum, unique
 from typing import ClassVar, override
 
 import pytest
-
 from flext_tests import tm
+
 from tests import m, p, r, t, u
 
 

@@ -15,6 +15,8 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "Ex02DatabaseService",
             "Ex02EmailService",
             "Ex02TestConfig",
+            "ExamplesFlextCoreModelsEx02",
+            "ExamplesFlextCoreSettingsEx02TestConfig",
         ),
         ".ex03": (
             "Ex03Email",
@@ -22,6 +24,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "Ex03Order",
             "Ex03OrderItem",
             "Ex03User",
+            "ExamplesFlextCoreModelsEx03",
         ),
         ".ex04": (
             "Ex04AutoCommand",
@@ -49,10 +52,12 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "Ex07DemoPlugin",
             "Ex07GetUserQuery",
             "Ex07UserCreatedEvent",
+            "ExamplesFlextCoreModelsEx07",
         ),
         ".ex08": (
             "Ex08Order",
             "Ex08User",
+            "ExamplesFlextCoreModelsEx08",
         ),
         ".ex10": (
             "Ex10CommandBusStub",
@@ -64,6 +69,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "Ex10ProcessorGood",
             "Ex10ProtocolHandler",
             "Ex10ServiceStub",
+            "ExamplesFlextCoreModelsEx10",
         ),
         ".ex11": (
             "Ex11CommandBusStub",
@@ -73,16 +79,14 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "Ex11Payload",
             "Ex11ProcessorProtocolBad",
             "Ex11ProcessorProtocolGood",
+            "ExamplesFlextCoreModelsEx11",
         ),
         ".ex12": (
             "Ex12CommandA",
             "Ex12CommandB",
+            "ExamplesFlextCoreModelsEx12",
         ),
-        ".ex14": (
-            "Ex14CreateUserCommand",
-            "Ex14GetUserQuery",
-            "Ex14UserDTO",
-        ),
+        ".ex14": ("ExamplesFlextCoreModelsEx14",),
         ".exsettings": ("ExSettingsAppSettings",),
         ".output": ("ExamplesFlextCoreModelsOutput",),
         ".shared": (

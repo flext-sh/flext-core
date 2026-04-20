@@ -10,6 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pydantic_core import (
+    from_json,
+    to_json,
+    to_jsonable_python,
+)
+
+from flext_core import FlextModelsPydantic as mp
 from pydantic import (
     AfterValidator,
     Field,
@@ -28,13 +35,6 @@ from pydantic import (
     validate_call,
     with_config,
 )
-from pydantic_core import (
-    from_json,
-    to_json,
-    to_jsonable_python,
-)
-
-from flext_core import FlextModelsPydantic as mp
 
 
 class FlextUtilitiesPydantic:

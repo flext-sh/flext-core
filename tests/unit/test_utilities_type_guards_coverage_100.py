@@ -8,8 +8,8 @@ from collections.abc import (
 from typing import Annotated, ClassVar, override
 
 import pytest
-
 from flext_tests import tm
+
 from tests import m, t, u
 
 

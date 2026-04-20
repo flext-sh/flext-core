@@ -15,14 +15,6 @@ from collections.abc import (
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Literal
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    computed_field,
-    field_validator,
-)
-
 from flext_core import (
     FlextModelsBase as m,
     FlextRuntime as ur,
@@ -30,6 +22,13 @@ from flext_core import (
     c,
     r,
     t,
+)
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
 )
 
 

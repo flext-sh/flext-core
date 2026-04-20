@@ -12,14 +12,13 @@ from collections.abc import (
 from types import MappingProxyType
 from typing import Annotated
 
-from pydantic import BeforeValidator, field_validator
-
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsPydantic as mp,
     c,
     t,
 )
+from pydantic import BeforeValidator, field_validator
 
 
 class FlextModelsContextData:

@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import ParamSpec
 
 import pytest
-from pydantic import ValidationError
+from flext_tests import tm
 
 from flext_core import (
     P,
@@ -28,7 +28,7 @@ from flext_core import (
     T_Settings,
     U,
 )
-from flext_tests import tm
+from pydantic import ValidationError
 from tests import c, m, t
 
 

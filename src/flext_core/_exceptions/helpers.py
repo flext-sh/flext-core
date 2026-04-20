@@ -11,9 +11,6 @@ from collections.abc import (
     MutableMapping,
 )
 
-from pydantic import ValidationError as PydanticValidationError
-from pydantic.fields import FieldInfo
-
 from flext_core import (
     FlextModelsBase as m,
     FlextRuntime,
@@ -22,6 +19,8 @@ from flext_core import (
     p,
     t,
 )
+from pydantic import ValidationError as PydanticValidationError
+from pydantic.fields import FieldInfo
 
 
 class FlextExceptionsHelpers:

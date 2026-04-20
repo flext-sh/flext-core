@@ -11,8 +11,6 @@ from collections.abc import (
 )
 from typing import ClassVar
 
-from pydantic import ValidationError as _PydanticValidationError
-
 from flext_core import (
     FlextExceptionsBase,
     FlextExceptionsHelpers,
@@ -21,6 +19,7 @@ from flext_core import (
     c,
     t,
 )
+from pydantic import ValidationError as _PydanticValidationError
 
 
 class FlextExceptionsTypes(FlextExceptionsBase):

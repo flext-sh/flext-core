@@ -15,7 +15,6 @@ from abc import ABC, abstractmethod
 from typing import Annotated, Final, Protocol, runtime_checkable
 
 import pytest
-from pydantic.warnings import PydanticDeprecatedSince20
 
 from flext_core import (
     FlextModelsEnforcement,
@@ -23,6 +22,7 @@ from flext_core import (
     FlextUtilitiesBeartypeEngine,
     FlextUtilitiesEnforcement,
 )
+from pydantic.warnings import PydanticDeprecatedSince20
 from tests import TestsFlextCoreModelsMixins, c, m, u
 
 

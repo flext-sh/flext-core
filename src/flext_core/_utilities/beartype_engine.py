@@ -29,9 +29,8 @@ from pathlib import Path
 from types import UnionType
 from typing import TYPE_CHECKING, Annotated, Any, Union, get_args, get_origin
 
-from pydantic.fields import FieldInfo
-
 from flext_core import FlextConstantsEnforcement as c, FlextModelsPydantic as mp
+from pydantic.fields import FieldInfo
 
 if TYPE_CHECKING:
     from flext_core import t

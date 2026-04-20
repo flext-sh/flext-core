@@ -12,13 +12,13 @@ from collections.abc import (
 from typing import Annotated, ClassVar
 
 import pytest
+from flext_tests import tm
 
 import flext_core as core_decorators
 from flext_core import (
     FlextContainer,
     FlextContext,
 )
-from flext_tests import tm
 from tests import d, e, m, p, r, t, u
 
 

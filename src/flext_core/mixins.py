@@ -23,9 +23,8 @@ from typing import (
     Unpack,
 )
 
-from pydantic import ConfigDict, PrivateAttr
-
 from flext_core import FlextContainer, FlextContext, c, e, m, p, r, t, u
+from pydantic import ConfigDict, PrivateAttr
 
 
 class FlextMixins(m.ArbitraryTypesModel):

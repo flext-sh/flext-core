@@ -24,11 +24,10 @@ from contextlib import suppress
 from typing import ClassVar, override
 
 import structlog
+from flext_core import c, p, t
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 from structlog.types import Processor
-
-from flext_core import c, p, t
 
 
 class FlextUtilitiesLoggingConfig:

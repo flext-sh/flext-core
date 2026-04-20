@@ -32,10 +32,10 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
-from pydantic import ValidationError
+from flext_tests import tm
 
 from flext_core import FlextSettings
-from flext_tests import tm
+from pydantic import ValidationError
 from tests import c, p, t, u
 
 

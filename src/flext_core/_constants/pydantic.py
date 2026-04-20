@@ -10,6 +10,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pydantic_core import (
+    MISSING,
+    PydanticCustomError,
+    PydanticKnownError,
+    PydanticOmit,
+    PydanticSerializationError,
+    PydanticSerializationUnexpectedValue,
+    PydanticUndefined,
+    PydanticUndefinedType,
+    PydanticUseDefault,
+    SchemaError,
+    ValidationError as CoreValidationError,
+)
+
 from pydantic import (
     VERSION,
     ConfigDict,
@@ -29,19 +43,6 @@ from pydantic import (
     PydanticUndefinedAnnotation,
     PydanticUserError,
     ValidationError,
-)
-from pydantic_core import (
-    MISSING,
-    PydanticCustomError,
-    PydanticKnownError,
-    PydanticOmit,
-    PydanticSerializationError,
-    PydanticSerializationUnexpectedValue,
-    PydanticUndefined,
-    PydanticUndefinedType,
-    PydanticUseDefault,
-    SchemaError,
-    ValidationError as CoreValidationError,
 )
 
 

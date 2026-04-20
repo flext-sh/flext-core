@@ -12,8 +12,6 @@ from collections.abc import (
 from types import MappingProxyType
 from typing import Annotated
 
-from pydantic import BeforeValidator, Field
-
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsContainers,
@@ -21,6 +19,7 @@ from flext_core import (
     FlextModelsEntity,
     t,
 )
+from pydantic import BeforeValidator, Field
 
 
 class FlextModelsContextExport:

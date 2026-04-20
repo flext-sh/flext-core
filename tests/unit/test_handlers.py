@@ -8,9 +8,9 @@ from collections.abc import (
 from typing import Annotated, ClassVar, override
 
 import pytest
+from flext_tests import tm
 from hypothesis import given, strategies as st
 
-from flext_tests import tm
 from tests import c, e, h, m, p, r, t, u, x
 
 

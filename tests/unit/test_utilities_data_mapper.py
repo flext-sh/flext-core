@@ -17,6 +17,7 @@ from collections.abc import (
 from typing import override
 
 from flext_tests import tm
+
 from tests import (
     c,
     t,

@@ -174,7 +174,29 @@ omit = [ "*/dependency_injector/providers.pyx" ]
 
 # [MANAGED] deptry
 [tool.deptry]
-known_first_party = [ "flext_cli", "flext_core", "flext_infra", "flext_tests" ]
+known_first_party = [
+  "beartype",
+  "cachetools",
+  "dependency-injector",
+  "docker",
+  "flext_core",
+  "jinja2",
+  "limits",
+  "orjson",
+  "pybreaker",
+  "pydantic",
+  "pydantic-core",
+  "pydantic-extra-types",
+  "pydantic-settings",
+  "python-dotenv",
+  "python-on-whales",
+  "pyyaml",
+  "returns",
+  "rope (",
+  "structlog",
+  "tomlkit",
+  "wrapt",
+]
 pep621_dev_dependency_groups = [ "dev" ]
 
 [tool.flext.docs]
@@ -533,7 +555,29 @@ select = [ "ALL" ]
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-single-line = false
-known-first-party = [ "flext_cli", "flext_core", "flext_infra", "flext_tests" ]
+known-first-party = [
+  "beartype",
+  "cachetools",
+  "dependency-injector",
+  "docker",
+  "flext_core",
+  "jinja2",
+  "limits",
+  "orjson",
+  "pybreaker",
+  "pydantic",
+  "pydantic-core",
+  "pydantic-extra-types",
+  "pydantic-settings",
+  "python-dotenv",
+  "python-on-whales",
+  "pyyaml",
+  "returns",
+  "rope (",
+  "structlog",
+  "tomlkit",
+  "wrapt",
+]
 split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]

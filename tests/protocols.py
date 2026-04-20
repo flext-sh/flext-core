@@ -20,6 +20,7 @@ from collections.abc import (
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_tests import p
+
 from tests import t
 
 if TYPE_CHECKING:

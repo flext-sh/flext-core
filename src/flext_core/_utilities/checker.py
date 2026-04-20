@@ -19,9 +19,8 @@ from collections.abc import (
 )
 from typing import TypeIs, get_args, get_origin, get_type_hints
 
-from pydantic import BaseModel
-
 from flext_core import FlextUtilitiesGuards, c, p, r, t
+from pydantic import BaseModel
 
 
 class FlextUtilitiesChecker:

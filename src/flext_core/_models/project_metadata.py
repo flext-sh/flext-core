@@ -20,12 +20,11 @@ from collections.abc import (
 from pathlib import Path
 from typing import Annotated, Any, ClassVar
 
-from pydantic import Field, model_validator
-
 from flext_core import (
     FlextConstantsProjectMetadata as t,
     FlextModelsPydantic,
 )
+from pydantic import Field, model_validator
 
 
 class FlextModelsProjectMetadata:

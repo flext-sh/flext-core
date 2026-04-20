@@ -25,6 +25,7 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 from flext_tests import tm
+
 from tests import m, t, u
 
 

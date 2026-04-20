@@ -18,8 +18,9 @@ from collections.abc import (
     MutableSequence,
 )
 
-from flext_core import T, T_co, T_contra
 from flext_tests import t
+
+from flext_core import T, T_co, T_contra
 
 
 class TestsFlextCoreTypes(t):

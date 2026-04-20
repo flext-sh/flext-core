@@ -29,9 +29,9 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
+from flext_tests import tm
 from hypothesis import given, settings, strategies as st
 
-from flext_tests import tm
 from tests import m, p, r, t, u
 
 

@@ -16,8 +16,6 @@ from collections.abc import (
 )
 from enum import StrEnum
 
-from pydantic import Field
-
 from flext_core import (
     FlextModelsBase,
     FlextUtilitiesArgs,
@@ -29,6 +27,7 @@ from flext_core import (
     r,
     t,
 )
+from pydantic import Field
 
 
 class FlextUtilitiesParser:

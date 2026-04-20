@@ -11,7 +11,6 @@ from collections.abc import (
 )
 
 import structlog.contextvars
-
 from flext_core import FlextModelsContextTokens, t
 
 

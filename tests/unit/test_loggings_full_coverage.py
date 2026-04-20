@@ -11,11 +11,11 @@ from pathlib import Path
 from typing import ClassVar, override
 
 import pytest
+from flext_tests import tm
 
 from flext_core import (
     FlextSettings,
 )
-from flext_tests import tm
 from tests import m, p, t, u
 
 

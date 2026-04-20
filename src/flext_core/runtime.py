@@ -31,10 +31,9 @@ from typing import (
     ClassVar,
 )
 
-import orjson
 from dependency_injector import containers, providers, wiring
-from pydantic import BaseModel, ConfigDict
 
+import orjson
 from flext_core import (
     FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
@@ -45,6 +44,7 @@ from flext_core import (
     p,
     t,
 )
+from pydantic import BaseModel, ConfigDict
 
 
 class FlextRuntime:

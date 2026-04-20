@@ -19,8 +19,8 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
-from beartype import BeartypeConf, BeartypeStrategy
 
+from beartype import BeartypeConf, BeartypeStrategy
 from flext_core import FlextUtilitiesBeartypeConf, FlextUtilitiesBeartypeEngine as be
 from tests import m, t, u
 

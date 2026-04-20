@@ -19,8 +19,6 @@ from contextlib import suppress
 from typing import ClassVar, Self
 
 import structlog
-from structlog.typing import Context
-
 from flext_core import (
     FlextModelsContainers as mc,
     FlextRuntime as ur,
@@ -31,6 +29,7 @@ from flext_core import (
     t,
 )
 from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
+from structlog.typing import Context
 
 
 class FlextLogger(ulc):

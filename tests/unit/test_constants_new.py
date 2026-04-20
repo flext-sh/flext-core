@@ -15,8 +15,8 @@ from re import Pattern
 from types import MappingProxyType
 
 import pytest
-
 from flext_tests import tm
+
 from tests import c, t
 
 

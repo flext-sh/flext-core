@@ -11,10 +11,10 @@ from pathlib import Path
 from time import perf_counter
 
 import pytest
+from flext_tests import tf, tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextSettings
-from flext_tests import tf, tm
 from tests import c, m, t, u
 
 
