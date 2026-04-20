@@ -1,0 +1,133 @@
+tests/unit/test_loggings_full_coverage.py
+  376f82a5e64b61d4 208
+src/flext_core/_utilities/discovery.py
+  376f82a5e64b61d4 14
+examples/_models/ex11.py
+  376f82a5e64b61d4 5
+tests/unit/test_decorators.py
+  h_9db9d35f50cf33 6
+examples/_models/ex10.py
+  376f82a5e64b61d4 9
+src/flext_core/_utilities/args.py
+  376f82a5e64b61d4 22,24,53,56
+tests/unit/test_result_exception_carrying.py
+  376f82a5e64b61d4 73-74
+tests/unit/test_models_entity_full_coverage.py
+  376f82a5e64b61d4 10,25,34
+examples/ex_03_flext_logger.expected
+  376f82a5e64b61d4 45
+examples/_models/shared.py
+  376f82a5e64b61d4 7
+src/flext_core/_typings/base.py
+  h_9db9d35f50cf33 27
+src/flext_core/_models/domain_event.py
+  376f82a5e64b61d4 62
+tests/unit/test_context_full_coverage.py
+  376f82a5e64b61d4 10-11
+examples/_models/ex08.py
+  376f82a5e64b61d4 5
+src/flext_core/runtime.py
+  376f82a5e64b61d4 114-116,119
+  h_9db9d35f50cf33 41-42,363,365,371,387,409,411,413,441,443,448,783,805,810
+tests/unit/test_settings.py
+  376f82a5e64b61d4 39,91,104,216-218
+tests/unit/test_handlers.py
+  376f82a5e64b61d4 39,41-42,44-45
+tests/unit/test_dispatcher_di.py
+  376f82a5e64b61d4 5,12,15-17
+src/flext_core/_models/errors.py
+  376f82a5e64b61d4 52
+examples/_models/ex07.py
+  376f82a5e64b61d4 5
+src/flext_core/context.py
+  376f82a5e64b61d4 14,141,145-153,158,171-175
+  h_9db9d35f50cf33 48,64-67,69,297-300,302,306,332,335,338-340,342,344,346-350,352-356,359-360,362,364-369
+tests/unit/test_utilities_type_checker_coverage_100.py
+  376f82a5e64b61d4 170-171,207-208,235-236
+tests/unit/test_result_additional.py
+  376f82a5e64b61d4 42
+examples/_models/exsettings.py
+  376f82a5e64b61d4 5-6
+tests/_models/mixins.py
+  376f82a5e64b61d4 813
+src/flext_core/_utilities/model.py
+  h_9db9d35f50cf33 20-22,29-31,41,46,51,56,61,66,91,199,262,383,404,434
+  376f82a5e64b61d4 23
+examples/_models/ex12.py
+  376f82a5e64b61d4 5
+examples/_models/ex02.py
+  376f82a5e64b61d4 5
+src/flext_core/_models/cqrs.py
+  h_9db9d35f50cf33 12-13,141,147-149,154-155,164,179,182,189,278,287
+src/flext_core/_typings/typeadapters.py
+  h_9db9d35f50cf33 96-102
+src/flext_core/_typings/services.py
+  h_9db9d35f50cf33 23-29,37-42,53,66,71,87,91,97,103,107,119-120,142,191-200
+  376f82a5e64b61d4 43
+src/flext_core/registry.py
+  376f82a5e64b61d4 56-58,112,120-121
+src/flext_core/_models/_context/_data.py
+  h_9db9d35f50cf33 10,32,34,41,81,90
+src/flext_core/_typings/core.py
+  h_9db9d35f50cf33 9
+examples/_models/ex14.py
+  376f82a5e64b61d4 5
+examples/_models/ex04.py
+  376f82a5e64b61d4 5
+examples/ex_04_flext_dispatcher.py
+  376f82a5e64b61d4 27
+src/flext_core/_utilities/context_crud.py
+  h_9db9d35f50cf33 18,21
+  376f82a5e64b61d4 114-126
+src/flext_core/settings.py
+  376f82a5e64b61d4 19-20
+src/flext_core/_utilities/collection.py
+  h_9db9d35f50cf33 337,340-342
+  376f82a5e64b61d4 338-339
+src/flext_core/result.py
+  376f82a5e64b61d4 89
+  h_9db9d35f50cf33 40,66,91-107
+src/flext_core/loggings.py
+  h_9db9d35f50cf33 33
+examples/_models/ex00.py
+  376f82a5e64b61d4 5-6
+src/flext_core/lazy.py
+  376f82a5e64b61d4 8-10
+examples/ex_01_flext_result.expected
+  376f82a5e64b61d4 5,25
+examples/_models/ex03.py
+  376f82a5e64b61d4 5
+examples/ex_11_flext_service.py
+  376f82a5e64b61d4 31
+examples/_models/ex05.py
+  376f82a5e64b61d4 8
+src/flext_core/service.py
+  376f82a5e64b61d4 17
+examples/_models/ex01.py
+  376f82a5e64b61d4 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "fe5373606fafb7c0c68c44a1339d383bfc1e8bc3",
+  "prompts": {
+    "376f82a5e64b61d4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c3fe1632-f119-41b5-bbd0-0fc56ae1884d",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 271,
+      "total_deletions": 274,
+      "accepted_lines": 123,
+      "overriden_lines": 26
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
