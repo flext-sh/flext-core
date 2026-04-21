@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import pathlib
 from collections.abc import (
     Sequence,
 )
@@ -142,9 +143,9 @@ class TestUtilitiesTypeGuardsCoverage100:
     @pytest.mark.parametrize("scenario", IS_LIST_NON_EMPTY, ids=lambda s: s.name)
     def test_is_list_non_empty(self, scenario: TypeGuardScenario) -> None:
         if scenario.value == "has_items":
-            value: t.Container = [1, 2, 3]
+            value = [1, 2, 3]
         elif scenario.value == "empty":
-            value = []
+            value = list[t.JsonValue]()
         elif scenario.value in {"has_empty", "has_none"}:
             value = [""]
         else:
@@ -181,17 +182,16 @@ class TestUtilitiesTypeGuardsCoverage100:
         result = u.normalize_to_metadata(test_dict)
         tm.that(result, is_=dict)
 
-    def test_normalize_dict_with_nested_dict(self) -> None:
-        outer = {"key": {"nested": "value"}}
-        result = u.normalize_to_metadata(outer)
-        tm.that(result, is_=dict)
+    def test_normalize_dict_with_models(self) -> None:
+        class InnerModel(m.Value):
+            value: str = "nested"
 
-    def test_normalize_dict_with_list_value(self) -> None:
-        test_dict = {"key": [1, 2, 3]}
+        test_dict = InnerModel()
         result = u.normalize_to_metadata(test_dict)
         tm.that(result, is_=dict)
         assert isinstance(result, dict)
-        tm.that(result["key"], is_=list)
+        tm.that(result, has="value")
+        tm.that(result["value"], eq="nested")
 
     def test_normalize_dict_with_non_string_key(self) -> None:
         test_dict = {"123": "value", "key": "test"}
@@ -205,34 +205,23 @@ class TestUtilitiesTypeGuardsCoverage100:
         result = u.normalize_to_metadata(test_list)
         tm.that(result, is_=list)
 
-    def test_normalize_list_with_nested_list(self) -> None:
-        test_list: t.JsonList = [[1, 2], [3, 4]]
-        result = u.normalize_to_metadata(test_list)
-        tm.that(result, is_=list)
-
-    def test_normalize_list_with_dict(self) -> None:
-        test_list: t.JsonList = [{"key": "value"}]
-        result = u.normalize_to_metadata(test_list)
-        tm.that(result, is_=list)
-
     def test_normalize_list_with_complex_items(self) -> None:
-        test_list: t.JsonList = [
+        test_list = [
             "string",
             42,
             True,
-            {"dict": "value"},
-            [1, 2, 3],
+            pathlib.Path("/test/path"),
         ]
         result = u.normalize_to_metadata(test_list)
         tm.that(result, is_=list)
 
-    def test_normalize_tuple_to_pydantic_model(self) -> None:
+    def test_normalize_tuple(self) -> None:
         test_tuple = (1, 2, 3)
         result = u.normalize_to_metadata(test_tuple)
         tm.that(result, is_=list)
 
-    def test_normalize_dict_with_complex_nested_structure(self) -> None:
-        test_dict: t.JsonMapping = {
+    def test_normalize_dict_with_valid_flat_structure(self) -> None:
+        test_dict = {
             "str": "value",
             "int": 42,
             "bool": True,
@@ -263,8 +252,9 @@ class TestUtilitiesTypeGuardsCoverage100:
 
         model = SampleModel()
         result = u.normalize_to_metadata(model)
-        tm.that(result, is_=str)
-        tm.that(result, has="test")
+        tm.that(result, is_=dict)
+        assert isinstance(result, dict)
+        tm.that(result["name"], eq="test")
 
 
 __all__: list[str] = ["TestUtilitiesTypeGuardsCoverage100"]

@@ -92,15 +92,15 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _normalize_component(
         component: (
-            t.ValueOrModel | Mapping[str, t.Container] | set[t.Container] | None
+            t.RuntimeData | Mapping[str, t.Container] | set[t.Container] | None
         ),
     ) -> t.Container | t.FlatContainerList:
-        """Flat-Container normalization via canonical ``FlextRuntime.to_plain_container``."""
+        """Flat-Container normalization via canonical ``FlextRuntime.normalize_to_metadata``."""
         if component is None:
             return ""
         if isinstance(component, set):
             return [FlextRuntime.to_scalar(item) for item in component]
-        return FlextRuntime.to_plain_container(component)
+        return FlextRuntime.normalize_to_metadata(component)
 
     @staticmethod
     def _apply_normalize(
@@ -173,13 +173,13 @@ class FlextUtilitiesMapper:
         return FlextUtilitiesMapper._apply_strip_empty(step, strip_empty=strip_empty)
 
     @staticmethod
-    def _success_value_result(value: t.PresentValueOrModel) -> p.Result[t.ValueOrModel]:
+    def _success_value_result(value: t.PresentRuntimeData) -> p.Result[t.RuntimeData]:
         """Create a successful mapper result with concrete value typing."""
-        return r[t.ValueOrModel].ok(value)
+        return r[t.RuntimeData].ok(value)
 
     @staticmethod
     def _normalize_accessible_value(
-        value: t.ValueOrModel | p.Model | p.HasModelDump | p.ValidatorSpec,
+        value: t.RuntimeData | p.Model | p.HasModelDump | p.ValidatorSpec,
     ) -> t.RuntimeData | t.Container:
         """Normalize protocol-accessible values to canonical runtime/container shapes."""
         if value is None:
@@ -207,7 +207,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_field_value(
-        item: t.ValueOrModel | Mapping[str, t.Container] | Mapping[str, t.ValueOrModel],
+        item: t.RuntimeData | Mapping[str, t.Container] | Mapping[str, t.RuntimeData],
         field_name: str,
     ) -> t.Container:
         """Extract field value from dict or model for pyrefly type inference."""
@@ -229,13 +229,13 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _resolve_raw_value(
-        raw: t.ValueOrModel | None,
+        raw: t.RuntimeData | None,
         key_part: str,
-    ) -> p.Result[t.ValueOrModel]:
+    ) -> p.Result[t.RuntimeData]:
         """Wrap a raw value into a Result: fail on None, narrow containers, stringify rest."""
         if raw is None:
             marker = "found_none:"
-            return r[t.ValueOrModel].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "resolve extracted value",
                 marker + e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
             )
@@ -246,23 +246,23 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _extract_get_value(
         current: (
-            t.ValueOrModel
+            t.RuntimeData
             | t.ContainerCarrier
             | FlextModelsContainers.ConfigMap
-            | Sequence[t.ValueOrModel]
+            | Sequence[t.RuntimeData]
             | None
         ),
         key_part: str,
-    ) -> p.Result[t.ValueOrModel]:
+    ) -> p.Result[t.RuntimeData]:
         """Get raw value from dict/object/model, returning found_none or not-found failures."""
         if isinstance(current, Mapping):
-            mapping_obj: Mapping[str, t.ValueOrModel] = current
+            mapping_obj: Mapping[str, t.RuntimeData] = current
             if key_part in mapping_obj:
                 return FlextUtilitiesMapper._resolve_raw_value(
                     mapping_obj[key_part],
                     key_part,
                 )
-            return r[t.ValueOrModel].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "extract mapping key",
                 e.render_template(
                     c.ERR_TEMPLATE_KEY_NOT_FOUND,
@@ -279,7 +279,7 @@ class FlextUtilitiesMapper:
         #             mapping_obj[key_part],
         #             key_part,
         #         )
-        #     return r[t.ValueOrModel].fail_op(
+        #     return r[t.RuntimeData].fail_op(
         #         "extract config mapping key",
         #         e.render_template(
         #             c.ERR_TEMPLATE_KEY_NOT_FOUND,
@@ -300,7 +300,7 @@ class FlextUtilitiesMapper:
                     val = model_dict[key_part]
                     if val is None:
                         marker = "found_none:"
-                        return r[t.ValueOrModel].fail_op(
+                        return r[t.RuntimeData].fail_op(
                             "extract model key value",
                             marker
                             + e.render_template(
@@ -308,24 +308,24 @@ class FlextUtilitiesMapper:
                             ),
                         )
                     return FlextUtilitiesMapper._success_value_result(val)
-        return r[t.ValueOrModel].fail_op(
+        return r[t.RuntimeData].fail_op(
             "extract key",
             e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part),
         )
 
     @staticmethod
     def _extract_handle_array_index(
-        current: t.ValueOrModel | t.ContainerCarrier | Sequence[t.ValueOrModel],
+        current: t.RuntimeData | t.ContainerCarrier | Sequence[t.RuntimeData],
         array_match: str,
-    ) -> p.Result[t.ValueOrModel]:
+    ) -> p.Result[t.RuntimeData]:
         """Handle array indexing with negative index support."""
-        sequence: Sequence[t.ValueOrModel]
+        sequence: Sequence[t.RuntimeData]
         if isinstance(current, FlextModelsContainers.ObjectList):
             sequence = current.root
         elif isinstance(current, Sequence) and not isinstance(current, (str, bytes)):
             sequence = current
         else:
-            return r[t.ValueOrModel].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "extract array index",
                 c.ERR_MAPPER_NOT_A_SEQUENCE,
             )
@@ -336,12 +336,12 @@ class FlextUtilitiesMapper:
             if 0 <= idx < len(sequence):
                 item = sequence[idx]
                 if item is None:
-                    return r[t.ValueOrModel].fail_op(
+                    return r[t.RuntimeData].fail_op(
                         "extract array index value",
                         c.ERR_MAPPER_FOUND_NONE_INDEX,
                     )
                 return FlextUtilitiesMapper._success_value_result(item)
-            return r[t.ValueOrModel].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "extract array index",
                 e.render_template(
                     c.ERR_TEMPLATE_INDEX_OUT_OF_RANGE,
@@ -349,7 +349,7 @@ class FlextUtilitiesMapper:
                 ),
             )
         except (ValueError, IndexError):
-            return r[t.ValueOrModel].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "extract array index",
                 e.render_template(c.ERR_TEMPLATE_INVALID_INDEX, index=array_match),
             )
@@ -437,8 +437,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _deep_eq_values(
-        val_a: t.ValueOrModel,
-        val_b: t.ValueOrModel,
+        val_a: t.RuntimeData,
+        val_b: t.RuntimeData,
     ) -> bool:
         """Recursive deep equality for any two nested items."""
         if val_a is val_b:
@@ -468,8 +468,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def deep_eq(
-        a: Mapping[str, t.ValueOrModel],
-        b: Mapping[str, t.ValueOrModel],
+        a: Mapping[str, t.RuntimeData],
+        b: Mapping[str, t.RuntimeData],
     ) -> bool:
         """Recursive deep equality for nested dicts/lists/primitives."""
         if a is b:
@@ -488,14 +488,14 @@ class FlextUtilitiesMapper:
     def _extract_fail_or_default(
         msg: str,
         *,
-        default: t.ValueOrModel | None,
+        default: t.RuntimeData | None,
         required: bool,
-    ) -> p.Result[t.ValueOrModel]:
+    ) -> p.Result[t.RuntimeData]:
         """Return fail (required) or ok(default) / fail (no default) for extract paths."""
         if required:
-            return r[t.ValueOrModel].fail_op("extract required path", msg)
+            return r[t.RuntimeData].fail_op("extract required path", msg)
         if default is None:
-            return r[t.ValueOrModel].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "extract path default",
                 e.render_template(
                     c.ERR_TEMPLATE_MESSAGE_AND_DEFAULT_IS_NONE,
@@ -507,24 +507,24 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _extract_resolve_path_part(
         current: (
-            t.ValueOrModel
+            t.RuntimeData
             | t.ContainerCarrier
             | FlextModelsContainers.ConfigMap
-            | Sequence[t.ValueOrModel]
+            | Sequence[t.RuntimeData]
             | None
         ),
         part: str,
         *,
         path_context: str,
-        default: t.ValueOrModel | None,
+        default: t.RuntimeData | None,
         required: bool,
-    ) -> tuple[t.ValueOrModel | None, p.Result[t.ValueOrModel] | None]:
+    ) -> tuple[t.RuntimeData | None, p.Result[t.RuntimeData] | None]:
         """Resolve one path segment; returns (next_current, None) or (None, early_result)."""
         found_none_prefix = "found_none:"
         key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(part)
 
         get_result = FlextUtilitiesMapper._extract_get_value(current, key_part)
-        next_val: t.ValueOrModel | None
+        next_val: t.RuntimeData | None
         if get_result.failure:
             error_str = get_result.error or ""
             if found_none_prefix in error_str:
@@ -577,15 +577,15 @@ class FlextUtilitiesMapper:
         data: p.AccessibleData,
         path: str,
         *,
-        default: t.ValueOrModel | None = None,
+        default: t.RuntimeData | None = None,
         required: bool = False,
         separator: str = ".",
-    ) -> p.Result[t.ValueOrModel]:
+    ) -> p.Result[t.RuntimeData]:
         """Extract nested value via dot-notation path with array index support (e.g. "user.addresses[0].city")."""
         try:
             parts = path.split(separator)
             current: (
-                t.ValueOrModel
+                t.RuntimeData
                 | t.ContainerCarrier
                 | FlextModelsContainers.ConfigMap
                 | None
@@ -646,7 +646,7 @@ class FlextUtilitiesMapper:
                 operation="extract",
                 reason=str(exc),
             )
-            return r[t.ValueOrModel].fail_op(
+            return r[t.RuntimeData].fail_op(
                 "extract path",
                 e.render_error_template(
                     c.ERR_TEMPLATE_EXTRACT_FAILED,
@@ -663,7 +663,7 @@ class FlextUtilitiesMapper:
         data: p.AccessibleData | t.ConfigModelInput,
         key: str,
         *,
-        default: t.ValueOrModel | None = None,
+        default: t.RuntimeData | None = None,
     ) -> t.RuntimeData | t.Container:
         """Get value by key from dict/object, returning default if missing."""
         runtime_default: t.RuntimeData | None = (

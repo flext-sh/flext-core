@@ -913,7 +913,7 @@ class TestsFlextCoreModelsMixins:
 
         name: Annotated[str, m.Field(description="Unique scenario name")]
         input_value: Annotated[
-            t.ValueOrModel | None,
+            t.RuntimeData | None,
             m.Field(description="Public value passed to u.parse()"),
         ]
         target: Annotated[
@@ -927,7 +927,7 @@ class TestsFlextCoreModelsMixins:
             bool, m.Field(description="Whether parsing should succeed")
         ] = True
         expected_value: Annotated[
-            t.ValueOrModel | None,
+            t.RuntimeData | None,
             m.Field(description="Expected parsed scalar or enum value"),
         ] = None
         expected_data: Annotated[

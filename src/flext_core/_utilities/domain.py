@@ -142,7 +142,7 @@ class FlextUtilitiesDomain:
     def add_domain_event(
         entity: pb.HasDomainEvents,
         event_type: str,
-        data: mc.ConfigMap | Mapping[str, t.MetadataOrValue | None] | None = None,
+        data: mc.ConfigMap | Mapping[str, t.MetadataData | None] | None = None,
         aggregate_id: str | None = None,
     ) -> mde.Entry:
         """Create a domain event and append it to the entity's event buffer.

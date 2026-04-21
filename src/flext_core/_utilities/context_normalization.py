@@ -52,9 +52,7 @@ class FlextUtilitiesContextNormalization:
                 if str(key) != key:
                     empty_key: t.FlatContainerMapping = {}
                     return empty_key
-                normalized[key] = FlextRuntime.to_plain_container(
-                    FlextRuntime.normalize_to_container(value)
-                )
+                normalized[key] = FlextRuntime.normalize_to_container(value)
             return t.flat_container_mapping_adapter().validate_python(normalized)
         except (TypeError, ValueError, AttributeError, KeyError) as exc:
             FlextUtilitiesContextNormalization._logger.debug(

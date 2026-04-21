@@ -38,32 +38,25 @@ class FlextTypesServices:
     type JsonValue = t.JsonValue
     type JsonMapping = Mapping[str, t.JsonValue]
     type JsonSequence = Sequence[t.JsonValue]
-    type JsonLikeMapping = Mapping[str, JsonValue]
-    type JsonLikeSequence = Sequence[JsonValue]
+    type JsonLikeMapping = t.JsonMapping
+    type JsonLikeSequence = t.JsonList
     type JsonPayload = t.JsonValue | mp.BaseModel
     type RegistryDict[T] = MutableMapping[str, T]
     type ModelCarrier = mp.BaseModel
     type ProtocolModelCarrier = p.Model
     type DomainModelCarrier = ModelCarrier | ProtocolModelCarrier
     type ContainerCarrier = Mapping[str, t.Container]
+    type FlatRuntimeData = t.Container | t.FlatContainerMapping | t.FlatContainerList
+    type StructuredValue = t.Container | t.JsonMapping | t.JsonList
     type ScalarOrModel = t.Scalar | mp.BaseModel
     type ModelClass[T: ModelCarrier] = type[T]
     type LogArgument = t.Container | p.Model
     type LogValue = FlextTypesServices.LogArgument | Exception
     type LogResult = prt.Result[bool]
-    type MetadataValue = t.Container
-    type MetadataOrValue = t.Container | t.FlatContainerMapping | t.FlatContainerList
-    type MetadataAttributeValue = MetadataValue
-    type ValueOrModel = (
-        t.Container | t.FlatContainerMapping | t.FlatContainerList | mp.BaseModel
-    )
-    type RuntimeAtomic = ValueOrModel
-    type RuntimeData = (
-        RuntimeAtomic | t.Scalar | Mapping[str, t.Container] | Sequence[t.Container]
-    )
-    type PresentValueOrModel = (
-        t.Container | t.FlatContainerMapping | t.FlatContainerList | ModelCarrier
-    )
+    type MetadataValue = t.JsonValue
+    type MetadataData = FlatRuntimeData | t.JsonMapping | t.JsonList
+    type RuntimeData = FlatRuntimeData | StructuredValue | mp.BaseModel
+    type PresentRuntimeData = RuntimeData
     type BootstrapInput = ModelCarrier | Mapping[str, t.Container]
     type RegisterableService = (
         t.Container
@@ -79,13 +72,13 @@ class FlextTypesServices:
     )
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], RegisterableService]
-    type ModelInput = t.Container | ModelCarrier | Mapping[str, ValueOrModel]
-    type ConfigModelInput = ModelCarrier | Mapping[str, RuntimeAtomic]
-    type MetadataInput = ModelCarrier | JsonLikeMapping
+    type ModelInput = t.Container | ModelCarrier | Mapping[str, RuntimeData]
+    type ConfigModelInput = ModelCarrier | Mapping[str, RuntimeData]
+    type MetadataInput = ModelCarrier | Mapping[str, MetadataValue]
     type ServiceMap = Mapping[str, RegisterableService]
     type FactoryMap = Mapping[str, FactoryCallable]
     type ResourceMap = Mapping[str, ResourceCallable]
-    type ContextHookCallable = Callable[[t.Scalar], ValueOrModel]
+    type ContextHookCallable = Callable[[t.Scalar], RuntimeData]
     type ContextHookMap = Mapping[str, Sequence[ContextHookCallable]]
 
     type HandlerCallable = Callable[
@@ -100,17 +93,17 @@ class FlextTypesServices:
         ModelCarrier
         | Callable[
             ...,
-            ModelCarrier | RuntimeAtomic | prt.ResultLike[RuntimeAtomic],
+            ModelCarrier | RuntimeData | prt.ResultLike[RuntimeData],
         ]
     )
     type HandlerProtocolVariant = DispatchableHandler
     type ResolvedHandlerCallable = Callable[
         ...,
-        ModelCarrier | RuntimeAtomic | prt.ResultLike[RuntimeAtomic],
+        ModelCarrier | RuntimeData | prt.ResultLike[RuntimeData],
     ]
     type RoutedHandlerCallable = Callable[
         [p.Routable],
-        RuntimeAtomic | prt.ResultLike[RuntimeAtomic],
+        RuntimeData | prt.ResultLike[RuntimeData],
     ]
     type RegisteredHandler = tuple[
         HandlerProtocolVariant,
@@ -174,9 +167,10 @@ class FlextTypesServices:
     type GuardInput = (
         type[BaseException | Enum]
         | t.Container
+        | MetadataValue
         | ContainerCarrier
-        | Mapping[str, ValueOrModel]
-        | Sequence[t.Container]
+        | Mapping[str, RuntimeData]
+        | Sequence[RuntimeData]
         | bytes
         | bytearray
         | ModelCarrier
@@ -202,7 +196,7 @@ class FlextTypesServices:
         | pl.Logger
         | pl.HasLogger
         | pr.Registry
-        | prt.ResultLike[RuntimeAtomic]
+        | prt.ResultLike[RuntimeData]
         | AbstractSet[t.Scalar]
         | ps.Settings
     )

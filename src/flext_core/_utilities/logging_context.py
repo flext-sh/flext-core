@@ -121,7 +121,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def _to_container_value(
-        value: t.LogValue | t.Container | t.ValueOrModel | t.RuntimeData,
+        value: t.LogValue | t.Container | t.RuntimeData,
     ) -> t.Container:
         """Normalize value to Container (internal helper)."""
         if isinstance(value, Exception):
@@ -138,21 +138,14 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             Path,
         ):
             return normalized
-        flattened = FlextRuntime.to_plain_container(normalized)
+        flattened = FlextRuntime.normalize_to_metadata(normalized)
         if FlextUtilitiesGuardsTypeModel.base_model(flattened):
             return str(flattened.model_dump())
         return str(flattened)
 
     @staticmethod
     def _to_scalar_value(
-        value: (
-            t.LogValue
-            | t.Container
-            | t.ValueOrModel
-            | t.ContainerCarrier
-            | t.RuntimeData
-            | None
-        ),
+        value: (t.LogValue | t.Container | t.RuntimeData | t.ContainerCarrier | None),
     ) -> t.Scalar:
         if value is None:
             return ""
@@ -168,9 +161,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def _to_container_context(
-        context: Mapping[
-            str, t.LogValue | t.Container | t.ValueOrModel | t.RuntimeData
-        ],
+        context: Mapping[str, t.LogValue | t.Container | t.RuntimeData],
     ) -> t.FlatContainerMapping:
         """Convert mapping to container context using normalization."""
         return {
@@ -181,9 +172,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     @classmethod
     def _to_scalar_context(
         cls,
-        context: Mapping[
-            str, t.LogValue | t.Container | t.ValueOrModel | t.RuntimeData | None
-        ],
+        context: Mapping[str, t.LogValue | t.Container | t.RuntimeData | None],
     ) -> t.ScalarMapping:
         return {key: cls._to_scalar_value(value) for key, value in context.items()}
 

@@ -15,11 +15,11 @@ from collections.abc import (
     MutableSequence,
     Sequence,
 )
-from datetime import datetime
 from typing import ClassVar, overload
 
 from flext_core import (
     FlextModelsContainers as mc,
+    FlextRuntime,
     T,
     U,
     c,
@@ -34,7 +34,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def normalize_domain_event_data(
-        value: mc.ConfigMap | Mapping[str, t.MetadataOrValue | None] | None,
+        value: mc.ConfigMap | Mapping[str, t.MetadataData | None] | None,
     ) -> Mapping[str, t.MetadataValue]:
         """Normalize domain event payloads into plain flat mappings.
 
@@ -44,72 +44,15 @@ class FlextUtilitiesCollection:
         if value is None:
             return {}
         raw_source = value.root if isinstance(value, mc.ConfigMap) else value
-        typed_source = t.flat_container_mapping_adapter().validate_python(raw_source)
         normalized: MutableMapping[str, t.MetadataValue] = {}
-        for key, item in typed_source.items():
-            nv = FlextUtilitiesCollection.normalize_aggregated_metadata_value(item)
-            if nv is not None:
-                normalized[str(key)] = nv
+        for key, item in raw_source.items():
+            if item is None:
+                continue
+            normalized[str(key)] = FlextRuntime.normalize_to_metadata(item)
         return normalized
 
     @staticmethod
-    def normalize_aggregated_metadata_value(
-        value: t.PresentValueOrModel,
-    ) -> t.MetadataValue | None:
-        """Convert dumped model values into canonical metadata values."""
-        if value is None:
-            return None
-        if isinstance(value, (str, int, float, bool)):
-            return value
-        if isinstance(value, datetime):
-            return value.isoformat()
-        if isinstance(value, Mapping):
-            normalized_map: dict[str, t.JsonValue] = {}
-            for key, item in value.items():
-                if isinstance(item, (str, int, float, bool)):
-                    normalized_map[str(key)] = item
-                    continue
-                if isinstance(item, datetime):
-                    normalized_map[str(key)] = item.isoformat()
-                    continue
-                if isinstance(item, Sequence) and not isinstance(
-                    item,
-                    (str, bytes, bytearray),
-                ):
-                    normalized_items: list[t.JsonValue] = []
-                    for nested_item in item:
-                        if isinstance(nested_item, (str, int, float, bool)):
-                            normalized_items.append(nested_item)
-                        elif isinstance(nested_item, datetime):
-                            normalized_items.append(nested_item.isoformat())
-                        else:
-                            normalized_items.append(str(nested_item))
-                    normalized_map[str(key)] = normalized_items
-                    continue
-                normalized_map[str(key)] = str(item)
-            return normalized_map
-        if isinstance(value, Sequence) and not isinstance(
-            value,
-            (str, bytes, bytearray),
-        ):
-            normalized_sequence: list[t.JsonValue] = []
-            for item in value:
-                if isinstance(item, (str, int, float, bool)):
-                    normalized_sequence.append(item)
-                elif isinstance(item, datetime):
-                    normalized_sequence.append(item.isoformat())
-                else:
-                    normalized_sequence.append(str(item))
-            return normalized_sequence
-        return str(value)
-
-    @staticmethod
-    def _ok_result[TValue](value: TValue) -> p.Result[TValue]:
-        """Create a typed success result."""
-        return r[TValue].ok(value)
-
-    @staticmethod
-    def _is_empty_value(value: t.PresentValueOrModel) -> bool:
+    def _is_empty_value(value: t.GuardInput | None) -> bool:
         """Check if value is considered empty (empty string, empty list, etc.)."""
         if value is None:
             return True
@@ -123,15 +66,13 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_deep_single_key(
-        result: dict[str, t.Container],
+        result: dict[str, t.MetadataValue],
         key: str,
-        value: t.Container,
+        value: t.MetadataValue,
     ) -> p.Result[bool]:
         """Merge single key in deep merge strategy.
 
-        Flat-mapping invariant: Container values stay flat (FlatScalarMapping),
-        so deep-merging two mappings collapses to a shallow key union — a
-        recursive merge would widen values beyond Container.
+        Structured metadata values preserve nested JSON-compatible shapes.
         """
         current_val = result.get(key)
         if (
@@ -139,21 +80,10 @@ class FlextUtilitiesCollection:
             and isinstance(current_val, Mapping)
             and isinstance(value, Mapping)
         ):
-            merged: dict[str, t.JsonValue] = {}
-            for inner_key, inner_val in current_val.items():
-                if isinstance(inner_val, (str, int, float, bool)):
-                    merged[str(inner_key)] = inner_val
-                elif isinstance(inner_val, datetime):
-                    merged[str(inner_key)] = inner_val.isoformat()
-            for inner_key, inner_val in value.items():
-                if isinstance(inner_val, (str, int, float, bool)):
-                    merged[str(inner_key)] = inner_val
-                elif isinstance(inner_val, datetime):
-                    merged[str(inner_key)] = inner_val.isoformat()
-            result[key] = merged
-            return FlextUtilitiesCollection._ok_result(True)
+            result[key] = FlextRuntime.normalize_to_metadata({**current_val, **value})
+            return r[bool].ok(True)
         result[key] = value
-        return FlextUtilitiesCollection._ok_result(True)
+        return r[bool].ok(True)
 
     @staticmethod
     def count(items: Sequence[T], predicate: Callable[[T], bool] | None = None) -> int:
@@ -267,12 +197,12 @@ class FlextUtilitiesCollection:
         if isinstance(items, (list, tuple)):
             for item in items:
                 if predicate(item):
-                    return FlextUtilitiesCollection._ok_result(item)
+                    return r[T].ok(item)
             return r[T].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
         if isinstance(items, Mapping):
             for v in items.values():
                 if predicate(v):
-                    return FlextUtilitiesCollection._ok_result(v)
+                    return r[T].ok(v)
         return r[T].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
 
     @overload
@@ -317,45 +247,45 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_replace(
-        other: Mapping[str, t.Container],
-        base: Mapping[str, t.Container],
-    ) -> p.Result[Mapping[str, t.Container]]:
+        other: Mapping[str, t.MetadataValue],
+        base: Mapping[str, t.MetadataValue],
+    ) -> p.Result[Mapping[str, t.MetadataValue]]:
         """Replace strategy: base values overwrite other."""
-        result: dict[str, t.Container] = dict(other)
+        result: dict[str, t.MetadataValue] = dict(other)
         result.update(base)
-        return FlextUtilitiesCollection._ok_result(result)
+        return r[Mapping[str, t.MetadataValue]].ok(result)
 
     @staticmethod
     def _merge_filter_none(
-        other: Mapping[str, t.Container],
-        base: Mapping[str, t.Container],
-    ) -> p.Result[Mapping[str, t.Container]]:
+        other: Mapping[str, t.MetadataValue],
+        base: Mapping[str, t.MetadataValue],
+    ) -> p.Result[Mapping[str, t.MetadataValue]]:
         """Filter-none strategy: skip None values from base."""
-        result: dict[str, t.Container] = dict(other)
+        result: dict[str, t.MetadataValue] = dict(other)
         result.update({k: v for k, v in base.items() if v is not None})
-        return FlextUtilitiesCollection._ok_result(result)
+        return r[Mapping[str, t.MetadataValue]].ok(result)
 
     @staticmethod
     def _merge_filter_empty(
-        other: Mapping[str, t.Container],
-        base: Mapping[str, t.Container],
-    ) -> p.Result[Mapping[str, t.Container]]:
+        other: Mapping[str, t.MetadataValue],
+        base: Mapping[str, t.MetadataValue],
+    ) -> p.Result[Mapping[str, t.MetadataValue]]:
         """Filter-empty strategy: skip empty values from base."""
-        result: dict[str, t.Container] = dict(other)
+        result: dict[str, t.MetadataValue] = dict(other)
         result.update({
             k: v
             for k, v in base.items()
             if not FlextUtilitiesCollection._is_empty_value(v)
         })
-        return FlextUtilitiesCollection._ok_result(result)
+        return r[Mapping[str, t.MetadataValue]].ok(result)
 
     @staticmethod
     def _merge_append(
-        other: Mapping[str, t.Container],
-        base: Mapping[str, t.Container],
-    ) -> p.Result[Mapping[str, t.Container]]:
+        other: Mapping[str, t.MetadataValue],
+        base: Mapping[str, t.MetadataValue],
+    ) -> p.Result[Mapping[str, t.MetadataValue]]:
         """Append strategy: concatenate lists instead of replacing."""
-        result: dict[str, t.Container] = dict(other)
+        result: dict[str, t.MetadataValue] = dict(other)
         for key, value in base.items():
             current_val = result.get(key)
             if (
@@ -363,23 +293,18 @@ class FlextUtilitiesCollection:
                 and isinstance(current_val, list)
                 and isinstance(value, list)
             ):
-                try:
-                    result[key] = t.json_value_adapter().validate_python(
-                        [*current_val, *value],
-                    )
-                except c.ValidationError:
-                    result[key] = value
+                result[key] = FlextRuntime.normalize_to_metadata([*current_val, *value])
             else:
                 result[key] = value
-        return FlextUtilitiesCollection._ok_result(result)
+        return r[Mapping[str, t.MetadataValue]].ok(result)
 
     @staticmethod
     def _merge_deep(
-        other: Mapping[str, t.Container],
-        base: Mapping[str, t.Container],
-    ) -> p.Result[Mapping[str, t.Container]]:
+        other: Mapping[str, t.MetadataValue],
+        base: Mapping[str, t.MetadataValue],
+    ) -> p.Result[Mapping[str, t.MetadataValue]]:
         """Deep strategy: recursively merge nested dicts."""
-        result: dict[str, t.Container] = dict(other)
+        result: dict[str, t.MetadataValue] = dict(other)
         for key, value in base.items():
             merge_result = FlextUtilitiesCollection._merge_deep_single_key(
                 result,
@@ -387,14 +312,14 @@ class FlextUtilitiesCollection:
                 value,
             )
             if merge_result.failure:
-                return r[Mapping[str, t.Container]].fail(
+                return r[Mapping[str, t.MetadataValue]].fail(
                     merge_result.error or "Unknown error",
                 )
-        return FlextUtilitiesCollection._ok_result(result)
+        return r[Mapping[str, t.MetadataValue]].ok(result)
 
     _MergeHandler = Callable[
-        [Mapping[str, t.Container], Mapping[str, t.Container]],
-        "p.Result[Mapping[str, t.Container]]",
+        [Mapping[str, t.MetadataValue], Mapping[str, t.MetadataValue]],
+        "p.Result[Mapping[str, t.MetadataValue]]",
     ]
 
     _MERGE_STRATEGIES: ClassVar[Mapping[str, _MergeHandler]] = {
@@ -409,11 +334,11 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def merge_mappings(
-        other: Mapping[str, t.Container] | None,
-        base: Mapping[str, t.Container],
+        other: Mapping[str, t.MetadataValue] | None,
+        base: Mapping[str, t.MetadataValue],
         *,
         strategy: str = "deep",
-    ) -> p.Result[Mapping[str, t.Container]]:
+    ) -> p.Result[Mapping[str, t.MetadataValue]]:
         """Merge two dictionaries with configurable strategy.
 
         Strategies:
@@ -430,7 +355,7 @@ class FlextUtilitiesCollection:
             raise TypeError(msg)
         handler = FlextUtilitiesCollection._MERGE_STRATEGIES.get(strategy)
         if handler is None:
-            return r[Mapping[str, t.Container]].fail(
+            return r[Mapping[str, t.MetadataValue]].fail(
                 f"Unknown merge strategy: {strategy}",
             )
         return handler(other, base)
@@ -460,7 +385,7 @@ class FlextUtilitiesCollection:
                 )
             processed_item: U = process_result.unwrap()
             results.append(processed_item)
-        return FlextUtilitiesCollection._ok_result(results)
+        return r[Sequence[U]].ok(results)
 
 
 __all__: list[str] = ["FlextUtilitiesCollection"]

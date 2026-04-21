@@ -479,7 +479,7 @@ class FlextContainer(p.ContainerLifecycle):
         config_map: Mapping[str, t.Container] = settings
         merged = self._user_overrides.model_copy()
         merged.update({
-            str(k): FlextRuntime.to_plain_container(u.normalize_to_container(v))
+            str(k): FlextRuntime.normalize_to_container(v)
             for k, v in config_map.items()
         })
         self._user_overrides = merged

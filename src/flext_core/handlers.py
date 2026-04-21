@@ -428,9 +428,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """Push execution context onto the local handler stack."""
         return FlextUtilitiesHandler.push_context(self._runtime_state, ctx)
 
-    def record_metric(
-        self, name: str, value: t.MetadataAttributeValue
-    ) -> p.Result[bool]:
+    def record_metric(self, name: str, value: t.MetadataData) -> p.Result[bool]:
         """Record a metric value in the current handler state."""
         return FlextUtilitiesHandler.record_metric(
             self._runtime_state.execution_context,

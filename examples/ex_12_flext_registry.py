@@ -45,7 +45,7 @@ def _as_registry_handler(
 ) -> t.HandlerProtocolVariant:
     """Adapt protocol handlers to the registry callable contract."""
 
-    def _call(message: p.Routable) -> t.RuntimeAtomic:
+    def _call(message: p.Routable) -> t.RuntimeData:
         return handler.handle(message).unwrap_or("")
 
     return _call

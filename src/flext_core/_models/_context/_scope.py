@@ -42,7 +42,7 @@ class FlextModelsContextScope:
             ),
         ] = ""
         data: Annotated[
-            Mapping[str, t.ValueOrModel],
+            Mapping[str, t.RuntimeData],
             FlextModelsPydantic.BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),

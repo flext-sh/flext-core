@@ -22,6 +22,8 @@ from flext_core import (
     FlextTypesPydantic,
     FlextTypesServices,
     FlextTypesTypeAdapters,
+    FlextTypingBase,
+    FlextTypingContainers,
     FlextTypingProjectMetadata,
 )
 
@@ -48,7 +50,7 @@ T_contra = TypeVar("T_contra", contravariant=True)
 """Contravariant generic type variable for input-only positions."""
 T_DomainResult = TypeVar(
     "T_DomainResult",
-    bound=FlextTypesServices.ValueOrModel | Sequence[FlextTypesServices.ValueOrModel],
+    bound=FlextTypesServices.RuntimeData | Sequence[FlextTypesServices.RuntimeData],
 )
 """Domain result constrained to FLEXT value-or-model payloads."""
 T_Model = TypeVar("T_Model", bound=FlextModelsPydantic.BaseModel)
@@ -68,7 +70,9 @@ U = TypeVar("U")
 
 
 class FlextTypes(
+    FlextTypingBase,
     FlextTypesAnnotateds,
+    FlextTypingContainers,
     FlextTypesCore,
     FlextTypesPydantic,
     FlextTypesServices,

@@ -61,12 +61,10 @@ class FlextUtilitiesHandler:
     def record_metric(
         ctx: FlextModelsHandler.ExecutionContext,
         name: str,
-        value: t.MetadataAttributeValue,
+        value: t.MetadataData,
     ) -> p.Result[bool]:
         """Record a metric value onto an execution context's payload."""
-        normalized = FlextRuntime.to_plain_container(
-            FlextRuntime.normalize_to_container(value),
-        )
+        normalized = FlextRuntime.normalize_to_container(value)
         ctx.metrics_state_data.root[name] = (
             normalized
             if isinstance(normalized, (str, int, float, bool, datetime, Path))

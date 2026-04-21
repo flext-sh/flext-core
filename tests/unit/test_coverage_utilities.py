@@ -112,7 +112,7 @@ class Testu(u.Core.Tests.Contract):
         @staticmethod
         def create_mock_config(**kwargs: t.Scalar) -> m.ConfigMap:
             """Create mock settings t.Container."""
-            result: MutableMapping[str, t.ValueOrModel] = {}
+            result: MutableMapping[str, t.RuntimeData] = {}
             for key, value in kwargs.items():
                 result[str(key)] = value
             return m.ConfigMap(root=result)

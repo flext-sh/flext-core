@@ -20,7 +20,7 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def parse_model[M: t.ModelCarrier](
-        kwargs: Mapping[str, t.ValueOrModel],
+        kwargs: Mapping[str, t.RuntimeData],
         model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
@@ -52,7 +52,7 @@ class FlextUtilitiesArgs:
     @staticmethod
     def resolve_options[M: t.ModelCarrier](
         options: M | None,
-        kwargs: Mapping[str, t.ValueOrModel],
+        kwargs: Mapping[str, t.RuntimeData],
         model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,

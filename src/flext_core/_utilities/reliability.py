@@ -70,7 +70,7 @@ class FlextUtilitiesReliability:
     def retry[TResult](
         operation: Callable[[], p.Result[TResult]],
         options: FlextUtilitiesReliability.RetryOptions | None = None,
-        **kwargs: t.ValueOrModel,
+        **kwargs: t.RuntimeData,
     ) -> p.Result[TResult]:
         """Execute an operation with retry logic using railway patterns.
 

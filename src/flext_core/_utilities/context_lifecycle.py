@@ -52,11 +52,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         metadata_attributes: dict[str, t.MetadataValue] | None = None
         if include_metadata:
             metadata_attributes = {
-                str(k): u.normalize_to_metadata(
-                    FlextRuntime.to_plain_container(
-                        FlextRuntime.normalize_to_container(v)
-                    ),
-                )
+                str(k): u.normalize_to_metadata(v)
                 for k, v in self._metadata_map().items()
             }
         export_model = m.ContextExport.model_validate({
@@ -74,34 +70,25 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     @staticmethod
     def _normalize_mapping_payload(
-        source: (
-            Mapping[str, t.RuntimeData]
-            | Mapping[str, t.ValueOrModel]
-            | Mapping[str, t.Container]
-        ),
+        source: (Mapping[str, t.RuntimeData] | Mapping[str, t.Container]),
     ) -> t.FlatContainerMapping:
         """Normalize and validate mapping payloads through canonical adapters."""
         normalized = {
-            str(k): FlextRuntime.to_plain_container(
-                FlextRuntime.normalize_to_container(v),
-            )
-            for k, v in source.items()
+            str(k): FlextRuntime.normalize_to_container(v) for k, v in source.items()
         }
         return t.flat_container_mapping_adapter().validate_python(normalized)
 
     @staticmethod
     def _as_config_map(
-        source: (
-            Mapping[str, t.RuntimeData]
-            | Mapping[str, t.ValueOrModel]
-            | Mapping[str, t.Container]
-        ),
+        source: (Mapping[str, t.RuntimeData] | Mapping[str, t.Container]),
         label: str,
     ) -> m.ConfigMap | None:
         """Normalize an arbitrary mapping into a scope-compatible map."""
         try:
             normalized_payload = (
-                FlextUtilitiesContextLifecycle._normalize_mapping_payload(source)
+                FlextUtilitiesContextLifecycle._normalize_mapping_payload(
+                    source,
+                )
             )
             return m.ConfigMap(root=dict(normalized_payload))
         except (TypeError, ValueError, AttributeError) as exc:

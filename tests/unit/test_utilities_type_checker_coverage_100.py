@@ -167,8 +167,8 @@ class TestsFlextCoreUtilitiesTypeChecker:
         tm.that(not u.can_handle_message_type(accepted, int), eq=True)
 
     def test_can_handle_message_type_object_accepts_all(self) -> None:
-        """Test can_handle_message_type with t.ValueOrModel type (universal catch-all)."""
-        accepted: tuple[t.TypeHintSpecifier, ...] = (t.ValueOrModel,)
+        """Test can_handle_message_type with t.RuntimeData type (universal catch-all)."""
+        accepted: tuple[t.TypeHintSpecifier, ...] = (t.RuntimeData,)
         tm.that(u.can_handle_message_type(accepted, str), eq=True)
         tm.that(u.can_handle_message_type(accepted, int), eq=True)
         tm.that(u.can_handle_message_type(accepted, dict), eq=True)
@@ -204,8 +204,8 @@ class TestsFlextCoreUtilitiesTypeChecker:
         tm.that(u._evaluate_type_compatibility(int, int), eq=True)
 
     def test_evaluate_type_compatibility_object_accepts_all(self) -> None:
-        """Test _evaluate_type_compatibility with t.ValueOrModel (universal catch-all)."""
-        object_type: t.TypeHintSpecifier = t.ValueOrModel
+        """Test _evaluate_type_compatibility with t.RuntimeData (universal catch-all)."""
+        object_type: t.TypeHintSpecifier = t.RuntimeData
         tm.that(u._evaluate_type_compatibility(object_type, str), eq=True)
         tm.that(u._evaluate_type_compatibility(object_type, int), eq=True)
         tm.that(u._evaluate_type_compatibility(object_type, dict), eq=True)
@@ -232,8 +232,8 @@ class TestsFlextCoreUtilitiesTypeChecker:
         tm.that(result_different, is_=bool)
 
     def test_check_object_type_compatibility_object_type(self) -> None:
-        """Test _check_object_type_compatibility with t.ValueOrModel (universal catch-all)."""
-        object_type: t.TypeHintSpecifier = t.ValueOrModel
+        """Test _check_object_type_compatibility with t.RuntimeData (universal catch-all)."""
+        object_type: t.TypeHintSpecifier = t.RuntimeData
         result = u._check_object_type_compatibility(object_type)
         tm.that(result, eq=True)
 

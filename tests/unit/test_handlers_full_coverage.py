@@ -11,22 +11,22 @@ from tests import c, e, h, m, p, r, t
 
 
 class TestHandlersFullCoverage:
-    class _Handler(h[t.ValueOrModel, t.ValueOrModel]):
+    class _Handler(h[t.RuntimeData, t.RuntimeData]):
         def __init__(self, *, settings: m.Handler | None = None) -> None:
             super().__init__(settings=settings)
 
         @override
-        def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
+        def handle(self, message: t.RuntimeData) -> p.Result[t.RuntimeData]:
             if isinstance(message, (str, int, float, bool)):
-                return r[t.ValueOrModel].ok(message)
-            return r[t.ValueOrModel].fail(c.Core.Tests.TestErrors.UNSUPPORTED_MESSAGE)
+                return r[t.RuntimeData].ok(message)
+            return r[t.RuntimeData].fail(c.Core.Tests.TestErrors.UNSUPPORTED_MESSAGE)
 
     class _QueryHandler(_Handler):
         def __init__(self, *, settings: m.Handler | None = None) -> None:
             super().__init__(settings=settings)
 
         @override
-        def validate_message(self, data: t.ValueOrModel) -> p.Result[bool]:
+        def validate_message(self, data: t.RuntimeData) -> p.Result[bool]:
             _ = data
             return r[bool].ok(True)
 
@@ -35,7 +35,7 @@ class TestHandlersFullCoverage:
             super().__init__(settings=settings)
 
         @override
-        def validate_message(self, data: t.ValueOrModel) -> p.Result[bool]:
+        def validate_message(self, data: t.RuntimeData) -> p.Result[bool]:
             _ = data
             return r[bool].ok(True)
 
@@ -99,7 +99,7 @@ class TestHandlersFullCoverage:
                 handler_mode=c.HandlerType.QUERY,
             ),
         )
-        query_message: t.ValueOrModel = "query"
+        query_message: t.RuntimeData = "query"
         qr = qh.dispatch_message(
             query_message,
             c.HandlerType.QUERY,
@@ -113,7 +113,7 @@ class TestHandlersFullCoverage:
                 handler_mode=c.HandlerType.EVENT,
             ),
         )
-        event_message: t.ValueOrModel = "event"
+        event_message: t.RuntimeData = "event"
         er = eh.dispatch_message(
             event_message,
             c.HandlerType.EVENT.value,

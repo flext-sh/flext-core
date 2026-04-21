@@ -26,7 +26,7 @@ class FlextModelsContextData:
 
     @staticmethod
     def normalize_to_mapping(
-        v: t.ValueOrModel,
+        v: t.RuntimeData,
     ) -> Mapping[str, t.Scalar]:
         """Convert value to an immutable flat mapping with scalar values only."""
         if v is None:
@@ -52,8 +52,8 @@ class FlextModelsContextData:
 
     @staticmethod
     def normalize_metadata_before(
-        v: t.ValueOrModel | None,
-    ) -> t.ValueOrModel | None:
+        v: t.RuntimeData | None,
+    ) -> t.RuntimeData | None:
         """Normalize input to Metadata or return as-is."""
         if v is None or isinstance(v, m.Metadata):
             return v

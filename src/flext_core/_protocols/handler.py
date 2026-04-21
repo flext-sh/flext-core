@@ -121,7 +121,7 @@ class FlextProtocolsHandler:
         def record_metric(
             self,
             name: str,
-            value: t.MetadataAttributeValue,
+            value: t.MetadataData,
         ) -> FlextProtocolsResult.Result[bool]:
             """Record a metric value in the current handler state."""
             ...

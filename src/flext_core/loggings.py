@@ -21,7 +21,6 @@ from typing import ClassVar, Self
 import structlog
 from flext_core import (
     FlextModelsContainers as mc,
-    FlextRuntime as ur,
     FlextUtilitiesGenerators as ug,
     FlextUtilitiesLoggingContext as ulc,
     c,
@@ -188,8 +187,8 @@ class FlextLogger(ulc):
     @classmethod
     def to_container_context(
         cls,
-        context: Mapping[str, t.LogValue | t.Container | t.ValueOrModel],
-    ) -> t.FlatContainerMapping:
+        context: Mapping[str, t.LogValue | t.Container | t.RuntimeData],
+    ) -> Mapping[str, t.MetadataData]:
         """Public wrapper for context normalization used outside helper mixins."""
         return cls._to_container_context(context)
 
@@ -218,9 +217,7 @@ class FlextLogger(ulc):
             context_dict["stack_trace"] = traceback.format_exc()
         for key, value in context.items():
             if not isinstance(value, BaseException):
-                context_dict[key] = ur.to_plain_container(
-                    ur.normalize_to_container(value),
-                )
+                context_dict[key] = FlextLogger._to_container_value(value)
         return context_dict
 
     def critical(
@@ -282,7 +279,7 @@ class FlextLogger(ulc):
                 exc_info=bool(exc_info_value),
                 context=context_input,
             )
-            context_dict: dict[str, t.Container] = dict(built_context)
+            context_dict: dict[str, t.MetadataData] = dict(built_context)
             if resolved_exception is None and isinstance(raw_exception, BaseException):
                 context_dict["exception_type"] = raw_exception.__class__.__name__
                 context_dict["exception_message"] = str(raw_exception)
@@ -512,12 +509,16 @@ class FlextLogger(ulc):
             if success:
                 _ = self.logger.info(
                     f"{self._operation_name} {status}",
-                    **FlextLogger.to_container_context(context.root),
+                    **FlextLogger._to_scalar_context(
+                        FlextLogger.to_container_context(context.root),
+                    ),
                 )
             else:
                 _ = self.logger.error(
                     f"{self._operation_name} {status}",
-                    **FlextLogger.to_container_context(context.root),
+                    **FlextLogger._to_scalar_context(
+                        FlextLogger.to_container_context(context.root),
+                    ),
                 )
 
 

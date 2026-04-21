@@ -26,12 +26,12 @@ class TestsFlextCoreUtilities(u):
 
             # --- from test_registry_full_coverage.py ---
 
-            class Handler(h[t.ValueOrModel, t.ValueOrModel]):
+            class Handler(h[t.RuntimeData, t.RuntimeData]):
                 """Simple handler used by public registry scenarios."""
 
                 @override
-                def handle(self, message: t.ValueOrModel) -> p.Result[t.ValueOrModel]:
-                    return r[t.ValueOrModel].ok(message)
+                def handle(self, message: t.RuntimeData) -> p.Result[t.RuntimeData]:
+                    return r[t.RuntimeData].ok(message)
 
             class FalseyDispatcher(p.Dispatcher):
                 """Dispatcher that is present but reports itself as unavailable."""

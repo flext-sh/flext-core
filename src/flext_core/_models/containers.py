@@ -47,13 +47,13 @@ class FlextModelsContainers:
             return self.root(value)
 
     class Dict(
-        mp.RootModel[dict[str, FlextTypesServices.ValueOrModel]],
-        MutableMapping[str, FlextTypesServices.ValueOrModel],
+        mp.RootModel[dict[str, FlextTypesServices.RuntimeData]],
+        MutableMapping[str, FlextTypesServices.RuntimeData],
     ):
         """Runtime dictionary container rooted in validated values."""
 
         root: Annotated[
-            dict[str, FlextTypesServices.ValueOrModel],
+            dict[str, FlextTypesServices.RuntimeData],
             up.Field(description="Validated runtime key-value mapping."),
         ]
 
@@ -66,11 +66,11 @@ class FlextModelsContainers:
             return len(self.root)
 
         @override
-        def __getitem__(self, key: str) -> FlextTypesServices.ValueOrModel:
+        def __getitem__(self, key: str) -> FlextTypesServices.RuntimeData:
             return self.root[key]
 
         @override
-        def __setitem__(self, key: str, value: FlextTypesServices.ValueOrModel) -> None:
+        def __setitem__(self, key: str, value: FlextTypesServices.RuntimeData) -> None:
             self.root[key] = value
 
         @override
@@ -78,13 +78,13 @@ class FlextModelsContainers:
             del self.root[key]
 
     class ConfigMap(
-        mp.RootModel[dict[str, FlextTypesServices.ValueOrModel]],
-        MutableMapping[str, FlextTypesServices.ValueOrModel],
+        mp.RootModel[dict[str, FlextTypesServices.RuntimeData]],
+        MutableMapping[str, FlextTypesServices.RuntimeData],
     ):
         """Runtime configuration mapping rooted in validated values."""
 
         root: Annotated[
-            dict[str, FlextTypesServices.ValueOrModel],
+            dict[str, FlextTypesServices.RuntimeData],
             up.Field(description="Validated runtime configuration mapping."),
         ]
 
@@ -97,11 +97,11 @@ class FlextModelsContainers:
             return len(self.root)
 
         @override
-        def __getitem__(self, key: str) -> FlextTypesServices.ValueOrModel:
+        def __getitem__(self, key: str) -> FlextTypesServices.RuntimeData:
             return self.root[key]
 
         @override
-        def __setitem__(self, key: str, value: FlextTypesServices.ValueOrModel) -> None:
+        def __setitem__(self, key: str, value: FlextTypesServices.RuntimeData) -> None:
             self.root[key] = value
 
         @override
@@ -109,18 +109,18 @@ class FlextModelsContainers:
             del self.root[key]
 
     class ObjectList(
-        mp.RootModel[list[FlextTypesServices.ValueOrModel]],
-        Sequence[FlextTypesServices.ValueOrModel],
+        mp.RootModel[list[FlextTypesServices.RuntimeData]],
+        Sequence[FlextTypesServices.RuntimeData],
     ):
         """Runtime list container rooted in validated values."""
 
         root: Annotated[
-            list[FlextTypesServices.ValueOrModel],
+            list[FlextTypesServices.RuntimeData],
             up.Field(description="Validated runtime sequence."),
         ]
 
         @override
-        def __iter__(self) -> Iterator[FlextTypesServices.ValueOrModel]:
+        def __iter__(self) -> Iterator[FlextTypesServices.RuntimeData]:
             return iter(self.root)
 
         @override
@@ -128,7 +128,7 @@ class FlextModelsContainers:
             return len(self.root)
 
         @override
-        def __getitem__(self, index: int) -> FlextTypesServices.ValueOrModel:
+        def __getitem__(self, index: int) -> FlextTypesServices.RuntimeData:
             return self.root[index]
 
 

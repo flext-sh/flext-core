@@ -96,9 +96,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
             return None
         normalized_raw: dict[str, t.Container] = {}
         for key, value in data.root.items():
-            normalized = FlextRuntime.to_plain_container(
-                FlextRuntime.normalize_to_container(value)
-            )
+            normalized = FlextRuntime.normalize_to_container(value)
             if isinstance(normalized, t.CONTAINER_TYPES):
                 normalized_raw[str(key)] = normalized
             else:
@@ -530,19 +528,15 @@ class FlextResult[T](BaseModel, p.Result[T]):
 
     @staticmethod
     def failed_result(
-        value: FlextResult[t.ValueOrModel]
-        | p.ResultLike[t.ValueOrModel]
-        | t.GuardInput,
-    ) -> TypeIs[FlextResult[t.ValueOrModel]]:
+        value: FlextResult[t.RuntimeData] | p.ResultLike[t.RuntimeData] | t.GuardInput,
+    ) -> TypeIs[FlextResult[t.RuntimeData]]:
         """Return ``True`` when *value* is a failed runtime result."""
         return isinstance(value, FlextResult) and value.failure
 
     @staticmethod
     def successful_result(
-        value: FlextResult[t.ValueOrModel]
-        | p.ResultLike[t.ValueOrModel]
-        | t.GuardInput,
-    ) -> TypeIs[FlextResult[t.ValueOrModel]]:
+        value: FlextResult[t.RuntimeData] | p.ResultLike[t.RuntimeData] | t.GuardInput,
+    ) -> TypeIs[FlextResult[t.RuntimeData]]:
         """Return ``True`` when *value* is a successful runtime result."""
         return isinstance(value, FlextResult) and value.success
 

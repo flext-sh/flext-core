@@ -12,9 +12,8 @@ class ExamplesFlextCoreTypes(t):
         """Examples namespace for shared aliases."""
 
         type ExampleRenderable = (
-            t.ValueOrModel
+            t.RuntimeData
             | t.ScalarOrModel
-            | t.RuntimeData
             | m.ConfigMap
             | p.ResultLike[t.RuntimeData]
             | p.ResultLike[t.Container]

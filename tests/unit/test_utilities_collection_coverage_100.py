@@ -78,7 +78,7 @@ class TestUtilitiesCollectionCoverage:
             type[StrEnum], m.Field(description="Enum class for coercion")
         ]
         value: Annotated[
-            Annotated[t.Container, m.SkipValidation],
+            Annotated[t.RuntimeData, m.SkipValidation],
             m.Field(description="Input value to coerce"),
         ]
         expected_success: Annotated[
@@ -196,7 +196,7 @@ class TestUtilitiesCollectionCoverage:
             m.Field(description="Processor callable under test"),
         ]
         expected_result: Annotated[
-            t.Container,
+            t.FlatContainerList,
             m.Field(description="Expected processing result"),
         ]
         on_error: Annotated[str, m.Field(description="Error handling mode")] = "collect"
@@ -662,8 +662,8 @@ class TestUtilitiesCollectionCoverage:
 
     def test_merge_deep(self) -> None:
         """Test deep merge."""
-        base_data: Mapping[str, t.Container] = {"a": 1, "b": {"x": 1}}
-        other_data: Mapping[str, t.Container] = {"b": {"y": 2}, "c": 3}
+        base_data: Mapping[str, t.MetadataValue] = {"a": 1, "b": {"x": 1}}
+        other_data: Mapping[str, t.MetadataValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base_data, other_data)
         assert result.success
         tm.that(result.value["a"], eq=1)
@@ -672,8 +672,8 @@ class TestUtilitiesCollectionCoverage:
 
     def test_merge_override(self) -> None:
         """Test override merge."""
-        base_data: Mapping[str, t.Container] = {"a": 1, "b": {"x": 1}}
-        other_data: Mapping[str, t.Container] = {"b": {"y": 2}, "c": 3}
+        base_data: Mapping[str, t.MetadataValue] = {"a": 1, "b": {"x": 1}}
+        other_data: Mapping[str, t.MetadataValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base_data, other_data, strategy="override")
         assert result.success
         tm.that(result.value["a"], eq=1)

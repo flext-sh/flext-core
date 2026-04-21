@@ -14,7 +14,6 @@ from collections.abc import (
 from flext_core import (
     FlextModelsBase as m,
     FlextRuntime,
-    FlextUtilitiesGuardsTypeCore,
     c,
     p,
     t,
@@ -27,24 +26,33 @@ class FlextExceptionsHelpers:
     """Internal helpers for exception param extraction and metadata normalization."""
 
     @staticmethod
-    def safe_settings_map(
-        value: p.HasModelDump
-        | Mapping[str, t.MetadataOrValue | None]
-        | t.MetadataValue
-        | None,
-    ) -> Mapping[str, t.MetadataOrValue | None] | None:
-        """Extract SettingsMap when value is mapping-compatible."""
-        if value is None:
-            return None
-        try:
-            return t.flat_container_mapping_adapter().validate_python(value)
-        except PydanticValidationError:
-            return None
+    def _normalized_source_entries(
+        context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
+        extra_kwargs: Mapping[str, t.MetadataData | None],
+    ) -> tuple[tuple[str, t.MetadataValue], ...]:
+        """Collect normalized metadata entries from context and kwargs once."""
+        entries: list[tuple[str, t.MetadataValue]] = []
+        source_values = (context, extra_kwargs)
+        for source_value in source_values:
+            if source_value is None:
+                continue
+            try:
+                source_mapping = FlextRuntime.normalize_metadata_input_mapping(
+                    source_value,
+                )
+            except (PydanticValidationError, TypeError, ValueError):
+                continue
+            if not source_mapping:
+                continue
+            for key, value in source_mapping.items():
+                if value is not None:
+                    entries.append((key, FlextRuntime.normalize_to_metadata(value)))
+        return tuple(entries)
 
     @staticmethod
     def safe_metadata(
         value: p.HasModelDump
-        | Mapping[str, t.MetadataOrValue | None]
+        | Mapping[str, t.MetadataData | None]
         | t.MetadataValue
         | None,
     ) -> m.Metadata | None:
@@ -55,18 +63,19 @@ class FlextExceptionsHelpers:
             return m.Metadata.model_validate(value, from_attributes=True)
         except (PydanticValidationError, TypeError):
             pass
-        attrs_map = FlextExceptionsHelpers.safe_settings_map(value)
+        if not isinstance(value, Mapping) and not isinstance(value, p.HasModelDump):
+            return None
+        try:
+            attrs_map = FlextRuntime.normalize_metadata_input_mapping(value)
+        except (PydanticValidationError, TypeError, ValueError):
+            return None
         if attrs_map is None:
             return None
-        attrs = {
-            k: FlextRuntime.normalize_to_metadata(v)
-            for k, v in attrs_map.items()
-            if v is not None
-        }
+        attrs = {key: value for key, value in attrs_map.items() if value is not None}
         return m.Metadata.model_validate({c.FIELD_ATTRIBUTES: attrs})
 
     @staticmethod
-    def safe_optional_str(value: t.Container | type | None) -> str | None:
+    def safe_optional_str(value: t.MetadataData | type | None) -> str | None:
         """Extract optional strict string from dynamic values."""
         if value is None:
             return None
@@ -76,51 +85,41 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_context_map(
-        context: Mapping[str, t.MetadataOrValue | None] | p.HasModelDump | None,
-        extra_kwargs: Mapping[str, t.MetadataOrValue | None],
+        context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
+        extra_kwargs: Mapping[str, t.MetadataData | None],
         excluded_keys: set[str] | frozenset[str] | None = None,
     ) -> dict[str, t.MetadataValue]:
         """Build normalized context map from context and kwargs."""
         excluded = excluded_keys or frozenset()
-        result: dict[str, t.MetadataValue] = {}
-        source_mappings = (
-            FlextExceptionsHelpers.safe_settings_map(context),
-            FlextExceptionsHelpers.safe_settings_map(extra_kwargs),
-        )
-        for source in source_mappings:
-            if not source:
-                continue
-            for k, v in source.items():
-                if k in excluded or v is None:
-                    continue
-                result[k] = FlextRuntime.normalize_to_metadata(v)
-        return result
+        return {
+            key: value
+            for key, value in FlextExceptionsHelpers._normalized_source_entries(
+                context,
+                extra_kwargs,
+            )
+            if key not in excluded
+        }
 
     @staticmethod
     def build_param_map(
-        context: Mapping[str, t.MetadataOrValue | None] | p.HasModelDump | None,
-        extra_kwargs: Mapping[str, t.MetadataOrValue | None],
+        context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
+        extra_kwargs: Mapping[str, t.MetadataData | None],
         keys: set[str] | frozenset[str],
     ) -> dict[str, t.MetadataValue]:
         """Build parameter map restricted to declared param keys."""
-        result: dict[str, t.MetadataValue] = {}
-        source_mappings = (
-            FlextExceptionsHelpers.safe_settings_map(context),
-            FlextExceptionsHelpers.safe_settings_map(extra_kwargs),
-        )
-        for source in source_mappings:
-            if not source:
-                continue
-            for k, v in source.items():
-                if k not in keys or v is None:
-                    continue
-                result[k] = FlextRuntime.normalize_to_metadata(v)
-        return result
+        return {
+            key: value
+            for key, value in FlextExceptionsHelpers._normalized_source_entries(
+                context,
+                extra_kwargs,
+            )
+            if key in keys
+        }
 
     @staticmethod
     def init_error_params[TParams: t.ModelCarrier](
-        context: Mapping[str, t.MetadataOrValue | None] | p.HasModelDump | None,
-        extra_kwargs: Mapping[str, t.MetadataOrValue | None],
+        context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
+        extra_kwargs: Mapping[str, t.MetadataData | None],
         named_params: Mapping[str, t.RuntimeData | None],
         params_cls: t.ModelClass[TParams],
         existing_params: TParams | None,
@@ -138,11 +137,7 @@ class FlextExceptionsHelpers:
         Shared init boilerplate for all typed error subclasses.
         Returns: (resolved_params, error_context, metadata, correlation_id)
         """
-        mutable_extra: MutableMapping[str, t.MetadataValue] = {
-            key: FlextRuntime.normalize_to_metadata(value)
-            for key, value in extra_kwargs.items()
-            if value is not None
-        }
+        mutable_extra: MutableMapping[str, t.MetadataData | None] = dict(extra_kwargs)
         preserved_metadata_raw = mutable_extra.pop(c.FIELD_METADATA, None)
         preserved_metadata = (
             FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
@@ -150,20 +145,16 @@ class FlextExceptionsHelpers:
             else None
         )
         correlation_id_raw = mutable_extra.pop(c.ContextKey.CORRELATION_ID, None)
-        correlation_id_str = (
-            FlextExceptionsHelpers.safe_optional_str(correlation_id_raw)
-            if correlation_id_raw is not None
-            and FlextUtilitiesGuardsTypeCore.scalar(correlation_id_raw)
-            else None
+        correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
+            correlation_id_raw,
         )
-        normalized_extra_kwargs: Mapping[str, t.MetadataValue] = {
-            key: FlextRuntime.normalize_to_metadata(value)
-            for key, value in mutable_extra.items()
-        }
+        remaining_extra_kwargs: Mapping[str, t.MetadataData | None] = dict(
+            mutable_extra,
+        )
         param_values: dict[str, t.MetadataValue] = (
             FlextExceptionsHelpers.build_param_map(
                 context,
-                normalized_extra_kwargs,
+                remaining_extra_kwargs,
                 keys=param_keys,
             )
         )
@@ -171,7 +162,7 @@ class FlextExceptionsHelpers:
             if val is None:
                 continue
             normalized_val = FlextRuntime.normalize_to_metadata(val)
-            if FlextUtilitiesGuardsTypeCore.scalar(normalized_val):
+            if isinstance(normalized_val, t.SCALAR_TYPES):
                 param_values[key] = normalized_val
             else:
                 param_values[key] = str(normalized_val)
@@ -182,7 +173,7 @@ class FlextExceptionsHelpers:
         )
         error_context = FlextExceptionsHelpers.build_context_map(
             context,
-            normalized_extra_kwargs,
+            remaining_extra_kwargs,
             excluded_keys=excluded_context_keys,
         )
         for key in param_keys:

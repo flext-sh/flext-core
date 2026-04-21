@@ -64,7 +64,7 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _coerce_to_bool(value: t.ValueOrModel) -> p.Result[bool]:
+    def _coerce_to_bool(value: t.RuntimeData) -> p.Result[bool]:
         """Coerce value to bool. Returns None if not coercible."""
         if FlextUtilitiesGuards.matches_type(value, str):
             normalized_val = FlextUtilitiesParser._parse_normalize_str(
@@ -81,7 +81,7 @@ class FlextUtilitiesParser:
         return r[bool].ok(bool(value))
 
     @staticmethod
-    def _coerce_to_float(value: t.ValueOrModel) -> p.Result[float]:
+    def _coerce_to_float(value: t.RuntimeData) -> p.Result[float]:
         """Coerce value to float. Returns None if not coercible."""
         if isinstance(value, (str, int)):
             return r[float].create_from_callable(
@@ -96,7 +96,7 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _coerce_to_int(value: t.ValueOrModel) -> p.Result[int]:
+    def _coerce_to_int(value: t.RuntimeData) -> p.Result[int]:
         """Coerce value to int. Returns None if not coercible."""
         if isinstance(value, (str, float)):
             return r[int].create_from_callable(
@@ -118,7 +118,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_normalize_str(
-        value: t.ValueOrModel,
+        value: t.RuntimeData,
         *,
         case: str = c.ParserCase.LOWER.value,
     ) -> str:
@@ -129,10 +129,10 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_try_direct[T](
-        value: t.ValueOrModel,
+        value: t.RuntimeData,
         target: type[T],
         options: FlextUtilitiesParser.ParseOptions[T] | None = None,
-        **kwargs: t.ValueOrModel,
+        **kwargs: t.RuntimeData,
     ) -> T:
         """Helper: Try direct type call."""
         opts = FlextUtilitiesArgs.resolve_options(
@@ -169,10 +169,10 @@ class FlextUtilitiesParser:
     @staticmethod
     @r.safe
     def _parse_try_enum[T](
-        value: t.ValueOrModel,
+        value: t.RuntimeData,
         target: type[T],
         options: FlextUtilitiesParser.ParseOptions[T] | None = None,
-        **kwargs: t.ValueOrModel,
+        **kwargs: t.RuntimeData,
     ) -> T:
         """Helper: Try enum parsing, raise ValueError if not enum or invalid."""
         opts = FlextUtilitiesArgs.resolve_options(
@@ -227,10 +227,10 @@ class FlextUtilitiesParser:
     @staticmethod
     @r.safe
     def _parse_try_model[T](
-        value: t.ValueOrModel,
+        value: t.RuntimeData,
         target: type[T],
         options: FlextUtilitiesParser.ParseOptions[T] | None = None,
-        **kwargs: t.ValueOrModel,
+        **kwargs: t.RuntimeData,
     ) -> T:
         """Helper: Try model parsing, raise ValueError if not model or invalid."""
         opts = FlextUtilitiesArgs.resolve_options(
@@ -272,10 +272,10 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_try_primitive[T](
-        value: t.ValueOrModel,
+        value: t.RuntimeData,
         target: type[T],
         options: FlextUtilitiesParser.ParseOptions[T] | None = None,
-        **kwargs: t.ValueOrModel,
+        **kwargs: t.RuntimeData,
     ) -> T | None:
         """Helper function for type primitive parsing fallback."""
         opts = FlextUtilitiesArgs.resolve_options(
@@ -338,7 +338,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_str(
-        value: t.ValueOrModel | None,
+        value: t.RuntimeData | None,
         *,
         case: str | None = None,
         default: str = "",
@@ -357,10 +357,10 @@ class FlextUtilitiesParser:
     @staticmethod
     @r.safe
     def parse[T](
-        value: t.ValueOrModel,
+        value: t.RuntimeData,
         target: type[T],
         options: FlextUtilitiesParser.ParseOptions[T] | None = None,
-        **kwargs: t.ValueOrModel,
+        **kwargs: t.RuntimeData,
     ) -> T:
         """Universal type parser supporting enums, models, and primitives."""
         opts = FlextUtilitiesArgs.resolve_options(

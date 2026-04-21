@@ -24,6 +24,7 @@ from flext_core import (
     p,
     t,
 )
+from pydantic import ValidationError as PydanticValidationError
 
 
 class FlextExceptionsBase:
@@ -89,14 +90,12 @@ class FlextExceptionsBase:
             message: str,
             *,
             error_code: str = c.ErrorCode.UNKNOWN_ERROR,
-            context: Mapping[str, t.MetadataOrValue | None]
-            | p.HasModelDump
-            | None = None,
+            context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None = None,
             metadata: p.HasModelDump | t.MetadataValue | None = None,
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
-            merged_kwargs: Mapping[str, t.MetadataOrValue | None]
+            merged_kwargs: Mapping[str, t.MetadataData | None]
             | p.HasModelDump
             | None = None,
             params: t.ModelCarrier | None = None,
@@ -110,10 +109,13 @@ class FlextExceptionsBase:
                     if error_code == c.ErrorCode.UNKNOWN_ERROR
                     else error_code
                 )
-                combined_extra: MutableMapping[str, t.MetadataOrValue | None] = {}
-                merged_kwargs_map = FlextExceptionsHelpers.safe_settings_map(
-                    merged_kwargs,
-                )
+                combined_extra: MutableMapping[str, t.MetadataData | None] = {}
+                try:
+                    merged_kwargs_map = FlextRuntime.normalize_metadata_input_mapping(
+                        merged_kwargs,
+                    )
+                except (PydanticValidationError, TypeError, ValueError):
+                    merged_kwargs_map = None
                 if merged_kwargs_map:
                     combined_extra.update({
                         key: FlextRuntime.normalize_to_metadata(value)
@@ -153,34 +155,35 @@ class FlextExceptionsBase:
             message: str,
             *,
             error_code: str,
-            context: Mapping[str, t.MetadataOrValue | None] | p.HasModelDump | None,
+            context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
             metadata: p.HasModelDump | t.MetadataValue | None,
             correlation_id: str | None,
             auto_correlation: bool,
             auto_log: bool,
-            merged_kwargs: Mapping[str, t.MetadataOrValue | None]
-            | p.HasModelDump
-            | None,
-            extra_kwargs: Mapping[str, t.MetadataOrValue | None],
+            merged_kwargs: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
+            extra_kwargs: Mapping[str, t.MetadataData | None],
         ) -> None:
             """Initialize the shared base error state without subclass metaprogramming."""
             super().__init__(message)
             self.message = message
             self.error_code = error_code
             final_kwargs_dict: dict[str, t.MetadataValue] = {}
-            source_mappings: tuple[
-                Mapping[str, t.MetadataOrValue | None] | None, ...
-            ] = (
-                FlextExceptionsHelpers.safe_settings_map(merged_kwargs),
-                FlextExceptionsHelpers.safe_settings_map(context),
-                FlextExceptionsHelpers.safe_settings_map(extra_kwargs),
-            )
-            for source_dict in source_mappings:
-                if source_dict:
-                    for k, v in source_dict.items():
-                        if v is None:
-                            continue
-                        final_kwargs_dict[k] = FlextRuntime.normalize_to_metadata(v)
+            for source_value in (merged_kwargs, context, extra_kwargs):
+                if source_value is None:
+                    continue
+                try:
+                    source_dict = FlextRuntime.normalize_metadata_input_mapping(
+                        source_value,
+                    )
+                except (PydanticValidationError, TypeError, ValueError):
+                    continue
+                if not source_dict:
+                    continue
+                for key, value in source_dict.items():
+                    if value is not None:
+                        final_kwargs_dict[key] = FlextRuntime.normalize_to_metadata(
+                            value,
+                        )
             final_kwargs = mc.ConfigMap.model_validate(final_kwargs_dict)
             self.correlation_id = (
                 f"exc_{uuid.uuid4().hex[:8]}"
@@ -204,7 +207,7 @@ class FlextExceptionsBase:
         @staticmethod
         def _normalize_metadata(
             metadata: p.HasModelDump | t.MetadataValue | None,
-            merged_kwargs: Mapping[str, t.ValueOrModel],
+            merged_kwargs: Mapping[str, t.RuntimeData],
         ) -> m.Metadata:
             """Normalize metadata from various input types to m.Metadata model."""
             if metadata is None:
@@ -233,7 +236,15 @@ class FlextExceptionsBase:
                 return m.Metadata.model_validate({
                     c.FIELD_ATTRIBUTES: merged_attrs,
                 })
-            metadata_dict = FlextExceptionsHelpers.safe_settings_map(metadata)
+            if isinstance(metadata, (Mapping, p.HasModelDump)):
+                try:
+                    metadata_dict = FlextRuntime.normalize_metadata_input_mapping(
+                        metadata,
+                    )
+                except (PydanticValidationError, TypeError, ValueError):
+                    metadata_dict = None
+            else:
+                metadata_dict = None
             if metadata_dict is not None:
                 return FlextExceptionsBase.BaseError._normalize_metadata_from_dict(
                     metadata_dict,
@@ -245,8 +256,8 @@ class FlextExceptionsBase:
 
         @staticmethod
         def _normalize_metadata_from_dict(
-            metadata_dict: Mapping[str, t.MetadataOrValue | None],
-            merged_kwargs: Mapping[str, t.ValueOrModel],
+            metadata_dict: Mapping[str, t.MetadataData | None],
+            merged_kwargs: Mapping[str, t.RuntimeData],
         ) -> m.Metadata:
             """Normalize metadata from dict-like recursive containers."""
             merged_attrs: MutableMapping[str, t.MetadataValue | None] = {}
@@ -267,7 +278,7 @@ class FlextExceptionsBase:
                 },
             })
 
-        def to_dict(self) -> Mapping[str, t.ValueOrModel | None]:
+        def to_dict(self) -> Mapping[str, t.RuntimeData | None]:
             """Convert exception to dictionary representation."""
             result: MutableMapping[str, t.MetadataValue | None] = {
                 "error_type": type(self).__name__,
@@ -299,10 +310,10 @@ class FlextExceptionsBase:
             message: str,
             *,
             error_code: str,
-            context: Mapping[str, t.MetadataOrValue | None] | p.HasModelDump | None,
+            context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
             params: t.ModelCarrier | None,
             named_params: Mapping[str, t.RuntimeData | None] | None = None,
-            extra_kwargs: Mapping[str, t.MetadataOrValue | None] | None = None,
+            extra_kwargs: Mapping[str, t.MetadataData | None] | None = None,
             param_keys: frozenset[str] | None = None,
             correlation_id: str | None = None,
             metadata: p.HasModelDump | t.MetadataValue | None = None,

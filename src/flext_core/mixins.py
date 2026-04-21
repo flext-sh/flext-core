@@ -104,7 +104,7 @@ class FlextMixins(m.ArbitraryTypesModel):
     ] = None
 
     @contextmanager
-    def track(self, operation_name: str) -> Generator[Mapping[str, t.ValueOrModel]]:
+    def track(self, operation_name: str) -> Generator[Mapping[str, t.RuntimeData]]:
         """Track operation performance with timing and automatic context cleanup."""
         stats: m.ConfigMap = self._operation_stats.get(
             operation_name,
@@ -115,9 +115,8 @@ class FlextMixins(m.ArbitraryTypesModel):
         stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
-                metrics_map: MutableMapping[str, t.ValueOrModel] = {
-                    str(k): u.to_plain_container(u.normalize_to_container(v))
-                    for k, v in metrics.items()
+                metrics_map: MutableMapping[str, t.RuntimeData] = {
+                    str(k): u.normalize_to_container(v) for k, v in metrics.items()
                 }
                 metrics_map["operation_count"] = stats["operation_count"]
                 try:

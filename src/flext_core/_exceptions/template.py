@@ -17,7 +17,7 @@ from pydantic.fields import FieldInfo
 class FlextExceptionsTemplate:
     """Template rendering helpers for exception and result messages."""
 
-    type TemplateValues = Mapping[str, t.MetadataOrValue | None] | m.ConfigMap
+    type TemplateValues = Mapping[str, t.MetadataData | None] | m.ConfigMap
 
     @staticmethod
     def template_values(
@@ -48,7 +48,7 @@ class FlextExceptionsTemplate:
         template: str,
         *,
         params: t.ModelCarrier | None = None,
-        **values: t.MetadataOrValue | None,
+        **values: t.MetadataData | None,
     ) -> str:
         """Render a message template from params + explicit values.
 
@@ -73,7 +73,7 @@ class FlextExceptionsTemplate:
         operation: str | None = None,
         error: Exception | str | None = None,
         params: t.ModelCarrier | None = None,
-        **values: t.MetadataOrValue | None,
+        **values: t.MetadataData | None,
     ) -> str:
         """Render error template with canonical operation/error fields."""
         payload: dict[str, t.MetadataValue] = {}
@@ -94,7 +94,7 @@ class FlextExceptionsTemplate:
     @staticmethod
     def result_error_data(
         params: t.ModelCarrier | None,
-        **values: t.MetadataOrValue | None,
+        **values: t.MetadataData | None,
     ) -> m.ConfigMap | None:
         """Build canonical error_data payload from params and explicit values."""
         payload = FlextExceptionsTemplate.template_values(params, values)

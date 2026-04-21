@@ -14,11 +14,10 @@ from collections.abc import (
 from flext_core import (
     FlextTypesPydantic as tp,
     FlextTypingBase as t,
-    FlextTypingContainers,
 )
 
 
-class FlextTypesCore(t, FlextTypingContainers):
+class FlextTypesCore:
     """Type aliases for core scalar/container foundations."""
 
     type TextValue = tp.StrictStr

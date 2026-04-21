@@ -117,51 +117,6 @@ class FlextRuntime:
         return item if isinstance(item, t.SCALAR_TYPES) else str(item)
 
     @staticmethod
-    def to_plain_container[TValue](value: TValue) -> t.MetadataOrValue:
-        """Flatten a runtime value to flat ``t.MetadataOrValue`` (Pydantic-native)."""
-        to_scalar = FlextRuntime.to_scalar
-        if value is None:
-            return ""
-        match value:
-            case mc.ConfigMap() | mc.Dict():
-                return dict(
-                    t.flat_container_mapping_adapter().validate_python(
-                        {str(k): to_scalar(v) for k, v in value.root.items()},
-                    )
-                )
-            case mc.ObjectList():
-                return list(
-                    t.flat_container_list_adapter().validate_python(
-                        [to_scalar(v) for v in value.root],
-                    )
-                )
-            case BaseModel():
-                return dict(
-                    t.flat_container_mapping_adapter().validate_python({
-                        str(k): to_scalar(v)
-                        for k, v in value.model_dump(mode="python").items()
-                    })
-                )
-            case Mapping():
-                return dict(
-                    t.flat_container_mapping_adapter().validate_python(
-                        {str(k): to_scalar(v) for k, v in value.items()},
-                    )
-                )
-            case list() | tuple():
-                return list(
-                    t.flat_container_list_adapter().validate_python(
-                        [to_scalar(item) for item in value],
-                    )
-                )
-            case bool() | str() | int() | float() | datetime() | Path():
-                return value
-            case None:
-                return ""
-            case _:
-                return str(value)
-
-    @staticmethod
     def _normalize_dict_entries(
         items: Sequence[tuple[str, t.RuntimeData]],
     ) -> t.FlatContainerMapping:
@@ -169,7 +124,7 @@ class FlextRuntime:
         result: dict[str, t.Container] = {}
         for key, item in items:
             normalized = FlextRuntime.normalize_to_container(item)
-            plain = FlextRuntime.to_plain_container(normalized)
+            plain = FlextRuntime.normalize_to_metadata(normalized)
             result[key] = FlextRuntime.to_scalar(plain)
         return result
 
@@ -210,7 +165,7 @@ class FlextRuntime:
     @staticmethod
     def normalize_model_input_mapping(
         value: BaseModel | mc.Dict | t.ScalarMapping | None,
-    ) -> Mapping[str, t.ValueOrModel] | None:
+    ) -> Mapping[str, t.RuntimeData] | None:
         """Normalize model-like input to a plain mapping."""
         if value is None:
             return None
@@ -221,25 +176,41 @@ class FlextRuntime:
         return dict(value)
 
     @staticmethod
+    def normalize_metadata_input_mapping(
+        value: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
+    ) -> Mapping[str, t.MetadataData | None] | None:
+        """Normalize mapping-like metadata input while preserving explicit None."""
+        if value is None:
+            return None
+        raw_mapping = value if isinstance(value, Mapping) else value.model_dump()
+        return {
+            str(key): (
+                None if item is None else FlextRuntime.normalize_to_metadata(item)
+            )
+            for key, item in raw_mapping.items()
+        }
+
+    @staticmethod
     def validate_metadata_attributes(
         value: t.MetadataValue | Mapping[str, t.MetadataValue] | BaseModel | None,
     ) -> Mapping[str, t.MetadataValue]:
         """Normalize and validate metadata attributes input."""
         if value is None:
             return {}
-        if isinstance(value, BaseModel):
-            result = value.model_dump()
-        elif isinstance(value, Mapping):
-            result = dict(value)
-        else:
+        if not isinstance(value, (BaseModel, Mapping)):
             msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
             raise TypeError(msg)
-        for key in result:
+        normalized_result = FlextRuntime.normalize_metadata_input_mapping(value)
+        if normalized_result is None:
+            return {}
+        for key in normalized_result:
             if key.startswith("_"):
                 raise ValueError(
                     c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key),
                 )
-        return t.metadata_map_adapter().validate_python(result)
+        return t.metadata_map_adapter().validate_python({
+            key: item for key, item in normalized_result.items() if item is not None
+        })
 
     @staticmethod
     def validate_metadata_model_input[TModel: BaseModel](
@@ -275,7 +246,7 @@ class FlextRuntime:
         if callable(value):
             return value
         if isinstance(value, Mapping):
-            normalized_mapping: MutableMapping[str, t.ValueOrModel] = {}
+            normalized_mapping: MutableMapping[str, t.RuntimeData] = {}
             for key_s, item in value.items():
                 if isinstance(item, datetime):
                     normalized_mapping[key_s] = (
@@ -357,12 +328,14 @@ class FlextRuntime:
     @staticmethod
     def normalize_to_container(
         val: t.RuntimeData
+        | t.MetadataData
+        | t.MetadataValue
         | mc.ConfigMap
         | mc.Dict
         | t.ObjectList
         | AbstractSet[t.Scalar],
-    ) -> t.ValueOrModel:
-        """Normalize any value to ValueOrModel.
+    ) -> t.RuntimeData:
+        """Normalize any value to RuntimeData.
 
         Args:
             val: Value to normalize
@@ -406,39 +379,41 @@ class FlextRuntime:
                 return str(val)
 
     @staticmethod
-    def _normalize_to_metadata_scalar(
-        val: t.RuntimeData
-        | mc.ConfigMap
-        | mc.Dict
-        | t.ObjectList
-        | AbstractSet[t.Scalar],
-    ) -> t.Container:
-        if val is None:
-            return ""
-        if isinstance(val, AbstractSet):
-            raw_value: Sequence[t.Scalar] = list(val)
-            return str(raw_value)
-        if isinstance(val, BaseModel):
-            return val.model_dump_json()
-        item = FlextRuntime.normalize_to_container(val)
-        return FlextRuntime.to_scalar(item)
-
-    @staticmethod
-    def _normalize_metadata_dict_value(
-        v: t.RuntimeData,
-    ) -> t.Container:
-        return FlextRuntime._normalize_to_metadata_scalar(v)
-
-    @staticmethod
     def normalize_to_metadata(
         val: t.RuntimeData
+        | t.MetadataData
+        | t.MetadataValue
         | mc.ConfigMap
         | mc.Dict
         | t.ObjectList
         | AbstractSet[t.Scalar],
-    ) -> t.MetadataOrValue:
+    ) -> t.MetadataValue:
         """Normalize input into metadata-compatible JSON-native values."""
-        return FlextRuntime.to_plain_container(FlextRuntime.normalize_to_container(val))
+        if val is None:
+            return ""
+        if isinstance(val, datetime):
+            return val.isoformat()
+        if isinstance(val, Path):
+            return str(val)
+        if isinstance(val, (str, int, float, bool)):
+            return val
+        if isinstance(val, BaseModel):
+            return FlextRuntime.normalize_to_metadata(val.model_dump())
+        if isinstance(val, (mc.ConfigMap, mc.Dict, mc.ObjectList)):
+            val = val.root
+        elif isinstance(val, AbstractSet):
+            val = list(val)
+        if isinstance(val, Mapping):
+            return {
+                str(key): FlextRuntime.normalize_to_metadata(item)
+                for key, item in val.items()
+            }
+        if isinstance(val, Sequence) and not isinstance(
+            val,
+            (str, bytes, bytearray),
+        ):
+            return [FlextRuntime.normalize_to_metadata(item) for item in val]
+        return str(val)
 
     class DependencyIntegration:
         """Centralize dependency-injector wiring with provider helpers."""
@@ -761,7 +736,7 @@ class FlextRuntime:
         """
         context_dict = mc.ConfigMap(root={})
         if isinstance(context, Mapping):
-            parsed_context: MutableMapping[str, t.ValueOrModel] = {
+            parsed_context: MutableMapping[str, t.RuntimeData] = {
                 str(k): str(v) for k, v in context.items()
             }
             context_dict = mc.ConfigMap(root=parsed_context)

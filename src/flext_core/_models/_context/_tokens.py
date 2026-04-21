@@ -38,7 +38,7 @@ class FlextModelsContextTokens:
             ),
         ]
         previous_value: Annotated[
-            t.ValueOrModel | None,
+            t.RuntimeData | None,
             FlextUtilitiesPydantic.Field(
                 default=None, description="Previous value before set operation"
             ),
@@ -64,7 +64,7 @@ class FlextModelsContextTokens:
             ),
         ]
         old_value: Annotated[
-            t.ValueOrModel | None,
+            t.RuntimeData | None,
             FlextUtilitiesPydantic.Field(
                 default=None, description="Previous value before set operation"
             ),
