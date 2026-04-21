@@ -155,8 +155,6 @@ class FlextModelsBase:
     class Metadata(FlextModelsPydantic.BaseModel):
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
-        _flext_enforcement_exempt: ClassVar[bool] = True
-
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(
                 extra=c.EXTRA_CONFIG_FORBID,

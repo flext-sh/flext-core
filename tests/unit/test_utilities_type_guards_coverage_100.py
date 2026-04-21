@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 from collections.abc import (
-    Mapping,
     Sequence,
 )
 from typing import Annotated, ClassVar, override
@@ -207,17 +206,17 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_list_with_nested_list(self) -> None:
-        test_list: Sequence[t.Container] = [[1, 2], [3, 4]]
+        test_list: t.JsonList = [[1, 2], [3, 4]]
         result = u.normalize_to_metadata(test_list)
         tm.that(result, is_=list)
 
     def test_normalize_list_with_dict(self) -> None:
-        test_list = [{"key": "value"}]
+        test_list: t.JsonList = [{"key": "value"}]
         result = u.normalize_to_metadata(test_list)
         tm.that(result, is_=list)
 
     def test_normalize_list_with_complex_items(self) -> None:
-        test_list: Sequence[t.Container] = [
+        test_list: t.JsonList = [
             "string",
             42,
             True,
@@ -233,7 +232,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_dict_with_complex_nested_structure(self) -> None:
-        test_dict: Mapping[str, t.Container] = {
+        test_dict: t.JsonMapping = {
             "str": "value",
             "int": 42,
             "bool": True,

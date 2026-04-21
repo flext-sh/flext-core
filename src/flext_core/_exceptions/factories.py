@@ -143,7 +143,7 @@ class FlextExceptionsFactories:
     @staticmethod
     def fail_validation[TResult](
         field: str | None = None,
-        value: t.Scalar | None = None,
+        value: t.Container | None = None,
         *,
         error_code: str | None = None,
         error: Exception | str | None = None,

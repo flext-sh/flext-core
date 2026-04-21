@@ -54,7 +54,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def normalize_aggregated_metadata_value(
-        value: t.ValueOrModel,
+        value: t.PresentValueOrModel,
     ) -> t.MetadataValue | None:
         """Convert dumped model values into canonical metadata values."""
         if value is None:
@@ -109,7 +109,7 @@ class FlextUtilitiesCollection:
         return r[TValue].ok(value)
 
     @staticmethod
-    def _is_empty_value(value: t.ValueOrModel) -> bool:
+    def _is_empty_value(value: t.PresentValueOrModel) -> bool:
         """Check if value is considered empty (empty string, empty list, etc.)."""
         if value is None:
             return True

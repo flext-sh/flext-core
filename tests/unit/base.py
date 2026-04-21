@@ -222,7 +222,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
         @staticmethod
         def create_simple_handler(
             handler_id: str,
-            result_value: t.Container = "test",
+            result_value: t.ValueOrModel = "test",
         ) -> h[t.ValueOrModel, t.ValueOrModel]:
             """Create a simple handler that always returns the same value.
 

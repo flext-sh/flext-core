@@ -18,6 +18,7 @@ from datetime import datetime
 from typing import ClassVar
 
 from flext_core import (
+    FlextRuntime,
     FlextUtilitiesContextNormalization,
     c,
     m,
@@ -80,7 +81,9 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
         _ = ctx_var.set(updated)
         if scope == c.ContextScope.GLOBAL:
             normalized_context: Mapping[str, t.RuntimeData] = {
-                key: self._to_normalized(value)
+                key: FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(value)
+                )
                 for key, value in incoming.items()
                 if value is not None
             }
@@ -118,7 +121,9 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
         try:
             cf_map = m.ConfigMap(root=dict(custom_fields_raw))
             for ck, cv in cf_map.items():
-                custom_fields_dict[ck] = self._to_normalized(cv)
+                custom_fields_dict[ck] = FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(cv)
+                )
         except (TypeError, ValueError, AttributeError) as exc:
             self._logger.debug(
                 "Custom metadata field normalization failed",
@@ -134,7 +139,9 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
             elif isinstance(v, (str, int, float, bool, list, dict)):
                 result[k] = v
             elif u.pydantic_model(v):
-                result[k] = self._to_normalized(v)
+                result[k] = FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(v)
+                )
             else:
                 result[k] = str(v)
         result.update(custom_fields_dict)

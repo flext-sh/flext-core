@@ -28,12 +28,8 @@ class FlextModelsEnforcement:
     always go through ``m.Enforcement.Violation`` / ``m.Enforcement.Report``.
     """
 
-    _flext_enforcement_exempt: ClassVar[bool] = True
-
     class Violation(FlextModelsPydantic.BaseModel):
         """Single enforcement violation located at ``qualname``."""
-
-        _flext_enforcement_exempt: ClassVar[bool] = True
 
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
@@ -58,8 +54,6 @@ class FlextModelsEnforcement:
 
     class Report(FlextModelsPydantic.BaseModel):
         """Aggregated violation report returned by a check or runner."""
-
-        _flext_enforcement_exempt: ClassVar[bool] = True
 
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")

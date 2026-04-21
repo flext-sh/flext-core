@@ -35,8 +35,6 @@ class FlextUtilitiesProjectMetadata:
     ``u.read_project_metadata`` / etc. (flat access).
     """
 
-    _flext_enforcement_exempt: ClassVar[bool] = True
-
     PYPROJECT_FILENAME: ClassVar[str] = "pyproject.toml"
 
     @staticmethod

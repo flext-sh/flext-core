@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import (
     MutableSequence,
 )
-from typing import Annotated, ClassVar, override
+from typing import Annotated, override
 
 from flext_core import (
     FlextModelsBase as m,
@@ -55,8 +55,6 @@ class FlextModelsEntity:
         ``default_factory=list`` yields a fresh per-instance list (no shared
         state) and is required by the event-sourcing API contract.
         """
-
-        _flext_enforcement_exempt: ClassVar[bool] = True
 
         domain_events: Annotated[
             MutableSequence[FlextModelsDomainEvent.Entry],

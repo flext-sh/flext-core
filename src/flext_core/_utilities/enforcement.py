@@ -454,7 +454,7 @@ class FlextUtilitiesEnforcement:
 
         Exemption applies when either:
 
-        1. The class declares ``_flext_enforcement_exempt: ClassVar[bool] = True``
+
            on itself (not inherited — opt-out is explicit per subclass).
         2. The class lives inside a test fixture scope: the defining module
            path begins with ``tests.`` (or ``tests`` is a top-level package

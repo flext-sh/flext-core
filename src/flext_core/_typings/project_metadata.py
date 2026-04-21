@@ -16,13 +16,10 @@ from __future__ import annotations
 from collections.abc import (
     Mapping,
 )
-from typing import ClassVar
 
 
 class FlextTypingProjectMetadata:
     """PEP 695 aliases for project-metadata SSOT (flat on ``t.*``)."""
-
-    _flext_enforcement_exempt: ClassVar[bool] = True
 
     type ProjectAliasName = str
     type ProjectTierName = str

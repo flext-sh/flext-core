@@ -11,6 +11,7 @@ from collections.abc import (
     Mapping,
     MutableMapping,
     Sequence,
+    Set as AbstractSet,
 )
 from datetime import date, time, tzinfo
 from enum import Enum
@@ -37,11 +38,8 @@ class FlextTypesServices:
     type JsonValue = t.JsonValue
     type JsonMapping = Mapping[str, t.JsonValue]
     type JsonSequence = Sequence[t.JsonValue]
-    type JsonLikeValue = (
-        t.Container | Mapping[str, JsonLikeValue] | Sequence[JsonLikeValue]
-    )
-    type JsonLikeMapping = Mapping[str, JsonLikeValue]
-    type JsonLikeSequence = Sequence[JsonLikeValue]
+    type JsonLikeMapping = Mapping[str, JsonValue]
+    type JsonLikeSequence = Sequence[JsonValue]
     type JsonPayload = t.JsonValue | mp.BaseModel
     type RegistryDict[T] = MutableMapping[str, T]
     type ModelCarrier = mp.BaseModel
@@ -53,13 +51,19 @@ class FlextTypesServices:
     type LogArgument = t.Container | p.Model
     type LogValue = FlextTypesServices.LogArgument | Exception
     type LogResult = prt.Result[bool]
-    type MetadataValue = t.JsonValue
-    type MetadataOrValue = MetadataValue | t.Container
+    type MetadataValue = t.Container
+    type MetadataOrValue = t.Container | t.FlatContainerMapping | t.FlatContainerList
     type MetadataAttributeValue = MetadataValue
-    type ValueOrModel = t.Container | ModelCarrier
+    type ValueOrModel = (
+        t.Container | t.FlatContainerMapping | t.FlatContainerList | mp.BaseModel
+    )
     type RuntimeAtomic = ValueOrModel
-    type RuntimeData = RuntimeAtomic | JsonLikeValue
-    type PresentValueOrModel = t.Container | ModelCarrier
+    type RuntimeData = (
+        RuntimeAtomic | t.Scalar | Mapping[str, t.Container] | Sequence[t.Container]
+    )
+    type PresentValueOrModel = (
+        t.Container | t.FlatContainerMapping | t.FlatContainerList | ModelCarrier
+    )
     type BootstrapInput = ModelCarrier | Mapping[str, t.Container]
     type RegisterableService = (
         t.Container
@@ -199,6 +203,7 @@ class FlextTypesServices:
         | pl.HasLogger
         | pr.Registry
         | prt.ResultLike[RuntimeAtomic]
+        | AbstractSet[t.Scalar]
         | ps.Settings
     )
 

@@ -23,13 +23,6 @@ class FlextUtilitiesContextNormalization:
     _logger: ClassVar[p.Logger]
 
     @staticmethod
-    def _to_normalized(value: t.RuntimeData) -> t.RuntimeData:
-        """Normalize one runtime value into the canonical plain container shape."""
-        return FlextRuntime.to_plain_container(
-            FlextRuntime.normalize_to_container(value),
-        )
-
-    @staticmethod
     def _narrow_contextvar_to_configuration_dict(
         ctx_value: m.ConfigMap | Mapping[str, t.RuntimeData] | p.Model | None,
     ) -> t.FlatContainerMapping:
@@ -59,8 +52,8 @@ class FlextUtilitiesContextNormalization:
                 if str(key) != key:
                     empty_key: t.FlatContainerMapping = {}
                     return empty_key
-                normalized[key] = FlextUtilitiesContextNormalization._to_normalized(
-                    value,
+                normalized[key] = FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(value)
                 )
             return t.flat_container_mapping_adapter().validate_python(normalized)
         except (TypeError, ValueError, AttributeError, KeyError) as exc:

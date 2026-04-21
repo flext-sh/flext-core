@@ -11,19 +11,27 @@ from collections.abc import (
     Sequence,
 )
 
-from flext_core import FlextTypingBase as t, FlextTypingContainers
+from flext_core import (
+    FlextTypesPydantic as tp,
+    FlextTypingBase as t,
+    FlextTypingContainers,
+)
 
 
 class FlextTypesCore(t, FlextTypingContainers):
     """Type aliases for core scalar/container foundations."""
 
-    type TextValue = str
-    type IntegerValue = int
-    type FloatValue = float
-    type BinaryContent = bytes
+    type TextValue = tp.StrictStr
+    type IntegerValue = tp.StrictInt
+    type FloatValue = tp.StrictFloat
+    type BinaryContent = tp.StrictBytes
     type TextOrBinaryContent = FlextTypesCore.TextValue | FlextTypesCore.BinaryContent
     type RegistryBindingKey = str | type
 
     type Serializable = t.Container
-    type FileContent = str | FlextTypesCore.BinaryContent | Sequence[t.StrSequence]
+    type FileContent = (
+        FlextTypesCore.TextValue
+        | FlextTypesCore.BinaryContent
+        | Sequence[t.StrSequence]
+    )
     type GeneralValueTypeMapping = Mapping[str, t.Scalar]

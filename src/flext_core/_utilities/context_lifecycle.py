@@ -14,7 +14,7 @@ from collections.abc import (
 )
 from typing import ClassVar, Self
 
-from flext_core import FlextUtilitiesContextCrud, c, m, p, t, u
+from flext_core import FlextRuntime, FlextUtilitiesContextCrud, c, m, p, t, u
 
 
 class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
@@ -52,7 +52,11 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         metadata_attributes: dict[str, t.MetadataValue] | None = None
         if include_metadata:
             metadata_attributes = {
-                str(k): u.normalize_to_metadata(self._to_normalized(v))
+                str(k): u.normalize_to_metadata(
+                    FlextRuntime.to_plain_container(
+                        FlextRuntime.normalize_to_container(v)
+                    ),
+                )
                 for k, v in self._metadata_map().items()
             }
         export_model = m.ContextExport.model_validate({
@@ -78,7 +82,9 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
     ) -> t.FlatContainerMapping:
         """Normalize and validate mapping payloads through canonical adapters."""
         normalized = {
-            str(k): FlextUtilitiesContextLifecycle._to_normalized(v)
+            str(k): FlextRuntime.to_plain_container(
+                FlextRuntime.normalize_to_container(v),
+            )
             for k, v in source.items()
         }
         return t.flat_container_mapping_adapter().validate_python(normalized)

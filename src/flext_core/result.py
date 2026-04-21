@@ -29,6 +29,7 @@ from flext_core import (
     FlextModelsContainers as mc,
     FlextProtocolsLogging as pl,
     FlextProtocolsResult as p,
+    FlextRuntime,
     c,
     t,
 )
@@ -93,21 +94,16 @@ class FlextResult[T](BaseModel, p.Result[T]):
         data = self.result_error_data
         if data is None:
             return None
-        normalized_raw: dict[str, t.Container] = {
-            str(key): (
-                value.model_dump(mode="json") if isinstance(value, BaseModel) else value
+        normalized_raw: dict[str, t.Container] = {}
+        for key, value in data.root.items():
+            normalized = FlextRuntime.to_plain_container(
+                FlextRuntime.normalize_to_container(value)
             )
-            for key, value in data.root.items()
-        }
-        try:
-            return t.flat_container_mapping_adapter().validate_python(normalized_raw)
-        except ValidationError:
-            return {
-                str(key): (
-                    value if isinstance(value, (str, int, float, bool)) else str(value)
-                )
-                for key, value in normalized_raw.items()
-            }
+            if isinstance(normalized, t.CONTAINER_TYPES):
+                normalized_raw[str(key)] = normalized
+            else:
+                normalized_raw[str(key)] = str(normalized)
+        return normalized_raw
 
     @override
     def __repr__(self) -> str:

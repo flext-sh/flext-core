@@ -14,13 +14,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import ClassVar, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 
 class FlextProtocolsProjectMetadata:
     """Protocols for project-metadata services (flat on ``p.*``)."""
-
-    _flext_enforcement_exempt: ClassVar[bool] = True
 
     @runtime_checkable
     class ProjectMetadataReader(Protocol):

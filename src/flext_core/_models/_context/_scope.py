@@ -10,10 +10,8 @@ import contextvars
 from collections.abc import (
     Mapping,
 )
-from datetime import datetime
-from pathlib import Path
 from types import MappingProxyType
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, Self
 
 from flext_core import (
     FlextModelsBase,
@@ -64,8 +62,6 @@ class FlextModelsContextScope:
         Enforcement exemption: counters and the ``operations`` map are
         incremented throughout the context lifecycle; fresh per-instance.
         """
-
-        _flext_enforcement_exempt: ClassVar[bool] = True
 
         sets: Annotated[
             t.NonNegativeInt,
@@ -227,10 +223,10 @@ class FlextModelsContextScope:
                 current_counter = getattr(current_statistics, counter_attr)
                 if isinstance(current_counter, int):
                     statistics_updates[counter_attr] = current_counter + 1
-            operations: dict[str, t.Container] = {
+            operations: dict[str, t.JsonValue] = {
                 str(key): value
                 for key, value in current_statistics.operations.items()
-                if isinstance(value, (str, int, float, bool, datetime, Path))
+                if isinstance(value, (str, int, float, bool))
             }
             current_operation_value = operations.get(operation)
             if isinstance(current_operation_value, int):

@@ -19,7 +19,7 @@ from collections.abc import (
     Mapping,
 )
 from types import MappingProxyType
-from typing import ClassVar, Final
+from typing import Final
 
 
 class FlextConstantsProjectMetadata:
@@ -28,8 +28,6 @@ class FlextConstantsProjectMetadata:
     Inherited into ``FlextConstants`` via MRO so consumers access
     every attribute flat on ``c.*`` (e.g. ``c.ALIAS_TO_SUFFIX``).
     """
-
-    _flext_enforcement_exempt: ClassVar[bool] = True
 
     ALIAS_TO_SUFFIX: Final[Mapping[str, str]] = MappingProxyType({
         "c": "Constants",

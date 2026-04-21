@@ -48,7 +48,7 @@ class FlextModelsExceptionParams:
             ),
         ]
         value: Annotated[
-            t.Scalar | None,
+            t.Container | None,
             up.Field(
                 default=None,
                 description="Rejected input value that triggered the validation error.",

@@ -12,14 +12,14 @@ from collections.abc import (
     Sequence,
 )
 from enum import StrEnum
-from typing import Annotated, ClassVar
+from typing import ClassVar
 
 from flext_core import (
     FlextModelsPydantic as mp,
+    FlextTypesAnnotateds as ta,
     FlextTypesCore as tc,
     FlextTypesServices as ts,
     FlextTypingBase as t,
-    FlextUtilitiesPydantic as up,
 )
 
 
@@ -30,11 +30,14 @@ class FlextTypesTypeAdapters:
     _flat_container_list_adapter: ClassVar[
         mp.TypeAdapter[t.FlatContainerList] | None
     ] = None
-    _strict_string_adapter: ClassVar[
-        mp.TypeAdapter[Annotated[str, up.Field(strict=True)]] | None
-    ] = None
     _metadata_map_adapter: ClassVar[
         mp.TypeAdapter[Mapping[str, ts.MetadataValue]] | None
+    ] = None
+    _container_mapping_adapter: ClassVar[
+        mp.TypeAdapter[Mapping[str, t.Container]] | None
+    ] = None
+    _container_mapping_sequence_adapter: ClassVar[
+        mp.TypeAdapter[Sequence[Mapping[str, t.Container]]] | None
     ] = None
     _flat_container_mapping_adapter: ClassVar[
         mp.TypeAdapter[t.FlatContainerMapping] | None
@@ -69,6 +72,10 @@ class FlextTypesTypeAdapters:
     _scalar_adapter: ClassVar[mp.TypeAdapter[t.Scalar] | None] = None
     _float_adapter: ClassVar[mp.TypeAdapter[tc.FloatValue] | None] = None
     _str_adapter: ClassVar[mp.TypeAdapter[tc.TextValue] | None] = None
+    _binary_content_adapter: ClassVar[mp.TypeAdapter[tc.BinaryContent] | None] = None
+    _str_mapping_adapter: ClassVar[mp.TypeAdapter[t.StrMapping] | None] = None
+    _hostname_str_adapter: ClassVar[mp.TypeAdapter[ta.HostnameStr] | None] = None
+    _port_number_adapter: ClassVar[mp.TypeAdapter[ta.PortNumber] | None] = None
     _str_or_bytes_adapter: ClassVar[mp.TypeAdapter[tc.TextOrBinaryContent] | None] = (
         None
     )
@@ -96,6 +103,26 @@ class FlextTypesTypeAdapters:
         return cls._metadata_map_adapter
 
     @classmethod
+    def container_mapping_adapter(
+        cls,
+    ) -> mp.TypeAdapter[Mapping[str, t.Container]]:
+        if cls._container_mapping_adapter is None:
+            cls._container_mapping_adapter = mp.TypeAdapter(
+                Mapping[str, t.Container],
+            )
+        return cls._container_mapping_adapter
+
+    @classmethod
+    def container_mapping_sequence_adapter(
+        cls,
+    ) -> mp.TypeAdapter[Sequence[Mapping[str, t.Container]]]:
+        if cls._container_mapping_sequence_adapter is None:
+            cls._container_mapping_sequence_adapter = mp.TypeAdapter(
+                Sequence[Mapping[str, t.Container]],
+            )
+        return cls._container_mapping_sequence_adapter
+
+    @classmethod
     def json_value_adapter(cls) -> mp.TypeAdapter[t.JsonValue]:
         if cls._json_value_adapter is None:
             cls._json_value_adapter = mp.TypeAdapter(t.JsonValue)
@@ -118,16 +145,6 @@ class FlextTypesTypeAdapters:
         if cls._container_adapter is None:
             cls._container_adapter = mp.TypeAdapter(t.Container)
         return cls._container_adapter
-
-    @classmethod
-    def strict_string_adapter(
-        cls,
-    ) -> mp.TypeAdapter[Annotated[str, up.Field(strict=True)]]:
-        if cls._strict_string_adapter is None:
-            cls._strict_string_adapter = mp.TypeAdapter(
-                Annotated[str, up.Field(strict=True)]
-            )
-        return cls._strict_string_adapter
 
     @classmethod
     def flat_container_mapping_adapter(
@@ -270,6 +287,38 @@ class FlextTypesTypeAdapters:
         if cls._str_adapter is None:
             cls._str_adapter = mp.TypeAdapter(tc.TextValue)
         return cls._str_adapter
+
+    @classmethod
+    def binary_content_adapter(
+        cls,
+    ) -> mp.TypeAdapter[tc.BinaryContent]:
+        if cls._binary_content_adapter is None:
+            cls._binary_content_adapter = mp.TypeAdapter(tc.BinaryContent)
+        return cls._binary_content_adapter
+
+    @classmethod
+    def str_mapping_adapter(
+        cls,
+    ) -> mp.TypeAdapter[t.StrMapping]:
+        if cls._str_mapping_adapter is None:
+            cls._str_mapping_adapter = mp.TypeAdapter(t.StrMapping)
+        return cls._str_mapping_adapter
+
+    @classmethod
+    def hostname_str_adapter(
+        cls,
+    ) -> mp.TypeAdapter[ta.HostnameStr]:
+        if cls._hostname_str_adapter is None:
+            cls._hostname_str_adapter = mp.TypeAdapter(ta.HostnameStr)
+        return cls._hostname_str_adapter
+
+    @classmethod
+    def port_number_adapter(
+        cls,
+    ) -> mp.TypeAdapter[ta.PortNumber]:
+        if cls._port_number_adapter is None:
+            cls._port_number_adapter = mp.TypeAdapter(ta.PortNumber)
+        return cls._port_number_adapter
 
     @classmethod
     def str_sequence_adapter(

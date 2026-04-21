@@ -14,7 +14,17 @@ from collections.abc import (
 )
 from typing import ClassVar, overload
 
-from flext_core import FlextUtilitiesContextScope as ucs, c, e, m, p, r, t, u
+from flext_core import (
+    FlextRuntime,
+    FlextUtilitiesContextScope as ucs,
+    c,
+    e,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 
 class FlextUtilitiesContextCrud(ucs):
@@ -50,7 +60,10 @@ class FlextUtilitiesContextCrud(ucs):
                 "validate context value",
                 c.ERR_CONTEXT_VALUE_CANNOT_BE_NONE,
             )
-        value_for_guard = FlextUtilitiesContextCrud._to_normalized(value)
+        value_for_guard = FlextRuntime.to_plain_container(
+            FlextRuntime.normalize_to_container(value),
+        )
+
         if not isinstance(value_for_guard, t.CONTAINER_AND_COLLECTION_TYPES):
             return r[bool].fail_op(
                 "validate context value serializable",
@@ -96,7 +109,9 @@ class FlextUtilitiesContextCrud(ucs):
                 f"Context key '{key}' has None value in scope '{scope}'",
             )
 
-        normalized = self._to_normalized(value)
+        normalized = FlextRuntime.to_plain_container(
+            FlextRuntime.normalize_to_container(value),
+        )
         return r[t.RuntimeData].ok(normalized)
 
     def resolve_metadata(self, key: str) -> p.Result[t.RuntimeData]:
@@ -107,7 +122,9 @@ class FlextUtilitiesContextCrud(ucs):
                 c.ERR_CONTEXT_METADATA_KEY_NOT_FOUND.format(key=key),
             )
         raw_value: t.MetadataValue = self._state.metadata.attributes[key]
-        normalized_value = self._to_normalized(raw_value)
+        normalized_value = FlextRuntime.to_plain_container(
+            FlextRuntime.normalize_to_container(raw_value),
+        )
         return r[t.RuntimeData].ok(normalized_value)
 
     def apply_metadata(self, key: str, value: t.MetadataValue) -> None:
@@ -224,10 +241,16 @@ class FlextUtilitiesContextCrud(ucs):
             ctx_var = self._scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             updated_payload: dict[str, t.RuntimeData] = {
-                str(k): self._to_normalized(v) for k, v in current.items()
+                str(k): FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(v),
+                )
+                for k, v in current.items()
             }
             updated_payload.update({
-                str(k): self._to_normalized(v) for k, v in data.items()
+                str(k): FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(v),
+                )
+                for k, v in data.items()
             })
             validated = t.flat_container_mapping_adapter().validate_python(
                 updated_payload,
@@ -236,7 +259,11 @@ class FlextUtilitiesContextCrud(ucs):
             self._update_statistics(c.ContextOperation.SET.value)
             self._execute_hooks(
                 c.ContextOperation.SET.value,
-                {c.Directory.DATA: self._to_normalized(dict(data))},
+                {
+                    c.Directory.DATA: FlextRuntime.to_plain_container(
+                        FlextRuntime.normalize_to_container(dict(data)),
+                    )
+                },
             )
             return r[bool].ok(True)
         except TypeError as exc:
@@ -266,9 +293,14 @@ class FlextUtilitiesContextCrud(ucs):
         try:
             ctx_var = self._scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            normalized_value = self._to_normalized(value)
+            normalized_value = FlextRuntime.to_plain_container(
+                FlextRuntime.normalize_to_container(value),
+            )
             updated_payload: dict[str, t.RuntimeData] = {
-                str(k): self._to_normalized(v) for k, v in current.items()
+                str(k): FlextRuntime.to_plain_container(
+                    FlextRuntime.normalize_to_container(v),
+                )
+                for k, v in current.items()
             }
             updated_payload[key] = normalized_value
             validated = t.flat_container_mapping_adapter().validate_python(

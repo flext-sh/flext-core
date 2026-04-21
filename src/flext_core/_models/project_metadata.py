@@ -34,12 +34,8 @@ class FlextModelsProjectMetadata:
     wiring in ``flext_core/models.py``.
     """
 
-    _flext_enforcement_exempt: ClassVar[bool] = True
-
     class ProjectMetadata(FlextModelsPydantic.BaseModel):
         """Canonical per-project metadata (name, version, license, derived names)."""
-
-        _flext_enforcement_exempt: ClassVar[bool] = True
 
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
@@ -105,8 +101,6 @@ class FlextModelsProjectMetadata:
         (``r``/``e``/``d``/``x`` always from ``flext_core``).
         """
 
-        _flext_enforcement_exempt: ClassVar[bool] = True
-
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
         )
@@ -166,8 +160,6 @@ class FlextModelsProjectMetadata:
     class ProjectToolFlextProject(FlextModelsPydantic.BaseModel):
         """``[tool.flext.project]`` table contract."""
 
-        _flext_enforcement_exempt: ClassVar[bool] = True
-
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
         )
@@ -189,8 +181,6 @@ class FlextModelsProjectMetadata:
 
     class ProjectToolFlextNamespace(FlextModelsPydantic.BaseModel):
         """``[tool.flext.namespace]`` table contract."""
-
-        _flext_enforcement_exempt: ClassVar[bool] = True
 
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
@@ -225,8 +215,6 @@ class FlextModelsProjectMetadata:
     class ProjectToolFlextDocs(FlextModelsPydantic.BaseModel):
         """``[tool.flext.docs]`` table contract."""
 
-        _flext_enforcement_exempt: ClassVar[bool] = True
-
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
         )
@@ -246,8 +234,6 @@ class FlextModelsProjectMetadata:
     class ProjectToolFlextAliases(FlextModelsPydantic.BaseModel):
         """``[tool.flext.aliases]`` table contract."""
 
-        _flext_enforcement_exempt: ClassVar[bool] = True
-
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
         )
@@ -262,8 +248,6 @@ class FlextModelsProjectMetadata:
 
     class ProjectToolFlext(FlextModelsPydantic.BaseModel):
         """``[tool.flext]`` root contract aggregating the sub-tables."""
-
-        _flext_enforcement_exempt: ClassVar[bool] = True
 
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")

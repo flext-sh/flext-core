@@ -21,15 +21,15 @@ from flext_core import FlextTypesPydantic as tp
 class FlextTypingBase:
     """Base type alias namespace for Flext core type-safe contracts."""
 
-    type Numeric = int | float
-    type Primitives = str | Numeric | bool
-    type Scalar = Primitives | bytes | datetime
+    type Numeric = tp.StrictInt | tp.StrictFloat
+    type Primitives = tp.StrictStr | Numeric | tp.StrictBool
+    type Scalar = Primitives | tp.StrictBytes | datetime
     type JsonValue = tp.JsonValue
     type JsonMapping = Mapping[str, JsonValue]
     type JsonList = Sequence[JsonValue]
     type FlatScalarMapping = Mapping[str, Scalar]
     type FlatScalarSequence = Sequence[Scalar]
-    type Container = Scalar | Path | JsonValue
+    type Container = Scalar | Path
     type OpaqueValue = Container
     type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
     type MutableMappingKV[KeyT, ValueT] = dict[KeyT, ValueT]

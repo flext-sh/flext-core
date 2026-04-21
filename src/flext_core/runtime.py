@@ -38,7 +38,6 @@ from flext_core import (
     FlextModelsPydantic as mp,
     FlextUtilitiesGenerators as ug,
     FlextUtilitiesGuardsTypeCore as ugc,
-    FlextUtilitiesPydantic as up,
     T,
     c,
     p,
@@ -113,41 +112,45 @@ class FlextRuntime:
     @staticmethod
     def to_scalar[TItem](item: TItem) -> t.Scalar:
         """Coerce any runtime value to ``t.Scalar`` (flat Container invariant)."""
+        if item is None:
+            return ""
         return item if isinstance(item, t.SCALAR_TYPES) else str(item)
 
     @staticmethod
-    def to_plain_container[TValue](value: TValue) -> t.Container:
-        """Flatten a runtime value to flat ``t.Container`` (Pydantic-native)."""
+    def to_plain_container[TValue](value: TValue) -> t.MetadataOrValue:
+        """Flatten a runtime value to flat ``t.MetadataOrValue`` (Pydantic-native)."""
         to_scalar = FlextRuntime.to_scalar
+        if value is None:
+            return ""
         match value:
             case mc.ConfigMap() | mc.Dict():
                 return dict(
-                    t.json_mapping_adapter().validate_python(
+                    t.flat_container_mapping_adapter().validate_python(
                         {str(k): to_scalar(v) for k, v in value.root.items()},
                     )
                 )
             case mc.ObjectList():
                 return list(
-                    t.json_list_adapter().validate_python(
+                    t.flat_container_list_adapter().validate_python(
                         [to_scalar(v) for v in value.root],
                     )
                 )
             case BaseModel():
                 return dict(
-                    t.json_mapping_adapter().validate_python({
+                    t.flat_container_mapping_adapter().validate_python({
                         str(k): to_scalar(v)
                         for k, v in value.model_dump(mode="python").items()
                     })
                 )
             case Mapping():
                 return dict(
-                    t.json_mapping_adapter().validate_python(
+                    t.flat_container_mapping_adapter().validate_python(
                         {str(k): to_scalar(v) for k, v in value.items()},
                     )
                 )
             case list() | tuple():
                 return list(
-                    t.json_list_adapter().validate_python(
+                    t.flat_container_list_adapter().validate_python(
                         [to_scalar(item) for item in value],
                     )
                 )
@@ -161,12 +164,13 @@ class FlextRuntime:
     @staticmethod
     def _normalize_dict_entries(
         items: Sequence[tuple[str, t.RuntimeData]],
-    ) -> dict[str, t.Container]:
+    ) -> t.FlatContainerMapping:
         """Normalize key-value pairs for container dict construction."""
         result: dict[str, t.Container] = {}
         for key, item in items:
             normalized = FlextRuntime.normalize_to_container(item)
-            result[key] = FlextRuntime.to_plain_container(normalized)
+            plain = FlextRuntime.to_plain_container(normalized)
+            result[key] = FlextRuntime.to_scalar(plain)
         return result
 
     @staticmethod
@@ -352,9 +356,13 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_container(
-        val: t.RuntimeData | mc.ConfigMap | mc.Dict | t.ObjectList,
-    ) -> t.ValueOrModel | dict[str, t.Container]:
-        """Normalize any value to ValueOrModel (RecursiveContainer | BaseModel).
+        val: t.RuntimeData
+        | mc.ConfigMap
+        | mc.Dict
+        | t.ObjectList
+        | AbstractSet[t.Scalar],
+    ) -> t.ValueOrModel:
+        """Normalize any value to ValueOrModel.
 
         Args:
             val: Value to normalize
@@ -387,14 +395,13 @@ class FlextRuntime:
                     entries = [(str(k), v) for k, v in val.items()]
                 return FlextRuntime._normalize_dict_entries(entries)
             case _ if isinstance(val, Sequence) and not isinstance(val, str | bytes):
-                normalized_list: list[t.Scalar] = []
+                normalized_list: list[t.Container] = []
                 for item_raw in val:
                     item = FlextRuntime.normalize_to_container(item_raw)
-                    if isinstance(item, (str, int, float, bool, datetime)):
-                        normalized_list.append(item)
-                    else:
-                        normalized_list.append(str(item))
-                return list(t.json_list_adapter().validate_python(normalized_list))
+                    normalized_list.append(FlextRuntime.to_scalar(item))
+                return list(
+                    t.flat_container_list_adapter().validate_python(normalized_list)
+                )
             case _:
                 return str(val)
 
@@ -405,23 +412,21 @@ class FlextRuntime:
         | mc.Dict
         | t.ObjectList
         | AbstractSet[t.Scalar],
-    ) -> t.JsonValue:
+    ) -> t.Container:
+        if val is None:
+            return ""
         if isinstance(val, AbstractSet):
             raw_value: Sequence[t.Scalar] = list(val)
-            return t.json_value_adapter().validate_python(
-                up.to_jsonable_python(raw_value)
-            )
+            return str(raw_value)
         if isinstance(val, BaseModel):
             return val.model_dump_json()
-        try:
-            return t.json_value_adapter().validate_python(up.to_jsonable_python(val))
-        except (TypeError, ValueError):
-            return str(val)
+        item = FlextRuntime.normalize_to_container(val)
+        return FlextRuntime.to_scalar(item)
 
     @staticmethod
     def _normalize_metadata_dict_value(
         v: t.RuntimeData,
-    ) -> t.JsonValue:
+    ) -> t.Container:
         return FlextRuntime._normalize_to_metadata_scalar(v)
 
     @staticmethod
@@ -431,9 +436,9 @@ class FlextRuntime:
         | mc.Dict
         | t.ObjectList
         | AbstractSet[t.Scalar],
-    ) -> t.MetadataValue:
+    ) -> t.MetadataOrValue:
         """Normalize input into metadata-compatible JSON-native values."""
-        return FlextRuntime._normalize_to_metadata_scalar(val)
+        return FlextRuntime.to_plain_container(FlextRuntime.normalize_to_container(val))
 
     class DependencyIntegration:
         """Centralize dependency-injector wiring with provider helpers."""
