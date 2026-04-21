@@ -19,16 +19,14 @@ from flext_core import (
     FlextModelsService as ms,
     FlextUtilitiesArgs as ua,
     FlextUtilitiesDiscovery as ud,
+    FlextUtilitiesGuardsTypeCore as ugc,
+    FlextUtilitiesGuardsTypeProtocol as ugp,
     FlextUtilitiesPydantic as up,
     c,
     e,
     p,
     r,
     t,
-)
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ugc
-from flext_core._utilities.guards_type_protocol import (
-    FlextUtilitiesGuardsTypeProtocol as ugp,
 )
 
 
@@ -265,7 +263,7 @@ class FlextUtilitiesModel:
                     )
                     wire_packages_raw = sanitized_source.get("wire_packages")
                     if isinstance(wire_packages_raw, (list, tuple)):
-                        normalized_wire_packages: list[str] = [
+                        normalized_wire_packages: list[t.JsonValue] = [
                             wire_pkg
                             for wire_pkg in wire_packages_raw
                             if isinstance(wire_pkg, str)

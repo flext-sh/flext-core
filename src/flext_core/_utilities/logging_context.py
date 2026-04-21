@@ -24,13 +24,13 @@ from flext_core import (
     FlextUtilitiesCollection,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesLoggingConfig,
     c,
     e,
     p,
     r,
     t,
 )
-from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
 
 
 class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):

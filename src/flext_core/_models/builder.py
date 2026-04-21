@@ -40,11 +40,7 @@ class FlextModelsBuilder:
 
             def _set(
                 self,
-                **updates: (
-                    t.ValueOrModel
-                    | t.Container
-                    | Sequence[t.ValueOrModel | t.Container]
-                ),
+                **updates: t.ValueOrModel | Sequence[t.ValueOrModel],
             ) -> Self:
                 """Apply one immutable ``model_copy(update=...)`` transition."""
                 return self._replace(self._state.model_copy(update=updates))
@@ -68,7 +64,7 @@ class FlextModelsBuilder:
             def _model[ModelT: m.ContractModel](
                 model_type: type[ModelT],
                 /,
-                **data: t.ValueOrModel | t.Container,
+                **data: t.ValueOrModel | Sequence[t.ValueOrModel],
             ) -> ModelT:
                 """Build one ContractModel payload for DSL composition."""
                 return model_type.model_validate(data)
@@ -78,7 +74,7 @@ class FlextModelsBuilder:
                 field_name: str,
                 model_type: type[ModelT],
                 /,
-                **data: t.ValueOrModel | t.Container,
+                **data: t.ValueOrModel | Sequence[t.ValueOrModel],
             ) -> Self:
                 """Build and append one ContractModel item to a sequence field."""
                 model_item = self._model(model_type, **data)

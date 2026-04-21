@@ -19,6 +19,7 @@ from datetime import datetime
 from typing import ClassVar, overload
 
 from flext_core import (
+    FlextModelsContainers as mc,
     T,
     U,
     c,
@@ -26,7 +27,6 @@ from flext_core import (
     r,
     t,
 )
-from flext_core._models.containers import FlextModelsContainers as mc
 
 
 class FlextUtilitiesCollection:
@@ -59,28 +59,31 @@ class FlextUtilitiesCollection:
         """Convert dumped model values into canonical metadata values."""
         if value is None:
             return None
-        if isinstance(value, (str, int, float, bool, datetime)):
+        if isinstance(value, (str, int, float, bool)):
             return value
+        if isinstance(value, datetime):
+            return value.isoformat()
         if isinstance(value, Mapping):
-            normalized_map: MutableMapping[str, t.Scalar | t.ScalarList] = {}
+            normalized_map: dict[str, t.JsonValue] = {}
             for key, item in value.items():
-                if isinstance(item, (str, int, float, bool, datetime)):
+                if isinstance(item, (str, int, float, bool)):
                     normalized_map[str(key)] = item
+                    continue
+                if isinstance(item, datetime):
+                    normalized_map[str(key)] = item.isoformat()
                     continue
                 if isinstance(item, Sequence) and not isinstance(
                     item,
                     (str, bytes, bytearray),
                 ):
-                    normalized_items: MutableSequence[t.Scalar] = []
+                    normalized_items: list[t.JsonValue] = []
                     for nested_item in item:
-                        normalized_items.append(
-                            nested_item
-                            if isinstance(
-                                nested_item,
-                                (str, int, float, bool, datetime),
-                            )
-                            else str(nested_item),
-                        )
+                        if isinstance(nested_item, (str, int, float, bool)):
+                            normalized_items.append(nested_item)
+                        elif isinstance(nested_item, datetime):
+                            normalized_items.append(nested_item.isoformat())
+                        else:
+                            normalized_items.append(str(nested_item))
                     normalized_map[str(key)] = normalized_items
                     continue
                 normalized_map[str(key)] = str(item)
@@ -89,13 +92,14 @@ class FlextUtilitiesCollection:
             value,
             (str, bytes, bytearray),
         ):
-            normalized_sequence: MutableSequence[t.Scalar] = []
+            normalized_sequence: list[t.JsonValue] = []
             for item in value:
-                normalized_sequence.append(
-                    item
-                    if isinstance(item, (str, int, float, bool, datetime))
-                    else str(item),
-                )
+                if isinstance(item, (str, int, float, bool)):
+                    normalized_sequence.append(item)
+                elif isinstance(item, datetime):
+                    normalized_sequence.append(item.isoformat())
+                else:
+                    normalized_sequence.append(str(item))
             return normalized_sequence
         return str(value)
 
@@ -135,13 +139,17 @@ class FlextUtilitiesCollection:
             and isinstance(current_val, Mapping)
             and isinstance(value, Mapping)
         ):
-            merged: dict[str, t.Scalar] = {}
+            merged: dict[str, t.JsonValue] = {}
             for inner_key, inner_val in current_val.items():
-                if isinstance(inner_val, (str, int, float, bool, datetime)):
+                if isinstance(inner_val, (str, int, float, bool)):
                     merged[str(inner_key)] = inner_val
+                elif isinstance(inner_val, datetime):
+                    merged[str(inner_key)] = inner_val.isoformat()
             for inner_key, inner_val in value.items():
-                if isinstance(inner_val, (str, int, float, bool, datetime)):
+                if isinstance(inner_val, (str, int, float, bool)):
                     merged[str(inner_key)] = inner_val
+                elif isinstance(inner_val, datetime):
+                    merged[str(inner_key)] = inner_val.isoformat()
             result[key] = merged
             return FlextUtilitiesCollection._ok_result(True)
         result[key] = value

@@ -21,8 +21,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Annotated, ClassVar, Self
 
-from flext_core import c, m, p, r, t, u
-from flext_core._utilities.context_tracing import FlextUtilitiesContextTracing
+from flext_core import FlextUtilitiesContextTracing, c, m, p, r, t, u
 from pydantic import PrivateAttr
 
 

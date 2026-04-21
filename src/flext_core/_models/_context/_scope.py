@@ -221,10 +221,7 @@ class FlextModelsContextScope:
         def with_operation_update(self, operation: str) -> Self:
             """Increment canonical statistics for the given operation."""
             counter_attr = f"{operation}s"
-            statistics_updates: dict[
-                str,
-                t.ValueOrModel | t.MetadataValue,
-            ] = {}
+            statistics_updates: dict[str, t.RuntimeData] = {}
             current_statistics = self.statistics
             if counter_attr in type(current_statistics).model_fields:
                 current_counter = getattr(current_statistics, counter_attr)

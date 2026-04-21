@@ -12,8 +12,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import ClassVar, Final
 
-from flext_core import c, m, t, u
-from flext_core._utilities.context_lifecycle import FlextUtilitiesContextLifecycle
+from flext_core import FlextUtilitiesContextLifecycle, c, m, t, u
 
 
 class FlextUtilitiesContextTracing(FlextUtilitiesContextLifecycle):

@@ -130,7 +130,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def list_like(
-        value: t.RuntimeData,
+        value: t.GuardInput,
     ) -> TypeIs[Sequence[t.Container]]:
         """Check if value behaves like a non-string object sequence."""
         return isinstance(value, (list, tuple)) and not isinstance(

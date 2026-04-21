@@ -26,7 +26,7 @@ from flext_core import (
 )
 
 if TYPE_CHECKING:
-    from flext_core._protocols.base import FlextProtocolsBase as pb
+    from flext_core import FlextProtocolsBase as pb
 
 
 class FlextUtilitiesDomain:

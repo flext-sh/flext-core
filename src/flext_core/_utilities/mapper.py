@@ -94,12 +94,12 @@ class FlextUtilitiesMapper:
         component: (
             t.ValueOrModel | Mapping[str, t.Container] | set[t.Container] | None
         ),
-    ) -> t.Container:
+    ) -> t.Container | t.FlatContainerList:
         """Flat-Container normalization via canonical ``FlextRuntime.to_plain_container``."""
         if component is None:
             return ""
         if isinstance(component, set):
-            return tuple(FlextRuntime.to_scalar(item) for item in component)
+            return [FlextRuntime.to_scalar(item) for item in component]
         return FlextRuntime.to_plain_container(component)
 
     @staticmethod

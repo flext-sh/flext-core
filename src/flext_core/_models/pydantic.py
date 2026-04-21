@@ -40,11 +40,13 @@ from pydantic import (
     RootModel as PydanticRootModel,
     SkipValidation,
     TypeAdapter,
+    ValidationError,
     WrapSerializer,
     WrapValidator,
     computed_field,
     field_validator,
 )
+from pydantic.fields import FieldInfo
 
 
 class FlextModelsPydantic:
@@ -88,6 +90,7 @@ class FlextModelsPydantic:
     WrapSerializer = WrapSerializer
 
     # Validation and serialization context helpers
+    FieldInfo = FieldInfo
     FieldSerializationInfo = FieldSerializationInfo
     TypeAdapter = TypeAdapter
 
@@ -95,6 +98,9 @@ class FlextModelsPydantic:
     GetCoreSchemaHandler = GetCoreSchemaHandler
     GetJsonSchemaHandler = GetJsonSchemaHandler
     GetPydanticSchema = GetPydanticSchema
+
+    # Validation exception (re-exported so consumers avoid `import pydantic`)
+    ValidationError = ValidationError
 
     # Schema and JSON utilities (from pydantic_core)
     SchemaValidator = SchemaValidator

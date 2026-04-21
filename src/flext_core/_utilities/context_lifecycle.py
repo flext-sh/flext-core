@@ -14,8 +14,7 @@ from collections.abc import (
 )
 from typing import ClassVar, Self
 
-from flext_core import c, m, p, t, u
-from flext_core._utilities.context_crud import FlextUtilitiesContextCrud
+from flext_core import FlextUtilitiesContextCrud, c, m, p, t, u
 
 
 class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):

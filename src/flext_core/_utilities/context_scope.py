@@ -17,9 +17,13 @@ from collections.abc import (
 from datetime import datetime
 from typing import ClassVar
 
-from flext_core import c, m, p, t, u
-from flext_core._utilities.context_normalization import (
+from flext_core import (
     FlextUtilitiesContextNormalization,
+    c,
+    m,
+    p,
+    t,
+    u,
 )
 
 
@@ -127,7 +131,7 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
                 continue
             if isinstance(v, datetime):
                 result[k] = v.isoformat()
-            elif isinstance(v, (str, int, float, bool, list, dict, tuple)):
+            elif isinstance(v, (str, int, float, bool, list, dict)):
                 result[k] = v
             elif u.pydantic_model(v):
                 result[k] = self._to_normalized(v)

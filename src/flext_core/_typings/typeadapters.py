@@ -82,6 +82,8 @@ class FlextTypesTypeAdapters:
     ] = None
     _json_value_adapter: ClassVar[mp.TypeAdapter[t.JsonValue] | None] = None
     _json_mapping_adapter: ClassVar[mp.TypeAdapter[t.JsonMapping] | None] = None
+    _json_list_adapter: ClassVar[mp.TypeAdapter[t.JsonList] | None] = None
+    _container_adapter: ClassVar[mp.TypeAdapter[t.Container] | None] = None
 
     @classmethod
     def metadata_map_adapter(
@@ -104,6 +106,18 @@ class FlextTypesTypeAdapters:
         if cls._json_mapping_adapter is None:
             cls._json_mapping_adapter = mp.TypeAdapter(t.JsonMapping)
         return cls._json_mapping_adapter
+
+    @classmethod
+    def json_list_adapter(cls) -> mp.TypeAdapter[t.JsonList]:
+        if cls._json_list_adapter is None:
+            cls._json_list_adapter = mp.TypeAdapter(t.JsonList)
+        return cls._json_list_adapter
+
+    @classmethod
+    def container_adapter(cls) -> mp.TypeAdapter[t.Container]:
+        if cls._container_adapter is None:
+            cls._container_adapter = mp.TypeAdapter(t.Container)
+        return cls._container_adapter
 
     @classmethod
     def strict_string_adapter(

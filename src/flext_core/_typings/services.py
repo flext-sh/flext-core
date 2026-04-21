@@ -37,9 +37,11 @@ class FlextTypesServices:
     type JsonValue = t.JsonValue
     type JsonMapping = Mapping[str, t.JsonValue]
     type JsonSequence = Sequence[t.JsonValue]
-    type JsonLikeValue = JsonValue
-    type JsonLikeMapping = JsonMapping
-    type JsonLikeSequence = JsonSequence
+    type JsonLikeValue = (
+        t.Container | Mapping[str, JsonLikeValue] | Sequence[JsonLikeValue]
+    )
+    type JsonLikeMapping = Mapping[str, JsonLikeValue]
+    type JsonLikeSequence = Sequence[JsonLikeValue]
     type JsonPayload = t.JsonValue | mp.BaseModel
     type RegistryDict[T] = MutableMapping[str, T]
     type ModelCarrier = mp.BaseModel
@@ -51,12 +53,12 @@ class FlextTypesServices:
     type LogArgument = t.Container | p.Model
     type LogValue = FlextTypesServices.LogArgument | Exception
     type LogResult = prt.Result[bool]
-    type MetadataValue = t.Scalar | Mapping[str, t.Container] | Sequence[t.Container]
+    type MetadataValue = t.JsonValue
     type MetadataOrValue = MetadataValue | t.Container
     type MetadataAttributeValue = MetadataValue
     type ValueOrModel = t.Container | ModelCarrier
     type RuntimeAtomic = ValueOrModel
-    type RuntimeData = RuntimeAtomic | MetadataValue | Mapping[str, t.Container]
+    type RuntimeData = RuntimeAtomic | JsonLikeValue
     type PresentValueOrModel = t.Container | ModelCarrier
     type BootstrapInput = ModelCarrier | Mapping[str, t.Container]
     type RegisterableService = (
@@ -75,7 +77,7 @@ class FlextTypesServices:
     type ResourceCallable = Callable[[], RegisterableService]
     type ModelInput = t.Container | ModelCarrier | Mapping[str, ValueOrModel]
     type ConfigModelInput = ModelCarrier | Mapping[str, RuntimeAtomic]
-    type MetadataInput = ModelCarrier | Mapping[str, t.Scalar]
+    type MetadataInput = ModelCarrier | JsonLikeMapping
     type ServiceMap = Mapping[str, RegisterableService]
     type FactoryMap = Mapping[str, FactoryCallable]
     type ResourceMap = Mapping[str, ResourceCallable]

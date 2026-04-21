@@ -82,7 +82,7 @@ class TestFlextTypes:
         "JsonMapping",
         "JsonList",
         "JsonObject",
-        "ApiJsonValue",
+        "JsonValue",
     )
 
     @pytest.mark.parametrize("alias_name", CORE_ALIAS_NAMES)

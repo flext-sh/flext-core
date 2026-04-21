@@ -25,9 +25,13 @@ from typing import (
     override,
 )
 
-from flext_core import FlextModelsContainers as mc, c, t
-from flext_core._protocols.logging import FlextProtocolsLogging as pl
-from flext_core.protocols import FlextProtocolsResult as p
+from flext_core import (
+    FlextModelsContainers as mc,
+    FlextProtocolsLogging as pl,
+    FlextProtocolsResult as p,
+    c,
+    t,
+)
 from pydantic import (
     BaseModel,
     ConfigDict,

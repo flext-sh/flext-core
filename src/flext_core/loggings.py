@@ -23,12 +23,12 @@ from flext_core import (
     FlextModelsContainers as mc,
     FlextRuntime as ur,
     FlextUtilitiesGenerators as ug,
+    FlextUtilitiesLoggingContext as ulc,
     c,
     p,
     r,
     t,
 )
-from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
 from structlog.typing import Context
 
 

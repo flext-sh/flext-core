@@ -164,7 +164,7 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def _structlog_processor(
-        value: typing.Callable[..., t.ValueOrModel] | t.Container | None,
+        value: Processor | typing.Callable[..., t.ValueOrModel] | t.Container | None,
     ) -> typing.TypeIs[Processor]:
         return callable(value)
 

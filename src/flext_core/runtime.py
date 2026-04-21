@@ -33,12 +33,12 @@ from typing import (
 
 from dependency_injector import containers, providers, wiring
 
-import orjson
 from flext_core import (
     FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
     FlextUtilitiesGenerators as ug,
     FlextUtilitiesGuardsTypeCore as ugc,
+    FlextUtilitiesPydantic as up,
     T,
     c,
     p,
@@ -121,18 +121,36 @@ class FlextRuntime:
         to_scalar = FlextRuntime.to_scalar
         match value:
             case mc.ConfigMap() | mc.Dict():
-                return {str(k): to_scalar(v) for k, v in value.root.items()}
+                return dict(
+                    t.json_mapping_adapter().validate_python(
+                        {str(k): to_scalar(v) for k, v in value.root.items()},
+                    )
+                )
             case mc.ObjectList():
-                return [to_scalar(v) for v in value.root]
+                return list(
+                    t.json_list_adapter().validate_python(
+                        [to_scalar(v) for v in value.root],
+                    )
+                )
             case BaseModel():
-                return {
-                    str(k): to_scalar(v)
-                    for k, v in value.model_dump(mode="python").items()
-                }
+                return dict(
+                    t.json_mapping_adapter().validate_python({
+                        str(k): to_scalar(v)
+                        for k, v in value.model_dump(mode="python").items()
+                    })
+                )
             case Mapping():
-                return {str(k): to_scalar(v) for k, v in value.items()}
+                return dict(
+                    t.json_mapping_adapter().validate_python(
+                        {str(k): to_scalar(v) for k, v in value.items()},
+                    )
+                )
             case list() | tuple():
-                return [to_scalar(item) for item in value]
+                return list(
+                    t.json_list_adapter().validate_python(
+                        [to_scalar(item) for item in value],
+                    )
+                )
             case bool() | str() | int() | float() | datetime() | Path():
                 return value
             case None:
@@ -368,7 +386,7 @@ class FlextRuntime:
                 else:
                     entries = [(str(k), v) for k, v in val.items()]
                 return FlextRuntime._normalize_dict_entries(entries)
-            case _ if ugc.list_like(val):
+            case _ if isinstance(val, Sequence) and not isinstance(val, str | bytes):
                 normalized_list: list[t.Scalar] = []
                 for item_raw in val:
                     item = FlextRuntime.normalize_to_container(item_raw)
@@ -376,47 +394,35 @@ class FlextRuntime:
                         normalized_list.append(item)
                     else:
                         normalized_list.append(str(item))
-                return normalized_list
+                return list(t.json_list_adapter().validate_python(normalized_list))
             case _:
                 return str(val)
 
     @staticmethod
-    def _normalize_to_metadata_scalar(val: t.RuntimeData) -> t.Primitives:
-        if val is None:
-            return ""
-        if ugc.primitive(val):
-            return val
-        if isinstance(val, datetime):
-            return val.isoformat()
-        if isinstance(val, Path):
-            return str(val)
+    def _normalize_to_metadata_scalar(
+        val: t.RuntimeData
+        | mc.ConfigMap
+        | mc.Dict
+        | t.ObjectList
+        | AbstractSet[t.Scalar],
+    ) -> t.JsonValue:
+        if isinstance(val, AbstractSet):
+            raw_value: Sequence[t.Scalar] = list(val)
+            return t.json_value_adapter().validate_python(
+                up.to_jsonable_python(raw_value)
+            )
         if isinstance(val, BaseModel):
             return val.model_dump_json()
-        return str(val)
+        try:
+            return t.json_value_adapter().validate_python(up.to_jsonable_python(val))
+        except (TypeError, ValueError):
+            return str(val)
 
     @staticmethod
     def _normalize_metadata_dict_value(
         v: t.RuntimeData,
-    ) -> t.Scalar | t.ScalarList:
-        """Normalize a single dict value for metadata context."""
-        match v:
-            case None:
-                return ""
-            case Path():
-                return str(v)
-            case BaseModel():
-                return v.model_dump_json()
-            case _ if ugc.scalar(v):
-                return v
-            case _ if ugc.list_like(v):
-                return [FlextRuntime._normalize_to_metadata_scalar(item) for item in v]
-            case _ if ugc.dict_like(v):
-                inner: MutableMapping[str, t.Primitives] = {}
-                for ik, iv in v.items():
-                    inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
-                return orjson.dumps(inner).decode()
-            case _:
-                return str(v)
+    ) -> t.JsonValue:
+        return FlextRuntime._normalize_to_metadata_scalar(v)
 
     @staticmethod
     def normalize_to_metadata(
@@ -426,31 +432,8 @@ class FlextRuntime:
         | t.ObjectList
         | AbstractSet[t.Scalar],
     ) -> t.MetadataValue:
-        """Normalize input into metadata-compatible scalar, list, or mapping values."""
-        if isinstance(val, AbstractSet):
-            return str(val)
-        match val:
-            case None:
-                return ""
-            case Path():
-                return str(val)
-            case BaseModel():
-                return val.model_dump_json()
-            case datetime():
-                return val
-            case _ if ugc.primitive(val):
-                return val
-            case _ if ugc.dict_like(val):
-                normalized: MutableMapping[str, t.Scalar | t.ScalarList] = {}
-                for k, v in val.items():
-                    normalized[str(k)] = FlextRuntime._normalize_metadata_dict_value(v)
-                return normalized
-            case _ if ugc.list_like(val):
-                return [
-                    FlextRuntime._normalize_to_metadata_scalar(item) for item in val
-                ]
-            case _:
-                return str(val)
+        """Normalize input into metadata-compatible JSON-native values."""
+        return FlextRuntime._normalize_to_metadata_scalar(val)
 
     class DependencyIntegration:
         """Centralize dependency-injector wiring with provider helpers."""

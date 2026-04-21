@@ -72,6 +72,8 @@ class FlextTypingBase:
     type MutableIntMapping = MutableMapping[str, int]
     type BoolMapping = Mapping[str, bool]
     type MutableBoolMapping = MutableMapping[str, bool]
+    type OptionalBoolMapping = Mapping[str, bool | None]
+    type MutableOptionalBoolMapping = MutableMapping[str, bool | None]
     type FrozensetMapping = Mapping[str, frozenset[str]]
     type MutableFrozensetMapping = MutableMapping[str, frozenset[str]]
     type StrSequenceMapping = Mapping[str, Sequence[str]]

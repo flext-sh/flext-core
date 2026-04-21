@@ -14,8 +14,7 @@ from collections.abc import (
 )
 from typing import ClassVar, overload
 
-from flext_core import c, e, m, p, r, t, u
-from flext_core._utilities.context_scope import FlextUtilitiesContextScope as ucs
+from flext_core import FlextUtilitiesContextScope as ucs, c, e, m, p, r, t, u
 
 
 class FlextUtilitiesContextCrud(ucs):
