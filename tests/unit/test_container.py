@@ -401,10 +401,8 @@ class TestFlextContainer:
                     msg=f"Unknown settings key {key} must not leak into public settings",
                 )
         if not settings:
-            tm.that(
-                settings_result.root,
-                eq=original_settings.root,
-                msg="Empty configure() input must preserve existing settings",
+            assert settings_result.root == original_settings.root, (
+                "Empty configure() input must preserve existing settings"
             )
 
     def test_with_config_fluent(self, clean_container: p.Container) -> None:
