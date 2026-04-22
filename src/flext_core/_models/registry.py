@@ -62,7 +62,7 @@ class FlextModelsRegistry:
                 description="Handler identifiers that were skipped (already registered)",
                 examples=[["CreateUserCommand", "UpdateUserCommand"]],
             ),
-        ] = up.Field(default_factory=list[str])
+        ] = up.Field(default_factory=tuple)
         errors: Annotated[
             MutableSequence[str],
             up.Field(

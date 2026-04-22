@@ -16,6 +16,7 @@ from typing import ParamSpec
 
 import pytest
 from flext_tests import tm
+from pydantic import ValidationError
 
 from flext_core import (
     P,
@@ -28,7 +29,6 @@ from flext_core import (
     T_Settings,
     U,
 )
-from pydantic import ValidationError
 from tests import c, m, t
 
 

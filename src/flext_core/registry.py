@@ -19,8 +19,9 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Literal, Self, override
 
-from flext_core import c, e, h, m, p, r, s, t, u
 from pydantic import PrivateAttr
+
+from flext_core import c, e, h, m, p, r, s, t, u
 
 
 class FlextRegistry(s[bool]):

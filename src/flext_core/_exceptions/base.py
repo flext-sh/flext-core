@@ -14,6 +14,8 @@ from collections.abc import (
 )
 from typing import ClassVar, override
 
+from pydantic import ValidationError as PydanticValidationError
+
 from flext_core import (
     FlextExceptionsHelpers,
     FlextModelsBase as m,
@@ -24,7 +26,6 @@ from flext_core import (
     p,
     t,
 )
-from pydantic import ValidationError as PydanticValidationError
 
 
 class FlextExceptionsBase:

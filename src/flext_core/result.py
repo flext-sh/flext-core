@@ -25,14 +25,6 @@ from typing import (
     override,
 )
 
-from flext_core import (
-    FlextModelsContainers as mc,
-    FlextProtocolsLogging as pl,
-    FlextProtocolsResult as p,
-    FlextRuntime,
-    c,
-    t,
-)
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -43,6 +35,15 @@ from pydantic import (
 )
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
+
+from flext_core import (
+    FlextModelsContainers as mc,
+    FlextProtocolsLogging as pl,
+    FlextProtocolsResult as p,
+    FlextRuntime,
+    c,
+    t,
+)
 
 
 class FlextResult[T](BaseModel, p.Result[T]):

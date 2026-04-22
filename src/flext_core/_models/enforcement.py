@@ -16,8 +16,9 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar
 
-from flext_core import FlextModelsPydantic
 from pydantic import Field
+
+from flext_core import FlextModelsPydantic
 
 
 class FlextModelsEnforcement:
@@ -65,7 +66,7 @@ class FlextModelsEnforcement:
                 default_factory=list,
                 description="Violations detected by the check.",
             ),
-        ]
+        ] = Field(default_factory=tuple)
 
         @property
         def messages(self) -> Sequence[str]:

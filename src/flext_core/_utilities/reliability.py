@@ -17,8 +17,9 @@ from collections.abc import (
 )
 from typing import Annotated
 
-from flext_core import FlextModelsBase as m, FlextUtilitiesArgs, c, p, r, t
 from pydantic import Field
+
+from flext_core import FlextModelsBase as m, FlextUtilitiesArgs, c, p, r, t
 
 
 class FlextUtilitiesReliability:

@@ -14,16 +14,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic_core import (
-    SchemaValidator,
-)
-from pydantic_settings import (
-    BaseSettings as PydanticBaseSettings,
-    EnvSettingsSource,
-    PydanticBaseSettingsSource,
-    SettingsConfigDict,
-)
-
 from pydantic import (
     AfterValidator,
     BaseModel as PydanticBaseModel,
@@ -47,6 +37,15 @@ from pydantic import (
     field_validator,
 )
 from pydantic.fields import FieldInfo
+from pydantic_core import (
+    SchemaValidator,
+)
+from pydantic_settings import (
+    BaseSettings as PydanticBaseSettings,
+    EnvSettingsSource,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 
 
 class FlextModelsPydantic:

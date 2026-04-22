@@ -10,10 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import pydantic
 import pydantic_core
 from pydantic_core import core_schema
-
-import pydantic
 
 
 class FlextTypesPydantic:

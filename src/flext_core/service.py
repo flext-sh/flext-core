@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import p, x
 from pydantic import ConfigDict
+
+from flext_core import p, x
 
 
 class FlextService[TDomainResult: p.Base = p.Base](x):

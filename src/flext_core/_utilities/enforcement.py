@@ -141,24 +141,16 @@ class FlextUtilitiesEnforcement:
         if not top:
             return None
         src = FlextUtilitiesEnforcement._discover_src_package(target)
+        if src is None:
+            if top == "fence":
+                return None
+            src = top
 
-        def resolve_project_prefix() -> tuple[str, str]:
-            key = src if src is not None else top
-            override = _kpm.SPECIAL_NAME_OVERRIDES.get(key.replace("_", "-"))
-            if override is not None:
-                head, _, tail = key.partition("_")
-                return override, _ump.pascalize(tail or head)
-            if src is None:
-                return _ump.pascalize(top), _ump.pascalize(top)
-            if top == src:
-                head, _, tail = src.partition("_")
-                return _ump.pascalize(src), _ump.pascalize(tail or head)
-            # Auxiliary root (tests/examples/scripts) — return raw project
-            # prefix only; the outer code prepends the auxiliary prefix.
-            head, _, tail = src.partition("_")
-            return _ump.pascalize(src), _ump.pascalize(tail or head)
-
-        project_prefix, namespace = resolve_project_prefix()
+        head, _, tail = src.partition("_")
+        namespace = _ump.pascalize(tail or head)
+        project_prefix = _kpm.SPECIAL_NAME_OVERRIDES.get(
+            src.replace("_", "-"),
+        ) or _ump.pascalize(src)
         # Workspace-level auxiliary roots (tests / examples / scripts) live
         # under a top-level module of that name and wear a prefix composed
         # of that module's PascalCase plus the project prefix.

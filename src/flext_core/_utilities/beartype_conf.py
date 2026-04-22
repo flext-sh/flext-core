@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from beartype import BeartypeConf, BeartypeStrategy
+
 from flext_core import c
 
 

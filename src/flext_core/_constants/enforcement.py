@@ -284,8 +284,8 @@ class FlextConstantsEnforcement:
             EnforcementCategory.FIELD,
             EnforcementLayer.MODEL,
             EnforcementSeverity.HARD_RULES,
-            "Field(default_factory={kind}) MUST use immutable equivalent",
-            "Use default_factory=tuple (not list), MappingProxyType (not dict), frozenset (not set).",
+            "Field(default_factory={kind}) conflicts with a read-only field contract",
+            "Use the immutable equivalent (tuple, MappingProxyType, frozenset) or declare an explicit MutableSequence/MutableMapping/MutableSet contract when in-place mutation is part of the model API.",
         ),
         "no_str_none_empty": (
             EnforcementCategory.FIELD,

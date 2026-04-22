@@ -78,7 +78,7 @@ class TestHandlerDecoratorDiscovery:
         settings: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
         tm.that(settings.priority, eq=c.DEFAULT_MAX_COMMAND_RETRIES)
         tm.that(settings.timeout, eq=c.DEFAULT_TIMEOUT_SECONDS)
-        tm.that(settings.middleware, eq=[])
+        tm.that(settings.middleware, empty=True)
 
     def test_decorator_preserves_function_identity(self) -> None:
         class CreateCommand:

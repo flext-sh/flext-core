@@ -44,6 +44,8 @@ class FlextUtilitiesCollection:
         if value is None:
             return {}
         raw_source = value.root if isinstance(value, mc.ConfigMap) else value
+        if not isinstance(raw_source, Mapping):
+            raise ValueError(c.ERR_DOMAIN_EVENT_DATA_MUST_BE_DICT_OR_NONE)
         normalized: MutableMapping[str, t.MetadataValue] = {}
         for key, item in raw_source.items():
             if item is None:

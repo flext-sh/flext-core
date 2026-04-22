@@ -103,7 +103,7 @@ class FlextModelsContextScope:
             FlextUtilitiesPydantic.Field(
                 description="Additional metric counters and timing values grouped by metric key.",
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
 
     class ContextRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Centralized mutable runtime state for `FlextContext`."""

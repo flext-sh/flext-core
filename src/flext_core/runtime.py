@@ -32,6 +32,7 @@ from typing import (
 )
 
 from dependency_injector import containers, providers, wiring
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import (
     FlextModelsContainers as mc,
@@ -43,7 +44,6 @@ from flext_core import (
     p,
     t,
 )
-from pydantic import BaseModel, ConfigDict
 
 
 class FlextRuntime:
@@ -183,6 +183,8 @@ class FlextRuntime:
         if value is None:
             return None
         raw_mapping = value if isinstance(value, Mapping) else value.model_dump()
+        if not isinstance(raw_mapping, Mapping):
+            raise TypeError(c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE)
         return {
             str(key): (
                 None if item is None else FlextRuntime.normalize_to_metadata(item)

@@ -20,8 +20,9 @@ from collections.abc import (
 from types import ModuleType
 from typing import ClassVar, Unpack, override
 
-from flext_core import FlextUtilitiesHandler, P, R, c, e, m, p, r, t, u, x
 from pydantic import ConfigDict
+
+from flext_core import FlextUtilitiesHandler, P, R, c, e, m, p, r, t, u, x
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):

@@ -23,14 +23,26 @@ import inspect
 import re
 from collections.abc import (
     Mapping,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
 )
 from enum import EnumType
 from pathlib import Path
 from types import UnionType
-from typing import TYPE_CHECKING, Annotated, Any, Union, get_args, get_origin
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    ForwardRef,
+    Union,
+    get_args,
+    get_origin,
+)
+
+from pydantic.fields import FieldInfo
 
 from flext_core import FlextConstantsEnforcement as c, FlextModelsPydantic as mp
-from pydantic.fields import FieldInfo
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -99,6 +111,57 @@ class FlextUtilitiesBeartypeEngine:
         except (TypeError, AttributeError, RuntimeError, RecursionError):
             return "Any" in str(alias_value)
 
+    @staticmethod
+    def unwrap_annotated(
+        hint: t.TypeHintSpecifier | None,
+    ) -> t.TypeHintSpecifier | None:
+        current = hint
+        while current is not None:
+            if isinstance(current, ForwardRef):
+                current = current.__forward_arg__
+                continue
+            if isinstance(current, str):
+                stripped = current.strip()
+                annotated_prefix = next(
+                    (
+                        prefix
+                        for prefix in (
+                            "Annotated[",
+                            "typing.Annotated[",
+                            "typing_extensions.Annotated[",
+                        )
+                        if stripped.startswith(prefix) and stripped.endswith("]")
+                    ),
+                    None,
+                )
+                if annotated_prefix is None:
+                    return stripped
+                current = FlextUtilitiesBeartypeEngine._first_top_level_arg(
+                    stripped.removeprefix(annotated_prefix)[:-1],
+                )
+                continue
+            if get_origin(current) is not Annotated:
+                return current
+            args = get_args(current)
+            if not args:
+                return current
+            current = args[0]
+        return current
+
+    @staticmethod
+    def _first_top_level_arg(annotation_text: str) -> str:
+        depth = 0
+        for index, char in enumerate(annotation_text):
+            if char == "[":
+                depth += 1
+                continue
+            if char == "]":
+                depth -= 1
+                continue
+            if char == "," and depth == 0:
+                return annotation_text[:index].strip()
+        return annotation_text.strip()
+
     # ------------------------------------------------------------------
     # Rule-local helpers (shared)
     # ------------------------------------------------------------------
@@ -109,6 +172,46 @@ class FlextUtilitiesBeartypeEngine:
             if isinstance(value, kind):
                 return kind.__name__
         return None
+
+    @staticmethod
+    def mutable_default_factory_kind(factory: object) -> type | None:
+        for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
+            if factory is kind or get_origin(factory) is kind:
+                return kind
+        return None
+
+    @staticmethod
+    def allows_mutable_default_factory(
+        hint: t.TypeHintSpecifier | None,
+        factory: object,
+    ) -> bool:
+        expected_by_factory: Mapping[type, type] = {
+            list: MutableSequence,
+            dict: MutableMapping,
+            set: MutableSet,
+        }
+        mutable_kind = FlextUtilitiesBeartypeEngine.mutable_default_factory_kind(
+            factory,
+        )
+        if mutable_kind is None:
+            return False
+        expected = expected_by_factory.get(mutable_kind)
+        normalized = FlextUtilitiesBeartypeEngine.unwrap_annotated(hint)
+        if normalized is None:
+            return False
+        if isinstance(normalized, str):
+            expected_name = expected.__name__ if expected is not None else ""
+            return bool(expected_name) and (
+                normalized == expected_name
+                or normalized.startswith((
+                    f"{expected_name}[",
+                    f"typing.{expected_name}[",
+                    f"collections.abc.{expected_name}[",
+                ))
+            )
+        origin = get_origin(normalized)
+        target = origin or normalized
+        return expected is not None and target is expected
 
     @staticmethod
     def is_relaxed_extra_base(target: type) -> bool:
@@ -218,9 +321,16 @@ class FlextUtilitiesBeartypeEngine:
         factory = info.default_factory
         if factory is None:
             return _NO_VIOLATION
-        for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
-            if factory is kind:
-                return {"kind": kind.__name__}
+        if FlextUtilitiesBeartypeEngine.allows_mutable_default_factory(
+            info.annotation,
+            factory,
+        ):
+            return _NO_VIOLATION
+        mutable_kind = FlextUtilitiesBeartypeEngine.mutable_default_factory_kind(
+            factory,
+        )
+        if mutable_kind is not None:
+            return {"kind": mutable_kind.__name__}
         return _NO_VIOLATION
 
     @staticmethod

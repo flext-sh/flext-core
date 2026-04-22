@@ -33,9 +33,9 @@ from typing import ClassVar
 
 import pytest
 from flext_tests import tm
+from pydantic import ValidationError
 
 from flext_core import FlextSettings
-from pydantic import ValidationError
 from tests import c, p, t, u
 
 

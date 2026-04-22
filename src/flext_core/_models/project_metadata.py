@@ -18,13 +18,15 @@ from collections.abc import (
     Mapping,
 )
 from pathlib import Path
+from types import MappingProxyType
 from typing import Annotated, Any, ClassVar
+
+from pydantic import Field, model_validator
 
 from flext_core import (
     FlextConstantsProjectMetadata as t,
     FlextModelsPydantic,
 )
-from pydantic import Field, model_validator
 
 
 class FlextModelsProjectMetadata:
@@ -133,7 +135,7 @@ class FlextModelsProjectMetadata:
                 default_factory=dict,
                 description="Per-alias parent package source overrides.",
             ),
-        ] = Field(default_factory=dict)
+        ] = Field(default_factory=lambda: MappingProxyType({}))
 
         @model_validator(mode="before")
         @classmethod
@@ -210,7 +212,7 @@ class FlextModelsProjectMetadata:
                 default_factory=dict,
                 description="Per-alias parent package overrides.",
             ),
-        ] = Field(default_factory=dict)
+        ] = Field(default_factory=lambda: MappingProxyType({}))
 
     class ProjectToolFlextDocs(FlextModelsPydantic.BaseModel):
         """``[tool.flext.docs]`` table contract."""
@@ -244,7 +246,7 @@ class FlextModelsProjectMetadata:
                 default_factory=dict,
                 description="Per-alias type override strings.",
             ),
-        ] = Field(default_factory=dict)
+        ] = Field(default_factory=lambda: MappingProxyType({}))
 
     class ProjectToolFlext(FlextModelsPydantic.BaseModel):
         """``[tool.flext]`` root contract aggregating the sub-tables."""

@@ -23,6 +23,13 @@ from collections.abc import (
 from pathlib import Path
 from typing import Annotated, ClassVar, Self, override
 
+from pydantic import (
+    Field,
+    PrivateAttr,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import (
     BaseSettings,
     EnvSettingsSource,
@@ -39,13 +46,6 @@ from flext_core import (
     p,
     t,
     u,
-)
-from pydantic import (
-    Field,
-    PrivateAttr,
-    computed_field,
-    field_validator,
-    model_validator,
 )
 
 

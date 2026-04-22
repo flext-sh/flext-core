@@ -17,6 +17,7 @@ from collections.abc import (
     Mapping,
 )
 from datetime import UTC, datetime
+from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import (
@@ -214,7 +215,7 @@ class FlextModelsBase:
                 title="Tags",
                 examples=[["billing", "critical"]],
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=list)
+        ] = FlextUtilitiesPydantic.Field(default_factory=tuple)
         attributes: Annotated[
             Mapping[str, t.MetadataValue],
             FlextModelsPydantic.BeforeValidator(
@@ -225,7 +226,7 @@ class FlextModelsBase:
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
         metadata_value: Annotated[
             t.Scalar | None,
             FlextUtilitiesPydantic.Field(

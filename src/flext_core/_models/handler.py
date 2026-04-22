@@ -225,7 +225,7 @@ class FlextModelsHandler:
         middleware: Annotated[
             Sequence[type[p.Middleware]],
             up.Field(description="Middleware types to apply to this handler"),
-        ] = up.Field(default_factory=list[type[p.Middleware]])
+        ] = up.Field(default_factory=tuple)
 
 
 __all__: list[str] = ["FlextModelsHandler"]

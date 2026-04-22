@@ -12,9 +12,11 @@ from __future__ import annotations
 
 import typing
 from abc import ABC, abstractmethod
+from collections.abc import MutableSequence
 from typing import Annotated, Final, Protocol, runtime_checkable
 
 import pytest
+from pydantic.warnings import PydanticDeprecatedSince20
 
 from flext_core import (
     FlextModelsEnforcement,
@@ -22,7 +24,6 @@ from flext_core import (
     FlextUtilitiesBeartypeEngine,
     FlextUtilitiesEnforcement,
 )
-from pydantic.warnings import PydanticDeprecatedSince20
 from tests import TestsFlextCoreModelsMixins, c, m, u
 
 
@@ -69,6 +70,36 @@ class TestFieldRules:
             ]
 
         assert not _messages(u.check(_M), fragment="bare ")
+
+    def test_mutable_sequence_list_factory_passes(self) -> None:
+        class _M(m.ArbitraryTypesModel):
+            items: Annotated[
+                MutableSequence[str],
+                m.Field(default_factory=list, description="d"),
+            ]
+
+        assert not _messages(u.check(_M), fragment="read-only field contract")
+
+    def test_mutable_mapping_forward_ref_dict_factory_passes(self) -> None:
+        class _M(m.ArbitraryTypesModel):
+            class Value(m.ContractModel):
+                name: Annotated[str, m.Field(description="Value name")] = "x"
+
+            items: typing.MutableMapping[str, _M.Value] = m.Field(
+                default_factory=dict,
+                description="Mutable mapping contract.",
+            )
+
+        assert not _messages(u.check(_M), fragment="read-only field contract")
+
+    def test_sequence_list_factory_detected(self) -> None:
+        class _M(m.ArbitraryTypesModel):
+            items: Annotated[
+                typing.Sequence[str],
+                m.Field(default_factory=list, description="d"),
+            ]
+
+        assert _messages(u.check(_M), fragment="read-only field contract")
 
     def test_missing_description_detected(self) -> None:
         class _M(m.ArbitraryTypesModel):
@@ -123,6 +154,13 @@ class TestProjectDiscovery:
         prefix, namespace = project
         assert prefix == "Flext"
         assert namespace == "Core"
+
+    def test_synthetic_markdown_module_is_unknowable(self) -> None:
+        """Docs code fences run in synthetic modules and must not invent prefixes."""
+        fake = type("CreateUserService", (), {})
+        fake.__module__ = "fence"
+
+        assert FlextUtilitiesEnforcement._project(fake) is None
 
 
 class TestConstantsLayerRules:

@@ -17,6 +17,8 @@ from collections.abc import (
 )
 from typing import Annotated, override
 
+from pydantic import Field
+
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsDomainEvent,
@@ -24,7 +26,6 @@ from flext_core import (
     FlextUtilitiesGenerators,
     t,
 )
-from pydantic import Field
 
 
 class FlextModelsEntity:
@@ -50,10 +51,9 @@ class FlextModelsEntity:
         - version: Optimistic locking (from VersionableMixin)
         - domain_events: Event sourcing support
 
-        Enforcement exemption: DDD entities are intentionally mutable. The
-        ``domain_events`` collector is an in-process transient buffer; using
-        ``default_factory=list`` yields a fresh per-instance list (no shared
-        state) and is required by the event-sourcing API contract.
+        ``domain_events`` is an intentionally mutable in-process buffer; the
+        field contract is a ``MutableSequence`` because the event-sourcing API
+        appends new entries during the entity lifecycle.
         """
 
         domain_events: Annotated[

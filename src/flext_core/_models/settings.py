@@ -14,12 +14,13 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Final, Self
 
-from flext_core import FlextModelsBase as m, FlextModelsPydantic as mp, c, p, t
 from pydantic import (
     AliasChoices,
     ConfigDict,
     model_validator,
 )
+
+from flext_core import FlextModelsBase as m, FlextModelsPydantic as mp, c, p, t
 
 
 class FlextModelsSettings:
@@ -95,14 +96,14 @@ class FlextModelsSettings:
             mp.Field(
                 description="Exception types to retry on",
             ),
-        ] = mp.Field(default_factory=list[type[BaseException]])
+        ] = mp.Field(default_factory=tuple)
         retry_on_status_codes: Annotated[
             Sequence[int],
             mp.Field(
                 max_length=c.HTTP_STATUS_MIN,
                 description="HTTP status codes to retry on",
             ),
-        ] = mp.Field(default_factory=list[int])
+        ] = mp.Field(default_factory=tuple)
 
         @model_validator(mode="after")
         def validate_delay_consistency(self) -> Self:
