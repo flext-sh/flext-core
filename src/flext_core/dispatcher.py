@@ -212,6 +212,11 @@ class FlextDispatcher:
                         else None,
                     )
                 value: t.RuntimeData | None = raw_output.value
+                if value is None:
+                    return dispatch_result.fail_op(
+                        "validate handler success payload",
+                        c.ERR_HANDLER_RETURNED_NONE,
+                    )
                 if not u.container(value) and not u.pydantic_model(value):
                     return dispatch_result.fail_op(
                         "validate handler success payload",

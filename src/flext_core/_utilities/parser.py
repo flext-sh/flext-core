@@ -16,15 +16,14 @@ from collections.abc import (
 )
 from enum import StrEnum
 
-from pydantic import Field
-
 from flext_core import (
     FlextModelsBase,
+    FlextModelsPydantic,
     FlextUtilitiesArgs,
-    FlextUtilitiesGuards,
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesModel,
     c,
+    m,
     p,
     r,
     t,
@@ -43,31 +42,36 @@ class FlextUtilitiesParser:
     class ParseOptions[T](FlextModelsBase.FlexibleInternalModel):
         """Options controlling parsing behavior for string-to-type conversion."""
 
-        strict: bool | None = Field(
+        strict: bool | None = m.Field(
             None,
+            validate_default=True,
             description="Reject coercions; fail on type mismatch",
         )
-        case_insensitive: bool | None = Field(
+        case_insensitive: bool | None = m.Field(
             None,
+            validate_default=True,
             description="Normalize case before parsing",
         )
-        default: T | None = Field(
+        default: T | None = m.Field(
             None,
+            validate_default=True,
             description="Fallback value when parsing fails",
         )
-        default_factory: Callable[[], T] | None = Field(
+        default_factory: Callable[[], T] | None = m.Field(
             None,
+            validate_default=True,
             description="Factory producing fallback value",
         )
-        field_name: str | None = Field(
+        field_name: str | None = m.Field(
             None,
+            validate_default=True,
             description="Source field name for error context",
         )
 
     @staticmethod
     def _coerce_to_bool(value: t.RuntimeData) -> p.Result[bool]:
         """Coerce value to bool. Returns None if not coercible."""
-        if FlextUtilitiesGuards.matches_type(value, str):
+        if isinstance(value, str):
             normalized_val = FlextUtilitiesParser._parse_normalize_str(
                 value,
                 case="lower",
@@ -250,10 +254,8 @@ class FlextUtilitiesParser:
                 opts.default_factory,
                 c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
             ).unwrap()
-        if not isinstance(
-            value, Mapping
-        ) and not FlextUtilitiesGuardsTypeModel.base_model(
-            value,
+        if not isinstance(value, Mapping) and not isinstance(
+            value, FlextModelsPydantic.BaseModel
         ):
             raise TypeError(
                 c.ERR_PARSER_CANNOT_PARSE_SCALAR_TO_MODEL.format(

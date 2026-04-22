@@ -71,8 +71,10 @@ assert service.value == "ready"
 
 ```python
 from examples.ex_03_flext_logger import Ex03LoggingDsl
-from examples.ex_04_flext_dispatcher import _Ex04Exercise
+from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
 Ex03LoggingDsl("docs/guides/anti-patterns-best-practices.md").exercise()
-_Ex04Exercise("docs/guides/anti-patterns-best-practices.md").exercise()
+result = Ex04DispatchDsl.run()
+assert result.success
+assert result.value == "dispatcher-example"
 ```

@@ -48,7 +48,9 @@ assert resolved.value == "ready"
 ### Dispatcher (examples-backed)
 
 ```python
-from examples.ex_04_flext_dispatcher import _Ex04Exercise
+from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
-_Ex04Exercise("src/flext_core/README.md").exercise()
+result = Ex04DispatchDsl.run()
+assert result.success
+assert result.value == "dispatcher-example"
 ```

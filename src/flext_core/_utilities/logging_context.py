@@ -20,10 +20,10 @@ from pathlib import Path
 from typing import ClassVar
 
 from flext_core import (
+    FlextModelsPydantic,
     FlextRuntime,
     FlextUtilitiesCollection,
     FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesLoggingConfig,
     c,
     e,
@@ -51,12 +51,14 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             incoming_context: t.FlatContainerMapping = {
                 key: cls._to_container_value(value) for key, value in context.items()
             }
-            current_context_obj: Mapping[str, t.Container] = dict(
-                current_context.items(),
-            )
-            incoming_context_obj: Mapping[str, t.Container] = dict(
-                incoming_context.items(),
-            )
+            current_context_obj: Mapping[str, t.MetadataValue] = {
+                str(key): FlextRuntime.normalize_to_metadata(value)
+                for key, value in current_context.items()
+            }
+            incoming_context_obj: Mapping[str, t.MetadataValue] = {
+                str(key): FlextRuntime.normalize_to_metadata(value)
+                for key, value in incoming_context.items()
+            }
             merge_result = FlextUtilitiesCollection.merge_mappings(
                 incoming_context_obj,
                 current_context_obj,
@@ -121,38 +123,49 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def _to_container_value(
-        value: t.LogValue | t.Container | t.RuntimeData,
+        value: t.LogValue | t.Container | t.RuntimeData | t.MetadataValue | None,
     ) -> t.Container:
         """Normalize value to Container (internal helper)."""
         if isinstance(value, Exception):
             return str(value)
         if value is None:
             return ""
-        if FlextUtilitiesGuardsTypeModel.base_model(value):
+        if isinstance(value, FlextModelsPydantic.BaseModel):
             return str(value.model_dump())
+        if isinstance(value, p.Model):
+            return str(value)
+        model_dump_attr = getattr(value, "model_dump", None)
+        if callable(model_dump_attr):
+            return str(model_dump_attr())
         if FlextUtilitiesGuardsTypeCore.scalar(value) or isinstance(value, Path):
             return value
-        normalized = FlextRuntime.normalize_to_container(value)
-        if FlextUtilitiesGuardsTypeCore.scalar(normalized) or isinstance(
-            normalized,
-            Path,
-        ):
-            return normalized
-        flattened = FlextRuntime.normalize_to_metadata(normalized)
-        if FlextUtilitiesGuardsTypeModel.base_model(flattened):
-            return str(flattened.model_dump())
-        return str(flattened)
+        flattened = FlextRuntime.normalize_to_metadata(value)
+        return (
+            flattened
+            if FlextUtilitiesGuardsTypeCore.scalar(flattened)
+            else str(flattened)
+        )
 
     @staticmethod
     def _to_scalar_value(
-        value: (t.LogValue | t.Container | t.RuntimeData | t.ContainerCarrier | None),
+        value: (
+            t.LogValue
+            | t.Container
+            | t.RuntimeData
+            | t.ContainerCarrier
+            | t.MetadataValue
+            | None
+        ),
     ) -> t.Scalar:
         if value is None:
             return ""
         if isinstance(value, Exception):
             return str(value)
-        if FlextUtilitiesGuardsTypeModel.base_model(value):
+        if isinstance(value, FlextModelsPydantic.BaseModel):
             return str(value.model_dump())
+        model_dump_attr = getattr(value, "model_dump", None)
+        if callable(model_dump_attr):
+            return str(model_dump_attr())
         if isinstance(value, (list, tuple, dict, Mapping)):
             return str(value)
         if FlextUtilitiesGuardsTypeCore.scalar(value):

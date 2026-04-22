@@ -131,7 +131,9 @@ class TestAdvancedPatterns:
 
             """
 
-            def convert_dict_value(value: t.Container) -> t.Scalar:
+            def convert_dict_value(
+                value: t.Container | t.JsonValue | None,
+            ) -> t.JsonValue:
                 """Convert t.Container to t.Scalar."""
                 if isinstance(value, (str, int, bool)):
                     return value
@@ -139,33 +141,43 @@ class TestAdvancedPatterns:
                     return int(value)
                 return str(value)
 
+            given_source: t.JsonMapping = {
+                key: convert_dict_value(value) for key, value in self._given.items()
+            }
+
             given_mapped_raw = u.map_dict_keys(
-                self._given,
-                {k: str(k) for k in self._given},
+                given_source,
+                {k: str(k) for k in given_source},
                 keep_unmapped=True,
             ).value
             given_mapped = {
                 k: convert_dict_value(v) for k, v in given_mapped_raw.items()
             }
-            given_converted: t.ConfigurationMapping = {
+            given_converted: t.JsonMapping = {
                 key: convert_dict_value(value) for key, value in given_mapped.items()
             }
+            when_source: t.JsonMapping = {
+                key: convert_dict_value(value) for key, value in self._when.items()
+            }
             when_mapped_raw = u.map_dict_keys(
-                self._when,
-                {k: str(k) for k in self._when},
+                when_source,
+                {k: str(k) for k in when_source},
                 keep_unmapped=True,
             ).value
             when_mapped = {k: convert_dict_value(v) for k, v in when_mapped_raw.items()}
-            when_converted: t.ConfigurationMapping = {
+            when_converted: t.JsonMapping = {
                 key: convert_dict_value(value) for key, value in when_mapped.items()
             }
+            then_source: t.JsonMapping = {
+                key: convert_dict_value(value) for key, value in self._then.items()
+            }
             then_mapped_raw = u.map_dict_keys(
-                self._then,
-                {k: str(k) for k in self._then},
+                then_source,
+                {k: str(k) for k in then_source},
                 keep_unmapped=True,
             ).value
             then_mapped = {k: convert_dict_value(v) for k, v in then_mapped_raw.items()}
-            then_converted: t.ConfigurationMapping = {
+            then_converted: t.JsonMapping = {
                 key: convert_dict_value(value) for key, value in then_mapped.items()
             }
             scenario_data = m.Core.Tests.MockScenarioData.model_validate(

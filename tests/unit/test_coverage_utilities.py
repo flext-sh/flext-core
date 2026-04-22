@@ -88,11 +88,11 @@ class Testu(u.Core.Tests.Contract):
             ("", False, "Empty string fails guard"),
             (123, False, "Non-string fails guard"),
         ]
-        TYPE_GUARD_DICT_CASES: ClassVar[Sequence[tuple[t.Container, bool, str]]] = [
+        TYPE_GUARD_DICT_CASES: ClassVar[Sequence[tuple[t.MetadataValue, bool, str]]] = [
             ({"key": "value"}, True, "Non-empty dict passes guard"),
             ({}, False, "Empty dict fails guard"),
         ]
-        TYPE_GUARD_LIST_CASES: ClassVar[Sequence[tuple[t.Container, bool, str]]] = [
+        TYPE_GUARD_LIST_CASES: ClassVar[Sequence[tuple[t.MetadataValue, bool, str]]] = [
             ([1, 2, 3], True, "Non-empty list passes guard"),
             ([], False, "Empty list fails guard"),
         ]
@@ -104,7 +104,7 @@ class Testu(u.Core.Tests.Contract):
             ("generate_saga_id", None),
             ("generate_event_id", None),
         ]
-        CACHE_NORMALIZATION_CASES: ClassVar[Sequence[tuple[t.Container, type]]] = [
+        CACHE_NORMALIZATION_CASES: ClassVar[Sequence[tuple[t.MetadataValue, type]]] = [
             ({"a": 1, "b": 2}, dict),
             ([1, 2, 3], list),
         ]

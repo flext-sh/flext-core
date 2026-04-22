@@ -65,8 +65,8 @@ class TestsFlextCoreUtilitiesTypeChecker:
 
     class DictHandler(
         h[
-            t.MutableFlatContainerMapping,
-            t.MutableFlatContainerMapping,
+            t.JsonMapping,
+            t.JsonMapping,
         ],
     ):
         """Handler for dictionary messages."""
@@ -74,10 +74,10 @@ class TestsFlextCoreUtilitiesTypeChecker:
         @override
         def handle(
             self,
-            message: t.MutableFlatContainerMapping,
-        ) -> p.Result[t.MutableFlatContainerMapping]:
-            result: t.MutableFlatContainerMapping = {"processed": True, **message}
-            return r[t.MutableFlatContainerMapping].ok(result)
+            message: t.JsonMapping,
+        ) -> p.Result[t.JsonMapping]:
+            result: t.JsonMapping = {"processed": True, **message}
+            return r[t.JsonMapping].ok(result)
 
     class ObjectHandler(h[t.Container, t.Container]):
         """Handler for t.Container messages."""

@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from collections.abc import (
     Callable,
-    Iterable,
     Mapping,
     Sequence,
     Sized,
@@ -82,9 +81,12 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         contains: t.GuardInput,
     ) -> bool:
         """Check if iterable value contains the target."""
-        if isinstance(value, (str, bytes, list, tuple, set, frozenset, dict)):
-            iterable_value: Iterable[t.GuardInput] = value
-            return any(item == contains for item in iterable_value)
+        if isinstance(value, str):
+            return isinstance(contains, str) and contains in value
+        if isinstance(value, bytes):
+            return isinstance(contains, bytes) and contains in value
+        if isinstance(value, (list, tuple, set, frozenset, dict)):
+            return contains in value
         return False
 
     @staticmethod

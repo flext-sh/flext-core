@@ -315,11 +315,11 @@ class FlextProtocolsLogging:
         def flush(self) -> None: ...
 
     type AccessibleData = (
-        t.Container
+        t.RuntimeData
         | FlextProtocolsBase.Model
         | Mapping[
             str,
-            t.Container | FlextProtocolsBase.Model,
+            t.RuntimeData | FlextProtocolsBase.Model | None,
         ]
         | FlextProtocolsResult.HasModelDump
         | FlextProtocolsLogging.ValidatorSpec

@@ -45,5 +45,5 @@ assert ValidateThenCreateService(username="").execute().failure
 ```python
 from examples.ex_11_flext_service import Ex11FlextService
 
-Ex11FlextService("docs/guides/service-patterns.md").exercise()
+Ex11FlextService.run()
 ```

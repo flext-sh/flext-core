@@ -42,7 +42,9 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, Mapping)
 
     @staticmethod
-    def _all_container_sequence(value: Sequence[t.RuntimeData]) -> bool:
+    def _all_container_sequence(
+        value: Sequence[t.MetadataValue | t.RuntimeData],
+    ) -> bool:
         """Check if all items in sequence are valid containers."""
         for sequence_item in value:
             if not FlextUtilitiesGuardsTypeCore.container(sequence_item):
@@ -50,7 +52,9 @@ class FlextUtilitiesGuardsTypeCore:
         return True
 
     @staticmethod
-    def all_container_mapping_values(value: Mapping[str, t.RuntimeData]) -> bool:
+    def all_container_mapping_values(
+        value: Mapping[str, t.MetadataValue | t.RuntimeData],
+    ) -> bool:
         """Check if all values in mapping are valid containers."""
         for mapped_value in value.values():
             if not FlextUtilitiesGuardsTypeCore.container(mapped_value):

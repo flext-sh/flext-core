@@ -74,7 +74,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: t.MutableFlatContainerMapping = dict[str, t.Container]()
+                self._config: dict[str, t.MetadataValue] = {}
 
             def with_database(self, host: str, port: int) -> Self:
                 """Add database configuration."""
@@ -91,13 +91,13 @@ class TestArchitecturalPatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> p.Result[Mapping[str, t.Container]]:
+            def build(self) -> p.Result[Mapping[str, t.MetadataValue]]:
                 """Build the configuration."""
                 if not self._config:
-                    return r[Mapping[str, t.Container]].fail(
+                    return r[Mapping[str, t.MetadataValue]].fail(
                         "Configuration cannot be empty",
                     )
-                return r[Mapping[str, t.Container]].ok(dict(self._config))
+                return r[Mapping[str, t.MetadataValue]].ok(dict(self._config))
 
         config_result = (
             ConfigurationBuilder()

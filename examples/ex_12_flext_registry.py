@@ -48,6 +48,10 @@ def _as_registry_handler(
     def _call(message: p.Routable) -> t.RuntimeData:
         return handler.handle(message).unwrap_or("")
 
+    handler_name = handler.message_type.__name__
+    setattr(_call, "__name__", handler_name)
+    setattr(_call, "handler_id", handler_name)
+    setattr(_call, "message_type", handler.message_type)
     return _call
 
 

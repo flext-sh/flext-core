@@ -43,7 +43,7 @@ from examples.ex_08_flext_container import Ex08FlextContainer
 from examples.ex_11_flext_service import Ex11FlextService
 
 Ex08FlextContainer("docs/guides/testing.md").exercise()
-Ex11FlextService("docs/guides/testing.md").exercise()
+Ex11FlextService.run()
 ```
 
 ## Recommended Strategy

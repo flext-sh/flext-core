@@ -49,7 +49,7 @@ assert created.success
 from examples.ex_11_flext_service import Ex11FlextService
 from examples.ex_12_flext_registry import Ex12RegistryDsl
 
-Ex11FlextService("docs/guides/domain-driven-design.md").exercise()
+Ex11FlextService.run()
 Ex12RegistryDsl("docs/guides/domain-driven-design.md").exercise()
 ```
 

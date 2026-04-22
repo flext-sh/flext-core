@@ -26,9 +26,9 @@ from tests import (
 
 
 class TestUtilitiesDataMapper:
-    class _BadDict(UserDict[str, t.Container]):
+    class _BadDict(UserDict[str, t.JsonValue]):
         @override
-        def items(self) -> ItemsView[str, t.Container]:
+        def items(self) -> ItemsView[str, t.JsonValue]:
             msg = "Bad dict items"
             raise RuntimeError(msg)
 

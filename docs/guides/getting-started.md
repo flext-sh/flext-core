@@ -47,9 +47,11 @@ assert resolved.value == "flext-core"
 ## Dispatcher Walkthrough (Examples)
 
 ```python
-from examples.ex_04_flext_dispatcher import _Ex04Exercise
+from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
-_Ex04Exercise("docs/guides/getting-started.md").exercise()
+result = Ex04DispatchDsl.run()
+assert result.success
+assert result.value == "dispatcher-example"
 ```
 
 ## Next Steps

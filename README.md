@@ -119,10 +119,11 @@ assert scoped_result.success
 Route commands and queries with the dispatcher.
 
 ```python
-from examples.ex_04_flext_dispatcher import _Ex04Exercise
+from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
-demo = _Ex04Exercise("README.md")
-demo.exercise()
+result = Ex04DispatchDsl.run()
+assert result.success
+assert result.value == "dispatcher-example"
 ```
 
 ### Services & Domain Logic

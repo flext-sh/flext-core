@@ -44,13 +44,13 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_exclude_keys(
-        result: Mapping[str, t.Container],
+        result: Mapping[str, t.MetadataValue],
         *,
         exclude_keys: set[str] | None,
-    ) -> dict[str, t.Container] | Mapping[str, t.Container]:
+    ) -> dict[str, t.MetadataValue] | Mapping[str, t.MetadataValue]:
         """Apply exclude keys step."""
         if exclude_keys:
-            filtered_result: dict[str, t.Container] = dict(result)
+            filtered_result: dict[str, t.MetadataValue] = dict(result)
             for key in exclude_keys:
                 _ = filtered_result.pop(key, None)
             return filtered_result
@@ -58,13 +58,13 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_filter_keys(
-        result: Mapping[str, t.Container],
+        result: Mapping[str, t.MetadataValue],
         *,
         filter_keys: set[str] | None,
-    ) -> dict[str, t.Container] | Mapping[str, t.Container]:
+    ) -> dict[str, t.MetadataValue] | Mapping[str, t.MetadataValue]:
         """Apply filter keys step."""
         if filter_keys:
-            filtered_dict: dict[str, t.Container] = {}
+            filtered_dict: dict[str, t.MetadataValue] = {}
             for key in filter_keys:
                 if key in result:
                     filtered_dict[key] = result[key]
@@ -73,13 +73,13 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_map_keys(
-        result: Mapping[str, t.Container],
+        result: Mapping[str, t.MetadataValue],
         *,
         map_keys: t.StrMapping | None,
-    ) -> dict[str, t.Container] | Mapping[str, t.Container]:
+    ) -> dict[str, t.MetadataValue] | Mapping[str, t.MetadataValue]:
         """Apply map keys step."""
         if map_keys:
-            mapped_result: p.Result[dict[str, t.Container]] = (
+            mapped_result: p.Result[dict[str, t.MetadataValue]] = (
                 FlextUtilitiesMapper.map_dict_keys(
                     result,
                     map_keys,
@@ -92,29 +92,29 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _normalize_component(
         component: (
-            t.RuntimeData | Mapping[str, t.Container] | set[t.Container] | None
+            t.RuntimeData | Mapping[str, t.MetadataValue] | set[t.Container] | None
         ),
-    ) -> t.Container | t.FlatContainerList:
+    ) -> t.MetadataValue:
         """Flat-Container normalization via canonical ``FlextRuntime.normalize_to_metadata``."""
         if component is None:
             return ""
         if isinstance(component, set):
-            return [FlextRuntime.to_scalar(item) for item in component]
+            return [FlextRuntime.normalize_to_metadata(item) for item in component]
         return FlextRuntime.normalize_to_metadata(component)
 
     @staticmethod
     def _apply_normalize(
-        result: Mapping[str, t.Container],
+        result: Mapping[str, t.MetadataValue],
         *,
         normalize: bool,
-    ) -> dict[str, t.Container] | Mapping[str, t.Container]:
+    ) -> dict[str, t.MetadataValue] | Mapping[str, t.MetadataValue]:
         """Apply normalize step."""
         if normalize:
             normalized = FlextUtilitiesMapper._normalize_component(
                 {str(k): v for k, v in result.items()},
             )
             if FlextUtilitiesGuardsTypeCore.mapping(normalized):
-                normalized_result: dict[str, t.Container] = {}
+                normalized_result: dict[str, t.MetadataValue] = {}
                 for key, value in normalized.items():
                     normalized_result[str(key)] = value
                 return normalized_result
@@ -122,10 +122,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_strip_empty(
-        result: Mapping[str, t.Container],
+        result: Mapping[str, t.MetadataValue],
         *,
         strip_empty: bool,
-    ) -> Mapping[str, t.Container]:
+    ) -> Mapping[str, t.MetadataValue]:
         """Apply strip empty step."""
         if strip_empty:
             return FlextUtilitiesCollection.filter(
@@ -136,10 +136,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_strip_none(
-        result: Mapping[str, t.Container],
+        result: Mapping[str, t.MetadataValue],
         *,
         strip_none: bool,
-    ) -> Mapping[str, t.Container]:
+    ) -> Mapping[str, t.MetadataValue]:
         """Apply strip none step."""
         if strip_none:
             return FlextUtilitiesCollection.filter(result, lambda v: v is not None)
@@ -147,7 +147,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_transform_steps(
-        result: Mapping[str, t.Container],
+        result: Mapping[str, t.MetadataValue],
         *,
         normalize: bool,
         map_keys: t.StrMapping | None,
@@ -155,9 +155,9 @@ class FlextUtilitiesMapper:
         exclude_keys: set[str] | None,
         strip_none: bool,
         strip_empty: bool,
-    ) -> dict[str, t.Container] | Mapping[str, t.Container]:
+    ) -> dict[str, t.MetadataValue] | Mapping[str, t.MetadataValue]:
         """Apply transform steps to result dict."""
-        step: dict[str, t.Container] | Mapping[str, t.Container] = (
+        step: dict[str, t.MetadataValue] | Mapping[str, t.MetadataValue] = (
             FlextUtilitiesMapper._apply_normalize(result, normalize=normalize)
         )
         step = FlextUtilitiesMapper._apply_map_keys(step, map_keys=map_keys)
@@ -179,8 +179,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _normalize_accessible_value(
-        value: t.RuntimeData | p.Model | p.HasModelDump | p.ValidatorSpec,
-    ) -> t.RuntimeData | t.Container:
+        value: t.RuntimeData | p.Model | p.HasModelDump | p.ValidatorSpec | None,
+    ) -> t.RuntimeData | t.MetadataValue:
         """Normalize protocol-accessible values to canonical runtime/container shapes."""
         if value is None:
             return ""
@@ -207,14 +207,16 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_field_value(
-        item: t.RuntimeData | Mapping[str, t.Container] | Mapping[str, t.RuntimeData],
+        item: (
+            t.RuntimeData | Mapping[str, t.MetadataValue] | Mapping[str, t.RuntimeData]
+        ),
         field_name: str,
-    ) -> t.Container:
+    ) -> t.MetadataValue:
         """Extract field value from dict or model for pyrefly type inference."""
         if FlextUtilitiesGuardsTypeCore.mapping(item):
-            dict_item: dict[str, t.Container] = {}
+            dict_item: dict[str, t.MetadataValue] = {}
             for key, value in item.items():
-                coerced_value: t.Container = (
+                coerced_value: t.MetadataValue = (
                     value if FlextUtilitiesGuards.container(value) else str(value)
                 )
                 dict_item[str(key)] = coerced_value
@@ -249,14 +251,14 @@ class FlextUtilitiesMapper:
             t.RuntimeData
             | t.ContainerCarrier
             | FlextModelsContainers.ConfigMap
-            | Sequence[t.RuntimeData]
+            | Sequence[t.MetadataValue | t.RuntimeData]
             | None
         ),
         key_part: str,
     ) -> p.Result[t.RuntimeData]:
         """Get raw value from dict/object/model, returning found_none or not-found failures."""
         if isinstance(current, Mapping):
-            mapping_obj: Mapping[str, t.RuntimeData] = current
+            mapping_obj: Mapping[str, t.MetadataValue | t.RuntimeData] = current
             if key_part in mapping_obj:
                 return FlextUtilitiesMapper._resolve_raw_value(
                     mapping_obj[key_part],
@@ -315,11 +317,15 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_handle_array_index(
-        current: t.RuntimeData | t.ContainerCarrier | Sequence[t.RuntimeData],
+        current: (
+            t.RuntimeData
+            | t.ContainerCarrier
+            | Sequence[t.MetadataValue | t.RuntimeData]
+        ),
         array_match: str,
     ) -> p.Result[t.RuntimeData]:
         """Handle array indexing with negative index support."""
-        sequence: Sequence[t.RuntimeData]
+        sequence: Sequence[t.MetadataValue | t.RuntimeData]
         if isinstance(current, FlextModelsContainers.ObjectList):
             sequence = current.root
         elif isinstance(current, Sequence) and not isinstance(current, (str, bytes)):
@@ -370,9 +376,11 @@ class FlextUtilitiesMapper:
         key: str,
         *,
         default: t.RuntimeData | None = None,
-    ) -> t.RuntimeData | t.Container:
+    ) -> t.RuntimeData | t.MetadataValue:
         """Internal helper for raw get without DSL conversion."""
-        fallback: t.RuntimeData | t.Container = default if default is not None else ""
+        fallback: t.RuntimeData | t.MetadataValue = (
+            default if default is not None else ""
+        )
         match data:
             case dict() | Mapping():
                 if key not in data:
@@ -437,8 +445,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _deep_eq_values(
-        val_a: t.RuntimeData,
-        val_b: t.RuntimeData,
+        val_a: t.RuntimeData | t.MetadataValue,
+        val_b: t.RuntimeData | t.MetadataValue,
     ) -> bool:
         """Recursive deep equality for any two nested items."""
         if val_a is val_b:
@@ -468,8 +476,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def deep_eq(
-        a: Mapping[str, t.RuntimeData],
-        b: Mapping[str, t.RuntimeData],
+        a: Mapping[str, t.MetadataValue | t.RuntimeData],
+        b: Mapping[str, t.MetadataValue | t.RuntimeData],
     ) -> bool:
         """Recursive deep equality for nested dicts/lists/primitives."""
         if a is b:
@@ -664,7 +672,7 @@ class FlextUtilitiesMapper:
         key: str,
         *,
         default: t.RuntimeData | None = None,
-    ) -> t.RuntimeData | t.Container:
+    ) -> t.RuntimeData | t.MetadataValue:
         """Get value by key from dict/object, returning default if missing."""
         runtime_default: t.RuntimeData | None = (
             default
@@ -675,15 +683,15 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def map_dict_keys(
-        source: Mapping[str, t.Container],
+        source: Mapping[str, t.MetadataValue],
         key_mapping: t.StrMapping,
         *,
         keep_unmapped: bool = True,
-    ) -> p.Result[dict[str, t.Container]]:
+    ) -> p.Result[dict[str, t.MetadataValue]]:
         """Rename dict keys using old_key->new_key mapping."""
 
-        def _map_keys() -> dict[str, t.Container]:
-            result: dict[str, t.Container] = {}
+        def _map_keys() -> dict[str, t.MetadataValue]:
+            result: dict[str, t.MetadataValue] = {}
             for key, value in source.items():
                 new_key = key_mapping.get(key)
                 if new_key:
@@ -692,9 +700,9 @@ class FlextUtilitiesMapper:
                     result[key] = value
             return result
 
-        mapped_result = r[dict[str, t.Container]].create_from_callable(_map_keys)
+        mapped_result = r[dict[str, t.MetadataValue]].create_from_callable(_map_keys)
         return mapped_result.fold(
-            on_failure=lambda exc: r[dict[str, t.Container]].fail_op(
+            on_failure=lambda exc: r[dict[str, t.MetadataValue]].fail_op(
                 "map dict keys",
                 e.render_error_template(
                     c.ERR_TEMPLATE_FAILED_TO_MAP_DICT_KEYS,
@@ -714,12 +722,12 @@ class FlextUtilitiesMapper:
     @staticmethod
     def prop(
         key: str,
-    ) -> Callable[[t.ConfigModelInput], t.RuntimeData | t.Container]:
+    ) -> Callable[[t.ConfigModelInput], t.RuntimeData | t.MetadataValue]:
         """Return an accessor function that extracts the named property from an object."""
 
         def accessor(
             obj: t.ConfigModelInput,
-        ) -> t.RuntimeData | t.Container:
+        ) -> t.RuntimeData | t.MetadataValue:
             """Access property from object."""
             result = FlextUtilitiesMapper.map_get(obj, key)
             return result if result is not None else ""
@@ -728,19 +736,19 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _coerce_source_to_container_mapping(
-        source: Mapping[str, t.Container] | m.ConfigMap,
-    ) -> Mapping[str, t.Container]:
-        """Coerce ConfigMap (whose root may include BaseModel values) to ContainerMapping."""
+        source: Mapping[str, t.MetadataValue] | m.ConfigMap,
+    ) -> Mapping[str, t.MetadataValue]:
+        """Coerce ConfigMap to a metadata-compatible mapping for transform steps."""
         if isinstance(source, m.ConfigMap):
-            coerced: dict[str, t.Container] = {}
+            coerced: dict[str, t.MetadataValue] = {}
             for k, v in source.root.items():
-                coerced[str(k)] = v if FlextUtilitiesGuards.container(v) else str(v)
+                coerced[str(k)] = FlextRuntime.normalize_to_metadata(v)
             return coerced
         return source
 
     @staticmethod
     def transform(
-        source: Mapping[str, t.Container] | m.ConfigMap,
+        source: Mapping[str, t.MetadataValue] | m.ConfigMap,
         *,
         normalize: bool = False,
         strip_none: bool = False,
@@ -748,13 +756,13 @@ class FlextUtilitiesMapper:
         map_keys: t.StrMapping | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
-    ) -> p.Result[dict[str, t.Container] | Mapping[str, t.Container]]:
+    ) -> p.Result[dict[str, t.MetadataValue] | Mapping[str, t.MetadataValue]]:
         """Apply normalize/strip_none/strip_empty/map_keys/filter_keys/exclude_keys to a dict."""
         coerced_source = FlextUtilitiesMapper._coerce_source_to_container_mapping(
             source,
         )
         transform_result = r[
-            dict[str, t.Container] | Mapping[str, t.Container]
+            dict[str, t.MetadataValue] | Mapping[str, t.MetadataValue]
         ].create_from_callable(
             lambda: FlextUtilitiesMapper._apply_transform_steps(
                 dict(coerced_source),
@@ -768,7 +776,7 @@ class FlextUtilitiesMapper:
         )
         return transform_result.fold(
             on_failure=lambda exc: p.Result[
-                dict[str, t.Container] | Mapping[str, t.Container]
+                dict[str, t.MetadataValue] | Mapping[str, t.MetadataValue]
             ].fail_op("transform", exc),
             on_success=lambda _: transform_result,
         )

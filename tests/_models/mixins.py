@@ -76,7 +76,7 @@ class TestsFlextCoreModelsMixins:
     class _ValidationLikeError(ValueError):
         """Validation-like error for tests."""
 
-        def errors(self) -> Sequence[Mapping[str, t.Container]]:
+        def errors(self) -> Sequence[Mapping[str, t.MetadataValue]]:
             return [{"loc": ["value"], "msg": "bad value"}]
 
     type TestCaseMap = Mapping[str, t.Core.Tests.TestobjectSerializable]

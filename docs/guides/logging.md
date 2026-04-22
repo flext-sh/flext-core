@@ -51,15 +51,14 @@ _ = FlextLogger.clear_scope(scope)
 
 `clear_scope` removes context associated with that scope.
 
-## Level Context
+## Context Binding
 
-Use level context to enrich only specific levels (for example, DEBUG diagnostics).
+Use global context to enrich related log lines and clear it when the scope ends.
 
 ```python
 from flext_core import FlextLogger
 
-_ = FlextLogger.bind_context_for_level(
-    level="debug",
+_ = FlextLogger.bind_global_context(
     internal_state="cache-miss",
     debug_trace="trace-xyz",
 )
