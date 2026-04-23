@@ -5,6 +5,14 @@ the abstract hooks required by the ABCs are implemented - ``items``,
 ``keys``, ``values``, ``get``, ``update``, ``__contains__`` etc. come for
 free from the ABCs.
 
+Note: Pydantic's ``BaseModel.__iter__`` returns ``TupleGenerator`` while
+``MutableMapping.__iter__`` returns ``Iterator[K]``. This multi-inheritance
+is a known pydantic+collections tension — pyright flags the ``__iter__``
+and ``Sequence.__getitem__`` overrides as incompatible; the classes carry
+``@no_type_check`` to suppress this. Runtime behaviour favours the
+``MutableMapping``/``Sequence`` contract (key/value iteration, indexed
+access) which is what consumers rely on.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

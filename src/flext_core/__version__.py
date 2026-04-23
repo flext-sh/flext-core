@@ -48,10 +48,16 @@ class FlextVersion:
             )
             cls.__title__ = str(m.get("Name", ""))
             cls.__description__ = str(m.get("Summary", ""))
-            cls.__author__ = str(m.get("Author", ""))
+            cls.__author__ = str(
+                m.get("Author") or m.get("Author-Email") or "",
+            )
             cls.__author_email__ = str(m.get("Author-Email", ""))
-            cls.__license__ = str(m.get("License", ""))
-            cls.__url__ = str(m.get("Home-Page", ""))
+            cls.__license__ = str(
+                m.get("License-Expression") or m.get("License") or "",
+            )
+            cls.__url__ = str(
+                m.get("Home-Page") or m.get("Project-URL") or "",
+            )
 
     @classmethod
     def resolve_package_info(cls) -> t.StrMapping:

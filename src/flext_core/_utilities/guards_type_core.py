@@ -16,6 +16,8 @@ from collections.abc import (
 )
 from typing import TypeIs, no_type_check
 
+from pydantic import BaseModel as PydanticBaseModel
+
 from flext_core import t
 
 
@@ -30,14 +32,14 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def _object_sequence(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue,
+        value: t.GuardInput | t.JsonPayload | t.JsonValue | PydanticBaseModel,
     ) -> TypeIs[Sequence[t.JsonPayload]]:
         """Check if value is a sequence (list or tuple)."""
         return isinstance(value, (list, tuple))
 
     @staticmethod
     def _object_mapping(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue,
+        value: t.GuardInput | t.JsonPayload | t.JsonValue | PydanticBaseModel,
     ) -> TypeIs[Mapping[str, t.JsonPayload]]:
         """Check if value is a mapping type."""
         return isinstance(value, Mapping)
@@ -69,7 +71,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def container(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue | None,
+        value: t.GuardInput | t.JsonPayload | t.JsonValue | PydanticBaseModel | None,
     ) -> TypeIs[t.JsonValue]:
         """Check if value is a valid container (recursive validation).
 

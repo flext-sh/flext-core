@@ -364,15 +364,12 @@ class FlextProtocolsResult:
         @abstractmethod
         def __or__[D](self, default: D) -> T | D: ...
 
-        @override
         @abstractmethod
         def unwrap(self) -> T: ...
 
-        @override
         @abstractmethod
         def unwrap_or[D](self, default: D) -> T | D: ...
 
-        @override
         @abstractmethod
         def unwrap_or_else[D](self, func: Callable[[], D]) -> T | D: ...
 

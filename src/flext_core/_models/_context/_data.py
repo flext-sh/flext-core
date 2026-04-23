@@ -14,12 +14,10 @@ from typing import Annotated
 
 from pydantic import BeforeValidator, field_validator
 
-from flext_core import (
-    FlextModelsBase as m,
-    FlextModelsPydantic as mp,
-    c,
-    t,
-)
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core.constants import c
+from flext_core.typings import t
 
 
 class FlextModelsContextData:

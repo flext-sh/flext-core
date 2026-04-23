@@ -252,11 +252,11 @@ class FlextUtilitiesGuardsTypeProtocol:
         """Filter a service mapping to only registerable values."""
         if services is None:
             return None
-        return {
-            str(key): value
-            for key, value in services.items()
-            if FlextUtilitiesGuardsTypeProtocol.registerable_service(value)
-        }
+        filtered: dict[str, t.RegisterableService] = {}
+        for key, value in services.items():
+            if FlextUtilitiesGuardsTypeProtocol.registerable_service(value):
+                filtered[str(key)] = value
+        return filtered
 
     @staticmethod
     def handler(obj: t.GuardInput) -> bool:

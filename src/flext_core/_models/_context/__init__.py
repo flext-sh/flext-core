@@ -1,5 +1,11 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-"""Context package."""
+"""Private context model submodules.
+
+Imported internally by `flext_core._models.context`. Not part of the public
+surface; consumers should use `flext_core.m.Context.*` facades instead.
+
+Submodules are loaded lazily to avoid eager circular imports during
+``flext_core`` package initialization.
+"""
 
 from __future__ import annotations
 

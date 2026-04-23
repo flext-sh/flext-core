@@ -110,7 +110,7 @@ class FlextRuntime:
         return providers
 
     @staticmethod
-    def to_scalar[TItem](item: TItem) -> t.Scalar:
+    def to_scalar(item: t.GuardInput | None) -> t.Scalar:
         """Coerce any runtime value to ``t.Scalar`` (flat Container invariant)."""
         if item is None:
             return ""
@@ -429,21 +429,30 @@ class FlextRuntime:
             return val
         if isinstance(val, BaseModel):
             return FlextRuntime.normalize_to_metadata(val.model_dump())
+        normalized: (
+            t.JsonPayload
+            | AbstractSet[t.Scalar]
+            | dict[str, t.JsonPayload]
+            | list[t.JsonPayload]
+            | list[t.JsonValue]
+        )
         if isinstance(val, (mc.ConfigMap, mc.Dict, mc.ObjectList)):
-            val = val.root
+            normalized = val.root
         elif isinstance(val, AbstractSet):
-            val = [FlextRuntime._normalize_to_json_value(item) for item in val]
-        if isinstance(val, Mapping):
+            normalized = [FlextRuntime._normalize_to_json_value(item) for item in val]
+        else:
+            normalized = val
+        if isinstance(normalized, Mapping):
             return {
                 str(key): FlextRuntime.normalize_to_metadata(item)
-                for key, item in val.items()
+                for key, item in normalized.items()
             }
-        if isinstance(val, Sequence) and not isinstance(
-            val,
+        if isinstance(normalized, Sequence) and not isinstance(
+            normalized,
             (str, bytes, bytearray),
         ):
-            return [FlextRuntime.normalize_to_metadata(item) for item in val]
-        return str(val)
+            return [FlextRuntime.normalize_to_metadata(item) for item in normalized]
+        return str(normalized)
 
     @no_type_check
     class DependencyIntegration:

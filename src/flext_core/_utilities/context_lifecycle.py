@@ -22,7 +22,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     logger: ClassVar[p.Logger]
     state: m.ContextRuntimeState
-    initial_data: m.ContextData | m.ConfigMap | None
+    initial_data: m.ContextData | t.JsonValue | None
 
     _MERGEABLE_SCOPES: ClassVar[frozenset[str]] = frozenset({
         c.ContextScope.GLOBAL,

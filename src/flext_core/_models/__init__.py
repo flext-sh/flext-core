@@ -13,12 +13,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ("._context",),
     build_lazy_import_map(
         {
-            "._context._data": ("FlextModelsContextData",),
-            "._context._export": ("FlextModelsContextExport",),
-            "._context._metadata": ("FlextModelsContextMetadata",),
-            "._context._proxy_var": ("FlextModelsContextProxyVar",),
-            "._context._scope": ("FlextModelsContextScope",),
-            "._context._tokens": ("FlextModelsContextTokens",),
             ".base": ("FlextModelsBase",),
             ".builder": ("FlextModelsBuilder",),
             ".collections": ("FlextModelsCollections",),

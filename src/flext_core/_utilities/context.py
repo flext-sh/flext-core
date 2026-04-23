@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from flext_core import FlextModelsContextProxyVar, t
+from flext_core import FlextModelsContext, t
 
 
 class FlextUtilitiesContext:
@@ -22,9 +22,9 @@ class FlextUtilitiesContext:
     def create_str_proxy(
         key: str,
         default: str | None = None,
-    ) -> FlextModelsContextProxyVar.StructlogProxyContextVar[str]:
+    ) -> FlextModelsContext.StructlogProxyContextVar[str]:
         """Create StructlogProxyContextVar[str] instance."""
-        return FlextModelsContextProxyVar.StructlogProxyContextVar(
+        return FlextModelsContext.StructlogProxyContextVar(
             key,
             default=default,
         )
@@ -33,9 +33,9 @@ class FlextUtilitiesContext:
     def create_datetime_proxy(
         key: str,
         default: datetime | None = None,
-    ) -> FlextModelsContextProxyVar.StructlogProxyContextVar[datetime]:
+    ) -> FlextModelsContext.StructlogProxyContextVar[datetime]:
         """Create StructlogProxyContextVar[datetime] instance."""
-        return FlextModelsContextProxyVar.StructlogProxyContextVar(
+        return FlextModelsContext.StructlogProxyContextVar(
             key,
             default=default,
         )
@@ -44,9 +44,9 @@ class FlextUtilitiesContext:
     def create_dict_proxy(
         key: str,
         default: t.JsonMapping | None = None,
-    ) -> FlextModelsContextProxyVar.StructlogProxyContextVar[t.JsonMapping]:
+    ) -> FlextModelsContext.StructlogProxyContextVar[t.JsonMapping]:
         """Create StructlogProxyContextVar[dict] instance."""
-        return FlextModelsContextProxyVar.StructlogProxyContextVar(
+        return FlextModelsContext.StructlogProxyContextVar(
             key,
             default=default,
         )

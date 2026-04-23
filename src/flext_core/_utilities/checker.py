@@ -35,8 +35,12 @@ class FlextUtilitiesChecker:
     def _is_module_export_callable(
         value: Callable[..., t.ModuleExport] | t.GuardInput | None,
     ) -> TypeIs[Callable[..., t.ModuleExport]]:
-        """Narrow value to callable returning module exports."""
-        return callable(value)
+        """Narrow value to a callable returning module exports.
+
+        Excludes ``type`` objects (classes are callable but are not the
+        bound/free functions we expect as handle methods).
+        """
+        return callable(value) and not isinstance(value, type)
 
     @staticmethod
     def _is_subclass_of(candidate: t.TypeHintSpecifier, parent: type) -> bool:
@@ -156,6 +160,10 @@ class FlextUtilitiesChecker:
             None,
         )
         if not cls._is_module_export_callable(handle_method_raw):
+            return r[t.TypeHintSpecifier].fail(
+                c.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,
+            )
+        if isinstance(handle_method_raw, type):
             return r[t.TypeHintSpecifier].fail(
                 c.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,
             )

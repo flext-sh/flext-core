@@ -35,12 +35,6 @@ if _t.TYPE_CHECKING:
     from flext_core._exceptions.metrics import FlextExceptionsMetrics
     from flext_core._exceptions.template import FlextExceptionsTemplate
     from flext_core._exceptions.types import FlextExceptionsTypes
-    from flext_core._models._context._data import FlextModelsContextData
-    from flext_core._models._context._export import FlextModelsContextExport
-    from flext_core._models._context._metadata import FlextModelsContextMetadata
-    from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
-    from flext_core._models._context._scope import FlextModelsContextScope
-    from flext_core._models._context._tokens import FlextModelsContextTokens
     from flext_core._models.base import FlextModelsBase
     from flext_core._models.builder import FlextModelsBuilder
     from flext_core._models.collections import FlextModelsCollections
@@ -181,12 +175,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._exceptions.metrics": ("FlextExceptionsMetrics",),
             "._exceptions.template": ("FlextExceptionsTemplate",),
             "._exceptions.types": ("FlextExceptionsTypes",),
-            "._models._context._data": ("FlextModelsContextData",),
-            "._models._context._export": ("FlextModelsContextExport",),
-            "._models._context._metadata": ("FlextModelsContextMetadata",),
-            "._models._context._proxy_var": ("FlextModelsContextProxyVar",),
-            "._models._context._scope": ("FlextModelsContextScope",),
-            "._models._context._tokens": ("FlextModelsContextTokens",),
             "._models.base": ("FlextModelsBase",),
             "._models.builder": ("FlextModelsBuilder",),
             "._models.collections": ("FlextModelsCollections",),
@@ -379,12 +367,6 @@ __all__: list[str] = [
     "FlextModelsContainer",
     "FlextModelsContainers",
     "FlextModelsContext",
-    "FlextModelsContextData",
-    "FlextModelsContextExport",
-    "FlextModelsContextMetadata",
-    "FlextModelsContextProxyVar",
-    "FlextModelsContextScope",
-    "FlextModelsContextTokens",
     "FlextModelsCqrs",
     "FlextModelsDispatcher",
     "FlextModelsDomainEvent",
