@@ -30,7 +30,7 @@ describes the dependency rules and per-layer responsibilities.
 │  L3: Application                    │  dispatcher.py, handlers.py, decorators.py
 │  (orchestration & middleware)       │  _dispatcher/reliability.py, _dispatcher/timeout.py
 ├─────────────────────────────────────┤
-│  L2: Domain & Infrastructure        │  models.py, _models/*, mixins.py, service.py
+│  L2: Domain & Infrastructure        │  models.py, models/*, mixins.py, service.py
 │  (DDD, DI, settings, context)         │  utilities.py, _utilities/*, settings.py, context.py,
 │                                     │  loggings.py, container.py
 ├─────────────────────────────────────┤
@@ -82,7 +82,7 @@ from flext_core import FlextDispatcher  # not allowed inside result.py
 
 - **L2 – Domain & Infrastructure**
 
-  - Domain modules (`models.py`, `_models/`, `mixins.py`, `service.py`) wrap
+  - Domain modules (`models.py`, `models/`, `mixins.py`, `service.py`) wrap
     Pydantic v2 for aggregates, events, validators, and cross-cutting mixins
     (timestamps, versioning, soft deletes).
   - Infrastructure modules carry operational concerns: `settings.py` (settings),

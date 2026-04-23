@@ -65,7 +65,7 @@ class FlextConstantsEnforcement:
         "flext_core._typings",
         "flext_core.runtime",
         "flext_core.loggings",
-        "flext_core._models._context",
+        "flext_core._models.context",
         "flext_core._utilities.logging_config",
         "flext_core._utilities.parser",
         "flext_core._utilities.reliability",
@@ -496,7 +496,7 @@ class FlextConstantsEnforcement:
             EnforcementCategory.NAMESPACE,
             EnforcementLayer.NAMESPACE,
             EnforcementSeverity.BEST_PRACTICES,
-            "sibling _models/* import used only in annotation must be TYPE_CHECKING (R9)",
+            "sibling models/* import used only in annotation must be TYPE_CHECKING (R9)",
             "Wrap annotation-only imports under `if TYPE_CHECKING:`.",
         ),
         "utilities_explicit_class_when_self_ref": (
@@ -524,7 +524,7 @@ class FlextConstantsEnforcement:
     """The five canonical facade files per project (AGENTS.md §2.2)."""
 
     ENFORCEMENT_PYDANTIC_ALLOWED_MODULES: Final[frozenset[str]] = frozenset({
-        "flext_core._models",
+        "flext_core.models",
         "flext_core._utilities",
         "flext_core._protocols",
         "flext_core._constants",

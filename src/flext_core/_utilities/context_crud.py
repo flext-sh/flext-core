@@ -28,8 +28,8 @@ from flext_core import (
 class FlextUtilitiesContextCrud(ucs):
     """CRUD operations on context scopes for FlextContext."""
 
-    _logger: ClassVar[p.Logger]
-    _state: m.ContextRuntimeState
+    logger: ClassVar[p.Logger]
+    state: m.ContextRuntimeState
 
     @staticmethod
     def _propagate_to_logger(
@@ -69,13 +69,13 @@ class FlextUtilitiesContextCrud(ucs):
 
     def clear(self) -> None:
         """Clear all data from the context including metadata."""
-        if not self._state.active:
+        if not self.state.active:
             return
-        for scope_name, ctx_var in self._state.scope_vars.items():
+        for scope_name, ctx_var in self.state.scope_vars.items():
             _ = ctx_var.set(m.ConfigMap(root={}))
             if scope_name == c.ContextScope.GLOBAL:
                 _ = u.clear_global_context()
-        self._state = self._state.model_copy(
+        self.state = self.state.model_copy(
             update={"metadata": m.Metadata()},
         ).with_operation_update(c.ContextOperation.CLEAR.value)
 
@@ -87,7 +87,7 @@ class FlextUtilitiesContextCrud(ucs):
         Fast fail: Returns r[t.JsonValue] - fails if key not found.
         No fallback behavior - use r monadic operations for defaults.
         """
-        if not self._state.active:
+        if not self.state.active:
             return r[t.JsonPayload].fail_op(
                 "get context value", c.ERR_CONTEXT_NOT_ACTIVE
             )
@@ -110,19 +110,19 @@ class FlextUtilitiesContextCrud(ucs):
 
     def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
         """Get metadata from the context."""
-        if key not in self._state.metadata.attributes:
+        if key not in self.state.metadata.attributes:
             return r[t.JsonPayload].fail_op(
                 "resolve context metadata",
                 c.ERR_CONTEXT_METADATA_KEY_NOT_FOUND.format(key=key),
             )
-        raw_value: t.JsonValue = self._state.metadata.attributes[key]
+        raw_value: t.JsonValue = self.state.metadata.attributes[key]
         normalized_value = FlextRuntime.normalize_to_container(raw_value)
         return r[t.JsonPayload].ok(normalized_value)
 
     def apply_metadata(self, key: str, value: t.JsonValue) -> None:
         """Set metadata via Pydantic immutable copy DSL."""
-        meta = self._state.metadata
-        self._state = self._state.model_copy(
+        meta = self.state.metadata
+        self.state = self.state.model_copy(
             update={
                 "metadata": meta.model_copy(
                     update={
@@ -134,18 +134,18 @@ class FlextUtilitiesContextCrud(ucs):
 
     def has(self, key: str, scope: str = c.ContextScope.GLOBAL) -> bool:
         """Check if a key exists in the context."""
-        if not self._state.active:
+        if not self.state.active:
             return False
         scope_data = self._contextvar_data(scope)
         return key in scope_data
 
     def items(self) -> Sequence[tuple[str, t.JsonValue]]:
         """Get all items (key-value pairs) in the context."""
-        if not self._state.active:
+        if not self.state.active:
             return []
         return [
             item
-            for ctx_var in self._state.scope_vars.values()
+            for ctx_var in self.state.scope_vars.values()
             for item in self._narrow_contextvar_to_configuration_dict(
                 ctx_var.get(),
             ).items()
@@ -153,28 +153,28 @@ class FlextUtilitiesContextCrud(ucs):
 
     def keys(self) -> t.StrSequence:
         """Get all keys in the context."""
-        if not self._state.active:
+        if not self.state.active:
             return list[str]()
         all_keys: set[str] = set()
-        for ctx_var in self._state.scope_vars.values():
+        for ctx_var in self.state.scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_keys.update(scope_dict.keys())
         return list(all_keys)
 
     def values(self) -> t.JsonList:
         """Get all values in the context."""
-        if not self._state.active:
+        if not self.state.active:
             empty_values: t.JsonList = []
             return empty_values
         all_values: list[t.JsonValue] = []
-        for ctx_var in self._state.scope_vars.values():
+        for ctx_var in self.state.scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_values.extend(scope_dict.values())
         return all_values
 
     def remove(self, key: str, scope: str = c.ContextScope.GLOBAL) -> None:
         """Remove a key from the context."""
-        if not self._state.active:
+        if not self.state.active:
             return
         ctx_var = self._scope_var(scope)
         current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
@@ -183,7 +183,7 @@ class FlextUtilitiesContextCrud(ucs):
             try:
                 _ = ctx_var.set(m.ConfigMap(root=dict(filtered)))
             except (TypeError, ValueError, AttributeError) as exc:
-                self._logger.debug(
+                self.logger.debug(
                     "Failed to validate context after removal",
                     exc_info=exc,
                 )
@@ -215,7 +215,7 @@ class FlextUtilitiesContextCrud(ucs):
         scope: str = c.ContextScope.GLOBAL,
     ) -> p.Result[bool]:
         """Set one or many values in the context."""
-        if not self._state.active:
+        if not self.state.active:
             return r[bool].fail_op("set context value", c.ERR_CONTEXT_NOT_ACTIVE)
         if not isinstance(key_or_data, str):
             return self._apply_bulk(key_or_data, scope)

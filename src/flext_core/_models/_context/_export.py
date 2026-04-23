@@ -17,10 +17,10 @@ from pydantic import BeforeValidator, Field
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsContainers,
-    FlextModelsContextData,
     FlextModelsEntity,
     t,
 )
+from flext_core._models._context._data import FlextModelsContextData
 
 
 class FlextModelsContextExport:

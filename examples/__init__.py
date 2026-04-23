@@ -16,9 +16,6 @@ if _t.TYPE_CHECKING:
     from examples._models.ex00 import ExamplesFlextCoreModelsEx00
     from examples._models.ex01 import ExamplesFlextCoreModelsEx01
     from examples._models.ex02 import (
-        Ex02CacheService,
-        Ex02DatabaseService,
-        Ex02EmailService,
         ExamplesFlextCoreModelsEx02,
         ExamplesFlextCoreSettingsEx02TestConfig,
     )
@@ -30,34 +27,9 @@ if _t.TYPE_CHECKING:
         Ex03User,
         ExamplesFlextCoreModelsEx03,
     )
-    from examples._models.ex04 import (
-        Ex04AutoCommand,
-        Ex04CreateUser,
-        Ex04DeleteUser,
-        Ex04FailingDelete,
-        Ex04GetUser,
-        Ex04NoSubscriberEvent,
-        Ex04Ping,
-        Ex04UnknownQuery,
-        Ex04UserCreated,
-        ExamplesFlextCoreModelsEx04,
-    )
-    from examples._models.ex05 import (
-        Ex05BadProcessor,
-        Ex05GoodProcessor,
-        Ex05HandlerBad,
-        Ex05HandlerLike,
-        Ex05StatusEnum,
-        Ex05UserModel,
-        ExamplesFlextCoreModelsEx05,
-    )
-    from examples._models.ex07 import (
-        Ex07CreateUserCommand,
-        Ex07DemoPlugin,
-        Ex07GetUserQuery,
-        Ex07UserCreatedEvent,
-        ExamplesFlextCoreModelsEx07,
-    )
+    from examples._models.ex04 import ExamplesFlextCoreModelsEx04
+    from examples._models.ex05 import ExamplesFlextCoreModelsEx05
+    from examples._models.ex07 import ExamplesFlextCoreModelsEx07
     from examples._models.ex08 import Ex08Order, Ex08User, ExamplesFlextCoreModelsEx08
     from examples._models.ex10 import (
         Ex10CommandBusStub,
@@ -121,9 +93,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._models.ex00": ("ExamplesFlextCoreModelsEx00",),
             "._models.ex01": ("ExamplesFlextCoreModelsEx01",),
             "._models.ex02": (
-                "Ex02CacheService",
-                "Ex02DatabaseService",
-                "Ex02EmailService",
                 "ExamplesFlextCoreModelsEx02",
                 "ExamplesFlextCoreSettingsEx02TestConfig",
             ),
@@ -135,34 +104,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "Ex03User",
                 "ExamplesFlextCoreModelsEx03",
             ),
-            "._models.ex04": (
-                "Ex04AutoCommand",
-                "Ex04CreateUser",
-                "Ex04DeleteUser",
-                "Ex04FailingDelete",
-                "Ex04GetUser",
-                "Ex04NoSubscriberEvent",
-                "Ex04Ping",
-                "Ex04UnknownQuery",
-                "Ex04UserCreated",
-                "ExamplesFlextCoreModelsEx04",
-            ),
-            "._models.ex05": (
-                "Ex05BadProcessor",
-                "Ex05GoodProcessor",
-                "Ex05HandlerBad",
-                "Ex05HandlerLike",
-                "Ex05StatusEnum",
-                "Ex05UserModel",
-                "ExamplesFlextCoreModelsEx05",
-            ),
-            "._models.ex07": (
-                "Ex07CreateUserCommand",
-                "Ex07DemoPlugin",
-                "Ex07GetUserQuery",
-                "Ex07UserCreatedEvent",
-                "ExamplesFlextCoreModelsEx07",
-            ),
+            "._models.ex04": ("ExamplesFlextCoreModelsEx04",),
+            "._models.ex05": ("ExamplesFlextCoreModelsEx05",),
+            "._models.ex07": ("ExamplesFlextCoreModelsEx07",),
             "._models.ex08": (
                 "Ex08Order",
                 "Ex08User",
@@ -261,9 +205,6 @@ install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 __all__: list[str] = [
     "DatabaseService",
     "Ex01r",
-    "Ex02CacheService",
-    "Ex02DatabaseService",
-    "Ex02EmailService",
     "Ex02FlextSettings",
     "Ex03Email",
     "Ex03LoggingDsl",
@@ -271,29 +212,10 @@ __all__: list[str] = [
     "Ex03Order",
     "Ex03OrderItem",
     "Ex03User",
-    "Ex04AutoCommand",
-    "Ex04CreateUser",
-    "Ex04DeleteUser",
     "Ex04DispatchDsl",
-    "Ex04FailingDelete",
-    "Ex04GetUser",
-    "Ex04NoSubscriberEvent",
-    "Ex04Ping",
-    "Ex04UnknownQuery",
-    "Ex04UserCreated",
-    "Ex05BadProcessor",
     "Ex05FlextMixins",
-    "Ex05GoodProcessor",
-    "Ex05HandlerBad",
-    "Ex05HandlerLike",
-    "Ex05StatusEnum",
-    "Ex05UserModel",
     "Ex06FlextContext",
-    "Ex07CreateUserCommand",
-    "Ex07DemoPlugin",
     "Ex07FlextExceptions",
-    "Ex07GetUserQuery",
-    "Ex07UserCreatedEvent",
     "Ex08FlextContainer",
     "Ex08Order",
     "Ex08User",

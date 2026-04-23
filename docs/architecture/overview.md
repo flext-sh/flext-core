@@ -33,7 +33,7 @@ Canonical references:
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │             Domain & Infrastructure Services (L2)           │
-│  models.py, _models/*, mixins.py, service.py                │
+│  models.py, models/*, mixins.py, service.py                │
 │  utilities.py, _utilities/*, settings.py, context.py          │
 │  loggings.py, container.py                                  │
 └─────────────────────────────────────────────────────────────┘
@@ -72,7 +72,7 @@ Canonical references:
 
 - **L2 – domain and infrastructure services**
 
-  - Domain façade modules (`models.py`, `_models/*`, `mixins.py`, `service.py`)
+  - Domain façade modules (`models.py`, `models/*`, `mixins.py`, `service.py`)
     host Pydantic-backed DDD entities, aggregates, validators, and mixins for
     timestamps, versioning, and domain events.
   - Infrastructure sits beside the domain types: `settings.py` (settings via

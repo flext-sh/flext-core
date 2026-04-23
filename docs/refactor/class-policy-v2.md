@@ -9,7 +9,7 @@
 
 ## Matriz por Familia
 
-- `_models`: composicao sob `m`, bloqueado para `u/d/dispatcher`
+- `models`: composicao sob `m`, bloqueado para `u/d/dispatcher`
 - `_utilities`: consolidacao sob `u`, mudanca de assinatura exige validacao
 - `_dispatcher`: consolidacao sob `FlextDispatcher`, propagacao cross-project obrigatoria
 - `_decorators`: consolidacao em namespace de decorators, contrato callable preservado
@@ -36,7 +36,7 @@
 
 ## Nao Simplificar `_private`
 
-- `_models`, `_utilities`, `_dispatcher`, `_decorators`, `_runtime` possuem politicas distintas
+- `models`, `_utilities`, `_dispatcher`, `_decorators`, `_runtime` possuem politicas distintas
 - Misturar familias quebra contratos de namespace e MRO
 - O pipeline deve bloquear transformacoes fora da politica declarada
 

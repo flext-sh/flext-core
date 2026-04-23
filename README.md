@@ -230,7 +230,7 @@ FLEXT-Core exports 90+ symbols via automatic lazy loading:
 
 - `_constants/` → 11 submódules
 - `_exceptions/` → 6 submódules  
-- `_models/` → 17 submódules
+- `models/` → 17 submódules
 - `_protocols/` → 9 submódules
 - `_typings/` → 7 submódules
 - `_utilities/` → 20 submódules

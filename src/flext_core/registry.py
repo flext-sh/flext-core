@@ -252,26 +252,26 @@ class FlextRegistry(s[bool]):
             r[bool]: Success if dispatcher is configured, failure otherwise.
 
         """
-        dispatcher = self._state.dispatcher
+        dispatcher = self.state.dispatcher
         if dispatcher is None or (not dispatcher):
             return e.fail_operation("execute registry", c.ERR_DISPATCHER_NOT_CONFIGURED)
         return r[bool].ok(True)
 
     def _remember_registered_key(self, key: str) -> None:
         """Persist one instance-scoped registry key via immutable model state."""
-        self._state = self._state.model_copy(
+        self.state = self.state.model_copy(
             update={
-                "registered_keys": self._state.registered_keys | frozenset({key}),
+                "registered_keys": self.state.registered_keys | frozenset({key}),
             },
         )
 
     def _forget_registered_key(self, key: str) -> None:
         """Remove one instance-scoped registry key via immutable model state."""
-        self._state = self._state.model_copy(
+        self.state = self.state.model_copy(
             update={
                 "registered_keys": frozenset(
                     existing_key
-                    for existing_key in self._state.registered_keys
+                    for existing_key in self.state.registered_keys
                     if existing_key != key
                 ),
             },
@@ -292,7 +292,7 @@ class FlextRegistry(s[bool]):
         """
         key = f"{category}::{name}"
         if scope == c.RegistrationScope.INSTANCE:
-            if key not in self._state.registered_keys:
+            if key not in self.state.registered_keys:
                 return e.fail_not_found(category, name)
             raw_result = self.container.resolve(key)
             if raw_result.failure:
@@ -323,7 +323,7 @@ class FlextRegistry(s[bool]):
             r[t.StrSequence]: Success with list of plugin names.
 
         """
-        keys = self._state.registered_keys
+        keys = self.state.registered_keys
         if scope == c.RegistrationScope.CLASS:
             keys = self._class_registered_keys
         plugins = [k.split("::")[1] for k in keys if k.startswith(f"{category}::")]
@@ -414,7 +414,7 @@ class FlextRegistry(s[bool]):
         # Standard Dispatcher registration avoids passing name/metadata
         # as it discovers routes from the handler itself.
         registration_handler: t.DispatchableHandler = handler
-        dispatcher = self._state.dispatcher
+        dispatcher = self.state.dispatcher
         if dispatcher is None:
             return e.fail_operation(
                 "register handler in registry",
@@ -517,7 +517,7 @@ class FlextRegistry(s[bool]):
                 return e.fail_operation("validate plugin registration", exc)
         key = f"{category}::{name}"
         if scope == c.RegistrationScope.INSTANCE:
-            if key in self._state.registered_keys:
+            if key in self.state.registered_keys:
                 return r[bool].ok(True)
             normalized_plugin = self._normalize_registration_impl(plugin)
             self.container.bind(key, normalized_plugin)
@@ -552,7 +552,7 @@ class FlextRegistry(s[bool]):
         """
         key = f"{category}::{name}"
         if scope == c.RegistrationScope.INSTANCE:
-            if key not in self._state.registered_keys:
+            if key not in self.state.registered_keys:
                 return e.fail_not_found(category, name)
             self._forget_registered_key(key)
             return r[bool].ok(True)

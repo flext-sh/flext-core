@@ -31,15 +31,15 @@ from flext_core import (
 class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
     """Scope variable access, update, and statistics helpers for FlextContext."""
 
-    _logger: ClassVar[p.Logger]
-    _state: m.ContextRuntimeState
+    logger: ClassVar[p.Logger]
+    state: m.ContextRuntimeState
 
     def _scope_var(
         self,
         scope: str,
     ) -> contextvars.ContextVar[m.ConfigMap | None]:
         """Get or create contextvar for scope."""
-        self._state, scope_var = self._state.resolve_scope_var(scope)
+        self.state, scope_var = self.state.resolve_scope_var(scope)
         return scope_var
 
     def _contextvar_data(self, scope: str) -> t.JsonMapping:
@@ -54,10 +54,10 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
 
     def _scope_payloads(self) -> Mapping[str, t.JsonMapping]:
         """Get all scope registrations."""
-        if not self._state.active:
+        if not self.state.active:
             return {}
         scopes: MutableMapping[str, t.JsonMapping] = {}
-        for scope_name, ctx_var in self._state.scope_vars.items():
+        for scope_name, ctx_var in self.state.scope_vars.items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
                 scopes[scope_name] = dict(scope_dict)
@@ -89,7 +89,7 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
 
     def _update_statistics(self, operation: str) -> None:
         """Update statistics counter for an operation (DRY helper)."""
-        self._state = self._state.with_operation_update(operation)
+        self.state = self.state.with_operation_update(operation)
 
     def _execute_hooks(
         self,
@@ -97,9 +97,9 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
         event_data: t.JsonPayload | Mapping[str, t.JsonPayload],
     ) -> None:
         """Execute hooks for an event (DRY helper)."""
-        if event not in self._state.hooks:
+        if event not in self.state.hooks:
             return
-        hooks = self._state.hooks[event]
+        hooks = self.state.hooks[event]
         for hook in hooks:
             if callable(hook):
                 hook_data: t.Scalar
@@ -113,7 +113,7 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
 
     def _metadata_map(self) -> Mapping[str, t.JsonPayload]:
         """Get all metadata from the context."""
-        data = dict(self._state.metadata.model_dump())
+        data = dict(self.state.metadata.model_dump())
         custom_fields_raw = data.pop("custom_fields", {})
         custom_fields_dict: dict[str, t.JsonPayload] = {}
         try:
@@ -121,7 +121,7 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
             for ck, cv in cf_map.items():
                 custom_fields_dict[ck] = FlextRuntime.normalize_to_container(cv)
         except (TypeError, ValueError, AttributeError) as exc:
-            self._logger.debug(
+            self.logger.debug(
                 "Custom metadata field normalization failed",
                 exc_info=exc,
             )

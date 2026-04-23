@@ -1,6 +1,6 @@
 """Container models - Dependency Injection registry models.
 
-TIER 0.5: Uses only stdlib + pydantic + _models/metadata.py
+TIER 0.5: Uses only stdlib + pydantic + models/metadata.py
 (avoids cycles via __init__.py).
 
 This module contains Pydantic models for FlextContainer that implement

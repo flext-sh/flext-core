@@ -25,7 +25,7 @@ class TestService100Coverage:
         __test__ = False
 
         @override
-        def execute(self, **_kwargs: t.Scalar) -> p.Result[str]:
+        def execute(self, **kwargs: t.Scalar) -> p.Result[str]:
             """Execute service."""
             return r[str].ok("success")
 
@@ -35,7 +35,7 @@ class TestService100Coverage:
         __test__ = False
 
         @override
-        def execute(self, **_kwargs: t.Scalar) -> p.Result[str]:
+        def execute(self, **kwargs: t.Scalar) -> p.Result[str]:
             """Execute service."""
             return r[str].ok("validated")
 

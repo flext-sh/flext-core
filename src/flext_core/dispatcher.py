@@ -28,7 +28,7 @@ class FlextDispatcher:
     def __init__(self) -> None:
         """Initialize dispatcher."""
         super().__init__()
-        self._logger = u.fetch_logger(__name__)
+        self.logger = u.fetch_logger(__name__)
         self._handlers: t.RegistryDict[
             tuple[t.DispatchableHandler, t.RoutedHandlerCallable]
         ] = {}
@@ -171,7 +171,7 @@ class FlextDispatcher:
                     resolved_handler,
                     accepted_message_types,
                 ))
-                self._logger.info(
+                self.logger.info(
                     c.LOG_REGISTERED_AUTO_DISCOVERY_HANDLER,
                     handler=str(handler),
                 )
@@ -185,10 +185,10 @@ class FlextDispatcher:
                 handler,
                 resolved_handler,
             ))
-            self._logger.info(c.LOG_REGISTERED_EVENT_SUBSCRIBER, route=route_name)
+            self.logger.info(c.LOG_REGISTERED_EVENT_SUBSCRIBER, route=route_name)
         else:
             self._handlers[route_name] = (handler, resolved_handler)
-            self._logger.info(c.LOG_REGISTERED_HANDLER, route=route_name)
+            self.logger.info(c.LOG_REGISTERED_HANDLER, route=route_name)
         return r[bool].ok(True)
 
     def _execute_handler(
@@ -244,7 +244,7 @@ class FlextDispatcher:
             LookupError,
             ArithmeticError,
         ) as exc:
-            self._logger.exception(c.LOG_HANDLER_EXECUTION_FAILED, route=route_name)
+            self.logger.exception(c.LOG_HANDLER_EXECUTION_FAILED, route=route_name)
             return dispatch_result.fail_op(
                 "execute resolved handler",
                 exc,

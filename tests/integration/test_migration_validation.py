@@ -98,7 +98,7 @@ class TestMigrationValidation:
         class UserService(s[None]):
             """User service extending s."""
 
-            _logger: p.Logger = u.PrivateAttr(
+            logger: p.Logger = u.PrivateAttr(
                 default_factory=lambda: u.fetch_logger(__name__),
             )
 
@@ -107,7 +107,7 @@ class TestMigrationValidation:
                 super().model_post_init(__context)
 
             @override
-            def execute(self, **_kwargs: t.Scalar) -> p.Result[None]:
+            def execute(self, **kwargs: t.Scalar) -> p.Result[None]:
                 """Execute method required by s abstract class."""
                 return r[None].ok(None)
 
@@ -119,7 +119,7 @@ class TestMigrationValidation:
                 """Create user with validation."""
                 if not username or not email:
                     return r[t.StrMapping].fail("Username and email required")
-                self._logger.info("Creating user", username=username)
+                self.logger.info("Creating user", username=username)
                 user_data = {"username": username, "email": email}
                 return r[t.StrMapping].ok(user_data)
 

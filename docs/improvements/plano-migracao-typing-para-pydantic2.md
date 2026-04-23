@@ -21,8 +21,8 @@ No estado atual de `flext-core`, a fachada `FlextModels` cresce com muitas subcl
 
 - Reexports flat e wrappers em `models.py` (ex.: snapshots/progress/handler/settings).
 - Duplicidade semântica explícita (`ProcessingRequest`/`ProcessingConfig`, `CollectionsCategories`/`Categories`, versões flat e aninhadas de handler).
-- Base comum clara em `_models/base.py` para consolidar comportamento de validação.
-- Containers com API compartilhada em `_models/containers.py`, com espaço para redução de wrappers sem semântica real.
+- Base comum clara em `models/base.py` para consolidar comportamento de validação.
+- Containers com API compartilhada em `models/containers.py`, com espaço para redução de wrappers sem semântica real.
 
 ______________________________________________________________________
 
@@ -45,8 +45,8 @@ ______________________________________________________________________
 
 ## 3.1 Camadas
 
-- **Foundation (`_models/base.py`)**: políticas de validação e mutabilidade.
-- **Domain (`_models/*.py`)**: modelos reais por contexto.
+- **Foundation (`models/base.py`)**: políticas de validação e mutabilidade.
+- **Domain (`models/*.py`)**: modelos reais por contexto.
 - **Facade (`models.py`)**: apenas o mínimo canônico para API pública.
 
 ## 3.2 Regras de aceitação para novo modelo público
@@ -88,7 +88,7 @@ Critério de aceite:
 
 Ações:
 
-- alinhar todos os modelos de `_models/*` às 4 bases de intenção da foundation;
+- alinhar todos os modelos de `models/*` às 4 bases de intenção da foundation;
 - eliminar `model_config` duplicado quando a base já cobre;
 - consolidar validações comuns em pontos únicos.
 
@@ -136,7 +136,7 @@ ______________________________________________________________________
 - Dois nomes públicos para o mesmo conceito.
 - `Mapping[str, Any]` em fronteira pública quando há modelo.
 - `model_config` copiado sem necessidade.
-- expansão da fachada como espelho completo de `_models`.
+- expansão da fachada como espelho completo de `models`.
 
 ______________________________________________________________________
 

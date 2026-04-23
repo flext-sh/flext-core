@@ -74,30 +74,30 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: dict[str, t.JsonValue] = {}
+                self.config: dict[str, t.JsonValue] = {}
 
             def with_database(self, host: str, port: int) -> Self:
                 """Add database configuration."""
-                self._config["database"] = {"host": host, "port": port}
+                self.config["database"] = {"host": host, "port": port}
                 return self
 
             def with_logging(self, level: str) -> Self:
                 """Add logging configuration."""
-                self._config["logging"] = {"level": level}
+                self.config["logging"] = {"level": level}
                 return self
 
             def with_cache(self, *, enabled: bool) -> Self:
                 """Add cache configuration."""
-                self._config["cache"] = {"enabled": enabled}
+                self.config["cache"] = {"enabled": enabled}
                 return self
 
             def build(self) -> p.Result[Mapping[str, t.JsonValue]]:
                 """Build the configuration."""
-                if not self._config:
+                if not self.config:
                     return r[Mapping[str, t.JsonValue]].fail(
                         "Configuration cannot be empty",
                     )
-                return r[Mapping[str, t.JsonValue]].ok(dict(self._config))
+                return r[Mapping[str, t.JsonValue]].ok(dict(self.config))
 
         config_result = (
             ConfigurationBuilder()

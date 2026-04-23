@@ -38,10 +38,10 @@ class TestDecoratorsFullCoverage:
         def error(self, message: str, **kwargs: t.Scalar) -> None:
             self.error_calls.append((message, kwargs))
 
-        def info(self, _message: str, **_kwargs: t.Scalar) -> None:
+        def info(self, message: str, **kwargs: t.Scalar) -> None:
             return None
 
-        def debug(self, _message: str, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+        def debug(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
             return None
 
         def exception(self, message: str, **kwargs: t.Scalar) -> None:
@@ -71,7 +71,7 @@ class TestDecoratorsFullCoverage:
 
         class _Container:
             @staticmethod
-            def resolve(_name: str) -> p.Result[str]:
+            def resolve(name: str) -> p.Result[str]:
                 return r[str].ok("dep")
 
         monkeypatch.setattr(
@@ -92,13 +92,13 @@ class TestDecoratorsFullCoverage:
     ) -> None:
         fake_logger = self._FakeLogger()
 
-        def _bind_operation_context(**_kwargs: t.Scalar) -> str:
+        def _bind_operation_context(**kwargs: t.Scalar) -> str:
             return "cid-1"
 
-        def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
+        def _clear_operation_scope(**kwargs: t.Scalar) -> None:
             return None
 
-        def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
+        def _logger_factory(module: str) -> TestDecoratorsFullCoverage._FakeLogger:
             return fake_logger
 
         monkeypatch.setattr(
@@ -139,19 +139,19 @@ class TestDecoratorsFullCoverage:
         _ = self
 
         def _execute_retry_loop(
-            _call: Callable[[], str],
-            _func_name: str,
-            _logger: p.Logger,
+            call: Callable[[], str],
+            func_name: str,
+            logger: p.Logger,
             *,
             retry_settings: m.RetryConfiguration,
         ) -> Exception:
             _ = retry_settings
             return ValueError("failed")
 
-        def _handle_retry_exhaustion(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+        def _handle_retry_exhaustion(*args: t.Scalar, **kwargs: t.Scalar) -> None:
             return None
 
-        def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
+        def _logger_factory(module: str) -> TestDecoratorsFullCoverage._FakeLogger:
             return TestDecoratorsFullCoverage._FakeLogger()
 
         monkeypatch.setattr(
@@ -232,7 +232,7 @@ class TestDecoratorsFullCoverage:
 
         fake_logger = self._FakeLogger()
 
-        def fn(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+        def fn(*args: t.Scalar, **kwargs: t.Scalar) -> None:
             return None
 
         handle_retry_exhaustion = getattr(d, "_handle_retry_exhaustion")
@@ -252,7 +252,7 @@ class TestDecoratorsFullCoverage:
         fake_logger = self._FakeLogger()
         _ = FlextContext.Variables.CorrelationId.set("cid-existing")
 
-        def _bind_context(*_args: t.Scalar, **_kwargs: t.Scalar) -> p.Result[bool]:
+        def _bind_context(*args: t.Scalar, **kwargs: t.Scalar) -> p.Result[bool]:
             return r[bool].fail("bind-fail", error_code="E_BIND")
 
         monkeypatch.setattr(
@@ -360,19 +360,19 @@ class TestDecoratorsFullCoverage:
         tm.that(fn(), eq="ok")
         tm.that(ensure_calls, eq=[1])
 
-        def _bind_global_context(**_kwargs: t.Scalar) -> p.Result[bool]:
+        def _bind_global_context(**kwargs: t.Scalar) -> p.Result[bool]:
             return r[bool].fail("bind", error_code="B")
 
         def _unbind_global_context(*_keys: str) -> p.Result[bool]:
             return r[bool].fail("unbind", error_code="U")
 
-        def _bind_operation_context(**_kwargs: t.Scalar) -> None:
+        def _bind_operation_context(**kwargs: t.Scalar) -> None:
             return None
 
-        def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
+        def _clear_operation_scope(**kwargs: t.Scalar) -> None:
             return None
 
-        def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
+        def _logger_factory(module: str) -> TestDecoratorsFullCoverage._FakeLogger:
             return fake_logger
 
         setattr(_logger_factory, "bind_global_context", _bind_global_context)
@@ -404,7 +404,7 @@ class TestDecoratorsFullCoverage:
             v: int
 
         @d.factory(name="svc.factory", singleton=True, lazy=False)
-        def build(_value: m.BaseModel) -> m.BaseModel:
+        def build(value: m.BaseModel) -> m.BaseModel:
             return _FactoryPayload(v=7)
 
         built = build(m.ConfigMap(root={"v": 1}))
@@ -422,13 +422,13 @@ class TestDecoratorsFullCoverage:
     ) -> None:
         fake_logger = self._FakeLogger()
 
-        def _bind_operation_context(**_kwargs: t.Scalar) -> str:
+        def _bind_operation_context(**kwargs: t.Scalar) -> str:
             return "cid-perf"
 
-        def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
+        def _clear_operation_scope(**kwargs: t.Scalar) -> None:
             return None
 
-        def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
+        def _logger_factory(module: str) -> TestDecoratorsFullCoverage._FakeLogger:
             return fake_logger
 
         monkeypatch.setattr(
@@ -484,16 +484,16 @@ class TestDecoratorsFullCoverage:
         fake_logger = self._FakeLogger()
 
         def _execute_retry_loop(
-            _call: Callable[[], str],
-            _func_name: str,
-            _logger: p.Logger,
+            call: Callable[[], str],
+            func_name: str,
+            logger: p.Logger,
             *,
             retry_settings: m.RetryConfiguration,
         ) -> str:
             _ = retry_settings
             return "done"
 
-        def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
+        def _logger_factory(module: str) -> TestDecoratorsFullCoverage._FakeLogger:
             return fake_logger
 
         monkeypatch.setattr(
@@ -549,7 +549,7 @@ class TestDecoratorsFullCoverage:
         tm.that(result, is_=Exception)
         tm.that(calls["n"], eq=2)
 
-        def fn(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+        def fn(*args: t.Scalar, **kwargs: t.Scalar) -> None:
             return None
 
         handle_retry_exhaustion2 = getattr(d, "_handle_retry_exhaustion")

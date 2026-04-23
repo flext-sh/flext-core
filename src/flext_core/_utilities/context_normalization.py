@@ -20,7 +20,7 @@ from flext_core import FlextRuntime, m, p, t
 class FlextUtilitiesContextNormalization:
     """Static normalization helpers used by FlextContext."""
 
-    _logger: ClassVar[p.Logger]
+    logger: ClassVar[p.Logger]
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
@@ -51,7 +51,7 @@ class FlextUtilitiesContextNormalization:
                 normalized[key] = FlextRuntime.normalize_to_container(value)
             return t.flat_container_mapping_adapter().validate_python(normalized)
         except (TypeError, ValueError, AttributeError, KeyError) as exc:
-            FlextUtilitiesContextNormalization._logger.debug(
+            FlextUtilitiesContextNormalization.logger.debug(
                 "Failed to normalize contextvar payload to configuration dict",
                 exc_info=exc,
             )

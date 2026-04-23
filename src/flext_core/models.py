@@ -3,7 +3,7 @@
 Expose ``FlextModels`` as the façade for entities, value objects, aggregates,
 commands, queries, and domain events that integrate directly with the
 dispatcher-driven CQRS layer. Concrete implementations live in the
-``_models`` subpackage and are organized for clear validation, serialization,
+``models`` subpackage and are organized for clear validation, serialization,
 and event collection.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

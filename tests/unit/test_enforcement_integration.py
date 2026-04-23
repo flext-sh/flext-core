@@ -60,7 +60,7 @@ class TestCleanModuleEmitsNothing:
     """Importing well-formed code MUST NOT trigger any enforcement warning."""
 
     def test_clean_fixture_is_silent(self) -> None:
-        _module = _import_fresh_silent(
+        _import_fresh_silent(
             "tests.unit._enforcement_integration_fixtures.clean_module",
         )
 

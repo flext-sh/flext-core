@@ -337,7 +337,7 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def level_based_context_filter(
-        _logger: p.Logger | None,
+        logger: p.Logger | None,
         method_name: str,
         event_dict: t.ScalarMapping,
     ) -> t.ScalarMapping:

@@ -8,7 +8,7 @@ Padronizar o restante do código para reduzir duplicação e lógica ad-hoc, sem
 
 1. **Checks de tipo/hierarquia** centralizados em uma API interna única (sem novos usos diretos de `__mro__`).
 1. **Validação Pydantic v2** consolidada (adapters reutilizáveis + menos validators duplicados).
-1. **Módulos críticos com menor complexidade** (`runtime`, `checker`, `handlers`, `container`, `_models/*`).
+1. **Módulos críticos com menor complexidade** (`runtime`, `checker`, `handlers`, `container`, `models/*`).
 1. **Testes de regressão** cobrindo casos de compatibilidade e serialização.
 
 ______________________________________________________________________
@@ -56,7 +56,7 @@ ______________________________________________________________________
   - [ ] metadata
   - [ ] tags
   - [ ] payload/settings map
-- [ ] Unificar validators redundantes em `_models/container.py`, `_models/settings.py`, `_models/cqrs.py`.
+- [ ] Unificar validators redundantes em `models/container.py`, `models/settings.py`, `models/cqrs.py`.
 - [ ] Introduzir `Annotated[...]` com constraints nativas para remover validação manual onde aplicável.
 
 ### Critérios de aceite
@@ -99,7 +99,7 @@ ______________________________________________________________________
 
 ### Onda 3 — Alto impacto
 
-- [ ] Refactor de `_models/*` para reduzir validators redundantes.
+- [ ] Refactor de `models/*` para reduzir validators redundantes.
 - [ ] Limpeza de fallbacks/YAGNI e endurecimento de contratos.
 
 ______________________________________________________________________

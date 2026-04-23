@@ -75,7 +75,7 @@ class TestsFlextCoreBadAccessors(FlextModelsNamespace):
     def get_value(self) -> int:
         return 0
 
-    def set_value(self, _value: int) -> None:
+    def set_value(self, value: int) -> None:
         return None
 
     def is_ready(self) -> bool:

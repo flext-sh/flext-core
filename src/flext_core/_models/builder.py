@@ -23,19 +23,19 @@ class FlextModelsBuilder:
         class Base[StateT: m.ContractModel, ProductT]:
             """Canonical builder that evolves immutable state and delegates build()."""
 
-            _state: StateT
+            state: StateT
 
             def __init__(self, *, state: StateT) -> None:
-                self._state = state
+                self.state = state
 
             @property
             def state(self) -> StateT:
                 """Return current immutable builder state."""
-                return self._state
+                return self.state
 
             def _replace(self, state: StateT) -> Self:
                 """Replace current immutable state and preserve fluent chaining."""
-                self._state = state
+                self.state = state
                 return self
 
             def _set(
@@ -43,7 +43,7 @@ class FlextModelsBuilder:
                 **updates: t.JsonPayload | Sequence[t.JsonPayload],
             ) -> Self:
                 """Apply one immutable ``model_copy(update=...)`` transition."""
-                return self._replace(self._state.model_copy(update=updates))
+                return self._replace(self.state.model_copy(update=updates))
 
             def _path(self, field_name: str, *parts: str) -> Self:
                 """Set one tuple path field using immutable state updates."""
@@ -56,7 +56,7 @@ class FlextModelsBuilder:
             ) -> Self:
                 """Append one value to a sequence field while preserving immutability."""
                 current_values: t.VariadicTuple[t.JsonValue] = tuple(
-                    getattr(self._state, field_name)
+                    getattr(self.state, field_name)
                 )
                 return self._set(**{field_name: (*current_values, value)})
 
@@ -79,7 +79,7 @@ class FlextModelsBuilder:
                 """Build and append one ContractModel item to a sequence field."""
                 model_item = self._model(model_type, **data)
                 current_values: t.VariadicTuple[m.ContractModel] = tuple(
-                    getattr(self._state, field_name)
+                    getattr(self.state, field_name)
                 )
                 return self._set(**{field_name: (*current_values, model_item)})
 
@@ -89,7 +89,7 @@ class FlextModelsBuilder:
 
             def build(self) -> ProductT:
                 """Build the final product from the current state."""
-                return self._build_product(self._state)
+                return self._build_product(self.state)
 
         class Identity[StateT: m.ContractModel](Base[StateT, StateT]):
             """Canonical builder for DSLs whose final product is the state model."""

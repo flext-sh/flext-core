@@ -16,13 +16,13 @@ from typing import Annotated, Self
 from flext_core import (
     FlextModelsBase,
     FlextModelsContainers,
-    FlextModelsContextData,
     FlextModelsPydantic,
     FlextUtilitiesPydantic,
     c,
     p,
     t,
 )
+from flext_core._models._context._data import FlextModelsContextData
 
 
 class FlextModelsContextScope:

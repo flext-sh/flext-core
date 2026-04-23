@@ -754,7 +754,7 @@ class FlextRuntime:
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
     ) -> t.StrMapping:
-        """Ensure context dict has distributed tracing fields (bridge for _models).
+        """Ensure context dict has distributed tracing fields (bridge for models).
 
         Args:
             context: Context dictionary or recursive payload to enrich

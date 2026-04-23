@@ -250,7 +250,7 @@ class FlextSettings(BaseSettings):
     ] = c.FAILURE_LEVEL_DEFAULT
     _di_provider: t.Scalar | None = PrivateAttr(default=None)
 
-    def __new__(cls, **_kwargs: t.SettingsInput) -> Self:
+    def __new__(cls, **kwargs: t.SettingsInput) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.

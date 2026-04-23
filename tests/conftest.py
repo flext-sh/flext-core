@@ -260,7 +260,7 @@ class _DocsStub:
     def __call__(self, *args: object, **kwargs: object) -> _DocsStub:
         return _DocsStub(*args, **kwargs)
 
-    def __getattr__(self, _name: str) -> _DocsStub:
+    def __getattr__(self, name: str) -> _DocsStub:
         return _DocsStub()
 
     def __iter__(self) -> Iterator[object]:

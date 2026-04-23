@@ -108,7 +108,7 @@ class TestsFlextCoreModelsMixins:
             if name == "model_dump":
 
                 def _broken_dump(
-                    _value: t.Core.Tests.Testobject = None,
+                    value: t.Core.Tests.Testobject = None,
                 ) -> bool:
                     return True
 
@@ -1278,19 +1278,19 @@ class TestsFlextCoreModelsMixins:
 
         model_config: m.ConfigDict = m.ConfigDict(arbitrary_types_allowed=True)
 
-        def debug(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+        def debug(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
             return None
 
-        def info(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+        def info(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
             return None
 
-        def warning(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+        def warning(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
             return None
 
-        def error(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+        def error(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
             return None
 
-        def exception(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
+        def exception(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
             return None
 
     # --- from test_models_context_full_coverage.py ---

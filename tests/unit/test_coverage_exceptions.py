@@ -195,12 +195,12 @@ class TestCoverageExceptions:
     ]
 
     @pytest.mark.parametrize(
-        ("_name", "factory", "expected_domain", "expected_code", "expected_payload"),
+        ("name", "factory", "expected_domain", "expected_code", "expected_payload"),
         STRUCTURED_ERRORS,
     )
     def test_structured_errors_expose_public_contract(
         self,
-        _name: str,
+        name: str,
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
@@ -252,12 +252,12 @@ class TestCoverageExceptions:
         assert payload["attempt"] == 2
 
     @pytest.mark.parametrize(
-        ("_name", "factory", "expected_fragment", "expected_code", "expected_data"),
+        ("name", "factory", "expected_fragment", "expected_code", "expected_data"),
         FAILURES,
     )
     def test_failure_factories_return_public_result_contract(
         self,
-        _name: str,
+        name: str,
         factory: FailureFactory,
         expected_fragment: str,
         expected_code: str,

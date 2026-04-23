@@ -105,7 +105,7 @@ Use `lash` to transform failures into alternate result flows.
 from flext_core import p, r
 
 
-def fallback(_message: str) -> p.Result[int]:
+def fallback(message: str) -> p.Result[int]:
     return r[int].ok(0)
 
 

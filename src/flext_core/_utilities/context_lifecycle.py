@@ -20,8 +20,8 @@ from flext_core import FlextRuntime, FlextUtilitiesContextCrud, c, m, p, t, u
 class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
     """Lifecycle operations (merge/export) for FlextContext."""
 
-    _logger: ClassVar[p.Logger]
-    _state: m.ContextRuntimeState
+    logger: ClassVar[p.Logger]
+    state: m.ContextRuntimeState
     initial_data: m.ContextData | m.ConfigMap | None
 
     _MERGEABLE_SCOPES: ClassVar[frozenset[str]] = frozenset({
@@ -43,10 +43,10 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         for scope_name, scope_payload in all_scopes.items():
             all_data[scope_name] = self._normalize_mapping_payload(scope_payload)
         stats_dict_export: dict[str, t.JsonValue] = {}
-        if include_statistics and self._state.statistics:
+        if include_statistics and self.state.statistics:
             stats_dict_export = dict(
                 self._normalize_mapping_payload(
-                    self._state.statistics.model_dump(mode="python"),
+                    self.state.statistics.model_dump(mode="python"),
                 ),
             )
         metadata_attributes: dict[str, t.JsonValue] | None = None
@@ -92,7 +92,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
             )
             return m.ConfigMap(root=dict(normalized_payload))
         except (TypeError, ValueError, AttributeError) as exc:
-            FlextUtilitiesContextLifecycle._logger.debug(
+            FlextUtilitiesContextLifecycle.logger.debug(
                 f"Context {label} validation failed",
                 exc_info=exc,
             )
@@ -137,7 +137,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         other: p.Context | Mapping[str, t.JsonPayload] | t.JsonMapping,
     ) -> Self:
         """Merge another context or dictionary into this context."""
-        if not self._state.active:
+        if not self.state.active:
             return self
         exported_map = self._extract_config_map(other)
         if exported_map is None:

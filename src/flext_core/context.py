@@ -21,8 +21,6 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Annotated, ClassVar, Self
 
-from pydantic import PrivateAttr
-
 from flext_core import FlextUtilitiesContextTracing, c, m, p, r, t, u
 
 
@@ -41,16 +39,19 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
     - FlextUtilitiesContextTracing — Variables, Correlation, Service, Request, etc.
     """
 
-    _logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
+    logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     initial_data: Annotated[
         m.ContextData | t.JsonValue | None,
         m.Field(description="Initial data for context scopes."),
     ] = None
 
-    _state: m.ContextRuntimeState = PrivateAttr(
-        default_factory=lambda: m.ContextRuntimeState.create_default(),
-    )
+    state: Annotated[
+        m.ContextRuntimeState,
+        m.Field(description="Runtime state for context scopes and metadata."),
+    ] = m.Field(default_factory=lambda: m.ContextRuntimeState.create_default())
+
+    _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
 
     def __init__(self, **data: t.JsonPayload) -> None:
         """Initialize FlextContext with optional initial data."""
@@ -72,69 +73,7 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
             if isinstance(context_data.metadata, m.Metadata)
             else m.Metadata()
         )
-        self._state = m.ContextRuntimeState.create_default(metadata=metadata_model)
-
-    # DEPRECATED: create overloads and method removed - depends on m.ConfigMap which is no longer available
-    # @overload
-    # @classmethod
-    # def create(cls, initial_data: m.ConfigMap | None = None) -> Self: ...
-    #
-    # @overload
-    # @classmethod
-    # def create(
-    #     cls,
-    #     *,
-    #     operation_id: str | None = None,
-    #     user_id: str | None = None,
-    #     metadata: m.ConfigMap | None = None,
-    # ) -> Self: ...
-
-    # DEPRECATED: create method removed - depends on m.ConfigMap and m.Dict which are no longer available
-    # Refactor to use Pydantic models directly
-    # @classmethod
-    # def create(
-    #     cls,
-    #     initial_data: m.ConfigMap | None = None,
-    #     *,
-    #     operation_id: str | None = None,
-    #     user_id: str | None = None,
-    #     metadata: m.ConfigMap | None = None,
-    #     auto_correlation_id: bool = True,
-    # ) -> Self:
-    #     """Factory method to create a new FlextContext instance."""
-    #     if operation_id is not None or user_id is not None or metadata is not None:
-    #         initial_data_dict: m.ConfigMap = m.ConfigMap(root={})
-    #         if operation_id is not None:
-    #             initial_data_dict[c.ContextKey.OPERATION_ID] = operation_id
-    #         elif auto_correlation_id:
-    #             initial_data_dict[c.ContextKey.OPERATION_ID] = u.generate(
-    #                 "correlation",
-    #             )
-    #         if user_id is not None:
-    #             initial_data_dict[c.ContextKey.USER_ID] = user_id
-    #         if metadata is not None:
-    #             initial_data_dict.update(dict(metadata))
-    #         return cls(
-    #             initial_data=m.ContextData(data=m.Dict(root=initial_data_dict.root)),
-    #         )
-    #     data_map = (
-    #         initial_data
-    #         if isinstance(initial_data, m.ConfigMap)
-    #         else m.ConfigMap(initial_data)
-    #         if initial_data is not None
-    #         else m.ConfigMap(root={})
-    #     )
-    #     if auto_correlation_id and c.ContextKey.OPERATION_ID not in data_map:
-    #         initial_data_dict_new: m.ConfigMap = data_map.model_copy()
-    #         initial_data_dict_new[c.ContextKey.OPERATION_ID] = u.generate(
-    #             "correlation",
-    #         )
-    #         return cls(
-    #             initial_data=m.ContextData(
-    #                 data=m.Dict(root=initial_data_dict_new.root),
-    #             ),
-    #         )
-    #     return cls(initial_data=m.ContextData(data=m.Dict(root=data_map.root)))
+        self.state = m.ContextRuntimeState.create_default(metadata=metadata_model)
 
     def clone(self) -> Self:
         """Create a clone of this context with independent scope storage."""
@@ -142,7 +81,7 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
             "initial_data": self.initial_data
         })
         new_vars: dict[str, contextvars.ContextVar[m.ConfigMap | None]] = {}
-        for scope_name, ctx_var in self._state.scope_vars.items():
+        for scope_name, ctx_var in self.state.scope_vars.items():
             current = ctx_var.get()
             new_var: contextvars.ContextVar[m.ConfigMap | None] = (
                 contextvars.ContextVar(f"{scope_name}_clone", default=None)
@@ -150,22 +89,14 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
             if current is not None:
                 _ = new_var.set(current.model_copy())
             new_vars[scope_name] = new_var
-        cloned._state = cloned._state.model_copy(
+        cloned.state = cloned.state.model_copy(
             update={
-                "metadata": self._state.metadata.model_copy(),
-                "statistics": self._state.statistics.model_copy(),
+                "metadata": self.state.metadata.model_copy(),
+                "statistics": self.state.statistics.model_copy(),
                 "scope_vars": new_vars,
             },
         )
         return cloned
-
-    _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
-
-    # DEPRECATED: to_normalized method removed - depends on t.JsonPayload, m.ConfigMap, t.JsonValue
-    # @staticmethod
-    # def to_normalized(value: t.JsonPayload | m.ConfigMap) -> t.JsonValue:
-    #     """Normalize a runtime value to the canonical recursive container shape."""
-    #     return FlextRuntime.normalize_to_metadata(value))
 
     @classmethod
     def create(cls, **_: t.JsonPayload) -> Self:

@@ -13,7 +13,7 @@ from examples import (
     t,
     u,
 )
-from examples._models.ex12 import Ex12CommandA, Ex12CommandB
+from examples.models.ex12 import Ex12CommandA, Ex12CommandB
 from flext_core import h
 
 
@@ -45,18 +45,20 @@ def _as_registry_handler(
 ) -> t.DispatchableHandler:
     """Adapt protocol handlers to the registry callable contract."""
 
-    def _call(message: p.Routable) -> t.JsonPayload:
+    def call(message: p.Routable) -> t.JsonPayload:
         return u.normalize_to_container(handler.handle(message).unwrap_or(""))
 
     handler_name = handler.message_type.__name__
-    setattr(_call, "__name__", handler_name)
-    setattr(_call, "handler_id", handler_name)
-    setattr(_call, "message_type", handler.message_type)
-    return _call
+    setattr(call, "__name__", handler_name)
+    setattr(call, "handler_id", handler_name)
+    setattr(call, "message_type", handler.message_type)
+    return call
 
 
 @h.handler(Ex12CommandA, priority=3)
-def _discovered_handler(_message: m.Command) -> m.Command:
+def _discovered_handler(message: m.Command) -> m.Command:
+    if isinstance(message, Ex12CommandA):
+        return Ex12CommandA(value=message.value)
     return Ex12CommandA(value="decorated")
 
 
