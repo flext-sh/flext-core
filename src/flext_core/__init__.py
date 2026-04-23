@@ -444,7 +444,6 @@ __all__: list[str] = [
     "FlextUtilitiesReliability",
     "FlextUtilitiesSettings",
     "FlextUtilitiesText",
-    "FlextVersion",
     "__author__",
     "__author_email__",
     "__description__",
