@@ -241,7 +241,7 @@ project-excludes = [
   "typings/**",
   "vendor/**",
 ]
-project-includes = [ "examples/**/*.py*", "src/**/*.py*", "tests/**/*.py*" ]
+project-includes = [ "examples/**/*.py*", "scripts/**/*.py*", "src/**/*.py*", "tests/**/*.py*" ]
 python-version = "3.13"
 search-path = [ ".", "src" ]
 use-ignore-files = false
@@ -356,7 +356,7 @@ exclude = [
 ]
 extraPaths = [ ".", "../typings", "src" ]
 ignore = [ "**/*.pyi", "../typings" ]
-include = [ "examples", "src", "tests" ]
+include = [ "examples", "scripts", "src", "tests" ]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportArgumentType = "none"
@@ -394,6 +394,11 @@ venvPath = ".."
 extraPaths = [ ".", "src" ]
 reportPrivateUsage = "none"
 root = "examples"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [ ".", "src" ]
+reportPrivateUsage = "none"
+root = "scripts"
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ "src" ]
@@ -464,7 +469,7 @@ line-length = 88
 preview = true
 respect-gitignore = true
 show-fixes = true
-src = [ "examples", "src", "tests" ]
+src = [ "examples", "scripts", "src", "tests" ]
 target-version = "py313"
 
 [tool.ruff.format]

@@ -51,22 +51,6 @@ if _t.TYPE_CHECKING:
     from tests.models import TestsFlextCoreModels, m
     from tests.protocols import TestsFlextCoreProtocols, p
     from tests.typings import TestsFlextCoreTypes, t
-    from tests.unit._enforcement_integration_fixtures.bad_module import (
-        TestsFlextCoreBadAccessors,
-        TestsFlextCoreBadAnyField,
-        TestsFlextCoreBadBareCollection,
-        TestsFlextCoreBadConstants,
-        TestsFlextCoreBadFrozen,
-        TestsFlextCoreBadInlineUnion,
-        TestsFlextCoreBadMissingDesc,
-        TestsFlextCoreBadMutableDefault,
-        TestsFlextCoreBadWorkerSettings,
-    )
-    from tests.unit._enforcement_integration_fixtures.clean_module import (
-        TestsFlextCoreCleanConstants,
-        TestsFlextCoreCleanModels,
-        TestsFlextCoreCleanProtocols,
-    )
     from tests.unit._models.test_base import TestModelsBase
     from tests.unit._models.test_cqrs import TestModelsCQRS
     from tests.unit._models.test_entity import TestModelsEntity
@@ -321,22 +305,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".typings": (
                 "TestsFlextCoreTypes",
                 "t",
-            ),
-            ".unit._enforcement_integration_fixtures.bad_module": (
-                "TestsFlextCoreBadAccessors",
-                "TestsFlextCoreBadAnyField",
-                "TestsFlextCoreBadBareCollection",
-                "TestsFlextCoreBadConstants",
-                "TestsFlextCoreBadFrozen",
-                "TestsFlextCoreBadInlineUnion",
-                "TestsFlextCoreBadMissingDesc",
-                "TestsFlextCoreBadMutableDefault",
-                "TestsFlextCoreBadWorkerSettings",
-            ),
-            ".unit._enforcement_integration_fixtures.clean_module": (
-                "TestsFlextCoreCleanConstants",
-                "TestsFlextCoreCleanModels",
-                "TestsFlextCoreCleanProtocols",
             ),
             ".unit._models.test_base": ("TestModelsBase",),
             ".unit._models.test_cqrs": ("TestModelsCQRS",),
@@ -710,18 +678,6 @@ __all__: list[str] = [
     "TestUtilitiesTextFullCoverage",
     "TestUtilitiesTypeGuardsCoverage100",
     "Testr",
-    "TestsFlextCoreBadAccessors",
-    "TestsFlextCoreBadAnyField",
-    "TestsFlextCoreBadBareCollection",
-    "TestsFlextCoreBadConstants",
-    "TestsFlextCoreBadFrozen",
-    "TestsFlextCoreBadInlineUnion",
-    "TestsFlextCoreBadMissingDesc",
-    "TestsFlextCoreBadMutableDefault",
-    "TestsFlextCoreBadWorkerSettings",
-    "TestsFlextCoreCleanConstants",
-    "TestsFlextCoreCleanModels",
-    "TestsFlextCoreCleanProtocols",
     "TestsFlextCoreConstants",
     "TestsFlextCoreConstantsDomain",
     "TestsFlextCoreConstantsErrors",
