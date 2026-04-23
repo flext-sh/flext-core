@@ -24,9 +24,9 @@ class FlextTypesPydantic:
 
     # String constraints
     constr = pydantic.constr
-    StrictStr = pydantic.StrictStr
-    EmailStr = pydantic.EmailStr
-    NameEmail = pydantic.NameEmail
+    type StrictStr = pydantic.StrictStr
+    type EmailStr = pydantic.EmailStr
+    type NameEmail = pydantic.NameEmail
 
     # Numeric constraints
     conint = pydantic.conint
@@ -37,76 +37,76 @@ class FlextTypesPydantic:
     condate = pydantic.condate
     condecimal = pydantic.condecimal
     confrozenset = pydantic.confrozenset
-    PositiveInt = pydantic.PositiveInt
-    NonNegativeInt = pydantic.NonNegativeInt
-    NegativeInt = pydantic.NegativeInt
-    NonPositiveInt = pydantic.NonPositiveInt
-    PositiveFloat = pydantic.PositiveFloat
-    NonNegativeFloat = pydantic.NonNegativeFloat
-    NegativeFloat = pydantic.NegativeFloat
-    NonPositiveFloat = pydantic.NonPositiveFloat
-    FiniteFloat = pydantic.FiniteFloat
-    ByteSize = pydantic.ByteSize
+    type PositiveInt = pydantic.PositiveInt
+    type NonNegativeInt = pydantic.NonNegativeInt
+    type NegativeInt = pydantic.NegativeInt
+    type NonPositiveInt = pydantic.NonPositiveInt
+    type PositiveFloat = pydantic.PositiveFloat
+    type NonNegativeFloat = pydantic.NonNegativeFloat
+    type NegativeFloat = pydantic.NegativeFloat
+    type NonPositiveFloat = pydantic.NonPositiveFloat
+    type FiniteFloat = pydantic.FiniteFloat
+    type ByteSize = pydantic.ByteSize
 
     # Strict types
-    StrictInt = pydantic.StrictInt
-    StrictFloat = pydantic.StrictFloat
-    StrictBool = pydantic.StrictBool
-    StrictBytes = pydantic.StrictBytes
+    type StrictInt = pydantic.StrictInt
+    type StrictFloat = pydantic.StrictFloat
+    type StrictBool = pydantic.StrictBool
+    type StrictBytes = pydantic.StrictBytes
 
     # Date and time types
-    AwareDatetime = pydantic.AwareDatetime
-    NaiveDatetime = pydantic.NaiveDatetime
-    FutureDate = pydantic.FutureDate
-    FutureDatetime = pydantic.FutureDatetime
-    PastDate = pydantic.PastDate
-    PastDatetime = pydantic.PastDatetime
+    type AwareDatetime = pydantic.AwareDatetime
+    type NaiveDatetime = pydantic.NaiveDatetime
+    type FutureDate = pydantic.FutureDate
+    type FutureDatetime = pydantic.FutureDatetime
+    type PastDate = pydantic.PastDate
+    type PastDatetime = pydantic.PastDatetime
 
     # URL and network types
-    AnyUrl = pydantic.AnyUrl
-    AnyHttpUrl = pydantic.AnyHttpUrl
-    AnyWebsocketUrl = pydantic.AnyWebsocketUrl
-    HttpUrl = pydantic.HttpUrl
-    WebsocketUrl = pydantic.WebsocketUrl
-    FileUrl = pydantic.FileUrl
-    FtpUrl = pydantic.FtpUrl
-    PostgresDsn = pydantic.PostgresDsn
-    MySQLDsn = pydantic.MySQLDsn
-    MariaDBDsn = pydantic.MariaDBDsn
-    CockroachDsn = pydantic.CockroachDsn
-    ClickHouseDsn = pydantic.ClickHouseDsn
-    MongoDsn = pydantic.MongoDsn
-    KafkaDsn = pydantic.KafkaDsn
-    RedisDsn = pydantic.RedisDsn
-    SnowflakeDsn = pydantic.SnowflakeDsn
-    NatsDsn = pydantic.NatsDsn
+    type AnyUrl = pydantic.AnyUrl
+    type AnyHttpUrl = pydantic.AnyHttpUrl
+    type AnyWebsocketUrl = pydantic.AnyWebsocketUrl
+    type HttpUrl = pydantic.HttpUrl
+    type WebsocketUrl = pydantic.WebsocketUrl
+    type FileUrl = pydantic.FileUrl
+    type FtpUrl = pydantic.FtpUrl
+    type PostgresDsn = pydantic.PostgresDsn
+    type MySQLDsn = pydantic.MySQLDsn
+    type MariaDBDsn = pydantic.MariaDBDsn
+    type CockroachDsn = pydantic.CockroachDsn
+    type ClickHouseDsn = pydantic.ClickHouseDsn
+    type MongoDsn = pydantic.MongoDsn
+    type KafkaDsn = pydantic.KafkaDsn
+    type RedisDsn = pydantic.RedisDsn
+    type SnowflakeDsn = pydantic.SnowflakeDsn
+    type NatsDsn = pydantic.NatsDsn
 
     # File system types
-    FilePath = pydantic.FilePath
-    DirectoryPath = pydantic.DirectoryPath
-    NewPath = pydantic.NewPath
-    SocketPath = pydantic.SocketPath
+    type FilePath = pydantic.FilePath
+    type DirectoryPath = pydantic.DirectoryPath
+    type NewPath = pydantic.NewPath
+    type SocketPath = pydantic.SocketPath
 
     # UUID types
-    UUID1 = pydantic.UUID1
-    UUID3 = pydantic.UUID3
-    UUID4 = pydantic.UUID4
-    UUID5 = pydantic.UUID5
-    UUID6 = pydantic.UUID6
-    UUID7 = pydantic.UUID7
-    UUID8 = pydantic.UUID8
+    type UUID1 = pydantic.UUID1
+    type UUID3 = pydantic.UUID3
+    type UUID4 = pydantic.UUID4
+    type UUID5 = pydantic.UUID5
+    type UUID6 = pydantic.UUID6
+    type UUID7 = pydantic.UUID7
+    type UUID8 = pydantic.UUID8
 
     # Binary and encoding types
-    Base64Str = pydantic.Base64Str
-    Base64Bytes = pydantic.Base64Bytes
-    Base64UrlStr = pydantic.Base64UrlStr
-    Base64UrlBytes = pydantic.Base64UrlBytes
-    EncodedStr = pydantic.EncodedStr
-    EncodedBytes = pydantic.EncodedBytes
+    type Base64Str = pydantic.Base64Str
+    type Base64Bytes = pydantic.Base64Bytes
+    type Base64UrlStr = pydantic.Base64UrlStr
+    type Base64UrlBytes = pydantic.Base64UrlBytes
+    type EncodedStr = pydantic.EncodedStr
+    type EncodedBytes = pydantic.EncodedBytes
 
     # JSON and special types
     Json = pydantic.Json
-    JsonValue = pydantic.JsonValue
+    type JsonValue = pydantic.JsonValue
     ImportString = pydantic.ImportString
     InstanceOf = pydantic.InstanceOf
     Secret = pydantic.Secret
@@ -114,9 +114,9 @@ class FlextTypesPydantic:
     SecretBytes = pydantic.SecretBytes
 
     # IP types
-    IPvAnyAddress = pydantic.IPvAnyAddress
-    IPvAnyInterface = pydantic.IPvAnyInterface
-    IPvAnyNetwork = pydantic.IPvAnyNetwork
+    type IPvAnyAddress = pydantic.IPvAnyAddress
+    type IPvAnyInterface = pydantic.IPvAnyInterface
+    type IPvAnyNetwork = pydantic.IPvAnyNetwork
 
     # Constraint helper types
     StringConstraints = pydantic.StringConstraints

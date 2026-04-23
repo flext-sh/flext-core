@@ -1,17 +1,16 @@
 """Container RootModel wrappers for the FLEXT runtime.
 
-Pydantic v2 ``RootModel`` + ``MutableMapping`` / ``Sequence`` ABCs.  Only
-the abstract hooks required by the ABCs are implemented - ``items``,
-``keys``, ``values``, ``get``, ``update``, ``__contains__`` etc. come for
-free from the ABCs.
+Pydantic v2 ``RootModel`` subclasses with explicit mapping/sequence APIs.
+Uses composition over multi-inheritance: the ``root`` field holds the
+underlying container and the class exposes an explicit dict-like or
+list-like surface — no ``MutableMapping`` / ``Sequence`` ABC inheritance,
+which would collide with ``BaseModel.__iter__``'s ``TupleGenerator``
+signature (pydantic yields ``(field_name, value)`` tuples whereas
+``Mapping`` yields keys).
 
-Note: Pydantic's ``BaseModel.__iter__`` returns ``TupleGenerator`` while
-``MutableMapping.__iter__`` returns ``Iterator[K]``. This multi-inheritance
-is a known pydantic+collections tension — pyright flags the ``__iter__``
-and ``Sequence.__getitem__`` overrides as incompatible; the classes carry
-``@no_type_check`` to suppress this. Runtime behaviour favours the
-``MutableMapping``/``Sequence`` contract (key/value iteration, indexed
-access) which is what consumers rely on.
+Consumers that need a plain ``dict`` from validation should call
+``.root`` on the validated instance (see consumers in ``_exceptions``,
+``result``, ``_utilities.collection``).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,22 +19,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import (
-    Iterator,
-    MutableMapping,
-    Sequence,
+    ItemsView,
+    KeysView,
+    Mapping,
+    ValuesView,
 )
-from typing import Annotated, no_type_check, override
+from typing import Annotated
 
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.services import FlextTypesServices
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
 
-@no_type_check
 class FlextModelsContainers:
     """Pydantic RootModel container namespace."""
 
-    @no_type_check
     class ValidatorCallable(mp.RootModel[FlextTypesServices.ValidatorCallable]):
         """Callable validator container rooted in a scalar-or-model transform."""
 
@@ -54,93 +52,166 @@ class FlextModelsContainers:
         ) -> FlextTypesServices.ScalarOrModel:
             return self.root(value)
 
-    @no_type_check
-    class Dict(
-        mp.RootModel[dict[str, FlextTypesServices.JsonPayload]],
-        MutableMapping[str, FlextTypesServices.JsonPayload],
-    ):
-        """Runtime dictionary container rooted in validated values."""
+    class Dict(mp.RootModel[dict[str, FlextTypesServices.JsonPayload]]):
+        """Runtime dictionary container with explicit mapping API."""
 
         root: Annotated[
             dict[str, FlextTypesServices.JsonPayload],
             up.Field(description="Validated runtime key-value mapping."),
         ]
 
-        @override
-        def __iter__(self) -> Iterator[str]:
-            return iter(self.root)
-
-        @override
-        def __len__(self) -> int:
-            return len(self.root)
-
-        @override
         def __getitem__(self, key: str) -> FlextTypesServices.JsonPayload:
             return self.root[key]
 
-        @override
-        def __setitem__(self, key: str, value: FlextTypesServices.JsonPayload) -> None:
+        def __setitem__(
+            self,
+            key: str,
+            value: FlextTypesServices.JsonPayload,
+        ) -> None:
             self.root[key] = value
 
-        @override
         def __delitem__(self, key: str) -> None:
             del self.root[key]
 
-    @no_type_check
-    class ConfigMap(
-        mp.RootModel[dict[str, FlextTypesServices.JsonPayload]],
-        MutableMapping[str, FlextTypesServices.JsonPayload],
-    ):
-        """Runtime configuration mapping rooted in validated values."""
+        def __contains__(self, key: object) -> bool:
+            return key in self.root
+
+        def __len__(self) -> int:
+            return len(self.root)
+
+        def __bool__(self) -> bool:
+            return bool(self.root)
+
+        def keys(self) -> KeysView[str]:
+            return self.root.keys()
+
+        def values(self) -> ValuesView[FlextTypesServices.JsonPayload]:
+            return self.root.values()
+
+        def items(self) -> ItemsView[str, FlextTypesServices.JsonPayload]:
+            return self.root.items()
+
+        def get(
+            self,
+            key: str,
+            default: FlextTypesServices.JsonPayload | None = None,
+        ) -> FlextTypesServices.JsonPayload | None:
+            return self.root.get(key, default)
+
+        def update(
+            self,
+            other: Mapping[str, FlextTypesServices.JsonPayload],
+        ) -> None:
+            self.root.update(other)
+
+        def clear(self) -> None:
+            self.root.clear()
+
+        def pop(
+            self,
+            key: str,
+            *args: FlextTypesServices.JsonPayload,
+        ) -> FlextTypesServices.JsonPayload:
+            return self.root.pop(key, *args)
+
+        def popitem(self) -> tuple[str, FlextTypesServices.JsonPayload]:
+            return self.root.popitem()
+
+        def setdefault(
+            self,
+            key: str,
+            default: FlextTypesServices.JsonPayload,
+        ) -> FlextTypesServices.JsonPayload:
+            return self.root.setdefault(key, default)
+
+    class ConfigMap(mp.RootModel[dict[str, FlextTypesServices.JsonPayload]]):
+        """Runtime configuration mapping with explicit mapping API."""
 
         root: Annotated[
             dict[str, FlextTypesServices.JsonPayload],
             up.Field(description="Validated runtime configuration mapping."),
         ]
 
-        @override
-        def __iter__(self) -> Iterator[str]:
-            return iter(self.root)
-
-        @override
-        def __len__(self) -> int:
-            return len(self.root)
-
-        @override
         def __getitem__(self, key: str) -> FlextTypesServices.JsonPayload:
             return self.root[key]
 
-        @override
-        def __setitem__(self, key: str, value: FlextTypesServices.JsonPayload) -> None:
+        def __setitem__(
+            self,
+            key: str,
+            value: FlextTypesServices.JsonPayload,
+        ) -> None:
             self.root[key] = value
 
-        @override
         def __delitem__(self, key: str) -> None:
             del self.root[key]
 
-    @no_type_check
-    class ObjectList(
-        mp.RootModel[list[FlextTypesServices.JsonPayload]],
-        Sequence[FlextTypesServices.JsonPayload],
-    ):
-        """Runtime list container rooted in validated values."""
+        def __contains__(self, key: object) -> bool:
+            return key in self.root
+
+        def __len__(self) -> int:
+            return len(self.root)
+
+        def __bool__(self) -> bool:
+            return bool(self.root)
+
+        def keys(self) -> KeysView[str]:
+            return self.root.keys()
+
+        def values(self) -> ValuesView[FlextTypesServices.JsonPayload]:
+            return self.root.values()
+
+        def items(self) -> ItemsView[str, FlextTypesServices.JsonPayload]:
+            return self.root.items()
+
+        def get(
+            self,
+            key: str,
+            default: FlextTypesServices.JsonPayload | None = None,
+        ) -> FlextTypesServices.JsonPayload | None:
+            return self.root.get(key, default)
+
+        def update(
+            self,
+            other: Mapping[str, FlextTypesServices.JsonPayload],
+        ) -> None:
+            self.root.update(other)
+
+        def clear(self) -> None:
+            self.root.clear()
+
+        def pop(
+            self,
+            key: str,
+            *args: FlextTypesServices.JsonPayload,
+        ) -> FlextTypesServices.JsonPayload:
+            return self.root.pop(key, *args)
+
+        def popitem(self) -> tuple[str, FlextTypesServices.JsonPayload]:
+            return self.root.popitem()
+
+        def setdefault(
+            self,
+            key: str,
+            default: FlextTypesServices.JsonPayload,
+        ) -> FlextTypesServices.JsonPayload:
+            return self.root.setdefault(key, default)
+
+    class ObjectList(mp.RootModel[list[FlextTypesServices.JsonPayload]]):
+        """Runtime list container rooted in validated values.
+
+        Exposes ``root`` as the canonical accessor.
+        """
 
         root: Annotated[
             list[FlextTypesServices.JsonPayload],
             up.Field(description="Validated runtime sequence."),
         ]
 
-        @override
-        def __iter__(self) -> Iterator[FlextTypesServices.JsonPayload]:
-            return iter(self.root)
-
-        @override
         def __len__(self) -> int:
             return len(self.root)
 
-        @override
-        def __getitem__(self, index: int) -> FlextTypesServices.JsonPayload:
-            return self.root[index]
+        def __bool__(self) -> bool:
+            return bool(self.root)
 
 
 __all__: list[str] = ["FlextModelsContainers"]

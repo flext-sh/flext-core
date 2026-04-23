@@ -9,11 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from importlib.metadata import PackageMetadata, metadata
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flext_core import t
 
 
 class FlextVersion:
@@ -23,7 +20,7 @@ class FlextVersion:
     recomputes every derived attribute via MRO — zero duplication.
     """
 
-    _metadata: PackageMetadata | t.StrMapping = metadata("flext-core")
+    _metadata: PackageMetadata = metadata("flext-core")
 
     # -- Base-class derivation (inline; subclass derivation via __init_subclass__) --
     __version__: str = str(_metadata["Version"])
@@ -60,7 +57,7 @@ class FlextVersion:
             )
 
     @classmethod
-    def resolve_package_info(cls) -> t.StrMapping:
+    def resolve_package_info(cls) -> Mapping[str, str]:
         """Get comprehensive package information dictionary."""
         return {
             "name": cls.__title__,

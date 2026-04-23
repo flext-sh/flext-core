@@ -39,9 +39,7 @@ class FlextTypesAnnotateds:
     type UriString = Annotated[str, Len(1)]
     type TimestampStr = Annotated[str, Len(1)]
 
-    # -- integer constraints --------------------------------------------------
-    type PositiveInt = Annotated[int, Gt(0)]
-    type NonNegativeInt = Annotated[int, Ge(0)]
+    # -- integer constraints (PositiveInt / NonNegativeInt in FlextTypesPydantic) -
     type PortNumber = Annotated[int, Ge(1), Le(65535)]
     type RetryCount = Annotated[int, Ge(0), Le(10)]
     type WorkerCount = Annotated[int, Ge(1), Le(100)]
@@ -49,9 +47,7 @@ class FlextTypesAnnotateds:
     type BatchSize = Annotated[int, Ge(1), Le(10000)]
     type MaxLength = Annotated[int, Ge(1)]
 
-    # -- float constraints ----------------------------------------------------
-    type PositiveFloat = Annotated[float, Gt(0.0)]
-    type NonNegativeFloat = Annotated[float, Ge(0.0)]
+    # -- float constraints (PositiveFloat / NonNegativeFloat in FlextTypesPydantic) -
     type PositiveTimeout = Annotated[float, Gt(0.0), Le(300.0)]
     type BackoffMultiplier = Annotated[float, Ge(1.0)]
     type Percentage = Annotated[float, Ge(0.0), Le(100.0)]

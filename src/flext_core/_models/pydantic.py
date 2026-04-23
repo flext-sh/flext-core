@@ -29,7 +29,7 @@ from pydantic import (
     PrivateAttr,
     RootModel as PydanticRootModel,
     SkipValidation,
-    TypeAdapter,
+    TypeAdapter as PydanticTypeAdapter,
     ValidationError,
     WrapSerializer,
     WrapValidator,
@@ -91,7 +91,8 @@ class FlextModelsPydantic:
     # Validation and serialization context helpers
     FieldInfo = FieldInfo
     FieldSerializationInfo = FieldSerializationInfo
-    TypeAdapter = TypeAdapter
+
+    TypeAdapter = PydanticTypeAdapter
 
     # Schema and validator handlers
     GetCoreSchemaHandler = GetCoreSchemaHandler
