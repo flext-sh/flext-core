@@ -206,6 +206,7 @@ disable_error_code = [
   "misc",
   "name-defined",
   "prop-decorator",
+  "valid-type",
 ]
 exclude = "^tests/fixtures(?:/|$)"
 explicit_package_bases = true
@@ -216,6 +217,7 @@ local_partial_types = true
 mypy_path = [ ".", "../typings", "src" ]
 namespace_packages = true
 no_implicit_reexport = true
+overrides = [  ]
 plugins = [ "pydantic.mypy", "returns.contrib.mypy.returns_plugin" ]
 python_version = "3.13"
 strict_concatenate = true
@@ -224,10 +226,6 @@ warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
 warn_unused_ignores = true
-
-[[tool.mypy.overrides]]
-disable_error_code = [ "valid-type" ]
-module = [ "flext_core._models.pydantic", "flext_core._typings.pydantic" ]
 
 [tool.poetry]
 

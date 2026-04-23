@@ -122,7 +122,7 @@ class FlextTypesPydantic:
     ImportString = pydantic.ImportString
     InstanceOf = pydantic.InstanceOf
     Secret = pydantic.Secret
-    SecretStr: TypeAlias = pydantic.SecretStr
+    SecretStr = pydantic.SecretStr
     SecretBytes: TypeAlias = pydantic.SecretBytes
 
     # IP types
