@@ -11,7 +11,6 @@ from flext_core.lazy import (
 
 _LAZY_IMPORTS = merge_lazy_imports(
     (
-        "._enforcement_integration_fixtures",
         "._models",
         "._utilities",
     ),

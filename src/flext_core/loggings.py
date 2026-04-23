@@ -51,11 +51,11 @@ class FlextLogger(ulc):
         *,
         settings: p.Settings | None = None,
         _bound_logger: p.Logger | None = None,
-        _level: c.LogLevel | str | None = None,
-        _service_name: str | None = None,
-        _service_version: str | None = None,
-        _correlation_id: str | None = None,
-        _force_new: bool = False,
+        level: c.LogLevel | str | None = None,
+        service_name: str | None = None,
+        service_version: str | None = None,
+        correlation_id: str | None = None,
+        force_new: bool = False,
     ) -> None:
         """Initialize FlextLogger with name and optional context."""
         super().__init__()
@@ -65,26 +65,26 @@ class FlextLogger(ulc):
             self._structlog_instance = _bound_logger
             return
         if settings is not None:
-            _level = getattr(settings, "level", _level)
-            _service_name = getattr(settings, c.ContextKey.SERVICE_NAME, _service_name)
-            _service_version = getattr(
+            level = getattr(settings, "level", level)
+            service_name = getattr(settings, c.ContextKey.SERVICE_NAME, service_name)
+            service_version = getattr(
                 settings,
                 c.ContextKey.SERVICE_VERSION,
-                _service_version,
+                service_version,
             )
-            _correlation_id = getattr(
+            correlation_id = getattr(
                 settings,
                 c.ContextKey.CORRELATION_ID,
-                _correlation_id,
+                correlation_id,
             )
-            _force_new = getattr(settings, "force_new", _force_new)
+            force_new = getattr(settings, "force_new", force_new)
         context: t.MutableStrMapping = {}
-        if _service_name:
-            context[c.ContextKey.SERVICE_NAME] = _service_name
-        if _service_version:
-            context[c.ContextKey.SERVICE_VERSION] = _service_version
-        if _correlation_id:
-            context[c.ContextKey.CORRELATION_ID] = _correlation_id
+        if service_name:
+            context[c.ContextKey.SERVICE_NAME] = service_name
+        if service_version:
+            context[c.ContextKey.SERVICE_VERSION] = service_version
+        if correlation_id:
+            context[c.ContextKey.CORRELATION_ID] = correlation_id
         base_logger = type(self).resolve_bound_logger(resolved_name)
         self._structlog_instance = (
             base_logger.bind(**context) if context else base_logger
@@ -155,9 +155,9 @@ class FlextLogger(ulc):
         return FlextLogger(
             name,
             settings=settings,
-            _service_name=service_name,
-            _service_version=service_version,
-            _correlation_id=correlation_id,
+            service_name=service_name,
+            service_version=service_version,
+            correlation_id=correlation_id,
         )
 
     @classmethod
@@ -365,7 +365,7 @@ class FlextLogger(ulc):
 
     def _log(
         self,
-        _level: c.LogLevel | str,
+        level: c.LogLevel | str,
         event: str,
         *args: t.LogValue,
         **context: t.LogValue,
@@ -378,11 +378,11 @@ class FlextLogger(ulc):
                 context["source"] = source_path
             for idx, arg in enumerate(args):
                 context[f"arg_{idx}"] = arg
-            match _level:
+            match level:
                 case c.LogLevel() as enum_level:
                     level_raw: str = enum_level.value
                 case _:
-                    level_raw = str(_level)
+                    level_raw = str(level)
             level_str = level_raw.lower()
             scalar_context = FlextLogger._to_scalar_context(context)
             getattr(self.logger, level_str)(event, **scalar_context)
