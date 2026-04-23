@@ -349,7 +349,14 @@ class FlextUtilitiesLoggingConfig:
             c.WarningLevel.ERROR: 40,
             "critical": 50,
         }
-        current_level = level_hierarchy.get(method_name.lower(), 20)
+        logger_level_attr = (
+            getattr(logger, "level", None) if logger is not None else None
+        )
+        current_level = (
+            logger_level_attr
+            if isinstance(logger_level_attr, int)
+            else level_hierarchy.get(method_name.lower(), 20)
+        )
         filtered_dict: t.MutableConfigurationMapping = {}
         for key, value in event_dict.items():
             if key.startswith("_level_"):

@@ -28,11 +28,6 @@ class FlextModelsBuilder:
             def __init__(self, *, state: StateT) -> None:
                 self.state = state
 
-            @property
-            def state(self) -> StateT:
-                """Return current immutable builder state."""
-                return self.state
-
             def _replace(self, state: StateT) -> Self:
                 """Replace current immutable state and preserve fluent chaining."""
                 self.state = state
@@ -85,7 +80,11 @@ class FlextModelsBuilder:
 
             def _build_product(self, state: StateT) -> ProductT:
                 """Build one product from state. Subclasses must implement it."""
-                raise NotImplementedError(c.ERR_BUILDER_BUILD_PRODUCT_NOT_IMPLEMENTED)
+                msg = (
+                    f"{c.ERR_BUILDER_BUILD_PRODUCT_NOT_IMPLEMENTED}: "
+                    f"{type(state).__name__}"
+                )
+                raise NotImplementedError(msg)
 
             def build(self) -> ProductT:
                 """Build the final product from the current state."""

@@ -98,7 +98,7 @@ class TestMigrationValidation:
         class UserService(s[None]):
             """User service extending s."""
 
-            logger: p.Logger = u.PrivateAttr(
+            _logger: p.Logger = u.PrivateAttr(
                 default_factory=lambda: u.fetch_logger(__name__),
             )
 
@@ -119,7 +119,7 @@ class TestMigrationValidation:
                 """Create user with validation."""
                 if not username or not email:
                     return r[t.StrMapping].fail("Username and email required")
-                self.logger.info("Creating user", username=username)
+                self._logger.info("Creating user", username=username)
                 user_data = {"username": username, "email": email}
                 return r[t.StrMapping].ok(user_data)
 

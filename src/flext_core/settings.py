@@ -253,10 +253,22 @@ class FlextSettings(BaseSettings):
     def __new__(cls, **kwargs: t.SettingsInput) -> Self:
         """Create singleton instance.
 
-        Note: BaseSettings.__init__ accepts **values internally.
-        We override __new__ to implement singleton pattern while allowing
-        kwargs to be passed for testing and settings via model_validate.
+        Kwargs are pre-validated against the model's declared fields to
+        fail fast with a descriptive error before pydantic validation runs.
+        BaseSettings.__init__ consumes kwargs and applies them to the
+        (possibly cached) singleton instance.
         """
+        model_fields = getattr(cls, "model_fields", None)
+        if model_fields and kwargs:
+            computed_fields = getattr(cls, "model_computed_fields", {}) or {}
+            valid_keys = set(model_fields) | set(computed_fields)
+            unknown_keys = set(kwargs) - valid_keys
+            if unknown_keys:
+                msg = (
+                    f"Unknown {cls.__name__} fields: {sorted(unknown_keys)}. "
+                    f"Valid fields: {sorted(valid_keys)}"
+                )
+                raise ValueError(msg)
         if not cls._singleton_enabled:
             return super().__new__(cls)
         base_class = cls

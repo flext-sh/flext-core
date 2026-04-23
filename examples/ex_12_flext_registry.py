@@ -13,7 +13,7 @@ from examples import (
     t,
     u,
 )
-from examples.models.ex12 import Ex12CommandA, Ex12CommandB
+from examples._models.ex12 import Ex12CommandA, Ex12CommandB
 from flext_core import h
 
 
