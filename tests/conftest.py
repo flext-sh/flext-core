@@ -29,7 +29,9 @@ import pytest
 
 import flext_core as core
 from flext_core import FlextContainer, FlextContext, FlextSettings
-from tests import c, m, p, r, u
+from tests import c, m, p, r, t, u
+
+collect_ignore_glob = ["**/__init__.py"]
 
 
 @pytest.fixture
@@ -116,7 +118,7 @@ def invalid_port_numbers() -> Sequence[int]:
 
 
 @pytest.fixture
-def valid_uris() -> Sequence[str]:
+def valid_uris() -> t.StrSequence:
     """Valid URIs for UriString validation."""
     return [
         "http://localhost",
@@ -133,7 +135,7 @@ def valid_uris() -> Sequence[str]:
 
 
 @pytest.fixture
-def invalid_uris() -> Sequence[str]:
+def invalid_uris() -> t.StrSequence:
     """Invalid URIs for UriString validation."""
     return [
         "",
@@ -147,7 +149,7 @@ def invalid_uris() -> Sequence[str]:
 
 
 @pytest.fixture
-def valid_hostnames() -> Sequence[str]:
+def valid_hostnames() -> t.StrSequence:
     """Valid hostnames for HostnameStr validation."""
     return [
         "localhost",
@@ -163,7 +165,7 @@ def valid_hostnames() -> Sequence[str]:
 
 
 @pytest.fixture
-def invalid_hostnames() -> Sequence[str]:
+def invalid_hostnames() -> t.StrSequence:
     """Invalid hostnames for HostnameStr validation."""
     return [
         "",
@@ -178,7 +180,7 @@ def invalid_hostnames() -> Sequence[str]:
 
 
 @pytest.fixture
-def valid_strings() -> Sequence[str]:
+def valid_strings() -> t.StrSequence:
     """Valid non-empty strings for string validation."""
     return [
         "a",
@@ -195,13 +197,13 @@ def valid_strings() -> Sequence[str]:
 
 
 @pytest.fixture
-def empty_strings() -> Sequence[str]:
+def empty_strings() -> t.StrSequence:
     """Empty strings for validation."""
     return [""]
 
 
 @pytest.fixture
-def whitespace_strings() -> Sequence[str]:
+def whitespace_strings() -> t.StrSequence:
     """Whitespace-only strings for validation."""
     return [" ", "   ", "\t", "\n", "  \t  "]
 

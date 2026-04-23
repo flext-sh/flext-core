@@ -99,7 +99,7 @@ python -c "from flext_core import r; print('✅ FLEXT-Core ready')"
 1. **Make changes**: Implement your feature or fix
 1. **Write tests**: Add comprehensive tests
 1. **Update docs**: Update documentation if needed
-1. **Run checks**: `make validate` (lint + type-check + tests)
+1. **Run checks**: `make val` (lint + type-check + tests)
 1. **Submit PR**: Create pull request with clear description
 
 ## Development Workflow
@@ -108,7 +108,7 @@ python -c "from flext_core import r; print('✅ FLEXT-Core ready')"
 
 ```bash
 # Complete validation (required before PR)
-make validate
+make val
 
 # Individual checks
 make lint           # Ruff linting (ZERO tolerance)

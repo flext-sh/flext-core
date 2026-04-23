@@ -73,9 +73,9 @@ class FlextUtilitiesContextTracing(FlextUtilitiesContextLifecycle):
                     default=None,
                 )
             )
-            OPERATION_METADATA: Final[
-                m.StructlogProxyContextVar[t.FlatContainerMapping]
-            ] = u.create_dict_proxy(c.ContextKey.OPERATION_METADATA, default=None)
+            OPERATION_METADATA: Final[m.StructlogProxyContextVar[t.JsonMapping]] = (
+                u.create_dict_proxy(c.ContextKey.OPERATION_METADATA, default=None)
+            )
 
         CorrelationId: Final[m.StructlogProxyContextVar[str]] = (
             Correlation.CORRELATION_ID
@@ -96,7 +96,7 @@ class FlextUtilitiesContextTracing(FlextUtilitiesContextLifecycle):
         OperationStartTime: Final[m.StructlogProxyContextVar[datetime]] = (
             Performance.OPERATION_START_TIME
         )
-        OperationMetadata: Final[m.StructlogProxyContextVar[t.FlatContainerMapping]] = (
+        OperationMetadata: Final[m.StructlogProxyContextVar[t.JsonMapping]] = (
             Performance.OPERATION_METADATA
         )
 

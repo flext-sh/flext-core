@@ -21,6 +21,7 @@ from flext_core import (
     FlextModelsBase as m,
     FlextModelsContainers as mc,
     FlextModelsErrors,
+    FlextModelsPydantic as mp,
     FlextRuntime,
     c,
     p,
@@ -38,7 +39,7 @@ class FlextExceptionsBase:
         handling, logging, and correlation tracking across the ecosystem.
         """
 
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = None
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = None
         _param_keys: ClassVar[frozenset[str]] = frozenset()
         _excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
         message: str
@@ -92,15 +93,15 @@ class FlextExceptionsBase:
             *,
             error_code: str = c.ErrorCode.UNKNOWN_ERROR,
             context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None = None,
-            metadata: p.HasModelDump | t.MetadataValue | None = None,
+            metadata: p.HasModelDump | t.JsonValue | None = None,
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
             merged_kwargs: Mapping[str, t.MetadataData | None]
             | p.HasModelDump
             | None = None,
-            params: t.ModelCarrier | None = None,
-            **extra_kwargs: t.Container,
+            params: mp.BaseModel | None = None,
+            **extra_kwargs: t.JsonValue,
         ) -> None:
             """Initialize base error with message and optional metadata."""
             declared_params_cls = self.__class__._params_cls
@@ -157,7 +158,7 @@ class FlextExceptionsBase:
             *,
             error_code: str,
             context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
-            metadata: p.HasModelDump | t.MetadataValue | None,
+            metadata: p.HasModelDump | t.JsonValue | None,
             correlation_id: str | None,
             auto_correlation: bool,
             auto_log: bool,
@@ -168,7 +169,7 @@ class FlextExceptionsBase:
             super().__init__(message)
             self.message = message
             self.error_code = error_code
-            final_kwargs_dict: dict[str, t.MetadataValue] = {}
+            final_kwargs_dict: dict[str, t.JsonValue] = {}
             for source_value in (merged_kwargs, context, extra_kwargs):
                 if source_value is None:
                     continue
@@ -207,7 +208,7 @@ class FlextExceptionsBase:
 
         @staticmethod
         def _normalize_metadata(
-            metadata: p.HasModelDump | t.MetadataValue | None,
+            metadata: p.HasModelDump | t.JsonValue | None,
             merged_kwargs: Mapping[str, t.RuntimeData],
         ) -> m.Metadata:
             """Normalize metadata from various input types to m.Metadata model."""
@@ -261,7 +262,7 @@ class FlextExceptionsBase:
             merged_kwargs: Mapping[str, t.RuntimeData],
         ) -> m.Metadata:
             """Normalize metadata from dict-like recursive containers."""
-            merged_attrs: MutableMapping[str, t.MetadataValue | None] = {}
+            merged_attrs: MutableMapping[str, t.JsonValue | None] = {}
             for k, v in metadata_dict.items():
                 if v is None:
                     continue
@@ -281,7 +282,7 @@ class FlextExceptionsBase:
 
         def to_dict(self) -> Mapping[str, t.RuntimeData | None]:
             """Convert exception to dictionary representation."""
-            result: MutableMapping[str, t.MetadataValue | None] = {
+            result: MutableMapping[str, t.JsonValue | None] = {
                 "error_type": type(self).__name__,
                 "message": self.message,
                 "error_code": self.error_code,
@@ -290,7 +291,7 @@ class FlextExceptionsBase:
                 "timestamp": self.timestamp,
             }
             if self.metadata and self.metadata.attributes:
-                filtered_attrs: MutableMapping[str, t.MetadataValue | None] = {
+                filtered_attrs: MutableMapping[str, t.JsonValue | None] = {
                     k: v for k, v in self.metadata.attributes.items() if k not in result
                 }
             else:
@@ -312,12 +313,12 @@ class FlextExceptionsBase:
             *,
             error_code: str,
             context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
-            params: t.ModelCarrier | None,
+            params: mp.BaseModel | None,
             named_params: Mapping[str, t.RuntimeData | None] | None = None,
             extra_kwargs: Mapping[str, t.MetadataData | None] | None = None,
             param_keys: frozenset[str] | None = None,
             correlation_id: str | None = None,
-            metadata: p.HasModelDump | t.MetadataValue | None = None,
+            metadata: p.HasModelDump | t.JsonValue | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
         ) -> None:
@@ -332,7 +333,7 @@ class FlextExceptionsBase:
             declared_param_keys = (
                 param_keys if param_keys is not None else type(self)._param_keys
             )
-            remaining_extra: MutableMapping[str, t.MetadataValue] = {}
+            remaining_extra: MutableMapping[str, t.JsonValue] = {}
             if extra_kwargs:
                 remaining_extra.update({
                     key: FlextRuntime.normalize_to_metadata(value)

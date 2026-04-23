@@ -39,8 +39,8 @@ assert ko.failure
 ```text
 Internal state sketch (illustrative):
 
-self._context_stack: Sequence[Mapping[str, t.Container]] = []
-self._metrics: Mapping[str, t.Container] = {}
+self._context_stack: Sequence[t.JsonMapping] = []
+self._metrics = {}
 
 Typical runtime interactions:
 handler.push_context({"operation": "create_user"})

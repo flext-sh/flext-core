@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import types
 from collections.abc import (
-    Mapping,
     MutableSequence,
 )
 from pathlib import Path
@@ -25,7 +24,7 @@ class TestModule:
 
         def __init__(self) -> None:
             self.calls: MutableSequence[
-                tuple[str, tuple[t.Container, ...], t.ScalarMapping]
+                tuple[str, tuple[t.Scalar, ...], t.ScalarMapping]
             ] = []
 
         def bind(self, **kwargs: t.Scalar) -> TestModule._FakeBindable:
@@ -77,7 +76,7 @@ class TestModule:
 
     class _ContextVars:
         def __init__(self) -> None:
-            self.store: t.MutableFlatContainerMapping = dict[str, t.Container]()
+            self.store: t.MutableScalarMapping = dict[str, t.Scalar]()
 
         def bind_contextvars(self, **kwargs: t.Scalar) -> None:
             self.store.update(kwargs)
@@ -89,7 +88,7 @@ class TestModule:
         def clear_contextvars(self) -> None:
             self.store.clear()
 
-        def get_contextvars(self) -> Mapping[str, t.Container]:
+        def get_contextvars(self) -> t.ScalarMapping:
             return dict(self.store)
 
     class _StructlogShim:
@@ -124,7 +123,7 @@ class TestModule:
             co_qualname = "MyType.run"
 
         class _Frame:
-            f_locals: ClassVar[Mapping[str, t.Container]] = {}
+            f_locals: ClassVar[t.JsonMapping] = {}
             f_code = _Code()
 
         extract_class_name = getattr(u, "_extract_class_name")

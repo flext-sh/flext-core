@@ -55,26 +55,26 @@ class Testu(u.Core.Tests.Contract):
         """Test case for utility operations."""
 
         operation: str
-        input_data: t.Container = ""
+        input_data: t.JsonValue = ""
         expected_type: type | None = None
         should_succeed: bool = True
         description: str = ""
 
     class _TestCachedObject:
-        """Mock t.Container with cache attributes."""
+        """Mock t.JsonValue with cache attributes."""
 
         def __init__(self) -> None:
             self._cache: m.ConfigMap = m.ConfigMap(root={"key": "value"})
             self._simple_cache: str = "cached_value"
 
     class _TestUncachedObject:
-        """Mock t.Container without cache attributes."""
+        """Mock t.JsonValue without cache attributes."""
 
         def __init__(self) -> None:
             self.name: str = "uncached"
 
     class _CustomObject:
-        """Custom serializable t.Container."""
+        """Custom serializable t.JsonValue."""
 
         @override
         def __str__(self) -> str:
@@ -83,16 +83,16 @@ class Testu(u.Core.Tests.Contract):
     class UtilityScenarios:
         """Centralized utility test scenarios."""
 
-        TYPE_GUARD_STRING_CASES: ClassVar[Sequence[tuple[t.Container, bool, str]]] = [
+        TYPE_GUARD_STRING_CASES: ClassVar[Sequence[tuple[t.JsonValue, bool, str]]] = [
             ("hello", True, "Non-empty string passes guard"),
             ("", False, "Empty string fails guard"),
             (123, False, "Non-string fails guard"),
         ]
-        TYPE_GUARD_DICT_CASES: ClassVar[Sequence[tuple[t.MetadataValue, bool, str]]] = [
+        TYPE_GUARD_DICT_CASES: ClassVar[Sequence[tuple[t.JsonValue, bool, str]]] = [
             ({"key": "value"}, True, "Non-empty dict passes guard"),
             ({}, False, "Empty dict fails guard"),
         ]
-        TYPE_GUARD_LIST_CASES: ClassVar[Sequence[tuple[t.MetadataValue, bool, str]]] = [
+        TYPE_GUARD_LIST_CASES: ClassVar[Sequence[tuple[t.JsonValue, bool, str]]] = [
             ([1, 2, 3], True, "Non-empty list passes guard"),
             ([], False, "Empty list fails guard"),
         ]
@@ -104,32 +104,32 @@ class Testu(u.Core.Tests.Contract):
             ("generate_saga_id", None),
             ("generate_event_id", None),
         ]
-        CACHE_NORMALIZATION_CASES: ClassVar[Sequence[tuple[t.MetadataValue, type]]] = [
+        CACHE_NORMALIZATION_CASES: ClassVar[Sequence[tuple[t.JsonValue, type]]] = [
             ({"a": 1, "b": 2}, dict),
             ([1, 2, 3], list),
         ]
 
         @staticmethod
         def create_mock_config(**kwargs: t.Scalar) -> m.ConfigMap:
-            """Create mock settings t.Container."""
+            """Create mock settings t.JsonValue."""
             result: MutableMapping[str, t.RuntimeData] = {}
             for key, value in kwargs.items():
-                result[str(key)] = value
+                result[str(key)] = u.normalize_to_container(value)
             return m.ConfigMap(root=result)
 
         @staticmethod
         def create_mock_cached_object() -> Testu._TestCachedObject:
-            """Create mock t.Container with cache attributes."""
+            """Create mock t.JsonValue with cache attributes."""
             return Testu._TestCachedObject()
 
         @staticmethod
         def create_mock_uncached_object() -> Testu._TestUncachedObject:
-            """Create mock t.Container without cache attributes."""
+            """Create mock t.JsonValue without cache attributes."""
             return Testu._TestUncachedObject()
 
         @staticmethod
         def create_custom_object() -> Testu._CustomObject:
-            """Create custom serializable t.Container."""
+            """Create custom serializable t.JsonValue."""
             return Testu._CustomObject()
 
         @staticmethod
@@ -153,7 +153,7 @@ class Testu(u.Core.Tests.Contract):
     )
     def test_type_guard_string(
         self,
-        input_data: t.Container,
+        input_data: t.JsonValue,
         should_succeed: bool,
         description: str,
     ) -> None:
@@ -174,7 +174,7 @@ class Testu(u.Core.Tests.Contract):
     )
     def test_type_guard_dict(
         self,
-        input_data: t.Container,
+        input_data: t.JsonValue,
         should_succeed: bool,
         description: str,
     ) -> None:
@@ -195,7 +195,7 @@ class Testu(u.Core.Tests.Contract):
     )
     def test_type_guard_list(
         self,
-        input_data: t.Container,
+        input_data: t.JsonValue,
         should_succeed: bool,
         description: str,
     ) -> None:
@@ -291,7 +291,7 @@ class Testu(u.Core.Tests.Contract):
         tm.that(attempt_count[0], gte=2)
 
     def test_type_checker_object_accepts_all(self) -> None:
-        """Test type checking with t.Container (accepts all)."""
+        """Test type checking with t.JsonValue (accepts all)."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = (str,)
         tm.that(u.can_handle_message_type(accepted, str), eq=True)
 

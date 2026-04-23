@@ -159,21 +159,82 @@ class FlextRegistry(s[bool]):
     @staticmethod
     def _narrow_value(
         value: (
-            t.Container
+            t.JsonValue
             | t.RegisterableService
             | t.RegistrablePlugin
-            | t.ModelCarrier
+            | m.BaseModel
             | None
         ),
     ) -> t.RuntimeData | None:
         """Safe conversion using centralized utilities."""
         if value is None:
             return None
-        if isinstance(value, t.CONTAINER_TYPES):
-            return value
         if isinstance(value, m.BaseModel):
             return value
-        return str(value)
+        if isinstance(value, p.Logger) or callable(value):
+            return str(value)
+        normalized = u.normalize_to_metadata(value)
+        if isinstance(normalized, Mapping):
+            return dict(t.json_mapping_adapter().validate_python(normalized))
+        if isinstance(normalized, Sequence) and not isinstance(
+            normalized,
+            (str, bytes, bytearray),
+        ):
+            return list(t.json_list_adapter().validate_python(normalized))
+        return t.json_value_adapter().validate_python(normalized)
+
+    @staticmethod
+    def _normalize_registration_impl(
+        value: t.RegistrablePlugin,
+    ) -> t.RegisterableService:
+        """Normalize registry payloads to the container bind contract."""
+        if isinstance(value, m.BaseModel):
+            return value
+        if isinstance(value, p.Logger):
+            return value
+        if callable(value):
+
+            def normalized_callable(
+                *args: object,
+                **kwargs: object,
+            ) -> (
+                m.BaseModel
+                | p.Logger
+                | dict[str, t.JsonValue]
+                | list[t.JsonValue]
+                | bool
+                | float
+                | int
+                | str
+                | None
+            ):
+                result = value(*args, **kwargs)
+                if isinstance(result, (m.BaseModel, p.Logger)):
+                    return result
+                normalized_result = u.normalize_to_metadata(result)
+                if isinstance(normalized_result, Mapping):
+                    return dict(
+                        t.json_mapping_adapter().validate_python(normalized_result),
+                    )
+                if isinstance(normalized_result, Sequence) and not isinstance(
+                    normalized_result,
+                    (str, bytes, bytearray),
+                ):
+                    return list(
+                        t.json_list_adapter().validate_python(normalized_result),
+                    )
+                return t.json_value_adapter().validate_python(normalized_result)
+
+            return normalized_callable
+        normalized = u.normalize_to_metadata(value)
+        if isinstance(normalized, Mapping):
+            return dict(t.json_mapping_adapter().validate_python(normalized))
+        if isinstance(normalized, Sequence) and not isinstance(
+            normalized,
+            (str, bytes, bytearray),
+        ):
+            return list(t.json_list_adapter().validate_python(normalized))
+        return t.json_value_adapter().validate_python(normalized)
 
     def _get_handler_mode(self, value: t.RuntimeData) -> c.HandlerType:
         """Safe conversion to HandlerType."""
@@ -284,7 +345,8 @@ class FlextRegistry(s[bool]):
 
         """
         was_registered = self.container.has(name)
-        _ = self.container.bind(name, service)
+        normalized_service = self._normalize_registration_impl(service)
+        _ = self.container.bind(name, normalized_service)
         if was_registered or self.container.has(name):
             return r[bool].ok(True)
         return r[bool].fail_op(
@@ -457,7 +519,8 @@ class FlextRegistry(s[bool]):
         if scope == c.RegistrationScope.INSTANCE:
             if key in self._state.registered_keys:
                 return r[bool].ok(True)
-            self.container.bind(key, plugin)
+            normalized_plugin = self._normalize_registration_impl(plugin)
+            self.container.bind(key, normalized_plugin)
             self._remember_registered_key(key)
             return r[bool].ok(True)
         cls = type(self)

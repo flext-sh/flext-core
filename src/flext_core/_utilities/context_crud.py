@@ -9,9 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
+from collections.abc import Sequence
 from typing import ClassVar, overload
 
 from flext_core import (
@@ -86,7 +84,7 @@ class FlextUtilitiesContextCrud(ucs):
     ) -> p.Result[t.RuntimeData]:
         """Get a value from the context.
 
-        Fast fail: Returns r[t.Container] - fails if key not found.
+        Fast fail: Returns r[t.JsonValue] - fails if key not found.
         No fallback behavior - use r monadic operations for defaults.
         """
         if not self._state.active:
@@ -117,11 +115,11 @@ class FlextUtilitiesContextCrud(ucs):
                 "resolve context metadata",
                 c.ERR_CONTEXT_METADATA_KEY_NOT_FOUND.format(key=key),
             )
-        raw_value: t.MetadataValue = self._state.metadata.attributes[key]
+        raw_value: t.JsonValue = self._state.metadata.attributes[key]
         normalized_value = FlextRuntime.normalize_to_container(raw_value)
         return r[t.RuntimeData].ok(normalized_value)
 
-    def apply_metadata(self, key: str, value: t.MetadataValue) -> None:
+    def apply_metadata(self, key: str, value: t.JsonValue) -> None:
         """Set metadata via Pydantic immutable copy DSL."""
         meta = self._state.metadata
         self._state = self._state.model_copy(
@@ -141,7 +139,7 @@ class FlextUtilitiesContextCrud(ucs):
         scope_data = self._contextvar_data(scope)
         return key in scope_data
 
-    def items(self) -> list[tuple[str, t.Container]]:
+    def items(self) -> Sequence[tuple[str, t.JsonValue]]:
         """Get all items (key-value pairs) in the context."""
         if not self._state.active:
             return []
@@ -163,12 +161,12 @@ class FlextUtilitiesContextCrud(ucs):
             all_keys.update(scope_dict.keys())
         return list(all_keys)
 
-    def values(self) -> t.FlatContainerList:
+    def values(self) -> t.JsonList:
         """Get all values in the context."""
         if not self._state.active:
-            empty_values: t.FlatContainerList = []
+            empty_values: t.JsonList = []
             return empty_values
-        all_values: list[t.Container] = []
+        all_values: list[t.JsonValue] = []
         for ctx_var in self._state.scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_values.extend(scope_dict.values())
@@ -203,7 +201,7 @@ class FlextUtilitiesContextCrud(ucs):
     @overload
     def set(
         self,
-        key_or_data: Mapping[str, t.Container],
+        key_or_data: t.JsonMapping,
         value: None = ...,
         *,
         scope: str = ...,
@@ -211,7 +209,7 @@ class FlextUtilitiesContextCrud(ucs):
 
     def set(
         self,
-        key_or_data: str | Mapping[str, t.Container],
+        key_or_data: str | t.JsonMapping,
         value: t.RuntimeData | None = None,
         *,
         scope: str = c.ContextScope.GLOBAL,
@@ -225,7 +223,7 @@ class FlextUtilitiesContextCrud(ucs):
 
     def _apply_bulk(
         self,
-        data: Mapping[str, t.Container],
+        data: t.JsonMapping,
         scope: str,
     ) -> p.Result[bool]:
         """Set multiple values in the context from a ConfigMap."""

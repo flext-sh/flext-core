@@ -14,17 +14,16 @@ from collections.abc import (
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
-from flext_core import (
-    FlextProtocolsBase,
-    FlextProtocolsContext,
-    FlextProtocolsHandler,
-    FlextProtocolsLogging,
-    FlextProtocolsResult,
-    FlextProtocolsSettings,
-)
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.context import FlextProtocolsContext
+from flext_core._protocols.handler import FlextProtocolsHandler
+from flext_core._protocols.logging import FlextProtocolsLogging
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols.settings import FlextProtocolsSettings
 
 if TYPE_CHECKING:
-    from flext_core import m, t
+    from flext_core.models import m
+    from flext_core.typings import t
 
 
 class FlextProtocolsContainer:
@@ -119,14 +118,14 @@ class FlextProtocolsContainer:
         @override
         def configure(
             self,
-            settings: t.FlatContainerMapping | None = None,
+            settings: t.UserOverridesMapping | None = None,
         ) -> Self:
             """Configure the container with validated flat overrides."""
             ...
 
         def apply(
             self,
-            settings: t.FlatContainerMapping | None = None,
+            settings: t.UserOverridesMapping | None = None,
         ) -> Self:
             """Apply user configuration overrides to the container."""
             ...

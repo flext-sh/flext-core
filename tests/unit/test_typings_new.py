@@ -43,9 +43,9 @@ class TestFlextTypes:
         "Container",
         "Numeric",
         "NormalizedValue",
-        "RecursiveContainer",
-        "RecursiveContainerMapping",
-        "RecursiveContainerList",
+        "JsonValue",
+        "JsonMapping",
+        "JsonList",
         "ContainerMapping",
         "ContainerList",
         "MutableContainerMapping",
@@ -65,18 +65,18 @@ class TestFlextTypes:
     # -- Core type aliases --
 
     CORE_ALIAS_NAMES: tuple[str, ...] = (
-        "TextValue",
-        "IntegerValue",
-        "FloatValue",
-        "BinaryContent",
+        "StrictStr",
+        "StrictInt",
+        "StrictFloat",
+        "StrictBytes",
         "TextOrBinaryContent",
-        "OptionalPrimitive",
-        "OptionalScalar",
+        "Primitives | None",
+        "Scalar | None",
         "RegistryBindingKey",
         "Serializable",
-        "ContainerValue",
+        "JsonValue",
         "GeneralValueType",
-        "OptionalContainerValue",
+        "JsonValue | None",
         "ConstantValue",
         "FileContent",
         "JsonMapping",
@@ -95,7 +95,7 @@ class TestFlextTypes:
         "RegisterableService",
         "FactoryCallable",
         "ResourceCallable",
-        "MetadataValue",
+        "JsonValue",
         "HandlerCallable",
         "HandlerLike",
         "DispatchableHandler",
@@ -523,12 +523,12 @@ class TestFlextTypes:
         tm.that(len(cm), eq=2)
 
     def test_object_list_creation(self) -> None:
-        """t.ObjectList can be created with container values."""
+        """t.JsonList can be created with container values."""
         ol = m.ObjectList(root=["item1", 42, True])
         tm.that(len(ol.root), eq=3)
 
     def test_object_list_default_empty(self) -> None:
-        """t.ObjectList defaults to empty list."""
+        """t.JsonList defaults to empty list."""
         ol = m.ObjectList(root=[])
         tm.that(len(ol.root), eq=0)
 

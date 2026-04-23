@@ -3,6 +3,13 @@
 
 from __future__ import annotations
 
+from collections.abc import (
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core.lazy import (
     build_lazy_import_map,
     install_lazy_exports,
@@ -170,7 +177,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_settings_coverage": ("TestFlextSettingsCoverage",),
             ".test_typings_full_coverage": ("TestTypingsFullCoverage",),
             ".test_typings_new": ("TestFlextTypes",),
-            ".test_typings_project_metadata": ("test_typings_project_metadata",),
             ".test_utilities_collection_coverage_100": (
                 "TestUtilitiesCollectionCoverage",
             ),

@@ -12,14 +12,14 @@ from collections.abc import (
     Mapping,
 )
 
-from flext_core import c, e, p, r, t
+from flext_core import c, e, m, p, r, t
 
 
 class FlextUtilitiesArgs:
     """Utilities for model-based option parsing."""
 
     @staticmethod
-    def parse_model[M: t.ModelCarrier](
+    def parse_model[M: m.BaseModel](
         kwargs: Mapping[str, t.RuntimeData],
         model_cls: t.ModelClass[M],
         *,
@@ -50,7 +50,7 @@ class FlextUtilitiesArgs:
             return e.fail_validation(error=exc)
 
     @staticmethod
-    def resolve_options[M: t.ModelCarrier](
+    def resolve_options[M: m.BaseModel](
         options: M | None,
         kwargs: Mapping[str, t.RuntimeData],
         model_cls: t.ModelClass[M],

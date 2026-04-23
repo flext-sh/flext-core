@@ -21,15 +21,8 @@ from collections.abc import (
 class FlextTypingProjectMetadata:
     """PEP 695 aliases for project-metadata SSOT (flat on ``t.*``)."""
 
-    type ProjectAliasName = str
-    type ProjectTierName = str
-    type ProjectName = str
-    type ProjectPackageName = str
-    type ProjectClassStem = str
-    type ProjectLibraryName = str
-    type ProjectAliasToSuffixMap = Mapping[ProjectAliasName, str]
-    type ProjectTierFacadePrefixMap = Mapping[ProjectTierName, str]
-    type ProjectAliasParentSourceMap = Mapping[ProjectAliasName, str]
-    type ProjectSpecialNameOverrideMap = Mapping[ProjectName, ProjectClassStem]
-    type ProjectManagedKeyName = str
-    type ProjectManagedKeyTuple = tuple[ProjectManagedKeyName, ...]
+    type ProjectAliasToSuffixMap = Mapping[str, str]
+    type ProjectTierFacadePrefixMap = Mapping[str, str]
+    type ProjectAliasParentSourceMap = Mapping[str, str]
+    type ProjectSpecialNameOverrideMap = Mapping[str, str]
+    type ProjectManagedKeyTuple = tuple[str, ...]

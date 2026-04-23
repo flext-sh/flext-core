@@ -13,13 +13,11 @@ from collections.abc import (
 from datetime import datetime
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core import (
-    FlextProtocolsBase,
-    FlextProtocolsResult,
-)
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.result import FlextProtocolsResult
 
 if TYPE_CHECKING:
-    from flext_core import t
+    from flext_core.typings import t
 
 
 class FlextProtocolsLogging:
@@ -57,7 +55,7 @@ class FlextProtocolsLogging:
             exception: Exception | None,
             exc_info: bool,
             context: Mapping[str, t.RuntimeData | Exception],
-        ) -> t.FlatContainerMapping:
+        ) -> t.JsonMapping:
             """Build normalized structured exception context."""
             ...
 
@@ -238,7 +236,7 @@ class FlextProtocolsLogging:
 
         """
 
-        def __call__(self, value: t.Container) -> bool:
+        def __call__(self, value: t.JsonValue) -> bool:
             """Validate value, return True if valid."""
             ...
 

@@ -69,10 +69,10 @@ class ExamplesFlextCoreShared(m.BaseModel):
         max_u64 = (1 << 64) - 1
         return raw / max_u64
 
-    def check(
+    def check[TValue](
         self,
         label: str,
-        value: t.Examples.ExampleRenderable | None,
+        value: TValue | None,
     ) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         separator = m.Examples.LABEL_VALUE_SEPARATOR
@@ -126,9 +126,9 @@ class ExamplesFlextCoreShared(m.BaseModel):
             self._results.append("")
         self._results.append(f"[{name}]")
 
-    def ser(
+    def ser[TValue](
         self,
-        v: t.Examples.ExampleRenderable | None,
+        v: TValue | None,
     ) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
@@ -223,7 +223,7 @@ class ExamplesFlextCoreShared(m.BaseModel):
 
     @staticmethod
     def bind_status(
-        value: t.Container,
-    ) -> t.Container:
+        value: t.JsonValue,
+    ) -> t.JsonValue:
         """Return a summary ConfigMap when *value* is a ``r``."""
         return value

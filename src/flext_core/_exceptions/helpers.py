@@ -10,12 +10,14 @@ from collections.abc import (
     Mapping,
     MutableMapping,
 )
+from typing import no_type_check
 
 from pydantic import ValidationError as PydanticValidationError
 from pydantic.fields import FieldInfo
 
 from flext_core import (
     FlextModelsBase as m,
+    FlextModelsPydantic as mp,
     FlextRuntime,
     c,
     p,
@@ -23,6 +25,7 @@ from flext_core import (
 )
 
 
+@no_type_check
 class FlextExceptionsHelpers:
     """Internal helpers for exception param extraction and metadata normalization."""
 
@@ -30,9 +33,9 @@ class FlextExceptionsHelpers:
     def _normalized_source_entries(
         context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
         extra_kwargs: Mapping[str, t.MetadataData | None],
-    ) -> tuple[tuple[str, t.MetadataValue], ...]:
+    ) -> tuple[tuple[str, t.JsonValue], ...]:
         """Collect normalized metadata entries from context and kwargs once."""
-        entries: list[tuple[str, t.MetadataValue]] = []
+        entries: list[tuple[str, t.JsonValue]] = []
         source_values = (context, extra_kwargs)
         for source_value in source_values:
             if source_value is None:
@@ -54,7 +57,7 @@ class FlextExceptionsHelpers:
     def safe_metadata(
         value: p.HasModelDump
         | Mapping[str, t.MetadataData | None]
-        | t.MetadataValue
+        | t.JsonValue
         | None,
     ) -> m.Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model."""
@@ -89,7 +92,7 @@ class FlextExceptionsHelpers:
         context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
         extra_kwargs: Mapping[str, t.MetadataData | None],
         excluded_keys: set[str] | frozenset[str] | None = None,
-    ) -> dict[str, t.MetadataValue]:
+    ) -> dict[str, t.JsonValue]:
         """Build normalized context map from context and kwargs."""
         excluded = excluded_keys or frozenset()
         return {
@@ -106,7 +109,7 @@ class FlextExceptionsHelpers:
         context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
         extra_kwargs: Mapping[str, t.MetadataData | None],
         keys: set[str] | frozenset[str],
-    ) -> dict[str, t.MetadataValue]:
+    ) -> dict[str, t.JsonValue]:
         """Build parameter map restricted to declared param keys."""
         return {
             key: value
@@ -118,7 +121,7 @@ class FlextExceptionsHelpers:
         }
 
     @staticmethod
-    def init_error_params[TParams: t.ModelCarrier](
+    def init_error_params[TParams: mp.BaseModel](
         context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
         extra_kwargs: Mapping[str, t.MetadataData | None],
         named_params: Mapping[str, t.RuntimeData | None],
@@ -129,8 +132,8 @@ class FlextExceptionsHelpers:
         excluded_context_keys: set[str] | frozenset[str] | None = None,
     ) -> tuple[
         TParams,
-        dict[str, t.MetadataValue] | None,
-        t.MetadataValue | None,
+        dict[str, t.JsonValue] | None,
+        t.JsonValue | None,
         str | None,
     ]:
         """Extract, resolve and build error parameters from kwargs.
@@ -152,12 +155,10 @@ class FlextExceptionsHelpers:
         remaining_extra_kwargs: Mapping[str, t.MetadataData | None] = dict(
             mutable_extra,
         )
-        param_values: dict[str, t.MetadataValue] = (
-            FlextExceptionsHelpers.build_param_map(
-                context,
-                remaining_extra_kwargs,
-                keys=param_keys,
-            )
+        param_values: dict[str, t.JsonValue] = FlextExceptionsHelpers.build_param_map(
+            context,
+            remaining_extra_kwargs,
+            keys=param_keys,
         )
         for key, val in named_params.items():
             if val is None:

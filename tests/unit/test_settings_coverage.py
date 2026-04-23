@@ -15,7 +15,7 @@ from flext_tests import tf, tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextSettings
-from tests import c, m, t, u
+from tests import c, m, u
 
 
 class TestFlextSettingsCoverage:
@@ -89,7 +89,7 @@ class TestFlextSettingsCoverage:
     def test_create_and_read_config_file(self, tmp_path: Path) -> None:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
-        settings_payload: t.FlatContainerMapping = {
+        settings_payload = {
             "app_name": "flext",
             "debug": True,
             "port": 8080,
@@ -110,7 +110,7 @@ class TestFlextSettingsCoverage:
     def test_create_and_read_json_config(self, tmp_path: Path) -> None:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
-        payload_mapping: t.FlatContainerMapping = {
+        payload_mapping = {
             "name": "flext-core",
             "workers": 4,
             "enabled": True,

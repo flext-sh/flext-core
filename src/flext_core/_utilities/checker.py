@@ -305,7 +305,7 @@ class FlextUtilitiesChecker:
             return msg
         route_attrs = ("command_type", "query_type", "event_type")
         for attr in route_attrs:
-            attr_val: t.TextValue | None = getattr(msg, attr, None)
+            attr_val: t.StrictStr | None = getattr(msg, attr, None)
             if isinstance(attr_val, str) and attr_val:
                 return attr_val
         if isinstance(msg, type) and issubclass(msg, BaseModel):

@@ -49,12 +49,12 @@ class FlextModelsContextScope:
             FlextUtilitiesPydantic.Field(description="Scope data"),
         ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
         metadata: Annotated[
-            Mapping[str, t.Container],
+            t.JsonMapping,
             FlextModelsPydantic.BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),
             FlextUtilitiesPydantic.Field(description="Scope metadata"),
-        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
+        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
 
     class ContextStatistics(FlextModelsBase.ArbitraryTypesModel):
         """Statistics tracking for context operations.
@@ -92,7 +92,7 @@ class FlextModelsContextScope:
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         operations: Annotated[
-            Mapping[str, t.MetadataValue],
+            Mapping[str, t.JsonValue],
             FlextModelsPydantic.BeforeValidator(
                 lambda v: (
                     FlextModelsContextData.normalize_to_mapping(v)
@@ -223,15 +223,21 @@ class FlextModelsContextScope:
                 current_counter = getattr(current_statistics, counter_attr)
                 if isinstance(current_counter, int):
                     statistics_updates[counter_attr] = current_counter + 1
-            operations: dict[str, t.JsonValue] = {
+            operations: t.JsonMapping = {
                 str(key): value
                 for key, value in current_statistics.operations.items()
                 if isinstance(value, (str, int, float, bool))
             }
             current_operation_value = operations.get(operation)
             if isinstance(current_operation_value, int):
-                operations[operation] = current_operation_value + 1
-                statistics_updates["operations"] = operations
+                statistics_updates["operations"] = (
+                    t.json_mapping_adapter().validate_python(
+                        {
+                            **operations,
+                            operation: current_operation_value + 1,
+                        },
+                    )
+                )
             if not statistics_updates:
                 return self
             updated_statistics = current_statistics.model_copy(

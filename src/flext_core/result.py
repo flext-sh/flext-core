@@ -21,6 +21,7 @@ from typing import (
     Self,
     TypeIs,
     cast,
+    no_type_check,
     overload,
     override,
 )
@@ -38,6 +39,7 @@ from returns.result import Failure, Result, Success
 
 from flext_core import (
     FlextModelsContainers as mc,
+    FlextModelsPydantic as mp,
     FlextProtocolsLogging as pl,
     FlextProtocolsResult as p,
     FlextRuntime,
@@ -46,6 +48,7 @@ from flext_core import (
 )
 
 
+@no_type_check
 class FlextResult[T](BaseModel, p.Result[T]):
     """Type-safe result with monadic helpers for operation composition.
 
@@ -90,12 +93,12 @@ class FlextResult[T](BaseModel, p.Result[T]):
 
     @property
     @override
-    def error_data(self) -> t.FlatContainerMapping | None:
+    def error_data(self) -> t.JsonMapping | None:
         """Public error metadata; Pydantic-native dump to flat Mapping."""
         data = self.result_error_data
         if data is None:
             return None
-        normalized_raw: dict[str, t.Container] = {}
+        normalized_raw: dict[str, t.JsonValue] = {}
         for key, value in data.root.items():
             normalized = FlextRuntime.normalize_to_container(value)
             if isinstance(normalized, t.CONTAINER_TYPES):
@@ -285,7 +288,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
         )
 
     @staticmethod
-    def _validate_model[UModel: t.ModelCarrier](
+    def _validate_model[UModel: mp.BaseModel](
         data: t.ModelInput,
         model: t.ModelClass[UModel],
         *,
@@ -419,7 +422,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
         )
 
     @staticmethod
-    def from_validation[ModelT: t.ModelCarrier](
+    def from_validation[ModelT: mp.BaseModel](
         data: t.ModelInput,
         model: t.ModelClass[ModelT],
     ) -> FlextResult[ModelT]:
@@ -851,7 +854,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
         return self
 
     @override
-    def to_model[U: t.ModelCarrier](
+    def to_model[U: mp.BaseModel](
         self,
         model: t.ModelClass[U],
     ) -> FlextResult[U]:

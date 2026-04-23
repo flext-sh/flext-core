@@ -18,7 +18,8 @@ from typing import Annotated, ClassVar
 
 from pydantic import Field
 
-from flext_core import FlextModelsPydantic
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextModelsEnforcement:
@@ -29,11 +30,11 @@ class FlextModelsEnforcement:
     always go through ``m.Enforcement.Violation`` / ``m.Enforcement.Report``.
     """
 
-    class Violation(FlextModelsPydantic.BaseModel):
+    class Violation(mp.BaseModel):
         """Single enforcement violation located at ``qualname``."""
 
-        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
-            FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            frozen=True, extra="forbid"
         )
 
         qualname: Annotated[
@@ -53,11 +54,11 @@ class FlextModelsEnforcement:
             Field(description="Human-readable violation message."),
         ]
 
-    class Report(FlextModelsPydantic.BaseModel):
+    class Report(mp.BaseModel):
         """Aggregated violation report returned by a check or runner."""
 
-        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
-            FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            frozen=True, extra="forbid"
         )
 
         violations: Annotated[
@@ -69,7 +70,7 @@ class FlextModelsEnforcement:
         ] = Field(default_factory=tuple)
 
         @property
-        def messages(self) -> Sequence[str]:
+        def messages(self) -> t.StrSequence:
             """Return plain messages for backwards-compatible emission."""
             return [v.message for v in self.violations]
 

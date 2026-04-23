@@ -27,7 +27,7 @@ class FlextModelsContextData:
 
     @staticmethod
     def normalize_to_mapping(
-        v: t.RuntimeData,
+        v: Mapping[str, t.Scalar] | t.RuntimeData | None,
     ) -> Mapping[str, t.Scalar]:
         """Convert value to an immutable flat mapping with scalar values only."""
         if v is None:

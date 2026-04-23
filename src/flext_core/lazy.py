@@ -22,6 +22,8 @@ from pydantic import (
     computed_field,
 )
 
+from flext_core._beartype_bootstrap import FlextCoreBeartypeBootstrap
+
 
 class FlextLazy(BaseModel):
     """Canonical lazy API as a container with runtime reuse caches."""
@@ -107,6 +109,8 @@ class FlextLazy(BaseModel):
         cached = self.module_cache.get(module_path)
         if cached is not None:
             return cached
+        if module_path.startswith("flext_core."):
+            FlextCoreBeartypeBootstrap.activate_package_beartype()
         mod = sys.modules.get(module_path) or self._import_module(module_path)
         self.module_cache[module_path] = mod
         return mod
@@ -141,7 +145,7 @@ class FlextLazy(BaseModel):
         *,
         alias_groups: Mapping[str, Sequence[tuple[str, str]]] | None = None,
         sort_keys: bool = True,
-    ) -> dict[str, str | tuple[str, str]]:
+    ) -> Mapping[str, str | tuple[str, str]]:
         """Build one flat lazy-import map."""
         out: dict[str, str | tuple[str, str]] = {
             name: module
@@ -226,7 +230,7 @@ class FlextLazy(BaseModel):
         *,
         exclude_names: Sequence[str] = (),
         module_name: str | None = None,
-    ) -> dict[str, str | tuple[str, str]]:
+    ) -> MutableMapping[str, str | tuple[str, str]]:
         """Merge child lazy maps with local entries."""
         key = tuple(self._child_path(path, module_name) for path in child_module_paths)
         children = self.child_merge_cache.get(key)

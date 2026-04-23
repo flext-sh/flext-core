@@ -35,6 +35,14 @@ class FlextDecorators:
     type _LoggerCarrier = p.HasLogger | p.Logger | t.RuntimeData | m.BaseModel
 
     @staticmethod
+    def _is_logger_carrier(
+        value: object | None,
+    ) -> TypeIs[FlextDecorators._LoggerCarrier]:
+        return isinstance(value, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)) or (
+            FlextDecorators._has_flext_logger(value)
+        )
+
+    @staticmethod
     def _resolve_logger(
         first_arg: p.Logger | FlextDecorators._LoggerCarrier | None = None,
         *,
@@ -136,15 +144,7 @@ class FlextDecorators:
                 logger_carrier: FlextDecorators._LoggerCarrier | None = None
                 if args:
                     first_arg_raw = args[0]
-                    if isinstance(
-                        first_arg_raw, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)
-                    ) or (
-                        isinstance(
-                            first_arg_raw,
-                            (p.HasLogger,),
-                        )
-                        and FlextDecorators._has_flext_logger(first_arg_raw)
-                    ):
+                    if FlextDecorators._is_logger_carrier(first_arg_raw):
                         logger_carrier = first_arg_raw
                 logger = FlextDecorators._resolve_logger(
                     logger_carrier,
@@ -303,15 +303,7 @@ class FlextDecorators:
                 logger_carrier: FlextDecorators._LoggerCarrier | None = None
                 if args:
                     first_arg_raw = args[0]
-                    if isinstance(
-                        first_arg_raw, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)
-                    ) or (
-                        isinstance(
-                            first_arg_raw,
-                            (p.HasLogger,),
-                        )
-                        and FlextDecorators._has_flext_logger(first_arg_raw)
-                    ):
+                    if FlextDecorators._is_logger_carrier(first_arg_raw):
                         logger_carrier = first_arg_raw
                 logger = FlextDecorators._resolve_logger(
                     logger_carrier,
@@ -529,7 +521,7 @@ class FlextDecorators:
         track_perf: bool,
     ) -> None:
         """Log operation completion with optional perf metrics."""
-        extra: t.MutableConfigurationMapping = {
+        extra: t.MutableJsonMapping = {
             "function": func_name,
             "success": True,
         }
@@ -550,9 +542,9 @@ class FlextDecorators:
         *,
         tracked_duration: float,
         track_perf: bool,
-    ) -> t.MutableConfigurationMapping:
+    ) -> t.MutableJsonMapping:
         """Build kwargs dict for logger.exception call (must be called inside except)."""
-        kw: t.MutableConfigurationMapping = {
+        kw: t.MutableJsonMapping = {
             "function": func_name,
             "success": False,
             "error": str(exc),
@@ -793,15 +785,7 @@ class FlextDecorators:
                 logger_carrier: FlextDecorators._LoggerCarrier | None = None
                 if args:
                     first_arg_raw = args[0]
-                    if isinstance(
-                        first_arg_raw, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)
-                    ) or (
-                        isinstance(
-                            first_arg_raw,
-                            (p.HasLogger,),
-                        )
-                        and FlextDecorators._has_flext_logger(first_arg_raw)
-                    ):
+                    if FlextDecorators._is_logger_carrier(first_arg_raw):
                         logger_carrier = first_arg_raw
                 logger = FlextDecorators._resolve_logger(
                     logger_carrier,
@@ -809,7 +793,7 @@ class FlextDecorators:
                 )
                 try:
                     if context_vars:
-                        filtered_vars: t.FlatContainerMapping = {
+                        filtered_vars = {
                             k: v
                             for k, v in context_vars.items()
                             if v is not None and u.container(v)

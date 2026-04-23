@@ -12,9 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import (
-    Mapping,
-)
 from datetime import datetime
 from pathlib import Path
 
@@ -75,7 +72,7 @@ class FlextUtilitiesHandler:
     @staticmethod
     def push_context(
         state: FlextModelsHandler.HandlerRuntimeState,
-        ctx: Mapping[str, t.Container],
+        ctx: t.JsonMapping,
     ) -> p.Result[bool]:
         """Coerce a flat mapping into an ExecutionContext and push it."""
         handler_name = str(ctx.get("handler_name", c.IDENTIFIER_UNKNOWN))

@@ -41,7 +41,7 @@ class FlextUtilitiesDomain:
         return obj_a.__class__ is obj_b.__class__
 
     @staticmethod
-    def _get_obj_dict(obj: t.RuntimeData) -> Mapping[str, t.Container] | None:
+    def _get_obj_dict(obj: t.RuntimeData) -> t.JsonMapping | None:
         """Extract __dict__ safely, returning None on failure."""
         try:
             return obj.__dict__
@@ -49,7 +49,7 @@ class FlextUtilitiesDomain:
             return None
 
     @staticmethod
-    def _to_hashable(value: t.Container) -> t.Container:
+    def _to_hashable(value: t.JsonValue) -> t.JsonValue:
         """Coerce a value to something hashable for dict-based hashing."""
         if isinstance(value, (str, int, float, bool, type(None))):
             return value
@@ -132,7 +132,7 @@ class FlextUtilitiesDomain:
         obj_dict = FlextUtilitiesDomain._get_obj_dict(obj)
         if obj_dict is None:
             return hash(repr(obj))
-        items: Sequence[t.Pair[str, t.Container]] = [
+        items: Sequence[t.Pair[str, t.JsonValue]] = [
             (str(k), FlextUtilitiesDomain._to_hashable(v))
             for k, v in sorted(obj_dict.items())
         ]

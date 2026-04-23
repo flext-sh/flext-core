@@ -43,8 +43,8 @@ class FlextUtilitiesContext:
     @staticmethod
     def create_dict_proxy(
         key: str,
-        default: t.FlatContainerMapping | None = None,
-    ) -> FlextModelsContextProxyVar.StructlogProxyContextVar[t.FlatContainerMapping]:
+        default: t.JsonMapping | None = None,
+    ) -> FlextModelsContextProxyVar.StructlogProxyContextVar[t.JsonMapping]:
         """Create StructlogProxyContextVar[dict] instance."""
         return FlextModelsContextProxyVar.StructlogProxyContextVar(
             key,

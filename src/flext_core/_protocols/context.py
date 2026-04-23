@@ -49,11 +49,11 @@ class FlextProtocolsContext:
             """Return all keys across all scopes."""
             ...
 
-        def values(self) -> Sequence[t.Container]:
+        def values(self) -> t.JsonList:
             """Return all values across all scopes."""
             ...
 
-        def items(self) -> Sequence[tuple[str, t.Container]]:
+        def items(self) -> Sequence[tuple[str, t.JsonValue]]:
             """Return all key-value pairs across all scopes."""
             ...
 
@@ -73,7 +73,7 @@ class FlextProtocolsContext:
         @overload
         def set(
             self,
-            key_or_data: t.FlatContainerMapping,
+            key_or_data: t.JsonMapping,
             value: None = ...,
             *,
             scope: str = ...,
@@ -81,7 +81,7 @@ class FlextProtocolsContext:
 
         def set(
             self,
-            key_or_data: str | t.FlatContainerMapping,
+            key_or_data: str | t.JsonMapping,
             value: t.RuntimeData | None = ...,
             *,
             scope: str = ...,
@@ -107,7 +107,7 @@ class FlextProtocolsContext:
 
         def merge(
             self,
-            other: Self | Mapping[str, t.RuntimeData] | Mapping[str, t.Container],
+            other: Self | Mapping[str, t.RuntimeData] | t.JsonMapping,
         ) -> Self:
             """Merge another context or mapping into this one."""
             ...
@@ -137,7 +137,7 @@ class FlextProtocolsContext:
             """Get a metadata value by key."""
             ...
 
-        def apply_metadata(self, key: str, value: t.MetadataValue) -> None:
+        def apply_metadata(self, key: str, value: t.JsonValue) -> None:
             """Set a metadata value by key."""
             ...
 
@@ -222,7 +222,7 @@ class FlextProtocolsContext:
         @staticmethod
         def timed_operation(
             operation_name: str | None = None,
-        ) -> AbstractContextManager[t.FlatContainerMapping]:
+        ) -> AbstractContextManager[t.JsonMapping]:
             """Create a timed operation scope."""
             ...
 
@@ -231,7 +231,7 @@ class FlextProtocolsContext:
         """Protocol for context serialization helpers."""
 
         @staticmethod
-        def export_full_context() -> Mapping[str, t.Container]:
+        def export_full_context() -> t.JsonMapping:
             """Export the active global context variables."""
             ...
 
@@ -263,11 +263,11 @@ class FlextProtocolsContext:
         @classmethod
         def create(
             cls,
-            initial_data: t.FlatContainerMapping | None = None,
+            initial_data: t.JsonMapping | None = None,
             *,
             operation_id: str | None = None,
             user_id: str | None = None,
-            metadata: t.FlatContainerMapping | None = None,
+            metadata: t.JsonMapping | None = None,
             auto_correlation_id: bool = True,
         ) -> FlextProtocolsContext.Context:
             """Create a new context instance."""

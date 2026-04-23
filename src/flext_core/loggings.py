@@ -133,7 +133,7 @@ class FlextLogger(ulc):
                 resolved_name = frame.f_back.f_globals.get("__name__", __name__)
             else:
                 resolved_name = __name__
-        return cls.create_module_logger(resolved_name)
+        return FlextLogger.create_module_logger(resolved_name)
 
     @classmethod
     def create_bound_logger(cls, name: str, bound_logger: p.Logger) -> Self:
@@ -151,8 +151,8 @@ class FlextLogger(ulc):
         correlation_id: str | None = None,
     ) -> p.Logger:
         """Create a logger instance for a module."""
-        cls.ensure_structlog_configured()
-        return cls(
+        FlextLogger.ensure_structlog_configured()
+        return FlextLogger(
             name,
             settings=settings,
             _service_name=service_name,
@@ -166,7 +166,7 @@ class FlextLogger(ulc):
         container: p.Container,
         level: str | None = None,
         **context: t.RuntimeData,
-    ) -> Self:
+    ) -> p.Logger:
         """Create logger configured for a specific container."""
         if level is None:
             settings: p.Settings | None
@@ -175,7 +175,7 @@ class FlextLogger(ulc):
             except (AttributeError, RuntimeError, TypeError, ValueError):
                 settings = None
             level = getattr(settings, "log_level", "INFO")
-        logger = cls(f"container_{id(container)}")
+        logger = FlextLogger(f"container_{id(container)}")
         if context:
             _ = logger.bind_global_context(**context)
         return logger
@@ -188,8 +188,8 @@ class FlextLogger(ulc):
     @classmethod
     def to_container_context(
         cls,
-        context: Mapping[str, t.LogValue | t.Container | t.RuntimeData],
-    ) -> Mapping[str, t.MetadataData]:
+        context: Mapping[str, t.LogValue | t.JsonValue | t.RuntimeData],
+    ) -> t.JsonMapping:
         """Public wrapper for context normalization used outside helper mixins."""
         return cls._to_container_context(context)
 
@@ -199,10 +199,10 @@ class FlextLogger(ulc):
         exception: Exception | None,
         exc_info: bool,
         context: Mapping[str, t.RuntimeData | Exception],
-    ) -> t.FlatContainerMapping:
+    ) -> t.JsonMapping:
         """Build normalized context payload for exception/error logging."""
         include_stack_trace = self._should_include_stack_trace()
-        context_dict: dict[str, t.Container] = {}
+        context_dict: dict[str, t.JsonValue] = {}
         if exception is not None:
             context_dict["exception_type"] = exception.__class__.__name__
             context_dict["exception_message"] = str(exception)
@@ -256,8 +256,8 @@ class FlextLogger(ulc):
     ) -> t.LogResult:
         """Log exception with conditional stack trace (DEBUG only)."""
         message = str(msg)
-        filtered_args: tuple[t.Scalar, ...] = tuple(
-            FlextLogger._to_scalar_value(arg)
+        filtered_args: tuple[t.JsonValue, ...] = tuple(
+            FlextLogger._to_container_value(arg)
             for arg in args
             if not isinstance(arg, BaseException)
         )
@@ -267,14 +267,14 @@ class FlextLogger(ulc):
             )
             raw_exception = kw.get("exception")
             exc_info_value = kw.get("exc_info", True)
-            context_input: MutableMapping[str, t.Scalar | Exception] = {}
+            context_input: MutableMapping[str, t.RuntimeData | Exception] = {}
             for key, value in kw.items():
                 if key in {"exception", "exc_info"}:
                     continue
                 if isinstance(value, Exception):
                     context_input[key] = value
                 else:
-                    context_input[key] = FlextLogger._to_scalar_value(value)
+                    context_input[key] = FlextLogger._to_container_value(value)
             built_context = self.build_exception_context(
                 exception=resolved_exception,
                 exc_info=bool(exc_info_value),
@@ -314,8 +314,8 @@ class FlextLogger(ulc):
         level_enum: c.LogLevel | str = level
         with suppress(ValueError, AttributeError):
             level_enum = c.LogLevel(level.upper())
-        converted_args: tuple[t.Container, ...] = tuple(
-            FlextLogger._to_scalar_value(arg) for arg in args
+        converted_args: tuple[t.JsonValue, ...] = tuple(
+            FlextLogger._to_container_value(arg) for arg in args
         )
         return self._log(level_enum, message, *converted_args, **context)
 
@@ -510,16 +510,12 @@ class FlextLogger(ulc):
             if success:
                 _ = self.logger.info(
                     f"{self._operation_name} {status}",
-                    **FlextLogger._to_scalar_context(
-                        FlextLogger.to_container_context(context.root),
-                    ),
+                    **FlextLogger.to_container_context(context.root),
                 )
             else:
                 _ = self.logger.error(
                     f"{self._operation_name} {status}",
-                    **FlextLogger._to_scalar_context(
-                        FlextLogger.to_container_context(context.root),
-                    ),
+                    **FlextLogger.to_container_context(context.root),
                 )
 
 

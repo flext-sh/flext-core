@@ -13,11 +13,14 @@ from __future__ import annotations
 import secrets
 import string
 import uuid
+from collections.abc import Sequence
 from datetime import UTC, datetime
+from typing import no_type_check
 
 from flext_core import c, t
 
 
+@no_type_check
 class FlextUtilitiesGenerators:
     """Generate deterministic IDs and timestamps for CQRS workflows.
 
@@ -57,7 +60,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_prefixed_id(
         prefix: str,
-        *parts: t.Container,
+        *parts: t.JsonValue,
         length: int = c.SHORT_UUID_LENGTH,
     ) -> str:
         """Generate {prefix}_{parts}_{uuid[:length]} formatted ID."""
@@ -69,12 +72,12 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _build_parts_list(
-        parts: tuple[t.Container, ...] | None,
+        parts: tuple[t.JsonValue, ...] | None,
         *,
         include_timestamp: bool,
-    ) -> list[t.Container]:
+    ) -> Sequence[t.JsonValue]:
         """Collect ID parts including optional timestamp prefix."""
-        all_parts: list[t.Container] = []
+        all_parts: list[t.JsonValue] = []
         if include_timestamp:
             all_parts.append(int(datetime.now(UTC).timestamp()))
         if parts:
@@ -84,7 +87,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_custom_separator_id(
         actual_prefix: str,
-        all_parts: list[t.Container],
+        all_parts: Sequence[t.JsonValue],
         separator: str,
         id_length: int,
     ) -> str:
@@ -100,7 +103,7 @@ class FlextUtilitiesGenerators:
         kind: str | None = None,
         *,
         prefix: str | None = None,
-        parts: tuple[t.Container, ...] | None = None,
+        parts: tuple[t.JsonValue, ...] | None = None,
         length: int | None = None,
         include_timestamp: bool = False,
         separator: str = "_",

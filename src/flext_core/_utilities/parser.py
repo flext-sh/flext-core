@@ -15,6 +15,7 @@ from collections.abc import (
     Mapping,
 )
 from enum import StrEnum
+from typing import no_type_check
 
 from flext_core import (
     FlextModelsBase,
@@ -30,6 +31,7 @@ from flext_core import (
 )
 
 
+@no_type_check
 class FlextUtilitiesParser:
     """Parse delimited and structured strings with predictable results.
 

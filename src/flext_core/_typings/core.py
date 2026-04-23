@@ -20,17 +20,8 @@ from flext_core import (
 class FlextTypesCore:
     """Type aliases for core scalar/container foundations."""
 
-    type TextValue = tp.StrictStr
-    type IntegerValue = tp.StrictInt
-    type FloatValue = tp.StrictFloat
-    type BinaryContent = tp.StrictBytes
-    type TextOrBinaryContent = FlextTypesCore.TextValue | FlextTypesCore.BinaryContent
+    type TextOrBinaryContent = tp.StrictStr | tp.StrictBytes
     type RegistryBindingKey = str | type
 
-    type Serializable = t.Container
-    type FileContent = (
-        FlextTypesCore.TextValue
-        | FlextTypesCore.BinaryContent
-        | Sequence[t.StrSequence]
-    )
+    type FileContent = tp.StrictStr | tp.StrictBytes | Sequence[t.StrSequence]
     type GeneralValueTypeMapping = Mapping[str, t.Scalar]

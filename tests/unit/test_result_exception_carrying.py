@@ -13,7 +13,7 @@ from tests import m, p, r, t
 
 class TestsFlextCoreResultExceptionCarrying:
     class BrokenSized:
-        """Sized t.Container that raises on __len__."""
+        """Sized t.JsonValue that raises on __len__."""
 
         def __len__(self) -> int:
             """Raise TypeError on length call."""

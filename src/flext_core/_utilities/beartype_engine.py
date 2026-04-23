@@ -1,9 +1,9 @@
 """Annotation inspection + rule-predicate surface for enforcement.
 
 Every row in ``c.ENFORCEMENT_RULES`` is paired by naming convention with a
-``check_<tag>`` staticmethod on :class:`FlextUtilitiesBeartypeEngine`.
+``check_<tag>`` staticmethod on :class:`ube`.
 
-Every ``check_<tag>`` returns ``Mapping[str, str] | None``:
+Every ``check_<tag>`` returns ``t.StrMapping | None``:
 
 * ``None`` → no violation.
 * Empty mapping → violation with the default template strings.
@@ -31,27 +31,28 @@ from enum import EnumType
 from pathlib import Path
 from types import UnionType
 from typing import (
-    TYPE_CHECKING,
     Annotated,
     Any,
     ForwardRef,
+    TypeAliasType,
     Union,
     get_args,
     get_origin,
+    no_type_check,
 )
 
 from pydantic.fields import FieldInfo
 
-from flext_core import FlextConstantsEnforcement as c, FlextModelsPydantic as mp
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
-if TYPE_CHECKING:
-    from flext_core import t
+_NO_VIOLATION: t.StrMapping | None = None
+_BARE_VIOLATION: t.StrMapping = {}
 
 
-_NO_VIOLATION: Mapping[str, str] | None = None
-_BARE_VIOLATION: Mapping[str, str] = {}
-
-
+@no_type_check
 class FlextUtilitiesBeartypeEngine:
     """Annotation inspection + per-tag rule predicates (static-only)."""
 
@@ -60,20 +61,46 @@ class FlextUtilitiesBeartypeEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
+    def unwrap_type_alias(
+        hint: t.TypeHintSpecifier | None,
+    ) -> t.TypeHintSpecifier | None:
+        current = hint
+        seen: set[int] = set()
+        while isinstance(current, TypeAliasType):
+            current_id = id(current)
+            if current_id in seen:
+                return current
+            seen.add(current_id)
+            current = current.__value__
+        return current
+
+    @staticmethod
     def contains_any(hint: t.TypeHintSpecifier | None) -> bool:
+        return ube._contains_any(hint, seen=set())
+
+    @staticmethod
+    def _contains_any(
+        hint: t.TypeHintSpecifier | None,
+        *,
+        seen: set[int],
+    ) -> bool:
+        hint = ube.unwrap_type_alias(hint)
         if hint is None:
             return False
+        hint_id = id(hint)
+        if hint_id in seen:
+            return False
+        seen.add(hint_id)
         if hint is Any or hint is object:
             return True
-        return any(
-            FlextUtilitiesBeartypeEngine.contains_any(arg) for arg in get_args(hint)
-        )
+        return any(ube._contains_any(arg, seen=seen) for arg in get_args(hint))
 
     @staticmethod
     def has_forbidden_collection_origin(
         hint: t.TypeHintSpecifier | None,
         forbidden: frozenset[str],
     ) -> tuple[bool, str]:
+        hint = ube.unwrap_type_alias(hint)
         if hint is None:
             return False, ""
         origin = get_origin(hint)
@@ -85,6 +112,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def count_union_members(hint: t.TypeHintSpecifier | None) -> int:
+        hint = ube.unwrap_type_alias(hint)
         if hint is None:
             return 0
         origin = get_origin(hint)
@@ -94,6 +122,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def is_str_none_union(hint: t.TypeHintSpecifier | None) -> bool:
+        hint = ube.unwrap_type_alias(hint)
         if hint is None:
             return False
         origin = get_origin(hint)
@@ -107,7 +136,7 @@ class FlextUtilitiesBeartypeEngine:
         alias_value: t.TypeHintSpecifier | None,
     ) -> bool:
         try:
-            return FlextUtilitiesBeartypeEngine.contains_any(alias_value)
+            return ube.contains_any(alias_value)
         except (TypeError, AttributeError, RuntimeError, RecursionError):
             return "Any" in str(alias_value)
 
@@ -117,6 +146,7 @@ class FlextUtilitiesBeartypeEngine:
     ) -> t.TypeHintSpecifier | None:
         current = hint
         while current is not None:
+            current = ube.unwrap_type_alias(current)
             if isinstance(current, ForwardRef):
                 current = current.__forward_arg__
                 continue
@@ -136,7 +166,7 @@ class FlextUtilitiesBeartypeEngine:
                 )
                 if annotated_prefix is None:
                     return stripped
-                current = FlextUtilitiesBeartypeEngine._first_top_level_arg(
+                current = ube._first_top_level_arg(
                     stripped.removeprefix(annotated_prefix)[:-1],
                 )
                 continue
@@ -167,7 +197,7 @@ class FlextUtilitiesBeartypeEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def mutable_kind(value: t.Container) -> str | None:
+    def mutable_kind(value: tp.JsonValue) -> str | None:
         for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
             if isinstance(value, kind):
                 return kind.__name__
@@ -190,13 +220,13 @@ class FlextUtilitiesBeartypeEngine:
             dict: MutableMapping,
             set: MutableSet,
         }
-        mutable_kind = FlextUtilitiesBeartypeEngine.mutable_default_factory_kind(
+        mutable_kind = ube.mutable_default_factory_kind(
             factory,
         )
         if mutable_kind is None:
             return False
         expected = expected_by_factory.get(mutable_kind)
-        normalized = FlextUtilitiesBeartypeEngine.unwrap_annotated(hint)
+        normalized = ube.unwrap_annotated(hint)
         if normalized is None:
             return False
         if isinstance(normalized, str):
@@ -270,10 +300,10 @@ class FlextUtilitiesBeartypeEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def check_no_any(info: FieldInfo) -> Mapping[str, str] | None:
+    def check_no_any(info: FieldInfo) -> t.StrMapping | None:
         return (
             _BARE_VIOLATION
-            if FlextUtilitiesBeartypeEngine.contains_any(
+            if ube.contains_any(
                 info.annotation,
             )
             else _NO_VIOLATION
@@ -282,8 +312,8 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_no_bare_collection(
         info: FieldInfo,
-    ) -> Mapping[str, str] | None:
-        bad, origin = FlextUtilitiesBeartypeEngine.has_forbidden_collection_origin(
+    ) -> t.StrMapping | None:
+        bad, origin = ube.has_forbidden_collection_origin(
             info.annotation,
             c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
         )
@@ -302,8 +332,8 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_no_mutable_default(
         info: FieldInfo,
-    ) -> Mapping[str, str] | None:
-        kind = FlextUtilitiesBeartypeEngine.mutable_kind(info.default)
+    ) -> t.StrMapping | None:
+        kind = ube.mutable_kind(info.default)
         if kind is None or not info.default:
             return _NO_VIOLATION
         return {"kind": kind}
@@ -311,7 +341,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_no_raw_collections_field_default(
         info: FieldInfo,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         """Reject Field(default_factory=list/dict/set).
 
         When a field uses ``default_factory`` pointing to a mutable
@@ -321,12 +351,12 @@ class FlextUtilitiesBeartypeEngine:
         factory = info.default_factory
         if factory is None:
             return _NO_VIOLATION
-        if FlextUtilitiesBeartypeEngine.allows_mutable_default_factory(
+        if ube.allows_mutable_default_factory(
             info.annotation,
             factory,
         ):
             return _NO_VIOLATION
-        mutable_kind = FlextUtilitiesBeartypeEngine.mutable_default_factory_kind(
+        mutable_kind = ube.mutable_default_factory_kind(
             factory,
         )
         if mutable_kind is not None:
@@ -336,8 +366,8 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_no_str_none_empty(
         info: FieldInfo,
-    ) -> Mapping[str, str] | None:
-        if not FlextUtilitiesBeartypeEngine.is_str_none_union(info.annotation):
+    ) -> t.StrMapping | None:
+        if not ube.is_str_none_union(info.annotation):
             return _NO_VIOLATION
         if isinstance(info.default, str) and not info.default:
             return _BARE_VIOLATION
@@ -346,8 +376,8 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_no_inline_union(
         info: FieldInfo,
-    ) -> Mapping[str, str] | None:
-        arms = FlextUtilitiesBeartypeEngine.count_union_members(info.annotation)
+    ) -> t.StrMapping | None:
+        arms = ube.count_union_members(info.annotation)
         if arms <= c.ENFORCEMENT_INLINE_UNION_MAX:
             return _NO_VIOLATION
         return {"arms": str(arms)}
@@ -357,7 +387,7 @@ class FlextUtilitiesBeartypeEngine:
         model_type: type[mp.BaseModel],
         name: str,
         info: FieldInfo,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         if name.startswith("_") or info.description:
             return _NO_VIOLATION
         raw_ann = vars(model_type).get("__annotations__", {})
@@ -377,7 +407,7 @@ class FlextUtilitiesBeartypeEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def check_no_v1_config(target: type) -> Mapping[str, str] | None:
+    def check_no_v1_config(target: type) -> t.StrMapping | None:
         return (
             _BARE_VIOLATION
             if isinstance(
@@ -388,8 +418,8 @@ class FlextUtilitiesBeartypeEngine:
         )
 
     @staticmethod
-    def check_extra_missing(target: type) -> Mapping[str, str] | None:
-        if FlextUtilitiesBeartypeEngine.is_relaxed_extra_base(target):
+    def check_extra_missing(target: type) -> t.StrMapping | None:
+        if ube.is_relaxed_extra_base(target):
             return _NO_VIOLATION
         if not issubclass(target, mp.BaseModel):
             return _NO_VIOLATION
@@ -403,8 +433,8 @@ class FlextUtilitiesBeartypeEngine:
         )
 
     @staticmethod
-    def check_extra_wrong(target: type) -> Mapping[str, str] | None:
-        if FlextUtilitiesBeartypeEngine.is_relaxed_extra_base(target):
+    def check_extra_wrong(target: type) -> t.StrMapping | None:
+        if ube.is_relaxed_extra_base(target):
             return _NO_VIOLATION
         if not issubclass(target, mp.BaseModel):
             return _NO_VIOLATION
@@ -415,7 +445,7 @@ class FlextUtilitiesBeartypeEngine:
         return {"extra": str(extra)}
 
     @staticmethod
-    def check_value_not_frozen(target: type) -> Mapping[str, str] | None:
+    def check_value_not_frozen(target: type) -> t.StrMapping | None:
         if not any(
             b.__name__ in c.ENFORCEMENT_VALUE_OBJECT_BASES for b in target.__mro__
         ):
@@ -436,7 +466,7 @@ class FlextUtilitiesBeartypeEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def attr_accept_constants(name: str, value: t.Container) -> bool:
+    def attr_accept_constants(name: str, value: tp.JsonValue) -> bool:
         if name.startswith("_") or name in c.ENFORCEMENT_CONSTANTS_SKIP_ATTRS:
             return False
         if isinstance(value, (type, classmethod, staticmethod, property)):
@@ -461,10 +491,10 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_const_mutable(
         name: str,
-        value: t.Container,
-    ) -> Mapping[str, str] | None:
+        value: tp.JsonValue,
+    ) -> t.StrMapping | None:
         del name
-        kind = FlextUtilitiesBeartypeEngine.mutable_kind(value)
+        kind = ube.mutable_kind(value)
         if kind is None:
             return _NO_VIOLATION
         return {"kind": kind}
@@ -472,18 +502,18 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_const_lowercase(
         name: str,
-        value: t.Container,
-    ) -> Mapping[str, str] | None:
+        value: tp.JsonValue,
+    ) -> t.StrMapping | None:
         del value
         return _BARE_VIOLATION if name != name.upper() else _NO_VIOLATION
 
     @staticmethod
     def check_alias_any(
         name: str,
-        value: t.Container,
-    ) -> Mapping[str, str] | None:
+        value: tp.JsonValue,
+    ) -> t.StrMapping | None:
         del name
-        if FlextUtilitiesBeartypeEngine.alias_contains_any(
+        if ube.alias_contains_any(
             getattr(value, "__value__", None),
         ):
             return _BARE_VIOLATION
@@ -492,8 +522,8 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_typeadapter_name(
         name: str,
-        value: t.Container,
-    ) -> Mapping[str, str] | None:
+        value: tp.JsonValue,
+    ) -> t.StrMapping | None:
         if type(value).__name__ != "TypeAdapter":
             return _NO_VIOLATION
         if name.startswith("ADAPTER_") or name.upper() == name:
@@ -503,8 +533,8 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_utility_not_static(
         name: str,
-        value: t.Container,
-    ) -> Mapping[str, str] | None:
+        value: tp.JsonValue,
+    ) -> t.StrMapping | None:
         del name
         if isinstance(value, (staticmethod, classmethod)):
             return _NO_VIOLATION
@@ -520,7 +550,7 @@ class FlextUtilitiesBeartypeEngine:
     def check_class_prefix(
         target: type,
         expected: str,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         if target.__name__.startswith(expected):
             return _NO_VIOLATION
         return {"expected": expected, "actual": target.__name__}
@@ -529,7 +559,7 @@ class FlextUtilitiesBeartypeEngine:
     def check_cross_strenum(
         inner_cls: type,
         layer: str,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         allowed = c.ENFORCEMENT_LAYER_ALLOWS.get(layer, frozenset())
         if isinstance(inner_cls, EnumType) and "StrEnum" not in allowed:
             return _BARE_VIOLATION
@@ -539,9 +569,9 @@ class FlextUtilitiesBeartypeEngine:
     def check_cross_protocol(
         inner_cls: type,
         layer: str,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         allowed = c.ENFORCEMENT_LAYER_ALLOWS.get(layer, frozenset())
-        is_proto = FlextUtilitiesBeartypeEngine.is_runtime_protocol_target(
+        is_proto = ube.is_runtime_protocol_target(
             inner_cls,
         )
         if is_proto and "Protocol" not in allowed:
@@ -552,7 +582,7 @@ class FlextUtilitiesBeartypeEngine:
     def check_nested_mro(
         target: type,
         expected: str,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         parts = target.__qualname__.split(".")
         # Top-level classes ARE containers (the roots other classes nest
         # into) — they do not themselves need to be nested. Only nested
@@ -568,20 +598,20 @@ class FlextUtilitiesBeartypeEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def check_proto_inner_kind(value: type) -> Mapping[str, str] | None:
+    def check_proto_inner_kind(value: type) -> t.StrMapping | None:
         if value.__dict__.get("_flext_enforcement_exempt", False):
             return _NO_VIOLATION
-        if FlextUtilitiesBeartypeEngine.is_runtime_protocol_target(value):
+        if ube.is_runtime_protocol_target(value):
             return _NO_VIOLATION
-        if FlextUtilitiesBeartypeEngine.has_nested_namespace(value):
+        if ube.has_nested_namespace(value):
             return _NO_VIOLATION
-        if FlextUtilitiesBeartypeEngine.is_abstract_target(value):
+        if ube.is_abstract_target(value):
             return _NO_VIOLATION
         return _BARE_VIOLATION
 
     @staticmethod
-    def check_proto_not_runtime(value: type) -> Mapping[str, str] | None:
-        if not FlextUtilitiesBeartypeEngine.is_runtime_protocol_target(value):
+    def check_proto_not_runtime(value: type) -> t.StrMapping | None:
+        if not ube.is_runtime_protocol_target(value):
             return _NO_VIOLATION
         if getattr(value, "_is_runtime_protocol", False):
             return _NO_VIOLATION
@@ -595,7 +625,7 @@ class FlextUtilitiesBeartypeEngine:
     def check_no_accessor_methods(
         _target: type,
         name: str,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         """``get_*`` / ``set_*`` / ``is_*`` public methods are forbidden.
 
         AGENTS.md §3.1 Accessor Naming Law: expose state as fields or
@@ -616,7 +646,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_settings_inheritance(
         target: type,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         """Top-level ``*Settings`` classes must inherit from ``FlextSettings``.
 
         AGENTS.md §2.6 Settings Law. Only applies to classes defined at
@@ -642,7 +672,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_no_concrete_namespace_import(
         target: type,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         """R1, R3: Reject bare Flext* class imports in canonical files.
 
         Canonical files (typings, models, protocols, utilities, constants)
@@ -674,7 +704,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_no_pydantic_consumer_import(
         target: type,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         """R2: Reject bare pydantic imports in consumers.
 
         Only flext-core._* modules and flext-*._* base pyramids may import
@@ -733,7 +763,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_facade_base_is_alias_or_peer(
         target: type,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         """R4, R5: Facade class bases must be alias or peer concrete class.
 
         Pattern A: class FlextXxxTypes(t):
@@ -756,7 +786,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_alias_first_multi_parent(
         target: type,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         """R5: Multi-parent facades must have alias as first base.
 
         MRO C3 linearization requires alias (FlextCliTypes) before peer
@@ -778,7 +808,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_alias_rebound_at_module_end(
         target: type,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         """R6: Module must rebind the canonical alias at end-of-file.
 
         After class definition, module must end with: t = FlextXxxTypes
@@ -828,7 +858,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_no_redundant_inner_namespace(
         target: type,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         """R8: No redundant inner namespace re-inheritance.
 
         If parent already exposes a namespace (e.g., t.Cli from FlextCliTypes),
@@ -859,7 +889,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_no_self_root_import_in_core_files(
         target: type,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         """R7: Canonical files must not import aliases from own package.
 
         typings.py, models.py, protocols.py, utilities.py, constants.py must
@@ -892,7 +922,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_sibling_models_type_checking(
         target: type,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         """R9: Sibling _models/* imports used only in annotations go under TYPE_CHECKING.
 
         If a class from _models/sibling.py is referenced only in an Annotated[...],
@@ -948,7 +978,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_utilities_explicit_class_when_self_ref(
         target: type,
-    ) -> Mapping[str, str] | None:
+    ) -> t.StrMapping | None:
         """R10: utilities.py multi-parent must use explicit class base, not alias.
 
         When a utilities.py method calls u.method() and u is rebound to the
@@ -987,4 +1017,5 @@ class FlextUtilitiesBeartypeEngine:
             return _NO_VIOLATION
 
 
-__all__: list[str] = ["FlextUtilitiesBeartypeEngine"]
+ube = FlextUtilitiesBeartypeEngine
+__all__: list[str] = ["FlextUtilitiesBeartypeEngine", "ube"]

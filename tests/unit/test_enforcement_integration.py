@@ -23,6 +23,8 @@ from collections.abc import (
 
 import pytest
 
+from tests import t
+
 
 def _import_fresh(dotted: str) -> tuple[object, Sequence[warnings.WarningMessage]]:
     """Import ``dotted`` with a clean cache and capture enforcement warnings."""
@@ -62,7 +64,7 @@ class TestBadModuleFiresExpectedRules:
     """Each bad class in the fixture triggers its dedicated rule."""
 
     @pytest.fixture(scope="class")
-    def violations(self) -> Sequence[str]:
+    def violations(self) -> t.StrSequence:
         _module, messages = _import_fresh(
             "tests.unit._enforcement_integration_fixtures.bad_module",
         )
@@ -87,7 +89,7 @@ class TestBadModuleFiresExpectedRules:
     )
     def test_rule_fires_for_fragment(
         self,
-        violations: Sequence[str],
+        violations: t.StrSequence,
         fragment: str,
         tag: str,
     ) -> None:

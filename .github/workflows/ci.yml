@@ -44,6 +44,6 @@ jobs:
         continue-on-error: true
         run: make test
 
-      - name: Validate (advisory)
+      - name: Val (advisory)
         continue-on-error: true
-        run: make validate
+        run: make val

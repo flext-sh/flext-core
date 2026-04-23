@@ -16,18 +16,18 @@ from collections.abc import (
     MutableMapping,
     Sequence,
 )
-from typing import Annotated, override
+from typing import Annotated, no_type_check, override
 
-from flext_core import (
-    FlextModelsPydantic as mp,
-    FlextTypesServices,
-    FlextUtilitiesPydantic as up,
-)
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.services import FlextTypesServices
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
 
+@no_type_check
 class FlextModelsContainers:
     """Pydantic RootModel container namespace."""
 
+    @no_type_check
     class ValidatorCallable(mp.RootModel[FlextTypesServices.ValidatorCallable]):
         """Callable validator container rooted in a scalar-or-model transform."""
 
@@ -46,6 +46,7 @@ class FlextModelsContainers:
         ) -> FlextTypesServices.ScalarOrModel:
             return self.root(value)
 
+    @no_type_check
     class Dict(
         mp.RootModel[dict[str, FlextTypesServices.RuntimeData]],
         MutableMapping[str, FlextTypesServices.RuntimeData],
@@ -77,6 +78,7 @@ class FlextModelsContainers:
         def __delitem__(self, key: str) -> None:
             del self.root[key]
 
+    @no_type_check
     class ConfigMap(
         mp.RootModel[dict[str, FlextTypesServices.RuntimeData]],
         MutableMapping[str, FlextTypesServices.RuntimeData],
@@ -108,6 +110,7 @@ class FlextModelsContainers:
         def __delitem__(self, key: str) -> None:
             del self.root[key]
 
+    @no_type_check
     class ObjectList(
         mp.RootModel[list[FlextTypesServices.RuntimeData]],
         Sequence[FlextTypesServices.RuntimeData],

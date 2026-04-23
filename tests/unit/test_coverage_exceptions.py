@@ -20,7 +20,7 @@ class TestCoverageExceptions:
     """Validate public exception behavior without depending on internals."""
 
     STRUCTURED_ERRORS: Sequence[
-        tuple[str, ErrorFactory, str, str, Mapping[str, t.MetadataValue | None]]
+        tuple[str, ErrorFactory, str, str, Mapping[str, t.JsonValue | None]]
     ] = [
         (
             "validation",
@@ -139,7 +139,7 @@ class TestCoverageExceptions:
     ]
 
     FAILURES: Sequence[
-        tuple[str, FailureFactory, str, str, Mapping[str, t.MetadataValue | None]]
+        tuple[str, FailureFactory, str, str, Mapping[str, t.JsonValue | None]]
     ] = [
         (
             "config",
@@ -204,7 +204,7 @@ class TestCoverageExceptions:
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
-        expected_payload: Mapping[str, t.MetadataValue | None],
+        expected_payload: Mapping[str, t.JsonValue | None],
     ) -> None:
         error = factory()
 
@@ -261,7 +261,7 @@ class TestCoverageExceptions:
         factory: FailureFactory,
         expected_fragment: str,
         expected_code: str,
-        expected_data: Mapping[str, t.MetadataValue | None],
+        expected_data: Mapping[str, t.JsonValue | None],
     ) -> None:
         result = factory()
 

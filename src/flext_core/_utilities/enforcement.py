@@ -16,23 +16,19 @@ import warnings
 from collections.abc import (
     Callable,
     Iterator,
-    Mapping,
+    Sequence,
 )
 from enum import EnumType
 from pathlib import Path
-from typing import TYPE_CHECKING
 
-from flext_core import (
-    FlextConstantsEnforcement as c,
-    FlextConstantsProjectMetadata as _kpm,
-    FlextModelsEnforcement as me,
-    FlextModelsPydantic as mp,
-    FlextUtilitiesBeartypeEngine as ub,
-    FlextUtilitiesProjectMetadata as _ump,
-)
-
-if TYPE_CHECKING:
-    from flext_core import t
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
 
 
 class FlextUtilitiesEnforcement:
@@ -47,7 +43,7 @@ class FlextUtilitiesEnforcement:
         tag: str,
         location: str,
         qualname: str,
-        detail: Mapping[str, str] | None = None,
+        detail: t.StrMapping | None = None,
     ) -> me.Violation:
         _cat, layer, severity, problem, fix = c.ENFORCEMENT_RULES[tag]
         subs = detail or {}
@@ -120,7 +116,7 @@ class FlextUtilitiesEnforcement:
                 for child in src.iterdir():
                     if child.is_dir() and (child / "__init__.py").exists():
                         return child.name
-            meta = _ump.read_project_metadata(parent)
+            meta = upm.read_project_metadata(parent)
             return meta.package_name
         return None
 
@@ -147,15 +143,15 @@ class FlextUtilitiesEnforcement:
             src = top
 
         head, _, tail = src.partition("_")
-        namespace = _ump.pascalize(tail or head)
-        project_prefix = _kpm.SPECIAL_NAME_OVERRIDES.get(
+        namespace = upm.pascalize(tail or head)
+        project_prefix = cpm.SPECIAL_NAME_OVERRIDES.get(
             src.replace("_", "-"),
-        ) or _ump.pascalize(src)
+        ) or upm.pascalize(src)
         # Workspace-level auxiliary roots (tests / examples / scripts) live
         # under a top-level module of that name and wear a prefix composed
         # of that module's PascalCase plus the project prefix.
         if top in {"tests", "examples", "scripts"} and top != (src or ""):
-            return _ump.pascalize(top) + project_prefix, namespace
+            return upm.pascalize(top) + project_prefix, namespace
         return project_prefix, namespace
 
     # ------------------------------------------------------------------
@@ -192,9 +188,9 @@ class FlextUtilitiesEnforcement:
         tag: str,
         qualname: str,
         items: Iterator[tuple[str, tuple[object, ...]]],
-    ) -> list[me.Violation]:
+    ) -> Sequence[me.Violation]:
         """Call ``ub.check_<tag>(*args)`` per item; emit violation on non-None."""
-        predicate: Callable[..., Mapping[str, str] | None] = getattr(
+        predicate: Callable[..., t.StrMapping | None] = getattr(
             ub,
             f"check_{tag}",
         )
@@ -225,7 +221,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def _attr_filter(
         layer: str,
-    ) -> Callable[[str, t.Container], bool]:
+    ) -> Callable[[str, tp.JsonValue], bool]:
         if layer == c.EnforcementLayer.CONSTANTS.lower():
             return ub.attr_accept_constants
         if layer == c.EnforcementLayer.UTILITIES.lower():

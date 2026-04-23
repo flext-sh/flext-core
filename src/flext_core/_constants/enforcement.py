@@ -57,6 +57,20 @@ class FlextConstantsEnforcement:
     ENFORCEMENT_MODE: Final[EnforcementMode] = EnforcementMode.WARN
     """Controls behavior: strict (TypeError), warn (UserWarning), off."""
 
+    BEARTYPE_MODE: Final[EnforcementMode] = EnforcementMode.OFF
+    """Controls flext_core beartype.claw bootstrap: strict, warn, or off."""
+
+    BEARTYPE_CLAW_SKIP_PACKAGES: Final[tuple[str, ...]] = (
+        "flext_core._typings",
+        "flext_core.runtime",
+        "flext_core.loggings",
+        "flext_core._models._context",
+        "flext_core._utilities.logging_config",
+        "flext_core._utilities.parser",
+        "flext_core._utilities.reliability",
+    )
+    """Package paths skipped by the flext_core beartype bootstrap."""
+
     ENFORCEMENT_EXEMPT_MODULE_FRAGMENTS: Final[tuple[str, ...]] = (
         "tests.",
         "test_",
@@ -104,8 +118,8 @@ class FlextConstantsEnforcement:
     """FLEXT infrastructure base class names exempt from enforcement checks."""
 
     ENFORCEMENT_FORBIDDEN_COLLECTIONS: Final[Mapping[type, str]] = MappingProxyType({
-        dict: "Mapping[K, V] or Mapping[str, t.Container]",
-        list: "Sequence[X] or t.RecursiveContainerList",
+        dict: "Mapping[K, V] or t.JsonMapping",
+        list: "Sequence[X] or t.JsonList",
         set: "frozenset[X] or AbstractSet[X]",
     })
     """SSOT: forbidden mutable-collection types mapped to replacement hints.

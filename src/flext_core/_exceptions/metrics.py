@@ -34,7 +34,7 @@ class FlextExceptionsMetrics:
         return cls._metrics_state.snapshot()
 
     @classmethod
-    def resolve_metrics(cls) -> t.ConfigMap:
+    def resolve_metrics(cls) -> t.JsonMapping:
         """Get exception metrics and statistics."""
         return cls.resolve_metrics_snapshot().to_config_map()
 

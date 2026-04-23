@@ -17,9 +17,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
 from typing import override
 
 from flext_core import (
@@ -203,16 +200,16 @@ class TestMigrationValidation:
             def process_data(
                 self,
                 data: t.StrMapping,
-            ) -> p.Result[Mapping[str, t.Container]]:
+            ) -> p.Result[t.JsonMapping]:
                 """Typical data processing method."""
                 if not data:
-                    return r[Mapping[str, t.Container]].fail("Data required")
+                    return r[t.JsonMapping].fail("Data required")
                 self.logger.info("Processing data", size=len(data))
-                processed: Mapping[str, t.Container] = {
+                processed: t.JsonMapping = {
                     "original": str(data),
                     "processed": True,
                 }
-                return r[Mapping[str, t.Container]].ok(processed)
+                return r[t.JsonMapping].ok(processed)
 
         app = ApplicationExample()
         result = app.process_data({"key": "value"})

@@ -55,7 +55,7 @@ class TestsFlextCoreProtocols(p):
 
                 def __call__(
                     self, item: AttrObject, field_name: str
-                ) -> t.Container: ...
+                ) -> t.JsonValue: ...
 
             @runtime_checkable
             class TakeCallable(Protocol):
@@ -69,7 +69,7 @@ class TestsFlextCoreProtocols(p):
                     key_or_index: int | str,
                     *,
                     default: str | None = None,
-                ) -> Mapping[str, t.Container] | t.FlatContainerList | t.Container: ...
+                ) -> t.JsonMapping | t.JsonList | t.JsonValue: ...
 
             @runtime_checkable
             class BuildApplyConvertCallable(Protocol):
@@ -79,9 +79,9 @@ class TestsFlextCoreProtocols(p):
                     self,
                     current: tuple[str, ...] | str | int,
                     operations: Mapping[str, t.MapperInput],
-                    default_val: t.Container,
+                    default_val: t.JsonValue,
                     on_error: str,
-                ) -> t.Container: ...
+                ) -> t.JsonValue: ...
 
             @runtime_checkable
             class ExtractTransformOptionsCallable(Protocol):
@@ -109,9 +109,9 @@ class TestsFlextCoreProtocols(p):
                     | tuple[int, int, int]
                     | Sequence[TestsFlextCoreModelsMixins.GroupModel],
                     operations: Mapping[str, t.MapperInput],
-                    default_val: t.Container,
+                    default_val: t.JsonValue,
                     on_error: str,
-                ) -> Mapping[str, t.Container] | t.FlatContainerList | t.Container: ...
+                ) -> t.JsonMapping | t.JsonList | t.JsonValue: ...
 
             @runtime_checkable
             class TransformCallable(Protocol):
@@ -121,7 +121,7 @@ class TestsFlextCoreProtocols(p):
                     self,
                     source: BadMapping,
                     **kwargs: t.StrMapping,
-                ) -> p.Result[Mapping[str, t.Container]]: ...
+                ) -> p.Result[t.JsonMapping]: ...
 
             @runtime_checkable
             class MapDictKeysCallable(Protocol):
@@ -133,7 +133,7 @@ class TestsFlextCoreProtocols(p):
                     key_map: t.StrMapping,
                     *,
                     keep_unmapped: bool = True,
-                ) -> p.Result[Mapping[str, t.Container]]: ...
+                ) -> p.Result[t.JsonMapping]: ...
 
 
 p = TestsFlextCoreProtocols

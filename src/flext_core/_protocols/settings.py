@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocolsBase as p, FlextProtocolsResult
+from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._protocols.result import FlextProtocolsResult as pr
 
 if TYPE_CHECKING:
-    from flext_core import t
+    from flext_core.typings import t
 
 
 class FlextProtocolsSettings:
@@ -23,14 +24,14 @@ class FlextProtocolsSettings:
 
         def configure(
             self,
-            settings: t.FlatContainerMapping | None = None,
+            settings: t.UserOverridesMapping | None = None,
         ) -> Self:
             """Configure component with settings."""
             ...
 
     @runtime_checkable
     class Settings(
-        FlextProtocolsResult.HasModelDump,
+        pr.HasModelDump,
         p.Base,
         Protocol,
     ):
@@ -67,7 +68,7 @@ class FlextProtocolsSettings:
         def model_copy(
             self,
             *,
-            update: t.FlatContainerMapping | None = None,
+            update: t.JsonMapping | None = None,
             deep: bool = False,
         ) -> Self:
             """Create a copy of the model, optionally updating fields or deep copying.

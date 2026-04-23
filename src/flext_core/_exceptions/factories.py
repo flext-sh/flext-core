@@ -9,6 +9,7 @@ from __future__ import annotations
 from flext_core import (
     FlextExceptionsTemplate,
     FlextModelsExceptionParams as m,
+    FlextModelsPydantic as mp,
     c,
     p,
     r,
@@ -26,7 +27,7 @@ class FlextExceptionsFactories:
     def _failure_message(
         operation: str,
         *,
-        params: t.ModelCarrier | None = None,
+        params: mp.BaseModel | None = None,
         error: Exception | str | None = None,
     ) -> str:
         """Render the canonical failure message with or without an error cause."""
@@ -143,7 +144,7 @@ class FlextExceptionsFactories:
     @staticmethod
     def fail_validation[TResult](
         field: str | None = None,
-        value: t.Container | None = None,
+        value: t.JsonValue | None = None,
         *,
         error_code: str | None = None,
         error: Exception | str | None = None,

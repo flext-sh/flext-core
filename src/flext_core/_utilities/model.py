@@ -19,7 +19,6 @@ from flext_core import (
     FlextModelsService as ms,
     FlextUtilitiesArgs as ua,
     FlextUtilitiesDiscovery as ud,
-    FlextUtilitiesGuardsTypeCore as ugc,
     FlextUtilitiesGuardsTypeProtocol as ugp,
     FlextUtilitiesPydantic as up,
     c,
@@ -69,7 +68,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def dump(
-        model: t.ModelCarrier,
+        model: mp.BaseModel,
         options: FlextUtilitiesModel.ModelDumpOptions | None = None,
         **kwargs: t.RuntimeData,
     ) -> Mapping[str, t.RuntimeData]:
@@ -99,7 +98,7 @@ class FlextUtilitiesModel:
     # def load(
     #     cls,
     #     model_cls: t.ModelClass[T_Model],
-    #     data: t.ModelCarrier | Mapping[str, t.RuntimeData] | m.ConfigMap,
+    #     data: mp.BaseModel | Mapping[str, t.RuntimeData] | m.ConfigMap,
     # ) -> p.Result[T_Model]:
     #     """Load a model from a mapping-like input using Pydantic validation."""
     #     return r[T_Model].create_from_callable(
@@ -123,6 +122,28 @@ class FlextUtilitiesModel:
         """Resolve FlextContext lazily to avoid runtime import cycles."""
         context_module = import_module("flext_core")
         return context_module.FlextContext
+
+    @staticmethod
+    def _runtime_type() -> type:
+        """Resolve FlextRuntime lazily to avoid runtime import cycles."""
+        runtime_module = import_module("flext_core")
+        return runtime_module.FlextRuntime
+
+    @classmethod
+    def _normalize_runtime_override_mapping(
+        cls,
+        value: Mapping[str, t.RuntimeData | t.Scalar] | None,
+    ) -> t.JsonMapping | None:
+        """Normalize runtime override mappings to canonical JsonMapping."""
+        if value is None:
+            return None
+        runtime_type = cls._runtime_type()
+        return t.json_mapping_adapter().validate_python(
+            {
+                str(key): runtime_type.normalize_to_metadata(item)
+                for key, item in value.items()
+            },
+        )
 
     @staticmethod
     def service_settings_type(
@@ -374,14 +395,8 @@ class FlextUtilitiesModel:
             if settings_instance is not None
             else cls.service_settings_type(runtime_options.settings_type)
         )
-        settings_overrides = (
-            {
-                key: value
-                for key, value in runtime_options.settings_overrides.items()
-                if ugc.scalar(value)
-            }
-            if runtime_options.settings_overrides is not None
-            else None
+        settings_overrides = cls._normalize_runtime_override_mapping(
+            runtime_options.settings_overrides,
         )
         runtime_settings: p.Settings
         if settings_instance is not None:
@@ -418,8 +433,11 @@ class FlextUtilitiesModel:
             factories=runtime_options.factories,
             resources=runtime_options.resources,
         )
-        if runtime_options.container_overrides:
-            runtime_container.apply(runtime_options.container_overrides)
+        normalized_container_overrides = cls._normalize_runtime_override_mapping(
+            runtime_options.container_overrides,
+        )
+        if normalized_container_overrides:
+            runtime_container.apply(normalized_container_overrides)
         if wire_modules or wire_packages or wire_classes:
             runtime_container.wire(
                 modules=wire_modules,

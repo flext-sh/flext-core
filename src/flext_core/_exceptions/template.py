@@ -22,11 +22,11 @@ class FlextExceptionsTemplate:
 
     @staticmethod
     def template_values(
-        params: t.ModelCarrier | None,
+        params: m.BaseModel | None,
         values: FlextExceptionsTemplate.TemplateValues,
     ) -> m.ConfigMap:
         """Build template substitution values using params data and field metadata."""
-        payload: dict[str, t.MetadataValue] = {}
+        payload: dict[str, t.JsonValue] = {}
         if params is not None:
             model_fields: Mapping[str, FieldInfo] = params.__class__.model_fields
             params_dump = params.model_dump(exclude_none=True)
@@ -48,7 +48,7 @@ class FlextExceptionsTemplate:
     def render_template(
         template: str,
         *,
-        params: t.ModelCarrier | None = None,
+        params: m.BaseModel | None = None,
         **values: t.MetadataData | None,
     ) -> str:
         """Render a message template from params + explicit values.
@@ -73,11 +73,11 @@ class FlextExceptionsTemplate:
         *,
         operation: str | None = None,
         error: Exception | str | None = None,
-        params: t.ModelCarrier | None = None,
+        params: m.BaseModel | None = None,
         **values: t.MetadataData | None,
     ) -> str:
         """Render error template with canonical operation/error fields."""
-        payload: dict[str, t.MetadataValue] = {}
+        payload: dict[str, t.JsonValue] = {}
         if operation is not None:
             payload[c.HandlerType.OPERATION] = operation
         if error is not None:
@@ -94,7 +94,7 @@ class FlextExceptionsTemplate:
 
     @staticmethod
     def result_error_data(
-        params: t.ModelCarrier | None,
+        params: m.BaseModel | None,
         **values: t.MetadataData | None,
     ) -> m.ConfigMap | None:
         """Build canonical error_data payload from params and explicit values."""

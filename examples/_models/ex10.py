@@ -49,7 +49,7 @@ class Ex10CommandBusStub(m.BaseModel):
 
 
 class Ex10ServiceStub(m.BaseModel):
-    run: Callable[[], t.Container] | None = None
+    run: Callable[[], t.JsonValue] | None = None
 
 
 class ExamplesFlextCoreModelsEx10(m):

@@ -21,10 +21,8 @@ from collections.abc import (
 from pathlib import Path
 from typing import Any, ClassVar
 
-from flext_core import (
-    FlextConstantsProjectMetadata as _k,
-    FlextModelsProjectMetadata as _m,
-)
+from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
+from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 
 
 class FlextUtilitiesProjectMetadata:
@@ -70,7 +68,7 @@ class FlextUtilitiesProjectMetadata:
             msg = "empty project name"
             raise ValueError(msg)
         normalized = project_name.replace("_", "-").lower()
-        override = _k.SPECIAL_NAME_OVERRIDES.get(normalized)
+        override = cpm.SPECIAL_NAME_OVERRIDES.get(normalized)
         if override is not None:
             return override
         return FlextUtilitiesProjectMetadata.pascalize(normalized)
@@ -78,7 +76,7 @@ class FlextUtilitiesProjectMetadata:
     @staticmethod
     def derive_tier_facade_name(project_name: str, tier: str) -> str:
         """Build the tier-specific facade class name (src/tests/examples/...)."""
-        prefix = _k.TIER_FACADE_PREFIX.get(tier)
+        prefix = cpm.TIER_FACADE_PREFIX.get(tier)
         if prefix is None:
             msg = f"unknown tier: {tier!r}"
             raise ValueError(msg)
@@ -101,7 +99,7 @@ class FlextUtilitiesProjectMetadata:
             return tomllib.load(stream)
 
     @staticmethod
-    def read_project_metadata(root: Path) -> _m.ProjectMetadata:
+    def read_project_metadata(root: Path) -> mpm.ProjectMetadata:
         """Read canonical project metadata from a project's pyproject.toml."""
         data = FlextUtilitiesProjectMetadata._load_pyproject_toml(root)
         project = dict(data.get("project") or {})
@@ -131,7 +129,7 @@ class FlextUtilitiesProjectMetadata:
             if requires_python_raw
             else ""
         )
-        return _m.ProjectMetadata(
+        return mpm.ProjectMetadata(
             name=str(project["name"]),
             version=str(project["version"]),
             license=license_text,
@@ -143,19 +141,19 @@ class FlextUtilitiesProjectMetadata:
         )
 
     @staticmethod
-    def read_tool_flext_config(root: Path) -> _m.ProjectToolFlext:
+    def read_tool_flext_config(root: Path) -> mpm.ProjectToolFlext:
         """Read ``[tool.flext.*]`` tables from pyproject.toml."""
         data = FlextUtilitiesProjectMetadata._load_pyproject_toml(root)
         tool = data.get("tool") or {}
         tool_flext = tool.get("flext") if isinstance(tool, Mapping) else None
-        return _m.ProjectToolFlext.model_validate(tool_flext or {})
+        return mpm.ProjectToolFlext.model_validate(tool_flext or {})
 
     @staticmethod
-    def compose_namespace_config(root: Path) -> _m.ProjectNamespaceConfig:
+    def compose_namespace_config(root: Path) -> mpm.ProjectNamespaceConfig:
         """Build the effective namespace config for a project."""
         meta = FlextUtilitiesProjectMetadata.read_project_metadata(root)
         cfg = FlextUtilitiesProjectMetadata.read_tool_flext_config(root)
-        return _m.ProjectNamespaceConfig(
+        return mpm.ProjectNamespaceConfig(
             project_name=meta.name,
             enabled=cfg.namespace.enabled,
             scan_dirs=cfg.namespace.scan_dirs,

@@ -152,7 +152,7 @@ class TestFlextContainer:
     )
     def test_register_factory(
         self,
-        return_value: t.Scalar,
+        return_value: t.JsonValue,
         clean_container: p.Container,
     ) -> None:
         """Test factory registration using fixtures."""

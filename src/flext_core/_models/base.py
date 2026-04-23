@@ -38,7 +38,7 @@ class FlextModelsBase:
 
         @classmethod
         @override
-        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
+        def __pydantic_init_subclass__(cls, **kwargs: t.JsonValue) -> None:
             super().__pydantic_init_subclass__(**kwargs)
             FlextUtilitiesEnforcement.run(cls)
 
@@ -217,7 +217,7 @@ class FlextModelsBase:
             ),
         ] = FlextUtilitiesPydantic.Field(default_factory=tuple)
         attributes: Annotated[
-            Mapping[str, t.MetadataValue],
+            Mapping[str, t.JsonValue],
             FlextModelsPydantic.BeforeValidator(
                 FlextRuntime.validate_metadata_attributes
             ),

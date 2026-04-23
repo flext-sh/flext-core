@@ -6,7 +6,6 @@ import re
 from collections.abc import (
     Callable,
     Mapping,
-    Sequence,
     Sized,
 )
 from typing import ClassVar
@@ -25,7 +24,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     }
 
     _MEMBERSHIP_OPS: ClassVar[
-        Mapping[str, Callable[[t.GuardInput, Sequence[t.Container]], bool]]
+        Mapping[str, Callable[[t.GuardInput, t.JsonList], bool]]
     ] = {
         "in_": lambda val, cmp: val in cmp,
         "not_in": lambda val, cmp: val not in cmp,
@@ -119,8 +118,11 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 return False
         # Membership checks via dispatch
         for mem_op, mem_fn in FlextUtilitiesGuardsEnsure._MEMBERSHIP_OPS.items():
-            mem_val: Sequence[t.Container] | None = getattr(guard_spec, mem_op, None)
-            if mem_val is not None and not mem_fn(value, mem_val):
+            mem_raw = getattr(guard_spec, mem_op, None)
+            if mem_raw is not None and not mem_fn(
+                value,
+                t.json_list_adapter().validate_python(mem_raw),
+            ):
                 return False
         # Numeric/size checks via dispatch
         check_val = FlextUtilitiesGuardsEnsure._resolve_numeric(value)
@@ -148,14 +150,14 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         return True
 
     @staticmethod
-    def _to_container_or_str(value: t.Container) -> t.Container:
+    def _to_container_or_str(value: t.JsonValue) -> t.JsonValue:
         """Normalize a value to Container: pass through if already, else str()."""
         return value if FlextUtilitiesGuardsEnsure.container(value) else str(value)
 
     @staticmethod
     def _check_validator(
-        value: t.Container,
-        validator: Callable[[t.Container], bool] | type | tuple[type, ...] | None,
+        value: t.JsonValue,
+        validator: Callable[[t.JsonValue], bool] | type | tuple[type, ...] | None,
     ) -> bool:
         """Evaluate validator against value. Returns True if guard passes."""
         if isinstance(validator, type):
@@ -174,27 +176,27 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def _guard_fallback(
-        default: t.Container | None,
+        default: t.JsonValue | None,
         *,
         return_value: bool,
         fail_msg: str,
-    ) -> t.Container | bool | r[t.Container]:
+    ) -> t.JsonValue | bool | r[t.JsonValue]:
         """Return default or fail result for guard misses."""
         if default is not None:
             return FlextUtilitiesGuardsEnsure._to_container_or_str(default)
-        return r[t.Container].fail(fail_msg) if return_value else False
+        return r[t.JsonValue].fail(fail_msg) if return_value else False
 
     @staticmethod
     def guard(
-        value: t.Container,
-        validator: Callable[[t.Container], bool]
+        value: t.JsonValue,
+        validator: Callable[[t.JsonValue], bool]
         | type
         | tuple[type, ...]
         | None = None,
         *,
-        default: t.Container | None = None,
+        default: t.JsonValue | None = None,
         return_value: bool = False,
-    ) -> t.Container | bool | r[t.Container]:
+    ) -> t.JsonValue | bool | r[t.JsonValue]:
         try:
             if FlextUtilitiesGuardsEnsure._check_validator(value, validator):
                 if return_value:

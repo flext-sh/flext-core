@@ -74,7 +74,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: dict[str, t.MetadataValue] = {}
+                self._config: dict[str, t.JsonValue] = {}
 
             def with_database(self, host: str, port: int) -> Self:
                 """Add database configuration."""
@@ -91,13 +91,13 @@ class TestArchitecturalPatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> p.Result[Mapping[str, t.MetadataValue]]:
+            def build(self) -> p.Result[Mapping[str, t.JsonValue]]:
                 """Build the configuration."""
                 if not self._config:
-                    return r[Mapping[str, t.MetadataValue]].fail(
+                    return r[Mapping[str, t.JsonValue]].fail(
                         "Configuration cannot be empty",
                     )
-                return r[Mapping[str, t.MetadataValue]].ok(dict(self._config))
+                return r[Mapping[str, t.JsonValue]].ok(dict(self._config))
 
         config_result = (
             ConfigurationBuilder()
@@ -243,17 +243,17 @@ class TestArchitecturalPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        observers: MutableSequence[t.MutableFlatContainerMapping] = []
+        observers: MutableSequence[t.MutableJsonMapping] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
-        obs1: t.MutableFlatContainerMapping = {
+        obs1: t.MutableJsonMapping = {
             "name": "Observer1",
             "state": "",
         }
-        obs2: t.MutableFlatContainerMapping = {
+        obs2: t.MutableJsonMapping = {
             "name": "Observer2",
             "state": "",
         }

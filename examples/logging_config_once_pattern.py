@@ -51,8 +51,8 @@ class DatabaseService(s):
 
         """
         super().model_post_init(__context)
-        normalized_db_config: t.FlatContainerMapping = {
-            str(key): u.normalize_to_container(value)
+        normalized_db_config: t.JsonMapping = {
+            str(key): u.normalize_to_metadata(value)
             for key, value in self.db_config.root.items()
         }
         self.logger.info(
@@ -86,7 +86,7 @@ class MigrationService(s):
                 "max_workers": 4,
             },
         )
-        normalized_settings: t.FlatContainerMapping = {
+        normalized_settings = {
             str(key): u.normalize_to_metadata(value)
             for key, value in settings.root.items()
         }

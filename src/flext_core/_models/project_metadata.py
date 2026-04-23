@@ -14,19 +14,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
 from pathlib import Path
 from types import MappingProxyType
 from typing import Annotated, Any, ClassVar
 
 from pydantic import Field, model_validator
 
-from flext_core import (
-    FlextConstantsProjectMetadata as t,
-    FlextModelsPydantic,
-)
+from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as c
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextModelsProjectMetadata:
@@ -90,7 +86,7 @@ class FlextModelsProjectMetadata:
         @property
         def class_stem(self) -> str:
             """Return the canonical PascalCase class stem (SSOT-derived)."""
-            override = t.SPECIAL_NAME_OVERRIDES.get(self.name)
+            override = c.SPECIAL_NAME_OVERRIDES.get(self.name)
             if override is not None:
                 return override
             parts = self.name.replace("-", "_").split("_")
@@ -118,10 +114,10 @@ class FlextModelsProjectMetadata:
         scan_dirs: Annotated[
             tuple[str, ...],
             Field(
-                default=t.SCAN_DIRECTORIES,
+                default=c.SCAN_DIRECTORIES,
                 description="Top-level directories to scan for facades.",
             ),
-        ] = t.SCAN_DIRECTORIES
+        ] = c.SCAN_DIRECTORIES
         include_dynamic_dirs: Annotated[
             bool,
             Field(
@@ -130,7 +126,7 @@ class FlextModelsProjectMetadata:
             ),
         ] = False
         alias_parent_sources: Annotated[
-            Mapping[str, str],
+            tb.StrMapping,
             Field(
                 default_factory=dict,
                 description="Per-alias parent package source overrides.",
@@ -144,18 +140,18 @@ class FlextModelsProjectMetadata:
             if not isinstance(data, dict):
                 return data
             sources = dict(data.get("alias_parent_sources") or {})
-            unknown = set(sources) - set(t.RUNTIME_ALIAS_NAMES)
+            unknown = set(sources) - set(c.RUNTIME_ALIAS_NAMES)
             if unknown:
                 msg = f"unknown alias(es): {sorted(unknown)}"
                 raise ValueError(msg)
-            for alias, canonical in t.UNIVERSAL_ALIAS_PARENT_SOURCES.items():
+            for alias, canonical in c.UNIVERSAL_ALIAS_PARENT_SOURCES.items():
                 if alias in sources and sources[alias] != canonical:
                     msg = (
                         f"cannot override universal alias {alias!r}: "
                         f"must remain {canonical!r}"
                     )
                     raise ValueError(msg)
-            merged = {**t.UNIVERSAL_ALIAS_PARENT_SOURCES, **sources}
+            merged = {**c.UNIVERSAL_ALIAS_PARENT_SOURCES, **sources}
             data["alias_parent_sources"] = dict(merged)
             return data
 
@@ -195,10 +191,10 @@ class FlextModelsProjectMetadata:
         scan_dirs: Annotated[
             tuple[str, ...],
             Field(
-                default=t.SCAN_DIRECTORIES,
+                default=c.SCAN_DIRECTORIES,
                 description="Top-level directories to scan.",
             ),
-        ] = t.SCAN_DIRECTORIES
+        ] = c.SCAN_DIRECTORIES
         include_dynamic_dirs: Annotated[
             bool,
             Field(
@@ -207,7 +203,7 @@ class FlextModelsProjectMetadata:
             ),
         ] = False
         alias_parent_sources: Annotated[
-            Mapping[str, str],
+            tb.StrMapping,
             Field(
                 default_factory=dict,
                 description="Per-alias parent package overrides.",
@@ -241,7 +237,7 @@ class FlextModelsProjectMetadata:
         )
 
         overrides: Annotated[
-            Mapping[str, str],
+            tb.StrMapping,
             Field(
                 default_factory=dict,
                 description="Per-alias type override strings.",

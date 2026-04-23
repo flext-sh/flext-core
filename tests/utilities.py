@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import (
-    Mapping,
     MutableSequence,
     Sequence,
 )
@@ -153,9 +152,7 @@ class TestsFlextCoreUtilities(u):
                 ]
 
             @staticmethod
-            def multi_operation_cases() -> Sequence[
-                tuple[str, int, Mapping[str, t.Container]]
-            ]:
+            def multi_operation_cases() -> Sequence[tuple[str, int, t.JsonMapping]]:
                 return [
                     (
                         "double",
@@ -231,7 +228,7 @@ class TestsFlextCoreUtilities(u):
                         ),
                     )
 
-            class ValidationService(s[Mapping[str, t.Container]]):
+            class ValidationService(s[t.JsonMapping]):
                 """Service to validate values."""
 
                 value: Annotated[
@@ -240,20 +237,20 @@ class TestsFlextCoreUtilities(u):
                 ] = 0
 
                 @override
-                def execute(self) -> p.Result[Mapping[str, t.Container]]:
+                def execute(self) -> p.Result[t.JsonMapping]:
                     if self.value < 0:
-                        return r[Mapping[str, t.Container]].fail(
+                        return r[t.JsonMapping].fail(
                             c.Core.Tests.TestErrors.VALUE_TOO_LOW
                         )
                     if self.value > 100:
-                        return r[Mapping[str, t.Container]].fail(
+                        return r[t.JsonMapping].fail(
                             c.Core.Tests.TestErrors.VALUE_TOO_HIGH
                         )
-                    return r[Mapping[str, t.Container]].ok(
+                    return r[t.JsonMapping].ok(
                         {"valid": True, "value": self.value},
                     )
 
-            class MultiOperationService(s[Mapping[str, t.Container]]):
+            class MultiOperationService(s[t.JsonMapping]):
                 """Service for multiple operations."""
 
                 operation: Annotated[
@@ -266,33 +263,33 @@ class TestsFlextCoreUtilities(u):
                 ] = 0
 
                 @override
-                def execute(self) -> p.Result[Mapping[str, t.Container]]:
+                def execute(self) -> p.Result[t.JsonMapping]:
                     match self.operation:
                         case "double":
-                            return r[Mapping[str, t.Container]].ok(
+                            return r[t.JsonMapping].ok(
                                 {
                                     "operation": "double",
                                     "result": self.value * 2,
                                 },
                             )
                         case "square":
-                            return r[Mapping[str, t.Container]].ok(
+                            return r[t.JsonMapping].ok(
                                 {
                                     "operation": "square",
                                     "result": self.value**2,
                                 },
                             )
                         case "negate":
-                            return r[Mapping[str, t.Container]].ok(
+                            return r[t.JsonMapping].ok(
                                 {"operation": "negate", "result": -self.value},
                             )
                         case _:
-                            return r[Mapping[str, t.Container]].fail(
+                            return r[t.JsonMapping].fail(
                                 f"Unknown operation: {self.operation}"
                             )
 
             @staticmethod
-            def value_lt_100(data: Mapping[str, t.Container]) -> bool:
+            def value_lt_100(data: t.JsonMapping) -> bool:
                 value = data.get("value")
                 return isinstance(value, int) and value < 100
 

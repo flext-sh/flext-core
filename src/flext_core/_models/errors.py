@@ -47,7 +47,7 @@ class FlextModelsErrors:
             up.Field(description="Unix timestamp when the error instance was created."),
         ]
         attributes: Annotated[
-            t.ConfigMap,
+            t.JsonMapping,
             up.Field(description="Flattenable metadata attributes exposed publicly."),
         ] = up.Field(default_factory=lambda: MappingProxyType({}))
 
@@ -57,9 +57,9 @@ class FlextModelsErrors:
             """Public alias expected by structured error consumers."""
             return self.message
 
-        def to_payload(self) -> t.ConfigMap:
+        def to_payload(self) -> t.JsonMapping:
             """Flatten the snapshot into the public payload shape."""
-            payload: dict[str, t.Container] = {
+            payload: dict[str, t.JsonValue] = {
                 str(k): v
                 for k, v in self.model_dump(exclude={"attributes"}).items()
                 if isinstance(v, (str, int, float, bool))
@@ -95,9 +95,9 @@ class FlextModelsErrors:
             """Whether the metrics snapshot contains recorded exceptions."""
             return self.total_exceptions > 0
 
-        def to_config_map(self) -> t.ConfigMap:
+        def to_config_map(self) -> t.JsonMapping:
             """Expose the snapshot through the canonical flat config contract."""
-            payload: dict[str, t.Container] = {
+            payload: dict[str, t.JsonValue] = {
                 "total_exceptions": self.total_exceptions,
                 "exception_counts_summary": self.exception_counts_summary,
                 "unique_exception_types": self.unique_exception_types,

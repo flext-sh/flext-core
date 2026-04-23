@@ -8,15 +8,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-    Sequence,
-)
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
 
-from flext_core import FlextModels
-from tests import m, u
+from tests import m, t, u
 
 
 class TestsFlextCoreCleanModels:
@@ -24,7 +19,7 @@ class TestsFlextCoreCleanModels:
 
     class Core:
         class Tests:
-            class GoodEntity(FlextModels.ArbitraryTypesModel):
+            class GoodEntity(m.ArbitraryTypesModel):
                 """Well-formed entity."""
 
                 name: Annotated[
@@ -32,18 +27,18 @@ class TestsFlextCoreCleanModels:
                     u.Field(description="Entity display name."),
                 ] = ""
                 tags: Annotated[
-                    Sequence[str],
+                    t.StrSequence,
                     u.Field(default_factory=tuple, description="Tag collection."),
                 ]
                 metadata: Annotated[
-                    Mapping[str, str],
+                    t.StrMapping,
                     u.Field(
                         default_factory=lambda: MappingProxyType({}),
                         description="Attribute map.",
                     ),
                 ]
 
-            class GoodFrozenValue(FlextModels.FrozenValueModel):
+            class GoodFrozenValue(m.FrozenValueModel):
                 """Frozen value object."""
 
                 model_config: ClassVar[m.ConfigDict] = m.ConfigDict(

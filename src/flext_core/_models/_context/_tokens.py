@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated
 
 from flext_core import FlextModelsEntity, FlextUtilitiesPydantic, c, t
@@ -38,7 +39,7 @@ class FlextModelsContextTokens:
             ),
         ]
         previous_value: Annotated[
-            t.RuntimeData | None,
+            t.RuntimeData | datetime | None,
             FlextUtilitiesPydantic.Field(
                 default=None, description="Previous value before set operation"
             ),

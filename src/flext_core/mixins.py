@@ -90,7 +90,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         ),
     ] = None
     settings_overrides: Annotated[
-        Mapping[str, t.Container] | None,
+        t.JsonMapping | None,
         m.Field(
             exclude=True,
             description="Settings overrides applied at instantiation.",

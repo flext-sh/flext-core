@@ -42,7 +42,7 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
         self._state, scope_var = self._state.resolve_scope_var(scope)
         return scope_var
 
-    def _contextvar_data(self, scope: str) -> t.FlatContainerMapping:
+    def _contextvar_data(self, scope: str) -> t.JsonMapping:
         """Get all values from contextvar scope."""
         ctx_var = self._scope_var(scope)
         value = ctx_var.get()
@@ -52,11 +52,11 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
             ).items(),
         )
 
-    def _scope_payloads(self) -> Mapping[str, t.FlatContainerMapping]:
+    def _scope_payloads(self) -> Mapping[str, t.JsonMapping]:
         """Get all scope registrations."""
         if not self._state.active:
             return {}
-        scopes: MutableMapping[str, t.FlatContainerMapping] = {}
+        scopes: MutableMapping[str, t.JsonMapping] = {}
         for scope_name, ctx_var in self._state.scope_vars.items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
@@ -66,7 +66,7 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
     def _update_contextvar(
         self,
         scope: str,
-        data: m.ConfigMap | Mapping[str, t.Container],
+        data: m.ConfigMap | t.JsonMapping,
     ) -> None:
         """Set multiple values in contextvar scope."""
         ctx_var = self._scope_var(scope)

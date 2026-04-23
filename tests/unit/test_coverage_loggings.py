@@ -307,7 +307,7 @@ class TestCoverageLoggings:
         )
 
     def test_exception_logging_with_exception_object(self) -> None:
-        """Test logging with exception t.Container.
+        """Test logging with exception t.JsonValue.
 
         Validates:
         1. Logger handles exception objects correctly

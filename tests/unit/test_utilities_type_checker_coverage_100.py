@@ -22,7 +22,6 @@ from __future__ import annotations
 
 from collections import UserDict as BaseUserDict
 from collections.abc import (
-    Mapping,
     MutableMapping,
 )
 from typing import TypeVar, get_origin, override
@@ -79,14 +78,14 @@ class TestsFlextCoreUtilitiesTypeChecker:
             result: t.JsonMapping = {"processed": True, **message}
             return r[t.JsonMapping].ok(result)
 
-    class ObjectHandler(h[t.Container, t.Container]):
-        """Handler for t.Container messages."""
+    class ObjectHandler(h[t.JsonValue, t.JsonValue]):
+        """Handler for t.JsonValue messages."""
 
         @override
-        def handle(self, message: t.Container) -> p.Result[t.Container]:
+        def handle(self, message: t.JsonValue) -> p.Result[t.JsonValue]:
             if isinstance(message, (str, int, float, bool)):
-                return r[t.Container].ok(message)
-            return r[t.Container].fail("unsupported message")
+                return r[t.JsonValue].ok(message)
+            return r[t.JsonValue].fail("unsupported message")
 
     class ExplicitTypeHandler:
         """Handler with explicit type annotation."""
@@ -155,10 +154,10 @@ class TestsFlextCoreUtilitiesTypeChecker:
             assert origin in {dict, MutableMapping}
 
     def test_compute_accepted_message_types_object_handler(self) -> None:
-        """Test compute_accepted_message_types with t.Container handler (universal)."""
+        """Test compute_accepted_message_types with t.JsonValue handler (universal)."""
         types = u.compute_accepted_message_types(self.ObjectHandler)
         tm.that(len(types), eq=1)
-        assert types[0] == t.Container
+        assert types[0] == t.JsonValue
 
     def test_can_handle_message_type_exact_match(self) -> None:
         """Test can_handle_message_type with exact type match."""
@@ -178,7 +177,7 @@ class TestsFlextCoreUtilitiesTypeChecker:
         accepted: tuple[t.MessageTypeSpecifier, ...] = (self._message_type(dict),)
         tm.that(not u.can_handle_message_type(accepted, str), eq=True)
         tm.that(u.can_handle_message_type(accepted, dict), eq=True)
-        dict_type: type[Mapping[str, t.Container]] = dict
+        dict_type: type[t.JsonMapping] = dict
         tm.that(u.can_handle_message_type(accepted, dict_type), eq=True)
 
     def test_can_handle_message_type_empty_accepted(self) -> None:
@@ -213,7 +212,7 @@ class TestsFlextCoreUtilitiesTypeChecker:
     def test_evaluate_type_compatibility_dict_types(self) -> None:
         """Test _evaluate_type_compatibility with dict types."""
         tm.that(u._evaluate_type_compatibility(self._type_origin(dict), dict), eq=True)
-        dict_type: type[Mapping[str, t.Container]] = dict
+        dict_type: type[t.JsonMapping] = dict
         tm.that(
             u._evaluate_type_compatibility(self._type_origin(dict), dict_type),
             eq=True,
@@ -238,7 +237,7 @@ class TestsFlextCoreUtilitiesTypeChecker:
         tm.that(result, eq=True)
 
     def test_check_object_type_compatibility_non_object(self) -> None:
-        """Test _check_object_type_compatibility with non-t.Container type."""
+        """Test _check_object_type_compatibility with non-t.JsonValue type."""
         result = u._check_object_type_compatibility(str)
         tm.that(not result, eq=True)
 
@@ -255,7 +254,7 @@ class TestsFlextCoreUtilitiesTypeChecker:
     def test_check_dict_compatibility_dict_subclass(self) -> None:
         """Test _check_dict_compatibility with dict subclass."""
 
-        class CustomDict(BaseUserDict[str, t.Container]):
+        class CustomDict(BaseUserDict[str, t.JsonValue]):
             """Custom dict subclass."""
 
         result = u._check_dict_compatibility(

@@ -15,11 +15,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
 from types import MappingProxyType
-from typing import Final
+from typing import TYPE_CHECKING, Final
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class FlextConstantsProjectMetadata:
@@ -29,7 +29,7 @@ class FlextConstantsProjectMetadata:
     every attribute flat on ``c.*`` (e.g. ``c.ALIAS_TO_SUFFIX``).
     """
 
-    ALIAS_TO_SUFFIX: Final[Mapping[str, str]] = MappingProxyType({
+    ALIAS_TO_SUFFIX: Final[t.StrMapping] = MappingProxyType({
         "c": "Constants",
         "d": "Decorators",
         "e": "Exceptions",
@@ -45,7 +45,7 @@ class FlextConstantsProjectMetadata:
 
     RUNTIME_ALIAS_NAMES: Final[frozenset[str]] = frozenset(ALIAS_TO_SUFFIX)
 
-    TIER_FACADE_PREFIX: Final[Mapping[str, str]] = MappingProxyType({
+    TIER_FACADE_PREFIX: Final[t.StrMapping] = MappingProxyType({
         "src": "Flext",
         "tests": "TestsFlext",
         "examples": "ExamplesFlext",
@@ -55,7 +55,7 @@ class FlextConstantsProjectMetadata:
 
     SCAN_DIRECTORIES: Final[tuple[str, ...]] = tuple(TIER_FACADE_PREFIX)
 
-    TIER_SUB_NAMESPACE: Final[Mapping[str, str]] = MappingProxyType({
+    TIER_SUB_NAMESPACE: Final[t.StrMapping] = MappingProxyType({
         "src": "",
         "tests": "Tests",
         "examples": "Examples",
@@ -63,14 +63,14 @@ class FlextConstantsProjectMetadata:
         "docs": "Docs",
     })
 
-    UNIVERSAL_ALIAS_PARENT_SOURCES: Final[Mapping[str, str]] = MappingProxyType({
+    UNIVERSAL_ALIAS_PARENT_SOURCES: Final[t.StrMapping] = MappingProxyType({
         "r": "flext_core",
         "e": "flext_core",
         "d": "flext_core",
         "x": "flext_core",
     })
 
-    SPECIAL_NAME_OVERRIDES: Final[Mapping[str, str]] = MappingProxyType({
+    SPECIAL_NAME_OVERRIDES: Final[t.StrMapping] = MappingProxyType({
         "flext": "FlextRoot",
         "flext-core": "Flext",
     })

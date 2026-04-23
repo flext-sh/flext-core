@@ -28,7 +28,7 @@ from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 from structlog.types import Processor
 
-from flext_core import c, p, t
+from flext_core import FlextModelsPydantic as mp, c, p, t
 
 
 class FlextUtilitiesLoggingConfig:
@@ -165,7 +165,7 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def _structlog_processor(
-        value: Processor | typing.Callable[..., t.RuntimeData] | t.Container | None,
+        value: Processor | typing.Callable[..., t.RuntimeData] | t.JsonValue | None,
     ) -> typing.TypeIs[Processor]:
         return callable(value)
 
@@ -176,7 +176,7 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def _resolve_structlog_params(
-        settings: t.ModelCarrier | None,
+        settings: mp.BaseModel | None,
         *,
         log_level: int | None,
         console_renderer: bool,
@@ -230,7 +230,7 @@ class FlextUtilitiesLoggingConfig:
         *,
         console_renderer: bool,
         additional_processors: Sequence[Processor] | None,
-    ) -> list[Processor]:
+    ) -> Sequence[Processor]:
         """Assemble the structlog processor chain."""
         processors: list[Processor] = [
             structlog.contextvars.merge_contextvars,
@@ -284,7 +284,7 @@ class FlextUtilitiesLoggingConfig:
     def configure_structlog(
         cls,
         *,
-        settings: t.ModelCarrier | None = None,
+        settings: mp.BaseModel | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
         additional_processors: Sequence[Processor] | None = None,

@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import typing
 from abc import ABC, abstractmethod
-from collections.abc import MutableSequence
+from collections.abc import (
+    MutableSequence,
+)
 from typing import Annotated, Final, Protocol, runtime_checkable
 
 import pytest
@@ -24,7 +26,7 @@ from flext_core import (
     FlextUtilitiesBeartypeEngine,
     FlextUtilitiesEnforcement,
 )
-from tests import TestsFlextCoreModelsMixins, c, m, u
+from tests import TestsFlextCoreModelsMixins, c, m, t, u
 
 
 def _messages(
@@ -65,7 +67,7 @@ class TestFieldRules:
     def test_mapping_passes(self) -> None:
         class _M(m.ArbitraryTypesModel):
             data: Annotated[
-                typing.Mapping[str, str],
+                t.StrMapping,
                 m.Field(default_factory=dict, description="d"),
             ]
 
@@ -92,10 +94,22 @@ class TestFieldRules:
 
         assert not _messages(u.check(_M), fragment="read-only field contract")
 
+    def test_mutable_json_mapping_alias_dict_factory_passes(self) -> None:
+        class _M(m.ArbitraryTypesModel):
+            items: Annotated[
+                t.MutableJsonMapping,
+                m.Field(
+                    default_factory=dict,
+                    description="Mutable JSON mapping contract.",
+                ),
+            ]
+
+        assert not _messages(u.check(_M), fragment="read-only field contract")
+
     def test_sequence_list_factory_detected(self) -> None:
         class _M(m.ArbitraryTypesModel):
             items: Annotated[
-                typing.Sequence[str],
+                t.StrSequence,
                 m.Field(default_factory=list, description="d"),
             ]
 

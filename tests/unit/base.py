@@ -66,7 +66,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
             ),
         ] = c.HandlerType.COMMAND
         expected_result: Annotated[
-            t.Container | None,
+            t.JsonValue | None,
             m.Field(
                 description="Expected handler result when execution succeeds",
             ),
@@ -103,11 +103,15 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
         @staticmethod
         def _to_container(
             value: t.Core.Tests.TestobjectSerializable,
-        ) -> t.Container | None:
+        ) -> t.JsonValue | None:
             if value is None:
                 return None
             if isinstance(value, (str, int, float, bool, datetime, Path)):
-                container_value: t.Container = value
+                if isinstance(value, datetime):
+                    return value.isoformat()
+                if isinstance(value, Path):
+                    return str(value)
+                container_value: t.JsonValue = value
                 return container_value
             return None
 

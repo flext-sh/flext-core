@@ -237,13 +237,16 @@ class TestsFlextCoreFlextHandlers:
         assert isinstance(handler, x)
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        class DictHandler(h[t.RuntimeData, t.RuntimeData]):
+        class DictHandler(h[Mapping[str, t.JsonValue], t.RuntimeData]):
             @override
             def __init__(self, settings: m.Handler) -> None:
                 super().__init__(settings=settings)
 
             @override
-            def handle(self, message: t.RuntimeData) -> p.Result[t.RuntimeData]:
+            def handle(
+                self,
+                message: Mapping[str, t.JsonValue],
+            ) -> p.Result[t.RuntimeData]:
                 if not isinstance(message, dict):
                     return r[t.RuntimeData].fail(
                         c.Core.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
@@ -476,7 +479,7 @@ class TestsFlextCoreFlextHandlers:
     def test_handlers_message_validation_types(
         self,
         type_name: str,
-        message: t.Container,
+        message: t.JsonValue,
     ) -> None:
         settings = u.Core.Tests.create_handler_config(
             f"test_{type_name}_message",
@@ -501,7 +504,7 @@ class TestsFlextCoreFlextHandlers:
             "Test Push Context",
         )
         handler = self.ConcreteTestHandler(settings=settings)
-        context_typed: Mapping[str, t.Container] = {
+        context_typed = {
             "user_id": "123",
             "operation": "test",
         }

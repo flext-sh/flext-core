@@ -29,11 +29,15 @@ TestFunction = Callable[..., None]
 pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 
 
+def _new_config_map() -> m.ConfigMap:
+    return m.ConfigMap.model_validate({})
+
+
 class TestAdvancedPatterns:
     """Test class demonstrating advanced testing patterns."""
 
     class MockScenario:
-        """Mock scenario t.Container for testing purposes."""
+        """Mock scenario t.JsonValue for testing purposes."""
 
         def __init__(self, name: str, data: m.Core.Tests.MockScenarioData) -> None:
             """Initialize mockscenario:."""
@@ -52,16 +56,16 @@ class TestAdvancedPatterns:
             """Initialize givenwhenthenbuilder:."""
             super().__init__()
             self.name = name
-            self._given: t.MutableFlatContainerMapping = dict[str, t.Container]()
-            self._when: t.MutableFlatContainerMapping = dict[str, t.Container]()
-            self._then: t.MutableFlatContainerMapping = dict[str, t.Container]()
+            self._given: m.ConfigMap = _new_config_map()
+            self._when: m.ConfigMap = _new_config_map()
+            self._then: m.ConfigMap = _new_config_map()
             self._tags: MutableSequence[str] = []
             self._priority = "normal"
 
         def given(
             self,
             _description: str,
-            **kwargs: t.Scalar,
+            **kwargs: t.JsonValue,
         ) -> TestAdvancedPatterns.GivenWhenThenBuilder:
             """Given method.
 
@@ -75,7 +79,7 @@ class TestAdvancedPatterns:
         def when(
             self,
             _description: str,
-            **kwargs: t.Scalar,
+            **kwargs: t.JsonValue,
         ) -> TestAdvancedPatterns.GivenWhenThenBuilder:
             """When method.
 
@@ -89,7 +93,7 @@ class TestAdvancedPatterns:
         def then(
             self,
             _description: str,
-            **kwargs: t.Scalar,
+            **kwargs: t.JsonValue,
         ) -> TestAdvancedPatterns.GivenWhenThenBuilder:
             """Then method.
 
@@ -132,14 +136,10 @@ class TestAdvancedPatterns:
             """
 
             def convert_dict_value(
-                value: t.Container | t.JsonValue | None,
+                value: t.RuntimeData | None,
             ) -> t.JsonValue:
-                """Convert t.Container to t.Scalar."""
-                if isinstance(value, (str, int, bool)):
-                    return value
-                if isinstance(value, float):
-                    return int(value)
-                return str(value)
+                """Convert t.JsonValue to t.Scalar."""
+                return u.normalize_to_metadata(value)
 
             given_source: t.JsonMapping = {
                 key: convert_dict_value(value) for key, value in self._given.items()
@@ -197,10 +197,8 @@ class TestAdvancedPatterns:
         def __init__(self) -> None:
             """Initialize flexttestbuilder:."""
             super().__init__()
-            self._data: t.MutableFlatContainerMapping = dict[str, t.Container]()
-            self._validation_rules: t.MutableFlatContainerMapping = dict[
-                str, t.Container
-            ]()
+            self._data: m.ConfigMap = _new_config_map()
+            self._validation_rules: m.ConfigMap = _new_config_map()
 
         def with_id(self, id_: str) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_id method.
@@ -227,7 +225,7 @@ class TestAdvancedPatterns:
 
         def with_metadata(
             self,
-            **kwargs: t.Container,
+            **kwargs: t.JsonValue,
         ) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_metadata method.
 
@@ -266,7 +264,7 @@ class TestAdvancedPatterns:
 
         def with_validation_rules(
             self,
-            **kwargs: t.Container,
+            **kwargs: t.JsonValue,
         ) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_validation_rules method.
 
@@ -274,17 +272,17 @@ class TestAdvancedPatterns:
                 FlextTestBuilder: Self for method chaining.
 
             """
-            self._validation_rules = kwargs
+            self._validation_rules = m.ConfigMap.model_validate(kwargs)
             return self
 
-        def build(self) -> Mapping[str, t.Container]:
+        def build(self) -> t.JsonMapping:
             """Build method.
 
             Returns:
                 dict: Copy of the built data.
 
             """
-            return dict(self._data)
+            return t.json_mapping_adapter().validate_python(self._data.model_dump())
 
     class ParameterizedTestBuilder:
         """Builder for parameterized test cases with success/failure scenarios."""
@@ -374,19 +372,11 @@ class TestAdvancedPatterns:
 
         def __init__(
             self,
-            data: t.FlatContainerList
-            | Mapping[str, t.Container]
-            | str
-            | tuple[t.Container, ...],
+            data: t.JsonList | t.JsonMapping | str | tuple[t.JsonValue, ...],
         ) -> None:
             """Initialize assertionbuilder:."""
             super().__init__()
-            self.data: (
-                t.FlatContainerList
-                | Mapping[str, t.Container]
-                | str
-                | tuple[t.Container, ...]
-            ) = data
+            self.data: t.JsonList | t.JsonMapping | str | tuple[t.JsonValue, ...] = data
             self._assertions: MutableSequence[Callable[[], None]] = []
 
         def assert_equals(
@@ -449,10 +439,7 @@ class TestAdvancedPatterns:
             self,
             condition: Callable[
                 [
-                    t.FlatContainerList
-                    | Mapping[str, t.Container]
-                    | str
-                    | tuple[t.Container, ...],
+                    t.JsonList | t.JsonMapping | str | tuple[t.JsonValue, ...],
                 ],
                 bool,
             ],
@@ -583,7 +570,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: Mapping[str, t.Container] = {
+        test_data: t.JsonMapping = {
             "name": "John",
             "age": 30,
             "active": True,

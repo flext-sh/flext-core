@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import (
     Mapping,
+    Sequence,
 )
 from typing import ClassVar
 
@@ -17,6 +18,7 @@ from flext_core import (
     FlextExceptionsBase,
     FlextExceptionsHelpers,
     FlextModelsExceptionParams as m,
+    FlextModelsPydantic as mp,
     FlextRuntime,
     c,
     t,
@@ -34,7 +36,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         field: str | None = None
         value: t.Scalar | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.VALIDATION_ERROR
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.ValidationErrorParams
         )
         _param_keys: ClassVar[frozenset[str]] = frozenset({"field", "value"})
@@ -45,7 +47,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         config_key: str | None = None
         config_source: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.CONFIGURATION_ERROR
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.ConfigurationErrorParams
         )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
@@ -60,7 +62,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         port: int | None = None
         timeout: t.Numeric | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.CONNECTION_ERROR
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.ConnectionErrorParams
         )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
@@ -74,9 +76,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
 
         timeout_seconds: t.Numeric | None = None
         operation: str | None = None
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
-            m.TimeoutErrorParams
-        )
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.TimeoutErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "timeout_seconds",
             "operation",
@@ -89,10 +89,10 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             timeout_seconds: float | None = None,
             operation: str | None = None,
             error_code: str = c.ErrorCode.TIMEOUT_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, t.JsonValue] | None = None,
             correlation_id: str | None = None,
-            params: t.ModelCarrier | None = None,
-            **extra_kwargs: t.Container,
+            params: mp.BaseModel | None = None,
+            **extra_kwargs: t.JsonValue,
         ) -> None:
             """Initialize timeout error with timeout context."""
             self._init_declared_error(
@@ -114,7 +114,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         auth_method: str | None = None
         user_id: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.AUTHENTICATION_ERROR
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.AuthenticationErrorParams
         )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
@@ -129,7 +129,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         resource: str | None = None
         permission: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.AUTHORIZATION_ERROR
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.AuthorizationErrorParams
         )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
@@ -144,9 +144,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         resource_type: str | None = None
         resource_id: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.NOT_FOUND_ERROR
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
-            m.NotFoundErrorParams
-        )
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.NotFoundErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "resource_type",
             "resource_id",
@@ -163,9 +161,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         resource_id: str | None = None
         conflict_reason: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.ALREADY_EXISTS
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
-            m.ConflictErrorParams
-        )
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.ConflictErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "resource_type",
             "resource_id",
@@ -179,7 +175,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         window_seconds: int | None = None
         retry_after: t.Numeric | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.OPERATION_ERROR
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.RateLimitErrorParams
         )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
@@ -195,7 +191,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         failure_count: int | None = None
         reset_timeout: t.Numeric | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.EXTERNAL_SERVICE_ERROR
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.CircuitBreakerErrorParams
         )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
@@ -213,10 +209,10 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             failure_count: int | None = None,
             reset_timeout: t.Numeric | None = None,
             error_code: str = c.ErrorCode.EXTERNAL_SERVICE_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, t.JsonValue] | None = None,
             correlation_id: str | None = None,
-            params: t.ModelCarrier | None = None,
-            **extra_kwargs: t.Container,
+            params: mp.BaseModel | None = None,
+            **extra_kwargs: t.JsonValue,
         ) -> None:
             """Initialize circuit breaker error with canonical service metadata."""
             resolved_service_name = (
@@ -249,10 +245,10 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             error_code: str = c.ErrorCode.TYPE_ERROR,
             expected_type: type | str | None = None,
             actual_type: type | str | None = None,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, t.JsonValue] | None = None,
             correlation_id: str | None = None,
-            params: t.ModelCarrier | None = None,
-            **extra_kwargs: t.Container,
+            params: mp.BaseModel | None = None,
+            **extra_kwargs: t.JsonValue,
         ) -> None:
             """Initialize type error with type information."""
             preserved_metadata = extra_kwargs.pop(c.FIELD_METADATA, None)
@@ -275,7 +271,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
                 extra_kwargs,
                 "actual_type",
             )
-            param_values: dict[str, str | None] = {
+            param_values: Mapping[str, str | None] = {
                 "expected_type": normalized_expected_type.__qualname__
                 if normalized_expected_type is not None
                 else None,
@@ -288,7 +284,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
                 if params is not None
                 else m.TypeErrorParams.model_validate(param_values)
             )
-            normalized_extra_kwargs: Mapping[str, t.MetadataValue] = {
+            normalized_extra_kwargs: Mapping[str, t.JsonValue] = {
                 key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in extra_kwargs.items()
             }
@@ -314,9 +310,9 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         def _build_type_context(
             expected_type: type | str | None,
             actual_type: type | str | None,
-            context: Mapping[str, t.MetadataValue] | None,
-            extra_kwargs: Mapping[str, t.MetadataValue],
-        ) -> dict[str, t.MetadataValue]:
+            context: Mapping[str, t.JsonValue] | None,
+            extra_kwargs: Mapping[str, t.JsonValue],
+        ) -> Mapping[str, t.JsonValue]:
             """Build type context dictionary."""
             type_context = FlextExceptionsHelpers.build_context_map(
                 context,
@@ -353,11 +349,11 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         def _normalize_type(
             type_value: type | str | None,
             type_map: Mapping[str, type],
-            extra_kwargs: t.MutableFlatContainerMapping,
+            extra_kwargs: t.MutableJsonMapping,
             key: str,
         ) -> type | None:
             """Normalize type value from various sources."""
-            source_value: type | str | t.Container | None = type_value
+            source_value: type | str | t.JsonValue | None = type_value
             if source_value is None and key in extra_kwargs:
                 source_value = extra_kwargs.pop(key)
             type_name = FlextExceptionsTypes.TypeError._resolve_type_name(source_value)
@@ -367,7 +363,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
 
         @staticmethod
         def _resolve_type_name(
-            type_value: type | str | t.Container | None,
+            type_value: type | str | t.JsonValue | None,
         ) -> str | None:
             """Resolve type-like input to canonical string name."""
             if type_value is None:
@@ -386,7 +382,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         operation: str | None
         reason: str | None
         _default_error_code: ClassVar[str] = c.ErrorCode.OPERATION_ERROR
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.OperationErrorParams
         )
         _param_keys: ClassVar[frozenset[str]] = frozenset({"operation", "reason"})
@@ -395,9 +391,9 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         """Exception raised for attribute access errors."""
 
         attribute_name: str | None
-        attribute_context: t.MetadataValue | None
+        attribute_context: t.JsonValue | None
         _default_error_code: ClassVar[str] = c.ErrorCode.ATTRIBUTE_ERROR
-        _params_cls: ClassVar[t.ModelClass[t.ModelCarrier] | None] = (
+        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.AttributeAccessErrorParams
         )
         _param_keys: ClassVar[frozenset[str]] = frozenset({
@@ -406,4 +402,4 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         })
 
 
-__all__: list[str] = ["FlextExceptionsTypes"]
+__all__: Sequence[str] = ["FlextExceptionsTypes"]

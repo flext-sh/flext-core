@@ -48,7 +48,7 @@ class FlextModelsExceptionParams:
             ),
         ]
         value: Annotated[
-            t.Container | None,
+            t.JsonPayload | t.Scalar | None,
             up.Field(
                 default=None,
                 description="Rejected input value that triggered the validation error.",
@@ -447,7 +447,7 @@ class FlextModelsExceptionParams:
             ),
         ]
         attribute_context: Annotated[
-            t.MetadataValue | None,
+            t.JsonValue | None,
             up.Field(
                 default=None,
                 description="Context payload describing the state during access failure.",

@@ -35,7 +35,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def normalize_domain_event_data(
         value: mc.ConfigMap | Mapping[str, t.MetadataData | None] | None,
-    ) -> Mapping[str, t.MetadataValue]:
+    ) -> Mapping[str, t.JsonValue]:
         """Normalize domain event payloads into plain flat mappings.
 
         Moved from FlextUtilitiesDomain so the DomainEvent model can consume it
@@ -48,7 +48,7 @@ class FlextUtilitiesCollection:
             return FlextUtilitiesCollection.normalize_domain_event_data(
                 mc.ConfigMap.model_validate(raw_source),
             )
-        normalized: MutableMapping[str, t.MetadataValue] = {}
+        normalized: MutableMapping[str, t.JsonValue] = {}
         for key, item in raw_source.items():
             if item is None:
                 continue
@@ -70,9 +70,9 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_deep_single_key(
-        result: dict[str, t.MetadataValue],
+        result: dict[str, t.JsonValue],
         key: str,
-        value: t.MetadataValue,
+        value: t.JsonValue,
     ) -> p.Result[bool]:
         """Merge single key in deep merge strategy.
 
@@ -251,45 +251,45 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_replace(
-        other: Mapping[str, t.MetadataValue],
-        base: Mapping[str, t.MetadataValue],
-    ) -> p.Result[Mapping[str, t.MetadataValue]]:
+        other: Mapping[str, t.JsonValue],
+        base: Mapping[str, t.JsonValue],
+    ) -> p.Result[Mapping[str, t.JsonValue]]:
         """Replace strategy: base values overwrite other."""
-        result: dict[str, t.MetadataValue] = dict(other)
+        result: dict[str, t.JsonValue] = dict(other)
         result.update(base)
-        return r[Mapping[str, t.MetadataValue]].ok(result)
+        return r[Mapping[str, t.JsonValue]].ok(result)
 
     @staticmethod
     def _merge_filter_none(
-        other: Mapping[str, t.MetadataValue],
-        base: Mapping[str, t.MetadataValue],
-    ) -> p.Result[Mapping[str, t.MetadataValue]]:
+        other: Mapping[str, t.JsonValue],
+        base: Mapping[str, t.JsonValue],
+    ) -> p.Result[Mapping[str, t.JsonValue]]:
         """Filter-none strategy: skip None values from base."""
-        result: dict[str, t.MetadataValue] = dict(other)
+        result: dict[str, t.JsonValue] = dict(other)
         result.update({k: v for k, v in base.items() if v is not None})
-        return r[Mapping[str, t.MetadataValue]].ok(result)
+        return r[Mapping[str, t.JsonValue]].ok(result)
 
     @staticmethod
     def _merge_filter_empty(
-        other: Mapping[str, t.MetadataValue],
-        base: Mapping[str, t.MetadataValue],
-    ) -> p.Result[Mapping[str, t.MetadataValue]]:
+        other: Mapping[str, t.JsonValue],
+        base: Mapping[str, t.JsonValue],
+    ) -> p.Result[Mapping[str, t.JsonValue]]:
         """Filter-empty strategy: skip empty values from base."""
-        result: dict[str, t.MetadataValue] = dict(other)
+        result: dict[str, t.JsonValue] = dict(other)
         result.update({
             k: v
             for k, v in base.items()
             if not FlextUtilitiesCollection._is_empty_value(v)
         })
-        return r[Mapping[str, t.MetadataValue]].ok(result)
+        return r[Mapping[str, t.JsonValue]].ok(result)
 
     @staticmethod
     def _merge_append(
-        other: Mapping[str, t.MetadataValue],
-        base: Mapping[str, t.MetadataValue],
-    ) -> p.Result[Mapping[str, t.MetadataValue]]:
+        other: Mapping[str, t.JsonValue],
+        base: Mapping[str, t.JsonValue],
+    ) -> p.Result[Mapping[str, t.JsonValue]]:
         """Append strategy: concatenate lists instead of replacing."""
-        result: dict[str, t.MetadataValue] = dict(other)
+        result: dict[str, t.JsonValue] = dict(other)
         for key, value in base.items():
             current_val = result.get(key)
             if (
@@ -300,15 +300,15 @@ class FlextUtilitiesCollection:
                 result[key] = FlextRuntime.normalize_to_metadata([*current_val, *value])
             else:
                 result[key] = value
-        return r[Mapping[str, t.MetadataValue]].ok(result)
+        return r[Mapping[str, t.JsonValue]].ok(result)
 
     @staticmethod
     def _merge_deep(
-        other: Mapping[str, t.MetadataValue],
-        base: Mapping[str, t.MetadataValue],
-    ) -> p.Result[Mapping[str, t.MetadataValue]]:
+        other: Mapping[str, t.JsonValue],
+        base: Mapping[str, t.JsonValue],
+    ) -> p.Result[Mapping[str, t.JsonValue]]:
         """Deep strategy: recursively merge nested dicts."""
-        result: dict[str, t.MetadataValue] = dict(other)
+        result: dict[str, t.JsonValue] = dict(other)
         for key, value in base.items():
             merge_result = FlextUtilitiesCollection._merge_deep_single_key(
                 result,
@@ -316,14 +316,14 @@ class FlextUtilitiesCollection:
                 value,
             )
             if merge_result.failure:
-                return r[Mapping[str, t.MetadataValue]].fail(
+                return r[Mapping[str, t.JsonValue]].fail(
                     merge_result.error or "Unknown error",
                 )
-        return r[Mapping[str, t.MetadataValue]].ok(result)
+        return r[Mapping[str, t.JsonValue]].ok(result)
 
     _MergeHandler = Callable[
-        [Mapping[str, t.MetadataValue], Mapping[str, t.MetadataValue]],
-        "p.Result[Mapping[str, t.MetadataValue]]",
+        [Mapping[str, t.JsonValue], Mapping[str, t.JsonValue]],
+        "p.Result[Mapping[str, t.JsonValue]]",
     ]
 
     _MERGE_STRATEGIES: ClassVar[Mapping[str, _MergeHandler]] = {
@@ -338,11 +338,11 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def merge_mappings(
-        other: Mapping[str, t.MetadataValue] | None,
-        base: Mapping[str, t.MetadataValue],
+        other: Mapping[str, t.JsonValue] | None,
+        base: Mapping[str, t.JsonValue],
         *,
         strategy: str = "deep",
-    ) -> p.Result[Mapping[str, t.MetadataValue]]:
+    ) -> p.Result[Mapping[str, t.JsonValue]]:
         """Merge two dictionaries with configurable strategy.
 
         Strategies:
@@ -359,7 +359,7 @@ class FlextUtilitiesCollection:
             raise TypeError(msg)
         handler = FlextUtilitiesCollection._MERGE_STRATEGIES.get(strategy)
         if handler is None:
-            return r[Mapping[str, t.MetadataValue]].fail(
+            return r[Mapping[str, t.JsonValue]].fail(
                 f"Unknown merge strategy: {strategy}",
             )
         return handler(other, base)

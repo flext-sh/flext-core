@@ -15,13 +15,14 @@ import time
 from collections.abc import (
     Callable,
 )
-from typing import Annotated
+from typing import Annotated, no_type_check
 
 from pydantic import Field
 
 from flext_core import FlextModelsBase as m, FlextUtilitiesArgs, c, p, r, t
 
 
+@no_type_check
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 

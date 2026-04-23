@@ -46,7 +46,7 @@ def _as_registry_handler(
     """Adapt protocol handlers to the registry callable contract."""
 
     def _call(message: p.Routable) -> t.RuntimeData:
-        return handler.handle(message).unwrap_or("")
+        return u.normalize_to_container(handler.handle(message).unwrap_or(""))
 
     handler_name = handler.message_type.__name__
     setattr(_call, "__name__", handler_name)

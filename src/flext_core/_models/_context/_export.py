@@ -49,7 +49,7 @@ class FlextModelsContextExport:
             ),
         ] = None
         statistics: Annotated[
-            Mapping[str, t.Container],
+            t.JsonMapping,
             BeforeValidator(
                 lambda v: (
                     FlextModelsContextData.normalize_to_mapping(v)
@@ -60,7 +60,7 @@ class FlextModelsContextExport:
             Field(
                 description="Usage statistics (operation counts, timing info)",
             ),
-        ] = Field(default_factory=lambda: MappingProxyType({}))
+        ] = Field(default_factory=dict)
 
 
 __all__: list[str] = ["FlextModelsContextExport"]

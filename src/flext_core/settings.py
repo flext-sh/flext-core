@@ -134,7 +134,7 @@ class FlextSettings(BaseSettings):
         sources: list[PydanticBaseSettingsSource] = [init_settings, env_settings]
         leaf_prefix = cls.model_config.get("env_prefix", "")
         for parent in cls.__mro__:
-            cfg: Mapping[str, t.Container] | None = getattr(
+            cfg: t.JsonMapping | None = getattr(
                 parent,
                 "model_config",
                 None,

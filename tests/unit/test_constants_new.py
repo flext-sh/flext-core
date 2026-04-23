@@ -20,7 +20,7 @@ from flext_tests import tm
 from tests import c, t
 
 
-def _constant_case_id(case: t.Container | t.VariadicTuple[t.Container]) -> str:
+def _constant_case_id(case: t.JsonValue | t.VariadicTuple[t.JsonValue]) -> str:
     if isinstance(case, tuple) and case:
         first_item = case[0]
         return first_item if isinstance(first_item, str) else str(first_item)

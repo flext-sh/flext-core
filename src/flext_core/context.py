@@ -44,7 +44,7 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
     _logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     initial_data: Annotated[
-        m.ContextData | t.Container | None,
+        m.ContextData | t.JsonValue | None,
         m.Field(description="Initial data for context scopes."),
     ] = None
 
@@ -161,9 +161,9 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
 
     _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
 
-    # DEPRECATED: to_normalized method removed - depends on t.RuntimeData, m.ConfigMap, t.Container
+    # DEPRECATED: to_normalized method removed - depends on t.RuntimeData, m.ConfigMap, t.JsonValue
     # @staticmethod
-    # def to_normalized(value: t.RuntimeData | m.ConfigMap) -> t.Container:
+    # def to_normalized(value: t.RuntimeData | m.ConfigMap) -> t.JsonValue:
     #     """Normalize a runtime value to the canonical recursive container shape."""
     #     return FlextRuntime.normalize_to_metadata(value))
 
@@ -293,10 +293,12 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
             """Create timed operation context with performance tracking."""
             start_time = u.generate_datetime_utc()
             start_perf = time.perf_counter()
-            metadata_payload: t.FlatContainerMapping = {
-                c.MetadataKey.START_TIME: start_time.isoformat(),
-                c.ContextKey.OPERATION_NAME: operation_name or "",
-            }
+            metadata_payload = t.json_mapping_adapter().validate_python(
+                {
+                    str(c.MetadataKey.START_TIME): start_time.isoformat(),
+                    str(c.ContextKey.OPERATION_NAME): operation_name or "",
+                },
+            )
             operation_metadata: m.ConfigMap = m.ConfigMap(
                 root=dict(metadata_payload),
             )

@@ -10,7 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConstantsEnforcement as c, FlextUtilitiesEnforcement
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._utilities.enforcement import FlextUtilitiesEnforcement as ue
 
 
 class FlextModelsNamespace:
@@ -33,8 +34,8 @@ class FlextModelsNamespace:
         super().__init_subclass__(**kwargs)
         if c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.OFF:
             return
-        layer = FlextUtilitiesEnforcement.detect_layer(cls) or ""
-        FlextUtilitiesEnforcement.run_layer(cls, layer)
+        layer = ue.detect_layer(cls) or ""
+        ue.run_layer(cls, layer)
 
 
 __all__: list[str] = ["FlextModelsNamespace"]

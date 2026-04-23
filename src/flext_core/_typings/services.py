@@ -15,66 +15,53 @@ from collections.abc import (
 )
 from datetime import date, time, tzinfo
 from enum import Enum
+from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
 from typing import TypeAliasType
 
-from flext_core import (
-    FlextModelsPydantic as mp,
-    FlextProtocolsBase as p,
-    FlextProtocolsContainer as pc,
-    FlextProtocolsContext as pcx,
-    FlextProtocolsHandler as ph,
-    FlextProtocolsLogging as pl,
-    FlextProtocolsRegistry as pr,
-    FlextProtocolsResult as prt,
-    FlextProtocolsSettings as ps,
-    FlextTypingBase as t,
-)
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._protocols.container import FlextProtocolsContainer as pc
+from flext_core._protocols.context import FlextProtocolsContext as pcx
+from flext_core._protocols.handler import FlextProtocolsHandler as ph
+from flext_core._protocols.logging import FlextProtocolsLogging as pl
+from flext_core._protocols.registry import FlextProtocolsRegistry as pr
+from flext_core._protocols.result import FlextProtocolsResult as prt
+from flext_core._protocols.settings import FlextProtocolsSettings as ps
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
-    type JsonValue = t.JsonValue
-    type JsonMapping = Mapping[str, t.JsonValue]
-    type JsonSequence = Sequence[t.JsonValue]
-    type JsonLikeMapping = t.JsonMapping
-    type JsonLikeSequence = t.JsonList
-    type JsonPayload = t.JsonValue | mp.BaseModel
+    JsonPayload = tp.JsonValue | mp.BaseModel
     type RegistryDict[T] = MutableMapping[str, T]
-    type ModelCarrier = mp.BaseModel
-    type ProtocolModelCarrier = p.Model
-    type DomainModelCarrier = ModelCarrier | ProtocolModelCarrier
-    type ContainerCarrier = Mapping[str, t.Container]
-    type FlatRuntimeData = t.Container | t.FlatContainerMapping | t.FlatContainerList
-    type StructuredValue = t.Container | t.JsonMapping | t.JsonList
-    type ScalarOrModel = t.Scalar | mp.BaseModel
-    type ModelClass[T: ModelCarrier] = type[T]
-    type LogArgument = t.Container | p.Model
-    type LogValue = FlextTypesServices.LogArgument | Exception
-    type LogResult = prt.Result[bool]
-    type MetadataValue = t.JsonValue
-    type MetadataData = FlatRuntimeData | t.JsonMapping | t.JsonList
-    type RuntimeData = FlatRuntimeData | StructuredValue | mp.BaseModel
-    type PresentRuntimeData = RuntimeData
-    type BootstrapInput = ModelCarrier | Mapping[str, t.Container]
-    type RegisterableService = (
-        t.Container
-        | ModelCarrier
-        | ContainerCarrier
+    DomainModelCarrier = mp.BaseModel | p.Model
+    StructuredValue = tp.JsonValue
+    ScalarOrModel = t.Scalar | mp.BaseModel
+    type ModelClass[T: mp.BaseModel] = type[T]
+    LogArgument = tp.JsonValue | p.Model
+    LogValue = LogArgument | Exception
+    LogResult = prt.Result[bool]
+    MetadataData = StructuredValue
+    RuntimeData = StructuredValue | mp.BaseModel
+    PresentRuntimeData = RuntimeData
+    BootstrapInput = mp.BaseModel | t.JsonMapping
+    RegisterableService = (
+        tp.JsonValue
+        | mp.BaseModel
         | pl.Logger
-        | Mapping[str, t.Container]
-        | Sequence[t.Container]
         | Callable[
             ...,
-            t.Container | ModelCarrier | ContainerCarrier | pl.Logger,
+            tp.JsonValue | mp.BaseModel | pl.Logger,
         ]
     )
-    type FactoryCallable = Callable[[], RegisterableService]
-    type ResourceCallable = Callable[[], RegisterableService]
-    type ModelInput = t.Container | ModelCarrier | Mapping[str, RuntimeData]
-    type ConfigModelInput = ModelCarrier | Mapping[str, RuntimeData]
-    type MetadataInput = ModelCarrier | Mapping[str, MetadataValue]
+    FactoryCallable = Callable[[], RegisterableService]
+    ResourceCallable = Callable[[], RegisterableService]
+    ModelInput = tp.JsonValue | mp.BaseModel | Mapping[str, RuntimeData]
+    type ConfigModelInput = mp.BaseModel | Mapping[str, RuntimeData]
+    MetadataInput = mp.BaseModel | Mapping[str, tp.JsonValue]
     type ServiceMap = Mapping[str, RegisterableService]
     type FactoryMap = Mapping[str, FactoryCallable]
     type ResourceMap = Mapping[str, ResourceCallable]
@@ -83,23 +70,23 @@ class FlextTypesServices:
 
     type HandlerCallable = Callable[
         ...,
-        ModelCarrier | prt.ResultLike[ScalarOrModel],
+        mp.BaseModel | prt.ResultLike[ScalarOrModel],
     ]
     type HandlerLike = Callable[
         ...,
-        ModelCarrier | prt.ResultLike[ScalarOrModel],
+        mp.BaseModel | prt.ResultLike[ScalarOrModel],
     ]
     type DispatchableHandler = (
-        ModelCarrier
+        mp.BaseModel
         | Callable[
             ...,
-            ModelCarrier | RuntimeData | prt.ResultLike[RuntimeData],
+            mp.BaseModel | RuntimeData | prt.ResultLike[RuntimeData],
         ]
     )
     type HandlerProtocolVariant = DispatchableHandler
     type ResolvedHandlerCallable = Callable[
         ...,
-        ModelCarrier | RuntimeData | prt.ResultLike[RuntimeData],
+        mp.BaseModel | RuntimeData | prt.ResultLike[RuntimeData],
     ]
     type RoutedHandlerCallable = Callable[
         [p.Routable],
@@ -119,20 +106,19 @@ class FlextTypesServices:
     type LoggerWrapperFactory = Callable[[], type[pl.Logger]]
 
     type SortableObjectType = str | int | float
-    type TypeHintSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
     type ValueAdapter[T] = mp.TypeAdapter[T]
-    type TypeOriginSpecifier = TypeHintSpecifier
+    type TypeOriginSpecifier = t.TypeHintSpecifier
     type GenericTypeArgument = str | type[t.Scalar]
     type MessageTypeSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
-    type IncEx = set[str] | Mapping[str, set[str] | bool]
+    type IncEx = AbstractSet[str] | Mapping[str, AbstractSet[str] | bool]
 
     type LazyImportIndex = Mapping[str, str | t.StrSequence]
     type ConfigurationMapping = Mapping[str, t.Scalar]
-    type ResultErrorData = Mapping[str, t.Container]
+    ResultErrorData = t.JsonMapping
     type MutableConfigurationMapping = MutableMapping[str, t.Scalar]
     type ScopedContainerRegistry = MutableMapping[
         str,
-        MutableMapping[str, t.Container],
+        t.MutableJsonMapping,
     ]
     type ScopedScalarRegistry = MutableMapping[
         str,
@@ -142,7 +128,7 @@ class FlextTypesServices:
     type RuntimeModule = ModuleType
     type LazyScalar = t.Scalar | bytes | date | time
     type LazyCollection = Mapping[str, LazyScalar] | Sequence[LazyScalar]
-    type ModuleExportValue = t.Container | bytes | date | time
+    ModuleExportValue = tp.JsonValue | bytes | date | time
     type ModuleExport = (
         ModuleExportValue
         | LazyCollection
@@ -151,57 +137,64 @@ class FlextTypesServices:
         | Callable[..., ModuleExportValue | LazyCollection]
     )
     type LazyGetattr = Callable[[str], ModuleExport]
-    type LazyDir = Callable[[], list[str]]
+    type LazyDir = Callable[[], Sequence[str]]
     type LazyNamespaceValue = ModuleExport | t.StrSequence | LazyGetattr | LazyDir
 
     type ValidatorCallable = Callable[[ScalarOrModel], ScalarOrModel]
 
     type MapperCallable = Callable[
-        [t.Container],
-        t.Container,
+        [tp.JsonValue],
+        tp.JsonValue,
     ]
-    type MapperInput = MapperCallable | t.Container
-    type StrictValue = t.Scalar | ConfigurationMapping | Sequence[t.Container]
+    MapperInput = MapperCallable | tp.JsonValue
+    StrictValue = (
+        t.Scalar
+        | ConfigurationMapping
+        | t.JsonList
+        | tuple[tp.JsonValue | t.Scalar, ...]
+    )
     type PaginationMeta = Mapping[str, int | bool]
 
     type GuardInput = (
         type[BaseException | Enum]
-        | t.Container
-        | MetadataValue
-        | ContainerCarrier
-        | Mapping[str, RuntimeData]
-        | Sequence[RuntimeData]
-        | bytes
+        | AbstractSet[t.Scalar]
+        | JsonPayload
         | bytearray
-        | ModelCarrier
-        | ProtocolModelCarrier
-        | RegisterableService
-        | Callable[..., t.Container | ModelCarrier]
+        | bytes
+        | Callable[..., tp.JsonValue | mp.BaseModel]
         | Callable[[], RegisterableService]
-        | type
-        | tuple[type, ...]
-        | tuple[t.Container, ...]
+        | Path
+        | t.Scalar
+        | t.JsonMapping
         | Enum
-        | ModuleType
-        | GenericAlias
-        | UnionType
-        | TypeAliasType
-        | tzinfo
         | frozenset[str]
+        | GenericAlias
+        | Mapping[str, RuntimeData]
+        | tp.JsonValue
+        | ModuleType
+        | mp.BaseModel
         | pc.Container
         | pcx.Context
         | ph.Dispatcher
         | ph.Handle
         | ph.Middleware
-        | pl.Logger
         | pl.HasLogger
+        | pl.Logger
         | pr.Registry
+        | p.Model
         | prt.ResultLike[RuntimeData]
-        | AbstractSet[t.Scalar]
         | ps.Settings
+        | RegisterableService
+        | Sequence[RuntimeData]
+        | tuple[tp.JsonValue, ...]
+        | tuple[type, ...]
+        | type
+        | TypeAliasType
+        | tzinfo
+        | UnionType
     )
 
-    type UserOverridesMapping = Mapping[
+    UserOverridesMapping = Mapping[
         str,
-        t.Scalar | Mapping[str, t.Container] | t.ScalarList,
+        t.Scalar | t.JsonMapping | t.ScalarList,
     ]

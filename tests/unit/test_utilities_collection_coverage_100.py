@@ -101,11 +101,11 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Map scenario name")]
         items: Annotated[
-            t.FlatContainerList
-            | tuple[t.Container, ...]
-            | Mapping[str, t.Container]
-            | set[t.Container]
-            | frozenset[t.Container],
+            t.JsonList
+            | tuple[t.JsonValue, ...]
+            | t.JsonMapping
+            | set[t.JsonValue]
+            | frozenset[t.JsonValue],
             (
                 m.Field(
                     description="Collection input for map operation",
@@ -113,16 +113,16 @@ class TestUtilitiesCollectionCoverage:
             ),
         ]
         mapper: Annotated[
-            Callable[[t.Container], t.Container],
+            Callable[[t.JsonValue], t.JsonValue],
             m.Field(description="Mapper callable under test"),
         ]
         expected_result: Annotated[
             (
-                list[t.Container]
-                | tuple[t.Container, ...]
-                | t.MutableFlatContainerMapping
-                | set[t.Container]
-                | frozenset[t.Container]
+                list[t.JsonValue]
+                | tuple[t.JsonValue, ...]
+                | t.MutableJsonMapping
+                | set[t.JsonValue]
+                | frozenset[t.JsonValue]
             ),
             m.Field(description="Expected mapped output"),
         ]
@@ -133,15 +133,15 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Find scenario name")]
         items: Annotated[
-            t.FlatContainerList | tuple[t.Container, ...] | Mapping[str, t.Container],
+            t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
             m.Field(description="Input items for find"),
         ]
         predicate: Annotated[
-            Callable[[t.Container], bool],
+            Callable[[t.JsonValue], bool],
             m.Field(description="Predicate callable under test"),
         ]
         expected_result: Annotated[
-            t.Container | None,
+            t.JsonValue | None,
             m.Field(description="Expected found value"),
         ]
 
@@ -151,21 +151,21 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Filter scenario name")]
         items: Annotated[
-            t.FlatContainerList | tuple[t.Container, ...] | Mapping[str, t.Container],
+            t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
             m.Field(description="Input items for filter"),
         ]
         predicate: Annotated[
-            Callable[[t.Container], bool],
+            Callable[[t.JsonValue], bool],
             m.Field(description="Predicate callable under test"),
         ]
         expected_result: Annotated[
-            t.FlatContainerList | tuple[t.Container, ...] | Mapping[str, t.Container],
+            t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
             m.Field(
                 description="Expected filtered output",
             ),
         ]
         mapper: Annotated[
-            Callable[[t.Container], t.Container] | None,
+            Callable[[t.JsonValue], t.JsonValue] | None,
             m.Field(description="Optional mapping callable"),
         ] = None
 
@@ -174,12 +174,10 @@ class TestUtilitiesCollectionCoverage:
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Count scenario name")]
-        items: Annotated[
-            t.FlatContainerList, m.Field(description="Input items for count")
-        ]
+        items: Annotated[t.JsonList, m.Field(description="Input items for count")]
         expected_count: Annotated[int, m.Field(description="Expected item count")]
         predicate: Annotated[
-            Callable[[t.Container], bool] | None,
+            Callable[[t.JsonValue], bool] | None,
             m.Field(description="Optional predicate filter"),
         ] = None
 
@@ -188,20 +186,18 @@ class TestUtilitiesCollectionCoverage:
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Process scenario name")]
-        items: Annotated[
-            t.FlatContainerList, m.Field(description="Input items for process")
-        ]
+        items: Annotated[t.JsonList, m.Field(description="Input items for process")]
         processor: Annotated[
-            Callable[[t.Container], t.Container],
+            Callable[[t.JsonValue], t.JsonValue],
             m.Field(description="Processor callable under test"),
         ]
         expected_result: Annotated[
-            t.FlatContainerList,
+            t.JsonList,
             m.Field(description="Expected processing result"),
         ]
         on_error: Annotated[str, m.Field(description="Error handling mode")] = "collect"
         predicate: Annotated[
-            Callable[[t.Container], bool] | None,
+            Callable[[t.JsonValue], bool] | None,
             m.Field(description="Optional predicate filter"),
         ] = None
         expected_failure: Annotated[
@@ -253,11 +249,11 @@ class TestUtilitiesCollectionCoverage:
         name: Annotated[str, m.Field(description="Batch scenario name")]
         items: Annotated[Sequence[int], m.Field(description="Input items for batch")]
         operation: Annotated[
-            Callable[..., t.Container],
+            Callable[..., t.JsonValue],
             m.Field(description="Batch operation callable"),
         ]
         expected_result: Annotated[
-            t.Container,
+            t.JsonValue,
             m.Field(description="Expected batch result"),
         ]
         size: Annotated[int, m.Field(description="Batch size")] = 100
@@ -280,47 +276,47 @@ class TestUtilitiesCollectionCoverage:
         """Centralized collection utilities test scenarios."""
 
         @staticmethod
-        def _double(value: t.Container) -> t.Container:
+        def _double(value: t.JsonValue) -> t.JsonValue:
             assert isinstance(value, int)
             return value * 2
 
         @staticmethod
-        def _upper(value: t.Container) -> t.Container:
+        def _upper(value: t.JsonValue) -> t.JsonValue:
             assert isinstance(value, str)
             return value.upper()
 
         @staticmethod
-        def _is_even(value: t.Container) -> bool:
+        def _is_even(value: t.JsonValue) -> bool:
             assert isinstance(value, int)
             return value % 2 == 0
 
         @staticmethod
-        def _is_odd(value: t.Container) -> bool:
+        def _is_odd(value: t.JsonValue) -> bool:
             assert isinstance(value, int)
             return value % 2 != 0
 
         @staticmethod
-        def _greater_than_two(value: t.Container) -> bool:
+        def _greater_than_two(value: t.JsonValue) -> bool:
             assert isinstance(value, int)
             return value > 2
 
         @staticmethod
-        def _greater_than_one(value: t.Container) -> bool:
+        def _greater_than_one(value: t.JsonValue) -> bool:
             assert isinstance(value, int)
             return value > 1
 
         @staticmethod
-        def _greater_than_ten(value: t.Container) -> bool:
+        def _greater_than_ten(value: t.JsonValue) -> bool:
             assert isinstance(value, int)
             return value > 10
 
         @staticmethod
-        def _greater_than_fifteen(value: t.Container) -> bool:
+        def _greater_than_fifteen(value: t.JsonValue) -> bool:
             assert isinstance(value, int)
             return value > 15
 
         @staticmethod
-        def _equals_two(value: t.Container) -> bool:
+        def _equals_two(value: t.JsonValue) -> bool:
             return value == 2
 
         @staticmethod
@@ -662,8 +658,8 @@ class TestUtilitiesCollectionCoverage:
 
     def test_merge_deep(self) -> None:
         """Test deep merge."""
-        base_data: Mapping[str, t.MetadataValue] = {"a": 1, "b": {"x": 1}}
-        other_data: Mapping[str, t.MetadataValue] = {"b": {"y": 2}, "c": 3}
+        base_data: Mapping[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
+        other_data: Mapping[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base_data, other_data)
         assert result.success
         tm.that(result.value["a"], eq=1)
@@ -672,8 +668,8 @@ class TestUtilitiesCollectionCoverage:
 
     def test_merge_override(self) -> None:
         """Test override merge."""
-        base_data: Mapping[str, t.MetadataValue] = {"a": 1, "b": {"x": 1}}
-        other_data: Mapping[str, t.MetadataValue] = {"b": {"y": 2}, "c": 3}
+        base_data: Mapping[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
+        other_data: Mapping[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base_data, other_data, strategy="override")
         assert result.success
         tm.that(result.value["a"], eq=1)

@@ -87,7 +87,7 @@ class TestFlextMixinsNestedClasses:
             m.Field(description="Model conversion scenario type"),
         ]
         input_value: Annotated[
-            t.Container,
+            t.JsonValue,
             m.Field(description="Input value for conversion"),
         ]
         expected_output: Annotated[
@@ -105,7 +105,7 @@ class TestFlextMixinsNestedClasses:
             m.Field(description="Result handling scenario type"),
         ]
         input_value: Annotated[
-            t.Container,
+            t.JsonValue,
             m.Field(description="Input value for result handling"),
         ]
 

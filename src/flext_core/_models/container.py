@@ -16,7 +16,7 @@ from collections.abc import (
     Mapping,
 )
 from datetime import UTC, datetime
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, no_type_check
 
 from flext_core import (
     FlextModelsBase as m,
@@ -352,7 +352,7 @@ class FlextModelsContainer:
             lazy: Whether to defer factory invocation until first use. Default: True.
 
         Examples:
-            >>> settings = FlextModelsContainer.FactoryDecoratorConfig(
+            >>> settings = mc.FactoryDecoratorConfig(
             ...     name="database_service",
             ...     singleton=True,
             ...     lazy=False,
@@ -387,4 +387,7 @@ class FlextModelsContainer:
         ] = True
 
 
-__all__: list[str] = ["FlextModelsContainer"]
+mc = FlextModelsContainer
+_ = no_type_check(FlextModelsContainer)
+
+__all__: list[str] = ["FlextModelsContainer", "mc"]

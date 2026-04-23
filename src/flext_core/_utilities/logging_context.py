@@ -44,18 +44,18 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         """Bind context variables to a specific scope."""
         try:
             cls._scoped_contexts.setdefault(scope, {})
-            current_context: t.FlatContainerMapping = {
+            current_context = {
                 key: cls._to_container_value(value)
                 for key, value in cls._scoped_contexts[scope].items()
             }
-            incoming_context: t.FlatContainerMapping = {
+            incoming_context = {
                 key: cls._to_container_value(value) for key, value in context.items()
             }
-            current_context_obj: Mapping[str, t.MetadataValue] = {
+            current_context_obj: Mapping[str, t.JsonValue] = {
                 str(key): FlextRuntime.normalize_to_metadata(value)
                 for key, value in current_context.items()
             }
-            incoming_context_obj: Mapping[str, t.MetadataValue] = {
+            incoming_context_obj: Mapping[str, t.JsonValue] = {
                 str(key): FlextRuntime.normalize_to_metadata(value)
                 for key, value in incoming_context.items()
             }
@@ -65,7 +65,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 strategy="deep",
             )
             merged_value = merge_result.unwrap_or(current_context_obj)
-            merged_context: t.MutableFlatContainerMapping = {}
+            merged_context: t.MutableJsonMapping = {}
             for key, value in merged_value.items():
                 merged_context[str(key)] = cls._to_container_value(value)
             cls._scoped_contexts[scope] = merged_context
@@ -123,39 +123,36 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def _to_container_value(
-        value: t.LogValue | t.Container | t.RuntimeData | t.MetadataValue | None,
-    ) -> t.Container:
+        value: t.LogValue | t.JsonValue | t.RuntimeData | None,
+    ) -> t.JsonValue:
         """Normalize value to Container (internal helper)."""
         if isinstance(value, Exception):
-            return str(value)
+            return t.json_value_adapter().validate_python(str(value))
         if value is None:
             return ""
         if isinstance(value, FlextModelsPydantic.BaseModel):
-            return str(value.model_dump())
+            return dict(t.json_mapping_adapter().validate_python(value.model_dump()))
         if isinstance(value, p.Model):
-            return str(value)
+            model_dump_attr = getattr(value, "model_dump", None)
+            if callable(model_dump_attr):
+                return dict(t.json_mapping_adapter().validate_python(model_dump_attr()))
+            return t.json_value_adapter().validate_python(str(value))
         model_dump_attr = getattr(value, "model_dump", None)
         if callable(model_dump_attr):
-            return str(model_dump_attr())
-        if FlextUtilitiesGuardsTypeCore.scalar(value) or isinstance(value, Path):
-            return value
-        flattened = FlextRuntime.normalize_to_metadata(value)
-        return (
-            flattened
-            if FlextUtilitiesGuardsTypeCore.scalar(flattened)
-            else str(flattened)
+            return dict(t.json_mapping_adapter().validate_python(model_dump_attr()))
+        if isinstance(value, Path):
+            return t.json_value_adapter().validate_python(str(value))
+        if isinstance(value, bytes):
+            return t.json_value_adapter().validate_python(
+                value.decode("utf-8", errors="replace"),
+            )
+        return t.json_value_adapter().validate_python(
+            FlextRuntime.normalize_to_metadata(value),
         )
 
     @staticmethod
     def _to_scalar_value(
-        value: (
-            t.LogValue
-            | t.Container
-            | t.RuntimeData
-            | t.ContainerCarrier
-            | t.MetadataValue
-            | None
-        ),
+        value: (t.LogValue | t.JsonValue | t.RuntimeData | t.JsonMapping | None),
     ) -> t.Scalar:
         if value is None:
             return ""
@@ -174,8 +171,8 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def _to_container_context(
-        context: Mapping[str, t.LogValue | t.Container | t.RuntimeData],
-    ) -> t.FlatContainerMapping:
+        context: Mapping[str, t.LogValue | t.JsonValue | t.RuntimeData],
+    ) -> t.JsonMapping:
         """Convert mapping to container context using normalization."""
         return {
             key: FlextUtilitiesLoggingContext._to_container_value(value)
@@ -185,9 +182,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     @classmethod
     def _to_scalar_context(
         cls,
-        context: Mapping[str, t.LogValue | t.Container | t.RuntimeData | None],
-    ) -> t.ScalarMapping:
-        return {key: cls._to_scalar_value(value) for key, value in context.items()}
+        context: Mapping[str, t.LogValue | t.JsonValue | t.RuntimeData | None],
+    ) -> t.JsonMapping:
+        return t.json_mapping_adapter().validate_python(
+            {key: cls._to_container_value(value) for key, value in context.items()},
+        )
 
     @staticmethod
     def _extract_class_name(frame: types.FrameType) -> str | None:

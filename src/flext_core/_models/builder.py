@@ -52,10 +52,10 @@ class FlextModelsBuilder:
             def _append(
                 self,
                 field_name: str,
-                value: t.Container,
+                value: t.JsonValue,
             ) -> Self:
                 """Append one value to a sequence field while preserving immutability."""
-                current_values: tuple[t.Container, ...] = tuple(
+                current_values: tuple[t.JsonValue, ...] = tuple(
                     getattr(self._state, field_name)
                 )
                 return self._set(**{field_name: (*current_values, value)})

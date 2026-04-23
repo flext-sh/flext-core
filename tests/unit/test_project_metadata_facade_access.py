@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests import c, m, p, t, u
+from tests import c, m, p, u
 
 
 class TestFacadeFlatSsotAccess:
@@ -29,11 +29,6 @@ class TestFacadeFlatSsotAccess:
         assert isinstance(p.ProjectMetadataReader, type)
         assert isinstance(p.ProjectClassStemDeriver, type)
         assert isinstance(p.ProjectTierFacadeNamer, type)
-
-    def test_t_types_flat(self) -> None:
-        assert hasattr(t, "ProjectAliasName")
-        assert hasattr(t, "ProjectClassStem")
-        assert hasattr(t, "ProjectAliasToSuffixMap")
 
     def test_u_utilities_flat(self) -> None:
         assert u.derive_class_stem("flext-ldif") == "FlextLdif"

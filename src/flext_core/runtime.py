@@ -29,6 +29,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import (
     ClassVar,
+    no_type_check,
 )
 
 from dependency_injector import containers, providers, wiring
@@ -117,16 +118,29 @@ class FlextRuntime:
         return item if isinstance(item, t.SCALAR_TYPES) else str(item)
 
     @staticmethod
+    def _normalize_to_json_value(
+        value: t.JsonPayload
+        | t.Scalar
+        | Path
+        | mc.ConfigMap
+        | mc.Dict
+        | AbstractSet[t.Scalar],
+    ) -> t.JsonValue:
+        """Normalize arbitrary runtime input to one validated ``JsonValue``."""
+        normalized = FlextRuntime.normalize_to_metadata(value)
+        return t.json_value_adapter().validate_python(normalized)
+
+    @staticmethod
     def _normalize_dict_entries(
-        items: Sequence[tuple[str, t.RuntimeData]],
-    ) -> t.FlatContainerMapping:
+        items: Sequence[tuple[str, t.RuntimeData | t.Scalar]],
+    ) -> t.JsonMapping:
         """Normalize key-value pairs for container dict construction."""
-        result: dict[str, t.Container] = {}
-        for key, item in items:
-            normalized = FlextRuntime.normalize_to_container(item)
-            plain = FlextRuntime.normalize_to_metadata(normalized)
-            result[key] = FlextRuntime.to_scalar(plain)
-        return result
+        return t.json_mapping_adapter().validate_python(
+            {
+                str(key): FlextRuntime._normalize_to_json_value(item)
+                for key, item in items
+            },
+        )
 
     @staticmethod
     def resolve_nested_model_class[TModel: BaseModel](
@@ -170,10 +184,14 @@ class FlextRuntime:
         if value is None:
             return None
         if isinstance(value, mc.Dict):
-            return dict(value.root)
-        if isinstance(value, BaseModel):
-            return value.model_dump()
-        return dict(value)
+            raw_mapping: Mapping[str, t.RuntimeData | t.Scalar] = value.root
+        elif isinstance(value, BaseModel):
+            raw_mapping = value.model_dump()
+        else:
+            raw_mapping = value
+        return FlextRuntime._normalize_dict_entries(
+            [(str(key), item) for key, item in raw_mapping.items()],
+        )
 
     @staticmethod
     def normalize_metadata_input_mapping(
@@ -187,15 +205,15 @@ class FlextRuntime:
             raise TypeError(c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE)
         return {
             str(key): (
-                None if item is None else FlextRuntime.normalize_to_metadata(item)
+                None if item is None else FlextRuntime._normalize_to_json_value(item)
             )
             for key, item in raw_mapping.items()
         }
 
     @staticmethod
     def validate_metadata_attributes(
-        value: t.MetadataValue | Mapping[str, t.MetadataValue] | BaseModel | None,
-    ) -> Mapping[str, t.MetadataValue]:
+        value: t.JsonValue | Mapping[str, t.JsonValue] | BaseModel | None,
+    ) -> Mapping[str, t.JsonValue]:
         """Normalize and validate metadata attributes input."""
         if value is None:
             return {}
@@ -248,12 +266,12 @@ class FlextRuntime:
         if callable(value):
             return value
         if isinstance(value, Mapping):
-            normalized_mapping: MutableMapping[str, t.RuntimeData] = {}
+            normalized_mapping: dict[str, t.RuntimeData] = {}
             for key_s, item in value.items():
                 if isinstance(item, datetime):
                     normalized_mapping[key_s] = (
                         item.replace(tzinfo=UTC) if item.tzinfo is None else item
-                    )
+                    ).isoformat()
                 elif isinstance(item, Path):
                     normalized_mapping[key_s] = str(item)
                 elif isinstance(
@@ -280,10 +298,12 @@ class FlextRuntime:
             value,
             (str, bytes, bytearray),
         ):
-            normalized_sequence: MutableSequence[t.Container] = []
+            normalized_sequence: list[t.RuntimeData] = []
             for item in value:
                 if isinstance(item, datetime):
-                    item = item.replace(tzinfo=UTC) if item.tzinfo is None else item
+                    item = (
+                        item.replace(tzinfo=UTC) if item.tzinfo is None else item
+                    ).isoformat()
                 elif isinstance(item, Path):
                     item = str(item)
                 elif not isinstance(
@@ -304,7 +324,7 @@ class FlextRuntime:
                         type_name=type(item),
                     )
                     raise TypeError(msg)
-                normalized_sequence.append(str(item))
+                normalized_sequence.append(item)
             return mc.ObjectList(root=normalized_sequence)
         if hasattr(value, "__dict__"):
             return value
@@ -329,12 +349,11 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_container(
-        val: t.RuntimeData
-        | t.MetadataData
-        | t.MetadataValue
+        val: t.JsonPayload
+        | t.Scalar
+        | Path
         | mc.ConfigMap
         | mc.Dict
-        | t.ObjectList
         | AbstractSet[t.Scalar],
     ) -> t.RuntimeData:
         """Normalize any value to RuntimeData.
@@ -343,7 +362,7 @@ class FlextRuntime:
             val: Value to normalize
 
         Returns:
-            RecursiveContainer | BaseModel
+            JsonValue | BaseModel
 
         """
         match val:
@@ -356,13 +375,15 @@ class FlextRuntime:
                 entries = [(k, v) for k, v in val.root.items()]
                 return FlextRuntime._normalize_dict_entries(entries)
             case mc.ObjectList():
-                return [v for v in val.root]  # noqa: C416
+                return t.json_list_adapter().validate_python(
+                    [FlextRuntime._normalize_to_json_value(v) for v in val.root],
+                )
             case BaseModel():
                 return val
             case Path():
-                return val
+                return str(val)
             case _ if ugc.scalar(val):
-                return val
+                return FlextRuntime._normalize_to_json_value(val)
             case _ if ugc.dict_like(val):
                 if isinstance(val, mc.ConfigMap):
                     entries = [(k, v) for k, v in val.root.items()]
@@ -370,26 +391,26 @@ class FlextRuntime:
                     entries = [(str(k), v) for k, v in val.items()]
                 return FlextRuntime._normalize_dict_entries(entries)
             case _ if isinstance(val, Sequence) and not isinstance(val, str | bytes):
-                normalized_list: list[t.Container] = []
-                for item_raw in val:
-                    item = FlextRuntime.normalize_to_container(item_raw)
-                    normalized_list.append(FlextRuntime.to_scalar(item))
                 return list(
-                    t.flat_container_list_adapter().validate_python(normalized_list)
+                    t.flat_container_list_adapter().validate_python(
+                        [
+                            FlextRuntime._normalize_to_json_value(item_raw)
+                            for item_raw in val
+                        ],
+                    )
                 )
             case _:
                 return str(val)
 
     @staticmethod
     def normalize_to_metadata(
-        val: t.RuntimeData
-        | t.MetadataData
-        | t.MetadataValue
+        val: t.JsonPayload
+        | t.Scalar
+        | Path
         | mc.ConfigMap
         | mc.Dict
-        | t.ObjectList
         | AbstractSet[t.Scalar],
-    ) -> t.MetadataValue:
+    ) -> t.JsonValue:
         """Normalize input into metadata-compatible JSON-native values."""
         if val is None:
             return ""
@@ -404,7 +425,7 @@ class FlextRuntime:
         if isinstance(val, (mc.ConfigMap, mc.Dict, mc.ObjectList)):
             val = val.root
         elif isinstance(val, AbstractSet):
-            val = list(val)
+            val = [FlextRuntime._normalize_to_json_value(item) for item in val]
         if isinstance(val, Mapping):
             return {
                 str(key): FlextRuntime.normalize_to_metadata(item)
@@ -417,6 +438,7 @@ class FlextRuntime:
             return [FlextRuntime.normalize_to_metadata(item) for item in val]
         return str(val)
 
+    @no_type_check
     class DependencyIntegration:
         """Centralize dependency-injector wiring with provider helpers."""
 
@@ -742,11 +764,6 @@ class FlextRuntime:
                 str(k): str(v) for k, v in context.items()
             }
             context_dict = mc.ConfigMap(root=parsed_context)
-        elif not isinstance(
-            context,
-            Mapping,
-        ) and ugc.scalar(context):
-            context_dict = mc.ConfigMap(root={})
         elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())
         else:

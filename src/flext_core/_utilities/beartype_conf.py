@@ -9,9 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from beartype import BeartypeConf, BeartypeStrategy
 
-from flext_core import c
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 
 
 class FlextUtilitiesBeartypeConf:
@@ -21,25 +23,22 @@ class FlextUtilitiesBeartypeConf:
     downstream projects to use in their beartype_this_package() calls.
     """
 
-    CLAW_SKIP_PACKAGES: tuple[str, ...] = ("flext_core",)
-    """Packages to skip in beartype.claw due to Pydantic recursive type conflicts."""
+    CLAW_SKIP_PACKAGES: ClassVar[tuple[str, ...]] = c.BEARTYPE_CLAW_SKIP_PACKAGES
+    """Packages skipped by the centralized flext_core beartype bootstrap."""
 
     @staticmethod
     def build_beartype_conf() -> BeartypeConf:
-        """Build BeartypeConf matching current FLEXT enforcement mode.
+        """Build BeartypeConf matching current FLEXT beartype mode.
 
         - "warn" -> violation_type=UserWarning (default)
         - "strict" -> violation_type=TypeError (raises on violation)
         - "off" -> returns conf with O0 strategy (no checking)
-
-        Skips flext_core unresolved PEP 695 aliases and
-        recursive container schemas are still incompatible with beartype.claw.
         """
-        mode = c.ENFORCEMENT_MODE
-        if mode == "off":
+        mode = c.BEARTYPE_MODE
+        if mode is c.EnforcementMode.OFF:
             return BeartypeConf(strategy=BeartypeStrategy.O0)
         return BeartypeConf(
-            violation_type=UserWarning if mode == "warn" else TypeError,
+            violation_type=UserWarning if mode is c.EnforcementMode.WARN else TypeError,
             strategy=BeartypeStrategy.O1,
             claw_skip_package_names=FlextUtilitiesBeartypeConf.CLAW_SKIP_PACKAGES,
         )

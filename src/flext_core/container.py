@@ -461,26 +461,24 @@ class FlextContainer(p.ContainerLifecycle):
         self.register_core_services()
 
     @override
-    def configure(self, settings: Mapping[str, t.Container] | None = None) -> Self:
+    def configure(self, settings: t.UserOverridesMapping | None = None) -> Self:
         """Configure the container with flat validated overrides."""
         return self.apply(settings)
 
     @override
-    def apply(self, settings: Mapping[str, t.Container] | None = None) -> Self:
+    def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
         """Apply user-provided overrides to container configuration.
 
         Args:
-            settings: Mapping of configuration keys to values accepted by
-                ``t.Scalar``.
+            settings: Mapping of configuration keys to scalar, scalar-list,
+                or normalized JSON mapping values.
 
         """
         if settings is None:
             return self
-        config_map: Mapping[str, t.Container] = settings
         merged = self._user_overrides.model_copy()
         merged.update({
-            str(k): FlextRuntime.normalize_to_container(v)
-            for k, v in config_map.items()
+            str(k): FlextRuntime.normalize_to_container(v) for k, v in settings.items()
         })
         self._user_overrides = merged
         if applicable := {
@@ -1078,7 +1076,7 @@ class FlextContainer(p.ContainerLifecycle):
                 *,
                 _namespace: str = namespace,
                 _settings_class: t.SettingsClass = settings_class_non_null,
-            ) -> t.ModelCarrier:
+            ) -> m.BaseModel:
                 namespace_settings = FlextSettings.fetch_global().fetch_namespace(
                     _namespace,
                     _settings_class,

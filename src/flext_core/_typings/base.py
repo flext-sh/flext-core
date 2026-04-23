@@ -14,59 +14,51 @@ from collections.abc import (
 )
 from datetime import datetime
 from pathlib import Path
+from types import GenericAlias, UnionType
+from typing import TypeAliasType
 
-from flext_core import FlextTypesPydantic as tp
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextTypingBase:
     """Base type alias namespace for Flext core type-safe contracts."""
 
     type Numeric = tp.StrictInt | tp.StrictFloat
-    type Primitives = tp.StrictStr | Numeric | tp.StrictBool
-    type Scalar = Primitives | tp.StrictBytes | datetime
-    type JsonValue = tp.JsonValue
-    type JsonMapping = Mapping[str, JsonValue]
-    type JsonList = Sequence[JsonValue]
-    type FlatScalarMapping = Mapping[str, Scalar]
-    type FlatScalarSequence = Sequence[Scalar]
-    type Container = Scalar | Path
-    type OpaqueValue = Container
-    type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
-    type MutableMappingKV[KeyT, ValueT] = dict[KeyT, ValueT]
-    type SequenceOf[ItemT] = Sequence[ItemT]
-    type MutableSequenceOf[ItemT] = list[ItemT]
-    type SecretValue = tp.SecretStr | tp.SecretBytes
-    type SettingsValue = Scalar | SecretValue
 
-    # Flat (non-recursive) mapping/list aliases for high-frequency patterns
+    type Primitives = tp.StrictStr | Numeric | tp.StrictBool
+
+    type Scalar = Primitives | tp.StrictBytes | datetime
+    type ScalarMapping = Mapping[str, Scalar]
+    type ScalarList = Sequence[Scalar]
+    type MutableScalarMapping = MutableMapping[str, Scalar]
+
     type StrMapping = Mapping[str, str]
+    type StrSequence = Sequence[str]
     type MutableStrMapping = MutableMapping[str, str]
     type OptionalStrMapping = Mapping[str, str | None]
     type MutableOptionalStrMapping = MutableMapping[str, str | None]
-    type StrSequence = Sequence[str]
 
-    type ScalarMapping = Mapping[str, Scalar]
-    type MutableScalarMapping = MutableMapping[str, Scalar]
-    type ScalarList = Sequence[Scalar]
-    type FlatContainerList = Sequence[Container]
-    type MutableFlatContainerList = MutableSequence[Container]
-    type FlatContainerMapping = Mapping[str, Container]
-    type MutableFlatContainerMapping = MutableMapping[str, Container]
-    # Canonical consumer aliases (flat; no recursion — JsonValue carries depth)
-    type ContainerValue = Container
-    type ContainerValueMapping = FlatContainerMapping
-    type MutableContainerValueMapping = MutableFlatContainerMapping
-    type ContainerValueList = FlatContainerList
-    type MutableContainerValueList = MutableFlatContainerList
-    type RecursiveValue = JsonValue
-    type RecursiveContainerMapping = FlatContainerMapping
-    type MutableRecursiveContainerMapping = MutableFlatContainerMapping
-    type RecursiveContainerList = FlatContainerList
-    type MutableRecursiveContainerList = MutableFlatContainerList
-    type OptionalContainerValue = Container | None
-    type OptionalContainerValueMapping = FlatContainerMapping | None
-    type OptionalScalar = Scalar | None
-    type OptionalPrimitive = Primitives | None
+    type SecretValue = tp.SecretStr | tp.SecretBytes
+    type SettingsValue = Scalar | SecretValue | Path
+
+    type JsonMapping = Mapping[str, tp.JsonValue]
+    type JsonList = Sequence[tp.JsonValue]
+    type MutableJsonMapping = MutableMapping[str, tp.JsonValue]
+    type MutableJsonList = MutableSequence[tp.JsonValue]
+    type FlatContainerList = Sequence[tp.JsonValue]
+    type MutableFlatContainerList = MutableSequence[tp.JsonValue]
+    type FlatContainerMapping = Mapping[str, tp.JsonValue]
+    type FlatContainer = FlatContainerMapping | Sequence[tp.JsonValue]
+    type MutableFlatContainerMapping = MutableMapping[str, tp.JsonValue]
+    type MutableFlatContainer = (
+        MutableFlatContainerMapping | MutableSequence[tp.JsonValue]
+    )
+    type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
+    type MutableMappingKV[KeyT, ValueT] = MutableMapping[KeyT, ValueT]
+    type SequenceOf[ItemT] = Sequence[ItemT]
+    type MutableSequenceOf[ItemT] = MutableSequence[ItemT]
+
+    # Canonical consumer aliases (flat; no recursion — tp.JsonValue carries depth)
     type MutableOptionalFeatureFlagMapping = MutableMapping[str, str | bool | None]
     type IntMapping = Mapping[str, int]
     type MutableIntMapping = MutableMapping[str, int]
@@ -76,7 +68,7 @@ class FlextTypingBase:
     type MutableOptionalBoolMapping = MutableMapping[str, bool | None]
     type FrozensetMapping = Mapping[str, frozenset[str]]
     type MutableFrozensetMapping = MutableMapping[str, frozenset[str]]
-    type StrSequenceMapping = Mapping[str, Sequence[str]]
+    type StrSequenceMapping = Mapping[str, StrSequence]
     type MutableStrSequenceMapping = MutableMapping[str, MutableSequence[str]]
 
     # Recurring domain-specific flat mapping aliases
@@ -89,25 +81,25 @@ class FlextTypingBase:
     type MutableHeaderMapping = MutableMapping[str, int | str]
     type MutableConfigValueMapping = MutableMapping[str, str | int | float]
 
-    class ContainerMappingBase(Mapping[str, Container]):
-        """Concrete base for Mapping[str, Container] inheritance.
+    class ContainerMappingBase(Mapping[str, tp.JsonValue]):
+        """Concrete base for JsonMapping inheritance.
 
         PEP 695 ``type X = ...`` aliases cannot be subclassed (CPython limitation).
         Use ``t.*Base`` classes when inheriting, ``t.*`` aliases for annotations.
         """
 
-    class ContainerListBase(Sequence[Container]):
-        """Concrete base for Sequence[Container] inheritance."""
+    class ContainerListBase(Sequence[tp.JsonValue]):
+        """Concrete base for JsonList inheritance."""
 
     class MutableContainerMappingBase(
-        MutableMapping[str, Container],
+        MutableMapping[str, tp.JsonValue],
     ):
-        """Concrete base for MutableMapping[str, Container] inheritance."""
+        """Concrete base for MutableMapping[str, tp.JsonValue] inheritance."""
 
     class MutableContainerListBase(
-        MutableSequence[Container],
+        MutableSequence[tp.JsonValue],
     ):
-        """Concrete base for MutableSequence[Container] inheritance."""
+        """Concrete base for MutableSequence[tp.JsonValue] inheritance."""
 
     PRIMITIVES_TYPES: tuple[type[str], type[int], type[float], type[bool]] = (
         str,
@@ -155,3 +147,5 @@ class FlextTypingBase:
     ]
     type VariadicTuple[ItemT] = tuple[ItemT, ...]
     type IntPair = Pair[int, int]
+
+    type TypeHintSpecifier = type | str | UnionType | GenericAlias | TypeAliasType

@@ -55,11 +55,11 @@ class TestsFlextCoreModelsMixins:
             int, m.Field(description="Attribute recursive container value")
         ] = 1
 
-    class BadMapping(UserDict[str, t.Container]):
+    class BadMapping(UserDict[str, t.JsonValue]):
         """Mapping that raises on access — used for error-path testing."""
 
         @override
-        def __getitem__(self, key: str) -> t.Container:
+        def __getitem__(self, key: str) -> t.JsonValue:
             _ = key
             msg = "get exploded"
             raise TypeError(msg)
@@ -76,7 +76,7 @@ class TestsFlextCoreModelsMixins:
     class _ValidationLikeError(ValueError):
         """Validation-like error for tests."""
 
-        def errors(self) -> Sequence[Mapping[str, t.MetadataValue]]:
+        def errors(self) -> Sequence[Mapping[str, t.JsonValue]]:
             return [{"loc": ["value"], "msg": "bad value"}]
 
     type TestCaseMap = Mapping[str, t.Core.Tests.TestobjectSerializable]
@@ -122,12 +122,12 @@ class TestsFlextCoreModelsMixins:
         @override
         def model_validate(
             cls,
-            obj: t.Container,
+            obj: t.JsonValue,
             *,
             strict: bool | None = None,
             extra: str | None = None,
             from_attributes: bool | None = None,
-            context: Mapping[str, t.Container] | None = None,
+            context: t.JsonMapping | None = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> Never:
@@ -142,12 +142,12 @@ class TestsFlextCoreModelsMixins:
         @override
         def model_validate(
             cls,
-            obj: t.Container,
+            obj: t.JsonValue,
             *,
             strict: bool | None = None,
             extra: str | None = None,
             from_attributes: bool | None = None,
-            context: Mapping[str, t.Container] | None = None,
+            context: t.JsonMapping | None = None,
             by_alias: bool | None = None,
             by_name: bool | None = None,
         ) -> Never:
@@ -244,7 +244,7 @@ class TestsFlextCoreModelsMixins:
         timeout: int = 10
 
         @property
-        def data(self) -> Mapping[str, t.Container]:
+        def data(self) -> t.JsonMapping:
             return {"timeout": self.timeout}
 
     class _Model(m.BaseModel):
@@ -272,7 +272,7 @@ class TestsFlextCoreModelsMixins:
         """Complex test model."""
 
         id: int
-        data: Mapping[str, t.Container]
+        data: t.JsonMapping
         items: t.StrSequence
 
     class _Cfg(m.BaseModel):
@@ -308,7 +308,7 @@ class TestsFlextCoreModelsMixins:
 
         name: Annotated[str, m.Field(description="Entity display name.")]
         value: Annotated[
-            t.Container,
+            t.JsonValue,
             m.Field(description="Entity payload value."),
         ]
 
@@ -373,10 +373,10 @@ class TestsFlextCoreModelsMixins:
             return f"NoDict(value={self.value})"
 
     class MutableObj:
-        """Mutable t.Container for immutability testing."""
+        """Mutable t.JsonValue for immutability testing."""
 
         def __init__(self, value: int) -> None:
-            """Initialize mutable t.Container."""
+            """Initialize mutable t.JsonValue."""
             self.value = value
 
     class NoSettingsNoSetattr:
@@ -456,7 +456,7 @@ class TestsFlextCoreModelsMixins:
             arbitrary_types_allowed=True,
         )
 
-        obj: t.Container
+        obj: t.JsonValue
         expected_contains: t.StrSequence | None = None
         expected_exact: str | None = None
         description: Annotated[str, m.Field(exclude=True)] = ""
@@ -467,15 +467,15 @@ class TestsFlextCoreModelsMixins:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         description: str
-        input: t.Container
+        input: t.JsonValue
         expected_success: bool
 
     class StandardTestCaseModel(m.BaseModel):
         """Standard operation case model for shared test utilities."""
 
         description: str
-        input_data: t.Container
-        expected_result: t.Container
+        input_data: t.JsonValue
+        expected_result: t.JsonValue
         expected_success: bool = True
         error_contains: str | None = None
 
@@ -486,7 +486,7 @@ class TestsFlextCoreModelsMixins:
 
         name: Annotated[str, m.Field(description="Fixture entity name.")]
         value: Annotated[
-            t.Container,
+            t.JsonValue,
             m.Field(description="Fixture entity payload."),
         ]
 
@@ -496,7 +496,7 @@ class TestsFlextCoreModelsMixins:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         value: Annotated[
-            t.Container,
+            t.JsonValue,
             m.Field(description="Fixture value payload."),
         ]
 
@@ -806,7 +806,7 @@ class TestsFlextCoreModelsMixins:
             str, m.Field(description="Validator category under test")
         ]
         input_value: Annotated[
-            t.Container | None,
+            t.JsonValue | None,
             m.Field(description="Input value passed to validator"),
         ]
         input_params: Annotated[
@@ -822,7 +822,7 @@ class TestsFlextCoreModelsMixins:
             ),
         ] = True
         expected_value: Annotated[
-            t.Container | None,
+            t.JsonValue | None,
             m.Field(
                 description="Expected normalized value when validation succeeds",
             ),
@@ -846,7 +846,7 @@ class TestsFlextCoreModelsMixins:
         failure_count: Annotated[int, m.Field(description="Failed operations")]
         skipped_count: Annotated[int, m.Field(description="Skipped operations")]
         metadata: Annotated[
-            Mapping[str, t.Container],
+            t.JsonMapping,
             m.Field(description="Additional operation metadata"),
         ] = m.Field(default_factory=dict)
 
@@ -856,23 +856,23 @@ class TestsFlextCoreModelsMixins:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         converted: Annotated[
-            Sequence[t.Container],
+            t.JsonList,
             m.Field(description="Converted records"),
         ] = m.Field(default_factory=tuple)
         errors: Annotated[
-            Sequence[str],
+            t.StrSequence,
             m.Field(description="Conversion errors"),
         ] = m.Field(default_factory=tuple)
         warnings: Annotated[
-            Sequence[str],
+            t.StrSequence,
             m.Field(description="Conversion warnings"),
         ] = m.Field(default_factory=tuple)
         skipped: Annotated[
-            Sequence[t.Container],
+            t.JsonList,
             m.Field(description="Skipped records"),
         ] = m.Field(default_factory=tuple)
         metadata: Annotated[
-            Mapping[str, t.Container],
+            t.JsonMapping,
             m.Field(description="Additional conversion metadata"),
         ] = m.Field(default_factory=dict)
 
@@ -885,7 +885,7 @@ class TestsFlextCoreModelsMixins:
         parser_method: Annotated[str, m.Field(description="Parser method to execute")]
         input_data: Annotated[str, m.Field(description="Raw parser input data")]
         expected_output: Annotated[
-            t.Container | None,
+            t.JsonValue | None,
             m.Field(
                 description="Expected parsed output for successful scenarios",
             ),
@@ -931,7 +931,7 @@ class TestsFlextCoreModelsMixins:
             m.Field(description="Expected parsed scalar or enum value"),
         ] = None
         expected_data: Annotated[
-            Mapping[str, t.Container] | None,
+            t.JsonMapping | None,
             m.Field(description="Expected parsed model_dump payload"),
         ] = None
         error_contains: Annotated[
@@ -991,7 +991,7 @@ class TestsFlextCoreModelsMixins:
         def model_copy(
             self,
             *,
-            update: Mapping[str, t.Container] | None = None,
+            update: t.JsonMapping | None = None,
             deep: bool = False,
         ) -> Self:
             return self
@@ -1307,7 +1307,7 @@ class TestsFlextCoreModelsMixins:
 
         port: int = 0
         nested: Annotated[
-            Mapping[str, t.Container],
+            t.JsonMapping,
             m.Field(default_factory=dict),
         ]
 
@@ -1321,11 +1321,11 @@ class TestsFlextCoreModelsMixins:
 
         kind: str | None = None
 
-    class BadItems(UserDict[str, t.Container]):
+    class BadItems(UserDict[str, t.JsonValue]):
         """UserDict that explodes on items() for error-path testing."""
 
         @override
-        def items(self) -> ItemsView[str, t.Container]:
+        def items(self) -> ItemsView[str, t.JsonValue]:
             """Items method."""
             msg = "bad items"
             raise RuntimeError(msg)

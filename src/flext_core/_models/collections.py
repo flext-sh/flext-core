@@ -10,9 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Sequence,
-)
 from typing import Annotated
 
 from flext_core import (
@@ -29,7 +26,7 @@ class FlextModelsCollections:
         """Specification for guard conditions used in collection filters."""
 
         eq: Annotated[
-            t.Container | None,
+            t.JsonValue | None,
             up.Field(
                 default=None,
                 title="Equals",
@@ -37,7 +34,7 @@ class FlextModelsCollections:
             ),
         ] = None
         ne: Annotated[
-            t.Container | None,
+            t.JsonValue | None,
             up.Field(
                 default=None,
                 title="Not Equals",
@@ -93,7 +90,7 @@ class FlextModelsCollections:
             ),
         ] = None
         in_: Annotated[
-            Sequence[t.Container] | None,
+            t.JsonList | None,
             up.Field(
                 default=None,
                 title="In Values",
@@ -101,7 +98,7 @@ class FlextModelsCollections:
             ),
         ] = None
         not_in: Annotated[
-            Sequence[t.Container] | None,
+            t.JsonList | None,
             up.Field(
                 default=None,
                 title="Not In Values",
@@ -133,7 +130,7 @@ class FlextModelsCollections:
             ),
         ] = None
         contains: Annotated[
-            t.Container | None,
+            t.JsonValue | None,
             up.Field(
                 default=None,
                 title="Contains",

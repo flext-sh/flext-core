@@ -14,21 +14,19 @@ from collections.abc import (
 from enum import StrEnum
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
-from flext_core import (
-    FlextModelsNamespace,
-    FlextModelsPydantic,
-    FlextTypesAnnotateds,
-    FlextTypesCore,
-    FlextTypesPydantic,
-    FlextTypesServices,
-    FlextTypesTypeAdapters,
-    FlextTypingBase,
-    FlextTypingContainers,
-    FlextTypingProjectMetadata,
-)
+from flext_core._models.namespace import FlextModelsNamespace
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.annotateds import FlextTypesAnnotateds
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.containers import FlextTypingContainers
+from flext_core._typings.core import FlextTypesCore
+from flext_core._typings.project_metadata import FlextTypingProjectMetadata
+from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._typings.services import FlextTypesServices
+from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 
 if TYPE_CHECKING:
-    from flext_core import FlextSettings
+    from flext_core.settings import FlextSettings
 
 EnumT = TypeVar("EnumT", bound=StrEnum)
 """Type variable bounded to ``StrEnum`` implementations."""

@@ -16,7 +16,7 @@ class ExamplesFlextCoreTypes(t):
             | t.ScalarOrModel
             | m.ConfigMap
             | p.ResultLike[t.RuntimeData]
-            | p.ResultLike[t.Container]
+            | p.ResultLike[t.JsonValue]
         )
 
 

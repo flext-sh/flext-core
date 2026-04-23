@@ -18,10 +18,10 @@ from collections.abc import (
 from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
-from flext_core import FlextModelsPydantic as mp
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 if TYPE_CHECKING:
-    from flext_core import t
+    from flext_core.typings import t
 
 
 class FlextProtocolsResult:
@@ -46,7 +46,7 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def error_data(self) -> t.FlatContainerMapping | None:
+        def error_data(self) -> t.JsonMapping | None:
             """Structured error metadata when available."""
             ...
 
@@ -114,7 +114,7 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def error_data(self) -> t.FlatContainerMapping | None:
+        def error_data(self) -> t.JsonMapping | None:
             """Error metadata with structured error context (optional)."""
             ...
 
@@ -326,7 +326,7 @@ class FlextProtocolsResult:
 
         @property
         @abstractmethod
-        def error_data(self) -> t.FlatContainerMapping | None: ...
+        def error_data(self) -> t.JsonMapping | None: ...
 
         @property
         @abstractmethod

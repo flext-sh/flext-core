@@ -42,14 +42,14 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         all_scopes = self._scope_payloads()
         for scope_name, scope_payload in all_scopes.items():
             all_data[scope_name] = self._normalize_mapping_payload(scope_payload)
-        stats_dict_export: dict[str, t.Container] = {}
+        stats_dict_export: dict[str, t.JsonValue] = {}
         if include_statistics and self._state.statistics:
             stats_dict_export = dict(
                 self._normalize_mapping_payload(
                     self._state.statistics.model_dump(mode="python"),
                 ),
             )
-        metadata_attributes: dict[str, t.MetadataValue] | None = None
+        metadata_attributes: dict[str, t.JsonValue] | None = None
         if include_metadata:
             metadata_attributes = {
                 str(k): u.normalize_to_metadata(v)
@@ -70,8 +70,8 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     @staticmethod
     def _normalize_mapping_payload(
-        source: (Mapping[str, t.RuntimeData] | Mapping[str, t.Container]),
-    ) -> t.FlatContainerMapping:
+        source: (Mapping[str, t.RuntimeData] | t.JsonMapping),
+    ) -> t.JsonMapping:
         """Normalize and validate mapping payloads through canonical adapters."""
         normalized = {
             str(k): FlextRuntime.normalize_to_container(v) for k, v in source.items()
@@ -80,7 +80,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     @staticmethod
     def _as_config_map(
-        source: (Mapping[str, t.RuntimeData] | Mapping[str, t.Container]),
+        source: (Mapping[str, t.RuntimeData] | t.JsonMapping),
         label: str,
     ) -> m.ConfigMap | None:
         """Normalize an arbitrary mapping into a scope-compatible map."""
@@ -100,7 +100,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     def _extract_config_map(
         self,
-        other: p.Context | Mapping[str, t.RuntimeData] | Mapping[str, t.Container],
+        other: p.Context | Mapping[str, t.RuntimeData] | t.JsonMapping,
     ) -> m.ConfigMap | None:
         """Extract a ConfigMap from any supported merge source."""
         match other:
@@ -134,7 +134,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     def merge(
         self,
-        other: p.Context | Mapping[str, t.RuntimeData] | Mapping[str, t.Container],
+        other: p.Context | Mapping[str, t.RuntimeData] | t.JsonMapping,
     ) -> Self:
         """Merge another context or dictionary into this context."""
         if not self._state.active:

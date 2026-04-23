@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import (
-    Mapping,
     MutableSequence,
     Sequence,
 )
@@ -98,8 +97,8 @@ class Ex01r(ExamplesFlextCoreShared):
             "lash.failure",
             fail_value.lash(lambda err: r[int].ok(len(err))).unwrap_or(-1),
         )
-        valid_data: t.ScalarMapping = {"name": "Ada", "age": 30}
-        invalid_data: t.ScalarMapping = {"name": "Ada", "age": "bad"}
+        valid_data: t.JsonMapping = {"name": "Ada", "age": 30}
+        invalid_data: t.JsonMapping = {"name": "Ada", "age": "bad"}
         person_model = ExamplesFlextCoreShared.Person
         from_validation_ok = r[ExamplesFlextCoreShared.Person].from_validation(
             valid_data,
@@ -113,15 +112,15 @@ class Ex01r(ExamplesFlextCoreShared):
         self.check("from_validation.failure", from_validation_fail.failure)
         self.check(
             "to_model.success",
-            r[Mapping[str, t.Container]].ok(valid_data).to_model(self.Person).value.age,
+            r[t.JsonMapping].ok(valid_data).to_model(self.Person).value.age,
         )
         self.check(
             "to_model.from_failure",
-            r[Mapping[str, t.Container]].fail("missing").to_model(self.Person).error,
+            r[t.JsonMapping].fail("missing").to_model(self.Person).error,
         )
         self.check(
             "to_model.validation_failure",
-            r[Mapping[str, t.Container]].ok(invalid_data).to_model(self.Person).failure,
+            r[t.JsonMapping].ok(invalid_data).to_model(self.Person).failure,
         )
 
     def factories_and_guards(self) -> None:

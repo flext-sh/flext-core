@@ -22,7 +22,7 @@ import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core import FlextUtilitiesBeartypeConf, FlextUtilitiesBeartypeEngine as be
-from tests import m, t, u
+from tests import c, m, t, u
 
 # ------------------------------------------------------------------ #
 # contains_any                                                        #
@@ -53,8 +53,8 @@ class TestContainsAny:
         assert be.contains_any(Mapping[str, Sequence[typing.Any]]) is True
 
     def test_clean_mapping(self) -> None:
-        """Mapping[str, int] has no Any."""
-        assert be.contains_any(Mapping[str, int]) is False
+        """t.IntMapping has no Any."""
+        assert be.contains_any(t.IntMapping) is False
 
     def test_clean_sequence(self) -> None:
         """t.StrSequence has no Any."""
@@ -103,8 +103,8 @@ class TestForbiddenCollectionOrigin:
         assert result == (True, "set")
 
     def test_mapping_ok(self) -> None:
-        """Mapping[str, int] is not forbidden."""
-        result = be.has_forbidden_collection_origin(Mapping[str, int], self.FORBIDDEN)
+        """t.IntMapping is not forbidden."""
+        result = be.has_forbidden_collection_origin(t.IntMapping, self.FORBIDDEN)
         assert result == (False, "")
 
     def test_sequence_ok(self) -> None:
@@ -210,20 +210,24 @@ class TestAliasContainsAny:
 class TestBeartypeConf:
     """Verify centralized BeartypeConf factory."""
 
-    def test_warn_mode_conf(self) -> None:
-        """Default mode (warn) produces UserWarning violation type."""
+    def test_default_mode_conf(self) -> None:
+        """Default beartype mode is disabled in flext_core."""
         conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
-        assert conf.violation_type is UserWarning
+        assert conf.strategy is BeartypeStrategy.O0
 
-    def test_warn_mode_strategy(self) -> None:
-        """Default mode uses O1 strategy."""
+    def test_default_mode_strategy(self) -> None:
+        """Disabled default mode uses O0 strategy."""
         conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
-        assert conf.strategy is BeartypeStrategy.O1
+        assert conf.strategy is BeartypeStrategy.O0
 
     def test_conf_is_beartype_conf(self) -> None:
         """Factory returns a proper BeartypeConf instance."""
         conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
         assert isinstance(conf, BeartypeConf)
+
+    def test_beartype_mode_matches_default(self) -> None:
+        """flext_core starts with beartype activation disabled by default."""
+        assert c.BEARTYPE_MODE is c.EnforcementMode.OFF
 
 
 # ------------------------------------------------------------------ #
@@ -426,6 +430,78 @@ class TestBeartypeClawCompatibility:
         assert result.exit_code == 0, combined_output
         assert "unexpected_success True" in combined_output
 
+    def test_importing_flext_core_default_off_skips_auto_activation(self) -> None:
+        """Default OFF mode does not auto-activate beartype on flext_core import."""
+        result = self._run_python(
+            textwrap.dedent(
+                """
+                import warnings
+
+                import flext_core
+
+                with warnings.catch_warnings(record=True) as caught:
+                    warnings.simplefilter("always")
+                    try:
+                        flext_core.FlextUtilitiesProjectMetadata.derive_package_name(1)
+                    except Exception as exc:
+                        print("runtime_exc", type(exc).__name__)
+                    print("warning_count", len(caught))
+                """
+            ),
+            cwd=Path(__file__).resolve().parents[2],
+        )
+
+        combined_output = result.stdout + result.stderr
+        assert result.exit_code == 0, combined_output
+        assert "runtime_exc AttributeError" in combined_output
+        assert "warning_count 0" in combined_output
+
+    def test_warn_mode_still_executes_wrapped_callable(self) -> None:
+        """Warn mode emits a warning but still executes the wrapped function body."""
+        result = self._run_python(
+            textwrap.dedent(
+                """
+                import warnings
+
+                from beartype import BeartypeConf, BeartypeStrategy
+                from beartype.claw import beartype_package
+
+                from flext_core import FlextUtilitiesBeartypeConf
+
+                beartype_package(
+                    "flext_core",
+                    conf=BeartypeConf(
+                        violation_type=UserWarning,
+                        strategy=BeartypeStrategy.O1,
+                        claw_skip_package_names=FlextUtilitiesBeartypeConf.CLAW_SKIP_PACKAGES,
+                    ),
+                )
+
+                import flext_core
+
+                with warnings.catch_warnings(record=True) as caught:
+                    warnings.simplefilter("always")
+                    try:
+                        flext_core.FlextUtilitiesProjectMetadata.derive_package_name(1)
+                    except Exception as exc:
+                        print("runtime_exc", type(exc).__name__)
+                        print("runtime_msg", str(exc))
+                    print("warning_count", len(caught))
+                    if caught:
+                        print("warning_type", type(caught[0].message).__name__)
+                        print("warning_text", str(caught[0].message))
+                """
+            ),
+            cwd=Path(__file__).resolve().parents[2],
+        )
+
+        combined_output = result.stdout + result.stderr
+        assert result.exit_code == 0, combined_output
+        assert "runtime_exc AttributeError" in combined_output
+        assert "warning_count 1" in combined_output
+        assert "warning_type UserWarning" in combined_output
+        assert "derive_package_name" in combined_output
+
     def test_claw_without_skip_hits_recursive_container_schema(self) -> None:
         """Removing skip settings still fails to import flext_core under claw."""
         result = self._run_python(
@@ -461,4 +537,6 @@ class TestBeartypeClawCompatibility:
             "PydanticSchemaGenerationError" in combined_output
             or 'unimportable module "t"' in combined_output
             or "t.StrSequence" in combined_output
+            or "JsonValue not PEP 695-compliant unsubscripted type alias"
+            in combined_output
         )

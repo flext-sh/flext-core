@@ -112,11 +112,11 @@ class FlextModelsContextMetadata:
             ),
         ] = up.Field(default_factory=lambda: MappingProxyType({}))
         domain_metadata: Annotated[
-            Mapping[str, t.Container],
+            t.JsonMapping,
             up.Field(
                 description="Domain metadata attributes describing origin and processing state.",
             ),
-        ] = up.Field(default_factory=lambda: MappingProxyType({}))
+        ] = up.Field(default_factory=dict)
 
 
 __all__: list[str] = ["FlextModelsContextMetadata"]
