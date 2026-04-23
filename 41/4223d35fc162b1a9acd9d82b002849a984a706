@@ -1,0 +1,176 @@
+src/flext_core/_utilities/args.py
+  h_9db9d35f50cf33 23,55,74
+src/flext_core/_utilities/context_scope.py
+  h_9db9d35f50cf33 83,97,114,118,129
+src/flext_core/_utilities/reliability.py
+  h_9db9d35f50cf33 45,57,75,131
+src/flext_core/_typings/core.py
+  h_9db9d35f50cf33 14-15
+src/flext_core/_models/_context/_data.py
+  h_9db9d35f50cf33 30,56-57,115,141
+src/flext_core/_protocols/logging.py
+  h_9db9d35f50cf33 40,44,57,121,316,320
+src/flext_core/loggings.py
+  h_9db9d35f50cf33 168,183,191,201,270,283,322,330
+tests/unit/test_coverage_utilities.py
+  h_9db9d35f50cf33 115
+tests/unit/test_handlers_full_coverage.py
+  h_9db9d35f50cf33 14,19,21-22,29,38,102,116
+src/flext_core/_exceptions/template.py
+  h_9db9d35f50cf33 21,52,77,98
+src/flext_core/_utilities/enforcement.py
+  h_9db9d35f50cf33 24-27,76,262,295,389,487,502
+src/flext_core/result.py
+  h_9db9d35f50cf33 103,166,221,348,531-532,538-539
+src/flext_core/_typings/services.py
+  h_9db9d35f50cf33 39-46,49,52-62,69-72
+src/flext_core/_utilities/context_lifecycle.py
+  h_9db9d35f50cf33 39,41,73,83,103,109,137
+tests/unit/test_utilities_type_checker_coverage_100.py
+  h_9db9d35f50cf33 48-52,172-173,180,188,193,209-210,237-238,423
+tests/unit/test_utilities_collection_coverage_100.py
+  h_9db9d35f50cf33 81
+src/flext_core/_utilities/collection.py
+  h_9db9d35f50cf33 35,91-93,102-104,107,111-113,115-116,120-122,125,129-131,133-134,138-140,143,147-149,151-152,155-157,159,161-166,185,194-197,205-206,210-211,215-218,222-225,229-232,236-239,243-246,249-262,394-396,398,400,402,404,407,413,416,418
+src/flext_core/_models/_context/_proxy_var.py
+  h_9db9d35f50cf33 22,45,48,63,70
+src/flext_core/_utilities/logging_context.py
+  h_9db9d35f50cf33 43,81,126,155,174,185,294
+src/flext_core/runtime.py
+  h_9db9d35f50cf33 134-135,137,142-143,183,188,199-200,272,274,278-288,290,292,298,306,308,312-324,326-327,332,383,385-386,515,538,543,552,590,592,664,688,708,770
+src/flext_core/_utilities/beartype_engine.py
+  h_9db9d35f50cf33 25,54,81,99,129,174,212,221,252,258,262,287,293,375,427,442,579,609,613,619
+src/flext_core/_protocols/service.py
+  h_9db9d35f50cf33 131
+src/flext_core/_utilities/logging_config.py
+  h_9db9d35f50cf33 56,168,235,376
+src/flext_core/_models/namespace.py
+  h_9db9d35f50cf33 15
+src/flext_core/_models/_context/_scope.py
+  h_9db9d35f50cf33 45
+tests/typings.py
+  h_9db9d35f50cf33 64
+src/flext_core/registry.py
+  h_9db9d35f50cf33 168,239,243,286,303,307,359,388,401,407,416,445
+src/flext_core/dispatcher.py
+  h_9db9d35f50cf33 33,37,43,46,59,75,117,199,201,214
+src/flext_core/mixins.py
+  h_9db9d35f50cf33 108,119
+src/flext_core/_models/containers.py
+  h_9db9d35f50cf33 51-52,57,70,74,83-84,89,102,106,115-116,121,126,134
+src/flext_core/_utilities/guards_type_protocol.py
+  h_9db9d35f50cf33 102-103
+src/flext_core/_protocols/container.py
+  h_9db9d35f50cf33 82
+examples/typings.py
+  h_9db9d35f50cf33 15,18
+src/flext_core/service.py
+  h_9db9d35f50cf33 17,23,35,46,59,69
+src/flext_core/_models/service.py
+  h_9db9d35f50cf33 147,197
+src/flext_core/_models/_context/_tokens.py
+  h_9db9d35f50cf33 42,68,75
+src/flext_core/_protocols/context.py
+  h_9db9d35f50cf33 40,68,85,110,125,136
+src/flext_core/_utilities/conversion.py
+  h_9db9d35f50cf33 82,101
+tests/integration/patterns/test_advanced_patterns.py
+  h_9db9d35f50cf33 139
+src/flext_core/_models/_context/_metadata.py
+  h_9db9d35f50cf33 74,109,119,122
+tests/_models/mixins.py
+  h_9db9d35f50cf33 813,861,873,916,930
+src/flext_core/_utilities/handler.py
+  h_9db9d35f50cf33 61,113
+src/flext_core/_utilities/model.py
+  h_9db9d35f50cf33 73-74,101,135,199,229,255,266,268,282,380,382
+src/flext_core/handlers.py
+  h_9db9d35f50cf33 251,257,280-281,432,657
+src/flext_core/_constants/enforcement.py
+  h_9db9d35f50cf33 21,23-24,26
+src/flext_core/_models/enforcement.py
+  h_9db9d35f50cf33 94
+src/flext_core/__init__.py
+  h_9db9d35f50cf33 47,86,139,195,237,480,486
+src/flext_core/_models/builder.py
+  h_9db9d35f50cf33 43,58,67,77,81,102
+src/flext_core/_protocols/registry.py
+  h_9db9d35f50cf33 82,89,98,138
+src/flext_core/_utilities/parser.py
+  h_9db9d35f50cf33 74,91,106,128,139,142,179,182,237,240,280,283,346,365,368,452
+tests/unit/test_enforcement_integration.py
+  h_9db9d35f50cf33 26,30-31,34-43,45,63,73,110
+src/flext_core/_utilities/checker.py
+  h_9db9d35f50cf33 76,270,285,326
+tests/unit/test_result_full_coverage.py
+  h_9db9d35f50cf33 28-29,89-91,107-109
+src/flext_core/settings.py
+  h_9db9d35f50cf33 253,275
+tests/utilities.py
+  h_9db9d35f50cf33 28,32-33,53,62,64,82,91,93,111,120,122
+src/flext_core/_models/_context/_export.py
+  h_9db9d35f50cf33 36,63,66
+src/flext_core/_protocols/base.py
+  h_9db9d35f50cf33 55-56,133,144-145,153
+tests/unit/test_runtime.py
+  h_9db9d35f50cf33 12,16,20
+examples/_models/exsettings.py
+  h_9db9d35f50cf33 25
+examples/_models/ex00.py
+  h_9db9d35f50cf33 33
+src/flext_core/_utilities/context_normalization.py
+  h_9db9d35f50cf33 27,33,47
+tests/unit/test_runtime_full_coverage.py
+  h_9db9d35f50cf33 12,17
+src/flext_core/_exceptions/base.py
+  h_9db9d35f50cf33 95,100,114,160,165-166,212,261-262,283,315,317-318,343
+src/flext_core/context.py
+  h_9db9d35f50cf33 55,164,166,171
+src/flext_core/_typings/base.py
+  h_9db9d35f50cf33 42
+src/flext_core/_utilities/guards_type_core.py
+  h_9db9d35f50cf33 33-34,40-41,47,57,72,91,98,105,112,119,134-135,143-144,185
+src/flext_core/_constants/project_metadata.py
+  h_9db9d35f50cf33 21,24,58,80
+src/flext_core/_utilities/domain.py
+  h_9db9d35f50cf33 36,44,60-61,84-85,111,123,145,163
+tests/unit/base.py
+  h_9db9d35f50cf33 30-31,46,88-89,92,174-175,178,192,211-212,217,221,230-231,247-248,250,261,279-280,282,292-293,309-310,314,316
+tests/unit/test_handlers.py
+  h_9db9d35f50cf33 18,25,27,30,32,39,47-48,50,57,59,62,95,166,171,173,176,240,249,251,254,282,293,295,298,314,320,325,327,330,346,352,507,510,595
+src/flext_core/decorators.py
+  h_9db9d35f50cf33 21,26-27,39,43,69-71,75-76,78,91-93,110-111,114,128,133,150-151,154,229,231,242,247-248,252-254,257,269,279,284,319-320,323,411-412,417,470,497,613,620,624,631,634,642-643,659-660,666-667,671-674,678,683-684,688-691,695,734,737,760-761,764,802,804,820-821,824,870-871,885-886,889
+tests/unit/test_runtime_coverage_100.py
+  h_9db9d35f50cf33 24
+src/flext_core/_utilities/mapper.py
+  h_9db9d35f50cf33 94,174,176,180-181,208,230,232,236,247,250,254,257,263,280,301,309,317,320,322,328,339,344,352,372-373,375,440-441,471-472,491,493,496,498,510,513,519,521,527,580,583,588,646,663-664,666,714,719
+src/flext_core/_models/errors.py
+  h_9db9d35f50cf33 49,51,79,81,112,114
+src/flext_core/_exceptions/helpers.py
+  h_9db9d35f50cf33 34-35
+tests/unit/test_beartype_engine.py
+  h_9db9d35f50cf33 151,155,160,164,168,172,176,256
+tests/unit/test_typings_new.py
+  h_9db9d35f50cf33 20,29,56,83-85,88-93,95,106-127,169,528
+src/flext_core/_protocols/handler.py
+  h_9db9d35f50cf33 122,139,148,157,179,192,213,219
+src/flext_core/_utilities/context_crud.py
+  h_9db9d35f50cf33 37,48,84,91,96,103,109,111,114,120,196,213,235,258,280
+src/flext_core/_beartype_bootstrap.py
+  h_9db9d35f50cf33 27-28,45
+src/flext_core/typings.py
+  h_9db9d35f50cf33 3-4
+examples/ex_12_flext_registry.py
+  h_9db9d35f50cf33 45,48,210,262
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "414223d35fc162b1a9acd9d82b002849a984a706",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
