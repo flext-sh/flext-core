@@ -24,7 +24,8 @@ from collections import UserDict as BaseUserDict
 from collections.abc import (
     MutableMapping,
 )
-from typing import TypeVar, get_origin, override
+from types import GenericAlias, UnionType
+from typing import TypeAliasType, TypeVar, get_origin, override
 
 import pytest
 from flext_tests import tm
@@ -45,11 +46,14 @@ class TestsFlextCoreUtilitiesTypeChecker:
         return value
 
     @staticmethod
-    def _type_origin(value: t.TypeHintSpecifier) -> t.TypeHintSpecifier:
+    def _type_origin(value: object) -> t.TypeHintSpecifier:
         origin = get_origin(value)
-        if origin is None:
+        if isinstance(origin, (type, UnionType, GenericAlias, TypeAliasType)):
+            return origin
+        if isinstance(value, (type, str, UnionType, GenericAlias, TypeAliasType)):
             return value
-        return origin
+        msg = f"Unsupported type hint specifier: {value!r}"
+        raise TypeError(msg)
 
     class StringHandler(h[str, str]):
         """Handler for string messages."""
@@ -368,7 +372,7 @@ class TestsFlextCoreUtilitiesTypeChecker:
     def test_handle_type_or_origin_check_with_origin(self) -> None:
         """Test _handle_type_or_origin_check with __origin__ attribute."""
         dict_type = t.MutableStrMapping
-        origin = get_origin(dict_type) or dict_type
+        origin = self._type_origin(dict_type)
         result = u._handle_type_or_origin_check(
             self._type_origin(dict),
             self._type_origin(dict_type),

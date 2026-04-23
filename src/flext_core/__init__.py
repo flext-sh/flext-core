@@ -5,17 +5,7 @@ from __future__ import annotations
 
 import typing as _t
 
-from flext_core.__version__ import (
-    FlextVersion as FlextVersion,
-    __author__ as __author__,
-    __author_email__ as __author_email__,
-    __description__ as __description__,
-    __license__ as __license__,
-    __title__ as __title__,
-    __url__ as __url__,
-    __version__ as __version__,
-    __version_info__ as __version_info__,
-)
+from flext_core.__version__ import *
 from flext_core.lazy import (
     build_lazy_import_map,
     install_lazy_exports,
@@ -454,7 +444,6 @@ __all__: list[str] = [
     "FlextUtilitiesReliability",
     "FlextUtilitiesSettings",
     "FlextUtilitiesText",
-    "FlextVersion",
     "__author__",
     "__author_email__",
     "__description__",

@@ -303,7 +303,7 @@ class FlextExceptionsBase:
                 "error_domain": self.error_domain,
                 "correlation_id": self.correlation_id,
                 "timestamp": self.timestamp,
-                "attributes": mc.ConfigMap.model_validate(filtered_attrs).root,
+                "attributes": mc.ConfigMap.model_validate(filtered_attrs),
             })
             return snapshot.to_payload()
 
