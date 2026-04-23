@@ -52,7 +52,7 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
         default_factory=lambda: m.ContextRuntimeState.create_default(),
     )
 
-    def __init__(self, **data: t.RuntimeData) -> None:
+    def __init__(self, **data: t.JsonPayload) -> None:
         """Initialize FlextContext with optional initial data."""
         super().__init__(**data)
         context_data = m.ContextData()
@@ -161,14 +161,14 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
 
     _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
 
-    # DEPRECATED: to_normalized method removed - depends on t.RuntimeData, m.ConfigMap, t.JsonValue
+    # DEPRECATED: to_normalized method removed - depends on t.JsonPayload, m.ConfigMap, t.JsonValue
     # @staticmethod
-    # def to_normalized(value: t.RuntimeData | m.ConfigMap) -> t.JsonValue:
+    # def to_normalized(value: t.JsonPayload | m.ConfigMap) -> t.JsonValue:
     #     """Normalize a runtime value to the canonical recursive container shape."""
     #     return FlextRuntime.normalize_to_metadata(value))
 
     @classmethod
-    def create(cls, **_: t.RuntimeData) -> Self:
+    def create(cls, **_: t.JsonPayload) -> Self:
         """Factory: build a default context; kwargs reserved for future use."""
         return cls()
 

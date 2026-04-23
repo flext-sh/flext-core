@@ -19,7 +19,6 @@ if _t.TYPE_CHECKING:
         Ex02CacheService,
         Ex02DatabaseService,
         Ex02EmailService,
-        Ex02TestConfig,
         ExamplesFlextCoreModelsEx02,
         ExamplesFlextCoreSettingsEx02TestConfig,
     )
@@ -125,7 +124,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "Ex02CacheService",
                 "Ex02DatabaseService",
                 "Ex02EmailService",
-                "Ex02TestConfig",
                 "ExamplesFlextCoreModelsEx02",
                 "ExamplesFlextCoreSettingsEx02TestConfig",
             ),
@@ -267,7 +265,6 @@ __all__: list[str] = [
     "Ex02DatabaseService",
     "Ex02EmailService",
     "Ex02FlextSettings",
-    "Ex02TestConfig",
     "Ex03Email",
     "Ex03LoggingDsl",
     "Ex03Money",

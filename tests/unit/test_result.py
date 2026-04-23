@@ -795,7 +795,7 @@ class Testr:
         tm.fail(propagated, has=err)
         tm.that(propagated.failure, eq=True)
 
-    __all__: list[str] = ["Testr"]
+    __all__: t.MutableSequenceOf[str] = ["Testr"]
 
 
-__all__: list[str] = ["Testr"]
+__all__: t.MutableSequenceOf[str] = ["Testr"]

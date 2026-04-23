@@ -12,23 +12,12 @@ from __future__ import annotations
 import math
 from datetime import datetime
 from pathlib import Path
-from typing import ParamSpec
 
 import pytest
 from flext_tests import tm
 from pydantic import ValidationError
 
-from flext_core import (
-    P,
-    R,
-    ResultT,
-    T,
-    T_co,
-    T_contra,
-    T_Model,
-    T_Settings,
-    U,
-)
+import flext_core as core
 from tests import c, m, t
 
 
@@ -37,7 +26,7 @@ class TestFlextTypes:
 
     # -- Type alias existence and accessibility through t.* --
 
-    TYPE_ALIAS_NAMES: tuple[str, ...] = (
+    TYPE_ALIAS_NAMES: t.VariadicTuple[str] = (
         "Primitives",
         "Scalar",
         "Container",
@@ -64,7 +53,7 @@ class TestFlextTypes:
 
     # -- Core type aliases --
 
-    CORE_ALIAS_NAMES: tuple[str, ...] = (
+    CORE_ALIAS_NAMES: t.VariadicTuple[str] = (
         "StrictStr",
         "StrictInt",
         "StrictFloat",
@@ -91,26 +80,21 @@ class TestFlextTypes:
 
     # -- Service type aliases --
 
-    SERVICE_ALIAS_NAMES: tuple[str, ...] = (
-        "RegisterableService",
-        "FactoryCallable",
-        "ResourceCallable",
-        "JsonValue",
-        "HandlerCallable",
-        "HandlerLike",
-        "DispatchableHandler",
-        "LazyImportIndex",
+    SERVICE_ALIAS_NAMES: t.VariadicTuple[str] = (
         "ConfigurationMapping",
-        "ResultErrorData",
-        "ServiceMap",
+        "DispatchableHandler",
+        "FactoryCallable",
+        "HandlerCallable",
+        "JsonPayload",
+        "JsonValue",
+        "MessageTypeSpecifier",
+        "RegisterableService",
+        "ResourceCallable",
+        "JsonMapping",
         "ScalarOrModel",
-        "RuntimeData",
-        "RuntimeData",
-        "RuntimeData",
-        "BootstrapInput",
+        "ServiceMap",
         "SortableObjectType",
         "TypeHintSpecifier",
-        "MessageTypeSpecifier",
     )
 
     @pytest.mark.parametrize("alias_name", SERVICE_ALIAS_NAMES)
@@ -119,62 +103,28 @@ class TestFlextTypes:
 
     # -- Generic type vars --
 
-    def test_generic_type_vars_exist(self) -> None:
-        """All generic TypeVars and ParamSpec are importable."""
-        tm.that(
-            (
-                T.__name__,
-                U.__name__,
-                R.__name__,
-                P.__name__,
-                ResultT.__name__,
-                T_co.__name__,
-                T_contra.__name__,
-                T_Model.__name__,
-                T_Settings.__name__,
-            ),
-            eq=(
-                "T",
-                "U",
-                "R",
-                "P",
-                "ResultT",
-                "T_co",
-                "T_contra",
-                "T_Model",
-                "T_Settings",
-            ),
-        )
-
-    def test_typevar_names(self) -> None:
-        """TypeVars have correct __name__ attributes."""
-        tm.that(repr(T), has="T")
-        tm.that(repr(U), has="U")
-        tm.that(repr(R), has="R")
-        tm.that(repr(ResultT), has="ResultT")
-        tm.that(repr(T_co), has="T_co")
-        tm.that(repr(T_contra), has="T_contra")
-
-    def test_typevar_variance(self) -> None:
-        """Covariant and contravariant TypeVars have correct variance."""
-        tm.that(T_co.__covariant__, eq=True)
-        tm.that(T_contra.__contravariant__, eq=True)
-        tm.that(T.__covariant__, eq=False)
-        tm.that(T.__contravariant__, eq=False)
-
-    def test_paramspec_is_paramspec(self) -> None:
-        """P is a ParamSpec, not a TypeVar."""
-        assert type(P).__name__ == ParamSpec.__name__
-
-    def test_t_model_bound(self) -> None:
-        """T_Model is bound to BaseModel."""
-        bound_type = T_Model.__bound__
-        tm.that(bound_type, not_=None)
-        if isinstance(bound_type, type):
-            tm.that(issubclass(bound_type, m.BaseModel), eq=True)
-            return
-        err = "T_Model.__bound__ must be a runtime type"
-        raise AssertionError(err)
+    def test_public_generic_exports_stay_absent(self) -> None:
+        """flext_core must not expose shared TypeVar or ParamSpec helpers."""
+        for legacy_name in (
+            "EnumT",
+            "MessageT_contra",
+            "P",
+            "R",
+            "ResultT",
+            "RootValueT",
+            "T",
+            "T_DomainResult",
+            "T_Model",
+            "T_Namespace",
+            "T_Settings",
+            "T_co",
+            "T_contra",
+            "TRuntime",
+            "U",
+            "TV",
+            "TV_co",
+        ):
+            tm.that(hasattr(core, legacy_name), eq=False)
 
     # -- Runtime type tuples --
 
@@ -216,7 +166,7 @@ class TestFlextTypes:
 
     # -- Flat mapping aliases --
 
-    FLAT_ALIAS_NAMES: tuple[str, ...] = (
+    FLAT_ALIAS_NAMES: t.VariadicTuple[str] = (
         "AttributeMapping",
         "MutableAttributeMapping",
         "ConfigValueMapping",
@@ -575,4 +525,4 @@ class TestFlextTypes:
         tm.that(len(t.SCALAR_TYPES), gt=0)
 
 
-__all__: list[str] = ["TestFlextTypes"]
+__all__: t.MutableSequenceOf[str] = ["TestFlextTypes"]

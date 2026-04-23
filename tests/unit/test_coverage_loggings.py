@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from flext_tests import tm
 
-from tests import p, u
+from tests import p, t, u
 
 
 class TestCoverageLoggings:
@@ -409,4 +409,4 @@ class TestCoverageLoggings:
         )
 
 
-__all__: list[str] = ["TestCoverageLoggings"]
+__all__: t.MutableSequenceOf[str] = ["TestCoverageLoggings"]

@@ -37,7 +37,7 @@ class FlextProtocolsContext:
             self,
             key: str,
             scope: str = ...,
-        ) -> FlextProtocolsResult.Result[t.RuntimeData]:
+        ) -> FlextProtocolsResult.Result[t.JsonPayload]:
             """Get a context value by key and scope."""
             ...
 
@@ -65,7 +65,7 @@ class FlextProtocolsContext:
         def set(
             self,
             key_or_data: str,
-            value: t.RuntimeData,
+            value: t.JsonPayload,
             *,
             scope: str = ...,
         ) -> FlextProtocolsResult.Result[bool]: ...
@@ -82,7 +82,7 @@ class FlextProtocolsContext:
         def set(
             self,
             key_or_data: str | t.JsonMapping,
-            value: t.RuntimeData | None = ...,
+            value: t.JsonPayload | None = ...,
             *,
             scope: str = ...,
         ) -> FlextProtocolsResult.Result[bool]:
@@ -107,7 +107,7 @@ class FlextProtocolsContext:
 
         def merge(
             self,
-            other: Self | Mapping[str, t.RuntimeData] | t.JsonMapping,
+            other: Self | Mapping[str, t.JsonPayload] | t.JsonMapping,
         ) -> Self:
             """Merge another context or mapping into this one."""
             ...
@@ -122,7 +122,7 @@ class FlextProtocolsContext:
             include_statistics: bool = ...,
             include_metadata: bool = ...,
             as_dict: bool = ...,
-        ) -> m.ContextExport | Mapping[str, t.RuntimeData]:
+        ) -> m.ContextExport | Mapping[str, t.JsonPayload]:
             """Export context state as the canonical context export model or dict."""
             ...
 
@@ -133,7 +133,7 @@ class FlextProtocolsContext:
         def resolve_metadata(
             self,
             key: str,
-        ) -> FlextProtocolsResult.Result[t.RuntimeData]:
+        ) -> FlextProtocolsResult.Result[t.JsonPayload]:
             """Get a metadata value by key."""
             ...
 

@@ -31,8 +31,8 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def _normalized_source_entries(
-        context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
-        extra_kwargs: Mapping[str, t.MetadataData | None],
+        context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
+        extra_kwargs: Mapping[str, t.JsonPayload | None],
     ) -> tuple[tuple[str, t.JsonValue], ...]:
         """Collect normalized metadata entries from context and kwargs once."""
         entries: list[tuple[str, t.JsonValue]] = []
@@ -55,10 +55,7 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def safe_metadata(
-        value: p.HasModelDump
-        | Mapping[str, t.MetadataData | None]
-        | t.JsonValue
-        | None,
+        value: p.HasModelDump | Mapping[str, t.JsonPayload | None] | t.JsonValue | None,
     ) -> m.Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model."""
         if value is None:
@@ -79,7 +76,7 @@ class FlextExceptionsHelpers:
         return m.Metadata.model_validate({c.FIELD_ATTRIBUTES: attrs})
 
     @staticmethod
-    def safe_optional_str(value: t.MetadataData | type | None) -> str | None:
+    def safe_optional_str(value: t.JsonPayload | type | None) -> str | None:
         """Extract optional strict string from dynamic values."""
         if value is None:
             return None
@@ -89,8 +86,8 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_context_map(
-        context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
-        extra_kwargs: Mapping[str, t.MetadataData | None],
+        context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
+        extra_kwargs: Mapping[str, t.JsonPayload | None],
         excluded_keys: set[str] | frozenset[str] | None = None,
     ) -> dict[str, t.JsonValue]:
         """Build normalized context map from context and kwargs."""
@@ -106,8 +103,8 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_param_map(
-        context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
-        extra_kwargs: Mapping[str, t.MetadataData | None],
+        context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
+        extra_kwargs: Mapping[str, t.JsonPayload | None],
         keys: set[str] | frozenset[str],
     ) -> dict[str, t.JsonValue]:
         """Build parameter map restricted to declared param keys."""
@@ -122,9 +119,9 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def init_error_params[TParams: mp.BaseModel](
-        context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
-        extra_kwargs: Mapping[str, t.MetadataData | None],
-        named_params: Mapping[str, t.RuntimeData | None],
+        context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
+        extra_kwargs: Mapping[str, t.JsonPayload | None],
+        named_params: Mapping[str, t.JsonPayload | None],
         params_cls: t.ModelClass[TParams],
         existing_params: TParams | None,
         param_keys: set[str] | frozenset[str],
@@ -141,7 +138,7 @@ class FlextExceptionsHelpers:
         Shared init boilerplate for all typed error subclasses.
         Returns: (resolved_params, error_context, metadata, correlation_id)
         """
-        mutable_extra: MutableMapping[str, t.MetadataData | None] = dict(extra_kwargs)
+        mutable_extra: MutableMapping[str, t.JsonPayload | None] = dict(extra_kwargs)
         preserved_metadata_raw = mutable_extra.pop(c.FIELD_METADATA, None)
         preserved_metadata = (
             FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
@@ -152,7 +149,7 @@ class FlextExceptionsHelpers:
         correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
             correlation_id_raw,
         )
-        remaining_extra_kwargs: Mapping[str, t.MetadataData | None] = dict(
+        remaining_extra_kwargs: Mapping[str, t.JsonPayload | None] = dict(
             mutable_extra,
         )
         param_values: dict[str, t.JsonValue] = FlextExceptionsHelpers.build_param_map(

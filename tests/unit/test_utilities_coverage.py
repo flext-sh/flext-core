@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests import m
+from tests import m, t
 
 
 class TestUtilitiesCoverage:
@@ -33,4 +33,4 @@ class TestUtilitiesCoverage:
         assert result == "fallback"
 
 
-__all__: list[str] = ["TestUtilitiesCoverage"]
+__all__: t.MutableSequenceOf[str] = ["TestUtilitiesCoverage"]

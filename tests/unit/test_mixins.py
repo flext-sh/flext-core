@@ -193,4 +193,4 @@ class TestFlextMixinsNestedClasses:
             )
 
 
-__all__: list[str] = ["TestFlextMixinsNestedClasses"]
+__all__: t.MutableSequenceOf[str] = ["TestFlextMixinsNestedClasses"]

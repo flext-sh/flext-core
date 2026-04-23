@@ -10,6 +10,8 @@ from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import Final
 
+from flext_core import t
+
 
 class FlextConstantsDomain:
     """Constants for logging and domain models."""
@@ -18,7 +20,7 @@ class FlextConstantsDomain:
     DEFAULT_LEVEL_DEVELOPMENT: Final[str] = "DEBUG"
     DEFAULT_LEVEL_PRODUCTION: Final[str] = "WARNING"
     DEFAULT_LEVEL_TESTING: Final[str] = "INFO"
-    VALID_LEVELS: Final[tuple[str, ...]] = (
+    VALID_LEVELS: Final[t.VariadicTuple[str]] = (
         "DEBUG",
         "INFO",
         "WARNING",

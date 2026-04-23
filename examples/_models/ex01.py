@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from examples import t
 from flext_core import m, u
 
 
@@ -20,7 +21,7 @@ class ExamplesFlextCoreModelsEx01:
         demonstrations_completed: int = u.Field(
             description="Count of completed demonstrations"
         )
-        patterns_covered: tuple[str, ...] = u.Field(
+        patterns_covered: t.VariadicTuple[str] = u.Field(
             description="Tuple of covered pattern names"
         )
         completed_at: str = u.Field(description="ISO 8601 completion timestamp")

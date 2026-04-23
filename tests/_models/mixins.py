@@ -810,7 +810,7 @@ class TestsFlextCoreModelsMixins:
             m.Field(description="Input value passed to validator"),
         ]
         input_params: Annotated[
-            t.RuntimeData | None,
+            t.JsonPayload | None,
             m.Field(
                 description="Optional validator parameters for scenario execution",
             ),
@@ -858,7 +858,7 @@ class TestsFlextCoreModelsMixins:
         converted: Annotated[
             t.JsonList,
             m.Field(description="Converted records"),
-        ] = m.Field(default_factory=tuple)
+        ] = m.Field(default_factory=list)
         errors: Annotated[
             t.StrSequence,
             m.Field(description="Conversion errors"),
@@ -870,7 +870,7 @@ class TestsFlextCoreModelsMixins:
         skipped: Annotated[
             t.JsonList,
             m.Field(description="Skipped records"),
-        ] = m.Field(default_factory=tuple)
+        ] = m.Field(default_factory=list)
         metadata: Annotated[
             t.JsonMapping,
             m.Field(description="Additional conversion metadata"),
@@ -913,7 +913,7 @@ class TestsFlextCoreModelsMixins:
 
         name: Annotated[str, m.Field(description="Unique scenario name")]
         input_value: Annotated[
-            t.RuntimeData | None,
+            t.JsonPayload | None,
             m.Field(description="Public value passed to u.parse()"),
         ]
         target: Annotated[
@@ -927,7 +927,7 @@ class TestsFlextCoreModelsMixins:
             bool, m.Field(description="Whether parsing should succeed")
         ] = True
         expected_value: Annotated[
-            t.RuntimeData | None,
+            t.JsonPayload | None,
             m.Field(description="Expected parsed scalar or enum value"),
         ] = None
         expected_data: Annotated[

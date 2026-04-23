@@ -155,4 +155,4 @@ class FlextModelsCollections:
         ] = None
 
 
-__all__: list[str] = ["FlextModelsCollections"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsCollections"]

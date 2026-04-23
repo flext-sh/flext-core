@@ -9,13 +9,13 @@ class TestFlextRuntime:
     """Public runtime utility checks."""
 
     def test_dict_like_detects_mapping_inputs(self) -> None:
-        payload: t.RuntimeData = {"a": 1}
+        payload: t.JsonPayload = {"a": 1}
         assert u.dict_like(payload)
 
     def test_dict_like_rejects_scalar_inputs(self) -> None:
-        payload: t.RuntimeData = "value"
+        payload: t.JsonPayload = "value"
         assert not u.dict_like(payload)
 
     def test_normalize_to_container_returns_flat_scalar(self) -> None:
-        payload: t.RuntimeData = 42
+        payload: t.JsonPayload = 42
         assert u.normalize_to_container(payload) == 42

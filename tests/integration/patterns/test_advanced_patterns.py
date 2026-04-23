@@ -136,7 +136,7 @@ class TestAdvancedPatterns:
             """
 
             def convert_dict_value(
-                value: t.RuntimeData | None,
+                value: t.JsonPayload | None,
             ) -> t.JsonValue:
                 """Convert t.JsonValue to t.Scalar."""
                 return u.normalize_to_metadata(value)

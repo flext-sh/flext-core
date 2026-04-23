@@ -24,11 +24,12 @@ from typing import Annotated, ClassVar, override
 
 from flext_tests import td
 
-from flext_core import T_DomainResult
 from tests import c, h, m, p, r, s, t
 
 
-class TestsFlextCoreServiceBase(s[T_DomainResult]):
+class TestsFlextCoreServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPayload]](
+    s[TDomainResult]
+):
     """Service base for flext-core tests - extends s.
 
     Architecture: Extends s with flext-core-specific service
@@ -42,7 +43,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
     """
 
     @override
-    def execute(self) -> p.Result[T_DomainResult]:
+    def execute(self) -> p.Result[TDomainResult]:
         """Execute domain service logic - must be implemented by subclasses."""
         msg = c.Core.Tests.TestErrors.SUBCLASSES_MUST_IMPLEMENT_EXECUTE
         raise NotImplementedError(msg)
@@ -84,11 +85,11 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
         def create_handler(
             self,
             process_fn: Callable[
-                [t.RuntimeData],
-                p.Result[t.RuntimeData],
+                [t.JsonPayload],
+                p.Result[t.JsonPayload],
             ]
             | None = None,
-        ) -> h[t.RuntimeData, t.RuntimeData]:
+        ) -> h[t.JsonPayload, t.JsonPayload]:
             """Create handler instance for this test case."""
             return TestsFlextCoreServiceBase.Handlers.create_test_handler(
                 handler_id=self.handler_id,
@@ -170,11 +171,11 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
             handler_name: str | None = None,
             handler_type: c.HandlerType = c.HandlerType.COMMAND,
             process_fn: Callable[
-                [t.RuntimeData],
-                p.Result[t.RuntimeData],
+                [t.JsonPayload],
+                p.Result[t.JsonPayload],
             ]
             | None = None,
-        ) -> h[t.RuntimeData, t.RuntimeData]:
+        ) -> h[t.JsonPayload, t.JsonPayload]:
             """Factory for creating test handlers - reduces massive boilerplate.
 
             Args:
@@ -188,7 +189,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
 
             """
 
-            class DynamicTestHandler(h[t.RuntimeData, t.RuntimeData]):
+            class DynamicTestHandler(h[t.JsonPayload, t.JsonPayload]):
                 """Dynamic test handler implementation."""
 
                 def __init__(self) -> None:
@@ -207,17 +208,17 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
                 @override
                 def handle(
                     self,
-                    message: t.RuntimeData,
-                ) -> p.Result[t.RuntimeData]:
+                    message: t.JsonPayload,
+                ) -> p.Result[t.JsonPayload]:
                     """Handle message with proper error handling."""
                     try:
                         if process_fn:
                             return process_fn(message)
-                        return r[t.RuntimeData].ok(
+                        return r[t.JsonPayload].ok(
                             f"Handled: {message}",
                         )
                     except Exception as e:
-                        return r[t.RuntimeData].fail(
+                        return r[t.JsonPayload].fail(
                             f"Handler error: {e}",
                         )
 
@@ -226,8 +227,8 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
         @staticmethod
         def create_simple_handler(
             handler_id: str,
-            result_value: t.RuntimeData = "test",
-        ) -> h[t.RuntimeData, t.RuntimeData]:
+            result_value: t.JsonPayload = "test",
+        ) -> h[t.JsonPayload, t.JsonPayload]:
             """Create a simple handler that always returns the same value.
 
             Args:
@@ -243,10 +244,10 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
                 raise ValueError(msg)
 
             def always_succeed(
-                _msg: t.RuntimeData,
-            ) -> p.Result[t.RuntimeData]:
+                _msg: t.JsonPayload,
+            ) -> p.Result[t.JsonPayload]:
                 """Always return success with configured value."""
-                return r[t.RuntimeData].ok(result_value)
+                return r[t.JsonPayload].ok(result_value)
 
             return TestsFlextCoreServiceBase.Handlers.create_test_handler(
                 handler_id,
@@ -257,7 +258,7 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
         def create_failing_handler(
             handler_id: str,
             error_message: str = "Processing error",
-        ) -> h[t.RuntimeData, t.RuntimeData]:
+        ) -> h[t.JsonPayload, t.JsonPayload]:
             """Create a handler that always fails.
 
             Args:
@@ -275,10 +276,10 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
                 error_message = c.Core.Tests.TestErrors.PROCESSING_ERROR_DEFAULT
 
             def always_fail(
-                _msg: t.RuntimeData,
-            ) -> p.Result[t.RuntimeData]:
+                _msg: t.JsonPayload,
+            ) -> p.Result[t.JsonPayload]:
                 """Always return failure with configured error."""
-                return r[t.RuntimeData].fail(error_message)
+                return r[t.JsonPayload].fail(error_message)
 
             return TestsFlextCoreServiceBase.Handlers.create_test_handler(
                 handler_id,
@@ -288,8 +289,8 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
         @staticmethod
         def create_transform_handler(
             handler_id: str,
-            transform_fn: Callable[[t.RuntimeData], t.RuntimeData],
-        ) -> h[t.RuntimeData, t.RuntimeData]:
+            transform_fn: Callable[[t.JsonPayload], t.JsonPayload],
+        ) -> h[t.JsonPayload, t.JsonPayload]:
             """Create a handler that transforms messages.
 
             Args:
@@ -305,14 +306,14 @@ class TestsFlextCoreServiceBase(s[T_DomainResult]):
                 raise ValueError(msg)
 
             def transform(
-                msg: t.RuntimeData,
-            ) -> p.Result[t.RuntimeData]:
+                msg: t.JsonPayload,
+            ) -> p.Result[t.JsonPayload]:
                 """Transform message with proper error handling."""
                 try:
                     result = transform_fn(msg)
-                    return r[t.RuntimeData].ok(result)
+                    return r[t.JsonPayload].ok(result)
                 except Exception as e:
-                    return r[t.RuntimeData].fail(
+                    return r[t.JsonPayload].fail(
                         f"Transformation failed: {e}",
                     )
 

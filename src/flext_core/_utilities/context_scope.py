@@ -80,7 +80,7 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
         updated.update(dict(incoming))
         _ = ctx_var.set(updated)
         if scope == c.ContextScope.GLOBAL:
-            normalized_context: Mapping[str, t.RuntimeData] = {
+            normalized_context: Mapping[str, t.JsonPayload] = {
                 key: FlextRuntime.normalize_to_container(value)
                 for key, value in incoming.items()
                 if value is not None
@@ -94,7 +94,7 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
     def _execute_hooks(
         self,
         event: str,
-        event_data: t.RuntimeData | Mapping[str, t.RuntimeData],
+        event_data: t.JsonPayload | Mapping[str, t.JsonPayload],
     ) -> None:
         """Execute hooks for an event (DRY helper)."""
         if event not in self._state.hooks:
@@ -111,11 +111,11 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
                     hook_data = str(event_data)
                 _ = hook(hook_data)
 
-    def _metadata_map(self) -> Mapping[str, t.RuntimeData]:
+    def _metadata_map(self) -> Mapping[str, t.JsonPayload]:
         """Get all metadata from the context."""
         data = dict(self._state.metadata.model_dump())
         custom_fields_raw = data.pop("custom_fields", {})
-        custom_fields_dict: dict[str, t.RuntimeData] = {}
+        custom_fields_dict: dict[str, t.JsonPayload] = {}
         try:
             cf_map = m.ConfigMap(root=dict(custom_fields_raw))
             for ck, cv in cf_map.items():
@@ -126,7 +126,7 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
                 exc_info=exc,
             )
             custom_fields_dict = {}
-        result: dict[str, t.RuntimeData] = {}
+        result: dict[str, t.JsonPayload] = {}
         for k, v in data.items():
             if v is None or v == {}:
                 continue

@@ -165,7 +165,7 @@ class FlextLogger(ulc):
         cls,
         container: p.Container,
         level: str | None = None,
-        **context: t.RuntimeData,
+        **context: t.JsonPayload,
     ) -> p.Logger:
         """Create logger configured for a specific container."""
         if level is None:
@@ -180,7 +180,7 @@ class FlextLogger(ulc):
             _ = logger.bind_global_context(**context)
         return logger
 
-    def bind(self, **context: t.RuntimeData) -> Self:
+    def bind(self, **context: t.JsonPayload) -> Self:
         """Bind additional context, returning new logger (original unchanged)."""
         bound_logger = self.logger.bind(**self._to_container_context(context))
         return self.__class__.create_bound_logger(self.name, bound_logger)
@@ -188,7 +188,7 @@ class FlextLogger(ulc):
     @classmethod
     def to_container_context(
         cls,
-        context: Mapping[str, t.LogValue | t.JsonValue | t.RuntimeData],
+        context: Mapping[str, t.LogValue | t.JsonValue | t.JsonPayload],
     ) -> t.JsonMapping:
         """Public wrapper for context normalization used outside helper mixins."""
         return cls._to_container_context(context)
@@ -198,7 +198,7 @@ class FlextLogger(ulc):
         *,
         exception: Exception | None,
         exc_info: bool,
-        context: Mapping[str, t.RuntimeData | Exception],
+        context: Mapping[str, t.JsonPayload | Exception],
     ) -> t.JsonMapping:
         """Build normalized context payload for exception/error logging."""
         include_stack_trace = self._should_include_stack_trace()
@@ -267,7 +267,7 @@ class FlextLogger(ulc):
             )
             raw_exception = kw.get("exception")
             exc_info_value = kw.get("exc_info", True)
-            context_input: MutableMapping[str, t.RuntimeData | Exception] = {}
+            context_input: MutableMapping[str, t.JsonPayload | Exception] = {}
             for key, value in kw.items():
                 if key in {"exception", "exc_info"}:
                     continue
@@ -280,7 +280,7 @@ class FlextLogger(ulc):
                 exc_info=bool(exc_info_value),
                 context=context_input,
             )
-            context_dict: dict[str, t.MetadataData] = dict(built_context)
+            context_dict: dict[str, t.JsonPayload] = dict(built_context)
             if resolved_exception is None and isinstance(raw_exception, BaseException):
                 context_dict["exception_type"] = raw_exception.__class__.__name__
                 context_dict["exception_message"] = str(raw_exception)
@@ -319,7 +319,7 @@ class FlextLogger(ulc):
         )
         return self._log(level_enum, message, *converted_args, **context)
 
-    def new(self, **context: t.RuntimeData) -> Self:
+    def new(self, **context: t.JsonPayload) -> Self:
         """Create new logger with context — implements BindableLogger protocol."""
         return self.bind(**context)
 
@@ -327,7 +327,7 @@ class FlextLogger(ulc):
         self,
         message: str,
         *args: t.LogValue,
-        **kwargs: t.RuntimeData,
+        **kwargs: t.JsonPayload,
     ) -> t.LogResult:
         """Log trace message."""
         try:

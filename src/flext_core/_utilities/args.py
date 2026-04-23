@@ -20,7 +20,7 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def parse_model[M: m.BaseModel](
-        kwargs: Mapping[str, t.RuntimeData],
+        kwargs: Mapping[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
@@ -52,7 +52,7 @@ class FlextUtilitiesArgs:
     @staticmethod
     def resolve_options[M: m.BaseModel](
         options: M | None,
-        kwargs: Mapping[str, t.RuntimeData],
+        kwargs: Mapping[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
@@ -71,4 +71,4 @@ class FlextUtilitiesArgs:
         )
 
 
-__all__: list[str] = ["FlextUtilitiesArgs"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesArgs"]

@@ -39,7 +39,7 @@ class FlextTypingBase:
     type MutableOptionalStrMapping = MutableMapping[str, str | None]
 
     type SecretValue = tp.SecretStr | tp.SecretBytes
-    type SettingsValue = Scalar | SecretValue | Path
+    type SettingsValue = tp.JsonValue | SecretValue | Path
 
     type JsonMapping = Mapping[str, tp.JsonValue]
     type JsonList = Sequence[tp.JsonValue]

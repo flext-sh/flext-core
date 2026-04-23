@@ -25,12 +25,12 @@ class TestsFlextCoreUtilities(u):
 
             # --- from test_registry_full_coverage.py ---
 
-            class Handler(h[t.RuntimeData, t.RuntimeData]):
+            class Handler(h[t.JsonPayload, t.JsonPayload]):
                 """Simple handler used by public registry scenarios."""
 
                 @override
-                def handle(self, message: t.RuntimeData) -> p.Result[t.RuntimeData]:
-                    return r[t.RuntimeData].ok(message)
+                def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
+                    return r[t.JsonPayload].ok(message)
 
             class FalseyDispatcher(p.Dispatcher):
                 """Dispatcher that is present but reports itself as unavailable."""
@@ -50,7 +50,7 @@ class TestsFlextCoreUtilities(u):
                 @override
                 def register_handler(
                     self,
-                    handler: t.HandlerProtocolVariant,
+                    handler: t.DispatchableHandler,
                     *,
                     is_event: bool = False,
                 ) -> p.Result[bool]:
@@ -59,9 +59,9 @@ class TestsFlextCoreUtilities(u):
                     return r[bool].ok(True)
 
                 @override
-                def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeData]:
+                def dispatch(self, message: p.Routable) -> p.Result[t.JsonPayload]:
                     _ = message
-                    return r[t.RuntimeData].fail(
+                    return r[t.JsonPayload].fail(
                         c.Core.Tests.TestErrors.DISPATCHER_UNCONFIGURED
                     )
 
@@ -79,7 +79,7 @@ class TestsFlextCoreUtilities(u):
                 @override
                 def register_handler(
                     self,
-                    handler: t.HandlerProtocolVariant,
+                    handler: t.DispatchableHandler,
                     *,
                     is_event: bool = False,
                 ) -> p.Result[bool]:
@@ -88,9 +88,9 @@ class TestsFlextCoreUtilities(u):
                     return r[bool].fail(c.Core.Tests.TestErrors.DISPATCHER_FAIL)
 
                 @override
-                def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeData]:
+                def dispatch(self, message: p.Routable) -> p.Result[t.JsonPayload]:
                     _ = message
-                    return r[t.RuntimeData].fail(
+                    return r[t.JsonPayload].fail(
                         c.Core.Tests.TestErrors.DISPATCHER_FAIL
                     )
 
@@ -108,7 +108,7 @@ class TestsFlextCoreUtilities(u):
                 @override
                 def register_handler(
                     self,
-                    handler: t.HandlerProtocolVariant,
+                    handler: t.DispatchableHandler,
                     *,
                     is_event: bool = False,
                 ) -> p.Result[bool]:
@@ -117,9 +117,9 @@ class TestsFlextCoreUtilities(u):
                     return r[bool].ok(True)
 
                 @override
-                def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeData]:
+                def dispatch(self, message: p.Routable) -> p.Result[t.JsonPayload]:
                     _ = message
-                    return r[t.RuntimeData].ok(True)
+                    return r[t.JsonPayload].ok(True)
 
             @staticmethod
             def success_cases() -> Sequence[tuple[str, str]]:

@@ -18,9 +18,13 @@ from collections.abc import (
 )
 from contextlib import suppress
 from functools import wraps
-from typing import Literal, NoReturn, TypeIs, overload
+from typing import Literal, NoReturn, Protocol, TypeIs, overload
 
-from flext_core import FlextContainer, FlextContext, P, R, T, c, e, m, p, r, t, u
+from flext_core import FlextContainer, FlextContext, c, e, m, p, r, t, u
+
+
+class _AttributeProbe(Protocol):
+    """Structural marker for values inspected only via ``hasattr``/``getattr``."""
 
 
 class FlextDecorators:
@@ -32,11 +36,11 @@ class FlextDecorators:
     `r`, `FlextContext`, the public logging DSL in `u`, and `FlextContainer`.
     """
 
-    type _LoggerCarrier = p.HasLogger | p.Logger | t.RuntimeData | m.BaseModel
+    type _LoggerCarrier = p.HasLogger | p.Logger | t.JsonPayload | m.BaseModel
 
     @staticmethod
     def _is_logger_carrier(
-        value: object | None,
+        value: _AttributeProbe | None,
     ) -> TypeIs[FlextDecorators._LoggerCarrier]:
         return isinstance(value, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)) or (
             FlextDecorators._has_flext_logger(value)
@@ -62,12 +66,16 @@ class FlextDecorators:
         return u.fetch_logger(module_name)
 
     @staticmethod
-    def deprecated(reason: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def deprecated[**PCallback, TResult](
+        reason: str,
+    ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
         """Mark callable as deprecated and emit ``DeprecationWarning`` on use."""
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(
+            func: Callable[PCallback, TResult],
+        ) -> Callable[PCallback, TResult]:
             @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            def wrapper(*args: PCallback.args, **kwargs: PCallback.kwargs) -> TResult:
                 warnings.warn(
                     f"{func.__name__} is deprecated: {reason}",
                     DeprecationWarning,
@@ -80,7 +88,9 @@ class FlextDecorators:
         return decorator
 
     @staticmethod
-    def inject(**dependencies: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def inject[**PCallback, TResult](
+        **dependencies: str,
+    ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
         """Decorator to automatically inject dependencies from FlextContainer.
 
         Automatically resolves and injects dependencies from the global
@@ -96,10 +106,12 @@ class FlextDecorators:
 
         """
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(
+            func: Callable[PCallback, TResult],
+        ) -> Callable[PCallback, TResult]:
 
             @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            def wrapper(*args: PCallback.args, **kwargs: PCallback.kwargs) -> TResult:
                 container = FlextContainer.shared()
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
@@ -113,12 +125,12 @@ class FlextDecorators:
         return decorator
 
     @staticmethod
-    def log_operation(
+    def log_operation[**PCallback, TResult](
         operation_name: str | None = None,
         *,
         track_perf: bool = False,
         ensure_correlation: bool = True,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
         """Decorator to automatically log operation execution with structured logging.
 
         Automatically logs operation start, completion, and failures with
@@ -134,10 +146,12 @@ class FlextDecorators:
 
         """
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(
+            func: Callable[PCallback, TResult],
+        ) -> Callable[PCallback, TResult]:
 
             @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            def wrapper(*args: PCallback.args, **kwargs: PCallback.kwargs) -> TResult:
                 op_name: str = (
                     operation_name if operation_name is not None else func.__name__
                 )
@@ -212,9 +226,9 @@ class FlextDecorators:
         return decorator
 
     @staticmethod
-    def railway(
+    def railway[**PCallback, TValue](
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, T]], Callable[P, r[T]]]:
+    ) -> Callable[[Callable[PCallback, TValue]], Callable[PCallback, r[TValue]]]:
         """Decorator to automatically wrap function in railway pattern.
 
         Automatically converts exceptions to r failures and
@@ -225,17 +239,22 @@ class FlextDecorators:
             error_code: Optional error code for failures
 
         Returns:
-            Decorated function that returns r[T]
+            Decorated function that returns r[TValue]
 
         """
 
-        def decorator(func: Callable[P, T]) -> Callable[P, r[T]]:
+        def decorator(
+            func: Callable[PCallback, TValue],
+        ) -> Callable[PCallback, r[TValue]]:
 
             @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> r[T]:
+            def wrapper(
+                *args: PCallback.args,
+                **kwargs: PCallback.kwargs,
+            ) -> r[TValue]:
                 try:
                     result = func(*args, **kwargs)
-                    return r[T].ok(result)
+                    return r[TValue].ok(result)
                 except (
                     AttributeError,
                     TypeError,
@@ -247,7 +266,7 @@ class FlextDecorators:
                         str(error_code) if error_code is not None else "OPERATION_ERROR"
                     )
                     error_msg = f"{func.__name__} failed: {type(exc).__name__}: {exc}"
-                    return r[T].fail(
+                    return r[TValue].fail(
                         error_msg,
                         error_code=effective_error_code,
                     )
@@ -257,12 +276,12 @@ class FlextDecorators:
         return decorator
 
     @staticmethod
-    def retry(
+    def retry[**PCallback, TResult](
         max_attempts: int | None = None,
         delay_seconds: float | None = None,
         backoff_strategy: str | None = None,
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
         """Decorator to automatically retry failed operations with exponential backoff.
 
         Uses FlextConstants for default values and
@@ -296,10 +315,12 @@ class FlextDecorators:
             else c.DEFAULT_BACKOFF_STRATEGY
         )
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(
+            func: Callable[PCallback, TResult],
+        ) -> Callable[PCallback, TResult]:
 
             @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            def wrapper(*args: PCallback.args, **kwargs: PCallback.kwargs) -> TResult:
                 logger_carrier: FlextDecorators._LoggerCarrier | None = None
                 if args:
                     first_arg_raw = args[0]
@@ -387,13 +408,13 @@ class FlextDecorators:
             )
 
     @staticmethod
-    def _execute_retry_loop(
-        call: Callable[[], R],
+    def _execute_retry_loop[TResult](
+        call: Callable[[], TResult],
         func_name: str,
         logger: p.Logger,
         *,
         retry_settings: m.RetryConfiguration,
-    ) -> R | Exception:
+    ) -> TResult | Exception:
         """Execute retry loop with closure; return last exception on exhaustion."""
         attempts = retry_settings.max_retries
         delay = retry_settings.initial_delay_seconds
@@ -446,7 +467,7 @@ class FlextDecorators:
     @staticmethod
     def _handle_retry_exhaustion(
         last_exception: Exception,
-        func: Callable[..., R],
+        func: Callable[..., object],
         attempts: int,
         _error_code: str | None,
         logger: p.Logger,
@@ -473,7 +494,7 @@ class FlextDecorators:
 
     @staticmethod
     def _has_flext_logger(
-        value: object | None,
+        value: _AttributeProbe | None,
     ) -> TypeIs[p.HasLogger]:
         if not hasattr(value, "logger"):
             return False
@@ -589,35 +610,38 @@ class FlextDecorators:
 
     @overload
     @staticmethod
-    def combined(
+    def combined[**PCallback, TResult](
         *,
         inject_deps: t.StrMapping | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         use_railway: Literal[False] = False,
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
+    ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]: ...
 
     @overload
     @staticmethod
-    def combined(
+    def combined[**PCallback, TResult](
         *,
         inject_deps: t.StrMapping | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         use_railway: Literal[True],
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, r[R]]]: ...
+    ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, r[TResult]]]: ...
 
     @staticmethod
-    def combined(
+    def combined[**PCallback, TResult](
         *,
         inject_deps: t.StrMapping | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         use_railway: bool = False,
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R] | Callable[P, r[R]]]:
+    ) -> Callable[
+        [Callable[PCallback, TResult]],
+        Callable[PCallback, TResult] | Callable[PCallback, r[TResult]],
+    ]:
         """Combined decorator applying multiple automation patterns at once.
 
         Combines @inject, @log_operation (with optional track_perf), and optionally
@@ -632,31 +656,43 @@ class FlextDecorators:
 
         Returns:
             Decorated function with all requested automations.
-            When use_railway=True, returns Callable[..., r[R]].
-            When use_railway=False, returns Callable[..., R].
+            When use_railway=True, returns Callable[..., r[TResult]].
+            When use_railway=False, returns Callable[..., TResult].
 
         """
         if use_railway:
 
-            def railway_decorator(func: Callable[P, R]) -> Callable[P, r[R]]:
+            def railway_decorator(
+                func: Callable[PCallback, TResult],
+            ) -> Callable[PCallback, r[TResult]]:
                 result = FlextDecorators.railway(error_code=error_code)(func)
                 if inject_deps:
                     result = FlextDecorators.inject(**inject_deps)(result)
-                return FlextDecorators.log_operation(
+                operation_logger: Callable[
+                    [Callable[PCallback, r[TResult]]],
+                    Callable[PCallback, r[TResult]],
+                ] = FlextDecorators.log_operation(
                     operation_name=operation_name,
                     track_perf=track_perf,
-                )(result)
+                )
+                return operation_logger(result)
 
             return railway_decorator
 
-        def standard_decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def standard_decorator(
+            func: Callable[PCallback, TResult],
+        ) -> Callable[PCallback, TResult]:
             result = func
             if inject_deps:
                 result = FlextDecorators.inject(**inject_deps)(result)
-            return FlextDecorators.log_operation(
+            operation_logger: Callable[
+                [Callable[PCallback, TResult]],
+                Callable[PCallback, TResult],
+            ] = FlextDecorators.log_operation(
                 operation_name=operation_name,
                 track_perf=track_perf,
-            )(result)
+            )
+            return operation_logger(result)
 
         return standard_decorator
 
@@ -695,10 +731,10 @@ class FlextDecorators:
         return decorator
 
     @staticmethod
-    def timeout(
+    def timeout[**PCallback, TResult](
         timeout_seconds: float | None = None,
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
         """Decorator to enforce operation timeout.
 
         Uses c.DEFAULT_TIMEOUT_SECONDS for default
@@ -720,10 +756,12 @@ class FlextDecorators:
             else c.DEFAULT_TIMEOUT_SECONDS
         )
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(
+            func: Callable[PCallback, TResult],
+        ) -> Callable[PCallback, TResult]:
 
             @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            def wrapper(*args: PCallback.args, **kwargs: PCallback.kwargs) -> TResult:
                 start_time = time.perf_counter()
                 try:
                     result = func(*args, **kwargs)
@@ -761,9 +799,9 @@ class FlextDecorators:
         return decorator
 
     @staticmethod
-    def with_context(
+    def with_context[**PCallback, TResult](
         **context_vars: t.Primitives | None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
         """Decorator to manage context lifecycle for an operation.
 
         Automatically binds context variables for the operation duration and
@@ -778,10 +816,12 @@ class FlextDecorators:
 
         """
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(
+            func: Callable[PCallback, TResult],
+        ) -> Callable[PCallback, TResult]:
 
             @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            def wrapper(*args: PCallback.args, **kwargs: PCallback.kwargs) -> TResult:
                 logger_carrier: FlextDecorators._LoggerCarrier | None = None
                 if args:
                     first_arg_raw = args[0]
@@ -827,7 +867,9 @@ class FlextDecorators:
         return decorator
 
     @staticmethod
-    def with_correlation() -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def with_correlation[**PCallback, TResult]() -> Callable[
+        [Callable[PCallback, TResult]], Callable[PCallback, TResult]
+    ]:
         """Decorator to ensure correlation ID exists for operation tracking.
 
         Automatically ensures a correlation ID is present in the context,
@@ -839,10 +881,12 @@ class FlextDecorators:
 
         """
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def decorator(
+            func: Callable[PCallback, TResult],
+        ) -> Callable[PCallback, TResult]:
 
             @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            def wrapper(*args: PCallback.args, **kwargs: PCallback.kwargs) -> TResult:
                 _ = FlextContext.Utilities.ensure_correlation_id()
                 return func(*args, **kwargs)
 

@@ -48,13 +48,13 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def object_tuple(
         value: t.GuardInput | Callable[[t.JsonValue], bool] | None,
-    ) -> TypeIs[tuple[t.JsonValue, ...]]:
+    ) -> TypeIs[t.VariadicTuple[t.JsonValue]]:
         """Narrow value to a container tuple."""
         return isinstance(value, tuple)
 
     @staticmethod
     def pydantic_model(
-        value: t.GuardInput | p.Model | object | None,
+        value: t.GuardInput | p.Model | t.JsonValue | None,
     ) -> TypeIs[mp.BaseModel]:
         """Narrow value to the canonical Pydantic model carrier."""
         return (
@@ -64,4 +64,4 @@ class FlextUtilitiesGuardsTypeModel:
         )
 
 
-__all__: list[str] = ["FlextUtilitiesGuardsTypeModel"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesGuardsTypeModel"]

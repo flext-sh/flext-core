@@ -39,4 +39,4 @@ class FlextExceptionsMetrics:
         return cls.resolve_metrics_snapshot().to_config_map()
 
 
-__all__: list[str] = ["FlextExceptionsMetrics"]
+__all__: t.MutableSequenceOf[str] = ["FlextExceptionsMetrics"]

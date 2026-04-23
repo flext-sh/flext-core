@@ -21,7 +21,10 @@ from collections.abc import (
 from enum import EnumType
 from pathlib import Path
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._constants.enforcement import (
+    FlextConstantsEnforcement as c,
+    FlextMroViolation,
+)
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._models.pydantic import FlextModelsPydantic as mp
@@ -70,7 +73,7 @@ class FlextUtilitiesEnforcement:
                 f"\n{v.qualname} violates FLEXT {v.layer} {v.severity}:\n  - "
                 f"{v.message}\n\nFix: See AGENTS.md § {v.layer} governance."
             )
-            warnings.warn(msg, UserWarning, stacklevel=4)
+            warnings.warn(msg, FlextMroViolation, stacklevel=4)
             if active is c.EnforcementMode.STRICT:
                 raise TypeError(msg)
 
@@ -256,7 +259,7 @@ class FlextUtilitiesEnforcement:
         # Pydantic/Generic specializations carry a bracketed ``__name__``
         # (``Foo[int]``) — synthetic runtime artifacts, never user facades.
         if (
-            ub.is_function_local(target)
+            ub.defined_in_function_scope(target)
             or target.__name__.startswith("_")
             or "[" in target.__name__
         ):
@@ -289,7 +292,7 @@ class FlextUtilitiesEnforcement:
                 for name, value in FlextUtilitiesEnforcement._iter_inner(node):
                     # Skip re-assigned aliases (``Status = c.Status``) — they
                     # belong to their defining module, not this walk target.
-                    if not ub.is_defined_inside(value, node.__qualname__):
+                    if not ub.defined_inside(value, node.__qualname__):
                         continue
                     full = f"{path}.{name}"
                     yield full, (value, layer)
@@ -383,7 +386,7 @@ class FlextUtilitiesEnforcement:
                 for name, value in iterator(node):
                     nested = f"{path}.{name}"
                     yield nested, (value,)
-                    if ub.is_runtime_protocol_target(value) or ub.has_nested_namespace(
+                    if ub.has_runtime_protocol_marker(value) or ub.has_nested_namespace(
                         value
                     ):
                         yield from walk(value, nested)
@@ -481,7 +484,7 @@ class FlextUtilitiesEnforcement:
         """
         if c.ENFORCEMENT_MODE is c.EnforcementMode.OFF:
             return
-        if ub.is_function_local(model_type):
+        if ub.defined_in_function_scope(model_type):
             return
         if FlextUtilitiesEnforcement._is_exempt(model_type):
             return
@@ -496,7 +499,7 @@ class FlextUtilitiesEnforcement:
         """
         if c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.OFF:
             return
-        if ub.is_function_local(target):
+        if ub.defined_in_function_scope(target):
             return
         if FlextUtilitiesEnforcement._is_exempt(target):
             return

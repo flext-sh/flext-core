@@ -91,7 +91,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _normalize_component(
-        component: (t.RuntimeData | t.JsonMapping | set[t.JsonValue] | None),
+        component: (t.JsonPayload | t.JsonMapping | set[t.JsonValue] | None),
     ) -> t.JsonValue:
         """Flat-Container normalization via canonical ``FlextRuntime.normalize_to_metadata``."""
         if component is None:
@@ -171,14 +171,14 @@ class FlextUtilitiesMapper:
         return FlextUtilitiesMapper._apply_strip_empty(step, strip_empty=strip_empty)
 
     @staticmethod
-    def _success_value_result(value: t.PresentRuntimeData) -> p.Result[t.RuntimeData]:
+    def _success_value_result(value: t.JsonPayload) -> p.Result[t.JsonPayload]:
         """Create a successful mapper result with concrete value typing."""
-        return r[t.RuntimeData].ok(value)
+        return r[t.JsonPayload].ok(value)
 
     @staticmethod
     def _normalize_accessible_value(
-        value: t.RuntimeData | p.Model | p.HasModelDump | p.ValidatorSpec | None,
-    ) -> t.RuntimeData | t.JsonValue:
+        value: t.JsonPayload | p.Model | p.HasModelDump | p.ValidatorSpec | None,
+    ) -> t.JsonPayload | t.JsonValue:
         """Normalize protocol-accessible values to canonical runtime/container shapes."""
         if value is None:
             return ""
@@ -205,7 +205,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_field_value(
-        item: (t.RuntimeData | Mapping[str, t.JsonValue] | Mapping[str, t.RuntimeData]),
+        item: (t.JsonPayload | Mapping[str, t.JsonValue] | Mapping[str, t.JsonPayload]),
         field_name: str,
     ) -> t.JsonValue:
         """Extract field value from dict or model for pyrefly type inference."""
@@ -227,13 +227,13 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _resolve_raw_value(
-        raw: t.RuntimeData | None,
+        raw: t.JsonPayload | None,
         key_part: str,
-    ) -> p.Result[t.RuntimeData]:
+    ) -> p.Result[t.JsonPayload]:
         """Wrap a raw value into a Result: fail on None, narrow containers, stringify rest."""
         if raw is None:
             marker = "found_none:"
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "resolve extracted value",
                 marker + e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
             )
@@ -244,23 +244,23 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _extract_get_value(
         current: (
-            t.RuntimeData
+            t.JsonPayload
             | t.JsonMapping
             | FlextModelsContainers.ConfigMap
-            | Sequence[t.JsonValue | t.RuntimeData]
+            | Sequence[t.JsonValue | t.JsonPayload]
             | None
         ),
         key_part: str,
-    ) -> p.Result[t.RuntimeData]:
+    ) -> p.Result[t.JsonPayload]:
         """Get raw value from dict/object/model, returning found_none or not-found failures."""
         if isinstance(current, Mapping):
-            mapping_obj: Mapping[str, t.JsonValue | t.RuntimeData] = current
+            mapping_obj: Mapping[str, t.JsonValue | t.JsonPayload] = current
             if key_part in mapping_obj:
                 return FlextUtilitiesMapper._resolve_raw_value(
                     mapping_obj[key_part],
                     key_part,
                 )
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "extract mapping key",
                 e.render_template(
                     c.ERR_TEMPLATE_KEY_NOT_FOUND,
@@ -277,7 +277,7 @@ class FlextUtilitiesMapper:
         #             mapping_obj[key_part],
         #             key_part,
         #         )
-        #     return r[t.RuntimeData].fail_op(
+        #     return r[t.JsonPayload].fail_op(
         #         "extract config mapping key",
         #         e.render_template(
         #             c.ERR_TEMPLATE_KEY_NOT_FOUND,
@@ -298,7 +298,7 @@ class FlextUtilitiesMapper:
                     val = model_dict[key_part]
                     if val is None:
                         marker = "found_none:"
-                        return r[t.RuntimeData].fail_op(
+                        return r[t.JsonPayload].fail_op(
                             "extract model key value",
                             marker
                             + e.render_template(
@@ -306,7 +306,7 @@ class FlextUtilitiesMapper:
                             ),
                         )
                     return FlextUtilitiesMapper._success_value_result(val)
-        return r[t.RuntimeData].fail_op(
+        return r[t.JsonPayload].fail_op(
             "extract key",
             e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part),
         )
@@ -314,18 +314,18 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _extract_handle_array_index(
         current: (
-            t.RuntimeData | t.JsonMapping | Sequence[t.JsonValue | t.RuntimeData]
+            t.JsonPayload | t.JsonMapping | Sequence[t.JsonValue | t.JsonPayload]
         ),
         array_match: str,
-    ) -> p.Result[t.RuntimeData]:
+    ) -> p.Result[t.JsonPayload]:
         """Handle array indexing with negative index support."""
-        sequence: Sequence[t.JsonValue | t.RuntimeData]
+        sequence: Sequence[t.JsonValue | t.JsonPayload]
         if isinstance(current, FlextModelsContainers.ObjectList):
             sequence = current.root
         elif isinstance(current, Sequence) and not isinstance(current, (str, bytes)):
             sequence = current
         else:
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "extract array index",
                 c.ERR_MAPPER_NOT_A_SEQUENCE,
             )
@@ -336,12 +336,12 @@ class FlextUtilitiesMapper:
             if 0 <= idx < len(sequence):
                 item = sequence[idx]
                 if item is None:
-                    return r[t.RuntimeData].fail_op(
+                    return r[t.JsonPayload].fail_op(
                         "extract array index value",
                         c.ERR_MAPPER_FOUND_NONE_INDEX,
                     )
                 return FlextUtilitiesMapper._success_value_result(item)
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "extract array index",
                 e.render_template(
                     c.ERR_TEMPLATE_INDEX_OUT_OF_RANGE,
@@ -349,7 +349,7 @@ class FlextUtilitiesMapper:
                 ),
             )
         except (ValueError, IndexError):
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "extract array index",
                 e.render_template(c.ERR_TEMPLATE_INVALID_INDEX, index=array_match),
             )
@@ -369,10 +369,10 @@ class FlextUtilitiesMapper:
         data: p.AccessibleData | t.ConfigModelInput,
         key: str,
         *,
-        default: t.RuntimeData | None = None,
-    ) -> t.RuntimeData | t.JsonValue:
+        default: t.JsonPayload | None = None,
+    ) -> t.JsonPayload | t.JsonValue:
         """Internal helper for raw get without DSL conversion."""
-        fallback: t.RuntimeData | t.JsonValue = default if default is not None else ""
+        fallback: t.JsonPayload | t.JsonValue = default if default is not None else ""
         match data:
             case dict() | Mapping():
                 if key not in data:
@@ -437,8 +437,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _deep_eq_values(
-        val_a: t.RuntimeData | t.JsonValue,
-        val_b: t.RuntimeData | t.JsonValue,
+        val_a: t.JsonPayload | t.JsonValue,
+        val_b: t.JsonPayload | t.JsonValue,
     ) -> bool:
         """Recursive deep equality for any two nested items."""
         if val_a is val_b:
@@ -468,8 +468,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def deep_eq(
-        a: Mapping[str, t.JsonValue | t.RuntimeData],
-        b: Mapping[str, t.JsonValue | t.RuntimeData],
+        a: Mapping[str, t.JsonValue | t.JsonPayload],
+        b: Mapping[str, t.JsonValue | t.JsonPayload],
     ) -> bool:
         """Recursive deep equality for nested dicts/lists/primitives."""
         if a is b:
@@ -488,14 +488,14 @@ class FlextUtilitiesMapper:
     def _extract_fail_or_default(
         msg: str,
         *,
-        default: t.RuntimeData | None,
+        default: t.JsonPayload | None,
         required: bool,
-    ) -> p.Result[t.RuntimeData]:
+    ) -> p.Result[t.JsonPayload]:
         """Return fail (required) or ok(default) / fail (no default) for extract paths."""
         if required:
-            return r[t.RuntimeData].fail_op("extract required path", msg)
+            return r[t.JsonPayload].fail_op("extract required path", msg)
         if default is None:
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "extract path default",
                 e.render_template(
                     c.ERR_TEMPLATE_MESSAGE_AND_DEFAULT_IS_NONE,
@@ -507,24 +507,24 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _extract_resolve_path_part(
         current: (
-            t.RuntimeData
+            t.JsonPayload
             | t.JsonMapping
             | FlextModelsContainers.ConfigMap
-            | Sequence[t.RuntimeData]
+            | Sequence[t.JsonPayload]
             | None
         ),
         part: str,
         *,
         path_context: str,
-        default: t.RuntimeData | None,
+        default: t.JsonPayload | None,
         required: bool,
-    ) -> tuple[t.RuntimeData | None, p.Result[t.RuntimeData] | None]:
+    ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
         """Resolve one path segment; returns (next_current, None) or (None, early_result)."""
         found_none_prefix = "found_none:"
         key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(part)
 
         get_result = FlextUtilitiesMapper._extract_get_value(current, key_part)
-        next_val: t.RuntimeData | None
+        next_val: t.JsonPayload | None
         if get_result.failure:
             error_str = get_result.error or ""
             if found_none_prefix in error_str:
@@ -577,15 +577,15 @@ class FlextUtilitiesMapper:
         data: p.AccessibleData,
         path: str,
         *,
-        default: t.RuntimeData | None = None,
+        default: t.JsonPayload | None = None,
         required: bool = False,
         separator: str = ".",
-    ) -> p.Result[t.RuntimeData]:
+    ) -> p.Result[t.JsonPayload]:
         """Extract nested value via dot-notation path with array index support (e.g. "user.addresses[0].city")."""
         try:
             parts = path.split(separator)
             current: (
-                t.RuntimeData | t.JsonMapping | FlextModelsContainers.ConfigMap | None
+                t.JsonPayload | t.JsonMapping | FlextModelsContainers.ConfigMap | None
             ) = None
             if isinstance(data, FlextModelsPydantic.BaseModel):
                 current = data
@@ -643,7 +643,7 @@ class FlextUtilitiesMapper:
                 operation="extract",
                 reason=str(exc),
             )
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "extract path",
                 e.render_error_template(
                     c.ERR_TEMPLATE_EXTRACT_FAILED,
@@ -660,10 +660,10 @@ class FlextUtilitiesMapper:
         data: p.AccessibleData | t.ConfigModelInput,
         key: str,
         *,
-        default: t.RuntimeData | None = None,
-    ) -> t.RuntimeData | t.JsonValue:
+        default: t.JsonPayload | None = None,
+    ) -> t.JsonPayload | t.JsonValue:
         """Get value by key from dict/object, returning default if missing."""
-        runtime_default: t.RuntimeData | None = (
+        runtime_default: t.JsonPayload | None = (
             default
             if default is None or FlextUtilitiesGuards.container(default)
             else None
@@ -711,12 +711,12 @@ class FlextUtilitiesMapper:
     @staticmethod
     def prop(
         key: str,
-    ) -> Callable[[t.ConfigModelInput], t.RuntimeData | t.JsonValue]:
+    ) -> Callable[[t.ConfigModelInput], t.JsonPayload | t.JsonValue]:
         """Return an accessor function that extracts the named property from an object."""
 
         def accessor(
             obj: t.ConfigModelInput,
-        ) -> t.RuntimeData | t.JsonValue:
+        ) -> t.JsonPayload | t.JsonValue:
             """Access property from object."""
             result = FlextUtilitiesMapper.map_get(obj, key)
             return result if result is not None else ""

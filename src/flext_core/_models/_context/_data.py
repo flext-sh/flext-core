@@ -27,7 +27,7 @@ class FlextModelsContextData:
 
     @staticmethod
     def normalize_to_mapping(
-        v: Mapping[str, t.Scalar] | t.RuntimeData | None,
+        v: Mapping[str, t.Scalar] | t.JsonPayload | None,
     ) -> Mapping[str, t.Scalar]:
         """Convert value to an immutable flat mapping with scalar values only."""
         if v is None:
@@ -53,8 +53,8 @@ class FlextModelsContextData:
 
     @staticmethod
     def normalize_metadata_before(
-        v: t.RuntimeData | None,
-    ) -> t.RuntimeData | None:
+        v: t.JsonPayload | None,
+    ) -> t.JsonPayload | None:
         """Normalize input to Metadata or return as-is."""
         if v is None or isinstance(v, m.Metadata):
             return v
@@ -112,7 +112,7 @@ class FlextModelsContextData:
             ),
         ] = mp.Field(default_factory=lambda: MappingProxyType({}))
         metadata: Annotated[
-            m.Metadata | dict[str, t.Scalar] | None,
+            m.Metadata | Mapping[str, t.Scalar] | None,
             BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_metadata_before(v),
             ),
@@ -138,4 +138,4 @@ class FlextModelsContextData:
             return val if isinstance(val, (str, int, float, bool)) else str(val)
 
 
-__all__: list[str] = ["FlextModelsContextData"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsContextData"]

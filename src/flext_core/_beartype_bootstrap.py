@@ -23,26 +23,26 @@ class FlextCoreBeartypeBootstrap:
     @classmethod
     def build_beartype_conf(cls) -> BeartypeConf:
         """Return the package beartype configuration for the current mode."""
-        FlextConstantsEnforcement = cls._enforcement_constants()
-        mode = FlextConstantsEnforcement.BEARTYPE_MODE
-        if mode is FlextConstantsEnforcement.EnforcementMode.OFF:
+        enforcement_constants = cls._enforcement_constants()
+        mode = enforcement_constants.BEARTYPE_MODE
+        if mode is enforcement_constants.EnforcementMode.OFF:
             return BeartypeConf(strategy=BeartypeStrategy.O0)
         return BeartypeConf(
             violation_type=UserWarning
-            if mode is FlextConstantsEnforcement.EnforcementMode.WARN
+            if mode is enforcement_constants.EnforcementMode.WARN
             else TypeError,
             strategy=BeartypeStrategy.O1,
-            claw_skip_package_names=FlextConstantsEnforcement.BEARTYPE_CLAW_SKIP_PACKAGES,
+            claw_skip_package_names=enforcement_constants.BEARTYPE_CLAW_SKIP_PACKAGES,
         )
 
     @classmethod
     def activate_package_beartype(cls) -> None:
         """Install beartype.claw for flext_core exactly once."""
-        FlextConstantsEnforcement = cls._enforcement_constants()
+        enforcement_constants = cls._enforcement_constants()
         if (
             cls._activated
-            or FlextConstantsEnforcement.BEARTYPE_MODE
-            is FlextConstantsEnforcement.EnforcementMode.OFF
+            or enforcement_constants.BEARTYPE_MODE
+            is enforcement_constants.EnforcementMode.OFF
         ):
             return
         beartype_this_package(conf=cls.build_beartype_conf())

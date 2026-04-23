@@ -144,7 +144,7 @@ class FlextModelsService:
     class DependencyContainerCreationOptions(m.ArbitraryTypesModel):
         """Options used to create and populate dependency container instances."""
 
-        settings: dict[str, t.RuntimeData] | None = up.Field(
+        settings: Mapping[str, t.JsonPayload] | None = up.Field(
             None,
             title="Configuration",
             description="Optional configuration mapping bound to dependency container providers.",
@@ -194,4 +194,4 @@ class FlextModelsService:
         )
 
 
-__all__: list[str] = ["FlextModelsService"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsService"]

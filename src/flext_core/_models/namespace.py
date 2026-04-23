@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement as ue
 
 
@@ -22,7 +24,7 @@ class FlextModelsNamespace:
     per-layer wrapper methods, no hardcoded dispatch.
     """
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
+    def __init_subclass__(cls, **kwargs: tp.JsonValue) -> None:
         """Enforce namespace governance on every facade subclass.
 
         Layer-independent rules (``class_prefix``, ``no_accessor_methods``,
@@ -38,4 +40,4 @@ class FlextModelsNamespace:
         ue.run_layer(cls, layer)
 
 
-__all__: list[str] = ["FlextModelsNamespace"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsNamespace"]

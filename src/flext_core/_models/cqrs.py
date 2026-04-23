@@ -293,4 +293,4 @@ class FlextModelsCqrs:
     type FlextMessage = t.MessageUnion[Command, Query, Event]
 
 
-__all__: list[str] = ["FlextModelsCqrs"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsCqrs"]

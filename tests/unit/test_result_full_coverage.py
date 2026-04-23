@@ -25,8 +25,8 @@ class TestResultFullCoverage:
         tm.that(details[0]["msg"], eq="bad value")
 
     def test_type_guards_result(self) -> None:
-        ok_res = r[t.RuntimeData].ok("ok")
-        fail_res = r[t.RuntimeData].fail("x")
+        ok_res = r[t.JsonPayload].ok("ok")
+        fail_res = r[t.JsonPayload].fail("x")
         tm.that(r.successful_result(ok_res), eq=True)
         tm.that(r.failed_result(fail_res), eq=True)
 
@@ -86,9 +86,9 @@ class TestResultFullCoverage:
             @classmethod
             def model_validate(
                 cls,
-                obj: t.RuntimeData,
-                *args: t.RuntimeData,
-                **kwargs: t.RuntimeData,
+                obj: t.JsonPayload,
+                *args: t.JsonPayload,
+                **kwargs: t.JsonPayload,
             ) -> _ErrorsModel:
                 _ = args
                 _ = kwargs
@@ -104,9 +104,9 @@ class TestResultFullCoverage:
             @classmethod
             def model_validate(
                 cls,
-                obj: t.RuntimeData,
-                *args: t.RuntimeData,
-                **kwargs: t.RuntimeData,
+                obj: t.JsonPayload,
+                *args: t.JsonPayload,
+                **kwargs: t.JsonPayload,
             ) -> _PlainErrorModel:
                 _ = obj
                 _ = args

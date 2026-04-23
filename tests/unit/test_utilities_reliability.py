@@ -19,7 +19,7 @@ from collections.abc import (
 )
 from typing import Final
 
-from tests import p, r, u
+from tests import p, r, t, u
 
 
 class TestFlextUtilitiesReliability:
@@ -39,7 +39,7 @@ class TestFlextUtilitiesReliability:
         def create_retry_operation(
             success_after: int,
             success_value: int = 42,
-        ) -> tuple[Callable[[], p.Result[int]], Sequence[int]]:
+        ) -> t.Pair[Callable[[], p.Result[int]], Sequence[int]]:
             """Create retry operation that succeeds after N attempts."""
             attempts: MutableSequence[int] = []
 

@@ -42,7 +42,7 @@ class FlextUtilitiesReliability:
             ),
         ] = None
 
-    _RETRYABLE_EXCEPTIONS: tuple[type[Exception], ...] = (
+    _RETRYABLE_EXCEPTIONS: t.VariadicTuple[type[Exception]] = (
         AttributeError,
         TypeError,
         ValueError,
@@ -54,7 +54,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def try_[TResult](
         operation: Callable[[], TResult],
-        catch: type[Exception] | tuple[type[Exception], ...] | None = None,
+        catch: type[Exception] | t.VariadicTuple[type[Exception]] | None = None,
     ) -> p.Result[TResult]:
         """Execute a callable and capture configured exceptions as failed results."""
         if catch is None:
@@ -72,7 +72,7 @@ class FlextUtilitiesReliability:
     def retry[TResult](
         operation: Callable[[], p.Result[TResult]],
         options: FlextUtilitiesReliability.RetryOptions | None = None,
-        **kwargs: t.RuntimeData,
+        **kwargs: t.JsonPayload,
     ) -> p.Result[TResult]:
         """Execute an operation with retry logic using railway patterns.
 
@@ -128,4 +128,4 @@ class FlextUtilitiesReliability:
         )
 
 
-__all__: list[str] = ["FlextUtilitiesReliability"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesReliability"]

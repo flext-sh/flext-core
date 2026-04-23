@@ -14,13 +14,13 @@ from typing import ClassVar
 
 from pydantic import ConfigDict
 
-from flext_core import p, x
+from flext_core import p, t, x
 
 
 class FlextService[TDomainResult: p.Base = p.Base](x):
     """Base class for domain services in FLEXT applications.
 
-    DEPRECATED: This class depended on removed types (t.RuntimeData, t.RuntimeData, etc).
+    DEPRECATED: This class depended on removed types (t.JsonPayload, t.JsonPayload, etc).
     Refactor to use explicit Pydantic models in m.* and protocols in p.*.
     """
 
@@ -32,7 +32,7 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
         validate_assignment=True,
     )
 
-    # DEPRECATED: All methods removed - depended on t.RuntimeData, t.ServiceMap, t.RegisterableService
+    # DEPRECATED: All methods removed - depended on t.JsonPayload, t.ServiceMap, t.RegisterableService
     # Refactor manually to use explicit m.* models and p.* protocols
 
     # Original methods commented for reference during manual refactoring:
@@ -43,7 +43,7 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
     #     return FlextSettings.__new__()
 
     # @classmethod
-    # def execute(cls, **kwargs: t.RuntimeData) -> p.Result[TDomainResult]:
+    # def execute(cls, **kwargs: t.JsonPayload) -> p.Result[TDomainResult]:
     #     """Execute the service with given kwargs."""
     #     raise NotImplementedError
 
@@ -56,7 +56,7 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
     #     """Validate business rules."""
     #     return r[bool].ok(True)
 
-    # def ok[T: t.RuntimeData | Sequence[t.RuntimeData]](self, value: T) -> p.Result[T]:
+    # def ok[T: t.JsonPayload | Sequence[t.JsonPayload]](self, value: T) -> p.Result[T]:
     #     """Wrap a successful value into a result."""
     #     return r[T].ok(value)
 
@@ -66,4 +66,4 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
 
 
 s = FlextService
-__all__: list[str] = ["FlextService", "s"]
+__all__: t.MutableSequenceOf[str] = ["FlextService", "s"]

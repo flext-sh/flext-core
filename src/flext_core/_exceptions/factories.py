@@ -440,4 +440,4 @@ class FlextExceptionsFactories:
         )
 
 
-__all__: list[str] = ["FlextExceptionsFactories"]
+__all__: t.MutableSequenceOf[str] = ["FlextExceptionsFactories"]

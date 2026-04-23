@@ -78,7 +78,7 @@ class TestUtilitiesCollectionCoverage:
             type[StrEnum], m.Field(description="Enum class for coercion")
         ]
         value: Annotated[
-            Annotated[t.RuntimeData, m.SkipValidation],
+            Annotated[t.JsonPayload, m.SkipValidation],
             m.Field(description="Input value to coerce"),
         ]
         expected_success: Annotated[

@@ -70,8 +70,8 @@ class FlextUtilitiesModel:
     def dump(
         model: mp.BaseModel,
         options: FlextUtilitiesModel.ModelDumpOptions | None = None,
-        **kwargs: t.RuntimeData,
-    ) -> Mapping[str, t.RuntimeData]:
+        **kwargs: t.JsonPayload,
+    ) -> Mapping[str, t.JsonPayload]:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.
@@ -98,7 +98,7 @@ class FlextUtilitiesModel:
     # def load(
     #     cls,
     #     model_cls: t.ModelClass[T_Model],
-    #     data: mp.BaseModel | Mapping[str, t.RuntimeData] | m.ConfigMap,
+    #     data: mp.BaseModel | Mapping[str, t.JsonPayload] | m.ConfigMap,
     # ) -> p.Result[T_Model]:
     #     """Load a model from a mapping-like input using Pydantic validation."""
     #     return r[T_Model].create_from_callable(
@@ -132,7 +132,7 @@ class FlextUtilitiesModel:
     @classmethod
     def _normalize_runtime_override_mapping(
         cls,
-        value: Mapping[str, t.RuntimeData | t.Scalar] | None,
+        value: Mapping[str, t.JsonPayload | t.Scalar] | None,
     ) -> t.JsonMapping | None:
         """Normalize runtime override mappings to canonical JsonMapping."""
         if value is None:
@@ -196,7 +196,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def validate_value[TValue](
         target: t.ValueAdapter[TValue] | t.TypeHintSpecifier,
-        data: t.RuntimeData,
+        data: t.JsonPayload,
         *,
         from_json: bool = False,
         strict: bool | None = None,
@@ -226,7 +226,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def _runtime_option_updates_from_source(
         source: p.Base,
-    ) -> Mapping[str, t.RuntimeData]:
+    ) -> Mapping[str, t.JsonPayload]:
         """Extract runtime bootstrap fields from a service-like instance."""
         field_map = {
             "runtime_settings": "settings",
@@ -252,7 +252,7 @@ class FlextUtilitiesModel:
             "wire_packages",
             "wire_classes",
         )
-        updates: dict[str, t.RuntimeData] = {}
+        updates: dict[str, t.JsonPayload] = {}
         for attr_name in option_fields:
             value = getattr(source, attr_name, None)
             if value is not None:
@@ -263,9 +263,9 @@ class FlextUtilitiesModel:
     def resolve_runtime_options(
         cls,
         source: (
-            ms.RuntimeBootstrapOptions | Mapping[str, t.RuntimeData] | p.Base | None
+            ms.RuntimeBootstrapOptions | Mapping[str, t.JsonPayload] | p.Base | None
         ) = None,
-        **overrides: t.RuntimeData,
+        **overrides: t.JsonPayload,
     ) -> ms.RuntimeBootstrapOptions:
         """Resolve runtime options from models, mappings, or service instances."""
         resolved = ms.RuntimeBootstrapOptions()
@@ -279,7 +279,7 @@ class FlextUtilitiesModel:
                         source_dict,
                     )
                 except c.ValidationError:
-                    sanitized_source: dict[str, t.RuntimeData | None] = dict(
+                    sanitized_source: dict[str, t.JsonPayload | None] = dict(
                         source_dict
                     )
                     wire_packages_raw = sanitized_source.get("wire_packages")
@@ -377,9 +377,9 @@ class FlextUtilitiesModel:
     def build_service_runtime(
         cls,
         source: (
-            ms.RuntimeBootstrapOptions | Mapping[str, t.RuntimeData] | p.Base | None
+            ms.RuntimeBootstrapOptions | Mapping[str, t.JsonPayload] | p.Base | None
         ) = None,
-        **overrides: t.RuntimeData,
+        **overrides: t.JsonPayload,
     ) -> ms.ServiceRuntime:
         """Materialize settings, context, and container from one runtime specification."""
         runtime_options = cls.resolve_runtime_options(source, **overrides)

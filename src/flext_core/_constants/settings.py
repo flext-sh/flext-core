@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
+from flext_core import t
+
 
 class FlextConstantsSettings:
     """Constants for utilities and settings."""
@@ -29,7 +31,7 @@ class FlextConstantsSettings:
     SHORT_UUID_LENGTH: Final[int] = 8
     VERSION_MODULO: Final[int] = 100
     CONTROL_CHARS_PATTERN: Final[str] = "[\\x00-\\x1F\\x7F]"
-    CACHE_ATTRIBUTE_NAMES: Final[tuple[str, ...]] = (
+    CACHE_ATTRIBUTE_NAMES: Final[t.VariadicTuple[str]] = (
         "_cache",
         "_ttl",
         "_cached_at",

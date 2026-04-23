@@ -9,7 +9,10 @@ _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".args": ("FlextUtilitiesArgs",),
         ".beartype_conf": ("FlextUtilitiesBeartypeConf",),
-        ".beartype_engine": ("FlextUtilitiesBeartypeEngine",),
+        ".beartype_engine": (
+            "FlextUtilitiesBeartypeEngine",
+            "ube",
+        ),
         ".checker": ("FlextUtilitiesChecker",),
         ".collection": ("FlextUtilitiesCollection",),
         ".context": ("FlextUtilitiesContext",),

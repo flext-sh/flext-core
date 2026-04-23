@@ -13,7 +13,7 @@ from collections.abc import (
 )
 from pathlib import Path
 from types import MappingProxyType
-from typing import TypeGuard, TypeIs
+from typing import TypeIs
 
 from flext_core import FlextUtilitiesGuardsTypeModel as ugm, c, p, t
 
@@ -98,9 +98,9 @@ class FlextUtilitiesGuardsTypeProtocol:
         return callable(value)
 
     @staticmethod
-    def result_like[TValue](
-        value: TValue,
-    ) -> TypeGuard[p.Result[t.RuntimeData]]:
+    def result_like(
+        value: t.GuardInput,
+    ) -> TypeIs[p.Result[t.JsonPayload]]:
         """Narrow any value to Result protocol (runtime isinstance check)."""
         return isinstance(value, p.Result)
 

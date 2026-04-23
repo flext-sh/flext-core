@@ -11,10 +11,8 @@ from collections.abc import (
     Sequence,
 )
 
-from flext_core import (
-    FlextTypesPydantic as tp,
-    FlextTypingBase as t,
-)
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextTypesCore:

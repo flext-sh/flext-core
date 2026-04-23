@@ -74,4 +74,3 @@ class ExamplesFlextCoreModelsEx02:
 Ex02DatabaseService = ExamplesFlextCoreModelsEx02.Ex02DatabaseService
 Ex02CacheService = ExamplesFlextCoreModelsEx02.Ex02CacheService
 Ex02EmailService = ExamplesFlextCoreModelsEx02.Ex02EmailService
-Ex02TestConfig = ExamplesFlextCoreSettingsEx02TestConfig

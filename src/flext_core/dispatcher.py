@@ -30,20 +30,20 @@ class FlextDispatcher:
         super().__init__()
         self._logger = u.fetch_logger(__name__)
         self._handlers: t.RegistryDict[
-            tuple[t.HandlerProtocolVariant, t.RoutedHandlerCallable]
+            tuple[t.DispatchableHandler, t.RoutedHandlerCallable]
         ] = {}
         self._auto_handlers: MutableSequence[
             tuple[
-                t.HandlerProtocolVariant,
+                t.DispatchableHandler,
                 t.RoutedHandlerCallable,
                 tuple[t.TypeHintSpecifier, ...],
             ]
         ] = []
         self._event_subscribers: t.RegistryDict[
-            MutableSequence[tuple[t.HandlerProtocolVariant, t.RoutedHandlerCallable]]
+            MutableSequence[tuple[t.DispatchableHandler, t.RoutedHandlerCallable]]
         ] = {}
 
-    def dispatch(self, message: p.Routable) -> p.Result[t.RuntimeData]:
+    def dispatch(self, message: p.Routable) -> p.Result[t.JsonPayload]:
         """Dispatch a CQRS message to its registered handler.
 
         Args:
@@ -56,7 +56,7 @@ class FlextDispatcher:
         try:
             route_name = u.resolve_message_route(message)
         except (TypeError, ValueError) as exc:
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "dispatch message",
                 exc,
                 error_code=c.ErrorCode.COMMAND_PROCESSING_FAILED.value,
@@ -72,7 +72,7 @@ class FlextDispatcher:
                     handler_entry = (auto_h, resolved_handler)
                     break
         if not handler_entry:
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "resolve message handler",
                 f"No handler found for {route_name}",
                 error_code=c.ErrorCode.COMMAND_HANDLER_NOT_FOUND.value,
@@ -114,7 +114,7 @@ class FlextDispatcher:
 
     def register_handler(
         self,
-        handler: t.HandlerProtocolVariant,
+        handler: t.DispatchableHandler,
         *,
         is_event: bool = False,
     ) -> p.Result[bool]:
@@ -196,9 +196,9 @@ class FlextDispatcher:
         resolved_handler: t.RoutedHandlerCallable,
         message: p.Routable,
         route_name: str,
-    ) -> p.Result[t.RuntimeData]:
+    ) -> p.Result[t.JsonPayload]:
         """Execute a handler against a message."""
-        dispatch_result = r[t.RuntimeData]
+        dispatch_result = r[t.JsonPayload]
         try:
             raw_output = resolved_handler(message)
             if u.result_like(raw_output):
@@ -211,7 +211,7 @@ class FlextDispatcher:
                         if u.pydantic_model(error_data_value)
                         else None,
                     )
-                value: t.RuntimeData | None = raw_output.value
+                value: t.JsonPayload | None = raw_output.value
                 if value is None:
                     return dispatch_result.fail_op(
                         "validate handler success payload",

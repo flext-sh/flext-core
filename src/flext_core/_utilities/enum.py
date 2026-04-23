@@ -16,6 +16,8 @@ from collections.abc import (
 from enum import StrEnum
 from typing import ClassVar
 
+from flext_core import t
+
 
 class FlextUtilitiesEnum:
     """Utilities for working with StrEnum in a type-safe way."""
@@ -55,4 +57,4 @@ class FlextUtilitiesEnum:
         return result
 
 
-__all__: list[str] = ["FlextUtilitiesEnum"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesEnum"]

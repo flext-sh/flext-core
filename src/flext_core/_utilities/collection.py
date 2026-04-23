@@ -20,8 +20,6 @@ from typing import ClassVar, overload
 from flext_core import (
     FlextModelsContainers as mc,
     FlextRuntime,
-    T,
-    U,
     c,
     p,
     r,
@@ -34,7 +32,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def normalize_domain_event_data(
-        value: mc.ConfigMap | Mapping[str, t.MetadataData | None] | None,
+        value: mc.ConfigMap | Mapping[str, t.JsonPayload | None] | None,
     ) -> Mapping[str, t.JsonValue]:
         """Normalize domain event payloads into plain flat mappings.
 
@@ -90,7 +88,10 @@ class FlextUtilitiesCollection:
         return r[bool].ok(True)
 
     @staticmethod
-    def count(items: Sequence[T], predicate: Callable[[T], bool] | None = None) -> int:
+    def count[TItem](
+        items: Sequence[TItem],
+        predicate: Callable[[TItem], bool] | None = None,
+    ) -> int:
         """Count items, optionally matching predicate."""
         if predicate is None:
             return len(items)
@@ -98,71 +99,71 @@ class FlextUtilitiesCollection:
 
     @overload
     @staticmethod
-    def filter(
-        items: Sequence[T],
-        predicate: Callable[[T], bool],
+    def filter[TItem](
+        items: Sequence[TItem],
+        predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> Sequence[T]: ...
+    ) -> Sequence[TItem]: ...
 
     @overload
     @staticmethod
-    def filter(
-        items: Sequence[T],
-        predicate: Callable[[T], bool],
+    def filter[TItem, TMapped](
+        items: Sequence[TItem],
+        predicate: Callable[[TItem], bool],
         *,
-        mapper: Callable[[T], U],
-    ) -> Sequence[U]: ...
+        mapper: Callable[[TItem], TMapped],
+    ) -> Sequence[TMapped]: ...
 
     @overload
     @staticmethod
-    def filter(
-        items: tuple[T, ...],
-        predicate: Callable[[T], bool],
+    def filter[TItem](
+        items: tuple[TItem, ...],
+        predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> tuple[T, ...]: ...
+    ) -> tuple[TItem, ...]: ...
 
     @overload
     @staticmethod
-    def filter(
-        items: tuple[T, ...],
-        predicate: Callable[[T], bool],
+    def filter[TItem, TMapped](
+        items: tuple[TItem, ...],
+        predicate: Callable[[TItem], bool],
         *,
-        mapper: Callable[[T], U],
-    ) -> tuple[U, ...]: ...
+        mapper: Callable[[TItem], TMapped],
+    ) -> tuple[TMapped, ...]: ...
 
     @overload
     @staticmethod
-    def filter(
-        items: Mapping[str, T],
-        predicate: Callable[[T], bool],
+    def filter[TItem](
+        items: Mapping[str, TItem],
+        predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> Mapping[str, T]: ...
+    ) -> Mapping[str, TItem]: ...
 
     @overload
     @staticmethod
-    def filter(
-        items: Mapping[str, T],
-        predicate: Callable[[T], bool],
+    def filter[TItem, TMapped](
+        items: Mapping[str, TItem],
+        predicate: Callable[[TItem], bool],
         *,
-        mapper: Callable[[T], U],
-    ) -> Mapping[str, U]: ...
+        mapper: Callable[[TItem], TMapped],
+    ) -> Mapping[str, TMapped]: ...
 
     @staticmethod
-    def filter(
-        items: Sequence[T] | tuple[T, ...] | Mapping[str, T],
-        predicate: Callable[[T], bool],
+    def filter[TItem, TMapped](
+        items: Sequence[TItem] | tuple[TItem, ...] | Mapping[str, TItem],
+        predicate: Callable[[TItem], bool],
         *,
-        mapper: Callable[[T], U] | None = None,
+        mapper: Callable[[TItem], TMapped] | None = None,
     ) -> (
-        Sequence[T]
-        | Sequence[U]
-        | tuple[T, ...]
-        | tuple[U, ...]
-        | Mapping[str, T]
-        | Mapping[str, U]
+        Sequence[TItem]
+        | Sequence[TMapped]
+        | tuple[TItem, ...]
+        | tuple[TMapped, ...]
+        | Mapping[str, TItem]
+        | Mapping[str, TMapped]
     ):
         """Unified filter function with generic type support.
 
@@ -181,7 +182,7 @@ class FlextUtilitiesCollection:
             filtered_items = [item for item in items if predicate(item)]
             return (*filtered_items,)
         if isinstance(items, Mapping):
-            filtered: MutableMapping[str, T] = {
+            filtered: MutableMapping[str, TItem] = {
                 k: v for k, v in items.items() if predicate(v)
             }
             if mapper is not None:
@@ -190,10 +191,10 @@ class FlextUtilitiesCollection:
         return [item for item in items if predicate(item)]
 
     @staticmethod
-    def find(
-        items: Sequence[T] | tuple[T, ...] | Mapping[str, T],
-        predicate: Callable[[T], bool],
-    ) -> p.Result[T]:
+    def find[TItem](
+        items: Sequence[TItem] | tuple[TItem, ...] | Mapping[str, TItem],
+        predicate: Callable[[TItem], bool],
+    ) -> p.Result[TItem]:
         """Find first item matching predicate with generic type support.
 
         Returns first item where predicate returns True, or None.
@@ -201,39 +202,64 @@ class FlextUtilitiesCollection:
         if isinstance(items, (list, tuple)):
             for item in items:
                 if predicate(item):
-                    return r[T].ok(item)
-            return r[T].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
+                    return r[TItem].ok(item)
+            return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
         if isinstance(items, Mapping):
             for v in items.values():
                 if predicate(v):
-                    return r[T].ok(v)
-        return r[T].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
+                    return r[TItem].ok(v)
+        return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
 
     @overload
     @staticmethod
-    def map(items: Sequence[T], mapper: Callable[[T], U]) -> Sequence[U]: ...
+    def map[TItem, TMapped](
+        items: Sequence[TItem],
+        mapper: Callable[[TItem], TMapped],
+    ) -> Sequence[TMapped]: ...
 
     @overload
     @staticmethod
-    def map(items: tuple[T, ...], mapper: Callable[[T], U]) -> tuple[U, ...]: ...
+    def map[TItem, TMapped](
+        items: tuple[TItem, ...],
+        mapper: Callable[[TItem], TMapped],
+    ) -> tuple[TMapped, ...]: ...
 
     @overload
     @staticmethod
-    def map(items: Mapping[str, T], mapper: Callable[[T], U]) -> Mapping[str, U]: ...
+    def map[TItem, TMapped](
+        items: Mapping[str, TItem],
+        mapper: Callable[[TItem], TMapped],
+    ) -> Mapping[str, TMapped]: ...
 
     @overload
     @staticmethod
-    def map(items: set[T], mapper: Callable[[T], U]) -> set[U]: ...
+    def map[TItem, TMapped](
+        items: set[TItem],
+        mapper: Callable[[TItem], TMapped],
+    ) -> set[TMapped]: ...
 
     @overload
     @staticmethod
-    def map(items: frozenset[T], mapper: Callable[[T], U]) -> frozenset[U]: ...
+    def map[TItem, TMapped](
+        items: frozenset[TItem],
+        mapper: Callable[[TItem], TMapped],
+    ) -> frozenset[TMapped]: ...
 
     @staticmethod
-    def map(
-        items: Sequence[T] | tuple[T, ...] | Mapping[str, T] | set[T] | frozenset[T],
-        mapper: Callable[[T], U],
-    ) -> Sequence[U] | tuple[U, ...] | Mapping[str, U] | set[U] | frozenset[U]:
+    def map[TItem, TMapped](
+        items: Sequence[TItem]
+        | tuple[TItem, ...]
+        | Mapping[str, TItem]
+        | set[TItem]
+        | frozenset[TItem],
+        mapper: Callable[[TItem], TMapped],
+    ) -> (
+        Sequence[TMapped]
+        | tuple[TMapped, ...]
+        | Mapping[str, TMapped]
+        | set[TMapped]
+        | frozenset[TMapped]
+    ):
         """Unified map function with generic type support.
 
         Transforms elements using mapper function while preserving container type.
@@ -365,31 +391,31 @@ class FlextUtilitiesCollection:
         return handler(other, base)
 
     @staticmethod
-    def process(
-        items: Sequence[T],
-        processor: Callable[[T], U],
+    def process[TItem, TMapped](
+        items: Sequence[TItem],
+        processor: Callable[[TItem], TMapped],
         *,
-        predicate: Callable[[T], bool] | None = None,
+        predicate: Callable[[TItem], bool] | None = None,
         on_error: str = "fail",
-    ) -> p.Result[Sequence[U]]:
+    ) -> p.Result[Sequence[TMapped]]:
         """Process items with optional filtering; on_error="skip" to skip failures."""
-        results: MutableSequence[U] = []
+        results: MutableSequence[TMapped] = []
         for item in items:
-            item_typed: T = item
+            item_typed: TItem = item
             if predicate is not None and (not predicate(item_typed)):
                 continue
-            process_result = r[U].create_from_callable(
+            process_result = r[TMapped].create_from_callable(
                 lambda current_item=item_typed: processor(current_item),
             )
             if process_result.failure:
                 if on_error == "skip":
                     continue
-                return r[Sequence[U]].fail(
+                return r[Sequence[TMapped]].fail(
                     c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(item=item),
                 )
-            processed_item: U = process_result.unwrap()
+            processed_item: TMapped = process_result.unwrap()
             results.append(processed_item)
-        return r[Sequence[U]].ok(results)
+        return r[Sequence[TMapped]].ok(results)
 
 
 __all__: list[str] = ["FlextUtilitiesCollection"]

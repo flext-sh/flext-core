@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from tests import p, r, s
+from tests import p, r, s, t
 
 
 class TestsFlextCoreServiceAdditionalRuntimeCloneService(s[str]):
@@ -37,4 +37,4 @@ class TestServiceAdditional:
         assert result.error == "fail_exec"
 
 
-__all__: list[str] = ["TestServiceAdditional"]
+__all__: t.MutableSequenceOf[str] = ["TestServiceAdditional"]

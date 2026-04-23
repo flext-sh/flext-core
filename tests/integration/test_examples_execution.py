@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from tests import t
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -72,4 +74,4 @@ class TestExamplesExecution:
         assert not actual_path.exists()
 
 
-__all__: list[str] = ["TestExamplesExecution"]
+__all__: t.MutableSequenceOf[str] = ["TestExamplesExecution"]

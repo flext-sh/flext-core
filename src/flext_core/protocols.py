@@ -39,5 +39,6 @@ class FlextProtocols(
     """Runtime-checkable structural typing protocols for FLEXT framework."""
 
 
-p = FlextProtocols
 __all__: list[str] = ["FlextProtocols", "p"]
+
+p = FlextProtocols

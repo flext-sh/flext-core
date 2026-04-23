@@ -14,7 +14,7 @@ from collections.abc import (
     MutableSequence,
 )
 
-from tests import m, p, r, u
+from tests import m, p, r, t, u
 
 
 class TestResultAdditional:
@@ -107,4 +107,4 @@ class TestResultAdditional:
         assert cleanup_calls == ["ran"]
 
 
-__all__: list[str] = ["TestResultAdditional"]
+__all__: t.MutableSequenceOf[str] = ["TestResultAdditional"]

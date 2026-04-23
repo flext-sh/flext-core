@@ -128,7 +128,7 @@ class FlextProtocolsService:
         def track(
             self,
             operation_name: str,
-        ) -> AbstractContextManager[Mapping[str, t.RuntimeData]]:
+        ) -> AbstractContextManager[Mapping[str, t.JsonPayload]]:
             """Track operation performance with timing and context cleanup."""
             ...
 

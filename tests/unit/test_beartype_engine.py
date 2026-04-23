@@ -148,32 +148,32 @@ class TestCountUnionMembers:
 
 
 # ------------------------------------------------------------------ #
-# is_str_none_union                                                   #
+# matches_str_none_union                                              #
 # ------------------------------------------------------------------ #
 
 
-class TestIsStrNoneUnion:
+class TestMatchesStrNoneUnion:
     """Verify str | None pattern detection."""
 
     def test_str_none(self) -> None:
         """Str | None detected."""
-        assert be.is_str_none_union(str | None) is True
+        assert be.matches_str_none_union(str | None) is True
 
     def test_plain_str(self) -> None:
         """Plain str is not str | None."""
-        assert be.is_str_none_union(str) is False
+        assert be.matches_str_none_union(str) is False
 
     def test_int_none(self) -> None:
         """Int | None is NOT str | None."""
-        assert be.is_str_none_union(int | None) is False
+        assert be.matches_str_none_union(int | None) is False
 
     def test_str_int(self) -> None:
         """Str | int is NOT str | None."""
-        assert be.is_str_none_union(str | int) is False
+        assert be.matches_str_none_union(str | int) is False
 
     def test_str_int_none(self) -> None:
         """Str | int | None IS str | None (str and None both present)."""
-        assert be.is_str_none_union(str | int | None) is True
+        assert be.matches_str_none_union(str | int | None) is True
 
 
 # ------------------------------------------------------------------ #
@@ -253,7 +253,7 @@ class TestFacadeAccessibility:
             "contains_any",
             "has_forbidden_collection_origin",
             "count_union_members",
-            "is_str_none_union",
+            "matches_str_none_union",
             "alias_contains_any",
             "build_beartype_conf",
         ],

@@ -73,7 +73,7 @@ class FlextUtilitiesChecker:
         expected_type: t.TypeHintSpecifier,
     ) -> bool:
         """Check if expected type is a canonical catch-all value contract."""
-        return expected_type is t.RuntimeData
+        return expected_type is t.JsonPayload
 
     @classmethod
     def _evaluate_type_compatibility(
@@ -267,7 +267,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def can_handle_message_type(
         cls,
-        accepted_types: tuple[t.TypeHintSpecifier, ...],
+        accepted_types: t.VariadicTuple[t.TypeHintSpecifier],
         message_type: t.MessageTypeSpecifier | None,
     ) -> bool:
         """Check if handler can process this message type."""
@@ -282,7 +282,7 @@ class FlextUtilitiesChecker:
     def compute_accepted_message_types(
         cls,
         handler_class: type,
-    ) -> tuple[t.TypeHintSpecifier, ...]:
+    ) -> t.VariadicTuple[t.TypeHintSpecifier]:
         """Compute message types accepted by a handler using cached introspection."""
         message_types: MutableSequence[t.TypeHintSpecifier] = []
         generic_types = cls._extract_generic_message_types(handler_class)
@@ -323,4 +323,4 @@ class FlextUtilitiesChecker:
         raise TypeError(msg_type_error)
 
 
-__all__: list[str] = ["FlextUtilitiesChecker"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesChecker"]

@@ -165,7 +165,7 @@ class FlextRegistry(s[bool]):
             | m.BaseModel
             | None
         ),
-    ) -> t.RuntimeData | None:
+    ) -> t.JsonPayload | None:
         """Safe conversion using centralized utilities."""
         if value is None:
             return None
@@ -236,11 +236,11 @@ class FlextRegistry(s[bool]):
             return list(t.json_list_adapter().validate_python(normalized))
         return t.json_value_adapter().validate_python(normalized)
 
-    def _get_handler_mode(self, value: t.RuntimeData) -> c.HandlerType:
+    def _get_handler_mode(self, value: t.JsonPayload) -> c.HandlerType:
         """Safe conversion to HandlerType."""
         return u.parse_or_default(c.HandlerType, str(value), c.HandlerType.COMMAND)
 
-    def _get_status(self, value: t.RuntimeData) -> c.CommonStatus:
+    def _get_status(self, value: t.JsonPayload) -> c.CommonStatus:
         """Safe conversion to CommonStatus."""
         return u.parse_or_default(c.CommonStatus, str(value), c.CommonStatus.ACTIVE)
 
@@ -283,7 +283,7 @@ class FlextRegistry(s[bool]):
         name: str,
         *,
         scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-    ) -> p.Result[t.RuntimeData | None]:
+    ) -> p.Result[t.JsonPayload | None]:
         """Get a registered plugin by category and name.
 
         Returns:
@@ -300,11 +300,11 @@ class FlextRegistry(s[bool]):
                     f"retrieve {category} '{name}'",
                     raw_result.error or c.CQRS_OPERATION_FAILED,
                 )
-            return r[t.RuntimeData | None].ok(self._narrow_value(raw_result.value))
+            return r[t.JsonPayload | None].ok(self._narrow_value(raw_result.value))
         cls = type(self)
         if key not in cls._class_registered_keys:
             return e.fail_not_found(category, name)
-        return r[t.RuntimeData | None].ok(
+        return r[t.JsonPayload | None].ok(
             self._narrow_value(cls._class_plugin_storage[key]),
         )
 
@@ -356,7 +356,7 @@ class FlextRegistry(s[bool]):
 
     def register_bindings(
         self,
-        bindings: Mapping[t.RegistryBindingKey, t.HandlerProtocolVariant],
+        bindings: Mapping[t.RegistryBindingKey, t.DispatchableHandler],
     ) -> p.Result[m.RegistrySummary]:
         """Register message-to-handler bindings.
 
@@ -385,7 +385,7 @@ class FlextRegistry(s[bool]):
 
     def register_handler(
         self,
-        handler: t.HandlerProtocolVariant,
+        handler: t.DispatchableHandler,
     ) -> p.Result[m.RegistrationDetails]:
         """Register a handler instance or callable.
 
@@ -398,13 +398,13 @@ class FlextRegistry(s[bool]):
 
         """
         handler_id = str(getattr(handler, "handler_id", id(handler)))
-        status_raw: t.RuntimeData = getattr(
+        status_raw: t.JsonPayload = getattr(
             handler,
             c.FIELD_STATUS,
             c.CommonStatus.ACTIVE,
         )
         status = self._get_status(status_raw)
-        handler_mode_raw: t.RuntimeData = getattr(
+        handler_mode_raw: t.JsonPayload = getattr(
             handler,
             c.FIELD_HANDLER_MODE,
             getattr(handler, "mode", c.HandlerType.COMMAND),
@@ -413,7 +413,7 @@ class FlextRegistry(s[bool]):
 
         # Standard Dispatcher registration avoids passing name/metadata
         # as it discovers routes from the handler itself.
-        registration_handler: t.HandlerProtocolVariant = handler
+        registration_handler: t.DispatchableHandler = handler
         dispatcher = self._state.dispatcher
         if dispatcher is None:
             return e.fail_operation(
@@ -442,7 +442,7 @@ class FlextRegistry(s[bool]):
 
     def register_handlers(
         self,
-        handlers: Sequence[t.HandlerProtocolVariant],
+        handlers: Sequence[t.DispatchableHandler],
     ) -> p.Result[m.RegistrySummary]:
         """Register multiple handlers in batch.
 

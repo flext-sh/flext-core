@@ -71,7 +71,7 @@ class FlextModelsContextMetadata:
             up.Field(default=None, description="Unique message identifier"),
         ] = None
         custom_fields: Annotated[
-            Mapping[str, t.RuntimeData],
+            Mapping[str, t.JsonPayload],
             mp.BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),
@@ -106,7 +106,7 @@ class FlextModelsContextMetadata:
             up.Field(default=None, description="Type of domain"),
         ] = None
         domain_data: Annotated[
-            Mapping[str, t.RuntimeData],
+            Mapping[str, t.JsonPayload],
             up.Field(
                 description="Domain payload values scoped to the current business context.",
             ),
@@ -116,7 +116,7 @@ class FlextModelsContextMetadata:
             up.Field(
                 description="Domain metadata attributes describing origin and processing state.",
             ),
-        ] = up.Field(default_factory=dict)
+        ] = up.Field(default_factory=lambda: MappingProxyType({}))
 
 
-__all__: list[str] = ["FlextModelsContextMetadata"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsContextMetadata"]

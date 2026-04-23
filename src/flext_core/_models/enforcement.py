@@ -91,7 +91,7 @@ class FlextModelsEnforcement:
             """Return the nth message for ``report[i]`` access."""
             return self.messages[index]
 
-        def __contains__(self, fragment: object) -> bool:
+        def __contains__(self, fragment: t.Scalar | None) -> bool:
             """``"Any" in report`` — search message text."""
             if not isinstance(fragment, str):
                 return False

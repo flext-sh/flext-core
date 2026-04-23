@@ -19,7 +19,7 @@ from flext_tests import m
 from tests import TestsFlextCoreModelsMixins
 
 
-class TestsFlextCoreModels(m):
+class TestsFlextCoreModels(m, TestsFlextCoreModelsMixins):
     """Models for flext-core tests - uses composition with TestsFlextModels.
 
     Architecture: Uses composition (not inheritance) with TestsFlextModels and TestsFlextModels

@@ -92,12 +92,12 @@ class FlextExceptionsBase:
             message: str,
             *,
             error_code: str = c.ErrorCode.UNKNOWN_ERROR,
-            context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None = None,
+            context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None = None,
             metadata: p.HasModelDump | t.JsonValue | None = None,
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
-            merged_kwargs: Mapping[str, t.MetadataData | None]
+            merged_kwargs: Mapping[str, t.JsonPayload | None]
             | p.HasModelDump
             | None = None,
             params: mp.BaseModel | None = None,
@@ -111,7 +111,7 @@ class FlextExceptionsBase:
                     if error_code == c.ErrorCode.UNKNOWN_ERROR
                     else error_code
                 )
-                combined_extra: MutableMapping[str, t.MetadataData | None] = {}
+                combined_extra: MutableMapping[str, t.JsonPayload | None] = {}
                 try:
                     merged_kwargs_map = FlextRuntime.normalize_metadata_input_mapping(
                         merged_kwargs,
@@ -157,13 +157,13 @@ class FlextExceptionsBase:
             message: str,
             *,
             error_code: str,
-            context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
+            context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
             metadata: p.HasModelDump | t.JsonValue | None,
             correlation_id: str | None,
             auto_correlation: bool,
             auto_log: bool,
-            merged_kwargs: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
-            extra_kwargs: Mapping[str, t.MetadataData | None],
+            merged_kwargs: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
+            extra_kwargs: Mapping[str, t.JsonPayload | None],
         ) -> None:
             """Initialize the shared base error state without subclass metaprogramming."""
             super().__init__(message)
@@ -209,7 +209,7 @@ class FlextExceptionsBase:
         @staticmethod
         def _normalize_metadata(
             metadata: p.HasModelDump | t.JsonValue | None,
-            merged_kwargs: Mapping[str, t.RuntimeData],
+            merged_kwargs: Mapping[str, t.JsonPayload],
         ) -> m.Metadata:
             """Normalize metadata from various input types to m.Metadata model."""
             if metadata is None:
@@ -258,8 +258,8 @@ class FlextExceptionsBase:
 
         @staticmethod
         def _normalize_metadata_from_dict(
-            metadata_dict: Mapping[str, t.MetadataData | None],
-            merged_kwargs: Mapping[str, t.RuntimeData],
+            metadata_dict: Mapping[str, t.JsonPayload | None],
+            merged_kwargs: Mapping[str, t.JsonPayload],
         ) -> m.Metadata:
             """Normalize metadata from dict-like recursive containers."""
             merged_attrs: MutableMapping[str, t.JsonValue | None] = {}
@@ -280,7 +280,7 @@ class FlextExceptionsBase:
                 },
             })
 
-        def to_dict(self) -> Mapping[str, t.RuntimeData | None]:
+        def to_dict(self) -> Mapping[str, t.JsonPayload | None]:
             """Convert exception to dictionary representation."""
             result: MutableMapping[str, t.JsonValue | None] = {
                 "error_type": type(self).__name__,
@@ -312,10 +312,10 @@ class FlextExceptionsBase:
             message: str,
             *,
             error_code: str,
-            context: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
+            context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
             params: mp.BaseModel | None,
-            named_params: Mapping[str, t.RuntimeData | None] | None = None,
-            extra_kwargs: Mapping[str, t.MetadataData | None] | None = None,
+            named_params: Mapping[str, t.JsonPayload | None] | None = None,
+            extra_kwargs: Mapping[str, t.JsonPayload | None] | None = None,
             param_keys: frozenset[str] | None = None,
             correlation_id: str | None = None,
             metadata: p.HasModelDump | t.JsonValue | None = None,
@@ -340,7 +340,7 @@ class FlextExceptionsBase:
                     for key, value in extra_kwargs.items()
                     if value is not None
                 })
-            resolved_named: MutableMapping[str, t.RuntimeData | None] = dict(
+            resolved_named: MutableMapping[str, t.JsonPayload | None] = dict(
                 named_params or {},
             )
             for key in declared_param_keys:

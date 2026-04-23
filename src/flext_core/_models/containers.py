@@ -48,13 +48,13 @@ class FlextModelsContainers:
 
     @no_type_check
     class Dict(
-        mp.RootModel[dict[str, FlextTypesServices.RuntimeData]],
-        MutableMapping[str, FlextTypesServices.RuntimeData],
+        mp.RootModel[dict[str, FlextTypesServices.JsonPayload]],
+        MutableMapping[str, FlextTypesServices.JsonPayload],
     ):
         """Runtime dictionary container rooted in validated values."""
 
         root: Annotated[
-            dict[str, FlextTypesServices.RuntimeData],
+            dict[str, FlextTypesServices.JsonPayload],
             up.Field(description="Validated runtime key-value mapping."),
         ]
 
@@ -67,11 +67,11 @@ class FlextModelsContainers:
             return len(self.root)
 
         @override
-        def __getitem__(self, key: str) -> FlextTypesServices.RuntimeData:
+        def __getitem__(self, key: str) -> FlextTypesServices.JsonPayload:
             return self.root[key]
 
         @override
-        def __setitem__(self, key: str, value: FlextTypesServices.RuntimeData) -> None:
+        def __setitem__(self, key: str, value: FlextTypesServices.JsonPayload) -> None:
             self.root[key] = value
 
         @override
@@ -80,13 +80,13 @@ class FlextModelsContainers:
 
     @no_type_check
     class ConfigMap(
-        mp.RootModel[dict[str, FlextTypesServices.RuntimeData]],
-        MutableMapping[str, FlextTypesServices.RuntimeData],
+        mp.RootModel[dict[str, FlextTypesServices.JsonPayload]],
+        MutableMapping[str, FlextTypesServices.JsonPayload],
     ):
         """Runtime configuration mapping rooted in validated values."""
 
         root: Annotated[
-            dict[str, FlextTypesServices.RuntimeData],
+            dict[str, FlextTypesServices.JsonPayload],
             up.Field(description="Validated runtime configuration mapping."),
         ]
 
@@ -99,11 +99,11 @@ class FlextModelsContainers:
             return len(self.root)
 
         @override
-        def __getitem__(self, key: str) -> FlextTypesServices.RuntimeData:
+        def __getitem__(self, key: str) -> FlextTypesServices.JsonPayload:
             return self.root[key]
 
         @override
-        def __setitem__(self, key: str, value: FlextTypesServices.RuntimeData) -> None:
+        def __setitem__(self, key: str, value: FlextTypesServices.JsonPayload) -> None:
             self.root[key] = value
 
         @override
@@ -112,18 +112,18 @@ class FlextModelsContainers:
 
     @no_type_check
     class ObjectList(
-        mp.RootModel[list[FlextTypesServices.RuntimeData]],
-        Sequence[FlextTypesServices.RuntimeData],
+        mp.RootModel[list[FlextTypesServices.JsonPayload]],
+        Sequence[FlextTypesServices.JsonPayload],
     ):
         """Runtime list container rooted in validated values."""
 
         root: Annotated[
-            list[FlextTypesServices.RuntimeData],
+            list[FlextTypesServices.JsonPayload],
             up.Field(description="Validated runtime sequence."),
         ]
 
         @override
-        def __iter__(self) -> Iterator[FlextTypesServices.RuntimeData]:
+        def __iter__(self) -> Iterator[FlextTypesServices.JsonPayload]:
             return iter(self.root)
 
         @override
@@ -131,7 +131,7 @@ class FlextModelsContainers:
             return len(self.root)
 
         @override
-        def __getitem__(self, index: int) -> FlextTypesServices.RuntimeData:
+        def __getitem__(self, index: int) -> FlextTypesServices.JsonPayload:
             return self.root[index]
 
 

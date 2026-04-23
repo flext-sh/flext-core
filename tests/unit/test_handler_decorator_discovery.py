@@ -10,7 +10,7 @@ from typing import override
 
 from flext_tests import tm
 
-from tests import c, h, m, p, r, s
+from tests import c, h, m, p, r, s, t
 
 
 class TestHandlerDecoratorDiscovery:
@@ -286,4 +286,4 @@ class TestHandlerDecoratorDiscovery:
         tm.that(settings.priority, eq=10)
 
 
-__all__: list[str] = ["TestHandlerDecoratorDiscovery"]
+__all__: t.MutableSequenceOf[str] = ["TestHandlerDecoratorDiscovery"]

@@ -40,7 +40,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     _level_contexts: ClassVar[t.ScopedContainerRegistry]
 
     @classmethod
-    def bind_context(cls, scope: str, **context: t.RuntimeData) -> p.Result[bool]:
+    def bind_context(cls, scope: str, **context: t.JsonPayload) -> p.Result[bool]:
         """Bind context variables to a specific scope."""
         try:
             cls._scoped_contexts.setdefault(scope, {})
@@ -78,7 +78,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             )
 
     @classmethod
-    def bind_global_context(cls, **context: t.RuntimeData) -> p.Result[bool]:
+    def bind_global_context(cls, **context: t.JsonPayload) -> p.Result[bool]:
         """Bind context globally using structlog contextvars."""
         try:
             normalized_context = cls._to_container_context(context)
@@ -123,7 +123,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def _to_container_value(
-        value: t.LogValue | t.JsonValue | t.RuntimeData | None,
+        value: t.LogValue | t.JsonValue | t.JsonPayload | None,
     ) -> t.JsonValue:
         """Normalize value to Container (internal helper)."""
         if isinstance(value, Exception):
@@ -152,7 +152,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def _to_scalar_value(
-        value: (t.LogValue | t.JsonValue | t.RuntimeData | t.JsonMapping | None),
+        value: (t.LogValue | t.JsonValue | t.JsonPayload | t.JsonMapping | None),
     ) -> t.Scalar:
         if value is None:
             return ""
@@ -171,7 +171,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def _to_container_context(
-        context: Mapping[str, t.LogValue | t.JsonValue | t.RuntimeData],
+        context: Mapping[str, t.LogValue | t.JsonValue | t.JsonPayload],
     ) -> t.JsonMapping:
         """Convert mapping to container context using normalization."""
         return {
@@ -182,7 +182,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     @classmethod
     def _to_scalar_context(
         cls,
-        context: Mapping[str, t.LogValue | t.JsonValue | t.RuntimeData | None],
+        context: Mapping[str, t.LogValue | t.JsonValue | t.JsonPayload | None],
     ) -> t.JsonMapping:
         return t.json_mapping_adapter().validate_python(
             {key: cls._to_container_value(value) for key, value in context.items()},
@@ -291,4 +291,4 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             return True
 
 
-__all__: list[str] = ["FlextUtilitiesLoggingContext"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesLoggingContext"]

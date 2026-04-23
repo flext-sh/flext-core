@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import u
 
 
-class Testu:
+class TestUtilitiesSmoke:
     def test_matches_type_string(self) -> None:
         assert u.matches_type("abc", "str")
 

@@ -40,7 +40,6 @@ from flext_core import (
     FlextModelsPydantic as mp,
     FlextUtilitiesGenerators as ug,
     FlextUtilitiesGuardsTypeCore as ugc,
-    T,
     c,
     p,
     t,
@@ -132,14 +131,16 @@ class FlextRuntime:
 
     @staticmethod
     def _normalize_dict_entries(
-        items: Sequence[tuple[str, t.RuntimeData | t.Scalar]],
-    ) -> t.JsonMapping:
+        items: Sequence[tuple[str, t.JsonPayload | t.Scalar]],
+    ) -> dict[str, t.JsonValue]:
         """Normalize key-value pairs for container dict construction."""
-        return t.json_mapping_adapter().validate_python(
-            {
-                str(key): FlextRuntime._normalize_to_json_value(item)
-                for key, item in items
-            },
+        return dict(
+            t.json_mapping_adapter().validate_python(
+                {
+                    str(key): FlextRuntime._normalize_to_json_value(item)
+                    for key, item in items
+                },
+            ),
         )
 
     @staticmethod
@@ -179,12 +180,12 @@ class FlextRuntime:
     @staticmethod
     def normalize_model_input_mapping(
         value: BaseModel | mc.Dict | t.ScalarMapping | None,
-    ) -> Mapping[str, t.RuntimeData] | None:
+    ) -> Mapping[str, t.JsonPayload] | None:
         """Normalize model-like input to a plain mapping."""
         if value is None:
             return None
         if isinstance(value, mc.Dict):
-            raw_mapping: Mapping[str, t.RuntimeData | t.Scalar] = value.root
+            raw_mapping: Mapping[str, t.JsonPayload | t.Scalar] = value.root
         elif isinstance(value, BaseModel):
             raw_mapping = value.model_dump()
         else:
@@ -195,8 +196,8 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_metadata_input_mapping(
-        value: Mapping[str, t.MetadataData | None] | p.HasModelDump | None,
-    ) -> Mapping[str, t.MetadataData | None] | None:
+        value: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
+    ) -> Mapping[str, t.JsonPayload | None] | None:
         """Normalize mapping-like metadata input while preserving explicit None."""
         if value is None:
             return None
@@ -268,31 +269,33 @@ class FlextRuntime:
         if isinstance(value, Mapping):
             normalized_mapping: dict[str, t.RuntimeData] = {}
             for key_s, item in value.items():
+                normalized_item: t.RuntimeData
                 if isinstance(item, datetime):
-                    normalized_mapping[key_s] = (
+                    normalized_item = (
                         item.replace(tzinfo=UTC) if item.tzinfo is None else item
                     ).isoformat()
                 elif isinstance(item, Path):
-                    normalized_mapping[key_s] = str(item)
+                    normalized_item = str(item)
+                elif isinstance(item, tuple):
+                    normalized_item = FlextRuntime.normalize_to_metadata(item)
+                elif isinstance(item, dict):
+                    normalized_item = dict(
+                        t.json_mapping_adapter().validate_python(item),
+                    )
+                elif isinstance(item, list):
+                    normalized_item = list(
+                        t.json_list_adapter().validate_python(item),
+                    )
                 elif isinstance(
-                    item,
-                    (
-                        str,
-                        int,
-                        float,
-                        list,
-                        dict,
-                        tuple,
-                        type(None),
-                        BaseModel,
-                    ),
+                    item, (mp.BaseModel, str, int, float, bool, type(None))
                 ):
-                    normalized_mapping[key_s] = item
+                    normalized_item = item
                 else:
                     msg = c.ERR_RUNTIME_MAPPING_INVALID_TYPE.format(
                         type_name=type(item),
                     )
                     raise TypeError(msg)
+                normalized_mapping[str(key_s)] = normalized_item
             return mc.ConfigMap(root=normalized_mapping)
         if isinstance(value, Sequence) and not isinstance(
             value,
@@ -300,31 +303,33 @@ class FlextRuntime:
         ):
             normalized_sequence: list[t.RuntimeData] = []
             for item in value:
+                normalized_item: t.RuntimeData
                 if isinstance(item, datetime):
-                    item = (
+                    normalized_item = (
                         item.replace(tzinfo=UTC) if item.tzinfo is None else item
                     ).isoformat()
                 elif isinstance(item, Path):
-                    item = str(item)
-                elif not isinstance(
-                    item,
-                    (
-                        str,
-                        int,
-                        float,
-                        bool,
-                        list,
-                        dict,
-                        tuple,
-                        type(None),
-                        BaseModel,
-                    ),
+                    normalized_item = str(item)
+                elif isinstance(item, tuple):
+                    normalized_item = FlextRuntime.normalize_to_metadata(item)
+                elif isinstance(item, dict):
+                    normalized_item = dict(
+                        t.json_mapping_adapter().validate_python(item),
+                    )
+                elif isinstance(item, list):
+                    normalized_item = list(
+                        t.json_list_adapter().validate_python(item),
+                    )
+                elif isinstance(
+                    item, (mp.BaseModel, str, int, float, bool, type(None))
                 ):
+                    normalized_item = item
+                else:
                     msg = c.ERR_RUNTIME_SEQUENCE_INVALID_TYPE.format(
                         type_name=type(item),
                     )
                     raise TypeError(msg)
-                normalized_sequence.append(item)
+                normalized_sequence.append(normalized_item)
             return mc.ObjectList(root=normalized_sequence)
         if hasattr(value, "__dict__"):
             return value
@@ -375,8 +380,10 @@ class FlextRuntime:
                 entries = [(k, v) for k, v in val.root.items()]
                 return FlextRuntime._normalize_dict_entries(entries)
             case mc.ObjectList():
-                return t.json_list_adapter().validate_python(
-                    [FlextRuntime._normalize_to_json_value(v) for v in val.root],
+                return list(
+                    t.json_list_adapter().validate_python(
+                        [FlextRuntime._normalize_to_json_value(v) for v in val.root],
+                    ),
                 )
             case BaseModel():
                 return val
@@ -505,7 +512,7 @@ class FlextRuntime:
         def _parse_options(
             cls,
             container_options: p.ContainerCreationOptions
-            | Mapping[str, t.RuntimeData]
+            | Mapping[str, t.JsonPayload]
             | None,
         ) -> p.ContainerCreationOptions:
             """Parse raw container options into a validated model."""
@@ -528,12 +535,12 @@ class FlextRuntime:
         def _merge_options(
             cls,
             base: p.ContainerCreationOptions,
-            overrides: Mapping[str, t.RuntimeData],
+            overrides: Mapping[str, t.JsonPayload],
         ) -> p.ContainerCreationOptions:
             """Merge runtime kwargs over base options (override wins if not None)."""
             options_model = cls._require_container_creation_options_model()
             override_opts = options_model.model_validate(overrides)
-            merged: MutableMapping[str, t.RuntimeData] = {
+            merged: MutableMapping[str, t.JsonPayload] = {
                 field: (
                     getattr(override_opts, field)
                     if getattr(override_opts, field) is not None
@@ -542,7 +549,7 @@ class FlextRuntime:
                 for field in cls._OPTION_FIELDS
             }
             merged["factory_cache"] = override_opts.factory_cache
-            merged_options: Mapping[str, t.RuntimeData] = dict(merged)
+            merged_options: Mapping[str, t.JsonPayload] = dict(merged)
             return options_model.model_validate(merged_options)
 
         @classmethod
@@ -580,9 +587,9 @@ class FlextRuntime:
         def create_container(
             cls,
             container_options: p.ContainerCreationOptions
-            | Mapping[str, t.RuntimeData]
+            | Mapping[str, t.JsonPayload]
             | None = None,
-            **runtime_kwargs: t.RuntimeData,
+            **runtime_kwargs: t.JsonPayload,
         ) -> containers.DynamicContainer:
             """Create a DynamicContainer with optional pre-registration and wiring.
 
@@ -654,7 +661,7 @@ class FlextRuntime:
             return configuration_provider
 
         @staticmethod
-        def register_factory(
+        def register_factory[T](
             di_container: containers.DynamicContainer,
             name: str,
             factory: Callable[[], T],
@@ -678,7 +685,7 @@ class FlextRuntime:
             return provider
 
         @staticmethod
-        def register_object(
+        def register_object[T](
             di_container: containers.DynamicContainer,
             name: str,
             instance: T,
@@ -698,7 +705,7 @@ class FlextRuntime:
             return provider
 
         @staticmethod
-        def register_resource(
+        def register_resource[T](
             di_container: containers.DynamicContainer,
             name: str,
             factory: Callable[[], T],
@@ -760,7 +767,7 @@ class FlextRuntime:
         """
         context_dict = mc.ConfigMap(root={})
         if isinstance(context, Mapping):
-            parsed_context: MutableMapping[str, t.RuntimeData] = {
+            parsed_context: MutableMapping[str, t.JsonPayload] = {
                 str(k): str(v) for k, v in context.items()
             }
             context_dict = mc.ConfigMap(root=parsed_context)

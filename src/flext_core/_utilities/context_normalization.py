@@ -24,13 +24,13 @@ class FlextUtilitiesContextNormalization:
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
-        ctx_value: m.ConfigMap | Mapping[str, t.RuntimeData] | p.Model | None,
+        ctx_value: m.ConfigMap | Mapping[str, t.JsonPayload] | p.Model | None,
     ) -> t.JsonMapping:
         """Return contextvar payload as a flat container mapping with safe default."""
         if ctx_value is None:
             return {}
 
-        payload: Mapping[str, t.RuntimeData]
+        payload: Mapping[str, t.JsonPayload]
         if isinstance(ctx_value, m.ConfigMap):
             payload = ctx_value.root
         elif isinstance(ctx_value, p.Model):
@@ -44,7 +44,7 @@ class FlextUtilitiesContextNormalization:
             return {}
 
         try:
-            normalized: dict[str, t.RuntimeData] = {}
+            normalized: dict[str, t.JsonPayload] = {}
             for key, value in payload.items():
                 if str(key) != key:
                     return {}

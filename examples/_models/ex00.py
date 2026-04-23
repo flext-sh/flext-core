@@ -30,7 +30,7 @@ class ExamplesFlextCoreModelsEx00:
 
         @u.field_validator("name", "email", mode="before")
         @classmethod
-        def validate_non_empty_text(cls, value: t.RuntimeData) -> str:
+        def validate_non_empty_text(cls, value: t.JsonPayload) -> str:
             """Validate text input."""
             if not isinstance(value, str):
                 raise TypeError(_err.Examples.ErrorMessages.EXPECTED_TEXT_INPUT)

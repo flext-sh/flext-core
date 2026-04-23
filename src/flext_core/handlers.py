@@ -22,7 +22,7 @@ from typing import ClassVar, Unpack, override
 
 from pydantic import ConfigDict
 
-from flext_core import FlextUtilitiesHandler, P, R, c, e, m, p, r, t, u, x
+from flext_core import FlextUtilitiesHandler, c, e, m, p, r, t, u, x
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):
@@ -248,13 +248,13 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         )
 
     @staticmethod
-    def handler(
+    def handler[**PHandler, TResult](
         command: type,
         *,
         priority: int = c.DEFAULT_MAX_COMMAND_RETRIES,
         timeout: float | None = c.DEFAULT_TIMEOUT_SECONDS,
         middleware: Sequence[type[p.Middleware]] | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[PHandler, TResult]], Callable[PHandler, TResult]]:
         """Decorator to mark methods as handlers for commands.
 
         Stores handler configuration as metadata on the decorated method,
@@ -277,8 +277,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """
 
         def decorator(
-            func: Callable[P, R],
-        ) -> Callable[P, R]:
+            func: Callable[PHandler, TResult],
+        ) -> Callable[PHandler, TResult]:
             """Apply handler configuration metadata to function.
 
             Only sets the attribute if not already set - innermost decorator wins.
@@ -429,7 +429,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """Push execution context onto the local handler stack."""
         return FlextUtilitiesHandler.push_context(self._runtime_state, ctx)
 
-    def record_metric(self, name: str, value: t.MetadataData) -> p.Result[bool]:
+    def record_metric(self, name: str, value: t.JsonPayload) -> p.Result[bool]:
         """Record a metric value in the current handler state."""
         return FlextUtilitiesHandler.record_metric(
             self._runtime_state.execution_context,
@@ -654,7 +654,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 settings: m.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
 
                 def narrowed_func(
-                    message: t.RuntimeData,
+                    message: t.JsonPayload,
                     function_name: str = name,
                 ) -> t.Scalar | None:
                     resolved_callable = getattr(module, function_name, None)

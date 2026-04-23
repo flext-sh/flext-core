@@ -52,8 +52,8 @@ class FlextProtocolsBase:
             warnings: bool | str = True,
             fallback: (
                 Callable[
-                    [t.RuntimeData],
-                    t.RuntimeData,
+                    [t.JsonPayload],
+                    t.JsonPayload,
                 ]
                 | None
             ) = None,
@@ -130,7 +130,7 @@ class FlextProtocolsBase:
 
         def execute(
             self,
-        ) -> FlextProtocolsResult.Result[t.RuntimeData]: ...
+        ) -> FlextProtocolsResult.Result[t.JsonPayload]: ...
 
         def service_info(self) -> t.JsonMapping: ...
 
@@ -141,8 +141,8 @@ class FlextProtocolsBase:
         def get(
             self,
             key: str,
-            default: t.RuntimeData | None = None,
-        ) -> t.RuntimeData | None:
+            default: t.JsonPayload | None = None,
+        ) -> t.JsonPayload | None:
             """Fetch a configuration value by key."""
             ...
 
@@ -150,7 +150,7 @@ class FlextProtocolsBase:
             """Return known configuration keys."""
             ...
 
-        def items(self) -> Iterable[tuple[str, t.RuntimeData]]:
+        def items(self) -> Iterable[tuple[str, t.JsonPayload]]:
             """Return key/value entries for configuration payloads."""
             ...
 

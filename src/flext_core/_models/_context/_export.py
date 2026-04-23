@@ -33,7 +33,7 @@ class FlextModelsContextExport:
         """Typed snapshot returned by export_snapshot."""
 
         data: Annotated[
-            Mapping[str, t.RuntimeData],
+            Mapping[str, t.JsonPayload],
             Field(
                 description="All context data from all scopes",
             ),
@@ -60,7 +60,7 @@ class FlextModelsContextExport:
             Field(
                 description="Usage statistics (operation counts, timing info)",
             ),
-        ] = Field(default_factory=dict)
+        ] = Field(default_factory=lambda: MappingProxyType({}))
 
 
-__all__: list[str] = ["FlextModelsContextExport"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsContextExport"]

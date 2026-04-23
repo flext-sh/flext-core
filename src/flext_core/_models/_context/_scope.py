@@ -42,7 +42,7 @@ class FlextModelsContextScope:
             ),
         ] = ""
         data: Annotated[
-            Mapping[str, t.RuntimeData],
+            Mapping[str, t.JsonPayload],
             FlextModelsPydantic.BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),
@@ -54,7 +54,7 @@ class FlextModelsContextScope:
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),
             FlextUtilitiesPydantic.Field(description="Scope metadata"),
-        ] = FlextUtilitiesPydantic.Field(default_factory=dict)
+        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
 
     class ContextStatistics(FlextModelsBase.ArbitraryTypesModel):
         """Statistics tracking for context operations.
@@ -217,7 +217,7 @@ class FlextModelsContextScope:
         def with_operation_update(self, operation: str) -> Self:
             """Increment canonical statistics for the given operation."""
             counter_attr = f"{operation}s"
-            statistics_updates: dict[str, t.RuntimeData] = {}
+            statistics_updates: dict[str, t.JsonPayload] = {}
             current_statistics = self.statistics
             if counter_attr in type(current_statistics).model_fields:
                 current_counter = getattr(current_statistics, counter_attr)

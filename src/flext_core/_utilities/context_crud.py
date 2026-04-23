@@ -34,7 +34,7 @@ class FlextUtilitiesContextCrud(ucs):
     @staticmethod
     def _propagate_to_logger(
         key: str,
-        value: t.RuntimeData,
+        value: t.JsonPayload,
         scope: str,
     ) -> None:
         """Propagate context changes to the public logging DSL."""
@@ -45,7 +45,7 @@ class FlextUtilitiesContextCrud(ucs):
     @staticmethod
     def _validate_update_inputs(
         key: str,
-        value: t.RuntimeData,
+        value: t.JsonPayload,
     ) -> p.Result[bool]:
         """Validate inputs for set operation."""
         if not key:
@@ -81,43 +81,43 @@ class FlextUtilitiesContextCrud(ucs):
 
     def get(
         self, key: str, scope: str = c.ContextScope.GLOBAL
-    ) -> p.Result[t.RuntimeData]:
+    ) -> p.Result[t.JsonPayload]:
         """Get a value from the context.
 
         Fast fail: Returns r[t.JsonValue] - fails if key not found.
         No fallback behavior - use r monadic operations for defaults.
         """
         if not self._state.active:
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "get context value", c.ERR_CONTEXT_NOT_ACTIVE
             )
         scope_data = self._contextvar_data(scope)
         if key not in scope_data:
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "resolve context key",
                 f"Context key '{key}' not found in scope '{scope}'",
             )
         value = scope_data[key]
         self._update_statistics(c.ContextOperation.GET.value)
         if value is None:
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "resolve context key value",
                 f"Context key '{key}' has None value in scope '{scope}'",
             )
 
         normalized = FlextRuntime.normalize_to_container(value)
-        return r[t.RuntimeData].ok(normalized)
+        return r[t.JsonPayload].ok(normalized)
 
-    def resolve_metadata(self, key: str) -> p.Result[t.RuntimeData]:
+    def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
         """Get metadata from the context."""
         if key not in self._state.metadata.attributes:
-            return r[t.RuntimeData].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "resolve context metadata",
                 c.ERR_CONTEXT_METADATA_KEY_NOT_FOUND.format(key=key),
             )
         raw_value: t.JsonValue = self._state.metadata.attributes[key]
         normalized_value = FlextRuntime.normalize_to_container(raw_value)
-        return r[t.RuntimeData].ok(normalized_value)
+        return r[t.JsonPayload].ok(normalized_value)
 
     def apply_metadata(self, key: str, value: t.JsonValue) -> None:
         """Set metadata via Pydantic immutable copy DSL."""
@@ -193,7 +193,7 @@ class FlextUtilitiesContextCrud(ucs):
     def set(
         self,
         key_or_data: str,
-        value: t.RuntimeData,
+        value: t.JsonPayload,
         *,
         scope: str = ...,
     ) -> p.Result[bool]: ...
@@ -210,7 +210,7 @@ class FlextUtilitiesContextCrud(ucs):
     def set(
         self,
         key_or_data: str | t.JsonMapping,
-        value: t.RuntimeData | None = None,
+        value: t.JsonPayload | None = None,
         *,
         scope: str = c.ContextScope.GLOBAL,
     ) -> p.Result[bool]:
@@ -232,7 +232,7 @@ class FlextUtilitiesContextCrud(ucs):
         try:
             ctx_var = self._scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            updated_payload: dict[str, t.RuntimeData] = {
+            updated_payload: dict[str, t.JsonPayload] = {
                 str(k): FlextRuntime.normalize_to_container(v)
                 for k, v in current.items()
             }
@@ -255,7 +255,7 @@ class FlextUtilitiesContextCrud(ucs):
     def _apply_single(
         self,
         key: str,
-        value: t.RuntimeData | None,
+        value: t.JsonPayload | None,
         scope: str,
     ) -> p.Result[bool]:
         """Set a single key-value pair in the context."""
@@ -277,7 +277,7 @@ class FlextUtilitiesContextCrud(ucs):
             ctx_var = self._scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             normalized_value = FlextRuntime.normalize_to_container(value)
-            updated_payload: dict[str, t.RuntimeData] = {
+            updated_payload: dict[str, t.JsonPayload] = {
                 str(k): FlextRuntime.normalize_to_container(v)
                 for k, v in current.items()
             }

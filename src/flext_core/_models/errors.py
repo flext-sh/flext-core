@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import Annotated, Self
 
 from flext_core import (
@@ -47,9 +46,9 @@ class FlextModelsErrors:
             up.Field(description="Unix timestamp when the error instance was created."),
         ]
         attributes: Annotated[
-            t.JsonMapping,
+            t.MutableJsonMapping,
             up.Field(description="Flattenable metadata attributes exposed publicly."),
-        ] = up.Field(default_factory=lambda: MappingProxyType({}))
+        ] = up.Field(default_factory=dict)
 
         @up.computed_field()
         @property
@@ -77,9 +76,9 @@ class FlextModelsErrors:
             up.Field(description="Total recorded exception occurrences."),
         ] = 0
         exception_counts: Annotated[
-            t.IntMapping,
+            t.MutableIntMapping,
             up.Field(description="Per-exception occurrence totals keyed by type name."),
-        ] = up.Field(default_factory=lambda: MappingProxyType({}))
+        ] = up.Field(default_factory=dict)
         exception_counts_summary: Annotated[
             str,
             up.Field(description="Human-readable summary for logs and diagnostics."),
@@ -110,9 +109,9 @@ class FlextModelsErrors:
         """Mutable-through-copy runtime state for exception counters."""
 
         exception_counts: Annotated[
-            t.IntMapping,
+            t.MutableIntMapping,
             up.Field(description="Recorded counts keyed by exception type name."),
-        ] = up.Field(default_factory=lambda: MappingProxyType({}))
+        ] = up.Field(default_factory=dict)
 
         @up.computed_field()
         @property

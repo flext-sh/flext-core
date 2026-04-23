@@ -100,11 +100,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
             return None
         normalized_raw: dict[str, t.JsonValue] = {}
         for key, value in data.root.items():
-            normalized = FlextRuntime.normalize_to_container(value)
-            if isinstance(normalized, t.CONTAINER_TYPES):
-                normalized_raw[str(key)] = normalized
-            else:
-                normalized_raw[str(key)] = str(normalized)
+            normalized_raw[str(key)] = FlextRuntime.normalize_to_metadata(value)
         return normalized_raw
 
     @override
@@ -167,7 +163,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
 
     @staticmethod
     def _validate_error_data(
-        error_data: t.ResultErrorData | t.ConfigModelInput | None,
+        error_data: t.JsonMapping | t.ConfigModelInput | None,
     ) -> mc.ConfigMap | None:
         """Convert error_data to ConfigMap, matching RuntimeResult.fail() logic."""
         if error_data is None:
@@ -222,7 +218,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
         self,
         source: Result[T, str] | None = None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
+        error_data: t.JsonMapping | t.ConfigModelInput | None = None,
         *,
         value: T | None = None,
         error: str | None = None,
@@ -349,7 +345,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
         cls: type[FlextResult[V]],
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
+        error_data: t.JsonMapping | t.ConfigModelInput | None = None,
         *,
         exception: BaseException | None = None,
     ) -> FlextResult[V]:
@@ -532,15 +528,15 @@ class FlextResult[T](BaseModel, p.Result[T]):
 
     @staticmethod
     def failed_result(
-        value: FlextResult[t.RuntimeData] | p.ResultLike[t.RuntimeData] | t.GuardInput,
-    ) -> TypeIs[FlextResult[t.RuntimeData]]:
+        value: FlextResult[t.JsonPayload] | p.ResultLike[t.JsonPayload] | t.GuardInput,
+    ) -> TypeIs[FlextResult[t.JsonPayload]]:
         """Return ``True`` when *value* is a failed runtime result."""
         return isinstance(value, FlextResult) and value.failure
 
     @staticmethod
     def successful_result(
-        value: FlextResult[t.RuntimeData] | p.ResultLike[t.RuntimeData] | t.GuardInput,
-    ) -> TypeIs[FlextResult[t.RuntimeData]]:
+        value: FlextResult[t.JsonPayload] | p.ResultLike[t.JsonPayload] | t.GuardInput,
+    ) -> TypeIs[FlextResult[t.JsonPayload]]:
         """Return ``True`` when *value* is a successful runtime result."""
         return isinstance(value, FlextResult) and value.success
 

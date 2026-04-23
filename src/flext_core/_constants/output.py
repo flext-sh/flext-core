@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Final
 
+from flext_core import t
+
 
 class FlextConstantsOutput:
     """Output and logging message constants for core runtime flows."""
@@ -34,4 +36,4 @@ class FlextConstantsOutput:
     LOG_SERVICE_REGISTRATION_FAILED: Final[str] = "Service registration failed"
 
 
-__all__: list[str] = ["FlextConstantsOutput"]
+__all__: t.MutableSequenceOf[str] = ["FlextConstantsOutput"]

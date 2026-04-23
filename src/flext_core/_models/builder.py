@@ -40,7 +40,7 @@ class FlextModelsBuilder:
 
             def _set(
                 self,
-                **updates: t.PresentRuntimeData | Sequence[t.PresentRuntimeData],
+                **updates: t.JsonPayload | Sequence[t.JsonPayload],
             ) -> Self:
                 """Apply one immutable ``model_copy(update=...)`` transition."""
                 return self._replace(self._state.model_copy(update=updates))
@@ -55,7 +55,7 @@ class FlextModelsBuilder:
                 value: t.JsonValue,
             ) -> Self:
                 """Append one value to a sequence field while preserving immutability."""
-                current_values: tuple[t.JsonValue, ...] = tuple(
+                current_values: t.VariadicTuple[t.JsonValue] = tuple(
                     getattr(self._state, field_name)
                 )
                 return self._set(**{field_name: (*current_values, value)})
@@ -64,7 +64,7 @@ class FlextModelsBuilder:
             def _model[ModelT: m.ContractModel](
                 model_type: type[ModelT],
                 /,
-                **data: t.PresentRuntimeData | Sequence[t.PresentRuntimeData],
+                **data: t.JsonPayload | Sequence[t.JsonPayload],
             ) -> ModelT:
                 """Build one ContractModel payload for DSL composition."""
                 return model_type.model_validate(data)
@@ -74,11 +74,11 @@ class FlextModelsBuilder:
                 field_name: str,
                 model_type: type[ModelT],
                 /,
-                **data: t.PresentRuntimeData | Sequence[t.PresentRuntimeData],
+                **data: t.JsonPayload | Sequence[t.JsonPayload],
             ) -> Self:
                 """Build and append one ContractModel item to a sequence field."""
                 model_item = self._model(model_type, **data)
-                current_values: tuple[m.ContractModel, ...] = tuple(
+                current_values: t.VariadicTuple[m.ContractModel] = tuple(
                     getattr(self._state, field_name)
                 )
                 return self._set(**{field_name: (*current_values, model_item)})
@@ -99,4 +99,4 @@ class FlextModelsBuilder:
                 return state
 
 
-__all__: list[str] = ["FlextModelsBuilder"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsBuilder"]

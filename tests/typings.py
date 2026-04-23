@@ -20,8 +20,6 @@ from collections.abc import (
 
 from flext_tests import t
 
-from flext_core import T, T_co, T_contra
-
 
 class TestsFlextCoreTypes(t):
     """Type system foundation for flext-core tests - extends TestsFlextTypes.
@@ -63,4 +61,4 @@ class TestsFlextCoreTypes(t):
 
 t = TestsFlextCoreTypes
 
-__all__: list[str] = ["T", "T_co", "T_contra", "TestsFlextCoreTypes", "t"]
+__all__: list[str] = ["TestsFlextCoreTypes", "t"]

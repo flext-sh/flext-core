@@ -7,6 +7,7 @@ from examples import (
     ExamplesFlextCoreModelsOutput,
     ExamplesFlextCoreSharedHandle,
     ExamplesFlextCoreSharedPerson,
+    t,
 )
 from flext_core import m
 
@@ -33,4 +34,4 @@ class ExamplesFlextCoreModels(
 
 m = ExamplesFlextCoreModels
 
-__all__: list[str] = ["ExamplesFlextCoreModels", "m"]
+__all__: t.MutableSequenceOf[str] = ["ExamplesFlextCoreModels", "m"]

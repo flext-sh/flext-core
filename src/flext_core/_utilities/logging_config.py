@@ -53,7 +53,7 @@ class FlextUtilitiesLoggingConfig:
                 getattr(stream, "encoding", c.DEFAULT_ENCODING),
             )
             self._stream_errors: str | None = getattr(stream, "errors", None)
-            self._stream_newlines: str | tuple[str, ...] | None = getattr(
+            self._stream_newlines: str | t.VariadicTuple[str] | None = getattr(
                 stream,
                 "newlines",
                 None,
@@ -165,7 +165,7 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def _structlog_processor(
-        value: Processor | typing.Callable[..., t.RuntimeData] | t.JsonValue | None,
+        value: Processor | typing.Callable[..., t.JsonPayload] | t.JsonValue | None,
     ) -> typing.TypeIs[Processor]:
         return callable(value)
 
@@ -232,7 +232,7 @@ class FlextUtilitiesLoggingConfig:
         additional_processors: Sequence[Processor] | None,
     ) -> Sequence[Processor]:
         """Assemble the structlog processor chain."""
-        processors: list[Processor] = [
+        processors: t.MutableSequenceOf[Processor] = [
             structlog.contextvars.merge_contextvars,
             add_log_level,
             cls.level_based_context_filter,
@@ -373,4 +373,4 @@ class FlextUtilitiesLoggingConfig:
         return filtered_dict
 
 
-__all__: list[str] = ["FlextUtilitiesLoggingConfig"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesLoggingConfig"]

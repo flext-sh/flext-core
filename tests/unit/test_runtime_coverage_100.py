@@ -21,7 +21,7 @@ class TestRuntimeCoverage100:
         assert not u.dict_like(NonMapping())
 
     def test_normalize_to_container_keeps_scalar(self) -> None:
-        scalar: t.RuntimeData = "value"
+        scalar: t.JsonPayload = "value"
         assert u.normalize_to_container(scalar) == "value"
 
     def test_normalize_to_container_flattens_config_map(self) -> None:

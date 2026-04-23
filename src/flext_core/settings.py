@@ -250,7 +250,7 @@ class FlextSettings(BaseSettings):
     ] = c.FAILURE_LEVEL_DEFAULT
     _di_provider: t.Scalar | None = PrivateAttr(default=None)
 
-    def __new__(cls, **_kwargs: t.SettingsValue | None) -> Self:
+    def __new__(cls, **_kwargs: t.SettingsInput) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -272,7 +272,7 @@ class FlextSettings(BaseSettings):
             raise TypeError(msg)
         return raw_instance
 
-    def __init__(self, **kwargs: t.SettingsValue | None) -> None:
+    def __init__(self, **kwargs: t.SettingsInput) -> None:
         """Initialize settings with data.
 
         Kwargs are applied as field overrides after base env/settings loading

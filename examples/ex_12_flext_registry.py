@@ -42,10 +42,10 @@ class _ProtocolHandler:
 
 def _as_registry_handler(
     handler: _ProtocolHandler,
-) -> t.HandlerProtocolVariant:
+) -> t.DispatchableHandler:
     """Adapt protocol handlers to the registry callable contract."""
 
-    def _call(message: p.Routable) -> t.RuntimeData:
+    def _call(message: p.Routable) -> t.JsonPayload:
         return u.normalize_to_container(handler.handle(message).unwrap_or(""))
 
     handler_name = handler.message_type.__name__
@@ -207,7 +207,7 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
 
     def _exercise_create_and_service_methods(
         self,
-    ) -> tuple[p.Registry, p.Dispatcher]:
+    ) -> t.Pair[p.Registry, p.Dispatcher]:
         self.section("create_and_service_methods")
         discovered_value = self.rand_str(4)
         dispatcher = u.build_dispatcher()
@@ -259,7 +259,7 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
         self,
         registry: p.Registry,
         dispatcher: p.Dispatcher,
-    ) -> tuple[_ProtocolHandler, _ProtocolHandler]:
+    ) -> t.Pair[_ProtocolHandler, _ProtocolHandler]:
         self.section("registration_and_dispatch")
         label_a = self.rand_str(3)
         label_b = self.rand_str(3)

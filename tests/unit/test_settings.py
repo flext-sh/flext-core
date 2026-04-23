@@ -58,7 +58,7 @@ class TestFlextSettings:
             {"app_name": "dict_app", "version": "2.0.0", "debug": False},
             {"app_name": "valid_app", "version": "1.0.0"},
         ]
-        FIELD_ACCESS_CASES: ClassVar[Sequence[tuple[str, str, str]]] = [
+        FIELD_ACCESS_CASES: ClassVar[Sequence[t.Triple[str, str, str]]] = [
             ("app_name", "test_value", "modified_value"),
             ("version", "1.0.0", "2.0.0"),
         ]
@@ -67,16 +67,16 @@ class TestFlextSettings:
             {"debug": True, "trace": True},
             {"debug": False, "trace": False},
         ]
-        LOG_LEVEL_CASES: ClassVar[Sequence[tuple[str, bool, bool]]] = [
+        LOG_LEVEL_CASES: ClassVar[Sequence[t.Triple[str, bool, bool]]] = [
             (c.LogLevel.INFO, False, False),
             (c.LogLevel.INFO, True, False),
             (c.LogLevel.INFO, True, True),
         ]
-        ENV_PREFIX_CASES: ClassVar[Sequence[tuple[str, str, bool, str]]] = [
+        ENV_PREFIX_CASES: ClassVar[Sequence[t.Quad[str, str, bool, str]]] = [
             ("DEBUG", "true", False, "INFO"),
             ("FLEXT_DEBUG", "true", True, "INFO"),
         ]
-        VALIDATION_ERROR_CASES: ClassVar[Sequence[tuple[t.BoolMapping, str]]] = [
+        VALIDATION_ERROR_CASES: ClassVar[Sequence[t.Pair[t.BoolMapping, str]]] = [
             ({"trace": True, "debug": False}, "Trace mode requires debug mode"),
         ]
 
@@ -616,7 +616,7 @@ class TestFlextSettings:
             assert isinstance(instance, p.Settings)
             del FlextSettings._namespace_registry["test_attr"]
 
-    __all__: list[str] = ["TestFlextSettings"]
+    __all__: t.MutableSequenceOf[str] = ["TestFlextSettings"]
 
 
-__all__: list[str] = ["TestFlextSettings"]
+__all__: t.MutableSequenceOf[str] = ["TestFlextSettings"]

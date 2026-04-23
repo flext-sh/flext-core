@@ -18,12 +18,13 @@ from typing import Final
 
 
 class FlextMroViolation(UserWarning):
-    """MRO namespace compliance violation (R1–R10 rules).
+    """Runtime governance violation emitted by the FLEXT enforcement engine.
 
-    Emitted when a project violates canonical import shapes, facade patterns,
-    or namespace rules defined in AGENTS.md §2.2 and §4.
+    The historical name is preserved for API stability, but the warning is used
+    across model, constants, typing, and namespace enforcement layers.
 
-    Route with: `python -W error::FlextMroViolation` to fail on MRO violations.
+    Route with: `python -W error::FlextMroViolation` to fail on enforcement
+    violations.
     """
 
 

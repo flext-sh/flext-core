@@ -119,7 +119,7 @@ class FlextProtocolsHandler:
         def record_metric(
             self,
             name: str,
-            value: t.MetadataData,
+            value: t.JsonPayload,
         ) -> pr.Result[bool]:
             """Record a metric value in the current handler state."""
             ...
@@ -136,7 +136,7 @@ class FlextProtocolsHandler:
             self,
             message: p.Routable,
             operation: str = ...,
-        ) -> pr.ResultLike[t.RuntimeData] | t.RuntimeData | None: ...
+        ) -> pr.ResultLike[t.JsonPayload] | t.JsonPayload | None: ...
 
     @runtime_checkable
     class Handle(Protocol):
@@ -145,7 +145,7 @@ class FlextProtocolsHandler:
         def handle(
             self,
             message: p.Routable,
-        ) -> pr.ResultLike[t.RuntimeData] | t.RuntimeData | None: ...
+        ) -> pr.ResultLike[t.JsonPayload] | t.JsonPayload | None: ...
 
     @runtime_checkable
     class Execute(Protocol):
@@ -154,7 +154,7 @@ class FlextProtocolsHandler:
         def execute(
             self,
             message: p.Routable,
-        ) -> pr.ResultLike[t.RuntimeData] | t.RuntimeData | None: ...
+        ) -> pr.ResultLike[t.JsonPayload] | t.JsonPayload | None: ...
 
     @runtime_checkable
     class AutoDiscoverableHandler(Protocol):
@@ -176,7 +176,7 @@ class FlextProtocolsHandler:
         def dispatch(
             self,
             message: p.Routable,
-        ) -> pr.Result[t.RuntimeData]:
+        ) -> pr.Result[t.JsonPayload]:
             """Route a CQRS message to a registered handler."""
             ...
 
@@ -189,7 +189,7 @@ class FlextProtocolsHandler:
 
         def register_handler(
             self,
-            handler: t.HandlerProtocolVariant,
+            handler: t.DispatchableHandler,
             *,
             is_event: bool = False,
         ) -> pr.Result[bool]:
@@ -210,13 +210,13 @@ class FlextProtocolsHandler:
         def dispatch(
             self,
             message: p.Routable,
-        ) -> pr.Result[t.RuntimeData]:
+        ) -> pr.Result[t.JsonPayload]:
             """Dispatch a command to a registered handler."""
             ...
 
         def register_handler(
             self,
-            handler: t.HandlerProtocolVariant,
+            handler: t.DispatchableHandler,
             *,
             is_event: bool = False,
         ) -> pr.Result[bool]:

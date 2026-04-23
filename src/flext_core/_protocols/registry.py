@@ -79,14 +79,14 @@ class FlextProtocolsRegistry:
 
         def register_handler(
             self,
-            handler: t.HandlerProtocolVariant,
+            handler: t.DispatchableHandler,
         ) -> FlextProtocolsResult.Result[m.RegistrationDetails]:
             """Register a handler instance or callable."""
             ...
 
         def register_handlers(
             self,
-            handlers: Sequence[t.HandlerProtocolVariant],
+            handlers: Sequence[t.DispatchableHandler],
         ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register multiple handlers in batch."""
             ...
@@ -95,7 +95,7 @@ class FlextProtocolsRegistry:
             self,
             bindings: Mapping[
                 t.RegistryBindingKey,
-                t.HandlerProtocolVariant,
+                t.DispatchableHandler,
             ],
         ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register message-to-handler bindings."""
@@ -135,7 +135,7 @@ class FlextProtocolsRegistry:
             name: str,
             *,
             scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-        ) -> FlextProtocolsResult.Result[t.RuntimeData | None]:
+        ) -> FlextProtocolsResult.Result[t.JsonPayload | None]:
             """Get a registered plugin by category and name."""
             ...
 

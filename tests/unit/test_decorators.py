@@ -14,7 +14,7 @@ import pytest
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextContainer
-from tests import d, e, m, p, r, u
+from tests import d, e, m, p, r, t, u
 
 
 class TestFlextDecorators:
@@ -422,4 +422,4 @@ class TestFlextDecorators:
         assert result.success or result.failure
 
 
-__all__: list[str] = ["TestFlextDecorators"]
+__all__: t.MutableSequenceOf[str] = ["TestFlextDecorators"]

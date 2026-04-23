@@ -79,7 +79,7 @@ class FlextUtilitiesConversion:
             return [str(value)]
 
     @staticmethod
-    def to_int(value: t.RuntimeData, *, default: int = 0) -> int:
+    def to_int(value: t.JsonPayload, *, default: int = 0) -> int:
         """Convert value to int with safe fallback; bool returns default."""
         if value is None or isinstance(value, bool):
             return default
@@ -98,7 +98,7 @@ class FlextUtilitiesConversion:
         return default
 
     @staticmethod
-    def to_float(value: t.RuntimeData, *, default: float = 0.0) -> float:
+    def to_float(value: t.JsonPayload, *, default: float = 0.0) -> float:
         """Convert value to float with safe fallback; bool returns default."""
         if value is None or isinstance(value, bool):
             return default

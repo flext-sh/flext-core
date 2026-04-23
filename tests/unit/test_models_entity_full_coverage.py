@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from tests import c, m, r, u
+from tests import c, m, r, t, u
 
 
 class TestModelsEntityFullCoverage:
@@ -34,4 +34,4 @@ class TestModelsEntityFullCoverage:
         assert not hasattr(entry, "add_domain_events_bulk")
 
 
-__all__: list[str] = ["TestModelsEntityFullCoverage"]
+__all__: t.MutableSequenceOf[str] = ["TestModelsEntityFullCoverage"]

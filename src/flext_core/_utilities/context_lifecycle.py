@@ -36,9 +36,9 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         include_statistics: bool = False,
         include_metadata: bool = False,
         as_dict: bool = True,
-    ) -> m.ContextExport | Mapping[str, t.RuntimeData]:
+    ) -> m.ContextExport | Mapping[str, t.JsonPayload]:
         """Export context state using canonical Pydantic models."""
-        all_data: dict[str, t.RuntimeData] = {}
+        all_data: dict[str, t.JsonPayload] = {}
         all_scopes = self._scope_payloads()
         for scope_name, scope_payload in all_scopes.items():
             all_data[scope_name] = self._normalize_mapping_payload(scope_payload)
@@ -70,7 +70,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     @staticmethod
     def _normalize_mapping_payload(
-        source: (Mapping[str, t.RuntimeData] | t.JsonMapping),
+        source: (Mapping[str, t.JsonPayload] | t.JsonMapping),
     ) -> t.JsonMapping:
         """Normalize and validate mapping payloads through canonical adapters."""
         normalized = {
@@ -80,7 +80,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     @staticmethod
     def _as_config_map(
-        source: (Mapping[str, t.RuntimeData] | t.JsonMapping),
+        source: (Mapping[str, t.JsonPayload] | t.JsonMapping),
         label: str,
     ) -> m.ConfigMap | None:
         """Normalize an arbitrary mapping into a scope-compatible map."""
@@ -100,13 +100,13 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     def _extract_config_map(
         self,
-        other: p.Context | Mapping[str, t.RuntimeData] | t.JsonMapping,
+        other: p.Context | Mapping[str, t.JsonPayload] | t.JsonMapping,
     ) -> m.ConfigMap | None:
         """Extract a ConfigMap from any supported merge source."""
         match other:
             case _ if isinstance(other, p.Context):
                 exported_result = other.export(as_dict=True)
-                exported_payload: Mapping[str, t.RuntimeData] | None
+                exported_payload: Mapping[str, t.JsonPayload] | None
                 if isinstance(exported_result, m.ContextExport):
                     exported_payload = exported_result.model_dump(mode="python")
                 elif isinstance(exported_result, Mapping):
@@ -134,7 +134,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     def merge(
         self,
-        other: p.Context | Mapping[str, t.RuntimeData] | t.JsonMapping,
+        other: p.Context | Mapping[str, t.JsonPayload] | t.JsonMapping,
     ) -> Self:
         """Merge another context or dictionary into this context."""
         if not self._state.active:

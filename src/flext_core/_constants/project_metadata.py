@@ -18,8 +18,10 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
+from flext_core._typings.base import FlextTypingBase as t
+
 if TYPE_CHECKING:
-    from flext_core import t
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextConstantsProjectMetadata:
@@ -53,7 +55,7 @@ class FlextConstantsProjectMetadata:
         "docs": "DocsFlext",
     })
 
-    SCAN_DIRECTORIES: Final[tuple[str, ...]] = tuple(TIER_FACADE_PREFIX)
+    SCAN_DIRECTORIES: Final[t.VariadicTuple[str]] = tuple(TIER_FACADE_PREFIX)
 
     TIER_SUB_NAMESPACE: Final[t.StrMapping] = MappingProxyType({
         "src": "",
@@ -75,7 +77,7 @@ class FlextConstantsProjectMetadata:
         "flext-core": "Flext",
     })
 
-    MANAGED_PYPROJECT_KEYS: Final[tuple[str, ...]] = (
+    MANAGED_PYPROJECT_KEYS: Final[t.VariadicTuple[str]] = (
         "tool.flext.project",
         "tool.flext.namespace",
         "tool.flext.docs",

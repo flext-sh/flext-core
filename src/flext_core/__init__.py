@@ -44,7 +44,7 @@ if _t.TYPE_CHECKING:
     from flext_core._models.base import FlextModelsBase
     from flext_core._models.builder import FlextModelsBuilder
     from flext_core._models.collections import FlextModelsCollections
-    from flext_core._models.container import FlextModelsContainer
+    from flext_core._models.container import FlextModelsContainer, mc
     from flext_core._models.containers import FlextModelsContainers
     from flext_core._models.context import FlextModelsContext
     from flext_core._models.cqrs import FlextModelsCqrs
@@ -83,7 +83,7 @@ if _t.TYPE_CHECKING:
     from flext_core._typings.typeadapters import FlextTypesTypeAdapters
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
-    from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
+    from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine, ube
     from flext_core._utilities.checker import FlextUtilitiesChecker
     from flext_core._utilities.collection import FlextUtilitiesCollection
     from flext_core._utilities.context import FlextUtilitiesContext
@@ -136,27 +136,7 @@ if _t.TYPE_CHECKING:
     from flext_core.runtime import FlextRuntime
     from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
-    from flext_core.typings import (
-        TV,
-        EnumT,
-        FlextTypes,
-        MessageT_contra,
-        P,
-        R,
-        ResultT,
-        RootValueT,
-        T,
-        T_co,
-        T_contra,
-        T_DomainResult,
-        T_Model,
-        T_Namespace,
-        T_Settings,
-        TRuntime,
-        TV_co,
-        U,
-        t,
-    )
+    from flext_core.typings import FlextTypes, t
     from flext_core.utilities import FlextUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
@@ -210,7 +190,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._models.base": ("FlextModelsBase",),
             "._models.builder": ("FlextModelsBuilder",),
             "._models.collections": ("FlextModelsCollections",),
-            "._models.container": ("FlextModelsContainer",),
+            "._models.container": (
+                "FlextModelsContainer",
+                "mc",
+            ),
             "._models.containers": ("FlextModelsContainers",),
             "._models.context": ("FlextModelsContext",),
             "._models.cqrs": ("FlextModelsCqrs",),
@@ -249,7 +232,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._typings.typeadapters": ("FlextTypesTypeAdapters",),
             "._utilities.args": ("FlextUtilitiesArgs",),
             "._utilities.beartype_conf": ("FlextUtilitiesBeartypeConf",),
-            "._utilities.beartype_engine": ("FlextUtilitiesBeartypeEngine",),
+            "._utilities.beartype_engine": (
+                "FlextUtilitiesBeartypeEngine",
+                "ube",
+            ),
             "._utilities.checker": ("FlextUtilitiesChecker",),
             "._utilities.collection": ("FlextUtilitiesCollection",),
             "._utilities.context": ("FlextUtilitiesContext",),
@@ -332,24 +318,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".settings": ("FlextSettings",),
             ".typings": (
-                "EnumT",
                 "FlextTypes",
-                "MessageT_contra",
-                "P",
-                "R",
-                "ResultT",
-                "RootValueT",
-                "T",
-                "TRuntime",
-                "TV",
-                "TV_co",
-                "T_DomainResult",
-                "T_Model",
-                "T_Namespace",
-                "T_Settings",
-                "T_co",
-                "T_contra",
-                "U",
                 "t",
             ),
             ".utilities": (
@@ -374,8 +343,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
-    "TV",
-    "EnumT",
     "FlextConstants",
     "FlextConstantsBase",
     "FlextConstantsCqrs",
@@ -495,21 +462,6 @@ __all__: list[str] = [
     "FlextUtilitiesReliability",
     "FlextUtilitiesSettings",
     "FlextUtilitiesText",
-    "MessageT_contra",
-    "P",
-    "R",
-    "ResultT",
-    "RootValueT",
-    "T",
-    "TRuntime",
-    "TV_co",
-    "T_DomainResult",
-    "T_Model",
-    "T_Namespace",
-    "T_Settings",
-    "T_co",
-    "T_contra",
-    "U",
     "__author__",
     "__author_email__",
     "__description__",
@@ -525,10 +477,12 @@ __all__: list[str] = [
     "h",
     "lazy",
     "m",
+    "mc",
     "p",
     "r",
     "s",
     "t",
     "u",
+    "ube",
     "x",
 ]

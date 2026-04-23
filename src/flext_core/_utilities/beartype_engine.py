@@ -22,6 +22,7 @@ from __future__ import annotations
 import inspect
 import re
 from collections.abc import (
+    Callable,
     Mapping,
     MutableMapping,
     MutableSequence,
@@ -50,6 +51,7 @@ from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}
+type _DefaultFactory = type | Callable[..., tp.JsonValue] | None
 
 
 @no_type_check
@@ -76,7 +78,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def contains_any(hint: t.TypeHintSpecifier | None) -> bool:
-        return ube._contains_any(hint, seen=set())
+        return FlextUtilitiesBeartypeEngine._contains_any(hint, seen=set())
 
     @staticmethod
     def _contains_any(
@@ -93,7 +95,10 @@ class FlextUtilitiesBeartypeEngine:
         seen.add(hint_id)
         if hint is Any or hint is object:
             return True
-        return any(ube._contains_any(arg, seen=seen) for arg in get_args(hint))
+        return any(
+            FlextUtilitiesBeartypeEngine._contains_any(arg, seen=seen)
+            for arg in get_args(hint)
+        )
 
     @staticmethod
     def has_forbidden_collection_origin(
@@ -121,7 +126,7 @@ class FlextUtilitiesBeartypeEngine:
         return sum(1 for a in get_args(hint) if a is not type(None))
 
     @staticmethod
-    def is_str_none_union(hint: t.TypeHintSpecifier | None) -> bool:
+    def matches_str_none_union(hint: t.TypeHintSpecifier | None) -> bool:
         hint = ube.unwrap_type_alias(hint)
         if hint is None:
             return False
@@ -166,7 +171,7 @@ class FlextUtilitiesBeartypeEngine:
                 )
                 if annotated_prefix is None:
                     return stripped
-                current = ube._first_top_level_arg(
+                current = FlextUtilitiesBeartypeEngine._first_top_level_arg(
                     stripped.removeprefix(annotated_prefix)[:-1],
                 )
                 continue
@@ -204,7 +209,7 @@ class FlextUtilitiesBeartypeEngine:
         return None
 
     @staticmethod
-    def mutable_default_factory_kind(factory: object) -> type | None:
+    def mutable_default_factory_kind(factory: _DefaultFactory) -> type | None:
         for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
             if factory is kind or get_origin(factory) is kind:
                 return kind
@@ -213,7 +218,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def allows_mutable_default_factory(
         hint: t.TypeHintSpecifier | None,
-        factory: object,
+        factory: _DefaultFactory,
     ) -> bool:
         expected_by_factory: Mapping[type, type] = {
             list: MutableSequence,
@@ -244,17 +249,17 @@ class FlextUtilitiesBeartypeEngine:
         return expected is not None and target is expected
 
     @staticmethod
-    def is_relaxed_extra_base(target: type) -> bool:
+    def has_relaxed_extra_base(target: type) -> bool:
         return any(
             b.__name__ in c.ENFORCEMENT_RELAXED_EXTRA_BASES for b in target.__mro__
         )
 
     @staticmethod
-    def is_runtime_protocol_target(value: type) -> bool:
+    def has_runtime_protocol_marker(value: type) -> bool:
         return bool(getattr(value, "_is_protocol", False))
 
     @staticmethod
-    def is_abstract_target(value: type) -> bool:
+    def has_abstract_contract(value: type) -> bool:
         if getattr(value, "__abstractmethods__", None):
             return True
         return any(getattr(b, "__name__", "") == "ABC" for b in value.__mro__)
@@ -279,13 +284,13 @@ class FlextUtilitiesBeartypeEngine:
         return False
 
     @staticmethod
-    def is_defined_inside(inner_cls: type, outer_qualname: str) -> bool:
+    def defined_inside(inner_cls: type, outer_qualname: str) -> bool:
         """True when inner_cls was actually defined inside outer (not aliased)."""
         qn = getattr(inner_cls, "__qualname__", "")
         return qn.startswith(f"{outer_qualname}.")
 
     @staticmethod
-    def is_function_local(target: type) -> bool:
+    def defined_in_function_scope(target: type) -> bool:
         """True when target is defined inside a function body.
 
         Python marks function-local classes with ``<locals>`` in their
@@ -367,7 +372,7 @@ class FlextUtilitiesBeartypeEngine:
     def check_no_str_none_empty(
         info: FieldInfo,
     ) -> t.StrMapping | None:
-        if not ube.is_str_none_union(info.annotation):
+        if not ube.matches_str_none_union(info.annotation):
             return _NO_VIOLATION
         if isinstance(info.default, str) and not info.default:
             return _BARE_VIOLATION
@@ -419,7 +424,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def check_extra_missing(target: type) -> t.StrMapping | None:
-        if ube.is_relaxed_extra_base(target):
+        if ube.has_relaxed_extra_base(target):
             return _NO_VIOLATION
         if not issubclass(target, mp.BaseModel):
             return _NO_VIOLATION
@@ -434,7 +439,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def check_extra_wrong(target: type) -> t.StrMapping | None:
-        if ube.is_relaxed_extra_base(target):
+        if ube.has_relaxed_extra_base(target):
             return _NO_VIOLATION
         if not issubclass(target, mp.BaseModel):
             return _NO_VIOLATION
@@ -571,7 +576,7 @@ class FlextUtilitiesBeartypeEngine:
         layer: str,
     ) -> t.StrMapping | None:
         allowed = c.ENFORCEMENT_LAYER_ALLOWS.get(layer, frozenset())
-        is_proto = ube.is_runtime_protocol_target(
+        is_proto = ube.has_runtime_protocol_marker(
             inner_cls,
         )
         if is_proto and "Protocol" not in allowed:
@@ -601,17 +606,17 @@ class FlextUtilitiesBeartypeEngine:
     def check_proto_inner_kind(value: type) -> t.StrMapping | None:
         if value.__dict__.get("_flext_enforcement_exempt", False):
             return _NO_VIOLATION
-        if ube.is_runtime_protocol_target(value):
+        if ube.has_runtime_protocol_marker(value):
             return _NO_VIOLATION
         if ube.has_nested_namespace(value):
             return _NO_VIOLATION
-        if ube.is_abstract_target(value):
+        if ube.has_abstract_contract(value):
             return _NO_VIOLATION
         return _BARE_VIOLATION
 
     @staticmethod
     def check_proto_not_runtime(value: type) -> t.StrMapping | None:
-        if not ube.is_runtime_protocol_target(value):
+        if not ube.has_runtime_protocol_marker(value):
             return _NO_VIOLATION
         if getattr(value, "_is_runtime_protocol", False):
             return _NO_VIOLATION

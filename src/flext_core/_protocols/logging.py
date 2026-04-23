@@ -37,11 +37,11 @@ class FlextProtocolsLogging:
             """Logger name exposed by the public adapter."""
             ...
 
-        def bind(self, **new_values: t.RuntimeData) -> Self:
+        def bind(self, **new_values: t.JsonPayload) -> Self:
             """Bind context and return a logger preserving the public protocol."""
             ...
 
-        def new(self, **new_values: t.RuntimeData) -> Self:
+        def new(self, **new_values: t.JsonPayload) -> Self:
             """Replace bound context and return a logger preserving the protocol."""
             ...
 
@@ -54,7 +54,7 @@ class FlextProtocolsLogging:
             *,
             exception: Exception | None,
             exc_info: bool,
-            context: Mapping[str, t.RuntimeData | Exception],
+            context: Mapping[str, t.JsonPayload | Exception],
         ) -> t.JsonMapping:
             """Build normalized structured exception context."""
             ...
@@ -118,7 +118,7 @@ class FlextProtocolsLogging:
             self,
             message: str,
             *args: t.LogValue,
-            **kwargs: t.RuntimeData,
+            **kwargs: t.JsonPayload,
         ) -> t.LogResult:
             """Log a trace/debug-level diagnostic message."""
             ...
@@ -313,11 +313,11 @@ class FlextProtocolsLogging:
         def flush(self) -> None: ...
 
     type AccessibleData = (
-        t.RuntimeData
+        t.JsonPayload
         | FlextProtocolsBase.Model
         | Mapping[
             str,
-            t.RuntimeData | FlextProtocolsBase.Model | None,
+            t.JsonPayload | FlextProtocolsBase.Model | None,
         ]
         | FlextProtocolsResult.HasModelDump
         | FlextProtocolsLogging.ValidatorSpec

@@ -52,4 +52,4 @@ class FlextUtilitiesContext:
         )
 
 
-__all__: list[str] = ["FlextUtilitiesContext"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesContext"]

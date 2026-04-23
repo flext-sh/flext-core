@@ -22,7 +22,7 @@ class ExSettingsAppSettings(FlextSettings):
 
     @u.field_validator("database_url", mode="before")
     @classmethod
-    def normalize_database_url(cls, value: t.RuntimeData) -> str:
+    def normalize_database_url(cls, value: t.JsonPayload) -> str:
         """Normalize and validate database URL."""
         if not isinstance(value, str):
             raise TypeError(_err.Examples.ErrorMessages.DB_URL_MUST_BE_TEXT)

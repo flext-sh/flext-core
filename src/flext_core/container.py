@@ -1,5 +1,6 @@
 """Dependency injection utilities for the dispatcher-first CQRS stack.
 
+from flext_core import FlextContainer, inject
 The module wraps Dependency Injector behind a result-bearing API so handlers and
 decorators can register and resolve dependencies without importing the
 underlying infrastructure. Configuration stays isolated from dispatcher code, and
@@ -265,7 +266,6 @@ class FlextContainer(p.ContainerLifecycle):
 
         .. code-block:: python
 
-           from flext_core import FlextContainer, inject
 
            container = FlextContainer.shared()
            _ = container.factory(
@@ -1149,4 +1149,4 @@ class FlextContainer(p.ContainerLifecycle):
         )
 
 
-__all__: list[str] = ["FlextContainer"]
+__all__: t.MutableSequenceOf[str] = ["FlextContainer"]

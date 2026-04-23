@@ -23,16 +23,26 @@ from collections.abc import (
 
 import pytest
 
+from flext_core import FlextMroViolation
 from tests import t
 
 
-def _import_fresh(dotted: str) -> tuple[object, Sequence[warnings.WarningMessage]]:
-    """Import ``dotted`` with a clean cache and capture enforcement warnings."""
+def _import_fresh_silent(dotted: str) -> object:
+    """Import ``dotted`` with a clean cache and fail on any warning."""
     sys.modules.pop(dotted, None)
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        return importlib.import_module(dotted)
+
+
+def _import_fresh_with_warnings(
+    dotted: str,
+) -> tuple[object, Sequence[warnings.WarningMessage]]:
+    """Import ``dotted`` with a clean cache and assert warnings are emitted."""
+    sys.modules.pop(dotted, None)
+    with pytest.warns(FlextMroViolation, match="violates FLEXT") as caught:
         module = importlib.import_module(dotted)
-    return module, caught
+    return module, tuple(caught)
 
 
 def _violation_lines(messages: Sequence[warnings.WarningMessage]) -> Iterator[str]:
@@ -50,13 +60,8 @@ class TestCleanModuleEmitsNothing:
     """Importing well-formed code MUST NOT trigger any enforcement warning."""
 
     def test_clean_fixture_is_silent(self) -> None:
-        _module, messages = _import_fresh(
+        _module = _import_fresh_silent(
             "tests.unit._enforcement_integration_fixtures.clean_module",
-        )
-        offenders = list(_violation_lines(messages))
-        assert not offenders, (
-            "Clean fixture should produce zero enforcement warnings; got: "
-            + "; ".join(offenders[:5])
         )
 
 
@@ -65,7 +70,7 @@ class TestBadModuleFiresExpectedRules:
 
     @pytest.fixture(scope="class")
     def violations(self) -> t.StrSequence:
-        _module, messages = _import_fresh(
+        _module, messages = _import_fresh_with_warnings(
             "tests.unit._enforcement_integration_fixtures.bad_module",
         )
         return list(_violation_lines(messages))
@@ -102,7 +107,7 @@ class TestBadModuleFiresExpectedRules:
 
     def test_rule_firings_cover_every_bad_class(self) -> None:
         """Every top-level bad class must produce at least one warning."""
-        _module, messages = _import_fresh(
+        _module, messages = _import_fresh_with_warnings(
             "tests.unit._enforcement_integration_fixtures.bad_module",
         )
         expected_classes = {

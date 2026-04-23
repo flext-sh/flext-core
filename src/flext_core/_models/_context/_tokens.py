@@ -39,7 +39,7 @@ class FlextModelsContextTokens:
             ),
         ]
         previous_value: Annotated[
-            t.RuntimeData | datetime | None,
+            t.JsonPayload | datetime | None,
             FlextUtilitiesPydantic.Field(
                 default=None, description="Previous value before set operation"
             ),
@@ -65,11 +65,11 @@ class FlextModelsContextTokens:
             ),
         ]
         old_value: Annotated[
-            t.RuntimeData | None,
+            t.JsonPayload | None,
             FlextUtilitiesPydantic.Field(
                 default=None, description="Previous value before set operation"
             ),
         ]
 
 
-__all__: list[str] = ["FlextModelsContextTokens"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsContextTokens"]

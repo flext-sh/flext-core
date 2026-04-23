@@ -14,7 +14,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "Ex02CacheService",
             "Ex02DatabaseService",
             "Ex02EmailService",
-            "Ex02TestConfig",
             "ExamplesFlextCoreModelsEx02",
             "ExamplesFlextCoreSettingsEx02TestConfig",
         ),

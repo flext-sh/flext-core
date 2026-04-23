@@ -457,4 +457,4 @@ class FlextModelsExceptionParams:
         ]
 
 
-__all__: list[str] = ["FlextModelsExceptionParams"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsExceptionParams"]

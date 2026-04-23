@@ -66,4 +66,4 @@ class FlextUtilitiesSettings:
         return log_level
 
 
-__all__: list[str] = ["FlextUtilitiesSettings"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesSettings"]

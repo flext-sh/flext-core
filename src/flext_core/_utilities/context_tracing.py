@@ -101,4 +101,4 @@ class FlextUtilitiesContextTracing(FlextUtilitiesContextLifecycle):
         )
 
 
-__all__: list[str] = ["FlextUtilitiesContextTracing"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesContextTracing"]

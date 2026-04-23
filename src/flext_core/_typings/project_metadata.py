@@ -13,16 +13,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
-
 
 class FlextTypingProjectMetadata:
     """PEP 695 aliases for project-metadata SSOT (flat on ``t.*``)."""
-
-    type ProjectAliasToSuffixMap = Mapping[str, str]
-    type ProjectTierFacadePrefixMap = Mapping[str, str]
-    type ProjectAliasParentSourceMap = Mapping[str, str]
-    type ProjectSpecialNameOverrideMap = Mapping[str, str]
-    type ProjectManagedKeyTuple = tuple[str, ...]

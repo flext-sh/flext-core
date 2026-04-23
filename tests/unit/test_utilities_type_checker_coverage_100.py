@@ -41,12 +41,15 @@ class TestsFlextCoreUtilitiesTypeChecker:
     """Comprehensive tests for u."""
 
     @staticmethod
-    def _type_origin(value: t.TypeHintSpecifier) -> t.TypeOriginSpecifier:
+    def _message_type(value: t.MessageTypeSpecifier) -> t.MessageTypeSpecifier:
         return value
 
     @staticmethod
-    def _message_type(value: t.MessageTypeSpecifier) -> t.MessageTypeSpecifier:
-        return value
+    def _type_origin(value: t.TypeHintSpecifier) -> t.TypeHintSpecifier:
+        origin = get_origin(value)
+        if origin is None:
+            return value
+        return origin
 
     class StringHandler(h[str, str]):
         """Handler for string messages."""
@@ -166,15 +169,15 @@ class TestsFlextCoreUtilitiesTypeChecker:
         tm.that(not u.can_handle_message_type(accepted, int), eq=True)
 
     def test_can_handle_message_type_object_accepts_all(self) -> None:
-        """Test can_handle_message_type with t.RuntimeData type (universal catch-all)."""
-        accepted: tuple[t.TypeHintSpecifier, ...] = (t.RuntimeData,)
+        """Test can_handle_message_type with t.JsonPayload type (universal catch-all)."""
+        accepted: t.VariadicTuple[t.TypeHintSpecifier] = (t.JsonPayload,)
         tm.that(u.can_handle_message_type(accepted, str), eq=True)
         tm.that(u.can_handle_message_type(accepted, int), eq=True)
         tm.that(u.can_handle_message_type(accepted, dict), eq=True)
 
     def test_can_handle_message_type_dict_compatibility(self) -> None:
         """Test can_handle_message_type with dict type compatibility."""
-        accepted: tuple[t.MessageTypeSpecifier, ...] = (self._message_type(dict),)
+        accepted: t.VariadicTuple[t.MessageTypeSpecifier] = (self._message_type(dict),)
         tm.that(not u.can_handle_message_type(accepted, str), eq=True)
         tm.that(u.can_handle_message_type(accepted, dict), eq=True)
         dict_type: type[t.JsonMapping] = dict
@@ -182,12 +185,12 @@ class TestsFlextCoreUtilitiesTypeChecker:
 
     def test_can_handle_message_type_empty_accepted(self) -> None:
         """Test can_handle_message_type with empty accepted types."""
-        accepted: tuple[t.MessageTypeSpecifier, ...] = ()
+        accepted: t.VariadicTuple[t.MessageTypeSpecifier] = ()
         tm.that(not u.can_handle_message_type(accepted, str), eq=True)
 
     def test_can_handle_message_type_multiple_accepted(self) -> None:
         """Test can_handle_message_type with multiple accepted types."""
-        accepted: tuple[t.MessageTypeSpecifier, ...] = (
+        accepted: t.VariadicTuple[t.MessageTypeSpecifier] = (
             self._message_type(str),
             self._message_type(int),
             self._message_type(dict),
@@ -203,8 +206,8 @@ class TestsFlextCoreUtilitiesTypeChecker:
         tm.that(u._evaluate_type_compatibility(int, int), eq=True)
 
     def test_evaluate_type_compatibility_object_accepts_all(self) -> None:
-        """Test _evaluate_type_compatibility with t.RuntimeData (universal catch-all)."""
-        object_type: t.TypeHintSpecifier = t.RuntimeData
+        """Test _evaluate_type_compatibility with t.JsonPayload (universal catch-all)."""
+        object_type: t.TypeHintSpecifier = t.JsonPayload
         tm.that(u._evaluate_type_compatibility(object_type, str), eq=True)
         tm.that(u._evaluate_type_compatibility(object_type, int), eq=True)
         tm.that(u._evaluate_type_compatibility(object_type, dict), eq=True)
@@ -231,8 +234,8 @@ class TestsFlextCoreUtilitiesTypeChecker:
         tm.that(result_different, is_=bool)
 
     def test_check_object_type_compatibility_object_type(self) -> None:
-        """Test _check_object_type_compatibility with t.RuntimeData (universal catch-all)."""
-        object_type: t.TypeHintSpecifier = t.RuntimeData
+        """Test _check_object_type_compatibility with t.JsonPayload (universal catch-all)."""
+        object_type: t.TypeHintSpecifier = t.JsonPayload
         result = u._check_object_type_compatibility(object_type)
         tm.that(result, eq=True)
 
@@ -417,7 +420,7 @@ class TestsFlextCoreUtilitiesTypeChecker:
 
     def test_boundary_empty_tuple_accepted_types(self) -> None:
         """Test boundary case: empty tuple for accepted types."""
-        accepted: tuple[t.MessageTypeSpecifier, ...] = ()
+        accepted: t.VariadicTuple[t.MessageTypeSpecifier] = ()
         tm.that(not u.can_handle_message_type(accepted, str), eq=True)
 
     def test_boundary_none_message_type(self) -> None:

@@ -31,7 +31,7 @@ class FlextUtilitiesGenerators:
     def _determine_prefix(
         kind: str | None,
         prefix: str | None,
-    ) -> tuple[bool, str | None]:
+    ) -> t.Pair[bool, str | None]:
         """Resolve ID prefix from kind or custom override."""
         if prefix is not None:
             return (True, prefix)
@@ -72,12 +72,12 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _build_parts_list(
-        parts: tuple[t.JsonValue, ...] | None,
+        parts: t.VariadicTuple[t.JsonValue] | None,
         *,
         include_timestamp: bool,
     ) -> Sequence[t.JsonValue]:
         """Collect ID parts including optional timestamp prefix."""
-        all_parts: list[t.JsonValue] = []
+        all_parts: t.MutableSequenceOf[t.JsonValue] = []
         if include_timestamp:
             all_parts.append(int(datetime.now(UTC).timestamp()))
         if parts:
@@ -103,7 +103,7 @@ class FlextUtilitiesGenerators:
         kind: str | None = None,
         *,
         prefix: str | None = None,
-        parts: tuple[t.JsonValue, ...] | None = None,
+        parts: t.VariadicTuple[t.JsonValue] | None = None,
         length: int | None = None,
         include_timestamp: bool = False,
         separator: str = "_",
@@ -167,4 +167,4 @@ class FlextUtilitiesGenerators:
         return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
-__all__: list[str] = ["FlextUtilitiesGenerators"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesGenerators"]

@@ -58,7 +58,7 @@ class FlextUtilitiesHandler:
     def record_metric(
         ctx: FlextModelsHandler.ExecutionContext,
         name: str,
-        value: t.MetadataData,
+        value: t.JsonPayload,
     ) -> p.Result[bool]:
         """Record a metric value onto an execution context's payload."""
         normalized = FlextRuntime.normalize_to_container(value)
@@ -110,4 +110,4 @@ class FlextUtilitiesHandler:
         })
 
 
-__all__: list[str] = ["FlextUtilitiesHandler"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesHandler"]

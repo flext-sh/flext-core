@@ -595,7 +595,7 @@ class TestFlextContainer:
         tm.ok(container.resolve(sanitized, type_cls=str), eq=sanitized)
         FlextContainer.reset_for_testing()
 
-    __all__: list[str] = ["TestFlextContainer"]
+    __all__: t.MutableSequenceOf[str] = ["TestFlextContainer"]
 
 
-__all__: list[str] = ["TestFlextContainer"]
+__all__: t.MutableSequenceOf[str] = ["TestFlextContainer"]

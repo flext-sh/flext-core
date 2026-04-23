@@ -18,7 +18,7 @@ from flext_core import FlextModels as m, FlextRuntime, c, t
 class FlextExceptionsTemplate:
     """Template rendering helpers for exception and result messages."""
 
-    type TemplateValues = Mapping[str, t.MetadataData | None] | m.ConfigMap
+    type TemplateValues = Mapping[str, t.JsonPayload | None] | m.ConfigMap
 
     @staticmethod
     def template_values(
@@ -49,7 +49,7 @@ class FlextExceptionsTemplate:
         template: str,
         *,
         params: m.BaseModel | None = None,
-        **values: t.MetadataData | None,
+        **values: t.JsonPayload | None,
     ) -> str:
         """Render a message template from params + explicit values.
 
@@ -74,7 +74,7 @@ class FlextExceptionsTemplate:
         operation: str | None = None,
         error: Exception | str | None = None,
         params: m.BaseModel | None = None,
-        **values: t.MetadataData | None,
+        **values: t.JsonPayload | None,
     ) -> str:
         """Render error template with canonical operation/error fields."""
         payload: dict[str, t.JsonValue] = {}
@@ -95,7 +95,7 @@ class FlextExceptionsTemplate:
     @staticmethod
     def result_error_data(
         params: m.BaseModel | None,
-        **values: t.MetadataData | None,
+        **values: t.JsonPayload | None,
     ) -> m.ConfigMap | None:
         """Build canonical error_data payload from params and explicit values."""
         payload = FlextExceptionsTemplate.template_values(params, values)
