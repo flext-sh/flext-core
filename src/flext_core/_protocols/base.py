@@ -65,7 +65,7 @@ class FlextProtocolsBase:
         @classmethod
         def model_validate(
             cls: type[Self],
-            obj: t.ModelInput,
+            obj: t.ConfigModelInput,
             *,
             strict: bool | None = None,
             extra: str | None = None,
@@ -93,7 +93,7 @@ class FlextProtocolsBase:
         @classmethod
         def model_validate(
             cls: type[TModel],
-            obj: t.ModelInput,
+            obj: t.ConfigModelInput,
             *,
             strict: bool | None = None,
             extra: str | None = None,

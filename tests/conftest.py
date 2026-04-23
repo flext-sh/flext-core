@@ -31,7 +31,10 @@ import flext_core as core
 from flext_core import FlextContainer, FlextContext, FlextSettings
 from tests import c, m, p, r, t, u
 
-collect_ignore_glob = ["**/__init__.py"]
+collect_ignore_glob = [
+    "**/__init__.py",
+    "**/_enforcement_integration_fixtures/*.py",
+]
 
 
 @pytest.fixture

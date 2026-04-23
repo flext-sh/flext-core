@@ -79,7 +79,7 @@ class FlextProtocolsContainer:
         @classmethod
         def model_validate(
             cls,
-            obj: t.ModelInput | Mapping[str, t.JsonPayload],
+            obj: Mapping[str, t.JsonPayload],
         ) -> FlextProtocolsContainer.ContainerCreationOptions:
             """Validate arbitrary input into container creation options."""
             ...
