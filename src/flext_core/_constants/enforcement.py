@@ -14,7 +14,10 @@ from collections.abc import (
 )
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Final
+from typing import TYPE_CHECKING, ClassVar, Final
+
+if TYPE_CHECKING:
+    from flext_core._models.enforcement import FlextModelsEnforcement as _me
 
 
 class FlextMroViolation(UserWarning):
@@ -570,3 +573,508 @@ class FlextConstantsEnforcement:
         "flext_quality",
     })
     """Projects where utilities.py legitimately uses explicit-class base (R10)."""
+
+    # --- Cross-layer enforcement catalog (SSOT for the pytest dispatcher) ---
+    #
+    # Every rule is addressed by a stable ``ENFORCE-NNN`` identifier and
+    # carries its origin as a typed ``Source`` variant. The catalog is the
+    # source of truth consumed by
+    # ``flext_tests._fixtures.enforcement`` at collection time, so adding or
+    # retiring a rule is a single entry here. Documentation-only kinds
+    # (``ast_grep``, ``ruff``, ``skill_pointer``) are indexed but not
+    # dispatched — they cross-link to existing authoritative layers
+    # (``sgconfig.yml`` / ``make lint`` / ``.agents/skills/``).
+
+    # Populated by ``_hydrate_enforcement_catalog()`` at module bottom after
+    # the class body finishes — a deliberate late-binding to break the
+    # beartype ↔ models ↔ constants import cycle.
+    ENFORCEMENT_CATALOG: ClassVar[_me.EnforcementCatalog]
+
+
+def _hydrate_enforcement_catalog() -> None:
+    """Construct and attach the enforcement catalog to the constants class.
+
+    Importing ``FlextModelsEnforcement`` at module top triggers the
+    ``flext_core._models`` package init → beartype bootstrap, which re-enters
+    this module before ``FlextConstantsEnforcement`` has been bound. Deferring
+    the import to this bottom-of-module hook breaks the cycle.
+    """
+    # the beartype ↔ models ↔ constants cycle this avoids.
+    from flext_core._models.enforcement import (  # noqa: PLC0415
+        FlextModelsEnforcement as _me,
+    )
+
+    FlextConstantsEnforcement.ENFORCEMENT_CATALOG = _me.EnforcementCatalog(
+        rules=(
+            # --- FLEXT_INFRA_DETECTOR (14 rules, one per ProjectEnforcementReport field) ---
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-001",
+                description=(
+                    "Loose object detected at module level — every public "
+                    "symbol must be nested inside its facade family."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="loose_objects",
+                ),
+                agents_md_anchor="2-architecture-law",
+                skills=("flext-mro-namespace-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-002",
+                description=(
+                    "Import alias source is wrong — alias imported from a "
+                    "non-canonical module."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="import_violations",
+                ),
+                skills=("flext-import-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-003",
+                description=(
+                    "Namespace source violation — canonical alias imported "
+                    "from a project that does not own that slot."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="namespace_source_violations",
+                ),
+                skills=("flext-import-rules", "flext-mro-namespace-rules"),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-004",
+                description=(
+                    "Internal (private) module import reaches outside its "
+                    "owning package boundary."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="internal_import_violations",
+                ),
+                skills=("flext-import-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-005",
+                description=(
+                    "Manual Protocol class declared outside protocols.py / "
+                    "_protocols/ tree."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="manual_protocol_violations",
+                ),
+                skills=("flext-patterns",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-006",
+                description="Cyclic import detected between modules.",
+                severity=_me.EnforcementRuleSeverity.CRITICAL,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="cyclic_imports",
+                ),
+                skills=("flext-import-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-007",
+                description=(
+                    "Runtime alias (c/p/t/m/u/r/s/x/d/e/h) rebound in a "
+                    "module that should not own it."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="runtime_alias_violations",
+                ),
+                skills=("flext-mro-namespace-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-008",
+                description=(
+                    "Python module missing `from __future__ import "
+                    "annotations`."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="future_violations",
+                ),
+                skills=("rules-examples",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-009",
+                description=(
+                    "Manual typing alias declared outside typings.py / "
+                    "_typings/ tree."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="manual_typing_violations",
+                ),
+                skills=("flext-type-system",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-010",
+                description=(
+                    "Backwards-compatibility alias retained after refactor "
+                    "— should be removed."
+                ),
+                severity=_me.EnforcementRuleSeverity.LOW,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="compatibility_alias_violations",
+                ),
+                skills=("flext-refactoring-workflow",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-011",
+                description=(
+                    "Class placed in the wrong facade layer (e.g. Protocol "
+                    "in models.py)."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="class_placement_violations",
+                ),
+                skills=("flext-mro-namespace-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-012",
+                description=(
+                    "MRO composition incomplete — facade does not compose "
+                    "all its domain mixin trees."
+                ),
+                severity=_me.EnforcementRuleSeverity.CRITICAL,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="mro_completeness_violations",
+                ),
+                skills=("flext-mro-namespace-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-013",
+                description="Source file failed to parse during enforcement.",
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="parse_failures",
+                ),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-014",
+                description=(
+                    "Canonical facade family is missing (no constants.py / "
+                    "models.py / typings.py / protocols.py / utilities.py)."
+                ),
+                severity=_me.EnforcementRuleSeverity.CRITICAL,
+                source=_me.EnforcementInfraDetectorSource(
+                    violation_field="facade_statuses",
+                    match_missing=True,
+                ),
+                skills=("flext-mro-namespace-rules",),
+            ),
+            # --- FLEXT_TESTS_VALIDATOR (7 rules, one per public tv.* method) ---
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-015",
+                description=(
+                    "Import discipline violation — lazy imports, "
+                    "TYPE_CHECKING misuse, sys.path manipulation, "
+                    "tech-lib leaks, or non-root flext-* imports."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementTestsValidatorSource(
+                    method="imports",
+                    rule_ids=(
+                        "IMPORT-001",
+                        "IMPORT-002",
+                        "IMPORT-003",
+                        "IMPORT-004",
+                        "IMPORT-005",
+                        "IMPORT-006",
+                    ),
+                ),
+                skills=("flext-import-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-016",
+                description=(
+                    "Type-system violation — Any/object/legacy typing or "
+                    "type: ignore bypass."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementTestsValidatorSource(
+                    method="types",
+                    rule_ids=("TYPE-001", "TYPE-002", "TYPE-003"),
+                ),
+                skills=("flext-strict-typing", "flext-type-system"),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-017",
+                description=(
+                    "Bypass pattern — noqa, pragma: no cover (unapproved), "
+                    "or exception swallowing."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementTestsValidatorSource(
+                    method="bypass",
+                    rule_ids=("BYPASS-001", "BYPASS-002", "BYPASS-003"),
+                ),
+                skills=("flext-patterns",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-018",
+                description="Layer violation — lower layer importing an upper layer.",
+                severity=_me.EnforcementRuleSeverity.CRITICAL,
+                source=_me.EnforcementTestsValidatorSource(
+                    method="layer",
+                    rule_ids=("LAYER-001",),
+                ),
+                skills=("flext-architecture-layers",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-019",
+                description=(
+                    "Test pattern violation — monkeypatch, Mock/MagicMock, "
+                    "or @patch usage."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementTestsValidatorSource(
+                    method="tests",
+                    rule_ids=("TEST-001", "TEST-002", "TEST-003"),
+                ),
+                skills=("testing-patterns",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-020",
+                description=(
+                    "pyproject.toml deviation — mypy ignore_errors, unapproved "
+                    "ruff ignores, or incomplete type strictness."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementTestsValidatorSource(
+                    method="validate_config",
+                    rule_ids=(
+                        "CONFIG-001",
+                        "CONFIG-002",
+                        "CONFIG-003",
+                        "CONFIG-004",
+                        "CONFIG-005",
+                    ),
+                ),
+                skills=("flext-development-workflow",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-021",
+                description=(
+                    "Markdown code block validation — syntax, forbidden "
+                    "typings, missing future annotations, object as type."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementTestsValidatorSource(
+                    method="markdown",
+                    rule_ids=("MD-001", "MD-002", "MD-003", "MD-004"),
+                ),
+                skills=("testing-patterns",),
+            ),
+            # --- RUNTIME_WARNING (1 rule) ---
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-022",
+                description=(
+                    "FlextMroViolation emitted by the flext-core enforcement "
+                    "engine at class-definition time."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementRuntimeWarningSource(
+                    category="flext_core._constants.enforcement.FlextMroViolation",
+                ),
+                skills=("flext-mro-namespace-rules", "pydantic-v2-governance"),
+            ),
+            # --- RUFF (3 rules — delegated to `make lint`, documentation-only) ---
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-023",
+                description=(
+                    "Dynamic Any usage (ruff ANN401) — enforced at lint time "
+                    "by `make lint`; listed here for cross-reference."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementRuffSource(rule_code="ANN401"),
+                skills=("flext-strict-typing",),
+                notes="Dispatched by ruff via make lint; catalog entry is documentation-only.",
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-024",
+                description=(
+                    "Missing specific rule code on pyright/pygrep suppressions "
+                    "(ruff PGH003)."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementRuffSource(rule_code="PGH003"),
+                skills=("flext-strict-typing",),
+                notes="Dispatched by ruff via make lint; catalog entry is documentation-only.",
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-025",
+                description="Relative import (ruff TID252) — prefer absolute imports.",
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementRuffSource(rule_code="TID252"),
+                skills=("flext-import-rules",),
+                notes="Dispatched by ruff via make lint; catalog entry is documentation-only.",
+            ),
+            # --- AST_GREP (8 rules — cross-reference sgconfig.yml, no dispatch) ---
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-026",
+                description="Bare `except:` clause swallows all exceptions including SystemExit.",
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementAstGrepSource(
+                    skill="flext-patterns",
+                    rule_id="ban-bare-except",
+                ),
+                skills=("flext-patterns",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-027",
+                description="`print()` call in source code — use structured logging.",
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementAstGrepSource(
+                    skill="flext-patterns",
+                    rule_id="ban-print-in-src",
+                ),
+                skills=("flext-patterns",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-028",
+                description="`breakpoint()` / pdb left in code.",
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementAstGrepSource(
+                    skill="flext-patterns",
+                    rule_id="no-breakpoint",
+                ),
+                skills=("flext-patterns",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-029",
+                description="`open()` without explicit encoding.",
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementAstGrepSource(
+                    skill="flext-patterns",
+                    rule_id="ban-open-no-encoding",
+                ),
+                skills=("flext-patterns",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-030",
+                description="`dict` in type annotation — prefer Mapping / MutableMapping / TypedDict.",
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementAstGrepSource(
+                    skill="flext-strict-typing",
+                    rule_id="ban-dict-type-annotation",
+                ),
+                skills=("flext-strict-typing",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-031",
+                description="`typing.Dict` attribute usage — use collections.abc.Mapping family.",
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementAstGrepSource(
+                    skill="flext-strict-typing",
+                    rule_id="ban-typing-dict-attribute",
+                ),
+                skills=("flext-strict-typing",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-032",
+                description="`from typing import Dict` — banned in favor of dict / Mapping.",
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementAstGrepSource(
+                    skill="flext-strict-typing",
+                    rule_id="ban-typing-dict-import",
+                ),
+                skills=("flext-strict-typing",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-033",
+                description="Hardcoded `__version__` string — use importlib.metadata.",
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementAstGrepSource(
+                    skill="flext-patterns",
+                    rule_id="no-hardcoded-version-string",
+                ),
+                skills=("flext-patterns",),
+            ),
+            # --- SKILL_POINTER (5 rules — narrative, no automation) ---
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-034",
+                description=(
+                    "Accessor method (get_*, set_*) forbidden — expose as "
+                    "field or @u.computed_field (AGENTS.md §3.1)."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementSkillPointerSource(
+                    skill="flext-patterns",
+                    anchor="no-accessor-methods",
+                ),
+                agents_md_anchor="3-code-law",
+                skills=("flext-patterns",),
+                enabled=False,
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-035",
+                description=(
+                    "Settings models must inherit FlextSettings, not BaseModel"
+                    " or BaseSettings (AGENTS.md §2.6)."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementSkillPointerSource(
+                    skill="lib-pydantic-settings",
+                    anchor="settings-baseline",
+                ),
+                agents_md_anchor="2-architecture-law",
+                skills=("lib-pydantic-settings",),
+                enabled=False,
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-036",
+                description=(
+                    "Never call `model_rebuild()` as a fix strategy — resolve "
+                    "forward refs via proper imports/annotations."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementSkillPointerSource(
+                    skill="pydantic-v2-governance",
+                ),
+                agents_md_anchor="0-quick-reference-must-read",
+                skills=("pydantic-v2-governance",),
+                enabled=False,
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-037",
+                description=(
+                    "No `os.environ` / `os.getenv` in src/ — use settings + "
+                    "constants contracts."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementSkillPointerSource(
+                    skill="lib-pydantic-settings",
+                ),
+                agents_md_anchor="0-quick-reference-must-read",
+                skills=("lib-pydantic-settings", "flext-constants-discipline"),
+                enabled=False,
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-038",
+                description=(
+                    "Never flatten organic namespace paths — preserve "
+                    "`m.TargetOracle.ExecuteResult` etc., don't rebind to "
+                    "`m.ExecuteResult`."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementSkillPointerSource(
+                    skill="flext-mro-namespace-rules",
+                ),
+                agents_md_anchor="0-quick-reference-must-read",
+                skills=("flext-mro-namespace-rules",),
+                enabled=False,
+            ),
+        ),
+    )
+
+
+_hydrate_enforcement_catalog()
+del _hydrate_enforcement_catalog

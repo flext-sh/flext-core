@@ -56,7 +56,14 @@ class FlextTypesServices:
     type RuntimeData = tp.JsonValue | mp.BaseModel
     type BootstrapInput = mp.BaseModel | t.JsonMapping
     type SettingsInput = t.SettingsValue | mp.BaseModel
-    type ServiceValue = JsonPayload | mp.BaseModel | pl.Logger
+    type ServiceValue = (
+        JsonPayload
+        | mp.BaseModel
+        | pl.Logger
+        | ps.Settings
+        | pcx.Context
+        | ph.Dispatcher
+    )
     type UserOverridesMapping = Mapping[str, JsonPayload]
     type RegisterableService = (
         ServiceValue
@@ -85,6 +92,7 @@ class FlextTypesServices:
         | ph.DispatchMessage
         | ph.Handle
         | ph.Execute
+        | ph.AutoDiscoverableHandler
         | Callable[
             ...,
             mp.BaseModel | JsonPayload | prt.ResultLike[JsonPayload],

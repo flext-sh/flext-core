@@ -76,7 +76,10 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         normalized = {
             str(k): FlextRuntime.normalize_to_container(v) for k, v in source.items()
         }
-        return t.flat_container_mapping_adapter().validate_python(normalized)
+        validated: t.JsonMapping = (
+            t.flat_container_mapping_adapter().validate_python(normalized)
+        )
+        return validated
 
     @staticmethod
     def _as_config_map(
@@ -103,19 +106,15 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         other: p.Context | Mapping[str, t.JsonPayload] | t.JsonMapping,
     ) -> m.ConfigMap | None:
         """Extract a ConfigMap from any supported merge source."""
-        match other:
-            case _ if isinstance(other, p.Context):
-                exported_result = other.export(as_dict=True)
-                exported_payload: Mapping[str, t.JsonPayload] = (
-                    exported_result.model_dump(mode="python")
-                    if isinstance(exported_result, m.ContextExport)
-                    else exported_result
-                )
-                return self._as_config_map(exported_payload, "export payload")
-            case _ if isinstance(other, Mapping):
-                return self._as_config_map(other, "export payload")
-            case _:
-                return None
+        if isinstance(other, p.Context):
+            exported_result = other.export(as_dict=True)
+            exported_payload: Mapping[str, t.JsonPayload] = (
+                exported_result.model_dump(mode="python")
+                if isinstance(exported_result, m.ContextExport)
+                else exported_result
+            )
+            return self._as_config_map(exported_payload, "export payload")
+        return self._as_config_map(other, "export payload")
 
     def _apply_scoped_merge(self, exported_map: m.ConfigMap) -> None:
         """Merge exported scopes from another FlextContext."""

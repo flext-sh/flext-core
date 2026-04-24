@@ -200,17 +200,15 @@ class FlextContainer(p.ContainerLifecycle):
                 source="bootstrap settings",
             )
             self._config = settings
-            if u.registerable_service(settings):
-                self._update_registered_object_service(c.Directory.CONFIG, settings)
-                self.sync_config_to_di()
+            self._update_registered_object_service(c.Directory.CONFIG, settings)
+            self.sync_config_to_di()
         if registration.context is not None:
             context = self._require_context(
                 registration.context,
                 source="bootstrap context",
             )
             self._context = context
-            if u.registerable_service(context):
-                self._update_registered_object_service(c.FIELD_CONTEXT, context)
+            self._update_registered_object_service(c.FIELD_CONTEXT, context)
 
     @property
     @override
@@ -282,16 +280,10 @@ class FlextContainer(p.ContainerLifecycle):
            assert consume() == "abc123"
         """
         provide_helper = self._di_bridge.provide
-        if not callable(provide_helper):
-            msg = c.ERR_CONTAINER_PROVIDE_HELPER_NOT_INITIALIZED
-            raise TypeError(msg)
         provide_fn: Callable[[str], t.RegisterableService] = provide_helper
 
         def provide_callable(name: str) -> t.RegisterableService:
-            provided = provide_fn(name)
-            if not u.registerable_service(provided):
-                raise TypeError(c.ERR_CONTAINER_PROVIDE_HELPER_UNSUPPORTED_TYPE)
-            return provided
+            return provide_fn(name)
 
         return provide_callable
 
@@ -400,11 +392,7 @@ class FlextContainer(p.ContainerLifecycle):
             _factory_config: m.FactoryDecoratorConfig = settings,
         ) -> t.RegisterableService:
             _ = _factory_config
-            raw_result: t.RegisterableService = _factory_func_ref()
-            if not u.registerable_service(raw_result):
-                msg = f"Factory '{_factory_name}' returned unsupported type: {raw_result.__class__.__name__}"
-                raise TypeError(msg)
-            return raw_result
+            return _factory_func_ref()
 
         return factory_wrapper
 
@@ -610,14 +598,6 @@ class FlextContainer(p.ContainerLifecycle):
                 resource_registration = self._resources[name]
                 resource_callable: t.ResourceCallable = resource_registration.factory
                 resolved = resource_callable()
-                if not u.registerable_service(resolved):
-                    return r[t.RegisterableService].from_result(
-                        e.fail_type_mismatch(
-                            "registerable service",
-                            resolved.__class__.__name__,
-                            service_name=name,
-                        )
-                    )
                 if type_cls is not None:
                     return self._narrow_service(resolved, type_cls)
                 return r[t.RegisterableService].ok(resolved)
@@ -841,15 +821,11 @@ class FlextContainer(p.ContainerLifecycle):
     @override
     def factory(self, name: str, impl: t.FactoryCallable) -> Self:
         """Bind a factory callable."""
-        if not u.factory(impl):
-            return self
         return self._bind_factory(name, impl)
 
     @override
     def resource(self, name: str, impl: t.ResourceCallable) -> Self:
         """Bind a resource factory."""
-        if not u.resource(impl):
-            return self
         return self._bind_resource(name, impl)
 
     @override
@@ -882,9 +858,7 @@ class FlextContainer(p.ContainerLifecycle):
         Note: Core bootstrap uses internal DI-aware checks so public registration
         helpers can remain focused on user-defined names.
         """
-        if not self._has_internal_registration(
-            str(c.Directory.CONFIG)
-        ) and u.registerable_service(self._config):
+        if not self._has_internal_registration(str(c.Directory.CONFIG)):
             _ = self.bind(c.Directory.CONFIG, self._config)
             self._internal_registrations.add(str(c.Directory.CONFIG))
         if not self._has_internal_registration(str(c.ServiceName.LOGGER)):
@@ -893,16 +867,13 @@ class FlextContainer(p.ContainerLifecycle):
                 lambda: u.fetch_logger(c.DEFAULT_LOGGER_MODULE),
             )
             self._internal_registrations.add(str(c.ServiceName.LOGGER))
-        if not self._has_internal_registration(
-            str(c.FIELD_CONTEXT)
-        ) and u.registerable_service(self._context):
+        if not self._has_internal_registration(str(c.FIELD_CONTEXT)):
             _ = self.bind(c.FIELD_CONTEXT, self._context)
             self._internal_registrations.add(str(c.FIELD_CONTEXT))
         if not self._has_internal_registration(str(c.ServiceName.COMMAND_BUS)):
             dispatcher = u.build_dispatcher()
-            if u.registerable_service(dispatcher):
-                _ = self.bind(c.ServiceName.COMMAND_BUS, dispatcher)
-                self._internal_registrations.add(str(c.ServiceName.COMMAND_BUS))
+            _ = self.bind(c.ServiceName.COMMAND_BUS, dispatcher)
+            self._internal_registrations.add(str(c.ServiceName.COMMAND_BUS))
 
     @override
     def register_existing_providers(self) -> None:
@@ -1002,23 +973,19 @@ class FlextContainer(p.ContainerLifecycle):
             for name, registration in self._resources.items()
         }
         for name, service in (services or {}).items():
-            if not u.registerable_service(service):
-                continue
             cloned_services[name] = m.ServiceRegistration(
                 name=name,
                 service=service,
                 service_type=service.__class__.__name__,
             )
         for name, factory in (factories or {}).items():
-            if u.factory(factory):
-                cloned_factories[name] = m.FactoryRegistration(
-                    name=name, factory=factory
-                )
+            cloned_factories[name] = m.FactoryRegistration(
+                name=name, factory=factory
+            )
         for name, resource_factory in (resources or {}).items():
-            if u.resource(resource_factory):
-                cloned_resources[name] = m.ResourceRegistration(
-                    name=name, factory=resource_factory
-                )
+            cloned_resources[name] = m.ResourceRegistration(
+                name=name, factory=resource_factory
+            )
         return self.__class__._create_scoped_instance(
             registration=m.ServiceRegistrationSpec(
                 settings=base_config,

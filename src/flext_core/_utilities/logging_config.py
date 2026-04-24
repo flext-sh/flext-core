@@ -74,11 +74,12 @@ class FlextUtilitiesLoggingConfig:
         @property
         def _writer_log(self) -> p.Logger:
             """Logger for async log writer."""
-            logger = getattr(self, "_writer_logger", None)
-            if logger is None:
-                logger = structlog.get_logger(__name__)
-                self._writer_logger = logger
-            return logger
+            existing: p.Logger | None = getattr(self, "_writer_logger", None)
+            if existing is not None:
+                return existing
+            created: p.Logger = structlog.get_logger(__name__)
+            self._writer_logger = created
+            return created
 
         @property
         def mode(self) -> str:
@@ -93,7 +94,7 @@ class FlextUtilitiesLoggingConfig:
         @property
         def buffer(self) -> typing.BinaryIO:
             """Return underlying binary buffer."""
-            buf = getattr(self.stream, "buffer", None)
+            buf: typing.BinaryIO | None = getattr(self.stream, "buffer", None)
             if buf is not None:
                 return buf
             return io.BytesIO()

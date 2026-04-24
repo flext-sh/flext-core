@@ -159,7 +159,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def _check_list_non_empty(value: t.GuardInput) -> bool:
         """Check if value is a non-empty list/tuple (excluding str/bytes)."""
-        if isinstance(value, (list, tuple)) and not isinstance(value, (str, bytes)):
+        if isinstance(value, (list, tuple)):
             return value.__len__() > 0
         return False
 

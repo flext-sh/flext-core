@@ -170,7 +170,9 @@ class FlextRegistry(s[bool]):
             return None
         if isinstance(value, m.BaseModel):
             return value
-        if isinstance(value, p.Logger) or callable(value):
+        if isinstance(value, (p.Logger, p.Settings, p.Context, p.Dispatcher)):
+            return str(value)
+        if callable(value):
             return str(value)
         normalized = u.normalize_to_metadata(value)
         if isinstance(normalized, Mapping):
@@ -180,7 +182,10 @@ class FlextRegistry(s[bool]):
             (str, bytes, bytearray),
         ):
             return list(t.json_list_adapter().validate_python(normalized))
-        return t.json_value_adapter().validate_python(normalized)
+        validated_value: t.JsonValue = t.json_value_adapter().validate_python(
+            normalized
+        )
+        return validated_value
 
     @staticmethod
     def _normalize_registration_impl(
@@ -188,8 +193,6 @@ class FlextRegistry(s[bool]):
     ) -> t.RegisterableService:
         """Normalize registry payloads to the container bind contract."""
         if isinstance(value, m.BaseModel):
-            return value
-        if isinstance(value, p.Logger):
             return value
         if callable(value):
 
@@ -222,7 +225,10 @@ class FlextRegistry(s[bool]):
                     return list(
                         t.json_list_adapter().validate_python(normalized_result),
                     )
-                return t.json_value_adapter().validate_python(normalized_result)
+                validated_inner: t.JsonValue = t.json_value_adapter().validate_python(
+                    normalized_result
+                )
+                return validated_inner
 
             return normalized_callable
         normalized = u.normalize_to_metadata(value)
@@ -233,7 +239,10 @@ class FlextRegistry(s[bool]):
             (str, bytes, bytearray),
         ):
             return list(t.json_list_adapter().validate_python(normalized))
-        return t.json_value_adapter().validate_python(normalized)
+        validated_outer: t.JsonValue = t.json_value_adapter().validate_python(
+            normalized
+        )
+        return validated_outer
 
     def _get_handler_mode(self, value: t.JsonPayload) -> c.HandlerType:
         """Safe conversion to HandlerType (falls back to COMMAND)."""

@@ -135,6 +135,7 @@ class FlextDispatcher:
             u.compute_accepted_message_types(handler.__class__),
         )
         resolved_handler: t.RoutedHandlerCallable
+        is_auto_discoverable = isinstance(handler, p.AutoDiscoverableHandler)
         match handler:
             case p.DispatchMessage():
                 resolved_handler = handler.dispatch_message
@@ -165,7 +166,7 @@ class FlextDispatcher:
                 except (TypeError, ValueError):
                     route_name = None
         if route_name is None:
-            if isinstance(handler, p.AutoDiscoverableHandler):
+            if is_auto_discoverable:
                 self._auto_handlers.append((
                     handler,
                     resolved_handler,

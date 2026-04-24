@@ -158,7 +158,9 @@ class FlextUtilitiesParser:
             ).unwrap()
         if isinstance(value, target):
             return value
-        validation_result = FlextUtilitiesModel.validate_value(target, value)
+        validation_result: p.Result[T] = FlextUtilitiesModel.validate_value(
+            target, value
+        )
         if validation_result.success:
             return validation_result.value
         target_name = target.__name__ if hasattr(target, "__name__") else "type"
@@ -202,7 +204,9 @@ class FlextUtilitiesParser:
         value_str = str(value)
         options_text = [member.value for member in target]
         if not opts.case_insensitive:
-            validation_result = FlextUtilitiesModel.validate_value(target, value_str)
+            validation_result: p.Result[T] = FlextUtilitiesModel.validate_value(
+                target, value_str
+            )
             if validation_result.success:
                 return validation_result.value
             raise ValueError(
@@ -266,7 +270,7 @@ class FlextUtilitiesParser:
                     target_name=target.__name__,
                 ),
             )
-        validation_result = FlextUtilitiesModel.validate_value(
+        validation_result: p.Result[T] = FlextUtilitiesModel.validate_value(
             target,
             value,
             strict=opts.strict,
@@ -323,7 +327,7 @@ class FlextUtilitiesParser:
                 return None
             return FlextUtilitiesModel.validate_value(target, coerced.value).unwrap()
         if target in {int, float, str, bool}:
-            validated = FlextUtilitiesModel.validate_value(target, value)
+            validated: p.Result[T] = FlextUtilitiesModel.validate_value(target, value)
             if validated.success:
                 return validated.value
         return None

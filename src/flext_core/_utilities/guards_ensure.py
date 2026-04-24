@@ -162,7 +162,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         """Evaluate validator against value. Returns True if guard passes."""
         if isinstance(validator, type):
             return isinstance(value, validator)
-        if FlextUtilitiesGuardsEnsure.object_tuple(validator):
+        if isinstance(validator, tuple):
             tuple_types: tuple[type, ...] = tuple(
                 item for item in validator if isinstance(item, type)
             )

@@ -109,25 +109,29 @@ class FlextUtilitiesModel:
     def _settings_base() -> t.SettingsClass:
         """Resolve FlextSettings lazily to avoid runtime import cycles."""
         settings_module = import_module("flext_core")
-        return settings_module.FlextSettings
+        settings_cls: t.SettingsClass = settings_module.FlextSettings
+        return settings_cls
 
     @staticmethod
     def _container_type() -> p.ContainerType:
         """Resolve FlextContainer lazily to avoid runtime import cycles."""
         container_module = import_module("flext_core")
-        return container_module.FlextContainer
+        container_cls: p.ContainerType = container_module.FlextContainer
+        return container_cls
 
     @staticmethod
     def _context_type() -> p.ContextType:
         """Resolve FlextContext lazily to avoid runtime import cycles."""
         context_module = import_module("flext_core")
-        return context_module.FlextContext
+        context_cls: p.ContextType = context_module.FlextContext
+        return context_cls
 
     @staticmethod
     def _runtime_type() -> type:
         """Resolve FlextRuntime lazily to avoid runtime import cycles."""
         runtime_module = import_module("flext_core")
-        return runtime_module.FlextRuntime
+        runtime_cls: type = runtime_module.FlextRuntime
+        return runtime_cls
 
     @classmethod
     def _normalize_runtime_override_mapping(
@@ -138,12 +142,13 @@ class FlextUtilitiesModel:
         if value is None:
             return None
         runtime_type = cls._runtime_type()
-        return t.json_mapping_adapter().validate_python(
+        validated: t.JsonMapping = t.json_mapping_adapter().validate_python(
             {
                 str(key): runtime_type.normalize_to_metadata(item)
                 for key, item in value.items()
             },
         )
+        return validated
 
     @staticmethod
     def service_settings_type(

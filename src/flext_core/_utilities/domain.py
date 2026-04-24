@@ -151,10 +151,16 @@ class FlextUtilitiesDomain:
         differs from ``unique_id`` (e.g. a surrogate ``id`` field). Pydantic's
         ``BeforeValidator`` on ``Entry.data`` handles all normalization.
         """
+        if data is None:
+            normalized_data = mc.ConfigMap(root={})
+        elif isinstance(data, mc.ConfigMap):
+            normalized_data = data
+        else:
+            normalized_data = mc.ConfigMap.model_validate(data)
         entry = mde.Entry(
             event_type=event_type,
             aggregate_id=aggregate_id if aggregate_id is not None else entity.unique_id,
-            data=data,
+            data=normalized_data,
         )
         entity.domain_events.append(entry)
         return entry

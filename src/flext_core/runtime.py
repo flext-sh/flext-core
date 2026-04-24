@@ -127,7 +127,8 @@ class FlextRuntime:
     ) -> t.JsonValue:
         """Normalize arbitrary runtime input to one validated ``JsonValue``."""
         normalized = FlextRuntime.normalize_to_metadata(value)
-        return t.json_value_adapter().validate_python(normalized)
+        validated: t.JsonValue = t.json_value_adapter().validate_python(normalized)
+        return validated
 
     @staticmethod
     def _normalize_dict_entries(
@@ -198,15 +199,28 @@ class FlextRuntime:
     def normalize_metadata_input_mapping(
         value: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
     ) -> Mapping[str, t.JsonPayload | None] | None:
-        """Normalize mapping-like metadata input while preserving explicit None."""
+        """Normalize mapping-like metadata input while preserving explicit None.
+
+        Defensively handles broken ``model_dump`` overrides that return a
+        non-Mapping value by raising ``TypeError`` instead of surfacing an
+        opaque ``AttributeError`` from downstream iteration.
+        """
         if value is None:
             return None
-        raw_mapping = value if isinstance(value, Mapping) else value.model_dump()
+        raw: Mapping[str, t.JsonPayload | None]
+        if isinstance(value, Mapping):
+            raw = value
+        else:
+            dumped: object = value.model_dump()
+            if not isinstance(dumped, Mapping):  # pyright: ignore[reportUnnecessaryIsInstance]
+                msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
+                raise TypeError(msg)
+            raw = dumped
         return {
             str(key): (
                 None if item is None else FlextRuntime._normalize_to_json_value(item)
             )
-            for key, item in raw_mapping.items()
+            for key, item in raw.items()
         }
 
     @staticmethod
@@ -233,9 +247,14 @@ class FlextRuntime:
                 raise ValueError(
                     c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key),
                 )
-        return t.metadata_map_adapter().validate_python({
-            key: item for key, item in normalized_result.items() if item is not None
-        })
+        validated_metadata: Mapping[str, t.JsonValue] = (
+            t.metadata_map_adapter().validate_python({
+                key: item
+                for key, item in normalized_result.items()
+                if item is not None
+            })
+        )
+        return validated_metadata
 
     @staticmethod
     def validate_metadata_model_input[TModel: BaseModel](
@@ -271,69 +290,69 @@ class FlextRuntime:
         if callable(value):
             return value
         if isinstance(value, Mapping):
-            normalized_mapping: dict[str, t.RuntimeData] = {}
+            normalized_mapping: dict[str, t.JsonPayload] = {}
             for key_s, item in value.items():
-                normalized_item: t.RuntimeData
+                mapping_item: t.JsonPayload
                 if isinstance(item, datetime):
-                    normalized_item = (
+                    mapping_item = (
                         item.replace(tzinfo=UTC) if item.tzinfo is None else item
                     ).isoformat()
                 elif isinstance(item, Path):
-                    normalized_item = str(item)
+                    mapping_item = str(item)
                 elif isinstance(item, tuple):
-                    normalized_item = FlextRuntime.normalize_to_metadata(item)
+                    mapping_item = FlextRuntime.normalize_to_metadata(item)
                 elif isinstance(item, dict):
-                    normalized_item = dict(
+                    mapping_item = dict(
                         t.json_mapping_adapter().validate_python(item),
                     )
                 elif isinstance(item, list):
-                    normalized_item = list(
+                    mapping_item = list(
                         t.json_list_adapter().validate_python(item),
                     )
                 elif isinstance(
                     item, (mp.BaseModel, str, int, float, bool, type(None))
                 ):
-                    normalized_item = item
+                    mapping_item = item
                 else:
                     msg = c.ERR_RUNTIME_MAPPING_INVALID_TYPE.format(
                         type_name=type(item),
                     )
                     raise TypeError(msg)
-                normalized_mapping[str(key_s)] = normalized_item
+                normalized_mapping[str(key_s)] = mapping_item
             return mc.ConfigMap(root=normalized_mapping)
         if isinstance(value, Sequence) and not isinstance(
             value,
             (str, bytes, bytearray),
         ):
-            normalized_sequence: list[t.RuntimeData] = []
+            normalized_sequence: list[t.JsonPayload] = []
             for item in value:
-                normalized_item: t.RuntimeData
+                sequence_item: t.JsonPayload
                 if isinstance(item, datetime):
-                    normalized_item = (
+                    sequence_item = (
                         item.replace(tzinfo=UTC) if item.tzinfo is None else item
                     ).isoformat()
                 elif isinstance(item, Path):
-                    normalized_item = str(item)
+                    sequence_item = str(item)
                 elif isinstance(item, tuple):
-                    normalized_item = FlextRuntime.normalize_to_metadata(item)
+                    sequence_item = FlextRuntime.normalize_to_metadata(item)
                 elif isinstance(item, dict):
-                    normalized_item = dict(
+                    sequence_item = dict(
                         t.json_mapping_adapter().validate_python(item),
                     )
                 elif isinstance(item, list):
-                    normalized_item = list(
+                    sequence_item = list(
                         t.json_list_adapter().validate_python(item),
                     )
                 elif isinstance(
                     item, (mp.BaseModel, str, int, float, bool, type(None))
                 ):
-                    normalized_item = item
+                    sequence_item = item
                 else:
                     msg = c.ERR_RUNTIME_SEQUENCE_INVALID_TYPE.format(
                         type_name=type(item),
                     )
                     raise TypeError(msg)
-                normalized_sequence.append(normalized_item)
+                normalized_sequence.append(sequence_item)
             return mc.ObjectList(root=normalized_sequence)
         if hasattr(value, "__dict__"):
             return value
@@ -773,7 +792,7 @@ class FlextRuntime:
         """
         context_dict = mc.ConfigMap(root={})
         if isinstance(context, Mapping):
-            parsed_context: MutableMapping[str, t.JsonPayload] = {
+            parsed_context: dict[str, t.JsonPayload] = {
                 str(k): str(v) for k, v in context.items()
             }
             context_dict = mc.ConfigMap(root=parsed_context)

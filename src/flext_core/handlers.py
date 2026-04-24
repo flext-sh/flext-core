@@ -186,20 +186,10 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             @override
             def handle(self, message: t.Scalar) -> p.Result[t.Scalar]:
                 """Execute the wrapped callable."""
-                if isinstance(message, tuple):
-                    return r[t.Scalar].fail_op(
-                        "validate callable handler message type",
-                        c.ERR_UNEXPECTED_MESSAGE_TYPE,
-                    )
                 try:
                     result = self._handler_fn(message)
                     if isinstance(result, r):
                         return result
-                    if isinstance(result, set):
-                        return r[t.Scalar].fail_op(
-                            "normalize callable handler result",
-                            c.ERR_RESULT_NOT_SCALAR_COMPATIBLE,
-                        )
                     return r[t.Scalar].ok(result)
                 except (
                     ValueError,

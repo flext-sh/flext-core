@@ -471,7 +471,16 @@ class FlextUtilitiesBeartypeEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def attr_accept_constants(name: str, value: tp.JsonValue) -> bool:
+    def attr_accept_constants(
+        name: str,
+        value: (
+            tp.JsonValue
+            | type
+            | classmethod[type, ..., tp.JsonValue]
+            | staticmethod[..., tp.JsonValue]
+            | property
+        ),
+    ) -> bool:
         if name.startswith("_") or name in c.ENFORCEMENT_CONSTANTS_SKIP_ATTRS:
             return False
         if isinstance(value, (type, classmethod, staticmethod, property)):
@@ -538,7 +547,12 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_utility_not_static(
         name: str,
-        value: tp.JsonValue,
+        value: (
+            tp.JsonValue
+            | staticmethod[..., tp.JsonValue]
+            | classmethod[type, ..., tp.JsonValue]
+            | Callable[..., tp.JsonValue]
+        ),
     ) -> t.StrMapping | None:
         del name
         if isinstance(value, (staticmethod, classmethod)):

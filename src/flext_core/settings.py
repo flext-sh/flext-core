@@ -282,9 +282,11 @@ class FlextSettings(BaseSettings):
         validate_assignment validators on each individual field set.
         """
         model_fields = self.__class__.model_fields
+        valid_kwargs: dict[str, t.SettingsInput] = (
+            {k: v for k, v in kwargs.items() if k in model_fields} if kwargs else {}
+        )
         if hasattr(self, "_di_provider"):
-            if kwargs:
-                valid_kwargs = {k: v for k, v in kwargs.items() if k in model_fields}
+            if valid_kwargs:
                 vars(self).update(valid_kwargs)
                 self.__pydantic_validator__.validate_python(
                     self.__dict__,
@@ -292,18 +294,7 @@ class FlextSettings(BaseSettings):
                 )
             return
 
-        valid_kwargs: dict[str, t.SettingsInput] = (
-            {k: v for k, v in kwargs.items() if k in model_fields} if kwargs else {}
-        )
-        if valid_kwargs:
-            vars(self).update(valid_kwargs)
-        BaseSettings.__init__(self)
-        if valid_kwargs:
-            vars(self).update(valid_kwargs)
-            self.__pydantic_validator__.validate_python(
-                self.__dict__,
-                self_instance=self,
-            )
+        BaseSettings.__init__(self, **valid_kwargs)  # type: ignore[arg-type]  # pyrefly: ignore[bad-argument-type]
 
     @computed_field
     @property
@@ -420,7 +411,9 @@ class FlextSettings(BaseSettings):
 
     def __getattr__(self, name: str) -> p.Settings:
         """Resolve namespace-style attribute access to registered settings."""
-        pydantic_private = object.__getattribute__(self, "__pydantic_private__")
+        pydantic_private: Mapping[str, p.Settings] | None = object.__getattribute__(
+            self, "__pydantic_private__"
+        )
         if pydantic_private is not None and name in pydantic_private:
             return pydantic_private[name]
         namespace = name.lower()

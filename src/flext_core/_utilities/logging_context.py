@@ -127,7 +127,10 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     ) -> t.JsonValue:
         """Normalize value to Container (internal helper)."""
         if isinstance(value, Exception):
-            return t.json_value_adapter().validate_python(str(value))
+            validated_exc: t.JsonValue = t.json_value_adapter().validate_python(
+                str(value)
+            )
+            return validated_exc
         if value is None:
             return ""
         if isinstance(value, FlextModelsPydantic.BaseModel):
@@ -136,19 +139,27 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             model_dump_attr = getattr(value, "model_dump", None)
             if callable(model_dump_attr):
                 return dict(t.json_mapping_adapter().validate_python(model_dump_attr()))
-            return t.json_value_adapter().validate_python(str(value))
+            validated_model_str: t.JsonValue = t.json_value_adapter().validate_python(
+                str(value)
+            )
+            return validated_model_str
         model_dump_attr = getattr(value, "model_dump", None)
         if callable(model_dump_attr):
             return dict(t.json_mapping_adapter().validate_python(model_dump_attr()))
         if isinstance(value, Path):
-            return t.json_value_adapter().validate_python(str(value))
+            validated_path: t.JsonValue = t.json_value_adapter().validate_python(
+                str(value)
+            )
+            return validated_path
         if isinstance(value, bytes):
-            return t.json_value_adapter().validate_python(
+            validated_bytes: t.JsonValue = t.json_value_adapter().validate_python(
                 value.decode("utf-8", errors="replace"),
             )
-        return t.json_value_adapter().validate_python(
+            return validated_bytes
+        validated_default: t.JsonValue = t.json_value_adapter().validate_python(
             FlextRuntime.normalize_to_metadata(value),
         )
+        return validated_default
 
     @staticmethod
     def _to_scalar_value(
@@ -184,9 +195,10 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         cls,
         context: Mapping[str, t.LogValue | t.JsonValue | t.JsonPayload | None],
     ) -> t.JsonMapping:
-        return t.json_mapping_adapter().validate_python(
+        validated: t.JsonMapping = t.json_mapping_adapter().validate_python(
             {key: cls._to_container_value(value) for key, value in context.items()},
         )
+        return validated
 
     @staticmethod
     def _extract_class_name(frame: types.FrameType) -> str | None:

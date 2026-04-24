@@ -45,7 +45,10 @@ class FlextUtilitiesContextNormalization:
                 if str(key) != key:
                     return {}
                 normalized[key] = FlextRuntime.normalize_to_container(value)
-            return t.flat_container_mapping_adapter().validate_python(normalized)
+            validated: t.JsonMapping = (
+                t.flat_container_mapping_adapter().validate_python(normalized)
+            )
+            return validated
         except (TypeError, ValueError, AttributeError, KeyError) as exc:
             FlextUtilitiesContextNormalization.logger.debug(
                 "Failed to normalize contextvar payload to configuration dict",

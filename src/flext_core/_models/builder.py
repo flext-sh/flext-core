@@ -78,7 +78,8 @@ class FlextModelsBuilder:
                 current_values: t.VariadicTuple[m.ContractModel] = tuple(
                     getattr(self.state, field_name)
                 )
-                return self._set(**{field_name: (*current_values, model_item)})
+                updated: Sequence[m.ContractModel] = (*current_values, model_item)
+                return self._set(**{field_name: updated})
 
             def _build_product(self, state: StateT) -> ProductT:
                 """Build one product from state. Subclasses must implement it."""
