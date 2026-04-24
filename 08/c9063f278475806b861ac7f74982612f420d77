@@ -1,0 +1,44 @@
+tests/__init__.py
+  h_9db9d35f50cf33 32
+src/flext_core/utilities.py
+  h_9db9d35f50cf33 38,59
+src/flext_core/__init__.py
+  8101ec7ad65f4317 116-117,266-267,461-462
+src/flext_core/_utilities/model_options.py
+  8101ec7ad65f4317 1-115
+src/flext_core/_utilities/__init__.py
+  8101ec7ad65f4317 42-43
+tests/unit/test_typings_new.py
+  8101ec7ad65f4317 24,528
+tests/unit/__init__.py
+  8101ec7ad65f4317 85
+src/flext_core/_utilities/model_runtime.py
+  h_9db9d35f50cf33 15
+  8101ec7ad65f4317 1-14,16-192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "08c9063f278475806b861ac7f74982612f420d77",
+  "prompts": {
+    "8101ec7ad65f4317": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "557c886b-b02d-489a-8237-05da7f2a1438",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 432,
+      "total_deletions": 357,
+      "accepted_lines": 318,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/d6c5c231e9539795635dfb792e3950bc6e3dddd5d70705fcbfdd73bcbf81b2e5"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
