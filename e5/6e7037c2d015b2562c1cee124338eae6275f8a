@@ -1,0 +1,32 @@
+tests/__init__.py
+  8101ec7ad65f4317 252
+  h_9db9d35f50cf33 410,436,444
+tests/unit/test_constants_new.py
+  h_9db9d35f50cf33 20,87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "e56e7037c2d015b2562c1cee124338eae6275f8a",
+  "prompts": {
+    "8101ec7ad65f4317": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "557c886b-b02d-489a-8237-05da7f2a1438",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 6,
+      "accepted_lines": 2,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/5f668328292919502954ea8ca18a4daab9a7f32e19d5889f93f1a6036128ab75"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
