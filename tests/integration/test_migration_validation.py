@@ -38,7 +38,7 @@ from tests import (
 )
 
 
-class TestMigrationValidation:
+class TestsFlextCoreMigrationValidation:
     def test_flext_result_value_access_pattern(self) -> None:
         """Verify .value access pattern works correctly."""
 

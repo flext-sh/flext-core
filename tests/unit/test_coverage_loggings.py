@@ -23,7 +23,7 @@ from flext_tests import tm
 from tests import p, t, u
 
 
-class TestCoverageLoggings:
+class TestsFlextCoreCoverageLoggings:
     @staticmethod
     def make_result_logger(
         name: str,
@@ -409,4 +409,4 @@ class TestCoverageLoggings:
         )
 
 
-__all__: t.MutableSequenceOf[str] = ["TestCoverageLoggings"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreCoverageLoggings"]

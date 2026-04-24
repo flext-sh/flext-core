@@ -10,7 +10,7 @@ _FailDispatcher = u.Core.Tests.FailDispatcher
 _OkDispatcher = u.Core.Tests.OkDispatcher
 
 
-class TestRegistryFullCoverage:
+class TestsFlextCoreRegistryFullCoverage:
     def test_registry_summary_reports_public_success_state(self) -> None:
         detail = m.RegistrationDetails(
             registration_id="handler-a",

@@ -184,18 +184,5 @@ class FlextUtilitiesGuardsTypeProtocol:
         except TypeError:
             return False
 
-    @staticmethod
-    def filter_registerable_services(
-        services: Mapping[str, t.GuardInput] | None,
-    ) -> Mapping[str, t.RegisterableService] | None:
-        """Filter a service mapping to only registerable values."""
-        if services is None:
-            return None
-        filtered: dict[str, t.RegisterableService] = {}
-        for key, value in services.items():
-            if FlextUtilitiesGuardsTypeProtocol.registerable_service(value):
-                filtered[str(key)] = value
-        return filtered
-
 
 __all__: list[str] = ["FlextUtilitiesGuardsTypeProtocol"]

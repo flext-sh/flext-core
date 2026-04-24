@@ -29,7 +29,7 @@ from flext_core import FlextContainer, FlextSettings
 from tests import c, m, p, t, u
 
 
-class TestFlextSettingsSingletonIntegration:
+class TestsFlextCoreSettingsIntegration:
     """Test FlextSettings singleton pattern and integration with all modules using factories."""
 
     class _ConfigTestCase(m.BaseModel):
@@ -100,11 +100,11 @@ class TestFlextSettingsSingletonIntegration:
 
         @staticmethod
         def basic_config_cases() -> Sequence[
-            TestFlextSettingsSingletonIntegration._ConfigTestCase
+            TestsFlextCoreSettingsIntegration._ConfigTestCase
         ]:
             """Generate basic configuration test cases."""
             return [
-                TestFlextSettingsSingletonIntegration._ConfigTestCase(
+                TestsFlextCoreSettingsIntegration._ConfigTestCase(
                     test_name="basic_json",
                     config_data={
                         "app_name": "test_app",
@@ -119,7 +119,7 @@ class TestFlextSettingsSingletonIntegration:
                     file_format="json",
                     description="Basic JSON configuration",
                 ),
-                TestFlextSettingsSingletonIntegration._ConfigTestCase(
+                TestsFlextCoreSettingsIntegration._ConfigTestCase(
                     test_name="basic_yaml",
                     config_data={"database_url": "sqlite:///test.db", "timeout": 30},
                     expected_values={
@@ -129,7 +129,7 @@ class TestFlextSettingsSingletonIntegration:
                     file_format="yaml",
                     description="Basic YAML configuration",
                 ),
-                TestFlextSettingsSingletonIntegration._ConfigTestCase(
+                TestsFlextCoreSettingsIntegration._ConfigTestCase(
                     test_name="env_override",
                     config_data={"max_connections": 10},
                     expected_values={"max_connections": 20},
@@ -141,16 +141,16 @@ class TestFlextSettingsSingletonIntegration:
 
         @staticmethod
         def thread_safety_cases() -> Sequence[
-            TestFlextSettingsSingletonIntegration._ThreadSafetyTest
+            TestsFlextCoreSettingsIntegration._ThreadSafetyTest
         ]:
             """Generate thread safety test cases."""
             return [
-                TestFlextSettingsSingletonIntegration._ThreadSafetyTest(
+                TestsFlextCoreSettingsIntegration._ThreadSafetyTest(
                     thread_count=3,
                     operations_per_thread=5,
                     description="Light concurrent access",
                 ),
-                TestFlextSettingsSingletonIntegration._ThreadSafetyTest(
+                TestsFlextCoreSettingsIntegration._ThreadSafetyTest(
                     thread_count=10,
                     operations_per_thread=20,
                     description="Heavy concurrent access",

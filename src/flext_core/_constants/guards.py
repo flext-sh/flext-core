@@ -16,11 +16,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, MutableSequence
 from types import MappingProxyType
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
-from flext_core import t
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class FlextConstantsGuards:
@@ -53,4 +54,4 @@ class FlextConstantsGuards:
     )
 
 
-__all__: list[str] = ["FlextConstantsGuards"]
+__all__: MutableSequence[str] = ["FlextConstantsGuards"]

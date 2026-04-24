@@ -13,6 +13,7 @@ from collections.abc import Mapping
 from importlib.metadata import PackageMetadata, metadata
 
 from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextVersion:
@@ -36,7 +37,7 @@ class FlextVersion:
     __license__: str = str(_metadata.get("License", ""))
     __url__: str = str(_metadata.get("Home-Page", ""))
 
-    def __init_subclass__(cls, **kwargs: t.JsonValue) -> None:
+    def __init_subclass__(cls, **kwargs: tp.JsonValue) -> None:
         """Recompute derived attributes when a subclass overrides ``_metadata``."""
         super().__init_subclass__(**kwargs)
         if "_metadata" in cls.__dict__:

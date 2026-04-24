@@ -51,7 +51,7 @@ _ContainerScenarios = m.Core.Tests.ContainerScenarios
 ContainerScenarios = m.Core.Tests.ContainerScenarios
 
 
-class TestFlextContainer:
+class TestsFlextCoreContainer:
     @pytest.fixture(autouse=True)
     def _reset_container_state(self) -> Generator[None]:
         FlextContainer.reset_for_testing()
@@ -595,7 +595,7 @@ class TestFlextContainer:
         tm.ok(container.resolve(sanitized, type_cls=str), eq=sanitized)
         FlextContainer.reset_for_testing()
 
-    __all__: t.MutableSequenceOf[str] = ["TestFlextContainer"]
+    __all__: t.MutableSequenceOf[str] = ["TestsFlextCoreContainer"]
 
 
-__all__: t.MutableSequenceOf[str] = ["TestFlextContainer"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreContainer"]

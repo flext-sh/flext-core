@@ -27,7 +27,7 @@ from flext_tests import tm
 from tests import m, u
 
 
-class TestEnumUtilitiesCoverage:
+class TestsFlextCoreEnumUtilities:
     @unique
     class Status(StrEnum):
         """Test StrEnum for enum testing."""
@@ -145,8 +145,8 @@ class TestEnumUtilitiesCoverage:
     )
     def test_parse_or_default(self, scenario: ParseOrDefaultScenario) -> None:
         """Test parse_or_default with various scenarios."""
-        if isinstance(scenario.default, TestEnumUtilitiesCoverage.Status):
-            default: TestEnumUtilitiesCoverage.Status = scenario.default
+        if isinstance(scenario.default, TestsFlextCoreEnumUtilities.Status):
+            default: TestsFlextCoreEnumUtilities.Status = scenario.default
         else:
             default = self.Status.PENDING
         result = u.parse_or_default(self.Status, scenario.value, default)

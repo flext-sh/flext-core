@@ -13,7 +13,7 @@ import pytest
 from tests import m, u
 
 
-class TestUtilitiesGeneratorsFullCoverage:
+class TestsFlextCoreUtilitiesGenerators:
     def test_enrich_and_ensure_trace_context_branches(
         self,
         monkeypatch: pytest.MonkeyPatch,

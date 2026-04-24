@@ -35,7 +35,7 @@ def get_memory_usage() -> int:
     return sys.getsizeof(gc.get_objects())
 
 
-class TestContainerMemory:
+class TestsFlextCoreContainerMemory:
     """Memory usage benchmarks for container operations."""
 
     @pytest.mark.benchmark

@@ -13,6 +13,7 @@ from typing import ClassVar
 
 from beartype import BeartypeConf, BeartypeStrategy
 
+from flext_core import t
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 
 
@@ -23,7 +24,7 @@ class FlextUtilitiesBeartypeConf:
     downstream projects to use in their beartype_this_package() calls.
     """
 
-    CLAW_SKIP_PACKAGES: ClassVar[tuple[str, ...]] = c.BEARTYPE_CLAW_SKIP_PACKAGES
+    CLAW_SKIP_PACKAGES: ClassVar[t.VariadicTuple[str]] = c.BEARTYPE_CLAW_SKIP_PACKAGES
     """Packages skipped by the centralized flext_core beartype bootstrap."""
 
     @staticmethod

@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import m
 
 
-class TestModelsEntity:
+class TestsFlextCoreModelsEntity:
     def test_entity_instantiation(self) -> None:
         class EntitySample(m.Entity):
             name: str

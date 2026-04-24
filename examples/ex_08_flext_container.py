@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 from types import ModuleType
 from typing import override
 
@@ -442,4 +443,4 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
 
 
 if __name__ == "__main__":
-    Ex08FlextContainer(caller_file=__file__).run()
+    Ex08FlextContainer(caller_file=Path(__file__)).run()

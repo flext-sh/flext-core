@@ -94,6 +94,7 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+    from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
     from flext_core._utilities.enum import FlextUtilitiesEnum
     from flext_core._utilities.generators import FlextUtilitiesGenerators
     from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -106,6 +107,8 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
     from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
     from flext_core._utilities.mapper import FlextUtilitiesMapper
+    from flext_core._utilities.mapper_access import FlextUtilitiesMapperAccess
+    from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
     from flext_core._utilities.model import FlextUtilitiesModel
     from flext_core._utilities.parser import FlextUtilitiesParser
     from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
@@ -240,6 +243,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.discovery": ("FlextUtilitiesDiscovery",),
             "._utilities.domain": ("FlextUtilitiesDomain",),
             "._utilities.enforcement": ("FlextUtilitiesEnforcement",),
+            "._utilities.enforcement_emit": ("FlextUtilitiesEnforcementEmit",),
             "._utilities.enum": ("FlextUtilitiesEnum",),
             "._utilities.generators": ("FlextUtilitiesGenerators",),
             "._utilities.guards": ("FlextUtilitiesGuards",),
@@ -250,6 +254,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.logging_config": ("FlextUtilitiesLoggingConfig",),
             "._utilities.logging_context": ("FlextUtilitiesLoggingContext",),
             "._utilities.mapper": ("FlextUtilitiesMapper",),
+            "._utilities.mapper_access": ("FlextUtilitiesMapperAccess",),
+            "._utilities.mapper_extract": ("FlextUtilitiesMapperExtract",),
             "._utilities.model": ("FlextUtilitiesModel",),
             "._utilities.parser": ("FlextUtilitiesParser",),
             "._utilities.project_metadata": ("FlextUtilitiesProjectMetadata",),
@@ -429,6 +435,7 @@ __all__: list[str] = [
     "FlextUtilitiesDiscovery",
     "FlextUtilitiesDomain",
     "FlextUtilitiesEnforcement",
+    "FlextUtilitiesEnforcementEmit",
     "FlextUtilitiesEnum",
     "FlextUtilitiesGenerators",
     "FlextUtilitiesGuards",
@@ -439,6 +446,8 @@ __all__: list[str] = [
     "FlextUtilitiesLoggingConfig",
     "FlextUtilitiesLoggingContext",
     "FlextUtilitiesMapper",
+    "FlextUtilitiesMapperAccess",
+    "FlextUtilitiesMapperExtract",
     "FlextUtilitiesModel",
     "FlextUtilitiesParser",
     "FlextUtilitiesProjectMetadata",

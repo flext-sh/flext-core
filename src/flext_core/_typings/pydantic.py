@@ -114,7 +114,7 @@ class FlextTypesPydantic:
 
     # JSON and special types
     # pydantic.Json / ImportString / InstanceOf / Secret are Generic classes/aliases
-    # used with [T] parameterization (e.g. `Json[dict[str, int]]`). TypeAlias only
+    # used with [T] parameterization (e.g. `Json[Mapping[str, int]]`). TypeAlias only
     # supports non-generic aliases, so we keep them as plain attributes which pydantic
     # and the mypy plugin recognize as type markers.
     Json = pydantic.Json

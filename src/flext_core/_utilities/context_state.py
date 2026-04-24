@@ -14,7 +14,7 @@ from collections.abc import Mapping, MutableMapping
 from datetime import datetime
 from typing import ClassVar
 
-from flext_core import FlextRuntime, c, m, p, t, u
+from flext_core import FlextRuntime, c, m, p, r, t, u
 
 
 class FlextUtilitiesContextState:
@@ -163,6 +163,27 @@ class FlextUtilitiesContextState:
                 result[k] = str(v)
         result.update(custom_fields_dict)
         return result
+
+    def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
+        """Get metadata from the context."""
+        if key not in self.state.metadata.attributes:
+            return r[t.JsonPayload].fail_op(
+                "resolve context metadata",
+                c.ERR_CONTEXT_METADATA_KEY_NOT_FOUND.format(key=key),
+            )
+        raw_value: t.JsonValue = self.state.metadata.attributes[key]
+        return r[t.JsonPayload].ok(FlextRuntime.normalize_to_container(raw_value))
+
+    def apply_metadata(self, key: str, value: t.JsonValue) -> None:
+        """Set metadata via Pydantic immutable copy DSL."""
+        meta = self.state.metadata
+        self.state = self.state.model_copy(
+            update={
+                "metadata": meta.model_copy(
+                    update={"attributes": {**meta.attributes, key: value}},
+                ),
+            }
+        )
 
 
 __all__: list[str] = ["FlextUtilitiesContextState"]

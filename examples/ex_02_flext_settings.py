@@ -256,4 +256,4 @@ class Ex02FlextSettings(ExamplesFlextCoreShared):
 
 
 if __name__ == "__main__":
-    Ex02FlextSettings(caller_file=__file__).run()
+    Ex02FlextSettings(caller_file=Path(__file__)).run()

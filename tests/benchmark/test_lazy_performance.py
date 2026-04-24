@@ -16,7 +16,7 @@ type LazyImportEntry = str | tuple[str, str]
 type LazyImportMap = dict[str, LazyImportEntry]
 
 
-class TestLazyPerformance:
+class TestsFlextCoreLazyPerformance:
     """Benchmarks for lazy installation and lazy symbol resolution."""
 
     class LazyBenchmark:
@@ -45,8 +45,10 @@ class TestLazyPerformance:
                 c.Core.Tests.LazyBenchmark.EXTRA_INSTALL_MAPS
             ):
                 module_name = f"flext_core_{index}"
-                virtual_module = TestLazyPerformance.LazyBenchmark._new_virtual_module(
-                    module_name,
+                virtual_module = (
+                    TestsFlextCoreLazyPerformance.LazyBenchmark._new_virtual_module(
+                        module_name,
+                    )
                 )
                 install_lazy_exports(
                     module_name,
@@ -62,7 +64,7 @@ class TestLazyPerformance:
         def run(reset_between_iterations: bool, iterations: int) -> float:
             start = time.perf_counter()
             for _ in range(iterations):
-                TestLazyPerformance.LazyBenchmark._exercise_lazy_path(
+                TestsFlextCoreLazyPerformance.LazyBenchmark._exercise_lazy_path(
                     reset_between_iterations=reset_between_iterations,
                 )
             return time.perf_counter() - start

@@ -10,7 +10,7 @@ import pytest
 from tests import c, m, u
 
 
-class TestModelsCqrsFullCoverage:
+class TestsFlextCoreModelsCqrs:
     def test_command_pagination_limit(self) -> None:
         page = m.Pagination(page=3, size=11)
         assert page.limit == 11

@@ -12,7 +12,7 @@ def test_container_basic_resolution_path() -> None:
     assert resolved.success
 
 
-class TestContainerPerformance:
+class TestsFlextCoreContainerPerformance:
     """Compatibility benchmark class for lazy test exports."""
 
     def test_container_basic_resolution_path(self) -> None:

@@ -42,13 +42,6 @@ class FlextUtilitiesGuardsTypeModel:
         )
 
     @staticmethod
-    def object_list(
-        value: t.GuardInput,
-    ) -> TypeIs[t.JsonList]:
-        """Narrow value to a container list."""
-        return isinstance(value, list)
-
-    @staticmethod
     def object_tuple(
         value: t.GuardInput | Callable[[t.JsonValue], bool] | None,
     ) -> TypeIs[t.VariadicTuple[t.JsonValue]]:

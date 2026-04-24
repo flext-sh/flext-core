@@ -29,7 +29,7 @@ from flext_core import FlextContext
 from tests import m, p, t, u, x
 
 
-class TestFlextMixinsNestedClasses:
+class TestsFlextCoreMixins:
     """Comprehensive test suite for nested mixin classes using u."""
 
     @unique
@@ -64,7 +64,7 @@ class TestFlextMixinsNestedClasses:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Service mixin scenario name")]
         scenario_type: Annotated[
-            TestFlextMixinsNestedClasses.ServiceMixinScenarioType,
+            TestsFlextCoreMixins.ServiceMixinScenarioType,
             m.Field(description="Service mixin scenario type"),
         ]
         needs_init: Annotated[
@@ -83,7 +83,7 @@ class TestFlextMixinsNestedClasses:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Model conversion scenario name")]
         scenario_type: Annotated[
-            TestFlextMixinsNestedClasses.ModelConversionScenarioType,
+            TestsFlextCoreMixins.ModelConversionScenarioType,
             m.Field(description="Model conversion scenario type"),
         ]
         input_value: Annotated[
@@ -101,7 +101,7 @@ class TestFlextMixinsNestedClasses:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Result handling scenario name")]
         scenario_type: Annotated[
-            TestFlextMixinsNestedClasses.ResultHandlingScenarioType,
+            TestsFlextCoreMixins.ResultHandlingScenarioType,
             m.Field(description="Result handling scenario type"),
         ]
         input_value: Annotated[
@@ -111,7 +111,7 @@ class TestFlextMixinsNestedClasses:
 
     def _service_scenarios(
         self,
-    ) -> Sequence[TestFlextMixinsNestedClasses.ServiceMixinScenario]:
+    ) -> Sequence[TestsFlextCoreMixins.ServiceMixinScenario]:
         return [
             self.ServiceMixinScenario(
                 name="container_register_in_container",
@@ -143,7 +143,7 @@ class TestFlextMixinsNestedClasses:
 
     def _assert_service_mixin_scenario(
         self,
-        scenario: TestFlextMixinsNestedClasses.ServiceMixinScenario,
+        scenario: TestsFlextCoreMixins.ServiceMixinScenario,
     ) -> None:
 
         class MyService(x):
@@ -193,4 +193,4 @@ class TestFlextMixinsNestedClasses:
             )
 
 
-__all__: t.MutableSequenceOf[str] = ["TestFlextMixinsNestedClasses"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreMixins"]

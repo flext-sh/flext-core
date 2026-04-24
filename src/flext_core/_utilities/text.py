@@ -72,7 +72,9 @@ class FlextUtilitiesText:
         return "".join(ch for ch in text.lower() if ch.isalnum())
 
     @staticmethod
-    def write_file(path: str | Path, content: str, encoding: str = "utf-8") -> None:
+    def write_file(
+        path: str | Path, content: str, encoding: str = c.DEFAULT_ENCODING
+    ) -> None:
         """Write text content to a file path using explicit encoding."""
         Path(path).write_text(content, encoding=encoding)
 

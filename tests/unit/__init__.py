@@ -37,7 +37,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_constants_project_metadata": (
                 "TestsFlextCoreConstantsProjectMetadata",
             ),
-            ".test_container": ("TestFlextContainer",),
+            ".test_container": ("TestsFlextCoreContainer",),
             ".test_context": ("TestsFlextCoreContext",),
             ".test_coverage_exceptions": ("TestCoverageExceptions",),
             ".test_coverage_loggings": ("TestCoverageLoggings",),
@@ -98,7 +98,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_registry": ("TestRegistry",),
             ".test_registry_full_coverage": ("TestRegistryFullCoverage",),
             ".test_result": ("Testr",),
-            ".test_result_additional": ("TestResultAdditional",),
             ".test_result_exception_carrying": (
                 "TestsFlextCoreResultExceptionCarrying",
             ),

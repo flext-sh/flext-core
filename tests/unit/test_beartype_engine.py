@@ -24,12 +24,15 @@ from beartype import BeartypeConf, BeartypeStrategy
 from flext_core import FlextUtilitiesBeartypeConf, FlextUtilitiesBeartypeEngine as be
 from tests import c, m, t, u
 
-# ------------------------------------------------------------------ #
 # contains_any                                                        #
-# ------------------------------------------------------------------ #
 
 
-class TestContainsAny:
+type _AnyAlias = str | typing.Any
+type _CleanAlias = str | int
+type _NestedAnyAlias = Mapping[str, typing.Any]
+
+
+class TestsFlextCoreBeartypeEngine:
     """Verify recursive Any detection via beartype.door.TypeHint."""
 
     def test_direct_any(self) -> None:
@@ -76,14 +79,7 @@ class TestContainsAny:
         """Mapping[str, Sequence[int]] has no Any."""
         assert be.contains_any(Mapping[str, Sequence[int]]) is False
 
-
-# ------------------------------------------------------------------ #
-# has_forbidden_collection_origin                                     #
-# ------------------------------------------------------------------ #
-
-
-class TestForbiddenCollectionOrigin:
-    """Verify bare dict/list/set detection."""
+    # has_forbidden_collection_origin                                     #
 
     FORBIDDEN: frozenset[str] = frozenset({"dict", "list", "set"})
 
@@ -117,14 +113,7 @@ class TestForbiddenCollectionOrigin:
         result = be.has_forbidden_collection_origin(str, self.FORBIDDEN)
         assert result == (False, "")
 
-
-# ------------------------------------------------------------------ #
-# count_union_members                                                 #
-# ------------------------------------------------------------------ #
-
-
-class TestCountUnionMembers:
-    """Verify non-None union member counting."""
+    # count_union_members                                                 #
 
     def test_simple_union(self) -> None:
         """Str | int has 2 members."""
@@ -146,14 +135,7 @@ class TestCountUnionMembers:
         """Str | int | float has 3 members."""
         assert be.count_union_members(str | int | float) == 3
 
-
-# ------------------------------------------------------------------ #
-# matches_str_none_union                                              #
-# ------------------------------------------------------------------ #
-
-
-class TestMatchesStrNoneUnion:
-    """Verify str | None pattern detection."""
+    # matches_str_none_union                                              #
 
     def test_str_none(self) -> None:
         """Str | None detected."""
@@ -175,19 +157,7 @@ class TestMatchesStrNoneUnion:
         """Str | int | None IS str | None (str and None both present)."""
         assert be.matches_str_none_union(str | int | None) is True
 
-
-# ------------------------------------------------------------------ #
-# alias_contains_any                                                  #
-# ------------------------------------------------------------------ #
-
-
-type _AnyAlias = str | typing.Any
-type _CleanAlias = str | int
-type _NestedAnyAlias = Mapping[str, typing.Any]
-
-
-class TestAliasContainsAny:
-    """Verify PEP 695 type alias Any detection."""
+    # alias_contains_any                                                  #
 
     def test_alias_with_any(self) -> None:
         """Type alias containing Any is detected."""
@@ -201,14 +171,7 @@ class TestAliasContainsAny:
         """Nested Any in alias is detected."""
         assert be.alias_contains_any(_NestedAnyAlias.__value__) is True
 
-
-# ------------------------------------------------------------------ #
-# BeartypeConf factory                                                #
-# ------------------------------------------------------------------ #
-
-
-class TestBeartypeConf:
-    """Verify centralized BeartypeConf factory."""
+    # BeartypeConf factory                                                #
 
     def test_default_mode_conf(self) -> None:
         """Default beartype mode is disabled in flext_core."""
@@ -229,14 +192,7 @@ class TestBeartypeConf:
         """flext_core starts with beartype activation disabled by default."""
         assert c.BEARTYPE_MODE is c.EnforcementMode.OFF
 
-
-# ------------------------------------------------------------------ #
-# Facade accessibility                                                #
-# ------------------------------------------------------------------ #
-
-
-class TestFacadeAccessibility:
-    """Verify beartype engine accessible via u.* facade."""
+    # Facade accessibility                                                #
 
     def test_contains_any_on_facade(self) -> None:
         """u.contains_any is accessible."""
@@ -261,14 +217,7 @@ class TestFacadeAccessibility:
     def test_all_methods_on_facade(self, method: str) -> None:
         """All beartype engine + conf methods on u.*."""
 
-
-# ------------------------------------------------------------------ #
-# beartype.claw compatibility                                         #
-# ------------------------------------------------------------------ #
-
-
-class TestBeartypeClawCompatibility:
-    """Verify current beartype.claw compatibility boundaries."""
+    # beartype.claw compatibility                                         #
 
     @staticmethod
     def _run_python(script: str, cwd: Path) -> m.Cli.CommandOutput:

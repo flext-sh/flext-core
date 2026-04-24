@@ -10,7 +10,7 @@ from flext_tests import tm, tv
 from tests import c
 
 
-class TestAutomatedArchitecture:
+class TestsFlextCoreAutomatedArchitecture:
     """Architecture compliance tests using tv validator."""
 
     def test_imports_no_violations(self) -> None:

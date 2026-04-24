@@ -22,7 +22,7 @@ from typing import Final
 from tests import p, r, t, u
 
 
-class TestFlextUtilitiesReliability:
+class TestsFlextCoreUtilitiesReliability:
     """Tests for FlextUtilitiesReliability retry methods."""
 
     class Constants:

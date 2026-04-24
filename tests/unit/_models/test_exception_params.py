@@ -18,7 +18,7 @@ from pydantic import ValidationError
 from tests import m, t
 
 
-class TestFlextModelsExceptionParams:
+class TestsFlextCoreModelsExceptionParams:
     """Tests for flext_core via the m facade."""
 
     # ── ParamsModel base ──────────────────────────────────────

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import override
 
 from examples import ExamplesFlextCoreShared, c, m, p, u
@@ -221,4 +222,4 @@ class Ex03LoggingDsl(ExamplesFlextCoreShared):
 
 
 if __name__ == "__main__":
-    Ex03LoggingDsl(caller_file=__file__).run()
+    Ex03LoggingDsl(caller_file=Path(__file__)).run()

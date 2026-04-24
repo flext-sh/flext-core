@@ -26,7 +26,7 @@ _UserCreatedEvent = m.Core.Tests.UserCreatedEvent
 _UserUpdatedEvent = m.Core.Tests.UserUpdatedEvent
 
 
-class TestArchitecturalPatterns:
+class TestsFlextCoreArchitecturalPatterns:
     """Test enterprise design patterns."""
 
     @pytest.mark.architecture

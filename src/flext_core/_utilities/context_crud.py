@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
+from datetime import datetime
+from pathlib import Path
 from typing import ClassVar, overload
 
 from flext_core import (
@@ -70,34 +72,13 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
             )
         return r[t.JsonPayload].ok(FlextRuntime.normalize_to_container(value))
 
-    def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
-        """Get metadata from the context."""
-        if key not in self.state.metadata.attributes:
-            return r[t.JsonPayload].fail_op(
-                "resolve context metadata",
-                c.ERR_CONTEXT_METADATA_KEY_NOT_FOUND.format(key=key),
-            )
-        raw_value: t.JsonValue = self.state.metadata.attributes[key]
-        return r[t.JsonPayload].ok(FlextRuntime.normalize_to_container(raw_value))
-
-    def apply_metadata(self, key: str, value: t.JsonValue) -> None:
-        """Set metadata via Pydantic immutable copy DSL."""
-        meta = self.state.metadata
-        self.state = self.state.model_copy(
-            update={
-                "metadata": meta.model_copy(
-                    update={"attributes": {**meta.attributes, key: value}},
-                ),
-            }
-        )
-
     def has(self, key: str, scope: str = c.ContextScope.GLOBAL) -> bool:
         """Check if a key exists in the context."""
         if not self.state.active:
             return False
         return key in self._contextvar_data(scope)
 
-    def items(self) -> Sequence[tuple[str, t.JsonValue]]:
+    def items(self) -> Sequence[t.Pair[str, t.JsonValue]]:
         """Get all items (key-value pairs) across scopes."""
         if not self.state.active:
             return []
@@ -175,7 +156,10 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
                     c.ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED,
                 )
             normalized_value = FlextRuntime.normalize_to_container(value)
-            if not isinstance(normalized_value, t.CONTAINER_AND_COLLECTION_TYPES):
+            if not isinstance(
+                normalized_value,
+                (str, int, float, bool, bytes, datetime, Path, list, dict, tuple),
+            ):
                 return r[bool].fail_op(
                     "validate context value serializable",
                     c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
@@ -189,8 +173,19 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
             if not key_or_data:
                 return r[bool].ok(True)
             payload = key_or_data
+            normalized_payload = FlextRuntime.normalize_to_container(dict(payload))
+            if not isinstance(
+                normalized_payload,
+                (str, int, float, bool, bytes, datetime, Path, list, dict, tuple),
+            ):
+                return r[bool].fail_op(
+                    "validate context payload serializable",
+                    c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
+                )
+            if isinstance(normalized_payload, m.BaseModel):
+                normalized_payload = normalized_payload.model_dump()
             hook_context = {
-                c.Directory.DATA: FlextRuntime.normalize_to_container(dict(payload)),
+                c.Directory.DATA.value: normalized_payload,
             }
 
         try:
@@ -202,4 +197,4 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
             return e.fail_operation("apply context update", exc)
 
 
-__all__: list[str] = ["FlextUtilitiesContextCrud"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesContextCrud"]

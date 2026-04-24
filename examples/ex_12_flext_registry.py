@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import override
 
 from examples import (
@@ -272,7 +273,7 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
         handler_a = _ProtocolHandler(label_a, Ex12CommandA)
         handler_b = _ProtocolHandler(label_b, Ex12CommandB)
         handler_mode = h.create_from_callable(
-            lambda msg: f"{callable_prefix}:{msg}",
+            lambda msg: f"{callable_prefix}:{msg!r}",
             handler_name=callable_name,
             mode=c.HandlerType.COMMAND,
         )
@@ -391,4 +392,4 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
 
 
 if __name__ == "__main__":
-    Ex12RegistryDsl(caller_file=__file__).run()
+    Ex12RegistryDsl(caller_file=Path(__file__)).run()

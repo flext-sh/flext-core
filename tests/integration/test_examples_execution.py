@@ -12,7 +12,7 @@ import pytest
 from tests import c, t
 
 
-class TestExamplesExecution:
+class TestsFlextCoreExamplesExecution:
     """Execute public flext-core example scripts against their golden files."""
 
     @pytest.mark.parametrize(
@@ -53,4 +53,4 @@ class TestExamplesExecution:
         assert not actual_path.exists()
 
 
-__all__: t.MutableSequenceOf[str] = ["TestExamplesExecution"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreExamplesExecution"]

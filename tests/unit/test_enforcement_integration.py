@@ -38,7 +38,6 @@ def _import_fresh_silent(dotted: str) -> object:
 def _import_fresh_with_warnings(
     dotted: str,
 ) -> tuple[object, Sequence[warnings.WarningMessage]]:
-    """Import ``dotted`` with a clean cache and assert warnings are emitted."""
     sys.modules.pop(dotted, None)
     with pytest.warns(FlextMroViolation, match="violates FLEXT") as caught:
         module = importlib.import_module(dotted)
@@ -56,17 +55,11 @@ def _violation_lines(messages: Sequence[warnings.WarningMessage]) -> Iterator[st
             )
 
 
-class TestCleanModuleEmitsNothing:
-    """Importing well-formed code MUST NOT trigger any enforcement warning."""
-
+class TestsFlextCoreEnforcementIntegration:
     def test_clean_fixture_is_silent(self) -> None:
         _import_fresh_silent(
             "tests.unit._enforcement_integration_fixtures.clean_module",
         )
-
-
-class TestBadModuleFiresExpectedRules:
-    """Each bad class in the fixture triggers its dedicated rule."""
 
     @pytest.fixture(scope="class")
     def violations(self) -> t.StrSequence:

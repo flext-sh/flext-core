@@ -14,7 +14,7 @@ from flext_tests import tm
 from tests import p, r, s, t
 
 
-class TestService100Coverage:
+class TestsFlextCoreService100Coverage:
     """Real tests to achieve 100% service coverage."""
 
     class _ServiceStub(s[str]):

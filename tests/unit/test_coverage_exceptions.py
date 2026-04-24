@@ -16,7 +16,7 @@ type ErrorFactory = Callable[[], e.BaseError]
 type FailureFactory = Callable[[], p.Result[bool]]
 
 
-class TestCoverageExceptions:
+class TestsFlextCoreCoverageExceptions:
     """Validate public exception behavior without depending on internals."""
 
     STRUCTURED_ERRORS: Sequence[

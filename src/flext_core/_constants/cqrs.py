@@ -9,8 +9,6 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
-from flext_core import t
-
 
 class FlextConstantsCqrs:
     """Constants for CQRS patterns and workflows."""
@@ -63,7 +61,7 @@ class FlextConstantsCqrs:
         ERRORS = "errors"
         THROUGHPUT = "throughput"
 
-    DEFAULT_METRIC_CATEGORIES: Final[t.VariadicTuple[str]] = (
+    DEFAULT_METRIC_CATEGORIES: Final[tuple[str, ...]] = (
         ServiceMetricCategory.PERFORMANCE,
         ServiceMetricCategory.ERRORS,
         ServiceMetricCategory.THROUGHPUT,

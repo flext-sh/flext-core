@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import m
 
 
-class TestModelsBase:
+class TestsFlextCoreModelsBase:
     def test_base_model_validate_and_dump(self) -> None:
         class Sample(m.BaseModel):
             name: str

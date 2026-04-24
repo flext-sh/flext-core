@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import t
 from flext_core._models._context._data import FlextModelsContextData
 from flext_core._models._context._export import FlextModelsContextExport
 from flext_core._models._context._metadata import FlextModelsContextMetadata
@@ -32,4 +33,4 @@ class FlextModelsContext(
     """
 
 
-__all__: list[str] = ["FlextModelsContext"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsContext"]

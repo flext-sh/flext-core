@@ -178,7 +178,7 @@ class FlextExceptionsHelpers:
         for key in param_keys:
             attr_val = getattr(resolved, key, None)
             if attr_val is not None:
-                error_context[key] = FlextRuntime.normalize_to_metadata(attr_val)
+                error_context[key] = FlextRuntime.normalize_to_metadata(attr_val)  # type: ignore[index]
         resolved_fields: Mapping[str, FieldInfo] = params_cls.__pydantic_fields__
         for key in param_keys:
             field_info = resolved_fields.get(key)
@@ -186,7 +186,7 @@ class FlextExceptionsHelpers:
                 continue
             field_help = field_info.description or field_info.title
             if isinstance(field_help, str) and field_help:
-                error_context[f"{key}_description"] = field_help
+                error_context[f"{key}_description"] = field_help  # type: ignore[index]
         return (resolved, error_context or None, preserved_metadata, correlation_id_str)
 
 

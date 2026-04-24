@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import override
 
 from examples import ExamplesFlextCoreShared, c, m
@@ -264,4 +265,4 @@ class Ex07FlextExceptions(ExamplesFlextCoreShared):
 
 
 if __name__ == "__main__":
-    Ex07FlextExceptions(caller_file=__file__).run()
+    Ex07FlextExceptions(caller_file=Path(__file__)).run()

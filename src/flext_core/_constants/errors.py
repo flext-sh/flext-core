@@ -9,8 +9,6 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final, override
 
-from flext_core import t
-
 
 class FlextConstantsErrors:
     """Error domain constants for structured error routing."""
@@ -141,7 +139,7 @@ class FlextConstantsErrors:
     ERR_VALIDATION_FAILED_WITH_ERROR: Final[str] = "Validation failed: {error}"
     ERR_GENERATOR_KIND_MISSING: Final[str] = "No kind provided for prefix resolution"
 
-    CATCHABLE_RUNTIME_EXCEPTIONS: Final[t.VariadicTuple[type[Exception]]] = (
+    CATCHABLE_RUNTIME_EXCEPTIONS: Final[tuple[type[Exception], ...]] = (
         ArithmeticError,
         AttributeError,
         KeyError,

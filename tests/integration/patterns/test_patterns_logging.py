@@ -18,7 +18,7 @@ import pytest
 from tests import p, t, u
 
 
-class TestPatternsLogging:
+class TestsFlextCorePatternsLogging:
     @staticmethod
     def make_result_logger(name: str) -> p.Logger:
         return u.create_module_logger(name)

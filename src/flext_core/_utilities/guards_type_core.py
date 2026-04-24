@@ -161,19 +161,6 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, getattr(type_cls, "__origin__", None) or type_cls)
 
     @staticmethod
-    def require_initialized[T](value: T | None, name: str) -> T:
-        """Require that a value is initialized (not None).
-
-        Raises:
-            AttributeError: If value is None.
-
-        """
-        if value is None:
-            msg = f"{name} is not initialized"
-            raise AttributeError(msg)
-        return value
-
-    @staticmethod
     def in_(value: t.GuardInput, container: t.GuardInput) -> bool:
         """Check if value is in container, handling TypeError gracefully."""
         if isinstance(container, (list, tuple, set, dict)):

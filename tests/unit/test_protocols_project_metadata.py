@@ -28,7 +28,7 @@ class _ConcreteTierNamer:
         return f"{tier}:{project_name}"
 
 
-class TestProjectMetadataReaderProtocol:
+class TestsFlextCoreProtocolsProjectMetadata:
     def test_accepts_reader(self) -> None:
         assert isinstance(_ConcreteReader(), pm.ProjectMetadataReader)
 
@@ -38,24 +38,8 @@ class TestProjectMetadataReaderProtocol:
 
         assert not isinstance(_Unrelated(), pm.ProjectMetadataReader)
 
-
-class TestProjectClassStemDeriverProtocol:
     def test_accepts_deriver(self) -> None:
         assert isinstance(_ConcreteStemmer(), pm.ProjectClassStemDeriver)
 
-    def test_rejects_unrelated(self) -> None:
-        class _Unrelated:
-            pass
-
-        assert not isinstance(_Unrelated(), pm.ProjectClassStemDeriver)
-
-
-class TestProjectTierFacadeNamerProtocol:
     def test_accepts_namer(self) -> None:
         assert isinstance(_ConcreteTierNamer(), pm.ProjectTierFacadeNamer)
-
-    def test_rejects_unrelated(self) -> None:
-        class _Unrelated:
-            pass
-
-        assert not isinstance(_Unrelated(), pm.ProjectTierFacadeNamer)

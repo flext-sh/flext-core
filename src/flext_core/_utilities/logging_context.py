@@ -153,7 +153,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             return validated_path
         if isinstance(value, bytes):
             validated_bytes: t.JsonValue = t.json_value_adapter().validate_python(
-                value.decode("utf-8", errors="replace"),
+                value.decode(c.DEFAULT_ENCODING, errors="replace"),
             )
             return validated_bytes
         validated_default: t.JsonValue = t.json_value_adapter().validate_python(

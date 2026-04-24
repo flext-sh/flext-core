@@ -15,7 +15,7 @@ from tests import p, r, t, u
 pytestmark = [pytest.mark.integration]
 
 
-class TestLibraryIntegration:
+class TestsFlextCoreLibraryIntegration:
     """Integration tests for FLEXT Core library components.
 
     Validates that core foundation components work together correctly

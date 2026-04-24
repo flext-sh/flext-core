@@ -37,7 +37,14 @@ def _messages(
     return [v.message for v in report.violations if fragment in v.message]
 
 
-class TestFieldRules:
+def _make_class(name: str, body: dict[str, object]) -> type:
+    cls = type(name, (), body)
+    cls.__qualname__ = name  # strip test-method qualname prefix
+    cls.__module__ = "flext_core.synthetic"
+    return cls
+
+
+class TestsFlextCoreEnforcement:
     """Model field-level rules — no_any, no_bare_collection, no_mutable_default, etc."""
 
     def test_any_field_detected(self) -> None:
@@ -127,10 +134,6 @@ class TestFieldRules:
 
         assert not _messages(u.check(_M), fragment="missing description")
 
-
-class TestModelClassRules:
-    """Model-class rules — no_v1_config, extra_policy, value_not_frozen."""
-
     def test_v1_config_class_detected(self) -> None:
         with pytest.warns(PydanticDeprecatedSince20):
 
@@ -148,8 +151,6 @@ class TestModelClassRules:
 
         assert not _messages(u.check(_M), fragment="extra")
 
-
-class TestEnforcementMode:
     def test_mode_default_is_warn(self) -> None:
         assert c.ENFORCEMENT_MODE is c.EnforcementMode.WARN
 
@@ -159,8 +160,6 @@ class TestEnforcementMode:
             row[0] in c.EnforcementCategory for row in c.ENFORCEMENT_RULES.values()
         )
 
-
-class TestProjectDiscovery:
     def test_flext_core_uses_flext_override(self) -> None:
         """``flext_core`` is the canonical src layer and overrides to ``Flext``."""
         project = FlextUtilitiesEnforcement._project(FlextUtilitiesEnforcement)
@@ -175,10 +174,6 @@ class TestProjectDiscovery:
         fake.__module__ = "fence"
 
         assert FlextUtilitiesEnforcement._project(fake) is None
-
-
-class TestConstantsLayerRules:
-    """Constants layer — const_mutable, const_lowercase."""
 
     def test_mutable_list_detected(self) -> None:
         class _CConstants:
@@ -235,10 +230,6 @@ class TestConstantsLayerRules:
             fragment="mutable constant",
         )
 
-
-class TestProtocolsLayerRules:
-    """Protocols layer — proto_inner_kind, proto_not_runtime."""
-
     def test_non_protocol_inner_detected(self) -> None:
         class _PProtocols:
             class NotAProtocol:
@@ -279,10 +270,6 @@ class TestProtocolsLayerRules:
             fragment="runtime_checkable",
         )
 
-
-class TestTypesLayerRules:
-    """Types layer — alias_any."""
-
     def test_alias_with_any_detected(self) -> None:
         class _TTypes:
             type BadAlias = typing.Any
@@ -296,10 +283,6 @@ class TestTypesLayerRules:
         assert not _messages(
             u.check(_TTypes, layer="types"), fragment="Any in type alias"
         )
-
-
-class TestUtilitiesLayerRules:
-    """Utilities layer — utility_not_static."""
 
     def test_instance_method_detected(self) -> None:
         class _UUtilities:
@@ -330,8 +313,6 @@ class TestUtilitiesLayerRules:
             fragment="staticmethod",
         )
 
-
-class TestBaseModelCoverage:
     @pytest.mark.parametrize(
         "base_cls",
         [
@@ -346,13 +327,9 @@ class TestBaseModelCoverage:
     def test_base_model_has_enforcement_hook(self, base_cls: type) -> None:
         assert hasattr(base_cls, "__pydantic_init_subclass__")
 
-
-class TestNamespaceInheritance:
     def test_c_facade_inherits_namespace(self) -> None:
         assert issubclass(c, FlextModelsNamespace)
 
-
-class TestReportApi:
     def test_empty_report_is_falsy(self) -> None:
         report = m.Report()
         assert not report
@@ -389,10 +366,6 @@ class TestReportApi:
         merged = m.Report(violations=[v, w])
         assert len(merged) == 2
 
-
-class TestFalsePositiveSkips:
-    """Dynamic runtime-driven skips — no hardcoded name lists."""
-
     def test_function_local_class_skipped(self) -> None:
         """Classes defined inside functions carry ``<locals>`` in qualname."""
 
@@ -426,10 +399,6 @@ class TestFalsePositiveSkips:
         report = u.check(fake)
         assert all(v.layer != "namespace" for v in report.violations)
 
-
-class TestClassPrefixScope:
-    """``class_prefix`` applies only to top-level facades."""
-
     def test_inner_class_qualname_exempts_prefix_check(self) -> None:
         """Classes with ``.`` in qualname (nested) skip class_prefix."""
         # Simulate a top-level class' inner class via a synthetic target whose
@@ -451,10 +420,6 @@ class TestClassPrefixScope:
             "class name missing project prefix" in v.message for v in report.violations
         )
 
-
-class TestProjectPrefixOverrides:
-    """``c.Project.SPECIAL_NAME_OVERRIDES`` honored (flext-core→Flext)."""
-
     def test_flext_core_override_returns_flext(self) -> None:
         """flext_core is the single src package that maps to ``Flext``."""
         project = FlextUtilitiesEnforcement._project(FlextUtilitiesEnforcement)
@@ -474,10 +439,6 @@ class TestProjectPrefixOverrides:
         # "TestsFlext" — the composed prefix — so no class_prefix violation.
         assert not namespace_msgs
 
-
-class TestDetailSubstitution:
-    """Rule templates with ``{placeholders}`` get context filled in."""
-
     def test_bare_collection_renders_kind(self) -> None:
         class _M(m.ArbitraryTypesModel):
             items: list[str] = m.Field(default_factory=list, description="d")
@@ -495,18 +456,6 @@ class TestDetailSubstitution:
         assert any(
             'Field "undoc"' in msg and "missing description" in msg for msg in msgs
         )
-
-
-def _make_class(name: str, body: dict[str, object]) -> type:
-    """Build a synthetic top-level class (no ``<locals>`` in qualname)."""
-    cls = type(name, (), body)
-    cls.__qualname__ = name  # strip test-method qualname prefix
-    cls.__module__ = "flext_core.synthetic"
-    return cls
-
-
-class TestAccessorMethodBan:
-    """AGENTS.md §3.1 — public ``get_*``/``set_*``/``is_*`` methods forbidden."""
 
     def test_get_prefix_flagged(self) -> None:
         cls = _make_class("FlextCoreAccessedGet", {"get_user": lambda self: None})
@@ -550,10 +499,6 @@ class TestAccessorMethodBan:
         ]
         assert not msgs
 
-
-class TestSettingsInheritance:
-    """AGENTS.md §2.6 — top-level ``*Settings`` must inherit FlextSettings."""
-
     def test_top_level_missing_inheritance_flagged(self) -> None:
         cls = _make_class("FlextWorkerSettings", {})
         msgs = [
@@ -583,10 +528,6 @@ class TestSettingsInheritance:
             if "must inherit FlextSettings" in v.message
         ]
         assert not msgs
-
-
-class TestHasNestedNamespaceViaMro:
-    """``has_nested_namespace`` must walk the MRO, not just ``vars(cls)``."""
 
     def test_direct_inner_class_detected(self) -> None:
         class _DirectHolder:

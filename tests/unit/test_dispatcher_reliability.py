@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import p, r
 
 
-class TestDispatcherReliability:
+class TestsFlextCoreDispatcherReliability:
     def test_reliability_chain_stops_on_failure(self) -> None:
         def fail_step(_: int) -> p.Result[int]:
             return r[int].fail("stop")
