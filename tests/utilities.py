@@ -1036,7 +1036,7 @@ class TestsFlextCoreUtilities(u):
                         name="none-uses-default",
                         input_value=None,
                         target=int,
-                        options=u.ParseOptions[int](default=7),
+                        options=u.ParseOptions(default=7),
                         should_succeed=True,
                         expected_value=7,
                         description="Public parse returns default when value is None",
@@ -1045,7 +1045,7 @@ class TestsFlextCoreUtilities(u):
                         name="invalid-uses-default-factory",
                         input_value="x",
                         target=int,
-                        options=u.ParseOptions[int](default_factory=lambda: 9),
+                        options=u.ParseOptions(default_factory=lambda: 9),
                         should_succeed=True,
                         expected_value=9,
                         description="Public parse returns default_factory output on failure",
@@ -1062,7 +1062,7 @@ class TestsFlextCoreUtilities(u):
                         name="enum-case-insensitive",
                         input_value="INACTIVE",
                         target=c.Core.Tests.StatusEnum,
-                        options=u.ParseOptions[c.Core.Tests.StatusEnum](
+                        options=u.ParseOptions(
                             case_insensitive=True,
                         ),
                         should_succeed=True,
@@ -1102,7 +1102,7 @@ class TestsFlextCoreUtilities(u):
                         name="invalid-bool-field-context",
                         input_value="maybe",
                         target=bool,
-                        options=u.ParseOptions[bool](field_name="flag"),
+                        options=u.ParseOptions(field_name="flag"),
                         should_succeed=False,
                         error_contains="flag",
                         description="Public parse includes field context on bool failure",
@@ -1268,7 +1268,7 @@ class TestsFlextCoreUtilities(u):
                 """Factory for `m.Core.Tests.User` entities using native Python patterns."""
 
                 _counter: ClassVar[count[int]] = count(1)
-                _names: ClassVar[t.StrSequence] = [
+                _names: ClassVar[Sequence[str]] = [
                     "Alice Johnson",
                     "Bob Smith",
                     "Carol Williams",
@@ -1399,7 +1399,7 @@ class TestsFlextCoreUtilities(u):
             class ValidatingServiceAutoFactory:
                 """Factory for ValidatingServiceAuto."""
 
-                _words: ClassVar[t.StrSequence] = [
+                _words: ClassVar[Sequence[str]] = [
                     "alpha",
                     "bravo",
                     "charlie",
@@ -1446,7 +1446,7 @@ class TestsFlextCoreUtilities(u):
             class ValidatingServiceFactory:
                 """Factory for `ValidatingService`."""
 
-                _words: ClassVar[t.StrSequence] = [
+                _words: ClassVar[Sequence[str]] = [
                     "alpha",
                     "bravo",
                     "charlie",
@@ -1520,7 +1520,7 @@ class TestsFlextCoreUtilities(u):
                     c.Core.Tests.ServiceTestType.FAIL,
                 ]
                 _type_index: ClassVar[int] = 0
-                _words: ClassVar[t.StrSequence] = [
+                _words: ClassVar[Sequence[str]] = [
                     "test",
                     "sample",
                     "example",

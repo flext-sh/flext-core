@@ -49,7 +49,7 @@ class TestsFlextCoreLazy:
         class Alpha:
             pass
 
-        alpha_module.Alpha = Alpha  # type: ignore[attr-defined]
+        alpha_module.Alpha = Alpha
         monkeypatch.setitem(sys.modules, package_name, ModuleType(package_name))
         monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
 
@@ -85,13 +85,13 @@ class TestsFlextCoreLazy:
         alpha_module_name = f"{child_package_name}.alpha"
 
         child_package = ModuleType(child_package_name)
-        child_package._LAZY_IMPORTS = {"Alpha": (".alpha", "Alpha")}  # type: ignore[attr-defined]
+        child_package._LAZY_IMPORTS = {"Alpha": (".alpha", "Alpha")}
         alpha_module = ModuleType(alpha_module_name)
 
         class Alpha:
             pass
 
-        alpha_module.Alpha = Alpha  # type: ignore[attr-defined]
+        alpha_module.Alpha = Alpha
         monkeypatch.setitem(sys.modules, child_package_name, child_package)
         monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
 
@@ -107,13 +107,13 @@ class TestsFlextCoreLazy:
         alpha_module_name = f"{child_package_name}.alpha"
 
         child_package = ModuleType(child_package_name)
-        child_package._LAZY_IMPORTS = {"Alpha": (".alpha", "Alpha")}  # type: ignore[attr-defined]
+        child_package._LAZY_IMPORTS = {"Alpha": (".alpha", "Alpha")}
         alpha_module = ModuleType(alpha_module_name)
 
         class Alpha:
             pass
 
-        alpha_module.Alpha = Alpha  # type: ignore[attr-defined]
+        alpha_module.Alpha = Alpha
         monkeypatch.setitem(sys.modules, child_package_name, child_package)
         monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
 

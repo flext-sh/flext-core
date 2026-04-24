@@ -13,5 +13,5 @@ class TestDispatcherDI:
         dispatcher = u.build_dispatcher()
         assert isinstance(dispatcher, p.Dispatcher)
         handle: t.DispatchableHandler = lambda _m: "handled"  # noqa: E731
-        handle.message_type = m.Command  # type: ignore[attr-defined]
+        handle.message_type = m.Command
         assert dispatcher.register_handler(handle).success

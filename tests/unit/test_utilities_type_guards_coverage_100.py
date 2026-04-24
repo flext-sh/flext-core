@@ -142,6 +142,7 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     @pytest.mark.parametrize("scenario", IS_LIST_NON_EMPTY, ids=lambda s: s.name)
     def test_is_list_non_empty(self, scenario: TypeGuardScenario) -> None:
+        value: t.JsonValue
         if scenario.value == "has_items":
             value = [1, 2, 3]
         elif scenario.value == "empty":
@@ -168,17 +169,17 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, eq="")
 
     def test_normalize_dict_to_pydantic_model(self) -> None:
-        test_dict = {"key": "value", "num": 42}
+        test_dict: t.JsonValue = {"key": "value", "num": 42}
         result = u.normalize_to_metadata(test_dict)
         tm.that(result, is_=dict)
 
     def test_normalize_list_to_pydantic_model(self) -> None:
-        test_list = [1, 2, 3]
+        test_list: t.JsonValue = [1, 2, 3]
         result = u.normalize_to_metadata(test_list)
         tm.that(result, is_=list)
 
     def test_normalize_dict_with_primitives(self) -> None:
-        test_dict = {"a": 1, "b": "test", "c": True}
+        test_dict: t.JsonValue = {"a": 1, "b": "test", "c": True}
         result = u.normalize_to_metadata(test_dict)
         tm.that(result, is_=dict)
 
@@ -201,7 +202,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, has="123")
 
     def test_normalize_list_with_primitives(self) -> None:
-        test_list = ["a", 1, True]
+        test_list: t.JsonValue = ["a", 1, True]
         result = u.normalize_to_metadata(test_list)
         tm.that(result, is_=list)
 
@@ -221,7 +222,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_dict_with_valid_flat_structure(self) -> None:
-        test_dict = {
+        test_dict: t.JsonValue = {
             "str": "value",
             "int": 42,
             "bool": True,

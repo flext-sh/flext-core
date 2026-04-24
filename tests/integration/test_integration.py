@@ -76,7 +76,9 @@ class TestLibraryIntegration:
 
         def create_result() -> str:
             process_result = mock_external_service.process(input_data)
-            return process_result.unwrap_or("")
+            if process_result.success and process_result.value is not None:
+                return str(process_result.value)
+            return ""
 
         register_result = clean_container.factory("result_factory", create_result)
         assert register_result is clean_container

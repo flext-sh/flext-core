@@ -18,8 +18,8 @@ class TestRegistryFullCoverage:
             status=c.Status.ACTIVE,
         )
         summary = m.RegistrySummary(registered=[detail])
-        assert summary.success is True
-        assert summary.failure is False
+        assert summary.success()
+        assert not summary.failure()
         assert len(summary.registered) == 1
 
     def test_registry_runtime_exposes_dispatcher_from_central_dsl(self) -> None:
