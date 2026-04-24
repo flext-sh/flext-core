@@ -1,0 +1,22 @@
+tests/unit/test_registry_full_coverage.py
+  h_9db9d35f50cf33 21-22
+tests/unit/test_dispatcher_di.py
+  h_9db9d35f50cf33 16
+tests/unit/test_lazy_exports.py
+  h_9db9d35f50cf33 52,88,94,110,116
+tests/utilities.py
+  h_9db9d35f50cf33 1039,1048,1065,1105,1271,1402,1449,1523
+tests/unit/test_utilities_type_guards_coverage_100.py
+  h_9db9d35f50cf33 145,172,177,182,205,225
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "d2f4d420c2780b5edf197247c62071a36cf365dc",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
