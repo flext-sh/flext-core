@@ -42,7 +42,6 @@ class TestsFlextCoreServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPa
     - All generic service functionality comes from s
     """
 
-    @override
     def execute(self) -> p.Result[TDomainResult]:
         """Execute domain service logic - must be implemented by subclasses."""
         msg = c.Core.Tests.TestErrors.SUBCLASSES_MUST_IMPLEMENT_EXECUTE

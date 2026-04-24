@@ -12,6 +12,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from importlib.metadata import PackageMetadata, metadata
 
+from flext_core._typings.base import FlextTypingBase as t
+
 
 class FlextVersion:
     """Package version and metadata — SSOT base class.
@@ -24,7 +26,7 @@ class FlextVersion:
 
     # -- Base-class derivation (inline; subclass derivation via __init_subclass__) --
     __version__: str = str(_metadata["Version"])
-    __version_info__: tuple[int | str, ...] = tuple(
+    __version_info__: t.VariadicTuple[int | str] = tuple(
         int(part) if part.isdigit() else part for part in __version__.split(".")
     )
     __title__: str = str(_metadata.get("Name", ""))
@@ -34,7 +36,7 @@ class FlextVersion:
     __license__: str = str(_metadata.get("License", ""))
     __url__: str = str(_metadata.get("Home-Page", ""))
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
+    def __init_subclass__(cls, **kwargs: t.JsonValue) -> None:
         """Recompute derived attributes when a subclass overrides ``_metadata``."""
         super().__init_subclass__(**kwargs)
         if "_metadata" in cls.__dict__:
@@ -70,7 +72,7 @@ class FlextVersion:
         }
 
     @classmethod
-    def resolve_version_info(cls) -> tuple[int | str, ...]:
+    def resolve_version_info(cls) -> t.VariadicTuple[int | str]:
         """Get package version as comparison-friendly tuple."""
         return cls.__version_info__
 
@@ -93,7 +95,7 @@ __author__ = FlextVersion.__author__
 __author_email__ = FlextVersion.__author_email__
 __license__ = FlextVersion.__license__
 __url__ = FlextVersion.__url__
-__all__: list[str] = [
+__all__: t.MutableSequenceOf[str] = [
     "FlextVersion",
     "__author__",
     "__author_email__",

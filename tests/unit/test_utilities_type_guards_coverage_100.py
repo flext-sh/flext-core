@@ -142,13 +142,12 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     @pytest.mark.parametrize("scenario", IS_LIST_NON_EMPTY, ids=lambda s: s.name)
     def test_is_list_non_empty(self, scenario: TypeGuardScenario) -> None:
-        value: t.JsonValue
         if scenario.value == "has_items":
             value = [1, 2, 3]
         elif scenario.value == "empty":
             value = list[t.JsonValue]()
         elif scenario.value in {"has_empty", "has_none"}:
-            value = [""]
+            value = [0]
         else:
             value = scenario.value
         result = u.matches_type(value, "list_non_empty")
@@ -207,11 +206,11 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_list_with_complex_items(self) -> None:
-        test_list = [
+        test_list: t.JsonValue = [
             "string",
             42,
             True,
-            pathlib.Path("/test/path"),
+            str(pathlib.Path("/test/path")),
         ]
         result = u.normalize_to_metadata(test_list)
         tm.that(result, is_=list)

@@ -317,7 +317,7 @@ class TestUtilitiesCollectionCoverage:
 
         @staticmethod
         def _equals_two(value: t.JsonValue) -> bool:
-            return value == 2
+            return bool(value == 2)
 
         @staticmethod
         def _by_length(value: str) -> int:

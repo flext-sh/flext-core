@@ -69,10 +69,10 @@ class ExamplesFlextCoreShared(m.BaseModel):
         max_u64 = (1 << 64) - 1
         return raw / max_u64
 
-    def check[TValue](
+    def check(
         self,
         label: str,
-        value: TValue | None,
+        value: object | None,
     ) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         separator = m.Examples.LABEL_VALUE_SEPARATOR
@@ -126,9 +126,9 @@ class ExamplesFlextCoreShared(m.BaseModel):
             self._results.append("")
         self._results.append(f"[{name}]")
 
-    def ser[TValue](
+    def ser(
         self,
-        v: TValue | None,
+        v: object | None,
     ) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import override
-
 from tests import m, p, r, s
 
 
@@ -21,7 +19,6 @@ class TestsFlextCoreServiceUserService(s[TestsFlextCoreServiceUserData]):
 
     __test__ = False
 
-    @override
     def execute(self) -> p.Result[TestsFlextCoreServiceUserData]:
         return r[TestsFlextCoreServiceUserData].ok(
             TestsFlextCoreServiceUserData(user_id=1, name="test_user")

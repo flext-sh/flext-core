@@ -106,7 +106,6 @@ class TestMigrationValidation:
             def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
                 super().model_post_init(__context)
 
-            @override
             def execute(self, **kwargs: t.Scalar) -> p.Result[None]:
                 """Execute method required by s abstract class."""
                 return r[None].ok(None)

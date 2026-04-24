@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-from typing import override
-
 from tests import p, r, s
 
 
 class _IntegrationService(s[str]):
-    @override
     def execute(self) -> p.Result[str]:
         return r[str].ok("ok")
 

@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from typing import ClassVar, overload
 
 from flext_core import (
@@ -30,6 +30,10 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
 
     logger: ClassVar[p.Logger]
     state: m.ContextRuntimeState
+
+    def _iter_scoped_dicts(self) -> Iterator[t.JsonMapping]:
+        for ctx_var in self.state.scope_vars.values():
+            yield self._narrow_contextvar_to_configuration_dict(ctx_var.get())
 
     def clear(self) -> None:
         """Clear all data from the context including metadata."""
@@ -97,34 +101,20 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
         """Get all items (key-value pairs) across scopes."""
         if not self.state.active:
             return []
-        return [
-            item
-            for ctx_var in self.state.scope_vars.values()
-            for item in self._narrow_contextvar_to_configuration_dict(
-                ctx_var.get(),
-            ).items()
-        ]
+        return [item for d in self._iter_scoped_dicts() for item in d.items()]
 
     def keys(self) -> t.StrSequence:
         """Get all keys across scopes."""
         if not self.state.active:
             return list[str]()
-        all_keys: set[str] = set()
-        for ctx_var in self.state.scope_vars.values():
-            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            all_keys.update(scope_dict.keys())
-        return list(all_keys)
+        return list({k for d in self._iter_scoped_dicts() for k in d})
 
     def values(self) -> t.JsonList:
         """Get all values across scopes."""
         if not self.state.active:
             empty_values: t.JsonList = []
             return empty_values
-        all_values: list[t.JsonValue] = []
-        for ctx_var in self.state.scope_vars.values():
-            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            all_values.extend(scope_dict.values())
-        return all_values
+        return [v for d in self._iter_scoped_dicts() for v in d.values()]
 
     def remove(self, key: str, scope: str = c.ContextScope.GLOBAL) -> None:
         """Remove a key from the context."""
@@ -132,16 +122,17 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
             return
         ctx_var = self._scope_var(scope)
         current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-        if key in current:
-            filtered = {k: v for k, v in current.items() if k != key}
-            try:
-                _ = ctx_var.set(m.ConfigMap(root=dict(filtered)))
-            except (TypeError, ValueError, AttributeError) as exc:
-                self.logger.debug(
-                    "Failed to validate context after removal",
-                    exc_info=exc,
-                )
-            self._update_statistics(c.ContextOperation.REMOVE.value)
+        if key not in current:
+            return
+        filtered = {k: v for k, v in current.items() if k != key}
+        try:
+            _ = ctx_var.set(m.ConfigMap(root=dict(filtered)))
+        except (TypeError, ValueError, AttributeError) as exc:
+            self.logger.debug(
+                "Failed to validate context after removal",
+                exc_info=exc,
+            )
+        self._update_statistics(c.ContextOperation.REMOVE.value)
 
     @overload
     def set(
@@ -171,62 +162,44 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
         """Set one or many values in the context."""
         if not self.state.active:
             return r[bool].fail_op("set context value", c.ERR_CONTEXT_NOT_ACTIVE)
-        if not isinstance(key_or_data, str):
-            return self._apply_bulk(key_or_data, scope)
-        return self._apply_single(key_or_data, value, scope)
 
-    def _apply_bulk(
-        self,
-        data: t.JsonMapping,
-        scope: str,
-    ) -> p.Result[bool]:
-        """Set multiple values in the context from a ConfigMap."""
-        if not data:
-            return r[bool].ok(True)
+        if isinstance(key_or_data, str):
+            if value is None:
+                return r[bool].fail_op(
+                    "set single context value",
+                    c.ERR_CONTEXT_SINGLE_KEY_VALUE_REQUIRED,
+                )
+            if not key_or_data:
+                return r[bool].fail_op(
+                    "validate context key",
+                    c.ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED,
+                )
+            normalized_value = FlextRuntime.normalize_to_container(value)
+            if not isinstance(normalized_value, t.CONTAINER_AND_COLLECTION_TYPES):
+                return r[bool].fail_op(
+                    "validate context value serializable",
+                    c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
+                )
+            payload: t.JsonMapping = {key_or_data: normalized_value}
+            hook_context: t.JsonMapping = {
+                "key": key_or_data,
+                "value": normalized_value,
+            }
+        else:
+            if not key_or_data:
+                return r[bool].ok(True)
+            payload = key_or_data
+            hook_context = {
+                c.Directory.DATA: FlextRuntime.normalize_to_container(dict(payload)),
+            }
+
         try:
-            self._update_contextvar(scope, data)
+            self._update_contextvar(scope, payload)
             self._update_statistics(c.ContextOperation.SET.value)
-            self._execute_hooks(
-                c.ContextOperation.SET.value,
-                {c.Directory.DATA: FlextRuntime.normalize_to_container(dict(data))},
-            )
+            self._execute_hooks(c.ContextOperation.SET.value, hook_context)
             return r[bool].ok(True)
         except TypeError as exc:
-            return e.fail_operation("apply bulk context update", exc)
-
-    def _apply_single(
-        self,
-        key: str,
-        value: t.JsonPayload | None,
-        scope: str,
-    ) -> p.Result[bool]:
-        """Set a single key-value pair in the context."""
-        if value is None:
-            return r[bool].fail_op(
-                "set single context value",
-                c.ERR_CONTEXT_SINGLE_KEY_VALUE_REQUIRED,
-            )
-        if not key:
-            return r[bool].fail_op(
-                "validate context key",
-                c.ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED,
-            )
-        normalized_value = FlextRuntime.normalize_to_container(value)
-        if not isinstance(normalized_value, t.CONTAINER_AND_COLLECTION_TYPES):
-            return r[bool].fail_op(
-                "validate context value serializable",
-                c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
-            )
-        try:
-            self._update_contextvar(scope, {key: normalized_value})
-            self._update_statistics(c.ContextOperation.SET.value)
-            self._execute_hooks(
-                c.ContextOperation.SET.value,
-                {"key": key, "value": normalized_value},
-            )
-            return r[bool].ok(True)
-        except TypeError as exc:
-            return e.fail_operation("apply single context key", exc)
+            return e.fail_operation("apply context update", exc)
 
 
 __all__: list[str] = ["FlextUtilitiesContextCrud"]

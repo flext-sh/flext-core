@@ -8,6 +8,8 @@ from typing import ClassVar
 from beartype import BeartypeConf, BeartypeStrategy
 from beartype.claw import beartype_this_package
 
+from flext_core._typings.base import FlextTypingBase as t
+
 
 class FlextCoreBeartypeBootstrap:
     """Build and activate the flext_core beartype import hook."""
@@ -50,4 +52,4 @@ class FlextCoreBeartypeBootstrap:
         cls._activated = True
 
 
-__all__: list[str] = ["FlextCoreBeartypeBootstrap"]
+__all__: t.MutableSequenceOf[str] = ["FlextCoreBeartypeBootstrap"]
