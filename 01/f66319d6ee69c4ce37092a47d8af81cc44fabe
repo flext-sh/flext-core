@@ -1,0 +1,75 @@
+tests/constants.py
+  h_9db9d35f50cf33 9,26-27
+tests/_constants/result.py
+  8c2cbdeb70613e9e 12
+tests/_constants/settings.py
+  8c2cbdeb70613e9e 9
+tests/_constants/errors.py
+  8c2cbdeb70613e9e 11
+src/flext_core/_utilities/enforcement.py
+  8101ec7ad65f4317 66
+src/flext_core/_constants/base.py
+  8c2cbdeb70613e9e 1,13,16-17,21-26,30-34,36-38
+tests/unit/test_enforcement_catalog.py
+  8c2cbdeb70613e9e 1,32,37,78-86,96,101-102,104,109-110,112,119-120,122,129-130,132
+src/flext_core/_utilities/model.py
+  8101ec7ad65f4317 147-152,156-159,162-168
+tests/_constants/domain.py
+  8c2cbdeb70613e9e 12
+src/flext_core/_constants/mixins.py
+  8c2cbdeb70613e9e 1,14,24
+tests/unit/test_context.py
+  8101ec7ad65f4317 1,8-11,18-53
+src/flext_core/constants.py
+  8c2cbdeb70613e9e 35,55
+tests/_constants/loggings.py
+  8c2cbdeb70613e9e 9
+src/flext_core/_constants/validation.py
+  8c2cbdeb70613e9e 1,14,107-120
+tests/unit/test_loggings_full_coverage.py
+  8101ec7ad65f4317 8
+src/flext_core/_constants/settings.py
+  8c2cbdeb70613e9e 1,13
+src/flext_core/_utilities/mapper.py
+  8101ec7ad65f4317 1,9,32,39-41,48-50,57-59,67-70,72-74,94-96,109,113-114,116-118,122-126,139,156,158-159,162,170-173,178,197,218,220-221,227,239,243,245,247,250-252,296-299,319,323-327,335-340,345,372,398,403,407,416,420-421,424-425,453-454,456,464,468,479,496-502,504-519,522
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "01f66319d6ee69c4ce37092a47d8af81cc44fabe",
+  "prompts": {
+    "8101ec7ad65f4317": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "557c886b-b02d-489a-8237-05da7f2a1438",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 260,
+      "total_deletions": 1684,
+      "accepted_lines": 397,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/7d0d841d89b5f19522c0e65cd2d15a4591f948a6ae7bd5a7426d04bcbcd43e6f"
+    },
+    "8c2cbdeb70613e9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2e74716b-0d32-4eb3-b239-a0f08c033edc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 94,
+      "total_deletions": 344,
+      "accepted_lines": 80,
+      "overriden_lines": 1,
+      "messages_url": "https://usegitai.com/cas/145679ad31e3b114f401e3b946929cf1bac880fcede4eb1cecb03ffe884ab095"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
