@@ -19,9 +19,6 @@ from flext_core import (
     FlextConstantsInfrastructure,
     FlextConstantsLogging,
     FlextConstantsMixins,
-    FlextConstantsNetwork,
-    FlextConstantsPagination,
-    FlextConstantsPlatform,
     FlextConstantsProjectMetadata,
     FlextConstantsPydantic,
     FlextConstantsRegex,
@@ -35,7 +32,7 @@ from flext_core import (
 
 
 class FlextConstants(
-    FlextConstantsNetwork,
+    FlextConstantsBase,
     FlextConstantsTimeout,
     FlextConstantsEnvironment,
     FlextConstantsLogging,
@@ -43,11 +40,8 @@ class FlextConstants(
     FlextConstantsStatus,
     FlextConstantsRegex,
     FlextConstantsSerialization,
-    FlextConstantsPagination,
-    FlextConstantsBase,
     FlextConstantsValidation,
     FlextConstantsSettings,
-    FlextConstantsPlatform,
     FlextConstantsCqrs,
     FlextConstantsErrors,
     FlextConstantsGuards,
@@ -58,11 +52,7 @@ class FlextConstants(
     FlextConstantsPydantic,
     FlextModelsNamespace,
 ):
-    """Centralized constants for the FLEXT ecosystem (Layer 0).
-
-    This class acts as a facade, composing all constant subclasses via MRO.
-    All constants are accessible via inheritance—do not duplicate parent attributes.
-    """
+    """SSOT facade: all constants flat on c.* via MRO composition."""
 
 
 __all__: list[str] = [

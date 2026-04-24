@@ -145,40 +145,15 @@ class TestAdvancedPatterns:
                 key: convert_dict_value(value) for key, value in self._given.items()
             }
 
-            given_mapped_raw = u.map_dict_keys(
-                given_source,
-                {k: str(k) for k in given_source},
-                keep_unmapped=True,
-            ).value
-            given_mapped = {
-                k: convert_dict_value(v) for k, v in given_mapped_raw.items()
-            }
             given_converted: t.JsonMapping = {
-                key: convert_dict_value(value) for key, value in given_mapped.items()
+                str(key): convert_dict_value(value)
+                for key, value in given_source.items()
             }
-            when_source: t.JsonMapping = {
-                key: convert_dict_value(value) for key, value in self._when.items()
-            }
-            when_mapped_raw = u.map_dict_keys(
-                when_source,
-                {k: str(k) for k in when_source},
-                keep_unmapped=True,
-            ).value
-            when_mapped = {k: convert_dict_value(v) for k, v in when_mapped_raw.items()}
             when_converted: t.JsonMapping = {
-                key: convert_dict_value(value) for key, value in when_mapped.items()
+                str(key): convert_dict_value(value) for key, value in self._when.items()
             }
-            then_source: t.JsonMapping = {
-                key: convert_dict_value(value) for key, value in self._then.items()
-            }
-            then_mapped_raw = u.map_dict_keys(
-                then_source,
-                {k: str(k) for k in then_source},
-                keep_unmapped=True,
-            ).value
-            then_mapped = {k: convert_dict_value(v) for k, v in then_mapped_raw.items()}
             then_converted: t.JsonMapping = {
-                key: convert_dict_value(value) for key, value in then_mapped.items()
+                str(key): convert_dict_value(value) for key, value in self._then.items()
             }
             scenario_data = m.Core.Tests.MockScenarioData.model_validate(
                 obj={

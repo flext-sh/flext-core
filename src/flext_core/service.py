@@ -18,11 +18,7 @@ from flext_core import p, t, x
 
 
 class FlextService[TDomainResult: p.Base = p.Base](x):
-    """Base class for domain services in FLEXT applications.
-
-    DEPRECATED: This class depended on removed types (t.JsonPayload, t.JsonPayload, etc).
-    Refactor to use explicit Pydantic models in m.* and protocols in p.*.
-    """
+    """Base class for domain services in FLEXT applications."""
 
     model_config: ClassVar[ConfigDict] = ConfigDict(
         strict=True,
@@ -31,38 +27,6 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
         use_enum_values=True,
         validate_assignment=True,
     )
-
-    # DEPRECATED: All methods removed - depended on t.JsonPayload, t.ServiceMap, t.RegisterableService
-    # Refactor manually to use explicit m.* models and p.* protocols
-
-    # Original methods commented for reference during manual refactoring:
-
-    # @property
-    # def settings(self) -> FlextSettings:
-    #     """Resolve settings instance."""
-    #     return FlextSettings.__new__()
-
-    # @classmethod
-    # def execute(cls, **kwargs: t.JsonPayload) -> p.Result[TDomainResult]:
-    #     """Execute the service with given kwargs."""
-    #     raise NotImplementedError
-
-    # @staticmethod
-    # def create_service_runtime(...) -> tuple[...]:
-    #     """Create service runtime instances."""
-    #     raise NotImplementedError
-
-    # def validate_business_rules(self) -> p.Result[bool]:
-    #     """Validate business rules."""
-    #     return r[bool].ok(True)
-
-    # def ok[T: t.JsonPayload | Sequence[t.JsonPayload]](self, value: T) -> p.Result[T]:
-    #     """Wrap a successful value into a result."""
-    #     return r[T].ok(value)
-
-    # def fail_op(...) -> p.Result[TDomainResult]:
-    #     """Return a failure result."""
-    #     raise NotImplementedError
 
 
 s = FlextService

@@ -6,8 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import c
+from flext_tests import FlextTestsConstants
 
+from flext_core import FlextConstants
 from tests import (
     TestsFlextCoreConstantsDomain,
     TestsFlextCoreConstantsErrors,
@@ -22,7 +23,8 @@ from tests import (
 
 
 class TestsFlextCoreConstants(
-    c,
+    FlextTestsConstants,
+    FlextConstants,
 ):
     """Layer 0 constants facade for flext-core tests."""
 

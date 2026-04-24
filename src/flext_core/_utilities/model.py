@@ -93,18 +93,6 @@ class FlextUtilitiesModel:
         opts_dict = opts.model_dump(exclude_none=True)
         return model.model_dump(**opts_dict)
 
-    # DEPRECATED: load method removed - depends on _normalize_model_input
-    # @classmethod
-    # def load(
-    #     cls,
-    #     model_cls: t.ModelClass[T_Model],
-    #     data: mp.BaseModel | Mapping[str, t.JsonPayload] | m.ConfigMap,
-    # ) -> p.Result[T_Model]:
-    #     """Load a model from a mapping-like input using Pydantic validation."""
-    #     return r[T_Model].create_from_callable(
-    #         lambda: model_cls.model_validate(cls._normalize_model_input(data)),
-    #     )
-
     @staticmethod
     def _settings_base() -> t.SettingsClass:
         """Resolve FlextSettings lazily to avoid runtime import cycles."""
@@ -156,47 +144,31 @@ class FlextUtilitiesModel:
     ) -> t.SettingsClass:
         """Resolve the concrete settings type used by a service-like object."""
         settings_base = FlextUtilitiesModel._settings_base()
-        if isinstance(
-            service_or_cls, type
-        ) and FlextUtilitiesModel._matches_settings_type(
-            service_or_cls,
-            settings_base,
+        fetch_global = getattr(service_or_cls, "fetch_global", None)
+        model_copy = getattr(service_or_cls, "model_copy", None)
+        if (
+            isinstance(service_or_cls, type)
+            and callable(fetch_global)
+            and callable(model_copy)
         ):
             return service_or_cls
         candidate = getattr(service_or_cls, "settings_type", None)
-        if isinstance(candidate, type) and FlextUtilitiesModel._matches_settings_type(
-            candidate,
-            settings_base,
+        if (
+            isinstance(candidate, type)
+            and callable(getattr(candidate, "fetch_global", None))
+            and callable(getattr(candidate, "model_copy", None))
         ):
             return candidate
-        settings_type_resolver = getattr(
-            service_or_cls, "_get_service_settings_type", None
-        )
-        if callable(settings_type_resolver):
-            resolved = settings_type_resolver()
-            if isinstance(
-                resolved, type
-            ) and FlextUtilitiesModel._matches_settings_type(
-                resolved,
-                settings_base,
+        resolver = getattr(service_or_cls, "_get_service_settings_type", None)
+        if callable(resolver):
+            resolved = resolver()
+            if (
+                isinstance(resolved, type)
+                and callable(getattr(resolved, "fetch_global", None))
+                and callable(getattr(resolved, "model_copy", None))
             ):
                 return resolved
         return settings_base
-
-    @staticmethod
-    def _matches_settings_type(
-        candidate: type,
-        settings_base: t.SettingsClass,
-    ) -> bool:
-        """Check whether candidate behaves as a settings class.
-
-        Avoid direct Protocol subclass checks when runtime-checkable protocols
-        include non-method members, which raises ``TypeError`` in ``issubclass``.
-        """
-        _ = settings_base
-        fetch_global = getattr(candidate, "fetch_global", None)
-        model_copy = getattr(candidate, "model_copy", None)
-        return callable(fetch_global) and callable(model_copy)
 
     @staticmethod
     def validate_value[TValue](

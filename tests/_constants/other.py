@@ -23,32 +23,6 @@ class TestsFlextCoreConstantsOther:
             "layer",
         )
 
-    class EnforcementCatalog:
-        """Shared enforcement-catalog literals for flext-core tests."""
-
-        RULE_ID_PATTERN: Final[str] = r"^ENFORCE-\d{3}$"
-        MISSING_RULE_ID: Final[str] = "ENFORCE-999"
-        DUPLICATE_RULE_ID: Final[str] = "ENFORCE-900"
-        INFRA_RULE_ID: Final[str] = "ENFORCE-901"
-        RUFF_RULE_ID: Final[str] = "ENFORCE-902"
-        INVALID_RULE_ID: Final[str] = "BAD-999"
-        SAMPLE_DESCRIPTION: Final[str] = "x"
-        INFRA_VIOLATION_FIELD: Final[str] = "loose_objects"
-        RUNTIME_WARNING_CATEGORY: Final[str] = (
-            "flext_core._constants.enforcement.FlextMroViolation"
-        )
-        RUFF_RULE_CODE_ANN401: Final[str] = "ANN401"
-        RUFF_RULE_CODE_PGH003: Final[str] = "PGH003"
-        VALIDATOR_METHODS: Final[tuple[str, ...]] = (
-            "imports",
-            "types",
-            "bypass",
-            "layer",
-            "tests",
-            "validate_config",
-            "markdown",
-        )
-
     class ExamplesExecution:
         """Shared public-example metadata for execution tests."""
 

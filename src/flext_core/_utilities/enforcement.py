@@ -63,6 +63,7 @@ class FlextUtilitiesEnforcement:
 
     @staticmethod
     def emit(report: me.Report, *, mode: c.EnforcementMode | None = None) -> None:
+        """Emit violations as warnings (or raise TypeError in STRICT mode)."""
         if report.empty:
             return
         active = mode or c.ENFORCEMENT_MODE
@@ -76,10 +77,6 @@ class FlextUtilitiesEnforcement:
             warnings.warn(msg, FlextMroViolation, stacklevel=4)
             if active is c.EnforcementMode.STRICT:
                 raise TypeError(msg)
-
-    # ------------------------------------------------------------------
-    # Discovery
-    # ------------------------------------------------------------------
 
     @staticmethod
     def detect_layer(target: type) -> str | None:

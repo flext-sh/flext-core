@@ -26,9 +26,6 @@ if _t.TYPE_CHECKING:
     from flext_core._constants.infrastructure import FlextConstantsInfrastructure
     from flext_core._constants.logging import FlextConstantsLogging
     from flext_core._constants.mixins import FlextConstantsMixins
-    from flext_core._constants.network import FlextConstantsNetwork
-    from flext_core._constants.pagination import FlextConstantsPagination
-    from flext_core._constants.platform import FlextConstantsPlatform
     from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
     from flext_core._constants.pydantic import FlextConstantsPydantic
     from flext_core._constants.regex import FlextConstantsRegex
@@ -169,9 +166,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._constants.infrastructure": ("FlextConstantsInfrastructure",),
             "._constants.logging": ("FlextConstantsLogging",),
             "._constants.mixins": ("FlextConstantsMixins",),
-            "._constants.network": ("FlextConstantsNetwork",),
-            "._constants.pagination": ("FlextConstantsPagination",),
-            "._constants.platform": ("FlextConstantsPlatform",),
             "._constants.project_metadata": ("FlextConstantsProjectMetadata",),
             "._constants.pydantic": ("FlextConstantsPydantic",),
             "._constants.regex": ("FlextConstantsRegex",),
@@ -348,9 +342,6 @@ __all__: list[str] = [
     "FlextConstantsInfrastructure",
     "FlextConstantsLogging",
     "FlextConstantsMixins",
-    "FlextConstantsNetwork",
-    "FlextConstantsPagination",
-    "FlextConstantsPlatform",
     "FlextConstantsProjectMetadata",
     "FlextConstantsPydantic",
     "FlextConstantsRegex",

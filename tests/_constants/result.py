@@ -9,7 +9,7 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final, Literal
 
-from tests import m
+from flext_core import FlextModels as m
 
 
 class TestsFlextCoreConstantsResult:

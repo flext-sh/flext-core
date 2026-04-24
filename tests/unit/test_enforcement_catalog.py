@@ -1,4 +1,4 @@
-"""Behavior contract for c.ENFORCEMENT_CATALOG — the cross-layer enforcement SSOT."""
+"""Behavior contract for c.ENFORCEMENT_CATALOG — cross-layer enforcement SSOT."""
 
 from __future__ import annotations
 
@@ -29,17 +29,12 @@ class TestsFlextCoreEnforcementCatalog:
 
     def test_all_rule_ids_match_enforce_nnn_format(self) -> None:
         for rule in c.ENFORCEMENT_CATALOG.rules:
-            assert re.match(c.Core.Tests.EnforcementCatalog.RULE_ID_PATTERN, rule.id)
+            assert re.match(r"^ENFORCE-\d{3}$", rule.id)
 
     def test_by_id_returns_rule_when_present_and_none_when_missing(self) -> None:
         first = c.ENFORCEMENT_CATALOG.rules[0]
         assert c.ENFORCEMENT_CATALOG.by_id(first.id) is first
-        assert (
-            c.ENFORCEMENT_CATALOG.by_id(
-                c.Core.Tests.EnforcementCatalog.MISSING_RULE_ID,
-            )
-            is None
-        )
+        assert c.ENFORCEMENT_CATALOG.by_id("ENFORCE-999") is None
 
     def test_enabled_rules_are_a_subset_of_all_rules(self) -> None:
         enabled = c.ENFORCEMENT_CATALOG.enabled_rules()
@@ -80,7 +75,15 @@ class TestsFlextCoreEnforcementCatalog:
         for rule in validators:
             assert isinstance(rule.source, m.EnforcementTestsValidatorSource)
             methods.add(rule.source.method)
-        assert methods == set(c.Core.Tests.EnforcementCatalog.VALIDATOR_METHODS)
+        assert methods == {
+            "imports",
+            "types",
+            "bypass",
+            "layer",
+            "tests",
+            "validate_config",
+            "markdown",
+        }
 
     def test_runtime_warning_category_references_flext_mro_violation(self) -> None:
         runtime = c.ENFORCEMENT_CATALOG.by_kind(
@@ -90,51 +93,43 @@ class TestsFlextCoreEnforcementCatalog:
         for rule in runtime:
             assert isinstance(rule.source, m.EnforcementRuntimeWarningSource)
             categories.add(rule.source.category)
-        assert c.Core.Tests.EnforcementCatalog.RUNTIME_WARNING_CATEGORY in categories
+        assert "flext_core._constants.enforcement.FlextMroViolation" in categories
 
     def test_rule_spec_construction_rejects_invalid_id_format(self) -> None:
         with pytest.raises(ValidationError):
             m.EnforcementRuleSpec(
-                id=c.Core.Tests.EnforcementCatalog.INVALID_RULE_ID,
-                description=c.Core.Tests.EnforcementCatalog.SAMPLE_DESCRIPTION,
+                id="BAD-999",
+                description="bad",
                 severity=m.EnforcementRuleSeverity.HIGH,
-                source=m.EnforcementRuffSource(
-                    rule_code=c.Core.Tests.EnforcementCatalog.RUFF_RULE_CODE_ANN401,
-                ),
+                source=m.EnforcementRuffSource(rule_code="ANN401"),
             )
 
     def test_catalog_construction_rejects_duplicate_rule_ids(self) -> None:
         rule = m.EnforcementRuleSpec(
-            id=c.Core.Tests.EnforcementCatalog.DUPLICATE_RULE_ID,
-            description=c.Core.Tests.EnforcementCatalog.SAMPLE_DESCRIPTION,
+            id="ENFORCE-900",
+            description="x",
             severity=m.EnforcementRuleSeverity.LOW,
-            source=m.EnforcementRuffSource(
-                rule_code=c.Core.Tests.EnforcementCatalog.RUFF_RULE_CODE_ANN401,
-            ),
+            source=m.EnforcementRuffSource(rule_code="ANN401"),
         )
         with pytest.raises(ValidationError):
             m.EnforcementCatalog(rules=(rule, rule))
 
     def test_discriminated_union_routes_source_kind_by_payload(self) -> None:
         infra_rule = m.EnforcementRuleSpec(
-            id=c.Core.Tests.EnforcementCatalog.INFRA_RULE_ID,
-            description=c.Core.Tests.EnforcementCatalog.SAMPLE_DESCRIPTION,
+            id="ENFORCE-901",
+            description="x",
             severity=m.EnforcementRuleSeverity.HIGH,
-            source=m.EnforcementInfraDetectorSource(
-                violation_field=c.Core.Tests.EnforcementCatalog.INFRA_VIOLATION_FIELD,
-            ),
+            source=m.EnforcementInfraDetectorSource(violation_field="loose_objects"),
         )
         assert (
             infra_rule.source.kind == m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR.value
         )
 
         ruff_rule = m.EnforcementRuleSpec(
-            id=c.Core.Tests.EnforcementCatalog.RUFF_RULE_ID,
-            description=c.Core.Tests.EnforcementCatalog.SAMPLE_DESCRIPTION,
+            id="ENFORCE-902",
+            description="x",
             severity=m.EnforcementRuleSeverity.LOW,
-            source=m.EnforcementRuffSource(
-                rule_code=c.Core.Tests.EnforcementCatalog.RUFF_RULE_CODE_PGH003,
-            ),
+            source=m.EnforcementRuffSource(rule_code="PGH003"),
         )
         assert ruff_rule.source.kind == m.EnforcementSourceKind.RUFF.value
 

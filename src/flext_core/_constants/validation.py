@@ -1,4 +1,4 @@
-"""FlextConstantsValidation - validation, errors, and exception constants.
+"""FlextConstantsValidation - validation and error classification constants.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,28 +11,9 @@ from typing import Final
 
 
 class FlextConstantsValidation:
-    """Constants for validation and error handling."""
+    """SSOT for validation thresholds, error codes, and parser tokens."""
 
-    MIN_NAME_LENGTH: Final[int] = 2
-    # MAX_NAME_LENGTH inherited from FlextConstantsBase via FlextConstants MRO
-    MAX_EMAIL_LENGTH: Final[int] = 254
-    EMAIL_PARTS_COUNT: Final[int] = 2
     LEVEL_PREFIX_PARTS_COUNT: Final[int] = 4
-    MIN_PHONE_DIGITS: Final[int] = 10
-    MAX_PHONE_DIGITS: Final[int] = 20
-    MIN_USERNAME_LENGTH: Final[int] = 3
-    MAX_AGE: Final[int] = 150
-    MIN_AGE: Final[int] = 0
-    # PREVIEW_LENGTH inherited from FlextConstantsBase via FlextConstants MRO
-    VALIDATION_TIMEOUT_MS: Final[float] = 100.0
-    MAX_UNCOMMITTED_EVENTS: Final[int] = 100
-    DISCOUNT_THRESHOLD: Final[int] = 100
-    DISCOUNT_RATE: Final[float] = 0.05
-    FILTER_THRESHOLD: Final[int] = 5
-    RETRY_COUNT_MAX: Final[int] = 3
-    MAX_WORKERS_LIMIT: Final[int] = 100
-    MAX_RETRY_STATUS_CODES: Final[int] = 100
-    MAX_CUSTOM_VALIDATORS: Final[int] = 50
 
     @unique
     class ErrorCode(StrEnum):
@@ -123,24 +104,20 @@ class FlextConstantsValidation:
         OFF = "off"
 
     FAILURE_LEVEL_DEFAULT: Final[FailureLevel] = FailureLevel.PERMISSIVE
-    PARSER_BOOLEAN_TRUTHY: frozenset[str] = frozenset(
-        {
-            ParserBooleanToken.TRUE.value,
-            ParserBooleanToken.ONE.value,
-            ParserBooleanToken.YES.value,
-            ParserBooleanToken.ON.value,
-        },
-    )
-    PARSER_BOOLEAN_FALSY: frozenset[str] = frozenset(
-        {
-            ParserBooleanToken.FALSE.value,
-            ParserBooleanToken.ZERO.value,
-            ParserBooleanToken.NO.value,
-            ParserBooleanToken.OFF.value,
-        },
-    )
+    PARSER_BOOLEAN_TRUTHY: Final[frozenset[str]] = frozenset({
+        ParserBooleanToken.TRUE.value,
+        ParserBooleanToken.ONE.value,
+        ParserBooleanToken.YES.value,
+        ParserBooleanToken.ON.value,
+    })
+    PARSER_BOOLEAN_FALSY: Final[frozenset[str]] = frozenset({
+        ParserBooleanToken.FALSE.value,
+        ParserBooleanToken.ZERO.value,
+        ParserBooleanToken.NO.value,
+        ParserBooleanToken.OFF.value,
+    })
 
-    STRING_METHOD_MAP: frozenset[str] = frozenset({
+    STRING_METHOD_MAP: Final[frozenset[str]] = frozenset({
         "str",
         "dict",
         "list",

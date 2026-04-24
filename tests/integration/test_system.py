@@ -103,9 +103,6 @@ class TestCompleteFlextSystemIntegration:
         config_error_code = c.ErrorCode.CONFIG_ERROR
         assert isinstance(config_error_code, str)
         assert config_error_code == "CONFIG_ERROR"
-        min_name_length = c.MIN_NAME_LENGTH
-        assert isinstance(min_name_length, int)
-        assert min_name_length > 0
 
     def _test_exceptions_system(self) -> None:
         """Test structured exceptions system."""
