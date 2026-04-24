@@ -1,0 +1,63 @@
+tests/unit/test_enforcement.py
+  b49ddca26ad86d52 40-47
+src/flext_core/_utilities/context_state.py
+  8101ec7ad65f4317 187
+  8c2cbdeb70613e9e 17,167-186
+src/flext_core/_utilities/context_crud.py
+  b49ddca26ad86d52 13-14,81,159-162,176-186,188
+src/flext_core/_utilities/logging_context.py
+  h_9db9d35f50cf33 156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "f53518abf8c37220748078945e9d06ba0a29cf95",
+  "prompts": {
+    "8101ec7ad65f4317": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "557c886b-b02d-489a-8237-05da7f2a1438",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 168,
+      "overriden_lines": 0
+    },
+    "8c2cbdeb70613e9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2e74716b-0d32-4eb3-b239-a0f08c033edc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 27,
+      "accepted_lines": 24,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/2fd1299877908e40d78690efc9d736850b5a4ba20d107aea180f03f613799b82"
+    },
+    "b49ddca26ad86d52": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "395c39dc-b71e-4968-98e3-7424c4b3af1c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 41,
+      "total_deletions": 84,
+      "accepted_lines": 139,
+      "overriden_lines": 11,
+      "messages_url": "https://usegitai.com/cas/91ae2f5b15341f6b7d2a229b6391249206e2e3822630918da5d8c489b6773ede"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
