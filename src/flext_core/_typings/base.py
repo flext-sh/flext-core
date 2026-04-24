@@ -15,7 +15,7 @@ from collections.abc import (
 from datetime import datetime
 from pathlib import Path
 from types import GenericAlias, UnionType
-from typing import TypeAliasType
+from typing import ForwardRef, TypeAliasType
 
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
@@ -148,4 +148,6 @@ class FlextTypingBase:
     type VariadicTuple[ItemT] = tuple[ItemT, ...]
     type IntPair = Pair[int, int]
 
-    type TypeHintSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
+    type TypeHintSpecifier = (
+        type | str | UnionType | GenericAlias | TypeAliasType | ForwardRef
+    )

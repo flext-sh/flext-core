@@ -253,22 +253,11 @@ class FlextSettings(BaseSettings):
     def __new__(cls, **kwargs: t.SettingsInput) -> Self:
         """Create singleton instance.
 
-        Kwargs are pre-validated against the model's declared fields to
-        fail fast with a descriptive error before pydantic validation runs.
-        BaseSettings.__init__ consumes kwargs and applies them to the
-        (possibly cached) singleton instance.
+        Unknown kwargs are filtered silently in ``__init__`` so consumer
+        factories can pass arbitrary connection parameters without breaking
+        when the target settings class does not declare them.
         """
-        model_fields = getattr(cls, "model_fields", None)
-        if model_fields and kwargs:
-            computed_fields = getattr(cls, "model_computed_fields", {}) or {}
-            valid_keys = set(model_fields) | set(computed_fields)
-            unknown_keys = set(kwargs) - valid_keys
-            if unknown_keys:
-                msg = (
-                    f"Unknown {cls.__name__} fields: {sorted(unknown_keys)}. "
-                    f"Valid fields: {sorted(valid_keys)}"
-                )
-                raise ValueError(msg)
+        _ = kwargs
         if not cls._singleton_enabled:
             return super().__new__(cls)
         base_class = cls
@@ -303,9 +292,13 @@ class FlextSettings(BaseSettings):
                 )
             return
 
+        valid_kwargs: dict[str, t.SettingsInput] = (
+            {k: v for k, v in kwargs.items() if k in model_fields} if kwargs else {}
+        )
+        if valid_kwargs:
+            vars(self).update(valid_kwargs)
         BaseSettings.__init__(self)
-        if kwargs:
-            valid_kwargs = {k: v for k, v in kwargs.items() if k in model_fields}
+        if valid_kwargs:
             vars(self).update(valid_kwargs)
             self.__pydantic_validator__.validate_python(
                 self.__dict__,

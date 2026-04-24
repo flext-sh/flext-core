@@ -738,11 +738,7 @@ class FlextContainer(p.ContainerLifecycle):
         if context is not None:
             self._context = self._require_context(context, source="container context")
         else:
-            default_context = FlextContext()
-            if not isinstance(default_context, p.Context):
-                error_msg = "default context must implement p.Context"
-                raise TypeError(error_msg)
-            self._context = default_context
+            self._context = FlextContext()
 
     @override
     def names(self) -> t.StrSequence:

@@ -314,7 +314,10 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _extract_handle_array_index(
         current: (
-            t.JsonPayload | t.JsonMapping | Sequence[t.JsonValue | t.JsonPayload]
+            t.JsonPayload
+            | t.JsonMapping
+            | Sequence[t.JsonValue | t.JsonPayload]
+            | FlextModelsContainers.ObjectList
         ),
         array_match: str,
     ) -> p.Result[t.JsonPayload]:

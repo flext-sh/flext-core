@@ -44,7 +44,7 @@ class FlextUtilitiesConversion:
         return str_value
 
     @staticmethod
-    def to_str(value: t.StrictValue, *, default: str | None = None) -> str:
+    def to_str(value: t.StrictValue | None, *, default: str | None = None) -> str:
         """Convert value to string, formatting floats as integers when possible."""
         if value is None:
             return default if default is not None else ""
@@ -62,7 +62,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list(
-        value: t.StrictValue,
+        value: t.StrictValue | None,
         *,
         default: t.StrSequence | None = None,
     ) -> t.StrSequence:
@@ -74,7 +74,7 @@ class FlextUtilitiesConversion:
             return [str(value)]
         try:
             list_value = t.strict_json_list_adapter().validate_python(value)
-            return [str(item) for item in list_value if item is not None]
+            return [str(item) for item in list_value]
         except c.ValidationError:
             return [str(value)]
 

@@ -86,16 +86,14 @@ class FlextModelsContextData:
                     )
                     for k, val in v.items()
                 })
-            if isinstance(v, mp.BaseModel):
-                return MappingProxyType({
-                    str(k): (
-                        str(val)
-                        if not isinstance(val, (str, int, float, bool))
-                        else val
-                    )
-                    for k, val in v.model_dump().items()
-                })
-            return MappingProxyType({})
+            return MappingProxyType({
+                str(k): (
+                    str(val)
+                    if not isinstance(val, (str, int, float, bool))
+                    else val
+                )
+                for k, val in v.model_dump().items()
+            })
 
     class ContextData(
         SerializableDataValidatorMixin,

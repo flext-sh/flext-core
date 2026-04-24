@@ -18,7 +18,8 @@ class FlextCoreBeartypeBootstrap:
     def _enforcement_constants(cls) -> type:
         """Load enforcement constants lazily to avoid package-init cycles."""
         module = import_module("flext_core._constants.enforcement")
-        return module.FlextConstantsEnforcement
+        constants_cls: type = module.FlextConstantsEnforcement
+        return constants_cls
 
     @classmethod
     def build_beartype_conf(cls) -> BeartypeConf:

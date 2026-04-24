@@ -32,20 +32,25 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def normalize_domain_event_data(
-        value: mc.ConfigMap | Mapping[str, t.JsonPayload | None] | None,
+        value: mc.ConfigMap | t.JsonPayload | None,
     ) -> Mapping[str, t.JsonValue]:
         """Normalize domain event payloads into plain flat mappings.
 
         Moved from FlextUtilitiesDomain so the DomainEvent model can consume it
         without creating a utility→model→utility cycle.
+
+        Used as a pydantic ``BeforeValidator`` — raw input may be any
+        ``JsonPayload``. Non-mapping inputs (scalars, sequences) are
+        re-validated through ``mc.ConfigMap.model_validate`` so pydantic
+        surfaces a canonical ``ValidationError`` instead of a raw
+        ``AttributeError`` from downstream iteration.
         """
         if value is None:
             return {}
         raw_source = value.root if isinstance(value, mc.ConfigMap) else value
         if not isinstance(raw_source, Mapping):
-            return FlextUtilitiesCollection.normalize_domain_event_data(
-                mc.ConfigMap.model_validate(raw_source),
-            )
+            validated = mc.ConfigMap.model_validate(raw_source)
+            return FlextUtilitiesCollection.normalize_domain_event_data(validated)
         normalized: MutableMapping[str, t.JsonValue] = {}
         for key, item in raw_source.items():
             if item is None:

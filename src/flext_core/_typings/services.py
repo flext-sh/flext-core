@@ -69,7 +69,7 @@ class FlextTypesServices:
     type ResourceCallable = Callable[[], RegisterableService]
     type ModelInput = tp.JsonValue | prt.HasModelDump | Mapping[str, JsonPayload]
     type ConfigModelInput = prt.HasModelDump | Mapping[str, JsonPayload]
-    type MetadataInput = prt.HasModelDump | Mapping[str, tp.JsonValue]
+    type MetadataInput = prt.HasModelDump | Mapping[str, tp.JsonValue] | None
     type ServiceMap = Mapping[str, RegisterableService]
     type FactoryMap = Mapping[str, FactoryCallable]
     type ResourceMap = Mapping[str, ResourceCallable]
@@ -82,6 +82,9 @@ class FlextTypesServices:
     ]
     type DispatchableHandler = (
         mp.BaseModel
+        | ph.DispatchMessage
+        | ph.Handle
+        | ph.Execute
         | Callable[
             ...,
             mp.BaseModel | JsonPayload | prt.ResultLike[JsonPayload],

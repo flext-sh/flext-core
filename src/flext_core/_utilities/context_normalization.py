@@ -35,13 +35,9 @@ class FlextUtilitiesContextNormalization:
             payload = ctx_value.root
         elif isinstance(ctx_value, p.Model):
             dumped = ctx_value.model_dump(mode="python")
-            if not isinstance(dumped, Mapping):
-                return {}
             payload = t.flat_container_mapping_adapter().validate_python(dumped)
-        elif isinstance(ctx_value, Mapping):
-            payload = ctx_value
         else:
-            return {}
+            payload = ctx_value
 
         try:
             normalized: dict[str, t.JsonPayload] = {}

@@ -35,7 +35,9 @@ class FlextModelsBuilder:
 
             def _set(
                 self,
-                **updates: t.JsonPayload | Sequence[t.JsonPayload],
+                **updates: t.JsonPayload
+                | Sequence[t.JsonPayload]
+                | Sequence[m.ContractModel],
             ) -> Self:
                 """Apply one immutable ``model_copy(update=...)`` transition."""
                 return self._replace(self.state.model_copy(update=updates))
