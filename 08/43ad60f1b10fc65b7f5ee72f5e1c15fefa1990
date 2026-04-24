@@ -1,0 +1,133 @@
+tests/unit/test_registry_full_coverage.py
+  8c2cbdeb70613e9e 18,45
+tests/__init__.py
+  8101ec7ad65f4317 215,375,455,661
+  8c2cbdeb70613e9e 314,645
+src/flext_core/_constants/timeout.py
+  8101ec7ad65f4317 13
+src/flext_core/_constants/file.py
+  8c2cbdeb70613e9e 1-23
+src/flext_core/_constants/infrastructure.py
+  h_9db9d35f50cf33 1,12,16,75-92
+tests/integration/test_architecture.py
+  h_9db9d35f50cf33 17-19,27-29,37-39,47-49,57-58,66,71-73,79-85
+tests/unit/test_constants_new.py
+  h_9db9d35f50cf33 421-423,427-435,438,447-450,454-455,475-480,482-486,492,494,497-499,501-527,544-549,1007,1043-1045
+  8c2cbdeb70613e9e 714-715,920,969-970,979,1029,1035,1048
+tests/unit/test_enforcement_catalog.py
+  8101ec7ad65f4317 1,8,10,13-14,16-17,19-21,23-24,26-28,30-31,34-36,38,40-41,44-47,49-52,54-55,58-69,72-77,79-82,85-92,95-97,100-101,103,106-107,110-111,113,115-119,122-123,131,134-135,137,141-143
+  h_9db9d35f50cf33 32,37,39,42,83,93,98-99,102,108-109,112,120-121,124,128,132-133,136,139
+src/flext_core/_constants/guards.py
+  8101ec7ad65f4317 1-56
+src/flext_core/registry.py
+  8c2cbdeb70613e9e 257,260-261,263,265,423
+src/flext_core/_utilities/context_state.py
+  8101ec7ad65f4317 1-168
+src/flext_core/_utilities/__init__.py
+  8101ec7ad65f4317 21
+src/flext_core/_constants/regex.py
+  8c2cbdeb70613e9e 1-20
+tests/unit/test_constants_project_metadata.py
+  8c2cbdeb70613e9e 1,5,8-9,11,13-19,21-22,24-29,31-32,34-38,40-42
+tests/_constants/other.py
+  h_9db9d35f50cf33 12,16-140
+tests/_constants/strings.py
+  h_9db9d35f50cf33 74
+examples/_models/ex02.py
+  8c2cbdeb70613e9e 27-28,45-46,62-63
+src/flext_core/_constants/__init__.py
+  8101ec7ad65f4317 23
+  8c2cbdeb70613e9e 18
+src/flext_core/__init__.py
+  8c2cbdeb70613e9e 22,24,27,30,34-35,37,170,173,177-178,344,346,349,352,356-357,359
+  8101ec7ad65f4317 25,29,38,94,165,167-168,172,181,243,347,351,360,435
+src/flext_core/context.py
+  8101ec7ad65f4317 35
+src/flext_core/constants.py
+  8c2cbdeb70613e9e 15,17-18,27-28,30,40-46,53
+  8101ec7ad65f4317 22,38
+tests/integration/test_examples_execution.py
+  h_9db9d35f50cf33 12,19-20,26,29-33,41-43
+tests/_constants/domain.py
+  h_9db9d35f50cf33 16-24
+src/flext_core/_constants/status.py
+  8c2cbdeb70613e9e 2-7,50-80
+  h_9db9d35f50cf33 1,16-19
+src/flext_core/_utilities/model.py
+  1e8c46a785af34f8 425-429
+tests/unit/test_version.py
+  h_9db9d35f50cf33 8-9,20,35,37,39-40,44-45
+src/flext_core/_utilities/context_crud.py
+  8101ec7ad65f4317 3-4,17,28,49,67,77,85,94,97,109,119,187,209,211-212,214-218,220-221
+src/flext_core/_utilities/guards_type_protocol.py
+  8101ec7ad65f4317 118,120-121
+tests/benchmark/test_lazy_performance.py
+  h_9db9d35f50cf33 12-13,45,58
+tests/unit/__init__.py
+  8101ec7ad65f4317 172
+src/flext_core/_constants/pagination.py
+  8101ec7ad65f4317 1-17
+src/flext_core/_constants/serialization.py
+  8c2cbdeb70613e9e 2-9,11-13,15-32
+  h_9db9d35f50cf33 1,10,14,33-34
+src/flext_core/_constants/platform.py
+  8c2cbdeb70613e9e 1,13
+src/flext_core/_constants/environment.py
+  8c2cbdeb70613e9e 1-30
+src/flext_core/_models/handler.py
+  8c2cbdeb70613e9e 95,97,101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "0843ad60f1b10fc65b7f5ee72f5e1c15fefa1990",
+  "prompts": {
+    "1e8c46a785af34f8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aa25f2cb-80b0-440b-a64c-b692f5b15b99",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 12,
+      "accepted_lines": 5,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/4ddf623464145a585be60e57afe7dcf52c569d0f41e427fa95025ec8e8ad1397"
+    },
+    "8101ec7ad65f4317": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "557c886b-b02d-489a-8237-05da7f2a1438",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 457,
+      "total_deletions": 344,
+      "accepted_lines": 399,
+      "overriden_lines": 8,
+      "messages_url": "https://usegitai.com/cas/6024494093ed3bc488f2fc1d94cf1b024600a3268545844a4ab4a351cd7b034e"
+    },
+    "8c2cbdeb70613e9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2e74716b-0d32-4eb3-b239-a0f08c033edc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 330,
+      "total_deletions": 760,
+      "accepted_lines": 246,
+      "overriden_lines": 6,
+      "messages_url": "https://usegitai.com/cas/ec645f8463ab4ab42a6b09210847f342a025d1a3b1877a3264c41e5612e87bc0"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
