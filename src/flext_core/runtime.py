@@ -249,9 +249,7 @@ class FlextRuntime:
                 )
         validated_metadata: Mapping[str, t.JsonValue] = (
             t.metadata_map_adapter().validate_python({
-                key: item
-                for key, item in normalized_result.items()
-                if item is not None
+                key: item for key, item in normalized_result.items() if item is not None
             })
         )
         return validated_metadata

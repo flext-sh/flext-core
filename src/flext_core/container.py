@@ -979,9 +979,7 @@ class FlextContainer(p.ContainerLifecycle):
                 service_type=service.__class__.__name__,
             )
         for name, factory in (factories or {}).items():
-            cloned_factories[name] = m.FactoryRegistration(
-                name=name, factory=factory
-            )
+            cloned_factories[name] = m.FactoryRegistration(name=name, factory=factory)
         for name, resource_factory in (resources or {}).items():
             cloned_resources[name] = m.ResourceRegistration(
                 name=name, factory=resource_factory

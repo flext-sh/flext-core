@@ -91,9 +91,7 @@ class TestEnforcementCatalogCoverage:
     def test_runtime_warning_points_at_flext_mro_violation(self) -> None:
         runtime = _cat.by_kind(_me.EnforcementSourceKind.RUNTIME_WARNING)
         categories = {getattr(r.source, "category", "") for r in runtime}
-        assert (
-            "flext_core._constants.enforcement.FlextMroViolation" in categories
-        )
+        assert "flext_core._constants.enforcement.FlextMroViolation" in categories
 
 
 class TestEnforcementRuleSpecConstruction:

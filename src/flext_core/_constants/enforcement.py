@@ -692,8 +692,7 @@ def _hydrate_enforcement_catalog() -> None:
             _me.EnforcementRuleSpec(
                 id="ENFORCE-008",
                 description=(
-                    "Python module missing `from __future__ import "
-                    "annotations`."
+                    "Python module missing `from __future__ import annotations`."
                 ),
                 severity=_me.EnforcementRuleSeverity.MEDIUM,
                 source=_me.EnforcementInfraDetectorSource(
@@ -704,8 +703,7 @@ def _hydrate_enforcement_catalog() -> None:
             _me.EnforcementRuleSpec(
                 id="ENFORCE-009",
                 description=(
-                    "Manual typing alias declared outside typings.py / "
-                    "_typings/ tree."
+                    "Manual typing alias declared outside typings.py / _typings/ tree."
                 ),
                 severity=_me.EnforcementRuleSeverity.MEDIUM,
                 source=_me.EnforcementInfraDetectorSource(
