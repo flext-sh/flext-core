@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import r
 
 
-class TestDispatcherMinimal:
+class TestsFlextCoreDispatcherMinimal:
     def test_minimal_success(self) -> None:
         result = r[str].ok("dispatch")
         assert result.success

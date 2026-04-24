@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import m, p, t, u
 
 
-class TestDispatcherDI:
+class TestsFlextCoreDispatcherDI:
     """Test dispatcher materialization without touching internals."""
 
     def test_dispatcher_builder_returns_protocol_aligned_dispatcher(self) -> None:

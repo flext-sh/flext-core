@@ -113,6 +113,8 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.mapper_access import FlextUtilitiesMapperAccess
     from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
     from flext_core._utilities.model import FlextUtilitiesModel
+    from flext_core._utilities.model_options import FlextUtilitiesModelOptions
+    from flext_core._utilities.model_runtime import FlextUtilitiesModelRuntime
     from flext_core._utilities.parser import FlextUtilitiesParser
     from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
     from flext_core._utilities.pydantic import FlextUtilitiesPydantic
@@ -261,6 +263,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.mapper_access": ("FlextUtilitiesMapperAccess",),
             "._utilities.mapper_extract": ("FlextUtilitiesMapperExtract",),
             "._utilities.model": ("FlextUtilitiesModel",),
+            "._utilities.model_options": ("FlextUtilitiesModelOptions",),
+            "._utilities.model_runtime": ("FlextUtilitiesModelRuntime",),
             "._utilities.parser": ("FlextUtilitiesParser",),
             "._utilities.project_metadata": ("FlextUtilitiesProjectMetadata",),
             "._utilities.pydantic": ("FlextUtilitiesPydantic",),
@@ -454,6 +458,8 @@ __all__: list[str] = [
     "FlextUtilitiesMapperAccess",
     "FlextUtilitiesMapperExtract",
     "FlextUtilitiesModel",
+    "FlextUtilitiesModelOptions",
+    "FlextUtilitiesModelRuntime",
     "FlextUtilitiesParser",
     "FlextUtilitiesProjectMetadata",
     "FlextUtilitiesPydantic",

@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import r
 
 
-class TestRegistry:
+class TestsFlextCoreRegistry:
     def test_registry_like_success_contract(self) -> None:
         result = r[str].ok("registered")
         assert result.success

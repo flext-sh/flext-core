@@ -21,7 +21,7 @@ import flext_core as core
 from tests import c, m, t
 
 
-class TestsFlextCoreTypes:
+class TestsFlextCoreTypesUnit:
     """Comprehensive tests for t facade and all _typings/ submodules."""
 
     # -- Type alias existence and accessibility through t.* --
@@ -525,4 +525,4 @@ class TestsFlextCoreTypes:
         tm.that(len(t.SCALAR_TYPES), gt=0)
 
 
-__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreTypes"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreTypesUnit"]
