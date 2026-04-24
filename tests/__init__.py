@@ -78,7 +78,7 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_coverage_loggings import TestCoverageLoggings
     from tests.unit.test_decorators import TestFlextDecorators
     from tests.unit.test_decorators_discovery_full_coverage import (
-        TestDecoratorsDiscoveryFullCoverage,
+        TestsFlextCoreDecoratorsDiscovery,
     )
     from tests.unit.test_decorators_full_coverage import TestDecoratorsFullCoverage
     from tests.unit.test_deprecation_warnings import TestDeprecationWarnings
@@ -116,7 +116,6 @@ if _t.TYPE_CHECKING:
         TestHandlerDecoratorDiscovery,
     )
     from tests.unit.test_handlers import TestsFlextCoreFlextHandlers
-    from tests.unit.test_handlers_full_coverage import TestHandlersFullCoverage
     from tests.unit.test_lazy_exports import TestsFlextCoreLazy
     from tests.unit.test_loggings_full_coverage import TestsFlextCoreLoggings
     from tests.unit.test_mixins import TestFlextMixinsNestedClasses
@@ -126,7 +125,6 @@ if _t.TYPE_CHECKING:
     )
     from tests.unit.test_models_container import TestModelsContainer
     from tests.unit.test_models_cqrs_full_coverage import TestModelsCqrsFullCoverage
-    from tests.unit.test_models_entity_full_coverage import TestModelsEntityFullCoverage
     from tests.unit.test_models_project_metadata import TestModelsProjectMetadata
     from tests.unit.test_project_metadata_facade_access import TestFacadeFlatSsotAccess
     from tests.unit.test_protocols_project_metadata import (
@@ -141,37 +139,25 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_result_exception_carrying import (
         TestsFlextCoreResultExceptionCarrying,
     )
-    from tests.unit.test_result_full_coverage import TestResultFullCoverage
     from tests.unit.test_runtime import TestFlextRuntime
     from tests.unit.test_service import (
         TestService,
         TestsFlextCoreServiceUserData,
         TestsFlextCoreServiceUserService,
     )
-    from tests.unit.test_service_additional import TestServiceAdditional
     from tests.unit.test_service_bootstrap import TestsFlextCoreServiceBootstrap
     from tests.unit.test_service_coverage_100 import TestService100Coverage
     from tests.unit.test_settings import TestFlextSettings
     from tests.unit.test_settings_coverage import TestFlextSettingsCoverage
-    from tests.unit.test_typings_full_coverage import TestTypingsFullCoverage
     from tests.unit.test_typings_new import TestFlextTypes
     from tests.unit.test_utilities import TestUtilitiesSmoke
     from tests.unit.test_utilities_collection_coverage_100 import (
         TestUtilitiesCollectionCoverage,
     )
-    from tests.unit.test_utilities_context_full_coverage import (
-        TestUtilitiesContextFullCoverage,
-    )
     from tests.unit.test_utilities_coverage import TestUtilitiesCoverage
     from tests.unit.test_utilities_domain import TestUtilitiesDomain
-    from tests.unit.test_utilities_domain_full_coverage import (
-        TestUtilitiesDomainFullCoverage,
-    )
     from tests.unit.test_utilities_generators_full_coverage import (
         TestUtilitiesGeneratorsFullCoverage,
-    )
-    from tests.unit.test_utilities_parser_full_coverage import (
-        TestUtilitiesParserFullCoverage,
     )
     from tests.unit.test_utilities_project_metadata import (
         TestsFlextCoreUtilitiesProjectMetadata,
@@ -180,14 +166,8 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_utilities_settings_coverage_100 import (
         TestFlextUtilitiesSettings,
     )
-    from tests.unit.test_utilities_settings_full_coverage import (
-        TestUtilitiesSettingsFullCoverage,
-    )
     from tests.unit.test_utilities_text_full_coverage import (
         TestUtilitiesTextFullCoverage,
-    )
-    from tests.unit.test_utilities_type_checker_coverage_100 import (
-        TestsFlextCoreUtilitiesTypeChecker,
     )
     from tests.unit.test_utilities_type_guards_coverage_100 import (
         TestUtilitiesTypeGuardsCoverage100,
@@ -280,7 +260,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_coverage_loggings": ("TestCoverageLoggings",),
             ".unit.test_decorators": ("TestFlextDecorators",),
             ".unit.test_decorators_discovery_full_coverage": (
-                "TestDecoratorsDiscoveryFullCoverage",
+                "TestsFlextCoreDecoratorsDiscovery",
             ),
             ".unit.test_decorators_full_coverage": ("TestDecoratorsFullCoverage",),
             ".unit.test_deprecation_warnings": ("TestDeprecationWarnings",),
@@ -318,7 +298,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestHandlerDecoratorDiscovery",
             ),
             ".unit.test_handlers": ("TestsFlextCoreFlextHandlers",),
-            ".unit.test_handlers_full_coverage": ("TestHandlersFullCoverage",),
             ".unit.test_lazy_exports": ("TestsFlextCoreLazy",),
             ".unit.test_loggings_full_coverage": ("TestsFlextCoreLoggings",),
             ".unit.test_mixins": ("TestFlextMixinsNestedClasses",),
@@ -328,7 +307,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".unit.test_models_container": ("TestModelsContainer",),
             ".unit.test_models_cqrs_full_coverage": ("TestModelsCqrsFullCoverage",),
-            ".unit.test_models_entity_full_coverage": ("TestModelsEntityFullCoverage",),
             ".unit.test_models_project_metadata": ("TestModelsProjectMetadata",),
             ".unit.test_project_metadata_facade_access": ("TestFacadeFlatSsotAccess",),
             ".unit.test_protocols_project_metadata": (
@@ -343,37 +321,25 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_result_exception_carrying": (
                 "TestsFlextCoreResultExceptionCarrying",
             ),
-            ".unit.test_result_full_coverage": ("TestResultFullCoverage",),
             ".unit.test_runtime": ("TestFlextRuntime",),
             ".unit.test_service": (
                 "TestService",
                 "TestsFlextCoreServiceUserData",
                 "TestsFlextCoreServiceUserService",
             ),
-            ".unit.test_service_additional": ("TestServiceAdditional",),
             ".unit.test_service_bootstrap": ("TestsFlextCoreServiceBootstrap",),
             ".unit.test_service_coverage_100": ("TestService100Coverage",),
             ".unit.test_settings": ("TestFlextSettings",),
             ".unit.test_settings_coverage": ("TestFlextSettingsCoverage",),
-            ".unit.test_typings_full_coverage": ("TestTypingsFullCoverage",),
             ".unit.test_typings_new": ("TestFlextTypes",),
             ".unit.test_utilities": ("TestUtilitiesSmoke",),
             ".unit.test_utilities_collection_coverage_100": (
                 "TestUtilitiesCollectionCoverage",
             ),
-            ".unit.test_utilities_context_full_coverage": (
-                "TestUtilitiesContextFullCoverage",
-            ),
             ".unit.test_utilities_coverage": ("TestUtilitiesCoverage",),
             ".unit.test_utilities_domain": ("TestUtilitiesDomain",),
-            ".unit.test_utilities_domain_full_coverage": (
-                "TestUtilitiesDomainFullCoverage",
-            ),
             ".unit.test_utilities_generators_full_coverage": (
                 "TestUtilitiesGeneratorsFullCoverage",
-            ),
-            ".unit.test_utilities_parser_full_coverage": (
-                "TestUtilitiesParserFullCoverage",
             ),
             ".unit.test_utilities_project_metadata": (
                 "TestsFlextCoreUtilitiesProjectMetadata",
@@ -382,14 +348,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_utilities_settings_coverage_100": (
                 "TestFlextUtilitiesSettings",
             ),
-            ".unit.test_utilities_settings_full_coverage": (
-                "TestUtilitiesSettingsFullCoverage",
-            ),
             ".unit.test_utilities_text_full_coverage": (
                 "TestUtilitiesTextFullCoverage",
-            ),
-            ".unit.test_utilities_type_checker_coverage_100": (
-                "TestsFlextCoreUtilitiesTypeChecker",
             ),
             ".unit.test_utilities_type_guards_coverage_100": (
                 "TestUtilitiesTypeGuardsCoverage100",
@@ -449,7 +409,6 @@ __all__: list[str] = [
     "TestCountUnionMembers",
     "TestCoverageExceptions",
     "TestCoverageLoggings",
-    "TestDecoratorsDiscoveryFullCoverage",
     "TestDecoratorsFullCoverage",
     "TestDeprecationWarnings",
     "TestDetailSubstitution",
@@ -479,7 +438,6 @@ __all__: list[str] = [
     "TestFlextUtilitiesSettings",
     "TestForbiddenCollectionOrigin",
     "TestHandlerDecoratorDiscovery",
-    "TestHandlersFullCoverage",
     "TestHasNestedNamespaceViaMro",
     "TestLazyPerformance",
     "TestLibraryIntegration",
@@ -491,7 +449,6 @@ __all__: list[str] = [
     "TestModelsContainer",
     "TestModelsCqrsFullCoverage",
     "TestModelsEntity",
-    "TestModelsEntityFullCoverage",
     "TestModelsProjectMetadata",
     "TestNamespaceInheritance",
     "TestPatternsLogging",
@@ -506,25 +463,18 @@ __all__: list[str] = [
     "TestRegistryFullCoverage",
     "TestReportApi",
     "TestResultAdditional",
-    "TestResultFullCoverage",
     "TestService",
     "TestService100Coverage",
-    "TestServiceAdditional",
     "TestServiceResultProperty",
     "TestSettingsInheritance",
     "TestTypesLayerRules",
-    "TestTypingsFullCoverage",
     "TestUtilitiesCollectionCoverage",
-    "TestUtilitiesContextFullCoverage",
     "TestUtilitiesCoverage",
     "TestUtilitiesDomain",
-    "TestUtilitiesDomainFullCoverage",
     "TestUtilitiesGeneratorsFullCoverage",
     "TestUtilitiesGuards",
     "TestUtilitiesLayerRules",
     "TestUtilitiesMapper",
-    "TestUtilitiesParserFullCoverage",
-    "TestUtilitiesSettingsFullCoverage",
     "TestUtilitiesSmoke",
     "TestUtilitiesTextFullCoverage",
     "TestUtilitiesTypeGuardsCoverage100",
@@ -541,6 +491,7 @@ __all__: list[str] = [
     "TestsFlextCoreConstantsSettings",
     "TestsFlextCoreConstantsStrings",
     "TestsFlextCoreContext",
+    "TestsFlextCoreDecoratorsDiscovery",
     "TestsFlextCoreEnforcementCatalog",
     "TestsFlextCoreFlextHandlers",
     "TestsFlextCoreLazy",
@@ -560,7 +511,6 @@ __all__: list[str] = [
     "TestsFlextCoreTypes",
     "TestsFlextCoreUtilities",
     "TestsFlextCoreUtilitiesProjectMetadata",
-    "TestsFlextCoreUtilitiesTypeChecker",
     "TestsFlextCoreVersion",
     "c",
     "d",

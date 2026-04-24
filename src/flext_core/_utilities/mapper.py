@@ -32,48 +32,6 @@ class FlextUtilitiesMapper:
     """Data structure mapping, extraction, and transformation utilities."""
 
     @staticmethod
-    def _apply_exclude_keys(
-        result: Mapping[str, t.JsonValue],
-        exclude_keys: set[str] | None,
-    ) -> dict[str, t.JsonValue] | Mapping[str, t.JsonValue]:
-        if not exclude_keys:
-            return result
-        return {k: v for k, v in result.items() if k not in exclude_keys}
-
-    @staticmethod
-    def _apply_filter_keys(
-        result: Mapping[str, t.JsonValue],
-        filter_keys: set[str] | None,
-    ) -> dict[str, t.JsonValue] | Mapping[str, t.JsonValue]:
-        if not filter_keys:
-            return result
-        return {k: result[k] for k in filter_keys if k in result}
-
-    @staticmethod
-    def _apply_map_keys(
-        result: Mapping[str, t.JsonValue],
-        map_keys: t.StrMapping | None,
-    ) -> dict[str, t.JsonValue] | Mapping[str, t.JsonValue]:
-        if not map_keys:
-            return result
-        return {map_keys.get(k, k): v for k, v in result.items()}
-
-    @staticmethod
-    def _apply_normalize(
-        result: Mapping[str, t.JsonValue],
-        *,
-        normalize: bool,
-    ) -> dict[str, t.JsonValue] | Mapping[str, t.JsonValue]:
-        if not normalize:
-            return result
-        normalized = FlextRuntime.normalize_to_metadata(
-            {str(k): v for k, v in result.items()},
-        )
-        if FlextUtilitiesGuardsTypeCore.mapping(normalized):
-            return {str(k): v for k, v in normalized.items()}
-        return result
-
-    @staticmethod
     def _normalize_accessible_value(
         value: t.JsonPayload | p.Model | p.HasModelDump | p.ValidatorSpec | None,
     ) -> t.JsonPayload | t.JsonValue:
@@ -504,10 +462,18 @@ class FlextUtilitiesMapper:
 
         def _pipeline() -> dict[str, t.JsonValue] | Mapping[str, t.JsonValue]:
             step: dict[str, t.JsonValue] | Mapping[str, t.JsonValue] = dict(coerced)
-            step = FlextUtilitiesMapper._apply_normalize(step, normalize=normalize)
-            step = FlextUtilitiesMapper._apply_map_keys(step, map_keys)
-            step = FlextUtilitiesMapper._apply_filter_keys(step, filter_keys)
-            step = FlextUtilitiesMapper._apply_exclude_keys(step, exclude_keys)
+            if normalize:
+                normalized = FlextRuntime.normalize_to_metadata(
+                    {str(k): v for k, v in step.items()},
+                )
+                if FlextUtilitiesGuardsTypeCore.mapping(normalized):
+                    step = {str(k): v for k, v in normalized.items()}
+            if map_keys:
+                step = {map_keys.get(k, k): v for k, v in step.items()}
+            if filter_keys:
+                step = {k: step[k] for k in filter_keys if k in step}
+            if exclude_keys:
+                step = {k: v for k, v in step.items() if k not in exclude_keys}
             if strip_none:
                 step = FlextUtilitiesCollection.filter(step, lambda v: v is not None)
             if strip_empty:

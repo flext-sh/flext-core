@@ -43,7 +43,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_coverage_loggings": ("TestCoverageLoggings",),
             ".test_decorators": ("TestFlextDecorators",),
             ".test_decorators_discovery_full_coverage": (
-                "TestDecoratorsDiscoveryFullCoverage",
+                "TestsFlextCoreDecoratorsDiscovery",
             ),
             ".test_decorators_full_coverage": ("TestDecoratorsFullCoverage",),
             ".test_deprecation_warnings": ("TestDeprecationWarnings",),
@@ -79,7 +79,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_exceptions": ("TestExceptions",),
             ".test_handler_decorator_discovery": ("TestHandlerDecoratorDiscovery",),
             ".test_handlers": ("TestsFlextCoreFlextHandlers",),
-            ".test_handlers_full_coverage": ("TestHandlersFullCoverage",),
             ".test_lazy_exports": ("TestsFlextCoreLazy",),
             ".test_loggings_full_coverage": ("TestsFlextCoreLoggings",),
             ".test_mixins": ("TestFlextMixinsNestedClasses",),
@@ -89,7 +88,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".test_models_container": ("TestModelsContainer",),
             ".test_models_cqrs_full_coverage": ("TestModelsCqrsFullCoverage",),
-            ".test_models_entity_full_coverage": ("TestModelsEntityFullCoverage",),
             ".test_models_project_metadata": ("TestModelsProjectMetadata",),
             ".test_project_metadata_facade_access": ("TestFacadeFlatSsotAccess",),
             ".test_protocols_project_metadata": (
@@ -104,50 +102,32 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_result_exception_carrying": (
                 "TestsFlextCoreResultExceptionCarrying",
             ),
-            ".test_result_full_coverage": ("TestResultFullCoverage",),
             ".test_runtime": ("TestFlextRuntime",),
             ".test_service": (
                 "TestService",
                 "TestsFlextCoreServiceUserData",
                 "TestsFlextCoreServiceUserService",
             ),
-            ".test_service_additional": ("TestServiceAdditional",),
             ".test_service_bootstrap": ("TestsFlextCoreServiceBootstrap",),
             ".test_service_coverage_100": ("TestService100Coverage",),
             ".test_settings": ("TestFlextSettings",),
             ".test_settings_coverage": ("TestFlextSettingsCoverage",),
-            ".test_typings_full_coverage": ("TestTypingsFullCoverage",),
             ".test_typings_new": ("TestFlextTypes",),
             ".test_utilities": ("TestUtilitiesSmoke",),
             ".test_utilities_collection_coverage_100": (
                 "TestUtilitiesCollectionCoverage",
             ),
-            ".test_utilities_context_full_coverage": (
-                "TestUtilitiesContextFullCoverage",
-            ),
             ".test_utilities_coverage": ("TestUtilitiesCoverage",),
             ".test_utilities_domain": ("TestUtilitiesDomain",),
-            ".test_utilities_domain_full_coverage": (
-                "TestUtilitiesDomainFullCoverage",
-            ),
             ".test_utilities_generators_full_coverage": (
                 "TestUtilitiesGeneratorsFullCoverage",
-            ),
-            ".test_utilities_parser_full_coverage": (
-                "TestUtilitiesParserFullCoverage",
             ),
             ".test_utilities_project_metadata": (
                 "TestsFlextCoreUtilitiesProjectMetadata",
             ),
             ".test_utilities_reliability": ("TestFlextUtilitiesReliability",),
             ".test_utilities_settings_coverage_100": ("TestFlextUtilitiesSettings",),
-            ".test_utilities_settings_full_coverage": (
-                "TestUtilitiesSettingsFullCoverage",
-            ),
             ".test_utilities_text_full_coverage": ("TestUtilitiesTextFullCoverage",),
-            ".test_utilities_type_checker_coverage_100": (
-                "TestsFlextCoreUtilitiesTypeChecker",
-            ),
             ".test_utilities_type_guards_coverage_100": (
                 "TestUtilitiesTypeGuardsCoverage100",
             ),
