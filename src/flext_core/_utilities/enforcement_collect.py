@@ -119,12 +119,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         qn: str,
         project: tuple[str, str],
     ) -> Iterator[tuple[str, tuple[object, ...]]]:
-        if "." in qn:
-            return
-        if (
-            target.__name__ in c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS
-            or target.__name__ in c.ENFORCEMENT_INFRASTRUCTURE_BASES
-        ):
+        skip_roots = (
+            c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | c.ENFORCEMENT_INFRASTRUCTURE_BASES
+        )
+        if "." in qn or target.__name__ in skip_roots:
             return
         yield qn, (target, project[0])
 
@@ -158,7 +156,9 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         project: tuple[str, str],
     ) -> Iterator[tuple[str, tuple[object, ...]]]:
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
-        if top and top == FlextUtilitiesEnforcementCollect._discover_src_package(target):
+        if top and top == FlextUtilitiesEnforcementCollect._discover_src_package(
+            target
+        ):
             return
         yield qn, (target, project[0])
 
@@ -191,24 +191,18 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         project = FlextUtilitiesEnforcementCollect._project(target)
         if project is None:
             return
-        if tag == "class_prefix":
-            yield from FlextUtilitiesEnforcementCollect._ns_class_prefix(
-                target, qn, project,
-            )
-        elif tag in {"cross_strenum", "cross_protocol"}:
-            yield from FlextUtilitiesEnforcementCollect._ns_cross(
-                target, qn, effective_layer,
-            )
-        elif tag == "nested_mro":
-            yield from FlextUtilitiesEnforcementCollect._ns_nested_mro(
-                target, qn, project,
-            )
-        elif tag == "no_accessor_methods":
-            yield from FlextUtilitiesEnforcementCollect._ns_no_accessor_methods(
-                target, qn,
-            )
-        elif tag == "settings_inheritance":
-            yield qn, (target,)
+        cls = FlextUtilitiesEnforcementCollect
+        match tag:
+            case "class_prefix":
+                yield from cls._ns_class_prefix(target, qn, project)
+            case "cross_strenum" | "cross_protocol":
+                yield from cls._ns_cross(target, qn, effective_layer)
+            case "nested_mro":
+                yield from cls._ns_nested_mro(target, qn, project)
+            case "no_accessor_methods":
+                yield from cls._ns_no_accessor_methods(target, qn)
+            case "settings_inheritance":
+                yield qn, (target,)
 
 
 __all__: list[str] = ["FlextUtilitiesEnforcementCollect"]

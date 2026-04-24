@@ -24,6 +24,15 @@ class FlextConstantsBase:
     MIN_PORT: Final[int] = 1
     MAX_PORT: Final[int] = 65535
     MAX_HOSTNAME_LENGTH: Final[int] = 253
+    LDAP_PORT: Final[int] = 389
+    LDAPS_PORT: Final[int] = 636
+    HTTP_PORT: Final[int] = 80
+    HTTPS_PORT: Final[int] = 443
+    HTTP_ALT_PORT: Final[int] = 8080
+    POSTGRES_PORT: Final[int] = 5432
+    REDIS_PORT: Final[int] = 6379
+    GRPC_PORT: Final[int] = 50051
+    ORACLE_PORT: Final[int] = 1521
 
     HTTP_STATUS_MIN: Final[int] = 100
     HTTP_STATUS_MAX: Final[int] = 599

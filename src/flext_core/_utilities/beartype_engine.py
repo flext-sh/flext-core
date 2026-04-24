@@ -705,7 +705,7 @@ class FlextUtilitiesBeartypeEngine:
             if filename not in c.ENFORCEMENT_CANONICAL_FILES:
                 return _NO_VIOLATION
 
-            source = Path(src_file).read_text(encoding=c.DEFAULT_ENCODING)
+            source = Path(src_file).read_text(encoding="utf-8")
 
             flext_imports = re.findall(
                 r"from\s+(flext_\w+)\s+import\s+([^#\n]+)", source
@@ -750,7 +750,7 @@ class FlextUtilitiesBeartypeEngine:
                 return _NO_VIOLATION
 
             src_file = inspect.getfile(target)
-            source = Path(src_file).read_text(encoding=c.DEFAULT_ENCODING)
+            source = Path(src_file).read_text(encoding="utf-8")
 
             pydantic_imports = re.findall(
                 r"from\s+pydantic\s+import\s+([^#\n]+)",
@@ -839,7 +839,7 @@ class FlextUtilitiesBeartypeEngine:
             if filename not in c.ENFORCEMENT_CANONICAL_FILES:
                 return _NO_VIOLATION
 
-            source = Path(src_file).read_text(encoding=c.DEFAULT_ENCODING)
+            source = Path(src_file).read_text(encoding="utf-8")
 
             target_name = target.__name__
             alias_char = None
@@ -889,7 +889,7 @@ class FlextUtilitiesBeartypeEngine:
         source_code = None
         try:
             src_file = inspect.getfile(target)
-            source_code = Path(src_file).read_text(encoding=c.DEFAULT_ENCODING)
+            source_code = Path(src_file).read_text(encoding="utf-8")
         except (TypeError, OSError, AttributeError):
             return _NO_VIOLATION
 
@@ -924,7 +924,7 @@ class FlextUtilitiesBeartypeEngine:
             module_name = getattr(target, "__module__", "") or ""
             package = module_name.split(".")[0]
 
-            source = Path(src_file).read_text(encoding=c.DEFAULT_ENCODING)
+            source = Path(src_file).read_text(encoding="utf-8")
 
             from_imports = re.findall(
                 rf"from\s+{re.escape(package)}\s+import\s+([cmptur])\b",
@@ -952,7 +952,7 @@ class FlextUtilitiesBeartypeEngine:
             if "_models" not in src_file:
                 return _NO_VIOLATION
 
-            source = Path(src_file).read_text(encoding=c.DEFAULT_ENCODING)
+            source = Path(src_file).read_text(encoding="utf-8")
 
             if "if TYPE_CHECKING:" not in source:
                 return _NO_VIOLATION
@@ -1023,7 +1023,7 @@ class FlextUtilitiesBeartypeEngine:
             first_name = getattr(first_base, "__name__", "")
 
             if first_name == "u":
-                source = Path(src_file).read_text(encoding=c.DEFAULT_ENCODING)
+                source = Path(src_file).read_text(encoding="utf-8")
 
                 if re.search(r"\bu\.(\w+)\s*\(", source):
                     return {

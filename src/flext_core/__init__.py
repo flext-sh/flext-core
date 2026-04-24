@@ -94,6 +94,9 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+    from flext_core._utilities.enforcement_collect import (
+        FlextUtilitiesEnforcementCollect,
+    )
     from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
     from flext_core._utilities.enum import FlextUtilitiesEnum
     from flext_core._utilities.generators import FlextUtilitiesGenerators
@@ -243,6 +246,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.discovery": ("FlextUtilitiesDiscovery",),
             "._utilities.domain": ("FlextUtilitiesDomain",),
             "._utilities.enforcement": ("FlextUtilitiesEnforcement",),
+            "._utilities.enforcement_collect": ("FlextUtilitiesEnforcementCollect",),
             "._utilities.enforcement_emit": ("FlextUtilitiesEnforcementEmit",),
             "._utilities.enum": ("FlextUtilitiesEnum",),
             "._utilities.generators": ("FlextUtilitiesGenerators",),
@@ -435,6 +439,7 @@ __all__: list[str] = [
     "FlextUtilitiesDiscovery",
     "FlextUtilitiesDomain",
     "FlextUtilitiesEnforcement",
+    "FlextUtilitiesEnforcementCollect",
     "FlextUtilitiesEnforcementEmit",
     "FlextUtilitiesEnum",
     "FlextUtilitiesGenerators",

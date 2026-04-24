@@ -11,116 +11,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
 from collections.abc import (
     Callable,
     Iterator,
     Sequence,
 )
 from enum import EnumType
-from pathlib import Path
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
-from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
-from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
+from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
 
 
-class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementEmit):
+class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
     """Rule-driven runtime enforcement (static-only)."""
-
-    @staticmethod
-    def _discover_src_package(target: type) -> str | None:
-        """Walk parents to the first ``pyproject.toml`` and return the package name.
-
-        Prefers the ``src/<pkg>/`` layout. Falls back to the ``[project].name``
-        field in ``pyproject.toml`` when no ``src/`` tree exists (workspace
-        roots like ``flext/`` that host test dirs at the top level).
-        """
-        try:
-            src_file = inspect.getfile(target)
-        except (TypeError, OSError):
-            return None
-        for parent in Path(src_file).parents:
-            pyproject = parent / "pyproject.toml"
-            if not pyproject.exists():
-                continue
-            src = parent / "src"
-            if src.is_dir():
-                for child in src.iterdir():
-                    if child.is_dir() and (child / "__init__.py").exists():
-                        return child.name
-            meta = upm.read_project_metadata(parent)
-            return meta.package_name
-        return None
-
-    @staticmethod
-    def _project(target: type) -> tuple[str, str] | None:
-        """Return (derived_prefix, inner_namespace) or None if unknowable.
-
-        * Explicit overrides in ``c.SPECIAL_NAME_OVERRIDES`` (SSOT)
-          win over PascalCase derivation (``flext-core`` → ``Flext``;
-          ``flext`` → ``FlextRoot``).
-        * When a class lives under a top-level package ``tests`` /
-          ``examples`` / ``scripts``, its facade prefix is that package's
-          PascalCase form prepended to the project prefix — e.g. a class in
-          ``tests.*`` belonging to the ``flext_core`` project must start
-          with ``TestsFlext`` (derived from ``Tests`` + ``Flext``).
-        """
-        top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
-        if not top:
-            return None
-        src = FlextUtilitiesEnforcement._discover_src_package(target)
-        if src is None:
-            if top == "fence":
-                return None
-            src = top
-
-        head, _, tail = src.partition("_")
-        namespace = upm.pascalize(tail or head)
-        project_prefix = cpm.SPECIAL_NAME_OVERRIDES.get(
-            src.replace("_", "-"),
-        ) or upm.pascalize(src)
-        # Workspace-level auxiliary roots (tests / examples / scripts) live
-        # under a top-level module of that name and wear a prefix composed
-        # of that module's PascalCase plus the project prefix.
-        if top in {"tests", "examples", "scripts"} and top != (src or ""):
-            return upm.pascalize(top) + project_prefix, namespace
-        return project_prefix, namespace
-
-    # ------------------------------------------------------------------
-    # Field & attribute collection
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _iter_inner(target: type) -> Iterator[tuple[str, type]]:
-        for name, value in vars(target).items():
-            if isinstance(value, type) and not name.startswith("_"):
-                yield name, value
-
-    @staticmethod
-    def _iter_effective(target: type) -> Iterator[tuple[str, type]]:
-        direct = list(FlextUtilitiesEnforcement._iter_inner(target))
-        if direct:
-            yield from direct
-            return
-        seen: set[str] = set()
-        for base in target.__mro__[1:]:
-            if base is object:
-                continue
-            for name, value in FlextUtilitiesEnforcement._iter_inner(base):
-                if name not in seen:
-                    seen.add(name)
-                    yield name, value
-
-    # ------------------------------------------------------------------
-    # Unified rule-application engine — all categories dispatch through here
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _apply_rule(
@@ -142,123 +49,6 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementEmit):
     # ------------------------------------------------------------------
     # Category-specific item iterators (feed _apply_rule)
     # ------------------------------------------------------------------
-
-    @staticmethod
-    def _field_items(
-        model_type: type[mp.BaseModel],
-        tag: str,
-    ) -> Iterator[tuple[str, tuple[object, ...]]]:
-        own_ann = set(vars(model_type).get("__annotations__", {}))
-        for name, info in model_type.model_fields.items():
-            if name not in own_ann:
-                continue
-            args: tuple[object, ...] = (
-                (model_type, name, info) if tag == "missing_description" else (info,)
-            )
-            yield f'Field "{name}"', args
-
-    @staticmethod
-    def _attr_filter(
-        layer: str,
-    ) -> Callable[[str, tp.JsonValue], bool]:
-        if layer == c.EnforcementLayer.CONSTANTS.lower():
-            return ub.attr_accept_constants
-        if layer == c.EnforcementLayer.UTILITIES.lower():
-            return lambda name, _v: ub.attr_accept_utility(name)
-        return lambda name, _v: ub.attr_accept_public(name)
-
-    @staticmethod
-    def _attr_items(
-        target: type,
-        layer: str,
-    ) -> Iterator[tuple[str, tuple[object, ...]]]:
-        accept = FlextUtilitiesEnforcement._attr_filter(layer)
-        qn = target.__qualname__
-        for name, value in vars(target).items():
-            if accept(name, value):
-                yield f"{qn}.{name}", (name, value)
-
-    @staticmethod
-    def _namespace_items(
-        target: type,
-        tag: str,
-        effective_layer: str = "",
-    ) -> Iterator[tuple[str, tuple[object, ...]]]:
-        """Yield ``(location, args)`` pairs per namespace rule tag.
-
-        ``effective_layer`` is the layer inherited from the enclosing
-        ``check()`` call — when ``check()`` recurses into inner classes
-        (for recursive attr rules), the outer layer must be preserved so
-        cross-layer checks don't reset to "" on the inner target.
-        """
-        # Dynamic context-based skips — no hardcoded name lists.
-        # Pydantic/Generic specializations carry a bracketed ``__name__``
-        # (``Foo[int]``) — synthetic runtime artifacts, never user facades.
-        if (
-            ub.defined_in_function_scope(target)
-            or target.__name__.startswith("_")
-            or "[" in target.__name__
-        ):
-            return
-        qn = target.__qualname__
-        project = FlextUtilitiesEnforcement._project(target)
-        if project is None:
-            return
-
-        if tag == "class_prefix":
-            # Top-level only — inner classes are namespaces of their outer.
-            if "." in qn:
-                return
-            if (
-                target.__name__ in c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS
-                or target.__name__ in c.ENFORCEMENT_INFRASTRUCTURE_BASES
-            ):
-                return
-            yield qn, (target, project[0])
-            return
-
-        if tag in {"cross_strenum", "cross_protocol"}:
-            # Prefer the layer inherited from the enclosing check() — only
-            # fall back to the target's own detected layer when no context.
-            layer = (
-                effective_layer or FlextUtilitiesEnforcement.detect_layer(target) or ""
-            )
-
-            def walk(node: type, path: str) -> Iterator[tuple[str, tuple[object, ...]]]:
-                for name, value in FlextUtilitiesEnforcement._iter_inner(node):
-                    # Skip re-assigned aliases (``Status = c.Status``) — they
-                    # belong to their defining module, not this walk target.
-                    if not ub.defined_inside(value, node.__qualname__):
-                        continue
-                    full = f"{path}.{name}"
-                    yield full, (value, layer)
-                    if not isinstance(value, EnumType):
-                        yield from walk(value, full)
-
-            yield from walk(target, qn)
-            return
-
-        if tag == "nested_mro":
-            top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
-            if top and top == FlextUtilitiesEnforcement._discover_src_package(target):
-                return
-            yield qn, (target, project[0])
-            return
-
-        if tag == "no_accessor_methods":
-            # Scan own-class methods only — inherited methods come from
-            # Pydantic/stdlib bases and belong to those libraries.
-            for name, value in vars(target).items():
-                if inspect.isfunction(value) or isinstance(
-                    value,
-                    (classmethod, staticmethod),
-                ):
-                    yield f"{qn}.{name}", (target, name)
-            return
-
-        if tag == "settings_inheritance":
-            # One row per target — predicate inspects the MRO.
-            yield qn, (target,)
 
     # ------------------------------------------------------------------
     # Public query + emission API
