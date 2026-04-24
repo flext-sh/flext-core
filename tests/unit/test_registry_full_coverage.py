@@ -15,7 +15,7 @@ class TestRegistryFullCoverage:
         detail = m.RegistrationDetails(
             registration_id="handler-a",
             handler_mode=c.HandlerType.COMMAND,
-            status=c.CommonStatus.ACTIVE,
+            status=c.Status.ACTIVE,
         )
         summary = m.RegistrySummary(registered=[detail])
         assert summary.success is True
@@ -42,7 +42,7 @@ class TestRegistryFullCoverage:
         successful_registration = ready_registry.register_handler(_Handler())
         assert successful_registration.success
         assert successful_registration.value.registration_id != ""
-        assert successful_registration.value.status == c.CommonStatus.ACTIVE
+        assert successful_registration.value.status == c.Status.ACTIVE
 
     def test_registry_registers_batches_through_public_methods(self) -> None:
         registry = u.build_registry(dispatcher=_OkDispatcher())

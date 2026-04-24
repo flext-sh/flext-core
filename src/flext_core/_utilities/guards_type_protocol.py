@@ -77,24 +77,10 @@ class FlextUtilitiesGuardsTypeProtocol:
         return isinstance(value, p.Context)
 
     @staticmethod
-    def handler_callable(
-        value: t.GuardInput,
-    ) -> bool:
-        """Narrow value to callable handler function."""
-        return callable(value)
-
-    @staticmethod
     def factory(
         value: t.GuardInput,
     ) -> TypeIs[t.FactoryCallable]:
         """Narrow value to factory callable."""
-        return callable(value)
-
-    @staticmethod
-    def resource(
-        value: t.GuardInput,
-    ) -> TypeIs[t.ResourceCallable]:
-        """Narrow value to resource factory callable."""
         return callable(value)
 
     @staticmethod
@@ -125,52 +111,14 @@ class FlextUtilitiesGuardsTypeProtocol:
             hasattr(value, "bind") and hasattr(value, "info"),
         )
 
-    _STRING_TYPE_CHECKS: Mapping[str, Callable[[t.GuardInput], bool]] = {
-        "str": lambda v: isinstance(v, str),
-        "dict": lambda v: isinstance(v, dict),
-        "list": lambda v: isinstance(v, list),
-        "tuple": lambda v: isinstance(v, tuple),
-        "sequence": lambda v: isinstance(v, (list, tuple, range)),
-        "mapping": lambda v: isinstance(v, Mapping),
-        "list_or_tuple": lambda v: isinstance(v, (list, tuple)),
-        "sequence_not_str": lambda v: (
-            isinstance(v, (list, tuple, range)) and not isinstance(v, str)
-        ),
-        "sequence_not_str_bytes": lambda v: (
-            isinstance(v, (list, tuple, range)) and not isinstance(v, (str, bytes))
-        ),
-        "sized": lambda v: hasattr(v, "__len__"),
-        "callable": lambda v: callable(v),
-        "bytes": lambda v: isinstance(v, bytes),
-        "int": lambda v: isinstance(v, int),
-        "float": lambda v: isinstance(v, float),
-        "bool": lambda v: isinstance(v, bool),
-        "none": lambda v: v is None,
-        "string_non_empty": lambda v: isinstance(v, str) and bool(v.strip()),
-    }
-
-    @staticmethod
-    def _check_dict_non_empty(value: t.GuardInput) -> bool:
-        """Check if value is a non-empty mapping (dict or ConfigMap)."""
-        if isinstance(value, Mapping):
-            return len(value) > 0
-        return False
-
-    @staticmethod
-    def _check_list_non_empty(value: t.GuardInput) -> bool:
-        """Check if value is a non-empty list/tuple (excluding str/bytes)."""
-        if isinstance(value, (list, tuple)):
-            return value.__len__() > 0
-        return False
-
     @staticmethod
     def _run_string_type_check(type_name: str, value: t.GuardInput) -> bool:
         """Check value against a string type specification (e.g., 'str', 'list', 'dict')."""
         if type_name == "dict_non_empty":
-            return FlextUtilitiesGuardsTypeProtocol._check_dict_non_empty(value)
+            return isinstance(value, Mapping) and len(value) > 0
         if type_name == "list_non_empty":
-            return FlextUtilitiesGuardsTypeProtocol._check_list_non_empty(value)
-        checker = FlextUtilitiesGuardsTypeProtocol._STRING_TYPE_CHECKS.get(type_name)
+            return isinstance(value, (list, tuple)) and len(value) > 0
+        checker = c.STRING_TYPE_PREDICATES.get(type_name)
         if checker is None:
             return False
         return checker(value)
@@ -237,15 +185,6 @@ class FlextUtilitiesGuardsTypeProtocol:
             return False
 
     @staticmethod
-    def settings_type(
-        candidate: type | t.GuardInput,
-    ) -> TypeIs[type[p.Settings]]:
-        """Narrow candidate to Settings type with callable fetch_global."""
-        return isinstance(candidate, type) and callable(
-            getattr(candidate, "fetch_global", None),
-        )
-
-    @staticmethod
     def filter_registerable_services(
         services: Mapping[str, t.GuardInput] | None,
     ) -> Mapping[str, t.RegisterableService] | None:
@@ -257,13 +196,6 @@ class FlextUtilitiesGuardsTypeProtocol:
             if FlextUtilitiesGuardsTypeProtocol.registerable_service(value):
                 filtered[str(key)] = value
         return filtered
-
-    @staticmethod
-    def handler(obj: t.GuardInput) -> bool:
-        """Check if obj satisfies p.Handle protocol with validate capability."""
-        return isinstance(obj, p.Handle) and callable(
-            getattr(obj, "validate", None),
-        )
 
 
 __all__: list[str] = ["FlextUtilitiesGuardsTypeProtocol"]

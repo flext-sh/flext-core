@@ -70,6 +70,7 @@ class FlextTypingBase:
     type MutableFrozensetMapping = MutableMapping[str, frozenset[str]]
     type StrSequenceMapping = Mapping[str, StrSequence]
     type MutableStrSequenceMapping = MutableMapping[str, MutableSequence[str]]
+    type ScalarOrStrSequenceMapping = Mapping[str, Scalar | StrSequence]
 
     # Recurring domain-specific flat mapping aliases
     type AttributeMapping = Mapping[str, str | MutableSequence[str]]

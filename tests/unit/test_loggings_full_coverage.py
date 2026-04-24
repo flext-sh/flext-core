@@ -1,219 +1,70 @@
-"""Loggings full coverage tests."""
+"""Behavior contract for flext_core.loggings.FlextLogger — public API only."""
 
 from __future__ import annotations
-
-import types
-from collections.abc import (
-    MutableSequence,
-)
-from pathlib import Path
-from typing import ClassVar, override
 
 import pytest
 from flext_tests import tm
 
-from flext_core import (
-    FlextSettings,
-)
-from tests import m, p, t, u
+from tests import u
 
 
-class TestModule:
-    class _FakeBindable:
-        name: str = "test"
+class TestsFlextCoreLoggings:
+    """Behavior contract for FlextLogger public API: create, bind, unbind, log, track."""
 
-        def __init__(self) -> None:
-            self.calls: MutableSequence[
-                tuple[str, tuple[t.Scalar, ...], t.ScalarMapping]
-            ] = []
+    def test_create_module_logger_returns_usable_logger_instance(self) -> None:
+        logger = u.create_module_logger("test_create")
+        tm.that(logger, none=False)
+        logger.info("ready")
 
-        def bind(self, **kwargs: t.Scalar) -> TestModule._FakeBindable:
-            self.calls.append(("bind", (), kwargs))
-            return self
-
-        def new(self, **kwargs: t.Scalar) -> TestModule._FakeBindable:
-            self.calls.append(("new", (), kwargs))
-            return self
-
-        def unbind(self, *keys: str, safe: bool = False) -> TestModule._FakeBindable:
-            self.calls.append(("unbind", keys, {}))
-            return self
-
-        def debug(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
-            self.calls.append(("debug", (message, *args), kwargs))
-
-        def info(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
-            self.calls.append(("info", (message, *args), kwargs))
-
-        def warning(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
-            self.calls.append(("warning", (message, *args), kwargs))
-
-        def error(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
-            self.calls.append(("error", (message, *args), kwargs))
-
-        def critical(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
-            self.calls.append(("critical", (message, *args), kwargs))
-
-        def exception(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
-            self.calls.append(("exception", (message, *args), kwargs))
-
-        def log(
-            self, level: str, message: str, *args: t.Scalar, **kwargs: t.Scalar
-        ) -> None:
-            self.calls.append(("log", (level, message, *args), kwargs))
-
-        def trace(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
-            self.calls.append(("trace", (message, *args), kwargs))
-
-        def build_exception_context(
-            self,
-            *,
-            exception: Exception | None,
-            exc_info: bool,
-            context: t.ScalarMapping,
-        ) -> m.ConfigMap:
-            return m.ConfigMap(root={})
-
-    class _ContextVars:
-        def __init__(self) -> None:
-            self.store: t.MutableScalarMapping = dict[str, t.Scalar]()
-
-        def bind_contextvars(self, **kwargs: t.Scalar) -> None:
-            self.store.update(kwargs)
-
-        def unbind_contextvars(self, *keys: str) -> None:
-            for key in keys:
-                self.store.pop(key, None)
-
-        def clear_contextvars(self) -> None:
-            self.store.clear()
-
-        def get_contextvars(self) -> t.ScalarMapping:
-            return dict(self.store)
-
-    class _StructlogShim:
-        def __init__(self) -> None:
-            self.contextvars: TestModule._ContextVars = TestModule._ContextVars()
-
-    class _FailingInfoBindable(_FakeBindable):
-        @override
-        def info(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
-            super().info(message, *args, **kwargs)
-            msg = "no info"
-            raise AttributeError(msg)
-
-    def test_loggings_instance_and_message_format_paths(self) -> None:
-        logger = u.create_module_logger("x")
-        logger = logger.bind(
+    def test_bind_returns_logger_accepting_subsequent_log_calls(self) -> None:
+        bound = u.create_module_logger("test_bind").bind(
             service_name="svc",
-            service_version="1.0",
             correlation_id="cid",
         )
-        tm.that(logger, none=False)
-        tm.that(logger.new(a=1), none=False)
+        tm.that(bound, none=False)
+        bound.info("bound ok")
+        bound.debug("debug")
+        bound.warning("warn")
+        bound.error("err")
+
+    def test_new_returns_fresh_bound_logger_without_prior_context(self) -> None:
+        logger = u.create_module_logger("test_new").bind(initial="x")
+        refreshed = logger.new(fresh="y")
+        tm.that(refreshed, none=False)
+        refreshed.info("new ok")
+
+    def test_unbind_with_safe_flag_ignores_missing_keys(self) -> None:
+        logger = u.create_module_logger("test_unbind_safe").bind(a="1")
+        result = logger.unbind("missing", safe=True)
+        tm.that(result, none=False)
+
+    def test_unbind_without_safe_raises_on_missing_key(self) -> None:
+        logger = u.create_module_logger("test_unbind_strict")
         with pytest.raises(KeyError):
-            logger.unbind("a")
-        tm.that(logger.unbind("a", safe=True), none=False)
-        logger.trace("%s %s", "a")
-        logger.trace("x")
-        tm.that(u.to_str(("%s %s", "a")), ne="")
-        tm.that(u._calling_frame(), is_=types.FrameType)
+            logger.unbind("missing")
 
-        class _Code:
-            co_qualname = "MyType.run"
-
-        class _Frame:
-            f_locals: ClassVar[t.JsonMapping] = {}
-            f_code = _Code()
-
-        extract_class_name = getattr(u, "_extract_class_name")
-        tm.that(
-            extract_class_name(
-                _Frame(),
-            ),
-            none=True,
-        )
-
-    def test_loggings_source_and_log_error_paths(self) -> None:
-        create_bound_logger = getattr(u, "create_bound_logger")
-        fake = self._FakeBindable()
-        logger = create_bound_logger("x", fake)
-
-        tm.that(u._caller_source_path(), none=True)
-
-        tm.that(Path("/tmp/x.py").name, eq="x.py")
-
-        class _NoMarkers:
-            def __init__(self, path: Path) -> None:
-                self.path: Path = path
-
-            @property
-            def parent(self) -> _NoMarkers:
-                return self
-
-            def __truediv__(self, _other: str) -> _NoMarkers:
-                return self
-
-            def exists(self) -> bool:
-                return False
-
-        find_workspace_root = getattr(u, "_find_workspace_root")
-        tm.that(
-            find_workspace_root(
-                _NoMarkers(Path("/tmp")),
-            ),
-            none=True,
-        )
-        boom_bindable = self._FakeBindable()
-        logger_boom = create_bound_logger("x", boom_bindable)
-        failing_bindable = self._FailingInfoBindable()
-        logger_boom._structlog_instance = failing_bindable
-
-        failed = logger_boom._log("INFO", "msg")
-        assert failed is not None
-        tm.fail(failed)
-        tm.ok(logger.log("INFO", "message", k="v"))
-        tm.ok(logger.warning("warn"))
-
-    def test_loggings_exception_and_adapter_paths(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        create_bound_logger = getattr(u, "create_bound_logger")
-        fake = self._FakeBindable()
-        logger = create_bound_logger("x", fake)
-
-        def _raise_cfg(_cls: type) -> p.Settings:
-            msg = "cfg"
-            raise RuntimeError(msg)
-
-        monkeypatch.setattr(
-            FlextSettings,
-            "fetch_global",
-            classmethod(_raise_cfg),
-        )
-        tm.that(logger._should_include_stack_trace(), is_=bool)
-        with_exception = logger.build_exception_context(
-            exception=ValueError("x"),
+    def test_build_exception_context_captures_exception_metadata(self) -> None:
+        logger = u.create_module_logger("test_exc")
+        context = logger.build_exception_context(
+            exception=ValueError("boom"),
             exc_info=False,
-            context={"k": "v"},
+            context={"op": "test"},
         )
-        tm.that(with_exception, has="exception_type")
-        with_exc_info = logger.build_exception_context(
+        tm.that(context, is_=dict, has="exception_type")
+
+    def test_build_exception_context_without_exception_returns_context_dict(
+        self,
+    ) -> None:
+        logger = u.create_module_logger("test_exc_none")
+        context = logger.build_exception_context(
             exception=None,
-            exc_info=True,
-            context={},
+            exc_info=False,
+            context={"op": "test"},
         )
-        tm.that(with_exc_info, is_=dict)
-        broken_bindable = self._FakeBindable()
-        broken = create_bound_logger("x", broken_bindable)
+        tm.that(context, is_=dict)
 
-        broken.exception("msg", exception=ValueError("x"), exc_info=True)
-        tracker = u.PerformanceTracker(logger, "op")
-        with tracker:
-            pass
-        tracker.__exit__(RuntimeError, RuntimeError("x"), None)
-        assert logger.unbind("missing", safe=True) is not None
-
-
-__all__: list[str] = ["TestModule"]
+    def test_performance_tracker_context_manager_completes_without_error(self) -> None:
+        logger = u.create_module_logger("test_perf")
+        with u.PerformanceTracker(logger, "operation_under_test"):
+            result = 1 + 1
+        tm.that(result, eq=2)

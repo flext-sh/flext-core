@@ -1,221 +1,59 @@
-"""Tests for flext_core module.
-
-Tests cover FlextVersion class methods and module-level exports,
-including version string, version info tuple, version comparison,
-package info dictionary, and PackageNotFoundError fallback handling.
-
-Uses flext_tests automation (tm, u) and pytest parametrization for
-comprehensive real validation of all methods and edge cases.
-"""
+"""Behavior contract for flext_core.__version__.FlextVersion — public API only."""
 
 from __future__ import annotations
 
 import pytest
 from flext_tests import tm
 
-from flext_core import FlextVersion, __version__, __version_info__
+from flext_core.__version__ import FlextVersion, __version__, __version_info__
+from tests import c
 
 
-class TestFlextVersion:
-    """Test FlextVersion class methods and functionality with real validation."""
+class TestsFlextCoreVersion:
+    """Behavior contract for FlextVersion public API and module-level exports."""
 
-    def test_resolve_version_string(self) -> None:
-        """Test resolve_version_string returns valid version string."""
-        version = FlextVersion.resolve_version_string()
-        tm.that(version, is_=str, none=False, empty=False)
+    def test_resolve_version_string_returns_semver_formatted_string(self) -> None:
         tm.that(
-            version,
-            match="^\\d+\\.\\d+\\.\\d+",
-            msg="Version must match semantic versioning",
+            FlextVersion.resolve_version_string(),
+            is_=str,
+            empty=False,
+            match=c.Core.Tests.Patterns.SEMVER,
         )
 
-    def test_resolve_version_info(self) -> None:
-        """Test resolve_version_info returns valid version tuple."""
-        version_info = FlextVersion.resolve_version_info()
-        tm.that(version_info, is_=(tuple, list), none=False, empty=False, len=(1, 10))
+    def test_resolve_version_info_returns_non_empty_tuple_starting_with_major(
+        self,
+    ) -> None:
+        info = FlextVersion.resolve_version_info()
+        tm.that(info, is_=tuple, empty=False)
+        tm.that(info[0], is_=int, gt=-1)
+
+    def test_resolve_package_info_returns_complete_metadata_dict(self) -> None:
+        info = FlextVersion.resolve_package_info()
         tm.that(
-            version_info[0],
-            is_=int,
-            gt=-1,
-            msg="Major version must be non-negative integer",
+            info,
+            is_=dict,
+            has=list(c.Core.Tests.Version.PACKAGE_INFO_REQUIRED_KEYS),
         )
-        if len(version_info) >= 2 and isinstance(version_info[1], int):
-            tm.that(
-                version_info[1],
-                gt=-1,
-                msg="Minor version must be non-negative integer",
-            )
+        for key in c.Core.Tests.Version.PACKAGE_INFO_REQUIRED_KEYS:
+            tm.that(info[key], is_=str, none=False)
+        tm.that(info["name"], eq=c.Core.Tests.Version.CORE_PACKAGE_NAME)
+        tm.that(info["version"], match=c.Core.Tests.Patterns.SEMVER)
 
     @pytest.mark.parametrize(
         ("major", "minor", "patch", "expected"),
-        [
-            (0, 0, 0, True),
-            (0, 0, 1, None),
-            (1, 0, 0, None),
-            (999, 999, 999, False),
-            (-1, 0, 0, True),
-        ],
+        c.Core.Tests.Version.AT_LEAST_CASES,
+        ids=c.Core.Tests.Version.AT_LEAST_CASE_IDS,
     )
-    def test_version_at_least(
+    def test_version_at_least_compares_against_current(
         self,
         major: int,
         minor: int,
         patch: int,
-        expected: bool | None,
+        *,
+        expected: bool,
     ) -> None:
-        """Test version_at_least with various version combinations."""
-        result = FlextVersion.version_at_least(major, minor, patch)
-        tm.that(result, is_=bool, none=False)
-        if expected is not None:
-            tm.that(
-                result,
-                eq=expected,
-                msg=f"Version comparison failed for {major}.{minor}.{patch}",
-            )
-        else:
-            current_version_info = FlextVersion.resolve_version_info()
-            current_major = (
-                current_version_info[0]
-                if isinstance(current_version_info[0], int)
-                else 0
-            )
-            if major < current_major:
-                tm.that(
-                    result,
-                    eq=True,
-                    msg=f"Should be True for major {major} < current {current_major}",
-                )
-            elif major > current_major:
-                tm.that(
-                    result,
-                    eq=False,
-                    msg=f"Should be False for major {major} > current {current_major}",
-                )
+        tm.that(FlextVersion.version_at_least(major, minor, patch), eq=expected)
 
-    def test_resolve_package_info(self) -> None:
-        """Test resolve_package_info returns complete package metadata dictionary."""
-        info = FlextVersion.resolve_package_info()
-        tm.that(info, is_=dict, none=False, empty=False)
-        required_keys = [
-            "name",
-            "version",
-            "description",
-            "author",
-            "author_email",
-            "license",
-            "url",
-        ]
-        tm.that(
-            info,
-            has=required_keys,
-            msg="Package info must contain all required keys",
-        )
-        for key in required_keys:
-            tm.that(
-                info[key],
-                is_=str,
-                none=False,
-                msg=f"Key {key} must be non-empty string",
-            )
-        tm.that(info["name"], eq="flext-core", msg="Package name must be flext-core")
-        tm.that(
-            info["version"],
-            match="^\\d+\\.\\d+\\.\\d+",
-            msg="Version must match semantic versioning",
-        )
-
-    def test_module_level_exports(self) -> None:
-        """Test module-level version exports are valid."""
-        tm.that(
-            __version__,
-            is_=str,
-            none=False,
-            empty=False,
-            match="^\\d+\\.\\d+\\.\\d+",
-        )
-        tm.that(
-            __version_info__,
-            is_=(tuple, list),
-            none=False,
-            empty=False,
-            len=(1, 10),
-        )
-        tm.that(
-            __version__,
-            eq=FlextVersion.resolve_version_string(),
-            msg="Module export must match class method",
-        )
-        tm.that(
-            __version_info__,
-            eq=FlextVersion.resolve_version_info(),
-            msg="Module export must match class method",
-        )
-
-    def test_package_not_found_error_fallback(self) -> None:
-        """Test PackageNotFoundError fallback handling.
-
-        The FlextVersion class catches PackageNotFoundError at class definition
-        time and uses a hardcoded fallback version. We verify the fallback
-        dict matches what FlextVersion._metadata resolves to when the package
-        is not installed.
-        """
-        fallback_metadata = {
-            "Version": "0.12.0-dev",
-            "Name": "flext-core",
-            "Summary": "",
-            "Author": "",
-            "Author-Email": "",
-            "License": "",
-            "Home-Page": "",
-        }
-        tm.that(
-            fallback_metadata["Version"],
-            eq="0.12.0-dev",
-            msg="Fallback version must be 0.12.0-dev",
-        )
-        tm.that(
-            fallback_metadata["Name"],
-            eq="flext-core",
-            msg="Fallback title must be flext-core",
-        )
-
-    @pytest.mark.parametrize(
-        "method_name",
-        [
-            "resolve_version_string",
-            "resolve_version_info",
-            "resolve_package_info",
-            "version_at_least",
-        ],
-    )
-    def test_methods_are_callable(self, method_name: str) -> None:
-        """Test that all class methods are callable and return valid results."""
-        method = getattr(FlextVersion, method_name)
-        tm.that(callable(method), eq=True, msg=f"{method_name} must be callable")
-        if method_name == "version_at_least":
-            result = method(0, 0, 0)
-            tm.that(result, is_=bool, none=False, msg=f"{method_name} must return bool")
-        elif method_name == "resolve_version_string":
-            result = method()
-            tm.that(
-                result,
-                is_=str,
-                none=False,
-                empty=False,
-                msg=f"{method_name} must return non-empty string",
-            )
-        elif method_name == "resolve_version_info":
-            version_info = FlextVersion.resolve_version_info()
-            assert isinstance(version_info, tuple), (
-                f"{method_name} must return non-empty tuple"
-            )
-            assert version_info, f"{method_name} must return non-empty tuple"
-        elif method_name == "resolve_package_info":
-            result = method()
-            tm.that(
-                result,
-                is_=dict,
-                none=False,
-                empty=False,
-                msg=f"{method_name} must return non-empty dict",
-            )
+    def test_module_level_exports_match_class_accessors(self) -> None:
+        tm.that(__version__, eq=FlextVersion.resolve_version_string())
+        tm.that(__version_info__, eq=FlextVersion.resolve_version_info())

@@ -12,7 +12,6 @@ from __future__ import annotations
 import re
 from enum import StrEnum
 from re import Pattern
-from types import MappingProxyType
 
 import pytest
 from flext_tests import tm
@@ -46,14 +45,13 @@ class TestFlextConstants:
             ("LOCALHOST", "localhost"),
             ("MIN_PORT", 1),
             ("MAX_PORT", 65535),
-            ("DEFAULT_TIMEOUT", 30),
+            ("DEFAULT_TIMEOUT_SECONDS", 30),
             ("DEFAULT_CONNECTION_POOL_SIZE", 10),
             ("MAX_CONNECTION_POOL_SIZE", 100),
             ("MAX_HOSTNAME_LENGTH", 253),
             ("HTTP_STATUS_MIN", 100),
             ("HTTP_STATUS_MAX", 599),
             ("TYPE_MISMATCH", "Type mismatch"),
-            ("PAGE_SIZE", 100),
             ("CACHE_TTL", 300),
             ("MAX_MESSAGE_LENGTH", 100),
             ("DEFAULT_MIDDLEWARE_ORDER", 0),
@@ -77,7 +75,6 @@ class TestFlextConstants:
             ("DEFAULT_BACKOFF_MULTIPLIER", 2.0),
             ("DEFAULT_MAX_DELAY_SECONDS", 60.0),
             ("MAX_TIMEOUT_SECONDS_PERFORMANCE", 600),
-            ("DEFAULT_HOUR_IN_SECONDS", 3600),
         ],
         ids=_constant_case_id,
     )
@@ -85,19 +82,6 @@ class TestFlextConstants:
         self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Base constants have correct values."""
-
-    def test_base_derived_aliases_are_consistent(self) -> None:
-        """Derived aliases point to same value as their source."""
-        tm.that(c.TIMEOUT, eq=c.DEFAULT_TIMEOUT)
-        tm.that(c.TIMEOUT_SECONDS, eq=c.DEFAULT_TIMEOUT)
-        tm.that(c.DEFAULT_CACHE_TTL, eq=c.CACHE_TTL)
-        tm.that(c.DEFAULT_DATABASE_URL, eq=c.DATABASE_URL)
-        tm.that(c.DEFAULT_TIMEOUT_SECONDS, eq=c.DEFAULT_TIMEOUT)
-        tm.that(c.OPERATION_TIMEOUT_SECONDS, eq=c.DEFAULT_TIMEOUT)
-        tm.that(c.DEFAULT_POOL_SIZE, eq=c.DEFAULT_CONNECTION_POOL_SIZE)
-        tm.that(c.MAX_POOL_SIZE, eq=c.MAX_CONNECTION_POOL_SIZE)
-        tm.that(c.MAX_PORT_NUMBER, eq=c.MAX_PORT)
-        tm.that(c.MIN_PORT_NUMBER, eq=c.MIN_PORT)
 
     # ------------------------------------------------------------------
     # CQRS constants
@@ -108,9 +92,6 @@ class TestFlextConstants:
         [
             ("DEFAULT_COMMAND_TYPE", "generic_command"),
             ("DEFAULT_TIMESTAMP", ""),
-            ("DEFAULT_COMMAND_TIMEOUT_MS", 30000),
-            ("MIN_TIMEOUT_MS", 1000),
-            ("MAX_TIMEOUT_MS", 300000),
             ("DEFAULT_RETRIES", 0),
             ("MIN_RETRIES", 0),
             ("MAX_RETRIES", 5),
@@ -131,24 +112,6 @@ class TestFlextConstants:
     @pytest.mark.parametrize(
         ("enum_cls", "members"),
         [
-            (
-                "DispatcherStatus",
-                {"STOPPED": "stopped"},
-            ),
-            (
-                "CommonStatus",
-                {
-                    "ACTIVE": "active",
-                    "INACTIVE": "inactive",
-                    "PENDING": "pending",
-                    "RUNNING": "running",
-                    "COMPLETED": "completed",
-                    "FAILED": "failed",
-                    "CANCELLED": "cancelled",
-                    "COMPENSATING": "compensating",
-                    "ARCHIVED": "archived",
-                },
-            ),
             (
                 "HandlerType",
                 {
@@ -217,20 +180,8 @@ class TestFlextConstants:
                 },
             ),
             (
-                "SpecialStatus",
-                {"SENT": "sent", "IDLE": "idle", "PROCESSING": "processing"},
-            ),
-            (
                 "TokenType",
                 {"BEARER": "bearer", "API_KEY": "api_key", "JWT": "jwt"},
-            ),
-            (
-                "OperationStatus",
-                {
-                    "SUCCESS": "success",
-                    "FAILURE": "failure",
-                    "PARTIAL": "partial",
-                },
             ),
             (
                 "SerializationFormat",
@@ -467,28 +418,24 @@ class TestFlextConstants:
         ("attr", "expected"),
         [
             ("ContextScope", c.ContextScope),
-            ("CORRELATION_ID_PREFIX", "flext-"),
-            ("CORRELATION_ID_LENGTH", 12),
-            ("MAX_CONTEXT_DEPTH", 10),
-            ("MAX_CONTEXT_SIZE", 1000),
-            ("MILLISECONDS_PER_SECOND", 1000),
-            ("ExportFormat", c.ExportFormat),
+            ("ContextKey", c.ContextKey),
+            ("MetadataKey", c.MetadataKey),
+            ("ServiceName", c.ServiceName),
             ("THREAD_NAME_PREFIX", "flext-dispatcher"),
             ("HandlerMode", c.HandlerMode),
             ("DEFAULT_HANDLER_MODE", "command"),
-            ("DEFAULT_AUTO_CONTEXT", True),
-            ("DEFAULT_ENABLE_LOGGING", True),
-            ("DEFAULT_ENABLE_METRICS", True),
-            ("DEFAULT_DISPATCHER_PATH", "flext_core:FlextDispatcher"),
-            ("DEFAULT_SERVICE_NAME", "default_service"),
-            ("DEFAULT_RESOURCE_TYPE", "default_resource"),
-            ("SENTINEL_MISSING", "__sentinel_missing__"),
-            ("DEFAULT_MAX_SERVICES", 1000),
+            ("BackoffStrategy", c.BackoffStrategy),
+            ("DEFAULT_BACKOFF_STRATEGY", "exponential"),
+            ("MAX_RETRY_ATTEMPTS", 3),
+            ("DEFAULT_RETRY_DELAY_SECONDS", 1),
+            ("DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT", 60),
+            ("DATABASE_URL", "sqlite:///:memory:"),
+            ("DEFAULT_CONNECTION_POOL_SIZE", 10),
+            ("MAX_CONNECTION_POOL_SIZE", 100),
+            ("MIN_POOL_SIZE", 1),
             ("DEFAULT_MAX_FACTORIES", 500),
             ("MAX_FACTORIES", 5000),
-            ("DEFAULT_PAGE_NUMBER", 1),
-            ("MIN_PAGE_NUMBER", 1),
-            ("MAX_PAGE_NUMBER", 10000),
+            ("DEFAULT_LOGGER_MODULE", "flext_core"),
         ],
     )
     def test_infrastructure_constant_values(
@@ -496,20 +443,16 @@ class TestFlextConstants:
     ) -> None:
         """Infrastructure constants have correct values."""
 
-    def test_infrastructure_context_timeout_derives_from_base(self) -> None:
-        """DEFAULT_CONTEXT_TIMEOUT equals DEFAULT_TIMEOUT_SECONDS from base."""
-        tm.that(c.DEFAULT_CONTEXT_TIMEOUT, eq=c.DEFAULT_TIMEOUT_SECONDS)
-
     def test_infrastructure_valid_handler_modes(self) -> None:
-        """Handler mode set is derived directly from canonical HandlerType enum."""
-        valid_handler_modes: tuple[c.HandlerType, ...] = (
-            c.HandlerType.COMMAND,
-            c.HandlerType.QUERY,
+        """Handler mode set is exposed by the infrastructure enum."""
+        valid_handler_modes: tuple[c.HandlerMode, ...] = (
+            c.HandlerMode.COMMAND,
+            c.HandlerMode.QUERY,
         )
         tm.that(valid_handler_modes, is_=tuple)
         tm.that(len(valid_handler_modes), eq=2)
-        tm.that(c.HandlerType.COMMAND in valid_handler_modes, eq=True)
-        tm.that(c.HandlerType.QUERY in valid_handler_modes, eq=True)
+        tm.that(c.HandlerMode.COMMAND in valid_handler_modes, eq=True)
+        tm.that(c.HandlerMode.QUERY in valid_handler_modes, eq=True)
 
     def test_infrastructure_valid_registration_statuses(self) -> None:
         """Registration status set is composed from canonical enum authorities."""
@@ -529,29 +472,59 @@ class TestFlextConstants:
         )
         tm.that(c.WarningLevel.ERROR in valid_registration_statuses, eq=True)
 
-    def test_infrastructure_debug_context_keys_frozenset(self) -> None:
-        """DEBUG_CONTEXT_KEYS is a frozenset with schema and params."""
-        tm.that(c.DEBUG_CONTEXT_KEYS, is_=frozenset)
-        tm.that("schema" in c.DEBUG_CONTEXT_KEYS, eq=True)
-        tm.that("params" in c.DEBUG_CONTEXT_KEYS, eq=True)
+    def test_infrastructure_context_keys_cover_core_request_fields(self) -> None:
+        """ContextKey exposes core request-scoped identifiers."""
+        tm.that(str(c.ContextKey.OPERATION_ID), eq="operation_id")
+        tm.that(str(c.ContextKey.USER_ID), eq="user_id")
+        tm.that(str(c.ContextKey.CORRELATION_ID), eq="correlation_id")
+        tm.that(str(c.ContextKey.REQUEST_ID), eq="request_id")
 
-    def test_infrastructure_error_context_keys_frozenset(self) -> None:
-        """ERROR_CONTEXT_KEYS is a frozenset with error-related keys."""
-        tm.that(c.ERROR_CONTEXT_KEYS, is_=frozenset)
-        tm.that("stack_trace" in c.ERROR_CONTEXT_KEYS, eq=True)
-        tm.that("exception" in c.ERROR_CONTEXT_KEYS, eq=True)
+    def test_infrastructure_metadata_keys_cover_timing_fields(self) -> None:
+        """MetadataKey exposes the operation timing fields."""
+        tm.that(str(c.MetadataKey.START_TIME), eq="start_time")
+        tm.that(str(c.MetadataKey.END_TIME), eq="end_time")
+        tm.that(str(c.MetadataKey.DURATION_SECONDS), eq="duration_seconds")
 
     @pytest.mark.parametrize(
         ("enum_cls", "members"),
         [
             (
-                "MetadataField",
+                "ContextKey",
                 {
+                    "OPERATION_ID": "operation_id",
                     "USER_ID": "user_id",
                     "CORRELATION_ID": "correlation_id",
+                    "PARENT_CORRELATION_ID": "parent_correlation_id",
+                    "SERVICE_NAME": "service_name",
+                    "OPERATION_NAME": "operation_name",
                     "REQUEST_ID": "request_id",
-                    "SESSION_ID": "session_id",
-                    "TENANT_ID": "tenant_id",
+                    "SERVICE_VERSION": "service_version",
+                    "OPERATION_START_TIME": "operation_start_time",
+                    "OPERATION_METADATA": "operation_metadata",
+                    "REQUEST_TIMESTAMP": "request_timestamp",
+                    "SERVICE_MODULE": "service_module",
+                },
+            ),
+            (
+                "MetadataKey",
+                {
+                    "START_TIME": "start_time",
+                    "END_TIME": "end_time",
+                    "DURATION_SECONDS": "duration_seconds",
+                },
+            ),
+            (
+                "ServiceName",
+                {
+                    "LOGGER": "logger",
+                    "COMMAND_BUS": "command_bus",
+                },
+            ),
+            (
+                "BackoffStrategy",
+                {
+                    "EXPONENTIAL": "exponential",
+                    "LINEAR": "linear",
                 },
             ),
         ],
@@ -568,12 +541,12 @@ class TestFlextConstants:
             tm.that(str(cls[name]), eq=value)
         tm.that(len(cls), eq=len(members))
 
-    def test_infrastructure_header_constants_prefixed(self) -> None:
-        """HTTP header constants start with X-."""
-        tm.that(c.ContextHeader.CORRELATION_ID, starts="X-")
-        tm.that(c.ContextHeader.PARENT_CORRELATION_ID, starts="X-")
-        tm.that(c.ContextHeader.SERVICE_NAME, starts="X-")
-        tm.that(c.ContextHeader.USER_ID, starts="X-")
+    def test_infrastructure_context_key_values_use_snake_case(self) -> None:
+        """Context keys follow the public snake_case contract."""
+        tm.that(str(c.ContextKey.PARENT_CORRELATION_ID), eq="parent_correlation_id")
+        tm.that(str(c.ContextKey.SERVICE_NAME), eq="service_name")
+        tm.that(str(c.ContextKey.OPERATION_NAME), eq="operation_name")
+        tm.that(str(c.ContextKey.SERVICE_MODULE), eq="service_module")
 
     # ------------------------------------------------------------------
     # Platform constants
@@ -587,63 +560,15 @@ class TestFlextConstants:
             ("ENV_FILE_ENV_VAR", "FLEXT_ENV_FILE"),
             ("ENV_NESTED_DELIMITER", "__"),
             ("DEFAULT_APP_NAME", "flext"),
-            ("FLEXT_API_PORT", 8000),
-            ("DEFAULT_HOST", "localhost"),
-            ("DEFAULT_HTTP_PORT", 80),
-            ("MIME_TYPE_JSON", "application/json"),
             ("MAX_RETRY_ATTEMPTS", 3),
-            ("CIRCUIT_BREAKER_THRESHOLD", 5),
-            ("HEADER_REQUEST_ID", "X-Request-ID"),
-            ("EXT_PYTHON", ".py"),
-            ("EXT_YAML", ".yaml"),
-            ("EXT_JSON", ".json"),
-            ("EXT_TOML", ".toml"),
-            ("EXT_XML", ".xml"),
-            ("EXT_TXT", ".txt"),
-            ("EXT_MD", ".md"),
-            ("DIR_CONFIG", "settings"),
-            ("DIR_PLUGINS", "plugins"),
-            ("DIR_LOGS", "logs"),
-            ("DIR_DATA", "data"),
-            ("DIR_TEMP", "temp"),
-            ("DEFAULT_DB_POOL_SIZE", 10),
-            ("MIN_DB_POOL_SIZE", 1),
-            ("MAX_DB_POOL_SIZE", 100),
-            ("DEFAULT_INITIAL_DELAY_SECONDS", 1.0),
-            ("MAX_BATCH_SIZE", 10000),
-            ("DEFAULT_VERSION", 1),
-            ("MIN_VERSION", 1),
-            ("HIGH_MEMORY_THRESHOLD_BYTES", 1073741824),
-            ("DEFAULT_MAX_RETRIES", 3),
             ("DEFAULT_RETRY_DELAY_SECONDS", 1),
-            ("RETRY_BACKOFF_BASE", 2.0),
-            ("RETRY_BACKOFF_MAX", 60.0),
             ("DEFAULT_BACKOFF_STRATEGY", "exponential"),
-            ("BACKOFF_STRATEGY_EXPONENTIAL", "exponential"),
-            ("BACKOFF_STRATEGY_LINEAR", "linear"),
-            ("DEFAULT_RATE_LIMIT_WINDOW_SECONDS", 60),
-            ("DEFAULT_RATE_LIMIT_MAX_REQUESTS", 100),
-            ("DEFAULT_CIRCUIT_BREAKER_THRESHOLD", 5),
-            ("DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD", 3),
         ],
     )
     def test_platform_constant_values(
         self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Platform constants have correct values."""
-
-    def test_platform_circuit_breaker_state_enum(self) -> None:
-        """CircuitBreakerState has closed/open/half_open members."""
-        cls = c.CircuitBreakerState
-        tm.that(StrEnum in cls.__mro__, eq=True)
-        tm.that(str(cls.CLOSED), eq="closed")
-        tm.that(str(cls.OPEN), eq="open")
-        tm.that(str(cls.HALF_OPEN), eq="half_open")
-        tm.that(len(cls), eq=3)
-
-    def test_platform_recovery_timeout_derives_from_base(self) -> None:
-        """DEFAULT_RECOVERY_TIMEOUT equals base DEFAULT_RECOVERY_TIMEOUT_SECONDS."""
-        tm.that(c.DEFAULT_RECOVERY_TIMEOUT, eq=c.DEFAULT_RECOVERY_TIMEOUT_SECONDS)
 
     def test_platform_circuit_breaker_recovery_timeout_derives_from_base(self) -> None:
         """DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT equals base DEFAULT_RECOVERY_TIMEOUT_SECONDS."""
@@ -660,47 +585,9 @@ class TestFlextConstants:
         ("pattern_attr", "valid", "invalid"),
         [
             (
-                "PATTERN_EMAIL",
-                ["test@example.com", "user.name+tag@example.co.uk"],
-                ["invalid.email", "@example.com", "test@"],
-            ),
-            (
-                "PATTERN_PHONE_NUMBER",
-                ["+5511987654321", "5511987654321", "+1234567890"],
-                ["123", "abc1234567890", "123456789"],
-            ),
-            (
-                "PATTERN_UUID",
-                [
-                    "550e8400-e29b-41d4-a716-446655440000",
-                    "550e8400e29b41d4a716446655440000",
-                ],
-                ["invalid-uuid", "550e8400-e29b-41d4"],
-            ),
-            (
-                "PATTERN_PATH",
-                ["/home/user/file.txt", "relative/path/file.py"],
-                ["path/with<invalid>chars", 'path/with"quotes'],
-            ),
-            (
-                "PATTERN_IDENTIFIER",
-                ["myVar", "handler1", "testCase"],
-                ["1starts_with_digit", "", "-invalid"],
-            ),
-            (
                 "PATTERN_IDENTIFIER_WITH_UNDERSCORE",
                 ["_private", "myVar", "__dunder"],
                 ["1digit", "-dash"],
-            ),
-            (
-                "PATTERN_SIMPLE_IDENTIFIER",
-                ["abc123", "TEST"],
-                ["has_underscore", "has-dash", "has space"],
-            ),
-            (
-                "PATTERN_MODULE_PATH",
-                ["flext_core:FlextDispatcher"],
-                ["no_colon_here", "too:many:colons"],
             ),
         ],
         ids=_constant_case_id,
@@ -734,27 +621,9 @@ class TestFlextConstants:
     @pytest.mark.parametrize(
         ("attr", "expected"),
         [
-            ("DEFAULT_LEVEL", "INFO"),
-            ("DEFAULT_LEVEL_DEVELOPMENT", "DEBUG"),
-            ("DEFAULT_LEVEL_PRODUCTION", "WARNING"),
-            ("DEFAULT_LEVEL_TESTING", "INFO"),
-            ("JSON_OUTPUT_DEFAULT", False),
-            ("STRUCTURED_OUTPUT", True),
-            ("INCLUDE_SOURCE", True),
-            ("VERBOSITY", "compact"),
             ("MAX_FILE_SIZE", 10485760),
             ("BACKUP_COUNT", 5),
-            ("CONSOLE_ENABLED", True),
-            ("CONSOLE_COLOR_ENABLED", True),
-            ("TRACK_PERFORMANCE", False),
-            ("TRACK_TIMING", False),
-            ("INCLUDE_CONTEXT", True),
-            ("INCLUDE_CORRELATION_ID", True),
-            ("MAX_CONTEXT_KEYS", 50),
-            ("MASK_SENSITIVE_DATA", True),
             ("ASYNC_ENABLED", True),
-            ("ASYNC_QUEUE_SIZE", 10000),
-            ("ASYNC_WORKERS", 1),
             ("ASYNC_BLOCK_ON_FULL", False),
         ],
     )
@@ -762,30 +631,6 @@ class TestFlextConstants:
         self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Domain constants have correct values."""
-
-    def test_domain_valid_levels_tuple(self) -> None:
-        """VALID_LEVELS contains all five standard log levels in order."""
-        tm.that(c.VALID_LEVELS, is_=tuple)
-        tm.that(c.VALID_LEVELS, eq=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"))
-
-    def test_domain_level_hierarchy_is_mapping_proxy(self) -> None:
-        """LEVEL_HIERARCHY is an immutable MappingProxyType with correct numeric values."""
-        tm.that(c.LEVEL_HIERARCHY.__class__, eq=MappingProxyType)
-        tm.that(c.LEVEL_HIERARCHY["debug"], eq=10)
-        tm.that(c.LEVEL_HIERARCHY["info"], eq=20)
-        tm.that(c.LEVEL_HIERARCHY["warning"], eq=30)
-        tm.that(c.LEVEL_HIERARCHY["error"], eq=40)
-        tm.that(c.LEVEL_HIERARCHY["critical"], eq=50)
-
-    def test_domain_level_hierarchy_is_monotonically_increasing(self) -> None:
-        """Log level numeric values increase: debug < info < warning < error < critical."""
-        levels = ["debug", "info", "warning", "error", "critical"]
-        for i in range(len(levels) - 1):
-            tm.that(
-                c.LEVEL_HIERARCHY[levels[i]] < c.LEVEL_HIERARCHY[levels[i + 1]],
-                eq=True,
-                msg=f"{levels[i]} should be less than {levels[i + 1]}",
-            )
 
     @pytest.mark.parametrize(
         ("enum_cls", "members"),
@@ -800,10 +645,6 @@ class TestFlextConstants:
                     "REMOVE": "remove",
                     "SET": "set",
                 },
-            ),
-            (
-                "Status",
-                {"ACTIVE": "active", "INACTIVE": "inactive", "ARCHIVED": "archived"},
             ),
             (
                 "Currency",
@@ -869,10 +710,9 @@ class TestFlextConstants:
         [
             ("DEFAULT_ENCODING", "utf-8"),
             ("SERIALIZATION_ISO8601", "iso8601"),
-            ("SERIALIZATION_FLOAT", "float"),
             ("SERIALIZATION_BASE64", "base64"),
-            ("SERIALIZATION_UTF8", "utf8"),
-            ("SERIALIZATION_HEX", "hex"),
+            ("EXTRA_CONFIG_FORBID", "forbid"),
+            ("EXTRA_CONFIG_IGNORE", "ignore"),
             ("LONG_UUID_LENGTH", 12),
             ("SHORT_UUID_LENGTH", 8),
             ("VERSION_MODULO", 100),
@@ -881,11 +721,6 @@ class TestFlextConstants:
             ("DEFAULT_ENABLE_TRACING", False),
             ("DEFAULT_DEBUG_MODE", False),
             ("DEFAULT_TRACE_MODE", False),
-            ("JWT_DEFAULT_ALGORITHM", "HS256"),
-            ("CREDENTIAL_BCRYPT_ROUNDS", 12),
-            ("EXTRA_FORBID", "forbid"),
-            ("EXTRA_IGNORE", "ignore"),
-            ("EXTRA_ALLOW", "allow"),
         ],
     )
     def test_settings_constant_values(
@@ -904,15 +739,6 @@ class TestFlextConstants:
     @pytest.mark.parametrize(
         ("enum_cls", "members"),
         [
-            (
-                "ConversionMode",
-                {
-                    "TO_STR": "to_str",
-                    "TO_STR_LIST": "to_str_list",
-                    "NORMALIZE": "normalize",
-                    "JOIN": "join",
-                },
-            ),
             (
                 "LogLevel",
                 {
@@ -1091,14 +917,13 @@ class TestFlextConstants:
             ("NAME", str),
             ("MIN_PORT", int),
             ("MAX_PORT", int),
-            ("DEFAULT_TIMEOUT", int),
+            ("DEFAULT_TIMEOUT_SECONDS", int),
             ("INITIAL_TIME", float),
             ("DEFAULT_BACKOFF_MULTIPLIER", float),
             ("DEFAULT_PARALLEL_EXECUTION", bool),
             ("DEFAULT_STOP_ON_ERROR", bool),
             ("DEFAULT_ENCODING", str),
             ("FLEXT_API_PORT", int),
-            ("DEFAULT_LEVEL", str),
             ("DATABASE_URL", str),
         ],
     )
@@ -1141,20 +966,8 @@ class TestFlextConstants:
     def test_pool_size_range_invariant(self) -> None:
         """MIN < DEFAULT < MAX for pool sizes."""
         tm.that(c.MIN_POOL_SIZE, gt=0)
-        tm.that(c.DEFAULT_POOL_SIZE, gte=c.MIN_POOL_SIZE)
-        tm.that(c.MAX_POOL_SIZE, gte=c.DEFAULT_POOL_SIZE)
-
-    def test_db_pool_size_range_invariant(self) -> None:
-        """MIN < DEFAULT < MAX for database pool sizes."""
-        tm.that(c.MIN_DB_POOL_SIZE, gt=0)
-        tm.that(c.DEFAULT_DB_POOL_SIZE, gte=c.MIN_DB_POOL_SIZE)
-        tm.that(c.MAX_DB_POOL_SIZE, gte=c.DEFAULT_DB_POOL_SIZE)
-
-    def test_cqrs_timeout_ms_range_invariant(self) -> None:
-        """MIN_TIMEOUT_MS < DEFAULT < MAX for CQRS timeouts."""
-        tm.that(c.MIN_TIMEOUT_MS, gt=0)
-        tm.that(c.DEFAULT_COMMAND_TIMEOUT_MS, gte=c.MIN_TIMEOUT_MS)
-        tm.that(c.MAX_TIMEOUT_MS, gte=c.DEFAULT_COMMAND_TIMEOUT_MS)
+        tm.that(c.DEFAULT_CONNECTION_POOL_SIZE, gte=c.MIN_POOL_SIZE)
+        tm.that(c.MAX_CONNECTION_POOL_SIZE, gte=c.DEFAULT_CONNECTION_POOL_SIZE)
 
     # ------------------------------------------------------------------
     # Cross-cutting: no duplicate enum values within a single enum
@@ -1163,8 +976,7 @@ class TestFlextConstants:
     @pytest.mark.parametrize(
         "enum_cls",
         [
-            "DispatcherStatus",
-            "CommonStatus",
+            "Status",
             "HandlerType",
             "MetricType",
             "ServiceMetricCategory",
@@ -1173,9 +985,7 @@ class TestFlextConstants:
             "BindType",
             "MergeStrategy",
             "HealthStatus",
-            "SpecialStatus",
             "TokenType",
-            "OperationStatus",
             "SerializationFormat",
             "Compression",
             "Aggregation",
@@ -1189,15 +999,12 @@ class TestFlextConstants:
             "ErrorType",
             "FailureLevel",
             "ContextOperation",
-            "Status",
             "Currency",
             "OrderStatus",
             "ErrorDomain",
-            "ConversionMode",
             "LogLevel",
             "Environment",
-            "CircuitBreakerState",
-            "MetadataField",
+            "MetadataKey",
             "BoolTrueValue",
             "BoolFalseValue",
         ],
@@ -1219,13 +1026,13 @@ class TestFlextConstants:
         [
             # From base
             "NAME",
-            "DEFAULT_TIMEOUT",
+            "DEFAULT_TIMEOUT_SECONDS",
             "ZERO",
             # From cqrs
             "DEFAULT_COMMAND_TYPE",
             "CQRS_OPERATION_FAILED",
             "HandlerType",
-            "CommonStatus",
+            "Status",
             # From validation
             "ErrorCode",
             "ErrorType",
@@ -1233,22 +1040,19 @@ class TestFlextConstants:
             "STRING_METHOD_MAP",
             # From infrastructure
             "ContextScope",
-            "MetadataField",
-            "SENTINEL_MISSING",
+            "ContextKey",
+            "MetadataKey",
+            "BackoffStrategy",
             # From platform
             "ENV_PREFIX",
-            "CircuitBreakerState",
-            "PATTERN_EMAIL",
+            "PATTERN_IDENTIFIER_WITH_UNDERSCORE",
             # From domain
-            "DEFAULT_LEVEL",
-            "LEVEL_HIERARCHY",
             "ContextOperation",
             "Currency",
             # From errors
             "ErrorDomain",
             # From settings
             "DEFAULT_ENCODING",
-            "ConversionMode",
             "LogLevel",
             "Environment",
             # From mixins

@@ -1,7 +1,7 @@
 """Context CRUD operations (get/set/has/remove/clear/items/keys/values).
 
-Extracted from FlextContext as an MRO mixin to keep the facade under
-the 200-line cap (AGENTS.md §3.1).
+MRO layer above FlextUtilitiesContextState providing the public contract that
+FlextContext exposes to service consumers.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,7 +14,7 @@ from typing import ClassVar, overload
 
 from flext_core import (
     FlextRuntime,
-    FlextUtilitiesContextScope as ucs,
+    FlextUtilitiesContextState,
     c,
     e,
     m,
@@ -25,47 +25,11 @@ from flext_core import (
 )
 
 
-class FlextUtilitiesContextCrud(ucs):
+class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
     """CRUD operations on context scopes for FlextContext."""
 
     logger: ClassVar[p.Logger]
     state: m.ContextRuntimeState
-
-    @staticmethod
-    def _propagate_to_logger(
-        key: str,
-        value: t.JsonPayload,
-        scope: str,
-    ) -> None:
-        """Propagate context changes to the public logging DSL."""
-        if scope == c.ContextScope.GLOBAL:
-            normalized = u.normalize_to_container(value)
-            _ = u.bind_global_context(**{key: normalized})
-
-    @staticmethod
-    def _validate_update_inputs(
-        key: str,
-        value: t.JsonPayload,
-    ) -> p.Result[bool]:
-        """Validate inputs for set operation."""
-        if not key:
-            return r[bool].fail_op(
-                "validate context key",
-                c.ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED,
-            )
-        if value is None:
-            return r[bool].fail_op(
-                "validate context value",
-                c.ERR_CONTEXT_VALUE_CANNOT_BE_NONE,
-            )
-        value_for_guard = FlextRuntime.normalize_to_container(value)
-
-        if not isinstance(value_for_guard, t.CONTAINER_AND_COLLECTION_TYPES):
-            return r[bool].fail_op(
-                "validate context value serializable",
-                c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
-            )
-        return r[bool].ok(True)
 
     def clear(self) -> None:
         """Clear all data from the context including metadata."""
@@ -82,11 +46,7 @@ class FlextUtilitiesContextCrud(ucs):
     def get(
         self, key: str, scope: str = c.ContextScope.GLOBAL
     ) -> p.Result[t.JsonPayload]:
-        """Get a value from the context.
-
-        Fast fail: Returns r[t.JsonValue] - fails if key not found.
-        No fallback behavior - use r monadic operations for defaults.
-        """
+        """Get a value from the context (fail-fast, no default fallback)."""
         if not self.state.active:
             return r[t.JsonPayload].fail_op(
                 "get context value", c.ERR_CONTEXT_NOT_ACTIVE
@@ -104,9 +64,7 @@ class FlextUtilitiesContextCrud(ucs):
                 "resolve context key value",
                 f"Context key '{key}' has None value in scope '{scope}'",
             )
-
-        normalized = FlextRuntime.normalize_to_container(value)
-        return r[t.JsonPayload].ok(normalized)
+        return r[t.JsonPayload].ok(FlextRuntime.normalize_to_container(value))
 
     def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
         """Get metadata from the context."""
@@ -116,8 +74,7 @@ class FlextUtilitiesContextCrud(ucs):
                 c.ERR_CONTEXT_METADATA_KEY_NOT_FOUND.format(key=key),
             )
         raw_value: t.JsonValue = self.state.metadata.attributes[key]
-        normalized_value = FlextRuntime.normalize_to_container(raw_value)
-        return r[t.JsonPayload].ok(normalized_value)
+        return r[t.JsonPayload].ok(FlextRuntime.normalize_to_container(raw_value))
 
     def apply_metadata(self, key: str, value: t.JsonValue) -> None:
         """Set metadata via Pydantic immutable copy DSL."""
@@ -125,9 +82,7 @@ class FlextUtilitiesContextCrud(ucs):
         self.state = self.state.model_copy(
             update={
                 "metadata": meta.model_copy(
-                    update={
-                        "attributes": {**meta.attributes, key: value},
-                    }
+                    update={"attributes": {**meta.attributes, key: value}},
                 ),
             }
         )
@@ -136,11 +91,10 @@ class FlextUtilitiesContextCrud(ucs):
         """Check if a key exists in the context."""
         if not self.state.active:
             return False
-        scope_data = self._contextvar_data(scope)
-        return key in scope_data
+        return key in self._contextvar_data(scope)
 
     def items(self) -> Sequence[tuple[str, t.JsonValue]]:
-        """Get all items (key-value pairs) in the context."""
+        """Get all items (key-value pairs) across scopes."""
         if not self.state.active:
             return []
         return [
@@ -152,7 +106,7 @@ class FlextUtilitiesContextCrud(ucs):
         ]
 
     def keys(self) -> t.StrSequence:
-        """Get all keys in the context."""
+        """Get all keys across scopes."""
         if not self.state.active:
             return list[str]()
         all_keys: set[str] = set()
@@ -162,7 +116,7 @@ class FlextUtilitiesContextCrud(ucs):
         return list(all_keys)
 
     def values(self) -> t.JsonList:
-        """Get all values in the context."""
+        """Get all values across scopes."""
         if not self.state.active:
             empty_values: t.JsonList = []
             return empty_values
@@ -230,19 +184,7 @@ class FlextUtilitiesContextCrud(ucs):
         if not data:
             return r[bool].ok(True)
         try:
-            ctx_var = self._scope_var(scope)
-            current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            updated_payload: dict[str, t.JsonPayload] = {
-                str(k): FlextRuntime.normalize_to_container(v)
-                for k, v in current.items()
-            }
-            updated_payload.update({
-                str(k): FlextRuntime.normalize_to_container(v) for k, v in data.items()
-            })
-            validated = t.flat_container_mapping_adapter().validate_python(
-                updated_payload,
-            )
-            _ = ctx_var.set(m.ConfigMap(root=validated))
+            self._update_contextvar(scope, data)
             self._update_statistics(c.ContextOperation.SET.value)
             self._execute_hooks(
                 c.ContextOperation.SET.value,
@@ -264,29 +206,19 @@ class FlextUtilitiesContextCrud(ucs):
                 "set single context value",
                 c.ERR_CONTEXT_SINGLE_KEY_VALUE_REQUIRED,
             )
-        validation_result = FlextUtilitiesContextCrud._validate_update_inputs(
-            key,
-            value,
-        )
-        if validation_result.failure:
+        if not key:
             return r[bool].fail_op(
-                "validate context update inputs",
-                validation_result.error or c.ERR_VALIDATION_FAILED,
+                "validate context key",
+                c.ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED,
+            )
+        normalized_value = FlextRuntime.normalize_to_container(value)
+        if not isinstance(normalized_value, t.CONTAINER_AND_COLLECTION_TYPES):
+            return r[bool].fail_op(
+                "validate context value serializable",
+                c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
             )
         try:
-            ctx_var = self._scope_var(scope)
-            current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            normalized_value = FlextRuntime.normalize_to_container(value)
-            updated_payload: dict[str, t.JsonPayload] = {
-                str(k): FlextRuntime.normalize_to_container(v)
-                for k, v in current.items()
-            }
-            updated_payload[key] = normalized_value
-            validated = t.flat_container_mapping_adapter().validate_python(
-                updated_payload,
-            )
-            _ = ctx_var.set(m.ConfigMap(root=validated))
-            FlextUtilitiesContextCrud._propagate_to_logger(key, value, scope)
+            self._update_contextvar(scope, {key: normalized_value})
             self._update_statistics(c.ContextOperation.SET.value)
             self._execute_hooks(
                 c.ContextOperation.SET.value,

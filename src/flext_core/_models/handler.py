@@ -92,13 +92,13 @@ class FlextModelsHandler:
             ),
         ] = up.Field(default_factory=lambda: c.DEFAULT_EMPTY_STRING)
         status: Annotated[
-            c.CommonStatus,
+            c.Status,
             up.Field(
-                default=c.CommonStatus.RUNNING,
+                default=c.Status.RUNNING,
                 description="Current registration status",
                 examples=["running", "stopped", "failed"],
             ),
-        ] = c.CommonStatus.RUNNING
+        ] = c.Status.RUNNING
 
     class ExecutionContext(m.ArbitraryTypesModel):
         """Handler execution state (identity + timing + metrics payload)."""

@@ -17,10 +17,6 @@ class FlextConstantsCqrs:
 
     DEFAULT_COMMAND_TYPE: Final[str] = "generic_command"
     DEFAULT_TIMESTAMP: Final[str] = ""
-    DEFAULT_COMMAND_TIMEOUT_MS: Final[int] = 30000
-    MIN_TIMEOUT_MS: Final[int] = 1000
-    MAX_TIMEOUT_MS: Final[int] = 300000
-    DEFAULT_COMMAND_TIMEOUT: Final[int] = 0
     DEFAULT_RETRIES: Final[int] = 0
     MIN_RETRIES: Final[int] = 0
     MAX_RETRIES: Final[int] = 5
@@ -34,26 +30,6 @@ class FlextConstantsCqrs:
     COMMAND_VALIDATION_FAILED: Final[str] = "COMMAND_VALIDATION_FAILED"
     QUERY_VALIDATION_FAILED: Final[str] = "QUERY_VALIDATION_FAILED"
     HANDLER_CONFIG_INVALID: Final[str] = "HANDLER_CONFIG_INVALID"
-
-    @unique
-    class DispatcherStatus(StrEnum):
-        """CQRS dispatcher status enumeration."""
-
-        STOPPED = "stopped"
-
-    @unique
-    class CommonStatus(StrEnum):
-        """Standard lifecycle statuses used across CQRS operations."""
-
-        ACTIVE = "active"
-        INACTIVE = "inactive"
-        PENDING = "pending"
-        RUNNING = "running"
-        COMPLETED = "completed"
-        FAILED = "failed"
-        CANCELLED = "cancelled"
-        COMPENSATING = "compensating"
-        ARCHIVED = "archived"
 
     @unique
     class HandlerType(StrEnum):
@@ -129,56 +105,12 @@ class FlextConstantsCqrs:
         MERGE_DEEP = "merge_deep"
 
     @unique
-    class HealthStatus(StrEnum):
-        """CQRS health status enumeration."""
-
-        HEALTHY = "healthy"
-        DEGRADED = "degraded"
-        UNHEALTHY = "unhealthy"
-        UNKNOWN = "unknown"
-        ERROR = "error"
-
-    @unique
-    class SpecialStatus(StrEnum):
-        """Special status values not in CommonStatus."""
-
-        SENT = "sent"
-        IDLE = "idle"
-        PROCESSING = "processing"
-
-    @unique
     class TokenType(StrEnum):
         """CQRS token types enumeration."""
 
         BEARER = "bearer"
         API_KEY = "api_key"
         JWT = "jwt"
-
-    @unique
-    class OperationStatus(StrEnum):
-        """CQRS operation status enumeration."""
-
-        SUCCESS = "success"
-        FAILURE = "failure"
-        PARTIAL = "partial"
-
-    @unique
-    class SerializationFormat(StrEnum):
-        """CQRS serialization formats enumeration."""
-
-        JSON = "json"
-        YAML = "yaml"
-        TOML = "toml"
-        MSGPACK = "msgpack"
-
-    @unique
-    class Compression(StrEnum):
-        """CQRS compression formats enumeration."""
-
-        NONE = "none"
-        GZIP = "gzip"
-        BZIP2 = "bzip2"
-        LZ4 = "lz4"
 
     @unique
     class Aggregation(StrEnum):

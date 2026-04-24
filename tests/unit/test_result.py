@@ -796,6 +796,11 @@ class Testr:
         tm.fail(propagated, has=err)
         tm.that(propagated.failure, eq=True)
 
+    def test_instances_satisfy_success_checkable_runtime_protocol(self) -> None:
+        """R instances conform to p.SuccessCheckable structural contract at runtime."""
+        assert isinstance(r[str].ok("value"), p.SuccessCheckable)
+        assert isinstance(r[str].fail("boom"), p.SuccessCheckable)
+
     __all__: t.MutableSequenceOf[str] = ["Testr"]
 
 

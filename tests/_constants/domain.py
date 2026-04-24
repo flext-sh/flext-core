@@ -13,6 +13,15 @@ from tests import c
 
 
 class TestsFlextCoreConstantsDomain:
+    class Paths:
+        """Path constants for flext-core tests."""
+
+        REPO_ROOT_PARENT_DEPTH: Final[int] = 2
+        SRC_DIR: Final[str] = "src"
+        CORE_PACKAGE_DIR: Final[str] = "flext_core"
+        EXAMPLES_DIR: Final[str] = "examples"
+        PYPROJECT_FILENAME: Final[str] = "pyproject.toml"
+
     class TestDomain:
         """Flext-core-specific domain utilities test constants."""
 
@@ -39,16 +48,13 @@ class TestsFlextCoreConstantsDomain:
 
         Status = c.Status
         HandlerType = c.HandlerType
-        CommonStatus = c.CommonStatus
         MetricType = c.MetricType
         ProcessingMode = c.ProcessingMode
         ProcessingPhase = c.ProcessingPhase
         BindType = c.BindType
         MergeStrategy = c.MergeStrategy
         HealthStatus = c.HealthStatus
-        SpecialStatus = c.SpecialStatus
         TokenType = c.TokenType
-        OperationStatus = c.OperationStatus
         SerializationFormat = c.SerializationFormat
         Compression = c.Compression
         Aggregation = c.Aggregation

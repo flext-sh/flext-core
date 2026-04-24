@@ -18,7 +18,6 @@ class TestFacadeFlatSsotAccess:
         assert c.ALIAS_TO_SUFFIX["c"] == "Constants"
         assert c.TIER_FACADE_PREFIX["tests"] == "TestsFlext"
         assert c.SPECIAL_NAME_OVERRIDES["flext-core"] == "Flext"
-        assert "tool.flext.project" in c.MANAGED_PYPROJECT_KEYS
 
     def test_m_models_flat(self) -> None:
         assert isinstance(m.ProjectMetadata, type)

@@ -17,8 +17,6 @@ import pytest
 
 from tests import p, t, u
 
-EXPECTED_BULK_SIZE = 2
-
 
 class TestPatternsLogging:
     @staticmethod

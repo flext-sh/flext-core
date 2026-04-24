@@ -24,8 +24,8 @@ class ExamplesFlextCoreModelsEx02:
         """Database service model used in example 02 settings integration."""
 
         settings: m.ConfigMap = u.Field(description="Database connection settings")
-        status: c.CommonStatus = u.Field(
-            c.CommonStatus.PENDING,
+        status: c.Status = u.Field(
+            c.Status.PENDING,
             description="Service connection status",
             validate_default=True,
         )
@@ -42,8 +42,8 @@ class ExamplesFlextCoreModelsEx02:
         """Cache service model used in example 02 settings integration."""
 
         settings: m.ConfigMap = u.Field(description="Cache connection settings")
-        status: c.CommonStatus = u.Field(
-            c.CommonStatus.PENDING,
+        status: c.Status = u.Field(
+            c.Status.PENDING,
             description="Service connection status",
             validate_default=True,
         )
@@ -59,8 +59,8 @@ class ExamplesFlextCoreModelsEx02:
         """Email service model used in example 02 settings integration."""
 
         settings: m.ConfigMap = u.Field(description="Email service settings")
-        status: c.CommonStatus = u.Field(
-            c.CommonStatus.PENDING,
+        status: c.Status = u.Field(
+            c.Status.PENDING,
             description="Service connection status",
             validate_default=True,
         )

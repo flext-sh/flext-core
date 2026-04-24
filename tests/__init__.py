@@ -71,11 +71,7 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_collections_coverage_100 import TestCollectionsCoverage100
     from tests.unit.test_constants_new import TestFlextConstants
     from tests.unit.test_constants_project_metadata import (
-        TestAliasToSuffix,
-        TestManagedPyprojectKeys,
-        TestSpecialNameOverrides,
-        TestTierFacadePrefix,
-        TestUniversalAliasParentSources,
+        TestsFlextCoreConstantsProjectMetadata,
     )
     from tests.unit.test_container import TestFlextContainer
     from tests.unit.test_context import TestFlextContext
@@ -121,6 +117,7 @@ if _t.TYPE_CHECKING:
         TestTypesLayerRules,
         TestUtilitiesLayerRules,
     )
+    from tests.unit.test_enforcement_catalog import TestsFlextCoreEnforcementCatalog
     from tests.unit.test_enforcement_integration import (
         TestBadModuleFiresExpectedRules,
         TestCleanModuleEmitsNothing,
@@ -133,14 +130,9 @@ if _t.TYPE_CHECKING:
     )
     from tests.unit.test_handlers import TestsFlextCoreFlextHandlers
     from tests.unit.test_handlers_full_coverage import TestHandlersFullCoverage
-    from tests.unit.test_lazy_exports import (
-        TestBuildLazyImportMap,
-        TestInstallLazyExports,
-        TestLazyRuntimeState,
-        TestMergeLazyImports,
-    )
+    from tests.unit.test_lazy_exports import TestsFlextCoreLazy
     from tests.unit.test_loggings_error_paths_coverage import TestLoggingsErrorPaths
-    from tests.unit.test_loggings_full_coverage import TestModule
+    from tests.unit.test_loggings_full_coverage import TestsFlextCoreLoggings
     from tests.unit.test_loggings_strict_returns import TestLoggingsStrictReturns
     from tests.unit.test_mixins import TestFlextMixinsNestedClasses
     from tests.unit.test_mixins_full_coverage import TestMixinsFullCoverage
@@ -159,7 +151,6 @@ if _t.TYPE_CHECKING:
     )
     from tests.unit.test_models_project_metadata import TestModelsProjectMetadata
     from tests.unit.test_project_metadata_facade_access import TestFacadeFlatSsotAccess
-    from tests.unit.test_protocols_new import TestFlextProtocols
     from tests.unit.test_protocols_project_metadata import (
         TestProjectClassStemDeriverProtocol,
         TestProjectMetadataReaderProtocol,
@@ -221,13 +212,7 @@ if _t.TYPE_CHECKING:
         TestUtilitiesParserFullCoverage,
     )
     from tests.unit.test_utilities_project_metadata import (
-        TestComposeNamespaceConfig,
-        TestDeriveClassStem,
-        TestDerivePackageName,
-        TestDeriveTierFacadeName,
-        TestPascalize,
-        TestReadProjectMetadata,
-        TestReadToolFlextConfig,
+        TestsFlextCoreUtilitiesProjectMetadata,
     )
     from tests.unit.test_utilities_reliability import TestFlextUtilitiesReliability
     from tests.unit.test_utilities_settings_coverage_100 import (
@@ -245,7 +230,7 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_utilities_type_guards_coverage_100 import (
         TestUtilitiesTypeGuardsCoverage100,
     )
-    from tests.unit.test_version import TestFlextVersion
+    from tests.unit.test_version import TestsFlextCoreVersion
     from tests.utilities import TestsFlextCoreUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
@@ -326,11 +311,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_collections_coverage_100": ("TestCollectionsCoverage100",),
             ".unit.test_constants_new": ("TestFlextConstants",),
             ".unit.test_constants_project_metadata": (
-                "TestAliasToSuffix",
-                "TestManagedPyprojectKeys",
-                "TestSpecialNameOverrides",
-                "TestTierFacadePrefix",
-                "TestUniversalAliasParentSources",
+                "TestsFlextCoreConstantsProjectMetadata",
             ),
             ".unit.test_container": ("TestFlextContainer",),
             ".unit.test_context": ("TestFlextContext",),
@@ -376,6 +357,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestTypesLayerRules",
                 "TestUtilitiesLayerRules",
             ),
+            ".unit.test_enforcement_catalog": ("TestsFlextCoreEnforcementCatalog",),
             ".unit.test_enforcement_integration": (
                 "TestBadModuleFiresExpectedRules",
                 "TestCleanModuleEmitsNothing",
@@ -388,14 +370,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".unit.test_handlers": ("TestsFlextCoreFlextHandlers",),
             ".unit.test_handlers_full_coverage": ("TestHandlersFullCoverage",),
-            ".unit.test_lazy_exports": (
-                "TestBuildLazyImportMap",
-                "TestInstallLazyExports",
-                "TestLazyRuntimeState",
-                "TestMergeLazyImports",
-            ),
+            ".unit.test_lazy_exports": ("TestsFlextCoreLazy",),
             ".unit.test_loggings_error_paths_coverage": ("TestLoggingsErrorPaths",),
-            ".unit.test_loggings_full_coverage": ("TestModule",),
+            ".unit.test_loggings_full_coverage": ("TestsFlextCoreLoggings",),
             ".unit.test_loggings_strict_returns": ("TestLoggingsStrictReturns",),
             ".unit.test_mixins": ("TestFlextMixinsNestedClasses",),
             ".unit.test_mixins_full_coverage": ("TestMixinsFullCoverage",),
@@ -414,7 +391,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".unit.test_models_project_metadata": ("TestModelsProjectMetadata",),
             ".unit.test_project_metadata_facade_access": ("TestFacadeFlatSsotAccess",),
-            ".unit.test_protocols_new": ("TestFlextProtocols",),
             ".unit.test_protocols_project_metadata": (
                 "TestProjectClassStemDeriverProtocol",
                 "TestProjectMetadataReaderProtocol",
@@ -476,13 +452,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestUtilitiesParserFullCoverage",
             ),
             ".unit.test_utilities_project_metadata": (
-                "TestComposeNamespaceConfig",
-                "TestDeriveClassStem",
-                "TestDerivePackageName",
-                "TestDeriveTierFacadeName",
-                "TestPascalize",
-                "TestReadProjectMetadata",
-                "TestReadToolFlextConfig",
+                "TestsFlextCoreUtilitiesProjectMetadata",
             ),
             ".unit.test_utilities_reliability": ("TestFlextUtilitiesReliability",),
             ".unit.test_utilities_settings_coverage_100": (
@@ -500,7 +470,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_utilities_type_guards_coverage_100": (
                 "TestUtilitiesTypeGuardsCoverage100",
             ),
-            ".unit.test_version": ("TestFlextVersion",),
+            ".unit.test_version": ("TestsFlextCoreVersion",),
             ".utilities": (
                 "TestsFlextCoreUtilities",
                 "u",
@@ -539,19 +509,16 @@ __all__: list[str] = [
     "TestAccessorMethodBan",
     "TestAdvancedPatterns",
     "TestAliasContainsAny",
-    "TestAliasToSuffix",
     "TestArchitecturalPatterns",
     "TestAutomatedArchitecture",
     "TestBadModuleFiresExpectedRules",
     "TestBaseModelCoverage",
     "TestBeartypeClawCompatibility",
     "TestBeartypeConf",
-    "TestBuildLazyImportMap",
     "TestClassPrefixScope",
     "TestCleanModuleEmitsNothing",
     "TestCollectionsCoverage100",
     "TestCompleteFlextSystemIntegration",
-    "TestComposeNamespaceConfig",
     "TestConstantsLayerRules",
     "TestContainerMemory",
     "TestContainerPerformance",
@@ -568,9 +535,6 @@ __all__: list[str] = [
     "TestDecoratorsDiscoveryFullCoverage",
     "TestDecoratorsFullCoverage",
     "TestDeprecationWarnings",
-    "TestDeriveClassStem",
-    "TestDerivePackageName",
-    "TestDeriveTierFacadeName",
     "TestDetailSubstitution",
     "TestDispatcherDI",
     "TestDispatcherFullCoverage",
@@ -593,7 +557,6 @@ __all__: list[str] = [
     "TestFlextDecorators",
     "TestFlextMixinsNestedClasses",
     "TestFlextModelsExceptionParams",
-    "TestFlextProtocols",
     "TestFlextRuntime",
     "TestFlextSettings",
     "TestFlextSettingsCoverage",
@@ -601,20 +564,15 @@ __all__: list[str] = [
     "TestFlextTypes",
     "TestFlextUtilitiesReliability",
     "TestFlextUtilitiesSettings",
-    "TestFlextVersion",
     "TestForbiddenCollectionOrigin",
     "TestHandlerDecoratorDiscovery",
     "TestHandlersFullCoverage",
     "TestHasNestedNamespaceViaMro",
-    "TestInstallLazyExports",
     "TestLazyPerformance",
-    "TestLazyRuntimeState",
     "TestLibraryIntegration",
     "TestLoggingsErrorPaths",
     "TestLoggingsStrictReturns",
-    "TestManagedPyprojectKeys",
     "TestMatchesStrNoneUnion",
-    "TestMergeLazyImports",
     "TestMigrationValidation",
     "TestMixinsFullCoverage",
     "TestModelClassRules",
@@ -627,9 +585,7 @@ __all__: list[str] = [
     "TestModelsEntityFullCoverage",
     "TestModelsGenericFullCoverage",
     "TestModelsProjectMetadata",
-    "TestModule",
     "TestNamespaceInheritance",
-    "TestPascalize",
     "TestPatternsLogging",
     "TestPatternsTesting",
     "TestProjectClassStemDeriverProtocol",
@@ -638,8 +594,6 @@ __all__: list[str] = [
     "TestProjectPrefixOverrides",
     "TestProjectTierFacadeNamerProtocol",
     "TestProtocolsLayerRules",
-    "TestReadProjectMetadata",
-    "TestReadToolFlextConfig",
     "TestRegistry",
     "TestRegistryFullCoverage",
     "TestReportApi",
@@ -653,11 +607,8 @@ __all__: list[str] = [
     "TestServiceAdditional",
     "TestServiceResultProperty",
     "TestSettingsInheritance",
-    "TestSpecialNameOverrides",
-    "TestTierFacadePrefix",
     "TestTypesLayerRules",
     "TestTypingsFullCoverage",
-    "TestUniversalAliasParentSources",
     "TestUtilitiesCollectionCoverage",
     "TestUtilitiesCollectionFullCoverage",
     "TestUtilitiesContextFullCoverage",
@@ -684,11 +635,15 @@ __all__: list[str] = [
     "TestsFlextCoreConstantsFixtures",
     "TestsFlextCoreConstantsLoggings",
     "TestsFlextCoreConstantsOther",
+    "TestsFlextCoreConstantsProjectMetadata",
     "TestsFlextCoreConstantsResult",
     "TestsFlextCoreConstantsServices",
     "TestsFlextCoreConstantsSettings",
     "TestsFlextCoreConstantsStrings",
+    "TestsFlextCoreEnforcementCatalog",
     "TestsFlextCoreFlextHandlers",
+    "TestsFlextCoreLazy",
+    "TestsFlextCoreLoggings",
     "TestsFlextCoreModels",
     "TestsFlextCoreModelsBaseFullCoverage",
     "TestsFlextCoreModelsMixins",
@@ -703,7 +658,9 @@ __all__: list[str] = [
     "TestsFlextCoreServiceUserService",
     "TestsFlextCoreTypes",
     "TestsFlextCoreUtilities",
+    "TestsFlextCoreUtilitiesProjectMetadata",
     "TestsFlextCoreUtilitiesTypeChecker",
+    "TestsFlextCoreVersion",
     "Testu",
     "c",
     "d",

@@ -71,3 +71,4 @@ class TestsFlextCoreConstantsStrings:
         EMAIL: Final[str] = "^[^@]+@[^@]+\\.[^@]+$"
         ALPHA_ONLY: Final[str] = "^[a-zA-Z]+$"
         NUMERIC_ONLY: Final[str] = "^\\d+$"
+        SEMVER: Final[str] = "^\\d+\\.\\d+\\.\\d+"

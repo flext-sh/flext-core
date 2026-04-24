@@ -1,7 +1,7 @@
-"""Context scope and state management helpers.
+"""Context state primitives: normalization, scope access, metadata mapping.
 
-Extracted from FlextContext as an MRO mixin to keep the facade under
-the 200-line cap (AGENTS.md §3.1).
+Base MRO layer for FlextContext providing contextvar payload normalization,
+scope variable access, statistics/hooks bookkeeping, and metadata projection.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,29 +10,52 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextvars
-from collections.abc import (
-    Mapping,
-    MutableMapping,
-)
+from collections.abc import Mapping, MutableMapping
 from datetime import datetime
 from typing import ClassVar
 
-from flext_core import (
-    FlextRuntime,
-    FlextUtilitiesContextNormalization,
-    c,
-    m,
-    p,
-    t,
-    u,
-)
+from flext_core import FlextRuntime, c, m, p, t, u
 
 
-class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
-    """Scope variable access, update, and statistics helpers for FlextContext."""
+class FlextUtilitiesContextState:
+    """Normalization + scope access primitives used by FlextContext."""
 
     logger: ClassVar[p.Logger]
     state: m.ContextRuntimeState
+
+    @staticmethod
+    def _narrow_contextvar_to_configuration_dict(
+        ctx_value: m.ConfigMap | Mapping[str, t.JsonPayload] | p.Model | None,
+    ) -> t.JsonMapping:
+        """Return contextvar payload as a flat container mapping with safe default."""
+        if ctx_value is None:
+            return {}
+
+        payload: Mapping[str, t.JsonPayload]
+        if isinstance(ctx_value, m.ConfigMap):
+            payload = ctx_value.root
+        elif isinstance(ctx_value, p.Model):
+            dumped = ctx_value.model_dump(mode="python")
+            payload = t.flat_container_mapping_adapter().validate_python(dumped)
+        else:
+            payload = ctx_value
+
+        try:
+            normalized: dict[str, t.JsonPayload] = {}
+            for key, value in payload.items():
+                if str(key) != key:
+                    return {}
+                normalized[key] = FlextRuntime.normalize_to_container(value)
+            validated: t.JsonMapping = (
+                t.flat_container_mapping_adapter().validate_python(normalized)
+            )
+            return validated
+        except (TypeError, ValueError, AttributeError, KeyError) as exc:
+            FlextUtilitiesContextState.logger.debug(
+                "Failed to normalize contextvar payload to configuration dict",
+                exc_info=exc,
+            )
+            return {}
 
     def _scope_var(
         self,
@@ -47,7 +70,7 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
         ctx_var = self._scope_var(scope)
         value = ctx_var.get()
         return dict(
-            FlextUtilitiesContextScope._narrow_contextvar_to_configuration_dict(
+            FlextUtilitiesContextState._narrow_contextvar_to_configuration_dict(
                 value,
             ).items(),
         )
@@ -142,4 +165,4 @@ class FlextUtilitiesContextScope(FlextUtilitiesContextNormalization):
         return result
 
 
-__all__: list[str] = ["FlextUtilitiesContextScope"]
+__all__: list[str] = ["FlextUtilitiesContextState"]

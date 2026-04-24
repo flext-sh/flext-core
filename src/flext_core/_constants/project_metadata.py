@@ -76,10 +76,3 @@ class FlextConstantsProjectMetadata:
         "flext": "FlextRoot",
         "flext-core": "Flext",
     })
-
-    MANAGED_PYPROJECT_KEYS: Final[t.VariadicTuple[str]] = (
-        "tool.flext.project",
-        "tool.flext.namespace",
-        "tool.flext.docs",
-        "tool.flext.aliases",
-    )

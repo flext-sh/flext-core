@@ -104,16 +104,6 @@ class FlextConstantsMixins:
         CLASS = "class"
 
     @unique
-    class CheckStatus(StrEnum):
-        """Check/validation result status codes."""
-
-        PASS = "PASS"
-        FAIL = "FAIL"
-        NO_TARGET = "NO_TARGET"
-        SKIP = "SKIP"
-        UNKNOWN = "UNKNOWN"
-
-    @unique
     class MethodName(StrEnum):
         """Standard method names used in handler and mixin resolution."""
 

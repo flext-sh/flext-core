@@ -9,45 +9,11 @@ from types import ModuleType
 import pytest
 
 import flext_core
-from flext_core import install_lazy_exports, lazy
+from flext_core.lazy import install_lazy_exports, lazy
+from tests import c
 
 type LazyImportEntry = str | tuple[str, str]
 type LazyImportMap = dict[str, LazyImportEntry]
-
-REAL_SYMBOLS: tuple[str, ...] = (
-    "FlextConstants",
-    "FlextContainer",
-    "FlextContext",
-    "FlextModels",
-    "FlextProtocols",
-    "FlextService",
-    "FlextSettings",
-    "FlextUtilities",
-    "c",
-    "m",
-    "p",
-    "r",
-    "t",
-    "u",
-)
-
-EXTRA_INSTALL_MAPS: tuple[LazyImportMap, ...] = (
-    {
-        "_types": ".typings:FlextTypes",
-        "_models": ".models:FlextModels",
-        "_utils": ".utilities:FlextUtilities",
-    },
-    {
-        "_svc": ".service:FlextService",
-        "_container": ".container:FlextContainer",
-        "_context": ".context:FlextContext",
-    },
-    {
-        "_const": ".constants:FlextConstants",
-        "_proto": ".protocols:FlextProtocols",
-        "_result": ".result:r",
-    },
-)
 
 
 class TestLazyPerformance:
@@ -75,7 +41,9 @@ class TestLazyPerformance:
 
             reloaded_module = importlib.reload(flext_core)
 
-            for index, lazy_map in enumerate(EXTRA_INSTALL_MAPS):
+            for index, lazy_map in enumerate(
+                c.Core.Tests.LazyBenchmark.EXTRA_INSTALL_MAPS
+            ):
                 module_name = f"flext_core_{index}"
                 virtual_module = TestLazyPerformance.LazyBenchmark._new_virtual_module(
                     module_name,
@@ -87,7 +55,7 @@ class TestLazyPerformance:
                     publish_all=index % 2 == 0,
                 )
 
-            for symbol_name in REAL_SYMBOLS:
+            for symbol_name in c.Core.Tests.LazyBenchmark.REAL_SYMBOLS:
                 getattr(reloaded_module, symbol_name)
 
         @staticmethod

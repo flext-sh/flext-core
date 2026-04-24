@@ -254,15 +254,15 @@ class FlextRegistry(s[bool]):
         except ValueError:
             return c.HandlerType.COMMAND
 
-    def _get_status(self, value: t.JsonPayload) -> c.CommonStatus:
+    def _get_status(self, value: t.JsonPayload) -> c.Status:
         """Safe conversion to CommonStatus (falls back to ACTIVE)."""
         text = str(value)
-        if text in c.CommonStatus.__members__:
-            return c.CommonStatus[text]
+        if text in c.Status.__members__:
+            return c.Status[text]
         try:
-            return c.CommonStatus(text)
+            return c.Status(text)
         except ValueError:
-            return c.CommonStatus.ACTIVE
+            return c.Status.ACTIVE
 
     def execute(self) -> p.Result[bool]:
         """Validate registry is properly initialized.
@@ -420,7 +420,7 @@ class FlextRegistry(s[bool]):
         status_raw: t.JsonPayload = getattr(
             handler,
             c.FIELD_STATUS,
-            c.CommonStatus.ACTIVE,
+            c.Status.ACTIVE,
         )
         status = self._get_status(status_raw)
         handler_mode_raw: t.JsonPayload = getattr(

@@ -422,9 +422,11 @@ class FlextUtilitiesModel:
             if ugp.context(runtime_options.context)
             else context_type.create()
         )
-        bootstrap_services = ugp.filter_registerable_services(
-            runtime_options.services,
-        )
+        bootstrap_services = {
+            name: service
+            for name, service in (runtime_options.services or {}).items()
+            if ugp.registerable_service(service)
+        }
         wire_modules, wire_packages, wire_classes = ud.resolve_wire_targets(
             runtime_options.wire_modules,
             runtime_options.wire_packages,

@@ -32,8 +32,7 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
     function signatures.
 
     Composed via MRO from:
-    - FlextUtilitiesContextNormalization — static value normalization
-    - FlextUtilitiesContextScope — scope variable access and state helpers
+    - FlextUtilitiesContextState — normalization + scope variable access
     - FlextUtilitiesContextCrud — get/set/has/remove/clear operations
     - FlextUtilitiesContextLifecycle — create/clone/merge/export
     - FlextUtilitiesContextTracing — Variables, Correlation, Service, Request, etc.

@@ -15,19 +15,27 @@ from flext_core.lazy import (
 if _t.TYPE_CHECKING:
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
-    from flext_core._constants.domain import FlextConstantsDomain
     from flext_core._constants.enforcement import (
         FlextConstantsEnforcement,
         FlextMroViolation,
     )
+    from flext_core._constants.environment import FlextConstantsEnvironment
     from flext_core._constants.errors import FlextConstantsErrors
+    from flext_core._constants.file import FlextConstantsFile
+    from flext_core._constants.guards import FlextConstantsGuards
     from flext_core._constants.infrastructure import FlextConstantsInfrastructure
+    from flext_core._constants.logging import FlextConstantsLogging
     from flext_core._constants.mixins import FlextConstantsMixins
-    from flext_core._constants.output import FlextConstantsOutput
+    from flext_core._constants.network import FlextConstantsNetwork
+    from flext_core._constants.pagination import FlextConstantsPagination
     from flext_core._constants.platform import FlextConstantsPlatform
     from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
     from flext_core._constants.pydantic import FlextConstantsPydantic
+    from flext_core._constants.regex import FlextConstantsRegex
+    from flext_core._constants.serialization import FlextConstantsSerialization
     from flext_core._constants.settings import FlextConstantsSettings
+    from flext_core._constants.status import FlextConstantsStatus
+    from flext_core._constants.timeout import FlextConstantsTimeout
     from flext_core._constants.validation import FlextConstantsValidation
     from flext_core._exceptions.base import FlextExceptionsBase
     from flext_core._exceptions.factories import FlextExceptionsFactories
@@ -83,10 +91,7 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.context import FlextUtilitiesContext
     from flext_core._utilities.context_crud import FlextUtilitiesContextCrud
     from flext_core._utilities.context_lifecycle import FlextUtilitiesContextLifecycle
-    from flext_core._utilities.context_normalization import (
-        FlextUtilitiesContextNormalization,
-    )
-    from flext_core._utilities.context_scope import FlextUtilitiesContextScope
+    from flext_core._utilities.context_state import FlextUtilitiesContextState
     from flext_core._utilities.context_tracing import FlextUtilitiesContextTracing
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
@@ -95,8 +100,6 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.enum import FlextUtilitiesEnum
     from flext_core._utilities.generators import FlextUtilitiesGenerators
     from flext_core._utilities.guards import FlextUtilitiesGuards
-    from flext_core._utilities.guards_ensure import FlextUtilitiesGuardsEnsure
-    from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
     from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
     from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
     from flext_core._utilities.guards_type_protocol import (
@@ -155,19 +158,27 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             "._constants.base": ("FlextConstantsBase",),
             "._constants.cqrs": ("FlextConstantsCqrs",),
-            "._constants.domain": ("FlextConstantsDomain",),
             "._constants.enforcement": (
                 "FlextConstantsEnforcement",
                 "FlextMroViolation",
             ),
+            "._constants.environment": ("FlextConstantsEnvironment",),
             "._constants.errors": ("FlextConstantsErrors",),
+            "._constants.file": ("FlextConstantsFile",),
+            "._constants.guards": ("FlextConstantsGuards",),
             "._constants.infrastructure": ("FlextConstantsInfrastructure",),
+            "._constants.logging": ("FlextConstantsLogging",),
             "._constants.mixins": ("FlextConstantsMixins",),
-            "._constants.output": ("FlextConstantsOutput",),
+            "._constants.network": ("FlextConstantsNetwork",),
+            "._constants.pagination": ("FlextConstantsPagination",),
             "._constants.platform": ("FlextConstantsPlatform",),
             "._constants.project_metadata": ("FlextConstantsProjectMetadata",),
             "._constants.pydantic": ("FlextConstantsPydantic",),
+            "._constants.regex": ("FlextConstantsRegex",),
+            "._constants.serialization": ("FlextConstantsSerialization",),
             "._constants.settings": ("FlextConstantsSettings",),
+            "._constants.status": ("FlextConstantsStatus",),
+            "._constants.timeout": ("FlextConstantsTimeout",),
             "._constants.validation": ("FlextConstantsValidation",),
             "._exceptions.base": ("FlextExceptionsBase",),
             "._exceptions.factories": ("FlextExceptionsFactories",),
@@ -229,10 +240,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.context": ("FlextUtilitiesContext",),
             "._utilities.context_crud": ("FlextUtilitiesContextCrud",),
             "._utilities.context_lifecycle": ("FlextUtilitiesContextLifecycle",),
-            "._utilities.context_normalization": (
-                "FlextUtilitiesContextNormalization",
-            ),
-            "._utilities.context_scope": ("FlextUtilitiesContextScope",),
+            "._utilities.context_state": ("FlextUtilitiesContextState",),
             "._utilities.context_tracing": ("FlextUtilitiesContextTracing",),
             "._utilities.conversion": ("FlextUtilitiesConversion",),
             "._utilities.discovery": ("FlextUtilitiesDiscovery",),
@@ -241,8 +249,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.enum": ("FlextUtilitiesEnum",),
             "._utilities.generators": ("FlextUtilitiesGenerators",),
             "._utilities.guards": ("FlextUtilitiesGuards",),
-            "._utilities.guards_ensure": ("FlextUtilitiesGuardsEnsure",),
-            "._utilities.guards_type": ("FlextUtilitiesGuardsType",),
             "._utilities.guards_type_core": ("FlextUtilitiesGuardsTypeCore",),
             "._utilities.guards_type_model": ("FlextUtilitiesGuardsTypeModel",),
             "._utilities.guards_type_protocol": ("FlextUtilitiesGuardsTypeProtocol",),
@@ -334,16 +340,24 @@ __all__: list[str] = [
     "FlextConstants",
     "FlextConstantsBase",
     "FlextConstantsCqrs",
-    "FlextConstantsDomain",
     "FlextConstantsEnforcement",
+    "FlextConstantsEnvironment",
     "FlextConstantsErrors",
+    "FlextConstantsFile",
+    "FlextConstantsGuards",
     "FlextConstantsInfrastructure",
+    "FlextConstantsLogging",
     "FlextConstantsMixins",
-    "FlextConstantsOutput",
+    "FlextConstantsNetwork",
+    "FlextConstantsPagination",
     "FlextConstantsPlatform",
     "FlextConstantsProjectMetadata",
     "FlextConstantsPydantic",
+    "FlextConstantsRegex",
+    "FlextConstantsSerialization",
     "FlextConstantsSettings",
+    "FlextConstantsStatus",
+    "FlextConstantsTimeout",
     "FlextConstantsValidation",
     "FlextContainer",
     "FlextContext",
@@ -418,8 +432,7 @@ __all__: list[str] = [
     "FlextUtilitiesContext",
     "FlextUtilitiesContextCrud",
     "FlextUtilitiesContextLifecycle",
-    "FlextUtilitiesContextNormalization",
-    "FlextUtilitiesContextScope",
+    "FlextUtilitiesContextState",
     "FlextUtilitiesContextTracing",
     "FlextUtilitiesConversion",
     "FlextUtilitiesDiscovery",
@@ -428,8 +441,6 @@ __all__: list[str] = [
     "FlextUtilitiesEnum",
     "FlextUtilitiesGenerators",
     "FlextUtilitiesGuards",
-    "FlextUtilitiesGuardsEnsure",
-    "FlextUtilitiesGuardsType",
     "FlextUtilitiesGuardsTypeCore",
     "FlextUtilitiesGuardsTypeModel",
     "FlextUtilitiesGuardsTypeProtocol",

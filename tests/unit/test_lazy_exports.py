@@ -1,4 +1,4 @@
-"""Tests for module-level lazy export installation behavior."""
+"""Behavior contract for flext_core.lazy — module-level lazy export installer."""
 
 from __future__ import annotations
 
@@ -10,45 +10,38 @@ import pytest
 from flext_core import install_lazy_exports, lazy, merge_lazy_imports
 
 
-class TestInstallLazyExports:
-    """Verify __all__ publication stays root-only when requested."""
+class TestsFlextCoreLazy:
+    """Behavior contract for install_lazy_exports, merge_lazy_imports, lazy runtime."""
 
-    def test_publish_all_disabled_omits_all(self) -> None:
-        """Subpackages keep __dir__ but do not publish __all__."""
+    def test_install_without_publish_all_omits_dunder_all_attribute(self) -> None:
         module_globals: dict[str, object] = {}
-
         install_lazy_exports(
             "test_pkg.transformers",
             module_globals,
             {"Alpha": ("test_pkg.transformers.alpha", "Alpha")},
             publish_all=False,
         )
-
         assert "__all__" not in module_globals
         dir_fn = module_globals["__dir__"]
         assert callable(dir_fn)
         assert dir_fn() == ["Alpha"]
 
-    def test_publish_all_enabled_keeps_all(self) -> None:
-        """Root packages still publish __all__ by default."""
+    def test_install_with_publish_all_populates_dunder_all(self) -> None:
         module_globals: dict[str, object] = {}
-
         install_lazy_exports(
             "test_pkg",
             module_globals,
             {"Alpha": ("test_pkg.alpha", "Alpha")},
         )
-
         assert module_globals["__all__"] == ("Alpha",)
         dir_fn = module_globals["__dir__"]
         assert callable(dir_fn)
         assert dir_fn() == ["Alpha"]
 
-    def test_relative_lazy_targets_resolve(
+    def test_install_resolves_relative_lazy_targets_against_installing_module(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Relative lazy targets are normalized against the installing module."""
         package_name = "test_lazy_pkg_relative"
         alpha_module_name = f"{package_name}.alpha"
         alpha_module = ModuleType(alpha_module_name)
@@ -56,7 +49,7 @@ class TestInstallLazyExports:
         class Alpha:
             pass
 
-        setattr(alpha_module, "Alpha", Alpha)
+        alpha_module.Alpha = Alpha  # type: ignore[attr-defined]
         monkeypatch.setitem(sys.modules, package_name, ModuleType(package_name))
         monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
 
@@ -66,91 +59,84 @@ class TestInstallLazyExports:
             module_globals,
             {"Alpha": (".alpha", "Alpha")},
         )
-
         getattr_fn = module_globals["__getattr__"]
         assert callable(getattr_fn)
         assert getattr_fn("Alpha") is Alpha
 
-    def test_repeated_install_reuses_cached_wiring(self) -> None:
-        """Second install with same inputs reuses previously installed handlers."""
+    def test_install_with_identical_inputs_reuses_cached_wiring(self) -> None:
         module_globals: dict[str, object] = {}
         lazy.reset()
 
         lazy_map = {"Alpha": ("test_pkg.alpha", "Alpha")}
         lazy.install("test_pkg", module_globals, lazy_map, publish_all=False)
-
         first_getattr = module_globals["__getattr__"]
         first_dir = module_globals["__dir__"]
-        lazy.install("test_pkg", module_globals, lazy_map, publish_all=False)
 
+        lazy.install("test_pkg", module_globals, lazy_map, publish_all=False)
         assert module_globals["__getattr__"] is first_getattr
         assert module_globals["__dir__"] is first_dir
         assert lazy.cache_stats["install_cache"] >= 1
 
-
-class TestMergeLazyImports:
-    """Verify merged child maps normalize relative lazy targets."""
-
-    def test_child_relative_targets_are_normalized(
+    def test_merge_normalizes_child_relative_targets_to_absolute_paths(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Merged child lazy maps expand relative targets to absolute module paths."""
         child_package_name = "test_lazy_pkg_merge.child"
         alpha_module_name = f"{child_package_name}.alpha"
 
         child_package = ModuleType(child_package_name)
-        setattr(child_package, "_LAZY_IMPORTS", {"Alpha": (".alpha", "Alpha")})
+        child_package._LAZY_IMPORTS = {"Alpha": (".alpha", "Alpha")}  # type: ignore[attr-defined]
         alpha_module = ModuleType(alpha_module_name)
 
         class Alpha:
             pass
 
-        setattr(alpha_module, "Alpha", Alpha)
+        alpha_module.Alpha = Alpha  # type: ignore[attr-defined]
         monkeypatch.setitem(sys.modules, child_package_name, child_package)
         monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
 
         merged = merge_lazy_imports((child_package_name,), {})
         assert merged["Alpha"] == (alpha_module_name, "Alpha")
 
-    def test_relative_child_package_paths_are_normalized(
+    def test_merge_normalizes_relative_child_package_paths_against_parent(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Relative child package paths expand against the parent module name."""
         parent_package_name = "test_lazy_pkg_parent"
         child_package_name = f"{parent_package_name}.child"
         alpha_module_name = f"{child_package_name}.alpha"
 
         child_package = ModuleType(child_package_name)
-        setattr(child_package, "_LAZY_IMPORTS", {"Alpha": (".alpha", "Alpha")})
+        child_package._LAZY_IMPORTS = {"Alpha": (".alpha", "Alpha")}  # type: ignore[attr-defined]
         alpha_module = ModuleType(alpha_module_name)
 
         class Alpha:
             pass
 
-        setattr(alpha_module, "Alpha", Alpha)
+        alpha_module.Alpha = Alpha  # type: ignore[attr-defined]
         monkeypatch.setitem(sys.modules, child_package_name, child_package)
         monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
 
-        merged = merge_lazy_imports((".child",), {}, module_name=parent_package_name)
+        merged = merge_lazy_imports(
+            (".child",),
+            {},
+            module_name=parent_package_name,
+        )
         assert merged["Alpha"] == (alpha_module_name, "Alpha")
 
-
-class TestLazyRuntimeState:
-    """Verify cache diagnostics and reset behavior."""
-
-    def test_cache_stats_and_reset(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Cache counters increase on usage and return to zero after reset."""
+    def test_cache_stats_increment_on_usage_and_reset_to_zero(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         package_name = "test_lazy_pkg_state"
         module_name = f"{package_name}.module"
-        module_globals: dict[str, object] = {}
         child_module = ModuleType(module_name)
 
         lazy.reset()
         monkeypatch.setitem(sys.modules, package_name, ModuleType(package_name))
         monkeypatch.setitem(sys.modules, module_name, child_module)
 
+        module_globals: dict[str, object] = {}
         install_lazy_exports(
             package_name,
             module_globals,
@@ -171,17 +157,11 @@ class TestLazyRuntimeState:
             "install_cache": 0,
         }
 
-
-class TestBuildLazyImportMap:
-    """Verify build_map behavior stays deterministic and explicit."""
-
-    def test_build_map_sorts_keys_by_default(self) -> None:
-        """Default behavior returns a stable alphabetic key order."""
+    def test_build_map_returns_keys_in_alphabetic_order_by_default(self) -> None:
         mapping = lazy.build_map({"pkg.mod": ("zeta", "alpha")})
         assert list(mapping) == ["alpha", "zeta"]
 
-    def test_build_map_keeps_insertion_order_when_disabled(self) -> None:
-        """Disabling sorting preserves insertion order from inputs."""
+    def test_build_map_preserves_insertion_order_when_sort_keys_disabled(self) -> None:
         mapping = lazy.build_map(
             {"pkg.mod": ("zeta", "alpha")},
             alias_groups={"pkg.alias": (("beta", "Thing"),)},

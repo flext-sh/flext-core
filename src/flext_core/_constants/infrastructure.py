@@ -1,4 +1,4 @@
-"""FlextConstantsInfrastructure - context and infrastructure constants.
+"""FlextConstantsInfrastructure - runtime infrastructure constants.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,73 +9,15 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
-from flext_core import FlextConstantsBase
+from flext_core._constants.timeout import FlextConstantsTimeout
 
 
 class FlextConstantsInfrastructure:
-    """Constants for context, container, dispatcher, and pagination."""
+    """Constants for context, container, dispatcher, resilience, and persistence."""
 
-    DEBUG_CONTEXT_KEYS: Final[frozenset[str]] = frozenset({
-        "schema",
-        "params",
-    })
-    "Keys whose values are bound at DEBUG level in operation context."
-
-    ERROR_CONTEXT_KEYS: Final[frozenset[str]] = frozenset({
-        "stack_trace",
-        "exception",
-        "traceback",
-        "error_details",
-    })
-    "Keys whose values are bound at ERROR level in operation context."
-
-    CORRELATION_ID_PREFIX: Final[str] = "flext-"
-    CORRELATION_ID_LENGTH: Final[int] = 12
-    DEFAULT_CONTEXT_TIMEOUT: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
-    MAX_CONTEXT_DEPTH: Final[int] = 10
-    MAX_CONTEXT_SIZE: Final[int] = 1000
-    MILLISECONDS_PER_SECOND: Final[int] = 1000
-    SENTINEL_MISSING: Final[str] = "__sentinel_missing__"
-    """Sentinel value to distinguish 'not provided' from None in context operations."""
-
-    INFRA_TIMEOUT_SECONDS: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
-    # MIN_TIMEOUT_SECONDS inherited from FlextConstantsBase via FlextConstants MRO
-    INFRA_MAX_TIMEOUT_SECONDS: Final[int] = 300
-    MAX_CACHE_SIZE: Final[int] = 100
-    DEFAULT_MAX_SERVICES: Final[int] = 1000
-    "Default maximum number of services allowed in container."
     DEFAULT_MAX_FACTORIES: Final[int] = 500
-    "Default maximum number of factories allowed in container."
     MAX_FACTORIES: Final[int] = 5000
-    "Maximum number of factories allowed in container."
-
-    THREAD_NAME_PREFIX: Final[str] = "flext-dispatcher"
-    "Thread name prefix for dispatcher thread pool executor."
-    DEFAULT_AUTO_CONTEXT: Final[bool] = True
-    DEFAULT_ENABLE_LOGGING: Final[bool] = True
-    DEFAULT_ENABLE_METRICS: Final[bool] = True
-    # DEFAULT_TIMEOUT_SECONDS inherited from FlextConstantsBase via FlextConstants MRO
-    MIN_REGISTRATION_ID_LENGTH: Final[int] = 1
-    DEFAULT_DISPATCHER_PATH: Final[str] = "flext_core:FlextDispatcher"
-    "Default dispatcher implementation path."
-    DEFAULT_SERVICE_NAME: Final[str] = "default_service"
-    "Default service name for service models."
-    DEFAULT_RESOURCE_TYPE: Final[str] = "default_resource"
-    "Default resource type for service models."
-    MIN_REQUEST_ID_LENGTH: Final[int] = 1
-    SINGLE_HANDLER_ARG_COUNT: Final[int] = 1
-    TWO_HANDLER_ARG_COUNT: Final[int] = 2
     DEFAULT_LOGGER_MODULE: Final[str] = "flext_core"
-    "Default module name for logger creation."
-
-    DEFAULT_PAGE_NUMBER: Final[int] = 1
-    # DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, MIN_PAGE_SIZE inherited from FlextConstantsBase via FlextConstants MRO
-    MIN_PAGE_NUMBER: Final[int] = 1
-    MAX_PAGE_NUMBER: Final[int] = 10000
-    DEFAULT_PAGE_SIZE_EXAMPLE: Final[int] = 20
-    "Default page size for examples and utilities (different from DEFAULT_PAGE_SIZE)."
-    MAX_PAGE_SIZE_EXAMPLE: Final[int] = 1000
-    "Maximum page size for examples and utilities."
 
     @unique
     class ContextScope(StrEnum):
@@ -88,13 +30,6 @@ class FlextConstantsInfrastructure:
         TRANSACTION = "transaction"
         APPLICATION = "application"
         OPERATION = "operation"
-
-    @unique
-    class ExportFormat(StrEnum):
-        """Supported context export formats."""
-
-        JSON = "json"
-        DICT = "dict"
 
     @unique
     class ContextKey(StrEnum):
@@ -114,15 +49,6 @@ class FlextConstantsInfrastructure:
         SERVICE_MODULE = "service_module"
 
     @unique
-    class ContextHeader(StrEnum):
-        """HTTP header names used for distributed tracing."""
-
-        CORRELATION_ID = "X-Correlation-Id"
-        PARENT_CORRELATION_ID = "X-Parent-Correlation-Id"
-        SERVICE_NAME = "X-Service-Name"
-        USER_ID = "X-User-Id"
-
-    @unique
     class MetadataKey(StrEnum):
         """Metadata dictionary key names for operation timing."""
 
@@ -131,34 +57,11 @@ class FlextConstantsInfrastructure:
         DURATION_SECONDS = "duration_seconds"
 
     @unique
-    class MetadataField(StrEnum):
-        """Metadata field names used in context operations."""
-
-        USER_ID = "user_id"
-        CORRELATION_ID = "correlation_id"
-        REQUEST_ID = "request_id"
-        SESSION_ID = "session_id"
-        TENANT_ID = "tenant_id"
-
-    @unique
-    class ContainerKind(StrEnum):
-        """Container registration kind identifiers."""
-
-        SERVICE = "service"
-        "Service: singleton instance registered directly."
-        FACTORY = "factory"
-        "Factory: callable that creates instances on demand."
-        RESOURCE = "resource"
-        "Resource: lifecycle-managed service (start/stop)."
-
-    @unique
     class ServiceName(StrEnum):
         """Standard service registration names used in FlextContainer."""
 
         LOGGER = "logger"
-        "Logger service registration name."
         COMMAND_BUS = "command_bus"
-        "Command bus service registration name."
 
     @unique
     class HandlerMode(StrEnum):
@@ -168,3 +71,22 @@ class FlextConstantsInfrastructure:
         QUERY = "query"
 
     DEFAULT_HANDLER_MODE: Final[str] = HandlerMode.COMMAND
+
+    @unique
+    class BackoffStrategy(StrEnum):
+        """Retry backoff strategy identifiers."""
+
+        EXPONENTIAL = "exponential"
+        LINEAR = "linear"
+
+    DEFAULT_BACKOFF_STRATEGY: Final[str] = BackoffStrategy.EXPONENTIAL
+    MAX_RETRY_ATTEMPTS: Final[int] = 3
+    DEFAULT_RETRY_DELAY_SECONDS: Final[int] = 1
+    DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT: Final[int] = (
+        FlextConstantsTimeout.DEFAULT_RECOVERY_TIMEOUT_SECONDS
+    )
+
+    DATABASE_URL: Final[str] = "sqlite:///:memory:"
+    DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10
+    MAX_CONNECTION_POOL_SIZE: Final[int] = 100
+    MIN_POOL_SIZE: Final[int] = 1

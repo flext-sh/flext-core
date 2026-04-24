@@ -635,11 +635,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 func = getattr(module, name, None)
                 if func is None:
                     continue
-                if not u.handler_callable(func):
+                if not callable(func):
                     continue
                 if not hasattr(func, c.HANDLER_ATTR):
-                    continue
-                if not callable(func):
                     continue
                 settings: m.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
 
