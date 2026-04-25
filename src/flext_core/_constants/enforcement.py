@@ -1227,11 +1227,12 @@ def _hydrate_enforcement_catalog() -> None:
                 agents_md_anchor="3-6-test-standardization",
                 skills=("flext-strict-typing", "flext-patterns"),
             ),
-            # Lane A-CH (clever-hedgehog) catalog entry — ENFORCE-045.
-            # Uses the existing check_no_pydantic_consumer_import beartype
-            # hook (no new detector code per SSOT/DRY). Captures the §2.7
-            # abstraction-boundary rule that is currently runtime-enforced
-            # but absent from the catalog SSOT.
+            # Lane A-CH (clever-hedgehog) catalog entries — ENFORCE-045..048.
+            # Each entry references an existing beartype hook (no new
+            # detector code per SSOT/DRY). The hooks already run at
+            # runtime; these entries register them in the catalog SSOT so
+            # other agents can reference each rule by ENFORCE-NNN instead
+            # of by hook name.
             _me.EnforcementRuleSpec(
                 id="ENFORCE-045",
                 description=(
@@ -1246,6 +1247,52 @@ def _hydrate_enforcement_catalog() -> None:
                 ),
                 agents_md_anchor="2-7-library-abstraction-boundaries",
                 skills=("flext-import-rules", "pydantic-v2-patterns"),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-046",
+                description=(
+                    "Canonical facade files (constants/models/protocols/"
+                    "typings/utilities) must import only c/m/p/t/u aliases "
+                    "from parent — never bare FlextXxx concrete classes "
+                    "(unless Pattern-B peer). Violates AGENTS.md §4 "
+                    "(Import Law)."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_no_concrete_namespace_import",
+                ),
+                agents_md_anchor="4-import-law",
+                skills=("flext-import-rules", "flext-mro-namespace-rules"),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-047",
+                description=(
+                    "Facade-class first base must be an alias (c/m/p/t/u) or "
+                    "a Pattern-B peer FlextXxx — never an arbitrary Flext* "
+                    "concrete class. Violates AGENTS.md §2.2 (One Facade "
+                    "Rule + Pattern-A/B)."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_facade_base_is_alias_or_peer",
+                ),
+                agents_md_anchor="2-2-facades-namespaces-naming-patterns",
+                skills=("flext-mro-namespace-rules", "flext-import-rules"),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-048",
+                description=(
+                    "Inner namespace class with empty body that re-inherits "
+                    "from outer (e.g. 'class Cli(FlextCliTypes): pass') is "
+                    "redundant — parent already exposes the namespace. "
+                    "Violates AGENTS.md §2.3 (Single Root Nested Namespace)."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_no_redundant_inner_namespace",
+                ),
+                agents_md_anchor="2-3-mro-inheritance-namespace-composition",
+                skills=("flext-mro-namespace-rules",),
             ),
         ),
     )
