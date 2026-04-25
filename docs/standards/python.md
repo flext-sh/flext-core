@@ -1,6 +1,5 @@
 # Python Standards
 
-
 <!-- TOC START -->
 - [Core Rules](#core-rules)
 - [Result Contract Example](#result-contract-example)

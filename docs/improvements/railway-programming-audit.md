@@ -1,6 +1,5 @@
 # Railway Programming Audit
 
-
 <!-- TOC START -->
 - [Current Status](#current-status)
 - [Audit Check: map + flat_map](#audit-check-map-flatmap)

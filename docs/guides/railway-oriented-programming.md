@@ -1,6 +1,5 @@
 # Railway-Oriented Programming with r[T]
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [Creating Results](#creating-results)

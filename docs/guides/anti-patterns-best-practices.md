@@ -1,6 +1,5 @@
 # Anti-Patterns and Best Practices
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [Common Anti-Patterns (Illustrative)](#common-anti-patterns-illustrative)

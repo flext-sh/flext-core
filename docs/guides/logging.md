@@ -1,6 +1,5 @@
 # Logging Guide
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [Global Context](#global-context)

@@ -1,6 +1,5 @@
 # Development Standards
 
-
 <!-- TOC START -->
 - [Core Expectations](#core-expectations)
 - [Example: Result-first workflow](#example-result-first-workflow)

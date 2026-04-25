@@ -128,7 +128,7 @@ class FlextModelsProjectMetadata:
         alias_parent_sources: Annotated[
             tb.StrMapping,
             Field(
-                default_factory=dict,
+                default_factory=lambda: MappingProxyType({}),
                 description="Per-alias parent package source overrides.",
             ),
         ] = Field(default_factory=lambda: MappingProxyType({}))
@@ -205,7 +205,7 @@ class FlextModelsProjectMetadata:
         alias_parent_sources: Annotated[
             tb.StrMapping,
             Field(
-                default_factory=dict,
+                default_factory=lambda: MappingProxyType({}),
                 description="Per-alias parent package overrides.",
             ),
         ] = Field(default_factory=lambda: MappingProxyType({}))
@@ -239,7 +239,7 @@ class FlextModelsProjectMetadata:
         overrides: Annotated[
             tb.StrMapping,
             Field(
-                default_factory=dict,
+                default_factory=lambda: MappingProxyType({}),
                 description="Per-alias type override strings.",
             ),
         ] = Field(default_factory=lambda: MappingProxyType({}))

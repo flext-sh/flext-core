@@ -1,6 +1,5 @@
 # Service Patterns
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [Simple Service Pattern](#simple-service-pattern)

@@ -1,6 +1,5 @@
 # Troubleshooting Guide
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [1. Validate Settings Shape](#1-validate-settings-shape)

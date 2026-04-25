@@ -1,6 +1,5 @@
 # Getting Started
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [Result Basics](#result-basics)

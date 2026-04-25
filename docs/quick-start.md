@@ -1,6 +1,5 @@
 # Quick Start
 
-
 <!-- TOC START -->
 - [Step 1: r[T] basics](#step-1-rt-basics)
 - [Step 2: Container basics](#step-2-container-basics)

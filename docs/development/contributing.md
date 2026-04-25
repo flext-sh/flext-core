@@ -1,6 +1,5 @@
 # Contributing to FLEXT-Core
 
-
 <!-- TOC START -->
 - [Code of Conduct](#code-of-conduct)
 - [Canonical Rules](#canonical-rules)

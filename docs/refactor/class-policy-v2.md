@@ -1,6 +1,5 @@
 # Class Policy v2
 
-
 <!-- TOC START -->
 - [Declaracao de Regras v2](#declaracao-de-regras-v2)
 - [Matriz por Familia](#matriz-por-familia)

@@ -118,7 +118,7 @@ class FlextModelsContextScope:
         hooks: Annotated[
             t.ContextHookMap,
             FlextUtilitiesPydantic.Field(
-                default_factory=dict,
+                default_factory=lambda: MappingProxyType({}),
                 description="Lifecycle hooks keyed by event name",
             ),
         ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
@@ -149,7 +149,7 @@ class FlextModelsContextScope:
                 str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
             ],
             FlextUtilitiesPydantic.Field(
-                default_factory=dict,
+                default_factory=lambda: MappingProxyType({}),
                 description="ContextVar registry keyed by scope name",
             ),
         ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))

@@ -1,6 +1,5 @@
 # Development Guide
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [1. Build a Result Pipeline](#1-build-a-result-pipeline)

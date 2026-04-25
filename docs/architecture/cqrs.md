@@ -1,6 +1,5 @@
 # CQRS Architecture
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [Executable Dispatcher Flow](#executable-dispatcher-flow)

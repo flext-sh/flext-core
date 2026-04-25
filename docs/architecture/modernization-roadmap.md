@@ -1,6 +1,5 @@
 # Roadmap Objetivo de Modernização (Python 3.13, OO/MRO, Pydantic v2)
 
-
 <!-- TOC START -->
 - [Escopo](#escopo)
 - [Resultado esperado (DoD do programa)](#resultado-esperado-dod-do-programa)

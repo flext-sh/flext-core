@@ -1,6 +1,5 @@
 # Domain-Driven Design Guide
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [Value Validation with r[T]](#value-validation-with-rt)

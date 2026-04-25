@@ -1,6 +1,5 @@
 # Architecture Patterns
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [Result Composition Pattern](#result-composition-pattern)

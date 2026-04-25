@@ -15,6 +15,7 @@ from abc import ABC, abstractmethod
 from collections.abc import (
     MutableSequence,
 )
+from types import MappingProxyType
 from typing import Annotated, Final, Protocol, runtime_checkable
 
 import pytest
@@ -75,7 +76,7 @@ class TestsFlextCoreEnforcement:
         class _M(m.ArbitraryTypesModel):
             data: Annotated[
                 t.StrMapping,
-                m.Field(default_factory=dict, description="d"),
+                m.Field(default_factory=lambda: MappingProxyType({}), description="d"),
             ]
 
         assert not _messages(u.check(_M), fragment="bare ")
@@ -106,7 +107,7 @@ class TestsFlextCoreEnforcement:
             items: Annotated[
                 t.MutableJsonMapping,
                 m.Field(
-                    default_factory=dict,
+                    default_factory=lambda: MappingProxyType({}),
                     description="Mutable JSON mapping contract.",
                 ),
             ]

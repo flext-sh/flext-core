@@ -3,7 +3,6 @@
 - [Executable CQRS reference](#executable-cqrs-reference)
 <!-- TOC END -->
 
-
 # Architecture Overview
 
 ## Core Layers

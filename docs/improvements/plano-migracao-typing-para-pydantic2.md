@@ -1,6 +1,5 @@
 # Plano objetivo: padronização e desduplicação de modelos (OO + MRO)
 
-
 <!-- TOC START -->
 - [Contexto aplicado (flext-sh/flext)](#contexto-aplicado-flext-shflext)
 - [1) Problema atual (direto ao ponto)](#1-problema-atual-direto-ao-ponto)

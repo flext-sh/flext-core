@@ -1,6 +1,5 @@
 # Dependency Injection Advanced
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [Reusing Official Example Code](#reusing-official-example-code)

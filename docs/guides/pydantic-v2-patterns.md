@@ -1,6 +1,5 @@
 # Pydantic v2 Patterns
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [Base Model + Field](#base-model-field)

@@ -1,6 +1,5 @@
 # Testing Guide
 
-
 <!-- TOC START -->
 - [Overview](#overview)
 - [Assert r[T] Outcomes](#assert-rt-outcomes)
