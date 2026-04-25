@@ -1,0 +1,75 @@
+docs/api-reference/generated/modules/settings.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/lazy.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/decorators.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/context.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/loggings.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/protocols.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/registry.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/constants.md
+  7e59eb7477d0bf8f 1-9
+docs/index.md
+  7e59eb7477d0bf8f 5,23-52
+docs/api-reference/README.md
+  7e59eb7477d0bf8f 23
+docs/api-reference/generated/modules/utilities.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/overview.md
+  7e59eb7477d0bf8f 6,13-14
+docs/api-reference/generated/modules/container.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/handlers.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/result.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/runtime.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/flext_core.md
+  7e59eb7477d0bf8f 5-9
+docs/api-reference/generated/modules/exceptions.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/service.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/typings.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/dispatcher.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/models.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/mixins.md
+  7e59eb7477d0bf8f 1-9
+docs/api-reference/generated/modules/index.md
+  7e59eb7477d0bf8f 7-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "99178a0205f763a362c882a7c752e82e541b9537",
+  "prompts": {
+    "7e59eb7477d0bf8f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d2066553-357e-4f10-8a23-66d1922e02b9",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 243,
+      "total_deletions": 54,
+      "accepted_lines": 231,
+      "overriden_lines": 4,
+      "messages_url": "https://usegitai.com/cas/4daa9aa145060656c7e6e3d05a810daa28d44be26fba6514a10b1e17580660ab"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
