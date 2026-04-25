@@ -4,24 +4,23 @@ Per AGENT_COORDINATION.md §4.1 / §2.1 / §4.8, A-PT owns ENFORCE-039..044.
 SSOT/DRY/YAGNI architecture (per user directive 2026-04-25):
 
 * ENFORCE-040 delegates to ``ruff PGH003`` via ``EnforcementRuffSource``
-  — no new code in flext-core.
-* ENFORCE-039 / ENFORCE-041 / ENFORCE-042 / ENFORCE-043 / ENFORCE-044
-  catalog rows use ``EnforcementSkillPointerSource`` (the only currently
-  registered source kind that names a skill anchor without requiring
-  per-rule discriminated-union extension). Runtime detection is dispatched
-  via the existing ``c.ENFORCEMENT_RULES`` string-tag system: each tag is
-  paired by naming convention with a ``check_<tag>`` static method on
-  ``FlextUtilitiesBeartypeEngine`` and an item-iterator arm in
-  ``FlextUtilitiesEnforcementCollect._namespace_items``.
+  (no new code in flext-core).
+* ENFORCE-039 / ENFORCE-041 / ENFORCE-042 / ENFORCE-043 / ENFORCE-044 use
+  ``EnforcementBeartypeSource(hook=...)`` — the canonical catalog source
+  for runtime hooks living on ``FlextUtilitiesBeartypeEngine``. Runtime
+  detection is dispatched via the existing ``c.ENFORCEMENT_RULES``
+  string-tag system (each tag is paired by naming convention with a
+  ``check_<tag>`` static method on the engine and an item-iterator arm
+  in ``FlextUtilitiesEnforcementCollect._namespace_items``).
 * ENFORCE-042 reuses the existing ``check_settings_inheritance`` hook —
-  zero new detection code for that rule.
+  zero new detection code for that rule (pure SSOT/DRY).
 * ENFORCE-039 / ENFORCE-041 / ENFORCE-043 / ENFORCE-044 add four new
-  ``check_<tag>`` static methods that share the centralized regex/path/
-  builtin sentinels declared on ``FlextConstantsEnforcement``.
+  ``check_<tag>`` static methods that share the centralized regex / path /
+  builtin sentinels declared on ``FlextConstantsEnforcement`` — no loose
+  module-level constants on ``beartype_engine.py``.
 
-No loose module-level constants — fixture data is held as ``ClassVar`` on
-the single test class per AGENTS.md §3.6 (one ``Tests<...>`` class per
-module).
+Fixture data is held as ``ClassVar`` on the single test class per
+AGENTS.md §3.6 (one ``Tests<...>`` class per module).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -77,11 +76,11 @@ class TestsFlextCoreEnforcementAptHooks:
 
     # --- Per-rule source contracts ---
 
-    def test_enforce_039_uses_skill_pointer_for_strict_typing(self) -> None:
+    def test_enforce_039_uses_beartype_source_with_cast_hook(self) -> None:
         rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-039")
         assert rule is not None
-        assert rule.source.kind == "skill_pointer"
-        assert rule.source.skill == "flext-strict-typing"
+        assert rule.source.kind == "beartype"
+        assert rule.source.hook == "check_cast_outside_core"
 
     def test_enforce_040_uses_ruff_source_pgh003(self) -> None:
         rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-040")
@@ -89,35 +88,33 @@ class TestsFlextCoreEnforcementAptHooks:
         assert rule.source.kind == "ruff"
         assert rule.source.rule_code == "PGH003"
 
-    def test_enforce_041_uses_skill_pointer_for_patterns(self) -> None:
+    def test_enforce_041_uses_beartype_source_with_model_rebuild_hook(self) -> None:
         rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-041")
         assert rule is not None
-        assert rule.source.kind == "skill_pointer"
-        assert rule.source.skill == "flext-patterns"
+        assert rule.source.kind == "beartype"
+        assert rule.source.hook == "check_model_rebuild_call"
 
-    def test_enforce_042_uses_skill_pointer_and_existing_hook_is_present(
-        self,
-    ) -> None:
+    def test_enforce_042_reuses_existing_settings_inheritance_hook(self) -> None:
         rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-042")
         assert rule is not None
-        assert rule.source.kind == "skill_pointer"
-        assert rule.source.skill == "flext-patterns"
+        assert rule.source.kind == "beartype"
+        assert rule.source.hook == "check_settings_inheritance"
         # SSOT/DRY: the runtime detection is the existing hook on the
         # canonical predicate surface — not duplicated by A-PT.
         assert hasattr(ube, "check_settings_inheritance")
         assert "settings_inheritance" in c.ENFORCEMENT_RULES
 
-    def test_enforce_043_uses_skill_pointer_for_refactoring_workflow(self) -> None:
+    def test_enforce_043_uses_beartype_source_with_passthrough_hook(self) -> None:
         rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-043")
         assert rule is not None
-        assert rule.source.kind == "skill_pointer"
-        assert rule.source.skill == "flext-refactoring-workflow"
+        assert rule.source.kind == "beartype"
+        assert rule.source.hook == "check_pass_through_wrapper"
 
-    def test_enforce_044_uses_skill_pointer_for_strict_typing(self) -> None:
+    def test_enforce_044_uses_beartype_source_with_private_probe_hook(self) -> None:
         rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-044")
         assert rule is not None
-        assert rule.source.kind == "skill_pointer"
-        assert rule.source.skill == "flext-strict-typing"
+        assert rule.source.kind == "beartype"
+        assert rule.source.hook == "check_private_attr_probe"
 
     # --- Runtime dispatcher wiring contracts ---
 
@@ -159,6 +156,5 @@ class TestsFlextCoreEnforcementAptHooks:
             method = getattr(ube, f"check_{tag}")
             result = method(dyn_class)
             assert result is None, (
-                f"check_{tag} must skip on source-unavailable target; "
-                f"got {result!r}"
+                f"check_{tag} must skip on source-unavailable target; got {result!r}"
             )

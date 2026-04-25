@@ -74,7 +74,7 @@ class FlextUtilitiesProjectMetadata:
         Result is cached by ``root`` (``Path`` is hashable). The cache is
         process-global so every workspace reader — typed config in
         ``read_tool_flext_config``/``read_project_metadata`` and the
-        flext-infra ``_pyproject_payload`` validation layer — shares the
+        flext-infra ``pyproject_payload`` validation layer — shares the
         same disk read; no parallel file I/O.
         """
         pyproject = root / FlextUtilitiesProjectMetadata.PYPROJECT_FILENAME

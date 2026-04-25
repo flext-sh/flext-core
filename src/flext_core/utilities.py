@@ -35,7 +35,6 @@ from flext_core import (
     FlextUtilitiesSettings,
     FlextUtilitiesText,
 )
-from flext_core._utilities.inspect_helpers import FlextUtilitiesInspectHelpers
 from flext_core._utilities.model_runtime import FlextUtilitiesModelRuntime
 
 
@@ -56,7 +55,6 @@ class FlextUtilities(
     FlextUtilitiesEnum,
     FlextUtilitiesGenerators,
     FlextUtilitiesGuards,
-    FlextUtilitiesInspectHelpers,
     FlextUtilitiesMapper,
     FlextUtilitiesModelRuntime,
     FlextUtilitiesParser,

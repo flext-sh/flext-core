@@ -21,8 +21,17 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _discover_src_package(target: type) -> str | None:
-        """Walk parents to the first ``pyproject.toml`` and return the package name."""
-        src_file = inspect.getsourcefile(target)
+        """Walk parents to the first ``pyproject.toml`` and return the package name.
+
+        Source-skip on built-in classes / dynamic types per the runtime-safety
+        contract: ``inspect.getsourcefile`` raises ``TypeError`` for built-ins
+        and ``OSError`` when the source file cannot be read; both produce
+        ``None`` here so the dispatcher cleanly skips the target.
+        """
+        try:
+            src_file = inspect.getsourcefile(target)
+        except (OSError, TypeError):
+            return None
         if src_file is None:
             return None
         for parent in Path(src_file).parents:

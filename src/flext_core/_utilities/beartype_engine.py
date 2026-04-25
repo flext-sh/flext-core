@@ -814,9 +814,8 @@ class FlextUtilitiesBeartypeEngine:
                 continue
             if node.func.id not in c.ENFORCE_PRIVATE_PROBE_BUILTINS:
                 continue
-            if (
-                len(node.args) < c.ENFORCE_PRIVATE_PROBE_MIN_ARGS
-                or not isinstance(node.args[1], ast.Constant)
+            if len(node.args) < c.ENFORCE_PRIVATE_PROBE_MIN_ARGS or not isinstance(
+                node.args[1], ast.Constant
             ):
                 continue
             attr_name = node.args[1].value

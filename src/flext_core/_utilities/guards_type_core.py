@@ -120,16 +120,7 @@ class FlextUtilitiesGuardsTypeCore:
     def _has_dict_protocol(
         obj: t.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> bool:
-        if not isinstance(obj, Mapping):
-            return False
-        try:
-            items_fn = getattr(obj, "items", None)
-            if items_fn is not None and callable(items_fn):
-                items_fn()
-                return True
-        except (AttributeError, TypeError):
-            return False
-        return False
+        return isinstance(obj, Mapping)
 
     @staticmethod
     def dict_like(
