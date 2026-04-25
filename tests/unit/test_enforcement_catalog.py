@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 
 import pytest
-from pydantic import ValidationError
 
 from tests import c, m
 
@@ -17,7 +16,7 @@ class TestsFlextCoreEnforcementCatalog:
         assert len(c.ENFORCEMENT_CATALOG.rules) > 0
 
     def test_catalog_is_frozen_and_rejects_mutation(self) -> None:
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             c.ENFORCEMENT_CATALOG.rules = ()
 
     def test_catalog_version_is_monotonic_positive_integer(self) -> None:
@@ -96,7 +95,7 @@ class TestsFlextCoreEnforcementCatalog:
         assert "flext_core._constants.enforcement.FlextMroViolation" in categories
 
     def test_rule_spec_construction_rejects_invalid_id_format(self) -> None:
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             m.EnforcementRuleSpec(
                 id="BAD-999",
                 description="bad",
@@ -111,7 +110,7 @@ class TestsFlextCoreEnforcementCatalog:
             severity=m.EnforcementRuleSeverity.LOW,
             source=m.EnforcementRuffSource(rule_code="ANN401"),
         )
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             m.EnforcementCatalog(rules=(rule, rule))
 
     def test_discriminated_union_routes_source_kind_by_payload(self) -> None:

@@ -6,9 +6,8 @@ from collections.abc import (
 )
 
 from flext_tests import tm
-from pydantic import ValidationError
 
-from tests import m, p, r, t
+from tests import c, m, p, r, t
 
 
 class TestsFlextCoreResultExceptionCarrying:
@@ -289,7 +288,7 @@ class TestsFlextCoreResultExceptionCarrying:
         )
         tm.that(result.failure, eq=True)
         tm.that(result.exception, none=False)
-        tm.that(result.exception, is_=ValidationError)
+        tm.that(result.exception, is_=c.ValidationError)
 
     def test_error_or_pattern_unchanged(self) -> None:
         result_success = r[int].ok(42)

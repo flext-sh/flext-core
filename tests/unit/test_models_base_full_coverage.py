@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
-from pydantic import ValidationError
 
 from tests import c, m, r
 
@@ -59,7 +58,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
 
     def test_identifiable_unique_id_empty_rejected(self) -> None:
         with pytest.raises(
-            ValidationError,
+            c.ValidationError,
             match="String should have at least 1 character",
         ) as exc_info:
             self._Identifiable(unique_id="   ")

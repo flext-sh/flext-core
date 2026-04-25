@@ -22,9 +22,12 @@ from flext_core import (
     t,
 )
 from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
+from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
 
 
-class FlextUtilitiesCollection(FlextUtilitiesCollectionIter):
+class FlextUtilitiesCollection(
+    FlextUtilitiesCollectionIter, FlextUtilitiesCollectionMerge
+):
     """Facade composing iter + merge utilities; small helpers live here."""
 
     @staticmethod

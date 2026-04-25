@@ -15,7 +15,6 @@ from pathlib import Path
 
 import pytest
 from flext_tests import tm
-from pydantic import ValidationError
 
 import flext_core as core
 from tests import c, m, t
@@ -194,7 +193,7 @@ class TestsFlextCoreTypesUnit:
     def test_non_empty_str_rejects_empty(self) -> None:
         """NonEmptyStr rejects empty strings."""
         adapter: m.TypeAdapter[str] = m.TypeAdapter(t.NonEmptyStr)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python("")
 
     def test_bounded_str_valid(self) -> None:
@@ -206,13 +205,13 @@ class TestsFlextCoreTypesUnit:
     def test_bounded_str_rejects_too_long(self) -> None:
         """BoundedStr rejects strings longer than 255 chars."""
         adapter: m.TypeAdapter[str] = m.TypeAdapter(t.BoundedStr)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python("x" * 256)
 
     def test_bounded_str_rejects_empty(self) -> None:
         """BoundedStr rejects empty strings."""
         adapter: m.TypeAdapter[str] = m.TypeAdapter(t.BoundedStr)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python("")
 
     def test_positive_int_valid(self) -> None:
@@ -224,13 +223,13 @@ class TestsFlextCoreTypesUnit:
     def test_positive_int_rejects_zero(self) -> None:
         """PositiveInt rejects zero."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.PositiveInt)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(0)
 
     def test_positive_int_rejects_negative(self) -> None:
         """PositiveInt rejects negative numbers."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.PositiveInt)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(-1)
 
     def test_non_negative_int_valid(self) -> None:
@@ -242,7 +241,7 @@ class TestsFlextCoreTypesUnit:
     def test_non_negative_int_rejects_negative(self) -> None:
         """NonNegativeInt rejects negative numbers."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.NonNegativeInt)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(-1)
 
     def test_port_number_valid(self) -> None:
@@ -255,13 +254,13 @@ class TestsFlextCoreTypesUnit:
     def test_port_number_rejects_zero(self) -> None:
         """PortNumber rejects 0."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.PortNumber)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(0)
 
     def test_port_number_rejects_too_high(self) -> None:
         """PortNumber rejects values above 65535."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.PortNumber)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(65536)
 
     def test_retry_count_valid(self) -> None:
@@ -273,7 +272,7 @@ class TestsFlextCoreTypesUnit:
     def test_retry_count_rejects_too_high(self) -> None:
         """RetryCount rejects values above 10."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.RetryCount)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(11)
 
     def test_worker_count_valid(self) -> None:
@@ -285,7 +284,7 @@ class TestsFlextCoreTypesUnit:
     def test_worker_count_rejects_zero(self) -> None:
         """WorkerCount rejects 0."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.WorkerCount)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(0)
 
     def test_http_status_code_valid(self) -> None:
@@ -298,9 +297,9 @@ class TestsFlextCoreTypesUnit:
     def test_http_status_code_rejects_invalid(self) -> None:
         """HttpStatusCode rejects values outside 100-599."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.HttpStatusCode)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(99)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(600)
 
     def test_batch_size_valid(self) -> None:
@@ -312,7 +311,7 @@ class TestsFlextCoreTypesUnit:
     def test_batch_size_rejects_zero(self) -> None:
         """BatchSize rejects 0."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.BatchSize)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(0)
 
     def test_max_length_valid(self) -> None:
@@ -324,7 +323,7 @@ class TestsFlextCoreTypesUnit:
     def test_max_length_rejects_zero(self) -> None:
         """MaxLength rejects 0."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.MaxLength)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(0)
 
     def test_positive_float_valid(self) -> None:
@@ -335,7 +334,7 @@ class TestsFlextCoreTypesUnit:
     def test_positive_float_rejects_zero(self) -> None:
         """PositiveFloat rejects 0.0."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.PositiveFloat)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(0.0)
 
     def test_non_negative_float_valid(self) -> None:
@@ -347,7 +346,7 @@ class TestsFlextCoreTypesUnit:
     def test_non_negative_float_rejects_negative(self) -> None:
         """NonNegativeFloat rejects negative floats."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.NonNegativeFloat)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(-0.1)
 
     def test_positive_timeout_valid(self) -> None:
@@ -359,13 +358,13 @@ class TestsFlextCoreTypesUnit:
     def test_positive_timeout_rejects_zero(self) -> None:
         """PositiveTimeout rejects 0.0."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.PositiveTimeout)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(0.0)
 
     def test_positive_timeout_rejects_too_high(self) -> None:
         """PositiveTimeout rejects > 300."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.PositiveTimeout)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(300.1)
 
     def test_backoff_multiplier_valid(self) -> None:
@@ -377,7 +376,7 @@ class TestsFlextCoreTypesUnit:
     def test_backoff_multiplier_rejects_below_one(self) -> None:
         """BackoffMultiplier rejects < 1.0."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.BackoffMultiplier)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(0.9)
 
     def test_percentage_valid(self) -> None:
@@ -390,7 +389,7 @@ class TestsFlextCoreTypesUnit:
     def test_percentage_rejects_over_100(self) -> None:
         """Percentage rejects > 100."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.Percentage)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(100.1)
 
     def test_decimal_fraction_valid(self) -> None:
@@ -403,7 +402,7 @@ class TestsFlextCoreTypesUnit:
     def test_decimal_fraction_rejects_over_one(self) -> None:
         """DecimalFraction rejects > 1.0."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.DecimalFraction)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python(1.1)
 
     def test_hostname_str_valid(self) -> None:
@@ -415,7 +414,7 @@ class TestsFlextCoreTypesUnit:
     def test_hostname_str_rejects_empty(self) -> None:
         """HostnameStr rejects empty strings."""
         adapter: m.TypeAdapter[str] = m.TypeAdapter(t.HostnameStr)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python("")
 
     def test_uri_string_valid(self) -> None:
@@ -427,7 +426,7 @@ class TestsFlextCoreTypesUnit:
     def test_uri_string_rejects_empty(self) -> None:
         """UriString rejects empty strings."""
         adapter: m.TypeAdapter[str] = m.TypeAdapter(t.UriString)
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             adapter.validate_python("")
 
     def test_timestamp_str_valid(self) -> None:

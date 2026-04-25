@@ -15,6 +15,8 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ),
         ".checker": ("FlextUtilitiesChecker",),
         ".collection": ("FlextUtilitiesCollection",),
+        ".collection_iter": ("FlextUtilitiesCollectionIter",),
+        ".collection_merge": ("FlextUtilitiesCollectionMerge",),
         ".context": ("FlextUtilitiesContext",),
         ".context_crud": ("FlextUtilitiesContextCrud",),
         ".context_lifecycle": ("FlextUtilitiesContextLifecycle",),

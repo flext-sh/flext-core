@@ -85,6 +85,8 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine, ube
     from flext_core._utilities.checker import FlextUtilitiesChecker
     from flext_core._utilities.collection import FlextUtilitiesCollection
+    from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
+    from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
     from flext_core._utilities.context import FlextUtilitiesContext
     from flext_core._utilities.context_crud import FlextUtilitiesContextCrud
     from flext_core._utilities.context_lifecycle import FlextUtilitiesContextLifecycle
@@ -241,6 +243,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             "._utilities.checker": ("FlextUtilitiesChecker",),
             "._utilities.collection": ("FlextUtilitiesCollection",),
+            "._utilities.collection_iter": ("FlextUtilitiesCollectionIter",),
+            "._utilities.collection_merge": ("FlextUtilitiesCollectionMerge",),
             "._utilities.context": ("FlextUtilitiesContext",),
             "._utilities.context_crud": ("FlextUtilitiesContextCrud",),
             "._utilities.context_lifecycle": ("FlextUtilitiesContextLifecycle",),
@@ -448,6 +452,8 @@ __all__: list[str] = [
     "FlextUtilitiesBeartypeEngine",
     "FlextUtilitiesChecker",
     "FlextUtilitiesCollection",
+    "FlextUtilitiesCollectionIter",
+    "FlextUtilitiesCollectionMerge",
     "FlextUtilitiesContext",
     "FlextUtilitiesContextCrud",
     "FlextUtilitiesContextLifecycle",

@@ -13,9 +13,8 @@ import math
 
 import pytest
 from flext_tests import tm
-from pydantic import ValidationError
 
-from tests import m, t
+from tests import c, m, t
 
 
 class TestsFlextCoreModelsExceptionParams:
@@ -24,7 +23,7 @@ class TestsFlextCoreModelsExceptionParams:
     # ── ParamsModel base ──────────────────────────────────────
 
     def test_params_model_forbids_extra_fields(self) -> None:
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             m.ParamsModel.model_validate({"unknown_field": "value"})
 
     def test_params_model_strict_mode(self) -> None:
@@ -407,7 +406,7 @@ class TestsFlextCoreModelsExceptionParams:
         self,
         model_cls: type[m.ParamsModel],
     ) -> None:
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             model_cls.model_validate({"bogus_field": "nope"})
 
     # ── Cross-cutting: all defaults to None ───────────────────
@@ -456,7 +455,7 @@ class TestsFlextCoreModelsExceptionParams:
     def test_validate_assignment_enforced(self) -> None:
         """Assigning a wrong type to a strict str field raises."""
         params = m.ValidationErrorParams(field="email")
-        with pytest.raises(ValidationError):
+        with pytest.raises(c.ValidationError):
             setattr(params, "field", 123)
 
     # ── Cross-cutting: roundtrip model_validate ───────────────

@@ -23,7 +23,6 @@ from flext_core import (
     FlextModelsPydantic,
     FlextRuntime,
     FlextUtilitiesCollection,
-    FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesLoggingConfig,
     c,
     e,
@@ -160,25 +159,6 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             FlextRuntime.normalize_to_metadata(value),
         )
         return validated_default
-
-    @staticmethod
-    def _to_scalar_value(
-        value: (t.LogValue | t.JsonValue | t.JsonPayload | t.JsonMapping | None),
-    ) -> t.Scalar:
-        if value is None:
-            return ""
-        if isinstance(value, Exception):
-            return str(value)
-        if isinstance(value, FlextModelsPydantic.BaseModel):
-            return str(value.model_dump())
-        model_dump_attr = getattr(value, "model_dump", None)
-        if callable(model_dump_attr):
-            return str(model_dump_attr())
-        if isinstance(value, (list, tuple, dict, Mapping)):
-            return str(value)
-        if FlextUtilitiesGuardsTypeCore.scalar(value):
-            return value
-        return str(value)
 
     @staticmethod
     def _to_container_context(

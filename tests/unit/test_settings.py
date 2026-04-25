@@ -13,7 +13,6 @@ from pathlib import Path
 
 import pytest
 from flext_tests import tm
-from pydantic import ValidationError
 
 from flext_core import FlextSettings
 from tests import c, p, t, u
@@ -159,7 +158,7 @@ class TestsFlextCoreSettings:
     # --- Validation ------------------------------------------------------
 
     def test_trace_without_debug_raises_validation_error(self) -> None:
-        with pytest.raises(ValidationError, match="Trace mode requires debug mode"):
+        with pytest.raises(c.ValidationError, match="Trace mode requires debug mode"):
             FlextSettings.model_validate({"trace": True, "debug": False})
 
     def test_invalid_database_url_scheme_raises(self) -> None:
