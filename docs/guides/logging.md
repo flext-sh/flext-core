@@ -1,5 +1,15 @@
 # Logging Guide
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Global Context](#global-context)
+- [Scoped Context](#scoped-context)
+- [Context Binding](#context-binding)
+- [Request Handler Pattern](#request-handler-pattern)
+- [Best Practices](#best-practices)
+<!-- TOC END -->
+
 ## Overview
 
 FLEXT logging is built on `structlog` through `FlextLogger`. The logger supports:

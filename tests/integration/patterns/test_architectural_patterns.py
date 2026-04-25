@@ -203,12 +203,16 @@ class TestsFlextCoreArchitecturalPatterns:
                 super().__init__()
                 self.processed_events: MutableSequence[m.DomainEvent] = []
 
-            def handle_user_created(self, event: m.Core.Tests.UserCreatedEvent) -> p.Result[bool]:
+            def handle_user_created(
+                self, event: m.Core.Tests.UserCreatedEvent
+            ) -> p.Result[bool]:
                 """Handle user created event."""
                 self.processed_events.append(event)
                 return r[bool].ok(True)
 
-            def handle_user_updated(self, event: m.Core.Tests.UserUpdatedEvent) -> p.Result[bool]:
+            def handle_user_updated(
+                self, event: m.Core.Tests.UserUpdatedEvent
+            ) -> p.Result[bool]:
                 """Handle user updated event."""
                 self.processed_events.append(event)
                 return r[bool].ok(True)

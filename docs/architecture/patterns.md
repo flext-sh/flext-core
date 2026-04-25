@@ -1,5 +1,13 @@
 # Architecture Patterns
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Result Composition Pattern](#result-composition-pattern)
+- [Container Pattern](#container-pattern)
+- [Dispatcher Pattern (examples-backed)](#dispatcher-pattern-examples-backed)
+<!-- TOC END -->
+
 ## Overview
 
 These patterns are executable references for core runtime behavior.

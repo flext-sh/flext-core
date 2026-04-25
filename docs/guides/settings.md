@@ -1,5 +1,17 @@
 # FLEXT Settings Guide
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Basic Usage](#basic-usage)
+- [Singleton Access](#singleton-access)
+- [Safe Override Application](#safe-override-application)
+- [Context-Specific Settings](#context-specific-settings)
+- [Namespace Registration](#namespace-registration)
+- [Environment Variables](#environment-variables)
+- [Best Practices](#best-practices)
+<!-- TOC END -->
+
 ## Overview
 
 `FlextSettings` is the canonical runtime configuration model in `flext-core`.

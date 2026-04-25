@@ -1,8 +1,8 @@
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-# flext_core
+# flext_core.registry
 
-::: flext_core
+::: flext_core.registry
     options:
       show_root_heading: true
       show_root_full_path: false

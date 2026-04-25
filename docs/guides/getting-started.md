@@ -1,5 +1,15 @@
 # Getting Started
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Result Basics](#result-basics)
+- [Settings Basics](#settings-basics)
+- [Container Basics](#container-basics)
+- [Dispatcher Walkthrough (Examples)](#dispatcher-walkthrough-examples)
+- [Next Steps](#next-steps)
+<!-- TOC END -->
+
 ## Overview
 
 This quick start uses current `flext-core` APIs and runnable snippets.

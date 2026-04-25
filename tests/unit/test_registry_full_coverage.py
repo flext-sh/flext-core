@@ -29,7 +29,9 @@ class TestsFlextCoreRegistryFullCoverage:
         assert registration.value is not None
 
     def test_registry_respects_explicit_dispatcher_behavior(self) -> None:
-        unavailable_registry = u.build_registry(dispatcher=u.Core.Tests.FalseyDispatcher())
+        unavailable_registry = u.build_registry(
+            dispatcher=u.Core.Tests.FalseyDispatcher()
+        )
         assert unavailable_registry.execute().success
 
         failing_registry = u.build_registry(dispatcher=u.Core.Tests.FailDispatcher())
@@ -38,7 +40,9 @@ class TestsFlextCoreRegistryFullCoverage:
         assert "dispatcher-fail" in (failed_registration.error or "")
 
         ready_registry = u.build_registry(dispatcher=u.Core.Tests.OkDispatcher())
-        successful_registration = ready_registry.register_handler(u.Core.Tests.Handler())
+        successful_registration = ready_registry.register_handler(
+            u.Core.Tests.Handler()
+        )
         assert successful_registration.success
         assert successful_registration.value.registration_id != ""
         assert successful_registration.value.status == c.Status.ACTIVE
@@ -46,12 +50,18 @@ class TestsFlextCoreRegistryFullCoverage:
     def test_registry_registers_batches_through_public_methods(self) -> None:
         registry = u.build_registry(dispatcher=u.Core.Tests.OkDispatcher())
 
-        handler_batch = registry.register_handlers([u.Core.Tests.Handler(), u.Core.Tests.Handler()])
+        handler_batch = registry.register_handlers([
+            u.Core.Tests.Handler(),
+            u.Core.Tests.Handler(),
+        ])
         assert handler_batch.success
         assert len(handler_batch.value.registered) == 2
         assert handler_batch.value.errors == []
 
-        bindings_batch = registry.register_bindings({str: u.Core.Tests.Handler(), int: u.Core.Tests.Handler()})
+        bindings_batch = registry.register_bindings({
+            str: u.Core.Tests.Handler(),
+            int: u.Core.Tests.Handler(),
+        })
         assert bindings_batch.success
         assert len(bindings_batch.value.registered) == 2
         assert bindings_batch.value.errors == []

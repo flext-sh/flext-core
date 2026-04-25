@@ -1,5 +1,12 @@
 # Development Standards
 
+
+<!-- TOC START -->
+- [Core Expectations](#core-expectations)
+- [Example: Result-first workflow](#example-result-first-workflow)
+- [Example: Runtime wiring](#example-runtime-wiring)
+<!-- TOC END -->
+
 ## Core Expectations
 
 - Use current public APIs only.

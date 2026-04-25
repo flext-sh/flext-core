@@ -1,5 +1,15 @@
 # Dependency Injection Advanced
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Reusing Official Example Code](#reusing-official-example-code)
+- [Core Container Operations](#core-container-operations)
+- [Scoped Containers](#scoped-containers)
+- [Batch Registration Pattern](#batch-registration-pattern)
+- [Best Practices](#best-practices)
+<!-- TOC END -->
+
 ## Overview
 
 This guide focuses on real `FlextContainer` usage with the current API.

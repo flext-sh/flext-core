@@ -1,5 +1,16 @@
 # Troubleshooting Guide
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [1. Validate Settings Shape](#1-validate-settings-shape)
+- [2. Validate Container Resolution](#2-validate-container-resolution)
+- [3. Validate Result Flow](#3-validate-result-flow)
+- [4. Re-run Canonical Examples](#4-re-run-canonical-examples)
+- [5. Debug Logger Context](#5-debug-logger-context)
+- [Checklist](#checklist)
+<!-- TOC END -->
+
 ## Overview
 
 This page lists practical checks for common runtime issues in `flext-core`.

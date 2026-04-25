@@ -1,5 +1,11 @@
 # Architecture Decisions
 
+
+<!-- TOC START -->
+- [Active Decisions](#active-decisions)
+- [Decision Check: Result Contract](#decision-check-result-contract)
+<!-- TOC END -->
+
 ## Active Decisions
 
 1. Use `r[T]` for explicit failure modeling.

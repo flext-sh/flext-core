@@ -1,5 +1,14 @@
 # Pydantic v2 Patterns
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Base Model + Field](#base-model-field)
+- [ConfigDict + model_dump](#configdict-modeldump)
+- [field_validator](#fieldvalidator)
+- [examples-backed sanity check](#examples-backed-sanity-check)
+<!-- TOC END -->
+
 ## Overview
 
 This guide shows practical Pydantic v2 patterns used in `flext-core`.

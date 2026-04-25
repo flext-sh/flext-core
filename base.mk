@@ -534,7 +534,7 @@ docs: ## Build docs
 	fi; \
 	for phase in $$phases; do \
 		case "$$phase" in \
-			audit) subcmd="$(PROJECT_INFRA_DOCS) audit"; extra="--strict 1" ;; \
+			audit) subcmd="$(PROJECT_INFRA_DOCS) audit"; extra="--strict" ;; \
 			fix) subcmd="$(PROJECT_INFRA_DOCS) fix"; extra="$(if $(filter 1,$(FIX)),--apply,)" ;; \
 			build) subcmd="$(PROJECT_INFRA_DOCS) build"; extra="" ;; \
 			generate) subcmd="$(PROJECT_INFRA_DOCS) generate"; extra="--apply" ;; \

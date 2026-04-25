@@ -1,5 +1,16 @@
 # Anti-Patterns and Best Practices
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Common Anti-Patterns (Illustrative)](#common-anti-patterns-illustrative)
+- [Best Practices (Executable)](#best-practices-executable)
+  - [Prefer r[T] for Fallible Paths](#prefer-rt-for-fallible-paths)
+  - [Prefer Current Settings API](#prefer-current-settings-api)
+  - [Prefer Explicit Container Registration](#prefer-explicit-container-registration)
+  - [Reuse Maintainer Examples](#reuse-maintainer-examples)
+<!-- TOC END -->
+
 ## Overview
 
 This guide separates intentionally wrong examples (text only) from executable best-practice snippets.

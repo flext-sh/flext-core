@@ -1,5 +1,12 @@
 # Documentation Standards
 
+
+<!-- TOC START -->
+- [Requirements](#requirements)
+- [Executable Standard Snippet](#executable-standard-snippet)
+- [Examples-backed Reference](#examples-backed-reference)
+<!-- TOC END -->
+
 ## Requirements
 
 - Snippets must be executable or explicitly marked as `text`.

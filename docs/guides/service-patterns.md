@@ -1,5 +1,13 @@
 # Service Patterns
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Simple Service Pattern](#simple-service-pattern)
+- [Validate Before Execute](#validate-before-execute)
+- [examples-backed service flows](#examples-backed-service-flows)
+<!-- TOC END -->
+
 ## Overview
 
 Service classes should keep orchestration explicit and failures modeled with `r[T]`.
