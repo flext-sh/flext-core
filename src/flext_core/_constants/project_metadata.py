@@ -47,6 +47,15 @@ class FlextConstantsProjectMetadata:
 
     RUNTIME_ALIAS_NAMES: Final[frozenset[str]] = frozenset(ALIAS_TO_SUFFIX)
 
+    FACADE_ALIAS_NAMES: Final[frozenset[str]] = frozenset({"c", "m", "p", "t", "u"})
+    """The five canonical facade aliases (constants/models/protocols/types/utilities).
+
+    AGENTS.md §0 names this subset explicitly: ``c, p, t, m, u`` are facade
+    aliases, while ``r, e, d, h, s, x`` are operational. Any cross-module
+    enumeration of the facade slots MUST consume this constant — duplicating
+    the literal tuple in another module is forbidden by metadata-discipline.
+    """
+
     TIER_FACADE_PREFIX: Final[t.StrMapping] = MappingProxyType({
         "src": "Flext",
         "tests": "TestsFlext",

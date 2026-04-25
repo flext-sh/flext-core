@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import ast
 import inspect
 import re
 from collections.abc import (
@@ -683,6 +684,151 @@ class FlextUtilitiesBeartypeEngine:
             if base.__name__ == "FlextSettings":
                 return _NO_VIOLATION
         return {"name": target.__name__}
+
+    # -----------------------------------------------------------------------
+    # Lane A-PT detection hooks (ENFORCE-039/041/043/044)
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def check_cast_outside_core(target: type) -> t.StrMapping | None:
+        """``cast()`` call outside flext-core result internals (ENFORCE-039).
+
+        AGENTS.md §3.2: ``typing.cast()`` is reserved for flext-core's
+        Result narrowing primitives. Outside flext-core every cast is a
+        type-system bypass. Detection inspects the target class's source
+        file for ``from typing import ... cast`` AND a ``cast(`` call.
+        Source-skip on ``inspect.getfile`` failure or ``OSError`` per the
+        runtime-safety contract; never raises.
+        """
+        if "." in target.__qualname__:
+            return _NO_VIOLATION
+        try:
+            src_file = inspect.getfile(target)
+        except (OSError, TypeError):
+            return _NO_VIOLATION
+        if any(marker in src_file for marker in c.ENFORCE_FLEXT_CORE_PATH_MARKERS):
+            return _NO_VIOLATION
+        try:
+            source = Path(src_file).read_text(encoding="utf-8")
+        except OSError:
+            return _NO_VIOLATION
+        if not c.ENFORCE_CAST_TYPING_IMPORT_RE.search(source):
+            return _NO_VIOLATION
+        if not c.ENFORCE_CAST_CALL_RE.search(source):
+            return _NO_VIOLATION
+        return {"file": Path(src_file).name}
+
+    @staticmethod
+    def check_model_rebuild_call(target: type) -> t.StrMapping | None:
+        """``model_rebuild()`` invocation indicates unresolved forward refs (ENFORCE-041).
+
+        AGENTS.md §3.4: forward-ref repair belongs in module-level imports
+        and ``__future__`` annotations, not at runtime. Source-skip on
+        unavailable source per the runtime-safety contract.
+        """
+        if "." in target.__qualname__:
+            return _NO_VIOLATION
+        try:
+            src_file = inspect.getfile(target)
+        except (OSError, TypeError):
+            return _NO_VIOLATION
+        try:
+            source = Path(src_file).read_text(encoding="utf-8")
+        except OSError:
+            return _NO_VIOLATION
+        if not c.ENFORCE_MODEL_REBUILD_CALL_RE.search(source):
+            return _NO_VIOLATION
+        return {"file": Path(src_file).name}
+
+    @staticmethod
+    def check_pass_through_wrapper(target: type) -> t.StrMapping | None:
+        """Pass-through wrapper detection (ENFORCE-043).
+
+        AGENTS.md §3.5: a function whose only body is ``return inner(*args)``
+        with positional argument names equal to the wrapper's own parameter
+        names is a pure delegation; remove the wrapper and use ``inner``
+        directly. Source-skip on unavailable or unparseable source.
+        """
+        if "." in target.__qualname__:
+            return _NO_VIOLATION
+        try:
+            src_file = inspect.getfile(target)
+        except (OSError, TypeError):
+            return _NO_VIOLATION
+        try:
+            source = Path(src_file).read_text(encoding="utf-8")
+        except OSError:
+            return _NO_VIOLATION
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            return _NO_VIOLATION
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef):
+                continue
+            body = [
+                stmt
+                for stmt in node.body
+                if not (
+                    isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant)
+                )
+            ]
+            if len(body) != 1 or not isinstance(body[0], ast.Return):
+                continue
+            ret = body[0]
+            if not isinstance(ret.value, ast.Call):
+                continue
+            call = ret.value
+            param_names = [a.arg for a in node.args.args]
+            call_args = [a.id if isinstance(a, ast.Name) else None for a in call.args]
+            if param_names and param_names == call_args and not call.keywords:
+                return {"name": node.name, "file": Path(src_file).name}
+        return _NO_VIOLATION
+
+    @staticmethod
+    def check_private_attr_probe(target: type) -> t.StrMapping | None:
+        """``hasattr/getattr/setattr`` probing of private attributes (ENFORCE-044).
+
+        AGENTS.md §3.6: private attributes (single-underscore names) are not
+        part of the public surface; probing them by name violates the
+        encapsulation contract. Dunder names (``__class__`` etc.) are
+        legitimate runtime introspection and are exempted. Source-skip on
+        unavailable or unparseable source.
+        """
+        if "." in target.__qualname__:
+            return _NO_VIOLATION
+        try:
+            src_file = inspect.getfile(target)
+        except (OSError, TypeError):
+            return _NO_VIOLATION
+        try:
+            source = Path(src_file).read_text(encoding="utf-8")
+        except OSError:
+            return _NO_VIOLATION
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            return _NO_VIOLATION
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+                continue
+            if node.func.id not in c.ENFORCE_PRIVATE_PROBE_BUILTINS:
+                continue
+            if (
+                len(node.args) < c.ENFORCE_PRIVATE_PROBE_MIN_ARGS
+                or not isinstance(node.args[1], ast.Constant)
+            ):
+                continue
+            attr_name = node.args[1].value
+            if not isinstance(attr_name, str):
+                continue
+            if attr_name.startswith("_") and not attr_name.startswith("__"):
+                return {
+                    "probe": node.func.id,
+                    "name": attr_name,
+                    "file": Path(src_file).name,
+                }
+        return _NO_VIOLATION
 
     # -----------------------------------------------------------------------
     # R1–R10 MRO compliance checks

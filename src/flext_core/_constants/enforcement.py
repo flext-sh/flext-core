@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from collections.abc import (
     Mapping,
 )
@@ -265,6 +266,41 @@ class FlextConstantsEnforcement:
         NAMESPACE = "namespace"
         PROTOCOL_TREE = "protocol_tree"
 
+    # --- Lane A-PT detection inputs (ENFORCE-039/041/043/044) ---
+    # Centralized SSOT for the regex/path/builtin sentinels consumed by the
+    # corresponding ``check_<tag>`` predicates on ``FlextUtilitiesBeartypeEngine``.
+    # Keep regex constants compiled as Final[re.Pattern[str]] here so the
+    # engine module never carries loose detection inputs.
+
+    ENFORCE_CAST_TYPING_IMPORT_RE: Final[re.Pattern[str]] = re.compile(
+        r"\bfrom\s+typing\s+import\b[^\n]*\bcast\b"
+    )
+    """ENFORCE-039: detects ``from typing import ... cast ...`` import lines."""
+
+    ENFORCE_CAST_CALL_RE: Final[re.Pattern[str]] = re.compile(r"\bcast\s*\(")
+    """ENFORCE-039: detects ``cast(...)`` call sites in source text."""
+
+    ENFORCE_MODEL_REBUILD_CALL_RE: Final[re.Pattern[str]] = re.compile(
+        r"\bmodel_rebuild\s*\("
+    )
+    """ENFORCE-041: detects ``model_rebuild(...)`` call sites in source text."""
+
+    ENFORCE_FLEXT_CORE_PATH_MARKERS: Final[frozenset[str]] = frozenset({
+        "flext_core",
+        "flext-core",
+    })
+    """Path fragments identifying flext-core source files (ENFORCE-039 exemption)."""
+
+    ENFORCE_PRIVATE_PROBE_BUILTINS: Final[frozenset[str]] = frozenset({
+        "hasattr",
+        "getattr",
+        "setattr",
+    })
+    """ENFORCE-044: builtins that probe attributes by name."""
+
+    ENFORCE_PRIVATE_PROBE_MIN_ARGS: Final[int] = 2
+    """ENFORCE-044: minimum positional args required to inspect ``args[1]`` as the attribute-name literal."""
+
     ENFORCEMENT_RULES: Final[
         Mapping[
             str,
@@ -444,6 +480,35 @@ class FlextConstantsEnforcement:
             EnforcementSeverity.HARD_RULES,
             '"{name}" must inherit FlextSettings (AGENTS.md §2.6)',
             "Add FlextSettings to the MRO; remove BaseModel/BaseSettings bases.",
+        ),
+        # --- Lane A-PT detection rows (ENFORCE-039/041/043/044) ---
+        "cast_outside_core": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            "cast() call in {file} is outside flext-core (AGENTS.md §3.2)",
+            "Replace cast() with FlextResult narrowing or explicit isinstance().",
+        ),
+        "model_rebuild_call": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            "model_rebuild() invocation in {file} (AGENTS.md §3.4)",
+            "Resolve forward refs via proper imports / __future__ annotations.",
+        ),
+        "pass_through_wrapper": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.BEST_PRACTICES,
+            'pass-through wrapper "{name}" in {file} (AGENTS.md §3.5)',
+            "Inline the wrapper at every call site and delete the function.",
+        ),
+        "private_attr_probe": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            '{probe}(obj, "{name}") probes private attribute in {file}',
+            "Refactor the consumer to use the public surface (AGENTS.md §3.6).",
         ),
         # R1–R10 MRO compliance rules
         "no_concrete_namespace_import": (
@@ -1069,6 +1134,103 @@ def _hydrate_enforcement_catalog() -> None:
                 agents_md_anchor="0-quick-reference-must-read",
                 skills=("flext-mro-namespace-rules",),
                 enabled=False,
+            ),
+            # Lane A-PT (peppy-thacker) catalog entries — ENFORCE-039..044.
+            # Per AGENT_COORDINATION.md §4.1, A-PT owns this range.
+            # ENFORCE-040 delegates to ruff PGH003; ENFORCE-042 reuses the
+            # existing check_settings_inheritance hook (zero new code for
+            # those two — pure SSOT/DRY/YAGNI). The other four point at
+            # check_<tag> hooks added in
+            # flext-core/_utilities/beartype_engine.py and dispatched via
+            # the cast_outside_core / model_rebuild_call /
+            # pass_through_wrapper / private_attr_probe rows in
+            # ENFORCEMENT_RULES.
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-039",
+                description=(
+                    "cast() call outside flext-core result internals "
+                    "violates AGENTS.md §3.2 (Strict Types)."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementSkillPointerSource(
+                    skill="flext-strict-typing",
+                    anchor="cast-outside-core",
+                ),
+                agents_md_anchor="3-2-types-and-contracts",
+                skills=("flext-strict-typing", "flext-patterns"),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-040",
+                description=(
+                    "Linter ignore directive without inline justification "
+                    "violates AGENTS.md §3.5 (Linter Zero Tolerance + "
+                    "Suppressions)."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementRuffSource(
+                    rule_code="PGH003",
+                ),
+                agents_md_anchor="3-5-integrity",
+                skills=("flext-strict-typing", "flext-quality-gates"),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-041",
+                description=(
+                    "model_rebuild() call indicates unresolved forward refs "
+                    "and violates AGENTS.md §3.4 (Tools/Modules/Env)."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementSkillPointerSource(
+                    skill="flext-patterns",
+                    anchor="model-rebuild-ban",
+                ),
+                agents_md_anchor="3-4-tools-and-modules",
+                skills=("flext-patterns",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-042",
+                description=(
+                    "Settings class missing FlextSettings base or wrong "
+                    "env_prefix violates AGENTS.md §2.6 (Settings Law). "
+                    "Reuses the existing check_settings_inheritance hook — "
+                    "no new detection code per SSOT/DRY."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementSkillPointerSource(
+                    skill="flext-patterns",
+                    anchor="settings-inheritance",
+                ),
+                agents_md_anchor="2-6-settings-law",
+                skills=("flext-patterns", "lib-pydantic-settings"),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-043",
+                description=(
+                    "Pass-through wrapper (single-statement return delegating "
+                    "to another callable with identical args) violates "
+                    "AGENTS.md §3.5."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementSkillPointerSource(
+                    skill="flext-refactoring-workflow",
+                    anchor="pass-through-wrapper",
+                ),
+                agents_md_anchor="3-5-integrity",
+                skills=("flext-refactoring-workflow",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-044",
+                description=(
+                    "hasattr/getattr/setattr probing of private attributes "
+                    "(single-underscore names) violates AGENTS.md §3.6."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementSkillPointerSource(
+                    skill="flext-strict-typing",
+                    anchor="private-attr-probe",
+                ),
+                agents_md_anchor="3-6-test-standardization",
+                skills=("flext-strict-typing", "flext-patterns"),
             ),
         ),
     )

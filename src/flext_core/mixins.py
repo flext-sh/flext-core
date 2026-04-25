@@ -166,7 +166,7 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     def _get_runtime(self) -> m.ServiceRuntime:
         """Return or create a runtime triple shared across mixin consumers."""
-        runtime = self._runtime if hasattr(self, "_runtime") else None
+        runtime = self._runtime
         if isinstance(runtime, m.ServiceRuntime):
             return runtime
         self._runtime = u.build_service_runtime(self)

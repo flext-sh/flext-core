@@ -18,6 +18,7 @@ import tomllib
 from collections.abc import (
     Mapping,
 )
+from functools import cache
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -66,8 +67,16 @@ class FlextUtilitiesProjectMetadata:
         return FlextUtilitiesProjectMetadata.pascalize(normalized)
 
     @staticmethod
-    def _load_pyproject_toml(root: Path) -> Mapping[str, Any]:
-        """Load and return the parsed pyproject.toml under ``root``."""
+    @cache
+    def load_pyproject_toml(root: Path) -> Mapping[str, Any]:
+        """Load and return the parsed pyproject.toml under ``root``.
+
+        Result is cached by ``root`` (``Path`` is hashable). The cache is
+        process-global so every workspace reader — typed config in
+        ``read_tool_flext_config``/``read_project_metadata`` and the
+        flext-infra ``_pyproject_payload`` validation layer — shares the
+        same disk read; no parallel file I/O.
+        """
         pyproject = root / FlextUtilitiesProjectMetadata.PYPROJECT_FILENAME
         if not pyproject.is_file():
             msg = (
@@ -81,7 +90,7 @@ class FlextUtilitiesProjectMetadata:
     @staticmethod
     def read_project_metadata(root: Path) -> mpm.ProjectMetadata:
         """Read canonical project metadata from a project's pyproject.toml."""
-        data = FlextUtilitiesProjectMetadata._load_pyproject_toml(root)
+        data = FlextUtilitiesProjectMetadata.load_pyproject_toml(root)
         project_raw = data.get("project")
         project: dict[str, Any] = (
             dict(project_raw) if isinstance(project_raw, Mapping) else {}
@@ -126,7 +135,7 @@ class FlextUtilitiesProjectMetadata:
     @staticmethod
     def read_tool_flext_config(root: Path) -> mpm.ProjectToolFlext:
         """Read ``[tool.flext.*]`` tables from pyproject.toml."""
-        data = FlextUtilitiesProjectMetadata._load_pyproject_toml(root)
+        data = FlextUtilitiesProjectMetadata.load_pyproject_toml(root)
         tool = data.get("tool") or {}
         tool_flext = tool.get("flext") if isinstance(tool, Mapping) else None
         return mpm.ProjectToolFlext.model_validate(tool_flext or {})

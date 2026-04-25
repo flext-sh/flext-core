@@ -35,6 +35,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".guards_type_model": ("FlextUtilitiesGuardsTypeModel",),
         ".guards_type_protocol": ("FlextUtilitiesGuardsTypeProtocol",),
         ".handler": ("FlextUtilitiesHandler",),
+        ".inspect_helpers": ("FlextUtilitiesInspectHelpers",),
         ".logging_config": ("FlextUtilitiesLoggingConfig",),
         ".logging_context": ("FlextUtilitiesLoggingContext",),
         ".mapper": ("FlextUtilitiesMapper",),

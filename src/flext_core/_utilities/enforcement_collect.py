@@ -22,9 +22,8 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     @staticmethod
     def _discover_src_package(target: type) -> str | None:
         """Walk parents to the first ``pyproject.toml`` and return the package name."""
-        try:
-            src_file = inspect.getfile(target)
-        except (TypeError, OSError):
+        src_file = inspect.getsourcefile(target)
+        if src_file is None:
             return None
         for parent in Path(src_file).parents:
             pyproject = parent / "pyproject.toml"
@@ -202,6 +201,14 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             case "no_accessor_methods":
                 yield from cls._ns_no_accessor_methods(target, qn)
             case "settings_inheritance":
+                yield qn, (target,)
+            # --- Lane A-PT dispatch arms (ENFORCE-039/041/043/044) ---
+            case (
+                "cast_outside_core"
+                | "model_rebuild_call"
+                | "pass_through_wrapper"
+                | "private_attr_probe"
+            ):
                 yield qn, (target,)
             case _:
                 return

@@ -1,3 +1,7 @@
+<!-- TOC START -->
+- [Next Pages](#next-pages)
+<!-- TOC END -->
+
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 # flext-core API Overview
@@ -7,9 +11,9 @@
 - Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
 - Project class: `platform`
 - Keywords: `clean-architecture`, `ddd`, `enterprise`, `flext`, `modern`, `solid`
-- Main facades: `FlextModelsBase`, `FlextConstantsRegex`, `FlextConstantsValidation`, `FlextUtilitiesConversion`, `FlextExceptionsBase`, `FlextModelsCollections`, `FlextUtilitiesText`, `FlextUtilitiesCollection` (+116 more)
+- Main facades: `FlextDecorators`, `FlextMroViolation`, `FlextTypesServices`, `FlextTypingContainers`, `FlextUtilitiesGenerators`, `FlextUtilitiesContextLifecycle`, `FlextConstantsErrors`, `FlextProtocolsPydantic` (+116 more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextModelsBase`, `FlextConstantsRegex`, `FlextConstantsValidation`, `FlextUtilitiesConversion`, `FlextExceptionsBase`, `FlextModelsCollections`, `FlextUtilitiesText`, `FlextUtilitiesCollection`, `FlextUtilitiesParser`, `FlextMroViolation` (+117 more)
+- Public symbol exports: `FlextDecorators`, `FlextMroViolation`, `FlextTypesServices`, `FlextTypingContainers`, `FlextUtilitiesGenerators`, `FlextUtilitiesContextLifecycle`, `FlextConstantsErrors`, `FlextProtocolsPydantic`, `FlextUtilitiesBeartypeEngine`, `FlextUtilitiesContextCrud` (+117 more)
 - Exported module shortcuts: `lazy`
 - Generated module pages: `20`
 

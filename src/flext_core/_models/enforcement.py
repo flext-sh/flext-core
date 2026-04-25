@@ -124,6 +124,7 @@ class FlextModelsEnforcement:
         FLEXT_INFRA_DETECTOR = "flext_infra_detector"
         FLEXT_TESTS_VALIDATOR = "flext_tests_validator"
         RUNTIME_WARNING = "runtime_warning"
+        BEARTYPE = "beartype"
         RUFF = "ruff"
         AST_GREP = "ast_grep"
         SKILL_POINTER = "skill_pointer"
@@ -202,6 +203,24 @@ class FlextModelsEnforcement:
                 description=(
                     "Dotted path to the warning class — e.g. "
                     "'flext_core._constants.enforcement.FlextMroViolation'."
+                ),
+            ),
+        ]
+
+    class EnforcementBeartypeSource(mp.BaseModel):
+        """Rule delegated to a ``FlextUtilitiesBeartypeEngine`` hook."""
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            frozen=True, extra="forbid"
+        )
+
+        kind: Literal["beartype"] = "beartype"
+        hook: Annotated[
+            ta.NonEmptyStr,
+            Field(
+                description=(
+                    "Hook name on FlextUtilitiesBeartypeEngine — e.g. "
+                    "'check_model_rebuild_call'."
                 ),
             ),
         ]
@@ -291,6 +310,7 @@ class FlextModelsEnforcement:
                 FlextModelsEnforcement.EnforcementInfraDetectorSource
                 | FlextModelsEnforcement.EnforcementTestsValidatorSource
                 | FlextModelsEnforcement.EnforcementRuntimeWarningSource
+                | FlextModelsEnforcement.EnforcementBeartypeSource
                 | FlextModelsEnforcement.EnforcementRuffSource
                 | FlextModelsEnforcement.EnforcementAstGrepSource
                 | FlextModelsEnforcement.EnforcementSkillPointerSource

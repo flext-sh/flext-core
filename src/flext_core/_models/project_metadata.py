@@ -244,6 +244,26 @@ class FlextModelsProjectMetadata:
             ),
         ] = Field(default_factory=lambda: MappingProxyType({}))
 
+    class ProjectToolFlextWorkspace(FlextModelsPydantic.BaseModel):
+        """``[tool.flext.workspace]`` table contract."""
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
+        )
+
+        attached: Annotated[
+            bool,
+            Field(
+                default=False,
+                description=(
+                    "Opt this directory into workspace iteration as an attached "
+                    "sub-repo. False (default) keeps the dir invisible to "
+                    "workspace verbs unless the iterator passes "
+                    "include_attached=True."
+                ),
+            ),
+        ] = False
+
     class ProjectToolFlext(FlextModelsPydantic.BaseModel):
         """``[tool.flext]`` root contract aggregating the sub-tables."""
 
@@ -296,4 +316,17 @@ class FlextModelsProjectMetadata:
             ),
         ] = Field(
             default_factory=lambda: FlextModelsProjectMetadata.ProjectToolFlextAliases()
+        )
+        workspace: Annotated[
+            FlextModelsProjectMetadata.ProjectToolFlextWorkspace,
+            Field(
+                default_factory=lambda: (
+                    FlextModelsProjectMetadata.ProjectToolFlextWorkspace()
+                ),
+                description="[tool.flext.workspace] sub-table.",
+            ),
+        ] = Field(
+            default_factory=lambda: (
+                FlextModelsProjectMetadata.ProjectToolFlextWorkspace()
+            )
         )

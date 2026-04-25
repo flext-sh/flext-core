@@ -108,6 +108,7 @@ if _t.TYPE_CHECKING:
         FlextUtilitiesGuardsTypeProtocol,
     )
     from flext_core._utilities.handler import FlextUtilitiesHandler
+    from flext_core._utilities.inspect_helpers import FlextUtilitiesInspectHelpers
     from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
     from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
     from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -261,6 +262,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.guards_type_model": ("FlextUtilitiesGuardsTypeModel",),
             "._utilities.guards_type_protocol": ("FlextUtilitiesGuardsTypeProtocol",),
             "._utilities.handler": ("FlextUtilitiesHandler",),
+            "._utilities.inspect_helpers": ("FlextUtilitiesInspectHelpers",),
             "._utilities.logging_config": ("FlextUtilitiesLoggingConfig",),
             "._utilities.logging_context": ("FlextUtilitiesLoggingContext",),
             "._utilities.mapper": ("FlextUtilitiesMapper",),
@@ -469,6 +471,7 @@ __all__: list[str] = [
     "FlextUtilitiesGuardsTypeModel",
     "FlextUtilitiesGuardsTypeProtocol",
     "FlextUtilitiesHandler",
+    "FlextUtilitiesInspectHelpers",
     "FlextUtilitiesLoggingConfig",
     "FlextUtilitiesLoggingContext",
     "FlextUtilitiesMapper",
