@@ -29,7 +29,7 @@ if _t.TYPE_CHECKING:
         TestsFlextCoreContainerPerformance,
     )
     from tests.benchmark.test_lazy_performance import TestsFlextCoreLazyPerformance
-    from tests.constants import c
+    from tests.constants import TestsFlextCoreConstants, c
     from tests.integration.patterns.test_advanced_patterns import (
         TestsFlextCoreAdvancedPatterns,
     )
@@ -366,6 +366,16 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "merge_lazy_imports",
         "output",
         "output_reporting",
+        "pytest_addoption",
+        "pytest_collect_file",
+        "pytest_collection_modifyitems",
+        "pytest_configure",
+        "pytest_runtest_setup",
+        "pytest_runtest_teardown",
+        "pytest_sessionfinish",
+        "pytest_sessionstart",
+        "pytest_terminal_summary",
+        "pytest_warning_recorded",
     ),
     module_name=__name__,
 )

@@ -203,6 +203,8 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
                 yield from cls._ns_no_accessor_methods(target, qn)
             case "settings_inheritance":
                 yield qn, (target,)
+            case _:
+                return
 
 
 __all__: list[str] = ["FlextUtilitiesEnforcementCollect"]
