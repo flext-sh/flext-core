@@ -45,12 +45,6 @@ def reset_flext_container_singleton() -> Generator[None]:
         FlextContainer.reset_for_testing()
 
 
-_ServiceScenario = m.Core.Tests.ServiceScenario
-_TypedRetrievalScenario = m.Core.Tests.TypedRetrievalScenario
-_ContainerScenarios = m.Core.Tests.ContainerScenarios
-ContainerScenarios = m.Core.Tests.ContainerScenarios
-
-
 class TestsFlextCoreContainer:
     @pytest.fixture(autouse=True)
     def _reset_container_state(self) -> Generator[None]:
@@ -83,12 +77,12 @@ class TestsFlextCoreContainer:
 
     @pytest.mark.parametrize(
         "scenario",
-        ContainerScenarios.SERVICE_SCENARIOS,
+        m.Core.Tests.ContainerScenarios.SERVICE_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_register_service(
         self,
-        scenario: _ServiceScenario,
+        scenario: m.Core.Tests.ServiceScenario,
         clean_container: p.Container,
     ) -> None:
         """Test service registration with various types using fixtures."""
@@ -106,12 +100,12 @@ class TestsFlextCoreContainer:
 
     @pytest.mark.parametrize(
         "scenario",
-        ContainerScenarios.SERVICE_SCENARIOS,
+        m.Core.Tests.ContainerScenarios.SERVICE_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_with_service_fluent(
         self,
-        scenario: _ServiceScenario,
+        scenario: m.Core.Tests.ServiceScenario,
         clean_container: p.Container,
     ) -> None:
         """Test fluent interface for service registration using fixtures."""
@@ -210,12 +204,12 @@ class TestsFlextCoreContainer:
 
     @pytest.mark.parametrize(
         "scenario",
-        ContainerScenarios.SERVICE_SCENARIOS,
+        m.Core.Tests.ContainerScenarios.SERVICE_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_get_service(
         self,
-        scenario: _ServiceScenario,
+        scenario: m.Core.Tests.ServiceScenario,
         clean_container: p.Container,
     ) -> None:
         """Test service retrieval using fixtures."""
@@ -264,12 +258,12 @@ class TestsFlextCoreContainer:
 
     @pytest.mark.parametrize(
         "scenario",
-        ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS,
+        m.Core.Tests.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_get_typed_correct(
         self,
-        scenario: _TypedRetrievalScenario,
+        scenario: m.Core.Tests.TypedRetrievalScenario,
         clean_container: p.Container,
     ) -> None:
         """Test typed retrieval with correct types using fixtures."""
@@ -370,7 +364,9 @@ class TestsFlextCoreContainer:
         for key in required_keys:
             tm.that(key in services, eq=True, msg=f"Services list must contain {key}")
 
-    @pytest.mark.parametrize("settings", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
+    @pytest.mark.parametrize(
+        "settings", m.Core.Tests.ContainerScenarios.CONFIG_SCENARIOS, ids=str
+    )
     def test_configure_container(
         self,
         settings: t.ScalarMapping,
