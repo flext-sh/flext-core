@@ -391,7 +391,7 @@ class TestsFlextCoreBeartypeEngine:
                 with warnings.catch_warnings(record=True) as caught:
                     warnings.simplefilter("always")
                     try:
-                        flext_core.FlextUtilitiesProjectMetadata.derive_package_name(1)
+                        flext_core.FlextUtilitiesProjectMetadata.derive_class_stem(1)
                     except Exception as exc:
                         print("runtime_exc", type(exc).__name__)
                     print("warning_count", len(caught))
@@ -431,7 +431,7 @@ class TestsFlextCoreBeartypeEngine:
                 with warnings.catch_warnings(record=True) as caught:
                     warnings.simplefilter("always")
                     try:
-                        flext_core.FlextUtilitiesProjectMetadata.derive_package_name(1)
+                        flext_core.FlextUtilitiesProjectMetadata.derive_class_stem(1)
                     except Exception as exc:
                         print("runtime_exc", type(exc).__name__)
                         print("runtime_msg", str(exc))
@@ -449,7 +449,7 @@ class TestsFlextCoreBeartypeEngine:
         assert "runtime_exc AttributeError" in combined_output
         assert "warning_count 1" in combined_output
         assert "warning_type UserWarning" in combined_output
-        assert "derive_package_name" in combined_output
+        assert "derive_class_stem" in combined_output
 
     def test_claw_without_skip_hits_recursive_container_schema(self) -> None:
         """Removing skip settings still fails to import flext_core under claw."""

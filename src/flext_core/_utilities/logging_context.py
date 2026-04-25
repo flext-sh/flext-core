@@ -71,7 +71,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             cls.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return cls._fail_logging_operation(
+            return e.fail_operation(
                 f"bind context for scope '{scope}'",
                 exc,
             )
@@ -80,11 +80,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     def bind_global_context(cls, **context: t.JsonPayload) -> p.Result[bool]:
         """Bind context globally using structlog contextvars."""
         try:
-            normalized_context = cls._to_container_context(context)
+            normalized_context = cls.to_container_context(context)
             cls.structlog().contextvars.bind_contextvars(**normalized_context)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return cls._fail_logging_operation("bind global context", exc)
+            return e.fail_operation("bind global context", exc)
 
     @classmethod
     def clear_global_context(cls) -> p.Result[bool]:
@@ -95,7 +95,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             cls._level_contexts.clear()
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return cls._fail_logging_operation("clear global context", exc)
+            return e.fail_operation("clear global context", exc)
 
     @classmethod
     def clear_scope(cls, scope: str) -> p.Result[bool]:
@@ -108,7 +108,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 cls._scoped_contexts[scope].clear()
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return cls._fail_logging_operation(f"clear scope '{scope}'", exc)
+            return e.fail_operation(f"clear scope '{scope}'", exc)
 
     @classmethod
     def unbind_global_context(cls, *keys: str) -> p.Result[bool]:
@@ -118,7 +118,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             cls.structlog().contextvars.unbind_contextvars(*unbind_keys)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return cls._fail_logging_operation("unbind global context", exc)
+            return e.fail_operation("unbind global context", exc)
 
     @staticmethod
     def _to_container_value(
@@ -161,7 +161,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         return validated_default
 
     @staticmethod
-    def _to_container_context(
+    def to_container_context(
         context: Mapping[str, t.LogValue | t.JsonValue | t.JsonPayload],
     ) -> t.JsonMapping:
         """Convert mapping to container context using normalization."""
@@ -265,11 +265,6 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 exception_type=exc.__class__.__name__,
                 exception_message=str(exc),
             )
-
-    @staticmethod
-    def _fail_logging_operation(operation: str, exc: Exception) -> p.Result[bool]:
-        """Return the canonical failed result for a logger operation."""
-        return e.fail_operation(operation, exc)
 
     @staticmethod
     def _should_include_stack_trace() -> bool:

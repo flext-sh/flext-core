@@ -17,7 +17,7 @@ from collections.abc import (
     MutableSequence,
     Sequence,
 )
-from typing import TypeIs, cast, get_args, get_origin, get_type_hints
+from typing import TypeIs, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
@@ -163,15 +163,12 @@ class FlextUtilitiesChecker:
             return r[t.TypeHintSpecifier].fail(
                 c.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,
             )
-        handle_method: Callable[..., t.ModuleExport] = cast(
-            "Callable[..., t.ModuleExport]", handle_method_raw
-        )
-        signature_result = cls._get_method_signature(handle_method)
+        signature_result = cls._get_method_signature(handle_method_raw)
         if signature_result.failure:
             signature_error = signature_result.error or "Invalid handle signature"
             return r[t.TypeHintSpecifier].fail(signature_error)
         signature = signature_result.unwrap()
-        type_hints = cls._get_type_hints_safe(handle_method, handler_class)
+        type_hints = cls._get_type_hints_safe(handle_method_raw, handler_class)
         for name, parameter in signature.parameters.items():
             if name == "self":
                 continue

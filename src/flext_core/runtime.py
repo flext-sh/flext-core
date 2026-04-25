@@ -802,24 +802,14 @@ class FlextRuntime:
         for key, value in context_dict.items():
             result[key] = str(value)
         if "trace_id" not in result:
-            result["trace_id"] = cls.generate_id()
+            result["trace_id"] = ug.generate_id()
         if "span_id" not in result:
-            result["span_id"] = cls.generate_id()
+            result["span_id"] = ug.generate_id()
         if include_correlation_id and c.ContextKey.CORRELATION_ID not in result:
-            result[c.ContextKey.CORRELATION_ID] = cls.generate_id()
+            result[c.ContextKey.CORRELATION_ID] = ug.generate_id()
         if include_timestamp and "timestamp" not in result:
-            result["timestamp"] = cls.generate_datetime_utc().isoformat()
+            result["timestamp"] = ug.generate_datetime_utc().isoformat()
         return result
-
-    @staticmethod
-    def generate_datetime_utc() -> datetime:
-        """Generate current UTC datetime for runtime-scoped timestamps."""
-        return ug.generate_datetime_utc()
-
-    @staticmethod
-    def generate_id() -> str:
-        """Generate unique ID for runtime-scoped correlation and tracing."""
-        return ug.generate_id()
 
 
 __all__: list[str] = ["FlextRuntime"]

@@ -37,7 +37,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
         **kwargs: t.JsonPayload,
     ) -> T:
         """Universal type parser supporting enums, models, and primitives."""
-        opts, fp = FlextUtilitiesParserTargets.resolve_opts(options, kwargs)
+        opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)  # noqa: SLF001
         return FlextUtilitiesParser._dispatch(value, target, opts, fp, kwargs)
 
     @staticmethod

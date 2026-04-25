@@ -122,9 +122,6 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_project_metadata_facade_access import (
         TestsFlextCoreFacadeFlatSsotAccess,
     )
-    from tests.unit.test_protocols_project_metadata import (
-        TestsFlextCoreProtocolsProjectMetadata,
-    )
     from tests.unit.test_registry import TestsFlextCoreRegistry
     from tests.unit.test_registry_full_coverage import (
         TestsFlextCoreRegistryFullCoverage,
@@ -296,9 +293,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_project_metadata_facade_access": (
                 "TestsFlextCoreFacadeFlatSsotAccess",
             ),
-            ".unit.test_protocols_project_metadata": (
-                "TestsFlextCoreProtocolsProjectMetadata",
-            ),
             ".unit.test_registry": ("TestsFlextCoreRegistry",),
             ".unit.test_registry_full_coverage": (
                 "TestsFlextCoreRegistryFullCoverage",
@@ -444,7 +438,6 @@ __all__: list[str] = [
     "TestsFlextCorePatternsLogging",
     "TestsFlextCorePatternsTesting",
     "TestsFlextCoreProtocols",
-    "TestsFlextCoreProtocolsProjectMetadata",
     "TestsFlextCoreRegistry",
     "TestsFlextCoreRegistryFullCoverage",
     "TestsFlextCoreResult",

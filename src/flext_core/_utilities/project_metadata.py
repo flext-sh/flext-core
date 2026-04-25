@@ -36,14 +36,6 @@ class FlextUtilitiesProjectMetadata:
     PYPROJECT_FILENAME: ClassVar[str] = "pyproject.toml"
 
     @staticmethod
-    def derive_package_name(project_name: str) -> str:
-        """Return the Python package name (``flext-ldif`` → ``flext_ldif``)."""
-        if not project_name:
-            msg = "empty project name"
-            raise ValueError(msg)
-        return project_name.replace("-", "_")
-
-    @staticmethod
     def pascalize(slug: str) -> str:
         """Simple kebab/snake → PascalCase (no project-name override lookup).
 
@@ -72,18 +64,6 @@ class FlextUtilitiesProjectMetadata:
         if override is not None:
             return override
         return FlextUtilitiesProjectMetadata.pascalize(normalized)
-
-    @staticmethod
-    def derive_tier_facade_name(project_name: str, tier: str) -> str:
-        """Build the tier-specific facade class name (src/tests/examples/...)."""
-        prefix = cpm.TIER_FACADE_PREFIX.get(tier)
-        if prefix is None:
-            msg = f"unknown tier: {tier!r}"
-            raise ValueError(msg)
-        stem = FlextUtilitiesProjectMetadata.derive_class_stem(project_name)
-        if stem.startswith("Flext") and prefix.endswith("Flext"):
-            return prefix + stem[len("Flext") :]
-        return prefix + stem
 
     @staticmethod
     def _load_pyproject_toml(root: Path) -> Mapping[str, Any]:

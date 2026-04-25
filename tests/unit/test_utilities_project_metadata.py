@@ -36,44 +36,6 @@ class TestsFlextCoreUtilitiesProjectMetadata:
     ) -> None:
         tm.that(u.derive_class_stem(project_name), eq=expected_stem)
 
-    @pytest.mark.parametrize(
-        ("project_name", "expected_package"),
-        [
-            ("flext-ldif", "flext_ldif"),
-            ("flext-core", "flext_core"),
-            ("gruponos-meltano-native", "gruponos_meltano_native"),
-        ],
-    )
-    def test_derive_package_name_replaces_dashes_with_underscores(
-        self,
-        project_name: str,
-        expected_package: str,
-    ) -> None:
-        tm.that(u.derive_package_name(project_name), eq=expected_package)
-
-    @pytest.mark.parametrize(
-        ("tier", "expected_facade"),
-        [
-            ("src", "FlextLdif"),
-            ("tests", "TestsFlextLdif"),
-            ("examples", "ExamplesFlextLdif"),
-            ("scripts", "ScriptsFlextLdif"),
-            ("docs", "DocsFlextLdif"),
-        ],
-    )
-    def test_derive_tier_facade_name_prepends_tier_prefix(
-        self,
-        tier: str,
-        expected_facade: str,
-    ) -> None:
-        tm.that(u.derive_tier_facade_name("flext-ldif", tier), eq=expected_facade)
-
-    def test_derive_tier_facade_name_handles_flext_core_without_stem_duplication(
-        self,
-    ) -> None:
-        tm.that(u.derive_tier_facade_name("flext-core", "src"), eq="Flext")
-        tm.that(u.derive_tier_facade_name("flext-core", "tests"), eq="TestsFlext")
-
     def test_pascalize_converts_dashes_and_underscores_to_camel_case(self) -> None:
         tm.that(u.pascalize("flext-ldif"), eq="FlextLdif")
         tm.that(u.pascalize("flext_ldif"), eq="FlextLdif")
@@ -82,14 +44,6 @@ class TestsFlextCoreUtilitiesProjectMetadata:
     def test_derive_class_stem_rejects_empty_input(self) -> None:
         with pytest.raises(ValueError, match="empty"):
             u.derive_class_stem("")
-
-    def test_derive_package_name_rejects_empty_input(self) -> None:
-        with pytest.raises(ValueError, match="empty"):
-            u.derive_package_name("")
-
-    def test_derive_tier_facade_name_rejects_unknown_tier(self) -> None:
-        with pytest.raises(ValueError, match="unknown tier"):
-            u.derive_tier_facade_name("flext-ldif", "nonsense")
 
     def test_read_project_metadata_parses_minimal_pyproject(
         self,

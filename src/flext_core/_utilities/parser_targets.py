@@ -23,14 +23,6 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
     """Per-target ``_parse_try_*`` helpers consumed by :meth:`parse`."""
 
     @staticmethod
-    def resolve_opts[T](
-        options: FlextUtilitiesParserCoerce.ParseOptions[T] | None,
-        kwargs: dict[str, t.JsonPayload],
-    ) -> tuple[FlextUtilitiesParserCoerce.ParseOptions[T], str]:
-        """Public wrapper around options resolution for external parser dispatch."""
-        return FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
-
-    @staticmethod
     def _resolve_opts[T](
         options: FlextUtilitiesParserCoerce.ParseOptions[T] | None,
         kwargs: dict[str, t.JsonPayload],

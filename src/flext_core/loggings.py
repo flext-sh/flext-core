@@ -26,6 +26,7 @@ from flext_core import (
     FlextUtilitiesGenerators as ug,
     FlextUtilitiesLoggingContext as ulc,
     c,
+    e,
     p,
     r,
     t,
@@ -182,16 +183,8 @@ class FlextLogger(ulc):
 
     def bind(self, **context: t.JsonPayload) -> Self:
         """Bind additional context, returning new logger (original unchanged)."""
-        bound_logger = self.logger.bind(**self._to_container_context(context))
+        bound_logger = self.logger.bind(**self.to_container_context(context))
         return self.__class__.create_bound_logger(self.name, bound_logger)
-
-    @classmethod
-    def to_container_context(
-        cls,
-        context: Mapping[str, t.LogValue | t.JsonValue | t.JsonPayload],
-    ) -> t.JsonMapping:
-        """Public wrapper for context normalization used outside helper mixins."""
-        return cls._to_container_context(context)
 
     def build_exception_context(
         self,
@@ -292,7 +285,7 @@ class FlextLogger(ulc):
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             FlextLogger._report_internal_logging_failure("exception", exc)
-            return self._fail_logging_operation("exception logging", exc)
+            return e.fail_operation("exception logging", exc)
 
     def info(
         self,
@@ -342,7 +335,7 @@ class FlextLogger(ulc):
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             FlextLogger._report_internal_logging_failure("trace", exc)
-            return self._fail_logging_operation("trace logging", exc)
+            return e.fail_operation("trace logging", exc)
 
     def unbind(self, *keys: str, safe: bool = False) -> Self:
         """Unbind keys from logger — implements BindableLogger protocol."""
@@ -388,7 +381,7 @@ class FlextLogger(ulc):
             getattr(self.logger, level_str)(event, **scalar_context)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return self._fail_logging_operation("logging", exc)
+            return e.fail_operation("logging", exc)
 
     def _log_standard_level(
         self,

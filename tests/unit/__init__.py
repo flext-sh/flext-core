@@ -63,9 +63,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_project_metadata_facade_access": (
                 "TestsFlextCoreFacadeFlatSsotAccess",
             ),
-            ".test_protocols_project_metadata": (
-                "TestsFlextCoreProtocolsProjectMetadata",
-            ),
             ".test_registry": ("TestsFlextCoreRegistry",),
             ".test_registry_full_coverage": ("TestsFlextCoreRegistryFullCoverage",),
             ".test_result": ("TestsFlextCoreResult",),

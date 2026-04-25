@@ -65,7 +65,6 @@ if _t.TYPE_CHECKING:
     from flext_core._protocols.context import FlextProtocolsContext
     from flext_core._protocols.handler import FlextProtocolsHandler
     from flext_core._protocols.logging import FlextProtocolsLogging
-    from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata
     from flext_core._protocols.pydantic import FlextProtocolsPydantic
     from flext_core._protocols.registry import FlextProtocolsRegistry
     from flext_core._protocols.result import FlextProtocolsResult
@@ -220,7 +219,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._protocols.context": ("FlextProtocolsContext",),
             "._protocols.handler": ("FlextProtocolsHandler",),
             "._protocols.logging": ("FlextProtocolsLogging",),
-            "._protocols.project_metadata": ("FlextProtocolsProjectMetadata",),
             "._protocols.pydantic": ("FlextProtocolsPydantic",),
             "._protocols.registry": ("FlextProtocolsRegistry",),
             "._protocols.result": ("FlextProtocolsResult",),
@@ -425,7 +423,6 @@ __all__: list[str] = [
     "FlextProtocolsContext",
     "FlextProtocolsHandler",
     "FlextProtocolsLogging",
-    "FlextProtocolsProjectMetadata",
     "FlextProtocolsPydantic",
     "FlextProtocolsRegistry",
     "FlextProtocolsResult",

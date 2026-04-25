@@ -25,28 +25,6 @@ class FlextUtilitiesEnum:
     _values_cache: ClassVar[MutableMapping[type[StrEnum], frozenset[str]]] = {}
 
     @staticmethod
-    def _parse[E: StrEnum](enum_cls: type[E], value: str | E) -> E:
-        if isinstance(value, enum_cls):
-            return value
-        if value in enum_cls.__members__:
-            return enum_cls.__members__[value]
-        return enum_cls(value)
-
-    @staticmethod
-    def parse_or_default[E: StrEnum](
-        enum_cls: type[E],
-        value: str | E | None,
-        default: E,
-    ) -> E:
-        """Convert with fallback to default (never fails)."""
-        if value is None:
-            return default
-        try:
-            return FlextUtilitiesEnum._parse(enum_cls, value)
-        except ValueError:
-            return default
-
-    @staticmethod
     def enum_values[E: StrEnum](enum_cls: type[E]) -> frozenset[str]:
         """Return frozenset of values (cached for performance)."""
         if enum_cls in FlextUtilitiesEnum._values_cache:

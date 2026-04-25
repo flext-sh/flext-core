@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 
 import pytest
 
+from flext_core import FlextUtilitiesGenerators
 from tests import m, u
 
 
@@ -20,12 +21,12 @@ class TestsFlextCoreUtilitiesGenerators:
     ) -> None:
         ids = iter(["trace-x", "span-x", "corr-x"])
         monkeypatch.setattr(
-            u,
+            FlextUtilitiesGenerators,
             "generate_id",
             staticmethod(lambda: next(ids)),
         )
         monkeypatch.setattr(
-            u,
+            FlextUtilitiesGenerators,
             "generate_datetime_utc",
             staticmethod(lambda: datetime(2026, 1, 1, tzinfo=UTC)),
         )

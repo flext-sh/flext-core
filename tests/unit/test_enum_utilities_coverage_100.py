@@ -61,18 +61,6 @@ class TestsFlextCoreEnumUtilities:
             str | None, m.Field(description="Expected error message fragment")
         ] = None
 
-    class ParseOrDefaultScenario(m.BaseModel):
-        """Parse or default test scenario."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-        name: Annotated[str, m.Field(description="Parse or default scenario name")]
-        value: Annotated[
-            str | StrEnum | None,
-            m.Field(description="Input value to parse"),
-        ]
-        default: Annotated[StrEnum, m.Field(description="Default enum value")]
-        expected: Annotated[StrEnum, m.Field(description="Expected output enum value")]
-
     PARSE: ClassVar[Sequence[ParseScenario]] = [
         ParseScenario(
             name="valid_string",
@@ -96,32 +84,6 @@ class TestsFlextCoreEnumUtilities:
             expected_error="Cannot parse",
         ),
     ]
-    PARSE_OR_DEFAULT: ClassVar[Sequence[ParseOrDefaultScenario]] = [
-        ParseOrDefaultScenario(
-            name="valid_string",
-            value="active",
-            default=Status.PENDING,
-            expected=Status.ACTIVE,
-        ),
-        ParseOrDefaultScenario(
-            name="valid_enum",
-            value=Status.INACTIVE,
-            default=Status.PENDING,
-            expected=Status.INACTIVE,
-        ),
-        ParseOrDefaultScenario(
-            name="none",
-            value=None,
-            default=Status.PENDING,
-            expected=Status.PENDING,
-        ),
-        ParseOrDefaultScenario(
-            name="invalid_string",
-            value="invalid",
-            default=Status.PENDING,
-            expected=Status.PENDING,
-        ),
-    ]
 
     @pytest.mark.parametrize("scenario", PARSE, ids=lambda s: s.name)
     def test_parse(self, scenario: ParseScenario) -> None:
@@ -137,20 +99,6 @@ class TestsFlextCoreEnumUtilities:
                 and scenario.expected_error is not None
                 and (scenario.expected_error in result.error)
             )
-
-    @pytest.mark.parametrize(
-        "scenario",
-        PARSE_OR_DEFAULT,
-        ids=lambda s: s.name,
-    )
-    def test_parse_or_default(self, scenario: ParseOrDefaultScenario) -> None:
-        """Test parse_or_default with various scenarios."""
-        if isinstance(scenario.default, TestsFlextCoreEnumUtilities.Status):
-            default: TestsFlextCoreEnumUtilities.Status = scenario.default
-        else:
-            default = self.Status.PENDING
-        result = u.parse_or_default(self.Status, scenario.value, default)
-        tm.that(result, eq=scenario.expected)
 
     def test_values(self) -> None:
         """Test values method."""
