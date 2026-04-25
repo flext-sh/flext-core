@@ -1070,6 +1070,49 @@ def _hydrate_enforcement_catalog() -> None:
                 skills=("flext-mro-namespace-rules",),
                 enabled=False,
             ),
+            # Lane A-CH Phase 0 Task 0.1 reservations: each new
+            # EnforcementSourceKind variant must have at least one rule
+            # registered (test_catalog_covers_every_declared_source_kind).
+            # The two entries below are scaffolding — disabled, no real
+            # detector behind them. Real BEARTYPE/MINIMAL_AST rules ship in
+            # A-CH Phase 1 (catalog ENFORCE-045..065).
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-066",
+                description=(
+                    "Reserved: BEARTYPE source kind scaffolding for Lane A-CH. "
+                    "Real rules using this kind ship in Phase 1."
+                ),
+                severity=_me.EnforcementRuleSeverity.LOW,
+                source=_me.EnforcementBeartypeSource(
+                    hook="reserved_lane_a_ch_scaffolding",
+                ),
+                agents_md_anchor="3-7-associated-skills",
+                skills=("flext-enforcement-catalog",),
+                enabled=False,
+                notes=(
+                    "Scaffolding only — placeholder so the BEARTYPE source "
+                    "kind has at least one catalog entry (per "
+                    "test_catalog_covers_every_declared_source_kind)."
+                ),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-067",
+                description=(
+                    "Reserved: MINIMAL_AST source kind scaffolding for Lane "
+                    "A-CH. Real rules using this kind ship in Phase 1."
+                ),
+                severity=_me.EnforcementRuleSeverity.LOW,
+                source=_me.EnforcementMinimalAstSource(
+                    pattern="reserved_lane_a_ch_scaffolding",
+                ),
+                agents_md_anchor="3-7-associated-skills",
+                skills=("flext-enforcement-catalog",),
+                enabled=False,
+                notes=(
+                    "Scaffolding only — placeholder so the MINIMAL_AST source "
+                    "kind has at least one catalog entry."
+                ),
+            ),
         ),
     )
 

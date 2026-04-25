@@ -15,6 +15,7 @@ from collections.abc import (
     Sequence,
 )
 from enum import StrEnum, unique
+from pathlib import Path
 from typing import Annotated, ClassVar, Literal
 
 from pydantic import Discriminator, Field, model_validator
@@ -119,7 +120,13 @@ class FlextModelsEnforcement:
 
     @unique
     class EnforcementSourceKind(StrEnum):
-        """Addressable origin layer for a catalog rule."""
+        """Addressable origin layer for a catalog rule.
+
+        ``BEARTYPE`` and ``MINIMAL_AST`` were added by Lane A-CH (Phase 0
+        Task 0.1) to cover runtime hook capture and inline AST queries that
+        the existing 6 variants cannot express. See AGENT_COORDINATION.md
+        §4.1 for the gating decision.
+        """
 
         FLEXT_INFRA_DETECTOR = "flext_infra_detector"
         FLEXT_TESTS_VALIDATOR = "flext_tests_validator"
@@ -127,6 +134,8 @@ class FlextModelsEnforcement:
         RUFF = "ruff"
         AST_GREP = "ast_grep"
         SKILL_POINTER = "skill_pointer"
+        BEARTYPE = "beartype"
+        MINIMAL_AST = "minimal_ast"
 
     class EnforcementInfraDetectorSource(mp.BaseModel):
         """Rule backed by a ``FlextInfraNamespaceEnforcer`` detector field."""
@@ -264,6 +273,191 @@ class FlextModelsEnforcement:
             ),
         ]
 
+    class EnforcementBeartypeSource(mp.BaseModel):
+        """Rule backed by a beartype runtime hook tied to internal object typing.
+
+        Runtime detection: when the named hook fires, the callback registered
+        via ``u.beartype_engine.register_violation_capture`` appends a
+        ``ViolationReport`` to the runtime violation registry. flext-infra
+        drains the registry to drive corrections.
+        """
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            frozen=True, extra="forbid"
+        )
+
+        kind: Literal["beartype"] = "beartype"
+        hook: Annotated[
+            ta.NonEmptyStr,
+            Field(
+                description=(
+                    "Beartype hook key registered via "
+                    "u.beartype_engine.register_violation_capture."
+                ),
+            ),
+        ]
+
+    class EnforcementMinimalAstSource(mp.BaseModel):
+        """Lightweight AST/regex pattern used when beartype cannot reach the data.
+
+        Source-availability skip is mandatory: when ``require_source`` is True
+        and the target's source file is not readable, the dispatcher emits
+        ``ViolationOutcome.SKIP`` rather than failing.
+        """
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            frozen=True, extra="forbid"
+        )
+
+        kind: Literal["minimal_ast"] = "minimal_ast"
+        pattern: Annotated[
+            ta.NonEmptyStr,
+            Field(description="ast-grep pattern OR Python regex applied to source."),
+        ]
+        require_source: Annotated[
+            bool,
+            Field(
+                default=True,
+                description=(
+                    "When True and source is unavailable, emit SKIP outcome "
+                    "instead of failing the rule."
+                ),
+            ),
+        ]
+
+    class EnforcementRopeFixSource(mp.BaseModel):
+        """Pointer to a flext-infra rope-backed fix handler.
+
+        Consumed by ``flext-infra/refactor/handlers/<handler>.py`` to dispatch
+        the named binding-aware refactor against violations of the parent
+        ``EnforcementRuleSpec``.
+        """
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            frozen=True, extra="forbid"
+        )
+
+        kind: Literal[
+            "rename",
+            "move",
+            "inline",
+            "extract",
+            "change_signature",
+            "custom",
+        ]
+        handler: Annotated[
+            ta.NonEmptyStr,
+            Field(
+                description=(
+                    "Handler key registered in flext_infra.refactor.handlers."
+                ),
+            ),
+        ]
+
+    class EnforcementAstGrepFixSource(mp.BaseModel):
+        """Pointer to an ast-grep autofix declared inside a skill's rules.yml.
+
+        Consumed by flext-infra to invoke ``sg scan --update-all`` against the
+        named rule. The detector and the fix may share the same rule entry
+        (with ``fix_auto: true`` per AGENTS.md §7).
+        """
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            frozen=True, extra="forbid"
+        )
+
+        kind: Literal["ast_grep_fix"] = "ast_grep_fix"
+        skill: Annotated[
+            ta.NonEmptyStr,
+            Field(
+                description=(
+                    "Skill directory under .agents/skills — e.g. 'flext-import-rules'."
+                ),
+            ),
+        ]
+        rule_id: Annotated[
+            ta.NonEmptyStr,
+            Field(
+                description=(
+                    "Rule id within .agents/skills/<skill>/rules.yml::rules[].id "
+                    "carrying fix_auto: true."
+                ),
+            ),
+        ]
+
+    @unique
+    class ViolationOutcome(StrEnum):
+        """Three-valued outcome emitted by detection runs.
+
+        - ``HIT`` — detector confirmed the rule was violated.
+        - ``MISS`` — detector ran and confirmed no violation.
+        - ``SKIP`` — detector could not run (e.g. source file unavailable);
+          the result is non-conclusive and MUST NOT be treated as either HIT
+          or MISS by the orchestrator.
+        """
+
+        HIT = "HIT"
+        MISS = "MISS"
+        SKIP = "SKIP"
+
+    class ViolationReport(mp.BaseModel):
+        """Structured detection result drained by the flext-infra correction layer.
+
+        Emitted by runtime hooks (beartype) and minimal-AST detectors into the
+        process-local ``runtime_violation_registry``. Orchestrators read the
+        registry to plan rope/ast-grep corrections.
+        """
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            frozen=True, extra="forbid"
+        )
+
+        rule_id: Annotated[
+            str,
+            Field(
+                pattern=r"^ENFORCE-\d{3}$",
+                description="Catalog identifier the report concerns.",
+            ),
+        ]
+        outcome: Annotated[
+            FlextModelsEnforcement.ViolationOutcome,
+            Field(description="HIT / MISS / SKIP."),
+        ]
+        file: Annotated[
+            Path | None,
+            Field(
+                default=None,
+                description="Source file where the violation was located, if known.",
+            ),
+        ]
+        line: Annotated[
+            int | None,
+            Field(
+                default=None,
+                ge=0,
+                description="1-indexed line number, or 0 for module-level.",
+            ),
+        ]
+        symbol: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Qualified symbol path (e.g. 'pkg.mod.Class.attr').",
+            ),
+        ]
+        payload: Annotated[
+            t.JsonMapping,
+            Field(
+                default_factory=dict,
+                description=(
+                    "Structured rule-specific evidence (matched tokens, "
+                    "expected vs actual types, AST node kinds, etc.). "
+                    "Permitted use of t.JsonMapping per AGENTS.md §3.2 "
+                    "exception 3 (validation/rule engines)."
+                ),
+            ),
+        ]
+
     class EnforcementRuleSpec(mp.BaseModel):
         """Single rule entry in the enforcement catalog."""
 
@@ -294,10 +488,28 @@ class FlextModelsEnforcement:
                 | FlextModelsEnforcement.EnforcementRuffSource
                 | FlextModelsEnforcement.EnforcementAstGrepSource
                 | FlextModelsEnforcement.EnforcementSkillPointerSource
+                | FlextModelsEnforcement.EnforcementBeartypeSource
+                | FlextModelsEnforcement.EnforcementMinimalAstSource
             ),
             Discriminator("kind"),
             Field(description="Addressable origin of the rule."),
         ]
+        fix_source: Annotated[
+            (
+                FlextModelsEnforcement.EnforcementRopeFixSource
+                | FlextModelsEnforcement.EnforcementAstGrepFixSource
+                | None
+            ),
+            Discriminator("kind"),
+            Field(
+                default=None,
+                description=(
+                    "Optional pointer to the correction handler. None for "
+                    "detection-only or narrative rules. Set for rules whose "
+                    "violations can be auto-fixed by flext-infra."
+                ),
+            ),
+        ] = None
         agents_md_anchor: Annotated[
             str,
             Field(
