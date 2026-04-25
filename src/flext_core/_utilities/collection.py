@@ -1,6 +1,9 @@
-"""Utilities module - FlextUtilitiesCollection.
+"""Public collection facade composing iter + merge layers via MRO.
 
-Extracted from flext_core for better modularity.
+The heavy lifting lives in `collection_iter.py` (filter/map overloads) and
+`collection_merge.py` (merge strategies). This file keeps just the small
+helpers (count, find, process, normalize_domain_event_data) so it remains
+under the 200-LOC cap (logical LOC, AGENTS.md §3.1).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -8,14 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-from typing import overload
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 
 from flext_core import (
     FlextModelsContainers as mc,
@@ -25,26 +21,17 @@ from flext_core import (
     r,
     t,
 )
+from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
 
 
-class FlextUtilitiesCollection:
-    """Utilities for collection operations with full generic type support."""
+class FlextUtilitiesCollection(FlextUtilitiesCollectionIter):
+    """Facade composing iter + merge utilities; small helpers live here."""
 
     @staticmethod
     def normalize_domain_event_data(
         value: mc.ConfigMap | t.JsonPayload | None,
     ) -> Mapping[str, t.JsonValue]:
-        """Normalize domain event payloads into plain flat mappings.
-
-        Moved from FlextUtilitiesDomain so the DomainEvent model can consume it
-        without creating a utility→model→utility cycle.
-
-        Used as a pydantic ``BeforeValidator`` — raw input may be any
-        ``JsonPayload``. Non-mapping inputs (scalars, sequences) are
-        re-validated through ``mc.ConfigMap.model_validate`` so pydantic
-        surfaces a canonical ``ValidationError`` instead of a raw
-        ``AttributeError`` from downstream iteration.
-        """
+        """Normalize domain event payloads into plain flat mappings."""
         if value is None:
             return {}
         raw_source = value.root if isinstance(value, mc.ConfigMap) else value
@@ -68,108 +55,12 @@ class FlextUtilitiesCollection:
             return len(items)
         return sum(1 for item in items if predicate(item))
 
-    @overload
-    @staticmethod
-    def filter[TItem](
-        items: Sequence[TItem],
-        predicate: Callable[[TItem], bool],
-        *,
-        mapper: None = None,
-    ) -> Sequence[TItem]: ...
-
-    @overload
-    @staticmethod
-    def filter[TItem, TMapped](
-        items: Sequence[TItem],
-        predicate: Callable[[TItem], bool],
-        *,
-        mapper: Callable[[TItem], TMapped],
-    ) -> Sequence[TMapped]: ...
-
-    @overload
-    @staticmethod
-    def filter[TItem](
-        items: tuple[TItem, ...],
-        predicate: Callable[[TItem], bool],
-        *,
-        mapper: None = None,
-    ) -> tuple[TItem, ...]: ...
-
-    @overload
-    @staticmethod
-    def filter[TItem, TMapped](
-        items: tuple[TItem, ...],
-        predicate: Callable[[TItem], bool],
-        *,
-        mapper: Callable[[TItem], TMapped],
-    ) -> tuple[TMapped, ...]: ...
-
-    @overload
-    @staticmethod
-    def filter[TItem](
-        items: Mapping[str, TItem],
-        predicate: Callable[[TItem], bool],
-        *,
-        mapper: None = None,
-    ) -> Mapping[str, TItem]: ...
-
-    @overload
-    @staticmethod
-    def filter[TItem, TMapped](
-        items: Mapping[str, TItem],
-        predicate: Callable[[TItem], bool],
-        *,
-        mapper: Callable[[TItem], TMapped],
-    ) -> Mapping[str, TMapped]: ...
-
-    @staticmethod
-    def filter[TItem, TMapped](
-        items: Sequence[TItem] | tuple[TItem, ...] | Mapping[str, TItem],
-        predicate: Callable[[TItem], bool],
-        *,
-        mapper: Callable[[TItem], TMapped] | None = None,
-    ) -> (
-        Sequence[TItem]
-        | Sequence[TMapped]
-        | tuple[TItem, ...]
-        | tuple[TMapped, ...]
-        | Mapping[str, TItem]
-        | Mapping[str, TMapped]
-    ):
-        """Unified filter function with generic type support.
-
-        Filters elements based on predicate while preserving container type.
-        Optionally maps filtered items with mapper function.
-        Supports lists, tuples, and dicts.
-        """
-        if isinstance(items, list):
-            if mapper is not None:
-                return [mapper(item) for item in items if predicate(item)]
-            return [item for item in items if predicate(item)]
-        if isinstance(items, tuple):
-            if mapper is not None:
-                mapped_items = [mapper(item) for item in items if predicate(item)]
-                return (*mapped_items,)
-            filtered_items = [item for item in items if predicate(item)]
-            return (*filtered_items,)
-        if isinstance(items, Mapping):
-            filtered: MutableMapping[str, TItem] = {
-                k: v for k, v in items.items() if predicate(v)
-            }
-            if mapper is not None:
-                return {k: mapper(v) for k, v in filtered.items()}
-            return filtered
-        return [item for item in items if predicate(item)]
-
     @staticmethod
     def find[TItem](
         items: Sequence[TItem] | tuple[TItem, ...] | Mapping[str, TItem],
         predicate: Callable[[TItem], bool],
     ) -> p.Result[TItem]:
-        """Find first item matching predicate with generic type support.
-
-        Returns first item where predicate returns True, or None.
-        """
+        """Find first item matching predicate; returns r[T]."""
         if isinstance(items, (list, tuple)):
             for item in items:
                 if predicate(item):
@@ -181,71 +72,6 @@ class FlextUtilitiesCollection:
                     return r[TItem].ok(v)
         return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
 
-    @overload
-    @staticmethod
-    def map[TItem, TMapped](
-        items: Sequence[TItem],
-        mapper: Callable[[TItem], TMapped],
-    ) -> Sequence[TMapped]: ...
-
-    @overload
-    @staticmethod
-    def map[TItem, TMapped](
-        items: tuple[TItem, ...],
-        mapper: Callable[[TItem], TMapped],
-    ) -> tuple[TMapped, ...]: ...
-
-    @overload
-    @staticmethod
-    def map[TItem, TMapped](
-        items: Mapping[str, TItem],
-        mapper: Callable[[TItem], TMapped],
-    ) -> Mapping[str, TMapped]: ...
-
-    @overload
-    @staticmethod
-    def map[TItem, TMapped](
-        items: set[TItem],
-        mapper: Callable[[TItem], TMapped],
-    ) -> set[TMapped]: ...
-
-    @overload
-    @staticmethod
-    def map[TItem, TMapped](
-        items: frozenset[TItem],
-        mapper: Callable[[TItem], TMapped],
-    ) -> frozenset[TMapped]: ...
-
-    @staticmethod
-    def map[TItem, TMapped](
-        items: Sequence[TItem]
-        | tuple[TItem, ...]
-        | Mapping[str, TItem]
-        | set[TItem]
-        | frozenset[TItem],
-        mapper: Callable[[TItem], TMapped],
-    ) -> (
-        Sequence[TMapped]
-        | tuple[TMapped, ...]
-        | Mapping[str, TMapped]
-        | set[TMapped]
-        | frozenset[TMapped]
-    ):
-        """Unified map function with generic type support.
-
-        Transforms elements using mapper function while preserving container type.
-        Supports lists, tuples, dicts, sets, and frozensets.
-        """
-        if isinstance(items, list):
-            return [mapper(item) for item in items]
-        if isinstance(items, tuple):
-            return tuple(mapper(item) for item in items)
-        if isinstance(items, Mapping):
-            return {k: mapper(v) for k, v in items.items()}
-        if isinstance(items, set):
-            return {mapper(item) for item in items}
-        return frozenset(mapper(item) for item in items)
-
     @staticmethod
     def process[TItem, TMapped](
         items: Sequence[TItem],
@@ -254,7 +80,7 @@ class FlextUtilitiesCollection:
         predicate: Callable[[TItem], bool] | None = None,
         on_error: str = "fail",
     ) -> p.Result[Sequence[TMapped]]:
-        """Process items with optional filtering; on_error="skip" to skip failures."""
+        """Process items with optional filter; ``on_error="skip"`` skips failures."""
         results: MutableSequence[TMapped] = []
         for item in items:
             item_typed: TItem = item
