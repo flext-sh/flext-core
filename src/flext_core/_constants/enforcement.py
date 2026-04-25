@@ -1152,9 +1152,8 @@ def _hydrate_enforcement_catalog() -> None:
                     "violates AGENTS.md §3.2 (Strict Types)."
                 ),
                 severity=_me.EnforcementRuleSeverity.HIGH,
-                source=_me.EnforcementSkillPointerSource(
-                    skill="flext-strict-typing",
-                    anchor="cast-outside-core",
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_cast_outside_core",
                 ),
                 agents_md_anchor="3-2-types-and-contracts",
                 skills=("flext-strict-typing", "flext-patterns"),
@@ -1180,9 +1179,8 @@ def _hydrate_enforcement_catalog() -> None:
                     "and violates AGENTS.md §3.4 (Tools/Modules/Env)."
                 ),
                 severity=_me.EnforcementRuleSeverity.HIGH,
-                source=_me.EnforcementSkillPointerSource(
-                    skill="flext-patterns",
-                    anchor="model-rebuild-ban",
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_model_rebuild_call",
                 ),
                 agents_md_anchor="3-4-tools-and-modules",
                 skills=("flext-patterns",),
@@ -1196,9 +1194,8 @@ def _hydrate_enforcement_catalog() -> None:
                     "no new detection code per SSOT/DRY."
                 ),
                 severity=_me.EnforcementRuleSeverity.HIGH,
-                source=_me.EnforcementSkillPointerSource(
-                    skill="flext-patterns",
-                    anchor="settings-inheritance",
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_settings_inheritance",
                 ),
                 agents_md_anchor="2-6-settings-law",
                 skills=("flext-patterns", "lib-pydantic-settings"),
@@ -1211,9 +1208,8 @@ def _hydrate_enforcement_catalog() -> None:
                     "AGENTS.md §3.5."
                 ),
                 severity=_me.EnforcementRuleSeverity.MEDIUM,
-                source=_me.EnforcementSkillPointerSource(
-                    skill="flext-refactoring-workflow",
-                    anchor="pass-through-wrapper",
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_pass_through_wrapper",
                 ),
                 agents_md_anchor="3-5-integrity",
                 skills=("flext-refactoring-workflow",),
@@ -1225,12 +1221,31 @@ def _hydrate_enforcement_catalog() -> None:
                     "(single-underscore names) violates AGENTS.md §3.6."
                 ),
                 severity=_me.EnforcementRuleSeverity.HIGH,
-                source=_me.EnforcementSkillPointerSource(
-                    skill="flext-strict-typing",
-                    anchor="private-attr-probe",
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_private_attr_probe",
                 ),
                 agents_md_anchor="3-6-test-standardization",
                 skills=("flext-strict-typing", "flext-patterns"),
+            ),
+            # Lane A-CH (clever-hedgehog) catalog entry — ENFORCE-045.
+            # Uses the existing check_no_pydantic_consumer_import beartype
+            # hook (no new detector code per SSOT/DRY). Captures the §2.7
+            # abstraction-boundary rule that is currently runtime-enforced
+            # but absent from the catalog SSOT.
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-045",
+                description=(
+                    "Direct 'from pydantic import ...' in a consumer project "
+                    "(outside its own '_' base pyramid) violates AGENTS.md "
+                    "§2.7 (Library Abstraction Boundaries) + §3.1 (Pydantic "
+                    "v2 Mastery — facade-only access)."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_no_pydantic_consumer_import",
+                ),
+                agents_md_anchor="2-7-library-abstraction-boundaries",
+                skills=("flext-import-rules", "pydantic-v2-patterns"),
             ),
         ),
     )
