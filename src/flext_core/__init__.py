@@ -116,6 +116,8 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.model_options import FlextUtilitiesModelOptions
     from flext_core._utilities.model_runtime import FlextUtilitiesModelRuntime
     from flext_core._utilities.parser import FlextUtilitiesParser
+    from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
+    from flext_core._utilities.parser_targets import FlextUtilitiesParserTargets
     from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
     from flext_core._utilities.pydantic import FlextUtilitiesPydantic
     from flext_core._utilities.reliability import FlextUtilitiesReliability
@@ -266,6 +268,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.model_options": ("FlextUtilitiesModelOptions",),
             "._utilities.model_runtime": ("FlextUtilitiesModelRuntime",),
             "._utilities.parser": ("FlextUtilitiesParser",),
+            "._utilities.parser_coerce": ("FlextUtilitiesParserCoerce",),
+            "._utilities.parser_targets": ("FlextUtilitiesParserTargets",),
             "._utilities.project_metadata": ("FlextUtilitiesProjectMetadata",),
             "._utilities.pydantic": ("FlextUtilitiesPydantic",),
             "._utilities.reliability": ("FlextUtilitiesReliability",),
@@ -471,6 +475,8 @@ __all__: list[str] = [
     "FlextUtilitiesModelOptions",
     "FlextUtilitiesModelRuntime",
     "FlextUtilitiesParser",
+    "FlextUtilitiesParserCoerce",
+    "FlextUtilitiesParserTargets",
     "FlextUtilitiesProjectMetadata",
     "FlextUtilitiesPydantic",
     "FlextUtilitiesReliability",

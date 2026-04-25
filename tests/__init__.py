@@ -135,7 +135,7 @@ if _t.TYPE_CHECKING:
     )
     from tests.unit.test_runtime import TestsFlextCoreRuntime
     from tests.unit.test_service import (
-        TestService,
+        TestsFlextCoreService,
         TestsFlextCoreServiceUserData,
         TestsFlextCoreServiceUserService,
     )
@@ -309,7 +309,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".unit.test_runtime": ("TestsFlextCoreRuntime",),
             ".unit.test_service": (
-                "TestService",
+                "TestsFlextCoreService",
                 "TestsFlextCoreServiceUserData",
                 "TestsFlextCoreServiceUserService",
             ),
@@ -384,7 +384,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
-    "TestService",
     "TestsFlextCoreAdvancedPatterns",
     "TestsFlextCoreArchitecturalPatterns",
     "TestsFlextCoreAutomatedArchitecture",
@@ -451,6 +450,7 @@ __all__: list[str] = [
     "TestsFlextCoreResult",
     "TestsFlextCoreResultExceptionCarrying",
     "TestsFlextCoreRuntime",
+    "TestsFlextCoreService",
     "TestsFlextCoreService100Coverage",
     "TestsFlextCoreServiceBase",
     "TestsFlextCoreServiceBootstrap",

@@ -14,7 +14,7 @@ class TestsFlextCoreServiceUserData(m.Value):
     name: str
 
 
-class TestsFlextCoreServiceUserService(s[TestsFlextCoreServiceUserData]):
+class TestsFlextCoreServiceUserService(s):
     """Simple successful service."""
 
     __test__ = False
@@ -25,7 +25,7 @@ class TestsFlextCoreServiceUserService(s[TestsFlextCoreServiceUserData]):
         )
 
 
-class TestService:
+class TestsFlextCoreService:
     """Validate stable behavior of FlextService subclasses."""
 
     def test_service_initializes_and_executes(self) -> None:

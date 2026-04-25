@@ -74,7 +74,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".test_runtime": ("TestsFlextCoreRuntime",),
             ".test_service": (
-                "TestService",
+                "TestsFlextCoreService",
                 "TestsFlextCoreServiceUserData",
                 "TestsFlextCoreServiceUserService",
             ),
