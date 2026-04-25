@@ -1294,6 +1294,83 @@ def _hydrate_enforcement_catalog() -> None:
                 agents_md_anchor="2-3-mro-inheritance-namespace-composition",
                 skills=("flext-mro-namespace-rules",),
             ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-049",
+                description=(
+                    "Multi-parent facade class must list canonical alias "
+                    "(c/m/p/t/u) as FIRST base — required for C3 MRO "
+                    "linearization. Violates AGENTS.md §2.2 (Pattern-B "
+                    "facade ordering)."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_alias_first_multi_parent",
+                ),
+                agents_md_anchor="2-2-facades-namespaces-naming-patterns",
+                skills=("flext-mro-namespace-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-050",
+                description=(
+                    "Canonical facade module must rebind its alias at "
+                    "end-of-file (e.g. 't = FlextXxxTypes') — establishes "
+                    "the public contract surface. Violates AGENTS.md §4 "
+                    "(Aliases — assigned once at module bottom)."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_alias_rebound_at_module_end",
+                ),
+                agents_md_anchor="4-import-law",
+                skills=("flext-import-rules", "flext-mro-namespace-rules"),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-051",
+                description=(
+                    "Canonical facade files must NOT import c/m/p/t/u from "
+                    "their own package — must import from the parent MRO "
+                    "package to avoid lazy-load circular initialization. "
+                    "Violates AGENTS.md §4 (No Same-Project Cross-Facade "
+                    "Runtime Imports)."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_no_self_root_import_in_core_files",
+                ),
+                agents_md_anchor="4-import-law",
+                skills=("flext-import-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-052",
+                description=(
+                    "Sibling _models/* imports referenced only in "
+                    "annotations must live under 'if TYPE_CHECKING:' to "
+                    "avoid circular runtime imports. Violates AGENTS.md §4 "
+                    "(Circular Import Resolution — TYPE_CHECKING for "
+                    "annotation-only siblings)."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_sibling_models_type_checking",
+                ),
+                agents_md_anchor="4-import-law",
+                skills=("flext-import-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-053",
+                description=(
+                    "Multi-parent utilities.py facade must list explicit "
+                    "PARENT class as first base (not alias 'u') to allow "
+                    "pyrefly to resolve the MRO when 'u' is rebound to the "
+                    "local class. Violates AGENTS.md §2.3 (MRO Cascade)."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_utilities_explicit_class_when_self_ref",
+                ),
+                agents_md_anchor="2-3-mro-inheritance-namespace-composition",
+                skills=("flext-mro-namespace-rules",),
+            ),
         ),
     )
 
