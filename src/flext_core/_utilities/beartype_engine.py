@@ -20,10 +20,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
+import functools
 import inspect
 import re
 from collections.abc import (
     Callable,
+    Iterator,
     Mapping,
     MutableMapping,
     MutableSequence,
@@ -35,6 +37,7 @@ from types import UnionType
 from typing import (
     Annotated,
     Any,
+    ClassVar,
     ForwardRef,
     TypeAliasType,
     Union,
@@ -46,9 +49,13 @@ from typing import (
 from pydantic.fields import FieldInfo
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._utilities.runtime_violation_registry import (
+    FlextUtilitiesRuntimeViolationRegistry,
+)
 
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}
@@ -58,6 +65,65 @@ type _DefaultFactory = type | Callable[..., tp.JsonValue] | None
 @no_type_check
 class FlextUtilitiesBeartypeEngine:
     """Annotation inspection + per-tag rule predicates (static-only)."""
+
+    # rule_id → check_<tag> hook name. Populated by ``register_violation_capture``
+    # and consumed by ``emit_violation_capture`` so detector hits route into
+    # ``FlextUtilitiesRuntimeViolationRegistry`` for the pytest dispatcher.
+    _violation_capture_registry: ClassVar[dict[str, str]] = {}
+
+    # ------------------------------------------------------------------
+    # Violation capture pipeline (Task 0.3 — feeds runtime violation registry)
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def register_violation_capture(cls, rule_id: str, hook_name: str) -> None:
+        """Bind ``rule_id`` to a ``check_<tag>`` hook on this engine.
+
+        Subsequent ``emit_violation_capture(rule_id, target)`` calls run the
+        hook against ``target`` and append a ``ViolationReport(outcome=HIT)``
+        when the hook returns a non-None payload.
+        """
+        cls._violation_capture_registry[rule_id] = hook_name
+
+    @classmethod
+    def unregister_violation_capture(cls, rule_id: str) -> None:
+        """Drop ``rule_id`` from the capture registry.
+
+        Silent no-op when ``rule_id`` was never registered.
+        """
+        cls._violation_capture_registry.pop(rule_id, None)
+
+    @classmethod
+    def emit_violation_capture(cls, rule_id: str, target: type) -> None:
+        """Run the registered hook for ``rule_id`` against ``target``.
+
+        On HIT (hook returns a non-None payload), append a typed
+        ``m.ViolationReport(outcome=HIT)`` to the runtime registry. MISS
+        (None payload), unknown ``rule_id``, or unknown hook name are all
+        silent no-ops — never raises.
+        """
+        hook_name = cls._violation_capture_registry.get(rule_id)
+        if hook_name is None:
+            return
+        hook = getattr(cls, hook_name, None)
+        if hook is None:
+            return
+        payload = hook(target)
+        if payload is None:
+            return
+        try:
+            line_value = int(payload.get("line", 0))
+        except (TypeError, ValueError):
+            line_value = 0
+        FlextUtilitiesRuntimeViolationRegistry.append_violation_report(
+            m.ViolationReport(
+                rule_id=rule_id,
+                outcome=c.ViolationOutcome.HIT,
+                file=str(payload.get("file", "")),
+                line=line_value,
+                symbol=getattr(target, "__qualname__", ""),
+            ),
+        )
 
     # ------------------------------------------------------------------
     # Low-level annotation helpers
@@ -686,83 +752,77 @@ class FlextUtilitiesBeartypeEngine:
         return {"name": target.__name__}
 
     # -----------------------------------------------------------------------
-    # Lane A-PT detection hooks (ENFORCE-039/041/043/044)
+    # ENFORCE-039 / ENFORCE-041 / ENFORCE-043 / ENFORCE-044 detection hooks
     # -----------------------------------------------------------------------
 
     @staticmethod
-    def check_cast_outside_core(target: type) -> t.StrMapping | None:
-        """``cast()`` call outside flext-core result internals (ENFORCE-039).
+    @functools.cache
+    def _apt_load_ast(target: type) -> tuple[str, ast.Module] | None:
+        """Source-skip helper for every A-PT hook.
 
-        AGENTS.md §3.2: ``typing.cast()`` is reserved for flext-core's
-        Result narrowing primitives. Outside flext-core every cast is a
-        type-system bypass. Detection inspects the target class's source
-        file for ``from typing import ... cast`` AND a ``cast(`` call.
-        Source-skip on ``inspect.getfile`` failure or ``OSError`` per the
-        runtime-safety contract; never raises.
+        Returns (src_file, ast_tree) or ``None`` to signal "skip this target."
+        Skip conditions: nested qualname, unavailable source, third-party
+        path (``site-packages`` / ``dist-packages`` / system lib), unparseable
+        source.
+
+        ``functools.cache`` keys on ``target`` identity so the four hooks
+        sharing this helper read+parse a given module once per import session
+        instead of four times.
         """
         if "." in target.__qualname__:
-            return _NO_VIOLATION
+            return None
         try:
             src_file = inspect.getfile(target)
         except (OSError, TypeError):
-            return _NO_VIOLATION
-        if any(marker in src_file for marker in c.ENFORCE_FLEXT_CORE_PATH_MARKERS):
-            return _NO_VIOLATION
+            return None
+        if any(marker in src_file for marker in c.ENFORCE_NON_WORKSPACE_PATH_MARKERS):
+            return None
         try:
             source = Path(src_file).read_text(encoding="utf-8")
         except OSError:
-            return _NO_VIOLATION
-        if not c.ENFORCE_CAST_TYPING_IMPORT_RE.search(source):
-            return _NO_VIOLATION
-        if not c.ENFORCE_CAST_CALL_RE.search(source):
-            return _NO_VIOLATION
-        return {"file": Path(src_file).name}
-
-    @staticmethod
-    def check_model_rebuild_call(target: type) -> t.StrMapping | None:
-        """``model_rebuild()`` invocation indicates unresolved forward refs (ENFORCE-041).
-
-        AGENTS.md §3.4: forward-ref repair belongs in module-level imports
-        and ``__future__`` annotations, not at runtime. Source-skip on
-        unavailable source per the runtime-safety contract.
-        """
-        if "." in target.__qualname__:
-            return _NO_VIOLATION
-        try:
-            src_file = inspect.getfile(target)
-        except (OSError, TypeError):
-            return _NO_VIOLATION
-        try:
-            source = Path(src_file).read_text(encoding="utf-8")
-        except OSError:
-            return _NO_VIOLATION
-        if not c.ENFORCE_MODEL_REBUILD_CALL_RE.search(source):
-            return _NO_VIOLATION
-        return {"file": Path(src_file).name}
-
-    @staticmethod
-    def check_pass_through_wrapper(target: type) -> t.StrMapping | None:
-        """Pass-through wrapper detection (ENFORCE-043).
-
-        AGENTS.md §3.5: a function whose only body is ``return inner(*args)``
-        with positional argument names equal to the wrapper's own parameter
-        names is a pure delegation; remove the wrapper and use ``inner``
-        directly. Source-skip on unavailable or unparseable source.
-        """
-        if "." in target.__qualname__:
-            return _NO_VIOLATION
-        try:
-            src_file = inspect.getfile(target)
-        except (OSError, TypeError):
-            return _NO_VIOLATION
-        try:
-            source = Path(src_file).read_text(encoding="utf-8")
-        except OSError:
-            return _NO_VIOLATION
+            return None
         try:
             tree = ast.parse(source)
         except SyntaxError:
-            return _NO_VIOLATION
+            return None
+        return src_file, tree
+
+    # Pure AST finders — single SSOT for ENFORCE-039/041/043/044 detection.
+    # Both the runtime ``check_<tag>`` wrappers below and the workspace
+    # ``FlextInfraEnforcementAuditor`` consume these. Adding/changing a
+    # detection rule means editing ONE finder, never two parallel walks.
+
+    @staticmethod
+    def find_cast_calls(tree: ast.Module) -> Iterator[ast.Call]:
+        """Yield every ``cast(...)`` call (ENFORCE-039 detection primitive)."""
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == c.EnforceAstHookSymbol.CAST_CALL
+            ):
+                yield node
+
+    @staticmethod
+    def find_model_rebuild_calls(tree: ast.Module) -> Iterator[ast.Call]:
+        """Yield every ``X.model_rebuild(...)`` call (ENFORCE-041 detection primitive)."""
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == c.EnforceAstHookSymbol.MODEL_REBUILD_ATTR
+            ):
+                yield node
+
+    @staticmethod
+    def find_pass_through_wrappers(tree: ast.Module) -> Iterator[ast.FunctionDef]:
+        """Yield every pass-through wrapper FunctionDef (ENFORCE-043).
+
+        A wrapper is a function whose only body (after stripping a leading
+        docstring) is ``return inner(arg1, arg2, ...)`` where ``inner`` is
+        called with the wrapper's positional parameters in order, no keyword
+        arguments — a pure delegation that should be inlined.
+        """
         for node in ast.walk(tree):
             if not isinstance(node, ast.FunctionDef):
                 continue
@@ -775,44 +835,33 @@ class FlextUtilitiesBeartypeEngine:
             ]
             if len(body) != 1 or not isinstance(body[0], ast.Return):
                 continue
-            ret = body[0]
-            if not isinstance(ret.value, ast.Call):
+            ret_value = body[0].value
+            if not isinstance(ret_value, ast.Call):
                 continue
-            call = ret.value
             param_names = [a.arg for a in node.args.args]
-            call_args = [a.id if isinstance(a, ast.Name) else None for a in call.args]
-            if param_names and param_names == call_args and not call.keywords:
-                return {"name": node.name, "file": Path(src_file).name}
-        return _NO_VIOLATION
+            call_args = [
+                a.id if isinstance(a, ast.Name) else None for a in ret_value.args
+            ]
+            if param_names and param_names == call_args and not ret_value.keywords:
+                yield node
 
     @staticmethod
-    def check_private_attr_probe(target: type) -> t.StrMapping | None:
-        """``hasattr/getattr/setattr`` probing of private attributes (ENFORCE-044).
+    def find_private_attr_probes(
+        tree: ast.Module,
+    ) -> Iterator[tuple[ast.Call, str, str]]:
+        """Yield ``(node, builtin_name, attr_name)`` for every private-attr probe (ENFORCE-044).
 
-        AGENTS.md §3.6: private attributes (single-underscore names) are not
-        part of the public surface; probing them by name violates the
-        encapsulation contract. Dunder names (``__class__`` etc.) are
-        legitimate runtime introspection and are exempted. Source-skip on
-        unavailable or unparseable source.
+        Matches ``hasattr/getattr/setattr(obj, "_private")`` where the second
+        argument is a string literal beginning with a single underscore (not
+        a dunder). Dunder names are legitimate runtime introspection. Yielding
+        the already-narrowed ``builtin_name`` and ``attr_name`` strings lets
+        every consumer skip re-narrowing the AST nodes.
         """
-        if "." in target.__qualname__:
-            return _NO_VIOLATION
-        try:
-            src_file = inspect.getfile(target)
-        except (OSError, TypeError):
-            return _NO_VIOLATION
-        try:
-            source = Path(src_file).read_text(encoding="utf-8")
-        except OSError:
-            return _NO_VIOLATION
-        try:
-            tree = ast.parse(source)
-        except SyntaxError:
-            return _NO_VIOLATION
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
                 continue
-            if node.func.id not in c.ENFORCE_PRIVATE_PROBE_BUILTINS:
+            builtin_name = node.func.id
+            if builtin_name not in c.ENFORCE_PRIVATE_PROBE_BUILTINS:
                 continue
             if len(node.args) < c.ENFORCE_PRIVATE_PROBE_MIN_ARGS or not isinstance(
                 node.args[1], ast.Constant
@@ -822,11 +871,67 @@ class FlextUtilitiesBeartypeEngine:
             if not isinstance(attr_name, str):
                 continue
             if attr_name.startswith("_") and not attr_name.startswith("__"):
-                return {
-                    "probe": node.func.id,
-                    "name": attr_name,
-                    "file": Path(src_file).name,
-                }
+                yield node, builtin_name, attr_name
+
+    # ``check_<tag>`` wrappers — runtime entrypoint for the ENFORCE-039/041/043/044
+    # rules dispatched via ``c.ENFORCEMENT_RULES``. Each wrapper loads the AST,
+    # delegates to the matching pure finder, and adapts the first match to the
+    # canonical ``t.StrMapping | None`` violation contract.
+
+    @staticmethod
+    def check_cast_outside_core(target: type) -> t.StrMapping | None:
+        """``cast()`` call outside flext-core result internals (ENFORCE-039)."""
+        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        if loaded is None:
+            return _NO_VIOLATION
+        src_file, tree = loaded
+        if any(marker in src_file for marker in c.ENFORCE_FLEXT_CORE_PATH_MARKERS):
+            return _NO_VIOLATION
+        for node in FlextUtilitiesBeartypeEngine.find_cast_calls(tree):
+            return {"file": Path(src_file).name, "line": str(node.lineno)}
+        return _NO_VIOLATION
+
+    @staticmethod
+    def check_model_rebuild_call(target: type) -> t.StrMapping | None:
+        """``model_rebuild()`` invocation indicates unresolved forward refs (ENFORCE-041)."""
+        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        if loaded is None:
+            return _NO_VIOLATION
+        src_file, tree = loaded
+        for node in FlextUtilitiesBeartypeEngine.find_model_rebuild_calls(tree):
+            return {"file": Path(src_file).name, "line": str(node.lineno)}
+        return _NO_VIOLATION
+
+    @staticmethod
+    def check_pass_through_wrapper(target: type) -> t.StrMapping | None:
+        """Pass-through wrapper detection (ENFORCE-043)."""
+        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        if loaded is None:
+            return _NO_VIOLATION
+        src_file, tree = loaded
+        for node in FlextUtilitiesBeartypeEngine.find_pass_through_wrappers(tree):
+            return {"name": node.name, "file": Path(src_file).name}
+        return _NO_VIOLATION
+
+    @staticmethod
+    def check_private_attr_probe(target: type) -> t.StrMapping | None:
+        """``hasattr/getattr/setattr`` probing of private attributes (ENFORCE-044)."""
+        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        if loaded is None:
+            return _NO_VIOLATION
+        src_file, tree = loaded
+        for (
+            _node,
+            builtin,
+            attr,
+        ) in FlextUtilitiesBeartypeEngine.find_private_attr_probes(
+            tree,
+        ):
+            return {
+                "probe": builtin,
+                "name": attr,
+                "file": Path(src_file).name,
+            }
         return _NO_VIOLATION
 
     # -----------------------------------------------------------------------

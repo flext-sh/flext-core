@@ -42,6 +42,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_dispatcher_minimal": ("TestsFlextCoreDispatcherMinimal",),
             ".test_dispatcher_reliability": ("TestsFlextCoreDispatcherReliability",),
             ".test_enforcement": ("TestsFlextCoreEnforcement",),
+            ".test_enforcement_apt_hooks": ("TestsFlextCoreEnforcementAptHooks",),
             ".test_enforcement_catalog": ("TestsFlextCoreEnforcementCatalog",),
             ".test_enforcement_integration": ("TestsFlextCoreEnforcementIntegration",),
             ".test_enum_utilities_coverage_100": ("TestsFlextCoreEnumUtilities",),

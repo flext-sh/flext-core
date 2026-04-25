@@ -227,7 +227,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             if relative_path.parts and relative_path.parts[0] == ".venv":
                 return None
             file_path = str(relative_path)
-            line_number = caller_frame.f_lineno + 1
+            line_number = caller_frame.f_lineno
             method_name = caller_frame.f_code.co_name
             class_name = FlextUtilitiesLoggingContext._extract_class_name(caller_frame)
             source_parts = [f"{file_path}:{line_number}"]
@@ -243,17 +243,32 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             )
             return None
 
+    _LOGGING_INTERNAL_PATH_FRAGMENTS: ClassVar[tuple[str, ...]] = (
+        "flext_core/loggings.py",
+        "flext_core/_utilities/logging_context.py",
+        "flext_core/_utilities/logging_config.py",
+        "flext_core/_utilities/logging_processors.py",
+        "flext_core/_utilities/logging_observability.py",
+    )
+
     @staticmethod
     def _calling_frame() -> types.FrameType | None:
-        """Get the calling frame 4 levels up the stack."""
+        """Walk the stack backward and return the first frame outside the logging machinery.
+
+        Generic: skips any frame whose source file path matches one of
+        ``_LOGGING_INTERNAL_PATH_FRAGMENTS``. The first frame outside is the
+        true caller regardless of how many internal wrappers are involved.
+        """
         frame = inspect.currentframe()
-        if not frame:
+        if frame is None:
             return None
-        for _ in range(4):
+        skip = FlextUtilitiesLoggingContext._LOGGING_INTERNAL_PATH_FRAGMENTS
+        while frame is not None:
+            filename = frame.f_code.co_filename
+            if not any(fragment in filename for fragment in skip):
+                return frame
             frame = frame.f_back
-            if not frame:
-                return None
-        return frame
+        return None
 
     @staticmethod
     def _report_internal_logging_failure(operation: str, exc: Exception) -> None:

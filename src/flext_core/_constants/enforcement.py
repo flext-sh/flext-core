@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from collections.abc import (
     Mapping,
 )
@@ -58,6 +57,35 @@ class FlextConstantsEnforcement:
         HARD_RULES = "HARD rules"
         BEST_PRACTICES = "best practices"
         NAMESPACE_RULES = "namespace rules"
+
+    class ViolationOutcome(StrEnum):
+        """Tri-state result emitted by a detector hook for a single target.
+
+        ``HIT`` — detector found a violation.
+        ``MISS`` — detector ran and found no violation.
+        ``SKIP`` — detector could not run (no source / unparseable / out of
+        scope); distinct from ``MISS`` so the dispatcher can report coverage
+        gaps without treating them as passes.
+        """
+
+        HIT = "HIT"
+        MISS = "MISS"
+        SKIP = "SKIP"
+
+    class EnforcementRopeFixOperation(StrEnum):
+        """Closed set of rope-driven correction operations.
+
+        Mirrors the rope refactoring catalog so ``EnforcementRopeFixSource``
+        and the infra refactor engine can dispatch on a typed enum instead
+        of a free-form string.
+        """
+
+        RENAME = "rename"
+        MOVE = "move"
+        INLINE = "inline"
+        EXTRACT = "extract"
+        CHANGE_SIGNATURE = "change_signature"
+        CUSTOM = "custom"
 
     ENFORCEMENT_MODE: Final[EnforcementMode] = EnforcementMode.WARN
     """Controls behavior: strict (TypeError), warn (UserWarning), off."""
@@ -266,30 +294,47 @@ class FlextConstantsEnforcement:
         NAMESPACE = "namespace"
         PROTOCOL_TREE = "protocol_tree"
 
-    # --- Lane A-PT detection inputs (ENFORCE-039/041/043/044) ---
-    # Centralized SSOT for the regex/path/builtin sentinels consumed by the
+    # --- ENFORCE-039 / 041 / 043 / 044 detection inputs ---
+    # Centralized SSOT for the AST-name / path / builtin sentinels consumed by the
     # corresponding ``check_<tag>`` predicates on ``FlextUtilitiesBeartypeEngine``.
     # Keep regex constants compiled as Final[re.Pattern[str]] here so the
     # engine module never carries loose detection inputs.
 
-    ENFORCE_CAST_TYPING_IMPORT_RE: Final[re.Pattern[str]] = re.compile(
-        r"\bfrom\s+typing\s+import\b[^\n]*\bcast\b"
-    )
-    """ENFORCE-039: detects ``from typing import ... cast ...`` import lines."""
+    class EnforceAstHookSymbol(StrEnum):
+        """AST identifier names matched by A-PT enforcement hooks.
 
-    ENFORCE_CAST_CALL_RE: Final[re.Pattern[str]] = re.compile(r"\bcast\s*\(")
-    """ENFORCE-039: detects ``cast(...)`` call sites in source text."""
+        Each member is the raw symbol the corresponding ``check_<tag>``
+        predicate inspects on an ``ast.Name``/``ast.Attribute`` node — keeps
+        the magic-string surface closed so typo regressions become import
+        errors instead of silently-skipped detections.
+        """
 
-    ENFORCE_MODEL_REBUILD_CALL_RE: Final[re.Pattern[str]] = re.compile(
-        r"\bmodel_rebuild\s*\("
-    )
-    """ENFORCE-041: detects ``model_rebuild(...)`` call sites in source text."""
+        CAST_CALL = "cast"
+        """ENFORCE-039: ``ast.Name.id`` matched as the ``typing.cast`` call."""
+
+        MODEL_REBUILD_ATTR = "model_rebuild"
+        """ENFORCE-041: ``ast.Attribute.attr`` matched as ``BaseModel.model_rebuild``."""
 
     ENFORCE_FLEXT_CORE_PATH_MARKERS: Final[frozenset[str]] = frozenset({
         "flext_core",
         "flext-core",
     })
     """Path fragments identifying flext-core source files (ENFORCE-039 exemption)."""
+
+    ENFORCE_NON_WORKSPACE_PATH_MARKERS: Final[frozenset[str]] = frozenset({
+        "site-packages",
+        "dist-packages",
+        "/usr/lib/",
+        "/usr/local/lib/",
+    })
+    """Filesystem path fragments identifying third-party source.
+
+    Note: parallel-purpose to ``ENFORCEMENT_EXEMPT_MODULE_FRAGMENTS`` but at
+    a different layer — that one filters by Python module qualname (e.g.
+    ``"tests."``); this one filters by filesystem path (e.g.
+    ``"site-packages"``). Beartype hooks that source-skip third-party
+    re-exports use this set; module-qualname-based exemptions use the other.
+    """
 
     ENFORCE_PRIVATE_PROBE_BUILTINS: Final[frozenset[str]] = frozenset({
         "hasattr",
@@ -481,7 +526,7 @@ class FlextConstantsEnforcement:
             '"{name}" must inherit FlextSettings (AGENTS.md §2.6)',
             "Add FlextSettings to the MRO; remove BaseModel/BaseSettings bases.",
         ),
-        # --- Lane A-PT detection rows (ENFORCE-039/041/043/044) ---
+        # --- ENFORCE-039 / 041 / 043 / 044 detection rows ---
         "cast_outside_core": (
             EnforcementCategory.NAMESPACE,
             EnforcementLayer.NAMESPACE,
@@ -638,6 +683,130 @@ class FlextConstantsEnforcement:
         "flext_quality",
     })
     """Projects where utilities.py legitimately uses explicit-class base (R10)."""
+
+    # --- A-TS lane: RULE_NO_* string-tag catalog (Phase 2.2 owner slice) ---
+    #
+    # A documentation-as-code registry for the ``RULE_NO_*`` named rules
+    # owned by the A-TS lane (per AGENT_COORDINATION.md §2.1 row 6 and
+    # §4.8 distinct-slice rule). These entries do NOT intersect with the
+    # ``ENFORCE-NNN`` numeric registry below — they live in their own
+    # namespace and are read-only metadata until A-CH's typed
+    # ``m.Enforcement.RuleEntry`` schema can host them as discriminated
+    # source variants. Each value is an immutable ``MappingProxyType`` so
+    # consumers (Rope detectors in ``flext-infra/detectors/``, the
+    # ``validate forbidden-patterns`` route, governance pytests) get a
+    # frozen contract.
+    #
+    # ``autofix_verb`` is a free-form pointer string that names the
+    # canonical remediation surface — either a flext-infra refactor verb
+    # or another agent's detector when ownership has been deferred per the
+    # coordination doc (e.g. RULE_NO_PASS_THROUGH_WRAPPER → A-PT C3
+    # resolution).
+    RULE_NO_CATALOG: Final[
+        Mapping[str, Mapping[str, str | tuple[str, ...]]]
+    ] = MappingProxyType({
+        "RULE_NO_PASS_THROUGH_WRAPPER": MappingProxyType({
+            "category": (
+                "Pass-through wrappers `def old(*a,**kw): return new(*a,**kw)`"
+            ),
+            "skill": "flext-patterns",
+            "severity": "high",
+            "autofix_verb": (
+                "ENFORCE-043 → A-PT flext-infra/refactor/passthrough_remover.py "
+                "(coordination C3)"
+            ),
+            "agents_md_anchor": "3-5-integrity",
+            "owner_lane": "A-TS catalog entry; A-PT detector implementation",
+        }),
+        "RULE_NO_COMPAT_ALIAS_REASSIGN": MappingProxyType({
+            "category": "Compat alias re-assigns `OldX = NewX` at module level",
+            "skill": "flext-mro-namespace-rules",
+            "severity": "high",
+            "autofix_verb": "flext-infra refactor migrate-to-class-mro",
+            "detector": (
+                "flext-infra/detectors/compatibility_alias_detector.py"
+            ),
+            "agents_md_anchor": "2-4-governance-anti-patterns",
+            "owner_lane": "A-TS",
+        }),
+        "RULE_NO_PUBLIC_GET_SET_IS_ACCESSOR": MappingProxyType({
+            "category": "`get_*`/`set_*`/`is_*` accessor on facade or service",
+            "skill": "flext-mro-namespace-rules",
+            "severity": "high",
+            "autofix_verb": "flext-infra refactor accessor-migrate",
+            "agents_md_anchor": "2-5-service-facade-pattern",
+            "owner_lane": "A-TS catalog entry; existing accessor_migration verb",
+        }),
+        "RULE_NO_BARE_R_FAIL_STRING_OUTSIDE_CORE": MappingProxyType({
+            "category": '`r.fail("…")` outside `flext-core` (must use `e.fail_*`)',
+            "skill": "flext-patterns",
+            "severity": "high",
+            "autofix_verb": "manual via centralized `e.fail_*` DSL",
+            "agents_md_anchor": "3-3-failures-and-error-handling",
+            "owner_lane": "A-TS",
+        }),
+        "RULE_NO_INLINE_COMPOSED_ANNOTATIONS": MappingProxyType({
+            "category": (
+                "Inline composed annotations `: str | int | None` should be "
+                "`t.*` aliases from `typings.py`"
+            ),
+            "skill": "flext-strict-typing",
+            "severity": "medium",
+            "autofix_verb": "flext-infra codegen consolidate",
+            "agents_md_anchor": "3-2-types-and-contracts",
+            "owner_lane": "A-TS",
+        }),
+        "RULE_NO_OS_ENVIRON_IN_SRC": MappingProxyType({
+            "category": "`os.environ` / `os.getenv` in `src/` (use FlextSettings)",
+            "skill": "rules-src",
+            "severity": "high",
+            "autofix_verb": "manual via FlextSettings env resolution",
+            "agents_md_anchor": "2-6-settings-law",
+            "owner_lane": "A-TS",
+        }),
+        "RULE_NO_GETATTRIBUTE_OUTSIDE_CORE": MappingProxyType({
+            "category": "`__getattribute__` overrides outside `flext-core`",
+            "skill": "rules-src",
+            "severity": "high",
+            "autofix_verb": "manual",
+            "agents_md_anchor": "3-4-tools-modules-environment",
+            "owner_lane": "A-TS",
+        }),
+        "RULE_DOC_PYTHON_RUFF_CLEAN": MappingProxyType({
+            "category": (
+                "Embedded Python in markdown / docstrings / SKILL.md must "
+                "pass `ruff check`"
+            ),
+            "skill": "flext-docs-pointer-policy",
+            "severity": "medium",
+            "autofix_verb": (
+                "flext-infra docs lint-code-blocks (delegates to A-CH "
+                "_utilities/docs_code_blocks.py once shipped — coordination "
+                "C4)"
+            ),
+            "agents_md_anchor": "3-8-verification-discipline",
+            "owner_lane": "A-TS catalog entry; A-HD service; A-CH library",
+        }),
+        "RULE_DOC_PYTHON_PYREFLY_CLEAN": MappingProxyType({
+            "category": (
+                "Embedded Python in markdown / docstrings / SKILL.md must "
+                "pass `pyrefly check`"
+            ),
+            "skill": "flext-docs-pointer-policy",
+            "severity": "medium",
+            "autofix_verb": (
+                "flext-infra docs lint-code-blocks (delegates to A-CH "
+                "_utilities/docs_code_blocks.py once shipped — coordination "
+                "C4)"
+            ),
+            "agents_md_anchor": "3-8-verification-discipline",
+            "owner_lane": "A-TS catalog entry; A-HD service; A-CH library",
+        }),
+    })
+    """A-TS owned RULE_NO_* + RULE_DOC_PYTHON_* registry (distinct slice
+    from A-CH's ENFORCE-NNN catalog per coordination §4.8). Pure data —
+    detectors and dispatchers consume the entries; the registry itself
+    holds no runtime side effects."""
 
     # --- Cross-layer enforcement catalog (SSOT for the pytest dispatcher) ---
     #
@@ -1135,16 +1304,12 @@ def _hydrate_enforcement_catalog() -> None:
                 skills=("flext-mro-namespace-rules",),
                 enabled=False,
             ),
-            # Lane A-PT (peppy-thacker) catalog entries — ENFORCE-039..044.
-            # Per AGENT_COORDINATION.md §4.1, A-PT owns this range.
-            # ENFORCE-040 delegates to ruff PGH003; ENFORCE-042 reuses the
-            # existing check_settings_inheritance hook (zero new code for
-            # those two — pure SSOT/DRY/YAGNI). The other four point at
-            # check_<tag> hooks added in
-            # flext-core/_utilities/beartype_engine.py and dispatched via
-            # the cast_outside_core / model_rebuild_call /
-            # pass_through_wrapper / private_attr_probe rows in
-            # ENFORCEMENT_RULES.
+            # ENFORCE-039..044: ENFORCE-040 delegates to ruff PGH003;
+            # ENFORCE-042 reuses the existing check_settings_inheritance
+            # hook (no new detection code). The other four point at
+            # check_<tag> hooks in beartype_engine.py and dispatch via the
+            # cast_outside_core / model_rebuild_call / pass_through_wrapper
+            # / private_attr_probe rows in ENFORCEMENT_RULES.
             _me.EnforcementRuleSpec(
                 id="ENFORCE-039",
                 description=(
@@ -1227,12 +1392,10 @@ def _hydrate_enforcement_catalog() -> None:
                 agents_md_anchor="3-6-test-standardization",
                 skills=("flext-strict-typing", "flext-patterns"),
             ),
-            # Lane A-CH (clever-hedgehog) catalog entries — ENFORCE-045..048.
-            # Each entry references an existing beartype hook (no new
-            # detector code per SSOT/DRY). The hooks already run at
-            # runtime; these entries register them in the catalog SSOT so
-            # other agents can reference each rule by ENFORCE-NNN instead
-            # of by hook name.
+            # ENFORCE-045..053: each entry references an existing beartype
+            # hook (no new detector code). The hooks already run at runtime;
+            # these entries register them in the catalog SSOT so consumers
+            # can address each rule by ENFORCE-NNN instead of by hook name.
             _me.EnforcementRuleSpec(
                 id="ENFORCE-045",
                 description=(

@@ -17,6 +17,10 @@ PYTEST_ARGS ?=
 DIAG ?= 0
 CHECK_GATES ?= 
 VALIDATE_GATES ?= 
+SCOPE ?= project
+NAMESPACE ?= 
+GATES ?= 
+PROPAGATE ?= 
 DOCS_PHASE ?= all
 FIX ?= 
 PR_ACTION ?= status
@@ -190,6 +194,7 @@ PROJECT_INFRA_CHECK := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_
 PROJECT_INFRA_DEPS := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_BOOT) deps
 PROJECT_INFRA_DOCS := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) docs
 PROJECT_INFRA_GITHUB := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) github
+PROJECT_INFRA_REFACTOR := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) refactor
 PROJECT_INFRA_VALIDATE := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) validate
 
 help: ## Show commands
@@ -198,6 +203,8 @@ help: ## Show commands
 	$(Q)echo "================================================"
 	$(Q)echo ""
 	$(Q)echo "Core verbs:"
+
+	$(Q)printf "  %-14s %s\n" "audit" "Run SSOT enforcement audit (SCOPE/NAMESPACE/GATES/PROPAGATE selectors)"
 
 	$(Q)printf "  %-14s %s\n" "boot" "Install dependencies and hooks"
 
@@ -277,6 +284,13 @@ help: ## Show commands
 
 	$(Q)echo "  PR_RELEASE_ON_MERGE=0|1"
 
+
+audit: ## Run SSOT enforcement audit (GATES=docs scopes to mkdocs python-codeblocks)
+	$(Q)if [ "$(GATES)" = "docs" ]; then \
+		$(PROJECT_INFRA_DOCS) audit --workspace "$(CURDIR)" --output-dir .reports/docs --strict; \
+	else \
+		$(PROJECT_INFRA_REFACTOR) audit --workspace "$(CURDIR)" $(if $(PROJECTS),--projects "$(PROJECTS)",) $(if $(filter 1,$(FIX)),--apply,); \
+	fi
 
 boot: ## Complete setup
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \

@@ -19,6 +19,7 @@ from typing import Annotated, ClassVar, Literal
 
 from pydantic import Discriminator, Field, model_validator
 
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.annotateds import FlextTypesAnnotateds as ta
 from flext_core._typings.base import FlextTypingBase as t
@@ -125,6 +126,7 @@ class FlextModelsEnforcement:
         FLEXT_TESTS_VALIDATOR = "flext_tests_validator"
         RUNTIME_WARNING = "runtime_warning"
         BEARTYPE = "beartype"
+        MINIMAL_AST = "minimal_ast"
         RUFF = "ruff"
         AST_GREP = "ast_grep"
         SKILL_POINTER = "skill_pointer"
@@ -225,6 +227,151 @@ class FlextModelsEnforcement:
             ),
         ]
 
+    class EnforcementMinimalAstSource(mp.BaseModel):
+        """Rule detected via lightweight AST scan (``u.lightweight_ast_parse``).
+
+        Used for textual constructs that vanish post-import (alias rebinds,
+        flat-facade roots, direct-library imports). The dispatcher delegates
+        to ``FlextUtilitiesLightweightAst.lightweight_ast_parse`` which
+        skip-on-missing-source per AGENTS.md §3.8.
+        """
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            frozen=True, extra="forbid"
+        )
+
+        kind: Literal["minimal_ast"] = "minimal_ast"
+        pattern: Annotated[
+            ta.NonEmptyStr,
+            Field(
+                description=(
+                    "AST-grep / regex pattern fragment that locates the violating"
+                    " construct in module source."
+                ),
+            ),
+        ]
+        require_source: Annotated[
+            bool,
+            Field(
+                default=True,
+                description=(
+                    "When True, missing source emits ``ViolationOutcome.SKIP``"
+                    " instead of falling back to ``MISS``."
+                ),
+            ),
+        ]
+
+    class EnforcementRopeFixSource(mp.BaseModel):
+        """Correction delegated to a rope-driven handler in ``flext-infra``.
+
+        Carried on ``EnforcementRuleSpec.fix_source`` for rules whose
+        correction requires binding-aware refactor (rename / move / etc.).
+        ``handler`` names the registered key in
+        ``flext-infra/refactor/handler_registry``.
+        """
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            frozen=True, extra="forbid"
+        )
+
+        kind: Literal["rope_fix"] = "rope_fix"
+        operation: Annotated[
+            c.EnforcementRopeFixOperation,
+            Field(description="Rope refactor operation kind."),
+        ]
+        handler: Annotated[
+            ta.NonEmptyStr,
+            Field(
+                description=(
+                    "Registered handler key in flext-infra refactor handler_registry."
+                ),
+            ),
+        ]
+
+    class EnforcementAstGrepFixSource(mp.BaseModel):
+        """Correction delegated to ast-grep autofix via ``sgconfig.yml``.
+
+        Carried on ``EnforcementRuleSpec.fix_source`` for rules whose
+        correction is a textual rewrite expressible as an ast-grep rule with
+        ``fix_auto: true`` in ``.agents/skills/<skill>/rules.yml``.
+        """
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            frozen=True, extra="forbid"
+        )
+
+        kind: Literal["ast_grep_fix"] = "ast_grep_fix"
+        skill: Annotated[
+            ta.NonEmptyStr,
+            Field(
+                description=(
+                    "Skill directory under .agents/skills hosting the autofix"
+                    " rule entry."
+                ),
+            ),
+        ]
+        rule_id: Annotated[
+            ta.NonEmptyStr,
+            Field(
+                description=(
+                    "Rule id within .agents/skills/<skill>/rules.yml::rules[].id."
+                ),
+            ),
+        ]
+
+    class ViolationReport(mp.BaseModel):
+        """Single dispatcher result emitted by a detector for one target.
+
+        Carries the target identity, the tri-state outcome
+        (``c.ViolationOutcome``), and structured payload metadata so the
+        pytest dispatcher can render coverage gaps without re-parsing
+        formatted strings.
+        """
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            frozen=True, extra="forbid"
+        )
+
+        rule_id: Annotated[
+            str,
+            Field(
+                pattern=r"^ENFORCE-\d{3}$",
+                description="Catalog identifier (ENFORCE-NNN) the report belongs to.",
+            ),
+        ]
+        outcome: Annotated[
+            c.ViolationOutcome,
+            Field(description="Tri-state result for this target."),
+        ]
+        file: Annotated[
+            str,
+            Field(
+                default="",
+                description="Source file path or empty when no location is known.",
+            ),
+        ]
+        line: Annotated[
+            int,
+            Field(
+                default=0,
+                description="Source line number or 0 when no line is known.",
+            ),
+        ]
+        symbol: Annotated[
+            str,
+            Field(
+                default="",
+                description="Qualified target symbol or empty when not applicable.",
+            ),
+        ]
+        payload: Annotated[
+            t.JsonMapping,
+            Field(
+                default_factory=dict,
+                description="Free-form structured detector metadata.",
+            ),
+        ]
+
     class EnforcementRuffSource(mp.BaseModel):
         """Rule delegated to ``ruff`` (documentation-only in dispatcher)."""
 
@@ -318,6 +465,22 @@ class FlextModelsEnforcement:
             Discriminator("kind"),
             Field(description="Addressable origin of the rule."),
         ]
+        fix_source: Annotated[
+            (
+                FlextModelsEnforcement.EnforcementRopeFixSource
+                | FlextModelsEnforcement.EnforcementAstGrepFixSource
+                | None
+            ),
+            Discriminator("kind"),
+            Field(
+                default=None,
+                description=(
+                    "Optional handler that corrects the violation. ``None`` "
+                    "marks detection-only rules (the catalog still indexes "
+                    "them but no automatic fix is dispatched)."
+                ),
+            ),
+        ] = None
         agents_md_anchor: Annotated[
             str,
             Field(

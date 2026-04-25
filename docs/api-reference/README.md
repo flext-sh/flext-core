@@ -1,9 +1,3 @@
-<!-- TOC START -->
-- [Source of Truth](#source-of-truth)
-- [Generated Pages](#generated-pages)
-- [Surface Summary](#surface-summary)
-<!-- TOC END -->
-
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 # flext-core API Reference
@@ -25,7 +19,7 @@ This section is generated from public exports and real docstrings.
 
 ## Surface Summary
 
-- Primary facades: `FlextDecorators`, `FlextMroViolation`, `FlextTypesServices`, `FlextTypingContainers`, `FlextUtilitiesGenerators`, `FlextUtilitiesContextLifecycle` (+118 more)
+- Primary facades: `FlextModelsEnforcement`, `FlextUtilitiesGuards`, `FlextProtocolsLogging`, `FlextUtilitiesLoggingContext`, `FlextModelsCollections`, `FlextConstantsCqrs` (+118 more)
 - Generated module pages: `20`
 
 - [Back to project docs](../index.md)

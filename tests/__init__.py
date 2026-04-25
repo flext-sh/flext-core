@@ -97,6 +97,7 @@ if _t.TYPE_CHECKING:
         TestsFlextCoreDispatcherReliability,
     )
     from tests.unit.test_enforcement import TestsFlextCoreEnforcement
+    from tests.unit.test_enforcement_apt_hooks import TestsFlextCoreEnforcementAptHooks
     from tests.unit.test_enforcement_catalog import TestsFlextCoreEnforcementCatalog
     from tests.unit.test_enforcement_integration import (
         TestsFlextCoreEnforcementIntegration,
@@ -268,6 +269,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextCoreDispatcherReliability",
             ),
             ".unit.test_enforcement": ("TestsFlextCoreEnforcement",),
+            ".unit.test_enforcement_apt_hooks": ("TestsFlextCoreEnforcementAptHooks",),
             ".unit.test_enforcement_catalog": ("TestsFlextCoreEnforcementCatalog",),
             ".unit.test_enforcement_integration": (
                 "TestsFlextCoreEnforcementIntegration",
@@ -409,6 +411,7 @@ __all__: list[str] = [
     "TestsFlextCoreDispatcherReliability",
     "TestsFlextCoreDocumentedPatterns",
     "TestsFlextCoreEnforcement",
+    "TestsFlextCoreEnforcementAptHooks",
     "TestsFlextCoreEnforcementCatalog",
     "TestsFlextCoreEnforcementIntegration",
     "TestsFlextCoreEnumUtilities",

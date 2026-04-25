@@ -35,7 +35,11 @@ from flext_core import (
     FlextUtilitiesSettings,
     FlextUtilitiesText,
 )
+from flext_core._utilities.lightweight_ast import FlextUtilitiesLightweightAst
 from flext_core._utilities.model_runtime import FlextUtilitiesModelRuntime
+from flext_core._utilities.runtime_violation_registry import (
+    FlextUtilitiesRuntimeViolationRegistry,
+)
 
 
 class FlextUtilities(
@@ -55,12 +59,14 @@ class FlextUtilities(
     FlextUtilitiesEnum,
     FlextUtilitiesGenerators,
     FlextUtilitiesGuards,
+    FlextUtilitiesLightweightAst,
     FlextUtilitiesMapper,
     FlextUtilitiesModelRuntime,
     FlextUtilitiesParser,
     FlextUtilitiesProjectMetadata,
     FlextUtilitiesPydantic,
     FlextUtilitiesReliability,
+    FlextUtilitiesRuntimeViolationRegistry,
     FlextUtilitiesText,
     FlextModelsNamespace,
 ):

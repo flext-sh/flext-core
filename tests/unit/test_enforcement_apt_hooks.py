@@ -1,23 +1,15 @@
-"""Lane A-PT — beartype hooks + ENFORCEMENT_RULES + ENFORCEMENT_CATALOG entries.
+"""Behavior contract for ENFORCE-039..044 — beartype hooks, ENFORCEMENT_RULES rows, ENFORCEMENT_CATALOG entries.
 
-Per AGENT_COORDINATION.md §4.1 / §2.1 / §4.8, A-PT owns ENFORCE-039..044.
-SSOT/DRY/YAGNI architecture (per user directive 2026-04-25):
+Asserts the runtime dispatch chain for the six rules:
 
-* ENFORCE-040 delegates to ``ruff PGH003`` via ``EnforcementRuffSource``
-  (no new code in flext-core).
-* ENFORCE-039 / ENFORCE-041 / ENFORCE-042 / ENFORCE-043 / ENFORCE-044 use
-  ``EnforcementBeartypeSource(hook=...)`` — the canonical catalog source
-  for runtime hooks living on ``FlextUtilitiesBeartypeEngine``. Runtime
-  detection is dispatched via the existing ``c.ENFORCEMENT_RULES``
-  string-tag system (each tag is paired by naming convention with a
-  ``check_<tag>`` static method on the engine and an item-iterator arm
-  in ``FlextUtilitiesEnforcementCollect._namespace_items``).
-* ENFORCE-042 reuses the existing ``check_settings_inheritance`` hook —
-  zero new detection code for that rule (pure SSOT/DRY).
-* ENFORCE-039 / ENFORCE-041 / ENFORCE-043 / ENFORCE-044 add four new
-  ``check_<tag>`` static methods that share the centralized regex / path /
-  builtin sentinels declared on ``FlextConstantsEnforcement`` — no loose
-  module-level constants on ``beartype_engine.py``.
+* ENFORCE-040 delegates to ``ruff PGH003`` via ``EnforcementRuffSource``.
+* ENFORCE-042 reuses the existing ``check_settings_inheritance`` hook.
+* ENFORCE-039 / ENFORCE-041 / ENFORCE-043 / ENFORCE-044 each pair a
+  ``check_<tag>`` static method on ``FlextUtilitiesBeartypeEngine`` with a
+  row in ``c.ENFORCEMENT_RULES`` and a dispatch arm in
+  ``FlextUtilitiesEnforcementCollect._namespace_items``. Detection
+  sentinels are class attributes of ``FlextConstantsEnforcement`` (no loose
+  module-level constants on ``beartype_engine.py``).
 
 Fixture data is held as ``ClassVar`` on the single test class per
 AGENTS.md §3.6 (one ``Tests<...>`` class per module).
@@ -140,10 +132,11 @@ class TestsFlextCoreEnforcementAptHooks:
         # Per the user directive: detection sentinels live on
         # ``FlextConstantsEnforcement`` (centralized SSOT) — never as loose
         # module-level constants on ``beartype_engine.py``.
-        assert hasattr(c, "ENFORCE_CAST_TYPING_IMPORT_RE")
-        assert hasattr(c, "ENFORCE_CAST_CALL_RE")
-        assert hasattr(c, "ENFORCE_MODEL_REBUILD_CALL_RE")
+        assert hasattr(c, "EnforceAstHookSymbol")
+        assert c.EnforceAstHookSymbol.CAST_CALL == "cast"
+        assert c.EnforceAstHookSymbol.MODEL_REBUILD_ATTR == "model_rebuild"
         assert hasattr(c, "ENFORCE_FLEXT_CORE_PATH_MARKERS")
+        assert hasattr(c, "ENFORCE_NON_WORKSPACE_PATH_MARKERS")
         assert hasattr(c, "ENFORCE_PRIVATE_PROBE_BUILTINS")
 
     # --- Hook resilience contract (source-skip on dynamic class) ---
