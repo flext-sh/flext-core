@@ -82,7 +82,10 @@ class FlextUtilitiesProjectMetadata:
     def read_project_metadata(root: Path) -> mpm.ProjectMetadata:
         """Read canonical project metadata from a project's pyproject.toml."""
         data = FlextUtilitiesProjectMetadata._load_pyproject_toml(root)
-        project = dict(data.get("project") or {})
+        project_raw = data.get("project")
+        project: dict[str, Any] = (
+            dict(project_raw) if isinstance(project_raw, Mapping) else {}
+        )
         if "name" not in project:
             msg = f"{root}: missing [project].name in pyproject.toml"
             raise ValueError(msg)
