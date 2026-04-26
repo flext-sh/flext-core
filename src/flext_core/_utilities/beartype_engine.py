@@ -1117,37 +1117,36 @@ class FlextUtilitiesBeartypeEngine:
                 return _NO_VIOLATION
 
             source = Path(src_file).read_text(encoding="utf-8")
-
             target_name = target.__name__
-            alias_char = None
-            if "Types" in target_name:
-                alias_char = "t"
-            elif "Models" in target_name:
-                alias_char = "m"
-            elif "Protocols" in target_name:
-                alias_char = "p"
-            elif "Constants" in target_name:
-                alias_char = "c"
-            elif "Utilities" in target_name:
-                alias_char = "u"
+            alias_char: str | None = None
+            match target_name:
+                case value if "Types" in value:
+                    alias_char = "t"
+                case value if "Models" in value:
+                    alias_char = "m"
+                case value if "Protocols" in value:
+                    alias_char = "p"
+                case value if "Constants" in value:
+                    alias_char = "c"
+                case value if "Utilities" in value:
+                    alias_char = "u"
+                case _:
+                    alias_char = None
 
-            if not alias_char:
-                return _NO_VIOLATION
-
-            lines = source.strip().split("\n")
-            last_assign = None
-            for line in reversed(lines):
-                if "=" in line:
-                    last_assign = line.strip()
-                    break
-
-            if not last_assign:
-                return {"alias": alias_char, "class": target_name}
-
-            if f"{alias_char} = {target_name}" not in last_assign:
-                return {"alias": alias_char, "class": target_name}
-
-            return _NO_VIOLATION
+            violation: t.StrMapping | None = _NO_VIOLATION
+            if alias_char:
+                last_assign = next(
+                    (
+                        line.strip()
+                        for line in reversed(source.strip().split("\n"))
+                        if "=" in line
+                    ),
+                    "",
+                )
+                expected = f"{alias_char} = {target_name}"
+                if expected not in last_assign:
+                    violation = {"alias": alias_char, "class": target_name}
+            return violation
         except (TypeError, OSError, AttributeError):
             return _NO_VIOLATION
 

@@ -65,19 +65,19 @@ class FlextUtilitiesDomain:
 
         Returns True if both entities have same type and ID.
         """
-        if u.scalar(entity_a):
-            return False
-        if isinstance(entity_a, (Sequence, Mapping)):
-            return False
-        if u.scalar(entity_b):
-            return False
-        if isinstance(entity_b, (Sequence, Mapping)):
-            return False
-        if not FlextUtilitiesDomain.same_type(entity_b, entity_a):
-            return False
-        id_a = getattr(entity_a, id_attr, None)
-        id_b = getattr(entity_b, id_attr, None)
-        return id_a is not None and id_a == id_b
+        invalid_entity = u.scalar(entity_a) or isinstance(entity_a, (Sequence, Mapping))
+        invalid_other = u.scalar(entity_b) or isinstance(entity_b, (Sequence, Mapping))
+        if (
+            invalid_entity
+            or invalid_other
+            or not FlextUtilitiesDomain.same_type(entity_b, entity_a)
+        ):
+            result = False
+        else:
+            id_a = getattr(entity_a, id_attr, None)
+            id_b = getattr(entity_b, id_attr, None)
+            result = id_a is not None and id_a == id_b
+        return result
 
     @staticmethod
     def compare_value_objects_by_value(
@@ -89,22 +89,33 @@ class FlextUtilitiesDomain:
         Returns True if same type and all attributes equal.
         """
         if u.scalar(obj_a):
-            return obj_a == obj_b
-        if u.scalar(obj_b):
-            return False
-        if hasattr(obj_a, "__iter__") and not hasattr(obj_a, "model_dump"):
-            return obj_a == obj_b
-        if hasattr(obj_b, "__iter__") and not hasattr(obj_b, "model_dump"):
-            return obj_a == obj_b
-        if not FlextUtilitiesDomain.same_type(obj_b, obj_a):
-            return False
-        if isinstance(obj_a, m.EnforcedModel) and isinstance(obj_b, m.EnforcedModel):
-            return obj_a.model_dump() == obj_b.model_dump()
-        dict_a = FlextUtilitiesDomain._get_obj_dict(obj_a)
-        dict_b = FlextUtilitiesDomain._get_obj_dict(obj_b)
-        if dict_a is not None and dict_b is not None:
-            return dict_a == dict_b
-        return repr(obj_a) == repr(obj_b)
+            result = obj_a == obj_b
+        elif u.scalar(obj_b):
+            result = False
+        else:
+            obj_a_iterable = hasattr(obj_a, "__iter__") and not hasattr(
+                obj_a, "model_dump"
+            )
+            obj_b_iterable = hasattr(obj_b, "__iter__") and not hasattr(
+                obj_b, "model_dump"
+            )
+            if obj_a_iterable or obj_b_iterable:
+                result = obj_a == obj_b
+            elif not FlextUtilitiesDomain.same_type(obj_b, obj_a):
+                result = False
+            elif isinstance(obj_a, m.EnforcedModel) and isinstance(
+                obj_b, m.EnforcedModel
+            ):
+                result = obj_a.model_dump() == obj_b.model_dump()
+            else:
+                dict_a = FlextUtilitiesDomain._get_obj_dict(obj_a)
+                dict_b = FlextUtilitiesDomain._get_obj_dict(obj_b)
+                result = (
+                    dict_a == dict_b
+                    if dict_a is not None and dict_b is not None
+                    else repr(obj_a) == repr(obj_b)
+                )
+        return result
 
     @staticmethod
     def hash_entity_by_id(

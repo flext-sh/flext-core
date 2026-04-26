@@ -14,7 +14,7 @@ import pytest
 from flext_tests import c as tc, tf, tm
 from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextSettings
+from flext_core import FlextSettings, FlextUtilitiesGenerators
 from tests import c, m, u
 
 
@@ -67,7 +67,7 @@ class TestsFlextCoreSettingsCoverage:
             )
             enabled: bool = True
 
-        namespace = f"ns_{u.generate('ulid', length=6)}"
+        namespace = f"ns_{u.generate('ulid', options=FlextUtilitiesGenerators.GenerateOptions(length=6))}"
         FlextSettings.register_namespace(namespace, DemoNamespace)
         settings_obj = FlextSettings.fetch_global()
         ns_cfg = settings_obj.fetch_namespace(namespace, DemoNamespace)

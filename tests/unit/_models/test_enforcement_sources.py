@@ -19,10 +19,10 @@ class TestsFlextCoreModelsEnforcementSources:
     # --- EnforcementSourceKind ---
 
     def test_enforcement_source_kind_includes_beartype(self) -> None:
-        assert m.EnforcementSourceKind.BEARTYPE == "beartype"
+        assert m.EnforcementSourceKind.BEARTYPE.value == "beartype"
 
     def test_enforcement_source_kind_includes_minimal_ast(self) -> None:
-        assert m.EnforcementSourceKind.MINIMAL_AST == "minimal_ast"
+        assert m.EnforcementSourceKind.MINIMAL_AST.value == "minimal_ast"
 
     # --- EnforcementMinimalAstSource ---
 

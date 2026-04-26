@@ -17,6 +17,8 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import no_type_check
 
+from pydantic import BaseModel, ConfigDict, Field
+
 from flext_core import c, t
 
 
@@ -26,6 +28,29 @@ class FlextUtilitiesGenerators:
 
     Centralizes random, prefixed, and timestamp-based identifier generation.
     """
+
+    class GenerateOptions(BaseModel):
+        """Typed options envelope for public ID generation."""
+
+        model_config = ConfigDict(extra="forbid")
+
+        prefix: str | None = Field(default=None, description="Custom ID prefix")
+        parts: t.VariadicTuple[t.JsonValue] | None = Field(
+            default=None,
+            description="Optional parts inserted between prefix and random suffix",
+        )
+        length: int | None = Field(
+            default=None,
+            description="Optional random suffix length override",
+        )
+        include_timestamp: bool = Field(
+            default=False,
+            description="Whether to prepend a UTC timestamp to parts",
+        )
+        separator: str = Field(
+            default="_",
+            description="Separator used for custom formatted IDs",
+        )
 
     @staticmethod
     def _determine_prefix(
@@ -102,37 +127,45 @@ class FlextUtilitiesGenerators:
     def generate(
         kind: str | None = None,
         *,
-        prefix: str | None = None,
-        parts: t.VariadicTuple[t.JsonValue] | None = None,
-        length: int | None = None,
-        include_timestamp: bool = False,
-        separator: str = "_",
+        options: GenerateOptions | None = None,
     ) -> str:
         """Generate ID by kind or custom prefix (the ONLY public ID generation method)."""
+        resolved_options = options or FlextUtilitiesGenerators.GenerateOptions()
         _prefix_resolved, actual_prefix = FlextUtilitiesGenerators._determine_prefix(
             kind,
-            prefix,
+            resolved_options.prefix,
         )
         match (kind, actual_prefix):
             case (("uuid" | None), None):
                 return FlextUtilitiesGenerators._generate_id()
             case ("ulid", _):
                 alphabet = string.ascii_letters + string.digits
-                short_length = length if length is not None else c.SHORT_UUID_LENGTH
+                short_length = (
+                    resolved_options.length
+                    if resolved_options.length is not None
+                    else c.SHORT_UUID_LENGTH
+                )
                 return "".join(secrets.choice(alphabet) for _ in range(short_length))
             case ("id", None):
                 return FlextUtilitiesGenerators._generate_id()
             case (_, str() as pfx):
                 all_parts = FlextUtilitiesGenerators._build_parts_list(
-                    parts,
-                    include_timestamp=include_timestamp,
+                    resolved_options.parts,
+                    include_timestamp=resolved_options.include_timestamp,
                 )
-                id_length = length if length is not None else c.SHORT_UUID_LENGTH
-                if separator != "_" or include_timestamp:
+                id_length = (
+                    resolved_options.length
+                    if resolved_options.length is not None
+                    else c.SHORT_UUID_LENGTH
+                )
+                if (
+                    resolved_options.separator != "_"
+                    or resolved_options.include_timestamp
+                ):
                     return FlextUtilitiesGenerators._generate_custom_separator_id(
                         pfx,
                         all_parts,
-                        separator,
+                        resolved_options.separator,
                         id_length,
                     )
                 return FlextUtilitiesGenerators._generate_prefixed_id(

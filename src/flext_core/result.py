@@ -340,14 +340,23 @@ class FlextResult[T](BaseModel, p.Result[T]):
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
             return FlextResult[V].fail(str(exc), error_code=error_code, exception=exc)
 
+    class FailOptions(BaseModel):
+        """Validated kwargs envelope for `r.fail(...)` optional arguments."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="forbid",
+            arbitrary_types_allowed=True,
+        )
+
+        error_code: str | None = None
+        error_data: t.JsonMapping | t.ConfigModelInput | None = None
+        exception: BaseException | None = None
+
     @classmethod
     def fail[V](
         cls: type[FlextResult[V]],
         error: str | None,
-        error_code: str | None = None,
-        error_data: t.JsonMapping | t.ConfigModelInput | None = None,
-        *,
-        exception: BaseException | None = None,
+        **kwargs: t.JsonMapping | t.ConfigModelInput | BaseException | str | None,
     ) -> FlextResult[V]:
         """Create failed result with error message using Python 3.13 advanced patterns.
 
@@ -373,12 +382,15 @@ class FlextResult[T](BaseModel, p.Result[T]):
             Failed FlextResult instance
 
         """
+        options = cls.FailOptions.model_validate(kwargs)
         error_msg = error if error is not None else ""
-        resolved_error_code = error_code or cls._exception_error_code(exception)
+        resolved_error_code = options.error_code or cls._exception_error_code(
+            options.exception,
+        )
         resolved_error_data = (
-            error_data
-            if error_data is not None
-            else cls._exception_error_data(exception)
+            options.error_data
+            if options.error_data is not None
+            else cls._exception_error_data(options.exception)
         )
         result = cls(
             error_code=resolved_error_code,
@@ -387,7 +399,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
             success=False,
         )
         result._result = Failure(error_msg)
-        result._exception = exception
+        result._exception = options.exception
         return result
 
     @classmethod

@@ -151,8 +151,8 @@ class TestsFlextCoreEnforcementAptHooks:
         # ``FlextConstantsEnforcement`` (centralized SSOT) — never as loose
         # module-level constants on ``beartype_engine.py``.
         assert hasattr(c, "EnforceAstHookSymbol")
-        assert c.EnforceAstHookSymbol.CAST_CALL == "cast"
-        assert c.EnforceAstHookSymbol.MODEL_REBUILD_ATTR == "model_rebuild"
+        assert c.EnforceAstHookSymbol.CAST_CALL.value == "cast"
+        assert c.EnforceAstHookSymbol.MODEL_REBUILD_ATTR.value == "model_rebuild"
         assert hasattr(c, "ENFORCE_FLEXT_CORE_PATH_MARKERS")
         assert hasattr(c, "ENFORCE_NON_WORKSPACE_PATH_MARKERS")
         assert hasattr(c, "ENFORCE_PRIVATE_PROBE_BUILTINS")

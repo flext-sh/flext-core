@@ -68,10 +68,12 @@ class TestsFlextCoreUtilitiesGenerators:
 
         custom = u.generate(
             kind="command",
-            include_timestamp=True,
-            separator="-",
-            parts=("part",),
-            length=8,
+            options=FlextUtilitiesGenerators.GenerateOptions(
+                include_timestamp=True,
+                separator="-",
+                parts=("part",),
+                length=8,
+            ),
         )
         assert custom.startswith("cmd-")
         assert "-part-" in custom
@@ -79,5 +81,8 @@ class TestsFlextCoreUtilitiesGenerators:
         assert isinstance(fallback, str)
 
     def test_generators_additional_missed_paths(self) -> None:
-        generated = u.generate(kind="event", separator="-")
+        generated = u.generate(
+            kind="event",
+            options=FlextUtilitiesGenerators.GenerateOptions(separator="-"),
+        )
         assert generated.startswith("evt-")
