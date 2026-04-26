@@ -122,13 +122,7 @@ class FlextContainer(p.ContainerLifecycle):
         self.providers = u.dependency_providers()
         self.initialize_di_components()
         self.initialize_registrations(
-            services=init_registration.services,
-            factories=init_registration.factories,
-            resources=init_registration.resources,
-            global_config=init_registration.container_config,
-            user_overrides=init_registration.user_overrides,
-            settings=init_registration.settings,
-            context=init_registration.context,
+            registration=init_registration,
         )
         self.sync_config_to_di()
         self.register_existing_providers()
@@ -304,13 +298,7 @@ class FlextContainer(p.ContainerLifecycle):
         instance.providers = u.dependency_providers()
         instance.initialize_di_components()
         instance.initialize_registrations(
-            services=scoped_registration.services,
-            factories=scoped_registration.factories,
-            resources=scoped_registration.resources,
-            global_config=scoped_registration.container_config,
-            user_overrides=scoped_registration.user_overrides,
-            settings=scoped_registration.settings,
-            context=scoped_registration.context,
+            registration=scoped_registration,
         )
         instance.sync_config_to_di()
         instance.register_existing_providers()
@@ -660,18 +648,7 @@ class FlextContainer(p.ContainerLifecycle):
     def initialize_registrations(
         self,
         *,
-        services: Mapping[str, m.ServiceRegistration] | None = None,
-        factories: Mapping[str, m.FactoryRegistration] | None = None,
-        resources: Mapping[str, m.ResourceRegistration] | None = None,
-        global_config: m.ContainerConfig | None = None,
-        user_overrides: (
-            t.UserOverridesMapping
-            | m.ConfigMap
-            | Mapping[str, m.ConfigMap | t.ScalarList | t.Scalar]
-            | None
-        ) = None,
-        settings: p.Settings | None = None,
-        context: p.Context | None = None,
+        registration: m.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Initialize service registrations and configuration.
 
@@ -679,9 +656,10 @@ class FlextContainer(p.ContainerLifecycle):
         Can be called from __init__ or _create_scoped_instance.
         Sets private attributes directly - this is internal initialization.
         """
-        self._services = dict(services) if services is not None else {}
-        self._factories = dict(factories) if factories is not None else {}
-        self._resources = dict(resources) if resources is not None else {}
+        resolved_registration = registration or m.ServiceRegistrationSpec()
+        self._services = dict(resolved_registration.services or {})
+        self._factories = dict(resolved_registration.factories or {})
+        self._resources = dict(resolved_registration.resources or {})
         self._internal_registrations = {
             str(name)
             for name in (
@@ -691,7 +669,10 @@ class FlextContainer(p.ContainerLifecycle):
             )
             if str(name) in self._core_names()
         }
-        self._global_config = global_config or self._create_container_config()
+        self._global_config = (
+            resolved_registration.container_config or self._create_container_config()
+        )
+        user_overrides = resolved_registration.user_overrides
         if isinstance(user_overrides, m.ConfigMap):
             user_overrides_map = user_overrides
         elif user_overrides is not None:
@@ -707,15 +688,18 @@ class FlextContainer(p.ContainerLifecycle):
             user_overrides_map = m.ConfigMap(root={})
         self._user_overrides = user_overrides_map
         config_instance = self._require_settings(
-            settings if settings is not None else FlextSettings.fetch_global(),
+            resolved_registration.settings or FlextSettings.fetch_global(),
             source="container settings",
         )
         self._config = config_instance
         # Always guarantee context is initialized to valid-by-construction design.
         # If no context was provided, create a default FlextContext instance.
         # This eliminates untestable error states where context could be None.
-        if context is not None:
-            self._context = self._require_context(context, source="container context")
+        if resolved_registration.context is not None:
+            self._context = self._require_context(
+                resolved_registration.context,
+                source="container context",
+            )
         else:
             self._context = FlextContext()
 

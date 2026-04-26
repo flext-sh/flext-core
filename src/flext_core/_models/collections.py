@@ -42,35 +42,35 @@ class FlextModelsCollections:
             ),
         ] = None
         gt: Annotated[
-            float | None,
+            float | str | None,
             up.Field(
                 default=None,
                 title="Greater Than",
-                description="Require numeric or length-derived value to be greater than this value.",
+                description="Require value to be greater than this (sortable: numeric or string).",
             ),
         ] = None
         gte: Annotated[
-            float | None,
+            float | str | None,
             up.Field(
                 default=None,
                 title="Greater Than Or Equal",
-                description="Require numeric or length-derived value to be greater than or equal to this value.",
+                description="Require value to be greater than or equal to this (sortable: numeric or string).",
             ),
         ] = None
         lt: Annotated[
-            float | None,
+            float | str | None,
             up.Field(
                 default=None,
                 title="Less Than",
-                description="Require numeric or length-derived value to be less than this value.",
+                description="Require value to be less than this (sortable: numeric or string).",
             ),
         ] = None
         lte: Annotated[
-            float | None,
+            float | str | None,
             up.Field(
                 default=None,
                 title="Less Than Or Equal",
-                description="Require numeric or length-derived value to be less than or equal to this value.",
+                description="Require value to be less than or equal to this (sortable: numeric or string).",
             ),
         ] = None
         is_: Annotated[

@@ -716,11 +716,8 @@ class FlextUtilitiesBeartypeEngine:
             return None
         try:
             source = Path(src_file).read_text(encoding="utf-8")
-        except OSError:
-            return None
-        try:
             tree = ast.parse(source)
-        except SyntaxError:
+        except (OSError, SyntaxError):
             return None
         return src_file, tree
 
@@ -1282,32 +1279,26 @@ class FlextUtilitiesBeartypeEngine:
         """
         try:
             src_file = inspect.getfile(target)
-            if not src_file.endswith("utilities.py"):
-                return _NO_VIOLATION
-
+            violation: t.StrMapping | None = _NO_VIOLATION
             module_name = getattr(target, "__module__", "") or ""
             package = module_name.split(".")[0]
-
-            if package in c.ENFORCEMENT_PATTERN_B_UTILITIES_WHITELIST:
-                return _NO_VIOLATION
-
             min_multi_parent = 2
-            if len(target.__bases__) < min_multi_parent:
-                return _NO_VIOLATION
-
-            first_base = target.__bases__[0]
-            first_name = getattr(first_base, "__name__", "")
-
-            if first_name == "u":
-                source = Path(src_file).read_text(encoding="utf-8")
-
-                if re.search(r"\bu\.(\w+)\s*\(", source):
-                    return {
-                        "class": target.__name__,
-                        "first_base": "u",
-                    }
-
-            return _NO_VIOLATION
+            is_eligible = (
+                src_file.endswith("utilities.py")
+                and package not in c.ENFORCEMENT_PATTERN_B_UTILITIES_WHITELIST
+                and len(target.__bases__) >= min_multi_parent
+            )
+            if is_eligible:
+                first_base = target.__bases__[0]
+                first_name = getattr(first_base, "__name__", "")
+                if first_name == "u":
+                    source = Path(src_file).read_text(encoding="utf-8")
+                    if re.search(r"\bu\.(\w+)\s*\(", source):
+                        violation = {
+                            "class": target.__name__,
+                            "first_base": "u",
+                        }
+            return violation
         except (TypeError, OSError, AttributeError):
             return _NO_VIOLATION
 

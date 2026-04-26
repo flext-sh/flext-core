@@ -236,18 +236,7 @@ class FlextProtocolsContainer:
         def initialize_registrations(
             self,
             *,
-            services: Mapping[str, m.ServiceRegistration] | None = None,
-            factories: Mapping[str, m.FactoryRegistration] | None = None,
-            resources: Mapping[str, m.ResourceRegistration] | None = None,
-            global_config: m.ContainerConfig | None = None,
-            user_overrides: (
-                t.UserOverridesMapping
-                | m.ConfigMap
-                | Mapping[str, m.ConfigMap | t.ScalarList | t.Scalar]
-                | None
-            ) = None,
-            settings: FlextProtocolsSettings.Settings | None = None,
-            context: FlextProtocolsContext.Context | None = None,
+            registration: m.ServiceRegistrationSpec | None = None,
         ) -> None:
             """Initialize explicit registrations and runtime-bound state."""
             ...

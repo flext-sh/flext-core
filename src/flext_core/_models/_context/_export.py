@@ -35,9 +35,10 @@ class FlextModelsContextExport:
         data: Annotated[
             Mapping[str, t.JsonPayload],
             Field(
+                default_factory=lambda: MappingProxyType({}),
                 description="All context data from all scopes",
             ),
-        ] = Field(default_factory=lambda: MappingProxyType({}))
+        ]
         metadata: Annotated[
             m.Metadata | FlextModelsContainers.Dict | None,
             BeforeValidator(
@@ -58,9 +59,10 @@ class FlextModelsContextExport:
                 ),
             ),
             Field(
+                default_factory=lambda: MappingProxyType({}),
                 description="Usage statistics (operation counts, timing info)",
             ),
-        ] = Field(default_factory=lambda: MappingProxyType({}))
+        ]
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextModelsContextExport"]

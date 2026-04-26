@@ -17,7 +17,7 @@ from collections.abc import (
     MutableSequence,
     Sequence,
 )
-from typing import TypeIs, get_args, get_origin, get_type_hints
+from typing import ClassVar, TypeIs, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
@@ -30,6 +30,10 @@ class FlextUtilitiesChecker:
     Extracts type introspection and compatibility logic from h
     to simplify handler initialization and provide reusable type checking.
     """
+
+    _HANDLER_GENERIC_ORIGIN_NAMES: ClassVar[frozenset[str]] = frozenset(
+        {"FlextHandlers", "h"},
+    )
 
     @staticmethod
     def _is_module_export_callable(
@@ -114,35 +118,32 @@ class FlextUtilitiesChecker:
         handler_class: type,
     ) -> Sequence[t.TypeHintSpecifier]:
         """Extract message types from generic base annotations."""
-        message_types: MutableSequence[t.TypeHintSpecifier] = []
         raw_bases: t.GuardInput = getattr(
             handler_class,
             "__orig_bases__",
             (),
         )
-        if FlextUtilitiesGuards.object_tuple(raw_bases):
-            for base in raw_bases:
-                origin = get_origin(base)
-                if origin is not None and origin.__name__ in {"h", "FlextHandlers"}:
-                    args = get_args(base)
-                    if args:
-                        message_types.append(args[0])
+        generic_bases = raw_bases if FlextUtilitiesGuards.object_tuple(raw_bases) else ()
+        message_types: MutableSequence[t.TypeHintSpecifier] = [
+            args[0]
+            for base in generic_bases
+            if (origin := get_origin(base)) is not None
+            if getattr(origin, "__name__", "") in cls._HANDLER_GENERIC_ORIGIN_NAMES
+            if (args := get_args(base))
+        ]
         if message_types:
             return message_types
-        for parent_cls in handler_class.__bases__:
-            meta = getattr(parent_cls, "__pydantic_generic_metadata__", None)
-            if meta is None:
-                continue
-            origin = meta.get("origin")
-            if origin is None:
-                continue
-            origin_name = getattr(origin, "__name__", "")
-            if origin_name not in {"FlextHandlers", "h"}:
-                continue
-            args = meta.get("args", ())
-            if args:
-                message_types.append(args[0])
-        return message_types
+        return [
+            args[0]
+            for parent_cls in handler_class.__bases__
+            if isinstance(
+                (meta := getattr(parent_cls, "__pydantic_generic_metadata__", None)),
+                Mapping,
+            )
+            if (origin := meta.get("origin")) is not None
+            if getattr(origin, "__name__", "") in cls._HANDLER_GENERIC_ORIGIN_NAMES
+            if (args := meta.get("args", ()))
+        ]
 
     @classmethod
     def _extract_message_type_from_handle(

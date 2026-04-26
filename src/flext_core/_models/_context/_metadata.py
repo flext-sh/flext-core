@@ -76,9 +76,10 @@ class FlextModelsContextMetadata:
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),
             up.Field(
+                default_factory=lambda: MappingProxyType({}),
                 description="Custom metadata attributes for caller-specific tracing and context.",
             ),
-        ] = up.Field(default_factory=lambda: MappingProxyType({}))
+        ]
 
         @up.model_validator(mode="after")
         def validate_context_protocol(self) -> Self:
@@ -108,15 +109,17 @@ class FlextModelsContextMetadata:
         domain_data: Annotated[
             Mapping[str, t.JsonPayload],
             up.Field(
+                default_factory=lambda: MappingProxyType({}),
                 description="Domain payload values scoped to the current business context.",
             ),
-        ] = up.Field(default_factory=lambda: MappingProxyType({}))
+        ]
         domain_metadata: Annotated[
             t.JsonMapping,
             up.Field(
+                default_factory=lambda: MappingProxyType({}),
                 description="Domain metadata attributes describing origin and processing state.",
             ),
-        ] = up.Field(default_factory=lambda: MappingProxyType({}))
+        ]
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextModelsContextMetadata"]

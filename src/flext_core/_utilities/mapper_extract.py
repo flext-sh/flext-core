@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import Annotated
 
 from flext_core import (
     FlextModelsContainers,
@@ -23,6 +24,22 @@ from flext_core import (
 
 class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
     """Path-based ``extract`` method and its helpers."""
+
+    class ExtractResolvePathPartContext(m.Value):
+        """Validated context envelope for one path-part extraction step."""
+
+        path_context: Annotated[
+            str,
+            m.Field(default="", description="Resolved parent path context"),
+        ]
+        default: Annotated[
+            t.JsonPayload | None,
+            m.Field(default=None, description="Default fallback payload"),
+        ]
+        required: Annotated[
+            bool,
+            m.Field(default=False, description="Whether missing values are fatal"),
+        ]
 
     @staticmethod
     def _extract_fail_or_default(
@@ -45,6 +62,25 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         return r[t.JsonPayload].ok(default)
 
     @staticmethod
+    def _extract_resolve_result(
+        result: p.Result[t.JsonPayload],
+        *,
+        failure_message: str,
+        default: t.JsonPayload | None,
+        required: bool,
+    ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
+        """Resolve extractor step result into next value or early fallback result."""
+        if result.failure:
+            if "found_none:" in (result.error or ""):
+                return None, None
+            return None, FlextUtilitiesMapperExtract._extract_fail_or_default(
+                failure_message,
+                default=default,
+                required=required,
+            )
+        return result.unwrap_or(None), None
+
+    @staticmethod
     def _extract_resolve_path_part(
         current: t.JsonPayload
         | t.JsonMapping
@@ -53,9 +89,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         | None,
         part: str,
         *,
-        path_context: str,
-        default: t.JsonPayload | None,
-        required: bool,
+        context: ExtractResolvePathPartContext,
     ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
         """Resolve one path segment; returns (next_current, None) or (None, early_result)."""
         if "[" in part and part.endswith("]"):
@@ -66,22 +100,18 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
             key_part, array_match = part, ""
 
         get_result = FlextUtilitiesMapperExtract._extract_get_value(current, key_part)
-        next_val: t.JsonPayload | None
-        if get_result.failure:
-            if "found_none:" in (get_result.error or ""):
-                next_val = None
-            else:
-                return None, FlextUtilitiesMapperExtract._extract_fail_or_default(
-                    e.render_template(
-                        c.ERR_TEMPLATE_KEY_NOT_FOUND_AT_PATH,
-                        key=key_part,
-                        path=path_context,
-                    ),
-                    default=default,
-                    required=required,
-                )
-        else:
-            next_val = get_result.unwrap_or(None)
+        next_val, early_result = FlextUtilitiesMapperExtract._extract_resolve_result(
+            get_result,
+            failure_message=e.render_template(
+                c.ERR_TEMPLATE_KEY_NOT_FOUND_AT_PATH,
+                key=key_part,
+                path=context.path_context,
+            ),
+            default=context.default,
+            required=context.required,
+        )
+        if early_result is not None:
+            return None, early_result
 
         if array_match and next_val is not None:
             narrowed_for_index = (
@@ -94,21 +124,20 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
                 narrowed_for_index,
                 array_match,
             )
-            if index_result.failure:
-                if "found_none:" in (index_result.error or ""):
-                    next_val = None
-                else:
-                    return None, FlextUtilitiesMapperExtract._extract_fail_or_default(
-                        e.render_template(
-                            c.ERR_TEMPLATE_ARRAY_ERROR_AT_KEY,
-                            key=key_part,
-                            error=index_result.error,
-                        ),
-                        default=default,
-                        required=required,
-                    )
-            else:
-                next_val = index_result.unwrap_or(None)
+            next_val, early_result = (
+                FlextUtilitiesMapperExtract._extract_resolve_result(
+                    index_result,
+                    failure_message=e.render_template(
+                        c.ERR_TEMPLATE_ARRAY_ERROR_AT_KEY,
+                        key=key_part,
+                        error=index_result.error,
+                    ),
+                    default=context.default,
+                    required=context.required,
+                )
+            )
+            if early_result is not None:
+                return None, early_result
 
         return next_val, None
 
@@ -162,9 +191,13 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
                     FlextUtilitiesMapperExtract._extract_resolve_path_part(
                         current,
                         part,
-                        path_context=separator.join(parts[:i]),
-                        default=default,
-                        required=required,
+                        context=FlextUtilitiesMapperExtract.ExtractResolvePathPartContext.model_validate(
+                            {
+                                "path_context": separator.join(parts[:i]),
+                                "default": default,
+                                "required": required,
+                            },
+                        ),
                     )
                 )
                 if early_return is not None:

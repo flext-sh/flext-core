@@ -62,19 +62,13 @@ class FlextModelsExceptionParams:
         resource_type: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             up.Field(
-                default=None,
                 description="Domain resource type associated with the failure.",
-                title="Resource Type",
-                examples=["user"],
             ),
         ] = None
         resource_id: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             up.Field(
-                default=None,
                 description="Identifier of the resource associated with the failure.",
-                title="Resource ID",
-                examples=["42"],
             ),
         ] = None
 
@@ -84,19 +78,13 @@ class FlextModelsExceptionParams:
         expected_type: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             up.Field(
-                default=None,
                 description="Expected runtime type name for the failing value.",
-                title="Expected Type",
-                examples=["str"],
             ),
         ] = None
         actual_type: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             up.Field(
-                default=None,
                 description="Actual runtime type name received at runtime.",
-                title="Actual Type",
-                examples=["int"],
             ),
         ] = None
 
@@ -126,19 +114,13 @@ class FlextModelsExceptionParams:
         config_key: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             up.Field(
-                default=None,
                 description="Settings key associated with the error.",
-                title="Settings Key",
-                examples=["database_url"],
             ),
         ] = None
         config_source: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             up.Field(
-                default=None,
                 description="Settings source where the invalid value originated.",
-                title="Settings Source",
-                examples=[".env"],
             ),
         ] = None
 
@@ -148,28 +130,19 @@ class FlextModelsExceptionParams:
         host: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             up.Field(
-                default=None,
                 description="Hostname or address used for the failed connection attempt.",
-                title="Host",
-                examples=["db.internal"],
             ),
         ] = None
         port: Annotated[
             FlextModelsExceptionParams.OptStrictInt,
             up.Field(
-                default=None,
                 description="Network port used for the failed connection attempt.",
-                title="Port",
-                examples=[5432],
             ),
         ] = None
         timeout: Annotated[
             FlextModelsExceptionParams.OptNumeric,
             up.Field(
-                default=None,
                 description="Connection timeout threshold in seconds.",
-                title="Timeout",
-                examples=[5, 5.5],
             ),
         ] = None
 
@@ -201,19 +174,13 @@ class FlextModelsExceptionParams:
         auth_method: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             up.Field(
-                default=None,
                 description="Authentication method used when the failure occurred.",
-                title="Auth Method",
-                examples=["token"],
             ),
         ] = None
         user_id: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             up.Field(
-                default=None,
                 description="User identifier associated with the authentication attempt.",
-                title="User ID",
-                examples=["user-123"],
             ),
         ] = None
 
@@ -301,28 +268,19 @@ class FlextModelsExceptionParams:
         service_name: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             up.Field(
-                default=None,
                 description="External service monitored by the circuit breaker.",
-                title="Service Name",
-                examples=["payments-api"],
             ),
         ] = None
         failure_count: Annotated[
             FlextModelsExceptionParams.OptStrictInt,
             up.Field(
-                default=None,
                 description="Consecutive failure count at the moment the breaker opened.",
-                title="Failure Count",
-                examples=[5],
             ),
         ] = None
         reset_timeout: Annotated[
             FlextModelsExceptionParams.OptNumeric,
             up.Field(
-                default=None,
                 description="Seconds before allowing a circuit breaker reset attempt.",
-                title="Reset Timeout",
-                examples=[30, 30.0],
             ),
         ] = None
 
@@ -335,19 +293,13 @@ class FlextModelsExceptionParams:
         operation: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             up.Field(
-                default=None,
                 description="Operation name associated with the failure.",
-                title="Operation",
-                examples=["publish_events"],
             ),
         ] = None
         reason: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             up.Field(
-                default=None,
                 description="Short reason explaining the operation failure.",
-                title="Reason",
-                examples=["transient_backend_error"],
             ),
         ] = None
 

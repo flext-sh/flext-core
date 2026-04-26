@@ -43,6 +43,12 @@ class FlextUtilitiesGuards(
         "lt": lambda v, c: v < c,
         "lte": lambda v, c: v <= c,
     }
+    _STRING_OPS: ClassVar[Mapping[str, Callable[[str, str], bool]]] = {
+        "gt": lambda v, c: v > c,
+        "gte": lambda v, c: v >= c,
+        "lt": lambda v, c: v < c,
+        "lte": lambda v, c: v <= c,
+    }
 
     @staticmethod
     def _resolve_numeric(value: t.GuardInput) -> t.Numeric:
@@ -103,8 +109,17 @@ class FlextUtilitiesGuards(
             ):
                 return False
         for op_name, num_fn in FlextUtilitiesGuards._NUMERIC_OPS.items():
-            spec_val_num: float | None = getattr(guard_spec, op_name, None)
-            if spec_val_num is not None and not num_fn(check_val, spec_val_num):
+            spec_val_num: float | str | None = getattr(guard_spec, op_name, None)
+            if spec_val_num is None:
+                continue
+            if isinstance(spec_val_num, str) and isinstance(value, str):
+                str_fn = FlextUtilitiesGuards._STRING_OPS[op_name]
+                if not str_fn(value, spec_val_num):
+                    return False
+                continue
+            if isinstance(spec_val_num, (int, float)) and not num_fn(
+                check_val, spec_val_num
+            ):
                 return False
         return True
 
