@@ -1,0 +1,16 @@
+src/flext_core/decorators.py
+  h_9db9d35f50cf33 158,163-164,166-168,170,177-206,212-216,220,233-236,252-254
+src/flext_core/_exceptions/template.py
+  h_9db9d35f50cf33 27,29-30,32-34,36-40,43-45,47-48,84-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "66b3db7aeb3a4c8fcbc1f5e24456181f41504cd4",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
