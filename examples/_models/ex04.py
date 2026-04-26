@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import m, t
+from flext_core import m, t, u
 
 
 class ExamplesFlextCoreModelsEx04:
@@ -14,48 +14,48 @@ class ExamplesFlextCoreModelsEx04:
         class Ex04CreateUser(m.Command):
             """Command to create a new user in example 04."""
 
-            command_type: t.NonEmptyStr = "ex04_create_user"
-            username: str
+            command_type: t.NonEmptyStr = u.Field(default="ex04_create_user", description="Command type identifier for create user operation")
+            username: str = u.Field(description="Username for the user to create")
 
         class Ex04GetUser(m.Query):
             """Query to get a user record by username in example 04."""
 
-            query_type: str | None = "ex04_get_user"
-            username: str
+            query_type: str | None = u.Field(default="ex04_get_user", description="Query type identifier for get user operation")
+            username: str = u.Field(description="Username to retrieve")
 
         class Ex04DeleteUser(m.Command):
             """Command to delete a user in example 04."""
 
-            command_type: t.NonEmptyStr = "ex04_delete_user"
-            username: str
+            command_type: t.NonEmptyStr = u.Field(default="ex04_delete_user", description="Command type identifier for delete user operation")
+            username: str = u.Field(description="Username of the user to delete")
 
         class Ex04FailingDelete(m.Command):
             """Command deliberately fails to demonstrate error handling in example 04."""
 
-            command_type: t.NonEmptyStr = "ex04_failing_delete"
-            username: str
+            command_type: t.NonEmptyStr = u.Field(default="ex04_failing_delete", description="Command type identifier for deliberately failing delete operation")
+            username: str = u.Field(description="Username for the failing delete operation")
 
         class Ex04AutoCommand(m.Command):
-            command_type: t.NonEmptyStr = "ex04_auto_command"
-            payload: str
+            command_type: t.NonEmptyStr = u.Field(default="ex04_auto_command", description="Command type identifier for auto command")
+            payload: str = u.Field(description="Payload data for the auto command")
 
         class Ex04Ping(m.Command):
-            command_type: t.NonEmptyStr = "ex04_ping"
-            value: str
+            command_type: t.NonEmptyStr = u.Field(default="ex04_ping", description="Command type identifier for ping operation")
+            value: str = u.Field(description="Value data for the ping command")
 
         class Ex04UnknownQuery(m.Query):
-            query_type: str | None = "ex04_unknown_query"
-            payload: str
+            query_type: str | None = u.Field(default="ex04_unknown_query", description="Query type identifier for unknown query operation")
+            payload: str = u.Field(description="Payload data for the unknown query")
 
         class Ex04UserCreated(m.Event):
-            username: str
-            event_type: str = "user_created"
-            aggregate_id: str = "users"
+            username: str = u.Field(description="Username of the user that was created")
+            event_type: str = u.Field(default="user_created", description="Event type identifier for user creation")
+            aggregate_id: str = u.Field(default="users", description="Aggregate ID for users")
 
         class Ex04NoSubscriberEvent(m.Event):
-            marker: str
-            event_type: str = "no_subscribers"
-            aggregate_id: str = "events"
+            marker: str = u.Field(description="Marker identifying the event as having no subscribers")
+            event_type: str = u.Field(default="no_subscribers", description="Event type identifier for no subscribers event")
+            aggregate_id: str = u.Field(default="events", description="Aggregate ID for events")
 
 
 # Module-level re-exports for package __init__.py API
