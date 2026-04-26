@@ -5,12 +5,13 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
 )
+from typing import Annotated
 
 from flext_core import m, p, r, t, u
 
 
 class Ex10Message(m.Command):
-    text: str = u.Field(description="Message text content")
+    text: Annotated[str, u.Field(description="Message text content")]
 
 
 class Ex10DerivedMessage(Ex10Message):
@@ -18,26 +19,35 @@ class Ex10DerivedMessage(Ex10Message):
 
 
 class Ex10ContextPayload(m.Value):
-    text: str = u.Field(description="Text payload for context")
+    text: Annotated[str, u.Field(description="Text payload for context")]
 
 
 class Ex10Entity(m.Value):
-    unique_id: str = u.Field(description="Unique identifier for entity")
+    unique_id: Annotated[str, u.Field(description="Unique identifier for entity")]
 
 
 class Ex10ProcessorGood(m.Value):
-    marker: str = u.Field(default="good", description="Marker indicating successful processing")
+    marker: Annotated[
+        str,
+        u.Field(description="Marker indicating successful processing"),
+    ] = "good"
 
     def process(self) -> bool:
         return True
 
 
 class Ex10ProcessorBad(m.Value):
-    marker: str = u.Field(default="bad", description="Marker indicating failed processing")
+    marker: Annotated[
+        str,
+        u.Field(description="Marker indicating failed processing"),
+    ] = "bad"
 
 
 class Ex10ProtocolHandler(m.BaseModel):
-    message_type: type = u.Field(default=Ex10Message, description="Message type for protocol handler")
+    message_type: Annotated[
+        type,
+        u.Field(description="Message type for protocol handler"),
+    ] = Ex10Message
 
     def handle(self, message: Ex10Message) -> p.Result[str]:
         return r[str].ok(message.text)
@@ -49,7 +59,10 @@ class Ex10CommandBusStub(m.BaseModel):
 
 
 class Ex10ServiceStub(m.BaseModel):
-    run: Callable[[], t.JsonValue] | None = u.Field(default=None, description="Callable returning JSON value or None")
+    run: Annotated[
+        Callable[[], t.JsonValue] | None,
+        u.Field(description="Callable returning JSON value or None"),
+    ] = None
 
 
 class ExamplesFlextCoreModelsEx10(m):
