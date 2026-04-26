@@ -964,6 +964,45 @@ class FlextUtilitiesBeartypeEngine:
             "line": str(line),
         }
 
+    @staticmethod
+    def check_no_wrapper_root_alias_import(target: type) -> t.StrMapping | None:
+        """Wrapper aliases must be imported from root package in tests/examples/scripts (ENFORCE-055)."""
+        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        if loaded is None:
+            return _NO_VIOLATION
+
+        src_file, _tree = loaded
+        normalized = src_file.replace("\\", "/")
+        if not any(
+            segment in normalized for segment in ("/tests/", "/examples/", "/scripts/")
+        ):
+            return _NO_VIOLATION
+        if normalized.endswith("/__init__.py"):
+            return _NO_VIOLATION
+
+        try:
+            source = Path(src_file).read_text(encoding="utf-8")
+        except OSError:
+            return _NO_VIOLATION
+
+        pattern = re.compile(
+            r"^\s*from\s+(tests|examples|scripts)\\."
+            r"(constants|models|protocols|typings|utilities)\s+import\s+"
+            r"([^\n]*\\b[cmptu]\\b[^\n]*)$",
+            re.MULTILINE,
+        )
+        match = pattern.search(source)
+        if match is None:
+            return _NO_VIOLATION
+
+        statement = match.group(0).strip()
+        line = source.count("\n", 0, match.start()) + 1
+        return {
+            "file": Path(src_file).name,
+            "line": str(line),
+            "statement": statement,
+        }
+
     # -----------------------------------------------------------------------
     # R1–R10 MRO compliance checks
     # -----------------------------------------------------------------------

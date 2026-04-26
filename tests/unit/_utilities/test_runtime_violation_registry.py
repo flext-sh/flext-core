@@ -9,6 +9,7 @@ payloads.
 from __future__ import annotations
 
 import threading
+from collections.abc import Iterator
 
 import pytest
 
@@ -19,7 +20,7 @@ class TestsFlextCoreUtilitiesRuntimeViolationRegistry:
     """Behavior contract for FlextUtilitiesRuntimeViolationRegistry."""
 
     @pytest.fixture(autouse=True)
-    def _reset_registry(self) -> None:
+    def _reset_registry(self) -> Iterator[None]:
         u.clear_violation_reports()
         yield
         u.clear_violation_reports()

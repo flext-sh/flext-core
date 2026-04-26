@@ -13,6 +13,7 @@ from __future__ import annotations
 import importlib.util
 import sys
 import textwrap
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -24,7 +25,7 @@ class TestsFlextCoreUtilitiesBeartypeViolationCapture:
     """Behavior contract for the beartype-driven violation capture pipeline."""
 
     @pytest.fixture(autouse=True)
-    def _reset(self) -> None:
+    def _reset(self) -> Iterator[None]:
         u.unregister_violation_capture("ENFORCE-905")
         u.unregister_violation_capture("ENFORCE-906")
         u.clear_violation_reports()

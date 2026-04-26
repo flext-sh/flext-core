@@ -562,6 +562,13 @@ class FlextConstantsEnforcement:
             'deprecated namespace "{symbol}" in {file}:{line}',
             "Use flat test namespace access (c/p/t/m/u.Tests.*) with no Core intermediary.",
         ),
+        "no_wrapper_root_alias_import": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            'wrapper alias import must use root package in {file}:{line}: "{statement}"',
+            "Use `from tests|examples|scripts import c, p, t, m, u` (no submodule alias imports).",
+        ),
         # R1–R10 MRO compliance rules
         "no_concrete_namespace_import": (
             EnforcementCategory.NAMESPACE,
@@ -1554,6 +1561,177 @@ def _hydrate_enforcement_catalog() -> None:
                 skills=(
                     "flext-mro-namespace-rules",
                     "flext-import-rules",
+                ),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-055",
+                description=(
+                    "Wrapper alias imports in tests/examples/scripts must come "
+                    "from wrapper root package (`from tests|examples|scripts import ...`). "
+                    "Submodule alias imports are forbidden outside `__init__.py`."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_no_wrapper_root_alias_import",
+                ),
+                agents_md_anchor="0-quick-reference-must-read",
+                skills=(
+                    "flext-import-rules",
+                    "flext-mro-namespace-rules",
+                    "rules-scripts",
+                ),
+            ),
+            # ENFORCE-066+: plan §1.2 source-rule range (shifted from plan IDs
+            # 053..065 because off-plan 045..053 already occupy the original
+            # slots — IDs are flexible per AGENTS.md, semantic content matches
+            # the plan exactly). First entry registers MINIMAL_AST in the
+            # catalog (catalog completeness invariant).
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-066",
+                description=(
+                    "Module-level alias assignment (``LegacyName = NewName``) "
+                    "where both sides are CapWords and the LHS is unreferenced"
+                    " is a backwards-compat shim. Violates AGENTS.md §2.4 "
+                    "(No Backward-Compat Aliases) — plan §1.2 row 053."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementMinimalAstSource(
+                    pattern="$X = $Y",
+                    require_source=True,
+                ),
+                agents_md_anchor="2-4-no-backwards-compat-aliases",
+                skills=("flext-mro-namespace-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-067",
+                description=(
+                    "Flat module-level facade rebind (e.g. ``c = "
+                    "FlextProjectConstants`` outside the canonical "
+                    "``constants.py`` tail) violates AGENTS.md §2.2 "
+                    "(One Facade Rule) — plan §1.2 row 054."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementMinimalAstSource(
+                    pattern="<flat-facade-rebind>",
+                    require_source=True,
+                ),
+                agents_md_anchor="2-2-facades-namespaces-naming-patterns",
+                skills=("flext-mro-namespace-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-068",
+                description=(
+                    "Module-level wrapper that re-exports an inner namespace "
+                    "(``X = SomeNamespace.X``) without adding behavior is a "
+                    "namespace alias. Violates AGENTS.md §2.4 — plan §1.2 "
+                    "row 056."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementMinimalAstSource(
+                    pattern="$X = $NS.$X",
+                    require_source=True,
+                ),
+                agents_md_anchor="2-4-no-backwards-compat-aliases",
+                skills=("flext-mro-namespace-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-069",
+                description=(
+                    "Direct ``from structlog import …`` in a consumer "
+                    "project violates AGENTS.md §2.7 (Library Abstraction "
+                    "Boundaries) — flext-core's ``FlextLogger`` is the only"
+                    " sanctioned access — plan §1.2 row 058."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementMinimalAstSource(
+                    pattern="from structlog import $X",
+                    require_source=True,
+                ),
+                agents_md_anchor="2-7-library-abstraction-boundaries",
+                skills=("flext-import-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-070",
+                description=(
+                    "Direct ``from returns import …`` in a consumer project "
+                    "violates AGENTS.md §2.7 — ``FlextResult`` is the only "
+                    "sanctioned access — plan §1.2 row 059."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementMinimalAstSource(
+                    pattern="from returns import $X",
+                    require_source=True,
+                ),
+                agents_md_anchor="2-7-library-abstraction-boundaries",
+                skills=("flext-import-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-071",
+                description=(
+                    "Direct ``from orjson import …`` (or ``import orjson``) "
+                    "in a consumer project violates AGENTS.md §2.7 — JSON "
+                    "I/O routes through the canonical flext-core utilities "
+                    "— plan §1.2 row 060."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementMinimalAstSource(
+                    pattern="from orjson import $X",
+                    require_source=True,
+                ),
+                agents_md_anchor="2-7-library-abstraction-boundaries",
+                skills=("flext-import-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-072",
+                description=(
+                    "Direct ``from yaml import …`` (or ``import yaml``) in a"
+                    " consumer project violates AGENTS.md §2.7 — YAML I/O "
+                    "routes through canonical flext-core utilities — plan "
+                    "§1.2 row 061."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementMinimalAstSource(
+                    pattern="(import yaml|from yaml import $X)",
+                    require_source=True,
+                ),
+                agents_md_anchor="2-7-library-abstraction-boundaries",
+                skills=("flext-import-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-073",
+                description=(
+                    "Direct ``from dependency_injector import …`` in a "
+                    "consumer project violates AGENTS.md §2.7 — DI container "
+                    "access flows through ``FlextContainer`` / "
+                    "``@u.factory`` — plan §1.2 row 062."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementMinimalAstSource(
+                    pattern="from dependency_injector import $X",
+                    require_source=True,
+                ),
+                agents_md_anchor="2-7-library-abstraction-boundaries",
+                skills=("flext-import-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-074",
+                description=(
+                    "``typer.Typer()`` instantiation outside ``flext-cli/"
+                    "src/`` indicates a consumer project bypassing the "
+                    "FlextCli MRO. Violates AGENTS.md §2.5 (Consumer CLI "
+                    "Composition) — plan §1.2 row 063 (detect-only, no "
+                    "fix_source)."
+                ),
+                severity=_me.EnforcementRuleSeverity.MEDIUM,
+                source=_me.EnforcementMinimalAstSource(
+                    pattern="typer.Typer()",
+                    require_source=True,
+                ),
+                agents_md_anchor="2-5-consumer-cli-composition",
+                skills=("flext-patterns",),
+                notes=(
+                    "Scope-exclude: flext-cli/src/** (the canonical "
+                    "FlextCli typer surface lives there)."
                 ),
             ),
         ),

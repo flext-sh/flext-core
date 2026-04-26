@@ -1,10 +1,10 @@
-"""Behavior contract for ENFORCE-039..044 + ENFORCE-054.
+"""Behavior contract for ENFORCE-039..044 + ENFORCE-054/055.
 
 Asserts the runtime dispatch chain for the six rules:
 
 * ENFORCE-040 delegates to ``ruff PGH003`` via ``EnforcementRuffSource``.
 * ENFORCE-042 reuses the existing ``check_settings_inheritance`` hook.
-* ENFORCE-039 / ENFORCE-041 / ENFORCE-043 / ENFORCE-044 / ENFORCE-054 each pair a
+* ENFORCE-039 / ENFORCE-041 / ENFORCE-043 / ENFORCE-044 / ENFORCE-054 / ENFORCE-055 each pair a
   ``check_<tag>`` static method on ``FlextUtilitiesBeartypeEngine`` with a
   row in ``c.ENFORCEMENT_RULES`` and a dispatch arm in
   ``FlextUtilitiesEnforcementCollect._namespace_items``. Detection
@@ -39,6 +39,7 @@ class TestsFlextCoreEnforcementAptHooks:
         "ENFORCE-043",
         "ENFORCE-044",
         "ENFORCE-054",
+        "ENFORCE-055",
     )
     A_PT_BEARTYPE_TAGS: ClassVar[tuple[str, ...]] = (
         "cast_outside_core",
@@ -46,6 +47,7 @@ class TestsFlextCoreEnforcementAptHooks:
         "pass_through_wrapper",
         "private_attr_probe",
         "no_core_tests_namespace",
+        "no_wrapper_root_alias_import",
     )
 
     # --- Catalog membership invariants ---
@@ -115,6 +117,14 @@ class TestsFlextCoreEnforcementAptHooks:
         assert rule is not None
         assert rule.source.kind == "beartype"
         assert rule.source.hook == "check_no_core_tests_namespace"
+
+    def test_enforce_055_uses_beartype_source_with_wrapper_root_import_hook(
+        self,
+    ) -> None:
+        rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-055")
+        assert rule is not None
+        assert rule.source.kind == "beartype"
+        assert rule.source.hook == "check_no_wrapper_root_alias_import"
 
     # --- Runtime dispatcher wiring contracts ---
 

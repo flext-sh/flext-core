@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_tests import p
 
-from tests.typings import t
+from tests import t
 
 if TYPE_CHECKING:
     from tests import TestsFlextCoreModelsMixins, TestsFlextCoreModelsMixins as _Mixins
