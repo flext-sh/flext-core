@@ -43,97 +43,94 @@ class TestsFlextCoreProtocols(p):
     - All generic protocols come from TestsFlextProtocols
     """
 
-    class Core:
-        """flext-core-specific protocol definitions namespace."""
+    class Tests(p.Tests):
+        """flext-core test protocols namespace."""
 
-        class Tests(p.Tests):
-            """flext-core test protocols namespace."""
+        @runtime_checkable
+        class ExtractFieldCallable(Protocol):
+            """Protocol for _extract_field_value callable."""
 
-            @runtime_checkable
-            class ExtractFieldCallable(Protocol):
-                """Protocol for _extract_field_value callable."""
+            def __call__(
+                self, item: AttrObject, field_name: str
+            ) -> t.JsonValue: ...
 
-                def __call__(
-                    self, item: AttrObject, field_name: str
-                ) -> t.JsonValue: ...
+        @runtime_checkable
+        class TakeCallable(Protocol):
+            """Protocol for take callable."""
 
-            @runtime_checkable
-            class TakeCallable(Protocol):
-                """Protocol for take callable."""
+            def __call__(
+                self,
+                data_or_items: TestsFlextCoreModelsMixins.MaybeModel
+                | TestsFlextCoreModelsMixins.PortModel
+                | int,
+                key_or_index: int | str,
+                *,
+                default: str | None = None,
+            ) -> t.JsonMapping | t.JsonList | t.JsonValue: ...
 
-                def __call__(
-                    self,
-                    data_or_items: TestsFlextCoreModelsMixins.MaybeModel
-                    | TestsFlextCoreModelsMixins.PortModel
-                    | int,
-                    key_or_index: int | str,
-                    *,
-                    default: str | None = None,
-                ) -> t.JsonMapping | t.JsonList | t.JsonValue: ...
+        @runtime_checkable
+        class BuildApplyConvertCallable(Protocol):
+            """Protocol for _op_convert callable."""
 
-            @runtime_checkable
-            class BuildApplyConvertCallable(Protocol):
-                """Protocol for _op_convert callable."""
+            def __call__(
+                self,
+                current: tuple[str, ...] | str | int,
+                operations: Mapping[str, t.MapperInput],
+                default_val: t.JsonValue,
+                on_error: str,
+            ) -> t.JsonValue: ...
 
-                def __call__(
-                    self,
-                    current: tuple[str, ...] | str | int,
-                    operations: Mapping[str, t.MapperInput],
-                    default_val: t.JsonValue,
-                    on_error: str,
-                ) -> t.JsonValue: ...
+        @runtime_checkable
+        class ExtractTransformOptionsCallable(Protocol):
+            """Protocol for _extract_transform_options callable."""
 
-            @runtime_checkable
-            class ExtractTransformOptionsCallable(Protocol):
-                """Protocol for _extract_transform_options callable."""
+            def __call__(
+                self,
+                transform_opts: Mapping[str, t.MapperInput],
+            ) -> tuple[
+                bool,
+                bool,
+                bool,
+                t.StrMapping | None,
+                set[str] | None,
+                set[str] | None,
+            ]: ...
 
-                def __call__(
-                    self,
-                    transform_opts: Mapping[str, t.MapperInput],
-                ) -> tuple[
-                    bool,
-                    bool,
-                    bool,
-                    t.StrMapping | None,
-                    set[str] | None,
-                    set[str] | None,
-                ]: ...
+        @runtime_checkable
+        class BuildApplyOpCallable(Protocol):
+            """Protocol for op callable (sort/unique/slice/group)."""
 
-            @runtime_checkable
-            class BuildApplyOpCallable(Protocol):
-                """Protocol for op callable (sort/unique/slice/group)."""
+            def __call__(
+                self,
+                current: tuple[str, str]
+                | tuple[int, int, int]
+                | Sequence[TestsFlextCoreModelsMixins.GroupModel],
+                operations: Mapping[str, t.MapperInput],
+                default_val: t.JsonValue,
+                on_error: str,
+            ) -> t.JsonMapping | t.JsonList | t.JsonValue: ...
 
-                def __call__(
-                    self,
-                    current: tuple[str, str]
-                    | tuple[int, int, int]
-                    | Sequence[TestsFlextCoreModelsMixins.GroupModel],
-                    operations: Mapping[str, t.MapperInput],
-                    default_val: t.JsonValue,
-                    on_error: str,
-                ) -> t.JsonMapping | t.JsonList | t.JsonValue: ...
+        @runtime_checkable
+        class TransformCallable(Protocol):
+            """Protocol for transform callable."""
 
-            @runtime_checkable
-            class TransformCallable(Protocol):
-                """Protocol for transform callable."""
+            def __call__(
+                self,
+                source: BadMapping,
+                **kwargs: t.StrMapping,
+            ) -> p.Result[t.JsonMapping]: ...
 
-                def __call__(
-                    self,
-                    source: BadMapping,
-                    **kwargs: t.StrMapping,
-                ) -> p.Result[t.JsonMapping]: ...
+        @runtime_checkable
+        class MapDictKeysCallable(Protocol):
+            """Protocol for map_dict_keys callable."""
 
-            @runtime_checkable
-            class MapDictKeysCallable(Protocol):
-                """Protocol for map_dict_keys callable."""
-
-                def __call__(
-                    self,
-                    source: TestsFlextCoreModelsMixins.BadItems,
-                    key_map: t.StrMapping,
-                    *,
-                    keep_unmapped: bool = True,
-                ) -> p.Result[t.JsonMapping]: ...
+            def __call__(
+                self,
+                source: TestsFlextCoreModelsMixins.BadItems,
+                key_map: t.StrMapping,
+                *,
+                keep_unmapped: bool = True,
+            ) -> p.Result[t.JsonMapping]: ...
 
 
 p = TestsFlextCoreProtocols

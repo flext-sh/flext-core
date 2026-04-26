@@ -9,6 +9,7 @@ from flext_core import c, m, p, r, t, u
 class ExamplesFlextCoreModelsEx00:
     """Example 00 model namespace."""
 
+
     class Ex00UserProfile(m.Entity):
         """User profile transport model."""
 

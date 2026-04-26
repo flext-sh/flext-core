@@ -30,9 +30,3 @@ class ExamplesFlextCoreModelsEx07:
         """Demo plugin model."""
 
         name: str = u.Field(description="Plugin name")
-
-
-Ex07CreateUserCommand = ExamplesFlextCoreModelsEx07.Ex07CreateUserCommand
-Ex07UserCreatedEvent = ExamplesFlextCoreModelsEx07.Ex07UserCreatedEvent
-Ex07GetUserQuery = ExamplesFlextCoreModelsEx07.Ex07GetUserQuery
-Ex07DemoPlugin = ExamplesFlextCoreModelsEx07.Ex07DemoPlugin
