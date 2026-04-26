@@ -155,7 +155,7 @@ class TestsFlextCoreArchitecturalPatterns:
                 f"entity_{i}",
                 m.ConfigMap(root={"id": i, "name": f"Entity {i}"}),
             )
-            u.Core.Tests.assert_success(
+            u.Tests.assert_success(
                 result,
                 f"Save operation {i} should succeed",
             )
@@ -204,28 +204,28 @@ class TestsFlextCoreArchitecturalPatterns:
                 self.processed_events: MutableSequence[m.DomainEvent] = []
 
             def handle_user_created(
-                self, event: m.Core.Tests.UserCreatedEvent
+                self, event: m.Tests.UserCreatedEvent
             ) -> p.Result[bool]:
                 """Handle user created event."""
                 self.processed_events.append(event)
                 return r[bool].ok(True)
 
             def handle_user_updated(
-                self, event: m.Core.Tests.UserUpdatedEvent
+                self, event: m.Tests.UserUpdatedEvent
             ) -> p.Result[bool]:
                 """Handle user updated event."""
                 self.processed_events.append(event)
                 return r[bool].ok(True)
 
         handler = UserEventHandler()
-        created_event = m.Core.Tests.UserCreatedEvent.model_validate({
+        created_event = m.Tests.UserCreatedEvent.model_validate({
             "event_type": "UserCreated",
             "aggregate_id": "user_123",
             "user_id": "123",
             "user_name": "John Doe",
             "timestamp": time.time(),
         })
-        updated_event = m.Core.Tests.UserUpdatedEvent.model_validate({
+        updated_event = m.Tests.UserUpdatedEvent.model_validate({
             "event_type": "UserUpdated",
             "aggregate_id": "user_123",
             "user_id": "123",
@@ -238,8 +238,8 @@ class TestsFlextCoreArchitecturalPatterns:
         result2 = handler.handle_user_updated(updated_event)
         assert result2.success
         assert len(handler.processed_events) == 2
-        assert isinstance(handler.processed_events[0], m.Core.Tests.UserCreatedEvent)
-        assert isinstance(handler.processed_events[1], m.Core.Tests.UserUpdatedEvent)
+        assert isinstance(handler.processed_events[0], m.Tests.UserCreatedEvent)
+        assert isinstance(handler.processed_events[1], m.Tests.UserUpdatedEvent)
 
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:

@@ -41,7 +41,7 @@ class TestsFlextCoreLibraryIntegration:
         """
         test_value = str(sample_data["string"])
         result = r[str].ok(test_value)
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert result.value == test_value
         entity_id = u.generate()
         assert isinstance(entity_id, str)
@@ -59,7 +59,7 @@ class TestsFlextCoreLibraryIntegration:
     def test_flext_result_with_container(
         self,
         clean_container: p.Container,
-        mock_external_service: u.Core.Tests.FunctionalExternalService,
+        mock_external_service: u.Tests.FunctionalExternalService,
     ) -> None:
         """Test r integration with DI container factory pattern.
 
@@ -94,7 +94,7 @@ class TestsFlextCoreLibraryIntegration:
         """Test entity ID used in r."""
         entity_id = u.generate()
         result = r[str].ok(entity_id)
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert isinstance(result.value, str)
         assert len(result.value) == 36
         assert result.value.count("-") == 4

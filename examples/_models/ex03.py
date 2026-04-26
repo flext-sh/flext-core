@@ -2,29 +2,31 @@
 
 from __future__ import annotations
 
-from flext_core import m
+from typing import Annotated
+
+from flext_core import m, u
 
 
 class Ex03Email(m.Value):
-    value: str
+    value: Annotated[str, u.Field(description="Email address value")]
 
 
 class Ex03Money(m.Value):
-    amount: float
-    currency: str = "USD"
+    amount: Annotated[float, u.Field(description="Monetary amount")]
+    currency: Annotated[str, u.Field(description="ISO 4217 currency code")] = "USD"
 
 
 class Ex03OrderItem(m.Value):
-    sku: str
-    quantity: int = 1
+    sku: Annotated[str, u.Field(description="Stock-keeping unit identifier")]
+    quantity: Annotated[int, u.Field(description="Number of units ordered")] = 1
 
 
 class Ex03Order(m.Entity):
-    status: str = "active"
+    status: Annotated[str, u.Field(description="Order lifecycle status")] = "active"
 
 
 class Ex03User(m.Entity):
-    email: str
+    email: Annotated[str, u.Field(description="User email address")]
 
 
 class ExamplesFlextCoreModelsEx03(m):

@@ -15,9 +15,9 @@ class TestsFlextCoreAutomatedArchitecture:
 
     def test_imports_no_violations(self) -> None:
         result = tv.imports(
-            Path(__file__).resolve().parents[c.Core.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
-            / c.Core.Tests.Paths.SRC_DIR
-            / c.Core.Tests.Paths.CORE_PACKAGE_DIR,
+            Path(__file__).resolve().parents[c.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
+            / c.Tests.Paths.SRC_DIR
+            / c.Tests.Paths.CORE_PACKAGE_DIR,
         )
         tm.ok(result)
         tm.that(result.value.passed, is_=bool)
@@ -25,9 +25,9 @@ class TestsFlextCoreAutomatedArchitecture:
 
     def test_types_no_violations(self) -> None:
         result = tv.types(
-            Path(__file__).resolve().parents[c.Core.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
-            / c.Core.Tests.Paths.SRC_DIR
-            / c.Core.Tests.Paths.CORE_PACKAGE_DIR,
+            Path(__file__).resolve().parents[c.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
+            / c.Tests.Paths.SRC_DIR
+            / c.Tests.Paths.CORE_PACKAGE_DIR,
         )
         tm.ok(result)
         tm.that(result.value.passed, is_=bool)
@@ -35,9 +35,9 @@ class TestsFlextCoreAutomatedArchitecture:
 
     def test_bypass_no_violations(self) -> None:
         result = tv.bypass(
-            Path(__file__).resolve().parents[c.Core.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
-            / c.Core.Tests.Paths.SRC_DIR
-            / c.Core.Tests.Paths.CORE_PACKAGE_DIR,
+            Path(__file__).resolve().parents[c.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
+            / c.Tests.Paths.SRC_DIR
+            / c.Tests.Paths.CORE_PACKAGE_DIR,
         )
         tm.ok(result)
         tm.that(result.value.passed, is_=bool)
@@ -45,9 +45,9 @@ class TestsFlextCoreAutomatedArchitecture:
 
     def test_layer_no_cross_layer_imports(self) -> None:
         result = tv.layer(
-            Path(__file__).resolve().parents[c.Core.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
-            / c.Core.Tests.Paths.SRC_DIR
-            / c.Core.Tests.Paths.CORE_PACKAGE_DIR,
+            Path(__file__).resolve().parents[c.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
+            / c.Tests.Paths.SRC_DIR
+            / c.Tests.Paths.CORE_PACKAGE_DIR,
         )
         tm.ok(result)
         tm.that(result.value.passed, is_=bool)
@@ -55,8 +55,8 @@ class TestsFlextCoreAutomatedArchitecture:
 
     def test_config_valid(self) -> None:
         result = tv.validate_config(
-            Path(__file__).resolve().parents[c.Core.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
-            / c.Core.Tests.Paths.PYPROJECT_FILENAME,
+            Path(__file__).resolve().parents[c.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
+            / c.Tests.Paths.PYPROJECT_FILENAME,
         )
         tm.ok(result)
         tm.that(result.value.passed, is_=bool)
@@ -64,26 +64,26 @@ class TestsFlextCoreAutomatedArchitecture:
 
     @pytest.mark.parametrize(
         "validator",
-        c.Core.Tests.Architecture.VALIDATOR_METHODS,
+        c.Tests.Architecture.VALIDATOR_METHODS,
     )
     def test_all_validators_return_scan_result(self, validator: str) -> None:
         func = getattr(tv, validator)
         result = func(
-            Path(__file__).resolve().parents[c.Core.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
-            / c.Core.Tests.Paths.SRC_DIR
-            / c.Core.Tests.Paths.CORE_PACKAGE_DIR,
+            Path(__file__).resolve().parents[c.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
+            / c.Tests.Paths.SRC_DIR
+            / c.Tests.Paths.CORE_PACKAGE_DIR,
         )
         tm.ok(result)
 
     def test_full_validation(self) -> None:
         result = tv.all(
-            Path(__file__).resolve().parents[c.Core.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
-            / c.Core.Tests.Paths.SRC_DIR
-            / c.Core.Tests.Paths.CORE_PACKAGE_DIR,
+            Path(__file__).resolve().parents[c.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
+            / c.Tests.Paths.SRC_DIR
+            / c.Tests.Paths.CORE_PACKAGE_DIR,
             pyproject_path=Path(__file__)
             .resolve()
-            .parents[c.Core.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
-            / c.Core.Tests.Paths.PYPROJECT_FILENAME,
+            .parents[c.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
+            / c.Tests.Paths.PYPROJECT_FILENAME,
         )
         tm.ok(result)
         tm.that(result.value.passed, is_=bool)

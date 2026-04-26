@@ -295,7 +295,7 @@ class TestsFlextCoreServiceIntegration:
         """
         user_service = self.UserQueryService()
         result = user_service.execute()
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert result.value is True
 
     @pytest.mark.integration
@@ -309,7 +309,7 @@ class TestsFlextCoreServiceIntegration:
         user_service = self.UserQueryService()
         user_id = "test_user_123"
         result = user_service.get_user(user_id)
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert result.value is not None
         assert result.value.unique_id == user_id
         assert result.value.name == f"User {user_id}"
@@ -337,7 +337,7 @@ class TestsFlextCoreServiceIntegration:
         )
         user_service.set_user_data(user_id, custom_user)
         result = user_service.get_user(user_id)
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert result.value is not None
         assert result.value.unique_id == user_id
         assert result.value.name == "Custom User"
@@ -354,7 +354,7 @@ class TestsFlextCoreServiceIntegration:
         user_service = self.UserQueryService()
         user_service.set_failure_mode(should_fail=True)
         result = user_service.execute()
-        _ = u.Core.Tests.assert_failure(result)
+        _ = u.Tests.assert_failure(result)
         assert result.error == "User service unavailable"
 
     @pytest.mark.integration
@@ -370,7 +370,7 @@ class TestsFlextCoreServiceIntegration:
         """
         notification_service = self.NotificationService()
         result = notification_service.execute()
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert result.value == "sent"
 
     @pytest.mark.integration
@@ -384,7 +384,7 @@ class TestsFlextCoreServiceIntegration:
         notification_service = self.NotificationService()
         email = "test@example.com"
         result = notification_service.send(email)
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert result.value == "sent"
         assert email in notification_service.sent_notifications
         assert notification_service.call_count == 1
@@ -403,7 +403,7 @@ class TestsFlextCoreServiceIntegration:
         notification_service = self.NotificationService()
         notification_service.set_failure_mode(should_fail=True)
         result = notification_service.send("test@example.com")
-        _ = u.Core.Tests.assert_failure(result)
+        _ = u.Tests.assert_failure(result)
         assert result.error == "Notification service unavailable"
 
     @pytest.mark.integration
@@ -416,7 +416,7 @@ class TestsFlextCoreServiceIntegration:
         """
         lifecycle_service = self.LifecycleService()
         result = lifecycle_service.execute()
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert result.value == "ready"
         assert lifecycle_service.initialized is False
 
@@ -440,7 +440,7 @@ class TestsFlextCoreServiceIntegration:
             temp_dir=str(temp_directory),
         )
         result = lifecycle_service.initialize(service_config)
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert result.value == "initialized"
         assert lifecycle_service.initialized is True
         assert lifecycle_service.service_config is not None
@@ -492,7 +492,7 @@ class TestsFlextCoreServiceIntegration:
         )
         _ = lifecycle_service.initialize(service_config)
         result = lifecycle_service.shutdown()
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert result.value == "shutdown"
         assert lifecycle_service.shutdown_called is True
         assert lifecycle_service.health_check() is False
@@ -578,7 +578,7 @@ class TestsFlextCoreServiceIntegration:
     def test_service_with_external_service(
         self,
         clean_container: p.Container,
-        mock_external_service: u.Core.Tests.FunctionalExternalService,
+        mock_external_service: u.Tests.FunctionalExternalService,
     ) -> None:
         """Test service integration with external service.
 

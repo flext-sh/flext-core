@@ -27,7 +27,7 @@ class TestsFlextCoreModels(m):
 
     Access patterns:
     - TestsFlextCoreModels.Tests.* = flext_tests test models (via inheritance)
-    - TestsFlextCoreModels.Core.Tests.* = flext-core-specific test models
+    - TestsFlextCoreModels.Tests.* = flext-core-specific test models
     - TestsFlextCoreModels.Entity, .Value, etc. = TestsFlextModels domain models (via inheritance)
 
     Rules:
@@ -35,11 +35,8 @@ class TestsFlextCoreModels(m):
     - Generic models accessed via TestsFlextModels.Tests namespace
     """
 
-    class Core:
-        """flext-core-specific test models namespace."""
-
-        class Tests(TestsFlextCoreModelsMixins):
-            """flext-core test models namespace."""
+    class Tests(TestsFlextCoreModelsMixins):
+        """flext-core test models namespace."""
 
 
 m = TestsFlextCoreModels

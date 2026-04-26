@@ -555,6 +555,13 @@ class FlextConstantsEnforcement:
             '{probe}(obj, "{name}") probes private attribute in {file}',
             "Refactor the consumer to use the public surface (AGENTS.md §3.6).",
         ),
+        "no_core_tests_namespace": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            'deprecated namespace "{symbol}" in {file}:{line}',
+            "Use flat test namespace access (c/p/t/m/u.Tests.*) with no Core intermediary.",
+        ),
         # R1–R10 MRO compliance rules
         "no_concrete_namespace_import": (
             EnforcementCategory.NAMESPACE,
@@ -702,107 +709,105 @@ class FlextConstantsEnforcement:
     # or another agent's detector when ownership has been deferred per the
     # coordination doc (e.g. RULE_NO_PASS_THROUGH_WRAPPER → A-PT C3
     # resolution).
-    RULE_NO_CATALOG: Final[
-        Mapping[str, Mapping[str, str | tuple[str, ...]]]
-    ] = MappingProxyType({
-        "RULE_NO_PASS_THROUGH_WRAPPER": MappingProxyType({
-            "category": (
-                "Pass-through wrappers `def old(*a,**kw): return new(*a,**kw)`"
-            ),
-            "skill": "flext-patterns",
-            "severity": "high",
-            "autofix_verb": (
-                "ENFORCE-043 → A-PT flext-infra/refactor/passthrough_remover.py "
-                "(coordination C3)"
-            ),
-            "agents_md_anchor": "3-5-integrity",
-            "owner_lane": "A-TS catalog entry; A-PT detector implementation",
-        }),
-        "RULE_NO_COMPAT_ALIAS_REASSIGN": MappingProxyType({
-            "category": "Compat alias re-assigns `OldX = NewX` at module level",
-            "skill": "flext-mro-namespace-rules",
-            "severity": "high",
-            "autofix_verb": "flext-infra refactor migrate-to-class-mro",
-            "detector": (
-                "flext-infra/detectors/compatibility_alias_detector.py"
-            ),
-            "agents_md_anchor": "2-4-governance-anti-patterns",
-            "owner_lane": "A-TS",
-        }),
-        "RULE_NO_PUBLIC_GET_SET_IS_ACCESSOR": MappingProxyType({
-            "category": "`get_*`/`set_*`/`is_*` accessor on facade or service",
-            "skill": "flext-mro-namespace-rules",
-            "severity": "high",
-            "autofix_verb": "flext-infra refactor accessor-migrate",
-            "agents_md_anchor": "2-5-service-facade-pattern",
-            "owner_lane": "A-TS catalog entry; existing accessor_migration verb",
-        }),
-        "RULE_NO_BARE_R_FAIL_STRING_OUTSIDE_CORE": MappingProxyType({
-            "category": '`r.fail("…")` outside `flext-core` (must use `e.fail_*`)',
-            "skill": "flext-patterns",
-            "severity": "high",
-            "autofix_verb": "manual via centralized `e.fail_*` DSL",
-            "agents_md_anchor": "3-3-failures-and-error-handling",
-            "owner_lane": "A-TS",
-        }),
-        "RULE_NO_INLINE_COMPOSED_ANNOTATIONS": MappingProxyType({
-            "category": (
-                "Inline composed annotations `: str | int | None` should be "
-                "`t.*` aliases from `typings.py`"
-            ),
-            "skill": "flext-strict-typing",
-            "severity": "medium",
-            "autofix_verb": "flext-infra codegen consolidate",
-            "agents_md_anchor": "3-2-types-and-contracts",
-            "owner_lane": "A-TS",
-        }),
-        "RULE_NO_OS_ENVIRON_IN_SRC": MappingProxyType({
-            "category": "`os.environ` / `os.getenv` in `src/` (use FlextSettings)",
-            "skill": "rules-src",
-            "severity": "high",
-            "autofix_verb": "manual via FlextSettings env resolution",
-            "agents_md_anchor": "2-6-settings-law",
-            "owner_lane": "A-TS",
-        }),
-        "RULE_NO_GETATTRIBUTE_OUTSIDE_CORE": MappingProxyType({
-            "category": "`__getattribute__` overrides outside `flext-core`",
-            "skill": "rules-src",
-            "severity": "high",
-            "autofix_verb": "manual",
-            "agents_md_anchor": "3-4-tools-modules-environment",
-            "owner_lane": "A-TS",
-        }),
-        "RULE_DOC_PYTHON_RUFF_CLEAN": MappingProxyType({
-            "category": (
-                "Embedded Python in markdown / docstrings / SKILL.md must "
-                "pass `ruff check`"
-            ),
-            "skill": "flext-docs-pointer-policy",
-            "severity": "medium",
-            "autofix_verb": (
-                "flext-infra docs lint-code-blocks (delegates to A-CH "
-                "_utilities/docs_code_blocks.py once shipped — coordination "
-                "C4)"
-            ),
-            "agents_md_anchor": "3-8-verification-discipline",
-            "owner_lane": "A-TS catalog entry; A-HD service; A-CH library",
-        }),
-        "RULE_DOC_PYTHON_PYREFLY_CLEAN": MappingProxyType({
-            "category": (
-                "Embedded Python in markdown / docstrings / SKILL.md must "
-                "pass `pyrefly check`"
-            ),
-            "skill": "flext-docs-pointer-policy",
-            "severity": "medium",
-            "autofix_verb": (
-                "flext-infra docs lint-code-blocks (delegates to A-CH "
-                "_utilities/docs_code_blocks.py once shipped — coordination "
-                "C4)"
-            ),
-            "agents_md_anchor": "3-8-verification-discipline",
-            "owner_lane": "A-TS catalog entry; A-HD service; A-CH library",
-        }),
-    })
+    RULE_NO_CATALOG: Final[Mapping[str, Mapping[str, str | tuple[str, ...]]]] = (
+        MappingProxyType({
+            "RULE_NO_PASS_THROUGH_WRAPPER": MappingProxyType({
+                "category": (
+                    "Pass-through wrappers `def old(*a,**kw): return new(*a,**kw)`"
+                ),
+                "skill": "flext-patterns",
+                "severity": "high",
+                "autofix_verb": (
+                    "ENFORCE-043 → A-PT flext-infra/refactor/passthrough_remover.py "
+                    "(coordination C3)"
+                ),
+                "agents_md_anchor": "3-5-integrity",
+                "owner_lane": "A-TS catalog entry; A-PT detector implementation",
+            }),
+            "RULE_NO_COMPAT_ALIAS_REASSIGN": MappingProxyType({
+                "category": "Compat alias re-assigns `OldX = NewX` at module level",
+                "skill": "flext-mro-namespace-rules",
+                "severity": "high",
+                "autofix_verb": "flext-infra refactor migrate-to-class-mro",
+                "detector": ("flext-infra/detectors/compatibility_alias_detector.py"),
+                "agents_md_anchor": "2-4-governance-anti-patterns",
+                "owner_lane": "A-TS",
+            }),
+            "RULE_NO_PUBLIC_GET_SET_IS_ACCESSOR": MappingProxyType({
+                "category": "`get_*`/`set_*`/`is_*` accessor on facade or service",
+                "skill": "flext-mro-namespace-rules",
+                "severity": "high",
+                "autofix_verb": "flext-infra refactor accessor-migrate",
+                "agents_md_anchor": "2-5-service-facade-pattern",
+                "owner_lane": "A-TS catalog entry; existing accessor_migration verb",
+            }),
+            "RULE_NO_BARE_R_FAIL_STRING_OUTSIDE_CORE": MappingProxyType({
+                "category": '`r.fail("…")` outside `flext-core` (must use `e.fail_*`)',
+                "skill": "flext-patterns",
+                "severity": "high",
+                "autofix_verb": "manual via centralized `e.fail_*` DSL",
+                "agents_md_anchor": "3-3-failures-and-error-handling",
+                "owner_lane": "A-TS",
+            }),
+            "RULE_NO_INLINE_COMPOSED_ANNOTATIONS": MappingProxyType({
+                "category": (
+                    "Inline composed annotations `: str | int | None` should be "
+                    "`t.*` aliases from `typings.py`"
+                ),
+                "skill": "flext-strict-typing",
+                "severity": "medium",
+                "autofix_verb": "flext-infra codegen consolidate",
+                "agents_md_anchor": "3-2-types-and-contracts",
+                "owner_lane": "A-TS",
+            }),
+            "RULE_NO_OS_ENVIRON_IN_SRC": MappingProxyType({
+                "category": "`os.environ` / `os.getenv` in `src/` (use FlextSettings)",
+                "skill": "rules-src",
+                "severity": "high",
+                "autofix_verb": "manual via FlextSettings env resolution",
+                "agents_md_anchor": "2-6-settings-law",
+                "owner_lane": "A-TS",
+            }),
+            "RULE_NO_GETATTRIBUTE_OUTSIDE_CORE": MappingProxyType({
+                "category": "`__getattribute__` overrides outside `flext-core`",
+                "skill": "rules-src",
+                "severity": "high",
+                "autofix_verb": "manual",
+                "agents_md_anchor": "3-4-tools-modules-environment",
+                "owner_lane": "A-TS",
+            }),
+            "RULE_DOC_PYTHON_RUFF_CLEAN": MappingProxyType({
+                "category": (
+                    "Embedded Python in markdown / docstrings / SKILL.md must "
+                    "pass `ruff check`"
+                ),
+                "skill": "flext-docs-pointer-policy",
+                "severity": "medium",
+                "autofix_verb": (
+                    "flext-infra docs lint-code-blocks (delegates to A-CH "
+                    "_utilities/docs_code_blocks.py once shipped — coordination "
+                    "C4)"
+                ),
+                "agents_md_anchor": "3-8-verification-discipline",
+                "owner_lane": "A-TS catalog entry; A-HD service; A-CH library",
+            }),
+            "RULE_DOC_PYTHON_PYREFLY_CLEAN": MappingProxyType({
+                "category": (
+                    "Embedded Python in markdown / docstrings / SKILL.md must "
+                    "pass `pyrefly check`"
+                ),
+                "skill": "flext-docs-pointer-policy",
+                "severity": "medium",
+                "autofix_verb": (
+                    "flext-infra docs lint-code-blocks (delegates to A-CH "
+                    "_utilities/docs_code_blocks.py once shipped — coordination "
+                    "C4)"
+                ),
+                "agents_md_anchor": "3-8-verification-discipline",
+                "owner_lane": "A-TS catalog entry; A-HD service; A-CH library",
+            }),
+        })
+    )
     """A-TS owned RULE_NO_* + RULE_DOC_PYTHON_* registry (distinct slice
     from A-CH's ENFORCE-NNN catalog per coordination §4.8). Pure data —
     detectors and dispatchers consume the entries; the registry itself
@@ -1533,6 +1538,23 @@ def _hydrate_enforcement_catalog() -> None:
                 ),
                 agents_md_anchor="2-3-mro-inheritance-namespace-composition",
                 skills=("flext-mro-namespace-rules",),
+            ),
+            _me.EnforcementRuleSpec(
+                id="ENFORCE-054",
+                description=(
+                    "Deprecated test namespace path '.Core.Tests' is forbidden "
+                    "in tests/examples/scripts. Use flat c/p/t/m/u.Tests.* "
+                    "access only."
+                ),
+                severity=_me.EnforcementRuleSeverity.HIGH,
+                source=_me.EnforcementBeartypeSource(
+                    hook="check_no_core_tests_namespace",
+                ),
+                agents_md_anchor="0-quick-reference-must-read",
+                skills=(
+                    "flext-mro-namespace-rules",
+                    "flext-import-rules",
+                ),
             ),
         ),
     )

@@ -2,25 +2,13 @@
 
 from __future__ import annotations
 
-from flext_core import FlextSettings, c, m, p, r, u
-
-
-class ExamplesFlextCoreSettingsEx02TestConfig(FlextSettings):
-    """Settings model used by Ex02 settings golden tests."""
-
-    service_name: str = u.Field(
-        default_factory=lambda: "example-service",
-        description="Service name for application",
-    )
-    feature_enabled: bool = u.Field(
-        default_factory=lambda: True, description="Feature enable flag"
-    )
+from flext_core import c, m, p, r, u
 
 
 class ExamplesFlextCoreModelsEx02:
     """Example 02 model namespace."""
 
-    class Ex02DatabaseService(m.Value):
+    class DatabaseService(m.Value):
         """Database service model used in example 02 settings integration."""
 
         settings: m.ConfigMap = u.Field(description="Database connection settings")
@@ -38,7 +26,7 @@ class ExamplesFlextCoreModelsEx02:
                 return r[m.ConfigMap].fail("invalid query")
             return r[m.ConfigMap].ok(m.ConfigMap(root={"rows": 1}))
 
-    class Ex02CacheService(m.Value):
+    class CacheService(m.Value):
         """Cache service model used in example 02 settings integration."""
 
         settings: m.ConfigMap = u.Field(description="Cache connection settings")
@@ -55,7 +43,7 @@ class ExamplesFlextCoreModelsEx02:
                 return r[bool].fail("missing value")
             return r[bool].ok(True)
 
-    class Ex02EmailService(m.Value):
+    class EmailService(m.Value):
         """Email service model used in example 02 settings integration."""
 
         settings: m.ConfigMap = u.Field(description="Email service settings")
@@ -69,8 +57,3 @@ class ExamplesFlextCoreModelsEx02:
             if not to or not subject or (not body):
                 return r[bool].fail("invalid email payload")
             return r[bool].ok(True)
-
-
-Ex02DatabaseService = ExamplesFlextCoreModelsEx02.Ex02DatabaseService
-Ex02CacheService = ExamplesFlextCoreModelsEx02.Ex02CacheService
-Ex02EmailService = ExamplesFlextCoreModelsEx02.Ex02EmailService

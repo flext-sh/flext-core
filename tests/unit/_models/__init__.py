@@ -9,6 +9,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".test_base": ("TestsFlextCoreModelsBase",),
         ".test_cqrs": ("TestsFlextCoreModelsCQRS",),
+        ".test_enforcement_sources": ("TestsFlextCoreModelsEnforcementSources",),
         ".test_entity": ("TestsFlextCoreModelsEntity",),
         ".test_exception_params": ("TestsFlextCoreModelsExceptionParams",),
     },

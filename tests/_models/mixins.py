@@ -19,29 +19,29 @@ from tests.typings import t
 class TestsFlextCoreModelsMixins:
     """flext-core test models namespace."""
 
-    class BadDict(UserDict[str, t.Core.Tests.TestobjectSerializable]):
+    class BadDict(UserDict[str, t.Tests.TestobjectSerializable]):
         """Dict that raises on get()."""
 
         @override
         def __getitem__(self, key: str) -> Never:
             """Raise error on get attempt."""
             _ = key
-            msg = c.Core.Tests.TestErrors.BAD_DICT_GET
+            msg = c.Tests.TestErrors.BAD_DICT_GET
             raise RuntimeError(msg)
 
-    class BadList(UserList[t.Core.Tests.TestobjectSerializable]):
+    class BadList(UserList[t.Tests.TestobjectSerializable]):
         """List that raises on iteration."""
 
         @override
-        def __iter__(self) -> Iterator[t.Core.Tests.TestobjectSerializable]:
+        def __iter__(self) -> Iterator[t.Tests.TestobjectSerializable]:
             """Raise error on iteration."""
-            msg = c.Core.Tests.TestErrors.BAD_LIST_ITERATION
+            msg = c.Tests.TestErrors.BAD_LIST_ITERATION
             raise RuntimeError(msg)
 
     class BadModelDump:
         """Object with model_dump that raises."""
 
-        model_dump: Callable[[], Mapping[str, t.Core.Tests.TestobjectSerializable]] = (
+        model_dump: Callable[[], Mapping[str, t.Tests.TestobjectSerializable]] = (
             staticmethod(
                 lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
             )
@@ -81,8 +81,8 @@ class TestsFlextCoreModelsMixins:
         def errors(self) -> Sequence[Mapping[str, t.JsonValue]]:
             return [{"loc": ["value"], "msg": "bad value"}]
 
-    type TestCaseMap = Mapping[str, t.Core.Tests.TestobjectSerializable]
-    type InputPayloadMap = Mapping[str, t.Core.Tests.TestobjectSerializable]
+    type TestCaseMap = Mapping[str, t.Tests.TestobjectSerializable]
+    type InputPayloadMap = Mapping[str, t.Tests.TestobjectSerializable]
 
     class _MsgWithCommandId(m.BaseModel):
         command_id: str = "cmd-1"
@@ -106,11 +106,11 @@ class TestsFlextCoreModelsMixins:
         def __getattribute__(
             self,
             name: str,
-        ) -> t.Core.Tests.PredicateSpec | None:
+        ) -> t.Tests.PredicateSpec | None:
             if name == "model_dump":
 
                 def _broken_dump(
-                    value: t.Core.Tests.Testobject = None,
+                    value: t.Tests.Testobject = None,
                 ) -> bool:
                     return True
 
@@ -155,7 +155,7 @@ class TestsFlextCoreModelsMixins:
         ) -> Never:
             _ = strict, extra, from_attributes, context, by_alias, by_name
             _ = obj
-            msg = c.Core.Tests.TestErrors.PLAIN_BOOM
+            msg = c.Tests.TestErrors.PLAIN_BOOM
             raise RuntimeError(msg)
 
     class _TargetModel(m.BaseModel):
@@ -231,7 +231,7 @@ class TestsFlextCoreModelsMixins:
         def __init__(self, **kwargs: t.Scalar) -> None:
             """Raise error on init."""
             super().__init__(**kwargs)
-            msg = c.Core.Tests.TestErrors.CANNOT_INSTANTIATE
+            msg = c.Tests.TestErrors.CANNOT_INSTANTIATE
             raise ValueError(msg)
 
     class _DumpErrorModel(m.BaseModel):

@@ -50,9 +50,7 @@ class TestsFlextCoreProtocols(p):
         class ExtractFieldCallable(Protocol):
             """Protocol for _extract_field_value callable."""
 
-            def __call__(
-                self, item: AttrObject, field_name: str
-            ) -> t.JsonValue: ...
+            def __call__(self, item: AttrObject, field_name: str) -> t.JsonValue: ...
 
         @runtime_checkable
         class TakeCallable(Protocol):

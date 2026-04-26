@@ -177,7 +177,7 @@ class TestsFlextCoreMixins:
         service = MyService()
         if scenario.scenario_type == self.ServiceMixinScenarioType.CONTAINER_REGISTER:
             result = service._register_in_container("test_service")
-            _ = u.Core.Tests.assert_success(result)
+            _ = u.Tests.assert_success(result)
         elif scenario.scenario_type == self.ServiceMixinScenarioType.CONTEXT_PROPERTY:
             assert isinstance(service.context, p.Context)
         elif (

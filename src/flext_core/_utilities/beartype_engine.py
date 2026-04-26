@@ -934,6 +934,36 @@ class FlextUtilitiesBeartypeEngine:
             }
         return _NO_VIOLATION
 
+    @staticmethod
+    def check_no_core_tests_namespace(target: type) -> t.StrMapping | None:
+        """Deprecated ``.Core.Tests`` namespace usage in tests/examples/scripts (ENFORCE-054)."""
+        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        if loaded is None:
+            return _NO_VIOLATION
+
+        src_file, _tree = loaded
+        normalized = src_file.replace("\\", "/")
+        if not any(
+            segment in normalized for segment in ("/tests/", "/examples/", "/scripts/")
+        ):
+            return _NO_VIOLATION
+
+        try:
+            source = Path(src_file).read_text(encoding="utf-8")
+        except OSError:
+            return _NO_VIOLATION
+
+        match = re.search(r"\\b[cmptu]\\.Core\\.Tests\\b", source)
+        if match is None:
+            return _NO_VIOLATION
+
+        line = source.count("\n", 0, match.start()) + 1
+        return {
+            "symbol": match.group(0),
+            "file": Path(src_file).name,
+            "line": str(line),
+        }
+
     # -----------------------------------------------------------------------
     # R1–R10 MRO compliance checks
     # -----------------------------------------------------------------------

@@ -6,7 +6,7 @@ from examples import ExamplesFlextCoreModelsErrors as _err
 from flext_core import FlextSettings, c, t, u
 
 
-class ExSettingsAppSettings(FlextSettings):
+class ExamplesSettings(FlextSettings):
     """Application settings model for settings examples."""
 
     database_url: str = u.Field(
@@ -19,6 +19,14 @@ class ExSettingsAppSettings(FlextSettings):
     debug: bool = u.Field(default_factory=lambda: False)
     max_workers: int = u.Field(default_factory=lambda: 4, ge=1)
     log_level: c.LogLevel = u.Field(default_factory=lambda: c.LogLevel.INFO)
+
+    service_name: str = u.Field(
+        default_factory=lambda: "example-service",
+        description="Service name for application",
+    )
+    feature_enabled: bool = u.Field(
+        default_factory=lambda: True, description="Feature enable flag"
+    )
 
     @u.field_validator("database_url", mode="before")
     @classmethod

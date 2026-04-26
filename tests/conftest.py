@@ -56,9 +56,9 @@ def clean_container() -> FlextContainer:
 
 
 @pytest.fixture
-def mock_external_service() -> u.Core.Tests.FunctionalExternalService:
+def mock_external_service() -> u.Tests.FunctionalExternalService:
     """Provide mock external service for integration tests."""
-    return u.Core.Tests.FunctionalExternalService()
+    return u.Tests.FunctionalExternalService()
 
 
 @pytest.fixture
@@ -105,7 +105,7 @@ def flext_result_success() -> p.Result[dict[str, bool]]:
 @pytest.fixture
 def flext_result_failure() -> p.Result[str]:
     """Failed r fixture available to all FLEXT projects."""
-    return r[str].fail(c.Core.Tests.TestErrors.TEST_ERROR)
+    return r[str].fail(c.Tests.TestErrors.TEST_ERROR)
 
 
 @pytest.fixture

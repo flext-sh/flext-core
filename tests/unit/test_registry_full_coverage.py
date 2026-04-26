@@ -24,50 +24,46 @@ class TestsFlextCoreRegistryFullCoverage:
     def test_registry_runtime_exposes_dispatcher_from_central_dsl(self) -> None:
         registry = u.build_registry()
         assert registry.execute().success
-        registration = registry.register_handler(u.Core.Tests.Handler())
+        registration = registry.register_handler(u.Tests.Handler())
         assert registration.success
         assert registration.value is not None
 
     def test_registry_respects_explicit_dispatcher_behavior(self) -> None:
-        unavailable_registry = u.build_registry(
-            dispatcher=u.Core.Tests.FalseyDispatcher()
-        )
+        unavailable_registry = u.build_registry(dispatcher=u.Tests.FalseyDispatcher())
         assert unavailable_registry.execute().success
 
-        failing_registry = u.build_registry(dispatcher=u.Core.Tests.FailDispatcher())
-        failed_registration = failing_registry.register_handler(u.Core.Tests.Handler())
+        failing_registry = u.build_registry(dispatcher=u.Tests.FailDispatcher())
+        failed_registration = failing_registry.register_handler(u.Tests.Handler())
         assert failed_registration.failure
         assert "dispatcher-fail" in (failed_registration.error or "")
 
-        ready_registry = u.build_registry(dispatcher=u.Core.Tests.OkDispatcher())
-        successful_registration = ready_registry.register_handler(
-            u.Core.Tests.Handler()
-        )
+        ready_registry = u.build_registry(dispatcher=u.Tests.OkDispatcher())
+        successful_registration = ready_registry.register_handler(u.Tests.Handler())
         assert successful_registration.success
         assert successful_registration.value.registration_id != ""
         assert successful_registration.value.status == c.Status.ACTIVE
 
     def test_registry_registers_batches_through_public_methods(self) -> None:
-        registry = u.build_registry(dispatcher=u.Core.Tests.OkDispatcher())
+        registry = u.build_registry(dispatcher=u.Tests.OkDispatcher())
 
         handler_batch = registry.register_handlers([
-            u.Core.Tests.Handler(),
-            u.Core.Tests.Handler(),
+            u.Tests.Handler(),
+            u.Tests.Handler(),
         ])
         assert handler_batch.success
         assert len(handler_batch.value.registered) == 2
         assert handler_batch.value.errors == []
 
         bindings_batch = registry.register_bindings({
-            str: u.Core.Tests.Handler(),
-            int: u.Core.Tests.Handler(),
+            str: u.Tests.Handler(),
+            int: u.Tests.Handler(),
         })
         assert bindings_batch.success
         assert len(bindings_batch.value.registered) == 2
         assert bindings_batch.value.errors == []
 
     def test_registry_plugin_scopes_roundtrip_via_public_api(self) -> None:
-        registry = u.build_registry(dispatcher=u.Core.Tests.OkDispatcher())
+        registry = u.build_registry(dispatcher=u.Tests.OkDispatcher())
 
         instance_registration = registry.register_plugin(
             "validators", "local", "plugin"
@@ -78,8 +74,8 @@ class TestsFlextCoreRegistryFullCoverage:
         assert registry.unregister_plugin("validators", "local").success
         assert registry.fetch_plugin("validators", "local").failure
 
-        registry_a = u.build_registry(dispatcher=u.Core.Tests.OkDispatcher())
-        registry_b = u.build_registry(dispatcher=u.Core.Tests.OkDispatcher())
+        registry_a = u.build_registry(dispatcher=u.Tests.OkDispatcher())
+        registry_b = u.build_registry(dispatcher=u.Tests.OkDispatcher())
         class_registration = registry_a.register_plugin(
             "validators",
             "shared",
@@ -107,7 +103,7 @@ class TestsFlextCoreRegistryFullCoverage:
         ).failure
 
     def test_registry_register_public_service(self) -> None:
-        registry = u.build_registry(dispatcher=u.Core.Tests.OkDispatcher())
+        registry = u.build_registry(dispatcher=u.Tests.OkDispatcher())
         registration = registry.register("service-name", "service-value")
         assert registration.success
         duplicate_registration = registry.register("service-name", "service-value")

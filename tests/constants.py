@@ -28,20 +28,20 @@ class TestsFlextCoreConstants(
 ):
     """Layer 0 constants facade for flext-core tests."""
 
-    class Core:
-        class Tests(
-            TestsFlextCoreConstantsDomain,
-            TestsFlextCoreConstantsErrors,
-            TestsFlextCoreConstantsFixtures,
-            TestsFlextCoreConstantsLoggings,
-            TestsFlextCoreConstantsOther,
-            TestsFlextCoreConstantsResult,
-            TestsFlextCoreConstantsServices,
-            TestsFlextCoreConstantsSettings,
-            TestsFlextCoreConstantsStrings,
-        ):
-            pass
+    class Tests(
+        TestsFlextCoreConstantsDomain,
+        TestsFlextCoreConstantsErrors,
+        TestsFlextCoreConstantsFixtures,
+        TestsFlextCoreConstantsLoggings,
+        TestsFlextCoreConstantsOther,
+        TestsFlextCoreConstantsResult,
+        TestsFlextCoreConstantsServices,
+        TestsFlextCoreConstantsSettings,
+        TestsFlextCoreConstantsStrings,
+    ):
+        pass
 
 
 c = TestsFlextCoreConstants
+
 __all__: list[str] = ["TestsFlextCoreConstants", "c"]

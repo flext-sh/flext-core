@@ -46,12 +46,12 @@ class TestsFlextCoreSettings:
         self,
         config_data: t.FeatureFlagMapping,
     ) -> None:
-        settings = u.Core.Tests.create_test_config(**config_data)
-        u.Core.Tests.assert_config_fields(settings, config_data)
+        settings = u.Tests.create_test_config(**config_data)
+        u.Tests.assert_config_fields(settings, config_data)
         tm.that(settings, is_=FlextSettings)
 
     def test_model_dump_round_trips_values(self) -> None:
-        settings = u.Core.Tests.create_test_config(
+        settings = u.Tests.create_test_config(
             app_name="test_app",
             version="1.0.0",
             debug=True,
@@ -62,7 +62,7 @@ class TestsFlextCoreSettings:
         tm.that(dumped["debug"], eq=True)
 
     def test_model_validate_returns_same_singleton(self) -> None:
-        original = u.Core.Tests.create_test_config(
+        original = u.Tests.create_test_config(
             app_name="original_app",
             version="1.0.0",
         )
@@ -83,7 +83,7 @@ class TestsFlextCoreSettings:
         initial: str,
         modified: str,
     ) -> None:
-        settings = u.Core.Tests.create_test_config()
+        settings = u.Tests.create_test_config()
         setattr(settings, field_name, initial)
         tm.that(getattr(settings, field_name), eq=initial)
         setattr(settings, field_name, modified)
@@ -110,7 +110,7 @@ class TestsFlextCoreSettings:
         tm.that(fresh.app_name, eq="flext")
 
     def test_concurrent_writes_do_not_crash(self) -> None:
-        settings = u.Core.Tests.create_test_config()
+        settings = u.Tests.create_test_config()
         results: MutableSequence[str] = []
 
         def set_value(thread_id: int) -> None:
@@ -126,7 +126,7 @@ class TestsFlextCoreSettings:
         tm.that(all(r.startswith("thread_") for r in results), eq=True)
 
     def test_repeated_writes_complete_within_budget(self) -> None:
-        settings = u.Core.Tests.create_test_config()
+        settings = u.Tests.create_test_config()
         start = time.time()
         for i in range(100):
             settings.app_name = f"value_{i}"
@@ -136,7 +136,7 @@ class TestsFlextCoreSettings:
     # --- Serialization ---------------------------------------------------
 
     def test_json_round_trip_preserves_fields(self) -> None:
-        settings = u.Core.Tests.create_test_config(
+        settings = u.Tests.create_test_config(
             app_name="serialize_app",
             version="1.0.0",
         )
@@ -180,7 +180,7 @@ class TestsFlextCoreSettings:
         env_value: str,
         should_load: bool,
     ) -> None:
-        with u.Core.Tests.env_vars_context(
+        with u.Tests.env_vars_context(
             {env_key: env_value},
             ["DEBUG", "LOG_LEVEL", "FLEXT_DEBUG", "FLEXT_LOG_LEVEL"],
         ):
@@ -197,7 +197,7 @@ class TestsFlextCoreSettings:
         env_file.write_text(
             "FLEXT_APP_NAME=from-dotenv\nFLEXT_LOG_LEVEL=WARNING\nFLEXT_DEBUG=true\n",
         )
-        with u.Core.Tests.env_vars_context(
+        with u.Tests.env_vars_context(
             {"FLEXT_ENV_FILE": str(env_file)},
             ["FLEXT_LOG_LEVEL", "FLEXT_DEBUG", "FLEXT_APP_NAME", "FLEXT_ENV_FILE"],
         ):
@@ -206,7 +206,7 @@ class TestsFlextCoreSettings:
             tm.that(settings.app_name in {"from-dotenv", "flext"}, eq=True)
 
     def test_env_var_overrides_dotenv_file(self, tmp_path: Path) -> None:
-        with u.Core.Tests.env_vars_context(
+        with u.Tests.env_vars_context(
             {},
             ["FLEXT_APP_NAME", "FLEXT_LOG_LEVEL"],
         ):
@@ -226,7 +226,7 @@ class TestsFlextCoreSettings:
     ) -> None:
         env_file = tmp_path / ".env"
         env_file.write_text("FLEXT_TIMEOUT_SECONDS=45\n")
-        with u.Core.Tests.env_vars_context(
+        with u.Tests.env_vars_context(
             {"FLEXT_TIMEOUT_SECONDS": "60", "FLEXT_ENV_FILE": str(env_file)},
             ["FLEXT_TIMEOUT_SECONDS", "FLEXT_ENV_FILE"],
         ):
@@ -236,30 +236,30 @@ class TestsFlextCoreSettings:
     # --- Effective log level --------------------------------------------
 
     def test_trace_mode_sets_effective_log_level_to_debug(self) -> None:
-        settings = u.Core.Tests.create_test_config(trace=True, debug=True)
+        settings = u.Tests.create_test_config(trace=True, debug=True)
         tm.that(settings.effective_log_level, eq=c.LogLevel.DEBUG)
 
     def test_debug_mode_sets_effective_log_level_to_info(self) -> None:
-        settings = u.Core.Tests.create_test_config(debug=True)
+        settings = u.Tests.create_test_config(debug=True)
         tm.that(settings.effective_log_level, eq=c.LogLevel.INFO)
 
     def test_without_debug_effective_log_level_matches_configured(self) -> None:
-        settings = u.Core.Tests.create_test_config(debug=False, trace=False)
+        settings = u.Tests.create_test_config(debug=False, trace=False)
         tm.that(settings.effective_log_level, eq=settings.log_level)
 
     # --- Overrides and DI provider --------------------------------------
 
     def test_apply_override_rejects_unknown_key(self) -> None:
-        settings = u.Core.Tests.create_test_config()
+        settings = u.Tests.create_test_config()
         tm.that(settings.apply_override("invalid_key", "value"), eq=False)
 
     def test_apply_override_updates_known_field(self) -> None:
-        settings = u.Core.Tests.create_test_config()
+        settings = u.Tests.create_test_config()
         settings.apply_override("app_name", "new_name")
         tm.that(settings.app_name, eq="new_name")
 
     def test_resolve_di_settings_provider_returns_stable_handle(self) -> None:
-        settings = u.Core.Tests.create_test_config()
+        settings = u.Tests.create_test_config()
         first = settings.resolve_di_settings_provider()
         second = settings.resolve_di_settings_provider()
         tm.that(first is second, eq=True)

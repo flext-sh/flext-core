@@ -217,15 +217,15 @@ class TestsFlextCoreResult:
         if not isinstance(value, str):
             pytest.fail("Expected string scenario value")
         if op_type == self.ResultOperationType.CREATION_SUCCESS:
-            creation_result: p.Result[str] = u.Core.Tests.create_result_from_value(
+            creation_result: p.Result[str] = u.Tests.create_result_from_value(
                 value,
                 error_on_none="Value cannot be None",
             )
-            u.Core.Tests.assert_success_with_value(creation_result, value)
+            u.Tests.assert_success_with_value(creation_result, value)
         elif op_type == self.ResultOperationType.CREATION_FAILURE:
             failure_result_raw = r[str].fail(str(value))
             failure_result: p.Result[str] = failure_result_raw
-            u.Core.Tests.assert_failure_with_error(failure_result, str(value))
+            u.Tests.assert_failure_with_error(failure_result, str(value))
         elif op_type == self.ResultOperationType.UNWRAP_OR:
             if success:
                 unwrap_result: p.Result[str] = r[str].ok(value)
@@ -240,12 +240,12 @@ class TestsFlextCoreResult:
         elif op_type == self.ResultOperationType.MAP:
             map_result: p.Result[str] = r[str].fail(str(value))
             mapped = map_result.map(lambda x: str(x) * 2)
-            u.Core.Tests.assert_failure_with_error(mapped, str(value))
+            u.Tests.assert_failure_with_error(mapped, str(value))
         elif op_type == self.ResultOperationType.FLAT_MAP:
             failure_raw = r[str].fail(str(value))
             flat_map_result: p.Result[str] = failure_raw
             flat_mapped = flat_map_result.flat_map(lambda x: r[str].ok(f"value_{x}"))
-            u.Core.Tests.assert_failure_with_error(flat_mapped, str(value))
+            u.Tests.assert_failure_with_error(flat_mapped, str(value))
         elif op_type == self.ResultOperationType.ALT:
             if success:
                 result_alt: p.Result[str] = r[str].ok(value)
@@ -254,20 +254,20 @@ class TestsFlextCoreResult:
                 result_alt = failure_raw
             alt_result = result_alt.map_error(lambda e: f"alt_{e}")
             if success:
-                u.Core.Tests.assert_success_with_value(alt_result, value)
+                u.Tests.assert_success_with_value(alt_result, value)
             else:
                 error_str_alt: str = f"alt_{value}"
-                u.Core.Tests.assert_failure_with_error(alt_result, error_str_alt)
+                u.Tests.assert_failure_with_error(alt_result, error_str_alt)
         elif op_type == self.ResultOperationType.LASH:
             lash_result_base: p.Result[str] = (
                 r[str].ok(str(value)) if success else r[str].fail(str(value))
             )
             lash_result = lash_result_base.lash(lambda e: r[str].ok(f"recovered_{e}"))
             if success:
-                u.Core.Tests.assert_success_with_value(lash_result, str(value))
+                u.Tests.assert_success_with_value(lash_result, str(value))
             else:
                 expected = f"recovered_{value}"
-                u.Core.Tests.assert_success_with_value(lash_result, expected)
+                u.Tests.assert_success_with_value(lash_result, expected)
         elif op_type == self.ResultOperationType.OR_OPERATOR:
             if success:
                 result_or: p.Result[str] = r[str].ok(value)
@@ -293,23 +293,23 @@ class TestsFlextCoreResult:
                 pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             mapped = result.map(lambda x: x * 2)
-            u.Core.Tests.assert_success_with_value(mapped, value * 2)
+            u.Tests.assert_success_with_value(mapped, value * 2)
         elif op_type == self.ResultOperationType.FLAT_MAP:
             if not isinstance(value, int):
                 pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             flat_mapped = result.flat_map(lambda x: r[str].ok(f"value_{x}"))
             expected = f"value_{value}"
-            u.Core.Tests.assert_success_with_value(flat_mapped, expected)
+            u.Tests.assert_success_with_value(flat_mapped, expected)
         elif op_type == self.ResultOperationType.FILTER:
             if not isinstance(value, int):
                 pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             filtered = result.filter(lambda x: x > 5)
             if success:
-                u.Core.Tests.assert_success_with_value(filtered, value)
+                u.Tests.assert_success_with_value(filtered, value)
             else:
-                _ = u.Core.Tests.assert_failure(filtered)
+                _ = u.Tests.assert_failure(filtered)
         elif op_type == self.ResultOperationType.RAILWAY_COMPOSITION:
             if not isinstance(value, int):
                 pytest.fail("Expected integer scenario value")
@@ -318,13 +318,13 @@ class TestsFlextCoreResult:
             res3 = res2.map(lambda v: f"result_{v}")
             expected = f"result_{value * 2}"
             result_list: Sequence[p.Result[str]] = [res1.map(str), res2.map(str), res3]
-            u.Core.Tests.assert_result_chain(
+            u.Tests.assert_result_chain(
                 result_list,
                 expected_success_count=3,
                 expected_failure_count=0,
                 first_failure_index=None,
             )
-            u.Core.Tests.assert_success_with_value(res3, expected)
+            u.Tests.assert_success_with_value(res3, expected)
 
     @pytest.mark.parametrize("scenario", BOOL_SCENARIOS, ids=lambda s: s.name)
     def test_result_bool_operations(self, scenario: ResultScenario) -> None:
@@ -342,7 +342,7 @@ class TestsFlextCoreResult:
         """
         results: MutableSequence[p.Result[int]] = []
         initial_value = 5
-        res1 = u.Core.Tests.create_result_from_value(
+        res1 = u.Tests.create_result_from_value(
             initial_value,
             error_on_none="Initial value cannot be None",
         )
@@ -351,13 +351,13 @@ class TestsFlextCoreResult:
         results.append(res2)
         res3 = res2.map(lambda x: x + 10)
         results.append(res3)
-        u.Core.Tests.assert_result_chain(
+        u.Tests.assert_result_chain(
             results,
             expected_success_count=3,
             expected_failure_count=0,
             first_failure_index=None,
         )
-        u.Core.Tests.assert_success_with_value(res3, 20)
+        u.Tests.assert_success_with_value(res3, 20)
 
     def test_result_chain_failure_behavior(self) -> None:
         """Test result chain with failure - real behavior and limits."""
@@ -370,12 +370,12 @@ class TestsFlextCoreResult:
             lambda x: r[int].fail("Division by zero") if x == 0 else r[int].ok(x // 2),
         )
         results.append(res3)
-        u.Core.Tests.assert_success_with_value(res3, 10)
+        u.Tests.assert_success_with_value(res3, 10)
         res4 = res3.flat_map(
             lambda x: r[int].fail("Cannot process zero") if x == 0 else r[int].ok(x),
         )
         results.append(res4)
-        u.Core.Tests.assert_result_chain(
+        u.Tests.assert_result_chain(
             results,
             expected_success_count=4,
             expected_failure_count=0,
@@ -389,7 +389,7 @@ class TestsFlextCoreResult:
         success_values: t.JsonList = ["value1", "value2", "value3"]
         failure_errors: t.StrSequence = ["error1", "error2"]
         error_codes: Sequence[str | None] = ["CODE1", None]
-        cases = u.Core.Tests.create_parametrized_cases(
+        cases = u.Tests.create_parametrized_cases(
             success_values,
             failure_errors,
             error_codes=error_codes,
@@ -397,27 +397,27 @@ class TestsFlextCoreResult:
         tm.that(len(cases), eq=5)
         for i, (result, success, _value, error) in enumerate(cases[:3]):
             tm.that(success, eq=True)
-            u.Core.Tests.assert_success_with_value(result, success_values[i])
+            u.Tests.assert_success_with_value(result, success_values[i])
             tm.that(error, none=True)
         for i, (result, success, _value, error) in enumerate(cases[3:]):
             tm.that(not success, eq=True)
-            _ = u.Core.Tests.assert_failure(result)
+            _ = u.Tests.assert_failure(result)
             tm.that(error, eq=failure_errors[i])
 
     def test_result_none_handling_limits(self) -> None:
         """Test None handling limits using generic helper."""
-        result1: p.Result[str] = u.Core.Tests.create_result_from_value(
+        result1: p.Result[str] = u.Tests.create_result_from_value(
             None,
             default_on_none="default_value",
         )
-        u.Core.Tests.assert_success_with_value(result1, "default_value")
-        result2: p.Result[str | None] = u.Core.Tests.create_result_from_value(
+        u.Tests.assert_success_with_value(result1, "default_value")
+        result2: p.Result[str | None] = u.Tests.create_result_from_value(
             None,
             error_on_none="Value is None",
         )
-        u.Core.Tests.assert_failure_with_error(result2, "Value is None")
-        result3 = u.Core.Tests.create_result_from_value("actual_value")
-        u.Core.Tests.assert_success_with_value(result3, "actual_value")
+        u.Tests.assert_failure_with_error(result2, "Value is None")
+        result3 = u.Tests.create_result_from_value("actual_value")
+        u.Tests.assert_success_with_value(result3, "actual_value")
 
     def test_safe_decorator(self) -> None:
         """Test safe decorator wraps function in try/except."""
@@ -427,7 +427,7 @@ class TestsFlextCoreResult:
 
         divide_wrapped = r.safe(divide)
         result: p.Result[int] = divide_wrapped(10, 2)
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         tm.that(result.value, eq=5)
         result_fail: p.Result[int] = divide_wrapped(10, 0)
         tm.fail(result_fail)
@@ -494,7 +494,7 @@ class TestsFlextCoreResult:
         """Test traverse maps over sequence successfully."""
         items = [1, 2, 3]
         result = r.traverse(items, lambda x: r[int].ok(x * 2))
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         tm.that(result.value, eq=[2, 4, 6])
 
     def test_traverse_failure(self) -> None:
@@ -504,7 +504,7 @@ class TestsFlextCoreResult:
             items,
             lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
         )
-        _ = u.Core.Tests.assert_failure(result)
+        _ = u.Tests.assert_failure(result)
         tm.that(result.error, eq="error")
 
     def test_accumulate_errors_all_success(self) -> None:
@@ -531,7 +531,7 @@ class TestsFlextCoreResult:
             lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
             fail_fast=True,
         )
-        _ = u.Core.Tests.assert_failure(result)
+        _ = u.Tests.assert_failure(result)
         tm.that(result.error, eq="error")
 
     def test_traverse_fail_fast_false(self) -> None:
@@ -542,7 +542,7 @@ class TestsFlextCoreResult:
             lambda x: r[int].fail(f"error_{x}") if x in {2, 3} else r[int].ok(x),
             fail_fast=False,
         )
-        _ = u.Core.Tests.assert_failure(result)
+        _ = u.Tests.assert_failure(result)
         tm.that(result.error, none=False)
         tm.that(str(result.error), has="error_2")
         tm.that(str(result.error), has="error_3")
@@ -565,7 +565,7 @@ class TestsFlextCoreResult:
             resource.clear()
 
         result: p.Result[str] = r[str].with_resource(factory, op, cleanup)
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         tm.that(result.value, eq="success")
         tm.that(len(resource_created), eq=1)
         tm.that(len(resource_cleaned), eq=1)
@@ -670,7 +670,7 @@ class TestsFlextCoreResult:
             return "success"
 
         result = r.create_from_callable(func)
-        _ = u.Core.Tests.assert_success(result)
+        _ = u.Tests.assert_success(result)
         tm.that(result.value, eq="success")
 
     def test_create_from_callable_none(self) -> None:
@@ -680,7 +680,7 @@ class TestsFlextCoreResult:
             return None
 
         result = r.create_from_callable(func)
-        _ = u.Core.Tests.assert_failure(result)
+        _ = u.Tests.assert_failure(result)
         error_msg = result.error
         tm.that(error_msg, none=False)
         tm.that(error_msg, has="Callable returned None")
@@ -693,7 +693,7 @@ class TestsFlextCoreResult:
             raise ValueError(error_msg)
 
         result = r.create_from_callable(func)
-        _ = u.Core.Tests.assert_failure(result)
+        _ = u.Tests.assert_failure(result)
         error_msg = result.error
         tm.that(error_msg, none=False)
         tm.that(error_msg, has="Callable failed")

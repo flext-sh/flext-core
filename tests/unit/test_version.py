@@ -17,7 +17,7 @@ class TestsFlextCoreVersion:
             FlextVersion.resolve_version_string(),
             is_=str,
             empty=False,
-            match=c.Core.Tests.Patterns.SEMVER,
+            match=c.Tests.Patterns.SEMVER,
         )
 
     def test_resolve_version_info_returns_non_empty_tuple_starting_with_major(
@@ -32,17 +32,17 @@ class TestsFlextCoreVersion:
         tm.that(
             info,
             is_=dict,
-            has=list(c.Core.Tests.Version.PACKAGE_INFO_REQUIRED_KEYS),
+            has=list(c.Tests.Version.PACKAGE_INFO_REQUIRED_KEYS),
         )
-        for key in c.Core.Tests.Version.PACKAGE_INFO_REQUIRED_KEYS:
+        for key in c.Tests.Version.PACKAGE_INFO_REQUIRED_KEYS:
             tm.that(info[key], is_=str, none=False)
-        tm.that(info["name"], eq=c.Core.Tests.Version.CORE_PACKAGE_NAME)
-        tm.that(info["version"], match=c.Core.Tests.Patterns.SEMVER)
+        tm.that(info["name"], eq=c.Tests.Version.CORE_PACKAGE_NAME)
+        tm.that(info["version"], match=c.Tests.Patterns.SEMVER)
 
     @pytest.mark.parametrize(
         ("major", "minor", "patch", "expected"),
-        c.Core.Tests.Version.AT_LEAST_CASES,
-        ids=c.Core.Tests.Version.AT_LEAST_CASE_IDS,
+        c.Tests.Version.AT_LEAST_CASES,
+        ids=c.Tests.Version.AT_LEAST_CASE_IDS,
     )
     def test_version_at_least_compares_against_current(
         self,

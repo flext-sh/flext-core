@@ -211,12 +211,13 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
                 yield from cls._ns_no_accessor_methods(target, qn)
             case "settings_inheritance":
                 yield qn, (target,)
-            # --- ENFORCE-039 / ENFORCE-041 / ENFORCE-043 / ENFORCE-044 dispatch arms ---
+            # --- ENFORCE-039 / ENFORCE-041 / ENFORCE-043 / ENFORCE-044 / ENFORCE-054 dispatch arms ---
             case (
                 "cast_outside_core"
                 | "model_rebuild_call"
                 | "pass_through_wrapper"
                 | "private_attr_probe"
+                | "no_core_tests_namespace"
             ):
                 yield qn, (target,)
             case _:

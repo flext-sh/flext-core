@@ -8,7 +8,7 @@ from flext_core import m, u
 class ExamplesFlextCoreModelsEx14:
     """Example 14 model namespace."""
 
-    class Ex14CreateUserCommand(m.Command):
+    class CreateUserCommand(m.Command):
         """Create user command payload."""
 
         user_id: str = u.Field(
@@ -17,14 +17,14 @@ class ExamplesFlextCoreModelsEx14:
         name: str = u.Field(description="Full name of the user.")
         email: str = u.Field(description="Email address of the user.")
 
-    class Ex14GetUserQuery(m.Query):
+    class GetUserQuery(m.Query):
         """Get user query payload."""
 
         user_id: str = u.Field(
             description="Unique identifier for the user to retrieve."
         )
 
-    class Ex14UserDTO(m.Value):
+    class UserDTO(m.Value):
         """Data transfer object for user information."""
 
         id: str = u.Field(description="Unique identifier for the user.")

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from examples import ExamplesFlextCoreModelsErrors as _err
 from flext_core import c, m, p, r, t, u
 
@@ -9,13 +11,14 @@ from flext_core import c, m, p, r, t, u
 class ExamplesFlextCoreModelsEx00:
     """Example 00 model namespace."""
 
-
-    class Ex00UserProfile(m.Entity):
+    class UserProfile(m.Entity):
         """User profile transport model."""
 
-        name: str = u.Field(min_length=1)
-        email: str = u.Field(min_length=1)
-        status: c.Status = c.Status.ACTIVE
+        name: Annotated[str, u.Field(min_length=1, description="User display name")]
+        email: Annotated[str, u.Field(min_length=1, description="User email address")]
+        status: Annotated[c.Status, u.Field(description="User account status")] = (
+            c.Status.ACTIVE
+        )
 
         def activate(self) -> p.Result[None]:
             """Activate user once."""
@@ -23,11 +26,11 @@ class ExamplesFlextCoreModelsEx00:
                 return r[None].fail("Already active")
             return r[None].ok(None)
 
-    class Ex00UserInput(m.Value):
+    class UserInput(m.Value):
         """Raw user input model."""
 
-        name: str = u.Field(min_length=1)
-        email: str = u.Field(min_length=1)
+        name: Annotated[str, u.Field(min_length=1, description="User display name")]
+        email: Annotated[str, u.Field(min_length=1, description="User email address")]
 
         @u.field_validator("name", "email", mode="before")
         @classmethod

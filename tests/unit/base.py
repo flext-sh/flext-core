@@ -44,7 +44,7 @@ class TestsFlextCoreServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPa
 
     def execute(self) -> p.Result[TDomainResult]:
         """Execute domain service logic - must be implemented by subclasses."""
-        msg = c.Core.Tests.TestErrors.SUBCLASSES_MUST_IMPLEMENT_EXECUTE
+        msg = c.Tests.TestErrors.SUBCLASSES_MUST_IMPLEMENT_EXECUTE
         raise NotImplementedError(msg)
 
     class HandlerTestCase(m.BaseModel):
@@ -102,7 +102,7 @@ class TestsFlextCoreServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPa
 
         @staticmethod
         def _to_container(
-            value: t.Core.Tests.TestobjectSerializable,
+            value: t.Tests.TestobjectSerializable,
         ) -> t.JsonValue | None:
             if value is None:
                 return None
@@ -193,7 +193,7 @@ class TestsFlextCoreServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPa
 
                 def __init__(self) -> None:
                     if not handler_id:
-                        msg = c.Core.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
+                        msg = c.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
                         raise ValueError(msg)
                     settings = m.Handler(
                         handler_id=handler_id,
@@ -239,7 +239,7 @@ class TestsFlextCoreServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPa
 
             """
             if not handler_id:
-                msg = c.Core.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
+                msg = c.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
                 raise ValueError(msg)
 
             def always_succeed(
@@ -269,10 +269,10 @@ class TestsFlextCoreServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPa
 
             """
             if not handler_id:
-                msg = c.Core.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
+                msg = c.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
                 raise ValueError(msg)
             if not error_message:
-                error_message = c.Core.Tests.TestErrors.PROCESSING_ERROR_DEFAULT
+                error_message = c.Tests.TestErrors.PROCESSING_ERROR_DEFAULT
 
             def always_fail(
                 _msg: t.JsonPayload,
@@ -301,7 +301,7 @@ class TestsFlextCoreServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPa
 
             """
             if not handler_id:
-                msg = c.Core.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
+                msg = c.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
                 raise ValueError(msg)
 
             def transform(

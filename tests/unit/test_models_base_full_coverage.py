@@ -31,7 +31,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
 
     def test_metadata_attributes_rejects_basemodel_non_mapping_dump(self) -> None:
         with pytest.raises(TypeError):
-            m.Metadata.model_validate({"attributes": m.Core.Tests._BrokenDumpModel()})
+            m.Metadata.model_validate({"attributes": m.Tests._BrokenDumpModel()})
 
     def test_metadata_attributes_accepts_t_dict_and_mapping(self) -> None:
         model_from_t_dict = m.Metadata.model_validate({

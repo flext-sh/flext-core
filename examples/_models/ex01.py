@@ -9,13 +9,13 @@ from flext_core import m, u
 class ExamplesFlextCoreModelsEx01:
     """Example 01 models."""
 
-    class Ex01User(m.Entity):
+    class User(m.Entity):
         """Result demo user model."""
 
         name: str = u.Field(description="User display name")
         email: str = u.Field(description="User email address")
 
-    class Ex01DemonstrationResult(m.Value):
+    class DemonstrationResult(m.Value):
         """Result demo summary model."""
 
         demonstrations_completed: int = u.Field(
@@ -26,7 +26,7 @@ class ExamplesFlextCoreModelsEx01:
         )
         completed_at: str = u.Field(description="ISO 8601 completion timestamp")
 
-    class Ex01RunDemonstrationCommand(m.Command):
+    class RunDemonstrationCommand(m.Command):
         """Result demo command model."""
 
         operation: str = u.Field(
@@ -35,13 +35,13 @@ class ExamplesFlextCoreModelsEx01:
             validate_default=True,
         )
 
-    class Ex01ValidPersonPayload(m.Value):
+    class ValidPersonPayload(m.Value):
         """Valid person payload model for demo validation."""
 
         name: str = u.Field(description="Person name")
         age: int = u.Field(description="Person age in years")
 
-    class Ex01InvalidPersonPayload(m.Value):
+    class InvalidPersonPayload(m.Value):
         """Invalid person payload model (for failure path tests)."""
 
         name: str = u.Field(description="Person name")

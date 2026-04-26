@@ -41,9 +41,7 @@ class TestsFlextCoreLazyPerformance:
 
             reloaded_module = importlib.reload(flext_core)
 
-            for index, lazy_map in enumerate(
-                c.Core.Tests.LazyBenchmark.EXTRA_INSTALL_MAPS
-            ):
+            for index, lazy_map in enumerate(c.Tests.LazyBenchmark.EXTRA_INSTALL_MAPS):
                 module_name = f"flext_core_{index}"
                 virtual_module = (
                     TestsFlextCoreLazyPerformance.LazyBenchmark._new_virtual_module(
@@ -57,7 +55,7 @@ class TestsFlextCoreLazyPerformance:
                     publish_all=index % 2 == 0,
                 )
 
-            for symbol_name in c.Core.Tests.LazyBenchmark.REAL_SYMBOLS:
+            for symbol_name in c.Tests.LazyBenchmark.REAL_SYMBOLS:
                 getattr(reloaded_module, symbol_name)
 
         @staticmethod
