@@ -15,10 +15,7 @@ if _t.TYPE_CHECKING:
     from examples._models.errors import ExamplesFlextCoreModelsErrors
     from examples._models.ex00 import ExamplesFlextCoreModelsEx00
     from examples._models.ex01 import ExamplesFlextCoreModelsEx01
-    from examples._models.ex02 import (
-        ExamplesFlextCoreModelsEx02,
-        ExamplesFlextCoreSettingsEx02TestConfig,
-    )
+    from examples._models.ex02 import ExamplesFlextCoreModelsEx02
     from examples._models.ex03 import (
         Ex03Email,
         Ex03Money,
@@ -30,36 +27,11 @@ if _t.TYPE_CHECKING:
     from examples._models.ex04 import ExamplesFlextCoreModelsEx04
     from examples._models.ex05 import ExamplesFlextCoreModelsEx05
     from examples._models.ex07 import ExamplesFlextCoreModelsEx07
-    from examples._models.ex08 import Ex08Order, Ex08User, ExamplesFlextCoreModelsEx08
-    from examples._models.ex10 import (
-        Ex10CommandBusStub,
-        Ex10ContextPayload,
-        Ex10DerivedMessage,
-        Ex10Entity,
-        Ex10Message,
-        Ex10ProcessorBad,
-        Ex10ProcessorGood,
-        Ex10ProtocolHandler,
-        Ex10ServiceStub,
-        ExamplesFlextCoreModelsEx10,
-    )
-    from examples._models.ex11 import (
-        Ex11CommandBusStub,
-        Ex11EntityStub,
-        Ex11HandlerLike,
-        Ex11HandlerLikeService,
-        Ex11Payload,
-        Ex11ProcessorProtocolBad,
-        Ex11ProcessorProtocolGood,
-        ExamplesFlextCoreModelsEx11,
-    )
-    from examples._models.ex12 import (
-        Ex12CommandA,
-        Ex12CommandB,
-        ExamplesFlextCoreModelsEx12,
-    )
+    from examples._models.ex08 import ExamplesFlextCoreModelsEx08
+    from examples._models.ex10 import ExamplesFlextCoreModelsEx10
+    from examples._models.ex11 import ExamplesFlextCoreModelsEx11
+    from examples._models.ex12 import ExamplesFlextCoreModelsEx12
     from examples._models.ex14 import ExamplesFlextCoreModelsEx14
-    from examples._models.exsettings import ExSettingsAppSettings
     from examples._models.output import ExamplesFlextCoreModelsOutput
     from examples._models.shared import (
         ExamplesFlextCoreSharedHandle,
@@ -81,6 +53,7 @@ if _t.TYPE_CHECKING:
     from examples.logging_config_once_pattern import DatabaseService, MigrationService
     from examples.models import ExamplesFlextCoreModels, m
     from examples.protocols import p
+    from examples.settings import ExamplesSettings
     from examples.shared import ExamplesFlextCoreShared
     from examples.typings import ExamplesFlextCoreTypes, t
     from examples.utilities import u
@@ -92,10 +65,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._models.errors": ("ExamplesFlextCoreModelsErrors",),
             "._models.ex00": ("ExamplesFlextCoreModelsEx00",),
             "._models.ex01": ("ExamplesFlextCoreModelsEx01",),
-            "._models.ex02": (
-                "ExamplesFlextCoreModelsEx02",
-                "ExamplesFlextCoreSettingsEx02TestConfig",
-            ),
+            "._models.ex02": ("ExamplesFlextCoreModelsEx02",),
             "._models.ex03": (
                 "Ex03Email",
                 "Ex03Money",
@@ -107,40 +77,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._models.ex04": ("ExamplesFlextCoreModelsEx04",),
             "._models.ex05": ("ExamplesFlextCoreModelsEx05",),
             "._models.ex07": ("ExamplesFlextCoreModelsEx07",),
-            "._models.ex08": (
-                "Ex08Order",
-                "Ex08User",
-                "ExamplesFlextCoreModelsEx08",
-            ),
-            "._models.ex10": (
-                "Ex10CommandBusStub",
-                "Ex10ContextPayload",
-                "Ex10DerivedMessage",
-                "Ex10Entity",
-                "Ex10Message",
-                "Ex10ProcessorBad",
-                "Ex10ProcessorGood",
-                "Ex10ProtocolHandler",
-                "Ex10ServiceStub",
-                "ExamplesFlextCoreModelsEx10",
-            ),
-            "._models.ex11": (
-                "Ex11CommandBusStub",
-                "Ex11EntityStub",
-                "Ex11HandlerLike",
-                "Ex11HandlerLikeService",
-                "Ex11Payload",
-                "Ex11ProcessorProtocolBad",
-                "Ex11ProcessorProtocolGood",
-                "ExamplesFlextCoreModelsEx11",
-            ),
-            "._models.ex12": (
-                "Ex12CommandA",
-                "Ex12CommandB",
-                "ExamplesFlextCoreModelsEx12",
-            ),
+            "._models.ex08": ("ExamplesFlextCoreModelsEx08",),
+            "._models.ex10": ("ExamplesFlextCoreModelsEx10",),
+            "._models.ex11": ("ExamplesFlextCoreModelsEx11",),
+            "._models.ex12": ("ExamplesFlextCoreModelsEx12",),
             "._models.ex14": ("ExamplesFlextCoreModelsEx14",),
-            "._models.exsettings": ("ExSettingsAppSettings",),
             "._models.output": ("ExamplesFlextCoreModelsOutput",),
             "._models.shared": (
                 "ExamplesFlextCoreSharedHandle",
@@ -171,6 +112,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "m",
             ),
             ".protocols": ("p",),
+            ".settings": ("ExamplesSettings",),
             ".shared": ("ExamplesFlextCoreShared",),
             ".typings": (
                 "ExamplesFlextCoreTypes",
@@ -227,31 +169,10 @@ __all__: list[str] = [
     "Ex06FlextContext",
     "Ex07FlextExceptions",
     "Ex08FlextContainer",
-    "Ex08Order",
-    "Ex08User",
     "Ex09FlextDecorators",
-    "Ex10CommandBusStub",
-    "Ex10ContextPayload",
-    "Ex10DerivedMessage",
-    "Ex10Entity",
     "Ex10FlextHandlers",
-    "Ex10Message",
-    "Ex10ProcessorBad",
-    "Ex10ProcessorGood",
-    "Ex10ProtocolHandler",
-    "Ex10ServiceStub",
-    "Ex11CommandBusStub",
-    "Ex11EntityStub",
     "Ex11FlextService",
-    "Ex11HandlerLike",
-    "Ex11HandlerLikeService",
-    "Ex11Payload",
-    "Ex11ProcessorProtocolBad",
-    "Ex11ProcessorProtocolGood",
-    "Ex12CommandA",
-    "Ex12CommandB",
     "Ex12RegistryDsl",
-    "ExSettingsAppSettings",
     "ExampleService",
     "ExamplesFlextCoreModels",
     "ExamplesFlextCoreModelsErrors",
@@ -268,11 +189,11 @@ __all__: list[str] = [
     "ExamplesFlextCoreModelsEx12",
     "ExamplesFlextCoreModelsEx14",
     "ExamplesFlextCoreModelsOutput",
-    "ExamplesFlextCoreSettingsEx02TestConfig",
     "ExamplesFlextCoreShared",
     "ExamplesFlextCoreSharedHandle",
     "ExamplesFlextCoreSharedPerson",
     "ExamplesFlextCoreTypes",
+    "ExamplesSettings",
     "MigrationService",
     "c",
     "d",

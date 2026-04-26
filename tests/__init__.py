@@ -69,12 +69,24 @@ if _t.TYPE_CHECKING:
     from tests.typings import TestsFlextCoreTypes, t
     from tests.unit._models.test_base import TestsFlextCoreModelsBase
     from tests.unit._models.test_cqrs import TestsFlextCoreModelsCQRS
+    from tests.unit._models.test_enforcement_sources import (
+        TestsFlextCoreModelsEnforcementSources,
+    )
     from tests.unit._models.test_entity import TestsFlextCoreModelsEntity
     from tests.unit._models.test_exception_params import (
         TestsFlextCoreModelsExceptionParams,
     )
+    from tests.unit._utilities.test_beartype_violation_capture import (
+        TestsFlextCoreUtilitiesBeartypeViolationCapture,
+    )
     from tests.unit._utilities.test_guards import TestsFlextCoreUtilitiesGuards
+    from tests.unit._utilities.test_lightweight_ast import (
+        TestsFlextCoreUtilitiesLightweightAst,
+    )
     from tests.unit._utilities.test_mapper import TestsFlextCoreUtilitiesMapper
+    from tests.unit._utilities.test_runtime_violation_registry import (
+        TestsFlextCoreUtilitiesRuntimeViolationRegistry,
+    )
     from tests.unit.base import TestsFlextCoreServiceBase
     from tests.unit.test_beartype_engine import TestsFlextCoreBeartypeEngine
     from tests.unit.test_constants_new import TestsFlextCoreConstantsNew
@@ -241,12 +253,24 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".unit._models.test_base": ("TestsFlextCoreModelsBase",),
             ".unit._models.test_cqrs": ("TestsFlextCoreModelsCQRS",),
+            ".unit._models.test_enforcement_sources": (
+                "TestsFlextCoreModelsEnforcementSources",
+            ),
             ".unit._models.test_entity": ("TestsFlextCoreModelsEntity",),
             ".unit._models.test_exception_params": (
                 "TestsFlextCoreModelsExceptionParams",
             ),
+            ".unit._utilities.test_beartype_violation_capture": (
+                "TestsFlextCoreUtilitiesBeartypeViolationCapture",
+            ),
             ".unit._utilities.test_guards": ("TestsFlextCoreUtilitiesGuards",),
+            ".unit._utilities.test_lightweight_ast": (
+                "TestsFlextCoreUtilitiesLightweightAst",
+            ),
             ".unit._utilities.test_mapper": ("TestsFlextCoreUtilitiesMapper",),
+            ".unit._utilities.test_runtime_violation_registry": (
+                "TestsFlextCoreUtilitiesRuntimeViolationRegistry",
+            ),
             ".unit.base": ("TestsFlextCoreServiceBase",),
             ".unit.test_beartype_engine": ("TestsFlextCoreBeartypeEngine",),
             ".unit.test_constants_new": ("TestsFlextCoreConstantsNew",),
@@ -432,6 +456,7 @@ __all__: list[str] = [
     "TestsFlextCoreModelsCQRS",
     "TestsFlextCoreModelsContainer",
     "TestsFlextCoreModelsCqrs",
+    "TestsFlextCoreModelsEnforcementSources",
     "TestsFlextCoreModelsEntity",
     "TestsFlextCoreModelsExceptionParams",
     "TestsFlextCoreModelsMixins",
@@ -461,14 +486,17 @@ __all__: list[str] = [
     "TestsFlextCoreTypes",
     "TestsFlextCoreTypesUnit",
     "TestsFlextCoreUtilities",
+    "TestsFlextCoreUtilitiesBeartypeViolationCapture",
     "TestsFlextCoreUtilitiesCollection",
     "TestsFlextCoreUtilitiesCoverage",
     "TestsFlextCoreUtilitiesDomain",
     "TestsFlextCoreUtilitiesGenerators",
     "TestsFlextCoreUtilitiesGuards",
+    "TestsFlextCoreUtilitiesLightweightAst",
     "TestsFlextCoreUtilitiesMapper",
     "TestsFlextCoreUtilitiesProjectMetadata",
     "TestsFlextCoreUtilitiesReliability",
+    "TestsFlextCoreUtilitiesRuntimeViolationRegistry",
     "TestsFlextCoreUtilitiesSettings",
     "TestsFlextCoreUtilitiesSmoke",
     "TestsFlextCoreUtilitiesText",

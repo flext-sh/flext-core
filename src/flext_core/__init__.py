@@ -108,6 +108,7 @@ if _t.TYPE_CHECKING:
         FlextUtilitiesGuardsTypeProtocol,
     )
     from flext_core._utilities.handler import FlextUtilitiesHandler
+    from flext_core._utilities.lightweight_ast import FlextUtilitiesLightweightAst
     from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
     from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
     from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -122,6 +123,9 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
     from flext_core._utilities.pydantic import FlextUtilitiesPydantic
     from flext_core._utilities.reliability import FlextUtilitiesReliability
+    from flext_core._utilities.runtime_violation_registry import (
+        FlextUtilitiesRuntimeViolationRegistry,
+    )
     from flext_core._utilities.settings import FlextUtilitiesSettings
     from flext_core._utilities.text import FlextUtilitiesText
     from flext_core.constants import FlextConstants, c
@@ -261,6 +265,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.guards_type_model": ("FlextUtilitiesGuardsTypeModel",),
             "._utilities.guards_type_protocol": ("FlextUtilitiesGuardsTypeProtocol",),
             "._utilities.handler": ("FlextUtilitiesHandler",),
+            "._utilities.lightweight_ast": ("FlextUtilitiesLightweightAst",),
             "._utilities.logging_config": ("FlextUtilitiesLoggingConfig",),
             "._utilities.logging_context": ("FlextUtilitiesLoggingContext",),
             "._utilities.mapper": ("FlextUtilitiesMapper",),
@@ -275,6 +280,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.project_metadata": ("FlextUtilitiesProjectMetadata",),
             "._utilities.pydantic": ("FlextUtilitiesPydantic",),
             "._utilities.reliability": ("FlextUtilitiesReliability",),
+            "._utilities.runtime_violation_registry": (
+                "FlextUtilitiesRuntimeViolationRegistry",
+            ),
             "._utilities.settings": ("FlextUtilitiesSettings",),
             "._utilities.text": ("FlextUtilitiesText",),
             ".constants": (
@@ -469,6 +477,7 @@ __all__: list[str] = [
     "FlextUtilitiesGuardsTypeModel",
     "FlextUtilitiesGuardsTypeProtocol",
     "FlextUtilitiesHandler",
+    "FlextUtilitiesLightweightAst",
     "FlextUtilitiesLoggingConfig",
     "FlextUtilitiesLoggingContext",
     "FlextUtilitiesMapper",
@@ -483,6 +492,7 @@ __all__: list[str] = [
     "FlextUtilitiesProjectMetadata",
     "FlextUtilitiesPydantic",
     "FlextUtilitiesReliability",
+    "FlextUtilitiesRuntimeViolationRegistry",
     "FlextUtilitiesSettings",
     "FlextUtilitiesText",
     "__author__",

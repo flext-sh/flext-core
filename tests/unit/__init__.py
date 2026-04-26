@@ -18,10 +18,22 @@ _LAZY_IMPORTS = merge_lazy_imports(
         {
             "._models.test_base": ("TestsFlextCoreModelsBase",),
             "._models.test_cqrs": ("TestsFlextCoreModelsCQRS",),
+            "._models.test_enforcement_sources": (
+                "TestsFlextCoreModelsEnforcementSources",
+            ),
             "._models.test_entity": ("TestsFlextCoreModelsEntity",),
             "._models.test_exception_params": ("TestsFlextCoreModelsExceptionParams",),
+            "._utilities.test_beartype_violation_capture": (
+                "TestsFlextCoreUtilitiesBeartypeViolationCapture",
+            ),
             "._utilities.test_guards": ("TestsFlextCoreUtilitiesGuards",),
+            "._utilities.test_lightweight_ast": (
+                "TestsFlextCoreUtilitiesLightweightAst",
+            ),
             "._utilities.test_mapper": ("TestsFlextCoreUtilitiesMapper",),
+            "._utilities.test_runtime_violation_registry": (
+                "TestsFlextCoreUtilitiesRuntimeViolationRegistry",
+            ),
             ".base": ("TestsFlextCoreServiceBase",),
             ".test_beartype_engine": ("TestsFlextCoreBeartypeEngine",),
             ".test_constants_new": ("TestsFlextCoreConstantsNew",),
