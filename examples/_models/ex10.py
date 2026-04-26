@@ -10,13 +10,13 @@ from typing import Annotated
 from flext_core import m, p, r, t, u
 
 
-class ExamplesFlextCoreModelsEx10(m):
+class ExamplesFlextCoreModelsEx10:
     """Examples namespace wrapper for ex10 models."""
 
     class Message(m.Command):
         text: Annotated[str, u.Field(description="Message text content")]
 
-    class DerivedMessage(Ex10Message):
+    class DerivedMessage(Message):
         pass
 
     class ContextPayload(m.Value):
@@ -42,15 +42,21 @@ class ExamplesFlextCoreModelsEx10(m):
 
     class ProtocolHandler(m.BaseModel):
         message_type: Annotated[
-            type,
+            type[m.Command],
             u.Field(description="Message type for protocol handler"),
-        ] = Ex10Message
+        ] = m.Command
 
-        def handle(self, message: Ex10Message) -> p.Result[str]:
+        def handle(
+            self,
+            message: ExamplesFlextCoreModelsEx10.Message,
+        ) -> p.Result[str]:
             return r[str].ok(message.text)
 
     class CommandBusStub(m.BaseModel):
-        def dispatch(self, message: Ex10Message) -> p.Result[str]:
+        def dispatch(
+            self,
+            message: ExamplesFlextCoreModelsEx10.Message,
+        ) -> p.Result[str]:
             return r[str].ok(message.text)
 
     class ServiceStub(m.BaseModel):

@@ -37,7 +37,6 @@ from types import UnionType
 from typing import (
     Annotated,
     Any,
-    ClassVar,
     ForwardRef,
     TypeAliasType,
     Union,
@@ -49,13 +48,10 @@ from typing import (
 from pydantic.fields import FieldInfo
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as m
+from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cp
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
-from flext_core._utilities.runtime_violation_registry import (
-    FlextUtilitiesRuntimeViolationRegistry,
-)
 
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}
@@ -65,65 +61,6 @@ type _DefaultFactory = type | Callable[..., tp.JsonValue] | None
 @no_type_check
 class FlextUtilitiesBeartypeEngine:
     """Annotation inspection + per-tag rule predicates (static-only)."""
-
-    # rule_id → check_<tag> hook name. Populated by ``register_violation_capture``
-    # and consumed by ``emit_violation_capture`` so detector hits route into
-    # ``FlextUtilitiesRuntimeViolationRegistry`` for the pytest dispatcher.
-    _violation_capture_registry: ClassVar[dict[str, str]] = {}
-
-    # ------------------------------------------------------------------
-    # Violation capture pipeline (Task 0.3 — feeds runtime violation registry)
-    # ------------------------------------------------------------------
-
-    @classmethod
-    def register_violation_capture(cls, rule_id: str, hook_name: str) -> None:
-        """Bind ``rule_id`` to a ``check_<tag>`` hook on this engine.
-
-        Subsequent ``emit_violation_capture(rule_id, target)`` calls run the
-        hook against ``target`` and append a ``ViolationReport(outcome=HIT)``
-        when the hook returns a non-None payload.
-        """
-        cls._violation_capture_registry[rule_id] = hook_name
-
-    @classmethod
-    def unregister_violation_capture(cls, rule_id: str) -> None:
-        """Drop ``rule_id`` from the capture registry.
-
-        Silent no-op when ``rule_id`` was never registered.
-        """
-        cls._violation_capture_registry.pop(rule_id, None)
-
-    @classmethod
-    def emit_violation_capture(cls, rule_id: str, target: type) -> None:
-        """Run the registered hook for ``rule_id`` against ``target``.
-
-        On HIT (hook returns a non-None payload), append a typed
-        ``m.ViolationReport(outcome=HIT)`` to the runtime registry. MISS
-        (None payload), unknown ``rule_id``, or unknown hook name are all
-        silent no-ops — never raises.
-        """
-        hook_name = cls._violation_capture_registry.get(rule_id)
-        if hook_name is None:
-            return
-        hook = getattr(cls, hook_name, None)
-        if hook is None:
-            return
-        payload = hook(target)
-        if payload is None:
-            return
-        try:
-            line_value = int(payload.get("line", 0))
-        except (TypeError, ValueError):
-            line_value = 0
-        FlextUtilitiesRuntimeViolationRegistry.append_violation_report(
-            m.ViolationReport(
-                rule_id=rule_id,
-                outcome=c.ViolationOutcome.HIT,
-                file=str(payload.get("file", "")),
-                line=line_value,
-                symbol=getattr(target, "__qualname__", ""),
-            ),
-        )
 
     # ------------------------------------------------------------------
     # Low-level annotation helpers
@@ -787,10 +724,32 @@ class FlextUtilitiesBeartypeEngine:
             return None
         return src_file, tree
 
+    @staticmethod
+    def _apt_load_wrapper_surface(
+        target: type,
+    ) -> tuple[str, str, ast.Module] | None:
+        """Return source for tests/examples/scripts modules that are real scan targets."""
+        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        if loaded is None:
+            return None
+
+        src_file, tree = loaded
+        normalized = src_file.replace("\\", "/")
+        if not any(
+            segment in normalized for segment in ("/tests/", "/examples/", "/scripts/")
+        ):
+            return None
+        if normalized.endswith("/__init__.py"):
+            return None
+        try:
+            source = Path(src_file).read_text(encoding="utf-8")
+        except OSError:
+            return None
+        return src_file, source, tree
+
     # Pure AST finders — single SSOT for ENFORCE-039/041/043/044 detection.
-    # Both the runtime ``check_<tag>`` wrappers below and the workspace
-    # ``FlextInfraEnforcementAuditor`` consume these. Adding/changing a
-    # detection rule means editing ONE finder, never two parallel walks.
+    # The runtime ``check_<tag>`` wrappers below consume these. Adding or
+    # changing a detection rule means editing ONE finder.
 
     @staticmethod
     def find_cast_calls(tree: ast.Module) -> Iterator[ast.Call]:
@@ -937,71 +896,70 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_no_core_tests_namespace(target: type) -> t.StrMapping | None:
         """Deprecated ``.Core.Tests`` namespace usage in tests/examples/scripts (ENFORCE-054)."""
-        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        loaded = FlextUtilitiesBeartypeEngine._apt_load_wrapper_surface(target)
         if loaded is None:
             return _NO_VIOLATION
 
-        src_file, _tree = loaded
-        normalized = src_file.replace("\\", "/")
-        if not any(
-            segment in normalized for segment in ("/tests/", "/examples/", "/scripts/")
-        ):
-            return _NO_VIOLATION
-
-        try:
-            source = Path(src_file).read_text(encoding="utf-8")
-        except OSError:
-            return _NO_VIOLATION
-
-        match = re.search(r"\\b[cmptu]\\.Core\\.Tests\\b", source)
-        if match is None:
-            return _NO_VIOLATION
-
-        line = source.count("\n", 0, match.start()) + 1
-        return {
-            "symbol": match.group(0),
-            "file": Path(src_file).name,
-            "line": str(line),
-        }
+        src_file, _source, tree = loaded
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Attribute) or node.attr != "Tests":
+                continue
+            parent_attr = node.value if isinstance(node.value, ast.Attribute) else None
+            if parent_attr is None or parent_attr.attr != "Core":
+                continue
+            base_name = (
+                parent_attr.value if isinstance(parent_attr.value, ast.Name) else None
+            )
+            if base_name is None or base_name.id not in cp.RUNTIME_ALIAS_NAMES:
+                continue
+            return {
+                "symbol": f"{base_name.id}.Core.Tests",
+                "file": Path(src_file).name,
+                "line": str(node.lineno),
+            }
+        return _NO_VIOLATION
 
     @staticmethod
     def check_no_wrapper_root_alias_import(target: type) -> t.StrMapping | None:
         """Wrapper aliases must be imported from root package in tests/examples/scripts (ENFORCE-055)."""
-        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        loaded = FlextUtilitiesBeartypeEngine._apt_load_wrapper_surface(target)
         if loaded is None:
             return _NO_VIOLATION
 
-        src_file, _tree = loaded
-        normalized = src_file.replace("\\", "/")
-        if not any(
-            segment in normalized for segment in ("/tests/", "/examples/", "/scripts/")
-        ):
-            return _NO_VIOLATION
-        if normalized.endswith("/__init__.py"):
-            return _NO_VIOLATION
+        src_file, source, tree = loaded
 
-        try:
-            source = Path(src_file).read_text(encoding="utf-8")
-        except OSError:
-            return _NO_VIOLATION
-
-        pattern = re.compile(
-            r"^\s*from\s+(tests|examples|scripts)\\."
-            r"(constants|models|protocols|typings|utilities)\s+import\s+"
-            r"([^\n]*\\b[cmptu]\\b[^\n]*)$",
-            re.MULTILINE,
-        )
-        match = pattern.search(source)
-        if match is None:
-            return _NO_VIOLATION
-
-        statement = match.group(0).strip()
-        line = source.count("\n", 0, match.start()) + 1
-        return {
-            "file": Path(src_file).name,
-            "line": str(line),
-            "statement": statement,
-        }
+        wrapper_submodules = cp.FACADE_MODULE_NAMES
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom):
+                continue
+            module_name = node.module or ""
+            parent, dot, child = module_name.partition(".")
+            if (
+                not dot
+                or parent not in {"tests", "examples", "scripts"}
+                or child not in wrapper_submodules
+            ):
+                continue
+            if not any(
+                (alias.asname or alias.name) in cp.RUNTIME_ALIAS_NAMES
+                for alias in node.names
+            ):
+                continue
+            statement = ast.get_source_segment(source, node) or (
+                f"from {module_name} import "
+                + ", ".join(
+                    alias.name
+                    if alias.asname is None
+                    else f"{alias.name} as {alias.asname}"
+                    for alias in node.names
+                )
+            )
+            return {
+                "file": Path(src_file).name,
+                "line": str(node.lineno),
+                "statement": statement.strip(),
+            }
+        return _NO_VIOLATION
 
     # -----------------------------------------------------------------------
     # R1–R10 MRO compliance checks

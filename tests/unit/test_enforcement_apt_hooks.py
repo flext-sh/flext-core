@@ -53,18 +53,18 @@ class TestsFlextCoreEnforcementAptHooks:
     # --- Catalog membership invariants ---
 
     def test_all_six_a_pt_rule_ids_are_present_in_catalog(self) -> None:
-        ids = {rule.id for rule in c.ENFORCEMENT_CATALOG.rules}
+        ids = {rule.id for rule in c.get_catalog().rules}
         for rule_id in self.A_PT_RULE_IDS:
             assert rule_id in ids, f"missing {rule_id}"
 
     def test_a_pt_rules_carry_agents_md_anchors(self) -> None:
         for rule_id in self.A_PT_RULE_IDS:
-            rule = c.ENFORCEMENT_CATALOG.by_id(rule_id)
+            rule = c.get_catalog().by_id(rule_id)
             assert rule is not None
             assert rule.agents_md_anchor != "", f"{rule_id} missing anchor"
 
     def test_catalog_invariants_unchanged(self) -> None:
-        ids = [rule.id for rule in c.ENFORCEMENT_CATALOG.rules]
+        ids = [rule.id for rule in c.get_catalog().rules]
         for rid in ids:
             assert rid.startswith("ENFORCE-")
             assert len(rid) == len("ENFORCE-NNN")
@@ -73,25 +73,25 @@ class TestsFlextCoreEnforcementAptHooks:
     # --- Per-rule source contracts ---
 
     def test_enforce_039_uses_beartype_source_with_cast_hook(self) -> None:
-        rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-039")
+        rule = c.get_catalog().by_id("ENFORCE-039")
         assert rule is not None
         assert rule.source.kind == "beartype"
         assert rule.source.hook == "check_cast_outside_core"
 
     def test_enforce_040_uses_ruff_source_pgh003(self) -> None:
-        rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-040")
+        rule = c.get_catalog().by_id("ENFORCE-040")
         assert rule is not None
         assert rule.source.kind == "ruff"
         assert rule.source.rule_code == "PGH003"
 
     def test_enforce_041_uses_beartype_source_with_model_rebuild_hook(self) -> None:
-        rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-041")
+        rule = c.get_catalog().by_id("ENFORCE-041")
         assert rule is not None
         assert rule.source.kind == "beartype"
         assert rule.source.hook == "check_model_rebuild_call"
 
     def test_enforce_042_reuses_existing_settings_inheritance_hook(self) -> None:
-        rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-042")
+        rule = c.get_catalog().by_id("ENFORCE-042")
         assert rule is not None
         assert rule.source.kind == "beartype"
         assert rule.source.hook == "check_settings_inheritance"
@@ -101,19 +101,19 @@ class TestsFlextCoreEnforcementAptHooks:
         assert "settings_inheritance" in c.ENFORCEMENT_RULES
 
     def test_enforce_043_uses_beartype_source_with_passthrough_hook(self) -> None:
-        rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-043")
+        rule = c.get_catalog().by_id("ENFORCE-043")
         assert rule is not None
         assert rule.source.kind == "beartype"
         assert rule.source.hook == "check_pass_through_wrapper"
 
     def test_enforce_044_uses_beartype_source_with_private_probe_hook(self) -> None:
-        rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-044")
+        rule = c.get_catalog().by_id("ENFORCE-044")
         assert rule is not None
         assert rule.source.kind == "beartype"
         assert rule.source.hook == "check_private_attr_probe"
 
     def test_enforce_054_uses_beartype_source_with_flat_tests_hook(self) -> None:
-        rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-054")
+        rule = c.get_catalog().by_id("ENFORCE-054")
         assert rule is not None
         assert rule.source.kind == "beartype"
         assert rule.source.hook == "check_no_core_tests_namespace"
@@ -121,7 +121,7 @@ class TestsFlextCoreEnforcementAptHooks:
     def test_enforce_055_uses_beartype_source_with_wrapper_root_import_hook(
         self,
     ) -> None:
-        rule = c.ENFORCEMENT_CATALOG.by_id("ENFORCE-055")
+        rule = c.get_catalog().by_id("ENFORCE-055")
         assert rule is not None
         assert rule.source.kind == "beartype"
         assert rule.source.hook == "check_no_wrapper_root_alias_import"

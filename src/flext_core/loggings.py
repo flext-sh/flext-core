@@ -137,11 +137,6 @@ class FlextLogger(ulc):
         return FlextLogger.create_module_logger(resolved_name)
 
     @classmethod
-    def create_bound_logger(cls, name: str, bound_logger: p.Logger) -> Self:
-        """Internal factory for creating logger with pre-bound structlog instance."""
-        return cls(name, _bound_logger=bound_logger)
-
-    @classmethod
     def create_module_logger(
         cls,
         name: str = "flext",
@@ -184,7 +179,7 @@ class FlextLogger(ulc):
     def bind(self, **context: t.JsonPayload) -> Self:
         """Bind additional context, returning new logger (original unchanged)."""
         bound_logger = self.logger.bind(**self.to_container_context(context))
-        return self.__class__.create_bound_logger(self.name, bound_logger)
+        return self.__class__(self.name, _bound_logger=bound_logger)
 
     def build_exception_context(
         self,
@@ -342,10 +337,10 @@ class FlextLogger(ulc):
         if safe:
             with suppress(KeyError, ValueError, AttributeError):
                 bound_logger = self.logger.unbind(*keys)
-                return self.__class__.create_bound_logger(self.name, bound_logger)
+                return self.__class__(self.name, _bound_logger=bound_logger)
             return self
         bound_logger = self.logger.unbind(*keys)
-        return self.__class__.create_bound_logger(self.name, bound_logger)
+        return self.__class__(self.name, _bound_logger=bound_logger)
 
     def warning(
         self,

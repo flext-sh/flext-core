@@ -1,4 +1,4 @@
-"""Behavior contract for c.ENFORCEMENT_CATALOG — cross-layer enforcement SSOT."""
+"""Behavior contract for c.get_catalog() — cross-layer enforcement SSOT."""
 
 from __future__ import annotations
 
@@ -10,38 +10,38 @@ from tests import c, m
 
 
 class TestsFlextCoreEnforcementCatalog:
-    """Behavior contract for c.ENFORCEMENT_CATALOG shape, coverage, and construction."""
+    """Behavior contract for c.get_catalog() shape, coverage, and construction."""
 
     def test_catalog_contains_at_least_one_rule(self) -> None:
-        assert len(c.ENFORCEMENT_CATALOG.rules) > 0
+        assert len(c.get_catalog().rules) > 0
 
     def test_catalog_is_frozen_and_rejects_mutation(self) -> None:
         with pytest.raises(c.ValidationError):
-            c.ENFORCEMENT_CATALOG.rules = ()
+            c.get_catalog().rules = ()
 
     def test_catalog_version_is_monotonic_positive_integer(self) -> None:
-        assert c.ENFORCEMENT_CATALOG.version >= 1
+        assert c.get_catalog().version >= 1
 
     def test_all_rule_ids_are_unique(self) -> None:
-        ids = [rule.id for rule in c.ENFORCEMENT_CATALOG.rules]
+        ids = [rule.id for rule in c.get_catalog().rules]
         assert len(ids) == len(set(ids))
 
     def test_all_rule_ids_match_enforce_nnn_format(self) -> None:
-        for rule in c.ENFORCEMENT_CATALOG.rules:
+        for rule in c.get_catalog().rules:
             assert re.match(r"^ENFORCE-\d{3}$", rule.id)
 
     def test_by_id_returns_rule_when_present_and_none_when_missing(self) -> None:
-        first = c.ENFORCEMENT_CATALOG.rules[0]
-        assert c.ENFORCEMENT_CATALOG.by_id(first.id) is first
-        assert c.ENFORCEMENT_CATALOG.by_id("ENFORCE-999") is None
+        first = c.get_catalog().rules[0]
+        assert c.get_catalog().by_id(first.id) is first
+        assert c.get_catalog().by_id("ENFORCE-999") is None
 
     def test_enabled_rules_are_a_subset_of_all_rules(self) -> None:
-        enabled = c.ENFORCEMENT_CATALOG.enabled_rules()
+        enabled = c.get_catalog().enabled_rules()
         assert all(rule.enabled for rule in enabled)
-        assert len(enabled) <= len(c.ENFORCEMENT_CATALOG.rules)
+        assert len(enabled) <= len(c.get_catalog().rules)
 
     def test_by_kind_returns_only_matching_source_kind(self) -> None:
-        infra = c.ENFORCEMENT_CATALOG.by_kind(
+        infra = c.get_catalog().by_kind(
             m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR,
         )
         assert all(
@@ -50,7 +50,7 @@ class TestsFlextCoreEnforcementCatalog:
         )
 
     def test_catalog_covers_every_declared_source_kind(self) -> None:
-        present = {rule.source.kind for rule in c.ENFORCEMENT_CATALOG.rules}
+        present = {rule.source.kind for rule in c.get_catalog().rules}
         expected = {member.value for member in m.EnforcementSourceKind}
         assert expected <= present
 
@@ -58,7 +58,7 @@ class TestsFlextCoreEnforcementCatalog:
         self,
     ) -> None:
         # ProjectEnforcementReport has 14 violation fields; catalog must match.
-        infra = c.ENFORCEMENT_CATALOG.by_kind(
+        infra = c.get_catalog().by_kind(
             m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR,
         )
         assert len(infra) == 14
@@ -66,7 +66,7 @@ class TestsFlextCoreEnforcementCatalog:
     def test_tests_validator_rules_cover_all_seven_public_dispatch_methods(
         self,
     ) -> None:
-        validators = c.ENFORCEMENT_CATALOG.by_kind(
+        validators = c.get_catalog().by_kind(
             m.EnforcementSourceKind.FLEXT_TESTS_VALIDATOR,
         )
         assert len(validators) == 7
@@ -85,7 +85,7 @@ class TestsFlextCoreEnforcementCatalog:
         }
 
     def test_runtime_warning_category_references_flext_mro_violation(self) -> None:
-        runtime = c.ENFORCEMENT_CATALOG.by_kind(
+        runtime = c.get_catalog().by_kind(
             m.EnforcementSourceKind.RUNTIME_WARNING,
         )
         categories: set[str] = set()
@@ -133,5 +133,5 @@ class TestsFlextCoreEnforcementCatalog:
         assert ruff_rule.source.kind == m.EnforcementSourceKind.RUFF.value
 
     def test_every_rule_severity_is_an_enum_member(self) -> None:
-        for rule in c.ENFORCEMENT_CATALOG.rules:
+        for rule in c.get_catalog().rules:
             assert isinstance(rule.severity, m.EnforcementRuleSeverity)

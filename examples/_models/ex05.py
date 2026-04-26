@@ -19,7 +19,7 @@ class ExamplesFlextCoreModelsEx05:
 
     class UserModel(m.Value):
         name: str = u.Field(description="User display name")
-        status: ExamplesFlextCoreModelsEx05.Ex05StatusEnum = u.Field(
+        status: ExamplesFlextCoreModelsEx05.StatusEnum = u.Field(
             description="User account status"
         )
         age: int = u.Field(description="User age in years")
@@ -28,18 +28,21 @@ class ExamplesFlextCoreModelsEx05:
         @classmethod
         def normalize_status(
             cls,
-            value: str | ExamplesFlextCoreModelsEx05.Ex05StatusEnum,
-        ) -> ExamplesFlextCoreModelsEx05.Ex05StatusEnum:
-            if isinstance(value, ExamplesFlextCoreModelsEx05.Ex05StatusEnum):
+            value: str | ExamplesFlextCoreModelsEx05.StatusEnum,
+        ) -> ExamplesFlextCoreModelsEx05.StatusEnum:
+            if isinstance(value, ExamplesFlextCoreModelsEx05.StatusEnum):
                 return value
-            return ExamplesFlextCoreModelsEx05.Ex05StatusEnum(value)
+            return ExamplesFlextCoreModelsEx05.StatusEnum(value)
 
     class HandlerBad(m.Value):
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
     class HandlerLike(m.Value):
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
-        data: m.ConfigMap = u.Field(default_factory=lambda: m.ConfigMap(root={}))
+        data: m.ConfigMap = u.Field(
+            default_factory=lambda: m.ConfigMap(root={}),
+            description="Handler payload map",
+        )
 
     class GoodProcessor(m.Value):
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
@@ -52,7 +55,7 @@ class ExamplesFlextCoreModelsEx05:
         def validate(
             cls,
             value: m.ConfigMap,
-        ) -> ExamplesFlextCoreModelsEx05.Ex05GoodProcessor:
+        ) -> ExamplesFlextCoreModelsEx05.GoodProcessor:
             return cls.model_validate(value)
 
     class BadProcessor(m.Value):

@@ -19,7 +19,6 @@ from typing import Annotated, ClassVar, Literal
 
 from pydantic import Discriminator, Field, model_validator
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.annotateds import FlextTypesAnnotateds as ta
 from flext_core._typings.base import FlextTypingBase as t
@@ -36,12 +35,19 @@ class FlextModelsEnforcement:
     pointers under stable ``ENFORCE-NNN`` identifiers.
     """
 
-    class Violation(mp.BaseModel):
-        """Single enforcement violation located at ``qualname``."""
+    class _EnforcementSourceBase(mp.BaseModel):
+        """Frozen, extra-forbid base for every enforcement model.
+
+        Shared by source-discriminator classes (`EnforcementXxxSource`) and
+        by the violation / report / catalog / rule-spec containers below.
+        """
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
             frozen=True, extra="forbid"
         )
+
+    class Violation(_EnforcementSourceBase):
+        """Single enforcement violation located at ``qualname``."""
 
         qualname: Annotated[
             str,
@@ -60,12 +66,8 @@ class FlextModelsEnforcement:
             Field(description="Human-readable violation message."),
         ]
 
-    class Report(mp.BaseModel):
+    class Report(_EnforcementSourceBase):
         """Aggregated violation report returned by a check or runner."""
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
 
         violations: Annotated[
             Sequence[FlextModelsEnforcement.Violation],
@@ -131,12 +133,8 @@ class FlextModelsEnforcement:
         AST_GREP = "ast_grep"
         SKILL_POINTER = "skill_pointer"
 
-    class EnforcementInfraDetectorSource(mp.BaseModel):
+    class EnforcementInfraDetectorSource(_EnforcementSourceBase):
         """Rule backed by a ``FlextInfraNamespaceEnforcer`` detector field."""
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
 
         kind: Literal["flext_infra_detector"] = "flext_infra_detector"
         violation_field: Annotated[
@@ -161,12 +159,8 @@ class FlextModelsEnforcement:
             ),
         ]
 
-    class EnforcementTestsValidatorSource(mp.BaseModel):
+    class EnforcementTestsValidatorSource(_EnforcementSourceBase):
         """Rule backed by a ``FlextTestsValidator`` (``tv.*``) classmethod."""
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
 
         kind: Literal["flext_tests_validator"] = "flext_tests_validator"
         method: Annotated[
@@ -191,12 +185,8 @@ class FlextModelsEnforcement:
             ),
         ]
 
-    class EnforcementRuntimeWarningSource(mp.BaseModel):
+    class EnforcementRuntimeWarningSource(_EnforcementSourceBase):
         """Rule backed by a ``warnings``-category raised at runtime."""
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
 
         kind: Literal["runtime_warning"] = "runtime_warning"
         category: Annotated[
@@ -209,12 +199,8 @@ class FlextModelsEnforcement:
             ),
         ]
 
-    class EnforcementBeartypeSource(mp.BaseModel):
+    class EnforcementBeartypeSource(_EnforcementSourceBase):
         """Rule delegated to a ``FlextUtilitiesBeartypeEngine`` hook."""
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
 
         kind: Literal["beartype"] = "beartype"
         hook: Annotated[
@@ -227,18 +213,13 @@ class FlextModelsEnforcement:
             ),
         ]
 
-    class EnforcementMinimalAstSource(mp.BaseModel):
-        """Rule detected via lightweight AST scan (``u.lightweight_ast_parse``).
+    class EnforcementMinimalAstSource(_EnforcementSourceBase):
+        """Rule detected via minimal AST inspection of an existing source path.
 
         Used for textual constructs that vanish post-import (alias rebinds,
-        flat-facade roots, direct-library imports). The dispatcher delegates
-        to ``FlextUtilitiesLightweightAst.lightweight_ast_parse`` which
-        skip-on-missing-source per AGENTS.md §3.8.
+        flat-facade roots, direct-library imports). Dispatchers MUST honour
+        the skip-on-missing-source contract from AGENTS.md §3.8.
         """
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
 
         kind: Literal["minimal_ast"] = "minimal_ast"
         pattern: Annotated[
@@ -255,129 +236,14 @@ class FlextModelsEnforcement:
             Field(
                 default=True,
                 description=(
-                    "When True, missing source emits ``ViolationOutcome.SKIP``"
-                    " instead of falling back to ``MISS``."
+                    "When True, dispatchers must skip rules whose source path"
+                    " is unavailable instead of recording a missed match."
                 ),
             ),
         ]
 
-    class EnforcementRopeFixSource(mp.BaseModel):
-        """Correction delegated to a rope-driven handler in ``flext-infra``.
-
-        Carried on ``EnforcementRuleSpec.fix_source`` for rules whose
-        correction requires binding-aware refactor (rename / move / etc.).
-        ``handler`` names the registered key in
-        ``flext-infra/refactor/handler_registry``.
-        """
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
-
-        kind: Literal["rope_fix"] = "rope_fix"
-        operation: Annotated[
-            c.EnforcementRopeFixOperation,
-            Field(description="Rope refactor operation kind."),
-        ]
-        handler: Annotated[
-            ta.NonEmptyStr,
-            Field(
-                description=(
-                    "Registered handler key in flext-infra refactor handler_registry."
-                ),
-            ),
-        ]
-
-    class EnforcementAstGrepFixSource(mp.BaseModel):
-        """Correction delegated to ast-grep autofix via ``sgconfig.yml``.
-
-        Carried on ``EnforcementRuleSpec.fix_source`` for rules whose
-        correction is a textual rewrite expressible as an ast-grep rule with
-        ``fix_auto: true`` in ``.agents/skills/<skill>/rules.yml``.
-        """
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
-
-        kind: Literal["ast_grep_fix"] = "ast_grep_fix"
-        skill: Annotated[
-            ta.NonEmptyStr,
-            Field(
-                description=(
-                    "Skill directory under .agents/skills hosting the autofix"
-                    " rule entry."
-                ),
-            ),
-        ]
-        rule_id: Annotated[
-            ta.NonEmptyStr,
-            Field(
-                description=(
-                    "Rule id within .agents/skills/<skill>/rules.yml::rules[].id."
-                ),
-            ),
-        ]
-
-    class ViolationReport(mp.BaseModel):
-        """Single dispatcher result emitted by a detector for one target.
-
-        Carries the target identity, the tri-state outcome
-        (``c.ViolationOutcome``), and structured payload metadata so the
-        pytest dispatcher can render coverage gaps without re-parsing
-        formatted strings.
-        """
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
-
-        rule_id: Annotated[
-            str,
-            Field(
-                pattern=r"^ENFORCE-\d{3}$",
-                description="Catalog identifier (ENFORCE-NNN) the report belongs to.",
-            ),
-        ]
-        outcome: Annotated[
-            c.ViolationOutcome,
-            Field(description="Tri-state result for this target."),
-        ]
-        file: Annotated[
-            str,
-            Field(
-                default="",
-                description="Source file path or empty when no location is known.",
-            ),
-        ]
-        line: Annotated[
-            int,
-            Field(
-                default=0,
-                description="Source line number or 0 when no line is known.",
-            ),
-        ]
-        symbol: Annotated[
-            str,
-            Field(
-                default="",
-                description="Qualified target symbol or empty when not applicable.",
-            ),
-        ]
-        payload: Annotated[
-            t.JsonMapping,
-            Field(
-                default_factory=dict,
-                description="Free-form structured detector metadata.",
-            ),
-        ]
-
-    class EnforcementRuffSource(mp.BaseModel):
+    class EnforcementRuffSource(_EnforcementSourceBase):
         """Rule delegated to ``ruff`` (documentation-only in dispatcher)."""
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
 
         kind: Literal["ruff"] = "ruff"
         rule_code: Annotated[
@@ -385,12 +251,8 @@ class FlextModelsEnforcement:
             Field(description="Ruff rule code — e.g. 'ANN401', 'PGH003', 'TID252'."),
         ]
 
-    class EnforcementAstGrepSource(mp.BaseModel):
+    class EnforcementAstGrepSource(_EnforcementSourceBase):
         """Rule delegated to ``ast-grep`` via ``sgconfig.yml``."""
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
 
         kind: Literal["ast_grep"] = "ast_grep"
         skill: Annotated[
@@ -410,12 +272,8 @@ class FlextModelsEnforcement:
             ),
         ]
 
-    class EnforcementSkillPointerSource(mp.BaseModel):
+    class EnforcementSkillPointerSource(_EnforcementSourceBase):
         """Rule that is narrative skill content only (no automation)."""
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
 
         kind: Literal["skill_pointer"] = "skill_pointer"
         skill: Annotated[
@@ -430,12 +288,8 @@ class FlextModelsEnforcement:
             ),
         ]
 
-    class EnforcementRuleSpec(mp.BaseModel):
+    class EnforcementRuleSpec(_EnforcementSourceBase):
         """Single rule entry in the enforcement catalog."""
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
 
         id: Annotated[
             str,
@@ -458,6 +312,7 @@ class FlextModelsEnforcement:
                 | FlextModelsEnforcement.EnforcementTestsValidatorSource
                 | FlextModelsEnforcement.EnforcementRuntimeWarningSource
                 | FlextModelsEnforcement.EnforcementBeartypeSource
+                | FlextModelsEnforcement.EnforcementMinimalAstSource
                 | FlextModelsEnforcement.EnforcementRuffSource
                 | FlextModelsEnforcement.EnforcementAstGrepSource
                 | FlextModelsEnforcement.EnforcementSkillPointerSource
@@ -465,22 +320,6 @@ class FlextModelsEnforcement:
             Discriminator("kind"),
             Field(description="Addressable origin of the rule."),
         ]
-        fix_source: Annotated[
-            (
-                FlextModelsEnforcement.EnforcementRopeFixSource
-                | FlextModelsEnforcement.EnforcementAstGrepFixSource
-                | None
-            ),
-            Discriminator("kind"),
-            Field(
-                default=None,
-                description=(
-                    "Optional handler that corrects the violation. ``None`` "
-                    "marks detection-only rules (the catalog still indexes "
-                    "them but no automatic fix is dispatched)."
-                ),
-            ),
-        ] = None
         agents_md_anchor: Annotated[
             str,
             Field(
@@ -521,12 +360,8 @@ class FlextModelsEnforcement:
             Field(default="", description="Free-form implementation notes."),
         ]
 
-    class EnforcementCatalog(mp.BaseModel):
+    class EnforcementCatalog(_EnforcementSourceBase):
         """Frozen catalog of all enforcement rules (SSOT)."""
-
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, extra="forbid"
-        )
 
         version: Annotated[
             int,

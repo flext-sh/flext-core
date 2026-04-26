@@ -56,6 +56,20 @@ class FlextConstantsProjectMetadata:
     the literal tuple in another module is forbidden by metadata-discipline.
     """
 
+    FACADE_MODULE_NAMES: Final[frozenset[str]] = frozenset({
+        "constants",
+        "models",
+        "protocols",
+        "typings",
+        "utilities",
+    })
+    """The five canonical facade module basenames (without ``.py`` suffix).
+
+    Maps to ``FACADE_ALIAS_NAMES`` files on disk — note ``t`` → ``typings.py``
+    (not ``types.py``).  Any code that checks whether a module is a facade
+    surface MUST consume this constant instead of declaring a local frozenset.
+    """
+
     TIER_FACADE_PREFIX: Final[t.StrMapping] = MappingProxyType({
         "src": "Flext",
         "tests": "TestsFlext",

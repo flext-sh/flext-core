@@ -51,7 +51,6 @@ class FlextExceptionsFactories:
         exc: Exception | str | None = None,
         *,
         error_code: str | None = None,
-        result_type: type[TResult] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical operation-error message.
 
@@ -60,7 +59,6 @@ class FlextExceptionsFactories:
             return e.fail_operation("resolve factory service", exc)
 
         """
-        _ = result_type
         params = m.OperationErrorParams(
             operation=operation,
             reason=str(exc) if exc is not None else None,
@@ -83,7 +81,6 @@ class FlextExceptionsFactories:
         resource_id: str,
         *,
         error_code: str | None = None,
-        result_type: type[TResult] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical not-found message.
 
@@ -92,7 +89,6 @@ class FlextExceptionsFactories:
             return e.fail_not_found("service", name)
 
         """
-        _ = result_type
         params = m.NotFoundErrorParams(
             resource_type=resource_type,
             resource_id=resource_id,
@@ -115,7 +111,6 @@ class FlextExceptionsFactories:
         *,
         service_name: str | None = None,
         error_code: str | None = None,
-        result_type: type[TResult] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical type-mismatch message.
 
@@ -124,7 +119,6 @@ class FlextExceptionsFactories:
             return e.fail_type_mismatch("FlextLogger", type(svc).__name__)
 
         """
-        _ = result_type
         params = m.ServiceLookupParams(
             service_name=service_name,
             expected_type=expected,
@@ -148,7 +142,6 @@ class FlextExceptionsFactories:
         *,
         error_code: str | None = None,
         error: Exception | str | None = None,
-        result_type: type[TResult] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical validation-failed message.
 
@@ -157,7 +150,6 @@ class FlextExceptionsFactories:
             return e.fail_validation("config_key", raw_value, error=exc)
 
         """
-        _ = result_type
         params = m.ValidationErrorParams(field=field, value=value)
         base_msg = (
             FlextExceptionsTemplate.render_error_template(
@@ -190,7 +182,6 @@ class FlextExceptionsFactories:
         *,
         error: Exception | str | None = None,
         error_code: str | None = None,
-        result_type: type[TResult] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical configuration-error message.
 
@@ -199,7 +190,6 @@ class FlextExceptionsFactories:
             return e.fail_config_error("database.url", "env")
 
         """
-        _ = result_type
         params = m.ConfigurationErrorParams(
             config_key=config_key,
             config_source=config_source,
@@ -224,7 +214,6 @@ class FlextExceptionsFactories:
         timeout: t.Numeric | None = None,
         error: Exception | str | None = None,
         error_code: str | None = None,
-        result_type: type[TResult] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical connection-error message.
 
@@ -233,7 +222,6 @@ class FlextExceptionsFactories:
             return e.fail_connection("ldap.example.com", 636, error=exc)
 
         """
-        _ = result_type
         params = m.ConnectionErrorParams(host=host, port=port, timeout=timeout)
         msg = FlextExceptionsFactories._failure_message(
             f"connect to {host}",
@@ -253,7 +241,6 @@ class FlextExceptionsFactories:
         operation: str | None = None,
         *,
         error_code: str | None = None,
-        result_type: type[TResult] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical timeout message.
 
@@ -262,7 +249,6 @@ class FlextExceptionsFactories:
             return e.fail_timeout(30.0, "fetch_users")
 
         """
-        _ = result_type
         params = m.TimeoutErrorParams(
             timeout_seconds=timeout_seconds,
             operation=operation,
@@ -285,7 +271,6 @@ class FlextExceptionsFactories:
         *,
         error: Exception | str | None = None,
         error_code: str | None = None,
-        result_type: type[TResult] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authentication-error message.
 
@@ -294,7 +279,6 @@ class FlextExceptionsFactories:
             return e.fail_auth("ldap", user_id)
 
         """
-        _ = result_type
         params = m.AuthenticationErrorParams(
             auth_method=auth_method,
             user_id=user_id,
@@ -318,7 +302,6 @@ class FlextExceptionsFactories:
         permission: str | None = None,
         *,
         error_code: str | None = None,
-        result_type: type[TResult] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authorization-error message.
 
@@ -327,7 +310,6 @@ class FlextExceptionsFactories:
             return e.fail_authz(user_id, "admin.panel", "write")
 
         """
-        _ = result_type
         params = m.AuthorizationErrorParams(
             user_id=user_id,
             resource=resource,
@@ -350,7 +332,6 @@ class FlextExceptionsFactories:
         reason: str | None = None,
         *,
         error_code: str | None = None,
-        result_type: type[TResult] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical conflict message.
 
@@ -359,7 +340,6 @@ class FlextExceptionsFactories:
             return e.fail_conflict("user", user_id, "already active")
 
         """
-        _ = result_type
         params = m.ConflictErrorParams(
             resource_type=resource_type,
             resource_id=resource_id,
@@ -372,70 +352,6 @@ class FlextExceptionsFactories:
         return r[TResult].fail(
             msg,
             error_code=error_code or c.ErrorCode.ALREADY_EXISTS,
-            error_data=FlextExceptionsTemplate.result_error_data(params),
-        )
-
-    @staticmethod
-    def fail_rate_limit[TResult](
-        limit: int,
-        window_seconds: int,
-        retry_after: t.Numeric | None = None,
-        *,
-        error_code: str | None = None,
-        result_type: type[TResult] | None = None,
-    ) -> p.Result[TResult]:
-        """Return r[T].fail with a canonical rate-limit message.
-
-        Usage::
-
-            return e.fail_rate_limit(100, 60, retry_after=30)
-
-        """
-        _ = result_type
-        params = m.RateLimitErrorParams(
-            limit=limit,
-            window_seconds=window_seconds,
-            retry_after=retry_after,
-        )
-        msg = FlextExceptionsFactories._failure_message(
-            f"rate limit ({limit}/{window_seconds}s)",
-            params=params,
-        )
-        return r[TResult].fail(
-            msg,
-            error_code=error_code or c.ErrorCode.OPERATION_ERROR,
-            error_data=FlextExceptionsTemplate.result_error_data(params),
-        )
-
-    @staticmethod
-    def fail_circuit_breaker[TResult](
-        service_name: str,
-        failure_count: int | None = None,
-        reset_timeout: t.Numeric | None = None,
-        *,
-        error_code: str | None = None,
-        result_type: type[TResult] | None = None,
-    ) -> p.Result[TResult]:
-        """Return r[T].fail with a canonical circuit-breaker message.
-
-        Usage::
-
-            return e.fail_circuit_breaker("ldap_service", failure_count=5)
-
-        """
-        _ = result_type
-        params = m.CircuitBreakerErrorParams(
-            service_name=service_name,
-            failure_count=failure_count,
-            reset_timeout=reset_timeout,
-        )
-        msg = FlextExceptionsFactories._failure_message(
-            f"call {service_name!r} (circuit open)",
-            params=params,
-        )
-        return r[TResult].fail(
-            msg,
-            error_code=error_code or c.ErrorCode.EXTERNAL_SERVICE_ERROR,
             error_data=FlextExceptionsTemplate.result_error_data(params),
         )
 

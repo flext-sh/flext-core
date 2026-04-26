@@ -7,20 +7,32 @@ from typing import Annotated
 from flext_core import m, u
 
 
-class ExamplesFlextCoreModelsEx12(m):
+class ExamplesFlextCoreModelsEx12:
     """Examples namespace wrapper for ex12 models."""
 
     class CommandA(m.Command):
-        command_type: str = "ex12_command_a"
-        query_type: str = ""
+        command_type: Annotated[
+            str,
+            u.Field(description="Command type identifier for command A"),
+        ] = "ex12_command_a"
+        query_type: Annotated[
+            str,
+            u.Field(description="Query type placeholder for command A"),
+        ] = ""
         event_type: Annotated[str, u.Field(description="Event type for command A")] = (
             "ex12_event_a"
         )
         value: Annotated[str, u.Field(description="Command A payload")]
 
     class CommandB(m.Command):
-        command_type: str = "ex12_command_b"
-        query_type: str = ""
+        command_type: Annotated[
+            str,
+            u.Field(description="Command type identifier for command B"),
+        ] = "ex12_command_b"
+        query_type: Annotated[
+            str,
+            u.Field(description="Query type placeholder for command B"),
+        ] = ""
         event_type: Annotated[str, u.Field(description="Event type for command B")] = (
             "ex12_event_b"
         )

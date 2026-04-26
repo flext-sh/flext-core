@@ -16,14 +16,7 @@ if _t.TYPE_CHECKING:
     from examples._models.ex00 import ExamplesFlextCoreModelsEx00
     from examples._models.ex01 import ExamplesFlextCoreModelsEx01
     from examples._models.ex02 import ExamplesFlextCoreModelsEx02
-    from examples._models.ex03 import (
-        Ex03Email,
-        Ex03Money,
-        Ex03Order,
-        Ex03OrderItem,
-        Ex03User,
-        ExamplesFlextCoreModelsEx03,
-    )
+    from examples._models.ex03 import ExamplesFlextCoreModelsEx03
     from examples._models.ex04 import ExamplesFlextCoreModelsEx04
     from examples._models.ex05 import ExamplesFlextCoreModelsEx05
     from examples._models.ex07 import ExamplesFlextCoreModelsEx07
@@ -66,14 +59,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._models.ex00": ("ExamplesFlextCoreModelsEx00",),
             "._models.ex01": ("ExamplesFlextCoreModelsEx01",),
             "._models.ex02": ("ExamplesFlextCoreModelsEx02",),
-            "._models.ex03": (
-                "Ex03Email",
-                "Ex03Money",
-                "Ex03Order",
-                "Ex03OrderItem",
-                "Ex03User",
-                "ExamplesFlextCoreModelsEx03",
-            ),
+            "._models.ex03": ("ExamplesFlextCoreModelsEx03",),
             "._models.ex04": ("ExamplesFlextCoreModelsEx04",),
             "._models.ex05": ("ExamplesFlextCoreModelsEx05",),
             "._models.ex07": ("ExamplesFlextCoreModelsEx07",),
@@ -158,12 +144,7 @@ __all__: list[str] = [
     "DatabaseService",
     "Ex01r",
     "Ex02FlextSettings",
-    "Ex03Email",
     "Ex03LoggingDsl",
-    "Ex03Money",
-    "Ex03Order",
-    "Ex03OrderItem",
-    "Ex03User",
     "Ex04DispatchDsl",
     "Ex05FlextMixins",
     "Ex06FlextContext",

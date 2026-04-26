@@ -37,7 +37,7 @@ class Ex03LoggingDsl(ExamplesFlextCoreShared):
         self.check("create_module_logger.protocol", isinstance(logger, p.Logger))
         raw = u.fetch_logger("examples.ex_03.factory.raw")
         self.check("fetch_logger.protocol", isinstance(raw, p.Logger))
-        wrapped = u.create_bound_logger("examples.ex_03.factory.bound", raw)
+        wrapped = u.create_module_logger("examples.ex_03.factory.bound")
         self.check("create_bound_logger.protocol", isinstance(wrapped, p.Logger))
 
     def _exercise_global_context(self) -> None:

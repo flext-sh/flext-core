@@ -7,7 +7,7 @@ from typing import Annotated
 from flext_core import FlextSettings, m, p, r, u
 
 
-class ExamplesFlextCoreModelsEx11(m):
+class ExamplesFlextCoreModelsEx11:
     """Examples namespace wrapper for ex11 models."""
 
     class Payload(m.Value):
@@ -16,18 +16,21 @@ class ExamplesFlextCoreModelsEx11(m):
     class EntityStub(m.Value):
         unique_id: Annotated[str, u.Field(description="Unique entity identifier")]
 
-    class HandlerLikeService(FlextSettings):
+    class ServiceHandlerConfig(FlextSettings):
         enabled: Annotated[
             bool, u.Field(description="Whether the service is enabled")
         ] = True
 
-    class HandlerLike(m.BaseModel):
+    class ServiceHandlerLike(m.BaseModel):
         message_type: Annotated[
-            type,
+            type[m.Value],
             u.Field(description="Message type handled by this handler"),
-        ] = Ex11Payload
+        ] = m.Value
 
-        def handle(self, message: Ex11Payload) -> p.Result[str]:
+        def handle(
+            self,
+            message: ExamplesFlextCoreModelsEx11.Payload,
+        ) -> p.Result[str]:
             return r[str].ok(message.text)
 
     class ProcessorProtocolGood(m.Value):
@@ -36,5 +39,5 @@ class ExamplesFlextCoreModelsEx11(m):
     class ProcessorProtocolBad(m.Value):
         status: Annotated[str, u.Field(description="Processing failure status")] = "bad"
 
-    class CommandBusStub(m.BaseModel):
+    class ServiceCommandBusStub(m.BaseModel):
         pass

@@ -51,7 +51,80 @@ class FlextModelsContainers:
         ) -> FlextTypesServices.ScalarOrModel:
             return self.root(value)
 
-    class Dict(mp.RootModel[dict[str, FlextTypesServices.JsonPayload]]):
+    class _MappingRootBase(mp.RootModel[dict[str, FlextTypesServices.JsonPayload]]):
+        """MRO base providing the explicit mapping API for dict-rooted RootModels.
+
+        Both ``Dict`` and ``ConfigMap`` differ only in the ``root`` field
+        description; the 13 mapping methods are identical. This base
+        consolidates the methods so subclasses only declare the typed
+        ``root`` field with the appropriate description.
+        """
+
+        def __getitem__(self, key: str) -> FlextTypesServices.JsonPayload:
+            return self.root[key]
+
+        def __setitem__(
+            self,
+            key: str,
+            value: FlextTypesServices.JsonPayload,
+        ) -> None:
+            self.root[key] = value
+
+        def __delitem__(self, key: str) -> None:
+            del self.root[key]
+
+        def __contains__(self, key: object) -> bool:
+            return key in self.root
+
+        def __len__(self) -> int:
+            return len(self.root)
+
+        def __bool__(self) -> bool:
+            return bool(self.root)
+
+        def keys(self) -> KeysView[str]:
+            return self.root.keys()
+
+        def values(self) -> ValuesView[FlextTypesServices.JsonPayload]:
+            return self.root.values()
+
+        def items(self) -> ItemsView[str, FlextTypesServices.JsonPayload]:
+            return self.root.items()
+
+        def get(
+            self,
+            key: str,
+            default: FlextTypesServices.JsonPayload | None = None,
+        ) -> FlextTypesServices.JsonPayload | None:
+            return self.root.get(key, default)
+
+        def update(
+            self,
+            other: Mapping[str, FlextTypesServices.JsonPayload],
+        ) -> None:
+            self.root.update(other)
+
+        def clear(self) -> None:
+            self.root.clear()
+
+        def pop(
+            self,
+            key: str,
+            *args: FlextTypesServices.JsonPayload,
+        ) -> FlextTypesServices.JsonPayload:
+            return self.root.pop(key, *args)
+
+        def popitem(self) -> tuple[str, FlextTypesServices.JsonPayload]:
+            return self.root.popitem()
+
+        def setdefault(
+            self,
+            key: str,
+            default: FlextTypesServices.JsonPayload,
+        ) -> FlextTypesServices.JsonPayload:
+            return self.root.setdefault(key, default)
+
+    class Dict(_MappingRootBase):
         """Runtime dictionary container with explicit mapping API."""
 
         root: Annotated[
@@ -59,141 +132,13 @@ class FlextModelsContainers:
             up.Field(description="Validated runtime key-value mapping."),
         ]
 
-        def __getitem__(self, key: str) -> FlextTypesServices.JsonPayload:
-            return self.root[key]
-
-        def __setitem__(
-            self,
-            key: str,
-            value: FlextTypesServices.JsonPayload,
-        ) -> None:
-            self.root[key] = value
-
-        def __delitem__(self, key: str) -> None:
-            del self.root[key]
-
-        def __contains__(self, key: object) -> bool:
-            return key in self.root
-
-        def __len__(self) -> int:
-            return len(self.root)
-
-        def __bool__(self) -> bool:
-            return bool(self.root)
-
-        def keys(self) -> KeysView[str]:
-            return self.root.keys()
-
-        def values(self) -> ValuesView[FlextTypesServices.JsonPayload]:
-            return self.root.values()
-
-        def items(self) -> ItemsView[str, FlextTypesServices.JsonPayload]:
-            return self.root.items()
-
-        def get(
-            self,
-            key: str,
-            default: FlextTypesServices.JsonPayload | None = None,
-        ) -> FlextTypesServices.JsonPayload | None:
-            return self.root.get(key, default)
-
-        def update(
-            self,
-            other: Mapping[str, FlextTypesServices.JsonPayload],
-        ) -> None:
-            self.root.update(other)
-
-        def clear(self) -> None:
-            self.root.clear()
-
-        def pop(
-            self,
-            key: str,
-            *args: FlextTypesServices.JsonPayload,
-        ) -> FlextTypesServices.JsonPayload:
-            return self.root.pop(key, *args)
-
-        def popitem(self) -> tuple[str, FlextTypesServices.JsonPayload]:
-            return self.root.popitem()
-
-        def setdefault(
-            self,
-            key: str,
-            default: FlextTypesServices.JsonPayload,
-        ) -> FlextTypesServices.JsonPayload:
-            return self.root.setdefault(key, default)
-
-    class ConfigMap(mp.RootModel[dict[str, FlextTypesServices.JsonPayload]]):
+    class ConfigMap(_MappingRootBase):
         """Runtime configuration mapping with explicit mapping API."""
 
         root: Annotated[
             dict[str, FlextTypesServices.JsonPayload],
             up.Field(description="Validated runtime configuration mapping."),
         ]
-
-        def __getitem__(self, key: str) -> FlextTypesServices.JsonPayload:
-            return self.root[key]
-
-        def __setitem__(
-            self,
-            key: str,
-            value: FlextTypesServices.JsonPayload,
-        ) -> None:
-            self.root[key] = value
-
-        def __delitem__(self, key: str) -> None:
-            del self.root[key]
-
-        def __contains__(self, key: object) -> bool:
-            return key in self.root
-
-        def __len__(self) -> int:
-            return len(self.root)
-
-        def __bool__(self) -> bool:
-            return bool(self.root)
-
-        def keys(self) -> KeysView[str]:
-            return self.root.keys()
-
-        def values(self) -> ValuesView[FlextTypesServices.JsonPayload]:
-            return self.root.values()
-
-        def items(self) -> ItemsView[str, FlextTypesServices.JsonPayload]:
-            return self.root.items()
-
-        def get(
-            self,
-            key: str,
-            default: FlextTypesServices.JsonPayload | None = None,
-        ) -> FlextTypesServices.JsonPayload | None:
-            return self.root.get(key, default)
-
-        def update(
-            self,
-            other: Mapping[str, FlextTypesServices.JsonPayload],
-        ) -> None:
-            self.root.update(other)
-
-        def clear(self) -> None:
-            self.root.clear()
-
-        def pop(
-            self,
-            key: str,
-            *args: FlextTypesServices.JsonPayload,
-        ) -> FlextTypesServices.JsonPayload:
-            return self.root.pop(key, *args)
-
-        def popitem(self) -> tuple[str, FlextTypesServices.JsonPayload]:
-            return self.root.popitem()
-
-        def setdefault(
-            self,
-            key: str,
-            default: FlextTypesServices.JsonPayload,
-        ) -> FlextTypesServices.JsonPayload:
-            return self.root.setdefault(key, default)
 
     class ObjectList(mp.RootModel[list[FlextTypesServices.JsonPayload]]):
         """Runtime list container rooted in validated values.

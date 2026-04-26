@@ -360,24 +360,19 @@ class FlextUtilitiesLoggingConfig:
         )
         filtered_dict: t.MutableConfigurationMapping = {}
         for key, value in event_dict.items():
-            if key.startswith("_level_"):
-                parts = key.split("_", c.DEFAULT_MAX_WORKERS)
-                if len(parts) >= c.DEFAULT_MAX_WORKERS:
-                    required_level_name = parts[2]
-                    actual_key = parts[3]
-                    required_level = level_hierarchy.get(
-                        required_level_name.lower(),
-                        10,
-                    )
-                    if current_level >= required_level:
-                        normalized_key = (
-                            "settings" if actual_key == "config" else actual_key
-                        )
-                        filtered_dict[normalized_key] = value
-                else:
-                    filtered_dict[key] = value
-            else:
+            if not key.startswith("_level_"):
                 filtered_dict[key] = value
+                continue
+            parts = key.split("_", c.DEFAULT_MAX_WORKERS)
+            if len(parts) < c.DEFAULT_MAX_WORKERS:
+                filtered_dict[key] = value
+                continue
+            required_level = level_hierarchy.get(parts[2].lower(), 10)
+            if current_level < required_level:
+                continue
+            actual_key = parts[3]
+            normalized_key = "settings" if actual_key == "config" else actual_key
+            filtered_dict[normalized_key] = value
         return filtered_dict
 
 

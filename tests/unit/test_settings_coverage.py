@@ -11,7 +11,7 @@ from pathlib import Path
 from time import perf_counter
 
 import pytest
-from flext_tests import tf, tm
+from flext_tests import c as tc, tf, tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextSettings
@@ -97,10 +97,10 @@ class TestsFlextCoreSettingsCoverage:
         config_path = files.create(
             settings_payload,
             "settings.yaml",
-            fmt=c.Tests.Format.YAML,
+            fmt=tc.Tests.Format.YAML,
         )
         tm.that(config_path.exists(), eq=True)
-        read_result = files.read(config_path, fmt=c.Tests.Format.YAML)
+        read_result = files.read(config_path, fmt=tc.Tests.Format.YAML)
         tm.ok(read_result)
         tm.that(read_result.value, is_=m.ConfigMap)
         if isinstance(read_result.value, m.ConfigMap):
@@ -118,10 +118,10 @@ class TestsFlextCoreSettingsCoverage:
         config_path = files.create(
             payload_mapping,
             "settings.json",
-            fmt=c.Tests.Format.JSON,
+            fmt=tc.Tests.Format.JSON,
         )
         tm.that(config_path.exists(), eq=True)
-        read_result = files.read(config_path, fmt=c.Tests.Format.JSON)
+        read_result = files.read(config_path, fmt=tc.Tests.Format.JSON)
         tm.ok(read_result)
         tm.that(read_result.value, is_=m.ConfigMap)
         if isinstance(read_result.value, m.ConfigMap):
@@ -134,8 +134,8 @@ class TestsFlextCoreSettingsCoverage:
     def test_compare_identical_files(self, tmp_path: Path) -> None:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
-        first = files.create({"x": 1}, "a.json", fmt=c.Tests.Format.JSON)
-        second = files.create({"x": 1}, "b.json", fmt=c.Tests.Format.JSON)
+        first = files.create({"x": 1}, "a.json", fmt=tc.Tests.Format.JSON)
+        second = files.create({"x": 1}, "b.json", fmt=tc.Tests.Format.JSON)
         result = files.compare(first, second)
         tm.ok(result)
         tm.that(result.value, eq=True)

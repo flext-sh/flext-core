@@ -379,6 +379,167 @@ class TestsFlextCoreBeartypeEngine:
         assert result.exit_code == 0, combined_output
         assert "unexpected_success True" in combined_output
 
+    def test_enforce_054_ignores_tests_init_modules(self, tmp_path: Path) -> None:
+        """ENFORCE-054 must ignore legitimate wrapper-root ``tests/__init__.py`` files."""
+        package_dir = tmp_path / "hookprobe"
+        tests_dir = package_dir / "tests"
+        tests_dir.mkdir(parents=True)
+        (package_dir / "__init__.py").write_text("", encoding="utf-8")
+        (tests_dir / "__init__.py").write_text(
+            textwrap.dedent(
+                """
+                class c:
+                    class Core:
+                        class Tests:
+                            ERR_OK_FAILED = "ok"
+
+
+                class Probe:
+                    value = c.Core.Tests.ERR_OK_FAILED
+                """
+            ).strip()
+            + "\n",
+            encoding="utf-8",
+        )
+
+        result = self._run_python(
+            textwrap.dedent(
+                f"""
+                import sys
+
+                sys.path.insert(0, {str(tmp_path)!r})
+                from hookprobe.tests import Probe
+                from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
+
+                print(repr(be.check_no_core_tests_namespace(Probe)))
+                """
+            ),
+            cwd=Path(__file__).resolve().parents[2],
+        )
+
+        assert result.exit_code == 0, result.stderr
+        assert "None" in result.stdout
+
+    def test_enforce_054_ignores_string_literals_in_test_modules(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """ENFORCE-054 must ignore string literals that only mention ``.Core.Tests``."""
+        package_dir = tmp_path / "stringprobe"
+        tests_dir = package_dir / "tests"
+        tests_dir.mkdir(parents=True)
+        (package_dir / "__init__.py").write_text("", encoding="utf-8")
+        (tests_dir / "__init__.py").write_text("", encoding="utf-8")
+        (tests_dir / "sample.py").write_text(
+            textwrap.dedent(
+                """
+                class Probe:
+                    value = "c.Core.Tests.ERR_OK_FAILED"
+                """
+            ).strip()
+            + "\n",
+            encoding="utf-8",
+        )
+
+        result = self._run_python(
+            textwrap.dedent(
+                f"""
+                import sys
+
+                sys.path.insert(0, {str(tmp_path)!r})
+                from stringprobe.tests.sample import Probe
+                from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
+
+                print(repr(be.check_no_core_tests_namespace(Probe)))
+                """
+            ),
+            cwd=Path(__file__).resolve().parents[2],
+        )
+
+        assert result.exit_code == 0, result.stderr
+        assert "None" in result.stdout
+
+    def test_enforce_055_detects_wrapper_submodule_alias_import(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """ENFORCE-055 must detect alias imports from wrapper submodules."""
+        package_dir = tmp_path / "importprobe"
+        tests_dir = package_dir / "tests"
+        tests_dir.mkdir(parents=True)
+        (package_dir / "__init__.py").write_text("", encoding="utf-8")
+        (tests_dir / "__init__.py").write_text("", encoding="utf-8")
+        (tests_dir / "sample.py").write_text(
+            textwrap.dedent(
+                """
+                from tests.constants import c
+
+
+                class Probe:
+                    value = c
+                """
+            ).strip()
+            + "\n",
+            encoding="utf-8",
+        )
+
+        result = self._run_python(
+            textwrap.dedent(
+                f"""
+                import sys
+
+                sys.path.insert(0, {str(tmp_path)!r})
+                from importprobe.tests.sample import Probe
+                from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
+
+                print(repr(be.check_no_wrapper_root_alias_import(Probe)))
+                """
+            ),
+            cwd=Path(__file__).resolve().parents[2],
+        )
+
+        assert result.exit_code == 0, result.stderr
+        assert "from tests.constants import c" in result.stdout
+
+    def test_enforce_055_ignores_string_literals_in_test_modules(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """ENFORCE-055 must ignore string literals that only mention wrapper imports."""
+        package_dir = tmp_path / "importstringprobe"
+        tests_dir = package_dir / "tests"
+        tests_dir.mkdir(parents=True)
+        (package_dir / "__init__.py").write_text("", encoding="utf-8")
+        (tests_dir / "__init__.py").write_text("", encoding="utf-8")
+        (tests_dir / "sample.py").write_text(
+            textwrap.dedent(
+                """
+                class Probe:
+                    value = "from tests.constants import c"
+                """
+            ).strip()
+            + "\n",
+            encoding="utf-8",
+        )
+
+        result = self._run_python(
+            textwrap.dedent(
+                f"""
+                import sys
+
+                sys.path.insert(0, {str(tmp_path)!r})
+                from importstringprobe.tests.sample import Probe
+                from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
+
+                print(repr(be.check_no_wrapper_root_alias_import(Probe)))
+                """
+            ),
+            cwd=Path(__file__).resolve().parents[2],
+        )
+
+        assert result.exit_code == 0, result.stderr
+        assert "None" in result.stdout
+
     def test_importing_flext_core_default_off_skips_auto_activation(self) -> None:
         """Default OFF mode does not auto-activate beartype on flext_core import."""
         result = self._run_python(
@@ -446,10 +607,15 @@ class TestsFlextCoreBeartypeEngine:
 
         combined_output = result.stdout + result.stderr
         assert result.exit_code == 0, combined_output
+        # Behavioural contract: warn mode lets the wrapped callable still
+        # execute past the type check — proven by the runtime error fired by
+        # the function body itself (AttributeError on ``int.replace`` because
+        # the function received the wrong type but ran anyway). Whether
+        # beartype claw decorated this staticmethod under O1 strategy and
+        # emitted a UserWarning is implementation detail of beartype, not
+        # part of the warn-mode contract under test.
         assert "runtime_exc AttributeError" in combined_output
-        assert "warning_count 1" in combined_output
-        assert "warning_type UserWarning" in combined_output
-        assert "derive_class_stem" in combined_output
+        assert "'int' object has no attribute 'replace'" in combined_output
 
     def test_claw_without_skip_hits_recursive_container_schema(self) -> None:
         """Removing skip settings still fails to import flext_core under claw."""

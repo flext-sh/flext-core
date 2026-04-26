@@ -76,37 +76,12 @@ class FlextExceptionsTypes(FlextExceptionsBase):
 
         timeout_seconds: t.Numeric | None = None
         operation: str | None = None
+        _default_error_code: ClassVar[str] = c.ErrorCode.TIMEOUT_ERROR
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.TimeoutErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "timeout_seconds",
             "operation",
         })
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            timeout_seconds: float | None = None,
-            operation: str | None = None,
-            error_code: str = c.ErrorCode.TIMEOUT_ERROR,
-            context: Mapping[str, t.JsonValue] | None = None,
-            correlation_id: str | None = None,
-            params: mp.BaseModel | None = None,
-            **extra_kwargs: t.JsonValue,
-        ) -> None:
-            """Initialize timeout error with timeout context."""
-            self._init_declared_error(
-                message,
-                error_code=error_code,
-                context=context,
-                params=params,
-                named_params={
-                    "timeout_seconds": timeout_seconds,
-                    "operation": operation,
-                },
-                correlation_id=correlation_id,
-                extra_kwargs=extra_kwargs,
-            )
 
     class AuthenticationError(FlextExceptionsBase.BaseError):
         """Exception raised for authentication failures."""

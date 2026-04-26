@@ -1264,20 +1264,37 @@ class TestsFlextCoreUtilities(u):
                 cls._counter = count(1)
                 cls._name_index = 0
 
-        class GetUserServiceFactory:
-            """Factory for `GetUserService`."""
+        class _GetUserFactoryBase:
+            """Shared counter-rotating state for GetUser-style factories.
+
+            Subclasses provide their own typed ``build``/``build_batch``;
+            the base owns the per-subclass ``_counter`` and ``reset``.
+            """
 
             _counter: ClassVar[count[int]] = count(1)
+
+            @classmethod
+            def _resolve_user_id(cls, user_id: str | None) -> str:
+                """Return ``user_id`` or the next auto-generated identifier."""
+                if user_id is not None:
+                    return user_id
+                return f"user_{next(cls._counter):03d}"
+
+            @classmethod
+            def reset(cls) -> None:
+                """Reset per-subclass factory counter."""
+                cls._counter = count(1)
+
+        class GetUserServiceFactory(_GetUserFactoryBase):
+            """Factory for `GetUserService`."""
 
             @classmethod
             def build(
                 cls, *, user_id: str | None = None
             ) -> TestsFlextCoreUtilities.Tests.GetUserService:
                 """Build a `GetUserService` instance."""
-                n = next(cls._counter)
-                actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
                 return TestsFlextCoreUtilities.Tests.GetUserService(
-                    user_id=actual_user_id,
+                    user_id=cls._resolve_user_id(user_id),
                 )
 
             @classmethod
@@ -1286,11 +1303,6 @@ class TestsFlextCoreUtilities(u):
             ) -> Sequence[TestsFlextCoreUtilities.Tests.GetUserService]:
                 """Build multiple `GetUserService` instances with auto-generated values."""
                 return [cls.build() for _ in range(size)]
-
-            @classmethod
-            def reset(cls) -> None:
-                """Reset factory state."""
-                cls._counter = count(1)
 
         class FailingServiceFactory:
             """Factory for FailingService."""
@@ -1313,20 +1325,16 @@ class TestsFlextCoreUtilities(u):
                 """Build multiple FailingService instances with default error message."""
                 return [cls.build() for _ in range(size)]
 
-        class GetUserServiceAutoFactory:
+        class GetUserServiceAutoFactory(_GetUserFactoryBase):
             """Factory for GetUserServiceAuto."""
-
-            _counter: ClassVar[count[int]] = count(1)
 
             @classmethod
             def build(
                 cls, *, user_id: str | None = None
             ) -> TestsFlextCoreUtilities.Tests.GetUserServiceAuto:
                 """Build a GetUserServiceAuto instance."""
-                n = next(cls._counter)
-                actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
                 return TestsFlextCoreUtilities.Tests.GetUserServiceAuto(
-                    user_id=actual_user_id,
+                    user_id=cls._resolve_user_id(user_id),
                 )
 
             @classmethod
@@ -1336,21 +1344,22 @@ class TestsFlextCoreUtilities(u):
                 """Build multiple GetUserServiceAuto instances with auto-generated values."""
                 return [cls.build() for _ in range(size)]
 
-            @classmethod
-            def reset(cls) -> None:
-                """Reset factory state."""
-                cls._counter = count(1)
+        class _ValidatingFactoryBase:
+            """Shared word-rotating state for validating-service factories.
 
-        class ValidatingServiceAutoFactory:
-            """Factory for ValidatingServiceAuto."""
+            Subclasses provide their own ``build`` (typed return) but
+            inherit ``_words``, ``_word_index``, ``_next_word``,
+            ``build_batch``, and ``reset``. ``_word_index`` reassignment
+            via ``cls._word_index += 1`` preserves per-subclass counter.
+            """
 
-            _words: ClassVar[Sequence[str]] = [
+            _words: ClassVar[Sequence[str]] = (
                 "alpha",
                 "bravo",
                 "charlie",
                 "delta",
                 "echo",
-            ]
+            )
             _word_index: ClassVar[int] = 0
 
             @classmethod
@@ -1359,6 +1368,14 @@ class TestsFlextCoreUtilities(u):
                 word = cls._words[cls._word_index % len(cls._words)]
                 cls._word_index += 1
                 return word
+
+            @classmethod
+            def reset(cls) -> None:
+                """Reset per-subclass factory counter."""
+                cls._word_index = 0
+
+        class ValidatingServiceAutoFactory(_ValidatingFactoryBase):
+            """Factory for ValidatingServiceAuto."""
 
             @classmethod
             def build(
@@ -1380,32 +1397,11 @@ class TestsFlextCoreUtilities(u):
             def build_batch(
                 cls, size: int
             ) -> Sequence[TestsFlextCoreUtilities.Tests.ValidatingServiceAuto]:
-                """Build multiple ValidatingServiceAuto instances with auto-generated values."""
+                """Build multiple ValidatingServiceAuto instances."""
                 return [cls.build() for _ in range(size)]
 
-            @classmethod
-            def reset(cls) -> None:
-                """Reset factory state."""
-                cls._word_index = 0
-
-        class ValidatingServiceFactory:
-            """Factory for `ValidatingService`."""
-
-            _words: ClassVar[Sequence[str]] = [
-                "alpha",
-                "bravo",
-                "charlie",
-                "delta",
-                "echo",
-            ]
-            _word_index: ClassVar[int] = 0
-
-            @classmethod
-            def _next_word(cls) -> str:
-                """Get next word from rotation."""
-                word = cls._words[cls._word_index % len(cls._words)]
-                cls._word_index += 1
-                return word
+        class ValidatingServiceFactory(_ValidatingFactoryBase):
+            """Factory for ``ValidatingService``."""
 
             @classmethod
             def build(
@@ -1427,13 +1423,8 @@ class TestsFlextCoreUtilities(u):
             def build_batch(
                 cls, size: int
             ) -> Sequence[TestsFlextCoreUtilities.Tests.ValidatingService]:
-                """Build multiple `ValidatingService` instances with auto-generated values."""
+                """Build multiple `ValidatingService` instances."""
                 return [cls.build() for _ in range(size)]
-
-            @classmethod
-            def reset(cls) -> None:
-                """Reset factory state."""
-                cls._word_index = 0
 
         class FailingServiceAutoFactory:
             """Factory for FailingServiceAuto."""

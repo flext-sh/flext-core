@@ -76,17 +76,8 @@ if _t.TYPE_CHECKING:
     from tests.unit._models.test_exception_params import (
         TestsFlextCoreModelsExceptionParams,
     )
-    from tests.unit._utilities.test_beartype_violation_capture import (
-        TestsFlextCoreUtilitiesBeartypeViolationCapture,
-    )
     from tests.unit._utilities.test_guards import TestsFlextCoreUtilitiesGuards
-    from tests.unit._utilities.test_lightweight_ast import (
-        TestsFlextCoreUtilitiesLightweightAst,
-    )
     from tests.unit._utilities.test_mapper import TestsFlextCoreUtilitiesMapper
-    from tests.unit._utilities.test_runtime_violation_registry import (
-        TestsFlextCoreUtilitiesRuntimeViolationRegistry,
-    )
     from tests.unit.base import TestsFlextCoreServiceBase
     from tests.unit.test_beartype_engine import TestsFlextCoreBeartypeEngine
     from tests.unit.test_constants_new import TestsFlextCoreConstantsNew
@@ -260,17 +251,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit._models.test_exception_params": (
                 "TestsFlextCoreModelsExceptionParams",
             ),
-            ".unit._utilities.test_beartype_violation_capture": (
-                "TestsFlextCoreUtilitiesBeartypeViolationCapture",
-            ),
             ".unit._utilities.test_guards": ("TestsFlextCoreUtilitiesGuards",),
-            ".unit._utilities.test_lightweight_ast": (
-                "TestsFlextCoreUtilitiesLightweightAst",
-            ),
             ".unit._utilities.test_mapper": ("TestsFlextCoreUtilitiesMapper",),
-            ".unit._utilities.test_runtime_violation_registry": (
-                "TestsFlextCoreUtilitiesRuntimeViolationRegistry",
-            ),
             ".unit.base": ("TestsFlextCoreServiceBase",),
             ".unit.test_beartype_engine": ("TestsFlextCoreBeartypeEngine",),
             ".unit.test_constants_new": ("TestsFlextCoreConstantsNew",),
@@ -486,17 +468,14 @@ __all__: list[str] = [
     "TestsFlextCoreTypes",
     "TestsFlextCoreTypesUnit",
     "TestsFlextCoreUtilities",
-    "TestsFlextCoreUtilitiesBeartypeViolationCapture",
     "TestsFlextCoreUtilitiesCollection",
     "TestsFlextCoreUtilitiesCoverage",
     "TestsFlextCoreUtilitiesDomain",
     "TestsFlextCoreUtilitiesGenerators",
     "TestsFlextCoreUtilitiesGuards",
-    "TestsFlextCoreUtilitiesLightweightAst",
     "TestsFlextCoreUtilitiesMapper",
     "TestsFlextCoreUtilitiesProjectMetadata",
     "TestsFlextCoreUtilitiesReliability",
-    "TestsFlextCoreUtilitiesRuntimeViolationRegistry",
     "TestsFlextCoreUtilitiesSettings",
     "TestsFlextCoreUtilitiesSmoke",
     "TestsFlextCoreUtilitiesText",

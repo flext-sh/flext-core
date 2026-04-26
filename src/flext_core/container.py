@@ -527,6 +527,29 @@ class FlextContainer(p.ContainerLifecycle):
             )
         )
 
+    def _resolve_callable[T: t.RegisterableService](
+        self,
+        callable_obj: t.FactoryCallable,
+        kind: str,
+        type_cls: type[T] | None,
+    ) -> r[T] | r[t.RegisterableService]:
+        """Invoke a factory/resource callable and narrow to ``type_cls`` if given."""
+        try:
+            resolved = callable_obj()
+        except (
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+            AttributeError,
+        ) as exc:
+            return r[t.RegisterableService].from_result(
+                e.fail_operation(f"resolve {kind} service", exc)
+            )
+        if type_cls is not None:
+            return self._narrow_service(resolved, type_cls)
+        return r[t.RegisterableService].ok(resolved)
+
     @overload
     def resolve[T: t.RegisterableService](
         self,
@@ -576,41 +599,17 @@ class FlextContainer(p.ContainerLifecycle):
                 return self._narrow_service(service, type_cls)
             return r[t.RegisterableService].ok(service)
         if name in self._factories:
-            try:
-                factory_registration = self._factories[name]
-                factory_callable: t.FactoryCallable = factory_registration.factory
-                resolved = factory_callable()
-                if type_cls is not None:
-                    return self._narrow_service(resolved, type_cls)
-                return r[t.RegisterableService].ok(resolved)
-            except (
-                TypeError,
-                ValueError,
-                RuntimeError,
-                KeyError,
-                AttributeError,
-            ) as exc:
-                return r[t.RegisterableService].from_result(
-                    e.fail_operation("resolve factory service", exc)
-                )
+            return self._resolve_callable(
+                self._factories[name].factory,
+                "factory",
+                type_cls,
+            )
         if name in self._resources:
-            try:
-                resource_registration = self._resources[name]
-                resource_callable: t.ResourceCallable = resource_registration.factory
-                resolved = resource_callable()
-                if type_cls is not None:
-                    return self._narrow_service(resolved, type_cls)
-                return r[t.RegisterableService].ok(resolved)
-            except (
-                TypeError,
-                ValueError,
-                RuntimeError,
-                KeyError,
-                AttributeError,
-            ) as exc:
-                return r[t.RegisterableService].from_result(
-                    e.fail_operation("resolve resource service", exc)
-                )
+            return self._resolve_callable(
+                self._resources[name].factory,
+                "resource",
+                type_cls,
+            )
         return r[t.RegisterableService].from_result(e.fail_not_found("service", name))
 
     @override
@@ -739,8 +738,9 @@ class FlextContainer(p.ContainerLifecycle):
             if str(name) not in self._internal_registrations
         ]
 
-    def _bind_service(self, name: str, impl: t.RegisterableService) -> Self:
-        """Register a concrete service instance under ``name``."""
+    @override
+    def bind(self, name: str, impl: t.RegisterableService) -> Self:
+        """Bind a concrete service instance or value."""
         if not name or self.has(name):
             return self
         self._clear_provider_registration(name)
@@ -760,8 +760,9 @@ class FlextContainer(p.ContainerLifecycle):
             del self._services[name]
         return self
 
-    def _bind_factory(self, name: str, impl: t.FactoryCallable) -> Self:
-        """Register a factory callable under ``name``."""
+    @override
+    def factory(self, name: str, impl: t.FactoryCallable) -> Self:
+        """Bind a factory callable."""
         if not name or self.has(name):
             return self
         self._clear_provider_registration(name)
@@ -795,8 +796,9 @@ class FlextContainer(p.ContainerLifecycle):
             del self._factories[name]
         return self
 
-    def _bind_resource(self, name: str, impl: t.ResourceCallable) -> Self:
-        """Register a resource factory under ``name``."""
+    @override
+    def resource(self, name: str, impl: t.ResourceCallable) -> Self:
+        """Bind a resource factory."""
         if not name or self.has(name):
             return self
         self._clear_provider_registration(name)
@@ -812,21 +814,6 @@ class FlextContainer(p.ContainerLifecycle):
         except (TypeError, ValueError, RuntimeError, AttributeError):
             del self._resources[name]
         return self
-
-    @override
-    def bind(self, name: str, impl: t.RegisterableService) -> Self:
-        """Bind a concrete service instance or value."""
-        return self._bind_service(name, impl)
-
-    @override
-    def factory(self, name: str, impl: t.FactoryCallable) -> Self:
-        """Bind a factory callable."""
-        return self._bind_factory(name, impl)
-
-    @override
-    def resource(self, name: str, impl: t.ResourceCallable) -> Self:
-        """Bind a resource factory."""
-        return self._bind_resource(name, impl)
 
     @override
     def register_core_services(self) -> None:

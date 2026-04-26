@@ -204,8 +204,6 @@ help: ## Show commands
 	$(Q)echo ""
 	$(Q)echo "Core verbs:"
 
-	$(Q)printf "  %-14s %s\n" "audit" "Run SSOT enforcement audit (SCOPE/NAMESPACE/GATES/PROPAGATE selectors)"
-
 	$(Q)printf "  %-14s %s\n" "boot" "Install dependencies and hooks"
 
 	$(Q)printf "  %-14s %s\n" "build" "Build distributable artifacts"
@@ -284,13 +282,6 @@ help: ## Show commands
 
 	$(Q)echo "  PR_RELEASE_ON_MERGE=0|1"
 
-
-audit: ## Run SSOT enforcement audit (GATES=docs scopes to mkdocs python-codeblocks)
-	$(Q)if [ "$(GATES)" = "docs" ]; then \
-		$(PROJECT_INFRA_DOCS) audit --workspace "$(CURDIR)" --output-dir .reports/docs --strict; \
-	else \
-		$(PROJECT_INFRA_REFACTOR) audit --workspace "$(CURDIR)" $(if $(PROJECTS),--projects "$(PROJECTS)",) $(if $(filter 1,$(FIX)),--apply,); \
-	fi
 
 boot: ## Complete setup
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \

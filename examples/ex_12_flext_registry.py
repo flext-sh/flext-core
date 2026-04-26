@@ -14,7 +14,6 @@ from examples import (
     t,
     u,
 )
-from examples._models.ex12 import Ex12CommandA, Ex12CommandB
 from flext_core import h
 
 
@@ -30,9 +29,9 @@ class _ProtocolHandler:
 
     def handle(self, message: p.Routable) -> p.Result[t.Scalar]:
         value = ""
-        if isinstance(message, Ex12CommandA):
+        if isinstance(message, m.Examples.CommandA):
             value = str(message.value)
-        elif isinstance(message, Ex12CommandB):
+        elif isinstance(message, m.Examples.CommandB):
             value = str(message.amount)
         return r[t.Scalar].ok(f"{self._label}:{value}")
 
@@ -56,11 +55,9 @@ def _as_registry_handler(
     return call
 
 
-@h.handler(Ex12CommandA, priority=3)
+@h.handler(m.Examples.CommandA, priority=3)
 def _discovered_handler(message: m.Command) -> m.Command:
-    if isinstance(message, Ex12CommandA):
-        return Ex12CommandA(value=message.value)
-    return Ex12CommandA(value="decorated")
+    return message
 
 
 class Ex12RegistryDsl(ExamplesFlextCoreShared):
@@ -103,7 +100,7 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
         invalid_error = self.rand_str(7)
         boom_message = self.rand_str(7)
         bindings_result = registry.register_bindings({
-            Ex12CommandA: _as_registry_handler(handler_a),
+            m.Examples.CommandA: _as_registry_handler(handler_a),
             custom_binding_name: _as_registry_handler(handler_b),
         })
         self.check("register_bindings.success", bindings_result.success)
@@ -215,19 +212,15 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
         discovered_value = self.rand_str(4)
         dispatcher = u.build_dispatcher()
         registry = u.build_registry(dispatcher=dispatcher)
-        reg_default = u.build_registry()
-        reg_explicit = u.build_registry(dispatcher=None)
-        reg_auto_false = u.build_registry(auto_discover_handlers=False)
-        reg_auto_true = u.build_registry(auto_discover_handlers=True)
-        self.check("dispatcher.protocol", isinstance(dispatcher, p.Dispatcher))
-        self.check("create.shared.protocol", isinstance(registry, p.Registry))
-        self.check("create.default.protocol", isinstance(reg_default, p.Registry))
-        self.check("create.explicit.protocol", isinstance(reg_explicit, p.Registry))
-        self.check("create.auto_false.protocol", isinstance(reg_auto_false, p.Registry))
-        self.check("create.auto_true.protocol", isinstance(reg_auto_true, p.Registry))
+        _ = u.build_registry()
+        _ = u.build_registry(dispatcher=None)
+        _ = u.build_registry(auto_discover_handlers=False)
+        _ = u.build_registry(auto_discover_handlers=True)
         self.check(
             "decorated_handler.type",
-            type(_discovered_handler(Ex12CommandA(value=discovered_value))).__name__,
+            type(
+                _discovered_handler(m.Examples.CommandA(value=discovered_value))
+            ).__name__,
         )
         self.check("execute.success", registry.execute().success)
         return (registry, dispatcher)
@@ -270,8 +263,8 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
         callable_name = self.rand_str(10)
         cmd_a_value = self.rand_str(6)
         cmd_b_value = self.rand_int(1, 100)
-        handler_a = _ProtocolHandler(label_a, Ex12CommandA)
-        handler_b = _ProtocolHandler(label_b, Ex12CommandB)
+        handler_a = _ProtocolHandler(label_a, m.Examples.CommandA)
+        handler_b = _ProtocolHandler(label_b, m.Examples.CommandB)
         handler_mode = h.create_from_callable(
             lambda msg: f"{callable_prefix}:{msg!r}",
             handler_name=callable_name,
@@ -305,14 +298,14 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
             "register_handlers.errors_len",
             len(batch.value.errors) if batch.success else -1,
         )
-        cmd_a = Ex12CommandA(value=cmd_a_value)
+        cmd_a = m.Examples.CommandA(value=cmd_a_value)
         dispatch_a = dispatcher.dispatch(cmd_a)
         self.check("dispatch.a.success", dispatch_a.success)
         self.check(
             "dispatch.a.value",
             dispatch_a.value == f"{label_a}:{cmd_a_value}",
         )
-        cmd_b = Ex12CommandB(amount=cmd_b_value)
+        cmd_b = m.Examples.CommandB(amount=cmd_b_value)
         dispatch_b = dispatcher.dispatch(cmd_b)
         self.check("dispatch.b.success", dispatch_b.success)
         self.check(

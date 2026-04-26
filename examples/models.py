@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from examples import t
+from examples._models.errors import ExamplesFlextCoreModelsErrors
 from examples._models.ex00 import ExamplesFlextCoreModelsEx00
 from examples._models.ex01 import ExamplesFlextCoreModelsEx01
 from examples._models.ex02 import ExamplesFlextCoreModelsEx02
@@ -15,6 +16,11 @@ from examples._models.ex10 import ExamplesFlextCoreModelsEx10
 from examples._models.ex11 import ExamplesFlextCoreModelsEx11
 from examples._models.ex12 import ExamplesFlextCoreModelsEx12
 from examples._models.ex14 import ExamplesFlextCoreModelsEx14
+from examples._models.output import ExamplesFlextCoreModelsOutput
+from examples._models.shared import (
+    ExamplesFlextCoreSharedHandle,
+    ExamplesFlextCoreSharedPerson,
+)
 from flext_core import m
 
 
@@ -24,6 +30,7 @@ class ExamplesFlextCoreModels(
     """Public examples model facade — composes all _models/* via MRO."""
 
     class Examples(
+        ExamplesFlextCoreModelsErrors.Examples,
         ExamplesFlextCoreModelsEx00,
         ExamplesFlextCoreModelsEx01,
         ExamplesFlextCoreModelsEx02,
@@ -36,11 +43,18 @@ class ExamplesFlextCoreModels(
         ExamplesFlextCoreModelsEx11,
         ExamplesFlextCoreModelsEx12,
         ExamplesFlextCoreModelsEx14,
+        ExamplesFlextCoreModelsOutput.Examples,
     ):
         """Canonical namespace for all example domain models.
 
         Access via: from examples import m; m.Examples.<ClassName>
         """
+
+        class Person(ExamplesFlextCoreSharedPerson):
+            """Shared person model used by public examples."""
+
+        class Handle(ExamplesFlextCoreSharedHandle):
+            """Shared resource-handle model used by public examples."""
 
 
 m = ExamplesFlextCoreModels
