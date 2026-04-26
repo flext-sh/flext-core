@@ -155,75 +155,103 @@ class FlextDecorators:
                 op_name: str = (
                     operation_name if operation_name is not None else func.__name__
                 )
-                logger_carrier: FlextDecorators._LoggerCarrier | None = None
-                if args:
-                    first_arg_raw = args[0]
-                    if FlextDecorators._is_logger_carrier(first_arg_raw):
-                        logger_carrier = first_arg_raw
+                logger_carrier = FlextDecorators._extract_logger_carrier(args)
                 logger = FlextDecorators._resolve_logger(
                     logger_carrier,
                     func_module=func.__module__,
                 )
-                correlation_id = FlextDecorators._bind_operation_context(
-                    operation=op_name,
+                return FlextDecorators._run_logged_operation(
+                    call=lambda: func(*args, **kwargs),
                     logger=logger,
-                    function_name=func.__name__,
+                    op_name=op_name,
+                    func_name=func.__name__,
+                    func_module=func.__module__,
                     ensure_correlation=ensure_correlation,
+                    track_perf=track_perf,
                 )
-                start_time = time.perf_counter() if track_perf else 0.0
-                try:
-                    FlextDecorators._log_start(
-                        logger,
-                        op_name,
-                        func.__name__,
-                        func.__module__,
-                        correlation_id,
-                    )
-                    result = func(*args, **kwargs)
-                    FlextDecorators._log_completion(
-                        logger,
-                        op_name,
-                        func.__name__,
-                        correlation_id,
-                        start_time=start_time,
-                        track_perf=track_perf,
-                    )
-                    return result
-                except (
-                    AttributeError,
-                    TypeError,
-                    ValueError,
-                    RuntimeError,
-                    KeyError,
-                ) as exc:
-                    tracked_duration = (
-                        time.perf_counter() - start_time if track_perf else 0.0
-                    )
-                    exc_kw = FlextDecorators._build_exception_kwargs(
-                        exc,
-                        func.__name__,
-                        op_name,
-                        correlation_id,
-                        tracked_duration=tracked_duration,
-                        track_perf=track_perf,
-                    )
-                    logger.exception(
-                        op_name,
-                        exception=exc,
-                        **exc_kw,
-                    )
-                    raise
-                finally:
-                    with suppress(Exception):
-                        FlextDecorators._clear_operation_scope(
-                            logger=logger,
-                            function_name=func.__name__,
-                            operation=op_name,
-                        )
 
             return wrapper
 
         return decorator
+
+    @staticmethod
+    def _extract_logger_carrier(
+        args: tuple[object, ...],
+    ) -> FlextDecorators._LoggerCarrier | None:
+        """Return first positional argument when it can provide a logger."""
+        if not args:
+            return None
+        first_arg = args[0]
+        if FlextDecorators._is_logger_carrier(first_arg):
+            return first_arg
+        return None
+
+    @staticmethod
+    def _run_logged_operation[TResult](
+        *,
+        call: Callable[[], TResult],
+        logger: p.Logger,
+        op_name: str,
+        func_name: str,
+        func_module: str,
+        ensure_correlation: bool,
+        track_perf: bool,
+    ) -> TResult:
+        """Execute logged operation lifecycle around ``call``."""
+        correlation_id = FlextDecorators._bind_operation_context(
+            operation=op_name,
+            logger=logger,
+            function_name=func_name,
+            ensure_correlation=ensure_correlation,
+        )
+        start_time = time.perf_counter() if track_perf else 0.0
+        try:
+            FlextDecorators._log_start(
+                logger,
+                op_name,
+                func_name,
+                func_module,
+                correlation_id,
+            )
+            result = call()
+            FlextDecorators._log_completion(
+                logger,
+                op_name,
+                func_name,
+                correlation_id,
+                start_time=start_time,
+                track_perf=track_perf,
+            )
+            return result
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+        ) as exc:
+            tracked_duration = time.perf_counter() - start_time if track_perf else 0.0
+            exc_kw = FlextDecorators._build_exception_kwargs(
+                exc,
+                func_name,
+                op_name,
+                correlation_id,
+                tracked_duration=tracked_duration,
+                track_perf=track_perf,
+            )
+            logger.exception(
+                op_name,
+                exception=exc,
+                **exc_kw,
+            )
+            raise
+        finally:
+            with suppress(Exception):
+                FlextDecorators._clear_operation_scope(
+                    logger=logger,
+                    function_name=func_name,
+                    operation=op_name,
+                )
 
     @staticmethod
     def railway[**PCallback, TValue](

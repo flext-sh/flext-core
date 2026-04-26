@@ -10,8 +10,6 @@ from collections.abc import (
     Mapping,
 )
 
-from pydantic.fields import FieldInfo
-
 from flext_core import FlextModels as m, FlextRuntime, c, t
 
 
@@ -26,22 +24,28 @@ class FlextExceptionsTemplate:
         values: FlextExceptionsTemplate.TemplateValues,
     ) -> m.ConfigMap:
         """Build template substitution values using params data and field metadata."""
-        payload: dict[str, t.JsonValue] = {}
+        payload: dict[str, t.JsonValue] = (
+            {
+                str(key): FlextRuntime.normalize_to_metadata(value)
+                for key, value in params.model_dump(exclude_none=True).items()
+            }
+            if params is not None
+            else {}
+        )
         if params is not None:
-            model_fields: Mapping[str, FieldInfo] = params.__class__.model_fields
-            params_dump = params.model_dump(exclude_none=True)
-            for key, value in params_dump.items():
-                if value is None:
-                    continue
-                payload[str(key)] = FlextRuntime.normalize_to_metadata(value)
-            for field_name, field_info in model_fields.items():
-                field_help = field_info.description or field_info.title
-                if isinstance(field_help, str) and field_help:
-                    payload[f"{field_name}_description"] = field_help
-        for key, value in values.items():
-            if value is None:
-                continue
-            payload[str(key)] = FlextRuntime.normalize_to_metadata(value)
+            payload |= {
+                f"{field_name}_description": field_help
+                for field_name, field_info in params.__class__.model_fields.items()
+                if isinstance(
+                    (field_help := field_info.description or field_info.title), str
+                )
+                and field_help
+            }
+        payload |= {
+            str(key): FlextRuntime.normalize_to_metadata(value)
+            for key, value in values.items()
+            if value is not None
+        }
         return m.ConfigMap.model_validate(payload)
 
     @staticmethod
@@ -77,15 +81,15 @@ class FlextExceptionsTemplate:
         **values: t.JsonPayload | None,
     ) -> str:
         """Render error template with canonical operation/error fields."""
-        payload: dict[str, t.JsonValue] = {}
-        if operation is not None:
-            payload[c.HandlerType.OPERATION] = operation
-        if error is not None:
-            payload["error"] = str(error)
-        for key, value in values.items():
-            if value is None:
-                continue
-            payload[str(key)] = FlextRuntime.normalize_to_metadata(value)
+        payload: dict[str, t.JsonValue] = (
+            ({c.HandlerType.OPERATION: operation} if operation is not None else {})
+            | ({"error": str(error)} if error is not None else {})
+            | {
+                str(key): FlextRuntime.normalize_to_metadata(value)
+                for key, value in values.items()
+                if value is not None
+            }
+        )
         return FlextExceptionsTemplate.render_template(
             template,
             params=params,
