@@ -16,10 +16,10 @@ from __future__ import annotations
 
 from flext_tests import m
 
-from tests import TestsFlextCoreModelsMixins
+from tests._models.mixins import TestsFlextCoreModelsMixins
 
 
-class TestsFlextCoreModels(m, TestsFlextCoreModelsMixins):
+class TestsFlextCoreModels(m):
     """Models for flext-core tests - uses composition with TestsFlextModels.
 
     Architecture: Uses composition (not inheritance) with TestsFlextModels and TestsFlextModels

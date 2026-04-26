@@ -11,7 +11,9 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Never, Self, override
 
-from tests import c, m, t
+from flext_core import m
+from tests.constants import c
+from tests.typings import t
 
 
 class TestsFlextCoreModelsMixins:
