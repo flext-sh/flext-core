@@ -33,10 +33,11 @@ from collections.abc import (
 )
 from enum import EnumType
 from pathlib import Path
-from types import UnionType
+from types import MappingProxyType, UnionType
 from typing import (
     Annotated,
     Any,
+    ClassVar,
     ForwardRef,
     TypeAliasType,
     Union,
@@ -45,6 +46,9 @@ from typing import (
     no_type_check,
 )
 
+from beartype._util.hint.pep.utilpepget import (  # noqa: PLC2701 - beartype-internal helper required for hint origin extraction
+    get_hint_pep_origin_or_none,
+)
 from pydantic.fields import FieldInfo
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
@@ -55,6 +59,8 @@ from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}
+_BINARY_ARITY: int = 2
+_FIELD_DESCRIPTION_ARITY: int = 3
 type _DefaultFactory = type | Callable[..., tp.JsonValue] | None
 
 
@@ -82,6 +88,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     def contains_any(hint: t.TypeHintSpecifier | None) -> bool:
+        """True if Any/object appears in ``hint`` — uses beartype.door.TypeHint."""
         return FlextUtilitiesBeartypeEngine._contains_any(hint, seen=set())
 
     @staticmethod
@@ -100,8 +107,8 @@ class FlextUtilitiesBeartypeEngine:
         if hint is Any or hint is object:
             return True
         return any(
-            FlextUtilitiesBeartypeEngine._contains_any(arg, seen=seen)
-            for arg in get_args(hint)
+            FlextUtilitiesBeartypeEngine._contains_any(child, seen=seen)
+            for child in get_args(hint)
         )
 
     @staticmethod
@@ -109,33 +116,41 @@ class FlextUtilitiesBeartypeEngine:
         hint: t.TypeHintSpecifier | None,
         forbidden: frozenset[str],
     ) -> tuple[bool, str]:
+        """Detect bare list/dict/set via beartype.get_hint_pep_origin_or_none."""
         hint = ube.unwrap_type_alias(hint)
         if hint is None:
             return False, ""
-        origin = get_origin(hint)
-        if origin is not None and hasattr(origin, "__name__"):
-            name: str = origin.__name__
-            if name in forbidden:
-                return True, name
+        origin = get_hint_pep_origin_or_none(hint)
+        if origin is None or not hasattr(origin, "__name__"):
+            return False, ""
+        name: str = origin.__name__
+        if name in forbidden:
+            return True, name
         return False, ""
 
     @staticmethod
     def count_union_members(hint: t.TypeHintSpecifier | None) -> int:
+        """Count union arms (excludes ``None``).
+
+        Uses ``typing.get_origin`` for union detection (robust for both
+        ``X | Y`` and ``Union[X, Y]``) and ``typing.get_args`` for the
+        member walk, which handles PEP-695 recursive aliases that
+        ``beartype.door.TypeHint`` does not yet support.
+        """
         hint = ube.unwrap_type_alias(hint)
         if hint is None:
             return 0
-        origin = get_origin(hint)
-        if origin is not UnionType and origin is not Union:
+        if get_origin(hint) not in {UnionType, Union}:
             return 0
         return sum(1 for a in get_args(hint) if a is not type(None))
 
     @staticmethod
     def matches_str_none_union(hint: t.TypeHintSpecifier | None) -> bool:
+        """``str | None`` detection via ``typing`` primitives (recursion-safe)."""
         hint = ube.unwrap_type_alias(hint)
         if hint is None:
             return False
-        origin = get_origin(hint)
-        if origin is not UnionType and origin is not Union:
+        if get_origin(hint) not in {UnionType, Union}:
             return False
         args = get_args(hint)
         return str in args and type(None) in args
@@ -694,7 +709,7 @@ class FlextUtilitiesBeartypeEngine:
 
     @staticmethod
     @functools.cache
-    def _apt_load_ast(target: type) -> tuple[str, ast.Module] | None:
+    def apt_load_ast(target: type) -> tuple[str, ast.Module] | None:
         """Source-skip helper for every A-PT hook.
 
         Returns (src_file, ast_tree) or ``None`` to signal "skip this target."
@@ -722,11 +737,11 @@ class FlextUtilitiesBeartypeEngine:
         return src_file, tree
 
     @staticmethod
-    def _apt_load_wrapper_surface(
+    def apt_load_wrapper_surface(
         target: type,
     ) -> tuple[str, str, ast.Module] | None:
         """Return source for tests/examples/scripts modules that are real scan targets."""
-        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        loaded = FlextUtilitiesBeartypeEngine.apt_load_ast(target)
         if loaded is None:
             return None
 
@@ -837,7 +852,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_cast_outside_core(target: type) -> t.StrMapping | None:
         """``cast()`` call outside flext-core result internals (ENFORCE-039)."""
-        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        loaded = FlextUtilitiesBeartypeEngine.apt_load_ast(target)
         if loaded is None:
             return _NO_VIOLATION
         src_file, tree = loaded
@@ -850,7 +865,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_model_rebuild_call(target: type) -> t.StrMapping | None:
         """``model_rebuild()`` invocation indicates unresolved forward refs (ENFORCE-041)."""
-        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        loaded = FlextUtilitiesBeartypeEngine.apt_load_ast(target)
         if loaded is None:
             return _NO_VIOLATION
         src_file, tree = loaded
@@ -861,7 +876,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_pass_through_wrapper(target: type) -> t.StrMapping | None:
         """Pass-through wrapper detection (ENFORCE-043)."""
-        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        loaded = FlextUtilitiesBeartypeEngine.apt_load_ast(target)
         if loaded is None:
             return _NO_VIOLATION
         src_file, tree = loaded
@@ -872,7 +887,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_private_attr_probe(target: type) -> t.StrMapping | None:
         """``hasattr/getattr/setattr`` probing of private attributes (ENFORCE-044)."""
-        loaded = FlextUtilitiesBeartypeEngine._apt_load_ast(target)
+        loaded = FlextUtilitiesBeartypeEngine.apt_load_ast(target)
         if loaded is None:
             return _NO_VIOLATION
         src_file, tree = loaded
@@ -893,7 +908,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_no_core_tests_namespace(target: type) -> t.StrMapping | None:
         """Deprecated ``.Core.Tests`` namespace usage in tests/examples/scripts (ENFORCE-054)."""
-        loaded = FlextUtilitiesBeartypeEngine._apt_load_wrapper_surface(target)
+        loaded = FlextUtilitiesBeartypeEngine.apt_load_wrapper_surface(target)
         if loaded is None:
             return _NO_VIOLATION
 
@@ -919,7 +934,7 @@ class FlextUtilitiesBeartypeEngine:
     @staticmethod
     def check_no_wrapper_root_alias_import(target: type) -> t.StrMapping | None:
         """Wrapper aliases must be imported from root package in tests/examples/scripts (ENFORCE-055)."""
-        loaded = FlextUtilitiesBeartypeEngine._apt_load_wrapper_surface(target)
+        loaded = FlextUtilitiesBeartypeEngine.apt_load_wrapper_surface(target)
         if loaded is None:
             return _NO_VIOLATION
 
@@ -1301,6 +1316,741 @@ class FlextUtilitiesBeartypeEngine:
             return violation
         except (TypeError, OSError, AttributeError):
             return _NO_VIOLATION
+
+    # ------------------------------------------------------------------
+    # Generic data-driven dispatcher (Phase 1 — beartype-driven engine)
+    # ------------------------------------------------------------------
+    #
+    # ``apply(kind, params, *args)`` replaces the legacy 1:1
+    # ``getattr(ube, f"check_{tag}")(*args)`` lookup. Each visitor is a
+    # thin adapter that consumes :class:`m.Enforcement.*Params` flags and
+    # delegates to existing introspection helpers (``contains_any``,
+    # ``has_forbidden_collection_origin``, ``mutable_kind``, ...) plus
+    # ``beartype.door.TypeHint`` for type-structure queries that previously
+    # used bespoke string heuristics.
+
+    @classmethod
+    def apply(
+        cls,
+        kind: c.EnforcementPredicateKind,
+        params: tp.JsonValue,
+        *args: tp.JsonValue,
+    ) -> t.StrMapping | None:
+        """Dispatch a rule predicate to its visitor by ``predicate_kind``.
+
+        Args mirror the per-category iteration shape from
+        :class:`FlextUtilitiesEnforcementCollect`. Visitors return
+        ``None`` for no violation, an empty mapping for a bare violation,
+        or a mapping of substitution keys for a parameterised message.
+        """
+        visitor = cls._VISITORS.get(kind)
+        if visitor is None:
+            return _NO_VIOLATION
+        return visitor(params, *args)
+
+    @staticmethod
+    def _v_field_shape(
+        params: tp.JsonValue,
+        *args: tp.JsonValue,
+    ) -> t.StrMapping | None:
+        """FIELD_SHAPE — Pydantic field annotation governance via flags.
+
+        Args shape depends on params.require_description: 1-arg ``(info,)`` for
+        annotation/default checks; 3-arg ``(model_type, name, info)`` for
+        the description-required check.
+        """
+        if params.require_description and len(args) == _FIELD_DESCRIPTION_ARITY:
+            model_type, name, info = args
+            if name.startswith("_") or info.description:
+                return _NO_VIOLATION
+            raw_ann = vars(model_type).get("__annotations__", {})
+            raw = raw_ann.get(name)
+            if isinstance(raw, str) and "description=" in raw:
+                return _NO_VIOLATION
+            resolved = inspect.get_annotations(model_type, eval_str=False)
+            ann = resolved.get(name)
+            if get_origin(ann) is Annotated:
+                for meta in get_args(ann)[1:]:
+                    if isinstance(meta, FieldInfo) and meta.description:
+                        return _NO_VIOLATION
+            return _BARE_VIOLATION
+        if len(args) != 1:
+            return _NO_VIOLATION
+        info = args[0]
+        if params.forbid_any and ube.contains_any(info.annotation):
+            return _BARE_VIOLATION
+        if params.forbid_bare_collection:
+            bad, origin = ube.has_forbidden_collection_origin(
+                info.annotation, c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS
+            )
+            if bad:
+                replacement = next(
+                    (
+                        repl
+                        for k, repl in c.ENFORCEMENT_FORBIDDEN_COLLECTIONS.items()
+                        if k.__name__ == origin
+                    ),
+                    origin,
+                )
+                return {"kind": origin, "replacement": replacement}
+        if params.forbid_mutable_default:
+            mk = ube.mutable_kind(info.default)
+            if mk is not None and info.default:
+                return {"kind": mk}
+        if (
+            params.forbid_raw_default_factory
+            and info.default_factory is not None
+            and not ube.allows_mutable_default_factory(
+                info.annotation, info.default_factory
+            )
+        ):
+            fk = ube.mutable_default_factory_kind(info.default_factory)
+            if fk is not None:
+                return {"kind": fk.__name__}
+        if (
+            params.forbid_str_none_empty
+            and ube.matches_str_none_union(info.annotation)
+            and isinstance(info.default, str)
+            and not info.default
+        ):
+            return _BARE_VIOLATION
+        if params.forbid_inline_union:
+            arms = ube.count_union_members(info.annotation)
+            if arms > params.max_union_arms:
+                return {"arms": str(arms)}
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_model_config(
+        params: tp.JsonValue,
+        target: type,
+    ) -> t.StrMapping | None:
+        """MODEL_CONFIG — Pydantic model_config governance via flags."""
+        if params.forbid_v1_config and isinstance(target.__dict__.get("Config"), type):
+            return _BARE_VIOLATION
+        if not issubclass(target, mp.BaseModel):
+            return _NO_VIOLATION
+        if ube.has_relaxed_extra_base(target):
+            return _NO_VIOLATION
+        extra = target.model_config.get("extra")
+        if params.require_extra_forbid and extra is None:
+            return _BARE_VIOLATION
+        local = target.__dict__.get("model_config", {})
+        if (
+            params.allowed_extra_values
+            and extra not in {None, "forbid", *params.allowed_extra_values}
+            and "extra" in local
+        ):
+            return {"extra": str(extra)}
+        if (
+            params.require_frozen_for_value_objects
+            and any(
+                b.__name__ in c.ENFORCEMENT_VALUE_OBJECT_BASES for b in target.__mro__
+            )
+            and not target.model_config.get("frozen", False)
+        ):
+            return _BARE_VIOLATION
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_attr_shape(
+        params: tp.JsonValue,
+        name: str,
+        value: tp.JsonValue,
+    ) -> t.StrMapping | None:
+        """ATTR_SHAPE — class-attribute governance (constants / aliases / TypeAdapters)."""
+        if params.forbid_mutable_value:
+            mk = ube.mutable_kind(value)
+            if mk is not None:
+                return {"kind": mk}
+        if params.require_uppercase_name and name != name.upper():
+            return _BARE_VIOLATION
+        if params.forbid_any_in_alias and ube.alias_contains_any(
+            getattr(value, "__value__", None)
+        ):
+            return _BARE_VIOLATION
+        if (
+            params.require_typeadapter_naming
+            and type(value).__name__ == "TypeAdapter"
+            and not (name.startswith("ADAPTER_") or name.upper() == name)
+        ):
+            return {"name": name, "upper_name": name.upper()}
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_method_shape(
+        params: tp.JsonValue,
+        *args: tp.JsonValue,
+    ) -> t.StrMapping | None:
+        """METHOD_SHAPE — accessor-prefix and staticmethod-required governance.
+
+        Args shape varies: ``(target, name)`` for accessor checks (NAMESPACE
+        category); ``(name, value)`` for utility-tier static-method checks
+        (ATTR category).
+        """
+        if len(args) != _BINARY_ARITY:
+            return _NO_VIOLATION
+        a, b = args
+        if isinstance(a, type) and isinstance(b, str):
+            name = b
+            if name.startswith("_"):
+                return _NO_VIOLATION
+            suggestions = (
+                ("get_", "fetch_/resolve_/compute_"),
+                ("set_", "configure/apply/update or model_copy(update=...)"),
+                ("is_", "a noun/adjective (success, expired, connected, ...)"),
+            )
+            for prefix in params.forbidden_prefixes:
+                suggestion = next(
+                    (s for p, s in suggestions if p == prefix),
+                    "use a domain verb",
+                )
+                if name.startswith(prefix):
+                    return {"name": name, "suggestion": suggestion}
+            return _NO_VIOLATION
+        if isinstance(a, str) and not isinstance(b, type):
+            if not params.require_static_or_classmethod:
+                return _NO_VIOLATION
+            if isinstance(b, (staticmethod, classmethod)):
+                return _NO_VIOLATION
+            if inspect.isfunction(b):
+                return _BARE_VIOLATION
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_class_placement(
+        params: tp.JsonValue,
+        *args: tp.JsonValue,
+    ) -> t.StrMapping | None:
+        """CLASS_PLACEMENT — class-name / inner-class layer placement.
+
+        Args:
+            (target, expected_prefix) → name-prefix check (class_prefix /
+              nested_mro per params.check_nested).
+            (value, layer) → cross-layer Enum/Protocol membership check.
+
+        """
+        if len(args) != _BINARY_ARITY:
+            return _NO_VIOLATION
+        a, b = args
+        if isinstance(b, str) and b in c.ENFORCEMENT_LAYER_ALLOWS:
+            value, layer = a, b
+            allowed = c.ENFORCEMENT_LAYER_ALLOWS.get(layer, frozenset())
+            if isinstance(value, EnumType) and "StrEnum" not in allowed:
+                return _BARE_VIOLATION
+            if ube.has_runtime_protocol_marker(value) and "Protocol" not in allowed:
+                return _BARE_VIOLATION
+            return _NO_VIOLATION
+        if not isinstance(a, type) or not isinstance(b, str):
+            return _NO_VIOLATION
+        target, expected = a, b
+        if params.check_nested:
+            parts = target.__qualname__.split(".")
+            if len(parts) < c.ENFORCEMENT_NESTED_MRO_MIN_DEPTH:
+                return _NO_VIOLATION
+            if not parts[0].startswith(expected):
+                return {"expected": expected}
+            return _NO_VIOLATION
+        if target.__name__.startswith(expected):
+            return _NO_VIOLATION
+        return {"expected": expected, "actual": target.__name__}
+
+    @staticmethod
+    def _v_protocol_tree(
+        params: tp.JsonValue,
+        value: type,
+    ) -> t.StrMapping | None:
+        """PROTOCOL_TREE — inner-class kind + runtime_checkable governance."""
+        if params.require_inner_kind_protocol_or_namespace:
+            if value.__dict__.get("_flext_enforcement_exempt", False):
+                return _NO_VIOLATION
+            if (
+                ube.has_runtime_protocol_marker(value)
+                or ube.has_nested_namespace(value)
+                or ube.has_abstract_contract(value)
+            ):
+                pass
+            else:
+                return _BARE_VIOLATION
+        if (
+            params.require_runtime_checkable
+            and ube.has_runtime_protocol_marker(value)
+            and not getattr(value, "_is_runtime_protocol", False)
+        ):
+            return _BARE_VIOLATION
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_mro_shape(
+        params: tp.JsonValue,
+        target: type,
+    ) -> t.StrMapping | None:
+        """MRO_SHAPE — facade base ordering and inner-namespace redundancy."""
+        aliases = {"t", "m", "p", "c", "u", "r", "s", "x", "d", "e", "h"}
+        if not target.__bases__:
+            return _NO_VIOLATION
+        first_base = target.__bases__[0]
+        first_name = getattr(first_base, "__name__", "")
+        if params.require_alias_first:
+            min_multi_parent = 2
+            if len(target.__bases__) >= min_multi_parent and first_name not in aliases:
+                return {"bases": str(len(target.__bases__)), "first": first_name}
+            if first_name not in aliases and first_name.startswith("Flext"):
+                return {"base": first_name, "expected": "alias or FlextPeerXxx"}
+        if params.forbid_redundant_inner and "." in target.__qualname__:
+            try:
+                src_file = inspect.getfile(target)
+                source_code = Path(src_file).read_text(encoding="utf-8")
+            except (TypeError, OSError, AttributeError):
+                return _NO_VIOLATION
+            outer_name = target.__qualname__.split(".")[0]
+            inner_name = target.__name__
+            pattern = rf"class\s+{inner_name}\s*\([^)]*{outer_name}[^)]*\):\s*pass\s*$"
+            if re.search(pattern, source_code, re.MULTILINE):
+                return {"class": target.__qualname__}
+        if params.require_explicit_class_when_self_ref:
+            try:
+                src_file = inspect.getfile(target)
+            except (TypeError, OSError, AttributeError):
+                return _NO_VIOLATION
+            module_name = getattr(target, "__module__", "") or ""
+            package = module_name.split(".")[0]
+            min_multi_parent = 2
+            is_eligible = (
+                src_file.endswith("utilities.py")
+                and package not in c.ENFORCEMENT_PATTERN_B_UTILITIES_WHITELIST
+                and len(target.__bases__) >= min_multi_parent
+                and first_name == "u"
+            )
+            if is_eligible:
+                try:
+                    source = Path(src_file).read_text(encoding="utf-8")
+                except (TypeError, OSError, AttributeError):
+                    return _NO_VIOLATION
+                if re.search(r"\bu\.(\w+)\s*\(", source):
+                    return {"class": target.__name__, "first_base": "u"}
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_loose_symbol(
+        params: tp.JsonValue,
+        target: type,
+        expected_prefix: str,
+    ) -> t.StrMapping | None:
+        """LOOSE_SYMBOL — top-level class/function naming + settings inheritance."""
+        if target.__name__.endswith("Settings"):
+            if "." in target.__qualname__ or target.__name__ == "FlextSettings":
+                return _NO_VIOLATION
+            for base in target.__mro__[1:]:
+                if base.__name__ == "FlextSettings":
+                    return _NO_VIOLATION
+            return {"name": target.__name__}
+        skip_roots = (
+            c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | c.ENFORCEMENT_INFRASTRUCTURE_BASES
+        )
+        if "." in target.__qualname__ or target.__name__ in skip_roots:
+            return _NO_VIOLATION
+        if not params.allowed_prefixes:
+            return _NO_VIOLATION
+        if any(target.__name__.startswith(p) for p in params.allowed_prefixes):
+            return _NO_VIOLATION
+        if expected_prefix and target.__name__.startswith(expected_prefix):
+            return _NO_VIOLATION
+        return {"expected": expected_prefix, "actual": target.__name__}
+
+    @staticmethod
+    def _v_wrapper(
+        params: tp.JsonValue,  # noqa: ARG004 — params reserved for future
+        target: type,
+    ) -> t.StrMapping | None:
+        """WRAPPER — single-statement pass-through wrapper detection."""
+        loaded = ube.apt_load_ast(target)
+        if loaded is None:
+            return _NO_VIOLATION
+        src_file, tree = loaded
+        for node in ube.find_pass_through_wrappers(tree):
+            return {"name": node.name, "file": Path(src_file).name}
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_call_pattern(
+        params: tp.JsonValue,
+        target: type,
+    ) -> t.StrMapping | None:
+        """DEPRECATED_SYNTAX (call-pattern variant) — cast / model_rebuild / private-attr probes.
+
+        ``params.ast_shape`` selects the call-shape: ``cast_outside_core``,
+        ``model_rebuild_call``, ``private_attr_probe``, ``no_core_tests_namespace``,
+        ``no_wrapper_root_alias_import``.
+        """
+        shape = params.ast_shape
+        if shape == "cast_outside_core":
+            loaded = ube.apt_load_ast(target)
+            if loaded is None:
+                return _NO_VIOLATION
+            src_file, tree = loaded
+            if any(marker in src_file for marker in c.ENFORCE_FLEXT_CORE_PATH_MARKERS):
+                return _NO_VIOLATION
+            for node in ube.find_cast_calls(tree):
+                return {"file": Path(src_file).name, "line": str(node.lineno)}
+            return _NO_VIOLATION
+        if shape == "model_rebuild_call":
+            loaded = ube.apt_load_ast(target)
+            if loaded is None:
+                return _NO_VIOLATION
+            src_file, tree = loaded
+            for node in ube.find_model_rebuild_calls(tree):
+                return {"file": Path(src_file).name, "line": str(node.lineno)}
+            return _NO_VIOLATION
+        if shape == "private_attr_probe":
+            loaded = ube.apt_load_ast(target)
+            if loaded is None:
+                return _NO_VIOLATION
+            src_file, tree = loaded
+            for _node, builtin, attr in ube.find_private_attr_probes(tree):
+                return {
+                    "probe": builtin,
+                    "name": attr,
+                    "file": Path(src_file).name,
+                }
+            return _NO_VIOLATION
+        if shape == "no_core_tests_namespace":
+            loaded = ube.apt_load_wrapper_surface(target)
+            if loaded is None:
+                return _NO_VIOLATION
+            src_file, _source, tree = loaded
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Attribute) or node.attr != "Tests":
+                    continue
+                parent_attr = (
+                    node.value if isinstance(node.value, ast.Attribute) else None
+                )
+                if parent_attr is None or parent_attr.attr != "Core":
+                    continue
+                base_name = (
+                    parent_attr.value
+                    if isinstance(parent_attr.value, ast.Name)
+                    else None
+                )
+                if base_name is None or base_name.id not in cp.RUNTIME_ALIAS_NAMES:
+                    continue
+                return {
+                    "symbol": f"{base_name.id}.Core.Tests",
+                    "file": Path(src_file).name,
+                    "line": str(node.lineno),
+                }
+            return _NO_VIOLATION
+        if shape == "no_wrapper_root_alias_import":
+            loaded = ube.apt_load_wrapper_surface(target)
+            if loaded is None:
+                return _NO_VIOLATION
+            src_file, source, tree = loaded
+            wrapper_submodules = cp.FACADE_MODULE_NAMES
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.ImportFrom):
+                    continue
+                module_name = node.module or ""
+                parent, dot, child = module_name.partition(".")
+                if (
+                    not dot
+                    or parent not in {"tests", "examples", "scripts"}
+                    or child not in wrapper_submodules
+                ):
+                    continue
+                if not any(
+                    (alias.asname or alias.name) in cp.RUNTIME_ALIAS_NAMES
+                    for alias in node.names
+                ):
+                    continue
+                statement = ast.get_source_segment(source, node) or (
+                    f"from {module_name} import "
+                    + ", ".join(
+                        alias.name
+                        if alias.asname is None
+                        else f"{alias.name} as {alias.asname}"
+                        for alias in node.names
+                    )
+                )
+                return {
+                    "file": Path(src_file).name,
+                    "line": str(node.lineno),
+                    "statement": statement.strip(),
+                }
+            return _NO_VIOLATION
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_import_blacklist(
+        params: tp.JsonValue,
+        target: type,
+    ) -> t.StrMapping | None:
+        """IMPORT_BLACKLIST — concrete-class / pydantic consumer-import discipline."""
+        try:
+            src_file = inspect.getfile(target)
+            filename = Path(src_file).name
+        except (TypeError, OSError, AttributeError):
+            return _NO_VIOLATION
+        module_name = getattr(target, "__module__", "") or ""
+        if filename in c.ENFORCEMENT_CANONICAL_FILES and not params.forbidden_symbols:
+            try:
+                source = Path(src_file).read_text(encoding="utf-8")
+            except (TypeError, OSError, AttributeError):
+                return _NO_VIOLATION
+            flext_imports = re.findall(
+                r"from\s+(flext_\w+)\s+import\s+([^#\n]+)", source
+            )
+            for _module, imports_str in flext_imports:
+                imports = [i.strip() for i in imports_str.split(",")]
+                for imp in imports:
+                    if imp.startswith("Flext") and " as " not in imp:
+                        return {"file": filename, "import": imp}
+            return _NO_VIOLATION
+        if params.forbidden_symbols:
+            if module_name.startswith("flext_core._") or any(
+                module_name.startswith(f"{pkg}._")
+                for pkg in (
+                    "flext_cli",
+                    "flext_web",
+                    "flext_meltano",
+                    "flext_ldap",
+                    "flext_api",
+                    "flext_auth",
+                    "flext_infra",
+                    "flext_tests",
+                    "flext_observability",
+                )
+            ):
+                return _NO_VIOLATION
+            try:
+                source = Path(src_file).read_text(encoding="utf-8")
+            except (TypeError, OSError, AttributeError):
+                return _NO_VIOLATION
+            forbidden = frozenset(params.forbidden_symbols)
+            for module_root in params.forbidden_modules or ("pydantic",):
+                pattern = rf"from\s+{re.escape(module_root)}\s+import\s+([^#\n]+)"
+                for import_str in re.findall(pattern, source):
+                    imports = [i.strip() for i in import_str.split(",")]
+                    for imp in imports:
+                        name = imp.split(" as ")[0].strip()
+                        if name in forbidden:
+                            return {
+                                "import": name,
+                                "package": module_name.split(".")[0],
+                            }
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_alias_rebind(
+        params: tp.JsonValue,
+        target: type,
+    ) -> t.StrMapping | None:
+        """ALIAS_REBIND — canonical alias rebind / sibling-import discipline.
+
+        ``params.expected_form`` selects the variant: ``rebound_at_module_end``,
+        ``no_self_root_import_in_core_files``, ``sibling_models_type_checking``.
+        """
+        try:
+            src_file = inspect.getfile(target)
+        except (TypeError, OSError, AttributeError):
+            return _NO_VIOLATION
+        filename = Path(src_file).name
+        module_name = getattr(target, "__module__", "") or ""
+        package = module_name.split(".")[0]
+        variant = params.expected_form
+        if (
+            variant == "rebound_at_module_end"
+            and filename in c.ENFORCEMENT_CANONICAL_FILES
+        ):
+            try:
+                source = Path(src_file).read_text(encoding="utf-8")
+            except (TypeError, OSError, AttributeError):
+                return _NO_VIOLATION
+            target_name = target.__name__
+            alias_char: str | None = None
+            match target_name:
+                case value if "Types" in value:
+                    alias_char = "t"
+                case value if "Models" in value:
+                    alias_char = "m"
+                case value if "Protocols" in value:
+                    alias_char = "p"
+                case value if "Constants" in value:
+                    alias_char = "c"
+                case value if "Utilities" in value:
+                    alias_char = "u"
+                case _:
+                    alias_char = None
+            if alias_char:
+                last_assign = next(
+                    (
+                        line.strip()
+                        for line in reversed(source.strip().split("\n"))
+                        if "=" in line
+                    ),
+                    "",
+                )
+                expected = f"{alias_char} = {target_name}"
+                if expected not in last_assign:
+                    return {"alias": alias_char, "class": target_name}
+            return _NO_VIOLATION
+        if (
+            variant == "no_self_root_import_in_core_files"
+            and filename in c.ENFORCEMENT_CANONICAL_FILES
+        ):
+            try:
+                source = Path(src_file).read_text(encoding="utf-8")
+            except (TypeError, OSError, AttributeError):
+                return _NO_VIOLATION
+            from_imports = re.findall(
+                rf"from\s+{re.escape(package)}\s+import\s+([cmptur])\b",
+                source,
+            )
+            if from_imports:
+                return {"package": package, "alias": from_imports[0]}
+            return _NO_VIOLATION
+        if variant == "sibling_models_type_checking" and "_models" in src_file:
+            try:
+                source = Path(src_file).read_text(encoding="utf-8")
+            except (TypeError, OSError, AttributeError):
+                return _NO_VIOLATION
+            if "if TYPE_CHECKING:" not in source:
+                return _NO_VIOLATION
+            sections = source.split("if TYPE_CHECKING:")
+            non_tc = sections[0]
+            tc = sections[1] if len(sections) > 1 else ""
+            non_tc_imports = re.findall(r"from\s+\.(\w+)\s+import\s+([^#\n]+)", non_tc)
+            for module, imports_str in non_tc_imports:
+                for raw in (i.strip() for i in imports_str.split(",")):
+                    name = raw.split(" as ")[0].strip()
+                    if not name:
+                        continue
+                    used = re.search(
+                        rf"\bAnnotated\s*\[\s*[^]]*\b{re.escape(name)}\b", source
+                    )
+                    if not used:
+                        continue
+                    in_tc = re.search(
+                        rf"from\s+\.{re.escape(module)}\s+import.*\b{re.escape(name)}\b",
+                        tc,
+                    )
+                    if not in_tc:
+                        return {"import": name, "module": module}
+            return _NO_VIOLATION
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_library_import(
+        params: tp.JsonValue,
+        target: type,
+    ) -> t.StrMapping | None:
+        """LIBRARY_IMPORT — §2.7 library abstraction owner enforcement (Phase 3 hook)."""
+        if not params.library_owners:
+            return _NO_VIOLATION
+        try:
+            src_file = inspect.getfile(target)
+        except (TypeError, OSError, AttributeError):
+            return _NO_VIOLATION
+        module_name = getattr(target, "__module__", "") or ""
+        package = module_name.split(".")[0].replace("_", "-")
+        try:
+            source = Path(src_file).read_text(encoding="utf-8")
+        except (TypeError, OSError, AttributeError):
+            return _NO_VIOLATION
+        for lib_root, owner in params.library_owners.items():
+            if package == owner:
+                continue
+            if re.search(
+                rf"^\s*(?:from|import)\s+{re.escape(lib_root)}\b",
+                source,
+                re.MULTILINE,
+            ):
+                return {"lib": lib_root, "owner": owner, "package": package}
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_loc_cap(
+        params: tp.JsonValue,
+        target: type,
+    ) -> t.StrMapping | None:
+        """LOC_CAP — module logical-LOC ceiling (AGENTS.md §3.1)."""
+        try:
+            src_file = inspect.getfile(target)
+            source = Path(src_file).read_text(encoding="utf-8")
+        except (TypeError, OSError, AttributeError):
+            return _NO_VIOLATION
+        loc = sum(
+            1
+            for line in source.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        )
+        if loc > params.max_logical_loc:
+            return {
+                "file": Path(src_file).name,
+                "loc": str(loc),
+                "cap": str(params.max_logical_loc),
+            }
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_duplicate_symbol(
+        params: tp.JsonValue,  # noqa: ARG004 — needs workspace_index from walker
+        target: type,  # noqa: ARG004
+    ) -> t.StrMapping | None:
+        """DUPLICATE_SYMBOL — workspace cross-project SSOT (Phase 3 hook).
+
+        Implementation lives in the workspace walker, not the per-class
+        runtime hook — needs the cross-project symbol index that only the
+        walker can build. Returns None at runtime.
+        """
+        return _NO_VIOLATION
+
+    @staticmethod
+    def _v_deprecated_syntax(
+        params: tp.JsonValue,
+        target: type,
+    ) -> t.StrMapping | None:
+        """DEPRECATED_SYNTAX — legacy AST shapes (TypeAlias = ..., etc.)."""
+        if params.ast_shape != "AnnAssign[TypeAlias]":
+            return _NO_VIOLATION
+        loaded = ube.apt_load_ast(target)
+        if loaded is None:
+            return _NO_VIOLATION
+        src_file, tree = loaded
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.AnnAssign)
+                and isinstance(node.annotation, ast.Name)
+                and node.annotation.id == "TypeAlias"
+            ):
+                return {
+                    "file": Path(src_file).name,
+                    "line": str(node.lineno),
+                }
+        return _NO_VIOLATION
+
+    # Static dispatch table — predicate_kind → visitor staticmethod. Resolved
+    # at class body time; staticmethod descriptors are directly callable in
+    # Python 3.10+. Adding a new predicate kind = one row here + one ``_v_*``
+    # method on this class. No other code change required.
+    _VISITORS: ClassVar[
+        Mapping[c.EnforcementPredicateKind, Callable[..., t.StrMapping | None]]
+    ] = MappingProxyType({
+        c.EnforcementPredicateKind.FIELD_SHAPE: _v_field_shape,
+        c.EnforcementPredicateKind.MODEL_CONFIG: _v_model_config,
+        c.EnforcementPredicateKind.ATTR_SHAPE: _v_attr_shape,
+        c.EnforcementPredicateKind.METHOD_SHAPE: _v_method_shape,
+        c.EnforcementPredicateKind.CLASS_PLACEMENT: _v_class_placement,
+        c.EnforcementPredicateKind.PROTOCOL_TREE: _v_protocol_tree,
+        c.EnforcementPredicateKind.MRO_SHAPE: _v_mro_shape,
+        c.EnforcementPredicateKind.LOOSE_SYMBOL: _v_loose_symbol,
+        c.EnforcementPredicateKind.WRAPPER: _v_wrapper,
+        c.EnforcementPredicateKind.IMPORT_BLACKLIST: _v_import_blacklist,
+        c.EnforcementPredicateKind.ALIAS_REBIND: _v_alias_rebind,
+        c.EnforcementPredicateKind.LIBRARY_IMPORT: _v_library_import,
+        c.EnforcementPredicateKind.LOC_CAP: _v_loc_cap,
+        c.EnforcementPredicateKind.DUPLICATE_SYMBOL: _v_duplicate_symbol,
+        c.EnforcementPredicateKind.DEPRECATED_SYNTAX: _v_deprecated_syntax,
+    })
 
 
 ube = FlextUtilitiesBeartypeEngine
