@@ -1,0 +1,86 @@
+src/flext_core/_models/_context/_metadata.py
+  h_9db9d35f50cf33 33,37,44,51,55,59,63,67,71,78,103,107,111,118
+src/flext_core/_utilities/context_crud.py
+  h_9db9d35f50cf33 58,63,70,113,145
+src/flext_core/_exceptions/helpers.py
+  h_9db9d35f50cf33 178
+src/flext_core/_utilities/logging_context.py
+  h_9db9d35f50cf33 64,73,75,86-87,97-98,110-111,120-121,129-142,144-145,147,254,256
+src/flext_core/_models/service.py
+  22632355ef1e26ce 19-24
+  h_9db9d35f50cf33 44,50,56,62,69,78,83,88,93,98,103,108,113,118,123,128,133,138,143,152,158,164,170,176,182,188,194
+src/flext_core/_models/handler.py
+  h_9db9d35f50cf33 40,44,50,54,58,72,79,87,93,96,116,123,130,137,141,156,160,167,174,181,208,212,219,227-228
+src/flext_core/_models/collections.py
+  h_9db9d35f50cf33 17,30,38,46,54,62,70,78,86,94,102,110,118,126,134,142,150
+src/flext_core/_models/containers.py
+  h_9db9d35f50cf33 40,131,139,150
+src/flext_core/decorators.py
+  h_9db9d35f50cf33 159-160,162,170-174,178,191-195,216-218
+src/flext_core/_constants/serialization.py
+  h_9db9d35f50cf33 34-43,45
+src/flext_core/_utilities/collection_merge.py
+  h_9db9d35f50cf33 19,132-138,146
+src/flext_core/_models/registry.py
+  h_9db9d35f50cf33 18,33,40,56,59,62,66,69,73
+src/flext_core/_models/errors.py
+  h_9db9d35f50cf33 13,27,31,35,39,43,47,51,80,84,91,95,120
+src/flext_core/_utilities/project_metadata.py
+  h_9db9d35f50cf33 37
+src/flext_core/_constants/file.py
+  h_9db9d35f50cf33 10,25-29
+src/flext_core/_constants/project_metadata.py
+  h_9db9d35f50cf33 102-104
+src/flext_core/_constants/cqrs.py
+  h_9db9d35f50cf33 103,105-109
+src/flext_core/_utilities/model.py
+  h_9db9d35f50cf33 34,39,44,49,54,59
+src/flext_core/_constants/status.py
+  h_9db9d35f50cf33 32-45
+src/flext_core/_constants/logging.py
+  h_9db9d35f50cf33 26-37,44-73,89-90
+src/flext_core/_models/base.py
+  h_9db9d35f50cf33 24-27,36,43,48-49,96-97,117,135,144,152,160,178,195,204,213,268,292,299,317
+src/flext_core/_utilities/guards_type_protocol.py
+  22632355ef1e26ce 103-118
+  h_9db9d35f50cf33 98,100,102
+src/flext_core/_utilities/beartype_engine.py
+  h_9db9d35f50cf33 50,52-53,243,249-251,400,468,863,866,869,871-877,879-913,922-923,925-926,928-930,944,948-956,958-960,964-970,976-981,983-991,1040-1042,1045,1050-1054,1056,1060-1063,1066,1069-1072,1099-1106,1119
+  22632355ef1e26ce 914-921,945-947,971-974,982,1046-1048,1057
+src/flext_core/_models/container.py
+  h_9db9d35f50cf33 48,56,62,75,82,89,117,125,131,138,146,159,166,183,191,197,210,225,232,239,247,255,262,269,290,299,306,314,322,333,339,372,379,386
+src/flext_core/_models/domain_event.py
+  h_9db9d35f50cf33 37,45,51,58
+src/flext_core/_utilities/checker.py
+  h_9db9d35f50cf33 176
+src/flext_core/dispatcher.py
+  h_9db9d35f50cf33 147-148,150-153,155,157-165,167,169-172
+src/flext_core/_models/exception_params.py
+  h_9db9d35f50cf33 36,40,44,63,69,79,85,95,104,115,121,131,137,143,153,162,175,181,191,200,209,225,238,247,256,269,275,281,294,300,310,323,332,341,354,363
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "637b974780062537763e8e116e645f2454199b99",
+  "prompts": {
+    "22632355ef1e26ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c6ac7df6-1398-4096-87d8-e634aca30e02",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 52,
+      "accepted_lines": 485,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/4567e6b537b4a7c4dd65cf70752faaf61921339fcb20b2692c7d184223f8915d"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
