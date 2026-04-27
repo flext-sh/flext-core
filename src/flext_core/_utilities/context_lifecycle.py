@@ -24,12 +24,6 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
     state: m.ContextRuntimeState
     initial_data: m.ContextData | t.JsonValue | None
 
-    _MERGEABLE_SCOPES: ClassVar[frozenset[str]] = frozenset({
-        c.ContextScope.GLOBAL,
-        c.ContextScope.USER,
-        c.ContextScope.SESSION,
-    })
-
     def export(
         self,
         *,
@@ -119,7 +113,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
     def _apply_scoped_merge(self, exported_map: m.ConfigMap) -> None:
         """Merge exported scopes from another FlextContext."""
         for scope_name, scope_payload in exported_map.items():
-            if scope_name not in self._MERGEABLE_SCOPES:
+            if scope_name not in c.CONTEXT_MERGEABLE_SCOPES:
                 continue
             if not u.mapping(scope_payload):
                 continue

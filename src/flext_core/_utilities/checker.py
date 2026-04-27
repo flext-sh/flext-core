@@ -17,7 +17,7 @@ from collections.abc import (
     MutableSequence,
     Sequence,
 )
-from typing import ClassVar, TypeIs, get_args, get_origin, get_type_hints
+from typing import TypeIs, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
@@ -126,7 +126,7 @@ class FlextUtilitiesChecker:
             args[0]
             for base in generic_bases
             if (origin := get_origin(base)) is not None
-            if getattr(origin, "__name__", "") in cls._HANDLER_GENERIC_ORIGIN_NAMES
+            if getattr(origin, "__name__", "") in c.CHECKER_HANDLER_ORIGIN_NAMES
             if (args := get_args(base))
         ]
         if message_types:
@@ -139,7 +139,7 @@ class FlextUtilitiesChecker:
                 Mapping,
             )
             if (origin := meta.get("origin")) is not None
-            if getattr(origin, "__name__", "") in cls._HANDLER_GENERIC_ORIGIN_NAMES
+            if getattr(origin, "__name__", "") in c.CHECKER_HANDLER_ORIGIN_NAMES
             if (args := meta.get("args", ()))
         ]
 
