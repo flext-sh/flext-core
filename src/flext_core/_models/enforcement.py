@@ -288,6 +288,382 @@ class FlextModelsEnforcement:
             ),
         ]
 
+    class FieldShapeParams(_EnforcementSourceBase):
+        """Parameters for FIELD_SHAPE predicate (Pydantic field annotations)."""
+
+        kind: Literal["field_shape"] = "field_shape"
+        forbid_any: Annotated[
+            bool,
+            mp.Field(default=False, description="Reject Any in field annotation."),
+        ]
+        forbid_bare_collection: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Reject bare list/dict/set/frozenset annotations.",
+            ),
+        ]
+        forbid_mutable_default: Annotated[
+            bool,
+            mp.Field(default=False, description="Reject mutable default values."),
+        ]
+        forbid_raw_default_factory: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Reject default_factory=list/dict/set on read-only fields.",
+            ),
+        ]
+        forbid_str_none_empty: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Reject 'str | None' fields with default=''.",
+            ),
+        ]
+        forbid_inline_union: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Reject inline unions wider than max_union_arms.",
+            ),
+        ]
+        require_description: Annotated[
+            bool,
+            mp.Field(default=False, description="Require Field(description=...)."),
+        ]
+        max_union_arms: Annotated[
+            int,
+            mp.Field(
+                default=2,
+                ge=2,
+                le=8,
+                description="Maximum allowed inline-union arity.",
+            ),
+        ]
+
+    class ModelConfigParams(_EnforcementSourceBase):
+        """Parameters for MODEL_CONFIG predicate (Pydantic model_config + frozen)."""
+
+        kind: Literal["model_config"] = "model_config"
+        forbid_v1_config: Annotated[
+            bool,
+            mp.Field(default=False, description="Reject 'class Config' (v1 syntax)."),
+        ]
+        require_extra_forbid: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Require model_config.extra == 'forbid'.",
+            ),
+        ]
+        allowed_extra_values: Annotated[
+            t.StrSequence,
+            mp.Field(
+                default_factory=tuple,
+                description="Permitted ConfigDict.extra values when not 'forbid'.",
+            ),
+        ]
+        require_frozen_for_value_objects: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Require frozen=True on ValueObject subclasses.",
+            ),
+        ]
+
+    class LooseSymbolParams(_EnforcementSourceBase):
+        """Parameters for LOOSE_SYMBOL predicate (top-level non-facade symbols)."""
+
+        kind: Literal["loose_symbol"] = "loose_symbol"
+        allowed_prefixes: Annotated[
+            t.StrSequence,
+            mp.Field(
+                default_factory=tuple,
+                description="Class/function-name prefixes that are facade-canonical.",
+            ),
+        ]
+        require_future_annotations: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Require 'from __future__ import annotations' header.",
+            ),
+        ]
+        required_canonical_files: Annotated[
+            t.StrSequence,
+            mp.Field(
+                default_factory=tuple,
+                description="Canonical filenames a package must expose.",
+            ),
+        ]
+
+    class ImportBlacklistParams(_EnforcementSourceBase):
+        """Parameters for IMPORT_BLACKLIST predicate (forbidden import statements)."""
+
+        kind: Literal["import_blacklist"] = "import_blacklist"
+        forbidden_modules: Annotated[
+            t.StrSequence,
+            mp.Field(
+                default_factory=tuple,
+                description="Module roots that may not be imported in scope.",
+            ),
+        ]
+        forbidden_symbols: Annotated[
+            t.StrSequence,
+            mp.Field(
+                default_factory=tuple,
+                description="Specific symbol names that may not be imported.",
+            ),
+        ]
+        private_package_only: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Restrict to private '_*' package boundary checks.",
+            ),
+        ]
+        detect_cycles: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Whether the visitor must build the import graph.",
+            ),
+        ]
+
+    class ClassPlacementParams(_EnforcementSourceBase):
+        """Parameters for CLASS_PLACEMENT predicate (class in canonical layer file)."""
+
+        kind: Literal["class_placement"] = "class_placement"
+        forbidden_bases: Annotated[
+            frozenset[str],
+            mp.Field(
+                default_factory=frozenset,
+                description="Base-class names that force layer placement.",
+            ),
+        ]
+        canonical_path_fragment: Annotated[
+            str,
+            mp.Field(
+                default="",
+                description="Path fragment that the source file MUST contain.",
+            ),
+        ]
+        check_nested: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Also flag classes whose qualname is module-root.",
+            ),
+        ]
+
+    class LocCapParams(_EnforcementSourceBase):
+        """Parameters for LOC_CAP predicate (module logical-LOC ceiling, §3.1)."""
+
+        kind: Literal["loc_cap"] = "loc_cap"
+        max_logical_loc: Annotated[
+            int,
+            mp.Field(
+                default=200,
+                ge=50,
+                le=2000,
+                description="Maximum non-blank/non-comment line count per module.",
+            ),
+        ]
+
+    class WrapperParams(_EnforcementSourceBase):
+        """Parameters for WRAPPER predicate (pass-through wrappers — no payload)."""
+
+        kind: Literal["wrapper"] = "wrapper"
+
+    class AliasRebindParams(_EnforcementSourceBase):
+        """Parameters for ALIAS_REBIND predicate (canonical alias rebind at EOF)."""
+
+        kind: Literal["alias_rebind"] = "alias_rebind"
+        canonical_files: Annotated[
+            t.StrSequence,
+            mp.Field(
+                default_factory=tuple,
+                description="Filenames where the alias rebind is required.",
+            ),
+        ]
+        alias_names: Annotated[
+            t.StrSequence,
+            mp.Field(
+                default_factory=tuple,
+                description="Canonical short alias names (c/m/p/t/u).",
+            ),
+        ]
+        expected_form: Annotated[
+            str,
+            mp.Field(
+                default="",
+                description="Expected rebind form (e.g. 't = FlextXxxTypes').",
+            ),
+        ]
+
+    class LibraryImportParams(_EnforcementSourceBase):
+        """Parameters for LIBRARY_IMPORT predicate (AGENTS.md §2.7 abstraction owners)."""
+
+        kind: Literal["library_import"] = "library_import"
+        library_owners: Annotated[
+            t.StrMapping,
+            mp.Field(
+                default_factory=dict,
+                description="Mapping library_root → owning project (e.g. pydantic→flext-core).",
+            ),
+        ]
+
+    class DuplicateSymbolParams(_EnforcementSourceBase):
+        """Parameters for DUPLICATE_SYMBOL predicate (cross-project SSOT hierarchy)."""
+
+        kind: Literal["duplicate_symbol"] = "duplicate_symbol"
+        hierarchy: Annotated[
+            t.StrSequence,
+            mp.Field(
+                default_factory=tuple,
+                description="Project precedence (root-most first).",
+            ),
+        ]
+        symbol_kinds: Annotated[
+            frozenset[str],
+            mp.Field(
+                default_factory=frozenset,
+                description="Symbol kinds eligible for duplicate detection.",
+            ),
+        ]
+
+    class DeprecatedSyntaxParams(_EnforcementSourceBase):
+        """Parameters for DEPRECATED_SYNTAX predicate (legacy AST shapes)."""
+
+        kind: Literal["deprecated_syntax"] = "deprecated_syntax"
+        ast_shape: Annotated[
+            ta.NonEmptyStr,
+            mp.Field(description="AST shape selector (e.g. 'AnnAssign[TypeAlias]')."),
+        ]
+
+    class MethodShapeParams(_EnforcementSourceBase):
+        """Parameters for METHOD_SHAPE predicate (forbidden prefixes + decorator shape)."""
+
+        kind: Literal["method_shape"] = "method_shape"
+        forbidden_prefixes: Annotated[
+            t.StrSequence,
+            mp.Field(
+                default_factory=tuple,
+                description="Method-name prefixes that constitute accessors.",
+            ),
+        ]
+        require_static_or_classmethod: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description=(
+                    "Require @staticmethod / @classmethod (utility-tier rule)."
+                ),
+            ),
+        ]
+
+    class AttrShapeParams(_EnforcementSourceBase):
+        """Parameters for ATTR_SHAPE predicate (class-attribute value/name checks)."""
+
+        kind: Literal["attr_shape"] = "attr_shape"
+        forbid_mutable_value: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Reject attribute values whose runtime type is mutable.",
+            ),
+        ]
+        require_uppercase_name: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Require constant-style UPPER_CASE attribute names.",
+            ),
+        ]
+        forbid_any_in_alias: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Reject Any inside type-alias attribute values.",
+            ),
+        ]
+        require_typeadapter_naming: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description=(
+                    "Require ADAPTER_/UPPER_CASE name on TypeAdapter attributes."
+                ),
+            ),
+        ]
+
+    class ProtocolTreeParams(_EnforcementSourceBase):
+        """Parameters for PROTOCOL_TREE predicate (Protocol nesting rules)."""
+
+        kind: Literal["protocol_tree"] = "protocol_tree"
+        require_inner_kind_protocol_or_namespace: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description=("Require inner classes to be Protocol/namespace/ABC."),
+            ),
+        ]
+        require_runtime_checkable: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Require @runtime_checkable on Protocol classes.",
+            ),
+        ]
+
+    class MroShapeParams(_EnforcementSourceBase):
+        """Parameters for MRO_SHAPE predicate (facade MRO ordering)."""
+
+        kind: Literal["mro_shape"] = "mro_shape"
+        require_alias_first: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Require canonical alias as first base class.",
+            ),
+        ]
+        forbid_redundant_inner: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Reject empty inner classes that re-inherit outer.",
+            ),
+        ]
+        require_explicit_class_when_self_ref: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Require explicit parent class in utilities.py multi-parent.",
+            ),
+        ]
+
+    class EnforcementRuleTarget(_EnforcementSourceBase):
+        """Single dispatch target — per-class or per-module — passed to ``apply()``.
+
+        Populated by :class:`FlextUtilitiesEnforcement` for runtime hooks
+        and by the workspace walker for parse-only flows. Visitors read
+        only the fields they require — string fields default to ``""``.
+        """
+
+        file_path: Annotated[
+            str,
+            mp.Field(default="", description="Absolute path to the source file."),
+        ]
+        module_qualname: Annotated[
+            str,
+            mp.Field(default="", description="Dotted import path of the module."),
+        ]
+        owning_project: Annotated[
+            str,
+            mp.Field(default="", description="Project root (e.g. 'flext-core')."),
+        ]
+
     class EnforcementRuleSpec(_EnforcementSourceBase):
         """Single rule entry in the enforcement catalog."""
 

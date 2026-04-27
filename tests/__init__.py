@@ -67,6 +67,22 @@ if _t.TYPE_CHECKING:
     from tests.models import TestsFlextCoreModels, m
     from tests.protocols import TestsFlextCoreProtocols, p
     from tests.typings import TestsFlextCoreTypes, t
+    from tests.unit._enforcement_integration_fixtures.bad_module import (
+        TestsFlextCoreBadAccessors,
+        TestsFlextCoreBadAnyField,
+        TestsFlextCoreBadBareCollection,
+        TestsFlextCoreBadConstants,
+        TestsFlextCoreBadFrozen,
+        TestsFlextCoreBadInlineUnion,
+        TestsFlextCoreBadMissingDesc,
+        TestsFlextCoreBadMutableDefault,
+        TestsFlextCoreBadWorkerSettings,
+    )
+    from tests.unit._enforcement_integration_fixtures.clean_module import (
+        TestsFlextCoreCleanConstants,
+        TestsFlextCoreCleanModels,
+        TestsFlextCoreCleanProtocols,
+    )
     from tests.unit._models.test_base import TestsFlextCoreModelsBase
     from tests.unit._models.test_cqrs import TestsFlextCoreModelsCQRS
     from tests.unit._models.test_enforcement_sources import (
@@ -242,6 +258,22 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextCoreTypes",
                 "t",
             ),
+            ".unit._enforcement_integration_fixtures.bad_module": (
+                "TestsFlextCoreBadAccessors",
+                "TestsFlextCoreBadAnyField",
+                "TestsFlextCoreBadBareCollection",
+                "TestsFlextCoreBadConstants",
+                "TestsFlextCoreBadFrozen",
+                "TestsFlextCoreBadInlineUnion",
+                "TestsFlextCoreBadMissingDesc",
+                "TestsFlextCoreBadMutableDefault",
+                "TestsFlextCoreBadWorkerSettings",
+            ),
+            ".unit._enforcement_integration_fixtures.clean_module": (
+                "TestsFlextCoreCleanConstants",
+                "TestsFlextCoreCleanModels",
+                "TestsFlextCoreCleanProtocols",
+            ),
             ".unit._models.test_base": ("TestsFlextCoreModelsBase",),
             ".unit._models.test_cqrs": ("TestsFlextCoreModelsCQRS",),
             ".unit._models.test_enforcement_sources": (
@@ -389,7 +421,19 @@ __all__: list[str] = [
     "TestsFlextCoreAdvancedPatterns",
     "TestsFlextCoreArchitecturalPatterns",
     "TestsFlextCoreAutomatedArchitecture",
+    "TestsFlextCoreBadAccessors",
+    "TestsFlextCoreBadAnyField",
+    "TestsFlextCoreBadBareCollection",
+    "TestsFlextCoreBadConstants",
+    "TestsFlextCoreBadFrozen",
+    "TestsFlextCoreBadInlineUnion",
+    "TestsFlextCoreBadMissingDesc",
+    "TestsFlextCoreBadMutableDefault",
+    "TestsFlextCoreBadWorkerSettings",
     "TestsFlextCoreBeartypeEngine",
+    "TestsFlextCoreCleanConstants",
+    "TestsFlextCoreCleanModels",
+    "TestsFlextCoreCleanProtocols",
     "TestsFlextCoreConstants",
     "TestsFlextCoreConstantsDomain",
     "TestsFlextCoreConstantsErrors",

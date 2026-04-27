@@ -31,11 +31,14 @@ assert result.value == "user_created"
 ## Validate Before Execute
 
 ```python
+from typing import Annotated
+
 from flext_core import p, r, s
+from pydantic import Field
 
 
 class ValidateThenCreateService(s):
-    username: str = ""
+    username: Annotated[str, Field(description="Username for the create flow.")] = ""
 
     def execute(self) -> p.Result[str]:
         if not self.username:

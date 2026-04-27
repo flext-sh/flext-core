@@ -43,7 +43,10 @@ if _t.TYPE_CHECKING:
     from examples.ex_10_flext_handlers import Ex10FlextHandlers
     from examples.ex_11_flext_service import Ex11FlextService, ExampleService
     from examples.ex_12_flext_registry import Ex12RegistryDsl
-    from examples.logging_config_once_pattern import DatabaseService, MigrationService
+    from examples.logging_config_once_pattern import (
+        ExamplesFlextCoreDatabaseService,
+        ExamplesFlextCoreMigrationService,
+    )
     from examples.models import ExamplesFlextCoreModels, m
     from examples.protocols import p
     from examples.settings import ExamplesSettings
@@ -90,8 +93,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".ex_12_flext_registry": ("Ex12RegistryDsl",),
             ".logging_config_once_pattern": (
-                "DatabaseService",
-                "MigrationService",
+                "ExamplesFlextCoreDatabaseService",
+                "ExamplesFlextCoreMigrationService",
             ),
             ".models": (
                 "ExamplesFlextCoreModels",
@@ -141,7 +144,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
-    "DatabaseService",
     "Ex01r",
     "Ex02FlextSettings",
     "Ex03LoggingDsl",
@@ -155,6 +157,8 @@ __all__: list[str] = [
     "Ex11FlextService",
     "Ex12RegistryDsl",
     "ExampleService",
+    "ExamplesFlextCoreDatabaseService",
+    "ExamplesFlextCoreMigrationService",
     "ExamplesFlextCoreModels",
     "ExamplesFlextCoreModelsErrors",
     "ExamplesFlextCoreModelsEx00",
@@ -175,7 +179,6 @@ __all__: list[str] = [
     "ExamplesFlextCoreSharedPerson",
     "ExamplesFlextCoreTypes",
     "ExamplesSettings",
-    "MigrationService",
     "c",
     "d",
     "e",

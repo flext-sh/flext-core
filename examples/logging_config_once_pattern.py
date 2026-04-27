@@ -15,15 +15,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import Annotated, override
 
 from examples import c, d, m, p, r, s, t, u
 
 
-class DatabaseService(s):
+class ExamplesFlextCoreDatabaseService(s):
     """Example service showing settings log-once pattern."""
 
-    db_config: m.ConfigMap
+    db_config: Annotated[
+        m.ConfigMap,
+        m.Field(description="Database connection settings."),
+    ]
 
     @override
     @d.log_operation("database_query")
@@ -61,12 +64,21 @@ class DatabaseService(s):
         )
 
 
-class MigrationService(s):
+class ExamplesFlextCoreMigrationService(s):
     """Example migration service with settings log-once pattern."""
 
-    input_dir: str
-    output_dir: str
-    sync: bool
+    input_dir: Annotated[
+        str,
+        m.Field(description="Source migration directory."),
+    ]
+    output_dir: Annotated[
+        str,
+        m.Field(description="Target migration directory."),
+    ]
+    sync: Annotated[
+        bool,
+        m.Field(description="Whether to perform synchronous migration."),
+    ]
 
     @override
     def model_post_init(self, /, __context: t.ScalarMapping | None) -> None:
@@ -125,12 +137,12 @@ def main() -> None:
             "pool_size": 10,
         },
     )
-    db_service = DatabaseService.model_construct(db_config=db_config)
+    db_service = ExamplesFlextCoreDatabaseService.model_construct(db_config=db_config)
     result = db_service.execute()
     if result.success:
         print(f"✅ Database query successful: {result.value}")
     print("\n=== Example 2: Migration Service ===")
-    migration_service = MigrationService(
+    migration_service = ExamplesFlextCoreMigrationService(
         input_dir="/data/input",
         output_dir="/data/output",
         sync=True,

@@ -123,7 +123,9 @@ class FlextUtilitiesChecker:
             "__orig_bases__",
             (),
         )
-        generic_bases = raw_bases if FlextUtilitiesGuards.object_tuple(raw_bases) else ()
+        generic_bases = (
+            raw_bases if FlextUtilitiesGuards.object_tuple(raw_bases) else ()
+        )
         message_types: MutableSequence[t.TypeHintSpecifier] = [
             args[0]
             for base in generic_bases

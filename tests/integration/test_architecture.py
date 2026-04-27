@@ -76,14 +76,14 @@ class TestsFlextCoreAutomatedArchitecture:
         tm.ok(result)
 
     def test_full_validation(self) -> None:
-        result = tv.all(
+        repo_root = (
             Path(__file__).resolve().parents[c.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
-            / c.Tests.Paths.SRC_DIR
-            / c.Tests.Paths.CORE_PACKAGE_DIR,
-            pyproject_path=Path(__file__)
-            .resolve()
-            .parents[c.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
-            / c.Tests.Paths.PYPROJECT_FILENAME,
+        )
+        result = tv.all(
+            repo_root / c.Tests.Paths.SRC_DIR / c.Tests.Paths.CORE_PACKAGE_DIR,
+            options=tv.AllValidationOptions(
+                pyproject_path=repo_root / c.Tests.Paths.PYPROJECT_FILENAME,
+            ),
         )
         tm.ok(result)
         tm.that(result.value.passed, is_=bool)

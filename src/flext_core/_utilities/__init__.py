@@ -49,6 +49,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".project_metadata": ("FlextUtilitiesProjectMetadata",),
         ".pydantic": ("FlextUtilitiesPydantic",),
         ".reliability": ("FlextUtilitiesReliability",),
+        ".runtime_violation_registry": ("FlextUtilitiesRuntimeViolationRegistry",),
         ".settings": ("FlextUtilitiesSettings",),
         ".text": ("FlextUtilitiesText",),
     },

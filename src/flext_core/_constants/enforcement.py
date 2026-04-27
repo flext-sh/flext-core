@@ -12,12 +12,9 @@ from __future__ import annotations
 from collections.abc import (
     Mapping,
 )
-from enum import StrEnum
+from enum import StrEnum, unique
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar, Final
-
-if TYPE_CHECKING:
-    from flext_core._models.enforcement import FlextModelsEnforcement as _me
+from typing import Final
 
 
 class FlextMroViolation(UserWarning):
@@ -58,6 +55,43 @@ class FlextConstantsEnforcement:
         BEST_PRACTICES = "best practices"
         NAMESPACE_RULES = "namespace rules"
 
+    @unique
+    class EnforcementPredicateKind(StrEnum):
+        """Generic detection predicate keyed by AST/typing shape.
+
+        Replaces legacy 1:1 ``check_<tag>`` dispatch — many rules share one
+        predicate kind and differ only in their typed predicate-params
+        payload (``m.Enforcement.*Params``). The engine selects a single
+        thin beartype-driven visitor by this kind, then reads parameters
+        from the rule row.
+        """
+
+        LOOSE_SYMBOL = "loose_symbol"
+        IMPORT_BLACKLIST = "import_blacklist"
+        CLASS_PLACEMENT = "class_placement"
+        LOC_CAP = "loc_cap"
+        WRAPPER = "wrapper"
+        ALIAS_REBIND = "alias_rebind"
+        LIBRARY_IMPORT = "library_import"
+        DUPLICATE_SYMBOL = "duplicate_symbol"
+        DEPRECATED_SYNTAX = "deprecated_syntax"
+        METHOD_SHAPE = "method_shape"
+        FIELD_SHAPE = "field_shape"
+        MODEL_CONFIG = "model_config"
+        MRO_SHAPE = "mro_shape"
+        ATTR_SHAPE = "attr_shape"
+        PROTOCOL_TREE = "protocol_tree"
+
+    @unique
+    class EnforcementTargetSelector(StrEnum):
+        """Iteration granularity that the dispatcher applies before a visitor."""
+
+        MODULE = "module"
+        CLASS = "class"
+        FILE = "file"
+        PACKAGE = "package"
+        WORKSPACE = "workspace"
+
     ENFORCEMENT_MODE: Final[EnforcementMode] = EnforcementMode.WARN
     """Controls behavior: strict (TypeError), warn (UserWarning), off."""
 
@@ -79,17 +113,6 @@ class FlextConstantsEnforcement:
         "flext_core._utilities.reliability",
     )
     """Package paths skipped by the flext_core beartype bootstrap."""
-
-    ENFORCEMENT_EXEMPT_MODULE_FRAGMENTS: Final[tuple[str, ...]] = (
-        "tests.",
-        "test_",
-        "conftest",
-        "examples.",
-        "scripts.",
-        "_utilities/adapters",
-        "adapters.py",
-    )
-    """Module path fragments that auto-exempt classes from enforcement."""
 
     ENFORCEMENT_RELAXED_EXTRA_BASES: Final[frozenset[str]] = frozenset({
         "DynamicModel",
@@ -185,24 +208,26 @@ class FlextConstantsEnforcement:
     ENFORCEMENT_NAMESPACE_MODE: Final[EnforcementMode] = EnforcementMode.WARN
     """Separate mode for namespace checks — see EnforcementMode."""
 
-    ENFORCEMENT_NAMESPACE_FACADE_ROOTS: Final[frozenset[str]] = frozenset({
-        "FlextConstants",
-        "FlextProtocols",
-        "FlextTypes",
-        "FlextUtilities",
-        "FlextModels",
-        "FlextModelsBase",
-        "FlextModelsNamespace",
-        "EnforcedModel",
-    })
+    # SSOT seed: the five canonical facade layers. Used to derive
+    # ENFORCEMENT_NAMESPACE_FACADE_ROOTS (Flext{Name}) and
+    # ENFORCEMENT_NAMESPACE_LAYER_MAP ((Name, name.lower())) below — adding
+    # a layer requires editing only this tuple.
+    _NAMESPACE_LAYER_NAMES: Final[tuple[str, ...]] = (
+        "Constants",
+        "Models",
+        "Protocols",
+        "Types",
+        "Utilities",
+    )
+
+    ENFORCEMENT_NAMESPACE_FACADE_ROOTS: Final[frozenset[str]] = frozenset(
+        {f"Flext{name}" for name in _NAMESPACE_LAYER_NAMES}
+        | {"FlextModelsBase", "FlextModelsNamespace", "EnforcedModel"},
+    )
     """Root facade class names — skip namespace prefix check on these."""
 
-    ENFORCEMENT_NAMESPACE_LAYER_MAP: Final[tuple[tuple[str, str], ...]] = (
-        ("Constants", "constants"),
-        ("Models", "models"),
-        ("Protocols", "protocols"),
-        ("Types", "types"),
-        ("Utilities", "utilities"),
+    ENFORCEMENT_NAMESPACE_LAYER_MAP: Final[tuple[tuple[str, str], ...]] = tuple(
+        (name, name.lower()) for name in _NAMESPACE_LAYER_NAMES
     )
     """Class name suffix → layer name mapping for cross-layer detection."""
 
@@ -215,16 +240,6 @@ class FlextConstantsEnforcement:
     ``check_cross_strenum`` / ``check_cross_protocol`` resolve their
     ``layer_allows`` argument via ``"StrEnum" in ENFORCEMENT_LAYER_ALLOWS.get(layer, ())``.
     """
-
-    ENFORCEMENT_FACADE_PREFIXES: Final[Mapping[str, tuple[str, ...]]] = (
-        MappingProxyType({
-            EnforcementLayer.CONSTANTS.lower(): ("FlextConstants",),
-            EnforcementLayer.PROTOCOLS.lower(): ("FlextProtocols",),
-            EnforcementLayer.TYPES.lower(): ("FlextTypes", "FlextTyping"),
-            EnforcementLayer.UTILITIES.lower(): ("FlextUtilities", "FlextLogger"),
-        })
-    )
-    """SSOT: per-layer class-name prefixes that mark a facade root."""
 
     # --- Violation message shape (single parameterized template) ---
     #
@@ -239,7 +254,6 @@ class FlextConstantsEnforcement:
     ENFORCEMENT_VALUE_OBJECT_BASES: Final[frozenset[str]] = frozenset({
         "ImmutableValueModel",
         "FrozenValueModel",
-        "FrozenStrictModel",
     })
     """Base-class names that require ``frozen=True`` configuration."""
 
@@ -626,175 +640,10 @@ class FlextConstantsEnforcement:
     })
     """The five canonical facade files per project (AGENTS.md §2.2)."""
 
-    ENFORCEMENT_PYDANTIC_ALLOWED_MODULES: Final[frozenset[str]] = frozenset({
-        "flext_core.models",
-        "flext_core._utilities",
-        "flext_core._protocols",
-        "flext_core._constants",
-        "flext_core._typings",
-    })
-    """Whitelist of modules permitted to import pydantic directly (R2 exemption)."""
-
-    ENFORCEMENT_MRO_ALIAS_MAP: Final[Mapping[str, frozenset[str]]] = MappingProxyType({
-        "flext_core": frozenset({
-            "c",
-            "m",
-            "t",
-            "u",
-            "p",
-            "r",
-            "s",
-            "x",
-            "d",
-            "e",
-            "h",
-        }),
-        "flext_cli": frozenset({"c", "m", "t", "u", "p", "r", "s"}),
-        "flext_web": frozenset({"c", "m", "t", "u", "p", "r", "s"}),
-        "flext_meltano": frozenset({"c", "m", "t", "u", "p", "r", "s"}),
-        "flext_api": frozenset({"c", "m", "t", "u", "p"}),
-        "flext_auth": frozenset({"c", "m", "t", "u", "p"}),
-        "flext_grpc": frozenset({"c", "m", "t", "u", "p"}),
-        "flext_infra": frozenset({"c", "m", "t", "u", "p"}),
-        "flext_tests": frozenset({"c", "m", "t", "u", "p"}),
-        "flext_plugin": frozenset({"c", "m", "t", "u", "p"}),
-        "flext_observability": frozenset({"c", "m", "t", "u", "p"}),
-        "flext_ldap": frozenset({"c", "m", "t", "u", "p"}),
-        "flext_ldif": frozenset({"c", "m", "t", "u", "p"}),
-        "flext_db_oracle": frozenset({"c", "m", "t", "u", "p"}),
-        "flext_oracle_oic": frozenset({"c", "m", "t", "u", "p"}),
-        "flext_oracle_wms": frozenset({"c", "m", "t", "u", "p"}),
-        "flext_quality": frozenset({"c", "m", "t", "u", "p"}),
-        "tests": frozenset({"c", "m", "t", "u", "p"}),
-    })
-    """Expected canonical aliases per project package."""
-
     ENFORCEMENT_PATTERN_B_UTILITIES_WHITELIST: Final[frozenset[str]] = frozenset({
         "flext_quality",
     })
     """Projects where utilities.py legitimately uses explicit-class base (R10)."""
-
-    # --- A-TS lane: RULE_NO_* string-tag catalog (Phase 2.2 owner slice) ---
-    #
-    # A documentation-as-code registry for the ``RULE_NO_*`` named rules
-    # owned by the A-TS lane (per AGENT_COORDINATION.md §2.1 row 6 and
-    # §4.8 distinct-slice rule). These entries do NOT intersect with the
-    # ``ENFORCE-NNN`` numeric registry below — they live in their own
-    # namespace and are read-only metadata until A-CH's typed
-    # ``m.Enforcement.RuleEntry`` schema can host them as discriminated
-    # source variants. Each value is an immutable ``MappingProxyType`` so
-    # consumers (Rope detectors in ``flext-infra/detectors/``, the
-    # ``validate forbidden-patterns`` route, governance pytests) get a
-    # frozen contract.
-    #
-    # ``autofix_verb`` is a free-form pointer string that names the
-    # canonical remediation surface — either a flext-infra refactor verb
-    # or another agent's detector when ownership has been deferred per the
-    # coordination doc (e.g. RULE_NO_PASS_THROUGH_WRAPPER → A-PT C3
-    # resolution).
-    RULE_NO_CATALOG: Final[Mapping[str, Mapping[str, str | tuple[str, ...]]]] = (
-        MappingProxyType({
-            "RULE_NO_PASS_THROUGH_WRAPPER": MappingProxyType({
-                "category": (
-                    "Pass-through wrappers `def old(*a,**kw): return new(*a,**kw)`"
-                ),
-                "skill": "flext-patterns",
-                "severity": "high",
-                "autofix_verb": (
-                    "ENFORCE-043 → A-PT flext-infra/refactor/passthrough_remover.py "
-                    "(coordination C3)"
-                ),
-                "agents_md_anchor": "3-5-integrity",
-                "owner_lane": "A-TS catalog entry; A-PT detector implementation",
-            }),
-            "RULE_NO_COMPAT_ALIAS_REASSIGN": MappingProxyType({
-                "category": "Compat alias re-assigns `OldX = NewX` at module level",
-                "skill": "flext-mro-namespace-rules",
-                "severity": "high",
-                "autofix_verb": "flext-infra refactor migrate-to-class-mro",
-                "detector": ("flext-infra/detectors/compatibility_alias_detector.py"),
-                "agents_md_anchor": "2-4-governance-anti-patterns",
-                "owner_lane": "A-TS",
-            }),
-            "RULE_NO_PUBLIC_GET_SET_IS_ACCESSOR": MappingProxyType({
-                "category": "`get_*`/`set_*`/`is_*` accessor on facade or service",
-                "skill": "flext-mro-namespace-rules",
-                "severity": "high",
-                "autofix_verb": "flext-infra refactor accessor-migrate",
-                "agents_md_anchor": "2-5-service-facade-pattern",
-                "owner_lane": "A-TS catalog entry; existing accessor_migration verb",
-            }),
-            "RULE_NO_BARE_R_FAIL_STRING_OUTSIDE_CORE": MappingProxyType({
-                "category": '`r.fail("…")` outside `flext-core` (must use `e.fail_*`)',
-                "skill": "flext-patterns",
-                "severity": "high",
-                "autofix_verb": "manual via centralized `e.fail_*` DSL",
-                "agents_md_anchor": "3-3-failures-and-error-handling",
-                "owner_lane": "A-TS",
-            }),
-            "RULE_NO_INLINE_COMPOSED_ANNOTATIONS": MappingProxyType({
-                "category": (
-                    "Inline composed annotations `: str | int | None` should be "
-                    "`t.*` aliases from `typings.py`"
-                ),
-                "skill": "flext-strict-typing",
-                "severity": "medium",
-                "autofix_verb": "flext-infra codegen consolidate",
-                "agents_md_anchor": "3-2-types-and-contracts",
-                "owner_lane": "A-TS",
-            }),
-            "RULE_NO_OS_ENVIRON_IN_SRC": MappingProxyType({
-                "category": "`os.environ` / `os.getenv` in `src/` (use FlextSettings)",
-                "skill": "rules-src",
-                "severity": "high",
-                "autofix_verb": "manual via FlextSettings env resolution",
-                "agents_md_anchor": "2-6-settings-law",
-                "owner_lane": "A-TS",
-            }),
-            "RULE_NO_GETATTRIBUTE_OUTSIDE_CORE": MappingProxyType({
-                "category": "`__getattribute__` overrides outside `flext-core`",
-                "skill": "rules-src",
-                "severity": "high",
-                "autofix_verb": "manual",
-                "agents_md_anchor": "3-4-tools-modules-environment",
-                "owner_lane": "A-TS",
-            }),
-            "RULE_DOC_PYTHON_RUFF_CLEAN": MappingProxyType({
-                "category": (
-                    "Embedded Python in markdown / docstrings / SKILL.md must "
-                    "pass `ruff check`"
-                ),
-                "skill": "flext-docs-pointer-policy",
-                "severity": "medium",
-                "autofix_verb": (
-                    "flext-infra docs lint-code-blocks (delegates to A-CH "
-                    "_utilities/docs_code_blocks.py once shipped — coordination "
-                    "C4)"
-                ),
-                "agents_md_anchor": "3-8-verification-discipline",
-                "owner_lane": "A-TS catalog entry; A-HD service; A-CH library",
-            }),
-            "RULE_DOC_PYTHON_PYREFLY_CLEAN": MappingProxyType({
-                "category": (
-                    "Embedded Python in markdown / docstrings / SKILL.md must "
-                    "pass `pyrefly check`"
-                ),
-                "skill": "flext-docs-pointer-policy",
-                "severity": "medium",
-                "autofix_verb": (
-                    "flext-infra docs lint-code-blocks (delegates to A-CH "
-                    "_utilities/docs_code_blocks.py once shipped — coordination "
-                    "C4)"
-                ),
-                "agents_md_anchor": "3-8-verification-discipline",
-                "owner_lane": "A-TS catalog entry; A-HD service; A-CH library",
-            }),
-        })
-    )
-    """A-TS owned RULE_NO_* + RULE_DOC_PYTHON_* registry (distinct slice
-    from A-CH's ENFORCE-NNN catalog per coordination §4.8). Pure data —
-    detectors and dispatchers consume the entries; the registry itself
-    holds no runtime side effects."""
 
     # --- Cross-layer enforcement catalog (SSOT for the pytest dispatcher) ---
     #
@@ -807,20 +656,13 @@ class FlextConstantsEnforcement:
     # dispatched — they cross-link to existing authoritative layers
     # (``sgconfig.yml`` / ``make lint`` / ``.agents/skills/``).
 
-    # Lazy classmethod: catalog construction defers the
-    # ``flext_core._models.enforcement`` import to first ``get_catalog()``
-    # call to break the beartype ↔ models ↔ constants import cycle.
-    # ``_ENFORCEMENT_CATALOG`` is the private cache; consumers always
-    # invoke ``cls.get_catalog()`` and never reach the slot directly.
-    _ENFORCEMENT_CATALOG: ClassVar[_me.EnforcementCatalog | None] = None
-
     # Compact data-table for the FLEXT_INFRA_DETECTOR family. Each row maps to a
-    # single ``EnforcementRuleSpec`` built lazily inside ``get_catalog()`` —
+    # single ``EnforcementRuleSpec`` built by ``u.build_canonical_catalog()`` —
     # collapsing 14 verbose constructor calls into a tabular SSOT (Pydantic v2
     # batch construction via comprehension; no per-rule boilerplate).
     # Row layout: (id, severity, violation_field, agents_md_anchor, skills,
     # match_missing, description).
-    _INFRA_DETECTOR_ROWS: ClassVar[
+    INFRA_DETECTOR_ROWS: Final[
         tuple[tuple[str, str, str, str, tuple[str, ...], bool, str], ...]
     ] = (
         (
@@ -979,7 +821,7 @@ class FlextConstantsEnforcement:
     # all ``enabled=False`` (catalog-only, no automation). Row layout:
     # (id, severity, source_skill, source_anchor, agents_md_anchor, skills,
     # description).
-    _SKILL_POINTER_ROWS: ClassVar[
+    SKILL_POINTER_ROWS: Final[
         tuple[tuple[str, str, str, str, str, tuple[str, ...], str], ...]
     ] = (
         (
@@ -1048,7 +890,7 @@ class FlextConstantsEnforcement:
     # Compact data-table for the RUFF family — 3 documentation-only rules
     # (dispatch is via ``make lint``). All share the same ``notes`` string.
     # Row layout: (id, severity, rule_code, skills, description).
-    _RUFF_ROWS: ClassVar[tuple[tuple[str, str, str, tuple[str, ...], str], ...]] = (
+    RUFF_ROWS: Final[tuple[tuple[str, str, str, tuple[str, ...], str], ...]] = (
         (
             "ENFORCE-023",
             "HIGH",
@@ -1081,7 +923,7 @@ class FlextConstantsEnforcement:
     # Compact data-table for the FLEXT_TESTS_VALIDATOR family — 7 rules, one
     # per public ``tv.*`` classmethod. Row layout:
     # (id, severity, method, rule_ids, skills, description).
-    _TESTS_VALIDATOR_ROWS: ClassVar[
+    TESTS_VALIDATOR_ROWS: Final[
         tuple[tuple[str, str, str, tuple[str, ...], tuple[str, ...], str], ...]
     ] = (
         (
@@ -1175,7 +1017,7 @@ class FlextConstantsEnforcement:
     # ``sgconfig.yml`` rule_id. ``skills`` collapses to ``(skill,)`` (every
     # row already mirrored that). Row layout: (id, severity, skill, rule_id,
     # description).
-    _AST_GREP_ROWS: ClassVar[tuple[tuple[str, str, str, str, str], ...]] = (
+    AST_GREP_ROWS: Final[tuple[tuple[str, str, str, str, str], ...]] = (
         (
             "ENFORCE-026",
             "HIGH",
@@ -1236,9 +1078,9 @@ class FlextConstantsEnforcement:
 
     # Compact data-table for the BEARTYPE family — 16 rules, one per
     # ``check_*`` hook on ``FlextUtilitiesBeartypeEngine``. Built via the same
-    # Pydantic v2 comprehension pattern as ``_INFRA_DETECTOR_ROWS``.
+    # Pydantic v2 comprehension pattern as ``INFRA_DETECTOR_ROWS``.
     # Row layout: (id, severity, hook, agents_md_anchor, skills, description).
-    _BEARTYPE_ROWS: ClassVar[
+    BEARTYPE_ROWS: Final[
         tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
     ] = (
         (
@@ -1445,179 +1287,3 @@ class FlextConstantsEnforcement:
             ),
         ),
     )
-
-    @classmethod
-    def get_catalog(cls) -> _me.EnforcementCatalog:
-        """Return the canonical enforcement catalog (lazy, cached).
-
-        Importing ``FlextModelsEnforcement`` at module top triggers the
-        ``flext_core._models`` package init → beartype bootstrap, which
-        re-enters this module before ``FlextConstantsEnforcement`` has
-        finished binding. Deferring the import to first call breaks the
-        cycle while keeping the catalog inside the class (no loose
-        module-level function — AGENTS.md §2.3 self-consistent).
-        """
-        if cls._ENFORCEMENT_CATALOG is not None:
-            return cls._ENFORCEMENT_CATALOG
-        from flext_core._models.enforcement import (  # noqa: PLC0415
-            FlextModelsEnforcement as _me,
-        )
-
-        # Build all FLEXT_INFRA_DETECTOR rules from the compact data-table via a
-        # single Pydantic v2 comprehension. ``EnforcementRuleSeverity`` is a
-        # StrEnum so the severity string coerces directly.
-        infra_specs = tuple(
-            _me.EnforcementRuleSpec(
-                id=rid,
-                description=desc,
-                severity=_me.EnforcementRuleSeverity(sev),
-                source=_me.EnforcementInfraDetectorSource(
-                    violation_field=vf,
-                    match_missing=mm,
-                ),
-                agents_md_anchor=anchor,
-                skills=skills,
-            )
-            for rid, sev, vf, anchor, skills, mm, desc in cls._INFRA_DETECTOR_ROWS
-        )
-        # Same comprehension applied to the BEARTYPE family.
-        beartype_specs = tuple(
-            _me.EnforcementRuleSpec(
-                id=rid,
-                description=desc,
-                severity=_me.EnforcementRuleSeverity(sev),
-                source=_me.EnforcementBeartypeSource(hook=hook),
-                agents_md_anchor=anchor,
-                skills=skills,
-            )
-            for rid, sev, hook, anchor, skills, desc in cls._BEARTYPE_ROWS
-        )
-        # FLEXT_TESTS_VALIDATOR family — one ``tv.<method>`` per row.
-        tests_validator_specs = tuple(
-            _me.EnforcementRuleSpec(
-                id=rid,
-                description=desc,
-                severity=_me.EnforcementRuleSeverity(sev),
-                source=_me.EnforcementTestsValidatorSource(
-                    method=method,
-                    rule_ids=rule_ids,
-                ),
-                skills=skills,
-            )
-            for rid, sev, method, rule_ids, skills, desc in cls._TESTS_VALIDATOR_ROWS
-        )
-        # AST_GREP family — every row's ``skills`` mirrors its source skill.
-        ast_grep_specs = tuple(
-            _me.EnforcementRuleSpec(
-                id=rid,
-                description=desc,
-                severity=_me.EnforcementRuleSeverity(sev),
-                source=_me.EnforcementAstGrepSource(
-                    skill=skill,
-                    rule_id=rule_id,
-                ),
-                skills=(skill,),
-            )
-            for rid, sev, skill, rule_id, desc in cls._AST_GREP_ROWS
-        )
-        # SKILL_POINTER family — narrative entries, all ``enabled=False``.
-        skill_pointer_specs = tuple(
-            _me.EnforcementRuleSpec(
-                id=rid,
-                description=desc,
-                severity=_me.EnforcementRuleSeverity(sev),
-                source=_me.EnforcementSkillPointerSource(
-                    skill=src_skill,
-                    anchor=src_anchor,
-                ),
-                agents_md_anchor=md_anchor,
-                skills=skills,
-                enabled=False,
-            )
-            for rid, sev, src_skill, src_anchor, md_anchor, skills, desc in cls._SKILL_POINTER_ROWS
-        )
-        # RUFF family — 3 documentation-only rules sharing one ``notes`` line.
-        ruff_notes = (
-            "Dispatched by ruff via make lint; catalog entry is documentation-only."
-        )
-        ruff_specs = tuple(
-            _me.EnforcementRuleSpec(
-                id=rid,
-                description=desc,
-                severity=_me.EnforcementRuleSeverity(sev),
-                source=_me.EnforcementRuffSource(rule_code=rule_code),
-                skills=skills,
-                notes=ruff_notes,
-            )
-            for rid, sev, rule_code, skills, desc in cls._RUFF_ROWS
-        )
-
-        cls._ENFORCEMENT_CATALOG = _me.EnforcementCatalog(
-            rules=(
-                # --- FLEXT_INFRA_DETECTOR (14 rules, table-driven above) ---
-                *infra_specs,
-                # --- FLEXT_TESTS_VALIDATOR (7 rules, table-driven) ---
-                *tests_validator_specs,
-                # --- RUNTIME_WARNING (1 rule) ---
-                _me.EnforcementRuleSpec(
-                    id="ENFORCE-022",
-                    description=(
-                        "FlextMroViolation emitted by the flext-core enforcement "
-                        "engine at class-definition time."
-                    ),
-                    severity=_me.EnforcementRuleSeverity.HIGH,
-                    source=_me.EnforcementRuntimeWarningSource(
-                        category="flext_core._constants.enforcement.FlextMroViolation",
-                    ),
-                    skills=("flext-mro-namespace-rules", "pydantic-v2-governance"),
-                ),
-                # --- RUFF (3 rules, table-driven) ---
-                *ruff_specs,
-                # --- AST_GREP (8 rules, table-driven via _AST_GREP_ROWS) ---
-                *ast_grep_specs,
-                # --- SKILL_POINTER (5 rules — narrative, all enabled=False) ---
-                *skill_pointer_specs,
-                # ENFORCE-039..044 + 045..055: 15 BEARTYPE rules built from the
-                # ``_BEARTYPE_ROWS`` data-table above; ENFORCE-040 (RUFF source)
-                # is interleaved in the original ordering and stays inline below
-                # to preserve the catalog's source-grouped narrative.
-                *beartype_specs[:1],  # ENFORCE-039 (cast outside core)
-                _me.EnforcementRuleSpec(
-                    id="ENFORCE-040",
-                    description=(
-                        "Linter ignore directive without inline justification "
-                        "violates AGENTS.md §3.5 (Linter Zero Tolerance + "
-                        "Suppressions)."
-                    ),
-                    severity=_me.EnforcementRuleSeverity.MEDIUM,
-                    source=_me.EnforcementRuffSource(
-                        rule_code="PGH003",
-                    ),
-                    agents_md_anchor="3-5-integrity",
-                    skills=("flext-strict-typing", "flext-quality-gates"),
-                ),
-                *beartype_specs[1:],  # ENFORCE-041..055
-                # ENFORCE-066+: plan §1.2 source-rule range (shifted from plan IDs
-                # 053..065 because off-plan 045..053 already occupy the original
-                # slots — IDs are flexible per AGENTS.md, semantic content matches
-                # the plan exactly). First entry registers MINIMAL_AST in the
-                # catalog (catalog completeness invariant).
-                _me.EnforcementRuleSpec(
-                    id="ENFORCE-066",
-                    description=(
-                        "Module-level alias assignment (``LegacyName = NewName``) "
-                        "where both sides are CapWords and the LHS is unreferenced"
-                        " is a backwards-compat shim. Violates AGENTS.md §2.4 "
-                        "(No Backward-Compat Aliases) — plan §1.2 row 053."
-                    ),
-                    severity=_me.EnforcementRuleSeverity.MEDIUM,
-                    source=_me.EnforcementMinimalAstSource(
-                        pattern="$X = $Y",
-                        require_source=True,
-                    ),
-                    agents_md_anchor="2-4-no-backwards-compat-aliases",
-                    skills=("flext-mro-namespace-rules",),
-                ),
-            ),
-        )
-        return cls._ENFORCEMENT_CATALOG

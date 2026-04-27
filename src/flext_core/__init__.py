@@ -122,6 +122,9 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
     from flext_core._utilities.pydantic import FlextUtilitiesPydantic
     from flext_core._utilities.reliability import FlextUtilitiesReliability
+    from flext_core._utilities.runtime_violation_registry import (
+        FlextUtilitiesRuntimeViolationRegistry,
+    )
     from flext_core._utilities.settings import FlextUtilitiesSettings
     from flext_core._utilities.text import FlextUtilitiesText
     from flext_core.constants import FlextConstants, c
@@ -275,6 +278,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.project_metadata": ("FlextUtilitiesProjectMetadata",),
             "._utilities.pydantic": ("FlextUtilitiesPydantic",),
             "._utilities.reliability": ("FlextUtilitiesReliability",),
+            "._utilities.runtime_violation_registry": (
+                "FlextUtilitiesRuntimeViolationRegistry",
+            ),
             "._utilities.settings": ("FlextUtilitiesSettings",),
             "._utilities.text": ("FlextUtilitiesText",),
             ".constants": (
@@ -483,6 +489,7 @@ __all__: list[str] = [
     "FlextUtilitiesProjectMetadata",
     "FlextUtilitiesPydantic",
     "FlextUtilitiesReliability",
+    "FlextUtilitiesRuntimeViolationRegistry",
     "FlextUtilitiesSettings",
     "FlextUtilitiesText",
     "__author__",

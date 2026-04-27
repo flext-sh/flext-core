@@ -98,23 +98,21 @@ class TestsFlextCoreModelsMixins:
     class _SvcModel(m.BaseModel):
         value: str
 
-    class _BrokenDumpModel(m.BaseModel):
+    class _BrokenDumpModel:
+        """Test fake whose ``model_dump`` returns wrong type.
+
+        Triggers ``TypeError`` in mapping-shaped validators (e.g.,
+        ``Metadata.attributes``). Intentionally NOT a ``m.BaseModel`` subclass:
+        avoids ``__getattribute__`` override (forbidden outside flext-core
+        src/) while still presenting the duck-typed ``model_dump`` callable
+        Pydantic runtime probes.
+        """
+
         value: int = 1
 
-        @override
-        def __getattribute__(
-            self,
-            name: str,
-        ) -> t.Tests.PredicateSpec | None:
-            if name == "model_dump":
-
-                def _broken_dump(
-                    value: t.Tests.Testobject = None,
-                ) -> bool:
-                    return True
-
-                return _broken_dump
-            return super().__getattribute__(name)
+        @staticmethod
+        def model_dump() -> bool:
+            return True
 
     class _ErrorsModel(m.BaseModel):
         value: int

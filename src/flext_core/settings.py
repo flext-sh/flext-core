@@ -156,9 +156,7 @@ class FlextSettings(BaseSettings):
     trace: Annotated[bool, Field(description="Enable trace mode")] = False
     log_level: Annotated[
         c.LogLevel,
-        BeforeValidator(
-            lambda v: c.LogLevel(v.upper()) if isinstance(v, str) else v
-        ),
+        BeforeValidator(lambda v: c.LogLevel(v.upper()) if isinstance(v, str) else v),
         Field(description="Log level"),
     ] = c.LogLevel.INFO
     async_logging: Annotated[

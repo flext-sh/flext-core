@@ -7,7 +7,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import override
 
-from examples import ExamplesFlextCoreShared, c, p, t, u
+from examples import ExamplesFlextCoreShared, c, m, p, t, u
 from flext_core import FlextContainer, r
 
 
@@ -120,8 +120,10 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             hasattr(container, "_di_container"),
         )
         container.initialize_registrations(
-            settings=root.settings.model_copy(deep=True),
-            context=root.context,
+            registration=m.ServiceRegistrationSpec(
+                settings=root.settings.model_copy(deep=True),
+                context=root.context,
+            ),
         )
         self.check(
             "initialize_registrations.list_services_empty",
