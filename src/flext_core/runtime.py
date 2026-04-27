@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-import sys
 from collections.abc import (
     Callable,
     Mapping,
@@ -132,40 +131,6 @@ class FlextRuntime:
         )
 
     @staticmethod
-    def resolve_nested_model_class[TModel: BaseModel](
-        *,
-        module_name: str,
-        qualname: str,
-        models_module_name: str,
-        attribute_name: str,
-        fallback: type[TModel],
-    ) -> type[TModel]:
-        """Resolve a nested override model class from a facade module path."""
-        min_qualname_parts = 2
-        if module_name != models_module_name or "." not in qualname:
-            return fallback
-        parts = qualname.split(".")
-        models_module = sys.modules.get(models_module_name)
-        if not isinstance(models_module, ModuleType) or len(parts) < min_qualname_parts:
-            return fallback
-        obj: type | ModuleType | None = models_module.__dict__.get(parts[0])
-        for part in parts[1:-1]:
-            if isinstance(obj, ModuleType):
-                obj = obj.__dict__.get(part)
-                continue
-            if isinstance(obj, type):
-                obj = obj.__dict__.get(part)
-                continue
-            obj = None
-            break
-        if not isinstance(obj, type):
-            return fallback
-        resolved_attr = obj.__dict__.get(attribute_name)
-        if isinstance(resolved_attr, type) and issubclass(resolved_attr, fallback):
-            return resolved_attr
-        return fallback
-
-    @staticmethod
     def normalize_model_input_mapping(
         value: BaseModel | mc.Dict | t.ScalarMapping | None,
     ) -> Mapping[str, t.JsonPayload] | None:
@@ -194,12 +159,11 @@ class FlextRuntime:
         """
         if value is None:
             return None
-        raw: Mapping[str, t.JsonPayload | None]
         if isinstance(value, Mapping):
-            raw = value
+            raw: Mapping[str, t.JsonPayload | None] = value
         else:
             dumped: object = value.model_dump()
-            if not isinstance(dumped, Mapping):  # pyright: ignore[reportUnnecessaryIsInstance]
+            if not isinstance(dumped, Mapping):
                 msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
                 raise TypeError(msg)
             raw = dumped
@@ -372,28 +336,29 @@ class FlextRuntime:
             JsonValue | BaseModel
 
         """
+        normalized_data: t.RuntimeData
         if val is None:
-            return ""
-        if isinstance(val, (mc.ConfigMap, mc.Dict)):
+            normalized_data = ""
+        elif isinstance(val, (mc.ConfigMap, mc.Dict)):
             entries = [(k, v) for k, v in val.root.items()]
-            return FlextRuntime._normalize_dict_entries(entries)
-        if isinstance(val, mc.ObjectList):
-            return list(
+            normalized_data = FlextRuntime._normalize_dict_entries(entries)
+        elif isinstance(val, mc.ObjectList):
+            normalized_data = list(
                 t.json_list_adapter().validate_python(
                     [FlextRuntime._normalize_to_json_value(v) for v in val.root],
                 ),
             )
-        if isinstance(val, BaseModel):
-            return val
-        if isinstance(val, Path):
-            return str(val)
-        if ugc.scalar(val):
-            return FlextRuntime._normalize_to_json_value(val)
-        if ugc.dict_like(val):
+        elif isinstance(val, BaseModel):
+            normalized_data = val
+        elif isinstance(val, Path):
+            normalized_data = str(val)
+        elif ugc.scalar(val):
+            normalized_data = FlextRuntime._normalize_to_json_value(val)
+        elif ugc.dict_like(val):
             entries = [(str(k), v) for k, v in val.items()]
-            return FlextRuntime._normalize_dict_entries(entries)
-        if isinstance(val, Sequence) and not isinstance(val, (str, bytes)):
-            return list(
+            normalized_data = FlextRuntime._normalize_dict_entries(entries)
+        elif isinstance(val, Sequence) and not isinstance(val, (str, bytes)):
+            normalized_data = list(
                 t.flat_container_list_adapter().validate_python(
                     [
                         FlextRuntime._normalize_to_json_value(item_raw)
@@ -401,7 +366,9 @@ class FlextRuntime:
                     ],
                 )
             )
-        return str(val)
+        else:
+            normalized_data = str(val)
+        return normalized_data
 
     @staticmethod
     def normalize_to_metadata(
@@ -413,41 +380,51 @@ class FlextRuntime:
         | AbstractSet[t.Scalar],
     ) -> t.JsonValue:
         """Normalize input into metadata-compatible JSON-native values."""
+        normalized_value: t.JsonValue
         if val is None:
-            return ""
-        if isinstance(val, datetime):
-            return val.isoformat()
-        if isinstance(val, Path):
-            return str(val)
-        if isinstance(val, (str, int, float, bool)):
-            return val
-        if isinstance(val, BaseModel):
-            return FlextRuntime.normalize_to_metadata(val.model_dump())
-        normalized: (
-            t.JsonPayload
-            | AbstractSet[t.Scalar]
-            | dict[str, t.JsonPayload]
-            | list[t.JsonPayload]
-            | list[t.JsonValue]
-        )
-        if isinstance(val, (mc.ConfigMap, mc.Dict, mc.ObjectList)):
-            normalized = val.root
-        elif isinstance(val, AbstractSet):
-            normalized = [FlextRuntime._normalize_to_json_value(item) for item in val]
+            normalized_value = ""
+        elif isinstance(val, datetime):
+            normalized_value = val.isoformat()
+        elif isinstance(val, Path):
+            normalized_value = str(val)
+        elif isinstance(val, (str, int, float, bool)):
+            normalized_value = val
+        elif isinstance(val, BaseModel):
+            normalized_value = FlextRuntime.normalize_to_metadata(val.model_dump())
         else:
-            normalized = val
-        if isinstance(normalized, Mapping):
-            return {
-                str(key): FlextRuntime.normalize_to_metadata(item)
-                for key, item in normalized.items()
-            }
-        if isinstance(normalized, (str, bytes, bytearray)):
-            return str(normalized)
-        try:
-            iter(normalized)
-        except TypeError:
-            return str(normalized)
-        return [FlextRuntime.normalize_to_metadata(item) for item in normalized]
+            normalized: (
+                t.JsonPayload
+                | AbstractSet[t.Scalar]
+                | dict[str, t.JsonPayload]
+                | list[t.JsonPayload]
+                | list[t.JsonValue]
+            )
+            if isinstance(val, (mc.ConfigMap, mc.Dict, mc.ObjectList)):
+                normalized = val.root
+            elif isinstance(val, AbstractSet):
+                normalized = [
+                    FlextRuntime._normalize_to_json_value(item) for item in val
+                ]
+            else:
+                normalized = val
+            if isinstance(normalized, Mapping):
+                normalized_value = {
+                    str(key): FlextRuntime.normalize_to_metadata(item)
+                    for key, item in normalized.items()
+                }
+            elif isinstance(normalized, (str, bytes, bytearray)):
+                normalized_value = str(normalized)
+            else:
+                try:
+                    iter(normalized)
+                except TypeError:
+                    normalized_value = str(normalized)
+                else:
+                    normalized_value = [
+                        FlextRuntime.normalize_to_metadata(item)
+                        for item in normalized
+                    ]
+        return normalized_value
 
     @no_type_check
     class DependencyIntegration:

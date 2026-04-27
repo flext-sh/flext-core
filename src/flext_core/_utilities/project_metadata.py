@@ -20,10 +20,11 @@ from collections.abc import (
 )
 from functools import cache
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextUtilitiesProjectMetadata:
@@ -68,7 +69,9 @@ class FlextUtilitiesProjectMetadata:
 
     @staticmethod
     @cache
-    def load_pyproject_toml(root: Path) -> Mapping[str, Any]:
+    def load_pyproject_toml(
+        root: Path,
+    ) -> Mapping[str, tp.JsonValue | str | object]:
         """Load and return the parsed pyproject.toml under ``root``.
 
         Result is cached by ``root`` (``Path`` is hashable). The cache is
@@ -92,7 +95,7 @@ class FlextUtilitiesProjectMetadata:
         """Read canonical project metadata from a project's pyproject.toml."""
         data = FlextUtilitiesProjectMetadata.load_pyproject_toml(root)
         project_raw = data.get("project")
-        project: dict[str, Any] = (
+        project: dict[str, tp.JsonValue | str | object] = (
             dict(project_raw) if isinstance(project_raw, Mapping) else {}
         )
         if "name" not in project:

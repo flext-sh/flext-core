@@ -179,13 +179,9 @@ class FlextModelsCqrs:
             v: BaseModel | Mapping[str, t.Scalar] | None,
         ) -> BaseModel:
             """Convert pagination to Pagination instance."""
-            pagination_cls = ur.resolve_nested_model_class(
-                module_name=cls.__module__,
-                qualname=cls.__qualname__,
-                models_module_name="flext_core",
-                attribute_name="Pagination",
-                fallback=_CqrsPagination,
-            )
+            # Allow subclasses to override Pagination via class attribute,
+            # fallback to the default _CqrsPagination
+            pagination_cls = getattr(cls, "Pagination", _CqrsPagination)
             normalized_input = ur.normalize_model_input_mapping(v)
             if normalized_input is None:
                 return pagination_cls()

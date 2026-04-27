@@ -272,7 +272,7 @@ class FlextSettings(BaseSettings):
                 )
             return
 
-        BaseSettings.__init__(self, **valid_kwargs)  # type: ignore[arg-type]  # pyrefly: ignore[bad-argument-type]
+        super().__init__(**valid_kwargs)
 
     @computed_field
     @property

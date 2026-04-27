@@ -19,7 +19,6 @@ from typing import (
     Annotated,
     ClassVar,
     Self,
-    cast,
     no_type_check,
     overload,
     override,
@@ -147,7 +146,10 @@ class FlextResult[T](BaseModel, p.Result[T]):
         if not self.success:
             msg = c.ERR_RESULT_CANNOT_ACCESS_VALUE.format(error=self.error)
             raise RuntimeError(msg)
-        return cast("T", self._payload)
+        if self._payload is None:  # pragma: no cover
+            msg = "Payload unexpectedly None despite success=True"
+            raise RuntimeError(msg)
+        return self._payload
 
     @staticmethod
     def _validate_error_data(
@@ -554,7 +556,13 @@ class FlextResult[T](BaseModel, p.Result[T]):
     def recover[U](self, func: Callable[[str], U]) -> FlextResult[T | U]:
         """Recover from failure with fallback value via callback."""
         if self.success:
-            return cast("FlextResult[T | U]", self)
+            # When success, return self as FlextResult[T | U] by wrapping the existing result
+            return FlextResult[T | U](
+                value=self.value,
+                error_code=self.error_code,
+                error_data=self.error_data,
+                success=True,
+            )
         fallback_value = func(self.error or "")
         return FlextResult[T | U].ok(fallback_value)
 
@@ -589,8 +597,10 @@ class FlextResult[T](BaseModel, p.Result[T]):
                 exception=self.exception,
             )
         try:
-            validation_input = cast("t.ModelInput", self.value)
-            return FlextResult[U].ok(model.model_validate(validation_input))
+            # Use TypeAdapter for type-safe validation
+            adapter = mp.TypeAdapter(model)
+            validated = adapter.validate_python(self.value)
+            return FlextResult[U].ok(validated)
         except (
             ValidationError,
             ValueError,

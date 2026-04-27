@@ -38,6 +38,7 @@ class FlextMixins(m.ArbitraryTypesModel):
     _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
     _cache_lock: ClassVar[p.Lock] = threading.Lock()
     _container_type: ClassVar[type[p.Container]] = FlextContainer
+    _auto_context_scope: ClassVar[bool] = True
 
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
         """Auto-initialize container for subclasses (ABI compatibility)."""

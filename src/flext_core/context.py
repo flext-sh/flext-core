@@ -17,7 +17,7 @@ import time
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Annotated, ClassVar, Self, cast
+from typing import Annotated, ClassVar, Self
 
 from flext_core import c, m, p, r, t, u
 
@@ -132,7 +132,8 @@ class FlextContext(m.ManagedModel):
     @classmethod
     def create(cls, **_: t.JsonPayload) -> p.Context:
         """Factory: build a default context instance."""
-        return cast("p.Context", cls())
+        instance: p.Context = cls()
+        return instance
 
     # --- Container management ---
 

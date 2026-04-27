@@ -7,7 +7,7 @@ from types import ModuleType
 
 import pytest
 
-from tests import c, m, u
+from tests import c, m
 
 
 class TestsFlextCoreModelsCqrs:
@@ -15,48 +15,20 @@ class TestsFlextCoreModelsCqrs:
         page = m.Pagination(page=3, size=11)
         assert page.limit == 11
 
-    def test_query_resolve_pagination_wrapper_and_fallback(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-
-        class Wrapper:
+    def test_query_resolve_pagination_with_custom_override(self) -> None:
+        # Test that Query subclasses can override Pagination via class attribute
+        class CustomQuery(m.Query):
             class Pagination(m.Pagination):
                 pass
 
-            class Query(m.Query):
-                pass
-
-        Wrapper.Query.__module__ = "flext_core"
-        Wrapper.Query.__qualname__ = "Wrapper.Query"
-        mock_module: ModuleType = ModuleType("flext_core")
-        setattr(mock_module, "Wrapper", Wrapper)
-        monkeypatch.setitem(sys.modules, "flext_core", mock_module)
-        assert (
-            u.resolve_nested_model_class(
-                module_name=Wrapper.Query.__module__,
-                qualname=Wrapper.Query.__qualname__,
-                models_module_name="flext_core",
-                attribute_name="Pagination",
-                fallback=m.Pagination,
-            )
-            is Wrapper.Pagination
-        )
-        monkeypatch.setitem(
-            sys.modules,
-            "flext_core",
-            ModuleType("flext_core"),
-        )
-        assert (
-            u.resolve_nested_model_class(
-                module_name=Wrapper.Query.__module__,
-                qualname=Wrapper.Query.__qualname__,
-                models_module_name="flext_core",
-                attribute_name="Pagination",
-                fallback=m.Pagination,
-            )
-            is m.Pagination
-        )
+        wrapped = CustomQuery.model_validate({
+            "pagination": {"page": 1, "size": 9},
+            "filters": {},
+        })
+        # Should use the custom Pagination from the Query subclass
+        assert type(wrapped.pagination) is CustomQuery.Pagination
+        assert wrapped.pagination.page == 1
+        assert wrapped.pagination.size == 9
 
     def test_query_validate_pagination_dict_and_default(self) -> None:
         parsed = m.Query.model_validate({
@@ -94,16 +66,11 @@ class TestsFlextCoreModelsCqrs:
         mock_module = ModuleType("flext_core")
         setattr(mock_module, "Wrapper", Wrapper)
         monkeypatch.setitem(sys.modules, "flext_core", mock_module)
-        assert (
-            u.resolve_nested_model_class(
-                module_name=Wrapper.Inner.Query.__module__,
-                qualname=Wrapper.Inner.Query.__qualname__,
-                models_module_name="flext_core",
-                attribute_name="Pagination",
-                fallback=m.Pagination,
-            )
-            is m.Pagination
-        )
+        wrapped = Wrapper.Inner.Query.model_validate({
+            "pagination": {"page": 2, "size": 10},
+            "filters": {},
+        })
+        assert isinstance(wrapped.pagination, m.Pagination)
         parsed = m.Query.model_validate({
             "pagination": {"page": 2, "size": 10},
             "filters": {},

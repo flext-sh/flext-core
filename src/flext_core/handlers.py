@@ -220,14 +220,18 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     @staticmethod
     def _handler_type_to_literal(
-        handler_type: c.HandlerType,
+        handler_type: c.HandlerType | str,
     ) -> c.HandlerType:
-        """Return handler type as-is (enum values are canonical)."""
-        if not isinstance(handler_type, c.HandlerType):
-            raise TypeError(
-                c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type),
-            )
-        return handler_type
+        """Coerce string or StrEnum to canonical HandlerType."""
+        if isinstance(handler_type, c.HandlerType):
+            return handler_type
+        if isinstance(handler_type, str):
+            for member in c.HandlerType:
+                if member.value == handler_type:
+                    return member
+        raise TypeError(
+            c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type),
+        )
 
     @staticmethod
     def handler[**PHandler, TResult](

@@ -45,8 +45,8 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
     @staticmethod
     def v_duplicate_symbol(
-        params: me.DuplicateSymbolParams,  # noqa: ARG004 — needs workspace_index from walker
-        target: type,  # noqa: ARG004
+        _params: me.DuplicateSymbolParams,
+        _target: type,
     ) -> t.StrMapping | None:
         """DUPLICATE_SYMBOL — workspace cross-project SSOT (Phase 3 hook).
 

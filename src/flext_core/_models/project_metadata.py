@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import MappingProxyType
-from typing import Annotated, Any, ClassVar
+from typing import Annotated, ClassVar
 
 from pydantic import Field, model_validator
 
@@ -135,7 +135,7 @@ class FlextModelsProjectMetadata:
 
         @model_validator(mode="before")
         @classmethod
-        def _merge_alias_sources(cls, data: Any) -> Any:
+        def _merge_alias_sources(cls, data: dict | object) -> dict | object:
             """Reject unknown aliases; merge universal sources into user input."""
             if not isinstance(data, dict):
                 return data

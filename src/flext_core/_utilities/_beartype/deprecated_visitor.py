@@ -24,7 +24,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
 
     @staticmethod
     def v_wrapper(
-        params: me.WrapperParams,  # noqa: ARG004 — params reserved for future
+        _params: me.WrapperParams,
         target: type,
     ) -> t.StrMapping | None:
         """WRAPPER — pass-through wrapper detection via bytecode (ENFORCE-043)."""
