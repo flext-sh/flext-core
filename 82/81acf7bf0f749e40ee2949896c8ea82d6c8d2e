@@ -1,0 +1,26 @@
+src/flext_core/_utilities/context_tracing.py
+  777db8edca009033 26-33,35-42,44-47,49-51,53-54,56-60,62-66,68-69
+src/flext_core/context.py
+  777db8edca009033 124,136-137,140,142,148,150,155,188-190,193,197,199,207,213,235-236,241,253-254,256,311-314,317,320-321,327
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "8281acf7bf0f749e40ee2949896c8ea82d6c8d2e",
+  "prompts": {
+    "777db8edca009033": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "264dddbe-fe20-4b0d-a48e-98a37e3d380a",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 114,
+      "total_deletions": 145,
+      "accepted_lines": 70,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/f414c9e25cf1a557f4ed62cbaf547be85df43cd3c3f4134950f049056861b78b"
+    }
+  }
+}
