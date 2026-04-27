@@ -99,3 +99,6 @@ class FlextConstantsProjectMetadata:
         "flext": "FlextRoot",
         "flext-core": "Flext",
     })
+
+    # Project manifest file name — canonical SSOT so no consumer duplicates "pyproject.toml"
+    PYPROJECT_FILENAME: Final[str] = "pyproject.toml"

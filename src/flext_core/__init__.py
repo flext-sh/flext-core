@@ -93,6 +93,7 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.context_tracing import FlextUtilitiesContextTracing
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
+    from flext_core._utilities.dispatcher_execute import execute_dispatcher_handler
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
     from flext_core._utilities.enforcement_collect import (
@@ -253,6 +254,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.context_tracing": ("FlextUtilitiesContextTracing",),
             "._utilities.conversion": ("FlextUtilitiesConversion",),
             "._utilities.discovery": ("FlextUtilitiesDiscovery",),
+            "._utilities.dispatcher_execute": ("execute_dispatcher_handler",),
             "._utilities.domain": ("FlextUtilitiesDomain",),
             "._utilities.enforcement": ("FlextUtilitiesEnforcement",),
             "._utilities.enforcement_collect": ("FlextUtilitiesEnforcementCollect",),
@@ -504,6 +506,7 @@ __all__: list[str] = [
     "c",
     "d",
     "e",
+    "execute_dispatcher_handler",
     "h",
     "lazy",
     "m",

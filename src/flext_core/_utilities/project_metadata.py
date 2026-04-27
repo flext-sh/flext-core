@@ -34,7 +34,7 @@ class FlextUtilitiesProjectMetadata:
     ``u.read_project_metadata`` / etc. (flat access).
     """
 
-    PYPROJECT_FILENAME: ClassVar[str] = "pyproject.toml"
+    PYPROJECT_FILENAME: ClassVar[str] = cpm.PYPROJECT_FILENAME
 
     @staticmethod
     def pascalize(slug: str) -> str:

@@ -61,7 +61,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             merge_result = FlextUtilitiesCollection.merge_mappings(
                 incoming_context_obj,
                 current_context_obj,
-                strategy="deep",
+                strategy=c.MergeStrategy.DEEP,
             )
             merged_value = merge_result.unwrap_or(current_context_obj)
             merged_context: t.MutableJsonMapping = {}
@@ -70,9 +70,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             cls._scoped_contexts[scope] = merged_context
             cls.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+        except c.CONTEXT_EXCEPTIONS as exc:
             return e.fail_operation(
-                f"bind context for scope '{scope}'",
+                f"{c.LoggingOperation.BIND_CONTEXT} '{scope}'",
                 exc,
             )
 
@@ -83,8 +83,8 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             normalized_context = cls.to_container_context(context)
             cls.structlog().contextvars.bind_contextvars(**normalized_context)
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return e.fail_operation("bind global context", exc)
+        except c.CONTEXT_EXCEPTIONS as exc:
+            return e.fail_operation(c.LoggingOperation.BIND_GLOBAL, exc)
 
     @classmethod
     def clear_global_context(cls) -> p.Result[bool]:
@@ -94,8 +94,8 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             cls._scoped_contexts.clear()
             cls._level_contexts.clear()
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return e.fail_operation("clear global context", exc)
+        except c.CONTEXT_EXCEPTIONS as exc:
+            return e.fail_operation(c.LoggingOperation.CLEAR_GLOBAL, exc)
 
     @classmethod
     def clear_scope(cls, scope: str) -> p.Result[bool]:
@@ -107,8 +107,8 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                     cls.structlog().contextvars.unbind_contextvars(*keys)
                 cls._scoped_contexts[scope].clear()
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return e.fail_operation(f"clear scope '{scope}'", exc)
+        except c.CONTEXT_EXCEPTIONS as exc:
+            return e.fail_operation(f"{c.LoggingOperation.CLEAR_SCOPE} '{scope}'", exc)
 
     @classmethod
     def unbind_global_context(cls, *keys: str) -> p.Result[bool]:
@@ -117,48 +117,36 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             unbind_keys: t.StrSequence = [str(key) for key in keys]
             cls.structlog().contextvars.unbind_contextvars(*unbind_keys)
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return e.fail_operation("unbind global context", exc)
+        except c.CONTEXT_EXCEPTIONS as exc:
+            return e.fail_operation(c.LoggingOperation.UNBIND_GLOBAL, exc)
 
     @staticmethod
     def _to_container_value(
         value: t.LogValue | t.JsonValue | t.JsonPayload | None,
     ) -> t.JsonValue:
         """Normalize value to Container (internal helper)."""
-        if isinstance(value, Exception):
-            validated_exc: t.JsonValue = t.json_value_adapter().validate_python(
-                str(value)
-            )
-            return validated_exc
-        if value is None:
-            return ""
-        if isinstance(value, FlextModelsPydantic.BaseModel):
-            return dict(t.json_mapping_adapter().validate_python(value.model_dump()))
-        if isinstance(value, p.Model):
-            model_dump_attr = getattr(value, "model_dump", None)
-            if callable(model_dump_attr):
-                return dict(t.json_mapping_adapter().validate_python(model_dump_attr()))
-            validated_model_str: t.JsonValue = t.json_value_adapter().validate_python(
-                str(value)
-            )
-            return validated_model_str
         model_dump_attr = getattr(value, "model_dump", None)
-        if callable(model_dump_attr):
-            return dict(t.json_mapping_adapter().validate_python(model_dump_attr()))
-        if isinstance(value, Path):
-            validated_path: t.JsonValue = t.json_value_adapter().validate_python(
-                str(value)
+        normalized_value: object
+        if isinstance(value, Exception):
+            normalized_value = str(value)
+        elif value is None:
+            normalized_value = ""
+        elif isinstance(value, FlextModelsPydantic.BaseModel):
+            normalized_value = value.model_dump()
+        elif callable(model_dump_attr):
+            normalized_value = model_dump_attr()
+        elif isinstance(value, (p.Model, Path)):
+            normalized_value = str(value)
+        elif isinstance(value, bytes):
+            normalized_value = value.decode(
+                c.DEFAULT_ENCODING, errors=c.DEFAULT_DECODE_ERROR_HANDLER
             )
-            return validated_path
-        if isinstance(value, bytes):
-            validated_bytes: t.JsonValue = t.json_value_adapter().validate_python(
-                value.decode(c.DEFAULT_ENCODING, errors="replace"),
-            )
-            return validated_bytes
-        validated_default: t.JsonValue = t.json_value_adapter().validate_python(
-            FlextRuntime.normalize_to_metadata(value),
+        else:
+            normalized_value = FlextRuntime.normalize_to_metadata(value)
+        validated_value: t.JsonValue = t.json_value_adapter().validate_python(
+            normalized_value,
         )
-        return validated_default
+        return validated_value
 
     @staticmethod
     def to_container_context(
@@ -183,8 +171,8 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     @staticmethod
     def _extract_class_name(frame: types.FrameType) -> str | None:
         """Extract class name from frame locals or qualname."""
-        if "self" in frame.f_locals:
-            self_obj = frame.f_locals["self"]
+        if c.FRAME_SELF_KEY in frame.f_locals:
+            self_obj = frame.f_locals[c.FRAME_SELF_KEY]
             if hasattr(self_obj, "__class__"):
                 class_name: str = self_obj.__class__.__name__
                 return class_name
@@ -202,9 +190,8 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     def _find_workspace_root(abs_path: Path) -> Path | None:
         """Find workspace root by looking for common markers."""
         current = abs_path.parent
-        markers = ["pyproject.toml", ".git", "poetry.lock"]
         for _ in range(10):
-            if any((current / marker).exists() for marker in markers):
+            if any((current / marker).exists() for marker in c.WORKSPACE_ROOT_MARKERS):
                 return current
             if current == current.parent:
                 break
@@ -224,7 +211,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             if workspace_root is None:
                 return None
             relative_path = abs_path.relative_to(workspace_root)
-            if relative_path.parts and relative_path.parts[0] == ".venv":
+            if relative_path.parts and relative_path.parts[0] == c.VENV_DIR_NAME:
                 return None
             file_path = str(relative_path)
             line_number = caller_frame.f_lineno
@@ -233,36 +220,28 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             source_parts = [f"{file_path}:{line_number}"]
             if class_name and method_name:
                 source_parts.append(f"{class_name}.{method_name}")
-            elif method_name and method_name != "<module>":
+            elif method_name and method_name != c.MODULE_FRAME_NAME:
                 source_parts.append(method_name)
             return " ".join(source_parts) if len(source_parts) > 1 else source_parts[0]
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             FlextUtilitiesLoggingContext._report_internal_logging_failure(
-                "get_caller_source_path",
+                c.LoggingOperation.GET_CALLER_SOURCE,
                 exc,
             )
             return None
-
-    _LOGGING_INTERNAL_PATH_FRAGMENTS: ClassVar[tuple[str, ...]] = (
-        "flext_core/loggings.py",
-        "flext_core/_utilities/logging_context.py",
-        "flext_core/_utilities/logging_config.py",
-        "flext_core/_utilities/logging_processors.py",
-        "flext_core/_utilities/logging_observability.py",
-    )
 
     @staticmethod
     def _calling_frame() -> types.FrameType | None:
         """Walk the stack backward and return the first frame outside the logging machinery.
 
         Generic: skips any frame whose source file path matches one of
-        ``_LOGGING_INTERNAL_PATH_FRAGMENTS``. The first frame outside is the
+        ``c.LOGGING_INTERNAL_PATH_FRAGMENTS``. The first frame outside is the
         true caller regardless of how many internal wrappers are involved.
         """
         frame = inspect.currentframe()
         if frame is None:
             return None
-        skip = FlextUtilitiesLoggingContext._LOGGING_INTERNAL_PATH_FRAGMENTS
+        skip = c.LOGGING_INTERNAL_PATH_FRAGMENTS
         while frame is not None:
             filename = frame.f_code.co_filename
             if not any(fragment in filename for fragment in skip):
@@ -272,9 +251,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def _report_internal_logging_failure(operation: str, exc: Exception) -> None:
-        with suppress(AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            FlextUtilitiesLoggingContext.structlog().get_logger("flext_core").warning(
-                "Internal logger operation failed",
+        with suppress(*c.CONTEXT_EXCEPTIONS):
+            FlextUtilitiesLoggingContext.structlog().get_logger(
+                c.LOGGER_NAME_FLEXT_CORE
+            ).warning(
+                c.LOG_INTERNAL_OPERATION_FAILED,
                 operation=operation,
                 error=exc,
                 exception_type=exc.__class__.__name__,
@@ -287,7 +268,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             return logging.getLogger().getEffectiveLevel() <= logging.DEBUG
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             FlextUtilitiesLoggingContext._report_internal_logging_failure(
-                "should_include_stack_trace",
+                c.LoggingOperation.SHOULD_INCLUDE_STACK,
                 exc,
             )
             return True

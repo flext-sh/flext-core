@@ -15,6 +15,7 @@ from flext_core import (
     FlextModelsBase as m,
     FlextModelsEntity,
     FlextModelsHandler,
+    FlextModelsPydantic as mp,
     FlextUtilitiesPydantic as up,
     p,
     t,
@@ -29,14 +30,14 @@ class FlextModelsRegistry:
 
         dispatcher: Annotated[
             p.Dispatcher | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Dispatcher used for handler registration and execution.",
             ),
         ] = None
         registered_keys: Annotated[
             frozenset[str],
-            up.Field(
+            mp.Field(
                 default_factory=frozenset,
                 description="Keys registered in the instance scope of the registry.",
             ),
@@ -52,24 +53,24 @@ class FlextModelsRegistry:
 
         registered: Annotated[
             MutableSequence[FlextModelsHandler.RegistrationDetails],
-            up.Field(
+            mp.Field(
                 description="Successfully registered handlers with registration details.",
             ),
-        ] = up.Field(default_factory=list[FlextModelsHandler.RegistrationDetails])
+        ] = mp.Field(default_factory=list[FlextModelsHandler.RegistrationDetails])
         skipped: Annotated[
             t.StrSequence,
-            up.Field(
+            mp.Field(
                 description="Handler identifiers that were skipped (already registered)",
                 examples=[["CreateUserCommand", "UpdateUserCommand"]],
             ),
-        ] = up.Field(default_factory=tuple)
+        ] = mp.Field(default_factory=tuple)
         errors: Annotated[
             MutableSequence[str],
-            up.Field(
+            mp.Field(
                 description="Error messages for failed registrations",
                 examples=[["Handler validation failed", "Duplicate registration"]],
             ),
-        ] = up.Field(default_factory=list[str])
+        ] = mp.Field(default_factory=list[str])
 
         @up.computed_field()
         def failure(self) -> bool:

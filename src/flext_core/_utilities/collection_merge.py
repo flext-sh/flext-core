@@ -16,6 +16,7 @@ from flext_core import (
     r,
     t,
 )
+from flext_core._constants.cqrs import FlextConstantsCqrs as _c_cqrs
 
 
 class FlextUtilitiesCollectionMerge:
@@ -128,13 +129,13 @@ class FlextUtilitiesCollectionMerge:
     ]
 
     _MERGE_STRATEGIES: ClassVar[Mapping[str, _MergeHandler]] = {
-        "replace": _merge_replace,
-        "override": _merge_replace,
-        "filter_none": _merge_filter_none,
-        "filter_empty": _merge_filter_empty,
-        "filter_both": _merge_filter_empty,
-        "append": _merge_append,
-        "deep": _merge_deep,
+        _c_cqrs.MergeStrategy.REPLACE: _merge_replace,
+        _c_cqrs.MergeStrategy.OVERRIDE: _merge_replace,
+        _c_cqrs.MergeStrategy.FILTER_NONE: _merge_filter_none,
+        _c_cqrs.MergeStrategy.FILTER_EMPTY: _merge_filter_empty,
+        _c_cqrs.MergeStrategy.FILTER_BOTH: _merge_filter_empty,
+        _c_cqrs.MergeStrategy.APPEND: _merge_append,
+        _c_cqrs.MergeStrategy.DEEP: _merge_deep,
     }
 
     @staticmethod
@@ -142,7 +143,7 @@ class FlextUtilitiesCollectionMerge:
         other: Mapping[str, t.JsonValue] | None,
         base: Mapping[str, t.JsonValue],
         *,
-        strategy: str = "deep",
+        strategy: str = _c_cqrs.MergeStrategy.DEEP,
     ) -> p.Result[Mapping[str, t.JsonValue]]:
         """Merge two dictionaries with configurable strategy."""
         if other is None:

@@ -24,6 +24,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".context_tracing": ("FlextUtilitiesContextTracing",),
         ".conversion": ("FlextUtilitiesConversion",),
         ".discovery": ("FlextUtilitiesDiscovery",),
+        ".dispatcher_execute": ("execute_dispatcher_handler",),
         ".domain": ("FlextUtilitiesDomain",),
         ".enforcement": ("FlextUtilitiesEnforcement",),
         ".enforcement_collect": ("FlextUtilitiesEnforcementCollect",),

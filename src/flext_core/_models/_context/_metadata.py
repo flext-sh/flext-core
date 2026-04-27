@@ -30,52 +30,52 @@ class FlextModelsContextMetadata:
 
         user_id: Annotated[
             str | None,
-            up.Field(default=None, description="Associated user ID"),
+            mp.Field(default=None, description="Associated user ID"),
         ] = None
         correlation_id: Annotated[
             str | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Primary correlation ID for distributed tracing",
             ),
         ] = None
         parent_correlation_id: Annotated[
             str | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Parent request's correlation ID for nested calls",
             ),
         ] = None
         request_id: Annotated[
             str | None,
-            up.Field(default=None, description="HTTP request identifier"),
+            mp.Field(default=None, description="HTTP request identifier"),
         ] = None
         session_id: Annotated[
             str | None,
-            up.Field(default=None, description="User session identifier"),
+            mp.Field(default=None, description="User session identifier"),
         ] = None
         tenant_id: Annotated[
             str | None,
-            up.Field(default=None, description="Tenant/Organization ID"),
+            mp.Field(default=None, description="Tenant/Organization ID"),
         ] = None
         handler_mode: Annotated[
             str | None,
-            up.Field(default=None, description="Handler mode (command/query/event)"),
+            mp.Field(default=None, description="Handler mode (command/query/event)"),
         ] = None
         message_type: Annotated[
             str | None,
-            up.Field(default=None, description="Type of message being processed"),
+            mp.Field(default=None, description="Type of message being processed"),
         ] = None
         message_id: Annotated[
             str | None,
-            up.Field(default=None, description="Unique message identifier"),
+            mp.Field(default=None, description="Unique message identifier"),
         ] = None
         custom_fields: Annotated[
             Mapping[str, t.JsonPayload],
             mp.BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),
-            up.Field(
+            mp.Field(
                 default_factory=lambda: MappingProxyType({}),
                 description="Custom metadata attributes for caller-specific tracing and context.",
             ),
@@ -100,22 +100,22 @@ class FlextModelsContextMetadata:
 
         domain_name: Annotated[
             str | None,
-            up.Field(default=None, description="Domain name/identifier"),
+            mp.Field(default=None, description="Domain name/identifier"),
         ] = None
         domain_type: Annotated[
             str | None,
-            up.Field(default=None, description="Type of domain"),
+            mp.Field(default=None, description="Type of domain"),
         ] = None
         domain_data: Annotated[
             Mapping[str, t.JsonPayload],
-            up.Field(
+            mp.Field(
                 default_factory=lambda: MappingProxyType({}),
                 description="Domain payload values scoped to the current business context.",
             ),
         ]
         domain_metadata: Annotated[
             t.JsonMapping,
-            up.Field(
+            mp.Field(
                 default_factory=lambda: MappingProxyType({}),
                 description="Domain metadata attributes describing origin and processing state.",
             ),

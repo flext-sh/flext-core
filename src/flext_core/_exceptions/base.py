@@ -40,7 +40,6 @@ class FlextExceptionsBase:
         """
 
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = None
-        _param_keys: ClassVar[frozenset[str]] = frozenset()
         _excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
         message: str
         error_code: str
@@ -331,7 +330,9 @@ class FlextExceptionsBase:
                     ),
                 )
             declared_param_keys = (
-                param_keys if param_keys is not None else type(self)._param_keys
+                param_keys
+                if param_keys is not None
+                else frozenset(declared_params_cls.model_fields)
             )
             remaining_extra: MutableMapping[str, t.JsonValue] = {}
             if extra_kwargs:

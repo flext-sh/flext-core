@@ -100,7 +100,13 @@ class FlextConstantsCqrs:
 
         REPLACE = "replace"
         UPDATE = "update"
+        DEEP = "deep"
         MERGE_DEEP = "merge_deep"
+        OVERRIDE = "override"
+        APPEND = "append"
+        FILTER_NONE = "filter_none"
+        FILTER_EMPTY = "filter_empty"
+        FILTER_BOTH = "filter_both"
 
     @unique
     class TokenType(StrEnum):

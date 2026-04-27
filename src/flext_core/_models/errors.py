@@ -10,6 +10,7 @@ from typing import Annotated, Self
 
 from flext_core import (
     FlextModelsBase as m,
+    FlextModelsPydantic as mp,
     FlextUtilitiesPydantic as up,
     t,
 )
@@ -23,31 +24,31 @@ class FlextModelsErrors:
 
         error_type: Annotated[
             str,
-            up.Field(description="Concrete exception type name."),
+            mp.Field(description="Concrete exception type name."),
         ]
         message: Annotated[
             str,
-            up.Field(description="Human-readable error message."),
+            mp.Field(description="Human-readable error message."),
         ]
         error_code: Annotated[
             str,
-            up.Field(description="Canonical structured error code."),
+            mp.Field(description="Canonical structured error code."),
         ]
         error_domain: Annotated[
             str | None,
-            up.Field(description="Canonical routing domain for the error."),
+            mp.Field(description="Canonical routing domain for the error."),
         ] = None
         correlation_id: Annotated[
             str | None,
-            up.Field(description="Correlation identifier propagated with the error."),
+            mp.Field(description="Correlation identifier propagated with the error."),
         ] = None
         timestamp: Annotated[
             t.Numeric,
-            up.Field(description="Unix timestamp when the error instance was created."),
+            mp.Field(description="Unix timestamp when the error instance was created."),
         ]
         attributes: Annotated[
             t.MutableJsonMapping,
-            up.Field(
+            mp.Field(
                 default_factory=dict,
                 description="Flattenable metadata attributes exposed publicly.",
             ),
@@ -76,22 +77,22 @@ class FlextModelsErrors:
 
         total_exceptions: Annotated[
             t.NonNegativeInt,
-            up.Field(description="Total recorded exception occurrences."),
+            mp.Field(description="Total recorded exception occurrences."),
         ] = 0
         exception_counts: Annotated[
             t.MutableIntMapping,
-            up.Field(
+            mp.Field(
                 default_factory=dict,
                 description="Per-exception occurrence totals keyed by type name.",
             ),
         ]
         exception_counts_summary: Annotated[
             str,
-            up.Field(description="Human-readable summary for logs and diagnostics."),
+            mp.Field(description="Human-readable summary for logs and diagnostics."),
         ] = ""
         unique_exception_types: Annotated[
             t.NonNegativeInt,
-            up.Field(description="Number of unique exception types recorded."),
+            mp.Field(description="Number of unique exception types recorded."),
         ] = 0
 
         @up.computed_field()
@@ -116,7 +117,7 @@ class FlextModelsErrors:
 
         exception_counts: Annotated[
             t.MutableIntMapping,
-            up.Field(
+            mp.Field(
                 default_factory=dict,
                 description="Recorded counts keyed by exception type name.",
             ),

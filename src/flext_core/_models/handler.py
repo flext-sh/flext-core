@@ -37,25 +37,25 @@ class FlextModelsHandler:
 
         handler_name: Annotated[
             t.NonEmptyStr,
-            up.Field(description="Name of the handler"),
+            mp.Field(description="Name of the handler"),
         ]
         status: Annotated[
             t.NonEmptyStr,
-            up.Field(
+            mp.Field(
                 description="Registration status (registered, skipped, failed)",
             ),
         ]
         mode: Annotated[
             t.NonEmptyStr,
-            up.Field(description="Registration mode (auto_discovery, explicit)"),
+            mp.Field(description="Registration mode (auto_discovery, explicit)"),
         ]
         handler_mode: Annotated[
             c.HandlerType | None,
-            up.Field(None, description="Handler mode (command/query/event)"),
+            mp.Field(None, description="Handler mode (command/query/event)"),
         ] = None
         message_type: Annotated[
             str | None,
-            up.Field(None, description="Message type bound (for explicit mode)"),
+            mp.Field(None, description="Message type bound (for explicit mode)"),
         ] = None
 
     class RegistrationDetails(m.ArbitraryTypesModel):
@@ -69,14 +69,14 @@ class FlextModelsHandler:
         )
         registration_id: Annotated[
             t.NonEmptyStr,
-            up.Field(
+            mp.Field(
                 description="Unique registration identifier",
                 examples=["reg-abc123", "handler-create-user-001"],
             ),
         ]
         handler_mode: Annotated[
             c.HandlerType,
-            up.Field(
+            mp.Field(
                 default=c.HandlerType.COMMAND,
                 description="Handler mode (command, query, or event)",
                 examples=["command", "query", "event"],
@@ -84,16 +84,16 @@ class FlextModelsHandler:
         ] = c.HandlerType.COMMAND
         timestamp: Annotated[
             str,
-            up.Field(
+            mp.Field(
                 description="ISO 8601 timestamp recording when the registration entry was created.",
                 title="Registration Timestamp",
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
                 pattern=c.PATTERN_ISO8601_TIMESTAMP,
             ),
-        ] = up.Field(default_factory=lambda: c.DEFAULT_EMPTY_STRING)
+        ] = mp.Field(default_factory=lambda: c.DEFAULT_EMPTY_STRING)
         status: Annotated[
             c.Status,
-            up.Field(
+            mp.Field(
                 default=c.Status.RUNNING,
                 description="Current registration status",
                 examples=["running", "stopped", "failed"],
@@ -113,32 +113,32 @@ class FlextModelsHandler:
         )
         handler_name: Annotated[
             t.NonEmptyStr,
-            up.Field(
+            mp.Field(
                 description="Name of the handler being executed",
                 examples=["ProcessOrderCommand", "GetUserQuery", "OrderCreatedEvent"],
             ),
         ]
         handler_mode: Annotated[
             c.HandlerType,
-            up.Field(
+            mp.Field(
                 description="Mode of handler execution",
                 examples=["command", "query", "event"],
             ),
         ]
         started_at: Annotated[
             float | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Monotonic start timestamp used to compute execution time.",
             ),
         ] = None
         metrics_state_data: Annotated[
             mc.Dict,
-            up.Field(
+            mp.Field(
                 default_factory=lambda: mc.Dict(root={}),
                 description="Mutable metrics payload for the active handler execution.",
             ),
-        ] = up.Field(default_factory=lambda: mc.Dict(root={}))
+        ] = mp.Field(default_factory=lambda: mc.Dict(root={}))
 
         @up.computed_field()
         def execution_time_ms(self) -> float:
@@ -153,32 +153,32 @@ class FlextModelsHandler:
 
         execution_context: Annotated[
             FlextModelsHandler.ExecutionContext,
-            up.Field(description="Execution context for the active handler"),
+            mp.Field(description="Execution context for the active handler"),
         ]
         context_stack: Annotated[
             MutableSequence[FlextModelsHandler.ExecutionContext],
-            up.Field(
+            mp.Field(
                 default_factory=list,
                 description="Stack of nested execution contexts.",
             ),
         ]
         accepted_message_types: Annotated[
             tuple[t.TypeHintSpecifier, ...],
-            up.Field(
+            mp.Field(
                 default_factory=tuple,
                 description="Accepted message types computed for dispatch routing",
             ),
         ]
         revalidate_pydantic_messages: Annotated[
             bool,
-            up.Field(
+            mp.Field(
                 default=False,
                 description="Whether Pydantic messages must be revalidated on dispatch",
             ),
         ] = False
         type_warning_emitted: Annotated[
             bool,
-            up.Field(
+            mp.Field(
                 default=False,
                 description="Whether the handler already emitted a type warning",
             ),
@@ -205,18 +205,18 @@ class FlextModelsHandler:
         )
         command: Annotated[
             type,
-            up.Field(description="Command type this handler processes"),
+            mp.Field(description="Command type this handler processes"),
         ]
         priority: Annotated[
             t.NonNegativeInt,
-            up.Field(
+            mp.Field(
                 default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Handler priority (higher = processed first)",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         timeout: Annotated[
             float | None,
-            up.Field(
+            mp.Field(
                 default=c.DEFAULT_TIMEOUT_SECONDS,
                 description="Handler execution timeout in seconds",
                 gt=0.0,
@@ -224,8 +224,8 @@ class FlextModelsHandler:
         ] = c.DEFAULT_TIMEOUT_SECONDS
         middleware: Annotated[
             Sequence[type[p.Middleware]],
-            up.Field(description="Middleware types to apply to this handler"),
-        ] = up.Field(default_factory=tuple)
+            mp.Field(description="Middleware types to apply to this handler"),
+        ] = mp.Field(default_factory=tuple)
 
 
 __all__: list[str] = ["FlextModelsHandler"]

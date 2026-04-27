@@ -39,7 +39,6 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.ValidationErrorParams
         )
-        _param_keys: ClassVar[frozenset[str]] = frozenset({"field", "value"})
 
     class ConfigurationError(FlextExceptionsBase.BaseError):
         """Exception raised for configuration-related errors."""
@@ -50,10 +49,6 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.ConfigurationErrorParams
         )
-        _param_keys: ClassVar[frozenset[str]] = frozenset({
-            "config_key",
-            "config_source",
-        })
 
     class ConnectionError(FlextExceptionsBase.BaseError):
         """Exception raised for network and connection failures."""
@@ -65,11 +60,6 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.ConnectionErrorParams
         )
-        _param_keys: ClassVar[frozenset[str]] = frozenset({
-            "host",
-            "port",
-            "timeout",
-        })
 
     class TimeoutError(FlextExceptionsBase.BaseError):
         """Exception raised for operation timeout errors."""
@@ -78,10 +68,6 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         operation: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.TIMEOUT_ERROR
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.TimeoutErrorParams
-        _param_keys: ClassVar[frozenset[str]] = frozenset({
-            "timeout_seconds",
-            "operation",
-        })
 
     class AuthenticationError(FlextExceptionsBase.BaseError):
         """Exception raised for authentication failures."""
@@ -92,10 +78,6 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.AuthenticationErrorParams
         )
-        _param_keys: ClassVar[frozenset[str]] = frozenset({
-            "auth_method",
-            c.ContextKey.USER_ID,
-        })
 
     class AuthorizationError(FlextExceptionsBase.BaseError):
         """Exception raised for permission and authorization failures."""
@@ -107,11 +89,6 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.AuthorizationErrorParams
         )
-        _param_keys: ClassVar[frozenset[str]] = frozenset({
-            c.ContextKey.USER_ID,
-            "resource",
-            "permission",
-        })
 
     class NotFoundError(FlextExceptionsBase.BaseError):
         """Exception raised when a resource is not found."""
@@ -120,10 +97,6 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         resource_id: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.NOT_FOUND_ERROR
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.NotFoundErrorParams
-        _param_keys: ClassVar[frozenset[str]] = frozenset({
-            "resource_type",
-            "resource_id",
-        })
         _excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = frozenset({
             c.ContextKey.CORRELATION_ID,
             c.FIELD_METADATA,
@@ -137,11 +110,6 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         conflict_reason: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.ALREADY_EXISTS
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.ConflictErrorParams
-        _param_keys: ClassVar[frozenset[str]] = frozenset({
-            "resource_type",
-            "resource_id",
-            "conflict_reason",
-        })
 
     class RateLimitError(FlextExceptionsBase.BaseError):
         """Exception raised when rate limits are exceeded."""
@@ -153,11 +121,6 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.RateLimitErrorParams
         )
-        _param_keys: ClassVar[frozenset[str]] = frozenset({
-            "limit",
-            "window_seconds",
-            "retry_after",
-        })
 
     class CircuitBreakerError(FlextExceptionsBase.BaseError):
         """Exception raised when circuit breaker is open."""
@@ -169,11 +132,6 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.CircuitBreakerErrorParams
         )
-        _param_keys: ClassVar[frozenset[str]] = frozenset({
-            c.ContextKey.SERVICE_NAME,
-            "failure_count",
-            "reset_timeout",
-        })
 
         def __init__(
             self,
@@ -360,7 +318,6 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.OperationErrorParams
         )
-        _param_keys: ClassVar[frozenset[str]] = frozenset({"operation", "reason"})
 
     class AttributeAccessError(FlextExceptionsBase.BaseError):
         """Exception raised for attribute access errors."""
@@ -371,10 +328,6 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.AttributeAccessErrorParams
         )
-        _param_keys: ClassVar[frozenset[str]] = frozenset({
-            "attribute_name",
-            "attribute_context",
-        })
 
 
 __all__: Sequence[str] = ["FlextExceptionsTypes"]

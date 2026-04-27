@@ -17,7 +17,6 @@ from flext_core import (
     FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
     FlextUtilitiesCollection as u,
-    FlextUtilitiesPydantic as up,
     t,
 )
 
@@ -35,7 +34,7 @@ class FlextModelsDomainEvent:
     ):
         """Base class for domain events."""
 
-        message_type: str = up.Field(
+        message_type: str = mp.Field(
             "event",
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
@@ -43,20 +42,20 @@ class FlextModelsDomainEvent:
         )
         event_type: Annotated[
             t.NonEmptyStr,
-            up.Field(
+            mp.Field(
                 description="Domain event type identifier for subscriber routing."
             ),
         ]
         aggregate_id: Annotated[
             t.NonEmptyStr,
-            up.Field(
+            mp.Field(
                 description="Identifier of the aggregate root that produced this event.",
             ),
         ]
         data: Annotated[
             mc.ConfigMap,
             mp.BeforeValidator(u.normalize_domain_event_data),
-        ] = up.Field(
+        ] = mp.Field(
             validate_default=True,
             description="Event data container",
             default_factory=lambda: mc.ConfigMap(root={}),

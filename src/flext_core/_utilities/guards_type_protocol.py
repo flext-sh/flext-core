@@ -95,21 +95,27 @@ class FlextUtilitiesGuardsTypeProtocol:
         value: t.GuardInput,
     ) -> TypeIs[t.RegisterableService]:
         """Narrow value to DI-registerable service (primitives, models, callables, etc.)."""
-        if value is None:
-            return True
-        if isinstance(value, (str, int, float, bool, Path, Mapping)):
-            return True
-        if isinstance(value, Sequence):
-            return not isinstance(value, (str, bytes, bytearray))
-        if ugm.pydantic_model(value):
-            return True
-        if callable(value):
-            return True
-        if FlextUtilitiesGuardsTypeProtocol.context(value):
-            return True
-        return hasattr(value, "__dict__") or bool(
-            hasattr(value, "bind") and hasattr(value, "info"),
+        is_sequence = isinstance(value, Sequence) and not isinstance(
+            value,
+            (str, bytes, bytearray),
         )
+        is_bindable_logger = hasattr(value, "bind") and hasattr(value, "info")
+        is_registerable_value = any((
+            value is None,
+            isinstance(value, (str, int, float, bool, Path, Mapping)),
+            is_sequence,
+        ))
+        is_service_shape = any((
+            FlextUtilitiesGuardsTypeProtocol.context(value),
+            hasattr(value, "__dict__"),
+            is_bindable_logger,
+        ))
+        return any((
+            is_registerable_value,
+            ugm.pydantic_model(value),
+            callable(value),
+            is_service_shape,
+        ))
 
     @staticmethod
     def _run_string_type_check(type_name: str, value: t.GuardInput) -> bool:

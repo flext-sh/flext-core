@@ -47,8 +47,10 @@ from typing import (
     no_type_check,
 )
 
-from beartype._util.func.utilfunctest import (  # noqa: PLC2701 - beartype-internal function introspection
+from beartype._util.func.utilfunccodeobj import (  # noqa: PLC2701 - beartype-internal function introspection
     get_func_code_object_or_none,
+)
+from beartype._util.func.utilfunctest import (  # noqa: PLC2701 - beartype-internal function introspection
     is_func_python,
 )
 from beartype._util.module.utilmodget import (  # noqa: PLC2701 - beartype-internal module introspection
@@ -238,14 +240,15 @@ class FlextUtilitiesBeartypeEngine:
     def mutable_kind(value: tp.JsonValue) -> str | None:
         for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
             if isinstance(value, kind):
-                return kind.__name__
+                return str(kind.__name__)
         return None
 
     @staticmethod
     def mutable_default_factory_kind(factory: _DefaultFactory) -> type | None:
         for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
-            if factory is kind or get_origin(factory) is kind:
-                return kind
+            runtime_type: type = kind
+            if factory is runtime_type or get_origin(factory) is runtime_type:
+                return runtime_type
         return None
 
     @staticmethod
@@ -394,7 +397,7 @@ class FlextUtilitiesBeartypeEngine:
         """
         if "." in target.__qualname__:
             return None
-        module = get_object_module_or_none(target)
+        module: _types_mod.ModuleType | None = get_object_module_or_none(target)
         if module is None:
             return None
         # Only audit classes that are top-level bindings in their declared
@@ -462,7 +465,7 @@ class FlextUtilitiesBeartypeEngine:
         code = get_func_code_object_or_none(fn)
         if code is None:
             return ()
-        return code.co_varnames[: code.co_argcount]
+        return tuple(str(name) for name in code.co_varnames[: code.co_argcount])
 
     @staticmethod
     def is_pass_through_bytecode(
@@ -857,56 +860,74 @@ class FlextUtilitiesBeartypeEngine:
         target: type,
     ) -> t.StrMapping | None:
         """MRO_SHAPE — facade base ordering and inner-namespace redundancy."""
-        aliases = {"t", "m", "p", "c", "u", "r", "s", "x", "d", "e", "h"}
+        aliases = cp.RUNTIME_ALIAS_NAMES
         if not target.__bases__:
             return _NO_VIOLATION
+        base_count = len(target.__bases__)
         first_base = target.__bases__[0]
         first_name = getattr(first_base, "__name__", "")
-        if params.require_alias_first:
-            min_multi_parent = 2
-            if len(target.__bases__) >= min_multi_parent and first_name not in aliases:
-                return {"bases": str(len(target.__bases__)), "first": first_name}
-            if first_name not in aliases and first_name.startswith("Flext"):
-                return {"base": first_name, "expected": "alias or FlextPeerXxx"}
-        if params.forbid_redundant_inner and "." in target.__qualname__:
-            outer_name = target.__qualname__.split(".")[0]
-            base_qualname = getattr(first_base, "__qualname__", "")
-            # Redundant inner = nested class whose first base IS the outer
-            # container AND whose own ``__dict__`` carries no real members
-            # (only Python-injected ``__module__``/``__qualname__``/``__doc__``).
-            empty_body = all(
-                key.startswith("__") and key.endswith("__") for key in vars(target)
+        requires_alias_first = params.require_alias_first and first_name not in aliases
+        min_multi_parent = 2
+        alias_violation = next(
+            (
+                payload
+                for enabled, payload in (
+                    (
+                        requires_alias_first and base_count >= min_multi_parent,
+                        {"bases": str(base_count), "first": first_name},
+                    ),
+                    (
+                        requires_alias_first and first_name.startswith("Flext"),
+                        {"base": first_name, "expected": "alias or FlextPeerXxx"},
+                    ),
+                )
+                if enabled
+            ),
+            _NO_VIOLATION,
+        )
+        outer_name, separator, _ = target.__qualname__.partition(".")
+        redundant_inner_violation = (
+            {"class": target.__qualname__}
+            if alias_violation is None
+            and params.forbid_redundant_inner
+            and bool(separator)
+            and getattr(first_base, "__qualname__", "") == outer_name
+            and all(key.startswith("__") and key.endswith("__") for key in vars(target))
+            else _NO_VIOLATION
+        )
+        violation = alias_violation or redundant_inner_violation
+        module = (
+            ube.runtime_module_for(target)
+            if violation is None and params.require_explicit_class_when_self_ref
+            else None
+        )
+        src_file = (
+            (get_module_filename_or_none(module) or "") if module is not None else ""
+        )
+        package = module.__name__.split(".")[0] if module is not None else ""
+        normalized_values = (
+            value.__func__ if isinstance(value, (classmethod, staticmethod)) else value
+            for value in vars(target).values()
+        )
+        self_ref_violation = (
+            {"class": target.__name__, "first_base": "u"}
+            if all((
+                violation is None,
+                module is not None,
+                src_file.endswith("utilities.py"),
+                package not in c.ENFORCEMENT_PATTERN_B_UTILITIES_WHITELIST,
+                base_count >= min_multi_parent,
+                first_name == "u",
+            ))
+            and any(
+                (code := get_func_code_object_or_none(value)) is not None
+                and "u" in code.co_names
+                for value in normalized_values
+                if is_func_python(value)
             )
-            if base_qualname == outer_name and empty_body:
-                return {"class": target.__qualname__}
-        if params.require_explicit_class_when_self_ref:
-            module = ube.runtime_module_for(target)
-            if module is None:
-                return _NO_VIOLATION
-            src_file = get_module_filename_or_none(module) or ""
-            module_name = module.__name__
-            package = module_name.split(".")[0]
-            min_multi_parent = 2
-            is_eligible = (
-                src_file.endswith("utilities.py")
-                and package not in c.ENFORCEMENT_PATTERN_B_UTILITIES_WHITELIST
-                and len(target.__bases__) >= min_multi_parent
-                and first_name == "u"
-            )
-            if is_eligible:
-                # Self-referencing utility = at least one method in
-                # ``target.__dict__`` whose code object references the alias
-                # ``u`` as a global. Detect via bytecode without re-reading
-                # source.
-                for value in vars(target).values():
-                    if isinstance(value, (classmethod, staticmethod)):
-                        value = value.__func__
-                    if not is_func_python(value):
-                        continue
-                    code = get_func_code_object_or_none(value)
-                    if code is not None and "u" in code.co_names:
-                        return {"class": target.__name__, "first_base": "u"}
-        return _NO_VIOLATION
+            else _NO_VIOLATION
+        )
+        return violation or self_ref_violation
 
     @staticmethod
     def _v_loose_symbol(
@@ -920,35 +941,54 @@ class FlextUtilitiesBeartypeEngine:
             (target, expected_prefix) → name-prefix check.
 
         """
-        if not args:
-            return _NO_VIOLATION
-        target = args[0]
-        if not isinstance(target, type):
-            return _NO_VIOLATION
-        if params.require_settings_base and target.__name__.endswith("Settings"):
-            if "." in target.__qualname__ or target.__name__ == "FlextSettings":
+        match args:
+            case (target, expected_prefix, *_) if isinstance(
+                target, type
+            ) and isinstance(
+                expected_prefix,
+                str,
+            ):
+                has_expected_prefix = True
+                expected_prefix_text = expected_prefix
+            case (target, *_) if isinstance(target, type):
+                has_expected_prefix = False
+                expected_prefix_text = ""
+            case _:
                 return _NO_VIOLATION
-            for base in target.__mro__[1:]:
-                if base.__name__ == "FlextSettings":
-                    return _NO_VIOLATION
-            return {"name": target.__name__}
-        if len(args) < _BINARY_ARITY:
-            return _NO_VIOLATION
-        expected_prefix = args[1]
-        if not isinstance(expected_prefix, str):
-            return _NO_VIOLATION
+        target_name = target.__name__
+        is_top_level = "." not in target.__qualname__
+        allowed_prefixes: tuple[str, ...] = tuple(params.allowed_prefixes)
         skip_roots = (
             c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | c.ENFORCEMENT_INFRASTRUCTURE_BASES
         )
-        if "." in target.__qualname__ or target.__name__ in skip_roots:
-            return _NO_VIOLATION
-        if params.allowed_prefixes and any(
-            target.__name__.startswith(p) for p in params.allowed_prefixes
-        ):
-            return _NO_VIOLATION
-        if expected_prefix and target.__name__.startswith(expected_prefix):
-            return _NO_VIOLATION
-        return {"expected": expected_prefix, "actual": target.__name__}
+        settings_violation = (
+            params.require_settings_base
+            and target_name.endswith("Settings")
+            and is_top_level
+            and target_name != "FlextSettings"
+            and not any(base.__name__ == "FlextSettings" for base in target.__mro__[1:])
+        )
+        allowed_prefix_match = (
+            has_expected_prefix
+            and bool(allowed_prefixes)
+            and any(target_name.startswith(prefix) for prefix in allowed_prefixes)
+        )
+        prefix_violation = (
+            has_expected_prefix
+            and is_top_level
+            and target_name not in skip_roots
+            and not allowed_prefix_match
+            and not (
+                expected_prefix_text and target_name.startswith(expected_prefix_text)
+            )
+        )
+        return (
+            {"name": target_name}
+            if settings_violation
+            else {"expected": expected_prefix_text, "actual": target_name}
+            if prefix_violation
+            else _NO_VIOLATION
+        )
 
     @staticmethod
     def _v_wrapper(
@@ -997,41 +1037,39 @@ class FlextUtilitiesBeartypeEngine:
         filename = Path(src_file).name
         module_name = module.__name__
         if filename in c.ENFORCEMENT_CANONICAL_FILES and not params.forbidden_symbols:
-            for name, value in vars(module).items():
-                if not isinstance(value, type) or not name.startswith("Flext"):
-                    continue
-                origin = get_object_module_name_or_none(value) or ""
-                if origin.startswith("flext_") and origin != module_name:
-                    return {"file": filename, "import": name}
+            canonical_import = next(
+                (
+                    {"file": filename, "import": name}
+                    for name, value in vars(module).items()
+                    if isinstance(value, type)
+                    and name.startswith("Flext")
+                    and (
+                        origin := get_object_module_name_or_none(value) or ""
+                    ).startswith("flext_")
+                    and origin != module_name
+                ),
+                None,
+            )
+            return canonical_import or _NO_VIOLATION
+        if not params.forbidden_symbols:
             return _NO_VIOLATION
-        if params.forbidden_symbols:
-            if module_name.startswith("flext_core._") or any(
-                module_name.startswith(f"{pkg}._")
-                for pkg in (
-                    "flext_cli",
-                    "flext_web",
-                    "flext_meltano",
-                    "flext_ldap",
-                    "flext_api",
-                    "flext_auth",
-                    "flext_infra",
-                    "flext_tests",
-                    "flext_observability",
-                )
-            ):
-                return _NO_VIOLATION
-            forbidden = frozenset(params.forbidden_symbols)
-            allowed_roots = tuple(params.forbidden_modules) or ("pydantic",)
-            for name, value in vars(module).items():
-                if name not in forbidden:
-                    continue
-                origin = get_object_module_name_or_none(value) or ""
-                origin_root = origin.split(".")[0]
-                if origin_root in allowed_roots:
-                    return {
-                        "import": name,
-                        "package": module_name.split(".")[0],
-                    }
+        package = module_name.split(".")[0]
+        if package.startswith("flext_") and module_name.startswith(f"{package}._"):
+            return _NO_VIOLATION
+        forbidden = frozenset(params.forbidden_symbols)
+        allowed_roots = frozenset(params.forbidden_modules) or frozenset({"pydantic"})
+        banned_import = next(
+            (
+                {"import": name, "package": package}
+                for name, value in vars(module).items()
+                if name in forbidden
+                and ((get_object_module_name_or_none(value) or "").split(".")[0])
+                in allowed_roots
+            ),
+            None,
+        )
+        if banned_import is not None:
+            return banned_import
         return _NO_VIOLATION
 
     @staticmethod
@@ -1058,20 +1096,14 @@ class FlextUtilitiesBeartypeEngine:
             and filename in c.ENFORCEMENT_CANONICAL_FILES
         ):
             target_name = target.__name__
-            alias_char: str | None = None
-            match target_name:
-                case value if "Types" in value:
-                    alias_char = "t"
-                case value if "Models" in value:
-                    alias_char = "m"
-                case value if "Protocols" in value:
-                    alias_char = "p"
-                case value if "Constants" in value:
-                    alias_char = "c"
-                case value if "Utilities" in value:
-                    alias_char = "u"
-                case _:
-                    alias_char = None
+            alias_char: str | None = next(
+                (
+                    alias_name
+                    for alias_name, suffix in cp.ALIAS_TO_SUFFIX.items()
+                    if alias_name in cp.FACADE_ALIAS_NAMES and suffix in target_name
+                ),
+                None,
+            )
             if alias_char and getattr(module, alias_char, None) is not target:
                 return {"alias": alias_char, "class": target_name}
             return _NO_VIOLATION
@@ -1084,7 +1116,7 @@ class FlextUtilitiesBeartypeEngine:
             # same package root we are inspecting (i.e. ``flext_core``
             # importing ``c`` from ``flext_core`` instead of from parent),
             # flag the violation.
-            for alias_char in ("c", "m", "p", "t", "u", "r"):
+            for alias_char in cp.RUNTIME_ALIAS_NAMES:
                 alias_value = getattr(module, alias_char, None)
                 if alias_value is None:
                     continue

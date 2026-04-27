@@ -144,28 +144,32 @@ class FlextDispatcher:
                 resolved_handler = handler.handle
             case p.Execute():
                 resolved_handler = handler.execute
+            case callable_handler if callable(callable_handler):
+                resolved_handler = callable_handler
             case _:
-                if not callable(handler):
-                    return r[bool].fail_op(
-                        "register handler",
-                        c.ERR_HANDLER_MUST_BE_CALLABLE,
-                    )
-                resolved_handler = handler
+                return r[bool].fail_op(
+                    "register handler",
+                    c.ERR_HANDLER_MUST_BE_CALLABLE,
+                )
         handler_message_type = getattr(handler, "message_type", None)
-        if isinstance(handler_message_type, str):
-            route_name = handler_message_type
-        elif handler_message_type is not None:
-            try:
-                route_name = u.resolve_message_route(handler_message_type)
-            except (TypeError, ValueError):
-                route_name = None
-        if route_name is None and accepted_message_types:
-            first_accepted = accepted_message_types[0]
-            if isinstance(first_accepted, (str, type)):
-                try:
-                    route_name = u.resolve_message_route(first_accepted)
-                except (TypeError, ValueError):
-                    route_name = None
+        route_candidates: tuple[t.TypeHintSpecifier | str | None, ...] = (
+            handler_message_type,
+            accepted_message_types[0] if accepted_message_types else None,
+        )
+        for candidate in route_candidates:
+            match candidate:
+                case None:
+                    continue
+                case str() as route_text:
+                    route_name = route_text
+                case type() as route_type:
+                    try:
+                        route_name = u.resolve_message_route(route_type)
+                    except (TypeError, ValueError):
+                        continue
+                case _:
+                    continue
+            break
         if route_name is None:
             if is_auto_discoverable:
                 self._auto_handlers.append((

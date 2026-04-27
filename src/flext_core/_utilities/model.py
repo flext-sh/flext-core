@@ -17,7 +17,6 @@ from flext_core import (
     FlextModelsBase as m,
     FlextModelsPydantic as mp,
     FlextUtilitiesArgs as ua,
-    FlextUtilitiesPydantic as up,
     c,
     e,
     p,
@@ -32,32 +31,32 @@ class FlextUtilitiesModel:
     class ModelDumpOptions(m.FlexibleInternalModel):
         """Options controlling Pydantic model_dump() serialization behavior."""
 
-        by_alias: bool | None = up.Field(
+        by_alias: bool | None = mp.Field(
             None,
             description="Serialize using field aliases",
             validate_default=True,
         )
-        exclude_none: bool | None = up.Field(
+        exclude_none: bool | None = mp.Field(
             None,
             description="Exclude None-valued fields",
             validate_default=True,
         )
-        exclude_unset: bool | None = up.Field(
+        exclude_unset: bool | None = mp.Field(
             None,
             description="Exclude fields not explicitly set",
             validate_default=True,
         )
-        exclude_defaults: bool | None = up.Field(
+        exclude_defaults: bool | None = mp.Field(
             None,
             description="Exclude fields matching defaults",
             validate_default=True,
         )
-        include: set[str] | None = up.Field(
+        include: set[str] | None = mp.Field(
             None,
             description="Whitelist of field names to include",
             validate_default=True,
         )
-        exclude: set[str] | None = up.Field(
+        exclude: set[str] | None = mp.Field(
             None,
             description="Blacklist of field names to exclude",
             validate_default=True,

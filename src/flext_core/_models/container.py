@@ -45,7 +45,7 @@ class FlextModelsContainer:
 
         name: Annotated[
             t.NonEmptyStr,
-            up.Field(
+            mp.Field(
                 ...,
                 description="Service identifier/name",
             ),
@@ -53,13 +53,13 @@ class FlextModelsContainer:
         service: Annotated[
             t.RegisterableService,
             tp.SkipValidation,
-            up.Field(
+            mp.Field(
                 ..., description="Service instance (protocols, models, callables)"
             ),
         ]
         registration_time: Annotated[
             datetime,
-            up.Field(
+            mp.Field(
                 default_factory=lambda: datetime.now(UTC),
                 description="UTC timestamp when service was registered",
             ),
@@ -72,21 +72,21 @@ class FlextModelsContainer:
                     m.Metadata,
                 ),
             ),
-            up.Field(
+            mp.Field(
                 None,
                 description="Additional service metadata (JSON-serializable)",
             ),
         ] = None
         service_type: Annotated[
             str | None,
-            up.Field(
+            mp.Field(
                 None,
                 description="Service type name (e.g., 'DatabaseService')",
             ),
         ] = None
         tags: Annotated[
             t.StrSequence,
-            up.Field(
+            mp.Field(
                 default_factory=tuple, description="Service tags for categorization"
             ),
         ]
@@ -114,7 +114,7 @@ class FlextModelsContainer:
 
         name: Annotated[
             t.NonEmptyStr,
-            up.Field(
+            mp.Field(
                 ...,
                 description="Factory identifier/name",
             ),
@@ -122,20 +122,20 @@ class FlextModelsContainer:
         factory: Annotated[
             t.FactoryCallable,
             tp.SkipValidation,
-            up.Field(
+            mp.Field(
                 ..., description="Factory function that creates service instances"
             ),
         ]
         registration_time: Annotated[
             datetime,
-            up.Field(
+            mp.Field(
                 default_factory=lambda: datetime.now(UTC),
                 description="UTC timestamp when factory was registered",
             ),
         ]
         is_singleton: Annotated[
             bool,
-            up.Field(
+            mp.Field(
                 False,
                 description="Whether factory creates singleton instances",
             ),
@@ -143,7 +143,7 @@ class FlextModelsContainer:
         cached_instance: Annotated[
             t.RegisterableService | None,
             tp.SkipValidation,
-            up.Field(
+            mp.Field(
                 None,
                 description="Cached singleton instance (if is_singleton=True)",
             ),
@@ -156,14 +156,14 @@ class FlextModelsContainer:
                     m.Metadata,
                 ),
             ),
-            up.Field(
+            mp.Field(
                 None,
                 description="Additional factory metadata (JSON-serializable)",
             ),
         ] = None
         invocation_count: Annotated[
             t.NonNegativeInt,
-            up.Field(
+            mp.Field(
                 c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of times factory has been invoked",
             ),
@@ -180,7 +180,7 @@ class FlextModelsContainer:
 
         name: Annotated[
             t.NonEmptyStr,
-            up.Field(
+            mp.Field(
                 ...,
                 description="Resource identifier/name",
             ),
@@ -188,13 +188,13 @@ class FlextModelsContainer:
         factory: Annotated[
             t.ResourceCallable,
             tp.SkipValidation,
-            up.Field(
+            mp.Field(
                 ..., description="Factory returning the lifecycle-managed resource"
             ),
         ]
         registration_time: Annotated[
             datetime,
-            up.Field(
+            mp.Field(
                 default_factory=lambda: datetime.now(UTC),
                 description="UTC timestamp when resource was registered",
             ),
@@ -207,7 +207,7 @@ class FlextModelsContainer:
                     m.Metadata,
                 ),
             ),
-            up.Field(
+            mp.Field(
                 None,
                 description="Additional resource metadata (JSON-serializable)",
             ),
@@ -222,21 +222,21 @@ class FlextModelsContainer:
 
         enable_singleton: Annotated[
             bool,
-            up.Field(
+            mp.Field(
                 True,
                 description="Enable singleton pattern for factories",
             ),
         ] = True
         enable_factory_caching: Annotated[
             bool,
-            up.Field(
+            mp.Field(
                 True,
                 description="Enable caching of factory-created instances",
             ),
         ] = True
         max_services: Annotated[
             t.PositiveInt,
-            up.Field(
+            mp.Field(
                 c.DEFAULT_SIZE,
                 le=c.MAX_ITEMS,
                 description="Maximum number of services allowed in registry",
@@ -244,7 +244,7 @@ class FlextModelsContainer:
         ] = c.DEFAULT_SIZE
         max_factories: Annotated[
             t.PositiveInt,
-            up.Field(
+            mp.Field(
                 c.DEFAULT_MAX_FACTORIES,
                 le=c.MAX_FACTORIES,
                 description="Maximum number of factories allowed in registry",
@@ -252,21 +252,21 @@ class FlextModelsContainer:
         ] = c.DEFAULT_MAX_FACTORIES
         enable_auto_registration: Annotated[
             bool,
-            up.Field(
+            mp.Field(
                 False,
                 description="Enable automatic service registration from decorators",
             ),
         ] = False
         enable_lifecycle_hooks: Annotated[
             bool,
-            up.Field(
+            mp.Field(
                 True,
                 description="Enable lifecycle hooks (on_register, on_get, etc.)",
             ),
         ] = True
         lazy_loading: Annotated[
             bool,
-            up.Field(
+            mp.Field(
                 True,
                 description="Enable lazy loading of services",
             ),
@@ -287,7 +287,7 @@ class FlextModelsContainer:
         settings: Annotated[
             p.Settings | None,
             tp.SkipValidation,
-            up.Field(
+            mp.Field(
                 None,
                 title="Config",
                 description="Settings instance bound to the container runtime.",
@@ -296,14 +296,14 @@ class FlextModelsContainer:
         context: Annotated[
             p.Context | None,
             tp.SkipValidation,
-            up.Field(
+            mp.Field(
                 None,
                 title="Context",
                 description="Execution context attached to the container.",
             ),
         ]
         services: Mapping[str, FlextModelsContainer.ServiceRegistration] | None = (
-            up.Field(
+            mp.Field(
                 None,
                 title="Services",
                 description="Pre-registered service instances for bootstrap.",
@@ -311,7 +311,7 @@ class FlextModelsContainer:
             )
         )
         factories: Mapping[str, FlextModelsContainer.FactoryRegistration] | None = (
-            up.Field(
+            mp.Field(
                 None,
                 title="Factories",
                 description="Pre-registered factory callables for bootstrap.",
@@ -319,7 +319,7 @@ class FlextModelsContainer:
             )
         )
         resources: Mapping[str, FlextModelsContainer.ResourceRegistration] | None = (
-            up.Field(
+            mp.Field(
                 None,
                 title="Resources",
                 description="Pre-registered resource factories for bootstrap.",
@@ -330,13 +330,13 @@ class FlextModelsContainer:
             FlextModelsContainers.ConfigMap
             | Mapping[str, FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar]
             | None
-        ) = up.Field(
+        ) = mp.Field(
             None,
             title="User Overrides",
             description="User-level configuration overrides applied after defaults.",
             validate_default=True,
         )
-        container_config: FlextModelsContainer.ContainerConfig | None = up.Field(
+        container_config: FlextModelsContainer.ContainerConfig | None = mp.Field(
             None,
             title="Container Config",
             description="Container configuration model controlling DI behavior.",
@@ -369,21 +369,21 @@ class FlextModelsContainer:
 
         name: Annotated[
             t.NonEmptyStr,
-            up.Field(
+            mp.Field(
                 ...,
                 description="Name to register this factory under in the container",
             ),
         ]
         singleton: Annotated[
             bool,
-            up.Field(
+            mp.Field(
                 False,
                 description="Whether factory creates singleton instances",
             ),
         ] = False
         lazy: Annotated[
             bool,
-            up.Field(
+            mp.Field(
                 True,
                 description="Whether to defer factory invocation until first use",
             ),

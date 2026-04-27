@@ -55,19 +55,19 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
         """Get a value from the context (fail-fast, no default fallback)."""
         if not self.state.active:
             return r[t.JsonPayload].fail_op(
-                "get context value", c.ERR_CONTEXT_NOT_ACTIVE
+                c.ContextCrudOperation.GET_VALUE, c.ERR_CONTEXT_NOT_ACTIVE
             )
         scope_data = self._contextvar_data(scope)
         if key not in scope_data:
             return r[t.JsonPayload].fail_op(
-                "resolve context key",
+                c.ContextCrudOperation.RESOLVE_KEY,
                 f"Context key '{key}' not found in scope '{scope}'",
             )
         value = scope_data[key]
         self._update_statistics(c.ContextOperation.GET.value)
         if value is None:
             return r[t.JsonPayload].fail_op(
-                "resolve context key value",
+                c.ContextCrudOperation.RESOLVE_KEY_VALUE,
                 f"Context key '{key}' has None value in scope '{scope}'",
             )
         return r[t.JsonPayload].ok(FlextRuntime.normalize_to_container(value))
@@ -110,7 +110,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
             _ = ctx_var.set(m.ConfigMap(root=dict(filtered)))
         except (TypeError, ValueError, AttributeError) as exc:
             self.logger.debug(
-                "Failed to validate context after removal",
+                c.LOG_CONTEXT_REMOVAL_FAILED,
                 exc_info=exc,
             )
         self._update_statistics(c.ContextOperation.REMOVE.value)
@@ -142,17 +142,19 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
     ) -> p.Result[bool]:
         """Set one or many values in the context."""
         if not self.state.active:
-            return r[bool].fail_op("set context value", c.ERR_CONTEXT_NOT_ACTIVE)
+            return r[bool].fail_op(
+                c.ContextCrudOperation.SET_VALUE, c.ERR_CONTEXT_NOT_ACTIVE
+            )
 
         if isinstance(key_or_data, str):
             if value is None:
                 return r[bool].fail_op(
-                    "set single context value",
+                    c.ContextCrudOperation.SET_SINGLE_VALUE,
                     c.ERR_CONTEXT_SINGLE_KEY_VALUE_REQUIRED,
                 )
             if not key_or_data:
                 return r[bool].fail_op(
-                    "validate context key",
+                    c.ContextCrudOperation.VALIDATE_KEY,
                     c.ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED,
                 )
             normalized_value = FlextRuntime.normalize_to_container(value)
@@ -161,7 +163,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
                 (str, int, float, bool, bytes, datetime, Path, list, dict, tuple),
             ):
                 return r[bool].fail_op(
-                    "validate context value serializable",
+                    c.ContextCrudOperation.VALIDATE_VALUE,
                     c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
                 )
             payload: t.JsonMapping = {key_or_data: normalized_value}
@@ -179,7 +181,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
                 (str, int, float, bool, bytes, datetime, Path, list, dict, tuple),
             ):
                 return r[bool].fail_op(
-                    "validate context payload serializable",
+                    c.ContextCrudOperation.VALIDATE_PAYLOAD,
                     c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
                 )
             if isinstance(normalized_payload, m.BaseModel):
@@ -194,7 +196,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
             self._execute_hooks(c.ContextOperation.SET.value, hook_context)
             return r[bool].ok(True)
         except TypeError as exc:
-            return e.fail_operation("apply context update", exc)
+            return e.fail_operation(c.ContextCrudOperation.APPLY_UPDATE, exc)
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextUtilitiesContextCrud"]

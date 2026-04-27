@@ -14,7 +14,7 @@ from typing import Annotated
 
 from flext_core import (
     FlextModelsBase as m,
-    FlextUtilitiesPydantic as up,
+    FlextModelsPydantic as mp,
     t,
 )
 
@@ -27,7 +27,7 @@ class FlextModelsCollections:
 
         eq: Annotated[
             t.JsonValue | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Equals",
                 description="Require the value to equal this value.",
@@ -35,7 +35,7 @@ class FlextModelsCollections:
         ] = None
         ne: Annotated[
             t.JsonValue | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Not Equals",
                 description="Require the value to differ from this value.",
@@ -43,7 +43,7 @@ class FlextModelsCollections:
         ] = None
         gt: Annotated[
             float | str | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Greater Than",
                 description="Require value to be greater than this (sortable: numeric or string).",
@@ -51,7 +51,7 @@ class FlextModelsCollections:
         ] = None
         gte: Annotated[
             float | str | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Greater Than Or Equal",
                 description="Require value to be greater than or equal to this (sortable: numeric or string).",
@@ -59,7 +59,7 @@ class FlextModelsCollections:
         ] = None
         lt: Annotated[
             float | str | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Less Than",
                 description="Require value to be less than this (sortable: numeric or string).",
@@ -67,7 +67,7 @@ class FlextModelsCollections:
         ] = None
         lte: Annotated[
             float | str | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Less Than Or Equal",
                 description="Require value to be less than or equal to this (sortable: numeric or string).",
@@ -75,7 +75,7 @@ class FlextModelsCollections:
         ] = None
         is_: Annotated[
             type | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Is Type",
                 description="Require the value to be an instance of this type.",
@@ -83,7 +83,7 @@ class FlextModelsCollections:
         ] = None
         not_: Annotated[
             type | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Not Type",
                 description="Require the value to not be an instance of this type.",
@@ -91,7 +91,7 @@ class FlextModelsCollections:
         ] = None
         in_: Annotated[
             t.JsonList | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="In Values",
                 description="Require the value to be present in this sequence.",
@@ -99,7 +99,7 @@ class FlextModelsCollections:
         ] = None
         not_in: Annotated[
             t.JsonList | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Not In Values",
                 description="Require the value to not be present in this sequence.",
@@ -107,7 +107,7 @@ class FlextModelsCollections:
         ] = None
         none: Annotated[
             bool | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="None Constraint",
                 description="When True, require None. When False, require non-None.",
@@ -115,7 +115,7 @@ class FlextModelsCollections:
         ] = None
         empty: Annotated[
             bool | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Empty Constraint",
                 description="When True, require empty value; when False, require non-empty.",
@@ -123,7 +123,7 @@ class FlextModelsCollections:
         ] = None
         match: Annotated[
             str | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Regex Match",
                 description="Require string value to match this regular expression.",
@@ -131,7 +131,7 @@ class FlextModelsCollections:
         ] = None
         contains: Annotated[
             t.JsonValue | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Contains",
                 description="Require string or iterable value to contain this item.",
@@ -139,7 +139,7 @@ class FlextModelsCollections:
         ] = None
         starts: Annotated[
             str | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Starts With",
                 description="Require string value to start with this prefix.",
@@ -147,7 +147,7 @@ class FlextModelsCollections:
         ] = None
         ends: Annotated[
             str | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 title="Ends With",
                 description="Require string value to end with this suffix.",

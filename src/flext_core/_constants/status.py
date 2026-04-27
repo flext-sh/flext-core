@@ -30,6 +30,20 @@ class FlextConstantsStatus:
         SET = "set"
 
     @unique
+    class ContextCrudOperation(StrEnum):
+        """Verbose operation labels used in context CRUD fail_op calls (SSOT)."""
+
+        GET_VALUE = "get context value"
+        RESOLVE_KEY = "resolve context key"
+        RESOLVE_KEY_VALUE = "resolve context key value"
+        SET_VALUE = "set context value"
+        SET_SINGLE_VALUE = "set single context value"
+        VALIDATE_KEY = "validate context key"
+        VALIDATE_VALUE = "validate context value serializable"
+        VALIDATE_PAYLOAD = "validate context payload serializable"
+        APPLY_UPDATE = "apply context update"
+
+    @unique
     class Currency(StrEnum):
         """Currency enumeration for monetary operations."""
 

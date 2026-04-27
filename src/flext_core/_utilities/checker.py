@@ -173,7 +173,7 @@ class FlextUtilitiesChecker:
         signature = signature_result.unwrap()
         type_hints = cls._get_type_hints_safe(handle_method_raw, handler_class)
         for name, parameter in signature.parameters.items():
-            if name == "self":
+            if name == c.FRAME_SELF_KEY:
                 continue
             return cls._extract_message_type_from_parameter(parameter, type_hints, name)
         return r[t.TypeHintSpecifier].fail(c.ERR_CHECKER_NO_MESSAGE_PARAMETER)

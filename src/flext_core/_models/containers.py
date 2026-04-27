@@ -27,7 +27,6 @@ from typing import Annotated
 
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.services import FlextTypesServices
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
 
 class FlextModelsContainers:
@@ -38,7 +37,7 @@ class FlextModelsContainers:
 
         root: Annotated[
             FlextTypesServices.ValidatorCallable,
-            up.Field(
+            mp.Field(
                 title="Validator Callable",
                 description="Callable that validates or transforms one scalar/model input value.",
                 examples=["identity_validator"],
@@ -129,7 +128,7 @@ class FlextModelsContainers:
 
         root: Annotated[
             dict[str, FlextTypesServices.JsonPayload],
-            up.Field(description="Validated runtime key-value mapping."),
+            mp.Field(description="Validated runtime key-value mapping."),
         ]
 
     class ConfigMap(_MappingRootBase):
@@ -137,7 +136,7 @@ class FlextModelsContainers:
 
         root: Annotated[
             dict[str, FlextTypesServices.JsonPayload],
-            up.Field(description="Validated runtime configuration mapping."),
+            mp.Field(description="Validated runtime configuration mapping."),
         ]
 
     class ObjectList(mp.RootModel[list[FlextTypesServices.JsonPayload]]):
@@ -148,7 +147,7 @@ class FlextModelsContainers:
 
         root: Annotated[
             list[FlextTypesServices.JsonPayload],
-            up.Field(description="Validated runtime sequence."),
+            mp.Field(description="Validated runtime sequence."),
         ]
 
         def __len__(self) -> int:

@@ -15,7 +15,6 @@ from typing import Annotated, ClassVar
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsPydantic as mp,
-    FlextUtilitiesPydantic as up,
     t,
 )
 
@@ -34,15 +33,15 @@ class FlextModelsExceptionParams:
 
     OptStrictStr: ClassVar = Annotated[
         str | None,
-        up.Field(default=None, strict=True),
+        mp.Field(default=None, strict=True),
     ]
     OptStrictInt: ClassVar = Annotated[
         int | None,
-        up.Field(default=None, strict=True),
+        mp.Field(default=None, strict=True),
     ]
     OptNumeric: ClassVar = Annotated[
         t.Numeric | None,
-        up.Field(default=None),
+        mp.Field(default=None),
     ]
 
     class ParamsModel(m.ArbitraryTypesModel):
@@ -61,13 +60,13 @@ class FlextModelsExceptionParams:
 
         resource_type: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 description="Domain resource type associated with the failure.",
             ),
         ] = None
         resource_id: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 description="Identifier of the resource associated with the failure.",
             ),
         ] = None
@@ -77,13 +76,13 @@ class FlextModelsExceptionParams:
 
         expected_type: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 description="Expected runtime type name for the failing value.",
             ),
         ] = None
         actual_type: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 description="Actual runtime type name received at runtime.",
             ),
         ] = None
@@ -93,7 +92,7 @@ class FlextModelsExceptionParams:
 
         field: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Name of the input field that failed validation.",
                 title="Field",
@@ -102,7 +101,7 @@ class FlextModelsExceptionParams:
         ] = None
         value: Annotated[
             t.JsonPayload | t.Scalar | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Rejected input value that triggered the validation error.",
             ),
@@ -113,13 +112,13 @@ class FlextModelsExceptionParams:
 
         config_key: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 description="Settings key associated with the error.",
             ),
         ] = None
         config_source: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 description="Settings source where the invalid value originated.",
             ),
         ] = None
@@ -129,19 +128,19 @@ class FlextModelsExceptionParams:
 
         host: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 description="Hostname or address used for the failed connection attempt.",
             ),
         ] = None
         port: Annotated[
             FlextModelsExceptionParams.OptStrictInt,
-            up.Field(
+            mp.Field(
                 description="Network port used for the failed connection attempt.",
             ),
         ] = None
         timeout: Annotated[
             FlextModelsExceptionParams.OptNumeric,
-            up.Field(
+            mp.Field(
                 description="Connection timeout threshold in seconds.",
             ),
         ] = None
@@ -151,7 +150,7 @@ class FlextModelsExceptionParams:
 
         timeout_seconds: Annotated[
             FlextModelsExceptionParams.OptNumeric,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Timeout duration in seconds that triggered this exception.",
                 title="Timeout Seconds",
@@ -160,7 +159,7 @@ class FlextModelsExceptionParams:
         ] = None
         operation: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Operation name that exceeded the configured timeout.",
                 title="Operation",
@@ -173,13 +172,13 @@ class FlextModelsExceptionParams:
 
         auth_method: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 description="Authentication method used when the failure occurred.",
             ),
         ] = None
         user_id: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 description="User identifier associated with the authentication attempt.",
             ),
         ] = None
@@ -189,7 +188,7 @@ class FlextModelsExceptionParams:
 
         user_id: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="User identifier denied access to a protected resource.",
                 title="User ID",
@@ -198,7 +197,7 @@ class FlextModelsExceptionParams:
         ] = None
         resource: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Protected resource that triggered the authorization failure.",
                 title="Resource",
@@ -207,7 +206,7 @@ class FlextModelsExceptionParams:
         ] = None
         permission: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Missing permission required to complete the requested action.",
                 title="Permission",
@@ -223,7 +222,7 @@ class FlextModelsExceptionParams:
 
         conflict_reason: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Human-readable explanation for why the conflict occurred.",
                 title="Conflict Reason",
@@ -236,7 +235,7 @@ class FlextModelsExceptionParams:
 
         limit: Annotated[
             FlextModelsExceptionParams.OptStrictInt,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Maximum request count allowed within the configured window.",
                 title="Limit",
@@ -245,7 +244,7 @@ class FlextModelsExceptionParams:
         ] = None
         window_seconds: Annotated[
             FlextModelsExceptionParams.OptStrictInt,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Duration, in seconds, of the rate-limit window.",
                 title="Window Seconds",
@@ -254,7 +253,7 @@ class FlextModelsExceptionParams:
         ] = None
         retry_after: Annotated[
             FlextModelsExceptionParams.OptNumeric,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Time in seconds clients should wait before retrying.",
                 title="Retry After",
@@ -267,19 +266,19 @@ class FlextModelsExceptionParams:
 
         service_name: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 description="External service monitored by the circuit breaker.",
             ),
         ] = None
         failure_count: Annotated[
             FlextModelsExceptionParams.OptStrictInt,
-            up.Field(
+            mp.Field(
                 description="Consecutive failure count at the moment the breaker opened.",
             ),
         ] = None
         reset_timeout: Annotated[
             FlextModelsExceptionParams.OptNumeric,
-            up.Field(
+            mp.Field(
                 description="Seconds before allowing a circuit breaker reset attempt.",
             ),
         ] = None
@@ -292,13 +291,13 @@ class FlextModelsExceptionParams:
 
         operation: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 description="Operation name associated with the failure.",
             ),
         ] = None
         reason: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 description="Short reason explaining the operation failure.",
             ),
         ] = None
@@ -308,7 +307,7 @@ class FlextModelsExceptionParams:
 
         service_name: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Service identifier requested from the container/registry.",
                 title="Service Name",
@@ -321,7 +320,7 @@ class FlextModelsExceptionParams:
 
         category: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Registry category for plugin registration.",
                 title="Category",
@@ -330,7 +329,7 @@ class FlextModelsExceptionParams:
         ] = None
         name: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Plugin name within a category.",
                 title="Plugin Name",
@@ -339,7 +338,7 @@ class FlextModelsExceptionParams:
         ] = None
         scope: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Registration scope used by registry operations.",
                 title="Scope",
@@ -352,7 +351,7 @@ class FlextModelsExceptionParams:
 
         attribute_name: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Attribute name that could not be accessed safely.",
                 title="Attribute Name",
@@ -361,7 +360,7 @@ class FlextModelsExceptionParams:
         ] = None
         attribute_context: Annotated[
             t.JsonValue | None,
-            up.Field(
+            mp.Field(
                 default=None,
                 description="Context payload describing the state during access failure.",
                 title="Attribute Context",

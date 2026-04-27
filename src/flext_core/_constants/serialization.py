@@ -31,4 +31,15 @@ class FlextConstantsSerialization:
         BZIP2 = "bzip2"
         LZ4 = "lz4"
 
+    @unique
+    class DecodeErrorHandler(StrEnum):
+        """Python bytes.decode error-handler identifiers (SSOT for ``errors=`` param)."""
+
+        REPLACE = "replace"
+        IGNORE = "ignore"
+        STRICT = "strict"
+        BACKSLASHREPLACE = "backslashreplace"
+        XMLCHARREFREPLACE = "xmlcharrefreplace"
+
     DEFAULT_ENCODING: Final[str] = "utf-8"
+    DEFAULT_DECODE_ERROR_HANDLER: Final[str] = DecodeErrorHandler.REPLACE
