@@ -31,10 +31,6 @@ class FlextUtilitiesChecker:
     to simplify handler initialization and provide reusable type checking.
     """
 
-    _HANDLER_GENERIC_ORIGIN_NAMES: ClassVar[frozenset[str]] = frozenset(
-        {"FlextHandlers", "h"},
-    )
-
     @staticmethod
     def _is_module_export_callable(
         value: Callable[..., t.ModuleExport] | t.GuardInput | None,
