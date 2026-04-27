@@ -233,8 +233,15 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         qualname: str,
         items: Iterator[tuple[str, tuple[object, ...]]],
     ) -> Sequence[me.Violation]:
-        """Apply the visitor for ``tag`` to each item; emit violation on non-None."""
-        kind, params = PREDICATE_BINDINGS[tag]
+        """Apply the visitor for ``tag`` to each item; emit violation on non-None.
+
+        Catalog rules without a runtime predicate binding (static-only or
+        beartype-driven entries keyed as ``ENFORCE-NNN``) are skipped gracefully.
+        """
+        binding = PREDICATE_BINDINGS.get(tag)
+        if binding is None:
+            return ()
+        kind, params = binding
         return [
             FlextUtilitiesEnforcement._violation(tag, location, qualname, detail)
             for location, args in items
@@ -327,7 +334,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         effective_layer = layer or FlextUtilitiesEnforcement.detect_layer(target) or ""
         is_model = issubclass(target, mp.BaseModel)
         qn = target.__qualname__
-        for tag, category in c._ENFORCEMENT_TAG_CATEGORY.items():
+        for tag, category in c.ENFORCEMENT_TAG_CATEGORY.items():
             rule_layer = ""  # Placeholder for future rule-layer dispatch
             items = FlextUtilitiesEnforcement._items_for(
                 target,

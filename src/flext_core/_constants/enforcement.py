@@ -202,7 +202,7 @@ class FlextConstantsEnforcement:
     # ENFORCEMENT_NAMESPACE_FACADE_ROOTS (Flext{Name}) and
     # ENFORCEMENT_NAMESPACE_LAYER_MAP ((Name, name.lower())) below — adding
     # a layer requires editing only this tuple.
-    _NAMESPACE_LAYER_NAMES: Final[tuple[str, ...]] = (
+    NAMESPACE_LAYER_NAMES: Final[tuple[str, ...]] = (
         "Constants",
         "Models",
         "Protocols",
@@ -211,13 +211,13 @@ class FlextConstantsEnforcement:
     )
 
     ENFORCEMENT_NAMESPACE_FACADE_ROOTS: Final[frozenset[str]] = frozenset(
-        {f"Flext{name}" for name in _NAMESPACE_LAYER_NAMES}
+        {f"Flext{name}" for name in NAMESPACE_LAYER_NAMES}
         | {"FlextModelsBase", "FlextModelsNamespace", "EnforcedModel"},
     )
     """Root facade class names — skip namespace prefix check on these."""
 
     ENFORCEMENT_NAMESPACE_LAYER_MAP: Final[tuple[tuple[str, str], ...]] = tuple(
-        (name, name.lower()) for name in _NAMESPACE_LAYER_NAMES
+        (name, name.lower()) for name in NAMESPACE_LAYER_NAMES
     )
     """Class name suffix → layer name mapping for cross-layer detection."""
 
@@ -313,7 +313,7 @@ class FlextConstantsEnforcement:
     # Mapping tags to their (problem_template, fix_template, category).
     # New code should use m.EnforcementCatalog instead.
 
-    _ENFORCEMENT_TAG_CATEGORY: Final[Mapping[str, EnforcementCategory]] = MappingProxyType({
+    ENFORCEMENT_TAG_CATEGORY: Final[Mapping[str, EnforcementCategory]] = MappingProxyType({
         "no_any": EnforcementCategory.FIELD,
         "no_bare_collection": EnforcementCategory.FIELD,
         "no_mutable_default": EnforcementCategory.FIELD,
