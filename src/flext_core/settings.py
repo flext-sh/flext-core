@@ -24,10 +24,10 @@ from pathlib import Path
 from typing import Annotated, ClassVar, Self, override
 
 from pydantic import (
+    BeforeValidator,
     Field,
     PrivateAttr,
     computed_field,
-    field_validator,
     model_validator,
 )
 from pydantic_settings import (
@@ -154,7 +154,13 @@ class FlextSettings(BaseSettings):
     version: Annotated[str, Field(description="Application version")] = __version__
     debug: Annotated[bool, Field(description="Enable debug mode")] = False
     trace: Annotated[bool, Field(description="Enable trace mode")] = False
-    log_level: Annotated[c.LogLevel, Field(description="Log level")] = c.LogLevel.INFO
+    log_level: Annotated[
+        c.LogLevel,
+        BeforeValidator(
+            lambda v: c.LogLevel(v.upper()) if isinstance(v, str) else v
+        ),
+        Field(description="Log level"),
+    ] = c.LogLevel.INFO
     async_logging: Annotated[
         bool,
         Field(
@@ -374,12 +380,6 @@ class FlextSettings(BaseSettings):
             raise RuntimeError(msg)
         return provider
 
-    @field_validator("log_level", mode="before")
-    @classmethod
-    def _normalize_log_level(cls, v: str) -> str:
-        """Normalize log level to uppercase before enum validation."""
-        return v.upper()
-
     @model_validator(mode="after")
     def _validate_settings(self) -> Self:
         """Validate settings.
@@ -460,9 +460,16 @@ class FlextSettings(BaseSettings):
         base = cls.fetch_global()
         context_overrides = cls._context_overrides.get(context_id, {})
         all_overrides = {**context_overrides, **overrides}
-        if all_overrides:
-            return base.model_copy(update=all_overrides)
-        return base
+        if not all_overrides:
+            return base
+        copied = base.model_copy(update=all_overrides)
+        # ``model_copy(update=...)`` bypasses validators by design; re-run them
+        # so field-level validators (e.g., ``log_level`` enum coercion) apply
+        # to override values such as ``log_level="DEBUG"`` from doc fences.
+        copied.__pydantic_validator__.validate_python(
+            copied.__dict__, self_instance=copied
+        )
+        return copied
 
     @classmethod
     def resolve_namespace_settings(cls, namespace: str) -> t.SettingsClass | None:
