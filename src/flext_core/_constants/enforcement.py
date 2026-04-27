@@ -361,7 +361,16 @@ class FlextConstantsEnforcement:
     })
     """Tag → category mapping for old enforcement API."""
 
-    _ENFORCEMENT_RULES_TEXT: Final[
+    ENFORCEMENT_TAG_LAYER: Final[Mapping[str, str]] = MappingProxyType({
+        "const_mutable": "Constants",
+        "const_lowercase": "Constants",
+        "alias_any": "Types",
+        "typeadapter_name": "Types",
+        "utility_not_static": "Utilities",
+    })
+    """Per-tag layer for ATTR-category rules (layer guard in _items_for)."""
+
+    ENFORCEMENT_RULES_TEXT: Final[
         Mapping[str, tuple[str, str]]
     ] = MappingProxyType({
         "no_any": ("Any is FORBIDDEN (detected recursively)", "Use a t.* type contract."),

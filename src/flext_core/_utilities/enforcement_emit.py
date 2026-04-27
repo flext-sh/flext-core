@@ -23,7 +23,7 @@ class FlextUtilitiesEnforcementEmit:
         detail: t.StrMapping | None = None,
     ) -> me.Violation:
         # Look up problem/fix from legacy text mapping (derived from rows)
-        problem, fix = c._ENFORCEMENT_RULES_TEXT[tag]
+        problem, fix = c.ENFORCEMENT_RULES_TEXT[tag]
         subs = detail or {}
         return me.Violation(
             qualname=qualname,

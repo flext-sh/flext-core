@@ -335,7 +335,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         is_model = issubclass(target, mp.BaseModel)
         qn = target.__qualname__
         for tag, category in c.ENFORCEMENT_TAG_CATEGORY.items():
-            rule_layer = ""  # Placeholder for future rule-layer dispatch
+            rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
             items = FlextUtilitiesEnforcement._items_for(
                 target,
                 tag,

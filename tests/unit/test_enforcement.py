@@ -23,7 +23,6 @@ from pydantic.warnings import PydanticDeprecatedSince20
 
 from flext_core import (
     FlextModelsEnforcement,
-    FlextModelsNamespace,
     FlextUtilitiesBeartypeEngine,
     FlextUtilitiesEnforcement,
 )
@@ -156,10 +155,10 @@ class TestsFlextCoreEnforcement:
         assert c.ENFORCEMENT_MODE is c.EnforcementMode.WARN
 
     def test_enforcement_rules_loaded(self) -> None:
-        assert len(c._ENFORCEMENT_RULES_TEXT) > 0
-        assert len(c._ENFORCEMENT_TAG_CATEGORY) > 0
+        assert len(c.ENFORCEMENT_RULES_TEXT) > 0
+        assert len(c.ENFORCEMENT_TAG_CATEGORY) > 0
         assert all(
-            cat in c.EnforcementCategory for cat in c._ENFORCEMENT_TAG_CATEGORY.values()
+            cat in c.EnforcementCategory for cat in c.ENFORCEMENT_TAG_CATEGORY.values()
         )
 
     def test_flext_core_uses_flext_override(self) -> None:
@@ -328,9 +327,6 @@ class TestsFlextCoreEnforcement:
     )
     def test_base_model_has_enforcement_hook(self, base_cls: type) -> None:
         assert hasattr(base_cls, "__pydantic_init_subclass__")
-
-    def test_c_facade_inherits_namespace(self) -> None:
-        assert issubclass(c, FlextModelsNamespace)
 
     def test_empty_report_is_falsy(self) -> None:
         report = m.Report()

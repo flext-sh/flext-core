@@ -33,7 +33,7 @@ from flext_core import m
 
 
 class AuditSettings(m.BaseModel):
-    model_config = m.ConfigDict(extra="ignore")
+    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="ignore")
     debug: bool = False
 
 
