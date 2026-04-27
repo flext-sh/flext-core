@@ -19,7 +19,8 @@ from typing import no_type_check
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import c, t
+from flext_core import c
+from flext_core.typings import t
 
 
 @no_type_check
