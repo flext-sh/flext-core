@@ -1,0 +1,52 @@
+src/flext_core/_utilities/enforcement_emit.py
+  22632355ef1e26ce 74,76-82
+src/flext_core/_utilities/beartype_engine.py
+  22632355ef1e26ce 22,25,42,50-57,63,72,128-133,137,316-317,319-323,326-327,329-332,334,336-338,340-342,344-359,362-363,365-370,372-375,377-379,381-411,413-417,419-433,436-439,441-443,445-453,455-457,459-465,467-472,474-501,503-508,510-517,519-524,526-533,536-540,542-545,547-573,591-592,608-609,619-624,641-642,688,720,745-746,785-786,801-802,804-808,810-814,833,856,873-880,883-884,886-887,897-908,913-914,916-928,935-939,945-947,955,958,960-964,966-967,969-975,980,983-994,996-998,1000-1005,1024-1034,1039,1044-1046,1048-1049,1051,1053,1075-1076,1082-1093,1096-1104,1110,1116-1117,1121-1123,1125-1129,1134,1138-1140,1142-1143,1145-1146,1162,1175,1178-1190,1192-1269
+src/flext_core/_utilities/enforcement_collect.py
+  22632355ef1e26ce 31-35
+src/flext_core/_models/enforcement.py
+  22632355ef1e26ce 22,204-209,212-214,216-218,407-413
+src/flext_core/_utilities/dispatcher_execute.py
+  22632355ef1e26ce 1-86
+src/flext_core/_utilities/enforcement.py
+  22632355ef1e26ce 1,3-8,18,22,31-225,236-237,241,428-430,434
+src/flext_core/_constants/enforcement.py
+  22632355ef1e26ce 626-661,1115-1119,1126,1137,1148,1161,1172,1183,1196,1209,1222,1235,1248,1261,1274,1287,1300,1312
+src/flext_core/_utilities/guards_type_protocol.py
+  h_9db9d35f50cf33 124,145,148-151,154-155,162-166,168,170-171,173,175-176
+tests/unit/test_enforcement_apt_hooks.py
+  22632355ef1e26ce 3-4,6-12,25-26,30,73,77-79,87,91-93,95,100-106,110,112,116-118,120,124-126,128,132-134,138,140-141,143-145,147,169,171-174,177-178,180
+tests/unit/test_beartype_engine.py
+  22632355ef1e26ce 414-420,459-465,507-513,552-558
+src/flext_core/decorators.py
+  h_9db9d35f50cf33 230,233-241
+  22632355ef1e26ce 39,525
+src/flext_core/dispatcher.py
+  22632355ef1e26ce 19,202-208
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "d0f85ef576453ecb6ecd36bf232b823c99d5603d",
+  "prompts": {
+    "22632355ef1e26ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c6ac7df6-1398-4096-87d8-e634aca30e02",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 1175,
+      "total_deletions": 1598,
+      "accepted_lines": 1405,
+      "overriden_lines": 1,
+      "messages_url": "https://usegitai.com/cas/1c517001529a40bcba1f93744456f095738423fc80cbbe04207c45300a331e7f"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
