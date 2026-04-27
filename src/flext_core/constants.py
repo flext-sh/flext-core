@@ -27,7 +27,6 @@ from flext_core import (
     FlextConstantsStatus,
     FlextConstantsTimeout,
     FlextConstantsValidation,
-    FlextModelsNamespace,
 )
 
 
@@ -50,7 +49,6 @@ class FlextConstants(
     FlextConstantsEnforcement,
     FlextConstantsProjectMetadata,
     FlextConstantsPydantic,
-    FlextModelsNamespace,
 ):
     """SSOT facade: all constants flat on c.* via MRO composition."""
 
