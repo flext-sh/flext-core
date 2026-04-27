@@ -13,7 +13,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Final
 
-from flext_core import FlextModelsContext, c, t
+from flext_core import FlextModelsContext, t
 
 
 class FlextUtilitiesContextVariables:
