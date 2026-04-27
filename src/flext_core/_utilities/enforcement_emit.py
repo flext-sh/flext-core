@@ -71,21 +71,16 @@ class FlextUtilitiesEnforcementEmit:
 
     @staticmethod
     def _is_exempt(target: type) -> bool:
-        """Honour explicit ``_flext_enforcement_exempt`` opt-out.
+        """Test-fixture exemption only — runtime opt-out attribute deleted.
 
-        Exemption applies when either:
-
-        1. ``target.__dict__`` carries ``_flext_enforcement_exempt = True``
-           on itself (not inherited — opt-out is explicit per subclass).
-        2. The class lives inside a test fixture scope: the defining module
-           path begins with ``tests.`` (or ``tests`` is a top-level package
-           segment) AND the qualname contains a ``Tests`` container segment.
-           Test fixtures exercise production APIs but are not subject to
-           production model governance (mutable defaults, accessor method
-           naming, field-description requirements).
+        The legacy ``_flext_enforcement_exempt = True`` ClassVar escape hatch
+        is gone. Test fixtures (modules whose path starts with ``tests.`` /
+        ``tests_`` AND whose qualname contains a ``Tests``/``Test`` segment)
+        remain exempt because they exercise production APIs intentionally
+        outside production model governance (mutable defaults, accessor
+        names, field-description requirements). Production code has no
+        opt-out — fix the violation instead.
         """
-        if target.__dict__.get("_flext_enforcement_exempt", False):
-            return True
         module = getattr(target, "__module__", "") or ""
         qualname = getattr(target, "__qualname__", "") or ""
         if not module.startswith(("tests.", "tests_")):

@@ -166,34 +166,33 @@ class FlextRegistry(s[bool]):
         ),
     ) -> t.JsonPayload | None:
         """Safe conversion using centralized utilities."""
+        narrowed: t.JsonPayload | None = None
         if value is None:
-            return None
-        if isinstance(value, m.BaseModel):
-            return value
-        if isinstance(value, (p.Logger, p.Settings, p.Context, p.Dispatcher)):
-            return str(value)
-        if callable(value):
-            return str(value)
-        normalized = u.normalize_to_metadata(value)
-        if isinstance(normalized, Mapping):
-            return dict(t.json_mapping_adapter().validate_python(normalized))
-        if isinstance(normalized, Sequence) and not isinstance(
-            normalized,
-            (str, bytes, bytearray),
-        ):
-            return list(t.json_list_adapter().validate_python(normalized))
-        validated_value: t.JsonValue = t.json_value_adapter().validate_python(
-            normalized
-        )
-        return validated_value
+            narrowed = None
+        elif isinstance(value, m.BaseModel):
+            narrowed = value
+        elif isinstance(
+            value, (p.Logger, p.Settings, p.Context, p.Dispatcher)
+        ) or callable(value):
+            narrowed = str(value)
+        else:
+            normalized = u.normalize_to_metadata(value)
+            if isinstance(normalized, Mapping):
+                narrowed = dict(t.json_mapping_adapter().validate_python(normalized))
+            elif isinstance(normalized, Sequence) and not isinstance(
+                normalized,
+                (str, bytes, bytearray),
+            ):
+                narrowed = list(t.json_list_adapter().validate_python(normalized))
+            else:
+                narrowed = t.json_value_adapter().validate_python(normalized)
+        return narrowed
 
     @staticmethod
     def _normalize_registration_impl(
         value: t.RegistrablePlugin,
     ) -> t.RegisterableService:
         """Normalize registry payloads to the container bind contract."""
-        if isinstance(value, m.BaseModel):
-            return value
         if callable(value):
 
             def normalized_callable(
@@ -211,38 +210,10 @@ class FlextRegistry(s[bool]):
                 | None
             ):
                 result = value(*args, **kwargs)
-                if isinstance(result, (m.BaseModel, p.Logger)):
-                    return result
-                normalized_result = u.normalize_to_metadata(result)
-                if isinstance(normalized_result, Mapping):
-                    return dict(
-                        t.json_mapping_adapter().validate_python(normalized_result),
-                    )
-                if isinstance(normalized_result, Sequence) and not isinstance(
-                    normalized_result,
-                    (str, bytes, bytearray),
-                ):
-                    return list(
-                        t.json_list_adapter().validate_python(normalized_result),
-                    )
-                validated_inner: t.JsonValue = t.json_value_adapter().validate_python(
-                    normalized_result
-                )
-                return validated_inner
+                return FlextRegistry._narrow_value(result)
 
             return normalized_callable
-        normalized = u.normalize_to_metadata(value)
-        if isinstance(normalized, Mapping):
-            return dict(t.json_mapping_adapter().validate_python(normalized))
-        if isinstance(normalized, Sequence) and not isinstance(
-            normalized,
-            (str, bytes, bytearray),
-        ):
-            return list(t.json_list_adapter().validate_python(normalized))
-        validated_outer: t.JsonValue = t.json_value_adapter().validate_python(
-            normalized
-        )
-        return validated_outer
+        return FlextRegistry._narrow_value(value)
 
     def _get_handler_mode(self, value: t.JsonPayload) -> c.HandlerType:
         """Safe conversion to HandlerType (falls back to COMMAND)."""

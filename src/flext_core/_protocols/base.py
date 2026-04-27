@@ -27,6 +27,17 @@ class FlextProtocolsBase:
         """Base protocol for FLEXT structural types."""
 
     @runtime_checkable
+    class AttributeProbe(Protocol):
+        """Structural marker for values inspected only via ``hasattr``/``getattr``.
+
+        Empty Protocol body — accepts any object structurally. Used by
+        ``FlextDecorators`` and other infrastructure helpers as a typed
+        parameter annotation when the actual contract is "any object that
+        may carry inspectable attributes" (a substitute for the
+        AGENTS.md-forbidden ``object`` annotation).
+        """
+
+    @runtime_checkable
     class Model(Base, Protocol):
         """Structural typing protocol for Pydantic v2 models.
 

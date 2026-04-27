@@ -19,6 +19,7 @@ from typing import Annotated, ClassVar, Literal
 
 from pydantic import Discriminator, Field, model_validator
 
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.annotateds import FlextTypesAnnotateds as ta
 from flext_core._typings.base import FlextTypingBase as t
@@ -200,15 +201,21 @@ class FlextModelsEnforcement:
         ]
 
     class EnforcementBeartypeSource(_EnforcementSourceBase):
-        """Rule delegated to a ``FlextUtilitiesBeartypeEngine`` hook."""
+        """Rule dispatched to ``FlextUtilitiesBeartypeEngine.apply`` by predicate kind.
+
+        Replaces the legacy ``hook`` string (a method name) with the typed
+        ``predicate_kind`` enum that selects a generic visitor; the per-rule
+        params live in ``c._PREDICATE_BINDINGS`` keyed by tag.
+        """
 
         kind: Literal["beartype"] = "beartype"
-        hook: Annotated[
-            ta.NonEmptyStr,
-            Field(
+        predicate_kind: Annotated[
+            c.EnforcementPredicateKind,
+            mp.Field(
                 description=(
-                    "Hook name on FlextUtilitiesBeartypeEngine — e.g. "
-                    "'check_model_rebuild_call'."
+                    "Generic predicate kind that ``apply()`` dispatches to a "
+                    "visitor; resolved via ``_PREDICATE_BINDINGS`` for the "
+                    "rule's tag."
                 ),
             ),
         ]
@@ -395,6 +402,13 @@ class FlextModelsEnforcement:
             mp.Field(
                 default_factory=tuple,
                 description="Canonical filenames a package must expose.",
+            ),
+        ]
+        require_settings_base: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Require ``FlextSettings`` in MRO for top-level *Settings classes.",
             ),
         ]
 

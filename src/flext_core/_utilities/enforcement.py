@@ -1,9 +1,11 @@
-"""Runtime enforcement engine — rules are DATA in c.*, predicates are METHODS in ub.*.
+"""Runtime enforcement engine — rules and predicate routing live as DATA.
 
-Every row in ``c.ENFORCEMENT_RULES`` is paired by naming convention with a
-``check_<tag>`` staticmethod on ``FlextUtilitiesBeartypeEngine``. This module
-holds only the dispatch engine + violation assembly; no rule strings, no
-predicate bodies, no back-compat shims.
+Every row in ``c.ENFORCEMENT_RULES`` carries the human-readable messaging
+metadata; the parallel ``PREDICATE_BINDINGS`` mapping in this module pairs
+each tag with a typed ``(predicate_kind, params)`` payload. The dispatcher
+forwards both to ``FlextUtilitiesBeartypeEngine.apply``, which selects the
+appropriate beartype-driven visitor — no ``getattr(check_<tag>)`` lookup,
+no per-rule predicate body in this module.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,19 +14,214 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import (
-    Callable,
     Iterator,
+    Mapping,
     Sequence,
 )
 from enum import EnumType
+from types import MappingProxyType
 from typing import ClassVar
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
+
+_PydanticBaseModel = mp.BaseModel
+_KindParams = tuple[c.EnforcementPredicateKind, _PydanticBaseModel]
+
+
+def _bindings() -> Mapping[str, _KindParams]:
+    """Build the tag → (predicate_kind, params) dispatch mapping.
+
+    Each entry pairs a tag in ``c.ENFORCEMENT_RULES`` with the typed
+    predicate descriptor consumed by ``FlextUtilitiesBeartypeEngine.apply``.
+    Adding a new rule = one row in ``c.ENFORCEMENT_RULES`` (messaging) plus
+    one row here (routing). No additional code change.
+    """
+    pk = c.EnforcementPredicateKind
+    fp = me.FieldShapeParams
+    mc = me.ModelConfigParams
+    asp = me.AttrShapeParams
+    msp = me.MethodShapeParams
+    cpp = me.ClassPlacementParams
+    ptp = me.ProtocolTreeParams
+    msh = me.MroShapeParams
+    lsp = me.LooseSymbolParams
+    wp = me.WrapperParams
+    iblp = me.ImportBlacklistParams
+    arp = me.AliasRebindParams
+    dsp = me.DeprecatedSyntaxParams
+    return MappingProxyType({
+        "no_any": (pk.FIELD_SHAPE, fp(forbid_any=True)),
+        "no_bare_collection": (pk.FIELD_SHAPE, fp(forbid_bare_collection=True)),
+        "no_mutable_default": (pk.FIELD_SHAPE, fp(forbid_mutable_default=True)),
+        "no_raw_collections_field_default": (
+            pk.FIELD_SHAPE,
+            fp(forbid_raw_default_factory=True),
+        ),
+        "no_str_none_empty": (pk.FIELD_SHAPE, fp(forbid_str_none_empty=True)),
+        "no_inline_union": (
+            pk.FIELD_SHAPE,
+            fp(forbid_inline_union=True, max_union_arms=c.ENFORCEMENT_INLINE_UNION_MAX),
+        ),
+        "missing_description": (pk.FIELD_SHAPE, fp(require_description=True)),
+        "no_v1_config": (pk.MODEL_CONFIG, mc(forbid_v1_config=True)),
+        "extra_missing": (pk.MODEL_CONFIG, mc(require_extra_forbid=True)),
+        "extra_wrong": (pk.MODEL_CONFIG, mc(allowed_extra_values=())),
+        "value_not_frozen": (
+            pk.MODEL_CONFIG,
+            mc(require_frozen_for_value_objects=True),
+        ),
+        "const_mutable": (pk.ATTR_SHAPE, asp(forbid_mutable_value=True)),
+        "const_lowercase": (pk.ATTR_SHAPE, asp(require_uppercase_name=True)),
+        "alias_any": (pk.ATTR_SHAPE, asp(forbid_any_in_alias=True)),
+        "typeadapter_name": (pk.ATTR_SHAPE, asp(require_typeadapter_naming=True)),
+        "utility_not_static": (
+            pk.METHOD_SHAPE,
+            msp(require_static_or_classmethod=True),
+        ),
+        "class_prefix": (pk.CLASS_PLACEMENT, cpp()),
+        "cross_strenum": (
+            pk.CLASS_PLACEMENT,
+            cpp(forbidden_bases=frozenset({"StrEnum"})),
+        ),
+        "cross_protocol": (
+            pk.CLASS_PLACEMENT,
+            cpp(forbidden_bases=frozenset({"Protocol"})),
+        ),
+        "nested_mro": (pk.CLASS_PLACEMENT, cpp(check_nested=True)),
+        "proto_inner_kind": (
+            pk.PROTOCOL_TREE,
+            ptp(require_inner_kind_protocol_or_namespace=True),
+        ),
+        "proto_not_runtime": (
+            pk.PROTOCOL_TREE,
+            ptp(require_runtime_checkable=True),
+        ),
+        "no_accessor_methods": (
+            pk.METHOD_SHAPE,
+            msp(forbidden_prefixes=("get_", "set_", "is_")),
+        ),
+        "settings_inheritance": (
+            pk.LOOSE_SYMBOL,
+            lsp(require_settings_base=True),
+        ),
+        "cast_outside_core": (
+            pk.DEPRECATED_SYNTAX,
+            dsp(ast_shape="cast_outside_core"),
+        ),
+        "model_rebuild_call": (
+            pk.DEPRECATED_SYNTAX,
+            dsp(ast_shape="model_rebuild_call"),
+        ),
+        "pass_through_wrapper": (pk.WRAPPER, wp()),
+        "private_attr_probe": (
+            pk.DEPRECATED_SYNTAX,
+            dsp(ast_shape="private_attr_probe"),
+        ),
+        "no_core_tests_namespace": (
+            pk.DEPRECATED_SYNTAX,
+            dsp(ast_shape="no_core_tests_namespace"),
+        ),
+        "no_wrapper_root_alias_import": (
+            pk.DEPRECATED_SYNTAX,
+            dsp(ast_shape="no_wrapper_root_alias_import"),
+        ),
+        "no_concrete_namespace_import": (pk.IMPORT_BLACKLIST, iblp()),
+        "no_pydantic_consumer_import": (
+            pk.IMPORT_BLACKLIST,
+            iblp(
+                forbidden_modules=("pydantic",),
+                forbidden_symbols=(
+                    "BaseModel",
+                    "Field",
+                    "ConfigDict",
+                    "TypeAdapter",
+                    "field_validator",
+                    "model_validator",
+                    "computed_field",
+                    "PrivateAttr",
+                    "AfterValidator",
+                    "BeforeValidator",
+                ),
+            ),
+        ),
+        "facade_base_is_alias_or_peer": (
+            pk.MRO_SHAPE,
+            msh(require_alias_first=True),
+        ),
+        "alias_first_multi_parent": (
+            pk.MRO_SHAPE,
+            msh(require_alias_first=True),
+        ),
+        "alias_rebound_at_module_end": (
+            pk.ALIAS_REBIND,
+            arp(expected_form="rebound_at_module_end"),
+        ),
+        "no_redundant_inner_namespace": (
+            pk.MRO_SHAPE,
+            msh(forbid_redundant_inner=True),
+        ),
+        "no_self_root_import_in_core_files": (
+            pk.ALIAS_REBIND,
+            arp(expected_form="no_self_root_import_in_core_files"),
+        ),
+        "sibling_models_type_checking": (
+            pk.ALIAS_REBIND,
+            arp(expected_form="sibling_models_type_checking"),
+        ),
+        "utilities_explicit_class_when_self_ref": (
+            pk.MRO_SHAPE,
+            msh(require_explicit_class_when_self_ref=True),
+        ),
+        # --- Phase 3 data-only additions ---
+        "loc_cap": (
+            pk.LOC_CAP,
+            me.LocCapParams(max_logical_loc=200),
+        ),
+        "library_abstraction": (
+            pk.LIBRARY_IMPORT,
+            me.LibraryImportParams(
+                library_owners=MappingProxyType({
+                    "pydantic": "flext-core",
+                    "dependency_injector": "flext-core",
+                    "structlog": "flext-observability",
+                    "rich": "flext-cli",
+                    "rope": "flext-infra",
+                }),
+            ),
+        ),
+        "deprecated_typealias_syntax": (
+            pk.DEPRECATED_SYNTAX,
+            dsp(ast_shape="AnnAssign[TypeAlias]"),
+        ),
+        "nested_layer_misplacement": (
+            pk.CLASS_PLACEMENT,
+            cpp(
+                forbidden_bases=frozenset({"BaseModel", "RootModel", "Protocol"}),
+                canonical_path_fragment="_models/",
+                check_nested=True,
+            ),
+        ),
+        "cross_project_duplicate": (
+            pk.DUPLICATE_SYMBOL,
+            me.DuplicateSymbolParams(
+                hierarchy=("flext-core", "flext-cli", "flext-infra"),
+                symbol_kinds=frozenset({
+                    "StrEnum",
+                    "Protocol",
+                    "TypeAlias",
+                    "BaseModel",
+                    "frozenset_const",
+                }),
+            ),
+        ),
+    })
+
+
+PREDICATE_BINDINGS: Mapping[str, _KindParams] = _bindings()
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
@@ -36,15 +233,12 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         qualname: str,
         items: Iterator[tuple[str, tuple[object, ...]]],
     ) -> Sequence[me.Violation]:
-        """Call ``ub.check_<tag>(*args)`` per item; emit violation on non-None."""
-        predicate: Callable[..., t.StrMapping | None] = getattr(
-            ub,
-            f"check_{tag}",
-        )
+        """Apply the visitor for ``tag`` to each item; emit violation on non-None."""
+        kind, params = PREDICATE_BINDINGS[tag]
         return [
             FlextUtilitiesEnforcement._violation(tag, location, qualname, detail)
             for location, args in items
-            if (detail := predicate(*args)) is not None
+            if (detail := ub.apply(kind, params, *args)) is not None
         ]
 
     # ------------------------------------------------------------------
@@ -231,11 +425,13 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 id=rid,
                 description=desc,
                 severity=me.EnforcementRuleSeverity(sev),
-                source=me.EnforcementBeartypeSource(hook=hook),
+                source=me.EnforcementBeartypeSource(
+                    predicate_kind=PREDICATE_BINDINGS[tag][0],
+                ),
                 agents_md_anchor=anchor,
                 skills=skills,
             )
-            for rid, sev, hook, anchor, skills, desc in c.BEARTYPE_ROWS
+            for rid, sev, tag, anchor, skills, desc in c.BEARTYPE_ROWS
         )
         # FLEXT_TESTS_VALIDATOR family — one ``tv.<method>`` per row.
         tests_validator_specs = tuple(

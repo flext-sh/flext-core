@@ -411,7 +411,13 @@ class TestsFlextCoreBeartypeEngine:
                 from hookprobe.tests import Probe
                 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
 
-                print(repr(be.check_no_core_tests_namespace(Probe)))
+                from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+                from flext_core._models.enforcement import FlextModelsEnforcement as me
+                print(repr(be.apply(
+                    c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
+                    me.DeprecatedSyntaxParams(ast_shape="no_core_tests_namespace"),
+                    Probe,
+                )))
                 """
             ),
             cwd=Path(__file__).resolve().parents[2],
@@ -450,7 +456,13 @@ class TestsFlextCoreBeartypeEngine:
                 from stringprobe.tests.sample import Probe
                 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
 
-                print(repr(be.check_no_core_tests_namespace(Probe)))
+                from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+                from flext_core._models.enforcement import FlextModelsEnforcement as me
+                print(repr(be.apply(
+                    c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
+                    me.DeprecatedSyntaxParams(ast_shape="no_core_tests_namespace"),
+                    Probe,
+                )))
                 """
             ),
             cwd=Path(__file__).resolve().parents[2],
@@ -492,7 +504,13 @@ class TestsFlextCoreBeartypeEngine:
                 from importprobe.tests.sample import Probe
                 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
 
-                print(repr(be.check_no_wrapper_root_alias_import(Probe)))
+                from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+                from flext_core._models.enforcement import FlextModelsEnforcement as me
+                print(repr(be.apply(
+                    c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
+                    me.DeprecatedSyntaxParams(ast_shape="no_wrapper_root_alias_import"),
+                    Probe,
+                )))
                 """
             ),
             cwd=Path(__file__).resolve().parents[2],
@@ -531,7 +549,13 @@ class TestsFlextCoreBeartypeEngine:
                 from importstringprobe.tests.sample import Probe
                 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
 
-                print(repr(be.check_no_wrapper_root_alias_import(Probe)))
+                from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+                from flext_core._models.enforcement import FlextModelsEnforcement as me
+                print(repr(be.apply(
+                    c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
+                    me.DeprecatedSyntaxParams(ast_shape="no_wrapper_root_alias_import"),
+                    Probe,
+                )))
                 """
             ),
             cwd=Path(__file__).resolve().parents[2],

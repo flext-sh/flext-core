@@ -28,6 +28,11 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         "private_attr_probe",
         "no_core_tests_namespace",
         "no_wrapper_root_alias_import",
+        # --- Phase 3 single-target tags ---
+        "loc_cap",
+        "library_abstraction",
+        "deprecated_typealias_syntax",
+        "cross_project_duplicate",
     })
 
     @staticmethod

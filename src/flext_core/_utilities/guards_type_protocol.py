@@ -121,7 +121,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         checker = c.STRING_TYPE_PREDICATES.get(type_name)
         if checker is None:
             return False
-        return checker(value)
+        return bool(checker(value))
 
     @staticmethod
     def _check_protocol(value: t.GuardInput, name: str) -> bool:
@@ -142,47 +142,43 @@ class FlextUtilitiesGuardsTypeProtocol:
         | t.Scalar,  # Scalar arm handles invalid spec at runtime
     ) -> bool:
         """Check if value matches a type spec (string name, type, or tuple of types)."""
+        matched = False
         if isinstance(type_spec, str):
             type_name = type_spec.lower()
-            if type_name in FlextUtilitiesGuardsTypeProtocol._get_protocol_specs():
-                return FlextUtilitiesGuardsTypeProtocol._check_protocol(
-                    value,
-                    type_name,
+            protocol_specs = FlextUtilitiesGuardsTypeProtocol._get_protocol_specs()
+            if type_name in protocol_specs:
+                matched = FlextUtilitiesGuardsTypeProtocol._check_protocol(
+                    value, type_name
                 )
-            if type_name in c.STRING_METHOD_MAP:
-                if type_name in {
-                    "string_non_empty",
-                    "dict_non_empty",
-                    "list_non_empty",
-                }:
-                    if ugm.pydantic_model(value):
-                        return False
-                    return FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
-                        type_name,
-                        value,
-                    )
-                return FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
+            elif type_name in c.STRING_METHOD_MAP:
+                matched = not (
+                    type_name
+                    in {"string_non_empty", "dict_non_empty", "list_non_empty"}
+                    and ugm.pydantic_model(value)
+                ) and FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
                     type_name,
                     value,
                 )
-            return False
-        if isinstance(type_spec, tuple):
-            return isinstance(value, type_spec)
-        if not isinstance(type_spec, type):
-            # type_spec is a non-type scalar (e.g. int value 123) — invalid spec
-            return False
-        if type_spec in FlextUtilitiesGuardsTypeProtocol._get_protocol_type_map():
-            return FlextUtilitiesGuardsTypeProtocol._check_protocol(
-                value,
-                FlextUtilitiesGuardsTypeProtocol._get_protocol_type_map()[type_spec],
+        elif isinstance(type_spec, tuple):
+            matched = isinstance(value, type_spec)
+        elif isinstance(type_spec, type):
+            protocol_name = (
+                FlextUtilitiesGuardsTypeProtocol._get_protocol_type_map().get(
+                    type_spec,
+                )
             )
-        try:
-            return isinstance(
-                value,
-                getattr(type_spec, "__origin__", None) or type_spec,
-            )
-        except TypeError:
-            return False
+            if protocol_name is not None:
+                matched = FlextUtilitiesGuardsTypeProtocol._check_protocol(
+                    value,
+                    protocol_name,
+                )
+            else:
+                runtime_type = getattr(type_spec, "__origin__", None) or type_spec
+                try:
+                    matched = isinstance(value, runtime_type)
+                except TypeError:
+                    matched = False
+        return matched
 
 
 __all__: list[str] = ["FlextUtilitiesGuardsTypeProtocol"]

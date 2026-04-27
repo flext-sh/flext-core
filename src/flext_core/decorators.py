@@ -18,13 +18,9 @@ from collections.abc import (
 )
 from contextlib import suppress
 from functools import wraps
-from typing import Literal, NoReturn, Protocol, TypeIs, overload
+from typing import Literal, NoReturn, TypeIs, overload
 
 from flext_core import FlextContainer, FlextContext, c, e, m, p, r, t, u
-
-
-class _AttributeProbe(Protocol):
-    """Structural marker for values inspected only via ``hasattr``/``getattr``."""
 
 
 class FlextDecorators:
@@ -40,7 +36,7 @@ class FlextDecorators:
 
     @staticmethod
     def _is_logger_carrier(
-        value: _AttributeProbe | None,
+        value: p.AttributeProbe | None,
     ) -> TypeIs[FlextDecorators._LoggerCarrier]:
         return isinstance(value, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)) or (
             FlextDecorators._has_flext_logger(value)
@@ -231,14 +227,18 @@ class FlextDecorators:
             KeyError,
         ) as exc:
             tracked_duration = time.perf_counter() - start_time if track_perf else 0.0
-            exc_kw = FlextDecorators._build_exception_kwargs(
-                exc,
-                func_name,
-                op_name,
-                correlation_id,
-                tracked_duration=tracked_duration,
-                track_perf=track_perf,
-            )
+            exc_kw: t.MutableJsonMapping = {
+                "function": func_name,
+                "success": False,
+                "error": str(exc),
+                "error_type": exc.__class__.__name__,
+                "operation": op_name,
+            }
+            if correlation_id is not None:
+                exc_kw[c.ContextKey.CORRELATION_ID] = correlation_id
+            if track_perf:
+                exc_kw["duration_ms"] = tracked_duration * c.DEFAULT_SIZE
+                exc_kw[c.MetadataKey.DURATION_SECONDS] = tracked_duration
             logger.exception(
                 op_name,
                 exception=exc,
@@ -522,7 +522,7 @@ class FlextDecorators:
 
     @staticmethod
     def _has_flext_logger(
-        value: _AttributeProbe | None,
+        value: p.AttributeProbe | None,
     ) -> TypeIs[p.HasLogger]:
         if not hasattr(value, "logger"):
             return False
@@ -581,31 +581,6 @@ class FlextDecorators:
             extra["duration_ms"] = duration * c.DEFAULT_SIZE
             extra[c.MetadataKey.DURATION_SECONDS] = duration
         logger.debug("%s_completed", op_name, **extra)
-
-    @staticmethod
-    def _build_exception_kwargs(
-        exc: Exception,
-        func_name: str,
-        op_name: str,
-        correlation_id: str | None,
-        *,
-        tracked_duration: float,
-        track_perf: bool,
-    ) -> t.MutableJsonMapping:
-        """Build kwargs dict for logger.exception call (must be called inside except)."""
-        kw: t.MutableJsonMapping = {
-            "function": func_name,
-            "success": False,
-            "error": str(exc),
-            "error_type": exc.__class__.__name__,
-            "operation": op_name,
-        }
-        if correlation_id is not None:
-            kw[c.ContextKey.CORRELATION_ID] = correlation_id
-        if track_perf:
-            kw["duration_ms"] = tracked_duration * c.DEFAULT_SIZE
-            kw[c.MetadataKey.DURATION_SECONDS] = tracked_duration
-        return kw
 
     @staticmethod
     def _raise_timeout(

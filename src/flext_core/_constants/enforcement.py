@@ -623,6 +623,42 @@ class FlextConstantsEnforcement:
             "utilities.py with self-referencing method must use explicit class base (R10)",
             "Use class FlextXxxUtilities(FlextParentUtilities, FlextPeerUtilities): for parent (not alias).",
         ),
+        # --- Phase 3 data-only additions (ENFORCE-067..071) ---
+        "loc_cap": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            "module {file} has {loc} logical LOC > cap {cap} (AGENTS.md §3.1)",
+            "Decompose into focused submodules under the same package.",
+        ),
+        "library_abstraction": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            "import of {lib} outside its owner {owner} (AGENTS.md §2.7)",
+            "Route through the owner facade (u.Observability.* / u.Cli.* / u.Infra.*).",
+        ),
+        "deprecated_typealias_syntax": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.BEST_PRACTICES,
+            "'X: TypeAlias = ...' deprecated in {file}:{line} (AGENTS.md §3.5)",
+            "Use PEP 695 'type X = ...' syntax.",
+        ),
+        "nested_layer_misplacement": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            "{qn} nested in wrong facade family (AGENTS.md §2.2)",
+            "Move declaration to its canonical _models/_protocols/_typings/ tree.",
+        ),
+        "cross_project_duplicate": (
+            EnforcementCategory.NAMESPACE,
+            EnforcementLayer.NAMESPACE,
+            EnforcementSeverity.HARD_RULES,
+            "{qn} duplicated across {owners} (AGENTS.md §2.3, §3.5)",
+            "Move the symbol to the highest project in hierarchy and re-export.",
+        ),
     })
     """Rule registry: tag → (category, layer, severity, problem, fix)."""
 
@@ -1076,17 +1112,18 @@ class FlextConstantsEnforcement:
         ),
     )
 
-    # Compact data-table for the BEARTYPE family — 16 rules, one per
-    # ``check_*`` hook on ``FlextUtilitiesBeartypeEngine``. Built via the same
-    # Pydantic v2 comprehension pattern as ``INFRA_DETECTOR_ROWS``.
-    # Row layout: (id, severity, hook, agents_md_anchor, skills, description).
+    # Compact data-table for the BEARTYPE family — one row per ENFORCE-NNN
+    # rule. The ``tag`` column keys ``_PREDICATE_BINDINGS`` in
+    # ``_utilities/enforcement.py`` to resolve the typed predicate-kind +
+    # params payload that ``FlextUtilitiesBeartypeEngine.apply`` consumes.
+    # Row layout: (id, severity, tag, agents_md_anchor, skills, description).
     BEARTYPE_ROWS: Final[
         tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
     ] = (
         (
             "ENFORCE-039",
             "HIGH",
-            "check_cast_outside_core",
+            "cast_outside_core",
             "3-2-types-and-contracts",
             ("flext-strict-typing", "flext-patterns"),
             (
@@ -1097,7 +1134,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-041",
             "HIGH",
-            "check_model_rebuild_call",
+            "model_rebuild_call",
             "3-4-tools-and-modules",
             ("flext-patterns",),
             (
@@ -1108,7 +1145,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-042",
             "HIGH",
-            "check_settings_inheritance",
+            "settings_inheritance",
             "2-6-settings-law",
             ("flext-patterns", "lib-pydantic-settings"),
             (
@@ -1121,7 +1158,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-043",
             "MEDIUM",
-            "check_pass_through_wrapper",
+            "pass_through_wrapper",
             "3-5-integrity",
             ("flext-refactoring-workflow",),
             (
@@ -1132,7 +1169,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-044",
             "HIGH",
-            "check_private_attr_probe",
+            "private_attr_probe",
             "3-6-test-standardization",
             ("flext-strict-typing", "flext-patterns"),
             (
@@ -1143,7 +1180,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-045",
             "HIGH",
-            "check_no_pydantic_consumer_import",
+            "no_pydantic_consumer_import",
             "2-7-library-abstraction-boundaries",
             ("flext-import-rules", "pydantic-v2-patterns"),
             (
@@ -1156,7 +1193,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-046",
             "HIGH",
-            "check_no_concrete_namespace_import",
+            "no_concrete_namespace_import",
             "4-import-law",
             ("flext-import-rules", "flext-mro-namespace-rules"),
             (
@@ -1169,7 +1206,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-047",
             "HIGH",
-            "check_facade_base_is_alias_or_peer",
+            "facade_base_is_alias_or_peer",
             "2-2-facades-namespaces-naming-patterns",
             ("flext-mro-namespace-rules", "flext-import-rules"),
             (
@@ -1182,7 +1219,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-048",
             "MEDIUM",
-            "check_no_redundant_inner_namespace",
+            "no_redundant_inner_namespace",
             "2-3-mro-inheritance-namespace-composition",
             ("flext-mro-namespace-rules",),
             (
@@ -1195,7 +1232,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-049",
             "HIGH",
-            "check_alias_first_multi_parent",
+            "alias_first_multi_parent",
             "2-2-facades-namespaces-naming-patterns",
             ("flext-mro-namespace-rules",),
             (
@@ -1208,7 +1245,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-050",
             "MEDIUM",
-            "check_alias_rebound_at_module_end",
+            "alias_rebound_at_module_end",
             "4-import-law",
             ("flext-import-rules", "flext-mro-namespace-rules"),
             (
@@ -1221,7 +1258,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-051",
             "HIGH",
-            "check_no_self_root_import_in_core_files",
+            "no_self_root_import_in_core_files",
             "4-import-law",
             ("flext-import-rules",),
             (
@@ -1234,7 +1271,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-052",
             "HIGH",
-            "check_sibling_models_type_checking",
+            "sibling_models_type_checking",
             "4-import-law",
             ("flext-import-rules",),
             (
@@ -1247,7 +1284,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-053",
             "HIGH",
-            "check_utilities_explicit_class_when_self_ref",
+            "utilities_explicit_class_when_self_ref",
             "2-3-mro-inheritance-namespace-composition",
             ("flext-mro-namespace-rules",),
             (
@@ -1260,7 +1297,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-054",
             "HIGH",
-            "check_no_core_tests_namespace",
+            "no_core_tests_namespace",
             "0-quick-reference-must-read",
             ("flext-mro-namespace-rules", "flext-import-rules"),
             (
@@ -1272,7 +1309,7 @@ class FlextConstantsEnforcement:
         (
             "ENFORCE-055",
             "HIGH",
-            "check_no_wrapper_root_alias_import",
+            "no_wrapper_root_alias_import",
             "0-quick-reference-must-read",
             (
                 "flext-import-rules",
