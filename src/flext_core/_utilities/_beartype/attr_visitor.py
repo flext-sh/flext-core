@@ -14,7 +14,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
     """ATTR_SHAPE — class-attribute shape governance."""
 
     @staticmethod
-    def _v_attr_shape(
+    def v_attr_shape(
         params: me.AttrShapeParams,
         name: str,
         value: tp.JsonValue,

@@ -550,7 +550,9 @@ class TestsFlextCoreContainer:
         """Test scoped container creation with FlextContext."""
         scoped = clean_container.scope(
             subproject="unit",
-            services={"scoped_service": "scoped-value"},
+            registration=m.ServiceRegistrationSpec.model_validate(
+                {"services": {"scoped_service": "scoped-value"}}
+            ),
         )
         tm.that(scoped.has("scoped_service"), eq=True)
         tm.ok(scoped.resolve("scoped_service", type_cls=str), eq="scoped-value")

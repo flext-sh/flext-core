@@ -21,7 +21,7 @@ class FlextUtilitiesBeartypeImportVisitor:
     """IMPORT_BLACKLIST + ALIAS_REBIND + LIBRARY_IMPORT visitors."""
 
     @staticmethod
-    def _v_import_blacklist(
+    def v_import_blacklist(
         params: me.ImportBlacklistParams,
         target: type,
     ) -> t.StrMapping | None:
@@ -71,7 +71,7 @@ class FlextUtilitiesBeartypeImportVisitor:
         return _NO_VIOLATION
 
     @staticmethod
-    def _v_alias_rebind(
+    def v_alias_rebind(
         params: me.AliasRebindParams,
         target: type,
     ) -> t.StrMapping | None:
@@ -119,7 +119,7 @@ class FlextUtilitiesBeartypeImportVisitor:
         return _NO_VIOLATION
 
     @staticmethod
-    def _v_library_import(
+    def v_library_import(
         params: me.LibraryImportParams,
         target: type,
     ) -> t.StrMapping | None:

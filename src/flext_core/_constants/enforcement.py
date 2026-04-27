@@ -231,7 +231,7 @@ class FlextConstantsEnforcement:
     """SSOT: per-layer inner-class kinds that cross-layer checks permit.
 
     Every canonical facade layer MUST be enumerated here so the
-    ``_v_class_placement`` visitor disambiguates the cross-layer branch
+    ``v_class_placement`` visitor disambiguates the cross-layer branch
     from the name-prefix branch via membership lookup. Empty frozensets
     are deliberate — they declare *no* allowed exception for that layer.
 

@@ -9,6 +9,7 @@ from flext_core import (
     FlextModelsService as ms,
     FlextUtilitiesDiscovery as ud,
     FlextUtilitiesGuardsTypeProtocol as ugp,
+    m,
     p,
     t,
 )
@@ -125,12 +126,16 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             runtime_options.wire_classes,
         )
         runtime_container = container_type.shared().scope(
-            settings=runtime_settings,
-            context=runtime_context,
             subproject=runtime_options.subproject,
-            services=bootstrap_services,
-            factories=runtime_options.factories,
-            resources=runtime_options.resources,
+            registration=m.ServiceRegistrationSpec.model_validate(
+                {
+                    "settings": runtime_settings,
+                    "context": runtime_context,
+                    "services": bootstrap_services,
+                    "factories": runtime_options.factories,
+                    "resources": runtime_options.resources,
+                }
+            ),
         )
         normalized_container_overrides = cls._normalize_runtime_override_mapping(
             runtime_options.container_overrides,

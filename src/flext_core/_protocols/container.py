@@ -206,12 +206,8 @@ class FlextProtocolsContainer:
         def scope(
             self,
             *,
-            settings: FlextProtocolsSettings.Settings | None = None,
-            context: FlextProtocolsContext.Context | None = None,
             subproject: str | None = None,
-            services: Mapping[str, t.RegisterableService] | None = None,
-            factories: t.FactoryMap | None = None,
-            resources: t.ResourceMap | None = None,
+            registration: m.ServiceRegistrationSpec | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
             ...

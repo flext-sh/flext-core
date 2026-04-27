@@ -1,110 +1,144 @@
-"""Context propagation utilities for dispatcher-coordinated workloads.
+"""FlextContext — scoped key-value store + contextvar facade.
 
-FlextContext tracks correlation metadata, request data, and timing information
-through the dispatcher pipeline and into handlers, ensuring structured logs and
-metrics remain consistent across threads and async boundaries.
+Pure Pydantic v2 model (m.ManagedModel). Zero utility-chain inheritance.
+Context-variable I/O (correlation IDs, service metadata) exclusively via u.*.
+Auto-injected transparently by FlextService via __init_subclass__.
+
+Per AGENTS.md §0.7: zero nested classes; all methods flat on the facade.
+Per AGENTS.md §3.1: single concern — context data model + contextvar ops.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-import contextvars
 import time
-from collections.abc import (
-    Generator,
-    Mapping,
-)
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, cast
 
-from flext_core import FlextUtilitiesContextTracing, c, m, p, r, t, u
+from flext_core import c, m, p, r, t, u
 
 
-class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
-    """Context manager for correlation, request data, and timing metadata.
+class FlextContext(m.ManagedModel):
+    """Scoped key-value context + correlation/service metadata facade.
 
-    The dispatcher and decorators rely on FlextContext to move correlation IDs,
-    service metadata, and timing details through CQRS handlers without mutating
-    function signatures.
-
-    Composed via MRO from:
-    - FlextUtilitiesContextState — normalization + scope variable access
-    - FlextUtilitiesContextCrud — get/set/has/remove/clear operations
-    - FlextUtilitiesContextLifecycle — create/clone/merge/export
-    - FlextUtilitiesContextTracing — flat ClassVar context variables (CORRELATION_ID, etc.)
+    Scope store: `ctx.set(key, value)` / `ctx.get(key)` — instance-level.
+    Contextvar ops: `FlextContext.apply_correlation_id(x)` — class-level via u.*.
+    Container ops: `FlextContext.resolve_container()` — class-level.
     """
 
-    logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
+    model_config = m.ConfigDict(
+        extra="forbid",
+        validate_assignment=False,
+        arbitrary_types_allowed=True,
+    )
 
-    initial_data: Annotated[
-        m.ContextData | t.JsonValue | None,
-        m.Field(description="Initial data for context scopes."),
-    ] = None
+    data: Annotated[
+        m.ConfigMap,
+        m.Field(description="Scoped key-value payload for this context instance."),
+    ] = m.Field(default_factory=lambda: m.ConfigMap(root={}))
 
-    state: Annotated[
-        m.ContextRuntimeState,
-        m.Field(description="Runtime state for context scopes and metadata."),
-    ] = m.Field(default_factory=lambda: m.ContextRuntimeState.create_default())
+    metadata: Annotated[
+        m.Metadata,
+        m.Field(description="Correlation and service metadata snapshot."),
+    ] = m.Field(default_factory=m.Metadata)
 
     _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
 
-    def __init__(self, **data: t.JsonPayload) -> None:
-        """Initialize FlextContext with optional initial data."""
-        super().__init__(**data)
-        context_data = m.ContextData()
-        if self.initial_data is not None:
-            if isinstance(self.initial_data, m.ContextData):
-                context_data = self.initial_data
-            elif isinstance(self.initial_data, dict):
-                normalized_data: dict[str, t.Scalar] = {
-                    str(key): u.to_scalar(raw_value)
-                    for key, raw_value in self.initial_data.items()
-                }
-                context_data = m.ContextData(
-                    data=normalized_data,
-                )
-        metadata_model = (
-            context_data.metadata.model_copy()
-            if isinstance(context_data.metadata, m.Metadata)
-            else m.Metadata()
-        )
-        self.state = m.ContextRuntimeState.create_default(metadata=metadata_model)
+    # --- Scope store (instance methods) ---
+
+    def set(self, key: str, value: t.JsonPayload) -> p.Result[bool]:
+        """Store a value in this context's scope."""
+        self.data.update({str(key): value})
+        return r[bool].ok(True)
+
+    def get(self, key: str) -> p.Result[t.JsonPayload]:
+        """Retrieve a value from this context's scope."""
+        k = str(key)
+        if k not in self.data.root:
+            return r[t.JsonPayload].fail(f"Key '{key}' not found in context")
+        v = self.data.root[k]
+        if v is None:
+            return r[t.JsonPayload].fail(f"Key '{key}' has no value")
+        return r[t.JsonPayload].ok(v)
+
+    def has(self, key: str) -> bool:
+        """Check if a key exists in this context's scope."""
+        return str(key) in self.data.root
+
+    def keys(self) -> t.StrSequence:
+        """Return all stored keys."""
+        return tuple(self.data.root.keys())
+
+    def values(self) -> list[t.JsonPayload]:
+        """Return all stored values."""
+        return list(self.data.root.values())
+
+    def items(self) -> list[tuple[str, t.JsonPayload]]:
+        """Return all key-value pairs."""
+        return list(self.data.root.items())
+
+    def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
+        """Get a metadata value by key."""
+        v = self.metadata.get(key) if hasattr(self.metadata, "get") else None
+        if v is None:
+            return r[t.JsonPayload].fail(f"Metadata key '{key}' not found")
+        return r[t.JsonPayload].ok(v)
+
+    def apply_metadata(self, key: str, value: t.JsonValue) -> None:
+        """Set a metadata value by key."""
+        if hasattr(self.metadata, "update"):
+            self.metadata.update({str(key): value})
+
+    def remove(self, key: str) -> None:
+        """Remove a key from this context's scope."""
+        self.data.root.pop(str(key), None)
+
+    def clear(self) -> None:
+        """Clear all stored keys from this context's scope."""
+        self.data.root.clear()
+
+    def merge(
+        self,
+        other: FlextContext | Mapping[str, t.JsonPayload],
+    ) -> Self:
+        """Merge another context or mapping into this context's scope."""
+        if isinstance(other, FlextContext):
+            self.data.update(other.data.root)
+        else:
+            self.data.update({str(k): v for k, v in other.items()})
+        return self
 
     def clone(self) -> Self:
-        """Create a clone of this context with independent scope storage."""
-        cloned: Self = self.__class__.model_validate({
-            "initial_data": self.initial_data
-        })
-        new_vars: dict[str, contextvars.ContextVar[m.ConfigMap | None]] = {}
-        for scope_name, ctx_var in self.state.scope_vars.items():
-            current = ctx_var.get()
-            new_var: contextvars.ContextVar[m.ConfigMap | None] = (
-                contextvars.ContextVar(f"{scope_name}_clone", default=None)
-            )
-            if current is not None:
-                _ = new_var.set(current.model_copy())
-            new_vars[scope_name] = new_var
-        cloned.state = cloned.state.model_copy(
-            update={
-                "metadata": self.state.metadata.model_copy(),
-                "statistics": self.state.statistics.model_copy(),
-                "scope_vars": new_vars,
-            },
+        """Create an independent copy of this context scope."""
+        return self.__class__(
+            data=m.ConfigMap(root=dict(self.data.root)),
+            metadata=self.metadata.model_copy(),
         )
-        return cloned
+
+    def export(
+        self,
+        *,
+        as_dict: bool = True,
+    ) -> dict[str, t.JsonPayload] | FlextContext:
+        """Export scope contents. Returns dict when as_dict=True (default)."""
+        if as_dict:
+            return dict(self.data.root)
+        return self
 
     @classmethod
-    def create(cls, **_: t.JsonPayload) -> Self:
-        """Factory: build a default context; kwargs reserved for future use."""
-        return cls()
+    def create(cls, **_: t.JsonPayload) -> p.Context:
+        """Factory: build a default context instance."""
+        return cast("p.Context", cls())
+
+    # --- Container management ---
 
     @classmethod
     def resolve_container(cls) -> p.Container:
-        """Get global container instance."""
+        """Get the global DI container instance."""
         if cls._container_state.container is None:
             msg = c.ERR_RUNTIME_CONTAINER_NOT_INITIALIZED
             raise RuntimeError(msg)
@@ -112,224 +146,181 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
 
     @classmethod
     def configure_container(cls, container: p.Container) -> None:
-        """Set the global container instance."""
+        """Register the global DI container instance."""
         cls._container_state = cls._container_state.with_container(container)
 
-    class Correlation:
-        """Distributed tracing and correlation ID management utilities."""
+    @staticmethod
+    def fetch_service(service_name: str) -> p.Result[t.RegisterableService]:
+        """Resolve a named service from the global container."""
+        return FlextContext.resolve_container().resolve(service_name)
 
-        @staticmethod
-        def resolve_correlation_id() -> str | None:
-            """Get current correlation ID."""
-            correlation_id = FlextUtilitiesContextTracing.CORRELATION_ID.get()
-            return correlation_id if isinstance(correlation_id, str) else None
+    @staticmethod
+    def register_service(
+        service_name: str,
+        service: t.RegisterableService,
+    ) -> p.Result[bool]:
+        """Register a named service in the global container."""
+        container = FlextContext.resolve_container()
+        _ = container.bind(service_name, service)
+        return (
+            r[bool].ok(True)
+            if container.has(service_name)
+            else r[bool].fail(f"Service '{service_name}' was not registered")
+        )
 
-        @staticmethod
-        @contextmanager
-        def new_correlation(
-            correlation_id: str | None = None,
-            parent_id: str | None = None,
-        ) -> Generator[str]:
-            """Create correlation context scope."""
-            if correlation_id is None:
-                correlation_id = u.generate("correlation")
-            current_correlation = FlextUtilitiesContextTracing.CORRELATION_ID.get()
-            correlation_token = FlextUtilitiesContextTracing.CORRELATION_ID.set(correlation_id)
-            parent_token = None
-            if parent_id:
-                parent_token = FlextUtilitiesContextTracing.PARENT_CORRELATION_ID.set(parent_id)
-            elif isinstance(current_correlation, str):
-                parent_token = FlextUtilitiesContextTracing.PARENT_CORRELATION_ID.set(
-                    current_correlation,
-                )
-            try:
-                yield correlation_id
-            finally:
-                FlextUtilitiesContextTracing.CORRELATION_ID.reset(correlation_token)
-                if parent_token:
-                    FlextUtilitiesContextTracing.PARENT_CORRELATION_ID.reset(parent_token)
+    # --- Correlation ID ops (contextvar via u.*) ---
 
-        @staticmethod
-        def apply_correlation_id(correlation_id: str | None) -> None:
-            """Set correlation ID."""
-            _ = FlextUtilitiesContextTracing.CORRELATION_ID.set(correlation_id)
+    @staticmethod
+    def resolve_correlation_id() -> str | None:
+        """Get current correlation ID from process context."""
+        v = u.CORRELATION_ID.get()
+        return v if isinstance(v, str) else None
 
-    class Service:
-        """Service identification and lifecycle context management utilities."""
-
-        @staticmethod
-        def fetch_service(service_name: str) -> p.Result[t.RegisterableService]:
-            """Resolve service from global container using r."""
-            container: p.Container = FlextContext.resolve_container()
-            return container.resolve(service_name)
-
-        @staticmethod
-        def register_service(
-            service_name: str,
-            service: t.RegisterableService,
-        ) -> p.Result[bool]:
-            """Register service in global container using r."""
-            container = FlextContext.resolve_container()
-            _ = container.bind(service_name, service)
-            if container.has(service_name):
-                return r[bool].ok(True)
-            return r[bool].fail_op(
-                "register service in context container",
-                f"Service '{service_name}' was not registered",
+    @staticmethod
+    @contextmanager
+    def new_correlation(
+        correlation_id: str | None = None,
+        parent_id: str | None = None,
+    ) -> Generator[str]:
+        """Scope a correlation ID, restoring the previous one on exit."""
+        if correlation_id is None:
+            correlation_id = u.generate("correlation")
+        current = u.CORRELATION_ID.get()
+        corr_token = u.CORRELATION_ID.set(correlation_id)
+        parent_token = (
+            u.PARENT_CORRELATION_ID.set(parent_id)
+            if parent_id
+            else (
+                u.PARENT_CORRELATION_ID.set(current)
+                if isinstance(current, str)
+                else None
             )
+        )
+        try:
+            yield correlation_id
+        finally:
+            u.CORRELATION_ID.reset(corr_token)
+            if parent_token:
+                u.PARENT_CORRELATION_ID.reset(parent_token)
 
-        @staticmethod
-        @contextmanager
-        def service_context(
-            service_name: str,
-            version: str | None = None,
-        ) -> Generator[None]:
-            """Create service context scope."""
-            _ = FlextUtilitiesContextTracing.SERVICE_NAME.get()
-            _ = FlextUtilitiesContextTracing.SERVICE_VERSION.get()
-            name_token = FlextUtilitiesContextTracing.SERVICE_NAME.set(service_name)
-            version_token = None
-            if version:
-                version_token = FlextUtilitiesContextTracing.SERVICE_VERSION.set(version)
-            try:
-                yield
-            finally:
-                FlextUtilitiesContextTracing.SERVICE_NAME.reset(name_token)
-                if version_token:
-                    FlextUtilitiesContextTracing.SERVICE_VERSION.reset(version_token)
+    @staticmethod
+    def apply_correlation_id(correlation_id: str | None) -> None:
+        """Set correlation ID in process context."""
+        _ = u.CORRELATION_ID.set(correlation_id)
 
-    class Request:
-        """Request-level context management utilities."""
+    @staticmethod
+    def ensure_correlation_id() -> str:
+        """Return current correlation ID, generating one if absent."""
+        current = u.CORRELATION_ID.get()
+        if isinstance(current, str) and current:
+            return current
+        new_id: str = u.generate("correlation")
+        _ = u.CORRELATION_ID.set(new_id)
+        return new_id
 
-        @staticmethod
-        def resolve_operation_name() -> str | None:
-            """Get the current operation name from context."""
-            operation_name = FlextUtilitiesContextTracing.OPERATION_NAME.get()
-            return str(operation_name) if operation_name is not None else None
+    # --- Service context ops (contextvar via u.*) ---
 
-        @staticmethod
-        def apply_operation_name(operation_name: str) -> None:
-            """Set operation name in context."""
-            _ = FlextUtilitiesContextTracing.OPERATION_NAME.set(operation_name)
+    @staticmethod
+    @contextmanager
+    def service_context(
+        service_name: str,
+        version: str | None = None,
+    ) -> Generator[None]:
+        """Scope service name/version in process context."""
+        name_token = u.SERVICE_NAME.set(service_name)
+        version_token = u.SERVICE_VERSION.set(version) if version else None
+        try:
+            yield
+        finally:
+            u.SERVICE_NAME.reset(name_token)
+            if version_token:
+                u.SERVICE_VERSION.reset(version_token)
 
-    class Performance:
-        """Performance monitoring and timing context management utilities."""
+    # --- Operation ops (contextvar via u.*) ---
 
-        @staticmethod
-        @contextmanager
-        def timed_operation(
-            operation_name: str | None = None,
-        ) -> Generator[m.ConfigMap]:
-            """Create timed operation context with performance tracking."""
-            start_time = u.generate_datetime_utc()
-            start_perf = time.perf_counter()
-            metadata_payload = t.json_mapping_adapter().validate_python(
-                {
-                    str(c.MetadataKey.START_TIME): start_time.isoformat(),
-                    str(c.ContextKey.OPERATION_NAME): operation_name or "",
-                },
+    @staticmethod
+    def resolve_operation_name() -> str | None:
+        """Get current operation name from process context."""
+        v = u.OPERATION_NAME.get()
+        return str(v) if v is not None else None
+
+    @staticmethod
+    def apply_operation_name(operation_name: str) -> None:
+        """Set operation name in process context."""
+        _ = u.OPERATION_NAME.set(operation_name)
+
+    @staticmethod
+    @contextmanager
+    def timed_operation(
+        operation_name: str | None = None,
+    ) -> Generator[m.ConfigMap]:
+        """Scope a timed operation with performance metadata."""
+        start_time = u.generate_datetime_utc()
+        start_perf = time.perf_counter()
+        payload = t.json_mapping_adapter().validate_python({
+            str(c.MetadataKey.START_TIME): start_time.isoformat(),
+            str(c.ContextKey.OPERATION_NAME): operation_name or "",
+        })
+        op_meta: m.ConfigMap = m.ConfigMap(root=dict(payload))
+        start_token = u.OPERATION_START_TIME.set(start_time)
+        meta_token = u.OPERATION_METADATA.set(payload)
+        op_token = u.OPERATION_NAME.set(operation_name) if operation_name else None
+        try:
+            yield op_meta
+        finally:
+            duration = time.perf_counter() - start_perf
+            end_time = start_time + timedelta(seconds=duration)
+            op_meta.update({
+                c.MetadataKey.END_TIME: end_time.isoformat(),
+                c.MetadataKey.DURATION_SECONDS: duration,
+            })
+            u.OPERATION_START_TIME.reset(start_token)
+            u.OPERATION_METADATA.reset(meta_token)
+            if op_token:
+                u.OPERATION_NAME.reset(op_token)
+
+    # --- Contextvar snapshot / clear ---
+
+    @staticmethod
+    def export_full_context() -> Mapping[str, t.Scalar]:
+        """Export all active contextvar values as a flat mapping."""
+        result: dict[str, t.Scalar] = {}
+        if (v := u.CORRELATION_ID.get()) is not None:
+            result[c.ContextKey.CORRELATION_ID] = str(v)
+        if (v := u.PARENT_CORRELATION_ID.get()) is not None:
+            result[c.ContextKey.PARENT_CORRELATION_ID] = str(v)
+        if (v := u.SERVICE_NAME.get()) is not None:
+            result[c.ContextKey.SERVICE_NAME] = str(v)
+        if (v := u.SERVICE_VERSION.get()) is not None:
+            result[c.ContextKey.SERVICE_VERSION] = str(v)
+        if (v := u.USER_ID.get()) is not None:
+            result[c.ContextKey.USER_ID] = str(v)
+        if (v := u.REQUEST_ID.get()) is not None:
+            result[c.ContextKey.REQUEST_ID] = str(v)
+        if (v := u.OPERATION_NAME.get()) is not None:
+            result[c.ContextKey.OPERATION_NAME] = str(v)
+        if (v := u.OPERATION_START_TIME.get()) is not None:
+            result[c.ContextKey.OPERATION_START_TIME] = (
+                v.isoformat() if isinstance(v, datetime) else str(v)
             )
-            operation_metadata: m.ConfigMap = m.ConfigMap(
-                root=dict(metadata_payload),
-            )
-            start_token = FlextUtilitiesContextTracing.OPERATION_START_TIME.set(start_time)
-            metadata_token = FlextUtilitiesContextTracing.OPERATION_METADATA.set(
-                metadata_payload,
-            )
-            operation_token = None
-            if operation_name:
-                operation_token = FlextUtilitiesContextTracing.OPERATION_NAME.set(
-                    operation_name,
-                )
-            try:
-                yield operation_metadata
-            finally:
-                duration = time.perf_counter() - start_perf
-                end_time = start_time + timedelta(seconds=duration)
-                operation_metadata.update({
-                    c.MetadataKey.END_TIME: end_time.isoformat(),
-                    c.MetadataKey.DURATION_SECONDS: duration,
-                })
-                FlextUtilitiesContextTracing.OPERATION_START_TIME.reset(start_token)
-                FlextUtilitiesContextTracing.OPERATION_METADATA.reset(metadata_token)
-                if operation_token:
-                    FlextUtilitiesContextTracing.OPERATION_NAME.reset(operation_token)
+        return result
 
-    class Serialization:
-        """Context serialization and deserialization utilities."""
-
-        @staticmethod
-        def export_full_context() -> Mapping[str, t.Scalar]:
-            """Export current context as a flat dictionary of scalar values."""
-            context_vars = FlextContext
-
-            # Build context dictionary with direct scalar access
-            result: dict[str, t.Scalar] = {}
-
-            # Correlation IDs (strings)
-            if (corr_id := context_vars.CORRELATION_ID.get()) is not None:
-                result[c.ContextKey.CORRELATION_ID] = str(corr_id)
-            if (
-                parent_corr := context_vars.PARENT_CORRELATION_ID.get()
-            ) is not None:
-                result[c.ContextKey.PARENT_CORRELATION_ID] = str(parent_corr)
-
-            # Service metadata (strings)
-            if (svc_name := context_vars.SERVICE_NAME.get()) is not None:
-                result[c.ContextKey.SERVICE_NAME] = str(svc_name)
-            if (svc_version := context_vars.SERVICE_VERSION.get()) is not None:
-                result[c.ContextKey.SERVICE_VERSION] = str(svc_version)
-
-            # Request metadata (strings)
-            if (user_id := context_vars.USER_ID.get()) is not None:
-                result[c.ContextKey.USER_ID] = str(user_id)
-            if (req_id := context_vars.REQUEST_ID.get()) is not None:
-                result[c.ContextKey.REQUEST_ID] = str(req_id)
-
-            # Performance metadata
-            if (op_name := context_vars.OPERATION_NAME.get()) is not None:
-                result[c.ContextKey.OPERATION_NAME] = str(op_name)
-
-            # Operation start time as ISO string
-            if (
-                op_start := context_vars.OPERATION_START_TIME.get()
-            ) is not None:
-                if isinstance(op_start, datetime):
-                    result[c.ContextKey.OPERATION_START_TIME] = op_start.isoformat()
-                else:
-                    result[c.ContextKey.OPERATION_START_TIME] = str(op_start)
-
-            return result
-
-    class Utilities:
-        """Context management utility methods."""
-
-        @staticmethod
-        def clear_context() -> None:
-            """Clear all context variables."""
-            for context_var in [
-                FlextUtilitiesContextTracing.CORRELATION_ID,
-                FlextUtilitiesContextTracing.PARENT_CORRELATION_ID,
-                FlextUtilitiesContextTracing.SERVICE_NAME,
-                FlextUtilitiesContextTracing.SERVICE_VERSION,
-                FlextUtilitiesContextTracing.USER_ID,
-                FlextUtilitiesContextTracing.REQUEST_ID,
-                FlextUtilitiesContextTracing.OPERATION_NAME,
-            ]:
-                _ = context_var.set(None)
-            _ = FlextUtilitiesContextTracing.OPERATION_START_TIME.set(None)
-            _ = FlextUtilitiesContextTracing.OPERATION_METADATA.set(None)
-            _ = FlextUtilitiesContextTracing.REQUEST_TIMESTAMP.set(None)
-
-        @staticmethod
-        def ensure_correlation_id() -> str:
-            """Ensure correlation ID exists, creating one if needed."""
-            correlation_id_value = FlextUtilitiesContextTracing.CORRELATION_ID.get()
-            if isinstance(correlation_id_value, str) and correlation_id_value:
-                return correlation_id_value
-            new_correlation_id: str = u.generate("correlation")
-            FlextContext.Correlation.apply_correlation_id(new_correlation_id)
-            return new_correlation_id
+    @staticmethod
+    def clear_context() -> None:
+        """Clear all contextvar proxies (process-global scope)."""
+        for ctx_var in (
+            u.CORRELATION_ID,
+            u.PARENT_CORRELATION_ID,
+            u.SERVICE_NAME,
+            u.SERVICE_VERSION,
+            u.USER_ID,
+            u.REQUEST_ID,
+            u.OPERATION_NAME,
+        ):
+            _ = ctx_var.set(None)
+        _ = u.OPERATION_START_TIME.set(None)
+        _ = u.OPERATION_METADATA.set(None)
+        _ = u.REQUEST_TIMESTAMP.set(None)
 
 
 __all__: t.StrSequence = ["FlextContext"]

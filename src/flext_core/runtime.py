@@ -39,7 +39,6 @@ from pydantic import BaseModel, ConfigDict
 from flext_core import (
     FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
-    FlextUtilitiesGenerators as ug,
     FlextUtilitiesGuardsTypeCore as ugc,
     c,
     p,
@@ -85,25 +84,12 @@ class FlextRuntime:
             raise TypeError(msg)
         return instance
 
-    class Bootstrap:
-        """Bootstrap helpers for instantiation without calling ``__init__``."""
-
-        @staticmethod
-        def create_instance[T](class_type: type[T]) -> T:
-            """Create instance using the runtime low-level constructor path."""
-            return FlextRuntime.create_instance(class_type)
-
     @staticmethod
     def ensure_utc_datetime(value: datetime | None) -> datetime | None:
         """Attach UTC timezone to naive datetimes while preserving None."""
         if value is not None and value.tzinfo is None:
             return value.replace(tzinfo=UTC)
         return value
-
-    @staticmethod
-    def dependency_containers() -> ModuleType:
-        """Return the dependency-injector containers module."""
-        return containers
 
     @staticmethod
     def dependency_providers() -> ModuleType:
@@ -289,21 +275,22 @@ class FlextRuntime:
         Sequence branches of ``normalize_registerable_service``. Uses Python
         3.13 ``match/case`` to collapse the prior duplicate isinstance ladders.
         """
+        normalized_item: t.JsonPayload
         match item:
             case datetime():
-                return (
+                normalized_item = (
                     item.replace(tzinfo=UTC) if item.tzinfo is None else item
                 ).isoformat()
             case Path():
-                return str(item)
+                normalized_item = str(item)
             case tuple():
-                return FlextRuntime.normalize_to_metadata(item)
+                normalized_item = FlextRuntime.normalize_to_metadata(item)
             case dict():
-                return dict(t.json_mapping_adapter().validate_python(item))
+                normalized_item = dict(t.json_mapping_adapter().validate_python(item))
             case list():
-                return list(t.json_list_adapter().validate_python(item))
+                normalized_item = list(t.json_list_adapter().validate_python(item))
             case bool() | int() | float() | str() | None | mp.BaseModel():
-                return item
+                normalized_item = item
             case _:
                 err_template = (
                     c.ERR_RUNTIME_MAPPING_INVALID_TYPE
@@ -312,6 +299,7 @@ class FlextRuntime:
                 )
                 msg = err_template.format(type_name=type(item))
                 raise TypeError(msg)
+        return normalized_item
 
     @staticmethod
     def normalize_registerable_service(
@@ -761,48 +749,6 @@ class FlextRuntime:
                 packages=None,
                 container=container,
             )
-
-    @classmethod
-    def ensure_trace_context(
-        cls,
-        context: t.ScalarMapping | t.ScalarOrModel,
-        *,
-        include_correlation_id: bool = False,
-        include_timestamp: bool = False,
-    ) -> t.StrMapping:
-        """Ensure context dict has distributed tracing fields (bridge for models).
-
-        Args:
-            context: Context dictionary or recursive payload to enrich
-            include_correlation_id: If True, ensure correlation_id exists
-            include_timestamp: If True, ensure timestamp exists
-
-        Returns:
-            t.StrMapping: Enriched context with trace fields
-
-        """
-        context_dict = mc.ConfigMap(root={})
-        if isinstance(context, Mapping):
-            parsed_context: dict[str, t.JsonPayload] = {
-                str(k): str(v) for k, v in context.items()
-            }
-            context_dict = mc.ConfigMap(root=parsed_context)
-        elif isinstance(context, BaseModel):
-            context_dict.update(context.model_dump())
-        else:
-            context_dict = mc.ConfigMap(root={})
-        result: t.MutableStrMapping = {}
-        for key, value in context_dict.items():
-            result[key] = str(value)
-        if "trace_id" not in result:
-            result["trace_id"] = ug.generate_id()
-        if "span_id" not in result:
-            result["span_id"] = ug.generate_id()
-        if include_correlation_id and c.ContextKey.CORRELATION_ID not in result:
-            result[c.ContextKey.CORRELATION_ID] = ug.generate_id()
-        if include_timestamp and "timestamp" not in result:
-            result["timestamp"] = ug.generate_datetime_utc().isoformat()
-        return result
 
 
 __all__: list[str] = ["FlextRuntime"]

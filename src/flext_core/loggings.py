@@ -11,12 +11,8 @@ import inspect
 import time
 import traceback
 import types
-from collections.abc import (
-    Mapping,
-    MutableMapping,
-)
 from contextlib import suppress
-from typing import ClassVar, Self
+from typing import ClassVar, Self, cast
 
 import structlog
 from structlog.typing import Context
@@ -148,13 +144,13 @@ class FlextLogger(ulc):
     ) -> p.Logger:
         """Create a logger instance for a module."""
         FlextLogger.ensure_structlog_configured()
-        return FlextLogger(
+        return cast("p.Logger", FlextLogger(
             name,
             settings=settings,
             service_name=service_name,
             service_version=service_version,
             correlation_id=correlation_id,
-        )
+        ))
 
     @classmethod
     def for_container(
@@ -174,40 +170,12 @@ class FlextLogger(ulc):
         logger = FlextLogger(f"container_{id(container)}")
         if context:
             _ = logger.bind_global_context(**context)
-        return logger
+        return cast("p.Logger", logger)
 
     def bind(self, **context: t.JsonPayload) -> Self:
         """Bind additional context, returning new logger (original unchanged)."""
         bound_logger = self.logger.bind(**self.to_container_context(context))
         return self.__class__(self.name, _bound_logger=bound_logger)
-
-    def build_exception_context(
-        self,
-        *,
-        exception: Exception | None,
-        exc_info: bool,
-        context: Mapping[str, t.JsonPayload | Exception],
-    ) -> t.JsonMapping:
-        """Build normalized context payload for exception/error logging."""
-        include_stack_trace = self._should_include_stack_trace()
-        context_dict: dict[str, t.JsonValue] = {}
-        if exception is not None:
-            context_dict["exception_type"] = exception.__class__.__name__
-            context_dict["exception_message"] = str(exception)
-            if include_stack_trace:
-                context_dict["stack_trace"] = "".join(
-                    traceback.format_exception(
-                        exception.__class__,
-                        exception,
-                        exception.__traceback__,
-                    ),
-                )
-        elif exc_info and include_stack_trace:
-            context_dict["stack_trace"] = traceback.format_exc()
-        for key, value in context.items():
-            if not isinstance(value, BaseException):
-                context_dict[key] = FlextLogger._to_container_value(value)
-        return context_dict
 
     def critical(
         self,
@@ -255,23 +223,33 @@ class FlextLogger(ulc):
             )
             raw_exception = kw.get("exception")
             exc_info_value = kw.get("exc_info", True)
-            context_input: MutableMapping[str, t.JsonPayload | Exception] = {}
+            include_stack_trace = self._should_include_stack_trace()
+            context_dict: dict[str, t.JsonValue] = {}
+
+            if resolved_exception is not None:
+                context_dict["exception_type"] = resolved_exception.__class__.__name__
+                context_dict["exception_message"] = str(resolved_exception)
+                if include_stack_trace:
+                    context_dict["stack_trace"] = "".join(
+                        traceback.format_exception(
+                            resolved_exception.__class__,
+                            resolved_exception,
+                            resolved_exception.__traceback__,
+                        ),
+                    )
+            elif exc_info_value and include_stack_trace:
+                context_dict["stack_trace"] = traceback.format_exc()
+
             for key, value in kw.items():
                 if key in {"exception", "exc_info"}:
                     continue
-                if isinstance(value, Exception):
-                    context_input[key] = value
-                else:
-                    context_input[key] = FlextLogger._to_container_value(value)
-            built_context = self.build_exception_context(
-                exception=resolved_exception,
-                exc_info=bool(exc_info_value),
-                context=context_input,
-            )
-            context_dict: dict[str, t.JsonPayload] = dict(built_context)
+                if not isinstance(value, BaseException):
+                    context_dict[key] = FlextLogger._to_container_value(value)
+
             if resolved_exception is None and isinstance(raw_exception, BaseException):
                 context_dict["exception_type"] = raw_exception.__class__.__name__
                 context_dict["exception_message"] = str(raw_exception)
+
             _ = self.logger.error(
                 message,
                 *filtered_args,

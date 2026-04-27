@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import inspect
-from typing import get_args, get_origin, Annotated
+from typing import Annotated, get_args, get_origin
 
 from pydantic.fields import FieldInfo
 
@@ -20,7 +20,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
     """FIELD_SHAPE + MODEL_CONFIG visitors via Pydantic introspection."""
 
     @staticmethod
-    def _v_field_shape(
+    def v_field_shape(
         params: me.FieldShapeParams,
         *args: object,
     ) -> t.StrMapping | None:
@@ -98,7 +98,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
         return _NO_VIOLATION
 
     @staticmethod
-    def _v_model_config(
+    def v_model_config(
         params: me.ModelConfigParams,
         target: type,
     ) -> t.StrMapping | None:

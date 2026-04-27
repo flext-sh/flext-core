@@ -183,8 +183,8 @@ class TestsFlextCoreMixins:
         elif (
             scenario.scenario_type == self.ServiceMixinScenarioType.CONTEXT_CORRELATION
         ):
-            FlextContext.Correlation.apply_correlation_id("test-123")
-            assert FlextContext.Correlation.resolve_correlation_id() == "test-123"
+            FlextContext.apply_correlation_id("test-123")
+            assert FlextContext.resolve_correlation_id() == "test-123"
         elif scenario.scenario_type == self.ServiceMixinScenarioType.METRICS_TRACK:
             assert service.run_process() == "done"
         elif scenario.scenario_type == self.ServiceMixinScenarioType.SERVICE_INIT:

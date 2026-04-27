@@ -1,4 +1,4 @@
-"""Behavior contract for flext_core.FlextContext — public API only."""
+"""Behavior contract for FlextContext — pure Pydantic v2 model + contextvar facade."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from flext_core import FlextContext
 
 
 class TestsFlextCoreContext:
-    """Behavior contract for set/get/remove/clear/merge/clone/export."""
+    """Contract: scope store (set/get/remove/clear/merge/clone/export) + contextvar ops."""
 
     def test_set_then_get_returns_success_with_original_value(self) -> None:
         ctx = FlextContext()
@@ -46,12 +46,27 @@ class TestsFlextCoreContext:
         cloned = ctx.clone()
         ctx.clear()
         assert ctx.get("k").failure
-        cloned_value = cloned.get("k")
-        assert cloned_value.success
-        assert cloned_value.value == "v"
+        assert cloned.get("k").success
+        assert cloned.get("k").value == "v"
 
-    def test_initial_data_constructor_populates_store(self) -> None:
-        ctx = FlextContext(initial_data={"a": 1})
+    def test_export_returns_dict_with_stored_keys(self) -> None:
+        ctx = FlextContext()
+        ctx.set("a", 1)
+        ctx.set("b", "two")
         exported = ctx.export(as_dict=True)
         assert isinstance(exported, dict)
-        assert "data" in exported or "a" in exported
+        assert exported["a"] == 1
+        assert exported["b"] == "two"
+
+    def test_contextvar_apply_and_resolve_correlation_id(self) -> None:
+        FlextContext.apply_correlation_id("test-corr-123")
+        assert FlextContext.resolve_correlation_id() == "test-corr-123"
+        FlextContext.clear_context()
+        assert FlextContext.resolve_correlation_id() is None
+
+    def test_ensure_correlation_id_generates_if_absent(self) -> None:
+        FlextContext.clear_context()
+        cid = FlextContext.ensure_correlation_id()
+        assert isinstance(cid, str) and len(cid) > 0
+        assert FlextContext.resolve_correlation_id() == cid
+        FlextContext.clear_context()

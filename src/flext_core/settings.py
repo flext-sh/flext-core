@@ -50,39 +50,13 @@ from flext_core import (
 
 
 def _resolve_env_file_bootstrap() -> str:
-    """Resolve .env file path from FLEXT_ENV_FILE env var.
-
-    Bootstrap-layer inline function (AGENTS.md §2.6 exception).
-    Avoids circular import of FlextUtilitiesSettings during settings initialization.
-    """
+    """Resolve .env file path from FLEXT_ENV_FILE env var."""
     custom_env_file = os.environ.get(c.ENV_FILE_ENV_VAR)
     if custom_env_file:
         custom_path = Path(custom_env_file)
-        if custom_path.exists():
-            return str(custom_path.resolve())
-        return custom_env_file
+        return str(custom_path.resolve()) if custom_path.exists() else custom_env_file
     default_path = Path.cwd() / c.ENV_FILE_DEFAULT
-    if default_path.exists():
-        return str(default_path.resolve())
-    return c.ENV_FILE_DEFAULT
-
-
-def _validate_database_url_scheme_bootstrap(url: str) -> None:
-    """Validate database URL scheme is postgresql://, mysql://, or sqlite://.
-
-    Bootstrap-layer inline validator (AGENTS.md §2.6 exception).
-    """
-    if url and not url.startswith(("postgresql://", "mysql://", "sqlite://")):
-        raise ValueError(c.ERR_CONFIG_INVALID_DB_URL_SCHEME)
-
-
-def _validate_trace_requires_debug_bootstrap(*, trace: bool, debug: bool) -> None:
-    """Validate that trace mode requires debug mode.
-
-    Bootstrap-layer inline validator (AGENTS.md §2.6 exception).
-    """
-    if trace and not debug:
-        raise ValueError(c.ERR_CONFIG_TRACE_REQUIRES_DEBUG)
+    return str(default_path.resolve()) if default_path.exists() else c.ENV_FILE_DEFAULT
 
 
 class FlextSettings(BaseSettings):
@@ -380,24 +354,13 @@ class FlextSettings(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_settings(self) -> Self:
-        """Validate settings.
-
-        Business Rule: Validates settings consistency after model initialization.
-        Delegates to bootstrap validation utilities for database URL scheme
-        and trace/debug consistency checks.
-
-        Returns:
-            Self: Validated settings instance
-
-        Raises:
-            ValueError: If settings are invalid
-
-        """
-        _validate_database_url_scheme_bootstrap(self.database_url)
-        _validate_trace_requires_debug_bootstrap(
-            trace=self.trace,
-            debug=self.debug,
-        )
+        """Validate settings consistency after model initialization."""
+        if self.database_url and not self.database_url.startswith(
+            ("postgresql://", "mysql://", "sqlite://")
+        ):
+            raise ValueError(c.ERR_CONFIG_INVALID_DB_URL_SCHEME)
+        if self.trace and not self.debug:
+            raise ValueError(c.ERR_CONFIG_TRACE_REQUIRES_DEBUG)
         return self
 
     AutoSettings: ClassVar[type[FlextModelsSettings.AutoSettings]] = (

@@ -18,7 +18,7 @@ class FlextUtilitiesBeartypeClassVisitor:
     """CLASS_PLACEMENT + PROTOCOL_TREE + MRO_SHAPE + LOOSE_SYMBOL visitors."""
 
     @staticmethod
-    def _v_class_placement(
+    def v_class_placement(
         params: me.ClassPlacementParams,
         *args: object,
     ) -> t.StrMapping | None:
@@ -61,7 +61,7 @@ class FlextUtilitiesBeartypeClassVisitor:
         return {"expected": expected, "actual": target.__name__}
 
     @staticmethod
-    def _v_protocol_tree(
+    def v_protocol_tree(
         params: me.ProtocolTreeParams,
         value: type,
     ) -> t.StrMapping | None:
@@ -86,7 +86,7 @@ class FlextUtilitiesBeartypeClassVisitor:
         return _NO_VIOLATION
 
     @staticmethod
-    def _v_mro_shape(
+    def v_mro_shape(
         params: me.MroShapeParams,
         target: type,
     ) -> t.StrMapping | None:
@@ -95,6 +95,7 @@ class FlextUtilitiesBeartypeClassVisitor:
             get_func_code_object_or_none,
         )
         from beartype._util.func.utilfunctest import is_func_python
+
         from flext_core._utilities.beartype_engine import ube
 
         aliases = cp.RUNTIME_ALIAS_NAMES
@@ -171,7 +172,7 @@ class FlextUtilitiesBeartypeClassVisitor:
         return violation or self_ref_violation
 
     @staticmethod
-    def _v_loose_symbol(
+    def v_loose_symbol(
         params: me.LooseSymbolParams,
         *args: object,
     ) -> t.StrMapping | None:

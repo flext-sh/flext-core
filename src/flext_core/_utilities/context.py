@@ -1,8 +1,9 @@
 """Context utility helpers for creating and managing context variables.
 
-These helpers provide factory functions for creating StructlogProxyContextVar
-instances with proper typing, ensuring consistent context variable creation
-across the FLEXT ecosystem.
+Factory functions and singleton context-variable proxies. Both are exposed via
+u.* (FlextUtilitiesContext is part of FlextUtilities MRO) so callers write
+u.create_str_proxy(...) and u.CORRELATION_ID.set(...) instead of importing
+internal classes directly.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,72 +12,96 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Final
+from typing import ClassVar
 
 from flext_core import FlextModelsContext, t
-
-
-class FlextUtilitiesContextVariables:
-    """Context variables using structlog as single source of truth.
-
-    Centralized, immutable container for all context variable proxies.
-    Access via u.ContextVariables.VARIABLE_NAME for standard context vars.
-    """
-
-    # Correlation variables for distributed tracing
-    CORRELATION_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]]
-    PARENT_CORRELATION_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]]
-
-    # Service context variables for identification
-    SERVICE_NAME: Final[FlextModelsContext.StructlogProxyContextVar[str]]
-    SERVICE_VERSION: Final[FlextModelsContext.StructlogProxyContextVar[str]]
-
-    # Request context variables for metadata
-    USER_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]]
-    REQUEST_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]]
-    REQUEST_TIMESTAMP: Final[FlextModelsContext.StructlogProxyContextVar[datetime]]
-
-    # Performance context variables for timing
-    OPERATION_NAME: Final[FlextModelsContext.StructlogProxyContextVar[str]]
-    OPERATION_START_TIME: Final[FlextModelsContext.StructlogProxyContextVar[datetime]]
-    OPERATION_METADATA: Final[FlextModelsContext.StructlogProxyContextVar[t.JsonMapping]]
+from flext_core._constants.infrastructure import FlextConstantsInfrastructure as _c
 
 
 class FlextUtilitiesContext:
-    """Context utility helpers for creating and managing context variables."""
+    """Context utility factories + singleton proxy instances.
+
+    Per AGENTS.md §0.7: single concern (context I/O). Proxy ClassVars are created
+    once at class-definition time using the factory @staticmethod helpers defined
+    in this same class. Access via u.CORRELATION_ID, u.SERVICE_NAME, etc.
+    """
+
+    # --- Proxy instances (ClassVar, created once) ---
+
+    CORRELATION_ID: ClassVar[FlextModelsContext.StructlogProxyContextVar[str]] = (
+        FlextModelsContext.StructlogProxyContextVar(
+            _c.ContextKey.CORRELATION_ID, default=None
+        )
+    )
+    PARENT_CORRELATION_ID: ClassVar[
+        FlextModelsContext.StructlogProxyContextVar[str]
+    ] = FlextModelsContext.StructlogProxyContextVar(
+        _c.ContextKey.PARENT_CORRELATION_ID, default=None
+    )
+    SERVICE_NAME: ClassVar[FlextModelsContext.StructlogProxyContextVar[str]] = (
+        FlextModelsContext.StructlogProxyContextVar(
+            _c.ContextKey.SERVICE_NAME, default=None
+        )
+    )
+    SERVICE_VERSION: ClassVar[FlextModelsContext.StructlogProxyContextVar[str]] = (
+        FlextModelsContext.StructlogProxyContextVar(
+            _c.ContextKey.SERVICE_VERSION, default=None
+        )
+    )
+    USER_ID: ClassVar[FlextModelsContext.StructlogProxyContextVar[str]] = (
+        FlextModelsContext.StructlogProxyContextVar(_c.ContextKey.USER_ID, default=None)
+    )
+    REQUEST_ID: ClassVar[FlextModelsContext.StructlogProxyContextVar[str]] = (
+        FlextModelsContext.StructlogProxyContextVar(
+            _c.ContextKey.REQUEST_ID, default=None
+        )
+    )
+    REQUEST_TIMESTAMP: ClassVar[
+        FlextModelsContext.StructlogProxyContextVar[datetime]
+    ] = FlextModelsContext.StructlogProxyContextVar(
+        _c.ContextKey.REQUEST_TIMESTAMP, default=None
+    )
+    OPERATION_NAME: ClassVar[FlextModelsContext.StructlogProxyContextVar[str]] = (
+        FlextModelsContext.StructlogProxyContextVar(
+            _c.ContextKey.OPERATION_NAME, default=None
+        )
+    )
+    OPERATION_START_TIME: ClassVar[
+        FlextModelsContext.StructlogProxyContextVar[datetime]
+    ] = FlextModelsContext.StructlogProxyContextVar(
+        _c.ContextKey.OPERATION_START_TIME, default=None
+    )
+    OPERATION_METADATA: ClassVar[
+        FlextModelsContext.StructlogProxyContextVar[t.JsonMapping]
+    ] = FlextModelsContext.StructlogProxyContextVar(
+        _c.ContextKey.OPERATION_METADATA, default=None
+    )
+
+    # --- Proxy factories (create new instances on demand) ---
 
     @staticmethod
     def create_str_proxy(
         key: str,
         default: str | None = None,
     ) -> FlextModelsContext.StructlogProxyContextVar[str]:
-        """Create StructlogProxyContextVar[str] instance."""
-        return FlextModelsContext.StructlogProxyContextVar(
-            key,
-            default=default,
-        )
+        """Create a new StructlogProxyContextVar[str] instance."""
+        return FlextModelsContext.StructlogProxyContextVar(key, default=default)
 
     @staticmethod
     def create_datetime_proxy(
         key: str,
         default: datetime | None = None,
     ) -> FlextModelsContext.StructlogProxyContextVar[datetime]:
-        """Create StructlogProxyContextVar[datetime] instance."""
-        return FlextModelsContext.StructlogProxyContextVar(
-            key,
-            default=default,
-        )
+        """Create a new StructlogProxyContextVar[datetime] instance."""
+        return FlextModelsContext.StructlogProxyContextVar(key, default=default)
 
     @staticmethod
     def create_dict_proxy(
         key: str,
         default: t.JsonMapping | None = None,
     ) -> FlextModelsContext.StructlogProxyContextVar[t.JsonMapping]:
-        """Create StructlogProxyContextVar[dict] instance."""
-        return FlextModelsContext.StructlogProxyContextVar(
-            key,
-            default=default,
-        )
+        """Create a new StructlogProxyContextVar[dict] instance."""
+        return FlextModelsContext.StructlogProxyContextVar(key, default=default)
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextUtilitiesContext"]

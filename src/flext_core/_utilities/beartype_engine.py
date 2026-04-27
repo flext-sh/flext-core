@@ -10,7 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, MutableSet
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+)
 from types import MappingProxyType, UnionType
 from typing import ClassVar, Union, get_args, get_origin, no_type_check
 
@@ -58,14 +64,26 @@ class FlextUtilitiesBeartypeEngine(
     unwrap_type_alias = staticmethod(FlextUtilitiesBeartypeHelpers.unwrap_type_alias)
     unwrap_annotated = staticmethod(FlextUtilitiesBeartypeHelpers.unwrap_annotated)
     runtime_module_for = staticmethod(FlextUtilitiesBeartypeHelpers.runtime_module_for)
-    runtime_wrapper_module_for = staticmethod(FlextUtilitiesBeartypeHelpers.runtime_wrapper_module_for)
-    iter_module_callables = staticmethod(FlextUtilitiesBeartypeHelpers.iter_module_callables)
-    function_param_names = staticmethod(FlextUtilitiesBeartypeHelpers.function_param_names)
-    is_pass_through_bytecode = staticmethod(FlextUtilitiesBeartypeHelpers.is_pass_through_bytecode)
+    runtime_wrapper_module_for = staticmethod(
+        FlextUtilitiesBeartypeHelpers.runtime_wrapper_module_for
+    )
+    iter_module_callables = staticmethod(
+        FlextUtilitiesBeartypeHelpers.iter_module_callables
+    )
+    function_param_names = staticmethod(
+        FlextUtilitiesBeartypeHelpers.function_param_names
+    )
+    is_pass_through_bytecode = staticmethod(
+        FlextUtilitiesBeartypeHelpers.is_pass_through_bytecode
+    )
     has_call_to_global = staticmethod(FlextUtilitiesBeartypeHelpers.has_call_to_global)
     has_attribute_call = staticmethod(FlextUtilitiesBeartypeHelpers.has_attribute_call)
-    has_private_attr_probe = staticmethod(FlextUtilitiesBeartypeHelpers.has_private_attr_probe)
-    has_forbidden_collection_origin = staticmethod(FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin)
+    has_private_attr_probe = staticmethod(
+        FlextUtilitiesBeartypeHelpers.has_private_attr_probe
+    )
+    has_forbidden_collection_origin = staticmethod(
+        FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin
+    )
 
     @staticmethod
     def contains_any(hint: t.TypeHintSpecifier | None) -> bool:
@@ -91,7 +109,7 @@ class FlextUtilitiesBeartypeEngine(
     def alias_contains_any(alias_value: t.TypeHintSpecifier | None) -> bool:
         try:
             return FlextUtilitiesBeartypeEngine.contains_any(alias_value)
-        except (TypeError, AttributeError, RuntimeError, RecursionError):  # noqa: BLE001
+        except (TypeError, AttributeError, RuntimeError, RecursionError):
             return "Any" in str(alias_value)
 
     @staticmethod
@@ -102,7 +120,9 @@ class FlextUtilitiesBeartypeEngine(
         return None
 
     @staticmethod
-    def mutable_default_factory_kind(factory: type | Callable[..., object] | None) -> type | None:
+    def mutable_default_factory_kind(
+        factory: type | Callable[..., object] | None,
+    ) -> type | None:
         for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
             if factory is kind or get_origin(factory) is kind:
                 return kind
@@ -123,14 +143,23 @@ class FlextUtilitiesBeartypeEngine(
             return False
         if isinstance(norm, str):
             en = exp.__name__ if exp else ""
-            return bool(en) and (norm == en or norm.startswith((f"{en}[", f"typing.{en}[", f"collections.abc.{en}[")))
+            return bool(en) and (
+                norm == en
+                or norm.startswith((
+                    f"{en}[",
+                    f"typing.{en}[",
+                    f"collections.abc.{en}[",
+                ))
+            )
         org = get_origin(norm)
         tgt = org or norm
         return exp is not None and tgt is exp
 
     @staticmethod
     def has_relaxed_extra_base(target: type) -> bool:
-        return any(b.__name__ in c.ENFORCEMENT_RELAXED_EXTRA_BASES for b in target.__mro__)
+        return any(
+            b.__name__ in c.ENFORCEMENT_RELAXED_EXTRA_BASES for b in target.__mro__
+        )
 
     @staticmethod
     def has_runtime_protocol_marker(value: type) -> bool:
@@ -138,12 +167,17 @@ class FlextUtilitiesBeartypeEngine(
 
     @staticmethod
     def has_abstract_contract(value: type) -> bool:
-        return bool(getattr(value, "__abstractmethods__", None)) or any(getattr(b, "__name__", "") == "ABC" for b in value.__mro__)
+        return bool(getattr(value, "__abstractmethods__", None)) or any(
+            getattr(b, "__name__", "") == "ABC" for b in value.__mro__
+        )
 
     @staticmethod
     def has_nested_namespace(value: type) -> bool:
         for base in value.__mro__:
-            if base is not object and any(isinstance(v, type) and not n.startswith("_") for n, v in vars(base).items()):
+            if base is not object and any(
+                isinstance(v, type) and not n.startswith("_")
+                for n, v in vars(base).items()
+            ):
                 return True
         return False
 
@@ -169,7 +203,9 @@ class FlextUtilitiesBeartypeEngine(
 
     @staticmethod
     def attr_accept_utility(name: str) -> bool:
-        return name not in c.ENFORCEMENT_UTILITIES_EXEMPT_METHODS and not name.startswith("_")
+        return (
+            name not in c.ENFORCEMENT_UTILITIES_EXEMPT_METHODS
+        ) and not name.startswith("_")
 
     @classmethod
     def apply(
@@ -179,26 +215,25 @@ class FlextUtilitiesBeartypeEngine(
         visitor = cls._VISITORS.get(kind)
         return _NO_VIOLATION if visitor is None else visitor(params, *args)
 
-    # noqa: SLF001 - private visitor methods are intentional; part of data-driven dispatch contract
-    _VISITORS: ClassVar[Mapping[c.EnforcementPredicateKind, Callable[..., t.StrMapping | None]]] = (
-        MappingProxyType({
-            c.EnforcementPredicateKind.FIELD_SHAPE: FlextUtilitiesBeartypeFieldVisitor._v_field_shape,
-            c.EnforcementPredicateKind.MODEL_CONFIG: FlextUtilitiesBeartypeFieldVisitor._v_model_config,
-            c.EnforcementPredicateKind.ATTR_SHAPE: FlextUtilitiesBeartypeAttrVisitor._v_attr_shape,
-            c.EnforcementPredicateKind.METHOD_SHAPE: FlextUtilitiesBeartypeMethodVisitor._v_method_shape,
-            c.EnforcementPredicateKind.CLASS_PLACEMENT: FlextUtilitiesBeartypeClassVisitor._v_class_placement,
-            c.EnforcementPredicateKind.PROTOCOL_TREE: FlextUtilitiesBeartypeClassVisitor._v_protocol_tree,
-            c.EnforcementPredicateKind.MRO_SHAPE: FlextUtilitiesBeartypeClassVisitor._v_mro_shape,
-            c.EnforcementPredicateKind.LOOSE_SYMBOL: FlextUtilitiesBeartypeClassVisitor._v_loose_symbol,
-            c.EnforcementPredicateKind.WRAPPER: FlextUtilitiesBeartypeDeprecatedVisitor._v_wrapper,
-            c.EnforcementPredicateKind.IMPORT_BLACKLIST: FlextUtilitiesBeartypeImportVisitor._v_import_blacklist,
-            c.EnforcementPredicateKind.ALIAS_REBIND: FlextUtilitiesBeartypeImportVisitor._v_alias_rebind,
-            c.EnforcementPredicateKind.LIBRARY_IMPORT: FlextUtilitiesBeartypeImportVisitor._v_library_import,
-            c.EnforcementPredicateKind.LOC_CAP: FlextUtilitiesBeartypeModuleVisitor._v_loc_cap,
-            c.EnforcementPredicateKind.DUPLICATE_SYMBOL: FlextUtilitiesBeartypeModuleVisitor._v_duplicate_symbol,
-            c.EnforcementPredicateKind.DEPRECATED_SYNTAX: FlextUtilitiesBeartypeDeprecatedVisitor._v_deprecated_syntax,
-        })
-    )
+    _VISITORS: ClassVar[
+        Mapping[c.EnforcementPredicateKind, Callable[..., t.StrMapping | None]]
+    ] = MappingProxyType({
+        c.EnforcementPredicateKind.FIELD_SHAPE: FlextUtilitiesBeartypeFieldVisitor.v_field_shape,
+        c.EnforcementPredicateKind.MODEL_CONFIG: FlextUtilitiesBeartypeFieldVisitor.v_model_config,
+        c.EnforcementPredicateKind.ATTR_SHAPE: FlextUtilitiesBeartypeAttrVisitor.v_attr_shape,
+        c.EnforcementPredicateKind.METHOD_SHAPE: FlextUtilitiesBeartypeMethodVisitor.v_method_shape,
+        c.EnforcementPredicateKind.CLASS_PLACEMENT: FlextUtilitiesBeartypeClassVisitor.v_class_placement,
+        c.EnforcementPredicateKind.PROTOCOL_TREE: FlextUtilitiesBeartypeClassVisitor.v_protocol_tree,
+        c.EnforcementPredicateKind.MRO_SHAPE: FlextUtilitiesBeartypeClassVisitor.v_mro_shape,
+        c.EnforcementPredicateKind.LOOSE_SYMBOL: FlextUtilitiesBeartypeClassVisitor.v_loose_symbol,
+        c.EnforcementPredicateKind.WRAPPER: FlextUtilitiesBeartypeDeprecatedVisitor.v_wrapper,
+        c.EnforcementPredicateKind.IMPORT_BLACKLIST: FlextUtilitiesBeartypeImportVisitor.v_import_blacklist,
+        c.EnforcementPredicateKind.ALIAS_REBIND: FlextUtilitiesBeartypeImportVisitor.v_alias_rebind,
+        c.EnforcementPredicateKind.LIBRARY_IMPORT: FlextUtilitiesBeartypeImportVisitor.v_library_import,
+        c.EnforcementPredicateKind.LOC_CAP: FlextUtilitiesBeartypeModuleVisitor.v_loc_cap,
+        c.EnforcementPredicateKind.DUPLICATE_SYMBOL: FlextUtilitiesBeartypeModuleVisitor.v_duplicate_symbol,
+        c.EnforcementPredicateKind.DEPRECATED_SYNTAX: FlextUtilitiesBeartypeDeprecatedVisitor.v_deprecated_syntax,
+    })
 
 
 ube = FlextUtilitiesBeartypeEngine

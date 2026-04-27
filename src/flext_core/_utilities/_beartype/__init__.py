@@ -18,34 +18,34 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._beartype.field_visitor import (
-    FlextUtilitiesBeartypeFieldVisitor,
-)
 from flext_core._utilities._beartype.attr_visitor import (
     FlextUtilitiesBeartypeAttrVisitor,
-)
-from flext_core._utilities._beartype.method_visitor import (
-    FlextUtilitiesBeartypeMethodVisitor,
 )
 from flext_core._utilities._beartype.class_visitor import (
     FlextUtilitiesBeartypeClassVisitor,
 )
-from flext_core._utilities._beartype.module_visitor import (
-    FlextUtilitiesBeartypeModuleVisitor,
+from flext_core._utilities._beartype.deprecated_visitor import (
+    FlextUtilitiesBeartypeDeprecatedVisitor,
+)
+from flext_core._utilities._beartype.field_visitor import (
+    FlextUtilitiesBeartypeFieldVisitor,
 )
 from flext_core._utilities._beartype.import_visitor import (
     FlextUtilitiesBeartypeImportVisitor,
 )
-from flext_core._utilities._beartype.deprecated_visitor import (
-    FlextUtilitiesBeartypeDeprecatedVisitor,
+from flext_core._utilities._beartype.method_visitor import (
+    FlextUtilitiesBeartypeMethodVisitor,
+)
+from flext_core._utilities._beartype.module_visitor import (
+    FlextUtilitiesBeartypeModuleVisitor,
 )
 
 __all__ = [
-    "FlextUtilitiesBeartypeFieldVisitor",
     "FlextUtilitiesBeartypeAttrVisitor",
-    "FlextUtilitiesBeartypeMethodVisitor",
     "FlextUtilitiesBeartypeClassVisitor",
-    "FlextUtilitiesBeartypeModuleVisitor",
-    "FlextUtilitiesBeartypeImportVisitor",
     "FlextUtilitiesBeartypeDeprecatedVisitor",
+    "FlextUtilitiesBeartypeFieldVisitor",
+    "FlextUtilitiesBeartypeImportVisitor",
+    "FlextUtilitiesBeartypeMethodVisitor",
+    "FlextUtilitiesBeartypeModuleVisitor",
 ]

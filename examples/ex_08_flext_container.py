@@ -370,14 +370,18 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
         scoped_factory_value = self.rand_int(1, 1000)
         scoped_resource_value = self.rand_str(8)
         scoped_full = container.scope(
-            settings=explicit_settings,
-            context=explicit_context,
             subproject=subproject_beta,
-            services={scoped_service_name: scoped_service_value},
-            factories={scoped_factory_name: lambda: scoped_factory_value},
-            resources={
-                scoped_resource_name: lambda: {"res": scoped_resource_value},
-            },
+            registration=m.ServiceRegistrationSpec.model_validate(
+                {
+                    "settings": explicit_settings,
+                    "context": explicit_context,
+                    "services": {scoped_service_name: scoped_service_value},
+                    "factories": {scoped_factory_name: lambda: scoped_factory_value},
+                    "resources": {
+                        scoped_resource_name: lambda: {"res": scoped_resource_value},
+                    },
+                }
+            ),
         )
         self.check("scoped.default.new_instance", scoped_default is not container)
         self.check(

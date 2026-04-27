@@ -343,6 +343,85 @@ class FlextModelsContainer:
             validate_default=True,
         )
 
+        @up.field_validator("services", mode="before")
+        @classmethod
+        def validate_services(
+            cls,
+            value: (
+                Mapping[str, FlextModelsContainer.ServiceRegistration | t.RegisterableService]
+                | None
+            ),
+        ) -> Mapping[str, FlextModelsContainer.ServiceRegistration] | None:
+            if value is None:
+                return None
+            return {
+                name: (
+                    registration
+                    if isinstance(
+                        registration,
+                        FlextModelsContainer.ServiceRegistration,
+                    )
+                    else FlextModelsContainer.ServiceRegistration(
+                        name=name,
+                        service=registration,
+                        service_type=registration.__class__.__name__,
+                    )
+                )
+                for name, registration in value.items()
+            }
+
+        @up.field_validator("factories", mode="before")
+        @classmethod
+        def validate_factories(
+            cls,
+            value: (
+                Mapping[str, FlextModelsContainer.FactoryRegistration | t.FactoryCallable]
+                | None
+            ),
+        ) -> Mapping[str, FlextModelsContainer.FactoryRegistration] | None:
+            if value is None:
+                return None
+            return {
+                name: (
+                    registration
+                    if isinstance(
+                        registration,
+                        FlextModelsContainer.FactoryRegistration,
+                    )
+                    else FlextModelsContainer.FactoryRegistration(
+                        name=name,
+                        factory=registration,
+                    )
+                )
+                for name, registration in value.items()
+            }
+
+        @up.field_validator("resources", mode="before")
+        @classmethod
+        def validate_resources(
+            cls,
+            value: (
+                Mapping[str, FlextModelsContainer.ResourceRegistration | t.ResourceCallable]
+                | None
+            ),
+        ) -> Mapping[str, FlextModelsContainer.ResourceRegistration] | None:
+            if value is None:
+                return None
+            return {
+                name: (
+                    registration
+                    if isinstance(
+                        registration,
+                        FlextModelsContainer.ResourceRegistration,
+                    )
+                    else FlextModelsContainer.ResourceRegistration(
+                        name=name,
+                        factory=registration,
+                    )
+                )
+                for name, registration in value.items()
+            }
+
     class FactoryDecoratorConfig(m.ImmutableValueModel):
         """Configuration extracted from @d.factory() decorator.
 

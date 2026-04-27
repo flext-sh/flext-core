@@ -23,7 +23,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
     """DEPRECATED_SYNTAX + WRAPPER visitors via bytecode introspection."""
 
     @staticmethod
-    def _v_wrapper(
+    def v_wrapper(
         params: me.WrapperParams,  # noqa: ARG004 — params reserved for future
         target: type,
     ) -> t.StrMapping | None:
@@ -43,12 +43,13 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
         return _NO_VIOLATION
 
     @staticmethod
-    def _v_deprecated_syntax(
+    def v_deprecated_syntax(
         params: me.DeprecatedSyntaxParams,
         target: type,
     ) -> t.StrMapping | None:
         """DEPRECATED_SYNTAX — runtime introspection routed by ``params.ast_shape``."""
         import inspect
+
         from flext_core._utilities.beartype_engine import ube
 
         shape = params.ast_shape

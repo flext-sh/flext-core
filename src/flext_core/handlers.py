@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    Mapping,
     MutableSequence,
     Sequence,
 )
@@ -37,13 +36,6 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     _expected_message_type: ClassVar[type | None] = None
     _expected_result_type: ClassVar[type | None] = None
-    _HANDLER_TYPE_LITERALS: ClassVar[Mapping[c.HandlerType, c.HandlerType]] = {
-        c.HandlerType.COMMAND: c.HandlerType.COMMAND,
-        c.HandlerType.QUERY: c.HandlerType.QUERY,
-        c.HandlerType.EVENT: c.HandlerType.EVENT,
-        c.HandlerType.OPERATION: c.HandlerType.OPERATION,
-        c.HandlerType.SAGA: c.HandlerType.SAGA,
-    }
 
     def __init__(self, *, settings: m.Handler | None = None) -> None:
         """Initialize handler with configuration and context.
@@ -230,12 +222,12 @@ class FlextHandlers[MessageT_contra, ResultT](x):
     def _handler_type_to_literal(
         handler_type: c.HandlerType,
     ) -> c.HandlerType:
-        """Convert handler type to canonical HandlerType."""
-        if handler_type in FlextHandlers._HANDLER_TYPE_LITERALS:
-            return FlextHandlers._HANDLER_TYPE_LITERALS[handler_type]
-        raise ValueError(
-            c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type),
-        )
+        """Return handler type as-is (enum values are canonical)."""
+        if not isinstance(handler_type, c.HandlerType):
+            raise TypeError(
+                c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type),
+            )
+        return handler_type
 
     @staticmethod
     def handler[**PHandler, TResult](

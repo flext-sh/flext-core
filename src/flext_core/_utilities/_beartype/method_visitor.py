@@ -16,7 +16,7 @@ class FlextUtilitiesBeartypeMethodVisitor:
     """METHOD_SHAPE — accessor-prefix and staticmethod-required governance."""
 
     @staticmethod
-    def _v_method_shape(
+    def v_method_shape(
         params: me.MethodShapeParams,
         *args: object,
     ) -> t.StrMapping | None:

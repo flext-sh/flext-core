@@ -553,36 +553,6 @@ class FlextRegistry(s[bool]):
         self._remember_registered_key(key)
         summary.registered.append(registration)
 
-    def _create_registration_details(
-        self,
-        reg_result: m.RegistrationResult,
-        key: str,
-    ) -> m.RegistrationDetails:
-        """Create RegistrationDetails from registration result (DRY helper).
-
-        Args:
-            reg_result: Registration result model from dispatcher
-            key: Handler key for registration_id
-
-        Returns:
-            RegistrationDetails: Validated registration details model
-
-        """
-        handler_mode_val = reg_result.mode
-        handler_mode = c.HandlerType.COMMAND
-        if c.HandlerType.QUERY in handler_mode_val.lower():
-            handler_mode = c.HandlerType.QUERY
-        elif c.HandlerType.EVENT in handler_mode_val.lower():
-            handler_mode = c.HandlerType.EVENT
-        timestamp = getattr(reg_result, "timestamp", "")
-        status = reg_result.status
-        return m.RegistrationDetails(
-            registration_id=key,
-            handler_mode=self._get_handler_mode(handler_mode),
-            timestamp=timestamp,
-            status=self._get_status(status),
-        )
-
     def _finalize_summary(
         self,
         summary: m.RegistrySummary,
