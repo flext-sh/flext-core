@@ -1,0 +1,47 @@
+src/flext_core/_utilities/_beartype/module_visitor.py
+  777db8edca009033 1-61
+src/flext_core/_utilities/_beartype/import_visitor.py
+  777db8edca009033 1-145
+src/flext_core/_utilities/_beartype/helpers.py
+  777db8edca009033 1-197
+src/flext_core/_utilities/beartype_engine.py
+  777db8edca009033 1,3-5,13,15,32-41,47-68,72,76-78,80,84-86,88,91,93-94,98,105,107-108,113,115-118,120-122,124-129,133,141,146,152,159,172,176,178,180-201
+src/flext_core/_utilities/_beartype/method_visitor.py
+  777db8edca009033 1-56
+src/flext_core/_utilities/_beartype/field_visitor.py
+  777db8edca009033 1-133
+src/flext_core/_utilities/_beartype/attr_visitor.py
+  777db8edca009033 1-41
+src/flext_core/_utilities/_beartype/deprecated_visitor.py
+  777db8edca009033 1-137
+src/flext_core/_utilities/_beartype/class_visitor.py
+  777db8edca009033 1-226
+src/flext_core/_utilities/_beartype/__init__.py
+  777db8edca009033 1-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "0c71adfe2c7954745d543d00cd377f9bb2c5749c",
+  "prompts": {
+    "777db8edca009033": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "264dddbe-fe20-4b0d-a48e-98a37e3d380a",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 1321,
+      "total_deletions": 1414,
+      "accepted_lines": 1142,
+      "overriden_lines": 6,
+      "messages_url": "https://usegitai.com/cas/08d06f3d75546f9169a502bd4286ac52c34fa7e06ee03a22ad47c02da8dd6c5f"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
