@@ -55,9 +55,9 @@ class FlextConstants(
     """SSOT facade: all constants flat on c.* via MRO composition."""
 
 
-__all__: list[str] = [
+__all__: tuple[str, ...] = (
     "FlextConstants",
     "c",
-]
+)
 
 c = FlextConstants

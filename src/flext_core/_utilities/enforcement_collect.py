@@ -6,7 +6,6 @@ import inspect
 from collections.abc import Callable, Iterator
 from enum import EnumType
 from pathlib import Path
-from typing import ClassVar
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
@@ -19,21 +18,6 @@ from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
 
 class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     """Project resolution + rule-input iterators."""
-
-    _NS_YIELD_TARGET_TAGS: ClassVar[frozenset[str]] = frozenset({
-        "settings_inheritance",
-        "cast_outside_core",
-        "model_rebuild_call",
-        "pass_through_wrapper",
-        "private_attr_probe",
-        "no_core_tests_namespace",
-        "no_wrapper_root_alias_import",
-        # --- Phase 3 single-target tags ---
-        "loc_cap",
-        "library_abstraction",
-        "deprecated_typealias_syntax",
-        "cross_project_duplicate",
-    })
 
     @staticmethod
     def _discover_src_package(target: type) -> str | None:
@@ -216,7 +200,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         if project is None:
             return
         cls = FlextUtilitiesEnforcementCollect
-        if tag in cls._NS_YIELD_TARGET_TAGS:
+        if tag in c.ENFORCEMENT_NAMESPACE_TARGET_TAGS:
             yield qn, (target,)
             return
         match tag:

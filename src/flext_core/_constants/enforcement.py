@@ -675,6 +675,31 @@ class FlextConstantsEnforcement:
     })
     """Tags that must recurse into inner namespace classes during scanning."""
 
+    # Derived at class-definition time from ENFORCEMENT_RULES: every NAMESPACE-category tag
+    # that does NOT have its own dispatch case in _namespace_items uses the simple
+    # "yield qn, (target,)" path. Adding a new rule here requires no code change.
+    ENFORCEMENT_NAMESPACE_DISPATCH_TAGS: Final[frozenset[str]] = frozenset({
+        "class_prefix",
+        "cross_strenum",
+        "cross_protocol",
+        "nested_mro",
+        "no_accessor_methods",
+    })
+    """NAMESPACE tags with their own dispatch case in _namespace_items."""
+
+    ENFORCEMENT_NAMESPACE_TARGET_TAGS: Final[frozenset[str]] = frozenset(
+        tag
+        for tag, row in ENFORCEMENT_RULES.items()
+        if row[0] == "namespace"
+    ) - frozenset({
+        "class_prefix",
+        "cross_strenum",
+        "cross_protocol",
+        "nested_mro",
+        "no_accessor_methods",
+    })
+    """NAMESPACE tags that use simple class-target dispatch (yield qn, (target,))."""
+
     ENFORCEMENT_CANONICAL_FILES: Final[frozenset[str]] = frozenset({
         "typings.py",
         "models.py",
