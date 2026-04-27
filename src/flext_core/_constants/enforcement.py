@@ -688,9 +688,7 @@ class FlextConstantsEnforcement:
     """NAMESPACE tags with their own dispatch case in _namespace_items."""
 
     ENFORCEMENT_NAMESPACE_TARGET_TAGS: Final[frozenset[str]] = frozenset(
-        tag
-        for tag, row in ENFORCEMENT_RULES.items()
-        if row[0] == "namespace"
+        tag for tag, row in ENFORCEMENT_RULES.items() if row[0] == "namespace"
     ) - frozenset({
         "class_prefix",
         "cross_strenum",
