@@ -328,12 +328,13 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         is_model = issubclass(target, mp.BaseModel)
         qn = target.__qualname__
         for tag, category in c._ENFORCEMENT_TAG_CATEGORY.items():
+            rule_layer = ""  # Placeholder for future rule-layer dispatch
             items = FlextUtilitiesEnforcement._items_for(
                 target,
                 tag,
                 category,
                 effective_layer,
-                "",  # No rule_layer needed anymore
+                rule_layer,
                 is_model=is_model,
             )
             violations.extend(
@@ -346,7 +347,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             if (
                 category is c.EnforcementCategory.ATTR
                 and tag in c.ENFORCEMENT_RECURSIVE_TAGS
-                and str(rule_layer).lower() == effective_layer
+                and rule_layer.lower() == effective_layer
             ):
                 for _name, inner in FlextUtilitiesEnforcement._iter_inner(target):
                     if isinstance(inner, EnumType):
