@@ -347,13 +347,7 @@ class FlextConstantsEnforcement:
     ENFORCEMENT_RULES: Final[
         Mapping[
             str,
-            tuple[
-                EnforcementCategory,
-                EnforcementLayer,
-                EnforcementSeverity,
-                str,
-                str,
-            ],
+            tuple[EnforcementCategory, EnforcementLayer, EnforcementSeverity, str, str],
         ]
     ] = MappingProxyType({
         "no_any": (
@@ -524,7 +518,6 @@ class FlextConstantsEnforcement:
             '"{name}" must inherit FlextSettings (AGENTS.md §2.6)',
             "Add FlextSettings to the MRO; remove BaseModel/BaseSettings bases.",
         ),
-        # --- ENFORCE-039 / 041 / 043 / 044 detection rows ---
         "cast_outside_core": (
             EnforcementCategory.NAMESPACE,
             EnforcementLayer.NAMESPACE,
@@ -567,7 +560,6 @@ class FlextConstantsEnforcement:
             'wrapper alias import must use root package in {file}:{line}: "{statement}"',
             "Use `from tests|examples|scripts import c, p, t, m, u` (no submodule alias imports).",
         ),
-        # R1–R10 MRO compliance rules
         "no_concrete_namespace_import": (
             EnforcementCategory.NAMESPACE,
             EnforcementLayer.NAMESPACE,
@@ -631,7 +623,6 @@ class FlextConstantsEnforcement:
             "utilities.py with self-referencing method must use explicit class base (R10)",
             "Use class FlextXxxUtilities(FlextParentUtilities, FlextPeerUtilities): for parent (not alias).",
         ),
-        # --- Phase 3 data-only additions (ENFORCE-067..071) ---
         "loc_cap": (
             EnforcementCategory.NAMESPACE,
             EnforcementLayer.NAMESPACE,
@@ -674,18 +665,6 @@ class FlextConstantsEnforcement:
         "const_mutable",
     })
     """Tags that must recurse into inner namespace classes during scanning."""
-
-    # Derived at class-definition time from ENFORCEMENT_RULES: every NAMESPACE-category tag
-    # that does NOT have its own dispatch case in _namespace_items uses the simple
-    # "yield qn, (target,)" path. Adding a new rule here requires no code change.
-    ENFORCEMENT_NAMESPACE_DISPATCH_TAGS: Final[frozenset[str]] = frozenset({
-        "class_prefix",
-        "cross_strenum",
-        "cross_protocol",
-        "nested_mro",
-        "no_accessor_methods",
-    })
-    """NAMESPACE tags with their own dispatch case in _namespace_items."""
 
     ENFORCEMENT_NAMESPACE_TARGET_TAGS: Final[frozenset[str]] = frozenset(
         tag for tag, row in ENFORCEMENT_RULES.items() if row[0] == "namespace"
@@ -739,10 +718,7 @@ class FlextConstantsEnforcement:
             "2-architecture-law",
             ("flext-mro-namespace-rules",),
             False,
-            (
-                "Loose object detected at module level — every public symbol "
-                "must be nested inside its facade family."
-            ),
+            "Loose object detected at module level — every public symbol must be nested inside its facade family.",
         ),
         (
             "ENFORCE-002",
@@ -751,10 +727,7 @@ class FlextConstantsEnforcement:
             "",
             ("flext-import-rules",),
             False,
-            (
-                "Import alias source is wrong — alias imported from a "
-                "non-canonical module."
-            ),
+            "Import alias source is wrong — alias imported from a non-canonical module.",
         ),
         (
             "ENFORCE-003",
@@ -763,10 +736,7 @@ class FlextConstantsEnforcement:
             "",
             ("flext-import-rules", "flext-mro-namespace-rules"),
             False,
-            (
-                "Namespace source violation — canonical alias imported from a "
-                "project that does not own that slot."
-            ),
+            "Namespace source violation — canonical alias imported from a project that does not own that slot.",
         ),
         (
             "ENFORCE-004",
@@ -775,10 +745,7 @@ class FlextConstantsEnforcement:
             "",
             ("flext-import-rules",),
             False,
-            (
-                "Internal (private) module import reaches outside its owning "
-                "package boundary."
-            ),
+            "Internal (private) module import reaches outside its owning package boundary.",
         ),
         (
             "ENFORCE-005",
@@ -787,7 +754,7 @@ class FlextConstantsEnforcement:
             "",
             ("flext-patterns",),
             False,
-            ("Manual Protocol class declared outside protocols.py / _protocols/ tree."),
+            "Manual Protocol class declared outside protocols.py / _protocols/ tree.",
         ),
         (
             "ENFORCE-006",
@@ -805,10 +772,7 @@ class FlextConstantsEnforcement:
             "",
             ("flext-mro-namespace-rules",),
             False,
-            (
-                "Runtime alias (c/p/t/m/u/r/s/x/d/e/h) rebound in a module "
-                "that should not own it."
-            ),
+            "Runtime alias (c/p/t/m/u/r/s/x/d/e/h) rebound in a module that should not own it.",
         ),
         (
             "ENFORCE-008",
@@ -835,10 +799,7 @@ class FlextConstantsEnforcement:
             "",
             ("flext-refactoring-workflow",),
             False,
-            (
-                "Backwards-compatibility alias retained after refactor — "
-                "should be removed."
-            ),
+            "Backwards-compatibility alias retained after refactor — should be removed.",
         ),
         (
             "ENFORCE-011",
@@ -847,7 +808,7 @@ class FlextConstantsEnforcement:
             "",
             ("flext-mro-namespace-rules",),
             False,
-            ("Class placed in the wrong facade layer (e.g. Protocol in models.py)."),
+            "Class placed in the wrong facade layer (e.g. Protocol in models.py).",
         ),
         (
             "ENFORCE-012",
@@ -856,10 +817,7 @@ class FlextConstantsEnforcement:
             "",
             ("flext-mro-namespace-rules",),
             False,
-            (
-                "MRO composition incomplete — facade does not compose all its "
-                "domain mixin trees."
-            ),
+            "MRO composition incomplete — facade does not compose all its domain mixin trees.",
         ),
         (
             "ENFORCE-013",
@@ -877,17 +835,10 @@ class FlextConstantsEnforcement:
             "",
             ("flext-mro-namespace-rules",),
             True,
-            (
-                "Canonical facade family is missing (no constants.py / "
-                "models.py / typings.py / protocols.py / utilities.py)."
-            ),
+            "Canonical facade family is missing (no constants.py / models.py / typings.py / protocols.py / utilities.py).",
         ),
     )
 
-    # Compact data-table for the SKILL_POINTER family — 5 narrative entries,
-    # all ``enabled=False`` (catalog-only, no automation). Row layout:
-    # (id, severity, source_skill, source_anchor, agents_md_anchor, skills,
-    # description).
     SKILL_POINTER_ROWS: Final[
         tuple[tuple[str, str, str, str, str, tuple[str, ...], str], ...]
     ] = (
@@ -898,10 +849,7 @@ class FlextConstantsEnforcement:
             "no-accessor-methods",
             "3-code-law",
             ("flext-patterns",),
-            (
-                "Accessor method (get_*, set_*) forbidden — expose as field "
-                "or @u.computed_field (AGENTS.md §3.1)."
-            ),
+            "Accessor method (get_*, set_*) forbidden — expose as field or @u.computed_field (AGENTS.md §3.1).",
         ),
         (
             "ENFORCE-035",
@@ -910,10 +858,7 @@ class FlextConstantsEnforcement:
             "settings-baseline",
             "2-architecture-law",
             ("lib-pydantic-settings",),
-            (
-                "Settings models must inherit FlextSettings, not BaseModel "
-                "or BaseSettings (AGENTS.md §2.6)."
-            ),
+            "Settings models must inherit FlextSettings, not BaseModel or BaseSettings (AGENTS.md §2.6).",
         ),
         (
             "ENFORCE-036",
@@ -922,10 +867,7 @@ class FlextConstantsEnforcement:
             "",
             "0-quick-reference-must-read",
             ("pydantic-v2-governance",),
-            (
-                "Never call `model_rebuild()` as a fix strategy — resolve "
-                "forward refs via proper imports/annotations."
-            ),
+            "Never call `model_rebuild()` as a fix strategy — resolve forward refs via proper imports/annotations.",
         ),
         (
             "ENFORCE-037",
@@ -934,10 +876,7 @@ class FlextConstantsEnforcement:
             "",
             "0-quick-reference-must-read",
             ("lib-pydantic-settings", "flext-constants-discipline"),
-            (
-                "No `os.environ` / `os.getenv` in src/ — use settings + "
-                "constants contracts."
-            ),
+            "No `os.environ` / `os.getenv` in src/ — use settings + constants contracts.",
         ),
         (
             "ENFORCE-038",
@@ -946,37 +885,24 @@ class FlextConstantsEnforcement:
             "",
             "0-quick-reference-must-read",
             ("flext-mro-namespace-rules",),
-            (
-                "Never flatten organic namespace paths — preserve "
-                "`m.TargetOracle.ExecuteResult` etc., don't rebind to "
-                "`m.ExecuteResult`."
-            ),
+            "Never flatten organic namespace paths — preserve `m.TargetOracle.ExecuteResult` etc., don't rebind to `m.ExecuteResult`.",
         ),
     )
 
-    # Compact data-table for the RUFF family — 3 documentation-only rules
-    # (dispatch is via ``make lint``). All share the same ``notes`` string.
-    # Row layout: (id, severity, rule_code, skills, description).
     RUFF_ROWS: Final[tuple[tuple[str, str, str, tuple[str, ...], str], ...]] = (
         (
             "ENFORCE-023",
             "HIGH",
             "ANN401",
             ("flext-strict-typing",),
-            (
-                "Dynamic Any usage (ruff ANN401) — enforced at lint time by "
-                "`make lint`; listed here for cross-reference."
-            ),
+            "Dynamic Any usage (ruff ANN401) — enforced at lint time by `make lint`; listed here for cross-reference.",
         ),
         (
             "ENFORCE-024",
             "MEDIUM",
             "PGH003",
             ("flext-strict-typing",),
-            (
-                "Missing specific rule code on pyright/pygrep suppressions "
-                "(ruff PGH003)."
-            ),
+            "Missing specific rule code on pyright/pygrep suppressions (ruff PGH003).",
         ),
         (
             "ENFORCE-025",
@@ -987,9 +913,6 @@ class FlextConstantsEnforcement:
         ),
     )
 
-    # Compact data-table for the FLEXT_TESTS_VALIDATOR family — 7 rules, one
-    # per public ``tv.*`` classmethod. Row layout:
-    # (id, severity, method, rule_ids, skills, description).
     TESTS_VALIDATOR_ROWS: Final[
         tuple[tuple[str, str, str, tuple[str, ...], tuple[str, ...], str], ...]
     ] = (
@@ -1006,11 +929,7 @@ class FlextConstantsEnforcement:
                 "IMPORT-006",
             ),
             ("flext-import-rules",),
-            (
-                "Import discipline violation — lazy imports, TYPE_CHECKING "
-                "misuse, sys.path manipulation, tech-lib leaks, or non-root "
-                "flext-* imports."
-            ),
+            "Import discipline violation — lazy imports, TYPE_CHECKING misuse, sys.path manipulation, tech-lib leaks, or non-root flext-* imports.",
         ),
         (
             "ENFORCE-016",
@@ -1018,10 +937,7 @@ class FlextConstantsEnforcement:
             "types",
             ("TYPE-001", "TYPE-002", "TYPE-003"),
             ("flext-strict-typing", "flext-type-system"),
-            (
-                "Type-system violation — Any/object/legacy typing or "
-                "type: ignore bypass."
-            ),
+            "Type-system violation — Any/object/legacy typing or type: ignore bypass.",
         ),
         (
             "ENFORCE-017",
@@ -1029,10 +945,7 @@ class FlextConstantsEnforcement:
             "bypass",
             ("BYPASS-001", "BYPASS-002", "BYPASS-003"),
             ("flext-patterns",),
-            (
-                "Bypass pattern — noqa, pragma: no cover (unapproved), or "
-                "exception swallowing."
-            ),
+            "Bypass pattern — noqa, pragma: no cover (unapproved), or exception swallowing.",
         ),
         (
             "ENFORCE-018",
@@ -1048,24 +961,15 @@ class FlextConstantsEnforcement:
             "tests",
             ("TEST-001", "TEST-002", "TEST-003"),
             ("testing-patterns",),
-            ("Test pattern violation — monkeypatch, Mock/MagicMock, or @patch usage."),
+            "Test pattern violation — monkeypatch, Mock/MagicMock, or @patch usage.",
         ),
         (
             "ENFORCE-020",
             "HIGH",
             "validate_config",
-            (
-                "CONFIG-001",
-                "CONFIG-002",
-                "CONFIG-003",
-                "CONFIG-004",
-                "CONFIG-005",
-            ),
+            ("CONFIG-001", "CONFIG-002", "CONFIG-003", "CONFIG-004", "CONFIG-005"),
             ("flext-development-workflow",),
-            (
-                "pyproject.toml deviation — mypy ignore_errors, unapproved "
-                "ruff ignores, or incomplete type strictness."
-            ),
+            "pyproject.toml deviation — mypy ignore_errors, unapproved ruff ignores, or incomplete type strictness.",
         ),
         (
             "ENFORCE-021",
@@ -1073,17 +977,10 @@ class FlextConstantsEnforcement:
             "markdown",
             ("MD-001", "MD-002", "MD-003", "MD-004"),
             ("testing-patterns",),
-            (
-                "Markdown code block validation — syntax, forbidden typings, "
-                "missing future annotations, object as type."
-            ),
+            "Markdown code block validation — syntax, forbidden typings, missing future annotations, object as type.",
         ),
     )
 
-    # Compact data-table for the AST_GREP family — 8 rules, one per
-    # ``sgconfig.yml`` rule_id. ``skills`` collapses to ``(skill,)`` (every
-    # row already mirrored that). Row layout: (id, severity, skill, rule_id,
-    # description).
     AST_GREP_ROWS: Final[tuple[tuple[str, str, str, str, str], ...]] = (
         (
             "ENFORCE-026",
@@ -1143,11 +1040,6 @@ class FlextConstantsEnforcement:
         ),
     )
 
-    # Compact data-table for the BEARTYPE family — one row per ENFORCE-NNN
-    # rule. The ``tag`` column keys ``_PREDICATE_BINDINGS`` in
-    # ``_utilities/enforcement.py`` to resolve the typed predicate-kind +
-    # params payload that ``FlextUtilitiesBeartypeEngine.apply`` consumes.
-    # Row layout: (id, severity, tag, agents_md_anchor, skills, description).
     BEARTYPE_ROWS: Final[
         tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
     ] = (
@@ -1157,10 +1049,7 @@ class FlextConstantsEnforcement:
             "cast_outside_core",
             "3-2-types-and-contracts",
             ("flext-strict-typing", "flext-patterns"),
-            (
-                "cast() call outside flext-core result internals violates "
-                "AGENTS.md §3.2 (Strict Types)."
-            ),
+            "cast() call outside flext-core result internals violates AGENTS.md §3.2 (Strict Types).",
         ),
         (
             "ENFORCE-041",
@@ -1168,10 +1057,7 @@ class FlextConstantsEnforcement:
             "model_rebuild_call",
             "3-4-tools-and-modules",
             ("flext-patterns",),
-            (
-                "model_rebuild() call indicates unresolved forward refs and "
-                "violates AGENTS.md §3.4 (Tools/Modules/Env)."
-            ),
+            "model_rebuild() call indicates unresolved forward refs and violates AGENTS.md §3.4 (Tools/Modules/Env).",
         ),
         (
             "ENFORCE-042",
@@ -1179,12 +1065,7 @@ class FlextConstantsEnforcement:
             "settings_inheritance",
             "2-6-settings-law",
             ("flext-patterns", "lib-pydantic-settings"),
-            (
-                "Settings class missing FlextSettings base or wrong "
-                "env_prefix violates AGENTS.md §2.6 (Settings Law). Reuses "
-                "the existing check_settings_inheritance hook — no new "
-                "detection code per SSOT/DRY."
-            ),
+            "Settings class missing FlextSettings base or wrong env_prefix violates AGENTS.md §2.6 (Settings Law). Reuses the existing check_settings_inheritance hook — no new detection code per SSOT/DRY.",
         ),
         (
             "ENFORCE-043",
@@ -1192,10 +1073,7 @@ class FlextConstantsEnforcement:
             "pass_through_wrapper",
             "3-5-integrity",
             ("flext-refactoring-workflow",),
-            (
-                "Pass-through wrapper (single-statement return delegating to "
-                "another callable with identical args) violates AGENTS.md §3.5."
-            ),
+            "Pass-through wrapper (single-statement return delegating to another callable with identical args) violates AGENTS.md §3.5.",
         ),
         (
             "ENFORCE-044",
@@ -1203,10 +1081,7 @@ class FlextConstantsEnforcement:
             "private_attr_probe",
             "3-6-test-standardization",
             ("flext-strict-typing", "flext-patterns"),
-            (
-                "hasattr/getattr/setattr probing of private attributes "
-                "(single-underscore names) violates AGENTS.md §3.6."
-            ),
+            "hasattr/getattr/setattr probing of private attributes (single-underscore names) violates AGENTS.md §3.6.",
         ),
         (
             "ENFORCE-045",
@@ -1214,12 +1089,7 @@ class FlextConstantsEnforcement:
             "no_pydantic_consumer_import",
             "2-7-library-abstraction-boundaries",
             ("flext-import-rules", "pydantic-v2-patterns"),
-            (
-                "Direct 'from pydantic import ...' in a consumer project "
-                "(outside its own '_' base pyramid) violates AGENTS.md §2.7 "
-                "(Library Abstraction Boundaries) + §3.1 (Pydantic v2 "
-                "Mastery — facade-only access)."
-            ),
+            "Direct 'from pydantic import ...' in a consumer project (outside its own '_' base pyramid) violates AGENTS.md §2.7 (Library Abstraction Boundaries) + §3.1 (Pydantic v2 Mastery — facade-only access).",
         ),
         (
             "ENFORCE-046",
@@ -1227,12 +1097,7 @@ class FlextConstantsEnforcement:
             "no_concrete_namespace_import",
             "4-import-law",
             ("flext-import-rules", "flext-mro-namespace-rules"),
-            (
-                "Canonical facade files (constants/models/protocols/typings/"
-                "utilities) must import only c/m/p/t/u aliases from parent — "
-                "never bare FlextXxx concrete classes (unless Pattern-B "
-                "peer). Violates AGENTS.md §4 (Import Law)."
-            ),
+            "Canonical facade files (constants/models/protocols/typings/utilities) must import only c/m/p/t/u aliases from parent — never bare FlextXxx concrete classes (unless Pattern-B peer). Violates AGENTS.md §4 (Import Law).",
         ),
         (
             "ENFORCE-047",
@@ -1240,12 +1105,7 @@ class FlextConstantsEnforcement:
             "facade_base_is_alias_or_peer",
             "2-2-facades-namespaces-naming-patterns",
             ("flext-mro-namespace-rules", "flext-import-rules"),
-            (
-                "Facade-class first base must be an alias (c/m/p/t/u) or a "
-                "Pattern-B peer FlextXxx — never an arbitrary Flext* "
-                "concrete class. Violates AGENTS.md §2.2 (One Facade Rule + "
-                "Pattern-A/B)."
-            ),
+            "Facade-class first base must be an alias (c/m/p/t/u) or a Pattern-B peer FlextXxx — never an arbitrary Flext* concrete class. Violates AGENTS.md §2.2 (One Facade Rule + Pattern-A/B).",
         ),
         (
             "ENFORCE-048",
@@ -1253,12 +1113,7 @@ class FlextConstantsEnforcement:
             "no_redundant_inner_namespace",
             "2-3-mro-inheritance-namespace-composition",
             ("flext-mro-namespace-rules",),
-            (
-                "Inner namespace class with empty body that re-inherits from "
-                "outer (e.g. 'class Cli(FlextCliTypes): pass') is redundant "
-                "— parent already exposes the namespace. Violates AGENTS.md "
-                "§2.3 (Single Root Nested Namespace)."
-            ),
+            "Inner namespace class with empty body that re-inherits from outer (e.g. 'class Cli(FlextCliTypes): pass') is redundant — parent already exposes the namespace. Violates AGENTS.md §2.3 (Single Root Nested Namespace).",
         ),
         (
             "ENFORCE-049",
@@ -1266,12 +1121,7 @@ class FlextConstantsEnforcement:
             "alias_first_multi_parent",
             "2-2-facades-namespaces-naming-patterns",
             ("flext-mro-namespace-rules",),
-            (
-                "Multi-parent facade class must list canonical alias "
-                "(c/m/p/t/u) as FIRST base — required for C3 MRO "
-                "linearization. Violates AGENTS.md §2.2 (Pattern-B facade "
-                "ordering)."
-            ),
+            "Multi-parent facade class must list canonical alias (c/m/p/t/u) as FIRST base — required for C3 MRO linearization. Violates AGENTS.md §2.2 (Pattern-B facade ordering).",
         ),
         (
             "ENFORCE-050",
@@ -1279,12 +1129,7 @@ class FlextConstantsEnforcement:
             "alias_rebound_at_module_end",
             "4-import-law",
             ("flext-import-rules", "flext-mro-namespace-rules"),
-            (
-                "Canonical facade module must rebind its alias at "
-                "end-of-file (e.g. 't = FlextXxxTypes') — establishes the "
-                "public contract surface. Violates AGENTS.md §4 (Aliases — "
-                "assigned once at module bottom)."
-            ),
+            "Canonical facade module must rebind its alias at end-of-file (e.g. 't = FlextXxxTypes') — establishes the public contract surface. Violates AGENTS.md §4 (Aliases — assigned once at module bottom).",
         ),
         (
             "ENFORCE-051",
@@ -1292,12 +1137,7 @@ class FlextConstantsEnforcement:
             "no_self_root_import_in_core_files",
             "4-import-law",
             ("flext-import-rules",),
-            (
-                "Canonical facade files must NOT import c/m/p/t/u from their "
-                "own package — must import from the parent MRO package to "
-                "avoid lazy-load circular initialization. Violates AGENTS.md "
-                "§4 (No Same-Project Cross-Facade Runtime Imports)."
-            ),
+            "Canonical facade files must NOT import c/m/p/t/u from their own package — must import from the parent MRO package to avoid lazy-load circular initialization. Violates AGENTS.md §4 (No Same-Project Cross-Facade Runtime Imports).",
         ),
         (
             "ENFORCE-052",
@@ -1305,12 +1145,7 @@ class FlextConstantsEnforcement:
             "sibling_models_type_checking",
             "4-import-law",
             ("flext-import-rules",),
-            (
-                "Sibling _models/* imports referenced only in annotations "
-                "must live under 'if TYPE_CHECKING:' to avoid circular "
-                "runtime imports. Violates AGENTS.md §4 (Circular Import "
-                "Resolution — TYPE_CHECKING for annotation-only siblings)."
-            ),
+            "Sibling _models/* imports referenced only in annotations must live under 'if TYPE_CHECKING:' to avoid circular runtime imports. Violates AGENTS.md §4 (Circular Import Resolution — TYPE_CHECKING for annotation-only siblings).",
         ),
         (
             "ENFORCE-053",
@@ -1318,12 +1153,7 @@ class FlextConstantsEnforcement:
             "utilities_explicit_class_when_self_ref",
             "2-3-mro-inheritance-namespace-composition",
             ("flext-mro-namespace-rules",),
-            (
-                "Multi-parent utilities.py facade must list explicit PARENT "
-                "class as first base (not alias 'u') to allow pyrefly to "
-                "resolve the MRO when 'u' is rebound to the local class. "
-                "Violates AGENTS.md §2.3 (MRO Cascade)."
-            ),
+            "Multi-parent utilities.py facade must list explicit PARENT class as first base (not alias 'u') to allow pyrefly to resolve the MRO when 'u' is rebound to the local class. Violates AGENTS.md §2.3 (MRO Cascade).",
         ),
         (
             "ENFORCE-054",
@@ -1331,27 +1161,14 @@ class FlextConstantsEnforcement:
             "no_core_tests_namespace",
             "0-quick-reference-must-read",
             ("flext-mro-namespace-rules", "flext-import-rules"),
-            (
-                "Deprecated test namespace path '.Core.Tests' is forbidden "
-                "in tests/examples/scripts. Use flat c/p/t/m/u.Tests.* "
-                "access only."
-            ),
+            "Deprecated test namespace path '.Core.Tests' is forbidden in tests/examples/scripts. Use flat c/p/t/m/u.Tests.* access only.",
         ),
         (
             "ENFORCE-055",
             "HIGH",
             "no_wrapper_root_alias_import",
             "0-quick-reference-must-read",
-            (
-                "flext-import-rules",
-                "flext-mro-namespace-rules",
-                "rules-scripts",
-            ),
-            (
-                "Wrapper alias imports in tests/examples/scripts must come "
-                "from wrapper root package (`from tests|examples|scripts "
-                "import ...`). Submodule alias imports are forbidden outside "
-                "`__init__.py`."
-            ),
+            ("flext-import-rules", "flext-mro-namespace-rules", "rules-scripts"),
+            "Wrapper alias imports in tests/examples/scripts must come from wrapper root package (`from tests|examples|scripts import ...`). Submodule alias imports are forbidden outside `__init__.py`.",
         ),
     )
