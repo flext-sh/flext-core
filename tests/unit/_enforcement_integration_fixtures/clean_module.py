@@ -22,6 +22,8 @@ class TestsFlextCoreCleanModels:
             class GoodEntity(m.ArbitraryTypesModel):
                 """Well-formed entity."""
 
+                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="forbid")
+
                 name: Annotated[
                     str,
                     u.Field(description="Entity display name."),
