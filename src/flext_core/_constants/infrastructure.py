@@ -91,7 +91,10 @@ class FlextConstantsInfrastructure:
     MAX_CONNECTION_POOL_SIZE: Final[int] = 100
     MIN_POOL_SIZE: Final[int] = 1
 
-    CHECKER_HANDLER_ORIGIN_NAMES: Final[frozenset[str]] = frozenset({"FlextHandlers", "h"})
+    CHECKER_HANDLER_ORIGIN_NAMES: Final[frozenset[str]] = frozenset({
+        "FlextHandlers",
+        "h",
+    })
     "Generic-origin names identifying the handler namespace in the type system."
 
     CONTEXT_MERGEABLE_SCOPES: Final[frozenset[str]] = frozenset({
