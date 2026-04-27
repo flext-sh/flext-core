@@ -566,6 +566,7 @@ class TestsFlextCoreContainer:
         "reset_last_overriding",
         "set_providers",
         "declarative_parent",
+        "settings",
     })
 
     @given(
