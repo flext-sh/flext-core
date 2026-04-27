@@ -1,0 +1,14 @@
+src/flext_core/registry.py
+  h_9db9d35f50cf33 201
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "94ddd1faebaee6df630ba12a7913079666308e6b",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
