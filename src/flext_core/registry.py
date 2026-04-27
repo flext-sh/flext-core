@@ -198,17 +198,7 @@ class FlextRegistry(s[bool]):
             def normalized_callable(
                 *args: object,
                 **kwargs: object,
-            ) -> (
-                m.BaseModel
-                | p.Logger
-                | dict[str, t.JsonValue]
-                | list[t.JsonValue]
-                | bool
-                | float
-                | int
-                | str
-                | None
-            ):
+            ) -> t.JsonPayload | m.BaseModel | None:
                 result = value(*args, **kwargs)
                 return FlextRegistry._narrow_value(result)
 
