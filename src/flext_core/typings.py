@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models.namespace import FlextModelsNamespace
 from flext_core._typings.annotateds import FlextTypesAnnotateds
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.containers import FlextTypingContainers
@@ -30,7 +29,6 @@ class FlextTypes(
     FlextTypesServices,
     FlextTypesTypeAdapters,
     FlextTypingProjectMetadata,
-    FlextModelsNamespace,
 ):
     """Type system foundation for FLEXT ecosystem.
 
