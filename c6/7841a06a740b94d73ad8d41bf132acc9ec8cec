@@ -1,0 +1,124 @@
+examples/ex_08_flext_container.py
+  h_9db9d35f50cf33 374,376-381,384
+src/flext_core/_utilities/context.py
+  7f8dabdbc28465a6 3-6,15,18,21-22,24-26,29,31-35,40-80,87-88,95-96,103-104
+  777db8edca009033 36-39
+src/flext_core/mixins.py
+  22632355ef1e26ce 118,165
+src/flext_core/result.py
+  777db8edca009033 52,74,80,86,92,122,161,165,169,172-174,280,310,313,319,336-343,347,357,368,392,411,432,444,459,478,488,496,520,546,555,566,573,583,622
+  22632355ef1e26ce 200,262
+src/flext_core/_utilities/_beartype/field_visitor.py
+  h_9db9d35f50cf33 23,101
+  777db8edca009033 6
+tests/unit/test_container.py
+  h_9db9d35f50cf33 553-555
+src/flext_core/_utilities/_beartype/attr_visitor.py
+  h_9db9d35f50cf33 17
+src/flext_core/_utilities/context_tracing.py
+  7f8dabdbc28465a6 12-14,21-24,27,29,32-33,35,38,41-48,50,53-54,56-57
+src/flext_core/_utilities/_beartype/module_visitor.py
+  h_9db9d35f50cf33 19,32,47
+src/flext_core/_models/container.py
+  h_9db9d35f50cf33 346-424
+src/flext_core/_utilities/_beartype/deprecated_visitor.py
+  h_9db9d35f50cf33 26,46
+  777db8edca009033 52
+src/flext_core/_models/enforcement.py
+  777db8edca009033 50,52-55,60,122-123,129-130,136,139,142,145,148-149,152,155,158,161-162,165,168-169,175-182,188-191,197-200,206-209,215-217,223,234-236,248-249,255,261-262,268-271,277-278,284-286,289,291-293,298-300,314-318,323-324
+  7f8dabdbc28465a6 242
+src/flext_core/loggings.py
+  777db8edca009033 226-242,246-248,252
+  22632355ef1e26ce 15,147,153,173
+src/flext_core/_utilities/_beartype/class_visitor.py
+  777db8edca009033 98
+  h_9db9d35f50cf33 21,64,89,175
+pyproject.toml
+  22632355ef1e26ce 573
+src/flext_core/_utilities/_beartype/__init__.py
+  777db8edca009033 27-31,36-40,47-50
+src/flext_core/_utilities/beartype_engine.py
+  777db8edca009033 13-19,67-78,81-86,112,123-125,146-153,160-162,170-172,177-180,206-208,218-220,236
+  h_9db9d35f50cf33 221-235
+src/flext_core/container.py
+  777db8edca009033 1,3-5,22,24,30,34,36,54-55,65,67,69,74,82,88,94-96,106,120-122,124,129,135-136,139-140,142,146,152,157-160,163-165,180,206-207,219,221,224-228,233,238,243,245,268-269,282,284,298,303-305,311,313-317,320-327,329-334,336-339,343-344,350,353-357,364-366,369-370,372-374,376-377,385-387,390-392,395-396,398,400,403,406-407,409-410,412,419-422,425-427,430-431,438-440,442-444,447-448,450-451,462-463,469-470,476-477,487,497,500,506-507,509-510,512-513,518-520,529,531-534,538-539,541,543,545,552,555,558-560,563,578-580,595,606-607,609-619,621-633,635-639
+  h_9db9d35f50cf33 246-258,261-267,270-275,277,345-346,485,488-491,493,495,499,501-503,515-517,554,557
+tests/unit/test_context.py
+  7f8dabdbc28465a6 1,9,49-50,52-55,58-72
+src/flext_core/_utilities/_beartype/helpers.py
+  777db8edca009033 9,30-32,59-61,79-81,91-95,97-99,116,135-139,149-151,156-158,163-166,172-176,179-181,187-192,196-200,203-207,210-212,219-221,238-242
+src/flext_core/_utilities/_beartype/method_visitor.py
+  h_9db9d35f50cf33 19
+src/flext_core/_protocols/container.py
+  h_9db9d35f50cf33 210
+src/flext_core/context.py
+  h_9db9d35f50cf33 204,209,230,235,237,250,265,277,312-318,321-323
+  7f8dabdbc28465a6 1,3-8,17,25-26,28-30,33-37,39-42,44-47,51-113,116-119,121-130,134,137,141,149,152-167,169,171-196,198-203,205-208,210-229,231-234,236,238-249,251-264,266-276,278-304,306-311,319-320
+  22632355ef1e26ce 20,133,135,168
+src/flext_core/handlers.py
+  777db8edca009033 225-226,228-230
+src/flext_core/_constants/enforcement.py
+  h_9db9d35f50cf33 234
+src/flext_core/_utilities/_beartype/import_visitor.py
+  h_9db9d35f50cf33 24,74,122
+src/flext_core/runtime.py
+  h_9db9d35f50cf33 278,281,285,287,289,291,293,302
+src/flext_core/settings.py
+  777db8edca009033 53,57,59,357-363
+tests/unit/test_mixins.py
+  7f8dabdbc28465a6 186-187
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "c67841a06a740b94d73ad8d41bf132acc9ec8cec",
+  "prompts": {
+    "22632355ef1e26ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c6ac7df6-1398-4096-87d8-e634aca30e02",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 39,
+      "total_deletions": 28,
+      "accepted_lines": 16,
+      "overriden_lines": 1,
+      "messages_url": "https://usegitai.com/cas/2eb89c7d40132f67e6ed10d569a018581150e595f7deb71226482d36ca4586ae"
+    },
+    "777db8edca009033": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "264dddbe-fe20-4b0d-a48e-98a37e3d380a",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 129,
+      "total_deletions": 761,
+      "accepted_lines": 568,
+      "overriden_lines": 8,
+      "messages_url": "https://usegitai.com/cas/718109edbbf9cdb41a97ba8a1c0651de3088afe7e4fd2ab4c1f237714ac58c1b"
+    },
+    "7f8dabdbc28465a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6be116e4-c6d0-4712-993e-5282bb50c991",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 229,
+      "total_deletions": 148,
+      "accepted_lines": 407,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/5d3773c4eb4d49c700e0e9a557746730466169a6cb4338b577ce90c6878c68e4"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
