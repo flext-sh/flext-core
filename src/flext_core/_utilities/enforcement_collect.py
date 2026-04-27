@@ -6,6 +6,7 @@ import inspect
 from collections.abc import Callable, Iterator
 from enum import EnumType
 from pathlib import Path
+from typing import ClassVar
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
@@ -18,6 +19,16 @@ from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
 
 class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     """Project resolution + rule-input iterators."""
+
+    _NS_YIELD_TARGET_TAGS: ClassVar[frozenset[str]] = frozenset({
+        "settings_inheritance",
+        "cast_outside_core",
+        "model_rebuild_call",
+        "pass_through_wrapper",
+        "private_attr_probe",
+        "no_core_tests_namespace",
+        "no_wrapper_root_alias_import",
+    })
 
     @staticmethod
     def _discover_src_package(target: type) -> str | None:
@@ -200,6 +211,9 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         if project is None:
             return
         cls = FlextUtilitiesEnforcementCollect
+        if tag in cls._NS_YIELD_TARGET_TAGS:
+            yield qn, (target,)
+            return
         match tag:
             case "class_prefix":
                 yield from cls._ns_class_prefix(target, qn, project)
@@ -209,18 +223,6 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
                 yield from cls._ns_nested_mro(target, qn, project)
             case "no_accessor_methods":
                 yield from cls._ns_no_accessor_methods(target, qn)
-            case "settings_inheritance":
-                yield qn, (target,)
-            # --- ENFORCE-039 / ENFORCE-041 / ENFORCE-043 / ENFORCE-044 / ENFORCE-054 / ENFORCE-055 dispatch arms ---
-            case (
-                "cast_outside_core"
-                | "model_rebuild_call"
-                | "pass_through_wrapper"
-                | "private_attr_probe"
-                | "no_core_tests_namespace"
-                | "no_wrapper_root_alias_import"
-            ):
-                yield qn, (target,)
             case _:
                 return
 
