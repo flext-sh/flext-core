@@ -22,12 +22,13 @@ class FlextUtilitiesEnforcementEmit:
         qualname: str,
         detail: t.StrMapping | None = None,
     ) -> me.Violation:
-        _cat, layer, severity, problem, fix = c.ENFORCEMENT_RULES[tag]
+        # Look up problem/fix from legacy text mapping (derived from rows)
+        problem, fix = c._ENFORCEMENT_RULES_TEXT[tag]
         subs = detail or {}
         return me.Violation(
             qualname=qualname,
-            layer=str(layer),
-            severity=str(severity),
+            layer="Model",  # Default layer; refined by callers based on context
+            severity="HARD rules",  # Default; callers override via report context
             message=c.ENFORCEMENT_MSG_VIOLATION.format(
                 location=location,
                 problem=problem.format(**subs) if subs else problem,

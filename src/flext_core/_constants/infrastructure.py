@@ -90,3 +90,13 @@ class FlextConstantsInfrastructure:
     DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10
     MAX_CONNECTION_POOL_SIZE: Final[int] = 100
     MIN_POOL_SIZE: Final[int] = 1
+
+    CHECKER_HANDLER_ORIGIN_NAMES: Final[frozenset[str]] = frozenset({"FlextHandlers", "h"})
+    "Generic-origin names identifying the handler namespace in the type system."
+
+    CONTEXT_MERGEABLE_SCOPES: Final[frozenset[str]] = frozenset({
+        ContextScope.GLOBAL,
+        ContextScope.USER,
+        ContextScope.SESSION,
+    })
+    "Context scopes that may be merged during lifecycle transitions."

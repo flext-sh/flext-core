@@ -156,9 +156,10 @@ class TestsFlextCoreEnforcement:
         assert c.ENFORCEMENT_MODE is c.EnforcementMode.WARN
 
     def test_enforcement_rules_loaded(self) -> None:
-        assert len(c.ENFORCEMENT_RULES) > 0
+        assert len(c._ENFORCEMENT_RULES_TEXT) > 0
+        assert len(c._ENFORCEMENT_TAG_CATEGORY) > 0
         assert all(
-            row[0] in c.EnforcementCategory for row in c.ENFORCEMENT_RULES.values()
+            cat in c.EnforcementCategory for cat in c._ENFORCEMENT_TAG_CATEGORY.values()
         )
 
     def test_flext_core_uses_flext_override(self) -> None:

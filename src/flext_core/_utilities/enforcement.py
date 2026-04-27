@@ -327,14 +327,13 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         effective_layer = layer or FlextUtilitiesEnforcement.detect_layer(target) or ""
         is_model = issubclass(target, mp.BaseModel)
         qn = target.__qualname__
-        for tag, row in c.ENFORCEMENT_RULES.items():
-            category, rule_layer, *_ = row
+        for tag, category in c._ENFORCEMENT_TAG_CATEGORY.items():
             items = FlextUtilitiesEnforcement._items_for(
                 target,
                 tag,
                 category,
                 effective_layer,
-                str(rule_layer),
+                "",  # No rule_layer needed anymore
                 is_model=is_model,
             )
             violations.extend(

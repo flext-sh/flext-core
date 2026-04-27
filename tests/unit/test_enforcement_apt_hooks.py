@@ -146,12 +146,10 @@ class TestsFlextCoreEnforcementAptHooks:
 
     def test_each_a_pt_tag_is_registered_in_enforcement_rules(self) -> None:
         for tag in self.A_PT_BEARTYPE_TAGS:
-            assert tag in c.ENFORCEMENT_RULES, (
-                f"tag '{tag}' missing from c.ENFORCEMENT_RULES"
+            assert tag in c._ENFORCEMENT_RULES_TEXT, (
+                f"tag '{tag}' missing from c._ENFORCEMENT_RULES_TEXT"
             )
-            row = c.ENFORCEMENT_RULES[tag]
-            assert len(row) == 5
-            *_, problem, fix = row
+            problem, fix = c._ENFORCEMENT_RULES_TEXT[tag]
             assert isinstance(problem, str) and problem
             assert isinstance(fix, str) and fix
 

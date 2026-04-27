@@ -82,16 +82,6 @@ class FlextConstantsEnforcement:
         ATTR_SHAPE = "attr_shape"
         PROTOCOL_TREE = "protocol_tree"
 
-    @unique
-    class EnforcementTargetSelector(StrEnum):
-        """Iteration granularity that the dispatcher applies before a visitor."""
-
-        MODULE = "module"
-        CLASS = "class"
-        FILE = "file"
-        PACKAGE = "package"
-        WORKSPACE = "workspace"
-
     ENFORCEMENT_MODE: Final[EnforcementMode] = EnforcementMode.WARN
     """Controls behavior: strict (TypeError), warn (UserWarning), off."""
 
@@ -271,17 +261,7 @@ class FlextConstantsEnforcement:
     ENFORCEMENT_NESTED_MRO_MIN_DEPTH: Final[int] = 2
     """Minimum qualname depth for a class to count as nested inside a container."""
 
-    # --- Rule registry (single source of truth) ---
-    #
-    # Each row: tag → (EnforcementCategory, layer, severity, problem, fix).
-    #
-    #   EnforcementCategory = one of the ``EnforcementCategory`` StrEnum members below.
-    #   layer    = facade layer for the violation message; for EnforcementCategory.ATTR
-    #              rules the lowercase form doubles as the dispatch layer
-    #              ("Constants" → runs when target layer == constants).
-    #
-    # Engine derives per-category tag groups directly from this table — do
-    # not maintain parallel lists. Adding a new rule is one row.
+    # --- Rule category dispatch ---
 
     class EnforcementCategory(StrEnum):
         """Rule category — dispatches engine behaviour per row."""
@@ -295,17 +275,9 @@ class FlextConstantsEnforcement:
     # --- ENFORCE-039 / 041 / 043 / 044 detection inputs ---
     # Centralized SSOT for the AST-name / path / builtin sentinels consumed by the
     # corresponding ``check_<tag>`` predicates on ``FlextUtilitiesBeartypeEngine``.
-    # Keep regex constants compiled as Final[re.Pattern[str]] here so the
-    # engine module never carries loose detection inputs.
 
     class EnforceAstHookSymbol(StrEnum):
-        """AST identifier names matched by A-PT enforcement hooks.
-
-        Each member is the raw symbol the corresponding ``check_<tag>``
-        predicate inspects on an ``ast.Name``/``ast.Attribute`` node — keeps
-        the magic-string surface closed so typo regressions become import
-        errors instead of silently-skipped detections.
-        """
+        """AST identifier names matched by A-PT enforcement hooks."""
 
         CAST_CALL = "cast"
         """ENFORCE-039: ``ast.Name.id`` matched as the ``typing.cast`` call."""
@@ -325,14 +297,7 @@ class FlextConstantsEnforcement:
         "/usr/lib/",
         "/usr/local/lib/",
     })
-    """Filesystem path fragments identifying third-party source.
-
-    Note: parallel-purpose to ``ENFORCEMENT_EXEMPT_MODULE_FRAGMENTS`` but at
-    a different layer — that one filters by Python module qualname (e.g.
-    ``"tests."``); this one filters by filesystem path (e.g.
-    ``"site-packages"``). Beartype hooks that source-skip third-party
-    re-exports use this set; module-qualname-based exemptions use the other.
-    """
+    """Filesystem path fragments identifying third-party source."""
 
     ENFORCE_PRIVATE_PROBE_BUILTINS: Final[frozenset[str]] = frozenset({
         "hasattr",
@@ -344,336 +309,135 @@ class FlextConstantsEnforcement:
     ENFORCE_PRIVATE_PROBE_MIN_ARGS: Final[int] = 2
     """ENFORCE-044: minimum positional args required to inspect ``args[1]`` as the attribute-name literal."""
 
-    ENFORCEMENT_RULES: Final[
-        Mapping[
-            str,
-            tuple[EnforcementCategory, EnforcementLayer, EnforcementSeverity, str, str],
-        ]
-    ] = MappingProxyType({
-        "no_any": (
-            EnforcementCategory.FIELD,
-            EnforcementLayer.MODEL,
-            EnforcementSeverity.HARD_RULES,
-            "Any is FORBIDDEN (detected recursively)",
-            "Use a t.* type contract.",
-        ),
-        "no_bare_collection": (
-            EnforcementCategory.FIELD,
-            EnforcementLayer.MODEL,
-            EnforcementSeverity.HARD_RULES,
-            "bare {kind}[...] annotation FORBIDDEN",
-            "Use {replacement}.",
-        ),
-        "no_mutable_default": (
-            EnforcementCategory.FIELD,
-            EnforcementLayer.MODEL,
-            EnforcementSeverity.HARD_RULES,
-            "mutable default {kind}() is FORBIDDEN",
-            "Use m.Field(default_factory={kind}).",
-        ),
-        "no_raw_collections_field_default": (
-            EnforcementCategory.FIELD,
-            EnforcementLayer.MODEL,
-            EnforcementSeverity.HARD_RULES,
-            "Field(default_factory={kind}) conflicts with a read-only field contract",
-            "Use the immutable equivalent (tuple, MappingProxyType, frozenset) or declare an explicit MutableSequence/MutableMapping/MutableSet contract when in-place mutation is part of the model API.",
-        ),
-        "no_str_none_empty": (
-            EnforcementCategory.FIELD,
-            EnforcementLayer.MODEL,
-            EnforcementSeverity.BEST_PRACTICES,
-            'str | None with default="" is wrong',
-            'Use str with default="" (None has no business meaning here).',
-        ),
-        "no_inline_union": (
-            EnforcementCategory.FIELD,
-            EnforcementLayer.MODEL,
-            EnforcementSeverity.BEST_PRACTICES,
-            "complex inline union with {arms} arms",
-            "Centralize as a t.* type alias in typings.py.",
-        ),
-        "missing_description": (
-            EnforcementCategory.FIELD,
-            EnforcementLayer.MODEL,
-            EnforcementSeverity.BEST_PRACTICES,
-            "m.Field() missing description",
-            'Provide description="...".',
-        ),
-        "no_v1_config": (
-            EnforcementCategory.MODEL_CLASS,
-            EnforcementLayer.MODEL,
-            EnforcementSeverity.HARD_RULES,
-            "class Config is Pydantic v1",
-            "Use model_config: ClassVar[ConfigDict] = ConfigDict(...).",
-        ),
-        "extra_missing": (
-            EnforcementCategory.MODEL_CLASS,
-            EnforcementLayer.MODEL,
-            EnforcementSeverity.BEST_PRACTICES,
-            'model_config missing extra="forbid"',
-            "Inherit a configured FLEXT base (ArbitraryTypesModel, etc.).",
-        ),
-        "extra_wrong": (
-            EnforcementCategory.MODEL_CLASS,
-            EnforcementLayer.MODEL,
-            EnforcementSeverity.BEST_PRACTICES,
-            'model_config extra="{extra}" not allowed',
-            "Use FlexibleModel or FlexibleInternalModel.",
-        ),
-        "value_not_frozen": (
-            EnforcementCategory.MODEL_CLASS,
-            EnforcementLayer.MODEL,
-            EnforcementSeverity.BEST_PRACTICES,
-            "value objects must be frozen=True",
-            "Inherit from ImmutableValueModel or FrozenValueModel.",
-        ),
-        "const_mutable": (
-            EnforcementCategory.ATTR,
-            EnforcementLayer.CONSTANTS,
-            EnforcementSeverity.HARD_RULES,
-            "mutable constant value FORBIDDEN",
-            "Use frozenset, tuple, or MappingProxyType.",
-        ),
-        "const_lowercase": (
-            EnforcementCategory.ATTR,
-            EnforcementLayer.CONSTANTS,
-            EnforcementSeverity.BEST_PRACTICES,
-            "constant names must be UPPER_CASE",
-            "Rename to UPPER_SNAKE_CASE.",
-        ),
-        "alias_any": (
-            EnforcementCategory.ATTR,
-            EnforcementLayer.TYPES,
-            EnforcementSeverity.HARD_RULES,
-            "Any in type alias FORBIDDEN",
-            "Use t.* contracts.",
-        ),
-        "typeadapter_name": (
-            EnforcementCategory.ATTR,
-            EnforcementLayer.TYPES,
-            EnforcementSeverity.BEST_PRACTICES,
-            'TypeAdapter "{name}" needs UPPER_CASE naming',
-            'Rename to "ADAPTER_{upper_name}".',
-        ),
-        "utility_not_static": (
-            EnforcementCategory.ATTR,
-            EnforcementLayer.UTILITIES,
-            EnforcementSeverity.BEST_PRACTICES,
-            "utility must be @staticmethod or @classmethod",
-            "Utilities must be stateless.",
-        ),
-        "class_prefix": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.NAMESPACE_RULES,
-            'class name missing project prefix "{expected}"',
-            'Rename to start with "{expected}".',
-        ),
-        "cross_strenum": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.NAMESPACE_RULES,
-            "StrEnum in wrong layer",
-            "Move to constants (c.*).",
-        ),
-        "cross_protocol": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.NAMESPACE_RULES,
-            "Protocol in wrong layer",
-            "Move to protocols (p.*).",
-        ),
-        "nested_mro": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.NAMESPACE_RULES,
-            'must be nested inside a "{expected}*" container class',
-            'Wrap in a container whose name starts with "{expected}".',
-        ),
-        "proto_inner_kind": (
-            EnforcementCategory.PROTOCOL_TREE,
-            EnforcementLayer.PROTOCOLS,
-            EnforcementSeverity.BEST_PRACTICES,
-            "inner class must be Protocol / namespace / ABC",
-            "Declare a Protocol subclass, namespace holder, or nominal contract.",
-        ),
-        "proto_not_runtime": (
-            EnforcementCategory.PROTOCOL_TREE,
-            EnforcementLayer.PROTOCOLS,
-            EnforcementSeverity.BEST_PRACTICES,
-            "Protocol must be @runtime_checkable",
-            "Decorate the Protocol with @runtime_checkable.",
-        ),
-        "no_accessor_methods": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            'accessor method "{name}" FORBIDDEN (AGENTS.md §3.1)',
-            'Rename "{name}" to a domain verb ({suggestion}) or expose as a field/@u.computed_field.',
-        ),
-        "settings_inheritance": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            '"{name}" must inherit FlextSettings (AGENTS.md §2.6)',
-            "Add FlextSettings to the MRO; remove BaseModel/BaseSettings bases.",
-        ),
-        "cast_outside_core": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            "cast() call in {file} is outside flext-core (AGENTS.md §3.2)",
-            "Replace cast() with FlextResult narrowing or explicit isinstance().",
-        ),
-        "model_rebuild_call": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            "model_rebuild() invocation in {file} (AGENTS.md §3.4)",
-            "Resolve forward refs via proper imports / __future__ annotations.",
-        ),
-        "pass_through_wrapper": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.BEST_PRACTICES,
-            'pass-through wrapper "{name}" in {file} (AGENTS.md §3.5)',
-            "Inline the wrapper at every call site and delete the function.",
-        ),
-        "private_attr_probe": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            '{probe}(obj, "{name}") probes private attribute in {file}',
-            "Refactor the consumer to use the public surface (AGENTS.md §3.6).",
-        ),
-        "no_core_tests_namespace": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            'deprecated namespace "{symbol}" in {file}:{line}',
-            "Use flat test namespace access (c/p/t/m/u.Tests.*) with no Core intermediary.",
-        ),
-        "no_wrapper_root_alias_import": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            'wrapper alias import must use root package in {file}:{line}: "{statement}"',
-            "Use `from tests|examples|scripts import c, p, t, m, u` (no submodule alias imports).",
-        ),
-        "no_concrete_namespace_import": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            "bare Flext* class import FORBIDDEN (R1, R3)",
-            "Import alias (t, m, c, u, p) from parent; use in class bases.",
-        ),
-        "no_pydantic_consumer_import": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            "bare pydantic import FORBIDDEN (R2)",
-            "Use u.Field(), m.BaseModel, m.ConfigDict, m.TypeAdapter, u.model_validator, u.field_validator, u.computed_field, u.PrivateAttr from parent facade.",
-        ),
-        "facade_base_is_alias_or_peer": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            "facade class base must be alias or peer concrete class (R4, R5)",
-            "Use class Base(t): for Pattern A; class Base(t, FlextPeerXxx): for Pattern B.",
-        ),
-        "alias_first_multi_parent": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            "multi-parent facade must have alias first in MRO (R5)",
-            "Order bases: alias first (t), then concrete peer (FlextPeerXxx).",
-        ),
-        "alias_rebound_at_module_end": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            "module must rebind alias at end (R6)",
-            "Add {rebind_form} as final statement (e.g., t = FlextxxxTypes).",
-        ),
-        "no_redundant_inner_namespace": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.BEST_PRACTICES,
-            "redundant inner namespace re-inheritance (R8)",
-            "Remove empty inner class — MRO already exposes it from parent.",
-        ),
-        "no_self_root_import_in_core_files": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            "same-package root import in canonical file (R7)",
-            "Import alias from parent package, not own package.",
-        ),
-        "sibling_models_type_checking": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.BEST_PRACTICES,
-            "sibling models/* import used only in annotation must be TYPE_CHECKING (R9)",
-            "Wrap annotation-only imports under `if TYPE_CHECKING:`.",
-        ),
-        "utilities_explicit_class_when_self_ref": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.UTILITIES,
-            EnforcementSeverity.BEST_PRACTICES,
-            "utilities.py with self-referencing method must use explicit class base (R10)",
-            "Use class FlextXxxUtilities(FlextParentUtilities, FlextPeerUtilities): for parent (not alias).",
-        ),
-        "loc_cap": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            "module {file} has {loc} logical LOC > cap {cap} (AGENTS.md §3.1)",
-            "Decompose into focused submodules under the same package.",
-        ),
-        "library_abstraction": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            "import of {lib} outside its owner {owner} (AGENTS.md §2.7)",
-            "Route through the owner facade (u.Observability.* / u.Cli.* / u.Infra.*).",
-        ),
-        "deprecated_typealias_syntax": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.BEST_PRACTICES,
-            "'X: TypeAlias = ...' deprecated in {file}:{line} (AGENTS.md §3.5)",
-            "Use PEP 695 'type X = ...' syntax.",
-        ),
-        "nested_layer_misplacement": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            "{qn} nested in wrong facade family (AGENTS.md §2.2)",
-            "Move declaration to its canonical _models/_protocols/_typings/ tree.",
-        ),
-        "cross_project_duplicate": (
-            EnforcementCategory.NAMESPACE,
-            EnforcementLayer.NAMESPACE,
-            EnforcementSeverity.HARD_RULES,
-            "{qn} duplicated across {owners} (AGENTS.md §2.3, §3.5)",
-            "Move the symbol to the highest project in hierarchy and re-export.",
-        ),
+    # --- Legacy: tag metadata for old enforcement API ---
+    # Mapping tags to their (problem_template, fix_template, category).
+    # New code should use m.EnforcementCatalog instead.
+
+    _ENFORCEMENT_TAG_CATEGORY: Final[Mapping[str, EnforcementCategory]] = MappingProxyType({
+        "no_any": EnforcementCategory.FIELD,
+        "no_bare_collection": EnforcementCategory.FIELD,
+        "no_mutable_default": EnforcementCategory.FIELD,
+        "no_raw_collections_field_default": EnforcementCategory.FIELD,
+        "no_str_none_empty": EnforcementCategory.FIELD,
+        "no_inline_union": EnforcementCategory.FIELD,
+        "missing_description": EnforcementCategory.FIELD,
+        "no_v1_config": EnforcementCategory.MODEL_CLASS,
+        "extra_missing": EnforcementCategory.MODEL_CLASS,
+        "extra_wrong": EnforcementCategory.MODEL_CLASS,
+        "value_not_frozen": EnforcementCategory.MODEL_CLASS,
+        "const_mutable": EnforcementCategory.ATTR,
+        "const_lowercase": EnforcementCategory.ATTR,
+        "alias_any": EnforcementCategory.ATTR,
+        "typeadapter_name": EnforcementCategory.ATTR,
+        "utility_not_static": EnforcementCategory.ATTR,
+        "class_prefix": EnforcementCategory.NAMESPACE,
+        "cross_strenum": EnforcementCategory.NAMESPACE,
+        "cross_protocol": EnforcementCategory.NAMESPACE,
+        "nested_mro": EnforcementCategory.NAMESPACE,
+        "proto_inner_kind": EnforcementCategory.PROTOCOL_TREE,
+        "proto_not_runtime": EnforcementCategory.PROTOCOL_TREE,
+        "no_accessor_methods": EnforcementCategory.NAMESPACE,
+        "settings_inheritance": EnforcementCategory.NAMESPACE,
+        "cast_outside_core": EnforcementCategory.NAMESPACE,
+        "model_rebuild_call": EnforcementCategory.NAMESPACE,
+        "pass_through_wrapper": EnforcementCategory.NAMESPACE,
+        "private_attr_probe": EnforcementCategory.NAMESPACE,
+        "no_core_tests_namespace": EnforcementCategory.NAMESPACE,
+        "no_wrapper_root_alias_import": EnforcementCategory.NAMESPACE,
+        "no_concrete_namespace_import": EnforcementCategory.NAMESPACE,
+        "no_pydantic_consumer_import": EnforcementCategory.NAMESPACE,
+        "facade_base_is_alias_or_peer": EnforcementCategory.NAMESPACE,
+        "alias_first_multi_parent": EnforcementCategory.NAMESPACE,
+        "alias_rebound_at_module_end": EnforcementCategory.NAMESPACE,
+        "no_redundant_inner_namespace": EnforcementCategory.NAMESPACE,
+        "no_self_root_import_in_core_files": EnforcementCategory.NAMESPACE,
+        "sibling_models_type_checking": EnforcementCategory.NAMESPACE,
+        "utilities_explicit_class_when_self_ref": EnforcementCategory.NAMESPACE,
+        "loc_cap": EnforcementCategory.NAMESPACE,
+        "library_abstraction": EnforcementCategory.NAMESPACE,
+        "deprecated_typealias_syntax": EnforcementCategory.NAMESPACE,
+        "nested_layer_misplacement": EnforcementCategory.NAMESPACE,
+        "cross_project_duplicate": EnforcementCategory.NAMESPACE,
     })
-    """Rule registry: tag → (category, layer, severity, problem, fix)."""
+    """Tag → category mapping for old enforcement API."""
+
+    _ENFORCEMENT_RULES_TEXT: Final[
+        Mapping[str, tuple[str, str]]
+    ] = MappingProxyType({
+        "no_any": ("Any is FORBIDDEN (detected recursively)", "Use a t.* type contract."),
+        "no_bare_collection": ("bare {kind}[...] annotation FORBIDDEN", "Use {replacement}."),
+        "no_mutable_default": ("mutable default {kind}() is FORBIDDEN", "Use m.Field(default_factory={kind})."),
+        "no_raw_collections_field_default": ("Field(default_factory={kind}) conflicts with a read-only field contract", "Use the immutable equivalent (tuple, MappingProxyType, frozenset) or declare an explicit MutableSequence/MutableMapping/MutableSet contract when in-place mutation is part of the model API."),
+        "no_str_none_empty": ('str | None with default="" is wrong', 'Use str with default="" (None has no business meaning here).'),
+        "no_inline_union": ("complex inline union with {arms} arms", "Centralize as a t.* type alias in typings.py."),
+        "missing_description": ("m.Field() missing description", 'Provide description="...".'),
+        "no_v1_config": ("class Config is Pydantic v1", "Use model_config: ClassVar[ConfigDict] = ConfigDict(...)."),
+        "extra_missing": ('model_config missing extra="forbid"', "Inherit a configured FLEXT base (ArbitraryTypesModel, etc.)."),
+        "extra_wrong": ('model_config extra="{extra}" not allowed', "Use FlexibleModel or FlexibleInternalModel."),
+        "value_not_frozen": ("value objects must be frozen=True", "Inherit from ImmutableValueModel or FrozenValueModel."),
+        "const_mutable": ("mutable constant value FORBIDDEN", "Use frozenset, tuple, or MappingProxyType."),
+        "const_lowercase": ("constant names must be UPPER_CASE", "Rename to UPPER_SNAKE_CASE."),
+        "alias_any": ("Any in type alias FORBIDDEN", "Use t.* contracts."),
+        "typeadapter_name": ('TypeAdapter "{name}" needs UPPER_CASE naming', 'Rename to "ADAPTER_{upper_name}".'),
+        "utility_not_static": ("utility must be @staticmethod or @classmethod", "Utilities must be stateless."),
+        "class_prefix": ('class name missing project prefix "{expected}"', 'Rename to start with "{expected}".'),
+        "cross_strenum": ("StrEnum in wrong layer", "Move to constants (c.*)."),
+        "cross_protocol": ("Protocol in wrong layer", "Move to protocols (p.*)."),
+        "nested_mro": ('must be nested inside a "{expected}*" container class', 'Wrap in a container whose name starts with "{expected}".'),
+        "proto_inner_kind": ("inner class must be Protocol / namespace / ABC", "Declare a Protocol subclass, namespace holder, or nominal contract."),
+        "proto_not_runtime": ("Protocol must be @runtime_checkable", "Decorate the Protocol with @runtime_checkable."),
+        "no_accessor_methods": ('accessor method "{name}" FORBIDDEN (AGENTS.md §3.1)', 'Rename "{name}" to a domain verb ({suggestion}) or expose as a field/@u.computed_field.'),
+        "settings_inheritance": ('"{name}" must inherit FlextSettings (AGENTS.md §2.6)', "Add FlextSettings to the MRO; remove BaseModel/BaseSettings bases."),
+        "cast_outside_core": ("cast() call in {file} is outside flext-core (AGENTS.md §3.2)", "Replace cast() with FlextResult narrowing or explicit isinstance()."),
+        "model_rebuild_call": ("model_rebuild() invocation in {file} (AGENTS.md §3.4)", "Resolve forward refs via proper imports / __future__ annotations."),
+        "pass_through_wrapper": ('pass-through wrapper "{name}" in {file} (AGENTS.md §3.5)', "Inline the wrapper at every call site and delete the function."),
+        "private_attr_probe": ('{probe}(obj, "{name}") probes private attribute in {file}', "Refactor the consumer to use the public surface (AGENTS.md §3.6)."),
+        "no_core_tests_namespace": ('deprecated namespace "{symbol}" in {file}:{line}', "Use flat test namespace access (c/p/t/m/u.Tests.*) with no Core intermediary."),
+        "no_wrapper_root_alias_import": ('wrapper alias import must use root package in {file}:{line}: "{statement}"', "Use `from tests|examples|scripts import c, p, t, m, u` (no submodule alias imports)."),
+        "no_concrete_namespace_import": ("bare Flext* class import FORBIDDEN (R1, R3)", "Import alias (t, m, c, u, p) from parent; use in class bases."),
+        "no_pydantic_consumer_import": ("bare pydantic import FORBIDDEN (R2)", "Use u.Field(), m.BaseModel, m.ConfigDict, m.TypeAdapter, u.model_validator, u.field_validator, u.computed_field, u.PrivateAttr from parent facade."),
+        "facade_base_is_alias_or_peer": ("facade class base must be alias or peer concrete class (R4, R5)", "Use class Base(t): for Pattern A; class Base(t, FlextPeerXxx): for Pattern B."),
+        "alias_first_multi_parent": ("multi-parent facade must have alias first in MRO (R5)", "Order bases: alias first (t), then concrete peer (FlextPeerXxx)."),
+        "alias_rebound_at_module_end": ("module must rebind alias at end (R6)", "Add {rebind_form} as final statement (e.g., t = FlextxxxTypes)."),
+        "no_redundant_inner_namespace": ("redundant inner namespace re-inheritance (R8)", "Remove empty inner class — MRO already exposes it from parent."),
+        "no_self_root_import_in_core_files": ("same-package root import in canonical file (R7)", "Import alias from parent package, not own package."),
+        "sibling_models_type_checking": ("sibling models/* import used only in annotation must be TYPE_CHECKING (R9)", "Wrap annotation-only imports under `if TYPE_CHECKING:`."),
+        "utilities_explicit_class_when_self_ref": ("utilities.py with self-referencing method must use explicit class base (R10)", "Use class FlextXxxUtilities(FlextParentUtilities, FlextPeerUtilities): for parent (not alias)."),
+        "loc_cap": ("module {file} has {loc} logical LOC > cap {cap} (AGENTS.md §3.1)", "Decompose into focused submodules under the same package."),
+        "library_abstraction": ("import of {lib} outside its owner {owner} (AGENTS.md §2.7)", "Route through the owner facade (u.Observability.* / u.Cli.* / u.Infra.*)."),
+        "deprecated_typealias_syntax": ("'X: TypeAlias = ...' deprecated in {file}:{line} (AGENTS.md §3.5)", "Use PEP 695 'type X = ...' syntax."),
+        "nested_layer_misplacement": ("{qn} nested in wrong facade family (AGENTS.md §2.2)", "Move declaration to its canonical _models/_protocols/_typings/ tree."),
+        "cross_project_duplicate": ("{qn} duplicated across {owners} (AGENTS.md §2.3, §3.5)", "Move the symbol to the highest project in hierarchy and re-export."),
+    })
+    """Legacy: problem/fix text indexed by tag. Use m.EnforcementCatalog for new code."""
 
     ENFORCEMENT_RECURSIVE_TAGS: Final[frozenset[str]] = frozenset({
         "const_mutable",
     })
     """Tags that must recurse into inner namespace classes during scanning."""
 
-    ENFORCEMENT_NAMESPACE_TARGET_TAGS: Final[frozenset[str]] = frozenset(
-        tag for tag, row in ENFORCEMENT_RULES.items() if row[0] == "namespace"
-    ) - frozenset({
-        "class_prefix",
-        "cross_strenum",
-        "cross_protocol",
-        "nested_mro",
-        "no_accessor_methods",
+    ENFORCEMENT_NAMESPACE_TARGET_TAGS: Final[frozenset[str]] = frozenset({
+        "settings_inheritance",
+        "cast_outside_core",
+        "model_rebuild_call",
+        "pass_through_wrapper",
+        "private_attr_probe",
+        "no_core_tests_namespace",
+        "no_wrapper_root_alias_import",
+        "no_concrete_namespace_import",
+        "no_pydantic_consumer_import",
+        "facade_base_is_alias_or_peer",
+        "alias_first_multi_parent",
+        "alias_rebound_at_module_end",
+        "no_redundant_inner_namespace",
+        "no_self_root_import_in_core_files",
+        "sibling_models_type_checking",
+        "utilities_explicit_class_when_self_ref",
+        "loc_cap",
+        "library_abstraction",
+        "deprecated_typealias_syntax",
+        "nested_layer_misplacement",
+        "cross_project_duplicate",
     })
     """NAMESPACE tags that use simple class-target dispatch (yield qn, (target,))."""
 
