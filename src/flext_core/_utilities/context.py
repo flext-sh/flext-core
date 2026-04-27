@@ -11,8 +11,35 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Final
 
-from flext_core import FlextModelsContext, t
+from flext_core import FlextModelsContext, c, t
+
+
+class FlextUtilitiesContextVariables:
+    """Context variables using structlog as single source of truth.
+
+    Centralized, immutable container for all context variable proxies.
+    Access via u.ContextVariables.VARIABLE_NAME for standard context vars.
+    """
+
+    # Correlation variables for distributed tracing
+    CORRELATION_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]]
+    PARENT_CORRELATION_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]]
+
+    # Service context variables for identification
+    SERVICE_NAME: Final[FlextModelsContext.StructlogProxyContextVar[str]]
+    SERVICE_VERSION: Final[FlextModelsContext.StructlogProxyContextVar[str]]
+
+    # Request context variables for metadata
+    USER_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]]
+    REQUEST_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]]
+    REQUEST_TIMESTAMP: Final[FlextModelsContext.StructlogProxyContextVar[datetime]]
+
+    # Performance context variables for timing
+    OPERATION_NAME: Final[FlextModelsContext.StructlogProxyContextVar[str]]
+    OPERATION_START_TIME: Final[FlextModelsContext.StructlogProxyContextVar[datetime]]
+    OPERATION_METADATA: Final[FlextModelsContext.StructlogProxyContextVar[t.JsonMapping]]
 
 
 class FlextUtilitiesContext:

@@ -378,7 +378,7 @@ class FlextDecorators:
         if ensure_correlation:
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
         else:
-            current_id = FlextContext.Variables.CorrelationId.get()
+            current_id = FlextContext.Variables.CORRELATION_ID.get()
             if isinstance(current_id, str):
                 correlation_id = current_id
         FlextContext.Request.apply_operation_name(operation)

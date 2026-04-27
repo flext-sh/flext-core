@@ -267,32 +267,32 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
             result: dict[str, t.Scalar] = {}
 
             # Correlation IDs (strings)
-            if (corr_id := context_vars.Correlation.CORRELATION_ID.get()) is not None:
+            if (corr_id := context_vars.CORRELATION_ID.get()) is not None:
                 result[c.ContextKey.CORRELATION_ID] = str(corr_id)
             if (
-                parent_corr := context_vars.Correlation.PARENT_CORRELATION_ID.get()
+                parent_corr := context_vars.PARENT_CORRELATION_ID.get()
             ) is not None:
                 result[c.ContextKey.PARENT_CORRELATION_ID] = str(parent_corr)
 
             # Service metadata (strings)
-            if (svc_name := context_vars.Service.SERVICE_NAME.get()) is not None:
+            if (svc_name := context_vars.SERVICE_NAME.get()) is not None:
                 result[c.ContextKey.SERVICE_NAME] = str(svc_name)
-            if (svc_version := context_vars.Service.SERVICE_VERSION.get()) is not None:
+            if (svc_version := context_vars.SERVICE_VERSION.get()) is not None:
                 result[c.ContextKey.SERVICE_VERSION] = str(svc_version)
 
             # Request metadata (strings)
-            if (user_id := context_vars.Request.USER_ID.get()) is not None:
+            if (user_id := context_vars.USER_ID.get()) is not None:
                 result[c.ContextKey.USER_ID] = str(user_id)
-            if (req_id := context_vars.Request.REQUEST_ID.get()) is not None:
+            if (req_id := context_vars.REQUEST_ID.get()) is not None:
                 result[c.ContextKey.REQUEST_ID] = str(req_id)
 
             # Performance metadata
-            if (op_name := context_vars.Performance.OPERATION_NAME.get()) is not None:
+            if (op_name := context_vars.OPERATION_NAME.get()) is not None:
                 result[c.ContextKey.OPERATION_NAME] = str(op_name)
 
             # Operation start time as ISO string
             if (
-                op_start := context_vars.Performance.OPERATION_START_TIME.get()
+                op_start := context_vars.OPERATION_START_TIME.get()
             ) is not None:
                 if isinstance(op_start, datetime):
                     result[c.ContextKey.OPERATION_START_TIME] = op_start.isoformat()
@@ -312,14 +312,14 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
                 FlextContext.Variables.PARENT_CORRELATION_ID,
                 FlextContext.Variables.SERVICE_NAME,
                 FlextContext.Variables.SERVICE_VERSION,
-                FlextContext.Variables.UserId,
-                FlextContext.Variables.RequestId,
+                FlextContext.Variables.USER_ID,
+                FlextContext.Variables.REQUEST_ID,
                 FlextContext.Variables.OPERATION_NAME,
             ]:
                 _ = context_var.set(None)
             _ = FlextContext.Variables.OPERATION_START_TIME.set(None)
             _ = FlextContext.Variables.OPERATION_METADATA.set(None)
-            _ = FlextContext.Variables.RequestTimestamp.set(None)
+            _ = FlextContext.Variables.REQUEST_TIMESTAMP.set(None)
 
         @staticmethod
         def ensure_correlation_id() -> str:
