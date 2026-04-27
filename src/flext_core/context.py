@@ -121,7 +121,7 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
         @staticmethod
         def resolve_correlation_id() -> str | None:
             """Get current correlation ID."""
-            correlation_id = FlextContext.Variables.CORRELATION_ID.get()
+            correlation_id = FlextUtilitiesContextTracing._correlation_id.get()
             return correlation_id if isinstance(correlation_id, str) else None
 
         @staticmethod
@@ -133,26 +133,26 @@ class FlextContext(FlextUtilitiesContextTracing, m.ArbitraryTypesModel):
             """Create correlation context scope."""
             if correlation_id is None:
                 correlation_id = u.generate("correlation")
-            current_correlation = FlextContext.Variables.CORRELATION_ID.get()
-            correlation_token = FlextContext.Variables.CORRELATION_ID.set(correlation_id)
+            current_correlation = FlextUtilitiesContextTracing._correlation_id.get()
+            correlation_token = FlextUtilitiesContextTracing._correlation_id.set(correlation_id)
             parent_token = None
             if parent_id:
-                parent_token = FlextContext.Variables.PARENT_CORRELATION_ID.set(parent_id)
+                parent_token = FlextUtilitiesContextTracing._parent_correlation_id.set(parent_id)
             elif isinstance(current_correlation, str):
-                parent_token = FlextContext.Variables.PARENT_CORRELATION_ID.set(
+                parent_token = FlextUtilitiesContextTracing._parent_correlation_id.set(
                     current_correlation,
                 )
             try:
                 yield correlation_id
             finally:
-                FlextContext.Variables.CORRELATION_ID.reset(correlation_token)
+                FlextUtilitiesContextTracing._correlation_id.reset(correlation_token)
                 if parent_token:
-                    FlextContext.Variables.PARENT_CORRELATION_ID.reset(parent_token)
+                    FlextUtilitiesContextTracing._parent_correlation_id.reset(parent_token)
 
         @staticmethod
         def apply_correlation_id(correlation_id: str | None) -> None:
             """Set correlation ID."""
-            _ = FlextContext.Variables.CORRELATION_ID.set(correlation_id)
+            _ = FlextUtilitiesContextTracing._correlation_id.set(correlation_id)
 
     class Service:
         """Service identification and lifecycle context management utilities."""
