@@ -1,0 +1,86 @@
+src/flext_core/_models/project_metadata.py
+  777db8edca009033 19,138
+src/flext_core/result.py
+  777db8edca009033 149-152,559-565,600-603
+src/flext_core/handlers.py
+  22632355ef1e26ce 223,225-234
+tests/unit/test_utilities_generators_full_coverage.py
+  7f8dabdbc28465a6 10,14
+src/flext_core/_utilities/_beartype/deprecated_visitor.py
+  777db8edca009033 27
+tests/unit/test_models_cqrs_full_coverage.py
+  h_9db9d35f50cf33 25-27,69-73
+  777db8edca009033 18-20,24,28-31
+src/flext_core/context.py
+  777db8edca009033 20,135-136
+src/flext_core/runtime.py
+  h_9db9d35f50cf33 339,341-342,344-346,351-357,359-361,369-371,383,385-393,405-409,411,415-417,421-423,427
+  777db8edca009033 163,166
+src/flext_core/_utilities/parser.py
+  777db8edca009033 40-42
+src/flext_core/_models/cqrs.py
+  777db8edca009033 182-184
+src/flext_core/_utilities/_beartype/module_visitor.py
+  777db8edca009033 48-49
+src/flext_core/_utilities/project_metadata.py
+  777db8edca009033 23,27,72-74,98
+src/flext_core/settings.py
+  777db8edca009033 275
+src/flext_core/loggings.py
+  22632355ef1e26ce 14,266-283
+  777db8edca009033 16,148,154-155,172,175
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "c98226bc1433bac5a23987a43a306decd213184b",
+  "prompts": {
+    "22632355ef1e26ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c6ac7df6-1398-4096-87d8-e634aca30e02",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 31,
+      "total_deletions": 7,
+      "accepted_lines": 33,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/29689d45f58d5f098bb13394c9676be969efcf0e43c8c892d0a4789174e37f18"
+    },
+    "777db8edca009033": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "264dddbe-fe20-4b0d-a48e-98a37e3d380a",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 67,
+      "total_deletions": 95,
+      "accepted_lines": 56,
+      "overriden_lines": 1,
+      "messages_url": "https://usegitai.com/cas/0b5413a8dc8b2e04bd036c571f9e2b113918e9cd3ed4d0c6720083b477b6698a"
+    },
+    "7f8dabdbc28465a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6be116e4-c6d0-4712-993e-5282bb50c991",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 55,
+      "accepted_lines": 2,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/3f118d726f993532aef0b8093379820812facc0759b68d3e80ea17bd249da676"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
