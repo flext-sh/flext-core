@@ -194,15 +194,6 @@ class TestsFlextCoreBeartypeEngine:
 
     # Facade accessibility                                                #
 
-    def test_contains_any_on_facade(self) -> None:
-        """u.contains_any is accessible."""
-
-    def test_build_beartype_conf_on_facade(self) -> None:
-        """u.build_beartype_conf is accessible."""
-
-    def test_has_forbidden_collection_origin_on_facade(self) -> None:
-        """u.has_forbidden_collection_origin is accessible."""
-
     @pytest.mark.parametrize(
         "method",
         [
@@ -216,6 +207,7 @@ class TestsFlextCoreBeartypeEngine:
     )
     def test_all_methods_on_facade(self, method: str) -> None:
         """All beartype engine + conf methods on u.*."""
+        assert hasattr(u, method) is True
 
     # beartype.claw compatibility                                         #
 

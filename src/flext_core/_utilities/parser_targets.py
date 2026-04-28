@@ -54,22 +54,25 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
             ).unwrap()
         if isinstance(value, target):
             return value
-        validation_result: p.Result[T] = FlextUtilitiesModel.validate_value(
-            target, value
-        )
-        if validation_result.success:
-            return validation_result.value
         target_name = target.__name__ if hasattr(target, "__name__") else "type"
-        return FlextUtilitiesParserTargets._parse_with_default(
-            default,
-            default_factory,
-            c.ERR_PARSER_CANNOT_PARSE_TO_TARGET.format(
-                field_prefix=fp,
-                source_type=value.__class__.__name__,
-                target_name=target_name,
-                error=validation_result.error or "",
-            ),
-        ).unwrap()
+        return (
+            FlextUtilitiesModel
+            .validate_value(target, value)
+            .fold(
+                lambda error: FlextUtilitiesParserTargets._parse_with_default(
+                    default,
+                    default_factory,
+                    c.ERR_PARSER_CANNOT_PARSE_TO_TARGET.format(
+                        field_prefix=fp,
+                        source_type=value.__class__.__name__,
+                        target_name=target_name,
+                        error=error,
+                    ),
+                ),
+                lambda validated: validated,
+            )
+            .unwrap()
+        )
 
     @staticmethod
     @r.safe
@@ -199,9 +202,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
                 return None
             return FlextUtilitiesModel.validate_value(target, coerced.value).unwrap()
         if target in {int, float, str, bool}:
-            validated: p.Result[T] = FlextUtilitiesModel.validate_value(target, value)
-            if validated.success:
-                return validated.value
+            return FlextUtilitiesModel.validate_value(target, value).map_or(None)
         return None
 
 

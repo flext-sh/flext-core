@@ -76,7 +76,7 @@ class FlextExceptionsBase:
                 self.error_code,
                 c.ErrorDomain.UNKNOWN,
             )
-            return str(domain.value)
+            return domain.value
 
         @property
         def error_message(self) -> str | None:

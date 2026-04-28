@@ -74,6 +74,22 @@ class TestsFlextCoreSettingsCoverage:
         tm.that(ns_cfg, is_=DemoNamespace)
         tm.that(ns_cfg.enabled, eq=True)
 
+    def test_auto_register_registers_namespace(self) -> None:
+        namespace = f"ns_{u.generate('ulid', options=FlextUtilitiesGenerators.GenerateOptions(length=6))}"
+
+        @FlextSettings.auto_register(namespace)
+        class DemoAutoNamespace(FlextSettings):
+            model_config = m.SettingsConfigDict(
+                env_prefix="FLEXT_DEMO_AUTO_",
+                extra="ignore",
+            )
+            enabled: bool = True
+
+        settings_obj = FlextSettings.fetch_global()
+        ns_cfg = settings_obj.fetch_namespace(namespace, DemoAutoNamespace)
+        tm.that(ns_cfg, is_=DemoAutoNamespace)
+        tm.that(ns_cfg.enabled, eq=True)
+
     def test_effective_log_level_property(self) -> None:
         settings_obj = FlextSettings.fetch_global(
             overrides={"debug": True, "trace": False}

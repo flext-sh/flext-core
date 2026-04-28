@@ -22,8 +22,6 @@ from pydantic import (
     computed_field,
 )
 
-from flext_core._beartype_bootstrap import FlextCoreBeartypeBootstrap
-
 
 class FlextLazy(BaseModel):
     """Canonical lazy API as a container with runtime reuse caches."""
@@ -56,6 +54,13 @@ class FlextLazy(BaseModel):
     )
     _alias_adapter: TypeAdapter[tuple[str, str]] = PrivateAttr(
         default_factory=lambda: TypeAdapter(tuple[str, str]),
+    )
+    _activate_core_beartype: Callable[[], None] = PrivateAttr(
+        default_factory=lambda: (
+            lambda: importlib.import_module(
+                "flext_core._beartype_bootstrap",
+            ).FlextCoreBeartypeBootstrap.activate_package_beartype()
+        ),
     )
 
     @computed_field(return_type=dict[str, int])
@@ -110,7 +115,7 @@ class FlextLazy(BaseModel):
         if cached is not None:
             return cached
         if module_path.startswith("flext_core."):
-            FlextCoreBeartypeBootstrap.activate_package_beartype()
+            self._activate_core_beartype()
         mod = sys.modules.get(module_path) or self._import_module(module_path)
         self.module_cache[module_path] = mod
         return mod

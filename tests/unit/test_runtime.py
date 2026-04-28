@@ -18,4 +18,6 @@ class TestsFlextCoreRuntime:
 
     def test_normalize_to_container_returns_flat_scalar(self) -> None:
         payload: t.JsonPayload = 42
-        assert u.normalize_to_container(payload) == 42
+        normalized = u.normalize_to_container(payload)
+        assert isinstance(normalized, int)
+        assert normalized == 42

@@ -76,23 +76,6 @@ class TestsFlextCoreResult:
             m.Field(description="Optional expected result payload"),
         ] = None
 
-        def __init__(
-            self,
-            name: str,
-            operation_type: ResultOperationType,
-            value: t.JsonValue,
-            *,
-            is_success_expected: bool = True,
-            expected_result: t.JsonValue | None = None,
-        ) -> None:
-            super().__init__(
-                name=name,
-                operation_type=operation_type,
-                value=value,
-                is_success_expected=is_success_expected,
-                expected_result=expected_result,
-            )
-
     STRING_SCENARIOS: ClassVar[Sequence[TestsFlextCoreResult.ResultScenario]] = [
         ResultScenario(
             name="creation_success_string",

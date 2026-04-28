@@ -11,7 +11,9 @@ from typing import Annotated, ClassVar, override
 
 from flext_tests import e, h, r, s, u
 
-from tests import c, m, p, t
+from tests import p, t
+from tests.constants import c
+from tests.models import m
 
 
 class TestsFlextCoreUtilities(u):

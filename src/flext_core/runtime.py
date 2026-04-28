@@ -43,6 +43,9 @@ from flext_core import (
     p,
     t,
 )
+from flext_core._utilities.guards_type_model import (
+    FlextUtilitiesGuardsTypeModel as ugm,
+)
 from flext_core._utilities.guards_type_protocol import (
     FlextUtilitiesGuardsTypeProtocol as ugp,
 )
@@ -106,18 +109,38 @@ class FlextRuntime:
         return item if isinstance(item, t.SCALAR_TYPES) else str(item)
 
     @staticmethod
-    def _normalize_to_json_value(
+    def normalize_to_json_value(
         value: t.JsonPayload
         | t.Scalar
         | Path
         | mc.ConfigMap
         | mc.Dict
-        | AbstractSet[t.Scalar],
+        | AbstractSet[t.Scalar]
+        | p.Model
+        | p.HasModelDump
+        | None,
     ) -> t.JsonValue:
         """Normalize arbitrary runtime input to one validated ``JsonValue``."""
-        normalized = FlextRuntime.normalize_to_metadata(value)
+        normalized: t.JsonValue | Mapping[str, t.JsonPayload] | t.Scalar
+        if value is None:
+            normalized = ""
+        elif ugm.has_model_dump(value):
+            normalized = value.model_dump()
+        elif isinstance(value, p.Model):
+            normalized = str(value)
+        else:
+            normalized = FlextRuntime.normalize_to_metadata(value)
         validated: t.JsonValue = t.json_value_adapter().validate_python(normalized)
         return validated
+
+    @staticmethod
+    def normalize_to_json_mapping(
+        value: Mapping[str, t.JsonPayload | t.Scalar],
+    ) -> t.JsonMapping:
+        """Normalize a mapping to a validated ``JsonMapping``."""
+        return FlextRuntime._normalize_dict_entries(
+            [(str(key), item) for key, item in value.items()],
+        )
 
     @staticmethod
     def _normalize_dict_entries(
@@ -127,7 +150,7 @@ class FlextRuntime:
         return dict(
             t.json_mapping_adapter().validate_python(
                 {
-                    str(key): FlextRuntime._normalize_to_json_value(item)
+                    str(key): FlextRuntime.normalize_to_json_value(item)
                     for key, item in items
                 },
             ),
@@ -172,14 +195,14 @@ class FlextRuntime:
                 raise TypeError(msg) from exc
         return {
             str(key): (
-                None if item is None else FlextRuntime._normalize_to_json_value(item)
+                None if item is None else FlextRuntime.normalize_to_json_value(item)
             )
             for key, item in raw.items()
         }
 
     @staticmethod
     def validate_metadata_attributes(
-        value: t.JsonValue | Mapping[str, t.JsonValue] | BaseModel | None,
+        value: t.MetadataInput,
     ) -> Mapping[str, t.JsonValue]:
         """Normalize and validate metadata attributes input.
 
@@ -349,7 +372,7 @@ class FlextRuntime:
         elif isinstance(val, mc.ObjectList):
             normalized_data = list(
                 t.json_list_adapter().validate_python(
-                    [FlextRuntime._normalize_to_json_value(v) for v in val.root],
+                    [FlextRuntime.normalize_to_json_value(v) for v in val.root],
                 ),
             )
         elif isinstance(val, BaseModel):
@@ -357,15 +380,15 @@ class FlextRuntime:
         elif isinstance(val, Path):
             normalized_data = str(val)
         elif ugc.scalar(val):
-            normalized_data = FlextRuntime._normalize_to_json_value(val)
+            normalized_data = FlextRuntime.normalize_to_json_value(val)
         elif isinstance(val, Mapping):
             entries = [(str(k), v) for k, v in val.items()]
             normalized_data = FlextRuntime._normalize_dict_entries(entries)
         elif isinstance(val, Sequence) and not isinstance(val, (str, bytes)):
             normalized_data = list(
-                t.flat_container_list_adapter().validate_python(
+                t.json_list_adapter().validate_python(
                     [
-                        FlextRuntime._normalize_to_json_value(item_raw)
+                        FlextRuntime.normalize_to_json_value(item_raw)
                         for item_raw in val
                     ],
                 )
@@ -381,9 +404,14 @@ class FlextRuntime:
         | Path
         | mc.ConfigMap
         | mc.Dict
-        | AbstractSet[t.Scalar],
+        | AbstractSet[t.Scalar]
+        | None,
     ) -> t.JsonValue:
-        """Normalize input into metadata-compatible JSON-native values."""
+        """Normalize input into metadata-compatible JSON-native values.
+
+        ``None`` is normalized to an empty string so metadata payloads stay
+        JSON-compatible without dropping the original key.
+        """
         normalized_value: t.JsonValue
         if isinstance(val, (mc.ConfigMap, mc.Dict)):
             normalized_value = FlextRuntime._normalize_dict_entries([
@@ -397,8 +425,8 @@ class FlextRuntime:
             normalized_value = str(val)
         elif isinstance(val, (str, int, float, bool)):
             normalized_value = val
-        elif isinstance(val, BaseModel):
-            normalized_value = FlextRuntime._normalize_to_json_value(val.model_dump())
+        elif ugm.has_model_dump(val):
+            normalized_value = FlextRuntime.normalize_to_json_value(val)
         elif isinstance(val, Mapping):
             normalized_value = FlextRuntime._normalize_dict_entries([
                 (str(key), item) for key, item in val.items()
@@ -406,7 +434,7 @@ class FlextRuntime:
         elif isinstance(val, AbstractSet):
             normalized_value = list(
                 t.json_list_adapter().validate_python([
-                    FlextRuntime._normalize_to_json_value(item) for item in val
+                    FlextRuntime.normalize_to_json_value(item) for item in val
                 ])
             )
         elif isinstance(val, (bytes, bytearray)):
@@ -414,7 +442,7 @@ class FlextRuntime:
         else:
             normalized_value = list(
                 t.json_list_adapter().validate_python([
-                    FlextRuntime._normalize_to_json_value(item) for item in val
+                    FlextRuntime.normalize_to_json_value(item) for item in val
                 ])
             )
         return normalized_value

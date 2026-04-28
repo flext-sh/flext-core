@@ -41,10 +41,10 @@ from flext_core import (
     FlextModelsPydantic as mp,
     FlextProtocolsLogging as pl,
     FlextProtocolsResult as p,
-    FlextRuntime,
     c,
     t,
 )
+from flext_core.runtime import FlextRuntime
 
 
 @no_type_check
@@ -357,17 +357,13 @@ class FlextResult[T](BaseModel, p.Result[T]):
         try:
             return FlextResult[ModelT].ok(model.model_validate(data))
         except (
-            ValidationError,
-            ValueError,
+            c.ValidationError,
             TypeError,
+            ValueError,
             AttributeError,
             RuntimeError,
-            Exception,
-        ) as e:
-            return FlextResult[ModelT].fail(
-                f"Validation failed: {FlextResult._model_error_message(e)}",
-                exception=e,
-            )
+        ) as exc:
+            return FlextResult[ModelT].fail(str(exc), exception=exc)
 
     @classmethod
     def ok[V](cls: type[FlextResult[V]], value: V) -> FlextResult[V]:
@@ -623,22 +619,15 @@ class FlextResult[T](BaseModel, p.Result[T]):
                 exception=self.exception,
             )
         try:
-            # Use TypeAdapter for type-safe validation
-            adapter = mp.TypeAdapter(model)
-            validated = adapter.validate_python(self.value)
-            return FlextResult[U].ok(validated)
+            return FlextResult[U].ok(model.model_validate(self.value))
         except (
-            ValidationError,
-            ValueError,
+            c.ValidationError,
             TypeError,
+            ValueError,
             AttributeError,
             RuntimeError,
-            Exception,
-        ) as e:
-            return FlextResult[U].fail(
-                f"Model conversion failed: {self._model_error_message(e)}",
-                exception=e,
-            )
+        ) as exc:
+            return FlextResult[U].fail(str(exc), exception=exc)
 
     @override
     def unwrap(self) -> T:

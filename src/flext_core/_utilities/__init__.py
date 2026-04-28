@@ -29,6 +29,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextUtilitiesBeartypeEngine",
                 "ube",
             ),
+            ".beartype_typingext_patch": ("FlextUtilitiesBeartypeTypingExtPatch",),
             ".checker": ("FlextUtilitiesChecker",),
             ".collection": ("FlextUtilitiesCollection",),
             ".collection_iter": ("FlextUtilitiesCollectionIter",),

@@ -36,7 +36,7 @@ class FlextUtilitiesContextState:
             payload = ctx_value.root
         elif isinstance(ctx_value, p.Model):
             dumped = ctx_value.model_dump(mode="python")
-            payload = t.flat_container_mapping_adapter().validate_python(dumped)
+            payload = t.json_mapping_adapter().validate_python(dumped)
         else:
             payload = ctx_value
 
@@ -46,8 +46,8 @@ class FlextUtilitiesContextState:
                 if str(key) != key:
                     return {}
                 normalized[key] = FlextRuntime.normalize_to_container(value)
-            validated: t.JsonMapping = (
-                t.flat_container_mapping_adapter().validate_python(normalized)
+            validated: t.JsonMapping = t.json_mapping_adapter().validate_python(
+                normalized
             )
             return validated
         except (TypeError, ValueError, AttributeError, KeyError) as exc:

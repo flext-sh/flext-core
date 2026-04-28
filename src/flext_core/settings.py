@@ -21,7 +21,7 @@ from collections.abc import (
     MutableMapping,
 )
 from pathlib import Path
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import (
     BeforeValidator,
@@ -36,6 +36,12 @@ from pydantic_settings import (
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
+from pydantic_settings.sources.base import (
+    DefaultSettingsSource,
+    InitSettingsSource,
+)
+from pydantic_settings.sources.providers.dotenv import DotEnvSettingsSource
+from pydantic_settings.sources.providers.secrets import SecretsSettingsSource
 
 from flext_core import (
     FlextModelsExceptionParams,
@@ -88,6 +94,26 @@ class FlextSettings(BaseSettings):
         extra=c.EXTRA_CONFIG_IGNORE,
         validate_assignment=True,
     )
+
+    @classmethod
+    def _runtime_settings_sources(
+        cls,
+        init_payload: dict[str, t.SettingsInput],
+    ) -> tuple[tuple[PydanticBaseSettingsSource, ...], dict[str, t.SettingsInput]]:
+        """Build the native settings sources tuple for an init payload."""
+        default_settings = DefaultSettingsSource(cls)
+        init_settings = InitSettingsSource(cls, init_kwargs=init_payload)
+        env_settings = EnvSettingsSource(cls)
+        dotenv_settings = DotEnvSettingsSource(cls)
+        file_secret_settings = SecretsSettingsSource(cls)
+        sources = cls.settings_customise_sources(
+            cls,
+            init_settings=init_settings,
+            env_settings=env_settings,
+            dotenv_settings=dotenv_settings,
+            file_secret_settings=file_secret_settings,
+        ) + (default_settings,)
+        return sources, init_payload
 
     @classmethod
     @override
@@ -254,29 +280,88 @@ class FlextSettings(BaseSettings):
     def __init__(self, **kwargs: t.SettingsInput) -> None:
         """Initialize settings with data.
 
-        Kwargs are applied through one packed validation path so unknown
-        extras are ignored by model config and known fields revalidate once.
+        First initialization delegates directly to BaseSettings so incoming
+        payloads participate in the native settings build pipeline. Repeated
+        construction of the singleton revalidates one packed payload update.
         """
         if hasattr(self, "_di_provider"):
             if kwargs:
+                init_payload = {
+                    **self.model_dump(exclude_computed_fields=True),
+                    **dict(kwargs),
+                }
+                sources, init_kwargs = self.__class__._runtime_settings_sources(
+                    init_payload,
+                )
+                built_values = self.__class__._settings_build_values(
+                    sources,
+                    init_kwargs,
+                )
                 self.__pydantic_validator__.validate_python(
-                    {
-                        **self.model_dump(exclude_computed_fields=True),
-                        **kwargs,
-                    },
+                    built_values,
                     self_instance=self,
                 )
             return
 
-        super().__init__()
         if kwargs:
-            self.__pydantic_validator__.validate_python(
-                {
-                    **self.model_dump(exclude_computed_fields=True),
-                    **kwargs,
-                },
-                self_instance=self,
+            sources, init_kwargs = self.__class__._runtime_settings_sources(
+                dict(kwargs),
             )
+            super().__init__(_build_sources=(sources, init_kwargs))
+            return
+
+        super().__init__()
+
+    @classmethod
+    @override
+    def model_validate(
+        cls,
+        obj: t.ConfigModelInput,
+        *,
+        strict: bool | None = None,
+        extra: str | None = None,
+        from_attributes: bool | None = None,
+        context: t.MetadataInput | None = None,
+        by_alias: bool | None = None,
+        by_name: bool | None = None,
+    ) -> Self:
+        """Validate settings payloads through the constructor for mappings.
+
+        ``BaseSettings`` subclasses need constructor-based validation so init
+        payloads are combined with env-backed defaults instead of being reduced
+        to the pre-built settings source snapshot.
+        """
+        if isinstance(obj, cls):
+            return obj
+        if isinstance(obj, Mapping):
+            payload = dict(obj)
+            if not any(
+                option is not None
+                for option in (
+                    strict,
+                    extra,
+                    from_attributes,
+                    context,
+                    by_alias,
+                    by_name,
+                )
+            ):
+                return cls(**payload)
+        resolved_extra: Literal["allow", "forbid", "ignore"] | None
+        match extra:
+            case "allow" | "forbid" | "ignore":
+                resolved_extra = extra
+            case _:
+                resolved_extra = None
+        return super().model_validate(
+            obj,
+            strict=strict,
+            extra=resolved_extra,
+            from_attributes=from_attributes,
+            context=context,
+            by_alias=by_alias,
+            by_name=by_name,
+        )
 
     @computed_field
     @property
@@ -487,15 +572,7 @@ class FlextSettings(BaseSettings):
 
         """
         if decorator:
-
-            def namespace_decorator(
-                class_to_register: type[TSettings],
-            ) -> type[TSettings]:
-                """Register the settings class while preserving type."""
-                cls._namespace_registry[namespace] = class_to_register
-                return class_to_register
-
-            return namespace_decorator
+            return cls.auto_register(namespace)
         if settings_class is None:
             msg = c.ERR_SETTINGS_CLASS_REQUIRED_FOR_NON_DECORATOR
             raise ValueError(msg)

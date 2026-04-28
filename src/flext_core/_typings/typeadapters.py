@@ -46,18 +46,6 @@ class FlextTypesTypeAdapters:
 
     @classmethod
     @cache
-    def container_mapping_adapter(cls) -> mp.TypeAdapter[t.JsonMapping]:
-        return mp.TypeAdapter(t.JsonMapping)
-
-    @classmethod
-    @cache
-    def container_mapping_sequence_adapter(
-        cls,
-    ) -> mp.TypeAdapter[Sequence[t.JsonMapping]]:
-        return mp.TypeAdapter(Sequence[t.JsonMapping])
-
-    @classmethod
-    @cache
     def json_value_adapter(cls) -> mp.TypeAdapter[tp.JsonValue]:
         return mp.TypeAdapter(tp.JsonValue)
 
@@ -73,38 +61,8 @@ class FlextTypesTypeAdapters:
 
     @classmethod
     @cache
-    def container_adapter(cls) -> mp.TypeAdapter[tp.JsonValue]:
-        return mp.TypeAdapter(tp.JsonValue)
-
-    @classmethod
-    @cache
-    def flat_container_mapping_adapter(cls) -> mp.TypeAdapter[t.JsonMapping]:
-        return mp.TypeAdapter(t.JsonMapping)
-
-    @classmethod
-    @cache
-    def flat_container_list_adapter(cls) -> mp.TypeAdapter[t.JsonList]:
-        return mp.TypeAdapter(t.JsonList)
-
-    @classmethod
-    @cache
-    def tuple_container_adapter(cls) -> mp.TypeAdapter[tuple[tp.JsonValue, ...]]:
-        return mp.TypeAdapter(tuple[tp.JsonValue, ...])
-
-    @classmethod
-    @cache
     def primitives_adapter(cls) -> mp.TypeAdapter[t.Primitives]:
         return mp.TypeAdapter(t.Primitives)
-
-    @classmethod
-    @cache
-    def list_serializable_adapter(cls) -> mp.TypeAdapter[Sequence[tp.JsonValue]]:
-        return mp.TypeAdapter(Sequence[tp.JsonValue])
-
-    @classmethod
-    @cache
-    def tuple_serializable_adapter(cls) -> mp.TypeAdapter[tuple[tp.JsonValue, ...]]:
-        return mp.TypeAdapter(tuple[tp.JsonValue, ...])
 
     @classmethod
     @cache
@@ -192,11 +150,6 @@ class FlextTypesTypeAdapters:
     @cache
     def enum_type_adapter(cls) -> mp.TypeAdapter[type[StrEnum]]:
         return mp.TypeAdapter(type[StrEnum])
-
-    @classmethod
-    @cache
-    def serializable_adapter(cls) -> mp.TypeAdapter[tp.JsonValue]:
-        return mp.TypeAdapter(tp.JsonValue)
 
     @classmethod
     @cache

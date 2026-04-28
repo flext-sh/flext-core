@@ -102,5 +102,4 @@ class TestsFlextCoreUtilitiesTypeGuards:
 
         result = u.normalize_to_metadata(SampleModel())
         tm.that(result, is_=dict)
-        assert isinstance(result, dict)
-        tm.that(result["name"], eq="test")
+        assert result == {"name": "test"}

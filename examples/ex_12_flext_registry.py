@@ -5,16 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples import (
-    ExamplesFlextCoreShared,
-    c,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
-from flext_core import h
+from examples.constants import c
+from examples.models import m
+from examples.protocols import p
+from examples.shared import ExamplesFlextCoreShared
+from examples.typings import t
+from examples.utilities import u
+from flext_core import h, r
 
 
 class _ProtocolHandler:
@@ -30,7 +27,7 @@ class _ProtocolHandler:
     def handle(self, message: p.Routable) -> p.Result[t.Scalar]:
         value = ""
         if isinstance(message, m.Examples.CommandA):
-            value = str(message.value)
+            value = message.value
         elif isinstance(message, m.Examples.CommandB):
             value = str(message.amount)
         return r[t.Scalar].ok(f"{self._label}:{value}")

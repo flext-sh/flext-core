@@ -224,7 +224,7 @@ class FlextModelsContextScope:
                 if isinstance(current_counter, int):
                     statistics_updates[counter_attr] = current_counter + 1
             operations: t.JsonMapping = {
-                str(key): value
+                key: value
                 for key, value in current_statistics.operations.items()
                 if isinstance(value, (str, int, float, bool))
             }

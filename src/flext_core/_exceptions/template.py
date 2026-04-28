@@ -10,23 +10,24 @@ from collections.abc import (
     Mapping,
 )
 
-from flext_core import FlextModels as m, FlextRuntime, c, t
+from flext_core import FlextModelsContainers as mc, FlextModelsPydantic as mp, c, t
+from flext_core.runtime import FlextRuntime
 
 
 class FlextExceptionsTemplate:
     """Template rendering helpers for exception and result messages."""
 
-    type TemplateValues = Mapping[str, t.JsonPayload | None] | m.ConfigMap
+    type TemplateValues = Mapping[str, t.JsonPayload | None] | mc.ConfigMap
 
     @staticmethod
     def template_values(
-        params: m.BaseModel | None,
+        params: mp.BaseModel | None,
         values: FlextExceptionsTemplate.TemplateValues,
-    ) -> m.ConfigMap:
+    ) -> mc.ConfigMap:
         """Build template substitution values using params data and field metadata."""
         payload: dict[str, t.JsonValue] = (
             {
-                str(key): FlextRuntime.normalize_to_metadata(value)
+                key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in params.model_dump(exclude_none=True).items()
             }
             if params is not None
@@ -42,17 +43,17 @@ class FlextExceptionsTemplate:
                 and field_help
             }
         payload |= {
-            str(key): FlextRuntime.normalize_to_metadata(value)
+            key: FlextRuntime.normalize_to_metadata(value)
             for key, value in values.items()
             if value is not None
         }
-        return m.ConfigMap.model_validate(payload)
+        return mc.ConfigMap.model_validate(payload)
 
     @staticmethod
     def render_template(
         template: str,
         *,
-        params: m.BaseModel | None = None,
+        params: mp.BaseModel | None = None,
         **values: t.JsonPayload | None,
     ) -> str:
         """Render a message template from params + explicit values.
@@ -73,9 +74,9 @@ class FlextExceptionsTemplate:
 
     @staticmethod
     def result_error_data(
-        params: m.BaseModel | None,
+        params: mp.BaseModel | None,
         **values: t.JsonPayload | None,
-    ) -> m.ConfigMap | None:
+    ) -> mc.ConfigMap | None:
         """Build canonical error_data payload from params and explicit values."""
         payload = FlextExceptionsTemplate.template_values(params, values)
         return payload or None

@@ -20,6 +20,14 @@ class FlextUtilitiesGuardsTypeModel:
     """Pydantic and data model type guards."""
 
     @staticmethod
+    def has_model_dump(
+        value: t.GuardInput | p.HasModelDump | p.Model | t.JsonValue | None,
+    ) -> TypeIs[p.HasModelDump]:
+        """Narrow value to objects exposing a callable ``model_dump``."""
+        model_dump = getattr(value, "model_dump", None)
+        return callable(model_dump)
+
+    @staticmethod
     def model_type(
         value: t.TypeHintSpecifier,
     ) -> TypeIs[t.ModelClass[mp.BaseModel]]:

@@ -68,11 +68,9 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
     ) -> t.JsonMapping:
         """Normalize and validate mapping payloads through canonical adapters."""
         normalized = {
-            str(k): FlextRuntime.normalize_to_container(v) for k, v in source.items()
+            k: FlextRuntime.normalize_to_container(v) for k, v in source.items()
         }
-        validated: t.JsonMapping = t.flat_container_mapping_adapter().validate_python(
-            normalized
-        )
+        validated: t.JsonMapping = t.json_mapping_adapter().validate_python(normalized)
         return validated
 
     @staticmethod

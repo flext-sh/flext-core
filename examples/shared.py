@@ -38,7 +38,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
 
-from examples import m, p, r, t, u
+from flext_core import p, r, t, u
+
+from .models import m
 
 
 class ExamplesFlextCoreShared(m.BaseModel):

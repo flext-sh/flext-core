@@ -5,7 +5,6 @@ from __future__ import annotations
 from importlib import import_module
 from typing import ClassVar
 
-from beartype import BeartypeConf, BeartypeStrategy
 from beartype.claw import beartype_this_package
 
 from flext_core._typings.base import FlextTypingBase as t
@@ -24,21 +23,6 @@ class FlextCoreBeartypeBootstrap:
         return constants_cls
 
     @classmethod
-    def build_beartype_conf(cls) -> BeartypeConf:
-        """Return the package beartype configuration for the current mode."""
-        enforcement_constants = cls._enforcement_constants()
-        mode = enforcement_constants.BEARTYPE_MODE
-        if mode is enforcement_constants.EnforcementMode.OFF:
-            return BeartypeConf(strategy=BeartypeStrategy.O0)
-        return BeartypeConf(
-            violation_type=UserWarning
-            if mode is enforcement_constants.EnforcementMode.WARN
-            else TypeError,
-            strategy=BeartypeStrategy.O1,
-            claw_skip_package_names=enforcement_constants.BEARTYPE_CLAW_SKIP_PACKAGES,
-        )
-
-    @classmethod
     def activate_package_beartype(cls) -> None:
         """Install beartype.claw for flext_core exactly once."""
         enforcement_constants = cls._enforcement_constants()
@@ -48,7 +32,10 @@ class FlextCoreBeartypeBootstrap:
             is enforcement_constants.EnforcementMode.OFF
         ):
             return
-        beartype_this_package(conf=cls.build_beartype_conf())
+        conf_module = import_module("flext_core._utilities.beartype_conf")
+        beartype_this_package(
+            conf=conf_module.FlextUtilitiesBeartypeConf.build_beartype_conf()
+        )
         cls._activated = True
 
 

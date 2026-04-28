@@ -55,7 +55,7 @@ class ExamplesFlextCoreDatabaseService(s):
         """
         super().model_post_init(__context)
         normalized_db_config: t.JsonMapping = {
-            str(key): u.normalize_to_metadata(value)
+            key: u.normalize_to_metadata(value)
             for key, value in self.db_config.root.items()
         }
         self.logger.info(
@@ -99,8 +99,7 @@ class ExamplesFlextCoreMigrationService(s):
             },
         )
         normalized_settings = {
-            str(key): u.normalize_to_metadata(value)
-            for key, value in settings.root.items()
+            key: u.normalize_to_metadata(value) for key, value in settings.root.items()
         }
         self.logger.info(
             "Migration configuration loaded",

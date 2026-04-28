@@ -7,7 +7,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import override
 
-from examples import ExamplesFlextCoreShared, c, m, p, t, u
+from examples import c, m, p, t, u
+from examples.shared import ExamplesFlextCoreShared
 from flext_core import FlextContainer, r
 
 
@@ -221,8 +222,8 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
         factory_calls = {"count": 0}
 
         def _factory_counter() -> int:
-            factory_calls["count"] = int(factory_calls["count"]) + 1
-            return int(factory_calls["count"])
+            factory_calls["count"] += 1
+            return factory_calls["count"]
 
         register_factory_ok = container.factory(factory_name, _factory_counter)
         register_factory_dup = container.factory(factory_name, _factory_counter)
@@ -247,8 +248,8 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
         resource_calls = {"count": 0}
 
         def _resource_data() -> t.IntMapping:
-            resource_calls["count"] = int(resource_calls["count"]) + 1
-            return {self.rand_str(4): int(resource_calls["count"])}
+            resource_calls["count"] += 1
+            return {self.rand_str(4): resource_calls["count"]}
 
         register_resource_ok = container.resource(resource_name, _resource_data)
         register_resource_dup = container.resource(resource_name, _resource_data)

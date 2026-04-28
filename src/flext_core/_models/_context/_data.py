@@ -39,9 +39,7 @@ class FlextModelsContextData:
             })
         if isinstance(v, mp.BaseModel):
             return MappingProxyType({
-                str(k): str(val)
-                if not isinstance(val, (str, int, float, bool))
-                else val
+                k: str(val) if not isinstance(val, (str, int, float, bool)) else val
                 for k, val in v.model_dump().items()
             })
         msg = c.ERR_CONTEXT_CANNOT_NORMALIZE_TYPE_TO_MAPPING.format(
@@ -79,7 +77,7 @@ class FlextModelsContextData:
                 return MappingProxyType({})
             if isinstance(v, Mapping):
                 return MappingProxyType({
-                    str(k): (
+                    k: (
                         str(val)
                         if not isinstance(val, (str, int, float, bool))
                         else val
@@ -87,9 +85,7 @@ class FlextModelsContextData:
                     for k, val in v.items()
                 })
             return MappingProxyType({
-                str(k): (
-                    str(val) if not isinstance(val, (str, int, float, bool)) else val
-                )
+                k: (str(val) if not isinstance(val, (str, int, float, bool)) else val)
                 for k, val in v.model_dump().items()
             })
 

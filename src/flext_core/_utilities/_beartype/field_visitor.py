@@ -15,10 +15,6 @@ from flext_core._utilities._beartype.helpers import (
     FlextUtilitiesBeartypeHelpers as _ubh,
 )
 
-_NO_VIOLATION: t.StrMapping | None = None
-_BARE_VIOLATION: t.StrMapping = {}
-_FIELD_DESCRIPTION_ARITY: int = 3
-
 
 class FlextUtilitiesBeartypeFieldVisitor:
     """FIELD_SHAPE + MODEL_CONFIG visitors via Pydantic introspection."""
@@ -46,16 +42,16 @@ class FlextUtilitiesBeartypeFieldVisitor:
             isinstance(raw_annotation, str) and "description=" in raw_annotation,
             has_annotated_description,
         ))
-        return _NO_VIOLATION if has_description else _BARE_VIOLATION
+        return None if has_description else {}
 
     @staticmethod
     def _field_violation(
         params: me.FieldShapeParams,
         info: FieldInfo,
     ) -> t.StrMapping | None:
-        violation = _NO_VIOLATION
+        violation: t.StrMapping | None = None
         if params.forbid_any and _ubh.contains_any(info.annotation):
-            violation = _BARE_VIOLATION
+            violation = {}
         elif params.forbid_bare_collection:
             bad, origin = _ubh.has_forbidden_collection_origin(
                 info.annotation, c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS
@@ -90,7 +86,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
             and isinstance(info.default, str)
             and not info.default
         ):
-            violation = _BARE_VIOLATION
+            violation = {}
         elif params.forbid_inline_union:
             inline_union_arms = _ubh.count_union_members(info.annotation)
             if inline_union_arms > params.max_union_arms:
@@ -111,14 +107,14 @@ class FlextUtilitiesBeartypeFieldVisitor:
                     and isinstance(name, str)
                     and isinstance(info, FieldInfo)
                 ):
-                    return _NO_VIOLATION
+                    return None
                 return cls._field_description_violation(model_type, name, info)
             case (info,):
                 if not isinstance(info, FieldInfo):
-                    return _NO_VIOLATION
+                    return None
                 return cls._field_violation(params, info)
             case _:
-                return _NO_VIOLATION
+                return None
 
     @staticmethod
     def v_model_config(
@@ -126,19 +122,19 @@ class FlextUtilitiesBeartypeFieldVisitor:
         target: type,
     ) -> t.StrMapping | None:
         """MODEL_CONFIG — Pydantic model_config governance via flags."""
-        violation = _NO_VIOLATION
+        violation: t.StrMapping | None = None
         has_v1_config = params.forbid_v1_config and isinstance(
             target.__dict__.get("Config"), type
         )
         if has_v1_config:
-            violation = _BARE_VIOLATION
+            violation = {}
         elif issubclass(target, mp.BaseModel) and not _ubh.has_relaxed_extra_base(
             target
         ):
             extra = target.model_config.get("extra")
             local = target.__dict__.get("model_config", {})
             if params.require_extra_forbid and extra is None:
-                violation = _BARE_VIOLATION
+                violation = {}
             elif (
                 params.allowed_extra_values
                 and extra not in {None, "forbid", *params.allowed_extra_values}
@@ -153,5 +149,5 @@ class FlextUtilitiesBeartypeFieldVisitor:
                 )
                 and not target.model_config.get("frozen", False)
             ):
-                violation = _BARE_VIOLATION
+                violation = {}
         return violation

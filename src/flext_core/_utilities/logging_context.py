@@ -20,7 +20,6 @@ from pathlib import Path
 from typing import ClassVar
 
 from flext_core import (
-    FlextModelsPydantic,
     FlextRuntime,
     FlextUtilitiesCollection,
     FlextUtilitiesLoggingConfig,
@@ -125,28 +124,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         value: t.LogValue | t.JsonValue | t.JsonPayload | None,
     ) -> t.JsonValue:
         """Normalize value to Container (internal helper)."""
-        model_dump_attr = getattr(value, "model_dump", None)
-        normalized_value: object
         if isinstance(value, Exception):
-            normalized_value = str(value)
-        elif value is None:
-            normalized_value = ""
-        elif isinstance(value, FlextModelsPydantic.BaseModel):
-            normalized_value = value.model_dump()
-        elif callable(model_dump_attr):
-            normalized_value = model_dump_attr()
-        elif isinstance(value, (p.Model, Path)):
-            normalized_value = str(value)
-        elif isinstance(value, bytes):
-            normalized_value = value.decode(
-                c.DEFAULT_ENCODING, errors=c.DEFAULT_DECODE_ERROR_HANDLER
-            )
-        else:
-            normalized_value = FlextRuntime.normalize_to_metadata(value)
-        validated_value: t.JsonValue = t.json_value_adapter().validate_python(
-            normalized_value,
-        )
-        return validated_value
+            return str(value)
+        return FlextRuntime.normalize_to_json_value(value)
 
     @staticmethod
     def to_container_context(

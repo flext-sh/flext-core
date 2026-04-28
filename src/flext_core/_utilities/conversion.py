@@ -44,7 +44,7 @@ class FlextUtilitiesConversion:
         return str_value
 
     @staticmethod
-    def to_str(value: t.StrictValue | None, *, default: str | None = None) -> str:
+    def to_str(value: t.JsonPayload | None, *, default: str | None = None) -> str:
         """Convert value to string, formatting floats as integers when possible."""
         if value is None:
             return default if default is not None else ""
@@ -79,7 +79,7 @@ class FlextUtilitiesConversion:
             return [str(value)]
 
     @staticmethod
-    def to_int(value: t.JsonPayload, *, default: int = 0) -> int:
+    def to_int(value: t.JsonPayload | None, *, default: int = 0) -> int:
         """Convert value to int with safe fallback; bool returns default."""
         if value is None or isinstance(value, bool):
             return default
@@ -98,7 +98,7 @@ class FlextUtilitiesConversion:
         return default
 
     @staticmethod
-    def to_float(value: t.JsonPayload, *, default: float = 0.0) -> float:
+    def to_float(value: t.JsonPayload | None, *, default: float = 0.0) -> float:
         """Convert value to float with safe fallback; bool returns default."""
         if value is None or isinstance(value, bool):
             return default
@@ -110,6 +110,36 @@ class FlextUtilitiesConversion:
             except (ValueError, OverflowError):
                 return default
         return default
+
+    @staticmethod
+    def to_bool(value: t.JsonPayload | None, *, default: bool = False) -> bool:
+        """Convert value to bool with safe fallback."""
+        if value is None:
+            return default
+        return bool(value)
+
+    @staticmethod
+    def to_positive_int(value: t.JsonPayload | None, *, default: int = 0) -> int:
+        """Convert value to a strictly positive integer with safe fallback.
+
+        Rejects ``None``, booleans, non-numeric strings, and non-positive values.
+        """
+        if value is None or isinstance(value, bool):
+            return default
+        if isinstance(value, int):
+            return value if value > 0 else default
+        if isinstance(value, float) and value.is_integer():
+            return int(value) if value > 0 else default
+        if isinstance(value, str) and value.strip().isdigit():
+            return int(value)
+        return default
+
+    @staticmethod
+    def to_optional_str(value: t.JsonPayload | None) -> str | None:
+        """Return the value unchanged only when it is a non-empty string."""
+        if value is None or not isinstance(value, str):
+            return None
+        return value or None
 
 
 __all__: list[str] = ["FlextUtilitiesConversion"]

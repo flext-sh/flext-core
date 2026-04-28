@@ -6,15 +6,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from importlib import import_module
+from typing import TYPE_CHECKING
+
 from flext_core import (
     FlextExceptionsTemplate,
     FlextModelsExceptionParams as m,
     FlextModelsPydantic as mp,
     c,
     p,
-    r,
     t,
 )
+
+if TYPE_CHECKING:
+    from flext_core.result import FlextResult
 
 
 class FlextExceptionsFactories:
@@ -22,6 +27,17 @@ class FlextExceptionsFactories:
 
     Eliminates the 4-line boilerplate across all modules.
     """
+
+    @staticmethod
+    def _result_type[TValue](
+        result_type: type[FlextResult[TValue]] | None = None,
+    ) -> type[FlextResult[TValue]]:
+        """Resolve FlextResult lazily to avoid runtime import cycles."""
+        if result_type is not None:
+            return result_type
+        result_module = import_module("flext_core")
+        result_cls: type[FlextResult[TValue]] = result_module.FlextResult
+        return result_cls
 
     @staticmethod
     def _failure_message(
@@ -33,20 +49,16 @@ class FlextExceptionsFactories:
         """Render the canonical failure message with or without an error cause."""
         if error is None:
             template_without_error = c.ERR_TEMPLATE_FAILED_WITH_ERROR.split(": ", 1)[0]
-            return str(
-                FlextExceptionsTemplate.render_template(
-                    template_without_error,
-                    operation=operation,
-                    params=params,
-                )
-            )
-        return str(
-            FlextExceptionsTemplate.render_template(
-                c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+            return FlextExceptionsTemplate.render_template(
+                template_without_error,
                 operation=operation,
-                error=str(error),
                 params=params,
             )
+        return FlextExceptionsTemplate.render_template(
+            c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+            operation=operation,
+            error=str(error),
+            params=params,
         )
 
     @staticmethod
@@ -55,6 +67,7 @@ class FlextExceptionsFactories:
         exc: Exception | str | None = None,
         *,
         error_code: str | None = None,
+        result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical operation-error message.
 
@@ -72,7 +85,7 @@ class FlextExceptionsFactories:
             params=params,
             error=exc,
         )
-        return r[TResult].fail(
+        return FlextExceptionsFactories._result_type(result_type).fail(
             msg,
             error_code=error_code or c.ErrorCode.OPERATION_ERROR,
             error_data=FlextExceptionsTemplate.result_error_data(params),
@@ -85,6 +98,7 @@ class FlextExceptionsFactories:
         resource_id: str,
         *,
         error_code: str | None = None,
+        result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical not-found message.
 
@@ -102,7 +116,7 @@ class FlextExceptionsFactories:
             name=resource_id,
             params=params,
         )
-        return r[TResult].fail(
+        return FlextExceptionsFactories._result_type(result_type).fail(
             msg,
             error_code=error_code or c.ErrorCode.NOT_FOUND_ERROR,
             error_data=FlextExceptionsTemplate.result_error_data(params),
@@ -115,6 +129,7 @@ class FlextExceptionsFactories:
         *,
         service_name: str | None = None,
         error_code: str | None = None,
+        result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical type-mismatch message.
 
@@ -133,7 +148,7 @@ class FlextExceptionsFactories:
             type_name=expected,
             params=params,
         )
-        return r[TResult].fail(
+        return FlextExceptionsFactories._result_type(result_type).fail(
             msg,
             error_code=error_code or c.ErrorCode.TYPE_ERROR,
             error_data=FlextExceptionsTemplate.result_error_data(params),
@@ -146,6 +161,7 @@ class FlextExceptionsFactories:
         *,
         error_code: str | None = None,
         error: Exception | str | None = None,
+        result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical validation-failed message.
 
@@ -169,7 +185,7 @@ class FlextExceptionsFactories:
                 params=params,
             )
         )
-        return r[TResult].fail(
+        return FlextExceptionsFactories._result_type(result_type).fail(
             base_msg,
             error_code=error_code or c.ErrorCode.VALIDATION_ERROR,
             error_data=FlextExceptionsTemplate.result_error_data(
@@ -186,6 +202,7 @@ class FlextExceptionsFactories:
         *,
         error: Exception | str | None = None,
         error_code: str | None = None,
+        result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical configuration-error message.
 
@@ -203,7 +220,7 @@ class FlextExceptionsFactories:
             params=params,
             error=error,
         )
-        return r[TResult].fail(
+        return FlextExceptionsFactories._result_type(result_type).fail(
             msg,
             error_code=error_code or c.ErrorCode.CONFIGURATION_ERROR,
             error_data=FlextExceptionsTemplate.result_error_data(params),
@@ -217,6 +234,7 @@ class FlextExceptionsFactories:
         *,
         timeout: t.Numeric | None = None,
         error: Exception | str | None = None,
+        result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical connection-error message.
 
@@ -231,7 +249,7 @@ class FlextExceptionsFactories:
             params=params,
             error=error,
         )
-        return r[TResult].fail(
+        return FlextExceptionsFactories._result_type(result_type).fail(
             msg,
             error_code=c.ErrorCode.CONNECTION_ERROR,
             error_data=FlextExceptionsTemplate.result_error_data(params),
@@ -244,6 +262,7 @@ class FlextExceptionsFactories:
         operation: str | None = None,
         *,
         error_code: str | None = None,
+        result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical timeout message.
 
@@ -261,7 +280,7 @@ class FlextExceptionsFactories:
             f"{op_label} (timeout={timeout_seconds}s)",
             params=params,
         )
-        return r[TResult].fail(
+        return FlextExceptionsFactories._result_type(result_type).fail(
             msg,
             error_code=error_code or c.ErrorCode.TIMEOUT_ERROR,
             error_data=FlextExceptionsTemplate.result_error_data(params),
@@ -274,6 +293,7 @@ class FlextExceptionsFactories:
         *,
         error: Exception | str | None = None,
         error_code: str | None = None,
+        result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authentication-error message.
 
@@ -291,7 +311,7 @@ class FlextExceptionsFactories:
             params=params,
             error=error,
         )
-        return r[TResult].fail(
+        return FlextExceptionsFactories._result_type(result_type).fail(
             msg,
             error_code=error_code or c.ErrorCode.AUTHENTICATION_ERROR,
             error_data=FlextExceptionsTemplate.result_error_data(params),
@@ -305,6 +325,7 @@ class FlextExceptionsFactories:
         permission: str | None = None,
         *,
         error_code: str | None = None,
+        result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authorization-error message.
 
@@ -322,7 +343,7 @@ class FlextExceptionsFactories:
             f"authorize {user_id!r} on {resource!r}",
             params=params,
         )
-        return r[TResult].fail(
+        return FlextExceptionsFactories._result_type(result_type).fail(
             msg,
             error_code=error_code or c.ErrorCode.AUTHORIZATION_ERROR,
             error_data=FlextExceptionsTemplate.result_error_data(params),
@@ -335,6 +356,7 @@ class FlextExceptionsFactories:
         reason: str | None = None,
         *,
         error_code: str | None = None,
+        result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical conflict message.
 
@@ -352,7 +374,7 @@ class FlextExceptionsFactories:
             f"create {resource_type} {resource_id!r}",
             params=params,
         )
-        return r[TResult].fail(
+        return FlextExceptionsFactories._result_type(result_type).fail(
             msg,
             error_code=error_code or c.ErrorCode.ALREADY_EXISTS,
             error_data=FlextExceptionsTemplate.result_error_data(params),

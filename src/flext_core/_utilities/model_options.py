@@ -102,11 +102,9 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
                     resolved = resolved.model_copy(update=source_updates)
         if overrides:
             override_options = ms.RuntimeBootstrapOptions.model_validate(overrides)
-            override_updates = {
-                field: getattr(override_options, field)
-                for field in ms.RuntimeBootstrapOptions.model_fields
-                if getattr(override_options, field) is not None
-            }
+            override_updates = dict(
+                cls.dump(override_options, exclude_none=True),
+            )
             if override_updates:
                 resolved = resolved.model_copy(update=override_updates)
         return resolved

@@ -200,7 +200,7 @@ class FlextUtilitiesBeartypeHelpers:
     def function_param_names(fn: _types_mod.FunctionType) -> tuple[str, ...]:
         code = getattr(fn, "__code__", None)
         return (
-            tuple(str(name) for name in code.co_varnames[: code.co_argcount])
+            tuple(name for name in code.co_varnames[: code.co_argcount])
             if isinstance(code, _types_mod.CodeType)
             else ()
         )

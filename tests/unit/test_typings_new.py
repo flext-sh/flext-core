@@ -28,16 +28,10 @@ class TestsFlextCoreTypesUnit:
     TYPE_ALIAS_NAMES: t.VariadicTuple[str] = (
         "Primitives",
         "Scalar",
-        "Container",
         "Numeric",
-        "NormalizedValue",
         "JsonValue",
         "JsonMapping",
         "JsonList",
-        "ContainerMapping",
-        "ContainerList",
-        "MutableContainerMapping",
-        "MutableContainerList",
         "StrMapping",
         "StrSequence",
         "ScalarMapping",
@@ -45,10 +39,6 @@ class TestsFlextCoreTypesUnit:
         "SettingsValue",
         "IntPair",
     )
-
-    @pytest.mark.parametrize("alias_name", TYPE_ALIAS_NAMES)
-    def test_type_alias_accessible(self, alias_name: str) -> None:
-        """Each type alias is accessible through t.* namespace."""
 
     # -- Core type aliases --
 
@@ -58,24 +48,12 @@ class TestsFlextCoreTypesUnit:
         "StrictFloat",
         "StrictBytes",
         "TextOrBinaryContent",
-        "Primitives | None",
-        "Scalar | None",
         "RegistryBindingKey",
-        "Serializable",
         "JsonValue",
-        "GeneralValueType",
-        "JsonValue | None",
-        "ConstantValue",
         "FileContent",
         "JsonMapping",
         "JsonList",
-        "JsonObject",
-        "JsonValue",
     )
-
-    @pytest.mark.parametrize("alias_name", CORE_ALIAS_NAMES)
-    def test_core_alias_accessible(self, alias_name: str) -> None:
-        """T aliases are accessible through t.* namespace."""
 
     # -- Service type aliases --
 
@@ -96,9 +74,14 @@ class TestsFlextCoreTypesUnit:
         "TypeHintSpecifier",
     )
 
-    @pytest.mark.parametrize("alias_name", SERVICE_ALIAS_NAMES)
-    def test_service_alias_accessible(self, alias_name: str) -> None:
-        """T aliases are accessible through t.* namespace."""
+    PUBLIC_ALIAS_NAMES: t.VariadicTuple[str] = (
+        TYPE_ALIAS_NAMES + CORE_ALIAS_NAMES + SERVICE_ALIAS_NAMES
+    )
+
+    @pytest.mark.parametrize("alias_name", PUBLIC_ALIAS_NAMES)
+    def test_public_alias_accessible(self, alias_name: str) -> None:
+        """Public type aliases are accessible through t.* namespace."""
+        tm.that(hasattr(t, alias_name), eq=True)
 
     # -- Generic type vars --
 
@@ -151,17 +134,17 @@ class TestsFlextCoreTypesUnit:
 
     # -- Container base classes --
 
-    def test_container_mapping_base_exists(self) -> None:
-        """ContainerMappingBase is accessible for subclassing."""
+    CONTAINER_BASE_NAMES: t.VariadicTuple[str] = (
+        "ContainerMappingBase",
+        "ContainerListBase",
+        "MutableContainerMappingBase",
+        "MutableContainerListBase",
+    )
 
-    def test_container_list_base_exists(self) -> None:
-        """ContainerListBase is accessible for subclassing."""
-
-    def test_mutable_container_mapping_base_exists(self) -> None:
-        """MutableContainerMappingBase is accessible for subclassing."""
-
-    def test_mutable_container_list_base_exists(self) -> None:
-        """MutableContainerListBase is accessible for subclassing."""
+    @pytest.mark.parametrize("base_name", CONTAINER_BASE_NAMES)
+    def test_container_base_accessible(self, base_name: str) -> None:
+        """Container base classes are accessible for subclassing."""
+        tm.that(hasattr(t, base_name), eq=True)
 
     # -- Flat mapping aliases --
 
@@ -181,6 +164,7 @@ class TestsFlextCoreTypesUnit:
     @pytest.mark.parametrize("alias_name", FLAT_ALIAS_NAMES)
     def test_flat_alias_accessible(self, alias_name: str) -> None:
         """Flat mapping type aliases are accessible through t.*."""
+        tm.that(hasattr(t, alias_name), eq=True)
 
     # -- Validation types with Pydantic --
 

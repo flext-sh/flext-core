@@ -33,6 +33,7 @@ from hypothesis import assume, given, settings, strategies as st
 
 from flext_core import FlextContainer, FlextSettings
 from tests import c, m, p, t, u
+from tests.models import TestsFlextCoreModels
 
 
 @pytest.fixture(autouse=True)
@@ -77,12 +78,12 @@ class TestsFlextCoreContainer:
 
     @pytest.mark.parametrize(
         "scenario",
-        m.Tests.ContainerScenarios.SERVICE_SCENARIOS,
+        TestsFlextCoreModels.Tests.ContainerScenarios.SERVICE_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_register_service(
         self,
-        scenario: m.Tests.ServiceScenario,
+        scenario: TestsFlextCoreModels.Tests.ServiceScenario,
         clean_container: p.Container,
     ) -> None:
         """Test service registration with various types using fixtures."""
@@ -100,12 +101,12 @@ class TestsFlextCoreContainer:
 
     @pytest.mark.parametrize(
         "scenario",
-        m.Tests.ContainerScenarios.SERVICE_SCENARIOS,
+        TestsFlextCoreModels.Tests.ContainerScenarios.SERVICE_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_with_service_fluent(
         self,
-        scenario: m.Tests.ServiceScenario,
+        scenario: TestsFlextCoreModels.Tests.ServiceScenario,
         clean_container: p.Container,
     ) -> None:
         """Test fluent interface for service registration using fixtures."""
@@ -202,12 +203,12 @@ class TestsFlextCoreContainer:
 
     @pytest.mark.parametrize(
         "scenario",
-        m.Tests.ContainerScenarios.SERVICE_SCENARIOS,
+        TestsFlextCoreModels.Tests.ContainerScenarios.SERVICE_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_get_service(
         self,
-        scenario: m.Tests.ServiceScenario,
+        scenario: TestsFlextCoreModels.Tests.ServiceScenario,
         clean_container: p.Container,
     ) -> None:
         """Test service retrieval using fixtures."""
@@ -256,12 +257,12 @@ class TestsFlextCoreContainer:
 
     @pytest.mark.parametrize(
         "scenario",
-        m.Tests.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS,
+        TestsFlextCoreModels.Tests.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_get_typed_correct(
         self,
-        scenario: m.Tests.TypedRetrievalScenario,
+        scenario: TestsFlextCoreModels.Tests.TypedRetrievalScenario,
         clean_container: p.Container,
     ) -> None:
         """Test typed retrieval with correct types using fixtures."""
@@ -363,7 +364,9 @@ class TestsFlextCoreContainer:
             tm.that(key in services, eq=True, msg=f"Services list must contain {key}")
 
     @pytest.mark.parametrize(
-        "settings", m.Tests.ContainerScenarios.CONFIG_SCENARIOS, ids=str
+        "settings",
+        TestsFlextCoreModels.Tests.ContainerScenarios.CONFIG_SCENARIOS,
+        ids=str,
     )
     def test_configure_container(
         self,

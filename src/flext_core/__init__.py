@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import typing as _t
 
-from flext_core.__version__ import *
 from flext_core.lazy import (
     build_lazy_import_map,
     install_lazy_exports,
@@ -13,6 +12,16 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
+    from flext_core.__version__ import (
+        __author__,
+        __author_email__,
+        __description__,
+        __license__,
+        __title__,
+        __url__,
+        __version__,
+        __version_info__,
+    )
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.enforcement import (
@@ -104,6 +113,9 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
     from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine, ube
+    from flext_core._utilities.beartype_typingext_patch import (
+        FlextUtilitiesBeartypeTypingExtPatch,
+    )
     from flext_core._utilities.checker import FlextUtilitiesChecker
     from flext_core._utilities.collection import FlextUtilitiesCollection
     from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
@@ -286,6 +298,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.beartype_engine": (
                 "FlextUtilitiesBeartypeEngine",
                 "ube",
+            ),
+            "._utilities.beartype_typingext_patch": (
+                "FlextUtilitiesBeartypeTypingExtPatch",
             ),
             "._utilities.checker": ("FlextUtilitiesChecker",),
             "._utilities.collection": ("FlextUtilitiesCollection",),
@@ -507,6 +522,7 @@ __all__: list[str] = [
     "FlextUtilitiesBeartypeImportVisitor",
     "FlextUtilitiesBeartypeMethodVisitor",
     "FlextUtilitiesBeartypeModuleVisitor",
+    "FlextUtilitiesBeartypeTypingExtPatch",
     "FlextUtilitiesChecker",
     "FlextUtilitiesCollection",
     "FlextUtilitiesCollectionIter",
