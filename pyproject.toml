@@ -250,6 +250,7 @@ project-excludes = [
   "**/typings/**",
   "**/vendor/**",
   "**/venv/**",
+  "**/venv.bak/**",
   ".flext-deps/**",
   ".venv/**",
   "typings/**",
@@ -260,7 +261,6 @@ project-includes = [
   "scripts/**/*.py*",
   "src/**/*.py*",
   "tests/**/*.py*",
-  "venv/**/*.py*",
 ]
 python-version = "3.13"
 search-path = [
@@ -270,7 +270,6 @@ search-path = [
   "../flext-core/examples",
   "../flext-core/scripts",
   "../flext-core/src",
-  "../flext-core/venv",
   "../flext-infra/src",
   "../flext-infra/tmp_flow_test",
   "../flext-tests/src",
@@ -385,12 +384,15 @@ exclude = [
   "**/tests/fixtures/**",
   "**/venv",
   "**/venv/**",
+  "**/venv.bak",
+  "**/venv.bak/**",
   ".sisyphus",
   ".venv",
+  "venv.bak",
 ]
 extraPaths = [ ".", "../typings", "src" ]
 ignore = [ "**/*.pyi", "../typings" ]
-include = [ "examples", "scripts", "src", "tests", "venv" ]
+include = [ "examples", "scripts", "src", "tests" ]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportArgumentType = "none"
@@ -447,7 +449,7 @@ root = "tests"
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ ".", "src" ]
 reportPrivateUsage = "none"
-root = "venv"
+root = "tests"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
@@ -503,13 +505,14 @@ exclude = [
   "typings",
   "vendor",
   "venv",
+  "venv.bak",
 ]
 fix = true
 line-length = 88
 preview = true
 respect-gitignore = true
 show-fixes = true
-src = [ "examples", "scripts", "src", "tests", "venv" ]
+src = [ "examples", "scripts", "src", "tests" ]
 target-version = "py313"
 
 [tool.ruff.format]
