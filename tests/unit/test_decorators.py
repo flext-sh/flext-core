@@ -251,7 +251,7 @@ class TestsFlextCoreDecoratorsLegacy:
 
             result = successful_operation()
             assert isinstance(result, r)
-            u.Tests.assert_success_with_value(result, "success")
+            u.Tests.assert_success(result, expected_value="success")
         elif test_case.operation == self.DecoratorOperationType.RAILWAY_EXCEPTION:
 
             @d.railway(error_code="CUSTOM_ERROR")

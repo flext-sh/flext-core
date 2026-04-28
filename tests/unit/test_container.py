@@ -94,9 +94,8 @@ class TestsFlextCoreContainer:
             eq=True,
             msg=f"Container must expose {scenario.name} after registration",
         )
-        u.Tests.assert_success_with_value(
-            clean_container.resolve(scenario.name),
-            scenario.service,
+        u.Tests.assert_success(
+            clean_container.resolve(scenario.name), expected_value=scenario.service
         )
 
     @pytest.mark.parametrize(
@@ -129,7 +128,7 @@ class TestsFlextCoreContainer:
         _ = container.bind("service1", "value1")
         _ = container.bind("service1", "value2")
         service_result = container.resolve("service1")
-        u.Tests.assert_success_with_value(service_result, "value1")
+        u.Tests.assert_success(service_result, expected_value="value1")
 
     def test_register_with_empty_name(self, clean_container: p.Container) -> None:
         """Test that empty name is rejected using fixtures."""
@@ -159,9 +158,8 @@ class TestsFlextCoreContainer:
             eq=True,
             msg=f"Factory {factory_name} must be registered",
         )
-        u.Tests.assert_success_with_value(
-            clean_container.resolve(factory_name),
-            return_value,
+        u.Tests.assert_success(
+            clean_container.resolve(factory_name), expected_value=return_value
         )
 
     @pytest.mark.parametrize(
@@ -199,7 +197,9 @@ class TestsFlextCoreContainer:
         clean_container.factory("factory1", factory1)
         factory2 = u.Tests.create_factory("value2")
         clean_container.factory("factory1", factory2)
-        u.Tests.assert_success_with_value(clean_container.resolve("factory1"), "value1")
+        u.Tests.assert_success(
+            clean_container.resolve("factory1"), expected_value="value1"
+        )
 
     @pytest.mark.parametrize(
         "scenario",
@@ -214,15 +214,12 @@ class TestsFlextCoreContainer:
         """Test service retrieval using fixtures."""
         clean_container.bind(scenario.name, scenario.service)
         result: p.Result[t.RegisterableService] = clean_container.resolve(scenario.name)
-        u.Tests.assert_success_with_value(result, scenario.service)
+        u.Tests.assert_success(result, expected_value=scenario.service)
 
     def test_get_nonexistent_service(self, clean_container: p.Container) -> None:
         """Test getting non-existent service using fixtures."""
         result: p.Result[t.RegisterableService] = clean_container.resolve("nonexistent")
-        u.Tests.assert_failure_with_error(
-            result,
-            expected_error="not found",
-        )
+        u.Tests.assert_failure(result, expected_error="not found")
 
     def test_get_factory_service(self, clean_container: p.Container) -> None:
         """Test retrieving service created by factory using fixtures."""
@@ -232,7 +229,7 @@ class TestsFlextCoreContainer:
         result: p.Result[t.RegisterableService] = clean_container.resolve(
             "factory_service"
         )
-        u.Tests.assert_success_with_value(result, factory_result)
+        u.Tests.assert_success(result, expected_value=factory_result)
 
     def test_get_factory_called_each_time(self, clean_container: p.Container) -> None:
         """Test that factory is called each time get() is invoked using fixtures."""
@@ -296,10 +293,7 @@ class TestsFlextCoreContainer:
     def test_get_typed_nonexistent(self, clean_container: p.Container) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
         result = clean_container.resolve("nonexistent", type_cls=dict)
-        u.Tests.assert_failure_with_error(
-            result,
-            expected_error="not found",
-        )
+        u.Tests.assert_failure(result, expected_error="not found")
 
     @pytest.mark.parametrize(
         ("has_service", "expected"),

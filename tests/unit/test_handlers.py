@@ -124,7 +124,7 @@ class TestsFlextCoreFlextHandlers:
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.handle("test_message")
-        u.Tests.assert_success_with_value(result, "processed_test_message")
+        u.Tests.assert_success(result, expected_value="processed_test_message")
 
     def test_handlers_handle_failure(self) -> None:
         settings = u.Tests.create_handler_config(
@@ -133,9 +133,8 @@ class TestsFlextCoreFlextHandlers:
         )
         handler = self.FailingTestHandler(settings=settings)
         result = handler.handle("test_message")
-        u.Tests.assert_failure_with_error(
-            result,
-            expected_error="Handler failed for: test_message",
+        u.Tests.assert_failure(
+            result, expected_error="Handler failed for: test_message"
         )
 
     def test_handlers_config_access(self) -> None:
@@ -156,7 +155,7 @@ class TestsFlextCoreFlextHandlers:
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.execute("test_message")
-        u.Tests.assert_success_with_value(result, "processed_test_message")
+        u.Tests.assert_success(result, expected_value="processed_test_message")
 
     def test_handlers_different_types(self) -> None:
         class IntHandler(h[t.JsonPayload, t.JsonPayload]):
@@ -177,7 +176,7 @@ class TestsFlextCoreFlextHandlers:
         )
         handler = IntHandler(settings=settings)
         result = handler.handle(42)
-        u.Tests.assert_success_with_value(result, "processed_42")
+        u.Tests.assert_success(result, expected_value="processed_42")
 
     @pytest.mark.parametrize(
         "scenario",
@@ -202,7 +201,7 @@ class TestsFlextCoreFlextHandlers:
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.execute("test_message")
-        u.Tests.assert_success_with_value(result, "processed_test_message")
+        u.Tests.assert_success(result, expected_value="processed_test_message")
 
     def test_handlers_with_timeout(self) -> None:
         settings = u.Tests.create_handler_config(
@@ -212,7 +211,7 @@ class TestsFlextCoreFlextHandlers:
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.execute("test_message")
-        u.Tests.assert_success_with_value(result, "processed_test_message")
+        u.Tests.assert_success(result, expected_value="processed_test_message")
 
     def test_handlers_with_retry_config(self) -> None:
         settings = u.Tests.create_handler_config(
@@ -222,7 +221,7 @@ class TestsFlextCoreFlextHandlers:
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.execute("test_message")
-        u.Tests.assert_success_with_value(result, "processed_test_message")
+        u.Tests.assert_success(result, expected_value="processed_test_message")
 
     def test_handlers_inheritance_chain(self) -> None:
         settings = u.Tests.create_handler_config(
@@ -269,7 +268,7 @@ class TestsFlextCoreFlextHandlers:
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.dispatch_message("test_message", operation="query")
-        u.Tests.assert_failure_with_error(
+        u.Tests.assert_failure(
             result,
             expected_error="Handler with mode 'command' cannot execute query pipelines",
         )
@@ -301,9 +300,8 @@ class TestsFlextCoreFlextHandlers:
         )
         handler = RestrictiveHandler(settings=settings)
         result = handler.dispatch_message("test_message", operation="command")
-        u.Tests.assert_failure_with_error(
-            result,
-            expected_error="Handler cannot handle message type str",
+        u.Tests.assert_failure(
+            result, expected_error="Handler cannot handle message type str"
         )
 
     def test_handlers_dispatch_message_validation_failure(self) -> None:
@@ -333,7 +331,7 @@ class TestsFlextCoreFlextHandlers:
         )
         handler = ValidationFailingHandler(settings=settings)
         result = handler.dispatch_message("test_message", operation="command")
-        u.Tests.assert_failure_with_error(
+        u.Tests.assert_failure(
             result,
             expected_error="Message validation failed: Validation failed for test",
         )
@@ -358,9 +356,8 @@ class TestsFlextCoreFlextHandlers:
         )
         handler = ExceptionHandler(settings=settings)
         result = handler.dispatch_message("test_message", operation="command")
-        u.Tests.assert_failure_with_error(
-            result,
-            expected_error="Critical handler failure: Test exception in handler",
+        u.Tests.assert_failure(
+            result, expected_error="Critical handler failure: Test exception in handler"
         )
 
     def test_handlers_create_from_callable_basic(self) -> None:
@@ -375,7 +372,7 @@ class TestsFlextCoreFlextHandlers:
         assert handler is not None
         assert handler.handler_name == "simple_handler"
         result = handler.handle("test")
-        u.Tests.assert_success_with_value(result, "handled_test")
+        u.Tests.assert_success(result, expected_value="handled_test")
 
     def test_handlers_create_from_callable_with_flext_result(self) -> None:
         def result_handler(message: t.Scalar) -> t.Scalar:
@@ -388,7 +385,7 @@ class TestsFlextCoreFlextHandlers:
         )
         assert handler.handler_name == "result_handler"
         result = handler.handle("test")
-        u.Tests.assert_success_with_value(result, "result_test")
+        u.Tests.assert_success(result, expected_value="result_test")
 
     def test_handlers_create_from_callable_with_exception(self) -> None:
         def failing_handler(message: t.Scalar) -> t.Scalar:
@@ -402,10 +399,7 @@ class TestsFlextCoreFlextHandlers:
             handler_type=c.HandlerType.COMMAND,
         )
         result = handler.handle("test")
-        u.Tests.assert_failure_with_error(
-            result,
-            expected_error="Handler failed",
-        )
+        u.Tests.assert_failure(result, expected_error="Handler failed")
 
     def test_handlers_create_from_callable_invalid_mode(self) -> None:
         def invalid_handler(message: t.Scalar) -> t.Scalar:
@@ -426,7 +420,7 @@ class TestsFlextCoreFlextHandlers:
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.execute("test_message")
-        u.Tests.assert_success_with_value(result, "processed_test_message")
+        u.Tests.assert_success(result, expected_value="processed_test_message")
 
     def test_handlers_can_handle_method(self) -> None:
         settings = u.Tests.create_handler_config(

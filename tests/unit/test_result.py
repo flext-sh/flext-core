@@ -204,11 +204,11 @@ class TestsFlextCoreResult:
                 value,
                 error_on_none="Value cannot be None",
             )
-            u.Tests.assert_success_with_value(creation_result, value)
+            u.Tests.assert_success(creation_result, expected_value=value)
         elif op_type == self.ResultOperationType.CREATION_FAILURE:
             failure_result_raw = r[str].fail(str(value))
             failure_result: p.Result[str] = failure_result_raw
-            u.Tests.assert_failure_with_error(failure_result, str(value))
+            u.Tests.assert_failure(failure_result, str(value))
         elif op_type == self.ResultOperationType.UNWRAP_OR:
             if success:
                 unwrap_result: p.Result[str] = r[str].ok(value)
@@ -223,12 +223,12 @@ class TestsFlextCoreResult:
         elif op_type == self.ResultOperationType.MAP:
             map_result: p.Result[str] = r[str].fail(str(value))
             mapped = map_result.map(lambda x: str(x) * 2)
-            u.Tests.assert_failure_with_error(mapped, str(value))
+            u.Tests.assert_failure(mapped, str(value))
         elif op_type == self.ResultOperationType.FLAT_MAP:
             failure_raw = r[str].fail(str(value))
             flat_map_result: p.Result[str] = failure_raw
             flat_mapped = flat_map_result.flat_map(lambda x: r[str].ok(f"value_{x}"))
-            u.Tests.assert_failure_with_error(flat_mapped, str(value))
+            u.Tests.assert_failure(flat_mapped, str(value))
         elif op_type == self.ResultOperationType.ALT:
             if success:
                 result_alt: p.Result[str] = r[str].ok(value)
@@ -237,20 +237,20 @@ class TestsFlextCoreResult:
                 result_alt = failure_raw
             alt_result = result_alt.map_error(lambda e: f"alt_{e}")
             if success:
-                u.Tests.assert_success_with_value(alt_result, value)
+                u.Tests.assert_success(alt_result, expected_value=value)
             else:
                 error_str_alt: str = f"alt_{value}"
-                u.Tests.assert_failure_with_error(alt_result, error_str_alt)
+                u.Tests.assert_failure(alt_result, error_str_alt)
         elif op_type == self.ResultOperationType.LASH:
             lash_result_base: p.Result[str] = (
                 r[str].ok(str(value)) if success else r[str].fail(str(value))
             )
             lash_result = lash_result_base.lash(lambda e: r[str].ok(f"recovered_{e}"))
             if success:
-                u.Tests.assert_success_with_value(lash_result, str(value))
+                u.Tests.assert_success(lash_result, expected_value=str(value))
             else:
                 expected = f"recovered_{value}"
-                u.Tests.assert_success_with_value(lash_result, expected)
+                u.Tests.assert_success(lash_result, expected_value=expected)
         elif op_type == self.ResultOperationType.OR_OPERATOR:
             if success:
                 result_or: p.Result[str] = r[str].ok(value)
@@ -276,21 +276,21 @@ class TestsFlextCoreResult:
                 pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             mapped = result.map(lambda x: x * 2)
-            u.Tests.assert_success_with_value(mapped, value * 2)
+            u.Tests.assert_success(mapped, expected_value=value * 2)
         elif op_type == self.ResultOperationType.FLAT_MAP:
             if not isinstance(value, int):
                 pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             flat_mapped = result.flat_map(lambda x: r[str].ok(f"value_{x}"))
             expected = f"value_{value}"
-            u.Tests.assert_success_with_value(flat_mapped, expected)
+            u.Tests.assert_success(flat_mapped, expected_value=expected)
         elif op_type == self.ResultOperationType.FILTER:
             if not isinstance(value, int):
                 pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             filtered = result.filter(lambda x: x > 5)
             if success:
-                u.Tests.assert_success_with_value(filtered, value)
+                u.Tests.assert_success(filtered, expected_value=value)
             else:
                 _ = u.Tests.assert_failure(filtered)
         elif op_type == self.ResultOperationType.RAILWAY_COMPOSITION:
@@ -307,7 +307,7 @@ class TestsFlextCoreResult:
                 expected_failure_count=0,
                 first_failure_index=None,
             )
-            u.Tests.assert_success_with_value(res3, expected)
+            u.Tests.assert_success(res3, expected_value=expected)
 
     @pytest.mark.parametrize("scenario", BOOL_SCENARIOS, ids=lambda s: s.name)
     def test_result_bool_operations(self, scenario: ResultScenario) -> None:
@@ -340,7 +340,7 @@ class TestsFlextCoreResult:
             expected_failure_count=0,
             first_failure_index=None,
         )
-        u.Tests.assert_success_with_value(res3, 20)
+        u.Tests.assert_success(res3, expected_value=20)
 
     def test_result_chain_failure_behavior(self) -> None:
         """Test result chain with failure - real behavior and limits."""
@@ -353,7 +353,7 @@ class TestsFlextCoreResult:
             lambda x: r[int].fail("Division by zero") if x == 0 else r[int].ok(x // 2),
         )
         results.append(res3)
-        u.Tests.assert_success_with_value(res3, 10)
+        u.Tests.assert_success(res3, expected_value=10)
         res4 = res3.flat_map(
             lambda x: r[int].fail("Cannot process zero") if x == 0 else r[int].ok(x),
         )
@@ -380,7 +380,7 @@ class TestsFlextCoreResult:
         tm.that(len(cases), eq=5)
         for i, (result, success, _value, error) in enumerate(cases[:3]):
             tm.that(success, eq=True)
-            u.Tests.assert_success_with_value(result, success_values[i])
+            u.Tests.assert_success(result, expected_value=success_values[i])
             tm.that(error, none=True)
         for i, (result, success, _value, error) in enumerate(cases[3:]):
             tm.that(not success, eq=True)
@@ -393,14 +393,14 @@ class TestsFlextCoreResult:
             None,
             default_on_none="default_value",
         )
-        u.Tests.assert_success_with_value(result1, "default_value")
+        u.Tests.assert_success(result1, expected_value="default_value")
         result2: p.Result[str | None] = u.Tests.create_result_from_value(
             None,
             error_on_none="Value is None",
         )
-        u.Tests.assert_failure_with_error(result2, "Value is None")
+        u.Tests.assert_failure(result2, "Value is None")
         result3 = u.Tests.create_result_from_value("actual_value")
-        u.Tests.assert_success_with_value(result3, "actual_value")
+        u.Tests.assert_success(result3, expected_value="actual_value")
 
     def test_safe_decorator(self) -> None:
         """Test safe decorator wraps function in try/except."""
