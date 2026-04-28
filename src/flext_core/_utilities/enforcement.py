@@ -229,6 +229,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
 
     @staticmethod
     def _apply_rule(
+        _target: type,
         tag: str,
         qualname: str,
         items: Iterator[tuple[str, tuple[object, ...]]],
@@ -262,9 +263,6 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         tag: str,
         category: c.EnforcementCategory,
         effective_layer: str,
-        rule_layer: str,
-        *,
-        is_model: bool,
     ) -> Iterator[tuple[str, tuple[object, ...]]]:
         """Return category-specific (location, args) pairs for one rule tag.
 
@@ -274,10 +272,12 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         """
         # Generic/Pydantic specializations (``Foo[Bar]``) are synthetic
         # runtime artifacts shared across all categories — skip universally.
+        is_model = issubclass(target, mp.BaseModel)
+        rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
         if "[" in target.__name__:
             return
         if category is c.EnforcementCategory.FIELD:
-            if is_model and issubclass(target, mp.BaseModel):
+            if is_model:
                 yield from FlextUtilitiesEnforcement._field_items(
                     target,
                     tag,
@@ -332,7 +332,6 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         """
         violations: list[me.Violation] = []
         effective_layer = layer or FlextUtilitiesEnforcement.detect_layer(target) or ""
-        is_model = issubclass(target, mp.BaseModel)
         qn = target.__qualname__
         for tag, category in c.ENFORCEMENT_TAG_CATEGORY.items():
             rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
@@ -341,11 +340,10 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 tag,
                 category,
                 effective_layer,
-                rule_layer,
-                is_model=is_model,
             )
             violations.extend(
                 FlextUtilitiesEnforcement._apply_rule(
+                    target,
                     tag,
                     qn,
                     items,
@@ -402,13 +400,13 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             mode=c.ENFORCEMENT_NAMESPACE_MODE,
         )
 
-    _CANONICAL_CATALOG: ClassVar[me.EnforcementCatalog | None] = None
+    _canonical_catalog: ClassVar[me.EnforcementCatalog | None] = None
 
     @classmethod
     def build_canonical_catalog(cls) -> me.EnforcementCatalog:
         """Build (cached) the canonical enforcement catalog from constants rows."""
-        if cls._CANONICAL_CATALOG is not None:
-            return cls._CANONICAL_CATALOG
+        if cls._canonical_catalog is not None:
+            return cls._canonical_catalog
         # Build all FLEXT_INFRA_DETECTOR rules from the compact data-table via a
         # single Pydantic v2 comprehension. ``EnforcementRuleSeverity`` is a
         # StrEnum so the severity string coerces directly.
@@ -500,7 +498,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             for rid, sev, rule_code, skills, desc in c.RUFF_ROWS
         )
 
-        cls._CANONICAL_CATALOG = me.EnforcementCatalog(
+        cls._canonical_catalog = me.EnforcementCatalog(
             rules=(
                 # --- FLEXT_INFRA_DETECTOR (14 rules, table-driven above) ---
                 *infra_specs,
@@ -568,7 +566,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 ),
             ),
         )
-        return cls._CANONICAL_CATALOG
+        return cls._canonical_catalog
 
 
 __all__: list[str] = ["FlextUtilitiesEnforcement"]

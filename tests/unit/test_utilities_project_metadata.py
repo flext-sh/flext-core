@@ -79,6 +79,28 @@ class TestsFlextCoreUtilitiesProjectMetadata:
         )
         tm.that(u.read_project_metadata(root).license, eq="MIT")
 
+    def test_read_project_metadata_extracts_author_names_from_project_table(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        root = _write_pyproject(
+            tmp_path,
+            """
+            [project]
+            name = "flext-ldif"
+            version = "0.12.0-dev"
+            license = "MIT"
+            authors = [
+                {name = "Alice Example", email = "alice@example.com"},
+                {name = "Bob Example"},
+            ]
+            """,
+        )
+        tm.that(
+            u.read_project_metadata(root).authors,
+            eq=("Alice Example", "Bob Example"),
+        )
+
     def test_read_project_metadata_raises_on_missing_pyproject(
         self,
         tmp_path: Path,

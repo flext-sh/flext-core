@@ -201,7 +201,7 @@ class FlextMixins(m.ArbitraryTypesModel):
             return r[bool].ok(True)
         operation = "register service in container"
         return r[bool].fail(
-            e.render_error_template(
+            e.render_template(
                 c.ERR_TEMPLATE_FAILED_WITH_ERROR,
                 operation=operation,
                 error=c.ERR_SERVICE_REGISTRATION_FAILED,

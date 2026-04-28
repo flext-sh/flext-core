@@ -146,7 +146,7 @@ class FlextModelsHandler:
             if self.started_at is None:
                 return 0.0
             elapsed: float = time.time() - self.started_at
-            return round(elapsed * c.DEFAULT_SIZE, 2)
+            return float(round(elapsed * c.DEFAULT_SIZE, 2))
 
     class HandlerRuntimeState(m.ArbitraryTypesModel):
         """Aggregate runtime state for the active handler pipeline."""
@@ -188,7 +188,7 @@ class FlextModelsHandler:
         @property
         def handler_name(self) -> str:
             """Active handler name taken from the execution context."""
-            return self.execution_context.handler_name
+            return str(self.execution_context.handler_name)
 
         @up.computed_field()
         @property
@@ -226,6 +226,24 @@ class FlextModelsHandler:
             Sequence[type[p.Middleware]],
             mp.Field(description="Middleware types to apply to this handler"),
         ] = mp.Field(default_factory=tuple)
+
+    class CombinedRailwayOptions(m.ImmutableValueModel):
+        """Railway configuration consumed by @d.combined()."""
+
+        enabled: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Whether combined() applies railway wrapping.",
+            ),
+        ] = False
+        error_code: Annotated[
+            str | None,
+            mp.Field(
+                default=None,
+                description="Error code passed to railway() when railway wrapping is enabled.",
+            ),
+        ] = None
 
 
 __all__: list[str] = ["FlextModelsHandler"]

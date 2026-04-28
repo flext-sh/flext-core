@@ -61,6 +61,11 @@ class TestsFlextCoreSettings:
         tm.that(dumped["version"], eq="1.0.0")
         tm.that(dumped["debug"], eq=True)
 
+    def test_initialization_ignores_unknown_kwargs(self) -> None:
+        settings = FlextSettings(app_name="known", unknown_setting="ignored")
+        tm.that(settings.app_name, eq="known")
+        tm.that(hasattr(settings, "unknown_setting"), eq=False)
+
     def test_model_validate_returns_same_singleton(self) -> None:
         original = u.Tests.create_test_config(
             app_name="original_app",

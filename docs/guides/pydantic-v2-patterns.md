@@ -32,6 +32,7 @@ assert user.name == "Alice"
 ## ConfigDict + model_dump
 
 ```python
+from types import ClassVar
 from flext_core import m
 
 

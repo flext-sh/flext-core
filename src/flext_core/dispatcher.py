@@ -57,11 +57,7 @@ class FlextDispatcher:
         try:
             route_name = u.resolve_message_route(message)
         except (TypeError, ValueError) as exc:
-            return r[t.JsonPayload].fail_op(
-                "dispatch message",
-                exc,
-                error_code=c.ErrorCode.COMMAND_PROCESSING_FAILED.value,
-            )
+            return r[t.JsonPayload].fail_op("dispatch message", exc)
         handler_entry = self._handlers.get(route_name)
         if not handler_entry:
             msg_type = message.__class__
@@ -76,7 +72,6 @@ class FlextDispatcher:
             return r[t.JsonPayload].fail_op(
                 "resolve message handler",
                 f"No handler found for {route_name}",
-                error_code=c.ErrorCode.COMMAND_HANDLER_NOT_FOUND.value,
             )
         _, resolved_handler = handler_entry
         return self._execute_handler(resolved_handler, message, route_name)

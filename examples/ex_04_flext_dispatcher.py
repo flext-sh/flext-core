@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from examples import p, r
+from flext_core import p, r
 
 
 def run() -> p.Result[str]:

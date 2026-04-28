@@ -493,12 +493,12 @@ class FlextConstantsEnforcement:
             "Use u.Field(), m.BaseModel, m.ConfigDict, m.TypeAdapter, u.model_validator, u.field_validator, u.computed_field, u.PrivateAttr from parent facade.",
         ),
         "facade_base_is_alias_or_peer": (
-            "facade class base must be alias or peer concrete class (R4, R5)",
-            "Use class Base(t): for Pattern A; class Base(t, FlextPeerXxx): for Pattern B.",
+            "facade class base must be alias, alias-base, or peer concrete class (R4, R5)",
+            "Use class Base(t): or class Base(FlextProjectServiceBase): for Pattern A; class Base(t, FlextPeerXxx): for Pattern B.",
         ),
         "alias_first_multi_parent": (
-            "multi-parent facade must have alias first in MRO (R5)",
-            "Order bases: alias first (t), then concrete peer (FlextPeerXxx).",
+            "multi-parent facade must have alias or alias-base first in MRO (R5)",
+            "Order bases: alias or alias-base first (t or FlextProjectServiceBase), then concrete peer (FlextPeerXxx).",
         ),
         "alias_rebound_at_module_end": (
             "module must rebind alias at end (R6)",

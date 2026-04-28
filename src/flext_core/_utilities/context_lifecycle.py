@@ -102,11 +102,12 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         """Extract a ConfigMap from any supported merge source."""
         if isinstance(other, p.Context):
             exported_result = other.export(as_dict=True)
-            exported_payload: Mapping[str, t.JsonPayload] = (
-                exported_result.model_dump(mode="python")
-                if isinstance(exported_result, m.ContextExport)
-                else exported_result
-            )
+            if isinstance(exported_result, m.ContextExport):
+                exported_payload = exported_result.model_dump(mode="python")
+            elif isinstance(exported_result, Mapping):
+                exported_payload = exported_result
+            else:
+                return None
             return self._as_config_map(exported_payload, "export payload")
         return self._as_config_map(other, "export payload")
 

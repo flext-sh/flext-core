@@ -127,15 +127,13 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         )
         runtime_container = container_type.shared().scope(
             subproject=runtime_options.subproject,
-            registration=m.ServiceRegistrationSpec.model_validate(
-                {
-                    "settings": runtime_settings,
-                    "context": runtime_context,
-                    "services": bootstrap_services,
-                    "factories": runtime_options.factories,
-                    "resources": runtime_options.resources,
-                }
-            ),
+            registration=m.ServiceRegistrationSpec.model_validate({
+                "settings": runtime_settings,
+                "context": runtime_context,
+                "services": bootstrap_services,
+                "factories": runtime_options.factories,
+                "resources": runtime_options.resources,
+            }),
         )
         normalized_container_overrides = cls._normalize_runtime_override_mapping(
             runtime_options.container_overrides,

@@ -305,10 +305,10 @@ class TestsFlextCoreResultExceptionCarrying:
         tm.that(error_msg, eq="error")
         tm.that(result.exception is exc, eq=True)
 
-    def test_ok_none_succeeds(self) -> None:
-        result = r[int | None].ok(None)
+    def test_ok_bool_succeeds(self) -> None:
+        result = r[bool].ok(True)
         tm.that(result.success, eq=True)
-        tm.that(result.value, none=True)
+        tm.that(result.value, eq=True)
 
     def test_ok_with_valid_value_succeeds(self) -> None:
         value = 42

@@ -5,6 +5,9 @@ from __future__ import annotations
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._utilities._beartype.helpers import (
+    FlextUtilitiesBeartypeHelpers as _ubh,
+)
 
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}
@@ -20,15 +23,13 @@ class FlextUtilitiesBeartypeAttrVisitor:
         value: tp.JsonValue,
     ) -> t.StrMapping | None:
         """ATTR_SHAPE — class-attribute governance (constants / aliases / TypeAdapters)."""
-        from flext_core._utilities.beartype_engine import ube
-
         if params.forbid_mutable_value:
-            mk = ube.mutable_kind(value)
+            mk = _ubh.mutable_kind(value)
             if mk is not None:
                 return {"kind": mk}
         if params.require_uppercase_name and name != name.upper():
             return _BARE_VIOLATION
-        if params.forbid_any_in_alias and ube.alias_contains_any(
+        if params.forbid_any_in_alias and _ubh.alias_contains_any(
             getattr(value, "__value__", None)
         ):
             return _BARE_VIOLATION

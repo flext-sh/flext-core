@@ -33,16 +33,20 @@ class FlextExceptionsFactories:
         """Render the canonical failure message with or without an error cause."""
         if error is None:
             template_without_error = c.ERR_TEMPLATE_FAILED_WITH_ERROR.split(": ", 1)[0]
-            return FlextExceptionsTemplate.render_template(
-                template_without_error,
+            return str(
+                FlextExceptionsTemplate.render_template(
+                    template_without_error,
+                    operation=operation,
+                    params=params,
+                )
+            )
+        return str(
+            FlextExceptionsTemplate.render_template(
+                c.ERR_TEMPLATE_FAILED_WITH_ERROR,
                 operation=operation,
+                error=str(error),
                 params=params,
             )
-        return FlextExceptionsTemplate.render_error_template(
-            c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-            operation=operation,
-            error=error,
-            params=params,
         )
 
     @staticmethod
@@ -152,10 +156,10 @@ class FlextExceptionsFactories:
         """
         params = m.ValidationErrorParams(field=field, value=value)
         base_msg = (
-            FlextExceptionsTemplate.render_error_template(
+            FlextExceptionsTemplate.render_template(
                 c.ERR_TEMPLATE_FAILED_WITH_ERROR,
                 operation=f"validate {field or 'input'}",
-                error=error,
+                error=str(error),
                 params=params,
             )
             if error is not None
@@ -213,7 +217,6 @@ class FlextExceptionsFactories:
         *,
         timeout: t.Numeric | None = None,
         error: Exception | str | None = None,
-        error_code: str | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical connection-error message.
 
@@ -230,7 +233,7 @@ class FlextExceptionsFactories:
         )
         return r[TResult].fail(
             msg,
-            error_code=error_code or c.ErrorCode.CONNECTION_ERROR,
+            error_code=c.ErrorCode.CONNECTION_ERROR,
             error_data=FlextExceptionsTemplate.result_error_data(params),
             exception=error if isinstance(error, BaseException) else None,
         )

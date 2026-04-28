@@ -79,6 +79,28 @@ if _t.TYPE_CHECKING:
     from flext_core._typings.pydantic import FlextTypesPydantic
     from flext_core._typings.services import FlextTypesServices
     from flext_core._typings.typeadapters import FlextTypesTypeAdapters
+    from flext_core._utilities._beartype.attr_visitor import (
+        FlextUtilitiesBeartypeAttrVisitor,
+    )
+    from flext_core._utilities._beartype.class_visitor import (
+        FlextUtilitiesBeartypeClassVisitor,
+    )
+    from flext_core._utilities._beartype.deprecated_visitor import (
+        FlextUtilitiesBeartypeDeprecatedVisitor,
+    )
+    from flext_core._utilities._beartype.field_visitor import (
+        FlextUtilitiesBeartypeFieldVisitor,
+    )
+    from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
+    from flext_core._utilities._beartype.import_visitor import (
+        FlextUtilitiesBeartypeImportVisitor,
+    )
+    from flext_core._utilities._beartype.method_visitor import (
+        FlextUtilitiesBeartypeMethodVisitor,
+    )
+    from flext_core._utilities._beartype.module_visitor import (
+        FlextUtilitiesBeartypeModuleVisitor,
+    )
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
     from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine, ube
@@ -237,6 +259,28 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._typings.pydantic": ("FlextTypesPydantic",),
             "._typings.services": ("FlextTypesServices",),
             "._typings.typeadapters": ("FlextTypesTypeAdapters",),
+            "._utilities._beartype.attr_visitor": (
+                "FlextUtilitiesBeartypeAttrVisitor",
+            ),
+            "._utilities._beartype.class_visitor": (
+                "FlextUtilitiesBeartypeClassVisitor",
+            ),
+            "._utilities._beartype.deprecated_visitor": (
+                "FlextUtilitiesBeartypeDeprecatedVisitor",
+            ),
+            "._utilities._beartype.field_visitor": (
+                "FlextUtilitiesBeartypeFieldVisitor",
+            ),
+            "._utilities._beartype.helpers": ("FlextUtilitiesBeartypeHelpers",),
+            "._utilities._beartype.import_visitor": (
+                "FlextUtilitiesBeartypeImportVisitor",
+            ),
+            "._utilities._beartype.method_visitor": (
+                "FlextUtilitiesBeartypeMethodVisitor",
+            ),
+            "._utilities._beartype.module_visitor": (
+                "FlextUtilitiesBeartypeModuleVisitor",
+            ),
             "._utilities.args": ("FlextUtilitiesArgs",),
             "._utilities.beartype_conf": ("FlextUtilitiesBeartypeConf",),
             "._utilities.beartype_engine": (
@@ -453,8 +497,16 @@ __all__: list[str] = [
     "FlextTypingProjectMetadata",
     "FlextUtilities",
     "FlextUtilitiesArgs",
+    "FlextUtilitiesBeartypeAttrVisitor",
+    "FlextUtilitiesBeartypeClassVisitor",
     "FlextUtilitiesBeartypeConf",
+    "FlextUtilitiesBeartypeDeprecatedVisitor",
     "FlextUtilitiesBeartypeEngine",
+    "FlextUtilitiesBeartypeFieldVisitor",
+    "FlextUtilitiesBeartypeHelpers",
+    "FlextUtilitiesBeartypeImportVisitor",
+    "FlextUtilitiesBeartypeMethodVisitor",
+    "FlextUtilitiesBeartypeModuleVisitor",
     "FlextUtilitiesChecker",
     "FlextUtilitiesCollection",
     "FlextUtilitiesCollectionIter",

@@ -348,7 +348,10 @@ class TestsFlextCoreDecoratorsLegacy:
             assert simple_function() == "result"
         elif test_case.operation == self.DecoratorOperationType.COMBINED_WITH_RAILWAY:
 
-            @d.combined(use_railway=True, operation_name="wrapped")
+            @d.combined(
+                operation_name="wrapped",
+                railway_options={"enabled": True},
+            )
             def operation() -> str:
                 return "success"
 

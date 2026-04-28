@@ -146,23 +146,27 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         data: p.AccessibleData,
     ) -> t.JsonPayload | t.JsonMapping | FlextModelsContainers.ConfigMap | None:
         """Build the initial ``current`` cursor for path traversal."""
+        seed_current: (
+            t.JsonPayload | t.JsonMapping | FlextModelsContainers.ConfigMap | None
+        ) = None
         if isinstance(data, FlextModelsPydantic.BaseModel):
-            return data
-        if isinstance(data, Mapping):
-            return m.ConfigMap(
+            seed_current = data
+        elif isinstance(data, Mapping):
+            seed_current = m.ConfigMap(
                 root={
                     str(k): FlextUtilitiesMapperExtract._normalize_accessible_value(v)
                     for k, v in data.items()
                 },
             )
-        model_dump_attr = getattr(data, "model_dump", None)
-        if callable(model_dump_attr):
-            return m.ConfigMap.model_validate(model_dump_attr())
-        if isinstance(data, p.ValidatorSpec):
-            return str(data)
-        if data is None or isinstance(data, (*t.SCALAR_TYPES, Path, list, tuple)):
-            return data
-        return None
+        else:
+            model_dump_attr = getattr(data, "model_dump", None)
+            if callable(model_dump_attr):
+                seed_current = m.ConfigMap.model_validate(model_dump_attr())
+            elif isinstance(data, p.ValidatorSpec):
+                seed_current = str(data)
+            elif data is None or isinstance(data, (*t.SCALAR_TYPES, Path, list, tuple)):
+                seed_current = data
+        return seed_current
 
     @staticmethod
     def extract(
@@ -215,10 +219,10 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as exc:
             return r[t.JsonPayload].fail_op(
                 "extract path",
-                e.render_error_template(
+                e.render_template(
                     c.ERR_TEMPLATE_EXTRACT_FAILED,
                     operation="extract",
-                    error=exc,
+                    error=str(exc),
                     params=FlextModelsExceptionParams.OperationErrorParams(
                         operation="extract",
                         reason=str(exc),

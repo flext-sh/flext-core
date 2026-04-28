@@ -255,7 +255,13 @@ project-excludes = [
   "typings/**",
   "vendor/**",
 ]
-project-includes = [ "examples/**/*.py*", "scripts/**/*.py*", "src/**/*.py*", "tests/**/*.py*" ]
+project-includes = [
+  "examples/**/*.py*",
+  "scripts/**/*.py*",
+  "src/**/*.py*",
+  "tests/**/*.py*",
+  "venv/**/*.py*",
+]
 python-version = "3.13"
 search-path = [
   ".",
@@ -264,6 +270,7 @@ search-path = [
   "../flext-core/examples",
   "../flext-core/scripts",
   "../flext-core/src",
+  "../flext-core/venv",
   "../flext-infra/src",
   "../flext-infra/tmp_flow_test",
   "../flext-tests/src",
@@ -346,6 +353,7 @@ unexpected-keyword = true
 unexpected-positional-argument = true
 unknown-name = true
 unnecessary-comparison = true
+unnecessary-type-conversion = true
 unreachable = true
 unresolvable-dunder-all = true
 unsafe-overlap = true
@@ -382,7 +390,7 @@ exclude = [
 ]
 extraPaths = [ ".", "../typings", "src" ]
 ignore = [ "**/*.pyi", "../typings" ]
-include = [ "examples", "scripts", "src", "tests" ]
+include = [ "examples", "scripts", "src", "tests", "venv" ]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportArgumentType = "none"
@@ -435,6 +443,11 @@ root = "src"
 extraPaths = [ ".", "src" ]
 reportPrivateUsage = "none"
 root = "tests"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [ ".", "src" ]
+reportPrivateUsage = "none"
+root = "venv"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
@@ -496,7 +509,7 @@ line-length = 88
 preview = true
 respect-gitignore = true
 show-fixes = true
-src = [ "examples", "scripts", "src", "tests" ]
+src = [ "examples", "scripts", "src", "tests", "venv" ]
 target-version = "py313"
 
 [tool.ruff.format]
@@ -570,7 +583,6 @@ split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]
 "**/.vulture_whitelist.py" = [ "ALL" ]
-"**/_beartype/**" = [ "PLC0415", "PLC2701", "SLF001" ]
 "**/*_pb2*.py" = [ "ALL" ]
 "**/*dispatcher*" = [  ]
 "**/*docs*" = [ "INP001", "S404", "S603", "T201" ]

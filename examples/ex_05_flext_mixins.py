@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from examples import r
+from flext_core import r
 
 
 def run() -> None:

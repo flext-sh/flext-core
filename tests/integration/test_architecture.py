@@ -8,6 +8,7 @@ import pytest
 from flext_tests import tm, tv
 
 from tests import c
+from tests.constants import TestsFlextCoreConstants
 
 
 class TestsFlextCoreAutomatedArchitecture:
@@ -64,7 +65,7 @@ class TestsFlextCoreAutomatedArchitecture:
 
     @pytest.mark.parametrize(
         "validator",
-        c.Tests.Architecture.VALIDATOR_METHODS,
+        TestsFlextCoreConstants.Tests.Architecture.VALIDATOR_METHODS,
     )
     def test_all_validators_return_scan_result(self, validator: str) -> None:
         func = getattr(tv, validator)

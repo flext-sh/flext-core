@@ -72,10 +72,11 @@ class FlextExceptionsBase:
             """Canonical routing domain derived from the structured error code."""
             if not self.error_code:
                 return None
-            return self._error_domains.get(
+            domain = self._error_domains.get(
                 self.error_code,
                 c.ErrorDomain.UNKNOWN,
-            ).value
+            )
+            return str(domain.value)
 
         @property
         def error_message(self) -> str | None:
@@ -212,48 +213,50 @@ class FlextExceptionsBase:
         ) -> m.Metadata:
             """Normalize metadata from various input types to m.Metadata model."""
             if metadata is None:
-                if merged_kwargs:
-                    normalized_attrs = {
-                        k: FlextRuntime.normalize_to_metadata(v)
-                        for k, v in merged_kwargs.items()
-                    }
-                    return m.Metadata.model_validate({
-                        c.FIELD_ATTRIBUTES: normalized_attrs,
-                    })
-                return m.Metadata.model_validate({c.FIELD_ATTRIBUTES: {}})
-            metadata_model = FlextExceptionsHelpers.safe_metadata(metadata)
-            if metadata_model is not None:
-                if not merged_kwargs:
-                    return metadata_model
-                merged_attrs = {
-                    k: FlextRuntime.normalize_to_metadata(v)
-                    for k, v in metadata_model.attributes.items()
-                    if v is not None
+                normalized_attrs = {
+                    key: FlextRuntime.normalize_to_metadata(value)
+                    for key, value in merged_kwargs.items()
                 }
-                for k, v in merged_kwargs.items():
-                    if v is None:
-                        continue
-                    merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
-                return m.Metadata.model_validate({
-                    c.FIELD_ATTRIBUTES: merged_attrs,
+                resolved_metadata = m.Metadata.model_validate({
+                    c.FIELD_ATTRIBUTES: normalized_attrs,
                 })
-            if isinstance(metadata, (Mapping, p.HasModelDump)):
-                try:
-                    metadata_dict = FlextRuntime.normalize_metadata_input_mapping(
-                        metadata,
-                    )
-                except (PydanticValidationError, TypeError, ValueError):
-                    metadata_dict = None
             else:
-                metadata_dict = None
-            if metadata_dict is not None:
-                return FlextExceptionsBase.BaseError._normalize_metadata_from_dict(
-                    metadata_dict,
-                    merged_kwargs,
-                )
-            return m.Metadata.model_validate({
-                c.FIELD_ATTRIBUTES: {"value": str(metadata)},
-            })
+                metadata_model = FlextExceptionsHelpers.safe_metadata(metadata)
+                if metadata_model is not None:
+                    merged_attrs = {
+                        key: FlextRuntime.normalize_to_metadata(value)
+                        for key, value in metadata_model.attributes.items()
+                        if value is not None
+                    }
+                    for key, value in merged_kwargs.items():
+                        if value is None:
+                            continue
+                        merged_attrs[key] = FlextRuntime.normalize_to_metadata(value)
+                    resolved_metadata = m.Metadata.model_validate({
+                        c.FIELD_ATTRIBUTES: merged_attrs,
+                    })
+                else:
+                    metadata_dict: Mapping[str, t.JsonPayload | None] | None = None
+                    if isinstance(metadata, (Mapping, p.HasModelDump)):
+                        try:
+                            metadata_dict = (
+                                FlextRuntime.normalize_metadata_input_mapping(
+                                    metadata,
+                                )
+                            )
+                        except (PydanticValidationError, TypeError, ValueError):
+                            metadata_dict = None
+                    resolved_metadata = (
+                        FlextExceptionsBase.BaseError._normalize_metadata_from_dict(
+                            metadata_dict,
+                            merged_kwargs,
+                        )
+                        if metadata_dict is not None
+                        else m.Metadata.model_validate({
+                            c.FIELD_ATTRIBUTES: {"value": str(metadata)},
+                        })
+                    )
+            return resolved_metadata
 
         @staticmethod
         def _normalize_metadata_from_dict(
@@ -295,16 +298,30 @@ class FlextExceptionsBase:
                 }
             else:
                 filtered_attrs = {}
-            snapshot = FlextModelsErrors.StructuredErrorSnapshot.model_validate({
-                "error_type": type(self).__name__,
-                "message": self.message,
-                "error_code": self.error_code,
-                "error_domain": self.error_domain,
-                "correlation_id": self.correlation_id,
-                "timestamp": self.timestamp,
-                "attributes": mc.ConfigMap.model_validate(filtered_attrs).root,
-            })
-            return snapshot.to_payload()
+            snapshot: FlextModelsErrors.StructuredErrorSnapshot = (
+                FlextModelsErrors.StructuredErrorSnapshot.model_validate({
+                    "error_type": type(self).__name__,
+                    "message": self.message,
+                    "error_code": self.error_code,
+                    "error_domain": self.error_domain,
+                    "correlation_id": self.correlation_id,
+                    "timestamp": self.timestamp,
+                    "attributes": mc.ConfigMap.model_validate(filtered_attrs).root,
+                })
+            )
+            payload: dict[str, t.JsonPayload | None] = {
+                "error_type": snapshot.error_type,
+                "message": snapshot.message,
+                "error_code": snapshot.error_code,
+                "error_domain": snapshot.error_domain,
+                "correlation_id": snapshot.correlation_id,
+                "timestamp": snapshot.timestamp,
+                "error_message": snapshot.error_message,
+            }
+            for key, value in snapshot.attributes.items():
+                if key not in payload:
+                    payload[key] = value
+            return payload
 
         def _init_declared_error(
             self,
@@ -346,21 +363,62 @@ class FlextExceptionsBase:
             )
             for key in declared_param_keys:
                 resolved_named.setdefault(key, remaining_extra.pop(key, None))
-            resolved, ctx, meta, corr = FlextExceptionsHelpers.init_error_params(
+            preserved_metadata_raw = remaining_extra.pop(c.FIELD_METADATA, None)
+            preserved_metadata = (
+                FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
+                if preserved_metadata_raw is not None
+                else None
+            )
+            correlation_id_raw = remaining_extra.pop(
+                c.ContextKey.CORRELATION_ID,
+                None,
+            )
+            correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
+                correlation_id_raw,
+            )
+            param_values = FlextExceptionsHelpers.build_param_map(
                 context,
                 remaining_extra,
-                resolved_named,
-                declared_params_cls,
-                params,
-                declared_param_keys,
-                excluded_context_keys=type(self)._excluded_context_keys,
+                keys=declared_param_keys,
             )
+            for key, value in resolved_named.items():
+                if value is None:
+                    continue
+                normalized_value = FlextRuntime.normalize_to_metadata(value)
+                param_values[key] = (
+                    normalized_value
+                    if isinstance(normalized_value, t.SCALAR_TYPES)
+                    else str(normalized_value)
+                )
+            resolved = (
+                params
+                if params is not None
+                else declared_params_cls.model_validate(dict(param_values))
+            )
+            ctx = FlextExceptionsHelpers.build_context_map(
+                context,
+                remaining_extra,
+                excluded_keys=type(self)._excluded_context_keys,
+            )
+            resolved_fields = declared_params_cls.__pydantic_fields__
+            for key in declared_param_keys:
+                attr_val = getattr(resolved, key, None)
+                if attr_val is not None:
+                    ctx[key] = FlextRuntime.normalize_to_metadata(attr_val)
+                field_info = resolved_fields.get(key)
+                if field_info is None:
+                    continue
+                field_help = field_info.description or field_info.title
+                if isinstance(field_help, str) and field_help:
+                    ctx[f"{key}_description"] = field_help
             self._initialize_base_state(
                 message,
                 error_code=error_code,
-                context=ctx,
-                metadata=metadata if metadata is not None else meta,
-                correlation_id=correlation_id if correlation_id is not None else corr,
+                context=ctx or None,
+                metadata=metadata if metadata is not None else preserved_metadata,
+                correlation_id=(
+                    correlation_id if correlation_id is not None else correlation_id_str
+                ),
                 auto_correlation=auto_correlation,
                 auto_log=auto_log,
                 merged_kwargs=None,

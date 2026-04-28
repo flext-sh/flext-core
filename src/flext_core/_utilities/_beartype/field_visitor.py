@@ -9,7 +9,11 @@ from pydantic.fields import FieldInfo
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype.helpers import (
+    FlextUtilitiesBeartypeHelpers as _ubh,
+)
 
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}
@@ -20,82 +24,101 @@ class FlextUtilitiesBeartypeFieldVisitor:
     """FIELD_SHAPE + MODEL_CONFIG visitors via Pydantic introspection."""
 
     @staticmethod
-    def v_field_shape(
-        params: me.FieldShapeParams,
-        *args: object,
+    def _field_description_violation(
+        model_type: type,
+        name: str,
+        info: FieldInfo,
     ) -> t.StrMapping | None:
-        """FIELD_SHAPE — Pydantic field annotation governance via flags."""
-        # Import here to avoid circular dependency
-        from flext_core._utilities.beartype_engine import ube
+        raw_annotations = vars(model_type).get("__annotations__", {})
+        raw_annotation = raw_annotations.get(name)
+        resolved_annotation = inspect.get_annotations(model_type, eval_str=False).get(
+            name
+        )
+        has_annotated_description = False
+        if get_origin(resolved_annotation) is Annotated:
+            has_annotated_description = any(
+                isinstance(meta, FieldInfo) and meta.description
+                for meta in get_args(resolved_annotation)[1:]
+            )
+        has_description = any((
+            name.startswith("_"),
+            bool(info.description),
+            isinstance(raw_annotation, str) and "description=" in raw_annotation,
+            has_annotated_description,
+        ))
+        return _NO_VIOLATION if has_description else _BARE_VIOLATION
 
-        if params.require_description and len(args) == _FIELD_DESCRIPTION_ARITY:
-            model_type, name, info = args
-            if not (
-                isinstance(model_type, type)
-                and isinstance(name, str)
-                and isinstance(info, FieldInfo)
-            ):
-                return _NO_VIOLATION
-            if name.startswith("_") or info.description:
-                return _NO_VIOLATION
-            raw_ann = vars(model_type).get("__annotations__", {})
-            raw = raw_ann.get(name)
-            if isinstance(raw, str) and "description=" in raw:
-                return _NO_VIOLATION
-            resolved = inspect.get_annotations(model_type, eval_str=False)
-            ann = resolved.get(name)
-            if get_origin(ann) is Annotated:
-                for meta in get_args(ann)[1:]:
-                    if isinstance(meta, FieldInfo) and meta.description:
-                        return _NO_VIOLATION
-            return _BARE_VIOLATION
-        if len(args) != 1:
-            return _NO_VIOLATION
-        info = args[0]
-        if not isinstance(info, FieldInfo):
-            return _NO_VIOLATION
-        if params.forbid_any and ube.contains_any(info.annotation):
-            return _BARE_VIOLATION
-        if params.forbid_bare_collection:
-            bad, origin = ube.has_forbidden_collection_origin(
+    @staticmethod
+    def _field_violation(
+        params: me.FieldShapeParams,
+        info: FieldInfo,
+    ) -> t.StrMapping | None:
+        violation = _NO_VIOLATION
+        if params.forbid_any and _ubh.contains_any(info.annotation):
+            violation = _BARE_VIOLATION
+        elif params.forbid_bare_collection:
+            bad, origin = _ubh.has_forbidden_collection_origin(
                 info.annotation, c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS
             )
             if bad:
                 replacement = next(
                     (
                         repl
-                        for k, repl in c.ENFORCEMENT_FORBIDDEN_COLLECTIONS.items()
-                        if k.__name__ == origin
+                        for key, repl in c.ENFORCEMENT_FORBIDDEN_COLLECTIONS.items()
+                        if key.__name__ == origin
                     ),
                     origin,
                 )
-                return {"kind": origin, "replacement": replacement}
-        if params.forbid_mutable_default:
-            mk = ube.mutable_kind(info.default)
-            if mk is not None and info.default:
-                return {"kind": mk}
-        if (
+                violation = {"kind": origin, "replacement": replacement}
+        elif params.forbid_mutable_default:
+            mutable_kind = _ubh.mutable_kind(info.default)
+            if mutable_kind is not None and info.default:
+                violation = {"kind": mutable_kind}
+        elif (
             params.forbid_raw_default_factory
             and info.default_factory is not None
-            and not ube.allows_mutable_default_factory(
+            and not _ubh.allows_mutable_default_factory(
                 info.annotation, info.default_factory
             )
         ):
-            fk = ube.mutable_default_factory_kind(info.default_factory)
-            if fk is not None:
-                return {"kind": fk.__name__}
-        if (
+            factory_kind = _ubh.mutable_default_factory_kind(info.default_factory)
+            if factory_kind is not None:
+                violation = {"kind": factory_kind.__name__}
+        elif (
             params.forbid_str_none_empty
-            and ube.matches_str_none_union(info.annotation)
+            and _ubh.matches_str_none_union(info.annotation)
             and isinstance(info.default, str)
             and not info.default
         ):
-            return _BARE_VIOLATION
-        if params.forbid_inline_union:
-            arms = ube.count_union_members(info.annotation)
-            if arms > params.max_union_arms:
-                return {"arms": str(arms)}
-        return _NO_VIOLATION
+            violation = _BARE_VIOLATION
+        elif params.forbid_inline_union:
+            inline_union_arms = _ubh.count_union_members(info.annotation)
+            if inline_union_arms > params.max_union_arms:
+                violation = {"arms": str(inline_union_arms)}
+        return violation
+
+    @classmethod
+    def v_field_shape(
+        cls: type[FlextUtilitiesBeartypeFieldVisitor],
+        params: me.FieldShapeParams,
+        *args: type | str | FieldInfo,
+    ) -> t.StrMapping | None:
+        """FIELD_SHAPE — Pydantic field annotation governance via flags."""
+        match args:
+            case (model_type, name, info) if params.require_description:
+                if not (
+                    isinstance(model_type, type)
+                    and isinstance(name, str)
+                    and isinstance(info, FieldInfo)
+                ):
+                    return _NO_VIOLATION
+                return cls._field_description_violation(model_type, name, info)
+            case (info,):
+                if not isinstance(info, FieldInfo):
+                    return _NO_VIOLATION
+                return cls._field_violation(params, info)
+            case _:
+                return _NO_VIOLATION
 
     @staticmethod
     def v_model_config(
@@ -103,31 +126,32 @@ class FlextUtilitiesBeartypeFieldVisitor:
         target: type,
     ) -> t.StrMapping | None:
         """MODEL_CONFIG — Pydantic model_config governance via flags."""
-        from flext_core._models.pydantic import FlextModelsPydantic as mp
-        from flext_core._utilities.beartype_engine import ube
-
-        if params.forbid_v1_config and isinstance(target.__dict__.get("Config"), type):
-            return _BARE_VIOLATION
-        if not issubclass(target, mp.BaseModel):
-            return _NO_VIOLATION
-        if ube.has_relaxed_extra_base(target):
-            return _NO_VIOLATION
-        extra = target.model_config.get("extra")
-        if params.require_extra_forbid and extra is None:
-            return _BARE_VIOLATION
-        local = target.__dict__.get("model_config", {})
-        if (
-            params.allowed_extra_values
-            and extra not in {None, "forbid", *params.allowed_extra_values}
-            and "extra" in local
+        violation = _NO_VIOLATION
+        has_v1_config = params.forbid_v1_config and isinstance(
+            target.__dict__.get("Config"), type
+        )
+        if has_v1_config:
+            violation = _BARE_VIOLATION
+        elif issubclass(target, mp.BaseModel) and not _ubh.has_relaxed_extra_base(
+            target
         ):
-            return {"extra": str(extra)}
-        if (
-            params.require_frozen_for_value_objects
-            and any(
-                b.__name__ in c.ENFORCEMENT_VALUE_OBJECT_BASES for b in target.__mro__
-            )
-            and not target.model_config.get("frozen", False)
-        ):
-            return _BARE_VIOLATION
-        return _NO_VIOLATION
+            extra = target.model_config.get("extra")
+            local = target.__dict__.get("model_config", {})
+            if params.require_extra_forbid and extra is None:
+                violation = _BARE_VIOLATION
+            elif (
+                params.allowed_extra_values
+                and extra not in {None, "forbid", *params.allowed_extra_values}
+                and "extra" in local
+            ):
+                violation = {"extra": str(extra)}
+            elif (
+                params.require_frozen_for_value_objects
+                and any(
+                    b.__name__ in c.ENFORCEMENT_VALUE_OBJECT_BASES
+                    for b in target.__mro__
+                )
+                and not target.model_config.get("frozen", False)
+            ):
+                violation = _BARE_VIOLATION
+        return violation

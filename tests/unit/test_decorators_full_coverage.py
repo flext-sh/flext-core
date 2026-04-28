@@ -151,7 +151,10 @@ class TestsFlextCoreDecorators:
     ) -> None:
         _ = clean_container
 
-        @d.combined(operation_name="rw", use_railway=True)
+        @d.combined(
+            operation_name="rw",
+            railway_options={"enabled": True},
+        )
         def fails() -> int:
             msg = "boom"
             raise RuntimeError(msg)

@@ -18,9 +18,19 @@ from collections.abc import (
 )
 from contextlib import suppress
 from functools import wraps
-from typing import Literal, TypeIs, overload
+from typing import Literal, TypedDict, TypeIs, overload
 
 from flext_core import FlextContainer, FlextContext, c, e, m, p, r, t, u
+
+
+class _CombinedRailwayDisabledOptions(TypedDict, total=False):
+    enabled: Literal[False]
+    error_code: str | None
+
+
+class _CombinedRailwayEnabledOptions(TypedDict, total=False):
+    enabled: Literal[True]
+    error_code: str | None
 
 
 class FlextDecorators:
@@ -354,9 +364,13 @@ class FlextDecorators:
                         error_type=retry_result.__class__.__name__,
                     )
                     effective_error_code: str = (
-                        error_code if error_code is not None else c.ErrorCode.TIMEOUT_ERROR.value
+                        error_code
+                        if error_code is not None
+                        else c.ErrorCode.TIMEOUT_ERROR.value
                     )
-                    timeout_message = f"Operation {func.__name__} failed after {attempts} attempts"
+                    timeout_message = (
+                        f"Operation {func.__name__} failed after {attempts} attempts"
+                    )
                     raise e.TimeoutError(
                         timeout_message,
                         error_code=effective_error_code,
@@ -442,8 +456,7 @@ class FlextDecorators:
         inject_deps: t.StrMapping | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
-        use_railway: Literal[False] = False,
-        error_code: str | None = None,
+        railway_options: _CombinedRailwayDisabledOptions | None = None,
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]: ...
 
     @overload
@@ -453,8 +466,7 @@ class FlextDecorators:
         inject_deps: t.StrMapping | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
-        use_railway: Literal[True],
-        error_code: str | None = None,
+        railway_options: _CombinedRailwayEnabledOptions,
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, r[TResult]]]: ...
 
     @staticmethod
@@ -463,8 +475,12 @@ class FlextDecorators:
         inject_deps: t.StrMapping | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
-        use_railway: bool = False,
-        error_code: str | None = None,
+        railway_options: (
+            _CombinedRailwayDisabledOptions
+            | _CombinedRailwayEnabledOptions
+            | m.CombinedRailwayOptions
+            | None
+        ) = None,
     ) -> Callable[
         [Callable[PCallback, TResult]],
         Callable[PCallback, TResult] | Callable[PCallback, r[TResult]],
@@ -478,21 +494,23 @@ class FlextDecorators:
             inject_deps: Dependencies to inject (name -> type mapping)
             operation_name: Name for logging (defaults to function name)
             track_perf: Whether to track performance (default: True)
-            use_railway: Whether to apply railway pattern (default: False)
-            error_code: Error code for railway pattern failures
+            railway_options: Railway configuration (`enabled`, optional `error_code`)
 
         Returns:
             Decorated function with all requested automations.
-            When use_railway=True, returns Callable[..., r[TResult]].
-            When use_railway=False, returns Callable[..., TResult].
+            When railway is enabled, returns Callable[..., r[TResult]].
+            Otherwise, returns Callable[..., TResult].
 
         """
-        if use_railway:
+        railway = m.CombinedRailwayOptions.model_validate(
+            {} if railway_options is None else railway_options,
+        )
+        if railway.enabled:
 
             def railway_decorator(
                 func: Callable[PCallback, TResult],
             ) -> Callable[PCallback, r[TResult]]:
-                result = FlextDecorators.railway(error_code=error_code)(func)
+                result = FlextDecorators.railway(error_code=railway.error_code)(func)
                 if inject_deps:
                     result = FlextDecorators.inject(**inject_deps)(result)
                 operation_logger: Callable[

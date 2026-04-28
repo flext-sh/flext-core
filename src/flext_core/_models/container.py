@@ -348,7 +348,10 @@ class FlextModelsContainer:
         def validate_services(
             cls,
             value: (
-                Mapping[str, FlextModelsContainer.ServiceRegistration | t.RegisterableService]
+                Mapping[
+                    str,
+                    FlextModelsContainer.ServiceRegistration | t.RegisterableService,
+                ]
                 | None
             ),
         ) -> Mapping[str, FlextModelsContainer.ServiceRegistration] | None:
@@ -375,7 +378,9 @@ class FlextModelsContainer:
         def validate_factories(
             cls,
             value: (
-                Mapping[str, FlextModelsContainer.FactoryRegistration | t.FactoryCallable]
+                Mapping[
+                    str, FlextModelsContainer.FactoryRegistration | t.FactoryCallable
+                ]
                 | None
             ),
         ) -> Mapping[str, FlextModelsContainer.FactoryRegistration] | None:
@@ -401,7 +406,9 @@ class FlextModelsContainer:
         def validate_resources(
             cls,
             value: (
-                Mapping[str, FlextModelsContainer.ResourceRegistration | t.ResourceCallable]
+                Mapping[
+                    str, FlextModelsContainer.ResourceRegistration | t.ResourceCallable
+                ]
                 | None
             ),
         ) -> Mapping[str, FlextModelsContainer.ResourceRegistration] | None:

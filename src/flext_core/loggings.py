@@ -171,7 +171,7 @@ class FlextLogger(ulc):
             level = getattr(settings, "log_level", "INFO")
         logger: p.Logger = FlextLogger(f"container_{id(container)}")
         if context:
-            _ = logger.bind_global_context(**context)
+            return logger.bind(**context)
         return logger
 
     def bind(self, **context: t.JsonPayload) -> Self:
@@ -271,7 +271,9 @@ class FlextLogger(ulc):
     ) -> t.JsonMapping:
         """Build normalized structured exception context for logging."""
         result: dict[str, t.JsonValue] = {
-            str(k): str(v) if isinstance(v, Exception) else FlextLogger._to_container_value(v)
+            str(k): str(v)
+            if isinstance(v, Exception)
+            else FlextLogger._to_container_value(v)
             for k, v in context.items()
         }
         if exception is not None:

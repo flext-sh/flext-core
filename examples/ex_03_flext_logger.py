@@ -5,8 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples import ExamplesFlextCoreShared, c, m, p, u
-from flext_core import FlextContainer
+from flext_core import FlextContainer, c, p, u
+
+from .models import m
+from .shared import ExamplesFlextCoreShared
 
 u.configure_structlog()
 

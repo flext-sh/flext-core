@@ -254,25 +254,29 @@ class FlextSettings(BaseSettings):
     def __init__(self, **kwargs: t.SettingsInput) -> None:
         """Initialize settings with data.
 
-        Kwargs are applied as field overrides after base env/settings loading
-        to avoid type conflicts with BaseSettings internal parameters.
-        Uses __dict__ update + single revalidation to avoid triggering
-        validate_assignment validators on each individual field set.
+        Kwargs are applied through one packed validation path so unknown
+        extras are ignored by model config and known fields revalidate once.
         """
-        model_fields = self.__class__.model_fields
-        valid_kwargs: dict[str, t.SettingsInput] = (
-            {k: v for k, v in kwargs.items() if k in model_fields} if kwargs else {}
-        )
         if hasattr(self, "_di_provider"):
-            if valid_kwargs:
-                vars(self).update(valid_kwargs)
+            if kwargs:
                 self.__pydantic_validator__.validate_python(
-                    self.__dict__,
+                    {
+                        **self.model_dump(exclude_computed_fields=True),
+                        **kwargs,
+                    },
                     self_instance=self,
                 )
             return
 
-        super().__init__(**valid_kwargs)
+        super().__init__()
+        if kwargs:
+            self.__pydantic_validator__.validate_python(
+                {
+                    **self.model_dump(exclude_computed_fields=True),
+                    **kwargs,
+                },
+                self_instance=self,
+            )
 
     @computed_field
     @property
@@ -355,9 +359,11 @@ class FlextSettings(BaseSettings):
     @model_validator(mode="after")
     def _validate_settings(self) -> Self:
         """Validate settings consistency after model initialization."""
-        if self.database_url and not self.database_url.startswith(
-            ("postgresql://", "mysql://", "sqlite://")
-        ):
+        if self.database_url and not self.database_url.startswith((
+            "postgresql://",
+            "mysql://",
+            "sqlite://",
+        )):
             raise ValueError(c.ERR_CONFIG_INVALID_DB_URL_SCHEME)
         if self.trace and not self.debug:
             raise ValueError(c.ERR_CONFIG_TRACE_REQUIRES_DEBUG)

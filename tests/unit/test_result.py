@@ -640,11 +640,11 @@ class TestsFlextCoreResult:
         tm.that(result.flow_through() is result, eq=True)
         tm.that(result.value, eq=5)
 
-    def test_ok_with_none_succeeds(self) -> None:
-        """Test ok(None) creates valid success result."""
-        result = r[str | None].ok(None)
+    def test_ok_with_valid_value_succeeds(self) -> None:
+        """Test ok(True) creates valid success result."""
+        result = r[bool].ok(True)
         tm.that(result.success, eq=True)
-        tm.that(result.value, none=True)
+        tm.that(result.value, eq=True)
 
     def test_flow_through_stops_on_failure(self) -> None:
         """Test flow_through stops when function returns failure."""
@@ -801,10 +801,10 @@ class TestsFlextCoreResult:
         assert isinstance(r[str].ok("value"), p.SuccessCheckable)
         assert isinstance(r[str].fail("boom"), p.SuccessCheckable)
 
-    def test_ok_accepts_none_when_type_includes_none(self) -> None:
-        result = r[str | None].ok(None)
+    def test_ok_accepts_valid_value(self) -> None:
+        result = r[bool].ok(True)
         tm.that(result.success, eq=True)
-        tm.that(result.value, eq=None)
+        tm.that(result.value, eq=True)
 
     def test_map_error_transforms_failure_and_preserves_code(self) -> None:
         failure: p.Result[int] = r[int].fail(

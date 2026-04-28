@@ -22,6 +22,8 @@ from typing import ClassVar, Unpack, override
 from pydantic import ConfigDict
 
 from flext_core import FlextUtilitiesHandler, c, e, m, p, r, t, u, x
+from flext_core._models.handler import FlextModelsHandler
+from flext_core.context import FlextContext
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):
@@ -71,14 +73,21 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             error_msg = c.ERR_HANDLER_INVALID_MODE.format(mode=handler_type)
             raise e.ValidationError(error_msg)
         handler_mode_literal = self._handler_type_to_literal(handler_type)
-        self._runtime_state = FlextUtilitiesHandler.create_runtime_state(
-            handler_name=self._config_model.handler_name,
-            handler_mode=handler_mode_literal,
+        self._runtime_state: FlextModelsHandler.HandlerRuntimeState = (
+            FlextUtilitiesHandler.create_runtime_state(
+                handler_name=self._config_model.handler_name,
+                handler_mode=handler_mode_literal,
+            )
         )
 
     def __call__(self, message: MessageT_contra) -> p.Result[ResultT]:
-        """Callable interface for seamless dispatcher integration."""
-        return self.handle(message)
+        """Callable interface — auto-scopes correlation ID when _auto_context_scope=True."""
+        if not self._auto_context_scope:
+            return self.handle(message)
+        operation_name = f"{self.__class__.__qualname__}.handle"
+        with FlextContext.new_correlation():
+            FlextContext.apply_operation_name(operation_name)
+            return self.handle(message)
 
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
         """Validate non-abstract subclasses implement a handle() method.
@@ -115,7 +124,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             str: The handler name
 
         """
-        return self._runtime_state.handler_name
+        return str(self._runtime_state.handler_name)
 
     @property
     def mode(self) -> c.HandlerType:
@@ -127,9 +136,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """
         return self._runtime_state.handler_mode
 
-    @classmethod
+    @staticmethod
     def create_from_callable(
-        cls,
         handler_callable: Callable[[t.Scalar], t.Scalar],
         handler_name: str | None = None,
         handler_type: c.HandlerType | None = None,
@@ -225,10 +233,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """Coerce string or StrEnum to canonical HandlerType."""
         if isinstance(handler_type, c.HandlerType):
             return handler_type
-        if isinstance(handler_type, str):
-            for member in c.HandlerType:
-                if member.value == handler_type:
-                    return member
+        for member in c.HandlerType:
+            if member.value == handler_type:
+                return member
         raise TypeError(
             c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type),
         )

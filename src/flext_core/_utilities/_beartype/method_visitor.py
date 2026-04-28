@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import types as _types_mod
 
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
@@ -18,7 +19,7 @@ class FlextUtilitiesBeartypeMethodVisitor:
     @staticmethod
     def v_method_shape(
         params: me.MethodShapeParams,
-        *args: object,
+        *args: type | str | _types_mod.FunctionType,
     ) -> t.StrMapping | None:
         """METHOD_SHAPE — accessor-prefix and staticmethod-required governance.
 
@@ -28,29 +29,38 @@ class FlextUtilitiesBeartypeMethodVisitor:
         """
         if len(args) != _BINARY_ARITY:
             return _NO_VIOLATION
-        a, b = args
-        if isinstance(a, type) and isinstance(b, str):
-            name = b
-            if name.startswith("_"):
-                return _NO_VIOLATION
-            suggestions = (
-                ("get_", "fetch_/resolve_/compute_"),
-                ("set_", "configure/apply/update or model_copy(update=...)"),
-                ("is_", "a noun/adjective (success, expired, connected, ...)"),
-            )
-            for prefix in params.forbidden_prefixes:
-                suggestion = next(
-                    (s for p, s in suggestions if p == prefix),
-                    "use a domain verb",
-                )
-                if name.startswith(prefix):
-                    return {"name": name, "suggestion": suggestion}
-            return _NO_VIOLATION
-        if isinstance(a, str) and not isinstance(b, type):
-            if not params.require_static_or_classmethod:
-                return _NO_VIOLATION
-            if isinstance(b, (staticmethod, classmethod)):
-                return _NO_VIOLATION
-            if inspect.isfunction(b):
-                return _BARE_VIOLATION
-        return _NO_VIOLATION
+        suggestions = (
+            ("get_", "fetch_/resolve_/compute_"),
+            ("set_", "configure/apply/update or model_copy(update=...)"),
+            ("is_", "a noun/adjective (success, expired, connected, ...)"),
+        )
+        violation = _NO_VIOLATION
+        match args:
+            case (_, name) if isinstance(name, str) and isinstance(args[0], type):
+                if not name.startswith("_"):
+                    violation = next(
+                        (
+                            {"name": name, "suggestion": suggestion}
+                            for prefix in params.forbidden_prefixes
+                            for known_prefix, suggestion in suggestions
+                            if prefix == known_prefix and name.startswith(prefix)
+                        ),
+                        next(
+                            (
+                                {"name": name, "suggestion": "use a domain verb"}
+                                for prefix in params.forbidden_prefixes
+                                if name.startswith(prefix)
+                            ),
+                            _NO_VIOLATION,
+                        ),
+                    )
+            case (name, value) if isinstance(name, str) and not isinstance(value, type):
+                if all((
+                    params.require_static_or_classmethod,
+                    not isinstance(value, (staticmethod, classmethod)),
+                    inspect.isfunction(value),
+                )):
+                    violation = _BARE_VIOLATION
+            case _:
+                pass
+        return violation

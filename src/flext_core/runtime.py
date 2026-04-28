@@ -43,6 +43,9 @@ from flext_core import (
     p,
     t,
 )
+from flext_core._utilities.guards_type_protocol import (
+    FlextUtilitiesGuardsTypeProtocol as ugp,
+)
 
 
 class FlextRuntime:
@@ -162,11 +165,11 @@ class FlextRuntime:
         if isinstance(value, Mapping):
             raw: Mapping[str, t.JsonPayload | None] = value
         else:
-            dumped: object = value.model_dump()
-            if not isinstance(dumped, Mapping):
+            try:
+                raw = dict(value.model_dump())
+            except (TypeError, ValueError) as exc:
                 msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
-                raise TypeError(msg)
-            raw = dumped
+                raise TypeError(msg) from exc
         return {
             str(key): (
                 None if item is None else FlextRuntime._normalize_to_json_value(item)
@@ -212,9 +215,13 @@ class FlextRuntime:
     ) -> TModel:
         """Normalize metadata-like input into the provided metadata model."""
         if value is None:
-            return metadata_model.model_validate({
+            validated_model = metadata_model.model_validate({
                 c.FIELD_ATTRIBUTES: {},
             })
+            if isinstance(validated_model, metadata_model):
+                return validated_model
+            msg = f"{metadata_model.__name__} validation did not return model instance"
+            raise TypeError(msg)
         if isinstance(value, metadata_model):
             return value
         if not isinstance(value, Mapping):
@@ -223,9 +230,13 @@ class FlextRuntime:
                 f"{metadata_model.__name__}, got {value.__class__.__name__}"
             )
             raise TypeError(msg)
-        return metadata_model.model_validate({
+        validated_model = metadata_model.model_validate({
             c.FIELD_ATTRIBUTES: dict(value),
         })
+        if isinstance(validated_model, metadata_model):
+            return validated_model
+        msg = f"{metadata_model.__name__} validation did not return model instance"
+        raise TypeError(msg)
 
     @staticmethod
     def _normalize_payload_item(
@@ -270,42 +281,35 @@ class FlextRuntime:
         value: t.RegisterableService,
     ) -> t.RegisterableService | mc.ConfigMap | mc.ObjectList:
         """Normalize container registration payloads to canonical runtime types."""
-        if isinstance(value, (str, int, float, bool, type(None))):
-            return value
-        if isinstance(value, (mp.BaseModel, Path)):
-            return value
-        if callable(value):
-            return value
-        if isinstance(value, Mapping):
-            return mc.ConfigMap(
-                root={
-                    str(key_s): FlextRuntime._normalize_payload_item(
-                        item, container_kind="mapping"
-                    )
-                    for key_s, item in value.items()
-                }
-            )
-        if isinstance(value, Sequence) and not isinstance(
-            value,
-            (str, bytes, bytearray),
-        ):
-            return mc.ObjectList(
-                root=[
-                    FlextRuntime._normalize_payload_item(
-                        item, container_kind="sequence"
-                    )
-                    for item in value
-                ]
-            )
-        if hasattr(value, "__dict__"):
-            return value
-        if hasattr(value, "bind") and hasattr(value, "info"):
-            return value
-        raise ValueError(
-            c.ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE.format(
-                type_name=type(value).__name__,
-            ),
-        )
+        normalized_service: t.RegisterableService | mc.ConfigMap | mc.ObjectList
+        match value:
+            case Mapping():
+                normalized_service = mc.ConfigMap(
+                    root={
+                        str(key_s): FlextRuntime._normalize_payload_item(
+                            item, container_kind="mapping"
+                        )
+                        for key_s, item in value.items()
+                    }
+                )
+            case Sequence() if not isinstance(value, (str, bytes, bytearray)):
+                normalized_service = mc.ObjectList(
+                    root=[
+                        FlextRuntime._normalize_payload_item(
+                            item, container_kind="sequence"
+                        )
+                        for item in value
+                    ]
+                )
+            case _ if ugp.registerable_service(value):
+                normalized_service = value
+            case _:
+                raise ValueError(
+                    c.ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE.format(
+                        type_name=type(value).__name__,
+                    ),
+                )
+        return normalized_service
 
     @staticmethod
     def validate_callable_input[TCallable](
@@ -354,7 +358,7 @@ class FlextRuntime:
             normalized_data = str(val)
         elif ugc.scalar(val):
             normalized_data = FlextRuntime._normalize_to_json_value(val)
-        elif ugc.dict_like(val):
+        elif isinstance(val, Mapping):
             entries = [(str(k), v) for k, v in val.items()]
             normalized_data = FlextRuntime._normalize_dict_entries(entries)
         elif isinstance(val, Sequence) and not isinstance(val, (str, bytes)):
@@ -381,7 +385,11 @@ class FlextRuntime:
     ) -> t.JsonValue:
         """Normalize input into metadata-compatible JSON-native values."""
         normalized_value: t.JsonValue
-        if val is None:
+        if isinstance(val, (mc.ConfigMap, mc.Dict)):
+            normalized_value = FlextRuntime._normalize_dict_entries([
+                (str(key), item) for key, item in val.root.items()
+            ])
+        elif val is None:
             normalized_value = ""
         elif isinstance(val, datetime):
             normalized_value = val.isoformat()
@@ -390,40 +398,25 @@ class FlextRuntime:
         elif isinstance(val, (str, int, float, bool)):
             normalized_value = val
         elif isinstance(val, BaseModel):
-            normalized_value = FlextRuntime.normalize_to_metadata(val.model_dump())
-        else:
-            normalized: (
-                t.JsonPayload
-                | AbstractSet[t.Scalar]
-                | dict[str, t.JsonPayload]
-                | list[t.JsonPayload]
-                | list[t.JsonValue]
-            )
-            if isinstance(val, (mc.ConfigMap, mc.Dict, mc.ObjectList)):
-                normalized = val.root
-            elif isinstance(val, AbstractSet):
-                normalized = [
+            normalized_value = FlextRuntime._normalize_to_json_value(val.model_dump())
+        elif isinstance(val, Mapping):
+            normalized_value = FlextRuntime._normalize_dict_entries([
+                (str(key), item) for key, item in val.items()
+            ])
+        elif isinstance(val, AbstractSet):
+            normalized_value = list(
+                t.json_list_adapter().validate_python([
                     FlextRuntime._normalize_to_json_value(item) for item in val
-                ]
-            else:
-                normalized = val
-            if isinstance(normalized, Mapping):
-                normalized_value = {
-                    str(key): FlextRuntime.normalize_to_metadata(item)
-                    for key, item in normalized.items()
-                }
-            elif isinstance(normalized, (str, bytes, bytearray)):
-                normalized_value = str(normalized)
-            else:
-                try:
-                    iter(normalized)
-                except TypeError:
-                    normalized_value = str(normalized)
-                else:
-                    normalized_value = [
-                        FlextRuntime.normalize_to_metadata(item)
-                        for item in normalized
-                    ]
+                ])
+            )
+        elif isinstance(val, (bytes, bytearray)):
+            normalized_value = str(val)
+        else:
+            normalized_value = list(
+                t.json_list_adapter().validate_python([
+                    FlextRuntime._normalize_to_json_value(item) for item in val
+                ])
+            )
         return normalized_value
 
     @no_type_check
@@ -707,13 +700,13 @@ class FlextRuntime:
 
         @staticmethod
         def wire(
-            container: containers.DeclarativeContainer | containers.DynamicContainer,
+            container: containers.Container,
             *,
             modules: Sequence[ModuleType] | None = None,
             packages: t.StrSequence | None = None,
             classes: Sequence[type] | None = None,
         ) -> None:
-            """Wire modules or packages to a DeclarativeContainer or DynamicContainer for @inject usage."""
+            """Wire modules or packages to a dependency-injector container for @inject usage."""
             modules_to_wire: MutableSequence[ModuleType] = list(modules or [])
             if classes:
                 for target_class in classes:
@@ -721,7 +714,8 @@ class FlextRuntime:
                     if module is not None:
                         modules_to_wire.append(module)
             _ = packages
-            wiring.wire(
+            wire_runtime = getattr(wiring, "wire")
+            wire_runtime(
                 modules=modules_to_wire or None,
                 packages=None,
                 container=container,

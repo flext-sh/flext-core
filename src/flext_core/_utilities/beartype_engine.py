@@ -10,15 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    MutableSet,
-)
-from types import MappingProxyType, UnionType
-from typing import ClassVar, Union, get_args, get_origin, no_type_check
+from collections.abc import Callable, Mapping
+from types import MappingProxyType
+from typing import ClassVar, no_type_check
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.pydantic import FlextModelsPydantic as mp
@@ -44,6 +38,12 @@ from flext_core._utilities._beartype.method_visitor import (
 )
 from flext_core._utilities._beartype.module_visitor import (
     FlextUtilitiesBeartypeModuleVisitor,
+)
+
+# Side-effect: monkey-patch beartype cave so typing_extensions.TypeAliasType
+# (used by pydantic.JsonValue et al.) is accepted as a PEP-695 alias.
+from flext_core._utilities.beartype_typingext_patch import (  # noqa: F401
+    FlextUtilitiesBeartypeTypingExtPatch,
 )
 
 _NO_VIOLATION: t.StrMapping | None = None
@@ -81,105 +81,36 @@ class FlextUtilitiesBeartypeEngine(
     has_private_attr_probe = staticmethod(
         FlextUtilitiesBeartypeHelpers.has_private_attr_probe
     )
+    has_runtime_protocol_marker = staticmethod(
+        FlextUtilitiesBeartypeHelpers.has_runtime_protocol_marker
+    )
+    has_abstract_contract = staticmethod(
+        FlextUtilitiesBeartypeHelpers.has_abstract_contract
+    )
+    has_nested_namespace = staticmethod(
+        FlextUtilitiesBeartypeHelpers.has_nested_namespace
+    )
     has_forbidden_collection_origin = staticmethod(
         FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin
     )
-
-    @staticmethod
-    def contains_any(hint: t.TypeHintSpecifier | None) -> bool:
-        return FlextUtilitiesBeartypeHelpers.contains_any_recursive(hint, seen=set())
-
-    @staticmethod
-    def count_union_members(hint: t.TypeHintSpecifier | None) -> int:
-        h = FlextUtilitiesBeartypeEngine
-        h2 = h.unwrap_type_alias(hint)
-        if h2 is None or get_origin(h2) not in {UnionType, Union}:
-            return 0
-        return sum(1 for a in get_args(h2) if a is not type(None))
-
-    @staticmethod
-    def matches_str_none_union(hint: t.TypeHintSpecifier | None) -> bool:
-        h = FlextUtilitiesBeartypeEngine
-        h2 = h.unwrap_type_alias(hint)
-        if h2 is None or get_origin(h2) not in {UnionType, Union}:
-            return False
-        return str in (a := get_args(h2)) and type(None) in a
-
-    @staticmethod
-    def alias_contains_any(alias_value: t.TypeHintSpecifier | None) -> bool:
-        try:
-            return FlextUtilitiesBeartypeEngine.contains_any(alias_value)
-        except (TypeError, AttributeError, RuntimeError, RecursionError):
-            return "Any" in str(alias_value)
-
-    @staticmethod
-    def mutable_kind(value: object) -> str | None:
-        for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
-            if isinstance(value, kind):
-                return str(kind.__name__)
-        return None
-
-    @staticmethod
-    def mutable_default_factory_kind(
-        factory: type | Callable[..., object] | None,
-    ) -> type | None:
-        for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
-            if factory is kind or get_origin(factory) is kind:
-                return kind
-        return None
-
-    @staticmethod
-    def allows_mutable_default_factory(
-        hint: t.TypeHintSpecifier | None, factory: type | Callable[..., object] | None
-    ) -> bool:
-        h = FlextUtilitiesBeartypeEngine
-        expected_by = {list: MutableSequence, dict: MutableMapping, set: MutableSet}
-        mk = h.mutable_default_factory_kind(factory)
-        if mk is None:
-            return False
-        exp = expected_by.get(mk)
-        norm = h.unwrap_annotated(hint)
-        if norm is None:
-            return False
-        if isinstance(norm, str):
-            en = exp.__name__ if exp else ""
-            return bool(en) and (
-                norm == en
-                or norm.startswith((
-                    f"{en}[",
-                    f"typing.{en}[",
-                    f"collections.abc.{en}[",
-                ))
-            )
-        org = get_origin(norm)
-        tgt = org or norm
-        return exp is not None and tgt is exp
-
-    @staticmethod
-    def has_relaxed_extra_base(target: type) -> bool:
-        return any(
-            b.__name__ in c.ENFORCEMENT_RELAXED_EXTRA_BASES for b in target.__mro__
-        )
-
-    @staticmethod
-    def has_runtime_protocol_marker(value: type) -> bool:
-        return bool(getattr(value, "_is_protocol", False))
-
-    @staticmethod
-    def has_abstract_contract(value: type) -> bool:
-        return bool(getattr(value, "__abstractmethods__", None)) or any(
-            getattr(b, "__name__", "") == "ABC" for b in value.__mro__
-        )
-
-    @staticmethod
-    def has_nested_namespace(value: type) -> bool:
-        for base in value.__mro__:
-            if base is not object and any(
-                isinstance(v, type) and not n.startswith("_")
-                for n, v in vars(base).items()
-            ):
-                return True
-        return False
+    contains_any = staticmethod(FlextUtilitiesBeartypeHelpers.contains_any)
+    count_union_members = staticmethod(
+        FlextUtilitiesBeartypeHelpers.count_union_members
+    )
+    matches_str_none_union = staticmethod(
+        FlextUtilitiesBeartypeHelpers.matches_str_none_union
+    )
+    alias_contains_any = staticmethod(FlextUtilitiesBeartypeHelpers.alias_contains_any)
+    mutable_kind = staticmethod(FlextUtilitiesBeartypeHelpers.mutable_kind)
+    mutable_default_factory_kind = staticmethod(
+        FlextUtilitiesBeartypeHelpers.mutable_default_factory_kind
+    )
+    allows_mutable_default_factory = staticmethod(
+        FlextUtilitiesBeartypeHelpers.allows_mutable_default_factory
+    )
+    has_relaxed_extra_base = staticmethod(
+        FlextUtilitiesBeartypeHelpers.has_relaxed_extra_base
+    )
 
     @staticmethod
     def defined_inside(inner_cls: type, outer_qualname: str) -> bool:

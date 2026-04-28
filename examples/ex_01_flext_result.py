@@ -8,8 +8,10 @@ from collections.abc import (
 )
 from typing import override
 
-from examples import ExamplesFlextCoreShared, m, t
-from flext_core import p, r
+from flext_core import p, r, t
+
+from .models import m
+from .shared import ExamplesFlextCoreShared
 
 
 class Ex01r(ExamplesFlextCoreShared):

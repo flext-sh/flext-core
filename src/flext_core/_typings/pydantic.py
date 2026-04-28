@@ -118,7 +118,7 @@ class FlextTypesPydantic:
     # supports non-generic aliases, so we keep them as plain attributes which pydantic
     # and the mypy plugin recognize as type markers.
     Json = pydantic.Json
-    JsonValue: TypeAlias = pydantic.JsonValue
+    JsonValue = pydantic.JsonValue
     ImportString = pydantic.ImportString
     InstanceOf = pydantic.InstanceOf
     Secret = pydantic.Secret

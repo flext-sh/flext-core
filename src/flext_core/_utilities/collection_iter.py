@@ -6,7 +6,7 @@ collection facade stays under the 200-LOC cap (logical LOC, AGENTS.md §3.1).
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import overload
 
 from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
@@ -84,24 +84,44 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
         | Mapping[str, TMapped]
     ):
         """Unified filter function — preserves container type, optional mapper."""
-        if isinstance(items, list):
-            if mapper is not None:
-                return [mapper(item) for item in items if predicate(item)]
-            return [item for item in items if predicate(item)]
-        if isinstance(items, tuple):
-            if mapper is not None:
-                mapped_items = [mapper(item) for item in items if predicate(item)]
-                return (*mapped_items,)
-            filtered_items = [item for item in items if predicate(item)]
-            return (*filtered_items,)
+        filtered_output: (
+            Sequence[TItem]
+            | Sequence[TMapped]
+            | tuple[TItem, ...]
+            | tuple[TMapped, ...]
+            | Mapping[str, TItem]
+            | Mapping[str, TMapped]
+        )
         if isinstance(items, Mapping):
-            filtered: MutableMapping[str, TItem] = {
-                k: v for k, v in items.items() if predicate(v)
+            filtered_mapping = {
+                key: value for key, value in items.items() if predicate(value)
             }
-            if mapper is not None:
-                return {k: mapper(v) for k, v in filtered.items()}
-            return filtered
-        return [item for item in items if predicate(item)]
+            filtered_output = (
+                {key: mapper(value) for key, value in filtered_mapping.items()}
+                if mapper is not None
+                else filtered_mapping
+            )
+        else:
+            sequence_items: Sequence[TItem] = items
+            filtered_sequence: list[TItem] = [
+                sequence_items[index]
+                for index in range(len(sequence_items))
+                if predicate(sequence_items[index])
+            ]
+            match sequence_items:
+                case tuple():
+                    filtered_output = (
+                        tuple(mapper(item) for item in filtered_sequence)
+                        if mapper is not None
+                        else tuple(filtered_sequence)
+                    )
+                case _:
+                    filtered_output = (
+                        [mapper(item) for item in filtered_sequence]
+                        if mapper is not None
+                        else filtered_sequence
+                    )
+        return filtered_output
 
     @overload
     @staticmethod

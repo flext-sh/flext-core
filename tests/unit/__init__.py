@@ -32,6 +32,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextCoreCleanConstants",
                 "TestsFlextCoreCleanModels",
                 "TestsFlextCoreCleanProtocols",
+                "TestsFlextCoreCleanServiceBase",
             ),
             "._models.test_base": ("TestsFlextCoreModelsBase",),
             "._models.test_cqrs": ("TestsFlextCoreModelsCQRS",),

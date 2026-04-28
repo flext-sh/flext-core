@@ -53,6 +53,8 @@ class FlextModelsEnforcement:
         layer: str
         severity: str
         message: str
+        file_path: str = ""
+        line_number: int = 0
 
     class Report(_EnforcementSourceBase):
         """Aggregated violation report returned by a check or runner."""
@@ -145,7 +147,7 @@ class FlextModelsEnforcement:
         """Rule detected via minimal AST inspection; skips if source unavailable."""
 
         kind: Literal["minimal_ast"] = "minimal_ast"
-        pattern: str
+        pattern: str = Field(min_length=1)
         require_source: bool = True
 
     class EnforcementRuffSource(_EnforcementSourceBase):

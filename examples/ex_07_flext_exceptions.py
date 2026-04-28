@@ -5,8 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples import ExamplesFlextCoreShared, c, m
-from flext_core import e, r
+from flext_core import c, e, r
+
+from .models import m
+from .shared import ExamplesFlextCoreShared
 
 
 class Ex07FlextExceptions(ExamplesFlextCoreShared):

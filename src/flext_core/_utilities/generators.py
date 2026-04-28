@@ -103,7 +103,7 @@ class FlextUtilitiesGenerators:
         include_timestamp: bool,
     ) -> Sequence[t.JsonValue]:
         """Collect ID parts including optional timestamp prefix."""
-        all_parts: t.MutableSequenceOf[t.JsonValue] = []
+        all_parts: list[t.JsonValue] = []
         if include_timestamp:
             all_parts.append(int(datetime.now(UTC).timestamp()))
         if parts:
@@ -136,9 +136,10 @@ class FlextUtilitiesGenerators:
             kind,
             resolved_options.prefix,
         )
+        generated_id: str
         match (kind, actual_prefix):
             case (("uuid" | None), None):
-                return FlextUtilitiesGenerators._generate_id()
+                generated_id = FlextUtilitiesGenerators._generate_id()
             case ("ulid", _):
                 alphabet = string.ascii_letters + string.digits
                 short_length = (
@@ -146,9 +147,11 @@ class FlextUtilitiesGenerators:
                     if resolved_options.length is not None
                     else c.SHORT_UUID_LENGTH
                 )
-                return "".join(secrets.choice(alphabet) for _ in range(short_length))
+                generated_id = "".join(
+                    secrets.choice(alphabet) for _ in range(short_length)
+                )
             case ("id", None):
-                return FlextUtilitiesGenerators._generate_id()
+                generated_id = FlextUtilitiesGenerators._generate_id()
             case (_, str() as pfx):
                 all_parts = FlextUtilitiesGenerators._build_parts_list(
                     resolved_options.parts,
@@ -163,19 +166,23 @@ class FlextUtilitiesGenerators:
                     resolved_options.separator != "_"
                     or resolved_options.include_timestamp
                 ):
-                    return FlextUtilitiesGenerators._generate_custom_separator_id(
-                        pfx,
-                        all_parts,
-                        resolved_options.separator,
-                        id_length,
+                    generated_id = (
+                        FlextUtilitiesGenerators._generate_custom_separator_id(
+                            pfx,
+                            all_parts,
+                            resolved_options.separator,
+                            id_length,
+                        )
                     )
-                return FlextUtilitiesGenerators._generate_prefixed_id(
-                    pfx,
-                    *all_parts,
-                    length=id_length,
-                )
+                else:
+                    generated_id = FlextUtilitiesGenerators._generate_prefixed_id(
+                        pfx,
+                        *all_parts,
+                        length=id_length,
+                    )
             case _:
-                return FlextUtilitiesGenerators._generate_id()
+                generated_id = FlextUtilitiesGenerators._generate_id()
+        return generated_id
 
     @staticmethod
     def generate_datetime_utc() -> datetime:

@@ -20,11 +20,12 @@ from collections.abc import (
 )
 from functools import cache
 from pathlib import Path
+from types import MappingProxyType
 from typing import ClassVar
 
+from flext_core import t
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextUtilitiesProjectMetadata:
@@ -71,7 +72,7 @@ class FlextUtilitiesProjectMetadata:
     @cache
     def load_pyproject_toml(
         root: Path,
-    ) -> Mapping[str, tp.JsonValue | str | object]:
+    ) -> t.JsonMapping:
         """Load and return the parsed pyproject.toml under ``root``.
 
         Result is cached by ``root`` (``Path`` is hashable). The cache is
@@ -88,15 +89,20 @@ class FlextUtilitiesProjectMetadata:
             )
             raise FileNotFoundError(msg)
         with pyproject.open("rb") as stream:
-            return tomllib.load(stream)
+            validated_payload: t.JsonMapping = t.json_mapping_adapter().validate_python(
+                tomllib.load(stream)
+            )
+            return validated_payload
 
     @staticmethod
     def read_project_metadata(root: Path) -> mpm.ProjectMetadata:
         """Read canonical project metadata from a project's pyproject.toml."""
         data = FlextUtilitiesProjectMetadata.load_pyproject_toml(root)
         project_raw = data.get("project")
-        project: dict[str, tp.JsonValue | str | object] = (
-            dict(project_raw) if isinstance(project_raw, Mapping) else {}
+        project: t.JsonMapping = (
+            dict(project_raw)
+            if isinstance(project_raw, Mapping)
+            else MappingProxyType({})
         )
         if "name" not in project:
             msg = f"{root}: missing [project].name in pyproject.toml"
@@ -111,13 +117,17 @@ class FlextUtilitiesProjectMetadata:
             license_text = "UNLICENSED"
         else:
             license_text = str(license_field)
-        authors_raw = project.get("authors") or ()
+        authors_raw = project.get("authors")
+        authors_entries = authors_raw if isinstance(authors_raw, (list, tuple)) else ()
         authors = tuple(
             str(entry.get("name", "")) if isinstance(entry, Mapping) else str(entry)
-            for entry in authors_raw
+            for entry in authors_entries
         )
-        urls = project.get("urls") or {}
-        url = str(urls.get("Homepage", "")) if isinstance(urls, Mapping) else ""
+        urls_raw = project.get("urls")
+        urls: t.JsonMapping = (
+            dict(urls_raw) if isinstance(urls_raw, Mapping) else MappingProxyType({})
+        )
+        url = str(urls.get("Homepage", ""))
         requires_python_raw = project.get("requires-python", "")
         requires_python = (
             str(requires_python_raw).lstrip(">= ").split(",")[0].split("<")[0].strip()
@@ -139,9 +149,17 @@ class FlextUtilitiesProjectMetadata:
     def read_tool_flext_config(root: Path) -> mpm.ProjectToolFlext:
         """Read ``[tool.flext.*]`` tables from pyproject.toml."""
         data = FlextUtilitiesProjectMetadata.load_pyproject_toml(root)
-        tool = data.get("tool") or {}
-        tool_flext = tool.get("flext") if isinstance(tool, Mapping) else None
-        return mpm.ProjectToolFlext.model_validate(tool_flext or {})
+        tool_raw = data.get("tool")
+        tool: t.JsonMapping = (
+            dict(tool_raw) if isinstance(tool_raw, Mapping) else MappingProxyType({})
+        )
+        tool_flext_raw = tool.get("flext")
+        tool_flext: t.JsonMapping = (
+            dict(tool_flext_raw)
+            if isinstance(tool_flext_raw, Mapping)
+            else MappingProxyType({})
+        )
+        return mpm.ProjectToolFlext.model_validate(tool_flext)
 
     @staticmethod
     def compose_namespace_config(root: Path) -> mpm.ProjectNamespaceConfig:

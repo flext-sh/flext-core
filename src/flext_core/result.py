@@ -19,6 +19,7 @@ from typing import (
     Annotated,
     ClassVar,
     Self,
+    TypeIs,
     no_type_check,
     overload,
     override,
@@ -146,9 +147,9 @@ class FlextResult[T](BaseModel, p.Result[T]):
         if not self.success:
             msg = c.ERR_RESULT_CANNOT_ACCESS_VALUE.format(error=self.error)
             raise RuntimeError(msg)
-        if self._payload is None:  # pragma: no cover
-            msg = "Payload unexpectedly None despite success=True"
-            raise RuntimeError(msg)
+        if self._payload is None:
+            msg_0 = "Successful result must have a non-None payload"
+            raise ValueError(msg_0)
         return self._payload
 
     @staticmethod
@@ -230,7 +231,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
             error_data=validated_error_data,
         )
         self._result = source
-        if value is not None and success:
+        if success:
             self._payload = value
 
     @property
@@ -330,6 +331,23 @@ class FlextResult[T](BaseModel, p.Result[T]):
         result._exception = options.exception
         return result
 
+    @classmethod
+    def fail_op[V](
+        cls: type[FlextResult[V]],
+        operation: str,
+        exc: Exception | str | None = None,
+    ) -> FlextResult[V]:
+        """Create a failure result for a named operation with optional exception."""
+        if isinstance(exc, Exception):
+            return cls.fail(
+                f"{operation} failed: {exc}",
+                exception=exc,
+            )
+        error_msg = (
+            f"{operation} failed" if exc is None else f"{operation} failed: {exc}"
+        )
+        return cls.fail(error_msg)
+
     @staticmethod
     def from_validation[ModelT: mp.BaseModel](
         data: t.ModelInput,
@@ -338,7 +356,14 @@ class FlextResult[T](BaseModel, p.Result[T]):
         """Create result from Pydantic validation."""
         try:
             return FlextResult[ModelT].ok(model.model_validate(data))
-        except (ValidationError, ValueError, TypeError, AttributeError, RuntimeError, Exception) as e:
+        except (
+            ValidationError,
+            ValueError,
+            TypeError,
+            AttributeError,
+            RuntimeError,
+            Exception,
+        ) as e:
             return FlextResult[ModelT].fail(
                 f"Validation failed: {FlextResult._model_error_message(e)}",
                 exception=e,
@@ -411,6 +436,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
     @staticmethod
     def safe[U, **PFunc](func: Callable[PFunc, U]) -> Callable[PFunc, FlextResult[U]]:
         """Decorator: wrap function in FlextResult, catch exceptions."""
+
         def wrapper(*args: PFunc.args, **kwargs: PFunc.kwargs) -> FlextResult[U]:
             try:
                 result = func(*args, **kwargs)
@@ -651,6 +677,16 @@ class FlextResult[T](BaseModel, p.Result[T]):
         if self.success and self.value is not None:
             return self.value
         return func()
+
+    @staticmethod
+    def successful_result[V](obj: FlextResult[V] | V) -> TypeIs[FlextResult[V]]:
+        """Type guard for successful result."""
+        return isinstance(obj, FlextResult) and obj.success
+
+    @staticmethod
+    def failed_result[V](obj: FlextResult[V] | V) -> TypeIs[FlextResult[V]]:
+        """Type guard for failed result."""
+        return isinstance(obj, FlextResult) and obj.failure
 
 
 r = FlextResult

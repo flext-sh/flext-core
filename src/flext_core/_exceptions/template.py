@@ -72,31 +72,6 @@ class FlextExceptionsTemplate:
             ) from exc
 
     @staticmethod
-    def render_error_template(
-        template: str,
-        *,
-        operation: str | None = None,
-        error: Exception | str | None = None,
-        params: m.BaseModel | None = None,
-        **values: t.JsonPayload | None,
-    ) -> str:
-        """Render error template with canonical operation/error fields."""
-        payload: dict[str, t.JsonValue] = (
-            ({c.HandlerType.OPERATION: operation} if operation is not None else {})
-            | ({"error": str(error)} if error is not None else {})
-            | {
-                str(key): FlextRuntime.normalize_to_metadata(value)
-                for key, value in values.items()
-                if value is not None
-            }
-        )
-        return FlextExceptionsTemplate.render_template(
-            template,
-            params=params,
-            **payload,
-        )
-
-    @staticmethod
     def result_error_data(
         params: m.BaseModel | None,
         **values: t.JsonPayload | None,

@@ -12,7 +12,7 @@ from collections.abc import (
 )
 from contextlib import AbstractContextManager
 from types import ModuleType
-from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
     from flext_core import (
@@ -21,7 +21,6 @@ if TYPE_CHECKING:
         FlextProtocolsRegistry,
         FlextProtocolsResult,
         FlextProtocolsSettings,
-        m,
         t,
     )
 
@@ -36,65 +35,44 @@ class FlextProtocolsContext:
         def get(
             self,
             key: str,
-            scope: str = ...,
         ) -> FlextProtocolsResult.Result[t.JsonPayload]:
-            """Get a context value by key and scope."""
+            """Get a context value by key."""
             ...
 
-        def has(self, key: str, scope: str = ...) -> bool:
-            """Check if a key exists in the given scope."""
+        def has(self, key: str) -> bool:
+            """Check if a key exists in the context scope."""
             ...
 
         def keys(self) -> t.StrSequence:
-            """Return all keys across all scopes."""
+            """Return all keys in the context scope."""
             ...
 
-        def values(self) -> t.JsonList:
-            """Return all values across all scopes."""
+        def values(self) -> list[t.JsonPayload]:
+            """Return all values in the context scope."""
             ...
 
-        def items(self) -> Sequence[tuple[str, t.JsonValue]]:
-            """Return all key-value pairs across all scopes."""
+        def items(self) -> list[tuple[str, t.JsonPayload]]:
+            """Return all key-value pairs in the context scope."""
             ...
 
     @runtime_checkable
     class ContextWrite(Protocol):
         """Write context operations."""
 
-        @overload
         def set(
             self,
-            key_or_data: str,
+            key: str,
             value: t.JsonPayload,
-            *,
-            scope: str = ...,
-        ) -> FlextProtocolsResult.Result[bool]: ...
-
-        @overload
-        def set(
-            self,
-            key_or_data: t.JsonMapping,
-            value: None = ...,
-            *,
-            scope: str = ...,
-        ) -> FlextProtocolsResult.Result[bool]: ...
-
-        def set(
-            self,
-            key_or_data: str | t.JsonMapping,
-            value: t.JsonPayload | None = ...,
-            *,
-            scope: str = ...,
         ) -> FlextProtocolsResult.Result[bool]:
-            """Set a context value or bulk-set from ConfigMap."""
+            """Set a context value in the context scope."""
             ...
 
-        def remove(self, key: str, scope: str = ...) -> None:
-            """Remove a key from the given scope."""
+        def remove(self, key: str) -> None:
+            """Remove a key from the context scope."""
             ...
 
         def clear(self) -> None:
-            """Clear all context data across all scopes."""
+            """Clear all context data in the context scope."""
             ...
 
     @runtime_checkable
@@ -107,7 +85,7 @@ class FlextProtocolsContext:
 
         def merge(
             self,
-            other: Self | Mapping[str, t.JsonPayload] | t.JsonMapping,
+            other: Self | Mapping[str, t.JsonPayload],
         ) -> Self:
             """Merge another context or mapping into this one."""
             ...
@@ -119,11 +97,9 @@ class FlextProtocolsContext:
         def export(
             self,
             *,
-            include_statistics: bool = ...,
-            include_metadata: bool = ...,
             as_dict: bool = ...,
-        ) -> m.ContextExport | Mapping[str, t.JsonPayload]:
-            """Export context state as the canonical context export model or dict."""
+        ) -> dict[str, t.JsonPayload] | Self:
+            """Export context state as a dict or the context instance itself."""
             ...
 
     @runtime_checkable

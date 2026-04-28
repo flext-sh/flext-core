@@ -132,8 +132,7 @@ class FlextContext(m.ManagedModel):
     @classmethod
     def create(cls, **_: t.JsonPayload) -> p.Context:
         """Factory: build a default context instance."""
-        instance: p.Context = cls()
-        return instance
+        return cls()
 
     # --- Container management ---
 

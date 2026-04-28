@@ -6,8 +6,9 @@ import os
 from pathlib import Path
 from typing import override
 
-from examples import ExamplesFlextCoreShared, c, u
-from flext_core import FlextSettings
+from flext_core import FlextSettings, c, u
+
+from .shared import ExamplesFlextCoreShared
 
 
 class Ex02FlextSettings(ExamplesFlextCoreShared):

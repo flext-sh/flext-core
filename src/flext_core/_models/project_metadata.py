@@ -23,6 +23,7 @@ from pydantic import Field, model_validator
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as c
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextModelsProjectMetadata:
@@ -135,11 +136,16 @@ class FlextModelsProjectMetadata:
 
         @model_validator(mode="before")
         @classmethod
-        def _merge_alias_sources(cls, data: dict | object) -> dict | object:
+        def _merge_alias_sources(
+            cls, data: tb.JsonMapping | tp.JsonValue
+        ) -> tb.JsonMapping | tp.JsonValue:
             """Reject unknown aliases; merge universal sources into user input."""
             if not isinstance(data, dict):
                 return data
-            sources = dict(data.get("alias_parent_sources") or {})
+            sources_raw = data.get("alias_parent_sources")
+            sources: dict[str, tp.JsonValue] = (
+                dict(sources_raw) if isinstance(sources_raw, dict) else {}
+            )
             unknown = set(sources) - set(c.RUNTIME_ALIAS_NAMES)
             if unknown:
                 msg = f"unknown alias(es): {sorted(unknown)}"

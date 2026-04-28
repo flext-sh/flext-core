@@ -82,6 +82,7 @@ if _t.TYPE_CHECKING:
         TestsFlextCoreCleanConstants,
         TestsFlextCoreCleanModels,
         TestsFlextCoreCleanProtocols,
+        TestsFlextCoreCleanServiceBase,
     )
     from tests.unit._models.test_base import TestsFlextCoreModelsBase
     from tests.unit._models.test_cqrs import TestsFlextCoreModelsCQRS
@@ -273,6 +274,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextCoreCleanConstants",
                 "TestsFlextCoreCleanModels",
                 "TestsFlextCoreCleanProtocols",
+                "TestsFlextCoreCleanServiceBase",
             ),
             ".unit._models.test_base": ("TestsFlextCoreModelsBase",),
             ".unit._models.test_cqrs": ("TestsFlextCoreModelsCQRS",),
@@ -434,6 +436,7 @@ __all__: list[str] = [
     "TestsFlextCoreCleanConstants",
     "TestsFlextCoreCleanModels",
     "TestsFlextCoreCleanProtocols",
+    "TestsFlextCoreCleanServiceBase",
     "TestsFlextCoreConstants",
     "TestsFlextCoreConstantsDomain",
     "TestsFlextCoreConstantsErrors",
