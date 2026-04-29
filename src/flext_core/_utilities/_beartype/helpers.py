@@ -300,10 +300,6 @@ class FlextUtilitiesBeartypeHelpers:
     #     can import helpers top-level without cyclic imports ---
 
     @staticmethod
-    def contains_any(hint: t.TypeHintSpecifier | None) -> bool:
-        return FlextUtilitiesBeartypeHelpers.contains_any_recursive(hint, seen=set())
-
-    @staticmethod
     def count_union_members(hint: t.TypeHintSpecifier | None) -> int:
         h = FlextUtilitiesBeartypeHelpers
         h2 = h.unwrap_type_alias(hint)
@@ -323,7 +319,7 @@ class FlextUtilitiesBeartypeHelpers:
     def alias_contains_any(alias_value: t.TypeHintSpecifier | None) -> bool:
         h = FlextUtilitiesBeartypeHelpers
         try:
-            return h.contains_any(alias_value)
+            return h.contains_any_recursive(alias_value, seen=set())
         except (TypeError, AttributeError, RuntimeError, RecursionError):
             return "Any" in str(alias_value)
 

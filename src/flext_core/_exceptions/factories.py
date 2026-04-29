@@ -10,12 +10,12 @@ from importlib import import_module
 from typing import TYPE_CHECKING
 
 from flext_core import (
+    FlextConstants as c,
     FlextExceptionsTemplate,
     FlextModelsExceptionParams as m,
     FlextModelsPydantic as mp,
-    c,
-    p,
-    t,
+    FlextProtocols as p,
+    FlextTypes as t,
 )
 
 if TYPE_CHECKING:
@@ -116,11 +116,12 @@ class FlextExceptionsFactories:
             params=params,
             error=exc,
         )
-        return FlextExceptionsFactories._result_type(result_type).fail(
+        return FlextExceptionsFactories._fail_result(
             msg,
-            error_code=error_code or c.ErrorCode.OPERATION_ERROR,
-            error_data=FlextExceptionsTemplate.result_error_data(params),
-            exception=exc if isinstance(exc, BaseException) else None,
+            params,
+            options=m.ExceptionFactoryOptions(error=exc) if exc is not None else None,
+            default_error_code=error_code or c.ErrorCode.OPERATION_ERROR,
+            result_type=result_type,
         )
 
     @staticmethod
@@ -147,10 +148,11 @@ class FlextExceptionsFactories:
             name=resource_id,
             params=params,
         )
-        return FlextExceptionsFactories._result_type(result_type).fail(
+        return FlextExceptionsFactories._fail_result(
             msg,
-            error_code=error_code or c.ErrorCode.NOT_FOUND_ERROR,
-            error_data=FlextExceptionsTemplate.result_error_data(params),
+            params,
+            default_error_code=error_code or c.ErrorCode.NOT_FOUND_ERROR,
+            result_type=result_type,
         )
 
     @staticmethod
@@ -193,10 +195,11 @@ class FlextExceptionsFactories:
             type_name=expected_type,
             params=params,
         )
-        return FlextExceptionsFactories._result_type(result_type).fail(
+        return FlextExceptionsFactories._fail_result(
             msg,
-            error_code=error_code or c.ErrorCode.TYPE_ERROR,
-            error_data=FlextExceptionsTemplate.result_error_data(params),
+            params,
+            default_error_code=error_code or c.ErrorCode.TYPE_ERROR,
+            result_type=result_type,
         )
 
     @staticmethod
@@ -238,14 +241,14 @@ class FlextExceptionsFactories:
                 params=params,
             )
         )
-        return FlextExceptionsFactories._result_type(result_type).fail(
+        return FlextExceptionsFactories._fail_result(
             base_msg,
-            error_code=error_code or c.ErrorCode.VALIDATION_ERROR,
-            error_data=FlextExceptionsTemplate.result_error_data(
-                params,
-                cause=str(error) if error is not None else None,
-            ),
-            exception=error if isinstance(error, BaseException) else None,
+            params,
+            options=m.ExceptionFactoryOptions(error=error)
+            if error is not None
+            else None,
+            default_error_code=error_code or c.ErrorCode.VALIDATION_ERROR,
+            result_type=result_type,
         )
 
     @staticmethod
@@ -339,10 +342,11 @@ class FlextExceptionsFactories:
             f"{op_label} (timeout={timeout_seconds}s)",
             params=params,
         )
-        return FlextExceptionsFactories._result_type(result_type).fail(
+        return FlextExceptionsFactories._fail_result(
             msg,
-            error_code=error_code or c.ErrorCode.TIMEOUT_ERROR,
-            error_data=FlextExceptionsTemplate.result_error_data(params),
+            params,
+            default_error_code=error_code or c.ErrorCode.TIMEOUT_ERROR,
+            result_type=result_type,
         )
 
     @staticmethod

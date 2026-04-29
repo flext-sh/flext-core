@@ -73,6 +73,5 @@ class FlextUtilities(
     """
 
 
-__all__: list[str] = ["FlextUtilities", "u"]
-
 u = FlextUtilities
+__all__: list[str] = ["FlextUtilities", "u"]

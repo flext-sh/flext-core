@@ -12,7 +12,7 @@ from flext_core._protocols.base import FlextProtocolsBase as p
 from flext_core._protocols.result import FlextProtocolsResult as pr
 
 if TYPE_CHECKING:
-    from flext_core.typings import t
+    from flext_core.typings import FlextTypes as t
 
 
 class FlextProtocolsSettings:
@@ -83,7 +83,7 @@ class FlextProtocolsSettings:
             """
             ...
 
-        def clone(self, **overrides: t.Scalar) -> Self:
+        def clone(self, **overrides: t.JsonPayload | None) -> Self:
             """Create a deep copy with optional field overrides.
 
             This is the canonical way for containers and services to obtain an

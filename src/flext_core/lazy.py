@@ -170,6 +170,7 @@ class FlextLazy(BaseModel):
         module_name: str,
     ) -> object:
         """Resolve one lazy symbol and cache it."""
+        lazy_imports = self._norm_map(module_name, lazy_imports)
         entry = lazy_imports.get(name)
         if entry is None:
             msg = f"module {module_name!r} has no attribute {name!r}"

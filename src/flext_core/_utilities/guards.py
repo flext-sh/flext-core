@@ -16,11 +16,11 @@ from typing import ClassVar
 
 from flext_core import (
     FlextModelsCollections,
+    FlextResult as r,
+    FlextTypes as t,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesGuardsTypeProtocol,
-    r,
-    t,
 )
 
 
@@ -30,14 +30,6 @@ class FlextUtilitiesGuards(
     FlextUtilitiesGuardsTypeProtocol,
 ):
     """Unified guard utilities: type narrowing + chk/guard validation engines."""
-
-    @staticmethod
-    def _equal(value: t.GuardInput, comparator: t.GuardInput) -> bool:
-        return object.__eq__(value, comparator)
-
-    @staticmethod
-    def _not_equal(value: t.GuardInput, comparator: t.GuardInput) -> bool:
-        return not object.__eq__(value, comparator)
 
     @staticmethod
     def _in_list(value: t.GuardInput, container: t.JsonList) -> bool:
@@ -50,8 +42,8 @@ class FlextUtilitiesGuards(
     _EQUALITY_OPS: ClassVar[
         Mapping[str, Callable[[t.GuardInput, t.GuardInput], bool]]
     ] = {
-        "eq": _equal,
-        "ne": _not_equal,
+        "eq": object.__eq__,
+        "ne": lambda value, comparator: not object.__eq__(value, comparator),
     }
     _MEMBERSHIP_OPS: ClassVar[
         Mapping[str, Callable[[t.GuardInput, t.JsonList], bool]]

@@ -19,15 +19,15 @@ from datetime import UTC, datetime
 from typing import Annotated, ClassVar, no_type_check
 
 from flext_core import (
+    FlextConstants as c,
     FlextModelsBase as m,
     FlextModelsContainers,
     FlextModelsPydantic as mp,
+    FlextProtocols as p,
     FlextRuntime,
+    FlextTypes as t,
     FlextTypesPydantic as tp,
     FlextUtilitiesPydantic as up,
-    c,
-    p,
-    t,
 )
 
 
@@ -476,7 +476,6 @@ class FlextModelsContainer:
         ] = True
 
 
-mc = FlextModelsContainer
 _ = no_type_check(FlextModelsContainer)
 
-__all__: list[str] = ["FlextModelsContainer", "mc"]
+__all__: list[str] = ["FlextModelsContainer"]

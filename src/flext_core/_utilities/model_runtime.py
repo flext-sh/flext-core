@@ -6,11 +6,11 @@ from collections.abc import Mapping
 from importlib import import_module
 
 from flext_core import (
+    FlextModels as m,
+    FlextProtocols as p,
+    FlextTypes as t,
     FlextUtilitiesDiscovery,
     FlextUtilitiesGuardsTypeProtocol,
-    m,
-    p,
-    t,
 )
 from flext_core._utilities.model_options import FlextUtilitiesModelOptions
 
@@ -94,7 +94,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         )
         if settings_instance is not None:
             return (
-                settings_instance.model_copy(update=settings_overrides, deep=True)
+                settings_instance.clone(**settings_overrides)
                 if settings_overrides
                 else settings_instance
             )

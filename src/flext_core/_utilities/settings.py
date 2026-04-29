@@ -15,7 +15,13 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from flext_core import c, e, p, r, t
+from flext_core import (
+    FlextConstants as c,
+    FlextExceptions as e,
+    FlextProtocols as p,
+    FlextResult as r,
+    FlextTypes as t,
+)
 
 
 class FlextUtilitiesSettings:

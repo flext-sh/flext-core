@@ -10,10 +10,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from flext_core import (
+    FlextModels as m,
+    FlextProtocols as p,
+    FlextTypes as t,
     FlextUtilitiesModel,
-    m,
-    p,
-    t,
 )
 
 

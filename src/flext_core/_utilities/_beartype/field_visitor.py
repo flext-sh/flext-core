@@ -50,7 +50,9 @@ class FlextUtilitiesBeartypeFieldVisitor:
         info: FieldInfo,
     ) -> t.StrMapping | None:
         violation: t.StrMapping | None = None
-        if params.forbid_any and _ubh.contains_any(info.annotation):
+        if params.forbid_any and _ubh.contains_any_recursive(
+            info.annotation, seen=set()
+        ):
             violation = {}
         elif params.forbid_bare_collection:
             bad, origin = _ubh.has_forbidden_collection_origin(

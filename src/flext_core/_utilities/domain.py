@@ -17,12 +17,12 @@ from collections.abc import (
 from typing import TYPE_CHECKING
 
 from flext_core import (
+    FlextConstants as c,
     FlextModelsBase as m,
     FlextModelsContainers as mc,
     FlextModelsDomainEvent as mde,
+    FlextTypes as t,
     FlextUtilitiesGuards as u,
-    c,
-    t,
 )
 
 if TYPE_CHECKING:

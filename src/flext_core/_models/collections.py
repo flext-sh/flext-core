@@ -12,11 +12,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import (
-    FlextModelsBase as m,
-    FlextModelsPydantic as mp,
-    t,
-)
+from flext_core import FlextModelsBase as m, FlextModelsPydantic as mp, FlextTypes as t
 
 
 class FlextModelsCollections:

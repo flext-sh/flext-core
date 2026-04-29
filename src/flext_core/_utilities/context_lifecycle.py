@@ -15,13 +15,13 @@ from collections.abc import (
 from typing import ClassVar, Self
 
 from flext_core import (
+    FlextConstants as c,
+    FlextModels as m,
+    FlextProtocols as p,
     FlextRuntime,
+    FlextTypes as t,
     FlextUtilitiesContextCrud,
     FlextUtilitiesGuardsTypeCore,
-    c,
-    m,
-    p,
-    t,
 )
 
 

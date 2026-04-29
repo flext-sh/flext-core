@@ -40,8 +40,8 @@ class FlextModels(
     FlextModelsBase,
     FlextModelsBuilder,
     FlextModelsCollections,
-    FlextModelsContainer,
     FlextModelsContainers,
+    FlextModelsContainer,
     FlextModelsContext,
     FlextModelsCqrs,
     FlextModelsDispatcher,
@@ -78,5 +78,6 @@ class FlextModels(
 
 
 m = FlextModels
+
 
 __all__: list[str] = ["FlextModels", "m"]

@@ -20,7 +20,7 @@ from typing import Annotated, override
 from examples import c, d, m, p, r, s, t, u
 
 
-class ExamplesFlextDatabaseService(s):
+class ExamplesFlextDatabaseService(s[m.ConfigMap]):
     """Example service showing settings log-once pattern."""
 
     db_config: Annotated[
@@ -64,7 +64,7 @@ class ExamplesFlextDatabaseService(s):
         )
 
 
-class ExamplesFlextMigrationService(s):
+class ExamplesFlextMigrationService(s[m.ConfigMap]):
     """Example migration service with settings log-once pattern."""
 
     input_dir: Annotated[

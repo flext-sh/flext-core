@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from flext_core import m, p, t
+from flext_core import FlextTypes, m, p
 
 
-class ExamplesFlextTypes(t):
+class ExamplesFlextTypes(FlextTypes):
     """Examples-specific type aliases built from canonical flext-core contracts."""
 
     class Examples:

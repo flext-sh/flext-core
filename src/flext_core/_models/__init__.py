@@ -16,11 +16,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".base": ("FlextModelsBase",),
             ".builder": ("FlextModelsBuilder",),
             ".collections": ("FlextModelsCollections",),
-            ".container": (
-                "FlextModelsContainer",
+            ".container": ("FlextModelsContainer",),
+            ".containers": (
+                "FlextModelsContainers",
                 "mc",
             ),
-            ".containers": ("FlextModelsContainers",),
             ".context": ("FlextModelsContext",),
             ".cqrs": ("FlextModelsCqrs",),
             ".dispatcher": ("FlextModelsDispatcher",),

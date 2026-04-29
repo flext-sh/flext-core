@@ -20,7 +20,6 @@ from collections.abc import (
 )
 from enum import StrEnum
 from functools import cache
-from typing import no_type_check
 
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.annotateds import FlextTypesAnnotateds as ta
@@ -35,7 +34,6 @@ StrictValue = (
 )
 
 
-@no_type_check
 class FlextTypesTypeAdapters:
     """Cached mp.TypeAdapter factories shared through the ``t`` facade."""
 

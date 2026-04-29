@@ -16,7 +16,7 @@ from collections.abc import (
 )
 from types import ModuleType
 
-from flext_core import FlextModelsContainer, c, t
+from flext_core import FlextConstants as c, FlextModelsContainer, FlextTypes as t
 
 
 class FlextUtilitiesDiscovery:

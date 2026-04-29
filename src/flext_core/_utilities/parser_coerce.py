@@ -8,23 +8,23 @@ helpers in :mod:`parser_targets` and :mod:`parser` via MRO composition.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import no_type_check
+from typing import TypeVar
 
 from flext_core import (
-    FlextModelsBase,
-    c,
-    m,
-    p,
-    r,
-    t,
+    FlextConstants as c,
+    FlextModels as m,
+    FlextProtocols as p,
+    FlextResult as r,
+    FlextTypes as t,
 )
 
+T = TypeVar("T")
 
-@no_type_check
+
 class FlextUtilitiesParserCoerce:
     """Primitive coercion + string normalization + default fallback."""
 
-    class ParseOptions[T](FlextModelsBase.FlexibleInternalModel):
+    class ParseOptions[T](m.FlexibleInternalModel):
         """Options controlling parsing behavior for string-to-type conversion."""
 
         strict: bool | None = m.Field(

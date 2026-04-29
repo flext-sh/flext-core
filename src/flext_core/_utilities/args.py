@@ -12,7 +12,14 @@ from collections.abc import (
     Mapping,
 )
 
-from flext_core import c, e, m, p, r, t
+from flext_core import (
+    FlextConstants as c,
+    FlextExceptions as e,
+    FlextModels as m,
+    FlextProtocols as p,
+    FlextResult as r,
+    FlextTypes as t,
+)
 
 
 class FlextUtilitiesArgs:

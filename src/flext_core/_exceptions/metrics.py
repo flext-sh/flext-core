@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import FlextModelsErrors, t
+from flext_core import FlextModelsErrors, FlextTypes as t
 
 
 class FlextExceptionsMetrics:

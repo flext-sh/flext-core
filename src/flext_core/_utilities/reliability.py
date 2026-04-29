@@ -19,7 +19,14 @@ from typing import Annotated, no_type_check
 
 from pydantic import Field
 
-from flext_core import FlextModelsBase as m, FlextUtilitiesArgs, c, p, r, t
+from flext_core import (
+    FlextConstants as c,
+    FlextModelsBase as m,
+    FlextProtocols as p,
+    FlextResult as r,
+    FlextTypes as t,
+    FlextUtilitiesArgs,
+)
 
 
 @no_type_check

@@ -157,4 +157,6 @@ class FlextModelsContainers:
             return bool(self.root)
 
 
-__all__: list[str] = ["FlextModelsContainers"]
+mc = FlextModelsContainers
+
+__all__: list[str] = ["FlextModelsContainers", "mc"]

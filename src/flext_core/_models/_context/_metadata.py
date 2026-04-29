@@ -13,11 +13,11 @@ from types import MappingProxyType
 from typing import Annotated, Self
 
 from flext_core import (
+    FlextConstants as c,
     FlextModelsBase as m,
     FlextModelsPydantic as mp,
+    FlextTypes as t,
     FlextUtilitiesPydantic as up,
-    c,
-    t,
 )
 from flext_core._models._context._data import FlextModelsContextData
 

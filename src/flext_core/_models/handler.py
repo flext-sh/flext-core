@@ -19,13 +19,13 @@ from collections.abc import (
 from typing import Annotated, ClassVar
 
 from flext_core import (
+    FlextConstants as c,
     FlextModelsBase as m,
     FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
+    FlextProtocols as p,
+    FlextTypes as t,
     FlextUtilitiesPydantic as up,
-    c,
-    p,
-    t,
 )
 
 

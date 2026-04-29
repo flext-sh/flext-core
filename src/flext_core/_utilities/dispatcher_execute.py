@@ -13,13 +13,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import (
+    FlextConstants as c,
+    FlextProtocols as p,
+    FlextResult as r,
+    FlextTypes as t,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesGuardsTypeProtocol,
-    c,
-    p,
-    r,
-    t,
 )
 
 

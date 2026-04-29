@@ -14,12 +14,12 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 
 from flext_core import (
+    FlextConstants as c,
     FlextModelsContainers as mc,
+    FlextProtocols as p,
+    FlextResult as r,
     FlextRuntime,
-    c,
-    p,
-    r,
-    t,
+    FlextTypes as t,
 )
 from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
 from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge

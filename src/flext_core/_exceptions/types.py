@@ -15,13 +15,13 @@ from typing import ClassVar
 from pydantic import ValidationError as _PydanticValidationError
 
 from flext_core import (
+    FlextConstants as c,
     FlextExceptionsBase,
     FlextExceptionsHelpers,
     FlextModelsExceptionParams as m,
     FlextModelsPydantic as mp,
     FlextRuntime,
-    c,
-    t,
+    FlextTypes as t,
 )
 
 

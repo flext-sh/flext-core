@@ -200,6 +200,37 @@ class TestsFlextCoverageExceptions:
                 "conflict_reason": "duplicate",
             },
         ),
+        (
+            "operation",
+            lambda: e.fail_operation("resolve service", "timeout"),
+            "resolve service",
+            c.ErrorCode.OPERATION_ERROR,
+            {"operation": "resolve service", "reason": "timeout"},
+        ),
+        (
+            "not_found",
+            lambda: e.fail_not_found("service", "my-service"),
+            "my-service",
+            c.ErrorCode.NOT_FOUND_ERROR,
+            {"resource_type": "service", "resource_id": "my-service"},
+        ),
+        (
+            "type_mismatch",
+            lambda: e.fail_type_mismatch("FlextLogger", "str"),
+            "FlextLogger",
+            c.ErrorCode.TYPE_ERROR,
+            {"expected_type": "FlextLogger", "actual_type": "str"},
+        ),
+        (
+            "validation",
+            lambda: e.fail_validation(
+                m.ValidationErrorParams(field="email", value="bad"),
+                error="invalid",
+            ),
+            "validate email",
+            c.ErrorCode.VALIDATION_ERROR,
+            {"field": "email", "value": "bad"},
+        ),
     ]
 
     @pytest.mark.parametrize(

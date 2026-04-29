@@ -10,7 +10,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from flext_core import c, t
+from flext_core import FlextConstants as c, FlextTypes as t
 
 
 class FlextSettingsDatabase:

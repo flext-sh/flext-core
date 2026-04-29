@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import t
+from flext_core import FlextTypes as t
 
 
 class FlextSettingsContext:

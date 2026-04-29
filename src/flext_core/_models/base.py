@@ -21,12 +21,12 @@ from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
 from flext_core import (
+    FlextConstants as c,
     FlextModelsPydantic as mp,
     FlextRuntime as ur,
+    FlextTypes as t,
     FlextUtilitiesEnforcement as ue,
     FlextUtilitiesPydantic as up,
-    c,
-    t,
 )
 
 

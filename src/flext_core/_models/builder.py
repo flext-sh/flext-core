@@ -11,7 +11,7 @@ from collections.abc import (
 )
 from typing import Self, override
 
-from flext_core import FlextModelsBase as m, c, t
+from flext_core import FlextConstants as c, FlextModelsBase as m, FlextTypes as t
 
 
 class FlextModelsBuilder:

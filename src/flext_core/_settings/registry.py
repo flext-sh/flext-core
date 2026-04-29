@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, MutableMapping
 from typing import ClassVar
 
-from flext_core import c, p, t
+from flext_core import FlextConstants as c, FlextProtocols as p, FlextTypes as t
 
 
 class FlextSettingsRegistry:

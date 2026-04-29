@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import c, t
+from flext_core import FlextConstants as c, FlextTypes as t
 
 
 class FlextUtilitiesText:

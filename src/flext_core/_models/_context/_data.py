@@ -16,8 +16,8 @@ from pydantic import BeforeValidator, field_validator
 
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core.constants import c
-from flext_core.typings import t
+from flext_core.constants import FlextConstants as c
+from flext_core.typings import FlextTypes as t
 
 
 class FlextModelsContextData:

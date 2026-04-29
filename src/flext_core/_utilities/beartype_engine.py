@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from types import MappingProxyType
-from typing import ClassVar, no_type_check
+from typing import ClassVar, no_type_check, override
 
 # Side-effect: monkey-patch beartype cave so typing_extensions.TypeAliasType
 # (used by pydantic.JsonValue et al.) is accepted as a PEP-695 alias.
@@ -36,7 +36,9 @@ from flext_core._utilities._beartype.deprecated_visitor import (
 from flext_core._utilities._beartype.field_visitor import (
     FlextUtilitiesBeartypeFieldVisitor,
 )
-from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
+from flext_core._utilities._beartype.helpers import (
+    FlextUtilitiesBeartypeHelpers,
+)
 from flext_core._utilities._beartype.import_visitor import (
     FlextUtilitiesBeartypeImportVisitor,
 )
@@ -52,6 +54,7 @@ _NO_VIOLATION: t.StrMapping | None = None
 
 @no_type_check
 class FlextUtilitiesBeartypeEngine(
+    FlextUtilitiesBeartypeHelpers,
     FlextUtilitiesBeartypeFieldVisitor,
     FlextUtilitiesBeartypeAttrVisitor,
     FlextUtilitiesBeartypeMethodVisitor,
@@ -61,57 +64,6 @@ class FlextUtilitiesBeartypeEngine(
     FlextUtilitiesBeartypeDeprecatedVisitor,
 ):
     """Annotation inspection + per-tag rule predicates via data-driven visitors."""
-
-    unwrap_type_alias = staticmethod(FlextUtilitiesBeartypeHelpers.unwrap_type_alias)
-    unwrap_annotated = staticmethod(FlextUtilitiesBeartypeHelpers.unwrap_annotated)
-    runtime_module_for = staticmethod(FlextUtilitiesBeartypeHelpers.runtime_module_for)
-    runtime_wrapper_module_for = staticmethod(
-        FlextUtilitiesBeartypeHelpers.runtime_wrapper_module_for
-    )
-    iter_module_callables = staticmethod(
-        FlextUtilitiesBeartypeHelpers.iter_module_callables
-    )
-    function_param_names = staticmethod(
-        FlextUtilitiesBeartypeHelpers.function_param_names
-    )
-    is_pass_through_bytecode = staticmethod(
-        FlextUtilitiesBeartypeHelpers.is_pass_through_bytecode
-    )
-    has_call_to_global = staticmethod(FlextUtilitiesBeartypeHelpers.has_call_to_global)
-    has_attribute_call = staticmethod(FlextUtilitiesBeartypeHelpers.has_attribute_call)
-    has_private_attr_probe = staticmethod(
-        FlextUtilitiesBeartypeHelpers.has_private_attr_probe
-    )
-    has_runtime_protocol_marker = staticmethod(
-        FlextUtilitiesBeartypeHelpers.has_runtime_protocol_marker
-    )
-    has_abstract_contract = staticmethod(
-        FlextUtilitiesBeartypeHelpers.has_abstract_contract
-    )
-    has_nested_namespace = staticmethod(
-        FlextUtilitiesBeartypeHelpers.has_nested_namespace
-    )
-    has_forbidden_collection_origin = staticmethod(
-        FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin
-    )
-    contains_any = staticmethod(FlextUtilitiesBeartypeHelpers.contains_any)
-    count_union_members = staticmethod(
-        FlextUtilitiesBeartypeHelpers.count_union_members
-    )
-    matches_str_none_union = staticmethod(
-        FlextUtilitiesBeartypeHelpers.matches_str_none_union
-    )
-    alias_contains_any = staticmethod(FlextUtilitiesBeartypeHelpers.alias_contains_any)
-    mutable_kind = staticmethod(FlextUtilitiesBeartypeHelpers.mutable_kind)
-    mutable_default_factory_kind = staticmethod(
-        FlextUtilitiesBeartypeHelpers.mutable_default_factory_kind
-    )
-    allows_mutable_default_factory = staticmethod(
-        FlextUtilitiesBeartypeHelpers.allows_mutable_default_factory
-    )
-    has_relaxed_extra_base = staticmethod(
-        FlextUtilitiesBeartypeHelpers.has_relaxed_extra_base
-    )
 
     @staticmethod
     def defined_inside(inner_cls: type, outer_qualname: str) -> bool:
@@ -138,6 +90,49 @@ class FlextUtilitiesBeartypeEngine(
         return (
             name not in c.ENFORCEMENT_UTILITIES_EXEMPT_METHODS
         ) and not name.startswith("_")
+
+    @staticmethod
+    def contains_any(hint: t.TypeHintSpecifier | None) -> bool:
+        return FlextUtilitiesBeartypeHelpers.contains_any_recursive(
+            hint,
+            seen=set(),
+        )
+
+    @override
+    @staticmethod
+    def has_forbidden_collection_origin(
+        hint: t.TypeHintSpecifier | None,
+        forbidden: frozenset[str],
+    ) -> tuple[bool, str]:
+        return FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin(
+            hint,
+            forbidden,
+        )
+
+    @override
+    @staticmethod
+    def has_runtime_protocol_marker(value: type) -> bool:
+        return FlextUtilitiesBeartypeHelpers.has_runtime_protocol_marker(value)
+
+    @override
+    @staticmethod
+    def has_nested_namespace(value: type) -> bool:
+        return FlextUtilitiesBeartypeHelpers.has_nested_namespace(value)
+
+    @override
+    @staticmethod
+    def count_union_members(hint: t.TypeHintSpecifier | None) -> int:
+        return FlextUtilitiesBeartypeHelpers.count_union_members(hint)
+
+    @override
+    @staticmethod
+    def matches_str_none_union(hint: t.TypeHintSpecifier | None) -> bool:
+        return FlextUtilitiesBeartypeHelpers.matches_str_none_union(hint)
+
+    @override
+    @staticmethod
+    def alias_contains_any(alias_value: t.TypeHintSpecifier | None) -> bool:
+        return FlextUtilitiesBeartypeHelpers.alias_contains_any(alias_value)
 
     @classmethod
     def apply(
@@ -169,4 +164,5 @@ class FlextUtilitiesBeartypeEngine(
 
 
 ube = FlextUtilitiesBeartypeEngine
+
 __all__: list[str] = ["FlextUtilitiesBeartypeEngine", "ube"]

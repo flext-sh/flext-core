@@ -10,7 +10,7 @@ from typing import Annotated
 
 from pydantic import BeforeValidator, Field, computed_field
 
-from flext_core import c, t, u
+from flext_core import FlextConstants as c, FlextTypes as t, FlextUtilities as u
 
 
 class FlextSettingsCore:

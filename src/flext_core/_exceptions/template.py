@@ -10,7 +10,12 @@ from collections.abc import (
     Mapping,
 )
 
-from flext_core import FlextModelsContainers as mc, FlextModelsPydantic as mp, c, t
+from flext_core import (
+    FlextConstants as c,
+    FlextModelsContainers as mc,
+    FlextModelsPydantic as mp,
+    FlextTypes as t,
+)
 from flext_core.runtime import FlextRuntime
 
 

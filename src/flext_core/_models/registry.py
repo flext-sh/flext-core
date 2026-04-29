@@ -16,9 +16,9 @@ from flext_core import (
     FlextModelsEntity,
     FlextModelsHandler,
     FlextModelsPydantic as mp,
+    FlextProtocols as p,
+    FlextTypes as t,
     FlextUtilitiesPydantic as up,
-    p,
-    t,
 )
 
 

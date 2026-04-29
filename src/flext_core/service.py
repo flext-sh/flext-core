@@ -14,7 +14,7 @@ from typing import ClassVar
 
 from pydantic import ConfigDict
 
-from flext_core import p, t, x
+from flext_core import FlextMixins as x, FlextProtocols as p, FlextTypes as t
 
 
 class FlextService[TDomainResult: p.Base = p.Base](x):

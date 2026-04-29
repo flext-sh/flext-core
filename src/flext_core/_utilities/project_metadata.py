@@ -24,7 +24,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import ClassVar
 
-from flext_core import t
+from flext_core import FlextTypes as t
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 

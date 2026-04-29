@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, t, u
+from flext_core import FlextConstants as c, FlextTypes as t, FlextUtilities as u
 
 
 class FlextSettingsDI:

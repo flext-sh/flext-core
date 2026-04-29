@@ -18,7 +18,7 @@ from flext_core import (
     FlextModelsBase as m,
     FlextModelsContainers,
     FlextModelsEntity,
-    t,
+    FlextTypes as t,
 )
 from flext_core._models._context._data import FlextModelsContextData
 

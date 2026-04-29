@@ -14,11 +14,11 @@ from typing import no_type_check
 from pydantic import ValidationError as PydanticValidationError
 
 from flext_core import (
+    FlextConstants as c,
     FlextModelsBase as m,
+    FlextProtocols as p,
     FlextRuntime,
-    c,
-    p,
-    t,
+    FlextTypes as t,
 )
 
 

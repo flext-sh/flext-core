@@ -16,7 +16,7 @@ from collections.abc import (
 from enum import StrEnum
 from typing import ClassVar
 
-from flext_core import t
+from flext_core import FlextTypes as t
 
 
 class FlextUtilitiesEnum:

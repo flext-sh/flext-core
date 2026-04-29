@@ -25,11 +25,11 @@ from pydantic import (
 )
 
 from flext_core import (
+    FlextConstants as c,
     FlextModelsBase as m,
     FlextRuntime as ur,
+    FlextTypes as t,
     FlextUtilitiesGenerators as ug,
-    c,
-    t,
 )
 
 

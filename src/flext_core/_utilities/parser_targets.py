@@ -7,13 +7,13 @@ from enum import StrEnum
 from typing import no_type_check
 
 from flext_core import (
+    FlextConstants as c,
     FlextModelsPydantic,
+    FlextProtocols as p,
+    FlextResult as r,
+    FlextTypes as t,
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesModel,
-    c,
-    p,
-    r,
-    t,
 )
 from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
 

@@ -28,7 +28,12 @@ from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 from structlog.types import Processor
 
-from flext_core import FlextModelsPydantic as mp, c, p, t
+from flext_core import (
+    FlextConstants as c,
+    FlextModelsPydantic as mp,
+    FlextProtocols as p,
+    FlextTypes as t,
+)
 
 
 class FlextUtilitiesLoggingConfig:
@@ -165,12 +170,6 @@ class FlextUtilitiesLoggingConfig:
             cls._structlog_configured = True
 
     @staticmethod
-    def _structlog_processor(
-        value: Processor | typing.Callable[..., t.JsonPayload] | t.JsonValue | None,
-    ) -> typing.TypeIs[Processor]:
-        return callable(value)
-
-    @staticmethod
     def structlog() -> types.ModuleType:
         """Return the imported structlog module."""
         return structlog
@@ -241,9 +240,7 @@ class FlextUtilitiesLoggingConfig:
             StackInfoRenderer(),
         ]
         if additional_processors:
-            processors.extend(
-                proc for proc in additional_processors if cls._structlog_processor(proc)
-            )
+            processors.extend(proc for proc in additional_processors if callable(proc))
         if console_renderer:
             processors.append(structlog.dev.ConsoleRenderer(colors=True))
         else:

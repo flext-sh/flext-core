@@ -37,12 +37,12 @@ from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
 from flext_core import (
+    FlextConstants as c,
     FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
     FlextProtocolsLogging as pl,
     FlextProtocolsResult as p,
-    c,
-    t,
+    FlextTypes as t,
 )
 from flext_core.runtime import FlextRuntime
 
@@ -679,6 +679,5 @@ class FlextResult[T](BaseModel, p.Result[T]):
 
 
 r = FlextResult
-
 
 __all__: list[str] = ["FlextResult", "r"]

@@ -21,7 +21,13 @@ from typing import ClassVar, Self
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from flext_core import c, e, p, t, u
+from flext_core import (
+    FlextConstants as c,
+    FlextExceptions as e,
+    FlextProtocols as p,
+    FlextTypes as t,
+    FlextUtilities as u,
+)
 from flext_core._models.settings import FlextModelsSettings
 from flext_core._settings.base import FlextSettingsBase
 from flext_core._settings.context import FlextSettingsContext
@@ -88,7 +94,7 @@ class FlextSettings(
         )
         return copied
 
-    def clone(self, **overrides: t.Scalar) -> Self:
+    def clone(self, **overrides: t.JsonPayload | None) -> Self:
         """Create a deep copy with optional field overrides and re-validation.
 
         This is the canonical way for containers and services to obtain an

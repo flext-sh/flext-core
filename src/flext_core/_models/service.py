@@ -19,9 +19,9 @@ from typing import Annotated
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsPydantic as mp,
+    FlextProtocols as p,
+    FlextTypes as t,
     FlextUtilitiesPydantic as up,
-    p,
-    t,
 )
 
 

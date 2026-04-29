@@ -20,7 +20,13 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextModelsBase as m, FlextModelsPydantic as mp, c, p, t
+from flext_core import (
+    FlextConstants as c,
+    FlextModelsBase as m,
+    FlextModelsPydantic as mp,
+    FlextProtocols as p,
+    FlextTypes as t,
+)
 
 
 class FlextModelsSettings:

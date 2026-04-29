@@ -9,11 +9,7 @@ from typing import TypeIs
 
 from pydantic import BaseModel as PydanticBaseModel
 
-from flext_core import (
-    FlextModelsPydantic as mp,
-    p,
-    t,
-)
+from flext_core import FlextModelsPydantic as mp, FlextProtocols as p, FlextTypes as t
 
 
 class FlextUtilitiesGuardsTypeModel:

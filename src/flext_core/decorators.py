@@ -20,7 +20,17 @@ from contextlib import suppress
 from functools import wraps
 from typing import Literal, TypedDict, TypeIs, overload
 
-from flext_core import FlextContainer, FlextContext, c, e, m, p, r, t, u
+from flext_core import (
+    FlextConstants as c,
+    FlextContainer,
+    FlextContext,
+    FlextExceptions as e,
+    FlextModels as m,
+    FlextProtocols as p,
+    FlextResult as r,
+    FlextTypes as t,
+    FlextUtilities as u,
+)
 
 
 class _CombinedRailwayDisabledOptions(TypedDict, total=False):

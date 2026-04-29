@@ -18,7 +18,7 @@ from typing import TypeIs, no_type_check
 
 from pydantic import BaseModel as PydanticBaseModel
 
-from flext_core import t
+from flext_core import FlextTypes as t
 
 
 @no_type_check

@@ -52,8 +52,8 @@ if _t.TYPE_CHECKING:
     from flext_core._models.base import FlextModelsBase
     from flext_core._models.builder import FlextModelsBuilder
     from flext_core._models.collections import FlextModelsCollections
-    from flext_core._models.container import FlextModelsContainer, mc
-    from flext_core._models.containers import FlextModelsContainers
+    from flext_core._models.container import FlextModelsContainer
+    from flext_core._models.containers import FlextModelsContainers, mc
     from flext_core._models.context import FlextModelsContext
     from flext_core._models.cqrs import FlextModelsCqrs
     from flext_core._models.dispatcher import FlextModelsDispatcher
@@ -241,11 +241,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._models.base": ("FlextModelsBase",),
             "._models.builder": ("FlextModelsBuilder",),
             "._models.collections": ("FlextModelsCollections",),
-            "._models.container": (
-                "FlextModelsContainer",
+            "._models.container": ("FlextModelsContainer",),
+            "._models.containers": (
+                "FlextModelsContainers",
                 "mc",
             ),
-            "._models.containers": ("FlextModelsContainers",),
             "._models.context": ("FlextModelsContext",),
             "._models.cqrs": ("FlextModelsCqrs",),
             "._models.dispatcher": ("FlextModelsDispatcher",),

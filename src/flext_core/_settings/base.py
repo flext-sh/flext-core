@@ -12,7 +12,7 @@ from __future__ import annotations
 import threading
 from typing import ClassVar, Self
 
-from flext_core import t
+from flext_core import FlextTypes as t
 
 
 class FlextSettingsBase:
@@ -25,10 +25,11 @@ class FlextSettingsBase:
 
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _singleton_enabled: ClassVar[bool] = True
+    _instance: ClassVar[FlextSettingsBase | None] = None
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
-        cls._instance: object = None
+        cls._instance = None
 
     def __new__(cls, **kwargs: t.SettingsInput) -> Self:
         """Create singleton instance.

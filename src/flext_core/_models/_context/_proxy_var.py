@@ -13,7 +13,7 @@ from datetime import datetime
 
 import structlog.contextvars
 
-from flext_core import t
+from flext_core import FlextTypes as t
 from flext_core._models._context._tokens import FlextModelsContextTokens
 
 

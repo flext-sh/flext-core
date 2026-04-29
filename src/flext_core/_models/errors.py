@@ -11,8 +11,8 @@ from typing import Annotated, Self
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsPydantic as mp,
+    FlextTypes as t,
     FlextUtilitiesPydantic as up,
-    t,
 )
 
 

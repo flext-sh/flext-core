@@ -17,15 +17,15 @@ from typing import ClassVar, override
 from pydantic import ValidationError as PydanticValidationError
 
 from flext_core import (
+    FlextConstants as c,
     FlextExceptionsHelpers,
     FlextModelsBase as m,
     FlextModelsContainers as mc,
     FlextModelsErrors,
     FlextModelsPydantic as mp,
+    FlextProtocols as p,
     FlextRuntime,
-    c,
-    p,
-    t,
+    FlextTypes as t,
 )
 
 

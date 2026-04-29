@@ -19,7 +19,14 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Annotated, ClassVar, Self
 
-from flext_core import c, m, p, r, t, u
+from flext_core import (
+    FlextConstants as c,
+    FlextModels as m,
+    FlextProtocols as p,
+    FlextResult as r,
+    FlextTypes as t,
+    FlextUtilities as u,
+)
 
 
 class FlextContext(m.ManagedModel):

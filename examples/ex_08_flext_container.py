@@ -126,7 +126,7 @@ class Ex08FlextContainer(ExamplesFlextShared):
         )
         container.initialize_registrations(
             registration=m.ServiceRegistrationSpec(
-                settings=root.settings.model_copy(deep=True),
+                settings=root.settings.clone(),
                 context=root.context,
             ),
         )
@@ -383,8 +383,8 @@ class Ex08FlextContainer(ExamplesFlextShared):
         subproject_beta = self.rand_str(6)
         scoped_subproject = container.scope(subproject=subproject_alpha)
         explicit_context = container.context
-        explicit_settings = container.settings.model_copy(
-            update={"app_name": f"scoped.{self.rand_str(8)}"},
+        explicit_settings = container.settings.clone(
+            app_name=f"scoped.{self.rand_str(8)}",
         )
         scoped_service_name = f"svc.{self.rand_str(6)}"
         scoped_factory_name = f"svc.{self.rand_str(6)}"

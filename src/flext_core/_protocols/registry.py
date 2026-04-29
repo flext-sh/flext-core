@@ -22,8 +22,8 @@ from flext_core._protocols.result import FlextProtocolsResult
 
 if TYPE_CHECKING:
     from flext_core._protocols.handler import FlextProtocolsHandler
-    from flext_core.models import m
-    from flext_core.typings import t
+    from flext_core.models import FlextModels as m
+    from flext_core.typings import FlextTypes as t
 
 
 class FlextProtocolsRegistry:

@@ -22,9 +22,9 @@ from pydantic import Field
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsDomainEvent,
+    FlextTypes as t,
     FlextUtilitiesDomain as u,
     FlextUtilitiesGenerators,
-    t,
 )
 
 

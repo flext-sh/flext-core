@@ -20,8 +20,8 @@ from flext_core._protocols.base import FlextProtocolsBase as p
 from flext_core._protocols.result import FlextProtocolsResult as pr
 
 if TYPE_CHECKING:
-    from flext_core.constants import c
-    from flext_core.typings import t
+    from flext_core.constants import FlextConstants as c
+    from flext_core.typings import FlextTypes as t
 
 
 class FlextProtocolsHandler:

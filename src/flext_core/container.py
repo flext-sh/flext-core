@@ -23,7 +23,18 @@ from typing import Self, overload, override
 
 from dependency_injector import containers as di_containers
 
-from flext_core import FlextContext, FlextRuntime, FlextSettings, c, e, m, p, r, t, u
+from flext_core import (
+    FlextConstants as c,
+    FlextContext,
+    FlextExceptions as e,
+    FlextModels as m,
+    FlextProtocols as p,
+    FlextResult as r,
+    FlextRuntime,
+    FlextSettings,
+    FlextTypes as t,
+    FlextUtilities as u,
+)
 
 
 class FlextContainer(p.ContainerLifecycle):
