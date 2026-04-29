@@ -115,7 +115,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
             member_val = getattr(member, "value", None)
             if member_val is None:
                 continue
-            if str(member_val).lower() == str(value_str).lower():
+            if str(member_val).lower() == value_str.lower():
                 return FlextUtilitiesModel.validate_value(
                     target,
                     str(member_val),

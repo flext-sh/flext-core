@@ -118,7 +118,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         try:
             with FlextContext.timed_operation(operation_name) as metrics:
                 metrics_map: MutableMapping[str, t.JsonPayload] = {
-                    str(k): u.normalize_to_container(v) for k, v in metrics.items()
+                    k: u.normalize_to_container(v) for k, v in metrics.items()
                 }
                 metrics_map["operation_count"] = stats["operation_count"]
                 try:

@@ -124,10 +124,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
     ) -> p.Result[dict[str, t.JsonValue] | Mapping[str, t.JsonValue]]:
         """Apply normalize/strip_none/strip_empty/map_keys/filter_keys/exclude_keys to a dict."""
         coerced: Mapping[str, t.JsonValue] = (
-            {
-                str(k): FlextRuntime.normalize_to_metadata(v)
-                for k, v in source.root.items()
-            }
+            {k: FlextRuntime.normalize_to_metadata(v) for k, v in source.root.items()}
             if isinstance(source, m.ConfigMap)
             else source
         )
@@ -136,10 +133,10 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             step: dict[str, t.JsonValue] | Mapping[str, t.JsonValue] = dict(coerced)
             if normalize:
                 normalized = FlextRuntime.normalize_to_metadata(
-                    {str(k): v for k, v in step.items()},
+                    dict(step),
                 )
                 if FlextUtilitiesGuardsTypeCore.mapping(normalized):
-                    step = {str(k): v for k, v in normalized.items()}
+                    step = dict(normalized)
             if map_keys:
                 step = {map_keys.get(k, k): v for k, v in step.items()}
             if filter_keys:
@@ -151,7 +148,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             if strip_empty:
                 step = FlextUtilitiesCollection.filter(
                     step,
-                    lambda v: v not in ("", [], {}, None),
+                    lambda v: not FlextUtilitiesGuardsTypeCore.empty_value(v),
                 )
             return step
 

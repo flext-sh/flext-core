@@ -49,7 +49,7 @@ class FlextUtilitiesConversion:
         if value is None:
             return default if default is not None else ""
         if isinstance(value, str):
-            return str(value)
+            return value
         try:
             float_value = t.float_adapter().validate_python(
                 value,

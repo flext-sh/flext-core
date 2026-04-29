@@ -19,6 +19,8 @@ from __future__ import annotations
 
 from typing import override
 
+from flext_tests.base import s
+
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -31,7 +33,6 @@ from tests import (
     m,
     p,
     r,
-    s,
     t,
     u,
     x,
@@ -106,6 +107,7 @@ class TestsFlextCoreMigrationValidation:
             def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
                 super().model_post_init(__context)
 
+            @override
             def execute(self, **kwargs: t.Scalar) -> p.Result[None]:
                 """Execute method required by s abstract class."""
                 return r[None].ok(None)

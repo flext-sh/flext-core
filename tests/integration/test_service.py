@@ -13,11 +13,13 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
 )
-from typing import Annotated
+from pathlib import Path
+from typing import Annotated, override
 
 import pytest
+from flext_tests.base import s
 
-from tests import m, p, r, s, t, u
+from tests import m, p, r, t, u
 
 
 class TestsFlextCoreServiceIntegration:
@@ -53,6 +55,7 @@ class TestsFlextCoreServiceIntegration:
         _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)
         _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
 
+        @override
         def execute(self) -> p.Result[bool]:
             """Execute user query service.
 
@@ -136,6 +139,7 @@ class TestsFlextCoreServiceIntegration:
         _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
         _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)
 
+        @override
         def execute(self) -> p.Result[str]:
             """Execute notification service."""
             if self._should_fail:
@@ -212,6 +216,7 @@ class TestsFlextCoreServiceIntegration:
         _should_fail_init: bool = m.PrivateAttr(default_factory=lambda: False)
         _should_fail_shutdown: bool = m.PrivateAttr(default_factory=lambda: False)
 
+        @override
         def execute(self) -> p.Result[str]:
             """Execute lifecycle service."""
             if self._initialized:
@@ -424,7 +429,7 @@ class TestsFlextCoreServiceIntegration:
     def test_lifecycle_service_initialization(
         self,
         clean_container: p.Container,
-        temp_directory: str,
+        temp_directory: Path,
     ) -> None:
         """Test lifecycle service initialization with settings.
 
@@ -450,7 +455,7 @@ class TestsFlextCoreServiceIntegration:
     def test_lifecycle_service_health_check(
         self,
         clean_container: p.Container,
-        temp_directory: str,
+        temp_directory: Path,
     ) -> None:
         """Test lifecycle service health check.
 
@@ -475,7 +480,7 @@ class TestsFlextCoreServiceIntegration:
     def test_lifecycle_service_shutdown(
         self,
         clean_container: p.Container,
-        temp_directory: str,
+        temp_directory: Path,
     ) -> None:
         """Test lifecycle service shutdown.
 
@@ -501,7 +506,7 @@ class TestsFlextCoreServiceIntegration:
     def test_lifecycle_service_failure_modes(
         self,
         clean_container: p.Container,
-        temp_directory: str,
+        temp_directory: Path,
     ) -> None:
         """Test lifecycle service failure modes.
 

@@ -127,7 +127,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         checker = c.STRING_TYPE_PREDICATES.get(type_name)
         if checker is None:
             return False
-        return bool(checker(value))
+        return checker(value)
 
     @staticmethod
     def _check_protocol(value: t.GuardInput, name: str) -> bool:

@@ -120,7 +120,7 @@ class FlextUtilitiesGenerators:
         """Generate ID with custom separator."""
         uuid_part = str(uuid.uuid4())[:id_length]
         if all_parts:
-            middle = str(separator).join(str(p) for p in all_parts)
+            middle = separator.join(str(p) for p in all_parts)
             return f"{actual_prefix}{separator}{middle}{separator}{uuid_part}"
         return f"{actual_prefix}{separator}{uuid_part}"
 

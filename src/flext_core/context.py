@@ -52,12 +52,12 @@ class FlextContext(m.ManagedModel):
 
     def set(self, key: str, value: t.JsonPayload) -> p.Result[bool]:
         """Store a value in this context's scope."""
-        self.data.update({str(key): value})
+        self.data.update({key: value})
         return r[bool].ok(True)
 
     def get(self, key: str) -> p.Result[t.JsonPayload]:
         """Retrieve a value from this context's scope."""
-        k = str(key)
+        k = key
         if k not in self.data.root:
             return r[t.JsonPayload].fail(f"Key '{key}' not found in context")
         v = self.data.root[k]
@@ -67,7 +67,7 @@ class FlextContext(m.ManagedModel):
 
     def has(self, key: str) -> bool:
         """Check if a key exists in this context's scope."""
-        return str(key) in self.data.root
+        return key in self.data.root
 
     def keys(self) -> t.StrSequence:
         """Return all stored keys."""
@@ -91,11 +91,11 @@ class FlextContext(m.ManagedModel):
     def apply_metadata(self, key: str, value: t.JsonValue) -> None:
         """Set a metadata value by key."""
         if hasattr(self.metadata, "update"):
-            self.metadata.update({str(key): value})
+            self.metadata.update({key: value})
 
     def remove(self, key: str) -> None:
         """Remove a key from this context's scope."""
-        self.data.root.pop(str(key), None)
+        self.data.root.pop(key, None)
 
     def clear(self) -> None:
         """Clear all stored keys from this context's scope."""
@@ -109,7 +109,7 @@ class FlextContext(m.ManagedModel):
         if isinstance(other, FlextContext):
             self.data.update(other.data.root)
         else:
-            self.data.update({str(k): v for k, v in other.items()})
+            self.data.update(dict(other.items()))
         return self
 
     def clone(self) -> Self:
@@ -123,7 +123,7 @@ class FlextContext(m.ManagedModel):
         self,
         *,
         as_dict: bool = True,
-    ) -> dict[str, t.JsonPayload] | FlextContext:
+    ) -> dict[str, t.JsonPayload] | Self:
         """Export scope contents. Returns dict when as_dict=True (default)."""
         if as_dict:
             return dict(self.data.root)

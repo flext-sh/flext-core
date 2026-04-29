@@ -9,9 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import tm
+from typing import override
 
-from tests import p, r, s, t
+from flext_tests import tm
+from flext_tests.base import s
+
+from tests import p, r, t
 
 
 class TestsFlextCoreService100Coverage:
@@ -22,6 +25,7 @@ class TestsFlextCoreService100Coverage:
 
         __test__ = False
 
+        @override
         def execute(self, **kwargs: t.Scalar) -> p.Result[str]:
             """Execute service."""
             return r[str].ok("success")
@@ -31,6 +35,7 @@ class TestsFlextCoreService100Coverage:
 
         __test__ = False
 
+        @override
         def execute(self, **kwargs: t.Scalar) -> p.Result[str]:
             """Execute service."""
             return r[str].ok("validated")

@@ -46,8 +46,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         metadata_attributes: dict[str, t.JsonValue] | None = None
         if include_metadata:
             metadata_attributes = {
-                str(k): u.normalize_to_metadata(v)
-                for k, v in self._metadata_map().items()
+                k: u.normalize_to_metadata(v) for k, v in self._metadata_map().items()
             }
         export_model = m.ContextExport.model_validate({
             "data": dict(all_data),

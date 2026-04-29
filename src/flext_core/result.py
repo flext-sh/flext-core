@@ -95,7 +95,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
             return None
         normalized_raw: dict[str, t.JsonValue] = {}
         for key, value in data.root.items():
-            normalized_raw[str(key)] = FlextRuntime.normalize_to_metadata(value)
+            normalized_raw[key] = FlextRuntime.normalize_to_metadata(value)
         return normalized_raw
 
     @override
@@ -218,7 +218,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
                 return
             super().__init__(
                 error_code=error_code,
-                error=str(failure_value),
+                error=failure_value,
                 success=False,
                 error_data=validated_error_data,
             )

@@ -28,6 +28,14 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
         validate_assignment=True,
     )
 
+    def execute(self) -> p.Result[TDomainResult]:
+        """Execute the service domain logic.
+
+        Concrete services must override this method with their typed runtime result.
+        """
+        msg = f"{self.__class__.__name__}.execute() must be implemented"
+        raise NotImplementedError(msg)
+
 
 s = FlextService
 __all__: t.MutableSequenceOf[str] = ["FlextService", "s"]

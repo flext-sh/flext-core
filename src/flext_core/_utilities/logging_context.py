@@ -50,11 +50,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 key: cls._to_container_value(value) for key, value in context.items()
             }
             current_context_obj: Mapping[str, t.JsonValue] = {
-                str(key): FlextRuntime.normalize_to_metadata(value)
+                key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in current_context.items()
             }
             incoming_context_obj: Mapping[str, t.JsonValue] = {
-                str(key): FlextRuntime.normalize_to_metadata(value)
+                key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in incoming_context.items()
             }
             merge_result = FlextUtilitiesCollection.merge_mappings(
@@ -65,7 +65,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             merged_value = merge_result.unwrap_or(current_context_obj)
             merged_context: t.MutableJsonMapping = {}
             for key, value in merged_value.items():
-                merged_context[str(key)] = cls._to_container_value(value)
+                merged_context[key] = cls._to_container_value(value)
             cls._scoped_contexts[scope] = merged_context
             cls.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(True)
@@ -113,7 +113,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     def unbind_global_context(cls, *keys: str) -> p.Result[bool]:
         """Unbind specific keys from global context."""
         try:
-            unbind_keys: t.StrSequence = [str(key) for key in keys]
+            unbind_keys: t.StrSequence = list(keys)
             cls.structlog().contextvars.unbind_contextvars(*unbind_keys)
             return r[bool].ok(True)
         except c.CONTEXT_EXCEPTIONS as exc:

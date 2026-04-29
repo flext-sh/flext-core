@@ -67,10 +67,10 @@ class TestsFlextCoreSystemIntegration:
             success_result
             .map(lambda x: x.upper())
             .map(lambda x: f"processado_{x}")
-            .map(lambda x: str(x).replace("_", "-"))
+            .map(lambda x: x.replace("_", "-"))
         )
         assert pipeline_result.success is True
-        assert str(pipeline_result.value) == "processado-DADOS-INICIAIS"
+        assert pipeline_result.value == "processado-DADOS-INICIAIS"
         failure_result: p.Result[str] = r[str].fail(
             "erro_de_processamento",
         )
@@ -86,7 +86,7 @@ class TestsFlextCoreSystemIntegration:
 
         flat_map_success = success_result.flat_map(operacao_que_pode_falhar)
         assert flat_map_success.success is True
-        assert str(flat_map_success.value) == "validado_dados_iniciais"
+        assert flat_map_success.value == "validado_dados_iniciais"
         invalid_data = r[str].ok("dados_invalido")
         flat_map_failure = invalid_data.flat_map(operacao_que_pode_falhar)
         assert flat_map_failure.success is False
@@ -225,7 +225,7 @@ class TestsFlextCoreSystemIntegration:
             .flat_map(operacao_3)
         )
         assert pipeline_sucesso.success is True
-        assert str(pipeline_sucesso.value) == "final_etapa2_etapa1_dados_iniciais"
+        assert pipeline_sucesso.value == "final_etapa2_etapa1_dados_iniciais"
         pipeline_falha = (
             r[str]
             .ok("dados_com_erro")

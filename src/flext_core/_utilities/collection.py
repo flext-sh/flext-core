@@ -45,7 +45,7 @@ class FlextUtilitiesCollection(
         for key, item in raw_source.items():
             if item is None:
                 continue
-            normalized[str(key)] = FlextRuntime.normalize_to_metadata(item)
+            normalized[key] = FlextRuntime.normalize_to_metadata(item)
         return normalized
 
     @staticmethod

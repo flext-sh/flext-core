@@ -128,7 +128,7 @@ class FlextUtilitiesModel:
         runtime_type = cls._runtime_type()
         validated: t.JsonMapping = t.json_mapping_adapter().validate_python(
             {
-                str(key): runtime_type.normalize_to_metadata(item)
+                key: runtime_type.normalize_to_metadata(item)
                 for key, item in value.items()
             },
         )

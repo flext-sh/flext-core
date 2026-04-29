@@ -223,7 +223,7 @@ class FlextModelsBase:
         def __eq__(self, other: object) -> bool:
             if not isinstance(other, type(self)):
                 return NotImplemented
-            return bool(self.model_dump() == other.model_dump())
+            return self.model_dump() == other.model_dump()
 
         def __hash__(self) -> int:
             data = self.model_dump()

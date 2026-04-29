@@ -177,15 +177,7 @@ class FlextRegistry(s[bool]):
             narrowed = str(value)
         else:
             normalized = u.normalize_to_metadata(value)
-            if isinstance(normalized, Mapping):
-                narrowed = dict(t.json_mapping_adapter().validate_python(normalized))
-            elif isinstance(normalized, Sequence) and not isinstance(
-                normalized,
-                (str, bytes, bytearray),
-            ):
-                narrowed = list(t.json_list_adapter().validate_python(normalized))
-            else:
-                narrowed = t.json_value_adapter().validate_python(normalized)
+            narrowed = t.json_value_adapter().validate_python(normalized)
         return narrowed
 
     @staticmethod
@@ -225,6 +217,7 @@ class FlextRegistry(s[bool]):
         except ValueError:
             return c.Status.ACTIVE
 
+    @override
     def execute(self) -> p.Result[bool]:
         """Validate registry is properly initialized.
 

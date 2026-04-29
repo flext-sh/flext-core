@@ -42,15 +42,14 @@ class FlextUtilitiesBeartypeTypingExtPatch:
         te = _typing_extensions.TypeAliasType
         std = _typing.TypeAliasType
 
-        # If the cave already includes typing_extensions, nothing to do
-        if te is not std:
-            if isinstance(current, tuple):
-                if te not in current:
-                    new_value = (*current, te)
-            elif current is std:
+        if isinstance(current, tuple):
+            if te not in current:
+                new_value = (*current, te)
+        elif current is std:
+            if len({std, te}) > 1:
                 new_value = (std, te)
-            elif current is not te:
-                new_value = (current, te)
+        elif current is not te:
+            new_value = (current, te)
 
         if new_value is not current:
             # Use setattr to avoid pyrefly strict type-check on external attr.
@@ -59,7 +58,7 @@ class FlextUtilitiesBeartypeTypingExtPatch:
             # a stale reference; patch only loaded beartype modules and avoid
             # module-level __getattr__ side effects during import-time patching.
             for mod_name, mod in tuple(_sys.modules.items()):
-                if mod is None or (not mod_name.startswith("beartype")):
+                if not mod_name.startswith("beartype"):
                     continue
                 if mod.__dict__.get("HintPep695TypeAlias") is current:
                     setattr(mod, "HintPep695TypeAlias", new_value)

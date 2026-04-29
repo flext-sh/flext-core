@@ -77,7 +77,8 @@ class TestsFlextCoreLibraryIntegration:
         def create_result() -> str:
             process_result = mock_external_service.process(input_data)
             if process_result.success and process_result.value is not None:
-                return str(process_result.value)
+                processed_value: str = process_result.value
+                return processed_value
             return ""
 
         register_result = clean_container.factory("result_factory", create_result)

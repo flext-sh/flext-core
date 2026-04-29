@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from tests import p, r, s
+from typing import override
+
+from flext_tests.base import s
+
+from tests import p, r
 
 
 class TestsFlextCoreServiceBootstrap:
@@ -11,6 +15,7 @@ class TestsFlextCoreServiceBootstrap:
     class ConcreteTestService(s[bool]):
         """Concrete service for constructor/execute tests."""
 
+        @override
         def execute(self) -> p.Result[bool]:
             return r[bool].ok(True)
 

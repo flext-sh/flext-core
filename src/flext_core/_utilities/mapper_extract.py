@@ -154,7 +154,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         elif isinstance(data, Mapping):
             seed_current = m.ConfigMap(
                 root={
-                    str(k): FlextUtilitiesMapperExtract._normalize_accessible_value(v)
+                    k: FlextUtilitiesMapperExtract._normalize_accessible_value(v)
                     for k, v in data.items()
                 },
             )

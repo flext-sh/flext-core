@@ -43,8 +43,6 @@ class FlextUtilitiesContextState:
         try:
             normalized: dict[str, t.JsonPayload] = {}
             for key, value in payload.items():
-                if str(key) != key:
-                    return {}
                 normalized[key] = FlextRuntime.normalize_to_container(value)
             validated: t.JsonMapping = t.json_mapping_adapter().validate_python(
                 normalized
@@ -151,7 +149,7 @@ class FlextUtilitiesContextState:
             custom_fields_dict = {}
         result: dict[str, t.JsonPayload] = {}
         for k, v in data.items():
-            if v is None or v == {}:
+            if v is None or (u.mapping(v) and not v):
                 continue
             if isinstance(v, datetime):
                 result[k] = v.isoformat()

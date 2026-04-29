@@ -32,9 +32,7 @@ class FlextModelsContextData:
             return MappingProxyType({})
         if isinstance(v, Mapping):
             return MappingProxyType({
-                str(k): str(val)
-                if not isinstance(val, (str, int, float, bool))
-                else val
+                k: str(val) if not isinstance(val, (str, int, float, bool)) else val
                 for k, val in v.items()
             })
         if isinstance(v, mp.BaseModel):

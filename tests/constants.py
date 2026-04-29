@@ -29,6 +29,7 @@ class TestsFlextCoreConstants(
     """Layer 0 constants facade for flext-core tests."""
 
     class Tests(
+        FlextTestsConstants.Tests,
         TestsFlextCoreConstantsDomain,
         TestsFlextCoreConstantsErrors,
         TestsFlextCoreConstantsFixtures,

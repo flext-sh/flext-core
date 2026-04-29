@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 requires = [ "hatchling" ]
 
 [dependency-groups]
-dev = [ "types-defusedxml (>=0.7.0.20250822)", "vulture (>=2.15)" ]
+dev = [ "types-defusedxml>=0.7.0.20260408", "vulture>=2.16" ]
 
 # [CUSTOM] project metadata
 [project]
@@ -25,25 +25,25 @@ classifiers = [
 ]
 dependencies = [
   "beartype @ git+https://github.com/beartype/beartype.git@ee481e0c6da5c0cf8a6b27a53a10354e9df4ac71",
-  "cachetools>=5.3",
-  "dependency-injector>=4.41",
-  "docker>=7.1,<8",
+  "cachetools>=7.0.6",
+  "dependency-injector>=4.49.0",
+  "docker>=7.1.0",
   "jinja2>=3.1.6",
-  "limits>=3.6",
-  "orjson>=3.11.3",
-  "pybreaker>=0.8",
-  "pydantic-core>=2.41.4",
-  "pydantic-extra-types[semver]>=2.10",
-  "pydantic-settings>=2.10.1",
-  "pydantic>=2.12.3",
-  "python-dotenv>=1",
-  "python-on-whales>=0.79",
-  "pyyaml>=6.0.2",
-  "returns>=0.26",
-  "rope (>=1.14.0,<2.0.0)",
-  "structlog>=25.4",
-  "tomlkit>=0.13",
-  "wrapt>=1.17",
+  "limits>=5.8.0",
+  "orjson>=3.11.8",
+  "pybreaker>=1.4.1",
+  "pydantic-core>=2.46.3",
+  "pydantic-extra-types[semver]>=2.11.1",
+  "pydantic-settings>=2.14.0",
+  "pydantic>=2.13.3",
+  "python-dotenv>=1.2.2",
+  "python-on-whales>=0.81.0",
+  "pyyaml>=6.0.3",
+  "returns>=0.27.0",
+  "rope>=1.14.0",
+  "structlog>=25.5.0",
+  "tomlkit>=0.14.0",
+  "wrapt>=2.1.2",
 ]
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 keywords = [ "clean-architecture", "ddd", "enterprise", "flext", "modern", "solid" ]
@@ -70,7 +70,7 @@ dev = [
   "blacken-docs>=1.19",
   "codespell>=2.3",
   "deptry>=0.23",
-  "detect-secrets>=1.5",
+  "detect-secrets>=1.5.0",
   "django-stubs>=5.2.2",
   "factory-boy>=3.3.1",
   "faker>=37.4",
@@ -78,9 +78,9 @@ dev = [
   "flext-infra",
   "flext-tests",
   "hypothesis>=6.125",
-  "interrogate>=1.7",
+  "interrogate>=1.7.0",
   "isort>=6.0.1",
-  "libcst>=1.5.1",
+  "libcst>=1.8.6",
   "matplotlib-stubs>=0.3",
   "mkdocs-awesome-pages-plugin>=2.9",
   "mkdocs-encryptcontent-plugin>=2",
@@ -101,7 +101,7 @@ dev = [
   "mkdocs>=1.6",
   "mkdocstrings-python>=1.7",
   "mkdocstrings>=0.24",
-  "mypy>=1.18.2",
+  "mypy>=1.20.2",
   "pip-audit>=2.7.3",
   "pre-commit>=4.0.1",
   "pylint>=3.3",
@@ -142,7 +142,7 @@ dev = [
   "types-setuptools>=80.9",
   "types-tabulate>=0.10",
   "types-toml>=0.10.8.20240310",
-  "uv>=0.9.6",
+  "uv>=0.11.8",
   "vulture>=2.13",
 ]
 
@@ -220,7 +220,6 @@ no_implicit_reexport = true
 overrides = [  ]
 plugins = [ "pydantic.mypy", "returns.contrib.mypy.returns_plugin" ]
 python_version = "3.13"
-strict_concatenate = true
 strict_equality = true
 warn_redundant_casts = true
 warn_return_any = true
@@ -247,21 +246,16 @@ project-excludes = [
   "**/__pycache__",
   "**/__pyrefly_virtual__/**",
   "**/node_modules",
+  "**/site-packages/**",
   "**/typings/**",
   "**/vendor/**",
   "**/venv/**",
-  "**/venv.bak/**",
   ".flext-deps/**",
   ".venv/**",
   "typings/**",
   "vendor/**",
 ]
-project-includes = [
-  "examples/**/*.py*",
-  "scripts/**/*.py*",
-  "src/**/*.py*",
-  "tests/**/*.py*",
-]
+project-includes = [ "examples/**/*.py*", "scripts/**/*.py*", "src/**/*.py*", "tests/**/*.py*" ]
 python-version = "3.13"
 search-path = [
   ".",
@@ -279,90 +273,90 @@ use-ignore-files = false
 
 [tool.pyrefly.errors]
 abstract-method-call = false
-annotation-mismatch = true
-bad-argument-count = true
-bad-argument-type = true
-bad-assignment = true
-bad-class-definition = true
-bad-context-manager = true
-bad-dunder-all = true
-bad-function-definition = true
-bad-index = true
-bad-instantiation = true
-bad-keyword-argument = true
-bad-match = true
+annotation-mismatch = "error"
+bad-argument-count = "error"
+bad-argument-type = "error"
+bad-assignment = "error"
+bad-class-definition = "error"
+bad-context-manager = "error"
+bad-dunder-all = "error"
+bad-function-definition = "error"
+bad-index = "error"
+bad-instantiation = "error"
+bad-keyword-argument = "error"
+bad-match = "error"
 bad-override = false
-bad-param-name-override = true
-bad-raise = true
-bad-return = true
-bad-specialization = true
-bad-typed-dict = true
-bad-typed-dict-key = true
-bad-unpacking = true
-deprecated = true
-implicit-abstract-class = true
-implicit-any = true
-implicit-import = true
-implicitly-defined-attribute = true
-inconsistent-inheritance = true
-inconsistent-overload = true
-inconsistent-overload-default = true
-invalid-annotation = true
-invalid-argument = true
-invalid-decorator = true
-invalid-inheritance = true
-invalid-literal = true
-invalid-overload = true
-invalid-param-spec = true
-invalid-pattern = true
-invalid-self-type = true
-invalid-super-call = true
-invalid-type-alias = true
-invalid-type-var = true
-invalid-type-var-tuple = true
-invalid-variance = true
-invalid-yield = true
-missing-argument = true
-missing-attribute = true
-missing-import = true
-missing-module-attribute = true
-missing-override-decorator = true
-missing-source = true
-missing-source-for-stubs = true
-no-access = true
-no-matching-overload = true
+bad-param-name-override = "error"
+bad-raise = "error"
+bad-return = "error"
+bad-specialization = "error"
+bad-typed-dict = "error"
+bad-typed-dict-key = "error"
+bad-unpacking = "error"
+deprecated = "error"
+implicit-abstract-class = "error"
+implicit-any = "error"
+implicit-import = "error"
+implicitly-defined-attribute = "error"
+inconsistent-inheritance = "error"
+inconsistent-overload = "error"
+inconsistent-overload-default = "error"
+invalid-annotation = "error"
+invalid-argument = "error"
+invalid-decorator = "error"
+invalid-inheritance = "error"
+invalid-literal = "error"
+invalid-overload = "error"
+invalid-param-spec = "error"
+invalid-pattern = "error"
+invalid-self-type = "error"
+invalid-super-call = "error"
+invalid-type-alias = "error"
+invalid-type-var = "error"
+invalid-type-var-tuple = "error"
+invalid-variance = "error"
+invalid-yield = "error"
+missing-argument = "error"
+missing-attribute = "error"
+missing-import = "error"
+missing-module-attribute = "error"
+missing-override-decorator = "error"
+missing-source = "error"
+missing-source-for-stubs = "error"
+no-access = "error"
+no-matching-overload = "error"
 non-convergent-recursion = false
 non-exhaustive-match = false
-not-a-type = true
-not-async = true
-not-callable = true
-not-iterable = true
-not-required-key-access = true
-open-unpacking = true
-protocol-implicitly-defined-attribute = true
-read-only = true
-redefinition = true
-redundant-cast = true
-redundant-condition = true
-unannotated-attribute = true
-unannotated-parameter = true
-unannotated-return = true
-unbound-name = true
-unexpected-keyword = true
-unexpected-positional-argument = true
-unknown-name = true
-unnecessary-comparison = true
-unnecessary-type-conversion = true
-unreachable = true
-unresolvable-dunder-all = true
-unsafe-overlap = true
-unsupported = true
-unsupported-delete = true
-unsupported-operation = true
-untyped-import = true
-unused-coroutine = true
-unused-ignore = true
-variance-mismatch = true
+not-a-type = "error"
+not-async = "error"
+not-callable = "error"
+not-iterable = "error"
+not-required-key-access = "error"
+open-unpacking = "error"
+protocol-implicitly-defined-attribute = "error"
+read-only = "error"
+redefinition = "error"
+redundant-cast = "error"
+redundant-condition = "error"
+unannotated-attribute = "error"
+unannotated-parameter = "error"
+unannotated-return = "error"
+unbound-name = "error"
+unexpected-keyword = "error"
+unexpected-positional-argument = "error"
+unknown-name = "error"
+unnecessary-comparison = "error"
+unnecessary-type-conversion = "error"
+unreachable = "error"
+unresolvable-dunder-all = "error"
+unsafe-overlap = "error"
+unsupported = "error"
+unsupported-delete = "error"
+unsupported-operation = "error"
+untyped-import = "error"
+unused-coroutine = "error"
+unused-ignore = "error"
+variance-mismatch = "error"
 
 # [MANAGED] pyright
 [tool.pyright]
@@ -384,11 +378,8 @@ exclude = [
   "**/tests/fixtures/**",
   "**/venv",
   "**/venv/**",
-  "**/venv.bak",
-  "**/venv.bak/**",
   ".sisyphus",
   ".venv",
-  "venv.bak",
 ]
 extraPaths = [ ".", "../typings", "src" ]
 ignore = [ "**/*.pyi", "../typings" ]
@@ -440,11 +431,6 @@ root = "scripts"
 extraPaths = [ "src" ]
 reportPrivateUsage = "error"
 root = "src"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [ ".", "src" ]
-reportPrivateUsage = "none"
-root = "tests"
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ ".", "src" ]
@@ -505,7 +491,6 @@ exclude = [
   "typings",
   "vendor",
   "venv",
-  "venv.bak",
 ]
 fix = true
 line-length = 88

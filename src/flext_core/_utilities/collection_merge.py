@@ -12,6 +12,7 @@ from typing import ClassVar
 
 from flext_core import (
     FlextRuntime,
+    FlextUtilitiesGuardsTypeCore,
     p,
     r,
     t,
@@ -21,15 +22,6 @@ from flext_core._constants.cqrs import FlextConstantsCqrs as _c_cqrs
 
 class FlextUtilitiesCollectionMerge:
     """Mapping-merge strategies + dispatcher (`merge_mappings`)."""
-
-    @staticmethod
-    def _is_empty_value(value: t.GuardInput | None) -> bool:
-        """Check if value is considered empty (empty string, empty list, etc.)."""
-        if value is None:
-            return True
-        if isinstance(value, (str, list, dict)):
-            return not value
-        return False
 
     @staticmethod
     def _merge_deep_single_key(
@@ -79,7 +71,7 @@ class FlextUtilitiesCollectionMerge:
         result.update({
             k: v
             for k, v in base.items()
-            if not FlextUtilitiesCollectionMerge._is_empty_value(v)
+            if not FlextUtilitiesGuardsTypeCore.empty_value(v)
         })
         return r[Mapping[str, t.JsonValue]].ok(result)
 

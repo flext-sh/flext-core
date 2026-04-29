@@ -281,17 +281,6 @@ class TestsFlextCoreModelsMixins:
     class _BadCopyModel(m.BaseModel):
         x: int = 1
 
-    class User(m.BaseModel):
-        """Shared user model for tests."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
-
-        id: str | None = None
-        unique_id: str | None = None
-        name: str
-        email: str
-        active: bool = True
-
     class EmailResponse(m.BaseModel):
         """Shared email response model for tests."""
 
@@ -1275,7 +1264,9 @@ class TestsFlextCoreModelsMixins:
         matches_type(instance, 'logger') returns False.
         """
 
-        model_config: m.ConfigDict = m.ConfigDict(arbitrary_types_allowed=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+            arbitrary_types_allowed=True
+        )
 
         def debug(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
             return None

@@ -9,7 +9,8 @@ from collections.abc import (
 from itertools import count
 from typing import Annotated, ClassVar, override
 
-from flext_tests import e, h, r, s, u
+from flext_tests import e, h, m as tm, r, u
+from flext_tests.base import s
 
 from tests import p, t
 from tests.constants import c
@@ -184,11 +185,12 @@ class TestsFlextCoreUtilities(u):
                 u.Field(description="Identifier of the user to fetch."),
             ] = ""
 
-            def execute(self) -> p.Result[m.Tests.User]:
+            @override
+            def execute(self) -> p.Result[tm.Tests.User]:
                 if self.user_id in {"invalid", ""}:
-                    return r[m.Tests.User].fail(c.Tests.TestErrors.USER_NOT_FOUND)
-                return r[m.Tests.User].ok(
-                    m.Tests.User(
+                    return r[tm.Tests.User].fail(c.Tests.TestErrors.USER_NOT_FOUND)
+                return r[tm.Tests.User].ok(
+                    tm.Tests.User(
                         id=self.user_id,
                         unique_id=self.user_id,
                         name=f"User {self.user_id}",
@@ -208,6 +210,7 @@ class TestsFlextCoreUtilities(u):
                 u.Field(description="Email subject line."),
             ] = ""
 
+            @override
             def execute(self) -> p.Result[m.Tests.EmailResponse]:
                 if "@" not in self.to:
                     return r[m.Tests.EmailResponse].fail(
@@ -225,6 +228,7 @@ class TestsFlextCoreUtilities(u):
                 u.Field(description="Integer value to validate."),
             ] = 0
 
+            @override
             def execute(self) -> p.Result[t.JsonMapping]:
                 if self.value < 0:
                     return r[t.JsonMapping].fail(c.Tests.TestErrors.VALUE_TOO_LOW)
@@ -246,6 +250,7 @@ class TestsFlextCoreUtilities(u):
                 u.Field(description="Numeric operand for the operation."),
             ] = 0
 
+            @override
             def execute(self) -> p.Result[t.JsonMapping]:
                 match self.operation:
                     case "double":
@@ -293,24 +298,24 @@ class TestsFlextCoreUtilities(u):
         @staticmethod
         def execute_v1_pipeline(
             case: m.Tests.RailwayTestCase,
-        ) -> p.Result[str | m.Tests.User | m.Tests.EmailResponse]:
+        ) -> p.Result[str | tm.Tests.User | m.Tests.EmailResponse]:
             """Execute the documented V1 railway pipeline."""
             if not case.user_ids:
-                return r[str | m.Tests.User | m.Tests.EmailResponse].fail(
+                return r[str | tm.Tests.User | m.Tests.EmailResponse].fail(
                     c.Tests.TestErrors.NO_USER_IDS_PROVIDED,
                 )
-            user_result: p.Result[m.Tests.User] = TestsFlextCoreUtilities.Tests.make(
+            user_result: p.Result[tm.Tests.User] = TestsFlextCoreUtilities.Tests.make(
                 TestsFlextCoreUtilities.Tests.GetUserService,
                 user_id=case.user_ids[0],
             ).execute()
-            result: p.Result[str | m.Tests.User | m.Tests.EmailResponse] = (
+            result: p.Result[str | tm.Tests.User | m.Tests.EmailResponse] = (
                 user_result.map(lambda user: user)
             )
             for operation in case.operations:
                 if operation == "get_email":
                     result = result.map(
                         lambda user: (
-                            user.email if isinstance(user, m.Tests.User) else str(user)
+                            user.email if isinstance(user, tm.Tests.User) else str(user)
                         ),
                     )
                 elif operation == "send_email":
@@ -335,7 +340,7 @@ class TestsFlextCoreUtilities(u):
         @staticmethod
         def execute_v2_pipeline(
             case: m.Tests.RailwayTestCase,
-        ) -> m.Tests.User | str:
+        ) -> tm.Tests.User | str:
             """Execute the documented V2 railway pipeline."""
             if not case.user_ids:
                 msg = c.Tests.TestErrors.NO_USER_IDS_PROVIDED
@@ -348,13 +353,13 @@ class TestsFlextCoreUtilities(u):
                 msg = raw_user_result.error or c.Tests.TestErrors.USER_NOT_FOUND
                 raise e.BaseError(msg)
             raw_user = raw_user_result.unwrap_or(None)
-            if not isinstance(raw_user, m.Tests.User):
+            if not isinstance(raw_user, tm.Tests.User):
                 msg = c.Tests.TestErrors.USER_NOT_FOUND
                 raise e.BaseError(msg)
-            user: m.Tests.User | str = raw_user
+            user: tm.Tests.User | str = raw_user
             for operation in case.operations:
                 if operation == "get_email":
-                    user = user.email if isinstance(user, m.Tests.User) else str(user)
+                    user = user.email if isinstance(user, tm.Tests.User) else user
                 elif operation == "send_email":
                     email_to = user if isinstance(user, str) else str(user)
                     raw_response_result = TestsFlextCoreUtilities.Tests.make(
@@ -1176,6 +1181,7 @@ class TestsFlextCoreUtilities(u):
                 u.Field(description="Minimum accepted input length."),
             ] = c.Tests.TestValidation.MIN_LENGTH_DEFAULT
 
+            @override
             def execute(self) -> p.Result[str]:
                 """Validate and return value."""
                 if len(self.value_input) < self.min_length:
@@ -1192,6 +1198,7 @@ class TestsFlextCoreUtilities(u):
                 u.Field(description="Failure message emitted by execute()."),
             ] = c.Tests.Services.DEFAULT_ERROR_MESSAGE
 
+            @override
             def execute(self) -> p.Result[str]:
                 """Always fails."""
                 return r[str].fail(self.error_message)
@@ -1239,15 +1246,15 @@ class TestsFlextCoreUtilities(u):
                 name: str | None = None,
                 email: str | None = None,
                 is_active: bool = True,
-            ) -> m.Tests.User:
-                """Build a `m.Tests.User` instance with optional overrides."""
+            ) -> tm.Tests.User:
+                """Build a `tm.Tests.User` instance with optional overrides."""
                 n = next(cls._counter)
                 actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
                 actual_name = name if name is not None else cls._next_name()
                 actual_email = (
                     email if email is not None else f"{actual_user_id}@example.com"
                 )
-                return m.Tests.User(
+                return tm.Tests.User(
                     id=actual_user_id,
                     unique_id=actual_user_id,
                     name=actual_name,
@@ -1256,8 +1263,8 @@ class TestsFlextCoreUtilities(u):
                 )
 
             @classmethod
-            def build_batch(cls, size: int) -> Sequence[m.Tests.User]:
-                """Build multiple `m.Tests.User` instances with auto-generated values."""
+            def build_batch(cls, size: int) -> Sequence[tm.Tests.User]:
+                """Build multiple `tm.Tests.User` instances with auto-generated values."""
                 return [cls.build() for _ in range(size)]
 
             @classmethod

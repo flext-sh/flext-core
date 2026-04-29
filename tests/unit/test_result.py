@@ -206,14 +206,14 @@ class TestsFlextCoreResult:
             )
             u.Tests.assert_success(creation_result, expected_value=value)
         elif op_type == self.ResultOperationType.CREATION_FAILURE:
-            failure_result_raw = r[str].fail(str(value))
+            failure_result_raw = r[str].fail(value)
             failure_result: p.Result[str] = failure_result_raw
-            u.Tests.assert_failure(failure_result, str(value))
+            u.Tests.assert_failure(failure_result, value)
         elif op_type == self.ResultOperationType.UNWRAP_OR:
             if success:
                 unwrap_result: p.Result[str] = r[str].ok(value)
             else:
-                failure_raw = r[str].fail(str(value))
+                failure_raw = r[str].fail(value)
                 unwrap_result = failure_raw
             default = "default"
             tm.that(
@@ -221,19 +221,19 @@ class TestsFlextCoreResult:
                 eq=value if success else default,
             )
         elif op_type == self.ResultOperationType.MAP:
-            map_result: p.Result[str] = r[str].fail(str(value))
-            mapped = map_result.map(lambda x: str(x) * 2)
-            u.Tests.assert_failure(mapped, str(value))
+            map_result: p.Result[str] = r[str].fail(value)
+            mapped = map_result.map(lambda x: x * 2)
+            u.Tests.assert_failure(mapped, value)
         elif op_type == self.ResultOperationType.FLAT_MAP:
-            failure_raw = r[str].fail(str(value))
+            failure_raw = r[str].fail(value)
             flat_map_result: p.Result[str] = failure_raw
             flat_mapped = flat_map_result.flat_map(lambda x: r[str].ok(f"value_{x}"))
-            u.Tests.assert_failure(flat_mapped, str(value))
+            u.Tests.assert_failure(flat_mapped, value)
         elif op_type == self.ResultOperationType.ALT:
             if success:
                 result_alt: p.Result[str] = r[str].ok(value)
             else:
-                failure_raw = r[str].fail(str(value))
+                failure_raw = r[str].fail(value)
                 result_alt = failure_raw
             alt_result = result_alt.map_error(lambda e: f"alt_{e}")
             if success:
@@ -243,11 +243,11 @@ class TestsFlextCoreResult:
                 u.Tests.assert_failure(alt_result, error_str_alt)
         elif op_type == self.ResultOperationType.LASH:
             lash_result_base: p.Result[str] = (
-                r[str].ok(str(value)) if success else r[str].fail(str(value))
+                r[str].ok(value) if success else r[str].fail(value)
             )
             lash_result = lash_result_base.lash(lambda e: r[str].ok(f"recovered_{e}"))
             if success:
-                u.Tests.assert_success(lash_result, expected_value=str(value))
+                u.Tests.assert_success(lash_result, expected_value=value)
             else:
                 expected = f"recovered_{value}"
                 u.Tests.assert_success(lash_result, expected_value=expected)
@@ -255,7 +255,7 @@ class TestsFlextCoreResult:
             if success:
                 result_or: p.Result[str] = r[str].ok(value)
             else:
-                failure_raw = r[str].fail(str(value))
+                failure_raw = r[str].fail(value)
                 result_or = failure_raw
             default = "default"
             tm.that(result_or | default, eq=value if success else default)

@@ -139,7 +139,7 @@ class FlextRuntime:
     ) -> t.JsonMapping:
         """Normalize a mapping to a validated ``JsonMapping``."""
         return FlextRuntime._normalize_dict_entries(
-            [(str(key), item) for key, item in value.items()],
+            [(key, item) for key, item in value.items()],
         )
 
     @staticmethod
@@ -150,7 +150,7 @@ class FlextRuntime:
         return dict(
             t.json_mapping_adapter().validate_python(
                 {
-                    str(key): FlextRuntime.normalize_to_json_value(item)
+                    key: FlextRuntime.normalize_to_json_value(item)
                     for key, item in items
                 },
             ),
@@ -170,7 +170,7 @@ class FlextRuntime:
         else:
             raw_mapping = value
         return FlextRuntime._normalize_dict_entries(
-            [(str(key), item) for key, item in raw_mapping.items()],
+            [(key, item) for key, item in raw_mapping.items()],
         )
 
     @staticmethod
@@ -194,9 +194,7 @@ class FlextRuntime:
                 msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
                 raise TypeError(msg) from exc
         return {
-            str(key): (
-                None if item is None else FlextRuntime.normalize_to_json_value(item)
-            )
+            key: (None if item is None else FlextRuntime.normalize_to_json_value(item))
             for key, item in raw.items()
         }
 
@@ -309,7 +307,7 @@ class FlextRuntime:
             case Mapping():
                 normalized_service = mc.ConfigMap(
                     root={
-                        str(key_s): FlextRuntime._normalize_payload_item(
+                        key_s: FlextRuntime._normalize_payload_item(
                             item, container_kind="mapping"
                         )
                         for key_s, item in value.items()
@@ -382,7 +380,7 @@ class FlextRuntime:
         elif ugc.scalar(val):
             normalized_data = FlextRuntime.normalize_to_json_value(val)
         elif isinstance(val, Mapping):
-            entries = [(str(k), v) for k, v in val.items()]
+            entries = [(k, v) for k, v in val.items()]
             normalized_data = FlextRuntime._normalize_dict_entries(entries)
         elif isinstance(val, Sequence) and not isinstance(val, (str, bytes)):
             normalized_data = list(
@@ -415,7 +413,7 @@ class FlextRuntime:
         normalized_value: t.JsonValue
         if isinstance(val, (mc.ConfigMap, mc.Dict)):
             normalized_value = FlextRuntime._normalize_dict_entries([
-                (str(key), item) for key, item in val.root.items()
+                (key, item) for key, item in val.root.items()
             ])
         elif val is None:
             normalized_value = ""
@@ -429,7 +427,7 @@ class FlextRuntime:
             normalized_value = FlextRuntime.normalize_to_json_value(val)
         elif isinstance(val, Mapping):
             normalized_value = FlextRuntime._normalize_dict_entries([
-                (str(key), item) for key, item in val.items()
+                (key, item) for key, item in val.items()
             ])
         elif isinstance(val, AbstractSet):
             normalized_value = list(

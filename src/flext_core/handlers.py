@@ -124,7 +124,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             str: The handler name
 
         """
-        return str(self._runtime_state.handler_name)
+        return self._runtime_state.handler_name
 
     @property
     def mode(self) -> c.HandlerType:
@@ -211,7 +211,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 error_msg = c.ERR_HANDLER_INVALID_MODE.format(mode=mode)
                 raise e.ValidationError(error_msg)
             else:
-                resolved_type = c.HandlerType(str(mode))
+                resolved_type = c.HandlerType(mode)
         elif handler_type is not None:
             resolved_type = handler_type
         resolved_name: str = handler_name or str(

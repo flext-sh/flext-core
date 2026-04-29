@@ -6,10 +6,12 @@ import types
 from collections.abc import (
     MutableSequence,
 )
+from typing import override
 
 from flext_tests import tm
+from flext_tests.base import s
 
-from tests import c, h, m, p, r, s, t
+from tests import c, h, m, p, r, t
 
 
 class TestsFlextCoreHandlerDecoratorDiscovery:
@@ -273,6 +275,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
             def handle_user_create(self, cmd: CreateCommand) -> p.Result[str]:
                 return r[str].ok(f"created_{cmd.name}")
 
+            @override
             def execute(self) -> p.Result[str]:
                 return r[str].ok("executed")
 

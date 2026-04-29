@@ -148,14 +148,13 @@ class TestsFlextCoreAdvancedPatterns:
             }
 
             given_converted: t.JsonMapping = {
-                str(key): convert_dict_value(value)
-                for key, value in given_source.items()
+                key: convert_dict_value(value) for key, value in given_source.items()
             }
             when_converted: t.JsonMapping = {
-                str(key): convert_dict_value(value) for key, value in self._when.items()
+                key: convert_dict_value(value) for key, value in self._when.items()
             }
             then_converted: t.JsonMapping = {
-                str(key): convert_dict_value(value) for key, value in self._then.items()
+                key: convert_dict_value(value) for key, value in self._then.items()
             }
             scenario_data = m.Tests.MockScenarioData.model_validate(
                 obj={
@@ -327,12 +326,8 @@ class TestsFlextCoreAdvancedPatterns:
                 Sequence[tuple[str, str, bool]]: Pytest parameters for testing.
 
             """
-            success_params = [
-                (str(c.email), str(c.input), True) for c in self._success_cases
-            ]
-            failure_params = [
-                (str(c.email), str(c.input), False) for c in self._failure_cases
-            ]
+            success_params = [(c.email, c.input, True) for c in self._success_cases]
+            failure_params = [(c.email, c.input, False) for c in self._failure_cases]
             return success_params + failure_params
 
         def build_test_ids(self) -> t.StrSequence:
@@ -342,7 +337,7 @@ class TestsFlextCoreAdvancedPatterns:
                 t.StrSequence: List of test IDs.
 
             """
-            return [str(c.input) for c in (*self._success_cases, *self._failure_cases)]
+            return [c.input for c in (*self._success_cases, *self._failure_cases)]
 
     class AssertionBuilder:
         """Builder for complex test assertions."""

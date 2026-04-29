@@ -213,7 +213,7 @@ class FlextLogger(ulc):
         **kw: t.LogValue,
     ) -> t.LogResult:
         """Log exception with conditional stack trace (DEBUG only)."""
-        message = str(msg)
+        message = msg
         filtered_args: tuple[t.JsonValue, ...] = tuple(
             FlextLogger._to_container_value(arg)
             for arg in args
@@ -271,7 +271,7 @@ class FlextLogger(ulc):
     ) -> t.JsonMapping:
         """Build normalized structured exception context for logging."""
         result: dict[str, t.JsonValue] = {
-            str(k): str(v)
+            k: str(v)
             if isinstance(v, Exception)
             else FlextLogger._to_container_value(v)
             for k, v in context.items()
@@ -371,7 +371,7 @@ class FlextLogger(ulc):
                 case c.LogLevel() as enum_level:
                     level_raw: str = enum_level.value
                 case _:
-                    level_raw = str(level)
+                    level_raw = level
             level_str = level_raw.lower()
             scalar_context = FlextLogger._to_scalar_context(context)
             getattr(self.logger, level_str)(event, **scalar_context)

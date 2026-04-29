@@ -275,7 +275,7 @@ class FlextDecorators:
                     return r[TValue].ok(result)
                 except FlextDecorators._CAUGHT_EXCEPTIONS as exc:
                     effective_error_code: str = (
-                        str(error_code) if error_code is not None else "OPERATION_ERROR"
+                        error_code if error_code is not None else "OPERATION_ERROR"
                     )
                     error_msg = f"{func.__name__} failed: {type(exc).__name__}: {exc}"
                     return r[TValue].fail(

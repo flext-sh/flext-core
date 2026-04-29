@@ -70,6 +70,22 @@ class FlextUtilitiesGuardsTypeCore:
         return bool(isinstance(value, Mapping) and value)
 
     @staticmethod
+    def empty_value(
+        value: t.GuardInput | t.JsonPayload | t.JsonValue | None,
+    ) -> bool:
+        """Check whether a FLEXT value is absent or an empty text/container."""
+        if value is None:
+            return True
+        if isinstance(value, (str, bytes, bytearray, Mapping)):
+            return not value
+        if isinstance(value, Sequence) and not isinstance(
+            value,
+            (str, bytes, bytearray),
+        ):
+            return not value
+        return False
+
+    @staticmethod
     def container(
         value: t.GuardInput | t.JsonPayload | t.JsonValue | PydanticBaseModel | None,
     ) -> TypeIs[t.JsonValue]:
@@ -117,6 +133,13 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, t.SCALAR_TYPES)
 
     @staticmethod
+    def type_name(
+        value: t.GuardInput | t.JsonPayload | t.JsonValue | None,
+    ) -> str:
+        """Return the concrete runtime type name for any FLEXT payload value."""
+        return str(type(value).__name__)
+
+    @staticmethod
     def _has_dict_protocol(
         obj: t.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> bool:
@@ -129,7 +152,7 @@ class FlextUtilitiesGuardsTypeCore:
         """Check if value behaves like a mapping accepted by FLEXT containers."""
         if isinstance(value, Mapping):
             return True
-        return bool(FlextUtilitiesGuardsTypeCore._has_dict_protocol(value))
+        return FlextUtilitiesGuardsTypeCore._has_dict_protocol(value)
 
     @staticmethod
     def list_like(

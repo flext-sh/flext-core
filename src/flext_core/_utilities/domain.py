@@ -38,13 +38,13 @@ class FlextUtilitiesDomain:
 
         Returns True only when both objects are the exact same concrete type.
         """
-        return obj_a.__class__ is obj_b.__class__
+        return type(obj_a) is type(obj_b)
 
     @staticmethod
     def _get_obj_dict(obj: t.JsonPayload) -> t.JsonMapping | None:
         """Extract __dict__ safely, returning None on failure."""
         try:
-            return obj.__dict__
+            return vars(obj)
         except (AttributeError, TypeError):
             return None
 
@@ -53,7 +53,7 @@ class FlextUtilitiesDomain:
         """Coerce a value to something hashable for dict-based hashing."""
         if isinstance(value, (str, int, float, bool, type(None))):
             return value
-        return value.__class__.__name__
+        return u.type_name(value)
 
     @staticmethod
     def compare_entities_by_id(
@@ -128,7 +128,7 @@ class FlextUtilitiesDomain:
         entity_id = getattr(entity, id_attr, None)
         if entity_id is None:
             return hash(id(entity))
-        return hash((entity.__class__.__name__, entity_id))
+        return hash((u.type_name(entity), entity_id))
 
     @staticmethod
     def hash_value_object_by_value(obj: t.JsonPayload) -> int:
@@ -137,14 +137,14 @@ class FlextUtilitiesDomain:
             return hash(obj)
         if isinstance(obj, m.EnforcedModel):
             data = obj.model_dump()
-            return hash(tuple(sorted((str(k), str(v)) for k, v in data.items())))
+            return hash(tuple(sorted((k, str(v)) for k, v in data.items())))
         if hasattr(obj, "__iter__"):
             return hash(repr(obj))
         obj_dict = FlextUtilitiesDomain._get_obj_dict(obj)
         if obj_dict is None:
             return hash(repr(obj))
         items: Sequence[t.Pair[str, t.JsonValue]] = [
-            (str(k), FlextUtilitiesDomain._to_hashable(v))
+            (k, FlextUtilitiesDomain._to_hashable(v))
             for k, v in sorted(obj_dict.items())
         ]
         return hash(tuple(items))

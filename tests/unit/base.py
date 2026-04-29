@@ -23,8 +23,9 @@ from pathlib import Path
 from typing import Annotated, ClassVar, override
 
 from flext_tests import td
+from flext_tests.base import s
 
-from tests import c, h, m, p, r, s, t
+from tests import c, h, m, p, r, t
 
 
 class TestsFlextCoreServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPayload]](
@@ -42,6 +43,7 @@ class TestsFlextCoreServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPa
     - All generic service functionality comes from s
     """
 
+    @override
     def execute(self) -> p.Result[TDomainResult]:
         """Execute domain service logic - must be implemented by subclasses."""
         msg = c.Tests.TestErrors.SUBCLASSES_MUST_IMPLEMENT_EXECUTE

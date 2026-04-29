@@ -63,7 +63,7 @@ class FlextModelsErrors:
         def to_payload(self) -> t.JsonMapping:
             """Flatten the snapshot into the public payload shape."""
             payload: dict[str, t.JsonValue] = {
-                str(k): v
+                k: v
                 for k, v in self.model_dump(exclude={"attributes"}).items()
                 if isinstance(v, (str, int, float, bool))
             }

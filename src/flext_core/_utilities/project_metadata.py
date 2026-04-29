@@ -17,6 +17,7 @@ from __future__ import annotations
 import tomllib
 from collections.abc import (
     Mapping,
+    Sequence,
 )
 from functools import cache
 from pathlib import Path
@@ -110,19 +111,27 @@ class FlextUtilitiesProjectMetadata:
         if "version" not in project:
             msg = f"{root}: missing [project].version in pyproject.toml"
             raise ValueError(msg)
-        license_field = project.get("license")
-        if isinstance(license_field, Mapping):
-            license_text = str(license_field.get("text", "UNLICENSED"))
-        elif license_field is None:
+        license_field: object = project.get("license")
+        license_text: str
+        if license_field is None:
             license_text = "UNLICENSED"
+        elif isinstance(license_field, Mapping):
+            license_value = license_field.get("text", "UNLICENSED")
+            license_text = str(license_value)
         else:
             license_text = str(license_field)
-        authors_raw = project.get("authors")
-        authors_entries = authors_raw if isinstance(authors_raw, (list, tuple)) else ()
-        authors = tuple(
-            str(entry.get("name", "")) if isinstance(entry, Mapping) else str(entry)
-            for entry in authors_entries
+        authors_raw: object = project.get("authors")
+        authors_entries: Sequence[object] = (
+            authors_raw if isinstance(authors_raw, (list, tuple)) else ()
         )
+        author_names: list[str] = []
+        for entry in authors_entries:
+            if isinstance(entry, Mapping):
+                author_name = entry.get("name", "")
+                author_names.append(str(author_name))
+            else:
+                author_names.append(str(entry))
+        authors = tuple(author_names)
         urls_raw = project.get("urls")
         urls: t.JsonMapping = (
             dict(urls_raw) if isinstance(urls_raw, Mapping) else MappingProxyType({})

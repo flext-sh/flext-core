@@ -14,6 +14,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_tests import m
 
 from tests._models.mixins import TestsFlextCoreModelsMixins
@@ -35,6 +37,7 @@ class TestsFlextCoreModels(m):
     - Generic models accessed via TestsFlextModels.Tests namespace
     """
 
+    @override
     class Tests(TestsFlextCoreModelsMixins):
         """flext-core test models namespace."""
 

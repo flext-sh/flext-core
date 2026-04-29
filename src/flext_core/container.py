@@ -156,13 +156,13 @@ class FlextContainer(p.ContainerLifecycle):
             *self._resources.keys(),
             str(c.Directory.CONFIG),
             str(c.ServiceName.LOGGER),
-            str(c.FIELD_CONTEXT),
+            c.FIELD_CONTEXT,
             str(c.ServiceName.COMMAND_BUS),
         }
         for name in names_to_clear:
             for di_ns in (self._di_services, self._di_resources):
-                if hasattr(di_ns, str(name)):
-                    delattr(di_ns, str(name))
+                if hasattr(di_ns, name):
+                    delattr(di_ns, name)
         self._services.clear()
         self._factories.clear()
         self._resources.clear()
@@ -182,7 +182,7 @@ class FlextContainer(p.ContainerLifecycle):
             return self
         merged = self._user_overrides.model_copy()
         merged.update({
-            str(k): FlextRuntime.normalize_to_container(v) for k, v in settings.items()
+            k: FlextRuntime.normalize_to_container(v) for k, v in settings.items()
         })
         self._user_overrides = merged
         if applicable := {
@@ -281,7 +281,7 @@ class FlextContainer(p.ContainerLifecycle):
         """Return the merged settings exposed by this container."""
         config_dict = self._global_config.model_dump()
         return m.ConfigMap(
-            root={str(k): u.normalize_to_container(v) for k, v in config_dict.items()}
+            root={k: u.normalize_to_container(v) for k, v in config_dict.items()}
         )
 
     @override
@@ -316,13 +316,13 @@ class FlextContainer(p.ContainerLifecycle):
         self._factories = dict(spec.factories or {})
         self._resources = dict(spec.resources or {})
         self._internal_registrations = {
-            str(name)
+            name
             for name in self._services
-            if str(name)
+            if name
             in {
                 str(c.Directory.CONFIG),
                 str(c.ServiceName.LOGGER),
-                str(c.FIELD_CONTEXT),
+                c.FIELD_CONTEXT,
                 str(c.ServiceName.COMMAND_BUS),
             }
         }
@@ -355,7 +355,7 @@ class FlextContainer(p.ContainerLifecycle):
                 + list(self._factories.keys())
                 + list(self._resources.keys())
             )
-            if str(name) not in self._internal_registrations
+            if name not in self._internal_registrations
         ]
 
     @override
@@ -367,7 +367,9 @@ class FlextContainer(p.ContainerLifecycle):
             return self
         self._internal_registrations.discard(name)
         self._services[name] = m.ServiceRegistration(
-            name=name, service=impl, service_type=impl.__class__.__name__
+            name=name,
+            service=impl,
+            service_type=u.type_name(impl),
         )
         for di_ns in (self._di_services, self._di_resources):
             if hasattr(di_ns, name):
@@ -444,9 +446,9 @@ class FlextContainer(p.ContainerLifecycle):
                 c.ServiceName.LOGGER, lambda: u.fetch_logger(c.DEFAULT_LOGGER_MODULE)
             )
             self._internal_registrations.add(str(c.ServiceName.LOGGER))
-        if str(c.FIELD_CONTEXT) not in self._internal_registrations:
+        if c.FIELD_CONTEXT not in self._internal_registrations:
             self.bind(c.FIELD_CONTEXT, self._context)
-            self._internal_registrations.add(str(c.FIELD_CONTEXT))
+            self._internal_registrations.add(c.FIELD_CONTEXT)
         if str(c.ServiceName.COMMAND_BUS) not in self._internal_registrations:
             self.bind(c.ServiceName.COMMAND_BUS, u.build_dispatcher())
             self._internal_registrations.add(str(c.ServiceName.COMMAND_BUS))
@@ -538,7 +540,7 @@ class FlextContainer(p.ContainerLifecycle):
         """Synchronize FlextSettings to DI providers.Configuration."""
         config_dict = self._global_config.model_dump()
         config_map = m.ConfigMap(
-            root={str(k): u.normalize_to_container(v) for k, v in config_dict.items()}
+            root={k: u.normalize_to_container(v) for k, v in config_dict.items()}
         )
         _ = u.DependencyIntegration.bind_configuration(self._di_container, config_map)
         namespaces = FlextSettings.registered_namespaces()
@@ -606,7 +608,7 @@ class FlextContainer(p.ContainerLifecycle):
         if isinstance(result.value, p.Dispatcher):
             return r[p.Dispatcher].ok(result.value)
         return r[p.Dispatcher].from_result(
-            e.fail_type_mismatch("dispatcher", result.value.__class__.__name__)
+            e.fail_type_mismatch("dispatcher", u.type_name(result.value))
         )
 
     def _apply_explicit_bootstrap(
@@ -630,7 +632,9 @@ class FlextContainer(p.ContainerLifecycle):
     ) -> None:
         """Replace or insert an object-backed service across local and DI state."""
         self._services[name] = m.ServiceRegistration(
-            name=name, service=service, service_type=service.__class__.__name__
+            name=name,
+            service=service,
+            service_type=u.type_name(service),
         )
         for di_ns in (self._di_services, self._di_resources):
             if hasattr(di_ns, name):
