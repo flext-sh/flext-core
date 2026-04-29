@@ -1,0 +1,44 @@
+examples/typings.py
+  h_9db9d35f50cf33 5,8
+src/flext_core/mixins.py
+  h_9db9d35f50cf33 28-29,32-38
+src/flext_core/_utilities/parser_coerce.py
+  h_9db9d35f50cf33 11,21-22,27
+src/flext_core/lazy.py
+  h_9db9d35f50cf33 173
+src/flext_core/_protocols/result.py
+  h_9db9d35f50cf33 24,310,345,359,362,365,368,371,374,379,386,392-393,398,404-405,411,414,416,418,424-425,430-431,439-440,446
+src/flext_core/_models/containers.py
+  h_9db9d35f50cf33 160-162
+src/flext_core/_utilities/guards.py
+  h_9db9d35f50cf33 45-46
+src/flext_core/_utilities/beartype_engine.py
+  h_9db9d35f50cf33 15,39-41,57,94-136
+src/flext_core/_protocols/handler.py
+  h_9db9d35f50cf33 23-24
+tests/unit/test_coverage_exceptions.py
+  h_9db9d35f50cf33 203-233
+src/flext_core/_utilities/_beartype/helpers.py
+  h_9db9d35f50cf33 322
+src/flext_core/_settings/base.py
+  h_9db9d35f50cf33 15,28
+examples/logging_config_once_pattern.py
+  h_9db9d35f50cf33 23,67
+src/flext_core/_exceptions/factories.py
+  h_9db9d35f50cf33 119,121-124,151,153-155,198,200-202,244,246-249,345,347
+src/flext_core/_protocols/settings.py
+  h_9db9d35f50cf33 15,86
+src/flext_core/models.py
+  h_9db9d35f50cf33 44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "d04d8b5308a26072cdc0bba403bbb05f4239b6a2",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
