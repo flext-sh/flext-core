@@ -1,0 +1,282 @@
+tests/_constants/result.py
+  h_9db9d35f50cf33 15
+examples/ex_08_flext_container.py
+  h_9db9d35f50cf33 11,19,52-54,57,75,79,83,92,101,119,123,133,140,144,148,154,157,165-166,168,172,175,199-200,203,212,215,228,232,250,253,256,261,274,277,280,290-291,300-301,310-313,318-319,324,328-329,333-337,339-341,350-353,359-360,362,366-367,380,407-408,412,425,429-431,435,439,443,447,456,465
+tests/unit/test_constants_new.py
+  h_9db9d35f50cf33 20,87
+tests/unit/test_settings_coverage.py
+  h_9db9d35f50cf33 21,203
+tests/unit/test_settings.py
+  h_9db9d35f50cf33 31,278
+tests/benchmark/__init__.py
+  h_9db9d35f50cf33 10-12
+examples/_models/output.py
+  h_9db9d35f50cf33 14
+tests/_models/mixins.py
+  h_9db9d35f50cf33 18,135,172,200,1374
+tests/unit/test_runtime.py
+  h_9db9d35f50cf33 8
+examples/_models/ex05.py
+  h_9db9d35f50cf33 11,22,31-33,35,58
+tests/unit/_enforcement_integration_fixtures/__init__.py
+  h_9db9d35f50cf33 11-19,22-25
+tests/unit/test_handler_decorator_discovery.py
+  h_9db9d35f50cf33 17,290
+tests/_constants/services.py
+  h_9db9d35f50cf33 13
+tests/unit/test_enforcement_apt_hooks.py
+  h_9db9d35f50cf33 29
+examples/_models/ex07.py
+  h_9db9d35f50cf33 8
+examples/ex_02_flext_settings.py
+  h_9db9d35f50cf33 11,14,60,62,65,68,72,106-116,119,122,125-128,130,133,136,140,143-149,152,162,164-166,168,170,178,181,185-187,190,201,208,211,237,241,258,262,266-267,269
+tests/unit/_utilities/test_mapper.py
+  h_9db9d35f50cf33 8
+tests/integration/patterns/test_patterns_testing.py
+  h_9db9d35f50cf33 8
+examples/__init__.py
+  h_9db9d35f50cf33 15-28,30-31,47-48,50,53-54,61-74,76-77,96-97,100,105,107,160-180
+tests/unit/test_utilities_type_guards_coverage_100.py
+  h_9db9d35f50cf33 14
+tests/unit/test_models_base_full_coverage.py
+  h_9db9d35f50cf33 12
+tests/unit/test_constants_project_metadata.py
+  h_9db9d35f50cf33 8
+tests/unit/test_handlers.py
+  h_9db9d35f50cf33 17,585
+tests/unit/test_utilities_settings_coverage_100.py
+  h_9db9d35f50cf33 8
+tests/unit/test_result_exception_carrying.py
+  h_9db9d35f50cf33 13,285,287,421
+examples/logging_config_once_pattern.py
+  h_9db9d35f50cf33 23,67,139,144
+tests/unit/base.py
+  h_9db9d35f50cf33 3,8,31,95,124-125,132,153,160
+tests/unit/test_typings_new.py
+  h_9db9d35f50cf33 23,511
+tests/unit/test_enforcement_integration.py
+  h_9db9d35f50cf33 58,107-115
+tests/unit/test_models_cqrs_full_coverage.py
+  h_9db9d35f50cf33 13
+tests/constants.py
+  h_9db9d35f50cf33 13-21,25,33-41,46,48
+tests/unit/test_result.py
+  h_9db9d35f50cf33 55,79,148,181,862
+tests/integration/test_examples_execution.py
+  h_9db9d35f50cf33 13,16,21,33-34,46,59
+examples/typings.py
+  h_9db9d35f50cf33 8,23,25
+tests/unit/__init__.py
+  h_9db9d35f50cf33 22,24-29,32-35,38,40,42-48,50,52,54-56,58,60-68,70,72,74-78,83-84,86,88-90
+tests/unit/_models/test_cqrs.py
+  h_9db9d35f50cf33 8
+tests/unit/_models/test_base.py
+  h_9db9d35f50cf33 8
+examples/models.py
+  h_9db9d35f50cf33 6-19,21-22,27,33-46,53,56,60,62
+tests/integration/test_architecture.py
+  h_9db9d35f50cf33 11,14,68
+tests/unit/test_utilities_project_metadata.py
+  h_9db9d35f50cf33 19
+tests/integration/patterns/test_patterns_commands.py
+  h_9db9d35f50cf33 8
+tests/integration/test_settings_integration.py
+  h_9db9d35f50cf33 32,103,107,122,132,144,148,153
+examples/_models/__init__.py
+  h_9db9d35f50cf33 10-23,25-26
+examples/_models/ex10.py
+  h_9db9d35f50cf33 13,51,58
+tests/unit/test_beartype_engine.py
+  h_9db9d35f50cf33 35
+examples/ex_07_flext_exceptions.py
+  h_9db9d35f50cf33 11,14,20-22,26,44-49,52,56,61-63,66,73,87-88,96-97,108-110,118-119,127-128,137-139,147-148,157-159,168-170,179-180,183,193,197,208-209,217,220,227,231,244-246,250,257-258,267-269,273,275
+tests/unit/test_version.py
+  h_9db9d35f50cf33 9,12,20,35,37,40
+tests/__init__.py
+  h_9db9d35f50cf33 17-27,29,31-32,34,37,40,43,46,48,50,53,55,57,59,61,64,66-69,71,73,75,77,79,82-83,85,87-88,90,96-98,100,102,104,106,108,113-115,117,119,121,131,133,139,141,144,146,148,150,152,158,160,162,164,169,181,183,185-186,200,203,206,209,217,223,226,238,242,244,247,249,251,259,263-271,274,276,279-280,282,284,286,288,290,292,294,296,298,300,302,304-307,309,311,313,323,325,331,375,377,379,423-469
+tests/_constants/errors.py
+  h_9db9d35f50cf33 14
+tests/integration/patterns/test_advanced_patterns.py
+  h_9db9d35f50cf33 36,69,83,97
+examples/_models/errors.py
+  h_9db9d35f50cf33 8
+tests/_constants/__init__.py
+  h_9db9d35f50cf33 10-18
+tests/unit/test_exceptions.py
+  h_9db9d35f50cf33 16
+tests/unit/test_service_bootstrap.py
+  h_9db9d35f50cf33 12
+tests/unit/test_service_coverage_100.py
+  h_9db9d35f50cf33 20
+tests/unit/test_coverage_exceptions.py
+  h_9db9d35f50cf33 19
+tests/unit/test_container.py
+  h_9db9d35f50cf33 36,49,81,86,103,108,206,211,257,262,362,592,595
+tests/_models/__init__.py
+  h_9db9d35f50cf33 10
+examples/_models/ex03.py
+  h_9db9d35f50cf33 10
+tests/models.py
+  h_9db9d35f50cf33 3,9,21,24,31-33,41,45,48
+tests/unit/test_utilities_text_full_coverage.py
+  h_9db9d35f50cf33 16,19,27,40,55
+examples/ex_01_flext_result.py
+  h_9db9d35f50cf33 14,17,33,37,41,51-52,55,58,76-79,86-88,91-92,96,100,106-107,111,115-117,121,125,134,141-143,156-157,169,172-177,184-192,198,201,203-206,226,230,234-235,239,243-246,249,252,259,266,269,272,282-284,290,294,298,302,308-310,314,318,322,326,330,334-335,337
+tests/unit/test_utilities.py
+  h_9db9d35f50cf33 8
+examples/_models/ex01.py
+  h_9db9d35f50cf33 9
+tests/unit/test_dispatcher_di.py
+  h_9db9d35f50cf33 8
+tests/unit/test_models_container.py
+  h_9db9d35f50cf33 8
+tests/unit/test_utilities_generators_full_coverage.py
+  h_9db9d35f50cf33 13
+tests/_constants/fixtures.py
+  h_9db9d35f50cf33 13
+tests/unit/test_models.py
+  h_9db9d35f50cf33 8
+tests/unit/test_mixins.py
+  h_9db9d35f50cf33 32,67,86,104,114,146,196
+tests/unit/_enforcement_integration_fixtures/bad_module.py
+  h_9db9d35f50cf33 24,30,36,45,51,60,71,84,88
+tests/_constants/other.py
+  h_9db9d35f50cf33 15
+examples/shared.py
+  h_9db9d35f50cf33 46,74,108
+tests/unit/test_utilities_domain.py
+  h_9db9d35f50cf33 8
+tests/unit/test_utilities_collection_coverage_100.py
+  h_9db9d35f50cf33 13,140
+tests/benchmark/test_container_performance.py
+  h_9db9d35f50cf33 8
+tests/unit/test_models_project_metadata.py
+  h_9db9d35f50cf33 8
+tests/unit/test_service.py
+  h_9db9d35f50cf33 10,19,25-27,31,35,41,43
+tests/benchmark/test_lazy_performance.py
+  h_9db9d35f50cf33 19,47,65
+tests/integration/test_migration_validation.py
+  h_9db9d35f50cf33 42
+tests/unit/_utilities/__init__.py
+  h_9db9d35f50cf33 10-11
+tests/typings.py
+  h_9db9d35f50cf33 3,8,24,62,64
+tests/unit/_models/test_enforcement_sources.py
+  h_9db9d35f50cf33 16
+tests/integration/test_integration.py
+  h_9db9d35f50cf33 18
+tests/unit/test_enforcement_catalog.py
+  h_9db9d35f50cf33 12
+examples/_models/ex02.py
+  h_9db9d35f50cf33 8
+tests/integration/patterns/test_architectural_patterns.py
+  h_9db9d35f50cf33 26
+tests/unit/test_context.py
+  h_9db9d35f50cf33 8
+tests/utilities.py
+  h_9db9d35f50cf33 20,291,293-294,307-308,323-324,348-349,365-366,1303,1305,1312,1324,1326,1333,1343,1345,1352,1395,1400,1408,1421,1426,1434,1446,1448,1455,1544-1546,1550-1552,1557,1562,1568,1661,1703-1704
+tests/unit/test_loggings_full_coverage.py
+  h_9db9d35f50cf33 20
+tests/_constants/strings.py
+  h_9db9d35f50cf33 12
+tests/protocols.py
+  h_9db9d35f50cf33 3,8,27,33,61-62,105,127,134-135
+tests/_constants/settings.py
+  h_9db9d35f50cf33 12
+tests/unit/test_decorators_full_coverage.py
+  h_9db9d35f50cf33 15
+tests/unit/test_enum_utilities_coverage_100.py
+  h_9db9d35f50cf33 30
+examples/ex_12_flext_registry.py
+  h_9db9d35f50cf33 11,60,103-104,129-134,143-145,149-150,190-193,197-198,202-203,216,222,246-249,274-275,279-281,283,291-292,296,302-303,309-310,349-352,355-358,362,366-367,371,375-376,380
+examples/ex_03_flext_logger.py
+  h_9db9d35f50cf33 11,16,38-43,49,56-57,61,73,77,81,85,89,93,97,101,110,114,118,128-129,133,143,145,147,149-151,154,157,160,164,167,171,183-184,201,210-213,216,219-220,224-225,227,234
+tests/unit/test_registry_full_coverage.py
+  h_9db9d35f50cf33 8
+tests/integration/test_service_result_property.py
+  h_9db9d35f50cf33 18
+tests/integration/__init__.py
+  h_9db9d35f50cf33 16,18,20-31
+tests/unit/test_deprecation_warnings.py
+  h_9db9d35f50cf33 8
+tests/integration/patterns/test_patterns_logging.py
+  h_9db9d35f50cf33 21
+tests/unit/test_dispatcher_reliability.py
+  h_9db9d35f50cf33 8
+examples/_models/ex11.py
+  h_9db9d35f50cf33 10,32
+examples/_models/ex08.py
+  h_9db9d35f50cf33 10
+tests/unit/test_lazy_exports.py
+  h_9db9d35f50cf33 14
+examples/_models/ex14.py
+  h_9db9d35f50cf33 8
+tests/unit/_utilities/test_guards.py
+  h_9db9d35f50cf33 8
+tests/unit/test_utilities_coverage.py
+  h_9db9d35f50cf33 20,36
+tests/unit/test_utilities_reliability.py
+  h_9db9d35f50cf33 25
+tests/unit/test_decorators.py
+  h_9db9d35f50cf33 20,159,167,196,218,244,271,313,340,428
+tests/unit/test_dispatcher_minimal.py
+  h_9db9d35f50cf33 8
+tests/_constants/domain.py
+  h_9db9d35f50cf33 15
+examples/_models/ex12.py
+  h_9db9d35f50cf33 10
+examples/_models/ex04.py
+  h_9db9d35f50cf33 10
+src/flext_core/_utilities/model_options.py
+  h_9db9d35f50cf33 89-92,94,96,98,102-105,107-108,111-112,115,117-119
+tests/benchmark/test_container_memory.py
+  h_9db9d35f50cf33 38
+tests/unit/test_coverage_loggings.py
+  h_9db9d35f50cf33 26,412
+tests/unit/test_registry.py
+  h_9db9d35f50cf33 8
+tests/unit/test_enforcement.py
+  h_9db9d35f50cf33 29,47,430,436
+tests/integration/test_system.py
+  h_9db9d35f50cf33 20
+tests/unit/_models/test_exception_params.py
+  h_9db9d35f50cf33 20
+tests/_constants/loggings.py
+  h_9db9d35f50cf33 12
+tests/integration/test_documented_patterns.py
+  h_9db9d35f50cf33 8
+tests/unit/_models/__init__.py
+  h_9db9d35f50cf33 10-14
+tests/unit/test_decorators_discovery_full_coverage.py
+  h_9db9d35f50cf33 10
+tests/unit/_models/test_entity.py
+  h_9db9d35f50cf33 8
+examples/settings.py
+  h_9db9d35f50cf33 5
+tests/integration/test_service.py
+  h_9db9d35f50cf33 25,49,52,76,88,92,95,101
+tests/unit/_enforcement_integration_fixtures/clean_module.py
+  h_9db9d35f50cf33 15,18,58,68,80
+tests/unit/test_project_metadata_facade_access.py
+  h_9db9d35f50cf33 16
+src/flext_core/_utilities/enforcement_emit.py
+  h_9db9d35f50cf33 61-65,71-77
+tests/integration/patterns/__init__.py
+  h_9db9d35f50cf33 10-14
+examples/_models/shared.py
+  h_9db9d35f50cf33 11,18,29-30
+examples/_models/ex00.py
+  h_9db9d35f50cf33 7,11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "a6b6c8608d5e43b52fa019547d2391df85aadac6",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
