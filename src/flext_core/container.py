@@ -495,10 +495,10 @@ class FlextContainer(p.ContainerLifecycle):
             if scope_registration.settings is not None
             else self._config
         )
-        base_config: p.Settings = settings_source.model_copy(deep=True)
+        base_config: p.Settings = settings_source.clone()
         if subproject and scope_registration.settings is None:
-            base_config = base_config.model_copy(
-                update={"app_name": f"{base_config.app_name}.{subproject}"}
+            base_config = base_config.clone(
+                app_name=f"{base_config.app_name}.{subproject}"
             )
         scoped_context = (
             self.context.clone()

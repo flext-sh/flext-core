@@ -284,7 +284,7 @@ class FlextExceptionsBase:
 
         def to_dict(self) -> Mapping[str, t.JsonPayload | None]:
             """Convert exception to dictionary representation."""
-            result: MutableMapping[str, t.JsonValue | None] = {
+            result: MutableMapping[str, t.JsonPayload | None] = {
                 "error_type": type(self).__name__,
                 "message": self.message,
                 "error_code": self.error_code,
@@ -293,7 +293,7 @@ class FlextExceptionsBase:
                 "timestamp": self.timestamp,
             }
             if self.metadata and self.metadata.attributes:
-                filtered_attrs: MutableMapping[str, t.JsonValue | None] = {
+                filtered_attrs: MutableMapping[str, t.JsonPayload | None] = {
                     k: v for k, v in self.metadata.attributes.items() if k not in result
                 }
             else:

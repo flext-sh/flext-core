@@ -130,7 +130,7 @@ class FlextModelsCollections:
             ),
         ] = None
         contains: Annotated[
-            t.JsonValue | None,
+            str | None,
             mp.Field(
                 default=None,
                 title="Contains",

@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    Mapping,
     Sequence,
 )
 
 import pytest
 
-from tests import c, e, m, p, t
+from tests import c, e, m, p
 
 type ErrorFactory = Callable[[], e.BaseError]
 type FailureFactory = Callable[[], p.Result[bool]]
@@ -20,7 +19,7 @@ class TestsFlextCoverageExceptions:
     """Validate public exception behavior without depending on internals."""
 
     STRUCTURED_ERRORS: Sequence[
-        tuple[str, ErrorFactory, str, str, Mapping[str, t.JsonValue | None]]
+        tuple[str, ErrorFactory, str, str, dict[str, str | int | None]]
     ] = [
         (
             "validation",
@@ -139,11 +138,15 @@ class TestsFlextCoverageExceptions:
     ]
 
     FAILURES: Sequence[
-        tuple[str, FailureFactory, str, str, Mapping[str, t.JsonValue | None]]
+        tuple[str, FailureFactory, str, str, dict[str, str | int | None]]
     ] = [
         (
             "config",
-            lambda: e.fail_config_error("API_KEY", "environment", error="missing"),
+            lambda: e.fail_config_error(
+                "API_KEY",
+                "environment",
+                options=m.ExceptionFactoryOptions(error="missing"),
+            ),
             "read config key 'API_KEY'",
             c.ErrorCode.CONFIGURATION_ERROR,
             {"config_key": "API_KEY", "config_source": "environment"},
@@ -152,9 +155,10 @@ class TestsFlextCoverageExceptions:
             "connection",
             lambda: e.fail_connection(
                 "db.internal",
-                5432,
-                timeout=5,
-                error="refused",
+                params=m.ConnectionErrorParams(
+                    host="db.internal", port=5432, timeout=5
+                ),
+                options=m.ExceptionFactoryOptions(error="refused"),
             ),
             "connect to db.internal",
             c.ErrorCode.CONNECTION_ERROR,
@@ -169,7 +173,11 @@ class TestsFlextCoverageExceptions:
         ),
         (
             "auth",
-            lambda: e.fail_auth("token", "u-1", error="denied"),
+            lambda: e.fail_auth(
+                "token",
+                "u-1",
+                options=m.ExceptionFactoryOptions(error="denied"),
+            ),
             "authenticate user u-1",
             c.ErrorCode.AUTHENTICATION_ERROR,
             {"auth_method": "token", "user_id": "u-1"},
@@ -204,7 +212,7 @@ class TestsFlextCoverageExceptions:
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
-        expected_payload: Mapping[str, t.JsonValue | None],
+        expected_payload: dict[str, str | int | None],
     ) -> None:
         error = factory()
 
@@ -261,9 +269,10 @@ class TestsFlextCoverageExceptions:
         factory: FailureFactory,
         expected_fragment: str,
         expected_code: str,
-        expected_data: Mapping[str, t.JsonValue | None],
+        expected_data: dict[str, str | int | None],
     ) -> None:
         result = factory()
+        result_data = result.error_data or {}
 
         assert result.failure
         assert result.error is not None
@@ -271,7 +280,7 @@ class TestsFlextCoverageExceptions:
         assert result.error_code == expected_code
         assert result.error_data is not None
         for key, value in expected_data.items():
-            assert result.error_data[key] == value
+            assert result_data[key] == value
 
     def test_metrics_are_exposed_through_public_behavior(self) -> None:
         e.clear_metrics()

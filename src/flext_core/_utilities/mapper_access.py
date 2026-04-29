@@ -125,21 +125,21 @@ class FlextUtilitiesMapperAccess:
             if callable(model_dump_attr):
                 model_dict = m.ConfigMap.model_validate(model_dump_attr()).root
                 has_key = key_part in model_dict
-                val = model_dict[key_part] if has_key else None
-                result = (
-                    r[t.JsonPayload].fail_op(
-                        "extract model key value",
-                        "found_none:"
-                        + e.render_template(
-                            c.ERR_TEMPLATE_FOUND_NONE,
-                            key=key_part,
-                        ),
-                    )
-                    if has_key and val is None
-                    else r[t.JsonPayload].ok(val)
-                    if has_key
-                    else not_found_result
-                )
+                if has_key:
+                    val = model_dict[key_part]
+                    if val is None:
+                        result = r[t.JsonPayload].fail_op(
+                            "extract model key value",
+                            "found_none:"
+                            + e.render_template(
+                                c.ERR_TEMPLATE_FOUND_NONE,
+                                key=key_part,
+                            ),
+                        )
+                    else:
+                        result = r[t.JsonPayload].ok(val)
+                else:
+                    result = not_found_result
             else:
                 result = not_found_result
         else:

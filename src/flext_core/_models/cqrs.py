@@ -19,6 +19,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    ValidationError,
     computed_field,
     field_validator,
 )
@@ -28,7 +29,6 @@ from flext_core import (
     FlextRuntime as ur,
     FlextUtilitiesGenerators as ug,
     c,
-    r,
     t,
 )
 
@@ -181,16 +181,16 @@ class FlextModelsCqrs:
             """Convert pagination to Pagination instance."""
             # Allow subclasses to override Pagination via class attribute,
             # fallback to the default _CqrsPagination
-            pagination_cls = getattr(cls, "Pagination", _CqrsPagination)
+            pagination_cls: type[BaseModel] = getattr(
+                cls, "Pagination", _CqrsPagination
+            )
             normalized_input = ur.normalize_model_input_mapping(v)
             if normalized_input is None:
                 return pagination_cls()
-            validate_result = r[BaseModel].create_from_callable(
-                lambda: pagination_cls.model_validate(normalized_input),
-            )
-            if validate_result.failure:
+            try:
+                return pagination_cls.model_validate(normalized_input)
+            except ValidationError:
                 return pagination_cls()
-            return validate_result.value
 
     class Handler(m.ArbitraryTypesModel):
         """Handler configuration model."""

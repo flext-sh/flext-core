@@ -83,6 +83,21 @@ class FlextProtocolsSettings:
             """
             ...
 
+        def clone(self, **overrides: t.Scalar) -> Self:
+            """Create a deep copy with optional field overrides.
+
+            This is the canonical way for containers and services to obtain an
+            isolated settings snapshot without mutating the global singleton.
+
+            Args:
+                **overrides: Keyword arguments mapped to model field names.
+
+            Returns:
+                A new settings instance with overrides applied.
+
+            """
+            ...
+
     @runtime_checkable
     class SettingsType(Protocol):
         """Protocol for concrete settings classes with singleton access."""

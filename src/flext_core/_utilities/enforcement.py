@@ -270,56 +270,51 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         every row in ``c.ENFORCEMENT_RULES`` through here and pipes the
         result into :meth:`_apply_rule`.
         """
-        # Generic/Pydantic specializations (``Foo[Bar]``) are synthetic
-        # runtime artifacts shared across all categories — skip universally.
         is_model = issubclass(target, mp.BaseModel)
         rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
         if "[" in target.__name__:
             return
-        if category is c.EnforcementCategory.FIELD:
-            if is_model:
-                yield from FlextUtilitiesEnforcement._field_items(
-                    target,
-                    tag,
-                )
-            return
-        if category is c.EnforcementCategory.MODEL_CLASS:
-            if is_model:
-                yield target.__qualname__, (target,)
-            return
-        if category is c.EnforcementCategory.ATTR:
-            if rule_layer.lower() == effective_layer:
-                yield from FlextUtilitiesEnforcement._attr_items(
-                    target,
-                    effective_layer,
-                )
-            return
-        if category is c.EnforcementCategory.NAMESPACE:
-            yield from FlextUtilitiesEnforcement._namespace_items(
-                target,
-                tag,
-                effective_layer,
-            )
-            return
-        if category is c.EnforcementCategory.PROTOCOL_TREE:
-            if effective_layer != c.EnforcementLayer.PROTOCOLS.lower():
-                return
+
+        def walk(node: type, path: str) -> Iterator[tuple[str, tuple[object, ...]]]:
             iterator = (
                 FlextUtilitiesEnforcement._iter_effective
                 if tag == "proto_inner_kind"
                 else FlextUtilitiesEnforcement._iter_inner
             )
+            for name, value in iterator(node):
+                nested = f"{path}.{name}"
+                yield nested, (value,)
+                if ub.has_runtime_protocol_marker(value) or ub.has_nested_namespace(
+                    value
+                ):
+                    yield from walk(value, nested)
 
-            def walk(node: type, path: str) -> Iterator[tuple[str, tuple[object, ...]]]:
-                for name, value in iterator(node):
-                    nested = f"{path}.{name}"
-                    yield nested, (value,)
-                    if ub.has_runtime_protocol_marker(value) or ub.has_nested_namespace(
-                        value
-                    ):
-                        yield from walk(value, nested)
+        items: Iterator[tuple[str, tuple[object, ...]]] = iter(())
+        if category is c.EnforcementCategory.FIELD:
+            if is_model:
+                items = FlextUtilitiesEnforcement._field_items(target, tag)
+        elif category is c.EnforcementCategory.MODEL_CLASS:
+            if is_model:
+                items = iter(((target.__qualname__, (target,)),))
+        elif category is c.EnforcementCategory.ATTR:
+            if rule_layer.lower() == effective_layer:
+                items = FlextUtilitiesEnforcement._attr_items(
+                    target,
+                    effective_layer,
+                )
+        elif category is c.EnforcementCategory.NAMESPACE:
+            items = FlextUtilitiesEnforcement._namespace_items(
+                target,
+                tag,
+                effective_layer,
+            )
+        elif (
+            category is c.EnforcementCategory.PROTOCOL_TREE
+            and effective_layer == c.EnforcementLayer.PROTOCOLS.lower()
+        ):
+            items = walk(target, target.__qualname__)
 
-            yield from walk(target, target.__qualname__)
+        yield from items
 
     @staticmethod
     def check(target: type, *, layer: str | None = None) -> me.Report:
@@ -370,11 +365,19 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         """Return True if the target is exempt from enforcement.
 
         Exemptions:
-        - Classes in ``_enforcement_integration_fixtures`` modules (intentionally
-          test fixtures that exercise enforcement firing).
+        - Normal test classes (``Tests*`` / ``Test*`` in qualname) so that
+          pytest collection does not trigger enforcement noise.
+        - Intentional enforcement fixtures (``_enforcement_integration_fixtures``)
+          are NOT exempt — they are designed to exercise rule firing.
         """
         module = getattr(target, "__module__", "") or ""
-        return "_enforcement_integration_fixtures" in module
+        qualname = getattr(target, "__qualname__", "") or ""
+        if "_enforcement_integration_fixtures" in module:
+            return False
+        if not module.startswith(("tests.", "tests_")):
+            return False
+        segments = qualname.split(".")
+        return any(seg.startswith(("Tests", "Test")) for seg in segments)
 
     @staticmethod
     def run(model_type: type[mp.BaseModel]) -> None:

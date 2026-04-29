@@ -274,5 +274,34 @@ class TestsFlextSettings:
         instance = auto.create_settings()
         tm.that(instance, is_=p.Settings)
 
+    # --- Clone / isolated copies -----------------------------------------
+
+    def test_clone_without_overrides_returns_deep_copy(self) -> None:
+        original = u.Tests.create_test_config(app_name="orig")
+        copied = original.clone()
+        tm.that(copied is not original, eq=True)
+        tm.that(copied.app_name, eq="orig")
+        copied.app_name = "mutated"
+        tm.that(original.app_name, eq="orig")
+
+    def test_clone_with_overrides_applies_fields(self) -> None:
+        original = u.Tests.create_test_config(app_name="orig", version="1.0.0")
+        copied = original.clone(app_name="new", version="2.0.0")
+        tm.that(copied.app_name, eq="new")
+        tm.that(copied.version, eq="2.0.0")
+        tm.that(original.app_name, eq="orig")
+
+    def test_clone_reruns_validators(self) -> None:
+        original = u.Tests.create_test_config(debug=True)
+        with pytest.raises(c.ValidationError, match="Trace mode requires debug mode"):
+            original.clone(trace=True, debug=False)
+
+    def test_for_context_uses_deep_copy(self) -> None:
+        original = FlextSettings.fetch_global()
+        context = FlextSettings.for_context("test_ctx", app_name="ctx_app")
+        tm.that(context is not original, eq=True)
+        tm.that(context.app_name, eq="ctx_app")
+        tm.that(original.app_name, eq="flext")
+
 
 __all__: t.MutableSequenceOf[str] = ["TestsFlextSettings"]

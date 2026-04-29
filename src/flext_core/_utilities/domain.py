@@ -49,10 +49,11 @@ class FlextUtilitiesDomain:
             return None
 
     @staticmethod
-    def _to_hashable(value: t.JsonValue) -> t.JsonValue:
+    def _to_hashable(value: t.JsonPayload) -> t.JsonValue:
         """Coerce a value to something hashable for dict-based hashing."""
         if isinstance(value, (str, int, float, bool, type(None))):
-            return value
+            scalar_value: str | int | float | bool | None = value
+            return scalar_value
         return u.type_name(value)
 
     @staticmethod

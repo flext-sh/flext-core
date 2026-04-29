@@ -8,7 +8,7 @@ under the 200-LOC cap (logical LOC, AGENTS.md §3.1).
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import ClassVar
+from typing import ClassVar, TypeGuard
 
 from flext_core import (
     FlextRuntime,
@@ -24,6 +24,14 @@ class FlextUtilitiesCollectionMerge:
     """Mapping-merge strategies + dispatcher (`merge_mappings`)."""
 
     @staticmethod
+    def _is_json_mapping(value: object) -> TypeGuard[Mapping[str, t.JsonValue]]:
+        return isinstance(value, Mapping)
+
+    @staticmethod
+    def _is_json_list(value: object) -> TypeGuard[list[t.JsonValue]]:
+        return isinstance(value, list)
+
+    @staticmethod
     def _merge_deep_single_key(
         result: dict[str, t.JsonValue],
         key: str,
@@ -31,12 +39,12 @@ class FlextUtilitiesCollectionMerge:
     ) -> p.Result[bool]:
         """Merge single key in deep merge strategy."""
         current_val = result.get(key)
-        if (
-            current_val is not None
-            and isinstance(current_val, Mapping)
-            and isinstance(value, Mapping)
-        ):
-            result[key] = FlextRuntime.normalize_to_metadata({**current_val, **value})
+        if FlextUtilitiesCollectionMerge._is_json_mapping(
+            current_val
+        ) and FlextUtilitiesCollectionMerge._is_json_mapping(value):
+            result[key] = FlextRuntime.normalize_to_metadata(
+                {**current_val, **value},
+            )
             return r[bool].ok(True)
         result[key] = value
         return r[bool].ok(True)
@@ -84,16 +92,14 @@ class FlextUtilitiesCollectionMerge:
         result: dict[str, t.JsonValue] = dict(other)
         for key, value in base.items():
             current_val = result.get(key)
-            if (
-                current_val is not None
-                and isinstance(current_val, list)
-                and isinstance(value, list)
-            ):
+            if FlextUtilitiesCollectionMerge._is_json_list(
+                current_val
+            ) and FlextUtilitiesCollectionMerge._is_json_list(value):
                 result[key] = FlextRuntime.normalize_to_metadata(
                     [*current_val, *value],
                 )
-            else:
-                result[key] = value
+                continue
+            result[key] = value
         return r[Mapping[str, t.JsonValue]].ok(result)
 
     @staticmethod

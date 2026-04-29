@@ -14,7 +14,17 @@ from collections.abc import Mapping, MutableMapping
 from datetime import datetime
 from typing import ClassVar
 
-from flext_core import FlextRuntime, c, m, p, r, t, u
+from flext_core import (
+    FlextRuntime,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesLoggingContext,
+    c,
+    m,
+    p,
+    r,
+    t,
+)
 
 
 class FlextUtilitiesContextState:
@@ -106,7 +116,9 @@ class FlextUtilitiesContextState:
                 for key, value in incoming.items()
                 if value is not None
             }
-            _ = u.bind_global_context(**normalized_context)
+            _ = FlextUtilitiesLoggingContext.bind_global_context(
+                **normalized_context,
+            )
 
     def _update_statistics(self, operation: str) -> None:
         """Update statistics counter for an operation (DRY helper)."""
@@ -149,13 +161,13 @@ class FlextUtilitiesContextState:
             custom_fields_dict = {}
         result: dict[str, t.JsonPayload] = {}
         for k, v in data.items():
-            if v is None or (u.mapping(v) and not v):
+            if v is None or (FlextUtilitiesGuardsTypeCore.mapping(v) and not v):
                 continue
             if isinstance(v, datetime):
                 result[k] = v.isoformat()
             elif isinstance(v, (str, int, float, bool, list, dict)):
                 result[k] = v
-            elif u.pydantic_model(v):
+            elif FlextUtilitiesGuardsTypeModel.pydantic_model(v):
                 result[k] = FlextRuntime.normalize_to_container(v)
             else:
                 result[k] = str(v)

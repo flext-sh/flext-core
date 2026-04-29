@@ -6,19 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import PrivateAttr
-
 from flext_core import c, t, u
 
 
 class FlextSettingsDI:
     """Mixin that lazily builds a DI ``Singleton`` provider.
 
-    The provider wraps the current settings instance.  It is constructed on
-    first access and cached via ``PrivateAttr``.
+    The provider wraps the current settings instance.
     """
 
-    _di_provider: t.Scalar | None = PrivateAttr(default=None)
+    _di_provider: t.Scalar | None = None
 
     def resolve_di_settings_provider(self) -> t.Scalar:
         """Get dependency injection provider for this settings.
@@ -26,7 +23,7 @@ class FlextSettingsDI:
         Returns a providers.Singleton instance via the runtime bridge.
         Type annotation stays framework-level to avoid DI imports in this module.
         """
-        if self._di_provider is None:
+        if not hasattr(self, "_di_provider") or self._di_provider is None:
             providers_module = u.dependency_providers()
             self._di_provider = providers_module.Singleton(lambda: self)
         provider = self._di_provider

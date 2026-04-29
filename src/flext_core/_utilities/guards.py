@@ -31,12 +31,34 @@ class FlextUtilitiesGuards(
 ):
     """Unified guard utilities: type narrowing + chk/guard validation engines."""
 
+    @staticmethod
+    def _equal(value: t.GuardInput, comparator: t.GuardInput) -> bool:
+        return object.__eq__(value, comparator)
+
+    @staticmethod
+    def _not_equal(value: t.GuardInput, comparator: t.GuardInput) -> bool:
+        return not object.__eq__(value, comparator)
+
+    @staticmethod
+    def _in_list(value: t.GuardInput, container: t.JsonList) -> bool:
+        return value in container
+
+    @staticmethod
+    def _not_in_list(value: t.GuardInput, container: t.JsonList) -> bool:
+        return value not in container
+
     _EQUALITY_OPS: ClassVar[
         Mapping[str, Callable[[t.GuardInput, t.GuardInput], bool]]
-    ] = {"eq": lambda v, c: v == c, "ne": lambda v, c: v != c}
+    ] = {
+        "eq": _equal,
+        "ne": _not_equal,
+    }
     _MEMBERSHIP_OPS: ClassVar[
         Mapping[str, Callable[[t.GuardInput, t.JsonList], bool]]
-    ] = {"in_": lambda v, c: v in c, "not_in": lambda v, c: v not in c}
+    ] = {
+        "in_": _in_list,
+        "not_in": _not_in_list,
+    }
     _NUMERIC_OPS: ClassVar[Mapping[str, Callable[[t.Numeric, float], bool]]] = {
         "gt": lambda v, c: v > c,
         "gte": lambda v, c: v >= c,
@@ -70,13 +92,7 @@ class FlextUtilitiesGuards(
             return False
         if guard_spec.starts is not None and not value.startswith(guard_spec.starts):
             return False
-        if guard_spec.ends is not None and not value.endswith(guard_spec.ends):
-            return False
-        return not (
-            guard_spec.contains is not None
-            and isinstance(guard_spec.contains, str)
-            and guard_spec.contains not in value
-        )
+        return not (guard_spec.ends is not None and not value.endswith(guard_spec.ends))
 
     @staticmethod
     def _check_iterable_contains(
@@ -84,6 +100,8 @@ class FlextUtilitiesGuards(
         contains: t.GuardInput,
     ) -> bool:
         """Check if iterable value contains the target (strings handled upstream)."""
+        if isinstance(value, str):
+            return isinstance(contains, str) and contains in value
         if isinstance(value, bytes):
             return isinstance(contains, bytes) and contains in value
         if isinstance(value, (list, tuple, set, frozenset, dict)):
@@ -121,7 +139,18 @@ class FlextUtilitiesGuards(
                 check_val, spec_val_num
             ):
                 return False
-        return True
+        match guard_spec.contains:
+            case None:
+                return True
+            case contains_value:
+                if isinstance(value, str):
+                    return FlextUtilitiesGuards._check_string_ops(value, guard_spec)
+                if not FlextUtilitiesGuardsTypeCore.container(value):
+                    return False
+                return FlextUtilitiesGuards._check_iterable_contains(
+                    value,
+                    contains_value,
+                )
 
     @staticmethod
     def chk(
@@ -150,19 +179,10 @@ class FlextUtilitiesGuards(
             return False
         if guard_spec.empty is True and check_val != 0:
             return False
-        if guard_spec.empty is False and check_val == 0:
-            return False
-        if isinstance(value, str):
-            return FlextUtilitiesGuards._check_string_ops(value, guard_spec)
-        if guard_spec.contains is not None:
-            return FlextUtilitiesGuards._check_iterable_contains(
-                value,
-                guard_spec.contains,
-            )
-        return True
+        return not (guard_spec.empty is False and check_val == 0)
 
     @staticmethod
-    def _to_container_or_str(value: t.JsonValue) -> t.JsonValue:
+    def _to_container_or_str(value: t.JsonPayload) -> t.JsonValue:
         """Normalize a value to Container: pass through if already, else str()."""
         return value if FlextUtilitiesGuards.container(value) else str(value)
 
@@ -194,22 +214,26 @@ class FlextUtilitiesGuards(
         | tuple[type, ...]
         | None = None,
         *,
-        default: t.JsonValue | None = None,
+        default: t.Scalar | t.JsonList | t.JsonMapping | None = None,
         return_value: bool = False,
     ) -> t.JsonValue | bool | r[t.JsonValue]:
         fail_msg = "Guard validation failed"
         try:
-            if FlextUtilitiesGuards._check_validator(value, validator):
-                return (
-                    FlextUtilitiesGuards._to_container_or_str(value)
-                    if return_value
-                    else True
-                )
+            validation_passed = FlextUtilitiesGuards._check_validator(value, validator)
         except (TypeError, ValueError, AttributeError):
             fail_msg = "Guard validation raised an exception"
-        if default is not None:
-            return FlextUtilitiesGuards._to_container_or_str(default)
-        return r[t.JsonValue].fail(fail_msg) if return_value else False
+            validation_passed = False
+        if validation_passed:
+            return (
+                FlextUtilitiesGuards._to_container_or_str(value)
+                if return_value
+                else True
+            )
+        match default:
+            case None:
+                return r[t.JsonValue].fail(fail_msg) if return_value else False
+            case default_value:
+                return FlextUtilitiesGuards._to_container_or_str(default_value)
 
 
 __all__: list[str] = ["FlextUtilitiesGuards"]

@@ -12,7 +12,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, p, r, t, u
+from flext_core import (
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesGuardsTypeProtocol,
+    c,
+    p,
+    r,
+    t,
+)
 
 
 def execute_dispatcher_handler(
@@ -33,42 +41,40 @@ def execute_dispatcher_handler(
     try:
         raw_output = resolved_handler(message)
         result: p.Result[t.JsonPayload]
-        match raw_output:
-            case output if u.result_like(output) and output.failure:
-                error_data_value = output.error_data
+        if FlextUtilitiesGuardsTypeProtocol.result_like(raw_output):
+            if raw_output.failure:
+                error_data_value = raw_output.error_data
                 result = dispatch_result.fail(
-                    output.error or c.ERR_HANDLER_FAILED,
-                    error_code=output.error_code,
-                    error_data=error_data_value
-                    if u.pydantic_model(error_data_value)
-                    else None,
-                )
-            case output if u.result_like(output):
-                match output.value:
-                    case None:
-                        result = dispatch_result.fail_op(
-                            "validate handler success payload",
-                            c.ERR_HANDLER_RETURNED_NONE,
+                    raw_output.error or c.ERR_HANDLER_FAILED,
+                    error_code=raw_output.error_code,
+                    error_data=(
+                        error_data_value
+                        if FlextUtilitiesGuardsTypeModel.pydantic_model(
+                            error_data_value,
                         )
-                    case payload if u.container(payload) or u.pydantic_model(payload):
-                        result = dispatch_result.ok(payload)
-                    case _:
-                        result = dispatch_result.fail_op(
-                            "validate handler success payload",
-                            c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
-                        )
-            case None:
-                result = dispatch_result.fail_op(
-                    "execute resolved handler",
-                    c.ERR_HANDLER_RETURNED_NONE,
+                        else None
+                    ),
                 )
-            case payload if u.container(payload) or u.pydantic_model(payload):
-                result = dispatch_result.ok(payload)
-            case _:
-                result = dispatch_result.fail_op(
-                    "validate handler return payload",
-                    c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
-                )
+            else:
+                output_value = raw_output.value
+                if FlextUtilitiesGuardsTypeCore.container(
+                    output_value
+                ) or FlextUtilitiesGuardsTypeModel.pydantic_model(output_value):
+                    result = dispatch_result.ok(output_value)
+                else:
+                    result = dispatch_result.fail_op(
+                        "validate handler success payload",
+                        c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
+                    )
+        elif FlextUtilitiesGuardsTypeCore.container(
+            raw_output
+        ) or FlextUtilitiesGuardsTypeModel.pydantic_model(raw_output):
+            result = dispatch_result.ok(raw_output)
+        else:
+            result = dispatch_result.fail_op(
+                "validate handler return payload",
+                c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
+            )
         return result
     except (
         TypeError,

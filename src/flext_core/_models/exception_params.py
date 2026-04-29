@@ -15,6 +15,8 @@ from typing import Annotated, ClassVar
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsPydantic as mp,
+    FlextTypesPydantic as tp,
+    c,
     t,
 )
 
@@ -31,18 +33,9 @@ class FlextModelsExceptionParams:
     from the outer Field).
     """
 
-    OptStrictStr: ClassVar = Annotated[
-        str | None,
-        mp.Field(default=None, strict=True),
-    ]
-    OptStrictInt: ClassVar = Annotated[
-        int | None,
-        mp.Field(default=None, strict=True),
-    ]
-    OptNumeric: ClassVar = Annotated[
-        t.Numeric | None,
-        mp.Field(default=None),
-    ]
+    type OptStrictStr = tp.StrictStr | None
+    type OptStrictInt = tp.StrictInt | None
+    type OptNumeric = t.Numeric | None
 
     class ParamsModel(m.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
@@ -54,6 +47,24 @@ class FlextModelsExceptionParams:
             arbitrary_types_allowed=True,
             use_enum_values=True,
         )
+
+    class ExceptionFactoryOptions(ParamsModel):
+        """Shared factory options for exception failures."""
+
+        error: Annotated[
+            Exception | str | None,
+            mp.Field(
+                default=None,
+                description="Optional underlying error cause for this failure.",
+            ),
+        ] = None
+        error_code: Annotated[
+            c.ErrorCode | None,
+            mp.Field(
+                default=None,
+                description="Optional override for the canonical failure error code.",
+            ),
+        ] = None
 
     class ResourceIdentityParams(ParamsModel):
         """Shared resource identity fields for resource-oriented errors."""
@@ -100,7 +111,7 @@ class FlextModelsExceptionParams:
             ),
         ] = None
         value: Annotated[
-            t.JsonPayload | t.Scalar | None,
+            t.RuntimeData | None,
             mp.Field(
                 default=None,
                 description="Rejected input value that triggered the validation error.",
@@ -127,20 +138,23 @@ class FlextModelsExceptionParams:
         """Validated params for ConnectionError."""
 
         host: Annotated[
-            FlextModelsExceptionParams.OptStrictStr,
+            str | None,
             mp.Field(
+                default=None,
                 description="Hostname or address used for the failed connection attempt.",
             ),
         ] = None
         port: Annotated[
-            FlextModelsExceptionParams.OptStrictInt,
+            int | None,
             mp.Field(
+                default=None,
                 description="Network port used for the failed connection attempt.",
             ),
         ] = None
         timeout: Annotated[
-            FlextModelsExceptionParams.OptNumeric,
+            t.Numeric | None,
             mp.Field(
+                default=None,
                 description="Connection timeout threshold in seconds.",
             ),
         ] = None
@@ -265,20 +279,23 @@ class FlextModelsExceptionParams:
         """Validated params for CircuitBreakerError."""
 
         service_name: Annotated[
-            FlextModelsExceptionParams.OptStrictStr,
+            str | None,
             mp.Field(
+                default=None,
                 description="External service monitored by the circuit breaker.",
             ),
         ] = None
         failure_count: Annotated[
-            FlextModelsExceptionParams.OptStrictInt,
+            int | None,
             mp.Field(
+                default=None,
                 description="Consecutive failure count at the moment the breaker opened.",
             ),
         ] = None
         reset_timeout: Annotated[
-            FlextModelsExceptionParams.OptNumeric,
+            t.Numeric | None,
             mp.Field(
+                default=None,
                 description="Seconds before allowing a circuit breaker reset attempt.",
             ),
         ] = None
@@ -359,7 +376,7 @@ class FlextModelsExceptionParams:
             ),
         ] = None
         attribute_context: Annotated[
-            t.JsonValue | None,
+            t.RuntimeData | None,
             mp.Field(
                 default=None,
                 description="Context payload describing the state during access failure.",

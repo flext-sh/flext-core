@@ -59,28 +59,24 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         """Recursive deep equality for any two nested items."""
         if val_a is val_b:
             return True
-        match (val_a, val_b):
-            case (None, None):
-                return True
-            case (None, _) | (_, None):
+        if val_a is None or val_b is None:
+            return False
+        if isinstance(val_a, Mapping) and isinstance(val_b, Mapping):
+            return (
+                hasattr(val_a, "items")
+                and hasattr(val_b, "items")
+                and FlextUtilitiesMapper.deep_eq(val_a, val_b)
+            )
+        if isinstance(val_a, list) and isinstance(val_b, list):
+            if len(val_a) != len(val_b):
                 return False
-            case (Mapping() as ma, Mapping() as mb):
-                return (
-                    hasattr(ma, "items")
-                    and hasattr(mb, "items")
-                    and FlextUtilitiesMapper.deep_eq(ma, mb)
-                )
-            case (list() as la, list() as lb):
-                if len(la) != len(lb):
-                    return False
-                return all(
-                    starmap(
-                        FlextUtilitiesMapper._deep_eq_values,
-                        zip(la, lb, strict=True),
-                    ),
-                )
-            case _:
-                return val_a == val_b
+            return all(
+                starmap(
+                    FlextUtilitiesMapper._deep_eq_values,
+                    zip(val_a, val_b, strict=True),
+                ),
+            )
+        return val_a == val_b
 
     @staticmethod
     def deep_eq(

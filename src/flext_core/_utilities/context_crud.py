@@ -15,6 +15,7 @@ from typing import ClassVar, overload
 from flext_core import (
     FlextRuntime,
     FlextUtilitiesContextState,
+    FlextUtilitiesLoggingContext,
     FlextUtilitiesModel,
     c,
     e,
@@ -22,7 +23,6 @@ from flext_core import (
     p,
     r,
     t,
-    u,
 )
 
 
@@ -43,7 +43,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
         for scope_name, ctx_var in self.state.scope_vars.items():
             _ = ctx_var.set(m.ConfigMap(root={}))
             if scope_name == c.ContextScope.GLOBAL:
-                _ = u.clear_global_context()
+                _ = FlextUtilitiesLoggingContext.clear_global_context()
         self.state = self.state.model_copy(
             update={"metadata": m.Metadata()},
         ).with_operation_update(c.ContextOperation.CLEAR.value)

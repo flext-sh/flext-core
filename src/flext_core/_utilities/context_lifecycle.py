@@ -14,7 +14,15 @@ from collections.abc import (
 )
 from typing import ClassVar, Self
 
-from flext_core import FlextRuntime, FlextUtilitiesContextCrud, c, m, p, t, u
+from flext_core import (
+    FlextRuntime,
+    FlextUtilitiesContextCrud,
+    FlextUtilitiesGuardsTypeCore,
+    c,
+    m,
+    p,
+    t,
+)
 
 
 class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
@@ -46,7 +54,8 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         metadata_attributes: dict[str, t.JsonValue] | None = None
         if include_metadata:
             metadata_attributes = {
-                k: u.normalize_to_metadata(v) for k, v in self._metadata_map().items()
+                k: FlextRuntime.normalize_to_metadata(v)
+                for k, v in self._metadata_map().items()
             }
         export_model = m.ContextExport.model_validate({
             "data": dict(all_data),
@@ -113,7 +122,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         for scope_name, scope_payload in exported_map.items():
             if scope_name not in c.CONTEXT_MERGEABLE_SCOPES:
                 continue
-            if not u.mapping(scope_payload):
+            if not FlextUtilitiesGuardsTypeCore.mapping(scope_payload):
                 continue
             scope_data = self._as_config_map(scope_payload, "scope payload")
             if scope_data is not None:

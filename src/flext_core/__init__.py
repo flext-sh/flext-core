@@ -79,6 +79,14 @@ if _t.TYPE_CHECKING:
     from flext_core._protocols.result import FlextProtocolsResult
     from flext_core._protocols.service import FlextProtocolsService
     from flext_core._protocols.settings import FlextProtocolsSettings
+    from flext_core._settings.base import FlextSettingsBase
+    from flext_core._settings.context import FlextSettingsContext
+    from flext_core._settings.core import FlextSettingsCore
+    from flext_core._settings.database import FlextSettingsDatabase
+    from flext_core._settings.di import FlextSettingsDI
+    from flext_core._settings.dispatcher import FlextSettingsDispatcher
+    from flext_core._settings.infrastructure import FlextSettingsInfrastructure
+    from flext_core._settings.registry import FlextSettingsRegistry
     from flext_core._typings.annotateds import FlextTypesAnnotateds
     from flext_core._typings.base import FlextTypingBase
     from flext_core._typings.containers import FlextTypingContainers
@@ -187,6 +195,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "._exceptions",
         "._models",
         "._protocols",
+        "._settings",
         "._typings",
         "._utilities",
     ),
@@ -262,6 +271,14 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._protocols.result": ("FlextProtocolsResult",),
             "._protocols.service": ("FlextProtocolsService",),
             "._protocols.settings": ("FlextProtocolsSettings",),
+            "._settings.base": ("FlextSettingsBase",),
+            "._settings.context": ("FlextSettingsContext",),
+            "._settings.core": ("FlextSettingsCore",),
+            "._settings.database": ("FlextSettingsDatabase",),
+            "._settings.di": ("FlextSettingsDI",),
+            "._settings.dispatcher": ("FlextSettingsDispatcher",),
+            "._settings.infrastructure": ("FlextSettingsInfrastructure",),
+            "._settings.registry": ("FlextSettingsRegistry",),
             "._typings.annotateds": ("FlextTypesAnnotateds",),
             "._typings.base": ("FlextTypingBase",),
             "._typings.containers": ("FlextTypingContainers",),
@@ -500,6 +517,14 @@ __all__: list[str] = [
     "FlextRuntime",
     "FlextService",
     "FlextSettings",
+    "FlextSettingsBase",
+    "FlextSettingsContext",
+    "FlextSettingsCore",
+    "FlextSettingsDI",
+    "FlextSettingsDatabase",
+    "FlextSettingsDispatcher",
+    "FlextSettingsInfrastructure",
+    "FlextSettingsRegistry",
     "FlextTypes",
     "FlextTypesAnnotateds",
     "FlextTypesCore",
