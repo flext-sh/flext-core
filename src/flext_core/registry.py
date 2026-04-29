@@ -471,8 +471,7 @@ class FlextRegistry(s[bool]):
                 scope=scope,
             )
             result = e.fail_validation(
-                field="name",
-                value=name,
+                m.ValidationErrorParams(field="name", value=name),
                 error=e.render_template(
                     c.ERR_REGISTRY_CATEGORY_NAME_CANNOT_BE_EMPTY,
                     category=category,

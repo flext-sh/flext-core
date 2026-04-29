@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import override
+from typing import Annotated, override
 
 from tests import m, p, r, s
 
@@ -12,8 +12,8 @@ class TestsFlextServiceUserData(m.Value):
 
     __test__ = False
 
-    user_id: int
-    name: str
+    user_id: Annotated[int, m.Field(description="User identifier")]
+    name: Annotated[str, m.Field(description="User name")]
 
 
 class TestsFlextServiceUserService(s):

@@ -49,17 +49,19 @@ class FlextExceptionsFactories:
         """Render the canonical failure message with or without an error cause."""
         if error is None:
             template_without_error = c.ERR_TEMPLATE_FAILED_WITH_ERROR.split(": ", 1)[0]
-            return FlextExceptionsTemplate.render_template(
+            message: str = FlextExceptionsTemplate.render_template(
                 template_without_error,
                 operation=operation,
                 params=params,
             )
-        return FlextExceptionsTemplate.render_template(
+            return message
+        message_with_error: str = FlextExceptionsTemplate.render_template(
             c.ERR_TEMPLATE_FAILED_WITH_ERROR,
             operation=operation,
             error=str(error),
             params=params,
         )
+        return message_with_error
 
     @staticmethod
     def fail_operation[TResult](
@@ -124,10 +126,9 @@ class FlextExceptionsFactories:
 
     @staticmethod
     def fail_type_mismatch[TResult](
-        expected: str,
-        actual: str,
+        details: m.ServiceLookupParams | str,
+        actual: str | None = None,
         *,
-        service_name: str | None = None,
         error_code: str | None = None,
         result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
@@ -136,16 +137,27 @@ class FlextExceptionsFactories:
         Usage::
 
             return e.fail_type_mismatch("FlextLogger", type(svc).__name__)
+            return e.fail_type_mismatch(
+                m.ServiceLookupParams(
+                    service_name="connection",
+                    expected_type="ldap3.Connection",
+                    actual_type=type(raw).__name__,
+                ),
+            )
 
         """
-        params = m.ServiceLookupParams(
-            service_name=service_name,
-            expected_type=expected,
-            actual_type=actual,
+        params = (
+            details
+            if isinstance(details, m.ServiceLookupParams)
+            else m.ServiceLookupParams(
+                expected_type=details,
+                actual_type=actual,
+            )
         )
+        expected_type = params.expected_type or c.DEFAULT_EMPTY_STRING
         msg = FlextExceptionsTemplate.render_template(
             c.ERR_SERVICE_TYPE_MISMATCH,
-            type_name=expected,
+            type_name=expected_type,
             params=params,
         )
         return FlextExceptionsFactories._result_type(result_type).fail(
@@ -156,8 +168,7 @@ class FlextExceptionsFactories:
 
     @staticmethod
     def fail_validation[TResult](
-        field: str | None = None,
-        value: t.JsonValue | None = None,
+        details: m.ValidationErrorParams | str | None = None,
         *,
         error_code: str | None = None,
         error: Exception | str | None = None,
@@ -167,21 +178,30 @@ class FlextExceptionsFactories:
 
         Usage::
 
-            return e.fail_validation("config_key", raw_value, error=exc)
+            return e.fail_validation("config_key", error=exc)
+            return e.fail_validation(
+                m.ValidationErrorParams(field="config_key", value=raw_value),
+                error=exc,
+            )
 
         """
-        params = m.ValidationErrorParams(field=field, value=value)
+        params = (
+            details
+            if isinstance(details, m.ValidationErrorParams)
+            else m.ValidationErrorParams(field=details)
+        )
+        field_name = params.field or "input"
         base_msg = (
             FlextExceptionsTemplate.render_template(
                 c.ERR_TEMPLATE_FAILED_WITH_ERROR,
-                operation=f"validate {field or 'input'}",
+                operation=f"validate {field_name}",
                 error=str(error),
                 params=params,
             )
             if error is not None
             else FlextExceptionsTemplate.render_template(
                 c.ERR_TEMPLATE_VALIDATION_FAILED_FOR_FIELD,
-                field=field or "input",
+                field=field_name,
                 params=params,
             )
         )

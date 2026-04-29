@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Annotated
 
 import pytest
 
@@ -11,8 +12,8 @@ from tests import c, m, r
 
 class TestsFlextModelsBaseFullCoverage:
     class _FrozenValue(m.ContractModel):
-        name: str
-        count: int
+        name: Annotated[str, m.Field(description="Frozen value name")]
+        count: Annotated[int, m.Field(description="Frozen value count")]
 
     class _Identifiable(m.FlexibleModel, m.IdentifiableMixin):
         pass

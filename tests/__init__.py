@@ -46,12 +46,8 @@ if _t.TYPE_CHECKING:
         TestsFlextPatternsTesting,
     )
     from tests.integration.test_architecture import TestsFlextAutomatedArchitecture
-    from tests.integration.test_documented_patterns import (
-        TestsFlextDocumentedPatterns,
-    )
-    from tests.integration.test_examples_execution import (
-        TestsFlextExamplesExecution,
-    )
+    from tests.integration.test_documented_patterns import TestsFlextDocumentedPatterns
+    from tests.integration.test_examples_execution import TestsFlextExamplesExecution
     from tests.integration.test_integration import TestsFlextLibraryIntegration
     from tests.integration.test_migration_validation import (
         TestsFlextMigrationValidation,
@@ -67,15 +63,30 @@ if _t.TYPE_CHECKING:
     from tests.models import TestsFlextModels, m
     from tests.protocols import TestsFlextProtocols, p
     from tests.typings import TestsFlextTypes, t
+    from tests.unit._enforcement_integration_fixtures.bad_module import (
+        TestsFlextBadAccessors,
+        TestsFlextBadAnyField,
+        TestsFlextBadBareCollection,
+        TestsFlextBadConstants,
+        TestsFlextBadFrozen,
+        TestsFlextBadInlineUnion,
+        TestsFlextBadMissingDesc,
+        TestsFlextBadMutableDefault,
+        TestsFlextBadWorkerSettings,
+    )
+    from tests.unit._enforcement_integration_fixtures.clean_module import (
+        TestsFlextCleanConstants,
+        TestsFlextCleanModels,
+        TestsFlextCleanProtocols,
+        TestsFlextCleanServiceBase,
+    )
     from tests.unit._models.test_base import TestsFlextModelsBase
     from tests.unit._models.test_cqrs import TestsFlextModelsCQRS
     from tests.unit._models.test_enforcement_sources import (
         TestsFlextModelsEnforcementSources,
     )
     from tests.unit._models.test_entity import TestsFlextModelsEntity
-    from tests.unit._models.test_exception_params import (
-        TestsFlextModelsExceptionParams,
-    )
+    from tests.unit._models.test_exception_params import TestsFlextModelsExceptionParams
     from tests.unit._utilities.test_guards import TestsFlextUtilitiesGuards
     from tests.unit._utilities.test_mapper import TestsFlextUtilitiesMapper
     from tests.unit.base import TestsFlextServiceBase
@@ -96,15 +107,11 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_deprecation_warnings import TestsFlextDeprecationWarnings
     from tests.unit.test_dispatcher_di import TestsFlextDispatcherDI
     from tests.unit.test_dispatcher_minimal import TestsFlextDispatcherMinimal
-    from tests.unit.test_dispatcher_reliability import (
-        TestsFlextDispatcherReliability,
-    )
+    from tests.unit.test_dispatcher_reliability import TestsFlextDispatcherReliability
     from tests.unit.test_enforcement import TestsFlextEnforcement
     from tests.unit.test_enforcement_apt_hooks import TestsFlextEnforcementAptHooks
     from tests.unit.test_enforcement_catalog import TestsFlextEnforcementCatalog
-    from tests.unit.test_enforcement_integration import (
-        TestsFlextEnforcementIntegration,
-    )
+    from tests.unit.test_enforcement_integration import TestsFlextEnforcementIntegration
     from tests.unit.test_enum_utilities_coverage_100 import TestsFlextEnumUtilities
     from tests.unit.test_exceptions import TestsFlextExceptions
     from tests.unit.test_handler_decorator_discovery import (
@@ -120,16 +127,12 @@ if _t.TYPE_CHECKING:
     )
     from tests.unit.test_models_container import TestsFlextModelsContainer
     from tests.unit.test_models_cqrs_full_coverage import TestsFlextModelsCqrs
-    from tests.unit.test_models_project_metadata import (
-        TestsFlextModelsProjectMetadata,
-    )
+    from tests.unit.test_models_project_metadata import TestsFlextModelsProjectMetadata
     from tests.unit.test_project_metadata_facade_access import (
         TestsFlextFacadeFlatSsotAccess,
     )
     from tests.unit.test_registry import TestsFlextRegistry
-    from tests.unit.test_registry_full_coverage import (
-        TestsFlextRegistryFullCoverage,
-    )
+    from tests.unit.test_registry_full_coverage import TestsFlextRegistryFullCoverage
     from tests.unit.test_result import TestsFlextResult
     from tests.unit.test_result_exception_carrying import (
         TestsFlextResultExceptionCarrying,
@@ -237,6 +240,23 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".typings": (
                 "TestsFlextTypes",
                 "t",
+            ),
+            ".unit._enforcement_integration_fixtures.bad_module": (
+                "TestsFlextBadAccessors",
+                "TestsFlextBadAnyField",
+                "TestsFlextBadBareCollection",
+                "TestsFlextBadConstants",
+                "TestsFlextBadFrozen",
+                "TestsFlextBadInlineUnion",
+                "TestsFlextBadMissingDesc",
+                "TestsFlextBadMutableDefault",
+                "TestsFlextBadWorkerSettings",
+            ),
+            ".unit._enforcement_integration_fixtures.clean_module": (
+                "TestsFlextCleanConstants",
+                "TestsFlextCleanModels",
+                "TestsFlextCleanProtocols",
+                "TestsFlextCleanServiceBase",
             ),
             ".unit._models.test_base": ("TestsFlextModelsBase",),
             ".unit._models.test_cqrs": ("TestsFlextModelsCQRS",),
@@ -375,7 +395,20 @@ __all__: list[str] = [
     "TestsFlextAdvancedPatterns",
     "TestsFlextArchitecturalPatterns",
     "TestsFlextAutomatedArchitecture",
+    "TestsFlextBadAccessors",
+    "TestsFlextBadAnyField",
+    "TestsFlextBadBareCollection",
+    "TestsFlextBadConstants",
+    "TestsFlextBadFrozen",
+    "TestsFlextBadInlineUnion",
+    "TestsFlextBadMissingDesc",
+    "TestsFlextBadMutableDefault",
+    "TestsFlextBadWorkerSettings",
     "TestsFlextBeartypeEngine",
+    "TestsFlextCleanConstants",
+    "TestsFlextCleanModels",
+    "TestsFlextCleanProtocols",
+    "TestsFlextCleanServiceBase",
     "TestsFlextConstants",
     "TestsFlextConstantsDomain",
     "TestsFlextConstantsErrors",

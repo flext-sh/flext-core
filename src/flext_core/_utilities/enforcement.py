@@ -366,6 +366,17 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         return me.Report(violations=violations)
 
     @staticmethod
+    def _is_exempt(target: type) -> bool:
+        """Return True if the target is exempt from enforcement.
+
+        Exemptions:
+        - Classes in ``_enforcement_integration_fixtures`` modules (intentionally
+          test fixtures that exercise enforcement firing).
+        """
+        module = getattr(target, "__module__", "") or ""
+        return "_enforcement_integration_fixtures" in module
+
+    @staticmethod
     def run(model_type: type[mp.BaseModel]) -> None:
         """Pydantic ``__pydantic_init_subclass__`` hook.
 
@@ -376,6 +387,8 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         if c.ENFORCEMENT_MODE is c.EnforcementMode.OFF:
             return
         if ub.defined_in_function_scope(model_type):
+            return
+        if FlextUtilitiesEnforcement._is_exempt(model_type):
             return
         report = FlextUtilitiesEnforcement.check(model_type)
         FlextUtilitiesEnforcement.emit(report)
@@ -389,6 +402,8 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         if c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.OFF:
             return
         if ub.defined_in_function_scope(target):
+            return
+        if FlextUtilitiesEnforcement._is_exempt(target):
             return
         report = FlextUtilitiesEnforcement.check(target, layer=layer)
         FlextUtilitiesEnforcement.emit(

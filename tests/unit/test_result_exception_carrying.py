@@ -4,6 +4,7 @@ from collections.abc import (
     Sequence,
     Sized,
 )
+from typing import Annotated
 
 from flext_tests import tm
 
@@ -22,8 +23,8 @@ class TestsFlextResultExceptionCarrying:
     class UserModel(m.Value):
         """User model for testing."""
 
-        name: str
-        age: int
+        name: Annotated[str, m.Field(description="User name")]
+        age: Annotated[int, m.Field(description="User age")]
 
     def test_fail_no_exception_backward_compat(self) -> None:
         error_msg = "Operation failed"

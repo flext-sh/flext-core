@@ -41,7 +41,7 @@ class TestsFlextServiceIntegration:
 
         Implications for Audit:
         - bool return type simplifies status checking
-        - Use get_user() for actual entity retrieval
+        - Use fetch_user() for actual entity retrieval
         - This pattern separates status from data retrieval
         """
 
@@ -71,10 +71,10 @@ class TestsFlextServiceIntegration:
                 return r[bool].fail("User service unavailable")
             return r[bool].ok(True)
 
-        def get_user(
+        def fetch_user(
             self, user_id: str
         ) -> p.Result[TestsFlextServiceIntegration.UserServiceEntity]:
-            """Get user by ID.
+            """Fetch user by ID.
 
             Args:
                 user_id: User identifier.
@@ -100,12 +100,12 @@ class TestsFlextServiceIntegration:
             )
             return r[TestsFlextServiceIntegration.UserServiceEntity].ok(default_user)
 
-        def set_user_data(
+        def apply_user_data(
             self,
             user_id: str,
             user: TestsFlextServiceIntegration.UserServiceEntity,
         ) -> None:
-            """Set user data for testing.
+            """Apply user data for testing.
 
             Args:
                 user_id: User identifier.
@@ -114,8 +114,8 @@ class TestsFlextServiceIntegration:
             """
             self._users[user_id] = user
 
-        def set_failure_mode(self, should_fail: bool) -> None:
-            """Set failure mode for testing.
+        def configure_failure_mode(self, should_fail: bool) -> None:
+            """Configure failure mode for testing.
 
             Args:
                 should_fail: Whether service should fail.
@@ -160,8 +160,8 @@ class TestsFlextServiceIntegration:
             self._sent_notifications.append(email)
             return r[str].ok("sent")
 
-        def set_failure_mode(self, should_fail: bool) -> None:
-            """Set failure mode for testing.
+        def configure_failure_mode(self, should_fail: bool) -> None:
+            """Configure failure mode for testing.
 
             Business Rule: Uses setattr to modify PrivateAttr fields
             in frozen Pydantic models. This is the correct pattern for mutable
@@ -186,9 +186,11 @@ class TestsFlextServiceIntegration:
     class ServiceConfig(m.Value):
         """Service configuration model with required fields."""
 
-        name: str
-        version: str
-        temp_dir: str | None = None
+        name: Annotated[str, m.Field(description="Service name")]
+        version: Annotated[str, m.Field(description="Service version")]
+        temp_dir: Annotated[
+            str | None, m.Field(description="Temporary directory path")
+        ] = None
 
     @staticmethod
     def _build_service_config(
@@ -260,7 +262,7 @@ class TestsFlextServiceIntegration:
             self._shutdown_called = True
             return r[str].ok("shutdown")
 
-        def set_failure_mode(
+        def configure_failure_mode(
             self,
             *,
             fail_init: bool = False,
@@ -302,8 +304,8 @@ class TestsFlextServiceIntegration:
         assert result.value is True
 
     @pytest.mark.integration
-    def test_user_service_get_user(self, clean_container: p.Container) -> None:
-        """Test user service get_user method.
+    def test_user_service_fetch_user(self, clean_container: p.Container) -> None:
+        """Test user service fetch_user method.
 
         Args:
             clean_container: Isolated container fixture.
@@ -311,7 +313,7 @@ class TestsFlextServiceIntegration:
         """
         user_service = self.UserQueryService()
         user_id = "test_user_123"
-        result = user_service.get_user(user_id)
+        result = user_service.fetch_user(user_id)
         _ = u.Tests.assert_success(result)
         assert result.value is not None
         assert result.value.unique_id == user_id
@@ -338,8 +340,8 @@ class TestsFlextServiceIntegration:
             email="custom@example.com",
             active=True,
         )
-        user_service.set_user_data(user_id, custom_user)
-        result = user_service.get_user(user_id)
+        user_service.apply_user_data(user_id, custom_user)
+        result = user_service.fetch_user(user_id)
         _ = u.Tests.assert_success(result)
         assert result.value is not None
         assert result.value.unique_id == user_id
@@ -355,7 +357,7 @@ class TestsFlextServiceIntegration:
 
         """
         user_service = self.UserQueryService()
-        user_service.set_failure_mode(should_fail=True)
+        user_service.configure_failure_mode(should_fail=True)
         result = user_service.execute()
         _ = u.Tests.assert_failure(result)
         assert result.error == "User service unavailable"
@@ -404,7 +406,7 @@ class TestsFlextServiceIntegration:
 
         """
         notification_service = self.NotificationService()
-        notification_service.set_failure_mode(should_fail=True)
+        notification_service.configure_failure_mode(should_fail=True)
         result = notification_service.send("test@example.com")
         _ = u.Tests.assert_failure(result)
         assert result.error == "Notification service unavailable"
@@ -519,11 +521,11 @@ class TestsFlextServiceIntegration:
             version="1.0.0",
             temp_dir=str(temp_directory),
         )
-        lifecycle_service.set_failure_mode(fail_init=True)
+        lifecycle_service.configure_failure_mode(fail_init=True)
         init_result = lifecycle_service.initialize(service_config)
         assert init_result.success is False
         assert init_result.error == "Initialization failed"
-        lifecycle_service.set_failure_mode(fail_init=False, fail_shutdown=True)
+        lifecycle_service.configure_failure_mode(fail_init=False, fail_shutdown=True)
         _ = lifecycle_service.initialize(service_config)
         shutdown_result = lifecycle_service.shutdown()
         assert shutdown_result.success is False
@@ -552,7 +554,7 @@ class TestsFlextServiceIntegration:
             email=f"user{user_id}@example.com",
             active=True,
         )
-        user_service.set_user_data(user_id, user_entity)
+        user_service.apply_user_data(user_id, user_entity)
         _ = clean_container.bind("user_service", user_service)
         _ = clean_container.bind("notification_service", notification_service)
         user_service_result = clean_container.resolve(
@@ -569,7 +571,7 @@ class TestsFlextServiceIntegration:
         retrieved_notification_service = notification_service_result.value
         assert isinstance(retrieved_user_service, self.UserQueryService)
         assert isinstance(retrieved_notification_service, self.NotificationService)
-        user_result = retrieved_user_service.get_user(user_id)
+        user_result = retrieved_user_service.fetch_user(user_id)
         assert user_result.success is True
         user_entity = user_result.value
         assert user_entity is not None
@@ -592,7 +594,7 @@ class TestsFlextServiceIntegration:
         """
         user_service = self.UserQueryService()
         user_id = "test_user"
-        user_result = user_service.get_user(user_id)
+        user_result = user_service.fetch_user(user_id)
         assert user_result.success is True
         user_entity = user_result.value
         assert user_entity is not None

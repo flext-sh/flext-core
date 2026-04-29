@@ -46,9 +46,6 @@ from flext_core import (
 from flext_core._utilities.guards_type_model import (
     FlextUtilitiesGuardsTypeModel as ugm,
 )
-from flext_core._utilities.guards_type_protocol import (
-    FlextUtilitiesGuardsTypeProtocol as ugp,
-)
 
 
 class FlextRuntime:
@@ -322,7 +319,22 @@ class FlextRuntime:
                         for item in value
                     ]
                 )
-            case _ if ugp.registerable_service(value):
+            case (
+                None
+                | str()
+                | int()
+                | float()
+                | bool()
+                | bytes()
+                | datetime()
+                | Path()
+                | BaseModel()
+            ):
+                normalized_service = value
+            case _ if callable(value) or isinstance(
+                value,
+                (p.Logger, p.Settings, p.Context, p.Dispatcher),
+            ):
                 normalized_service = value
             case _:
                 raise ValueError(

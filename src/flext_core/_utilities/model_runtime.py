@@ -6,9 +6,8 @@ from collections.abc import Mapping
 from importlib import import_module
 
 from flext_core import (
-    FlextModelsService as ms,
-    FlextUtilitiesDiscovery as ud,
-    FlextUtilitiesGuardsTypeProtocol as ugp,
+    FlextUtilitiesDiscovery,
+    FlextUtilitiesGuardsTypeProtocol,
     m,
     p,
     t,
@@ -21,7 +20,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @staticmethod
     def _resolve_runtime_dispatcher(
-        runtime_options: ms.RuntimeBootstrapOptions,
+        runtime_options: m.RuntimeBootstrapOptions,
         runtime_container: p.Container,
     ) -> p.Dispatcher | None:
         """Resolve the dispatcher from explicit options or the built container."""
@@ -46,7 +45,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         cls,
         dispatcher: p.Dispatcher | None = None,
         *,
-        runtime: ms.ServiceRuntime | None = None,
+        runtime: m.ServiceRuntime | None = None,
         auto_discover_handlers: bool = False,
     ) -> p.Registry:
         """Materialize the canonical registry implementation behind ``p.Registry``."""
@@ -65,8 +64,8 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
     @classmethod
     def _resolve_runtime_registry(
         cls,
-        runtime_options: ms.RuntimeBootstrapOptions,
-        runtime: ms.ServiceRuntime,
+        runtime_options: m.RuntimeBootstrapOptions,
+        runtime: m.ServiceRuntime,
     ) -> p.Registry:
         """Resolve the registry from explicit options or the shared runtime DSL."""
         explicit_registry = runtime_options.registry
@@ -77,7 +76,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
     @classmethod
     def _resolve_runtime_settings(
         cls,
-        runtime_options: ms.RuntimeBootstrapOptions,
+        runtime_options: m.RuntimeBootstrapOptions,
     ) -> p.Settings:
         """Resolve the runtime settings instance + apply overrides."""
         settings_instance = (
@@ -109,21 +108,19 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
     @classmethod
     def _build_runtime_container(
         cls,
-        runtime_options: ms.RuntimeBootstrapOptions,
+        runtime_options: m.RuntimeBootstrapOptions,
         runtime_settings: p.Settings,
         runtime_context: p.Context,
     ) -> p.Container:
         """Construct + wire the runtime container from resolved options."""
         container_type = cls._container_type()
-        bootstrap_services = {
-            name: service
-            for name, service in (runtime_options.services or {}).items()
-            if ugp.registerable_service(service)
-        }
-        wire_modules, wire_packages, wire_classes = ud.resolve_wire_targets(
-            runtime_options.wire_modules,
-            runtime_options.wire_packages,
-            runtime_options.wire_classes,
+        bootstrap_services = runtime_options.services or {}
+        wire_modules, wire_packages, wire_classes = (
+            FlextUtilitiesDiscovery.resolve_wire_targets(
+                runtime_options.wire_modules,
+                runtime_options.wire_packages,
+                runtime_options.wire_classes,
+            )
         )
         runtime_container = container_type.shared().scope(
             subproject=runtime_options.subproject,
@@ -152,17 +149,17 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
     def build_service_runtime(
         cls,
         source: (
-            ms.RuntimeBootstrapOptions | Mapping[str, t.JsonPayload] | p.Base | None
+            m.RuntimeBootstrapOptions | Mapping[str, t.JsonPayload] | p.Base | None
         ) = None,
         **overrides: t.JsonPayload,
-    ) -> ms.ServiceRuntime:
+    ) -> m.ServiceRuntime:
         """Materialize settings, context, and container from one runtime specification."""
         runtime_options = cls.resolve_runtime_options(source, **overrides)
         context_type = cls._context_type()
         runtime_settings = cls._resolve_runtime_settings(runtime_options)
         runtime_context = (
             runtime_options.context
-            if ugp.context(runtime_options.context)
+            if FlextUtilitiesGuardsTypeProtocol.context(runtime_options.context)
             else context_type.create()
         )
         runtime_container = cls._build_runtime_container(
@@ -173,14 +170,14 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         runtime_container_context = getattr(runtime_container, "context", None)
         resolved_context = (
             runtime_container_context
-            if ugp.context(runtime_container_context)
+            if FlextUtilitiesGuardsTypeProtocol.context(runtime_container_context)
             else runtime_context
         )
         runtime_dispatcher = cls._resolve_runtime_dispatcher(
             runtime_options,
             runtime_container,
         )
-        service_runtime = ms.ServiceRuntime(
+        service_runtime = m.ServiceRuntime(
             settings=runtime_settings,
             context=resolved_context,
             container=runtime_container,

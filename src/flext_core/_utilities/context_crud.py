@@ -64,11 +64,6 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
             )
         value = scope_data[key]
         self._update_statistics(c.ContextOperation.GET.value)
-        if value is None:
-            return r[t.JsonPayload].fail_op(
-                c.ContextCrudOperation.RESOLVE_KEY_VALUE,
-                f"Context key '{key}' has None value in scope '{scope}'",
-            )
         return r[t.JsonPayload].ok(FlextRuntime.normalize_to_container(value))
 
     def has(self, key: str, scope: str = c.ContextScope.GLOBAL) -> bool:
@@ -159,17 +154,19 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
                         c.ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED,
                     )
                 case str() as key, raw_value:
-                    normalized_result = FlextUtilitiesModel.validate_value(
-                        t.JsonValue,
-                        FlextRuntime.normalize_to_container(raw_value),
+                    normalized_value_result: p.Result[t.JsonValue] = (
+                        FlextUtilitiesModel.validate_value(
+                            t.JsonValue,
+                            FlextRuntime.normalize_to_container(raw_value),
+                        )
                     )
-                    if normalized_result.failure:
+                    if normalized_value_result.failure:
                         operation_result = r[bool].fail_op(
                             c.ContextCrudOperation.VALIDATE_VALUE,
                             c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
                         )
                     else:
-                        normalized_value = normalized_result.value
+                        normalized_value = normalized_value_result.value
                         prepared_update = (
                             {key: normalized_value},
                             {
@@ -183,11 +180,13 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
                     mapping_payload = t.json_mapping_adapter().validate_python(
                         payload_mapping
                     )
-                    normalized_result = FlextUtilitiesModel.validate_value(
-                        t.JsonValue,
-                        FlextRuntime.normalize_to_container(dict(mapping_payload)),
+                    normalized_mapping_result: p.Result[t.JsonValue] = (
+                        FlextUtilitiesModel.validate_value(
+                            t.JsonValue,
+                            FlextRuntime.normalize_to_container(dict(mapping_payload)),
+                        )
                     )
-                    if normalized_result.failure:
+                    if normalized_mapping_result.failure:
                         operation_result = r[bool].fail_op(
                             c.ContextCrudOperation.VALIDATE_PAYLOAD,
                             c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
@@ -196,7 +195,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
                         prepared_update = (
                             mapping_payload,
                             {
-                                c.Directory.DATA.value: normalized_result.value,
+                                c.Directory.DATA.value: normalized_mapping_result.value,
                             },
                         )
 

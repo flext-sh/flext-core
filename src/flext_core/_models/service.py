@@ -19,6 +19,7 @@ from typing import Annotated
 from flext_core import (
     FlextModelsBase as m,
     FlextModelsPydantic as mp,
+    FlextUtilitiesPydantic as up,
     p,
     t,
 )
@@ -145,6 +146,17 @@ class FlextModelsService:
             description="Classes whose modules are wired for dependency resolution.",
             validate_default=True,
         )
+
+        @up.field_validator("wire_packages", mode="before")
+        @classmethod
+        def validate_wire_packages(
+            cls,
+            value: t.JsonPayload | None,
+        ) -> t.JsonPayload | None:
+            if not isinstance(value, (list, tuple)):
+                return value
+            normalized = tuple(item for item in value if isinstance(item, str))
+            return normalized if len(normalized) == len(value) else None
 
     class DependencyContainerCreationOptions(m.ArbitraryTypesModel):
         """Options used to create and populate dependency container instances."""

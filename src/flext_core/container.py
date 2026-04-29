@@ -395,10 +395,12 @@ class FlextContainer(p.ContainerLifecycle):
 
         def normalized_factory() -> t.RegisterableService:
             raw = impl()
-            if not u.registerable_service(raw):
+            try:
+                _ = u.normalize_registerable_service(raw)
+            except ValueError as exc:
                 raise ValueError(
                     c.ERR_CONTAINER_FACTORY_INVALID_REGISTERABLE.format(name=name)
-                )
+                ) from exc
             return raw
 
         self._factories[name] = m.FactoryRegistration(

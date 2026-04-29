@@ -9,9 +9,7 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
     Mapping,
-    Sequence,
 )
-from pathlib import Path
 from types import MappingProxyType
 from typing import TypeIs
 
@@ -89,33 +87,6 @@ class FlextUtilitiesGuardsTypeProtocol:
     ) -> TypeIs[p.Result[t.JsonPayload]]:
         """Narrow any value to Result protocol (runtime isinstance check)."""
         return isinstance(value, p.Result)
-
-    @staticmethod
-    def registerable_service(
-        value: t.GuardInput,
-    ) -> TypeIs[t.RegisterableService]:
-        """Narrow value to DI-registerable service (primitives, models, callables, etc.)."""
-        is_sequence = isinstance(value, Sequence) and not isinstance(
-            value,
-            (str, bytes, bytearray),
-        )
-        is_bindable_logger = hasattr(value, "bind") and hasattr(value, "info")
-        is_registerable_value = any((
-            value is None,
-            isinstance(value, (str, int, float, bool, Path, Mapping)),
-            is_sequence,
-        ))
-        is_service_shape = any((
-            FlextUtilitiesGuardsTypeProtocol.context(value),
-            hasattr(value, "__dict__"),
-            is_bindable_logger,
-        ))
-        return any((
-            is_registerable_value,
-            ugm.pydantic_model(value),
-            callable(value),
-            is_service_shape,
-        ))
 
     @staticmethod
     def _run_string_type_check(type_name: str, value: t.GuardInput) -> bool:
