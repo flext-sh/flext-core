@@ -1,0 +1,39 @@
+"""FlextSettingsDI — dependency-injection bridge for settings.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from pydantic import PrivateAttr
+
+from flext_core import c, t, u
+
+
+class FlextSettingsDI:
+    """Mixin that lazily builds a DI ``Singleton`` provider.
+
+    The provider wraps the current settings instance.  It is constructed on
+    first access and cached via ``PrivateAttr``.
+    """
+
+    _di_provider: t.Scalar | None = PrivateAttr(default=None)
+
+    def resolve_di_settings_provider(self) -> t.Scalar:
+        """Get dependency injection provider for this settings.
+
+        Returns a providers.Singleton instance via the runtime bridge.
+        Type annotation stays framework-level to avoid DI imports in this module.
+        """
+        if self._di_provider is None:
+            providers_module = u.dependency_providers()
+            self._di_provider = providers_module.Singleton(lambda: self)
+        provider = self._di_provider
+        if provider is None:
+            msg = c.ERR_SETTINGS_DI_PROVIDER_NOT_INITIALIZED
+            raise RuntimeError(msg)
+        return provider
+
+
+__all__: list[str] = ["FlextSettingsDI"]
