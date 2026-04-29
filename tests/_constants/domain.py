@@ -12,7 +12,7 @@ from typing import Final
 from flext_core import FlextConstants as c
 
 
-class TestsFlextCoreConstantsDomain:
+class TestsFlextConstantsDomain:
     class Paths:
         """Path constants for flext-core tests."""
 

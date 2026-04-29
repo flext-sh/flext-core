@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import m
 
 
-class TestsFlextCoreModelsProjectMetadata:
+class TestsFlextModelsProjectMetadata:
     def test_metadata_instantiation(self) -> None:
         metadata = m.Metadata(attributes={"service": "flext"})
         dumped = metadata.model_dump(mode="python")

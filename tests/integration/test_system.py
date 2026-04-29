@@ -17,7 +17,7 @@ from flext_core import FlextContainer
 from tests import c, e, p, r, t, u
 
 
-class TestsFlextCoreSystemIntegration:
+class TestsFlextSystemIntegration:
     """Teste de integração completo do sistema FLEXT.
 
     Este teste único valida todo o ecosistema flext-core através de cenários

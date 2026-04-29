@@ -33,7 +33,7 @@ def _new_config_map() -> m.ConfigMap:
     return m.ConfigMap.model_validate({})
 
 
-class TestsFlextCoreAdvancedPatterns:
+class TestsFlextAdvancedPatterns:
     """Test class demonstrating advanced testing patterns."""
 
     class MockScenario:
@@ -66,7 +66,7 @@ class TestsFlextCoreAdvancedPatterns:
             self,
             _description: str,
             **kwargs: t.JsonValue,
-        ) -> TestsFlextCoreAdvancedPatterns.GivenWhenThenBuilder:
+        ) -> TestsFlextAdvancedPatterns.GivenWhenThenBuilder:
             """Given method.
 
             Returns:
@@ -80,7 +80,7 @@ class TestsFlextCoreAdvancedPatterns:
             self,
             _description: str,
             **kwargs: t.JsonValue,
-        ) -> TestsFlextCoreAdvancedPatterns.GivenWhenThenBuilder:
+        ) -> TestsFlextAdvancedPatterns.GivenWhenThenBuilder:
             """When method.
 
             Returns:
@@ -94,7 +94,7 @@ class TestsFlextCoreAdvancedPatterns:
             self,
             _description: str,
             **kwargs: t.JsonValue,
-        ) -> TestsFlextCoreAdvancedPatterns.GivenWhenThenBuilder:
+        ) -> TestsFlextAdvancedPatterns.GivenWhenThenBuilder:
             """Then method.
 
             Returns:
@@ -104,9 +104,7 @@ class TestsFlextCoreAdvancedPatterns:
             self._then.update(kwargs)
             return self
 
-        def with_tag(
-            self, tag: str
-        ) -> TestsFlextCoreAdvancedPatterns.GivenWhenThenBuilder:
+        def with_tag(self, tag: str) -> TestsFlextAdvancedPatterns.GivenWhenThenBuilder:
             """with_tag method.
 
             Returns:
@@ -119,7 +117,7 @@ class TestsFlextCoreAdvancedPatterns:
         def with_priority(
             self,
             priority: str,
-        ) -> TestsFlextCoreAdvancedPatterns.GivenWhenThenBuilder:
+        ) -> TestsFlextAdvancedPatterns.GivenWhenThenBuilder:
             """with_priority method.
 
             Returns:
@@ -129,7 +127,7 @@ class TestsFlextCoreAdvancedPatterns:
             self._priority = priority
             return self
 
-        def build(self) -> TestsFlextCoreAdvancedPatterns.MockScenario:
+        def build(self) -> TestsFlextAdvancedPatterns.MockScenario:
             """Build method.
 
             Returns:
@@ -165,7 +163,7 @@ class TestsFlextCoreAdvancedPatterns:
                     "priority": self._priority,
                 },
             )
-            return TestsFlextCoreAdvancedPatterns.MockScenario(self.name, scenario_data)
+            return TestsFlextAdvancedPatterns.MockScenario(self.name, scenario_data)
 
     class FlextTestBuilder:
         """Builder for FLEXT test data with detailed metadata."""
@@ -176,7 +174,7 @@ class TestsFlextCoreAdvancedPatterns:
             self._data: m.ConfigMap = _new_config_map()
             self._validation_rules: m.ConfigMap = _new_config_map()
 
-        def with_id(self, id_: str) -> TestsFlextCoreAdvancedPatterns.FlextTestBuilder:
+        def with_id(self, id_: str) -> TestsFlextAdvancedPatterns.FlextTestBuilder:
             """with_id method.
 
             Returns:
@@ -189,7 +187,7 @@ class TestsFlextCoreAdvancedPatterns:
         def with_correlation_id(
             self,
             correlation_id: str,
-        ) -> TestsFlextCoreAdvancedPatterns.FlextTestBuilder:
+        ) -> TestsFlextAdvancedPatterns.FlextTestBuilder:
             """with_correlation_id method.
 
             Returns:
@@ -202,7 +200,7 @@ class TestsFlextCoreAdvancedPatterns:
         def with_metadata(
             self,
             **kwargs: t.JsonValue,
-        ) -> TestsFlextCoreAdvancedPatterns.FlextTestBuilder:
+        ) -> TestsFlextAdvancedPatterns.FlextTestBuilder:
             """with_metadata method.
 
             Returns:
@@ -216,7 +214,7 @@ class TestsFlextCoreAdvancedPatterns:
             self,
             name: str,
             email: str,
-        ) -> TestsFlextCoreAdvancedPatterns.FlextTestBuilder:
+        ) -> TestsFlextAdvancedPatterns.FlextTestBuilder:
             """with_user_data method.
 
             Returns:
@@ -227,7 +225,7 @@ class TestsFlextCoreAdvancedPatterns:
             self._data["email"] = email
             return self
 
-        def with_timestamp(self) -> TestsFlextCoreAdvancedPatterns.FlextTestBuilder:
+        def with_timestamp(self) -> TestsFlextAdvancedPatterns.FlextTestBuilder:
             """with_timestamp method.
 
             Returns:
@@ -241,7 +239,7 @@ class TestsFlextCoreAdvancedPatterns:
         def with_validation_rules(
             self,
             **kwargs: t.JsonValue,
-        ) -> TestsFlextCoreAdvancedPatterns.FlextTestBuilder:
+        ) -> TestsFlextAdvancedPatterns.FlextTestBuilder:
             """with_validation_rules method.
 
             Returns:
@@ -274,7 +272,7 @@ class TestsFlextCoreAdvancedPatterns:
         def add_case(
             self,
             **kwargs: t.Scalar | MutableSequence[str],
-        ) -> TestsFlextCoreAdvancedPatterns.ParameterizedTestBuilder:
+        ) -> TestsFlextAdvancedPatterns.ParameterizedTestBuilder:
             """add_case method.
 
             Returns:
@@ -287,7 +285,7 @@ class TestsFlextCoreAdvancedPatterns:
         def add_success_cases(
             self,
             cases: Sequence[m.Tests.FixtureCaseDict],
-        ) -> TestsFlextCoreAdvancedPatterns.ParameterizedTestBuilder:
+        ) -> TestsFlextAdvancedPatterns.ParameterizedTestBuilder:
             """add_success_cases method.
 
             Returns:
@@ -300,7 +298,7 @@ class TestsFlextCoreAdvancedPatterns:
         def add_failure_cases(
             self,
             cases: Sequence[m.Tests.FixtureCaseDict],
-        ) -> TestsFlextCoreAdvancedPatterns.ParameterizedTestBuilder:
+        ) -> TestsFlextAdvancedPatterns.ParameterizedTestBuilder:
             """add_failure_cases method.
 
             Returns:
@@ -354,7 +352,7 @@ class TestsFlextCoreAdvancedPatterns:
         def assert_equals(
             self,
             expected: Mapping[str, bool | int | str],
-        ) -> TestsFlextCoreAdvancedPatterns.AssertionBuilder:
+        ) -> TestsFlextAdvancedPatterns.AssertionBuilder:
             """assert_equals method.
 
             Returns:
@@ -371,7 +369,7 @@ class TestsFlextCoreAdvancedPatterns:
         def assert_contains(
             self,
             item: int | str,
-        ) -> TestsFlextCoreAdvancedPatterns.AssertionBuilder:
+        ) -> TestsFlextAdvancedPatterns.AssertionBuilder:
             """assert_contains method.
 
             Returns:
@@ -393,7 +391,7 @@ class TestsFlextCoreAdvancedPatterns:
         def assert_type(
             self,
             expected_type: type,
-        ) -> TestsFlextCoreAdvancedPatterns.AssertionBuilder:
+        ) -> TestsFlextAdvancedPatterns.AssertionBuilder:
             """assert_type method.
 
             Returns:
@@ -416,7 +414,7 @@ class TestsFlextCoreAdvancedPatterns:
                 bool,
             ],
             description: str = "",
-        ) -> TestsFlextCoreAdvancedPatterns.AssertionBuilder:
+        ) -> TestsFlextAdvancedPatterns.AssertionBuilder:
             """Satisfies method.
 
             Args:
@@ -459,7 +457,7 @@ class TestsFlextCoreAdvancedPatterns:
 
     def test_given_when_then_builder_pattern(self) -> None:
         """Test Given-When-Then builder pattern."""
-        scenario: TestsFlextCoreAdvancedPatterns.MockScenario = (
+        scenario: TestsFlextAdvancedPatterns.MockScenario = (
             self
             .GivenWhenThenBuilder("user_registration")
             .given("user provides valid data", email="test@example.com")
@@ -611,7 +609,7 @@ class TestsFlextCoreAdvancedPatterns:
 
     def test_complex_test_data_generation(self) -> None:
         """Test complex test data generation."""
-        scenarios: MutableSequence[TestsFlextCoreAdvancedPatterns.MockScenario] = []
+        scenarios: MutableSequence[TestsFlextAdvancedPatterns.MockScenario] = []
         for i in range(3):
             scenario = (
                 self

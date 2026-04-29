@@ -26,7 +26,7 @@ from flext_core._utilities.enforcement import PREDICATE_BINDINGS
 from tests import c, m, u
 
 
-class TestsFlextCoreEnforcementAptHooks:
+class TestsFlextEnforcementAptHooks:
     """Catalog entries + beartype dispatch table for A-PT rules."""
 
     A_PT_RULE_IDS: ClassVar[tuple[str, ...]] = (

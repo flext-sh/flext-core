@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Final
 
 
-class TestsFlextCoreConstantsStrings:
+class TestsFlextConstantsStrings:
     class Strings:
         """Flext-core-specific test strings organized by complexity."""
 

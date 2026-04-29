@@ -7,7 +7,7 @@ from typing import Annotated
 from flext_core import m, u
 
 
-class ExamplesFlextCoreModelsEx03:
+class ExamplesFlextModelsEx03:
     """Examples namespace wrapper for ex03 models."""
 
     class Email(m.Value):

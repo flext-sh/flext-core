@@ -17,7 +17,7 @@ from __future__ import annotations
 from tests import m, t
 
 
-class TestsFlextCoreUtilitiesCoverage:
+class TestsFlextUtilitiesCoverage:
     """Placeholder tests for utilities coverage - methods tested in dedicated coverage modules."""
 
     def test_coverage_placeholder(self) -> None:
@@ -33,4 +33,4 @@ class TestsFlextCoreUtilitiesCoverage:
         assert result == "fallback"
 
 
-__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreUtilitiesCoverage"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextUtilitiesCoverage"]

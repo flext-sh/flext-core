@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from examples import ExamplesFlextCoreModelsErrors as _err
+from examples import ExamplesFlextModelsErrors as _err
 from flext_core import FlextSettings, c, t, u
 
 

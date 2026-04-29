@@ -52,7 +52,7 @@ class ResultOperationType(StrEnum):
     RAILWAY_COMPOSITION = "railway_composition"
 
 
-class TestsFlextCoreResult:
+class TestsFlextResult:
     ResultOperationType = ResultOperationType
 
     class ResultScenario(m.BaseModel):
@@ -76,7 +76,7 @@ class TestsFlextCoreResult:
             m.Field(description="Optional expected result payload"),
         ] = None
 
-    STRING_SCENARIOS: ClassVar[Sequence[TestsFlextCoreResult.ResultScenario]] = [
+    STRING_SCENARIOS: ClassVar[Sequence[TestsFlextResult.ResultScenario]] = [
         ResultScenario(
             name="creation_success_string",
             operation_type=ResultOperationType.CREATION_SUCCESS,
@@ -145,7 +145,7 @@ class TestsFlextCoreResult:
             is_success_expected=False,
         ),
     ]
-    INT_SCENARIOS: ClassVar[Sequence[TestsFlextCoreResult.ResultScenario]] = [
+    INT_SCENARIOS: ClassVar[Sequence[TestsFlextResult.ResultScenario]] = [
         ResultScenario(
             name="unwrap_success",
             operation_type=ResultOperationType.UNWRAP,
@@ -178,7 +178,7 @@ class TestsFlextCoreResult:
             value=5,
         ),
     ]
-    BOOL_SCENARIOS: ClassVar[Sequence[TestsFlextCoreResult.ResultScenario]] = [
+    BOOL_SCENARIOS: ClassVar[Sequence[TestsFlextResult.ResultScenario]] = [
         ResultScenario(
             name="bool_conversion_success",
             operation_type=ResultOperationType.BOOL_CONVERSION,
@@ -859,4 +859,4 @@ class TestsFlextCoreResult:
         tm.that(cleanup_calls, eq=["ran"])
 
 
-__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreResult"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextResult"]

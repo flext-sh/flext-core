@@ -226,7 +226,9 @@ assert attempts["count"] == 3
 from flext_core import d
 
 
-@d.combined(operation_name="sum_values", use_railway=True, track_perf=False)
+@d.combined(
+    operation_name="sum_values", railway_options={"enabled": True}, track_perf=False
+)
 def sum_values(values: list[int]) -> int:
     return sum(values)
 

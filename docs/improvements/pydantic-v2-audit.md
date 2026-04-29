@@ -29,6 +29,7 @@ assert data["value"] == 1
 ## Check: ConfigDict usage
 
 ```python
+from typing import ClassVar
 from flext_core import m
 
 

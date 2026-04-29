@@ -11,7 +11,7 @@ from flext_tests import tm
 from tests import m, t, u
 
 
-class TestsFlextCoreUtilitiesTypeGuards:
+class TestsFlextUtilitiesTypeGuards:
     """Behavior contract for u.string_non_empty / u.dict_non_empty / u.matches_type / u.normalize_to_metadata."""
 
     @pytest.mark.parametrize(

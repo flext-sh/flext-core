@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import r
 
 
-class TestsFlextCorePatternsTesting:
+class TestsFlextPatternsTesting:
     def test_pattern_success(self) -> None:
         result = r[str].ok("tested")
         assert result.success

@@ -8,7 +8,7 @@ from types import ModuleType
 from typing import override
 
 from examples import c, m, p, t, u
-from examples.shared import ExamplesFlextCoreShared
+from examples.shared import ExamplesFlextShared
 from flext_core import FlextContainer, r
 
 
@@ -16,7 +16,7 @@ class _WireProbe:
     """Probe class used to exercise wire_modules(classes=...)."""
 
 
-class Ex08FlextContainer(ExamplesFlextCoreShared):
+class Ex08FlextContainer(ExamplesFlextShared):
     """Exercise FlextContainer public APIs."""
 
     _registered_service_name: str = u.PrivateAttr(default_factory=str)
@@ -49,10 +49,14 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             fluent_resource_name, lambda: fluent_resource_value
         )
         with_settings_result = container.apply({"max_factories": max_factories})
-        self.check("with_service.returns_self", with_service_result is container)
-        self.check("with_factory.returns_self", with_factory_result is container)
-        self.check("with_resource.returns_self", with_resource_result is container)
-        self.check("with_settings.returns_self", with_settings_result is container)
+        self.audit_check("with_service.returns_self", with_service_result is container)
+        self.audit_check("with_factory.returns_self", with_factory_result is container)
+        self.audit_check(
+            "with_resource.returns_self", with_resource_result is container
+        )
+        self.audit_check(
+            "with_settings.returns_self", with_settings_result is container
+        )
         configured_max_services = self.rand_int(1, 1000)
         configured_factory_caching = self.rand_bool()
         container.apply({
@@ -68,15 +72,15 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             if u.matches_type(enable_factory_caching, bool)
             else False
         )
-        self.check(
+        self.audit_check(
             "configure.resolve_settings.max_services_matches",
             max_services_num == configured_max_services,
         )
-        self.check(
+        self.audit_check(
             "configure.resolve_settings.enable_factory_caching_matches",
             factory_cache_flag == configured_factory_caching,
         )
-        self.check(
+        self.audit_check(
             "with_service.get.value_matches",
             (
                 container.resolve(fluent_service_name, type_cls=str).value
@@ -85,7 +89,7 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             )
             == fluent_service_value,
         )
-        self.check(
+        self.audit_check(
             "with_factory.get.value_matches",
             (
                 container.resolve(fluent_factory_name, type_cls=str).value
@@ -94,7 +98,7 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             )
             == fluent_factory_value,
         )
-        self.check(
+        self.audit_check(
             "with_resource.get.value_matches",
             (
                 container.resolve(fluent_resource_name, type_cls=str).value
@@ -112,11 +116,11 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
         """Exercise lifecycle helpers and cleanup APIs."""
         self.section("internal_and_cleanup")
         container.initialize_di_components()
-        self.check(
+        self.audit_check(
             "initialize_di_components.bridge_exists",
             hasattr(container, "_di_bridge"),
         )
-        self.check(
+        self.audit_check(
             "initialize_di_components.container_exists",
             hasattr(container, "_di_container"),
         )
@@ -126,43 +130,49 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
                 context=root.context,
             ),
         )
-        self.check(
+        self.audit_check(
             "initialize_registrations.list_services_empty",
             len(container.names()),
         )
         container.sync_config_to_di()
         container.register_existing_providers()
         container.register_core_services()
-        self.check(
+        self.audit_check(
             "sync_settings_to_di.service_settings_present",
             container.has("settings"),
         )
-        self.check(
+        self.audit_check(
             "register_core_services.logger_present",
             container.has("logger"),
         )
-        self.check(
+        self.audit_check(
             "register_core_services.command_bus_present",
             container.has("command_bus"),
         )
         logger_default = container.logger()
         logger_custom = container.logger(f"examples.{self.rand_str(6)}")
-        self.check("create_module_logger.default.type", type(logger_default).__name__)
-        self.check("create_module_logger.custom.type", type(logger_custom).__name__)
+        self.audit_check(
+            "create_module_logger.default.type", type(logger_default).__name__
+        )
+        self.audit_check(
+            "create_module_logger.custom.type", type(logger_custom).__name__
+        )
         removable_name = f"svc.{self.rand_str(6)}"
         missing_remove_name = f"svc.{self.rand_str(6)}"
         _ = container.bind(removable_name, self.rand_int(1, 1000))
         unregister_ok = container.drop(removable_name)
         unregister_missing = container.drop(missing_remove_name)
-        self.check("unregister.existing.success", unregister_ok.success)
-        self.check("unregister.missing.failure", unregister_missing.failure)
+        self.audit_check("unregister.existing.success", unregister_ok.success)
+        self.audit_check("unregister.missing.failure", unregister_missing.failure)
         container.clear()
-        self.check("clear_all.count", len(container.names()))
+        self.audit_check("clear_all.count", len(container.names()))
         before_reset = root
         FlextContainer.reset_for_testing()
         after_reset = FlextContainer.shared()
-        self.check("reset_singleton.new_instance", before_reset is not after_reset)
-        self.check(
+        self.audit_check(
+            "reset_singleton.new_instance", before_reset is not after_reset
+        )
+        self.audit_check(
             "reset_singleton.fetch_global.same_after_reset",
             after_reset is FlextContainer.shared(),
         )
@@ -186,9 +196,11 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
         empty_before_register = container.has("")
         register_empty = container.bind("", empty_name_value)
         empty_after_register = container.has("")
-        self.check("register.service.returns_self", register_ok is container)
-        self.check("register.service.success", container.resolve(service_name).success)
-        self.check(
+        self.audit_check("register.service.returns_self", register_ok is container)
+        self.audit_check(
+            "register.service.success", container.resolve(service_name).success
+        )
+        self.audit_check(
             "register.service.stored_value_matches",
             (
                 container.resolve(service_name, type_cls=int).value
@@ -197,8 +209,10 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             )
             == service_value,
         )
-        self.check("register.service.duplicate_returns_self", register_dup is container)
-        self.check(
+        self.audit_check(
+            "register.service.duplicate_returns_self", register_dup is container
+        )
+        self.audit_check(
             "register.service.duplicate_failure",
             service_before_dup
             and service_after_dup
@@ -211,11 +225,11 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
                 == service_value
             ),
         )
-        self.check(
+        self.audit_check(
             "register.service.empty_name_returns_self",
             register_empty is container,
         )
-        self.check(
+        self.audit_check(
             "register.service.empty_name_failure",
             not empty_before_register and (not empty_after_register),
         )
@@ -233,14 +247,18 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             raise RuntimeError(error_message)
 
         register_factory_bad = container.factory(bad_factory_name, _factory_raises)
-        self.check("register.factory.returns_self", register_factory_ok is container)
-        self.check("register.factory.success", container.resolve(factory_name).success)
-        self.check(
+        self.audit_check(
+            "register.factory.returns_self", register_factory_ok is container
+        )
+        self.audit_check(
+            "register.factory.success", container.resolve(factory_name).success
+        )
+        self.audit_check(
             "register.factory.duplicate_failure",
             register_factory_dup is container
             and container.resolve(factory_name).success,
         )
-        self.check(
+        self.audit_check(
             "register.factory.bad_registration_success",
             register_factory_bad is container
             and container.resolve(bad_factory_name).success,
@@ -253,11 +271,13 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
 
         register_resource_ok = container.resource(resource_name, _resource_data)
         register_resource_dup = container.resource(resource_name, _resource_data)
-        self.check("register.resource.returns_self", register_resource_ok is container)
-        self.check(
+        self.audit_check(
+            "register.resource.returns_self", register_resource_ok is container
+        )
+        self.audit_check(
             "register.resource.success", container.resolve(resource_name).success
         )
-        self.check(
+        self.audit_check(
             "register.resource.duplicate_failure",
             register_resource_dup is container
             and container.resolve(resource_name).success,
@@ -267,8 +287,8 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
         get_resource = container.resolve(resource_name)
         get_missing = container.resolve(missing_name)
         get_bad_factory = container.resolve(bad_factory_name)
-        self.check("get.service.success", get_service.success)
-        self.check(
+        self.audit_check("get.service.success", get_service.success)
+        self.audit_check(
             "get.service.value_matches",
             (
                 container.resolve(service_name, type_cls=int).value
@@ -277,8 +297,8 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             )
             == service_value,
         )
-        self.check("get.factory.success", get_factory.success)
-        self.check(
+        self.audit_check("get.factory.success", get_factory.success)
+        self.audit_check(
             "get.factory.value_first_call",
             (
                 container.resolve(factory_name, type_cls=int).value
@@ -287,62 +307,64 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             )
             == 1,
         )
-        self.check("get.resource.success", get_resource.success)
-        self.check("get.resource.call_count_is_one", resource_calls["count"] == 1)
-        self.check("get.missing.failure", get_missing.failure)
-        self.check("get.bad_factory.failure", get_bad_factory.failure)
+        self.audit_check("get.resource.success", get_resource.success)
+        self.audit_check("get.resource.call_count_is_one", resource_calls["count"] == 1)
+        self.audit_check("get.missing.failure", get_missing.failure)
+        self.audit_check("get.bad_factory.failure", get_bad_factory.failure)
         get_typed_service = container.resolve(service_name, type_cls=int)
         get_typed_service_bad = container.resolve(service_name, type_cls=str)
         get_typed_factory = container.resolve(factory_name, type_cls=int)
         get_typed_missing = container.resolve(missing_name, type_cls=int)
-        self.check("get_typed.service.success", get_typed_service.success)
-        self.check(
+        self.audit_check("get_typed.service.success", get_typed_service.success)
+        self.audit_check(
             "get_typed.service.value_matches",
             (get_typed_service.value if get_typed_service.success else -1)
             == service_value,
         )
-        self.check(
+        self.audit_check(
             "get_typed.service.type_mismatch_failure",
             get_typed_service_bad.failure,
         )
-        self.check("get_typed.factory.success", get_typed_factory.success)
-        self.check(
+        self.audit_check("get_typed.factory.success", get_typed_factory.success)
+        self.audit_check(
             "get_typed.resource_via_get.success",
             container.resolve(resource_name).success,
         )
-        self.check("get_typed.missing.failure", get_typed_missing.failure)
-        self.check("has_service.service.true", container.has(service_name))
-        self.check("has_service.factory.true", container.has(factory_name))
-        self.check("has_service.resource.true", container.has(resource_name))
-        self.check("has_service.missing.false", container.has(missing_name))
+        self.audit_check("get_typed.missing.failure", get_typed_missing.failure)
+        self.audit_check("has_service.service.true", container.has(service_name))
+        self.audit_check("has_service.factory.true", container.has(factory_name))
+        self.audit_check("has_service.resource.true", container.has(resource_name))
+        self.audit_check("has_service.missing.false", container.has(missing_name))
         service_list = list(container.names())
-        self.check("list_services.contains.service", service_name in service_list)
-        self.check("list_services.contains.factory", factory_name in service_list)
-        self.check("list_services.contains.resource", resource_name in service_list)
+        self.audit_check("list_services.contains.service", service_name in service_list)
+        self.audit_check("list_services.contains.factory", factory_name in service_list)
+        self.audit_check(
+            "list_services.contains.resource", resource_name in service_list
+        )
 
     def _exercise_singleton_and_creation(self) -> p.ContainerLifecycle:
         """Exercise fetch_global/create entrypoints and singleton semantics."""
         self.section("singleton_and_creation")
         FlextContainer.reset_for_testing()
         root = FlextContainer.shared()
-        self.check("fetch_global.type", type(root).__name__)
-        self.check("fetch_global.context.type", type(root.context).__name__)
-        self.check("fetch_global.settings.type", type(root.settings).__name__)
-        self.check(
+        self.audit_check("fetch_global.type", type(root).__name__)
+        self.audit_check("fetch_global.context.type", type(root.context).__name__)
+        self.audit_check("fetch_global.settings.type", type(root.settings).__name__)
+        self.audit_check(
             "fetch_global.same_instance",
             root is FlextContainer.shared(),
         )
         created_false = FlextContainer.shared(auto_register_factories=False)
         created_true = FlextContainer.shared(auto_register_factories=True)
-        self.check("create.false.same_instance", created_false is root)
-        self.check("create.true.same_instance", created_true is root)
+        self.audit_check("create.false.same_instance", created_false is root)
+        self.audit_check("create.true.same_instance", created_true is root)
         random_ok_val = self.rand_int(1, 1000)
-        self.check(
+        self.audit_check(
             "result.ok.roundtrip",
             r[int].ok(random_ok_val).value == random_ok_val,
         )
-        self.check("runtime.normalize.bool", u.normalize_to_container(True))
-        self.check("constants.default_max_services", c.DEFAULT_SIZE)
+        self.audit_check("runtime.normalize.bool", u.normalize_to_container(True))
+        self.audit_check("constants.default_max_services", c.DEFAULT_SIZE)
         return root
 
     def _exercise_wiring_and_scoped(
@@ -355,7 +377,7 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
         container.wire(modules=[this_module])
         container.wire(packages=[])
         container.wire(classes=[_WireProbe])
-        self.check("wire_modules.calls_completed", True)
+        self.audit_check("wire_modules.calls_completed", True)
         scoped_default = container.scope()
         subproject_alpha = self.rand_str(6)
         subproject_beta = self.rand_str(6)
@@ -382,12 +404,12 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
                 },
             }),
         )
-        self.check("scoped.default.new_instance", scoped_default is not container)
-        self.check(
+        self.audit_check("scoped.default.new_instance", scoped_default is not container)
+        self.audit_check(
             "scoped.default.inherits_service",
             scoped_default.has(self._registered_service_name),
         )
-        self.check(
+        self.audit_check(
             "scoped.default.get_typed_service_matches",
             (
                 scoped_default.resolve(
@@ -400,29 +422,29 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             )
             == self._registered_service_value,
         )
-        self.check(
+        self.audit_check(
             "scoped.subproject.app_name_suffix",
             scoped_subproject.settings.app_name.endswith(f".{subproject_alpha}"),
         )
-        self.check("scoped.full.new_instance", scoped_full is not container)
-        self.check("scoped.full.settings_app_name", scoped_full.settings.app_name)
-        self.check(
+        self.audit_check("scoped.full.new_instance", scoped_full is not container)
+        self.audit_check("scoped.full.settings_app_name", scoped_full.settings.app_name)
+        self.audit_check(
             "scoped.full.uses_explicit_context",
             scoped_full.context is explicit_context,
         )
-        self.check(
+        self.audit_check(
             "scoped.full.has_service",
             scoped_full.has(scoped_service_name),
         )
-        self.check(
+        self.audit_check(
             "scoped.full.has_factory",
             scoped_full.has(scoped_factory_name),
         )
-        self.check(
+        self.audit_check(
             "scoped.full.has_resource",
             scoped_full.has(scoped_resource_name),
         )
-        self.check(
+        self.audit_check(
             "scoped.full.get_service_matches",
             (
                 scoped_full.resolve(scoped_service_name, type_cls=str).value
@@ -431,7 +453,7 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             )
             == scoped_service_value,
         )
-        self.check(
+        self.audit_check(
             "scoped.full.get_factory_matches",
             (
                 scoped_full.resolve(scoped_factory_name, type_cls=int).value
@@ -440,7 +462,7 @@ class Ex08FlextContainer(ExamplesFlextCoreShared):
             )
             == scoped_factory_value,
         )
-        self.check(
+        self.audit_check(
             "scoped.full.get_resource.success",
             scoped_full.resolve(scoped_resource_name).success,
         )

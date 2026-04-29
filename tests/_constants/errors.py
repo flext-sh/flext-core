@@ -11,7 +11,7 @@ from typing import Final
 from flext_core import FlextConstants as c
 
 
-class TestsFlextCoreConstantsErrors:
+class TestsFlextConstantsErrors:
     class TestErrors:
         """Flext-core-specific error message patterns for validation."""
 

@@ -17,7 +17,7 @@ from tests.constants import c
 from tests.models import m
 
 
-class TestsFlextCoreUtilities(u):
+class TestsFlextUtilities(u):
     """Utilities for flext-core tests."""
 
     class Tests(u.Tests):
@@ -288,10 +288,10 @@ class TestsFlextCoreUtilities(u):
         @staticmethod
         def create_user_service(
             case: m.Tests.ServiceTestCase,
-        ) -> TestsFlextCoreUtilities.Tests.GetUserService:
+        ) -> TestsFlextUtilities.Tests.GetUserService:
             """Create a user service from a documented service case."""
-            return TestsFlextCoreUtilities.Tests.make(
-                TestsFlextCoreUtilities.Tests.GetUserService,
+            return TestsFlextUtilities.Tests.make(
+                TestsFlextUtilities.Tests.GetUserService,
                 user_id=case.user_id or case.input_value or "",
             )
 
@@ -304,8 +304,8 @@ class TestsFlextCoreUtilities(u):
                 return r[str | tm.Tests.User | m.Tests.EmailResponse].fail(
                     c.Tests.TestErrors.NO_USER_IDS_PROVIDED,
                 )
-            user_result: p.Result[tm.Tests.User] = TestsFlextCoreUtilities.Tests.make(
-                TestsFlextCoreUtilities.Tests.GetUserService,
+            user_result: p.Result[tm.Tests.User] = TestsFlextUtilities.Tests.make(
+                TestsFlextUtilities.Tests.GetUserService,
                 user_id=case.user_ids[0],
             ).execute()
             result: p.Result[str | tm.Tests.User | m.Tests.EmailResponse] = (
@@ -320,8 +320,8 @@ class TestsFlextCoreUtilities(u):
                     )
                 elif operation == "send_email":
                     email_result: p.Result[m.Tests.EmailResponse] = result.flat_map(
-                        lambda email: TestsFlextCoreUtilities.Tests.make(
-                            TestsFlextCoreUtilities.Tests.SendEmailService,
+                        lambda email: TestsFlextUtilities.Tests.make(
+                            TestsFlextUtilities.Tests.SendEmailService,
                             to=str(email),
                             subject="Test",
                         ).execute(),
@@ -345,8 +345,8 @@ class TestsFlextCoreUtilities(u):
             if not case.user_ids:
                 msg = c.Tests.TestErrors.NO_USER_IDS_PROVIDED
                 raise e.BaseError(msg)
-            raw_user_result = TestsFlextCoreUtilities.Tests.make(
-                TestsFlextCoreUtilities.Tests.GetUserService,
+            raw_user_result = TestsFlextUtilities.Tests.make(
+                TestsFlextUtilities.Tests.GetUserService,
                 user_id=case.user_ids[0],
             ).execute()
             if raw_user_result.failure:
@@ -362,8 +362,8 @@ class TestsFlextCoreUtilities(u):
                     user = user.email if isinstance(user, tm.Tests.User) else user
                 elif operation == "send_email":
                     email_to = user if isinstance(user, str) else str(user)
-                    raw_response_result = TestsFlextCoreUtilities.Tests.make(
-                        TestsFlextCoreUtilities.Tests.SendEmailService,
+                    raw_response_result = TestsFlextUtilities.Tests.make(
+                        TestsFlextUtilities.Tests.SendEmailService,
                         to=email_to,
                         subject="Test",
                     ).execute()
@@ -1300,16 +1300,16 @@ class TestsFlextCoreUtilities(u):
             @classmethod
             def build(
                 cls, *, user_id: str | None = None
-            ) -> TestsFlextCoreUtilities.Tests.GetUserService:
+            ) -> TestsFlextUtilities.Tests.GetUserService:
                 """Build a `GetUserService` instance."""
-                return TestsFlextCoreUtilities.Tests.GetUserService(
+                return TestsFlextUtilities.Tests.GetUserService(
                     user_id=cls._resolve_user_id(user_id),
                 )
 
             @classmethod
             def build_batch(
                 cls, size: int
-            ) -> Sequence[TestsFlextCoreUtilities.Tests.GetUserService]:
+            ) -> Sequence[TestsFlextUtilities.Tests.GetUserService]:
                 """Build multiple `GetUserService` instances with auto-generated values."""
                 return [cls.build() for _ in range(size)]
 
@@ -1321,16 +1321,16 @@ class TestsFlextCoreUtilities(u):
                 cls,
                 *,
                 error_message: str = c.Tests.Services.DEFAULT_ERROR_MESSAGE,
-            ) -> TestsFlextCoreUtilities.Tests.FailingService:
+            ) -> TestsFlextUtilities.Tests.FailingService:
                 """Build a FailingService instance."""
-                return TestsFlextCoreUtilities.Tests.FailingService(
+                return TestsFlextUtilities.Tests.FailingService(
                     error_message=error_message,
                 )
 
             @classmethod
             def build_batch(
                 cls, size: int
-            ) -> Sequence[TestsFlextCoreUtilities.Tests.FailingService]:
+            ) -> Sequence[TestsFlextUtilities.Tests.FailingService]:
                 """Build multiple FailingService instances with default error message."""
                 return [cls.build() for _ in range(size)]
 
@@ -1340,16 +1340,16 @@ class TestsFlextCoreUtilities(u):
             @classmethod
             def build(
                 cls, *, user_id: str | None = None
-            ) -> TestsFlextCoreUtilities.Tests.GetUserServiceAuto:
+            ) -> TestsFlextUtilities.Tests.GetUserServiceAuto:
                 """Build a GetUserServiceAuto instance."""
-                return TestsFlextCoreUtilities.Tests.GetUserServiceAuto(
+                return TestsFlextUtilities.Tests.GetUserServiceAuto(
                     user_id=cls._resolve_user_id(user_id),
                 )
 
             @classmethod
             def build_batch(
                 cls, size: int
-            ) -> Sequence[TestsFlextCoreUtilities.Tests.GetUserServiceAuto]:
+            ) -> Sequence[TestsFlextUtilities.Tests.GetUserServiceAuto]:
                 """Build multiple GetUserServiceAuto instances with auto-generated values."""
                 return [cls.build() for _ in range(size)]
 
@@ -1392,12 +1392,12 @@ class TestsFlextCoreUtilities(u):
                 *,
                 value_input: str | None = None,
                 min_length: int = c.Tests.TestValidation.MIN_LENGTH_DEFAULT,
-            ) -> TestsFlextCoreUtilities.Tests.ValidatingServiceAuto:
+            ) -> TestsFlextUtilities.Tests.ValidatingServiceAuto:
                 """Build a ValidatingServiceAuto instance."""
                 actual_value = (
                     value_input if value_input is not None else cls._next_word()
                 )
-                return TestsFlextCoreUtilities.Tests.ValidatingServiceAuto(
+                return TestsFlextUtilities.Tests.ValidatingServiceAuto(
                     value_input=actual_value,
                     min_length=min_length,
                 )
@@ -1405,7 +1405,7 @@ class TestsFlextCoreUtilities(u):
             @classmethod
             def build_batch(
                 cls, size: int
-            ) -> Sequence[TestsFlextCoreUtilities.Tests.ValidatingServiceAuto]:
+            ) -> Sequence[TestsFlextUtilities.Tests.ValidatingServiceAuto]:
                 """Build multiple ValidatingServiceAuto instances."""
                 return [cls.build() for _ in range(size)]
 
@@ -1418,12 +1418,12 @@ class TestsFlextCoreUtilities(u):
                 *,
                 value_input: str | None = None,
                 min_length: int = c.Tests.TestValidation.MIN_LENGTH_DEFAULT,
-            ) -> TestsFlextCoreUtilities.Tests.ValidatingService:
+            ) -> TestsFlextUtilities.Tests.ValidatingService:
                 """Build a `ValidatingService` instance."""
                 actual_value = (
                     value_input if value_input is not None else cls._next_word()
                 )
-                return TestsFlextCoreUtilities.Tests.ValidatingService(
+                return TestsFlextUtilities.Tests.ValidatingService(
                     value_input=actual_value,
                     min_length=min_length,
                 )
@@ -1431,7 +1431,7 @@ class TestsFlextCoreUtilities(u):
             @classmethod
             def build_batch(
                 cls, size: int
-            ) -> Sequence[TestsFlextCoreUtilities.Tests.ValidatingService]:
+            ) -> Sequence[TestsFlextUtilities.Tests.ValidatingService]:
                 """Build multiple `ValidatingService` instances."""
                 return [cls.build() for _ in range(size)]
 
@@ -1443,16 +1443,16 @@ class TestsFlextCoreUtilities(u):
                 cls,
                 *,
                 error_message: str = c.Tests.Services.DEFAULT_ERROR_MESSAGE,
-            ) -> TestsFlextCoreUtilities.Tests.FailingServiceAuto:
+            ) -> TestsFlextUtilities.Tests.FailingServiceAuto:
                 """Build a FailingServiceAuto instance."""
-                return TestsFlextCoreUtilities.Tests.FailingServiceAuto(
+                return TestsFlextUtilities.Tests.FailingServiceAuto(
                     error_message=error_message,
                 )
 
             @classmethod
             def build_batch(
                 cls, size: int
-            ) -> Sequence[TestsFlextCoreUtilities.Tests.FailingServiceAuto]:
+            ) -> Sequence[TestsFlextUtilities.Tests.FailingServiceAuto]:
                 """Build multiple FailingServiceAuto instances with default error message."""
                 return [cls.build() for _ in range(size)]
 
@@ -1541,34 +1541,32 @@ class TestsFlextCoreUtilities(u):
                 cls,
                 case: m.Tests.ServiceTestCase,
             ) -> (
-                TestsFlextCoreUtilities.Tests.GetUserService
-                | TestsFlextCoreUtilities.Tests.ValidatingService
-                | TestsFlextCoreUtilities.Tests.FailingService
+                TestsFlextUtilities.Tests.GetUserService
+                | TestsFlextUtilities.Tests.ValidatingService
+                | TestsFlextUtilities.Tests.FailingService
             ):
                 """Create appropriate service based on case type using pattern matching."""
                 service: (
-                    TestsFlextCoreUtilities.Tests.GetUserService
-                    | TestsFlextCoreUtilities.Tests.ValidatingService
-                    | TestsFlextCoreUtilities.Tests.FailingService
+                    TestsFlextUtilities.Tests.GetUserService
+                    | TestsFlextUtilities.Tests.ValidatingService
+                    | TestsFlextUtilities.Tests.FailingService
                 )
                 match case.service_type:
                     case c.Tests.ServiceTestType.GET_USER:
-                        service = (
-                            TestsFlextCoreUtilities.Tests.GetUserServiceFactory.build(
-                                user_id=case.input_value
-                            )
+                        service = TestsFlextUtilities.Tests.GetUserServiceFactory.build(
+                            user_id=case.input_value
                         )
                     case c.Tests.ServiceTestType.VALIDATE:
-                        service = TestsFlextCoreUtilities.Tests.ValidatingServiceFactory.build(
-                            value_input=case.input_value,
-                            min_length=case.extra_param,
+                        service = (
+                            TestsFlextUtilities.Tests.ValidatingServiceFactory.build(
+                                value_input=case.input_value,
+                                min_length=case.extra_param,
+                            )
                         )
                     case c.Tests.ServiceTestType.FAIL:
-                        service = (
-                            TestsFlextCoreUtilities.Tests.FailingServiceFactory.build(
-                                error_message=case.input_value
-                                or c.Tests.Services.DEFAULT_ERROR_MESSAGE
-                            )
+                        service = TestsFlextUtilities.Tests.FailingServiceFactory.build(
+                            error_message=case.input_value
+                            or c.Tests.Services.DEFAULT_ERROR_MESSAGE
                         )
                     case _:
                         msg = f"Unsupported service type: {case.service_type}"
@@ -1642,31 +1640,29 @@ class TestsFlextCoreUtilities(u):
             @staticmethod
             def user_success() -> Sequence[m.Tests.ServiceTestCase]:
                 """Generate cached-style success cases on demand."""
-                return TestsFlextCoreUtilities.Tests.TestDataGenerators.generate_user_success_cases()
+                return TestsFlextUtilities.Tests.TestDataGenerators.generate_user_success_cases()
 
             @staticmethod
             def validate_success() -> Sequence[m.Tests.ServiceTestCase]:
                 """Generate cached-style validation success cases on demand."""
-                return TestsFlextCoreUtilities.Tests.TestDataGenerators.generate_validation_success_cases()
+                return TestsFlextUtilities.Tests.TestDataGenerators.generate_validation_success_cases()
 
             @staticmethod
             def validate_failure() -> Sequence[m.Tests.ServiceTestCase]:
                 """Generate cached-style validation failure cases on demand."""
-                return TestsFlextCoreUtilities.Tests.TestDataGenerators.generate_validation_failure_cases()
+                return TestsFlextUtilities.Tests.TestDataGenerators.generate_validation_failure_cases()
 
             @staticmethod
             def create_service(
                 case: m.Tests.ServiceTestCase,
             ) -> (
-                TestsFlextCoreUtilities.Tests.GetUserService
-                | TestsFlextCoreUtilities.Tests.ValidatingService
-                | TestsFlextCoreUtilities.Tests.FailingService
+                TestsFlextUtilities.Tests.GetUserService
+                | TestsFlextUtilities.Tests.ValidatingService
+                | TestsFlextUtilities.Tests.FailingService
             ):
                 """Create appropriate service based on case type."""
-                return (
-                    TestsFlextCoreUtilities.Tests.ServiceFactoryRegistry.create_service(
-                        case
-                    )
+                return TestsFlextUtilities.Tests.ServiceFactoryRegistry.create_service(
+                    case
                 )
 
         class GenericModelFactory:
@@ -1700,12 +1696,12 @@ class TestsFlextCoreUtilities(u):
         @staticmethod
         def reset_all_factories() -> None:
             """Reset all factory states for test isolation."""
-            TestsFlextCoreUtilities.Tests.UserFactory.reset()
-            TestsFlextCoreUtilities.Tests.GetUserServiceFactory.reset()
-            TestsFlextCoreUtilities.Tests.ValidatingServiceFactory.reset()
-            TestsFlextCoreUtilities.Tests.GetUserServiceAutoFactory.reset()
-            TestsFlextCoreUtilities.Tests.ValidatingServiceAutoFactory.reset()
-            TestsFlextCoreUtilities.Tests.ServiceTestCaseFactory.reset()
+            TestsFlextUtilities.Tests.UserFactory.reset()
+            TestsFlextUtilities.Tests.GetUserServiceFactory.reset()
+            TestsFlextUtilities.Tests.ValidatingServiceFactory.reset()
+            TestsFlextUtilities.Tests.GetUserServiceAutoFactory.reset()
+            TestsFlextUtilities.Tests.ValidatingServiceAutoFactory.reset()
+            TestsFlextUtilities.Tests.ServiceTestCaseFactory.reset()
 
         class Contract:
             """Shared contract for text utility behavior."""
@@ -1733,7 +1729,7 @@ class TestsFlextCoreUtilities(u):
         @staticmethod
         def assert_safe_string_valid(raw: str, expected: str) -> None:
             """Assert safe string normalization for valid input."""
-            TestsFlextCoreUtilities.Tests.Contract.assert_safe_string_valid(
+            TestsFlextUtilities.Tests.Contract.assert_safe_string_valid(
                 raw,
                 expected,
             )
@@ -1741,7 +1737,7 @@ class TestsFlextCoreUtilities(u):
         @staticmethod
         def assert_format_app_id(raw: str, expected: str) -> None:
             """Assert app id formatting behavior."""
-            TestsFlextCoreUtilities.Tests.Contract.assert_format_app_id(
+            TestsFlextUtilities.Tests.Contract.assert_format_app_id(
                 raw,
                 expected,
             )
@@ -1781,6 +1777,6 @@ class TestsFlextCoreUtilities(u):
                 return self.call_count
 
 
-u = TestsFlextCoreUtilities
+u = TestsFlextUtilities
 
-__all__: list[str] = ["TestsFlextCoreUtilities", "u"]
+__all__: list[str] = ["TestsFlextUtilities", "u"]

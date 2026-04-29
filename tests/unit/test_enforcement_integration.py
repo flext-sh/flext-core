@@ -55,7 +55,7 @@ def _violation_lines(messages: Sequence[warnings.WarningMessage]) -> Iterator[st
             )
 
 
-class TestsFlextCoreEnforcementIntegration:
+class TestsFlextEnforcementIntegration:
     def test_clean_fixture_is_silent(self) -> None:
         _import_fresh_silent(
             "tests.unit._enforcement_integration_fixtures.clean_module",
@@ -104,15 +104,15 @@ class TestsFlextCoreEnforcementIntegration:
             "tests.unit._enforcement_integration_fixtures.bad_module",
         )
         expected_classes = {
-            "TestsFlextCoreBadAnyField",
-            "TestsFlextCoreBadBareCollection",
-            "TestsFlextCoreBadMutableDefault",
-            "TestsFlextCoreBadMissingDesc",
-            "TestsFlextCoreBadInlineUnion",
-            "TestsFlextCoreBadFrozen",
-            "TestsFlextCoreBadAccessors",
-            "TestsFlextCoreBadWorkerSettings",
-            "TestsFlextCoreBadConstants",
+            "TestsFlextBadAnyField",
+            "TestsFlextBadBareCollection",
+            "TestsFlextBadMutableDefault",
+            "TestsFlextBadMissingDesc",
+            "TestsFlextBadInlineUnion",
+            "TestsFlextBadFrozen",
+            "TestsFlextBadAccessors",
+            "TestsFlextBadWorkerSettings",
+            "TestsFlextBadConstants",
         }
         seen: set[str] = set()
         for entry in messages:

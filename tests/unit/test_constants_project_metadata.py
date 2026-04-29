@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import c
 
 
-class TestsFlextCoreConstantsProjectMetadata:
+class TestsFlextConstantsProjectMetadata:
     """Behavior contract for alias→suffix mappings, tier prefixes, and name overrides."""
 
     def test_alias_to_suffix_maps_every_runtime_alias_to_its_facade_suffix(

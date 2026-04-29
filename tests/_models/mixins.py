@@ -15,7 +15,7 @@ from flext_core import m
 from tests import c, t
 
 
-class TestsFlextCoreModelsMixins:
+class TestsFlextModelsMixins:
     """flext-core test models namespace."""
 
     class BadDict(UserDict[str, t.Tests.TestobjectSerializable]):
@@ -132,7 +132,7 @@ class TestsFlextCoreModelsMixins:
         ) -> Never:
             _ = strict, extra, from_attributes, context, by_alias, by_name
             _ = obj
-            raise TestsFlextCoreModelsMixins._ValidationLikeError
+            raise TestsFlextModelsMixins._ValidationLikeError
 
     class _PlainErrorModel(m.BaseModel):
         value: int
@@ -169,7 +169,7 @@ class TestsFlextCoreModelsMixins:
     class NestedModel(m.BaseModel):
         """Nested Pydantic model for cache testing."""
 
-        inner: TestsFlextCoreModelsMixins.CacheTestModel
+        inner: TestsFlextModelsMixins.CacheTestModel
         count: int
 
     class SettingsModelForTest(m.BaseModel):
@@ -197,9 +197,7 @@ class TestsFlextCoreModelsMixins:
             extra="forbid",
         )
 
-        _instance: ClassVar[TestsFlextCoreModelsMixins.SingletonClassForTest | None] = (
-            None
-        )
+        _instance: ClassVar[TestsFlextModelsMixins.SingletonClassForTest | None] = None
 
         name: str = "default"
         timeout: int = 30
@@ -207,7 +205,7 @@ class TestsFlextCoreModelsMixins:
         @classmethod
         def fetch_global(
             cls,
-        ) -> TestsFlextCoreModelsMixins.SingletonClassForTest:
+        ) -> TestsFlextModelsMixins.SingletonClassForTest:
             """Get global singleton instance."""
             if cls._instance is None:
                 cls._instance = cls()
@@ -523,7 +521,7 @@ class TestsFlextCoreModelsMixins:
         version: str
         nested_data: Mapping[
             str,
-            TestsFlextCoreModelsMixins.NestedDataDict,
+            TestsFlextModelsMixins.NestedDataDict,
         ]
 
     class FixtureCaseDict(m.BaseModel):
@@ -570,7 +568,7 @@ class TestsFlextCoreModelsMixins:
         tags: t.StrSequence
         setup_data: Mapping[
             str,
-            TestsFlextCoreModelsMixins.SetupDataDict,
+            TestsFlextModelsMixins.SetupDataDict,
         ]
 
     class UserDataFixtureDict(m.BaseModel):
@@ -598,11 +596,11 @@ class TestsFlextCoreModelsMixins:
 
         user: Mapping[
             str,
-            TestsFlextCoreModelsMixins.UserDataFixtureDict,
+            TestsFlextModelsMixins.UserDataFixtureDict,
         ]
         request: Mapping[
             str,
-            TestsFlextCoreModelsMixins.RequestDataFixtureDict,
+            TestsFlextModelsMixins.RequestDataFixtureDict,
         ]
 
     class UserProfileDict(m.BaseModel):
@@ -661,7 +659,7 @@ class TestsFlextCoreModelsMixins:
         timestamp: str
         payload: Mapping[
             str,
-            TestsFlextCoreModelsMixins.AsyncPayloadDict,
+            TestsFlextModelsMixins.AsyncPayloadDict,
         ]
 
     class UserPayloadDict(m.BaseModel):
@@ -688,7 +686,7 @@ class TestsFlextCoreModelsMixins:
         target_user_id: str
         updates: Mapping[
             str,
-            TestsFlextCoreModelsMixins.UpdateFieldDict,
+            TestsFlextModelsMixins.UpdateFieldDict,
         ]
 
     class UserDataDict(m.BaseModel):
@@ -1235,10 +1233,10 @@ class TestsFlextCoreModelsMixins:
         """Centralized container test scenarios using c."""
 
         SERVICE_SCENARIOS: ClassVar[
-            Sequence[TestsFlextCoreModelsMixins.ServiceScenario]
+            Sequence[TestsFlextModelsMixins.ServiceScenario]
         ] = []  # populated after class definition
         TYPED_RETRIEVAL_SCENARIOS: ClassVar[
-            Sequence[TestsFlextCoreModelsMixins.TypedRetrievalScenario]
+            Sequence[TestsFlextModelsMixins.TypedRetrievalScenario]
         ] = []  # populated after class definition
         CONFIG_SCENARIOS: ClassVar[Sequence[t.ScalarMapping]] = [
             {"enable_singleton": False, "max_services": 8},
@@ -1354,40 +1352,40 @@ class TestsFlextCoreModelsMixins:
 
 
 # Populate ContainerScenarios after class is fully defined to allow forward references
-_svc_scenarios: Sequence[TestsFlextCoreModelsMixins.ServiceScenario] = [
-    TestsFlextCoreModelsMixins.ServiceScenario(
+_svc_scenarios: Sequence[TestsFlextModelsMixins.ServiceScenario] = [
+    TestsFlextModelsMixins.ServiceScenario(
         name="test_service",
         service="test_service_value",
         description="Simple string service",
     ),
-    TestsFlextCoreModelsMixins.ServiceScenario(
+    TestsFlextModelsMixins.ServiceScenario(
         name="service_instance",
         service=42,
         description="Integer service instance",
     ),
-    TestsFlextCoreModelsMixins.ServiceScenario(
+    TestsFlextModelsMixins.ServiceScenario(
         name="string_service",
         service="test_value",
         description="String service",
     ),
 ]
-TestsFlextCoreModelsMixins.ContainerScenarios.SERVICE_SCENARIOS = _svc_scenarios
-_typed_scenarios: Sequence[TestsFlextCoreModelsMixins.TypedRetrievalScenario] = [
-    TestsFlextCoreModelsMixins.TypedRetrievalScenario(
+TestsFlextModelsMixins.ContainerScenarios.SERVICE_SCENARIOS = _svc_scenarios
+_typed_scenarios: Sequence[TestsFlextModelsMixins.TypedRetrievalScenario] = [
+    TestsFlextModelsMixins.TypedRetrievalScenario(
         name="dict_service",
         service="test_dict_service",
         expected_type=str,
         should_pass=True,
         description="String service",
     ),
-    TestsFlextCoreModelsMixins.TypedRetrievalScenario(
+    TestsFlextModelsMixins.TypedRetrievalScenario(
         name="string_service",
         service="test_string",
         expected_type=str,
         should_pass=True,
         description="String service",
     ),
-    TestsFlextCoreModelsMixins.TypedRetrievalScenario(
+    TestsFlextModelsMixins.TypedRetrievalScenario(
         name="list_service",
         service=123,
         expected_type=int,
@@ -1395,6 +1393,4 @@ _typed_scenarios: Sequence[TestsFlextCoreModelsMixins.TypedRetrievalScenario] = 
         description="Integer service for typed retrieval",
     ),
 ]
-TestsFlextCoreModelsMixins.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS = (
-    _typed_scenarios
-)
+TestsFlextModelsMixins.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS = _typed_scenarios

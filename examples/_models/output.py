@@ -11,7 +11,7 @@ from types import MappingProxyType
 from typing import ClassVar
 
 
-class ExamplesFlextCoreModelsOutput:
+class ExamplesFlextModelsOutput:
     """Output namespace used by example scripts."""
 
     class Examples:

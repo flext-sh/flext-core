@@ -14,176 +14,159 @@ from flext_core.lazy import (
 if _t.TYPE_CHECKING:
     from flext_tests import d, e, h, r, s, td, tf, tk, tm, tv, x
 
-    from tests._constants.domain import TestsFlextCoreConstantsDomain
-    from tests._constants.errors import TestsFlextCoreConstantsErrors
-    from tests._constants.fixtures import TestsFlextCoreConstantsFixtures
-    from tests._constants.loggings import TestsFlextCoreConstantsLoggings
-    from tests._constants.other import TestsFlextCoreConstantsOther
-    from tests._constants.result import TestsFlextCoreConstantsResult
-    from tests._constants.services import TestsFlextCoreConstantsServices
-    from tests._constants.settings import TestsFlextCoreConstantsSettings
-    from tests._constants.strings import TestsFlextCoreConstantsStrings
-    from tests._models.mixins import TestsFlextCoreModelsMixins
-    from tests.benchmark.test_container_memory import TestsFlextCoreContainerMemory
+    from tests._constants.domain import TestsFlextConstantsDomain
+    from tests._constants.errors import TestsFlextConstantsErrors
+    from tests._constants.fixtures import TestsFlextConstantsFixtures
+    from tests._constants.loggings import TestsFlextConstantsLoggings
+    from tests._constants.other import TestsFlextConstantsOther
+    from tests._constants.result import TestsFlextConstantsResult
+    from tests._constants.services import TestsFlextConstantsServices
+    from tests._constants.settings import TestsFlextConstantsSettings
+    from tests._constants.strings import TestsFlextConstantsStrings
+    from tests._models.mixins import TestsFlextModelsMixins
+    from tests.benchmark.test_container_memory import TestsFlextContainerMemory
     from tests.benchmark.test_container_performance import (
-        TestsFlextCoreContainerPerformance,
+        TestsFlextContainerPerformance,
     )
-    from tests.benchmark.test_lazy_performance import TestsFlextCoreLazyPerformance
-    from tests.constants import TestsFlextCoreConstants, c
+    from tests.benchmark.test_lazy_performance import TestsFlextLazyPerformance
+    from tests.constants import TestsFlextConstants, c
     from tests.integration.patterns.test_advanced_patterns import (
-        TestsFlextCoreAdvancedPatterns,
+        TestsFlextAdvancedPatterns,
     )
     from tests.integration.patterns.test_architectural_patterns import (
-        TestsFlextCoreArchitecturalPatterns,
+        TestsFlextArchitecturalPatterns,
     )
     from tests.integration.patterns.test_patterns_commands import (
-        TestsFlextCorePatternsCommands,
+        TestsFlextPatternsCommands,
     )
     from tests.integration.patterns.test_patterns_logging import (
-        TestsFlextCorePatternsLogging,
+        TestsFlextPatternsLogging,
     )
     from tests.integration.patterns.test_patterns_testing import (
-        TestsFlextCorePatternsTesting,
+        TestsFlextPatternsTesting,
     )
-    from tests.integration.test_architecture import TestsFlextCoreAutomatedArchitecture
+    from tests.integration.test_architecture import TestsFlextAutomatedArchitecture
     from tests.integration.test_documented_patterns import (
-        TestsFlextCoreDocumentedPatterns,
+        TestsFlextDocumentedPatterns,
     )
     from tests.integration.test_examples_execution import (
-        TestsFlextCoreExamplesExecution,
+        TestsFlextExamplesExecution,
     )
-    from tests.integration.test_integration import TestsFlextCoreLibraryIntegration
+    from tests.integration.test_integration import TestsFlextLibraryIntegration
     from tests.integration.test_migration_validation import (
-        TestsFlextCoreMigrationValidation,
+        TestsFlextMigrationValidation,
     )
-    from tests.integration.test_service import TestsFlextCoreServiceIntegration
+    from tests.integration.test_service import TestsFlextServiceIntegration
     from tests.integration.test_service_result_property import (
-        TestsFlextCoreServiceResultProperty,
+        TestsFlextServiceResultProperty,
     )
     from tests.integration.test_settings_integration import (
-        TestsFlextCoreSettingsIntegration,
+        TestsFlextSettingsIntegration,
     )
-    from tests.integration.test_system import TestsFlextCoreSystemIntegration
-    from tests.models import TestsFlextCoreModels, m
-    from tests.protocols import TestsFlextCoreProtocols, p
-    from tests.typings import TestsFlextCoreTypes, t
-    from tests.unit._enforcement_integration_fixtures.bad_module import (
-        TestsFlextCoreBadAccessors,
-        TestsFlextCoreBadAnyField,
-        TestsFlextCoreBadBareCollection,
-        TestsFlextCoreBadConstants,
-        TestsFlextCoreBadFrozen,
-        TestsFlextCoreBadInlineUnion,
-        TestsFlextCoreBadMissingDesc,
-        TestsFlextCoreBadMutableDefault,
-        TestsFlextCoreBadWorkerSettings,
-    )
-    from tests.unit._enforcement_integration_fixtures.clean_module import (
-        TestsFlextCoreCleanConstants,
-        TestsFlextCoreCleanModels,
-        TestsFlextCoreCleanProtocols,
-        TestsFlextCoreCleanServiceBase,
-    )
-    from tests.unit._models.test_base import TestsFlextCoreModelsBase
-    from tests.unit._models.test_cqrs import TestsFlextCoreModelsCQRS
+    from tests.integration.test_system import TestsFlextSystemIntegration
+    from tests.models import TestsFlextModels, m
+    from tests.protocols import TestsFlextProtocols, p
+    from tests.typings import TestsFlextTypes, t
+    from tests.unit._models.test_base import TestsFlextModelsBase
+    from tests.unit._models.test_cqrs import TestsFlextModelsCQRS
     from tests.unit._models.test_enforcement_sources import (
-        TestsFlextCoreModelsEnforcementSources,
+        TestsFlextModelsEnforcementSources,
     )
-    from tests.unit._models.test_entity import TestsFlextCoreModelsEntity
+    from tests.unit._models.test_entity import TestsFlextModelsEntity
     from tests.unit._models.test_exception_params import (
-        TestsFlextCoreModelsExceptionParams,
+        TestsFlextModelsExceptionParams,
     )
-    from tests.unit._utilities.test_guards import TestsFlextCoreUtilitiesGuards
-    from tests.unit._utilities.test_mapper import TestsFlextCoreUtilitiesMapper
-    from tests.unit.base import TestsFlextCoreServiceBase
-    from tests.unit.test_beartype_engine import TestsFlextCoreBeartypeEngine
-    from tests.unit.test_constants_new import TestsFlextCoreConstantsNew
+    from tests.unit._utilities.test_guards import TestsFlextUtilitiesGuards
+    from tests.unit._utilities.test_mapper import TestsFlextUtilitiesMapper
+    from tests.unit.base import TestsFlextServiceBase
+    from tests.unit.test_beartype_engine import TestsFlextBeartypeEngine
+    from tests.unit.test_constants_new import TestsFlextConstantsNew
     from tests.unit.test_constants_project_metadata import (
-        TestsFlextCoreConstantsProjectMetadata,
+        TestsFlextConstantsProjectMetadata,
     )
-    from tests.unit.test_container import TestsFlextCoreContainer
-    from tests.unit.test_context import TestsFlextCoreContext
-    from tests.unit.test_coverage_exceptions import TestsFlextCoreCoverageExceptions
-    from tests.unit.test_coverage_loggings import TestsFlextCoreCoverageLoggings
-    from tests.unit.test_decorators import TestsFlextCoreDecoratorsLegacy
+    from tests.unit.test_container import TestsFlextContainer
+    from tests.unit.test_context import TestsFlextContext
+    from tests.unit.test_coverage_exceptions import TestsFlextCoverageExceptions
+    from tests.unit.test_coverage_loggings import TestsFlextCoverageLoggings
+    from tests.unit.test_decorators import TestsFlextDecoratorsLegacy
     from tests.unit.test_decorators_discovery_full_coverage import (
-        TestsFlextCoreDecoratorsDiscovery,
+        TestsFlextDecoratorsDiscovery,
     )
-    from tests.unit.test_decorators_full_coverage import TestsFlextCoreDecorators
-    from tests.unit.test_deprecation_warnings import TestsFlextCoreDeprecationWarnings
-    from tests.unit.test_dispatcher_di import TestsFlextCoreDispatcherDI
-    from tests.unit.test_dispatcher_minimal import TestsFlextCoreDispatcherMinimal
+    from tests.unit.test_decorators_full_coverage import TestsFlextDecorators
+    from tests.unit.test_deprecation_warnings import TestsFlextDeprecationWarnings
+    from tests.unit.test_dispatcher_di import TestsFlextDispatcherDI
+    from tests.unit.test_dispatcher_minimal import TestsFlextDispatcherMinimal
     from tests.unit.test_dispatcher_reliability import (
-        TestsFlextCoreDispatcherReliability,
+        TestsFlextDispatcherReliability,
     )
-    from tests.unit.test_enforcement import TestsFlextCoreEnforcement
-    from tests.unit.test_enforcement_apt_hooks import TestsFlextCoreEnforcementAptHooks
-    from tests.unit.test_enforcement_catalog import TestsFlextCoreEnforcementCatalog
+    from tests.unit.test_enforcement import TestsFlextEnforcement
+    from tests.unit.test_enforcement_apt_hooks import TestsFlextEnforcementAptHooks
+    from tests.unit.test_enforcement_catalog import TestsFlextEnforcementCatalog
     from tests.unit.test_enforcement_integration import (
-        TestsFlextCoreEnforcementIntegration,
+        TestsFlextEnforcementIntegration,
     )
-    from tests.unit.test_enum_utilities_coverage_100 import TestsFlextCoreEnumUtilities
-    from tests.unit.test_exceptions import TestsFlextCoreExceptions
+    from tests.unit.test_enum_utilities_coverage_100 import TestsFlextEnumUtilities
+    from tests.unit.test_exceptions import TestsFlextExceptions
     from tests.unit.test_handler_decorator_discovery import (
-        TestsFlextCoreHandlerDecoratorDiscovery,
+        TestsFlextHandlerDecoratorDiscovery,
     )
-    from tests.unit.test_handlers import TestsFlextCoreFlextHandlers
-    from tests.unit.test_lazy_exports import TestsFlextCoreLazy
-    from tests.unit.test_loggings_full_coverage import TestsFlextCoreLoggings
-    from tests.unit.test_mixins import TestsFlextCoreMixins
-    from tests.unit.test_models import TestsFlextCoreModelsUnit
+    from tests.unit.test_handlers import TestsFlextFlextHandlers
+    from tests.unit.test_lazy_exports import TestsFlextLazy
+    from tests.unit.test_loggings_full_coverage import TestsFlextLoggings
+    from tests.unit.test_mixins import TestsFlextMixins
+    from tests.unit.test_models import TestsFlextModelsUnit
     from tests.unit.test_models_base_full_coverage import (
-        TestsFlextCoreModelsBaseFullCoverage,
+        TestsFlextModelsBaseFullCoverage,
     )
-    from tests.unit.test_models_container import TestsFlextCoreModelsContainer
-    from tests.unit.test_models_cqrs_full_coverage import TestsFlextCoreModelsCqrs
+    from tests.unit.test_models_container import TestsFlextModelsContainer
+    from tests.unit.test_models_cqrs_full_coverage import TestsFlextModelsCqrs
     from tests.unit.test_models_project_metadata import (
-        TestsFlextCoreModelsProjectMetadata,
+        TestsFlextModelsProjectMetadata,
     )
     from tests.unit.test_project_metadata_facade_access import (
-        TestsFlextCoreFacadeFlatSsotAccess,
+        TestsFlextFacadeFlatSsotAccess,
     )
-    from tests.unit.test_registry import TestsFlextCoreRegistry
+    from tests.unit.test_registry import TestsFlextRegistry
     from tests.unit.test_registry_full_coverage import (
-        TestsFlextCoreRegistryFullCoverage,
+        TestsFlextRegistryFullCoverage,
     )
-    from tests.unit.test_result import TestsFlextCoreResult
+    from tests.unit.test_result import TestsFlextResult
     from tests.unit.test_result_exception_carrying import (
-        TestsFlextCoreResultExceptionCarrying,
+        TestsFlextResultExceptionCarrying,
     )
-    from tests.unit.test_runtime import TestsFlextCoreRuntime
+    from tests.unit.test_runtime import TestsFlextRuntime
     from tests.unit.test_service import (
-        TestsFlextCoreService,
-        TestsFlextCoreServiceUserData,
-        TestsFlextCoreServiceUserService,
+        TestsFlextService,
+        TestsFlextServiceUserData,
+        TestsFlextServiceUserService,
     )
-    from tests.unit.test_service_bootstrap import TestsFlextCoreServiceBootstrap
-    from tests.unit.test_service_coverage_100 import TestsFlextCoreService100Coverage
-    from tests.unit.test_settings import TestsFlextCoreSettings
-    from tests.unit.test_settings_coverage import TestsFlextCoreSettingsCoverage
-    from tests.unit.test_typings_new import TestsFlextCoreTypesUnit
-    from tests.unit.test_utilities import TestsFlextCoreUtilitiesSmoke
+    from tests.unit.test_service_bootstrap import TestsFlextServiceBootstrap
+    from tests.unit.test_service_coverage_100 import TestsFlextService100Coverage
+    from tests.unit.test_settings import TestsFlextSettings
+    from tests.unit.test_settings_coverage import TestsFlextSettingsCoverage
+    from tests.unit.test_typings_new import TestsFlextTypesUnit
+    from tests.unit.test_utilities import TestsFlextUtilitiesSmoke
     from tests.unit.test_utilities_collection_coverage_100 import (
-        TestsFlextCoreUtilitiesCollection,
+        TestsFlextUtilitiesCollection,
     )
-    from tests.unit.test_utilities_coverage import TestsFlextCoreUtilitiesCoverage
-    from tests.unit.test_utilities_domain import TestsFlextCoreUtilitiesDomain
+    from tests.unit.test_utilities_coverage import TestsFlextUtilitiesCoverage
+    from tests.unit.test_utilities_domain import TestsFlextUtilitiesDomain
     from tests.unit.test_utilities_generators_full_coverage import (
-        TestsFlextCoreUtilitiesGenerators,
+        TestsFlextUtilitiesGenerators,
     )
     from tests.unit.test_utilities_project_metadata import (
-        TestsFlextCoreUtilitiesProjectMetadata,
+        TestsFlextUtilitiesProjectMetadata,
     )
-    from tests.unit.test_utilities_reliability import TestsFlextCoreUtilitiesReliability
+    from tests.unit.test_utilities_reliability import TestsFlextUtilitiesReliability
     from tests.unit.test_utilities_settings_coverage_100 import (
-        TestsFlextCoreUtilitiesSettings,
+        TestsFlextUtilitiesSettings,
     )
-    from tests.unit.test_utilities_text_full_coverage import TestsFlextCoreUtilitiesText
+    from tests.unit.test_utilities_text_full_coverage import TestsFlextUtilitiesText
     from tests.unit.test_utilities_type_guards_coverage_100 import (
-        TestsFlextCoreUtilitiesTypeGuards,
+        TestsFlextUtilitiesTypeGuards,
     )
-    from tests.unit.test_version import TestsFlextCoreVersion
-    from tests.utilities import TestsFlextCoreUtilities, u
+    from tests.unit.test_version import TestsFlextVersion
+    from tests.utilities import TestsFlextUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
         "._constants",
@@ -194,189 +177,158 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
-            "._constants.domain": ("TestsFlextCoreConstantsDomain",),
-            "._constants.errors": ("TestsFlextCoreConstantsErrors",),
-            "._constants.fixtures": ("TestsFlextCoreConstantsFixtures",),
-            "._constants.loggings": ("TestsFlextCoreConstantsLoggings",),
-            "._constants.other": ("TestsFlextCoreConstantsOther",),
-            "._constants.result": ("TestsFlextCoreConstantsResult",),
-            "._constants.services": ("TestsFlextCoreConstantsServices",),
-            "._constants.settings": ("TestsFlextCoreConstantsSettings",),
-            "._constants.strings": ("TestsFlextCoreConstantsStrings",),
-            "._models.mixins": ("TestsFlextCoreModelsMixins",),
-            ".benchmark.test_container_memory": ("TestsFlextCoreContainerMemory",),
+            "._constants.domain": ("TestsFlextConstantsDomain",),
+            "._constants.errors": ("TestsFlextConstantsErrors",),
+            "._constants.fixtures": ("TestsFlextConstantsFixtures",),
+            "._constants.loggings": ("TestsFlextConstantsLoggings",),
+            "._constants.other": ("TestsFlextConstantsOther",),
+            "._constants.result": ("TestsFlextConstantsResult",),
+            "._constants.services": ("TestsFlextConstantsServices",),
+            "._constants.settings": ("TestsFlextConstantsSettings",),
+            "._constants.strings": ("TestsFlextConstantsStrings",),
+            "._models.mixins": ("TestsFlextModelsMixins",),
+            ".benchmark.test_container_memory": ("TestsFlextContainerMemory",),
             ".benchmark.test_container_performance": (
-                "TestsFlextCoreContainerPerformance",
+                "TestsFlextContainerPerformance",
             ),
-            ".benchmark.test_lazy_performance": ("TestsFlextCoreLazyPerformance",),
+            ".benchmark.test_lazy_performance": ("TestsFlextLazyPerformance",),
             ".constants": (
-                "TestsFlextCoreConstants",
+                "TestsFlextConstants",
                 "c",
             ),
             ".integration.patterns.test_advanced_patterns": (
-                "TestsFlextCoreAdvancedPatterns",
+                "TestsFlextAdvancedPatterns",
             ),
             ".integration.patterns.test_architectural_patterns": (
-                "TestsFlextCoreArchitecturalPatterns",
+                "TestsFlextArchitecturalPatterns",
             ),
             ".integration.patterns.test_patterns_commands": (
-                "TestsFlextCorePatternsCommands",
+                "TestsFlextPatternsCommands",
             ),
             ".integration.patterns.test_patterns_logging": (
-                "TestsFlextCorePatternsLogging",
+                "TestsFlextPatternsLogging",
             ),
             ".integration.patterns.test_patterns_testing": (
-                "TestsFlextCorePatternsTesting",
+                "TestsFlextPatternsTesting",
             ),
-            ".integration.test_architecture": ("TestsFlextCoreAutomatedArchitecture",),
-            ".integration.test_documented_patterns": (
-                "TestsFlextCoreDocumentedPatterns",
-            ),
-            ".integration.test_examples_execution": (
-                "TestsFlextCoreExamplesExecution",
-            ),
-            ".integration.test_integration": ("TestsFlextCoreLibraryIntegration",),
+            ".integration.test_architecture": ("TestsFlextAutomatedArchitecture",),
+            ".integration.test_documented_patterns": ("TestsFlextDocumentedPatterns",),
+            ".integration.test_examples_execution": ("TestsFlextExamplesExecution",),
+            ".integration.test_integration": ("TestsFlextLibraryIntegration",),
             ".integration.test_migration_validation": (
-                "TestsFlextCoreMigrationValidation",
+                "TestsFlextMigrationValidation",
             ),
-            ".integration.test_service": ("TestsFlextCoreServiceIntegration",),
+            ".integration.test_service": ("TestsFlextServiceIntegration",),
             ".integration.test_service_result_property": (
-                "TestsFlextCoreServiceResultProperty",
+                "TestsFlextServiceResultProperty",
             ),
             ".integration.test_settings_integration": (
-                "TestsFlextCoreSettingsIntegration",
+                "TestsFlextSettingsIntegration",
             ),
-            ".integration.test_system": ("TestsFlextCoreSystemIntegration",),
+            ".integration.test_system": ("TestsFlextSystemIntegration",),
             ".models": (
-                "TestsFlextCoreModels",
+                "TestsFlextModels",
                 "m",
             ),
             ".protocols": (
-                "TestsFlextCoreProtocols",
+                "TestsFlextProtocols",
                 "p",
             ),
             ".typings": (
-                "TestsFlextCoreTypes",
+                "TestsFlextTypes",
                 "t",
             ),
-            ".unit._enforcement_integration_fixtures.bad_module": (
-                "TestsFlextCoreBadAccessors",
-                "TestsFlextCoreBadAnyField",
-                "TestsFlextCoreBadBareCollection",
-                "TestsFlextCoreBadConstants",
-                "TestsFlextCoreBadFrozen",
-                "TestsFlextCoreBadInlineUnion",
-                "TestsFlextCoreBadMissingDesc",
-                "TestsFlextCoreBadMutableDefault",
-                "TestsFlextCoreBadWorkerSettings",
-            ),
-            ".unit._enforcement_integration_fixtures.clean_module": (
-                "TestsFlextCoreCleanConstants",
-                "TestsFlextCoreCleanModels",
-                "TestsFlextCoreCleanProtocols",
-                "TestsFlextCoreCleanServiceBase",
-            ),
-            ".unit._models.test_base": ("TestsFlextCoreModelsBase",),
-            ".unit._models.test_cqrs": ("TestsFlextCoreModelsCQRS",),
+            ".unit._models.test_base": ("TestsFlextModelsBase",),
+            ".unit._models.test_cqrs": ("TestsFlextModelsCQRS",),
             ".unit._models.test_enforcement_sources": (
-                "TestsFlextCoreModelsEnforcementSources",
+                "TestsFlextModelsEnforcementSources",
             ),
-            ".unit._models.test_entity": ("TestsFlextCoreModelsEntity",),
-            ".unit._models.test_exception_params": (
-                "TestsFlextCoreModelsExceptionParams",
-            ),
-            ".unit._utilities.test_guards": ("TestsFlextCoreUtilitiesGuards",),
-            ".unit._utilities.test_mapper": ("TestsFlextCoreUtilitiesMapper",),
-            ".unit.base": ("TestsFlextCoreServiceBase",),
-            ".unit.test_beartype_engine": ("TestsFlextCoreBeartypeEngine",),
-            ".unit.test_constants_new": ("TestsFlextCoreConstantsNew",),
+            ".unit._models.test_entity": ("TestsFlextModelsEntity",),
+            ".unit._models.test_exception_params": ("TestsFlextModelsExceptionParams",),
+            ".unit._utilities.test_guards": ("TestsFlextUtilitiesGuards",),
+            ".unit._utilities.test_mapper": ("TestsFlextUtilitiesMapper",),
+            ".unit.base": ("TestsFlextServiceBase",),
+            ".unit.test_beartype_engine": ("TestsFlextBeartypeEngine",),
+            ".unit.test_constants_new": ("TestsFlextConstantsNew",),
             ".unit.test_constants_project_metadata": (
-                "TestsFlextCoreConstantsProjectMetadata",
+                "TestsFlextConstantsProjectMetadata",
             ),
-            ".unit.test_container": ("TestsFlextCoreContainer",),
-            ".unit.test_context": ("TestsFlextCoreContext",),
-            ".unit.test_coverage_exceptions": ("TestsFlextCoreCoverageExceptions",),
-            ".unit.test_coverage_loggings": ("TestsFlextCoreCoverageLoggings",),
-            ".unit.test_decorators": ("TestsFlextCoreDecoratorsLegacy",),
+            ".unit.test_container": ("TestsFlextContainer",),
+            ".unit.test_context": ("TestsFlextContext",),
+            ".unit.test_coverage_exceptions": ("TestsFlextCoverageExceptions",),
+            ".unit.test_coverage_loggings": ("TestsFlextCoverageLoggings",),
+            ".unit.test_decorators": ("TestsFlextDecoratorsLegacy",),
             ".unit.test_decorators_discovery_full_coverage": (
-                "TestsFlextCoreDecoratorsDiscovery",
+                "TestsFlextDecoratorsDiscovery",
             ),
-            ".unit.test_decorators_full_coverage": ("TestsFlextCoreDecorators",),
-            ".unit.test_deprecation_warnings": ("TestsFlextCoreDeprecationWarnings",),
-            ".unit.test_dispatcher_di": ("TestsFlextCoreDispatcherDI",),
-            ".unit.test_dispatcher_minimal": ("TestsFlextCoreDispatcherMinimal",),
-            ".unit.test_dispatcher_reliability": (
-                "TestsFlextCoreDispatcherReliability",
-            ),
-            ".unit.test_enforcement": ("TestsFlextCoreEnforcement",),
-            ".unit.test_enforcement_apt_hooks": ("TestsFlextCoreEnforcementAptHooks",),
-            ".unit.test_enforcement_catalog": ("TestsFlextCoreEnforcementCatalog",),
-            ".unit.test_enforcement_integration": (
-                "TestsFlextCoreEnforcementIntegration",
-            ),
-            ".unit.test_enum_utilities_coverage_100": ("TestsFlextCoreEnumUtilities",),
-            ".unit.test_exceptions": ("TestsFlextCoreExceptions",),
+            ".unit.test_decorators_full_coverage": ("TestsFlextDecorators",),
+            ".unit.test_deprecation_warnings": ("TestsFlextDeprecationWarnings",),
+            ".unit.test_dispatcher_di": ("TestsFlextDispatcherDI",),
+            ".unit.test_dispatcher_minimal": ("TestsFlextDispatcherMinimal",),
+            ".unit.test_dispatcher_reliability": ("TestsFlextDispatcherReliability",),
+            ".unit.test_enforcement": ("TestsFlextEnforcement",),
+            ".unit.test_enforcement_apt_hooks": ("TestsFlextEnforcementAptHooks",),
+            ".unit.test_enforcement_catalog": ("TestsFlextEnforcementCatalog",),
+            ".unit.test_enforcement_integration": ("TestsFlextEnforcementIntegration",),
+            ".unit.test_enum_utilities_coverage_100": ("TestsFlextEnumUtilities",),
+            ".unit.test_exceptions": ("TestsFlextExceptions",),
             ".unit.test_handler_decorator_discovery": (
-                "TestsFlextCoreHandlerDecoratorDiscovery",
+                "TestsFlextHandlerDecoratorDiscovery",
             ),
-            ".unit.test_handlers": ("TestsFlextCoreFlextHandlers",),
-            ".unit.test_lazy_exports": ("TestsFlextCoreLazy",),
-            ".unit.test_loggings_full_coverage": ("TestsFlextCoreLoggings",),
-            ".unit.test_mixins": ("TestsFlextCoreMixins",),
-            ".unit.test_models": ("TestsFlextCoreModelsUnit",),
+            ".unit.test_handlers": ("TestsFlextFlextHandlers",),
+            ".unit.test_lazy_exports": ("TestsFlextLazy",),
+            ".unit.test_loggings_full_coverage": ("TestsFlextLoggings",),
+            ".unit.test_mixins": ("TestsFlextMixins",),
+            ".unit.test_models": ("TestsFlextModelsUnit",),
             ".unit.test_models_base_full_coverage": (
-                "TestsFlextCoreModelsBaseFullCoverage",
+                "TestsFlextModelsBaseFullCoverage",
             ),
-            ".unit.test_models_container": ("TestsFlextCoreModelsContainer",),
-            ".unit.test_models_cqrs_full_coverage": ("TestsFlextCoreModelsCqrs",),
-            ".unit.test_models_project_metadata": (
-                "TestsFlextCoreModelsProjectMetadata",
-            ),
+            ".unit.test_models_container": ("TestsFlextModelsContainer",),
+            ".unit.test_models_cqrs_full_coverage": ("TestsFlextModelsCqrs",),
+            ".unit.test_models_project_metadata": ("TestsFlextModelsProjectMetadata",),
             ".unit.test_project_metadata_facade_access": (
-                "TestsFlextCoreFacadeFlatSsotAccess",
+                "TestsFlextFacadeFlatSsotAccess",
             ),
-            ".unit.test_registry": ("TestsFlextCoreRegistry",),
-            ".unit.test_registry_full_coverage": (
-                "TestsFlextCoreRegistryFullCoverage",
-            ),
-            ".unit.test_result": ("TestsFlextCoreResult",),
+            ".unit.test_registry": ("TestsFlextRegistry",),
+            ".unit.test_registry_full_coverage": ("TestsFlextRegistryFullCoverage",),
+            ".unit.test_result": ("TestsFlextResult",),
             ".unit.test_result_exception_carrying": (
-                "TestsFlextCoreResultExceptionCarrying",
+                "TestsFlextResultExceptionCarrying",
             ),
-            ".unit.test_runtime": ("TestsFlextCoreRuntime",),
+            ".unit.test_runtime": ("TestsFlextRuntime",),
             ".unit.test_service": (
-                "TestsFlextCoreService",
-                "TestsFlextCoreServiceUserData",
-                "TestsFlextCoreServiceUserService",
+                "TestsFlextService",
+                "TestsFlextServiceUserData",
+                "TestsFlextServiceUserService",
             ),
-            ".unit.test_service_bootstrap": ("TestsFlextCoreServiceBootstrap",),
-            ".unit.test_service_coverage_100": ("TestsFlextCoreService100Coverage",),
-            ".unit.test_settings": ("TestsFlextCoreSettings",),
-            ".unit.test_settings_coverage": ("TestsFlextCoreSettingsCoverage",),
-            ".unit.test_typings_new": ("TestsFlextCoreTypesUnit",),
-            ".unit.test_utilities": ("TestsFlextCoreUtilitiesSmoke",),
+            ".unit.test_service_bootstrap": ("TestsFlextServiceBootstrap",),
+            ".unit.test_service_coverage_100": ("TestsFlextService100Coverage",),
+            ".unit.test_settings": ("TestsFlextSettings",),
+            ".unit.test_settings_coverage": ("TestsFlextSettingsCoverage",),
+            ".unit.test_typings_new": ("TestsFlextTypesUnit",),
+            ".unit.test_utilities": ("TestsFlextUtilitiesSmoke",),
             ".unit.test_utilities_collection_coverage_100": (
-                "TestsFlextCoreUtilitiesCollection",
+                "TestsFlextUtilitiesCollection",
             ),
-            ".unit.test_utilities_coverage": ("TestsFlextCoreUtilitiesCoverage",),
-            ".unit.test_utilities_domain": ("TestsFlextCoreUtilitiesDomain",),
+            ".unit.test_utilities_coverage": ("TestsFlextUtilitiesCoverage",),
+            ".unit.test_utilities_domain": ("TestsFlextUtilitiesDomain",),
             ".unit.test_utilities_generators_full_coverage": (
-                "TestsFlextCoreUtilitiesGenerators",
+                "TestsFlextUtilitiesGenerators",
             ),
             ".unit.test_utilities_project_metadata": (
-                "TestsFlextCoreUtilitiesProjectMetadata",
+                "TestsFlextUtilitiesProjectMetadata",
             ),
-            ".unit.test_utilities_reliability": ("TestsFlextCoreUtilitiesReliability",),
+            ".unit.test_utilities_reliability": ("TestsFlextUtilitiesReliability",),
             ".unit.test_utilities_settings_coverage_100": (
-                "TestsFlextCoreUtilitiesSettings",
+                "TestsFlextUtilitiesSettings",
             ),
-            ".unit.test_utilities_text_full_coverage": ("TestsFlextCoreUtilitiesText",),
+            ".unit.test_utilities_text_full_coverage": ("TestsFlextUtilitiesText",),
             ".unit.test_utilities_type_guards_coverage_100": (
-                "TestsFlextCoreUtilitiesTypeGuards",
+                "TestsFlextUtilitiesTypeGuards",
             ),
-            ".unit.test_version": ("TestsFlextCoreVersion",),
+            ".unit.test_version": ("TestsFlextVersion",),
             ".utilities": (
-                "TestsFlextCoreUtilities",
+                "TestsFlextUtilities",
                 "u",
             ),
             "flext_tests": (
@@ -420,114 +372,101 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
-    "TestsFlextCoreAdvancedPatterns",
-    "TestsFlextCoreArchitecturalPatterns",
-    "TestsFlextCoreAutomatedArchitecture",
-    "TestsFlextCoreBadAccessors",
-    "TestsFlextCoreBadAnyField",
-    "TestsFlextCoreBadBareCollection",
-    "TestsFlextCoreBadConstants",
-    "TestsFlextCoreBadFrozen",
-    "TestsFlextCoreBadInlineUnion",
-    "TestsFlextCoreBadMissingDesc",
-    "TestsFlextCoreBadMutableDefault",
-    "TestsFlextCoreBadWorkerSettings",
-    "TestsFlextCoreBeartypeEngine",
-    "TestsFlextCoreCleanConstants",
-    "TestsFlextCoreCleanModels",
-    "TestsFlextCoreCleanProtocols",
-    "TestsFlextCoreCleanServiceBase",
-    "TestsFlextCoreConstants",
-    "TestsFlextCoreConstantsDomain",
-    "TestsFlextCoreConstantsErrors",
-    "TestsFlextCoreConstantsFixtures",
-    "TestsFlextCoreConstantsLoggings",
-    "TestsFlextCoreConstantsNew",
-    "TestsFlextCoreConstantsOther",
-    "TestsFlextCoreConstantsProjectMetadata",
-    "TestsFlextCoreConstantsResult",
-    "TestsFlextCoreConstantsServices",
-    "TestsFlextCoreConstantsSettings",
-    "TestsFlextCoreConstantsStrings",
-    "TestsFlextCoreContainer",
-    "TestsFlextCoreContainerMemory",
-    "TestsFlextCoreContainerPerformance",
-    "TestsFlextCoreContext",
-    "TestsFlextCoreCoverageExceptions",
-    "TestsFlextCoreCoverageLoggings",
-    "TestsFlextCoreDecorators",
-    "TestsFlextCoreDecoratorsDiscovery",
-    "TestsFlextCoreDecoratorsLegacy",
-    "TestsFlextCoreDeprecationWarnings",
-    "TestsFlextCoreDispatcherDI",
-    "TestsFlextCoreDispatcherMinimal",
-    "TestsFlextCoreDispatcherReliability",
-    "TestsFlextCoreDocumentedPatterns",
-    "TestsFlextCoreEnforcement",
-    "TestsFlextCoreEnforcementAptHooks",
-    "TestsFlextCoreEnforcementCatalog",
-    "TestsFlextCoreEnforcementIntegration",
-    "TestsFlextCoreEnumUtilities",
-    "TestsFlextCoreExamplesExecution",
-    "TestsFlextCoreExceptions",
-    "TestsFlextCoreFacadeFlatSsotAccess",
-    "TestsFlextCoreFlextHandlers",
-    "TestsFlextCoreHandlerDecoratorDiscovery",
-    "TestsFlextCoreLazy",
-    "TestsFlextCoreLazyPerformance",
-    "TestsFlextCoreLibraryIntegration",
-    "TestsFlextCoreLoggings",
-    "TestsFlextCoreMigrationValidation",
-    "TestsFlextCoreMixins",
-    "TestsFlextCoreModels",
-    "TestsFlextCoreModelsBase",
-    "TestsFlextCoreModelsBaseFullCoverage",
-    "TestsFlextCoreModelsCQRS",
-    "TestsFlextCoreModelsContainer",
-    "TestsFlextCoreModelsCqrs",
-    "TestsFlextCoreModelsEnforcementSources",
-    "TestsFlextCoreModelsEntity",
-    "TestsFlextCoreModelsExceptionParams",
-    "TestsFlextCoreModelsMixins",
-    "TestsFlextCoreModelsProjectMetadata",
-    "TestsFlextCoreModelsUnit",
-    "TestsFlextCorePatternsCommands",
-    "TestsFlextCorePatternsLogging",
-    "TestsFlextCorePatternsTesting",
-    "TestsFlextCoreProtocols",
-    "TestsFlextCoreRegistry",
-    "TestsFlextCoreRegistryFullCoverage",
-    "TestsFlextCoreResult",
-    "TestsFlextCoreResultExceptionCarrying",
-    "TestsFlextCoreRuntime",
-    "TestsFlextCoreService",
-    "TestsFlextCoreService100Coverage",
-    "TestsFlextCoreServiceBase",
-    "TestsFlextCoreServiceBootstrap",
-    "TestsFlextCoreServiceIntegration",
-    "TestsFlextCoreServiceResultProperty",
-    "TestsFlextCoreServiceUserData",
-    "TestsFlextCoreServiceUserService",
-    "TestsFlextCoreSettings",
-    "TestsFlextCoreSettingsCoverage",
-    "TestsFlextCoreSettingsIntegration",
-    "TestsFlextCoreSystemIntegration",
-    "TestsFlextCoreTypes",
-    "TestsFlextCoreTypesUnit",
-    "TestsFlextCoreUtilities",
-    "TestsFlextCoreUtilitiesCollection",
-    "TestsFlextCoreUtilitiesCoverage",
-    "TestsFlextCoreUtilitiesDomain",
-    "TestsFlextCoreUtilitiesGenerators",
-    "TestsFlextCoreUtilitiesGuards",
-    "TestsFlextCoreUtilitiesMapper",
-    "TestsFlextCoreUtilitiesProjectMetadata",
-    "TestsFlextCoreUtilitiesReliability",
-    "TestsFlextCoreUtilitiesSettings",
-    "TestsFlextCoreUtilitiesSmoke",
-    "TestsFlextCoreUtilitiesText",
-    "TestsFlextCoreUtilitiesTypeGuards",
-    "TestsFlextCoreVersion",
+    "TestsFlextAdvancedPatterns",
+    "TestsFlextArchitecturalPatterns",
+    "TestsFlextAutomatedArchitecture",
+    "TestsFlextBeartypeEngine",
+    "TestsFlextConstants",
+    "TestsFlextConstantsDomain",
+    "TestsFlextConstantsErrors",
+    "TestsFlextConstantsFixtures",
+    "TestsFlextConstantsLoggings",
+    "TestsFlextConstantsNew",
+    "TestsFlextConstantsOther",
+    "TestsFlextConstantsProjectMetadata",
+    "TestsFlextConstantsResult",
+    "TestsFlextConstantsServices",
+    "TestsFlextConstantsSettings",
+    "TestsFlextConstantsStrings",
+    "TestsFlextContainer",
+    "TestsFlextContainerMemory",
+    "TestsFlextContainerPerformance",
+    "TestsFlextContext",
+    "TestsFlextCoverageExceptions",
+    "TestsFlextCoverageLoggings",
+    "TestsFlextDecorators",
+    "TestsFlextDecoratorsDiscovery",
+    "TestsFlextDecoratorsLegacy",
+    "TestsFlextDeprecationWarnings",
+    "TestsFlextDispatcherDI",
+    "TestsFlextDispatcherMinimal",
+    "TestsFlextDispatcherReliability",
+    "TestsFlextDocumentedPatterns",
+    "TestsFlextEnforcement",
+    "TestsFlextEnforcementAptHooks",
+    "TestsFlextEnforcementCatalog",
+    "TestsFlextEnforcementIntegration",
+    "TestsFlextEnumUtilities",
+    "TestsFlextExamplesExecution",
+    "TestsFlextExceptions",
+    "TestsFlextFacadeFlatSsotAccess",
+    "TestsFlextFlextHandlers",
+    "TestsFlextHandlerDecoratorDiscovery",
+    "TestsFlextLazy",
+    "TestsFlextLazyPerformance",
+    "TestsFlextLibraryIntegration",
+    "TestsFlextLoggings",
+    "TestsFlextMigrationValidation",
+    "TestsFlextMixins",
+    "TestsFlextModels",
+    "TestsFlextModelsBase",
+    "TestsFlextModelsBaseFullCoverage",
+    "TestsFlextModelsCQRS",
+    "TestsFlextModelsContainer",
+    "TestsFlextModelsCqrs",
+    "TestsFlextModelsEnforcementSources",
+    "TestsFlextModelsEntity",
+    "TestsFlextModelsExceptionParams",
+    "TestsFlextModelsMixins",
+    "TestsFlextModelsProjectMetadata",
+    "TestsFlextModelsUnit",
+    "TestsFlextPatternsCommands",
+    "TestsFlextPatternsLogging",
+    "TestsFlextPatternsTesting",
+    "TestsFlextProtocols",
+    "TestsFlextRegistry",
+    "TestsFlextRegistryFullCoverage",
+    "TestsFlextResult",
+    "TestsFlextResultExceptionCarrying",
+    "TestsFlextRuntime",
+    "TestsFlextService",
+    "TestsFlextService100Coverage",
+    "TestsFlextServiceBase",
+    "TestsFlextServiceBootstrap",
+    "TestsFlextServiceIntegration",
+    "TestsFlextServiceResultProperty",
+    "TestsFlextServiceUserData",
+    "TestsFlextServiceUserService",
+    "TestsFlextSettings",
+    "TestsFlextSettingsCoverage",
+    "TestsFlextSettingsIntegration",
+    "TestsFlextSystemIntegration",
+    "TestsFlextTypes",
+    "TestsFlextTypesUnit",
+    "TestsFlextUtilities",
+    "TestsFlextUtilitiesCollection",
+    "TestsFlextUtilitiesCoverage",
+    "TestsFlextUtilitiesDomain",
+    "TestsFlextUtilitiesGenerators",
+    "TestsFlextUtilitiesGuards",
+    "TestsFlextUtilitiesMapper",
+    "TestsFlextUtilitiesProjectMetadata",
+    "TestsFlextUtilitiesReliability",
+    "TestsFlextUtilitiesSettings",
+    "TestsFlextUtilitiesSmoke",
+    "TestsFlextUtilitiesText",
+    "TestsFlextUtilitiesTypeGuards",
+    "TestsFlextVersion",
     "c",
     "d",
     "e",

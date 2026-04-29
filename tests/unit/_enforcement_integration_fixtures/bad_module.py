@@ -21,19 +21,19 @@ from tests import m, u
 # --- Pydantic hook rules ------------------------------------------------
 
 
-class TestsFlextCoreBadAnyField(FlextModels.ArbitraryTypesModel):
+class TestsFlextBadAnyField(FlextModels.ArbitraryTypesModel):
     """Violates ``no_any`` — field annotated as ``typing.Any``."""
 
     data: Annotated[typing.Any, u.Field(description="Intentionally Any.")] = None
 
 
-class TestsFlextCoreBadBareCollection(FlextModels.ArbitraryTypesModel):
+class TestsFlextBadBareCollection(FlextModels.ArbitraryTypesModel):
     """Violates ``no_bare_collection`` — raw ``list[str]`` annotation."""
 
     items: list[str] = u.Field(default_factory=list, description="Bare list.")
 
 
-class TestsFlextCoreBadMutableDefault(FlextModels.ArbitraryTypesModel):
+class TestsFlextBadMutableDefault(FlextModels.ArbitraryTypesModel):
     """Violates ``no_mutable_default`` — mutable default instance."""
 
     tags: Annotated[
@@ -42,13 +42,13 @@ class TestsFlextCoreBadMutableDefault(FlextModels.ArbitraryTypesModel):
     ] = ["a"]
 
 
-class TestsFlextCoreBadMissingDesc(FlextModels.ArbitraryTypesModel):
+class TestsFlextBadMissingDesc(FlextModels.ArbitraryTypesModel):
     """Violates ``missing_description`` — field without ``description=``."""
 
     undocumented: str = ""
 
 
-class TestsFlextCoreBadInlineUnion(FlextModels.ArbitraryTypesModel):
+class TestsFlextBadInlineUnion(FlextModels.ArbitraryTypesModel):
     """Violates ``no_inline_union`` — inline union with > max arms."""
 
     value: Annotated[
@@ -57,7 +57,7 @@ class TestsFlextCoreBadInlineUnion(FlextModels.ArbitraryTypesModel):
     ] = ""
 
 
-class TestsFlextCoreBadFrozen(FlextModels.ImmutableValueModel):
+class TestsFlextBadFrozen(FlextModels.ImmutableValueModel):
     """Violates ``value_not_frozen`` — value-object base with ``frozen=False``."""
 
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
@@ -68,7 +68,7 @@ class TestsFlextCoreBadFrozen(FlextModels.ImmutableValueModel):
 # --- Namespace hook rules (inherit FlextModelsNamespace) ----------------
 
 
-class TestsFlextCoreBadAccessors(FlextModelsNamespace):
+class TestsFlextBadAccessors(FlextModelsNamespace):
     """Violates ``no_accessor_methods`` — public ``get_*``/``set_*``/``is_*``."""
 
     def get_value(self) -> int:
@@ -81,11 +81,11 @@ class TestsFlextCoreBadAccessors(FlextModelsNamespace):
         return True
 
 
-class TestsFlextCoreBadWorkerSettings(FlextModelsNamespace):
+class TestsFlextBadWorkerSettings(FlextModelsNamespace):
     """Violates ``settings_inheritance`` — Settings name, no FlextSettings base."""
 
 
-class TestsFlextCoreBadConstants(FlextModelsNamespace):
+class TestsFlextBadConstants(FlextModelsNamespace):
     """Violates ``const_mutable`` + ``const_lowercase``."""
 
     items: ClassVar[list[str]] = ["a", "b"]  # mutable + lowercase

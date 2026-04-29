@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import StrEnum
 
 
-class ExamplesFlextCoreModelsErrors:
+class ExamplesFlextModelsErrors:
     """Error-message namespace used by example scripts."""
 
     class Examples:

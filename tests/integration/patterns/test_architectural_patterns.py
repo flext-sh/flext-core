@@ -23,7 +23,7 @@ import pytest
 from tests import c, m, p, r, t, u
 
 
-class TestsFlextCoreArchitecturalPatterns:
+class TestsFlextArchitecturalPatterns:
     """Test enterprise design patterns."""
 
     @pytest.mark.architecture

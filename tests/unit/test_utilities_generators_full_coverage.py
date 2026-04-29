@@ -10,7 +10,7 @@ from flext_core import FlextUtilitiesGenerators
 from tests import u
 
 
-class TestsFlextCoreUtilitiesGenerators:
+class TestsFlextUtilitiesGenerators:
     def test_generate_special_paths_and_dynamic_subclass(self) -> None:
         generated = u.generate(kind="id")
         assert isinstance(generated, str)

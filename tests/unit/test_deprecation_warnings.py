@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import r
 
 
-class TestsFlextCoreDeprecationWarnings:
+class TestsFlextDeprecationWarnings:
     def test_failure_result_contains_message(self) -> None:
         result = r[str].fail("deprecated")
         assert result.failure

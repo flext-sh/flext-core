@@ -10,7 +10,7 @@ from typing import Annotated
 from flext_core import m, p, r, t, u
 
 
-class ExamplesFlextCoreModelsEx10:
+class ExamplesFlextModelsEx10:
     """Examples namespace wrapper for ex10 models."""
 
     class Message(m.Command):
@@ -48,14 +48,14 @@ class ExamplesFlextCoreModelsEx10:
 
         def handle(
             self,
-            message: ExamplesFlextCoreModelsEx10.Message,
+            message: ExamplesFlextModelsEx10.Message,
         ) -> p.Result[str]:
             return r[str].ok(message.text)
 
     class CommandBusStub(m.BaseModel):
         def dispatch(
             self,
-            message: ExamplesFlextCoreModelsEx10.Message,
+            message: ExamplesFlextModelsEx10.Message,
         ) -> p.Result[str]:
             return r[str].ok(message.text)
 

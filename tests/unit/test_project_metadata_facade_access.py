@@ -13,7 +13,7 @@ from __future__ import annotations
 from tests import c, m, u
 
 
-class TestsFlextCoreFacadeFlatSsotAccess:
+class TestsFlextFacadeFlatSsotAccess:
     def test_c_constants_flat(self) -> None:
         assert c.ALIAS_TO_SUFFIX["c"] == "Constants"
         assert c.TIER_FACADE_PREFIX["tests"] == "TestsFlext"

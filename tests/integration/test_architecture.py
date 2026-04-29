@@ -8,10 +8,10 @@ import pytest
 from flext_tests import tm, tv
 
 from tests import c
-from tests.constants import TestsFlextCoreConstants
+from tests.constants import TestsFlextConstants
 
 
-class TestsFlextCoreAutomatedArchitecture:
+class TestsFlextAutomatedArchitecture:
     """Architecture compliance tests using tv validator."""
 
     def test_imports_no_violations(self) -> None:
@@ -65,7 +65,7 @@ class TestsFlextCoreAutomatedArchitecture:
 
     @pytest.mark.parametrize(
         "validator",
-        TestsFlextCoreConstants.Tests.Architecture.VALIDATOR_METHODS,
+        TestsFlextConstants.Tests.Architecture.VALIDATOR_METHODS,
     )
     def test_all_validators_return_scan_result(self, validator: str) -> None:
         func = getattr(tv, validator)

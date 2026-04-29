@@ -5,7 +5,7 @@ from __future__ import annotations
 from flext_core import FlextContainer
 
 
-class TestsFlextCoreContainerPerformance:
+class TestsFlextContainerPerformance:
     """Compatibility benchmark class for lazy test exports."""
 
     def test_container_basic_resolution_path(self) -> None:

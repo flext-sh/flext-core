@@ -10,7 +10,7 @@ from enum import StrEnum, unique
 from typing import ClassVar, Literal
 
 
-class TestsFlextCoreConstantsFixtures:
+class TestsFlextConstantsFixtures:
     @unique
     class Status(StrEnum):
         ACTIVE = "active"

@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import m
 
 
-class TestsFlextCorePatternsCommands:
+class TestsFlextPatternsCommands:
     def test_command_model_instantiation(self) -> None:
         class DemoCommand(m.Command):
             name: str

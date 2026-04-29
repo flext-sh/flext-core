@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from examples import ExamplesFlextCoreModelsErrors as _err
+from examples import ExamplesFlextModelsErrors as _err
 from flext_core import c, m, p, r, t, u
 
 
-class ExamplesFlextCoreModelsEx00:
+class ExamplesFlextModelsEx00:
     """Example 00 model namespace."""
 
     class UserProfile(m.Entity):

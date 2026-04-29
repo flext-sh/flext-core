@@ -17,7 +17,7 @@ LOG_LEVELS: tuple[str, ...] = (
 )
 
 
-class TestsFlextCoreLoggings:
+class TestsFlextLoggings:
     """Behavior contract for FlextLogger public API: create, bind, log, track, strict returns."""
 
     @pytest.fixture

@@ -6,7 +6,7 @@ from examples import t
 from flext_core import m, u
 
 
-class ExamplesFlextCoreModelsEx01:
+class ExamplesFlextModelsEx01:
     """Example 01 models."""
 
     class User(m.Entity):

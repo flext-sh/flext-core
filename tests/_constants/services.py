@@ -10,7 +10,7 @@ from enum import StrEnum, unique
 from typing import Final, Literal
 
 
-class TestsFlextCoreConstantsServices:
+class TestsFlextConstantsServices:
     @unique
     class ServiceTestType(StrEnum):
         """Service test type enum for test scenarios."""

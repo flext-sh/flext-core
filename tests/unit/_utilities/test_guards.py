@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import u
 
 
-class TestsFlextCoreUtilitiesGuards:
+class TestsFlextUtilitiesGuards:
     def test_matches_type_basic(self) -> None:
         assert u.matches_type("x", "str")
         assert u.matches_type(1, "int")

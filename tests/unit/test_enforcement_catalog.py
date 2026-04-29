@@ -9,7 +9,7 @@ import pytest
 from tests import c, m, u
 
 
-class TestsFlextCoreEnforcementCatalog:
+class TestsFlextEnforcementCatalog:
     """Behavior contract for u.build_canonical_catalog() shape, coverage, and construction."""
 
     def test_catalog_contains_at_least_one_rule(self) -> None:

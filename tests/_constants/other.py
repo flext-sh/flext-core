@@ -12,7 +12,7 @@ from collections.abc import (
 from typing import ClassVar, Final
 
 
-class TestsFlextCoreConstantsOther:
+class TestsFlextConstantsOther:
     class Architecture:
         """Architecture-test constants for flext-core validators."""
 

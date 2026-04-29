@@ -13,7 +13,7 @@ import pytest
 from tests import c, e, m, p
 
 
-class TestsFlextCoreExceptions:
+class TestsFlextExceptions:
     """Validate the public behavior exposed by flext_core."""
 
     def test_exception_hierarchy_uses_base_error(self) -> None:

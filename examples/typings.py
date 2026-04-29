@@ -5,7 +5,7 @@ from __future__ import annotations
 from flext_core import m, p, t
 
 
-class ExamplesFlextCoreTypes(t):
+class ExamplesFlextTypes(t):
     """Examples-specific type aliases built from canonical flext-core contracts."""
 
     class Examples:
@@ -20,6 +20,6 @@ class ExamplesFlextCoreTypes(t):
         )
 
 
-t = ExamplesFlextCoreTypes
+t = ExamplesFlextTypes
 
-__all__: list[str] = ["ExamplesFlextCoreTypes", "t"]
+__all__: list[str] = ["ExamplesFlextTypes", "t"]

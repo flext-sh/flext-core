@@ -20,7 +20,7 @@ from typing import Annotated, override
 from examples import c, d, m, p, r, s, t, u
 
 
-class ExamplesFlextCoreDatabaseService(s):
+class ExamplesFlextDatabaseService(s):
     """Example service showing settings log-once pattern."""
 
     db_config: Annotated[
@@ -64,7 +64,7 @@ class ExamplesFlextCoreDatabaseService(s):
         )
 
 
-class ExamplesFlextCoreMigrationService(s):
+class ExamplesFlextMigrationService(s):
     """Example migration service with settings log-once pattern."""
 
     input_dir: Annotated[
@@ -136,12 +136,12 @@ def main() -> None:
             "pool_size": 10,
         },
     )
-    db_service = ExamplesFlextCoreDatabaseService.model_construct(db_config=db_config)
+    db_service = ExamplesFlextDatabaseService.model_construct(db_config=db_config)
     result = db_service.execute()
     if result.success:
         print(f"✅ Database query successful: {result.value}")
     print("\n=== Example 2: Migration Service ===")
-    migration_service = ExamplesFlextCoreMigrationService(
+    migration_service = ExamplesFlextMigrationService(
         input_dir="/data/input",
         output_dir="/data/output",
         sync=True,

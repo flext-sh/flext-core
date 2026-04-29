@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import c, u
 
 
-class TestsFlextCoreUtilitiesSettings:
+class TestsFlextUtilitiesSettings:
     def test_resolve_effective_log_level_prioritizes_trace(self) -> None:
         assert (
             u.resolve_effective_log_level(

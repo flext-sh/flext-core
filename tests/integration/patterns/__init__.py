@@ -7,11 +7,11 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
-        ".test_advanced_patterns": ("TestsFlextCoreAdvancedPatterns",),
-        ".test_architectural_patterns": ("TestsFlextCoreArchitecturalPatterns",),
-        ".test_patterns_commands": ("TestsFlextCorePatternsCommands",),
-        ".test_patterns_logging": ("TestsFlextCorePatternsLogging",),
-        ".test_patterns_testing": ("TestsFlextCorePatternsTesting",),
+        ".test_advanced_patterns": ("TestsFlextAdvancedPatterns",),
+        ".test_architectural_patterns": ("TestsFlextArchitecturalPatterns",),
+        ".test_patterns_commands": ("TestsFlextPatternsCommands",),
+        ".test_patterns_logging": ("TestsFlextPatternsLogging",),
+        ".test_patterns_testing": ("TestsFlextPatternsTesting",),
     },
 )
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import c, m, u
 
 
-class TestsFlextCoreRegistryFullCoverage:
+class TestsFlextRegistryFullCoverage:
     def test_registry_summary_reports_public_success_state(self) -> None:
         detail = m.RegistrationDetails(
             registration_id="handler-a",

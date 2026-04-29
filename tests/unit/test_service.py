@@ -7,7 +7,7 @@ from typing import override
 from tests import m, p, r, s
 
 
-class TestsFlextCoreServiceUserData(m.Value):
+class TestsFlextServiceUserData(m.Value):
     """Public result model used by service tests."""
 
     __test__ = False
@@ -16,31 +16,31 @@ class TestsFlextCoreServiceUserData(m.Value):
     name: str
 
 
-class TestsFlextCoreServiceUserService(s):
+class TestsFlextServiceUserService(s):
     """Simple successful service."""
 
     __test__ = False
 
     @override
-    def execute(self) -> p.Result[TestsFlextCoreServiceUserData]:
-        return r[TestsFlextCoreServiceUserData].ok(
-            TestsFlextCoreServiceUserData(user_id=1, name="test_user")
+    def execute(self) -> p.Result[TestsFlextServiceUserData]:
+        return r[TestsFlextServiceUserData].ok(
+            TestsFlextServiceUserData(user_id=1, name="test_user")
         )
 
 
-class TestsFlextCoreService:
+class TestsFlextService:
     """Validate stable behavior of FlextService subclasses."""
 
     def test_service_initializes_and_executes(self) -> None:
-        service = TestsFlextCoreServiceUserService()
+        service = TestsFlextServiceUserService()
         assert isinstance(service, s)
         result = service.execute()
         assert result.success
 
     def test_execute_returns_typed_payload(self) -> None:
-        result = TestsFlextCoreServiceUserService().execute()
+        result = TestsFlextServiceUserService().execute()
         assert result.success
-        assert result.value == TestsFlextCoreServiceUserData(
+        assert result.value == TestsFlextServiceUserData(
             user_id=1,
             name="test_user",
         )

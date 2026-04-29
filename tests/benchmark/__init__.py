@@ -7,9 +7,9 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
-        ".test_container_memory": ("TestsFlextCoreContainerMemory",),
-        ".test_container_performance": ("TestsFlextCoreContainerPerformance",),
-        ".test_lazy_performance": ("TestsFlextCoreLazyPerformance",),
+        ".test_container_memory": ("TestsFlextContainerMemory",),
+        ".test_container_performance": ("TestsFlextContainerPerformance",),
+        ".test_lazy_performance": ("TestsFlextLazyPerformance",),
     },
 )
 

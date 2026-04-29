@@ -15,7 +15,7 @@ class _IntegrationService(s[str]):
         return r[str].ok("ok")
 
 
-class TestsFlextCoreServiceResultProperty:
+class TestsFlextServiceResultProperty:
     def test_service_execute_returns_success(self) -> None:
         result = _IntegrationService().execute()
         assert result.success

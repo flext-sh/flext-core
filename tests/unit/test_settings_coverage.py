@@ -18,7 +18,7 @@ from flext_core import FlextSettings, FlextUtilitiesGenerators
 from tests import c, m, u
 
 
-class TestsFlextCoreSettingsCoverage:
+class TestsFlextSettingsCoverage:
     @staticmethod
     def _extract_config_payload(value: m.ConfigMap) -> Mapping[str, object]:
         payload: Mapping[str, object] = value.root
@@ -200,4 +200,4 @@ class TestsFlextCoreSettingsCoverage:
         tm.that(perf_counter() - start, gte=0.0)
 
 
-__all__: list[str] = ["TestsFlextCoreSettingsCoverage"]
+__all__: list[str] = ["TestsFlextSettingsCoverage"]

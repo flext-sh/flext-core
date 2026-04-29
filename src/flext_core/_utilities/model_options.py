@@ -86,28 +86,37 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
     ) -> ms.RuntimeBootstrapOptions:
         """Resolve runtime options from models, mappings, or service instances."""
         resolved = ms.RuntimeBootstrapOptions()
-        if source is not None:
-            if isinstance(source, ms.RuntimeBootstrapOptions):
+        match source:
+            case None:
+                pass
+            case ms.RuntimeBootstrapOptions():
                 resolved = source
-            elif isinstance(source, Mapping):
+            case Mapping():
                 resolved = cls._resolve_from_mapping(source)
-            else:
+            case _:
                 options_resolver = getattr(source, "_runtime_bootstrap_options", None)
-                if callable(options_resolver):
-                    raw_options = options_resolver()
-                    if raw_options is not None:
-                        resolved = cls.resolve_runtime_options(raw_options)
+                raw_options = options_resolver() if callable(options_resolver) else None
+                if raw_options is not None:
+                    resolved = cls.resolve_runtime_options(raw_options)
                 source_updates = cls._runtime_option_updates_from_source(source)
-                if source_updates:
-                    resolved = resolved.model_copy(update=source_updates)
-        if overrides:
-            override_options = ms.RuntimeBootstrapOptions.model_validate(overrides)
-            override_updates = dict(
-                cls.dump(override_options, exclude_none=True),
-            )
-            if override_updates:
-                resolved = resolved.model_copy(update=override_updates)
-        return resolved
+                resolved = (
+                    resolved.model_copy(update=source_updates)
+                    if source_updates
+                    else resolved
+                )
+        if not overrides:
+            return resolved
+        override_updates = dict(
+            cls.dump(
+                cls._resolve_from_mapping(overrides),
+                exclude_none=True,
+            ),
+        )
+        return (
+            resolved.model_copy(update=override_updates)
+            if override_updates
+            else resolved
+        )
 
 
 __all__: list[str] = ["FlextUtilitiesModelOptions"]

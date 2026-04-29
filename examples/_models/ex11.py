@@ -7,7 +7,7 @@ from typing import Annotated
 from flext_core import FlextSettings, m, p, r, u
 
 
-class ExamplesFlextCoreModelsEx11:
+class ExamplesFlextModelsEx11:
     """Examples namespace wrapper for ex11 models."""
 
     class Payload(m.Value):
@@ -29,7 +29,7 @@ class ExamplesFlextCoreModelsEx11:
 
         def handle(
             self,
-            message: ExamplesFlextCoreModelsEx11.Payload,
+            message: ExamplesFlextModelsEx11.Payload,
         ) -> p.Result[str]:
             return r[str].ok(message.text)
 

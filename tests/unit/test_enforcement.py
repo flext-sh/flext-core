@@ -26,7 +26,7 @@ from flext_core import (
     FlextUtilitiesBeartypeEngine,
     FlextUtilitiesEnforcement,
 )
-from tests import TestsFlextCoreModelsMixins, c, m, t, u
+from tests import TestsFlextModelsMixins, c, m, t, u
 
 
 def _messages(
@@ -44,7 +44,7 @@ def _make_class(name: str, body: dict[str, object]) -> type:
     return cls
 
 
-class TestsFlextCoreEnforcement:
+class TestsFlextEnforcement:
     """Model field-level rules — no_any, no_bare_collection, no_mutable_default, etc."""
 
     def test_any_field_detected(self) -> None:
@@ -427,13 +427,13 @@ class TestsFlextCoreEnforcement:
 
     def test_tests_module_gets_tests_prefix_composition(self) -> None:
         """Classes in ``tests.*`` carry ``Tests`` + project prefix (e.g. TestsFlext)."""
-        report = u.check(TestsFlextCoreModelsMixins)
+        report = u.check(TestsFlextModelsMixins)
         namespace_msgs = [
             v.message
             for v in report.violations
             if v.layer == "namespace" and "class name" in v.message
         ]
-        # The class name IS "TestsFlextCoreModelsMixins" which starts with
+        # The class name IS "TestsFlextModelsMixins" which starts with
         # "TestsFlext" — the composed prefix — so no class_prefix violation.
         assert not namespace_msgs
 

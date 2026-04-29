@@ -13,7 +13,7 @@ import pytest
 from tests import c, m
 
 
-class TestsFlextCoreModelsEnforcementSources:
+class TestsFlextModelsEnforcementSources:
     """Behavior contract for surviving EnforcementSource variants."""
 
     # --- EnforcementSourceKind ---

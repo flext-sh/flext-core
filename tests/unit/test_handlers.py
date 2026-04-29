@@ -14,7 +14,7 @@ from hypothesis import given, strategies as st
 from tests import c, e, h, m, p, r, t, u, x
 
 
-class TestsFlextCoreFlextHandlers:
+class TestsFlextFlextHandlers:
     class ConcreteTestHandler(h[t.JsonPayload, t.JsonPayload]):
         """Test handler for string messages."""
 
@@ -582,4 +582,4 @@ class TestsFlextCoreFlextHandlers:
         tm.ok(handler.execute("x"), eq="x")
 
 
-__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreFlextHandlers"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextFlextHandlers"]

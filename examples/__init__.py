@@ -12,23 +12,23 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from examples._models.errors import ExamplesFlextCoreModelsErrors
-    from examples._models.ex00 import ExamplesFlextCoreModelsEx00
-    from examples._models.ex01 import ExamplesFlextCoreModelsEx01
-    from examples._models.ex02 import ExamplesFlextCoreModelsEx02
-    from examples._models.ex03 import ExamplesFlextCoreModelsEx03
-    from examples._models.ex04 import ExamplesFlextCoreModelsEx04
-    from examples._models.ex05 import ExamplesFlextCoreModelsEx05
-    from examples._models.ex07 import ExamplesFlextCoreModelsEx07
-    from examples._models.ex08 import ExamplesFlextCoreModelsEx08
-    from examples._models.ex10 import ExamplesFlextCoreModelsEx10
-    from examples._models.ex11 import ExamplesFlextCoreModelsEx11
-    from examples._models.ex12 import ExamplesFlextCoreModelsEx12
-    from examples._models.ex14 import ExamplesFlextCoreModelsEx14
-    from examples._models.output import ExamplesFlextCoreModelsOutput
+    from examples._models.errors import ExamplesFlextModelsErrors
+    from examples._models.ex00 import ExamplesFlextModelsEx00
+    from examples._models.ex01 import ExamplesFlextModelsEx01
+    from examples._models.ex02 import ExamplesFlextModelsEx02
+    from examples._models.ex03 import ExamplesFlextModelsEx03
+    from examples._models.ex04 import ExamplesFlextModelsEx04
+    from examples._models.ex05 import ExamplesFlextModelsEx05
+    from examples._models.ex07 import ExamplesFlextModelsEx07
+    from examples._models.ex08 import ExamplesFlextModelsEx08
+    from examples._models.ex10 import ExamplesFlextModelsEx10
+    from examples._models.ex11 import ExamplesFlextModelsEx11
+    from examples._models.ex12 import ExamplesFlextModelsEx12
+    from examples._models.ex14 import ExamplesFlextModelsEx14
+    from examples._models.output import ExamplesFlextModelsOutput
     from examples._models.shared import (
-        ExamplesFlextCoreSharedHandle,
-        ExamplesFlextCoreSharedPerson,
+        ExamplesFlextSharedHandle,
+        ExamplesFlextSharedPerson,
     )
     from examples.constants import c
     from examples.ex_01_flext_result import Ex01r
@@ -44,37 +44,37 @@ if _t.TYPE_CHECKING:
     from examples.ex_11_flext_service import Ex11FlextService, ExampleService
     from examples.ex_12_flext_registry import Ex12RegistryDsl
     from examples.logging_config_once_pattern import (
-        ExamplesFlextCoreDatabaseService,
-        ExamplesFlextCoreMigrationService,
+        ExamplesFlextDatabaseService,
+        ExamplesFlextMigrationService,
     )
-    from examples.models import ExamplesFlextCoreModels, m
+    from examples.models import ExamplesFlextModels, m
     from examples.protocols import p
     from examples.settings import ExamplesSettings
-    from examples.shared import ExamplesFlextCoreShared
-    from examples.typings import ExamplesFlextCoreTypes, t
+    from examples.shared import ExamplesFlextShared
+    from examples.typings import ExamplesFlextTypes, t
     from examples.utilities import u
     from flext_core import d, e, h, r, s, x
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._models",),
     build_lazy_import_map(
         {
-            "._models.errors": ("ExamplesFlextCoreModelsErrors",),
-            "._models.ex00": ("ExamplesFlextCoreModelsEx00",),
-            "._models.ex01": ("ExamplesFlextCoreModelsEx01",),
-            "._models.ex02": ("ExamplesFlextCoreModelsEx02",),
-            "._models.ex03": ("ExamplesFlextCoreModelsEx03",),
-            "._models.ex04": ("ExamplesFlextCoreModelsEx04",),
-            "._models.ex05": ("ExamplesFlextCoreModelsEx05",),
-            "._models.ex07": ("ExamplesFlextCoreModelsEx07",),
-            "._models.ex08": ("ExamplesFlextCoreModelsEx08",),
-            "._models.ex10": ("ExamplesFlextCoreModelsEx10",),
-            "._models.ex11": ("ExamplesFlextCoreModelsEx11",),
-            "._models.ex12": ("ExamplesFlextCoreModelsEx12",),
-            "._models.ex14": ("ExamplesFlextCoreModelsEx14",),
-            "._models.output": ("ExamplesFlextCoreModelsOutput",),
+            "._models.errors": ("ExamplesFlextModelsErrors",),
+            "._models.ex00": ("ExamplesFlextModelsEx00",),
+            "._models.ex01": ("ExamplesFlextModelsEx01",),
+            "._models.ex02": ("ExamplesFlextModelsEx02",),
+            "._models.ex03": ("ExamplesFlextModelsEx03",),
+            "._models.ex04": ("ExamplesFlextModelsEx04",),
+            "._models.ex05": ("ExamplesFlextModelsEx05",),
+            "._models.ex07": ("ExamplesFlextModelsEx07",),
+            "._models.ex08": ("ExamplesFlextModelsEx08",),
+            "._models.ex10": ("ExamplesFlextModelsEx10",),
+            "._models.ex11": ("ExamplesFlextModelsEx11",),
+            "._models.ex12": ("ExamplesFlextModelsEx12",),
+            "._models.ex14": ("ExamplesFlextModelsEx14",),
+            "._models.output": ("ExamplesFlextModelsOutput",),
             "._models.shared": (
-                "ExamplesFlextCoreSharedHandle",
-                "ExamplesFlextCoreSharedPerson",
+                "ExamplesFlextSharedHandle",
+                "ExamplesFlextSharedPerson",
             ),
             ".constants": ("c",),
             ".ex_01_flext_result": ("Ex01r",),
@@ -93,18 +93,18 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".ex_12_flext_registry": ("Ex12RegistryDsl",),
             ".logging_config_once_pattern": (
-                "ExamplesFlextCoreDatabaseService",
-                "ExamplesFlextCoreMigrationService",
+                "ExamplesFlextDatabaseService",
+                "ExamplesFlextMigrationService",
             ),
             ".models": (
-                "ExamplesFlextCoreModels",
+                "ExamplesFlextModels",
                 "m",
             ),
             ".protocols": ("p",),
             ".settings": ("ExamplesSettings",),
-            ".shared": ("ExamplesFlextCoreShared",),
+            ".shared": ("ExamplesFlextShared",),
             ".typings": (
-                "ExamplesFlextCoreTypes",
+                "ExamplesFlextTypes",
                 "t",
             ),
             ".utilities": ("u",),
@@ -157,27 +157,27 @@ __all__: list[str] = [
     "Ex11FlextService",
     "Ex12RegistryDsl",
     "ExampleService",
-    "ExamplesFlextCoreDatabaseService",
-    "ExamplesFlextCoreMigrationService",
-    "ExamplesFlextCoreModels",
-    "ExamplesFlextCoreModelsErrors",
-    "ExamplesFlextCoreModelsEx00",
-    "ExamplesFlextCoreModelsEx01",
-    "ExamplesFlextCoreModelsEx02",
-    "ExamplesFlextCoreModelsEx03",
-    "ExamplesFlextCoreModelsEx04",
-    "ExamplesFlextCoreModelsEx05",
-    "ExamplesFlextCoreModelsEx07",
-    "ExamplesFlextCoreModelsEx08",
-    "ExamplesFlextCoreModelsEx10",
-    "ExamplesFlextCoreModelsEx11",
-    "ExamplesFlextCoreModelsEx12",
-    "ExamplesFlextCoreModelsEx14",
-    "ExamplesFlextCoreModelsOutput",
-    "ExamplesFlextCoreShared",
-    "ExamplesFlextCoreSharedHandle",
-    "ExamplesFlextCoreSharedPerson",
-    "ExamplesFlextCoreTypes",
+    "ExamplesFlextDatabaseService",
+    "ExamplesFlextMigrationService",
+    "ExamplesFlextModels",
+    "ExamplesFlextModelsErrors",
+    "ExamplesFlextModelsEx00",
+    "ExamplesFlextModelsEx01",
+    "ExamplesFlextModelsEx02",
+    "ExamplesFlextModelsEx03",
+    "ExamplesFlextModelsEx04",
+    "ExamplesFlextModelsEx05",
+    "ExamplesFlextModelsEx07",
+    "ExamplesFlextModelsEx08",
+    "ExamplesFlextModelsEx10",
+    "ExamplesFlextModelsEx11",
+    "ExamplesFlextModelsEx12",
+    "ExamplesFlextModelsEx14",
+    "ExamplesFlextModelsOutput",
+    "ExamplesFlextShared",
+    "ExamplesFlextSharedHandle",
+    "ExamplesFlextSharedPerson",
+    "ExamplesFlextTypes",
     "ExamplesSettings",
     "c",
     "d",

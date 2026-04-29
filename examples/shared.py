@@ -43,7 +43,7 @@ from flext_core import p, r, t, u
 from .models import m
 
 
-class ExamplesFlextCoreShared(m.BaseModel):
+class ExamplesFlextShared(m.BaseModel):
     """Base class for golden-file example scripts.
 
     Subclass once per ``ex_*.py`` module.  Implement ``exercise()`` to
@@ -71,7 +71,7 @@ class ExamplesFlextCoreShared(m.BaseModel):
         max_u64 = (1 << 64) - 1
         return raw / max_u64
 
-    def check(
+    def audit_check(
         self,
         label: str,
         value: object | None,
@@ -105,7 +105,7 @@ class ExamplesFlextCoreShared(m.BaseModel):
         span = (hi - lo) + 1
         return lo + int(self._next_unit_float() * span)
 
-    def rand_person(self) -> ExamplesFlextCoreShared.Person:
+    def rand_person(self) -> ExamplesFlextShared.Person:
         """Return a ``Person`` with random name (6 chars) and age (1–99)."""
         return self.Person(name=self.rand_str(6), age=self.rand_int(1, 99))
 

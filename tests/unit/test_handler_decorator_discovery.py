@@ -14,7 +14,7 @@ from flext_tests.base import s
 from tests import c, h, m, p, r, t
 
 
-class TestsFlextCoreHandlerDecoratorDiscovery:
+class TestsFlextHandlerDecoratorDiscovery:
     def test_decorator_stores_metadata_on_method(self) -> None:
         class CreateCommand:
             pass
@@ -287,4 +287,4 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         tm.that(settings.priority, eq=10)
 
 
-__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreHandlerDecoratorDiscovery"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextHandlerDecoratorDiscovery"]

@@ -12,7 +12,7 @@ from flext_core import FlextContainer
 from tests import d, e, m, p, r
 
 
-class TestsFlextCoreDecorators:
+class TestsFlextDecorators:
     """Behavior contract for flext_core.decorators — public API only."""
 
     def test_deprecated_emits_deprecation_warning_and_preserves_return(self) -> None:

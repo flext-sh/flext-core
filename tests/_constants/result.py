@@ -12,7 +12,7 @@ from typing import Final, Literal
 from flext_core import FlextModels as m
 
 
-class TestsFlextCoreConstantsResult:
+class TestsFlextConstantsResult:
     class Railway:
         """Flext-core-specific railway pattern operation constants."""
 

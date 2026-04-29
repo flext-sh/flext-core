@@ -377,8 +377,6 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             return
         if ub.defined_in_function_scope(model_type):
             return
-        if FlextUtilitiesEnforcement._is_exempt(model_type):
-            return
         report = FlextUtilitiesEnforcement.check(model_type)
         FlextUtilitiesEnforcement.emit(report)
 
@@ -391,8 +389,6 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         if c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.OFF:
             return
         if ub.defined_in_function_scope(target):
-            return
-        if FlextUtilitiesEnforcement._is_exempt(target):
             return
         report = FlextUtilitiesEnforcement.check(target, layer=layer)
         FlextUtilitiesEnforcement.emit(

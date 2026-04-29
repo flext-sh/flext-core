@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import u
 
 
-class TestsFlextCoreUtilitiesDomain:
+class TestsFlextUtilitiesDomain:
     def test_normalize_keeps_plain_text(self) -> None:
         assert u.normalize("abc") == "abc"
 

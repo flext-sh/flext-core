@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import p, r
 
 
-class TestsFlextCoreDocumentedPatterns:
+class TestsFlextDocumentedPatterns:
     def test_result_map_pattern(self) -> None:
         result = r[int].ok(1).map(lambda value: value + 1)
         assert result.success

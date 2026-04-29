@@ -17,7 +17,7 @@ from flext_tests import tm
 from tests import c
 
 
-class TestsFlextCoreConstantsNew:
+class TestsFlextConstantsNew:
     """Semantic invariants over the c facade."""
 
     def test_port_range_invariant(self) -> None:
@@ -84,4 +84,4 @@ class TestsFlextCoreConstantsNew:
         tm.that(hasattr(c, attr), eq=True, msg=f"c.{attr} missing")
 
 
-__all__: list[str] = ["TestsFlextCoreConstantsNew"]
+__all__: list[str] = ["TestsFlextConstantsNew"]

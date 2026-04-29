@@ -5,7 +5,7 @@ from __future__ import annotations
 from flext_core import FlextContext
 
 
-class TestsFlextCoreContext:
+class TestsFlextContext:
     """Contract: scope store (set/get/remove/clear/merge/clone/export) + contextvar ops."""
 
     def test_set_then_get_returns_success_with_original_value(self) -> None:

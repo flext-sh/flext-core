@@ -10,7 +10,7 @@ from flext_tests import tm
 from tests import c, m, p, r, t
 
 
-class TestsFlextCoreResultExceptionCarrying:
+class TestsFlextResultExceptionCarrying:
     class BrokenSized:
         """Sized t.JsonValue that raises on __len__."""
 
@@ -282,9 +282,9 @@ class TestsFlextCoreResultExceptionCarrying:
 
     def test_from_validation_carries_exception(self) -> None:
         invalid_data = {"name": "Alice", "age": "not_an_int"}
-        result = r[TestsFlextCoreResultExceptionCarrying.UserModel].from_validation(
+        result = r[TestsFlextResultExceptionCarrying.UserModel].from_validation(
             invalid_data,
-            TestsFlextCoreResultExceptionCarrying.UserModel,
+            TestsFlextResultExceptionCarrying.UserModel,
         )
         tm.that(result.failure, eq=True)
         tm.that(result.exception, none=False)
@@ -418,4 +418,4 @@ class TestsFlextCoreResultExceptionCarrying:
             tm.that(result.exception, is_=type(exc))
 
 
-__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreResultExceptionCarrying"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextResultExceptionCarrying"]

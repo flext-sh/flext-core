@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import t, u
 
 
-class TestsFlextCoreRuntime:
+class TestsFlextRuntime:
     """Public runtime utility checks."""
 
     def test_dict_like_detects_mapping_inputs(self) -> None:

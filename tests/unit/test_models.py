@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import m
 
 
-class TestsFlextCoreModelsUnit:
+class TestsFlextModelsUnit:
     """Smoke tests for stable model contracts."""
 
     def test_config_map_supports_mapping_access(self) -> None:

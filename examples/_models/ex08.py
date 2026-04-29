@@ -7,7 +7,7 @@ from typing import Annotated
 from flext_core import m, u
 
 
-class ExamplesFlextCoreModelsEx08:
+class ExamplesFlextModelsEx08:
     """Examples namespace wrapper for ex08 models."""
 
     class UserEntity(m.Entity):

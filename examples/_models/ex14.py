@@ -5,7 +5,7 @@ from __future__ import annotations
 from flext_core import m, u
 
 
-class ExamplesFlextCoreModelsEx14:
+class ExamplesFlextModelsEx14:
     """Example 14 model namespace."""
 
     class HandlerCreateUserCommand(m.Command):

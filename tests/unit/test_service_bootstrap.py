@@ -9,7 +9,7 @@ from flext_tests.base import s
 from tests import p, r
 
 
-class TestsFlextCoreServiceBootstrap:
+class TestsFlextServiceBootstrap:
     """Test service initialization and execution patterns."""
 
     class ConcreteTestService(s[bool]):

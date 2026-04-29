@@ -8,7 +8,7 @@ from typing import ClassVar, override
 from flext_core import m, u
 
 
-class ExamplesFlextCoreModelsEx05:
+class ExamplesFlextModelsEx05:
     """Example 05 mixins model namespace."""
 
     @unique
@@ -19,7 +19,7 @@ class ExamplesFlextCoreModelsEx05:
 
     class UserModel(m.Value):
         name: str = u.Field(description="User display name")
-        status: ExamplesFlextCoreModelsEx05.StatusEnum = u.Field(
+        status: ExamplesFlextModelsEx05.StatusEnum = u.Field(
             description="User account status"
         )
         age: int = u.Field(description="User age in years")
@@ -28,11 +28,11 @@ class ExamplesFlextCoreModelsEx05:
         @classmethod
         def normalize_status(
             cls,
-            value: str | ExamplesFlextCoreModelsEx05.StatusEnum,
-        ) -> ExamplesFlextCoreModelsEx05.StatusEnum:
-            if isinstance(value, ExamplesFlextCoreModelsEx05.StatusEnum):
+            value: str | ExamplesFlextModelsEx05.StatusEnum,
+        ) -> ExamplesFlextModelsEx05.StatusEnum:
+            if isinstance(value, ExamplesFlextModelsEx05.StatusEnum):
                 return value
-            return ExamplesFlextCoreModelsEx05.StatusEnum(value)
+            return ExamplesFlextModelsEx05.StatusEnum(value)
 
     class HandlerBad(m.Value):
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
@@ -55,7 +55,7 @@ class ExamplesFlextCoreModelsEx05:
         def validate(
             cls,
             value: m.ConfigMap,
-        ) -> ExamplesFlextCoreModelsEx05.GoodProcessor:
+        ) -> ExamplesFlextModelsEx05.GoodProcessor:
             return cls.model_validate(value)
 
     class BadProcessor(m.Value):

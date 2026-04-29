@@ -1,11 +1,11 @@
 """Protocol definitions for flext-core tests.
 
-Provides TestsFlextCoreProtocols, extending TestsFlextProtocols with flext-core-specific
+Provides TestsFlextProtocols, extending TestsFlextProtocols with flext-core-specific
 protocols. All generic test protocols come from flext_tests.
 
 Architecture:
 - TestsFlextProtocols (flext_tests) = Generic protocols for all FLEXT projects
-- TestsFlextCoreProtocols (tests/) = flext-core-specific protocols extending TestsFlextProtocols
+- TestsFlextProtocols (tests/) = flext-core-specific protocols extending TestsFlextProtocols
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -24,13 +24,13 @@ from flext_tests import p
 from tests import t
 
 if TYPE_CHECKING:
-    from tests import TestsFlextCoreModelsMixins, TestsFlextCoreModelsMixins as _Mixins
+    from tests import TestsFlextModelsMixins, TestsFlextModelsMixins as _Mixins
 
     AttrObject = _Mixins.AttrObject
     BadMapping = _Mixins.BadMapping
 
 
-class TestsFlextCoreProtocols(p):
+class TestsFlextProtocols(p):
     """Protocol definitions for flext-core tests - extends TestsFlextProtocols.
 
     Architecture: Extends TestsFlextProtocols with flext-core-specific protocol
@@ -58,8 +58,8 @@ class TestsFlextCoreProtocols(p):
 
             def __call__(
                 self,
-                data_or_items: TestsFlextCoreModelsMixins.MaybeModel
-                | TestsFlextCoreModelsMixins.PortModel
+                data_or_items: TestsFlextModelsMixins.MaybeModel
+                | TestsFlextModelsMixins.PortModel
                 | int,
                 key_or_index: int | str,
                 *,
@@ -102,7 +102,7 @@ class TestsFlextCoreProtocols(p):
                 self,
                 current: tuple[str, str]
                 | tuple[int, int, int]
-                | Sequence[TestsFlextCoreModelsMixins.GroupModel],
+                | Sequence[TestsFlextModelsMixins.GroupModel],
                 operations: Mapping[str, t.MapperInput],
                 default_val: t.JsonValue,
                 on_error: str,
@@ -124,12 +124,12 @@ class TestsFlextCoreProtocols(p):
 
             def __call__(
                 self,
-                source: TestsFlextCoreModelsMixins.BadItems,
+                source: TestsFlextModelsMixins.BadItems,
                 key_map: t.StrMapping,
                 *,
                 keep_unmapped: bool = True,
             ) -> p.Result[t.JsonMapping]: ...
 
 
-p = TestsFlextCoreProtocols
-__all__: list[str] = ["TestsFlextCoreProtocols", "p"]
+p = TestsFlextProtocols
+__all__: list[str] = ["TestsFlextProtocols", "p"]

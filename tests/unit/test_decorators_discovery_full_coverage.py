@@ -7,7 +7,7 @@ import types
 from tests import c, m, u
 
 
-class TestsFlextCoreDecoratorsDiscovery:
+class TestsFlextDecoratorsDiscovery:
     """Behavior contract for u.scan_module — used by FlextContainer to register factories."""
 
     def test_scan_module_with_no_factories_returns_empty_list(self) -> None:

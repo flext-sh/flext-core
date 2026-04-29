@@ -58,38 +58,25 @@ class FlextUtilitiesEnforcementEmit:
         """Infer the facade layer from the class name.
 
         Matches the layer keyword (``Constants`` / ``Models`` / ``Protocols``
-        / ``Types`` / ``Utilities``) anywhere in the class name — not only
-        at the end — so composed facades such as ``FooConstantsSettings``
-        or ``FooProtocolsBase`` still get the correct layer routing.
+        / ``Types`` / ``Utilities``) only when it appears as a standalone
+        PascalCase segment — at the end of the name or immediately followed
+        by another capitalised word (e.g. ``FooConstantsSettings``).
+        This prevents false positives such as ``BadConstants`` where the
+        layer keyword is embedded inside a larger word.
         Generic-specialization brackets (``Foo[Bar]``) are stripped first
         so the search ignores type-parameter noise.
         """
         name = target.__name__.partition("[")[0]
         for suffix, layer in c.ENFORCEMENT_NAMESPACE_LAYER_MAP:
-            if suffix in name:
+            idx = name.find(suffix)
+            if idx == -1:
+                continue
+            end = idx + len(suffix)
+            # Suffix must be at the very end, or followed by an uppercase
+            # letter (start of next PascalCase word).
+            if end == len(name) or (end < len(name) and name[end].isupper()):
                 return layer
         return None
-
-    @staticmethod
-    def _is_exempt(target: type) -> bool:
-        """Test-fixture exemption only — runtime opt-out attribute deleted.
-
-        The legacy ``_flext_enforcement_exempt = True`` ClassVar escape hatch
-        is gone. Test fixtures (modules whose path starts with ``tests.`` /
-        ``tests_`` AND whose qualname contains a ``Tests``/``Test`` segment)
-        remain exempt because they exercise production APIs intentionally
-        outside production model governance (mutable defaults, accessor
-        names, field-description requirements). Production code has no
-        opt-out — fix the violation instead.
-        """
-        module = getattr(target, "__module__", "") or ""
-        qualname = getattr(target, "__qualname__", "") or ""
-        if not module.startswith(("tests.", "tests_")):
-            return False
-        if "_enforcement_integration_fixtures" in module:
-            return False
-        segments = qualname.split(".")
-        return any(seg.startswith(("Tests", "Test")) for seg in segments)
 
 
 __all__: list[str] = ["FlextUtilitiesEnforcementEmit"]

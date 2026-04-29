@@ -7,7 +7,7 @@ from typing import Annotated
 from flext_core import m, t, u
 
 
-class ExamplesFlextCoreModelsEx04:
+class ExamplesFlextModelsEx04:
     """Example 04 dispatcher model namespace."""
 
     class CreateUser(m.Command):

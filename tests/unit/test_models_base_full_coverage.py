@@ -9,7 +9,7 @@ import pytest
 from tests import c, m, r
 
 
-class TestsFlextCoreModelsBaseFullCoverage:
+class TestsFlextModelsBaseFullCoverage:
     class _FrozenValue(m.ContractModel):
         name: str
         count: int

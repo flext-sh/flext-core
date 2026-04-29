@@ -17,7 +17,7 @@ from flext_core import FlextContainer
 from tests import d, e, m, p, r, t, u
 
 
-class TestsFlextCoreDecoratorsLegacy:
+class TestsFlextDecoratorsLegacy:
     @unique
     class DecoratorOperationType(StrEnum):
         """Decorator operation types."""
@@ -156,7 +156,7 @@ class TestsFlextCoreDecoratorsLegacy:
     @pytest.mark.parametrize("test_case", INJECT_SCENARIOS, ids=lambda case: case.name)
     def test_inject_decorator(
         self,
-        test_case: TestsFlextCoreDecoratorsLegacy.DecoratorTestCase,
+        test_case: TestsFlextDecoratorsLegacy.DecoratorTestCase,
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.INJECT_BASIC:
 
@@ -164,7 +164,7 @@ class TestsFlextCoreDecoratorsLegacy:
             def process_data_basic(
                 data: str,
                 *,
-                test_service: TestsFlextCoreDecoratorsLegacy.TestService | None = None,
+                test_service: TestsFlextDecoratorsLegacy.TestService | None = None,
             ) -> str:
                 if test_service is not None:
                     return f"{data}_{test_service.get_value()}"
@@ -193,7 +193,7 @@ class TestsFlextCoreDecoratorsLegacy:
     @pytest.mark.parametrize("test_case", LOG_SCENARIOS, ids=lambda case: case.name)
     def test_log_operation_decorator(
         self,
-        test_case: TestsFlextCoreDecoratorsLegacy.DecoratorTestCase,
+        test_case: TestsFlextDecoratorsLegacy.DecoratorTestCase,
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.LOG_OPERATION_BASIC:
 
@@ -215,7 +215,7 @@ class TestsFlextCoreDecoratorsLegacy:
     @pytest.mark.parametrize("test_case", TRACK_SCENARIOS, ids=lambda case: case.name)
     def test_track_performance_decorator(
         self,
-        test_case: TestsFlextCoreDecoratorsLegacy.DecoratorTestCase,
+        test_case: TestsFlextDecoratorsLegacy.DecoratorTestCase,
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.TRACK_PERFORMANCE_BASIC:
 
@@ -241,7 +241,7 @@ class TestsFlextCoreDecoratorsLegacy:
     @pytest.mark.parametrize("test_case", RAILWAY_SCENARIOS, ids=lambda case: case.name)
     def test_railway_decorator(
         self,
-        test_case: TestsFlextCoreDecoratorsLegacy.DecoratorTestCase,
+        test_case: TestsFlextDecoratorsLegacy.DecoratorTestCase,
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.RAILWAY_SUCCESS:
 
@@ -268,7 +268,7 @@ class TestsFlextCoreDecoratorsLegacy:
     @pytest.mark.parametrize("test_case", RETRY_SCENARIOS, ids=lambda case: case.name)
     def test_retry_decorator(
         self,
-        test_case: TestsFlextCoreDecoratorsLegacy.DecoratorTestCase,
+        test_case: TestsFlextDecoratorsLegacy.DecoratorTestCase,
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.RETRY_SUCCESS_FIRST:
 
@@ -310,7 +310,7 @@ class TestsFlextCoreDecoratorsLegacy:
     @pytest.mark.parametrize("test_case", TIMEOUT_SCENARIOS, ids=lambda case: case.name)
     def test_timeout_decorator(
         self,
-        test_case: TestsFlextCoreDecoratorsLegacy.DecoratorTestCase,
+        test_case: TestsFlextDecoratorsLegacy.DecoratorTestCase,
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.TIMEOUT_SUCCESS:
 
@@ -337,7 +337,7 @@ class TestsFlextCoreDecoratorsLegacy:
     )
     def test_combined_decorator(
         self,
-        test_case: TestsFlextCoreDecoratorsLegacy.DecoratorTestCase,
+        test_case: TestsFlextDecoratorsLegacy.DecoratorTestCase,
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.COMBINED_BASIC:
 
@@ -425,4 +425,4 @@ class TestsFlextCoreDecoratorsLegacy:
         assert result.success or result.failure
 
 
-__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreDecoratorsLegacy"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextDecoratorsLegacy"]

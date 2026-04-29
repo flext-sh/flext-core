@@ -28,7 +28,7 @@ def reset_flext_settings_singleton() -> Generator[None]:
         FlextSettings.reset_for_testing()
 
 
-class TestsFlextCoreSettings:
+class TestsFlextSettings:
     """Behavior contract for FlextSettings — public API only."""
 
     # --- Initialization --------------------------------------------------
@@ -275,4 +275,4 @@ class TestsFlextCoreSettings:
         tm.that(instance, is_=p.Settings)
 
 
-__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreSettings"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextSettings"]

@@ -8,7 +8,7 @@ from typing import override
 from examples.constants import c
 from examples.models import m
 from examples.protocols import p
-from examples.shared import ExamplesFlextCoreShared
+from examples.shared import ExamplesFlextShared
 from examples.typings import t
 from examples.utilities import u
 from flext_core import h, r
@@ -57,7 +57,7 @@ def _discovered_handler(message: m.Command) -> m.Command:
     return message
 
 
-class Ex12RegistryDsl(ExamplesFlextCoreShared):
+class Ex12RegistryDsl(ExamplesFlextShared):
     """Exercise the canonical registry DSL public API."""
 
     @override
@@ -100,8 +100,8 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
             m.Examples.CommandA: _as_registry_handler(handler_a),
             custom_binding_name: _as_registry_handler(handler_b),
         })
-        self.check("register_bindings.success", bindings_result.success)
-        self.check(
+        self.audit_check("register_bindings.success", bindings_result.success)
+        self.audit_check(
             "register_bindings.registered_len",
             len(bindings_result.value.registered) if bindings_result.success else -1,
         )
@@ -126,12 +126,12 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
             self.rand_str(3),
             validate=lambda _pval: (_ for _ in ()).throw(RuntimeError(boom_message)),
         )
-        self.check("register_plugin.ok", plugin_ok.success)
-        self.check("register_plugin.dup", plugin_dup.success)
-        self.check("register_plugin.empty_name", plugin_empty.failure)
-        self.check("register_plugin.validated", plugin_validated.success)
-        self.check("register_plugin.validate_fail", plugin_validate_fail.failure)
-        self.check("register_plugin.validate_exc", plugin_validate_exc.failure)
+        self.audit_check("register_plugin.ok", plugin_ok.success)
+        self.audit_check("register_plugin.dup", plugin_dup.success)
+        self.audit_check("register_plugin.empty_name", plugin_empty.failure)
+        self.audit_check("register_plugin.validated", plugin_validated.success)
+        self.audit_check("register_plugin.validate_fail", plugin_validate_fail.failure)
+        self.audit_check("register_plugin.validate_exc", plugin_validate_exc.failure)
         plugin_fetch_ok = registry.fetch_plugin(plugin_ns, plugin_name_a)
         plugin_fetch_missing = registry.fetch_plugin(plugin_ns, plugin_missing_name)
         plugin_list = registry.list_plugins(plugin_ns)
@@ -140,14 +140,14 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
             plugin_ns,
             plugin_unreg_missing_name,
         )
-        self.check("fetch_plugin.ok", plugin_fetch_ok.value == plugin_value_a)
-        self.check("fetch_plugin.missing", plugin_fetch_missing.failure)
-        self.check(
+        self.audit_check("fetch_plugin.ok", plugin_fetch_ok.value == plugin_value_a)
+        self.audit_check("fetch_plugin.missing", plugin_fetch_missing.failure)
+        self.audit_check(
             "list_plugins.transports",
             sorted(plugin_list.value) if plugin_list.success else [],
         )
-        self.check("unregister_plugin.ok", plugin_unreg_ok.success)
-        self.check("unregister_plugin.missing", plugin_unreg_missing.failure)
+        self.audit_check("unregister_plugin.ok", plugin_unreg_ok.success)
+        self.audit_check("unregister_plugin.missing", plugin_unreg_missing.failure)
         class_ok = registry.register_plugin(
             class_ns,
             class_plugin_name,
@@ -187,20 +187,20 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
             class_unreg_missing_name,
             scope=c.RegistrationScope.CLASS,
         )
-        self.check("register_class_plugin.ok", class_ok.success)
-        self.check("register_class_plugin.dup", class_dup.success)
-        self.check("register_class_plugin.empty_name", class_empty.failure)
-        self.check(
+        self.audit_check("register_class_plugin.ok", class_ok.success)
+        self.audit_check("register_class_plugin.dup", class_dup.success)
+        self.audit_check("register_class_plugin.empty_name", class_empty.failure)
+        self.audit_check(
             "fetch_class_plugin.ok",
             class_fetch_ok.value == class_plugin_value,
         )
-        self.check("fetch_class_plugin.missing", class_fetch_missing.failure)
-        self.check(
+        self.audit_check("fetch_class_plugin.missing", class_fetch_missing.failure)
+        self.audit_check(
             "list_class_plugins.auth",
             class_list.value if class_list.success else [],
         )
-        self.check("unregister_class_plugin.ok", class_unreg_ok.success)
-        self.check("unregister_class_plugin.missing", class_unreg_missing.failure)
+        self.audit_check("unregister_class_plugin.ok", class_unreg_ok.success)
+        self.audit_check("unregister_class_plugin.missing", class_unreg_missing.failure)
 
     def _exercise_create_and_service_methods(
         self,
@@ -213,13 +213,13 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
         _ = u.build_registry(dispatcher=None)
         _ = u.build_registry(auto_discover_handlers=False)
         _ = u.build_registry(auto_discover_handlers=True)
-        self.check(
+        self.audit_check(
             "decorated_handler.type",
             type(
                 _discovered_handler(m.Examples.CommandA(value=discovered_value))
             ).__name__,
         )
-        self.check("execute.success", registry.execute().success)
+        self.audit_check("execute.success", registry.execute().success)
         return (registry, dispatcher)
 
     def _exercise_register_method_and_tracking(self, registry: p.Registry) -> None:
@@ -243,10 +243,10 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
             meta_model,
         )
         reg_bad = registry.register("", bad_value)
-        self.check("register.service.plain", reg_plain.success)
-        self.check("register.service.meta_dict", reg_meta_dict.success)
-        self.check("register.service.meta_model", reg_meta_model.success)
-        self.check("register.service.bad", reg_bad.failure)
+        self.audit_check("register.service.plain", reg_plain.success)
+        self.audit_check("register.service.meta_dict", reg_meta_dict.success)
+        self.audit_check("register.service.meta_model", reg_meta_model.success)
+        self.audit_check("register.service.bad", reg_bad.failure)
 
     def _exercise_registration_and_dispatch(
         self,
@@ -271,41 +271,43 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
         reg_dup = registry.register_handler(_as_registry_handler(handler_a))
         reg_two = registry.register_handler(_as_registry_handler(handler_b))
         reg_mode = registry.register_handler(_as_registry_handler(handler_a))
-        self.check("register_handler.a.success", reg_one.success)
-        self.check(
+        self.audit_check("register_handler.a.success", reg_one.success)
+        self.audit_check(
             "register_handler.a.id_present",
             bool(reg_one.value.registration_id) if reg_one.success else False,
         )
-        self.check("register_handler.duplicate.success", reg_dup.success)
-        self.check("register_handler.b.success", reg_two.success)
-        self.check("register_handler.mode.success", reg_mode.success)
+        self.audit_check("register_handler.duplicate.success", reg_dup.success)
+        self.audit_check("register_handler.b.success", reg_two.success)
+        self.audit_check("register_handler.mode.success", reg_mode.success)
         handler_mode_probe = handler_mode.handle(callable_prefix)
-        self.check("create_from_callable.handle_success", handler_mode_probe.success)
+        self.audit_check(
+            "create_from_callable.handle_success", handler_mode_probe.success
+        )
         batch = registry.register_handlers([
             _as_registry_handler(handler_a),
             _as_registry_handler(handler_b),
             _as_registry_handler(handler_a),
         ])
-        self.check("register_handlers.success", batch.success)
-        self.check(
+        self.audit_check("register_handlers.success", batch.success)
+        self.audit_check(
             "register_handlers.registered_len",
             len(batch.value.registered) if batch.success else -1,
         )
-        self.check(
+        self.audit_check(
             "register_handlers.errors_len",
             len(batch.value.errors) if batch.success else -1,
         )
         cmd_a = m.Examples.CommandA(value=cmd_a_value)
         dispatch_a = dispatcher.dispatch(cmd_a)
-        self.check("dispatch.a.success", dispatch_a.success)
-        self.check(
+        self.audit_check("dispatch.a.success", dispatch_a.success)
+        self.audit_check(
             "dispatch.a.value",
             dispatch_a.value == f"{label_a}:{cmd_a_value}",
         )
         cmd_b = m.Examples.CommandB(amount=cmd_b_value)
         dispatch_b = dispatcher.dispatch(cmd_b)
-        self.check("dispatch.b.success", dispatch_b.success)
-        self.check(
+        self.audit_check("dispatch.b.success", dispatch_b.success)
+        self.audit_check(
             "dispatch.b.value",
             dispatch_b.value == f"{label_b}:{cmd_b_value}",
         )
@@ -344,38 +346,38 @@ class Ex12RegistryDsl(ExamplesFlextCoreShared):
         summary_fail_failure = (
             fail_failure_attr() if callable(fail_failure_attr) else fail_failure_attr
         )
-        self.check("summary.ok.success", summary_ok_success)
-        self.check("summary.ok.failure", summary_ok_failure)
-        self.check("summary.fail.success", summary_fail_success)
-        self.check("summary.fail.failure", summary_fail_failure)
+        self.audit_check("summary.ok.success", summary_ok_success)
+        self.audit_check("summary.ok.failure", summary_ok_failure)
+        self.audit_check("summary.fail.success", summary_fail_success)
+        self.audit_check("summary.fail.failure", summary_fail_failure)
         ok_result = r[str].ok(ok_value)
         fail_result = r[str].fail(fail_message, error_code=fail_code)
-        self.check("mixin.ok.unwrap_or", ok_result.unwrap_or("") == ok_value)
-        self.check("mixin.fail.error", fail_result.error == fail_message)
-        self.check("mixin.fail.error_code", fail_result.error_code == fail_code)
-        self.check(
+        self.audit_check("mixin.ok.unwrap_or", ok_result.unwrap_or("") == ok_value)
+        self.audit_check("mixin.fail.error", fail_result.error == fail_message)
+        self.audit_check("mixin.fail.error_code", fail_result.error_code == fail_code)
+        self.audit_check(
             "ensure_result.raw",
             r[int].ok(ensured_raw).unwrap_or(0) == ensured_raw,
         )
-        self.check(
+        self.audit_check(
             "ensure_result.existing",
             r[int].ok(ensured_existing).unwrap_or(0) == ensured_existing,
         )
-        self.check("to_dict.none", m.ConfigMap(root={}))
-        self.check(
+        self.audit_check("to_dict.none", m.ConfigMap(root={}))
+        self.audit_check(
             "to_dict.mapping",
             m.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}),
         )
-        self.check(
+        self.audit_check(
             "to_dict.basemodel",
             m.Handler(handler_name=handler_name, handler_id=handler_id).model_dump(),
         )
-        self.check("generate_id.len", len(u.generate_id()))
-        self.check(
+        self.audit_check("generate_id.len", len(u.generate_id()))
+        self.audit_check(
             "generate_prefixed_id",
             u.generate_prefixed_id(prefix, 6).startswith(f"{prefix}_"),
         )
-        self.check(
+        self.audit_check(
             "generate_datetime_utc.type",
             type(u.generate_datetime_utc()).__name__,
         )

@@ -32,7 +32,7 @@ type _CleanAlias = str | int
 type _NestedAnyAlias = Mapping[str, typing.Any]
 
 
-class TestsFlextCoreBeartypeEngine:
+class TestsFlextBeartypeEngine:
     """Verify recursive Any detection via beartype.door.TypeHint."""
 
     def test_direct_any(self) -> None:

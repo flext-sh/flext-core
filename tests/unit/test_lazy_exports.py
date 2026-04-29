@@ -11,7 +11,7 @@ from flext_core import lazy
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 
-class TestsFlextCoreLazy:
+class TestsFlextLazy:
     """Behavior contract for install_lazy_exports, merge_lazy_imports, lazy runtime."""
 
     def test_install_without_publish_all_omits_dunder_all_attribute(self) -> None:

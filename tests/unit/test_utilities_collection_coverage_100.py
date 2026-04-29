@@ -10,7 +10,7 @@ from flext_tests import tm
 from tests import t, u
 
 
-class TestsFlextCoreUtilitiesCollection:
+class TestsFlextUtilitiesCollection:
     """Behavior contract for u.map / u.find / u.filter / u.count / u.process / u.merge_mappings."""
 
     # --- map -------------------------------------------------------------
@@ -137,4 +137,4 @@ class TestsFlextCoreUtilitiesCollection:
         tm.that(result.value["b"], is_=dict)
 
 
-__all__: list[str] = ["TestsFlextCoreUtilitiesCollection"]
+__all__: list[str] = ["TestsFlextUtilitiesCollection"]

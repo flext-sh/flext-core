@@ -17,7 +17,7 @@ from flext_tests import tm
 from tests import c, m, t
 
 
-class TestsFlextCoreModelsExceptionParams:
+class TestsFlextModelsExceptionParams:
     """Tests for flext_core via the m facade."""
 
     # ── ParamsModel base ──────────────────────────────────────

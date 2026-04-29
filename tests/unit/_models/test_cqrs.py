@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import m
 
 
-class TestsFlextCoreModelsCQRS:
+class TestsFlextModelsCQRS:
     def test_command_instantiation(self) -> None:
         class CreateItem(m.Command):
             name: str

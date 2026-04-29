@@ -27,7 +27,7 @@ from flext_tests import tm
 from tests import m, u
 
 
-class TestsFlextCoreEnumUtilities:
+class TestsFlextEnumUtilities:
     @unique
     class Status(StrEnum):
         """Test StrEnum for enum testing."""

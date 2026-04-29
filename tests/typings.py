@@ -1,11 +1,11 @@
 """Type system foundation for flext-core tests.
 
-Provides TestsFlextCoreTypes, extending TestsFlextTypes with flext-core-specific types.
+Provides TestsFlextTypes, extending TestsFlextTypes with flext-core-specific types.
 All generic test types come from flext_tests, only flext-core-specific additions here.
 
 Architecture:
 - TestsFlextTypes (flext_tests) = Generic types for all FLEXT projects
-- TestsFlextCoreTypes (tests/) = flext-core-specific types extending TestsFlextTypes
+- TestsFlextTypes (tests/) = flext-core-specific types extending TestsFlextTypes
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,7 +21,7 @@ from collections.abc import (
 from flext_tests import t
 
 
-class TestsFlextCoreTypes(t):
+class TestsFlextTypes(t):
     """Type system foundation for flext-core tests - extends TestsFlextTypes.
 
     Architecture: Extends TestsFlextTypes with flext-core-specific type definitions.
@@ -59,6 +59,6 @@ class TestsFlextCoreTypes(t):
             type InputPayloadMap = Mapping[str, t.Tests.TestobjectSerializable]
 
 
-t = TestsFlextCoreTypes
+t = TestsFlextTypes
 
-__all__: list[str] = ["TestsFlextCoreTypes", "t"]
+__all__: list[str] = ["TestsFlextTypes", "t"]

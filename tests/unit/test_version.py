@@ -6,10 +6,10 @@ import pytest
 from flext_tests import tm
 
 from flext_core.__version__ import FlextVersion, __version__, __version_info__
-from tests.constants import TestsFlextCoreConstants
+from tests.constants import TestsFlextConstants
 
 
-class TestsFlextCoreVersion:
+class TestsFlextVersion:
     """Behavior contract for FlextVersion public API and module-level exports."""
 
     def test_resolve_version_string_returns_semver_formatted_string(self) -> None:
@@ -17,7 +17,7 @@ class TestsFlextCoreVersion:
             FlextVersion.resolve_version_string(),
             is_=str,
             empty=False,
-            match=TestsFlextCoreConstants.Tests.Patterns.SEMVER,
+            match=TestsFlextConstants.Tests.Patterns.SEMVER,
         )
 
     def test_resolve_version_info_returns_non_empty_tuple_starting_with_major(
@@ -32,19 +32,17 @@ class TestsFlextCoreVersion:
         tm.that(
             info,
             is_=dict,
-            has=list(TestsFlextCoreConstants.Tests.Version.PACKAGE_INFO_REQUIRED_KEYS),
+            has=list(TestsFlextConstants.Tests.Version.PACKAGE_INFO_REQUIRED_KEYS),
         )
-        for key in TestsFlextCoreConstants.Tests.Version.PACKAGE_INFO_REQUIRED_KEYS:
+        for key in TestsFlextConstants.Tests.Version.PACKAGE_INFO_REQUIRED_KEYS:
             tm.that(info[key], is_=str, none=False)
-        tm.that(
-            info["name"], eq=TestsFlextCoreConstants.Tests.Version.CORE_PACKAGE_NAME
-        )
-        tm.that(info["version"], match=TestsFlextCoreConstants.Tests.Patterns.SEMVER)
+        tm.that(info["name"], eq=TestsFlextConstants.Tests.Version.CORE_PACKAGE_NAME)
+        tm.that(info["version"], match=TestsFlextConstants.Tests.Patterns.SEMVER)
 
     @pytest.mark.parametrize(
         ("major", "minor", "patch", "expected"),
-        TestsFlextCoreConstants.Tests.Version.AT_LEAST_CASES,
-        ids=TestsFlextCoreConstants.Tests.Version.AT_LEAST_CASE_IDS,
+        TestsFlextConstants.Tests.Version.AT_LEAST_CASES,
+        ids=TestsFlextConstants.Tests.Version.AT_LEAST_CASE_IDS,
     )
     def test_version_at_least_compares_against_current(
         self,

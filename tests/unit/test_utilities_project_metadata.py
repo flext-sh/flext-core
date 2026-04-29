@@ -16,7 +16,7 @@ def _write_pyproject(tmp_path: Path, body: str) -> Path:
     return tmp_path
 
 
-class TestsFlextCoreUtilitiesProjectMetadata:
+class TestsFlextUtilitiesProjectMetadata:
     """Behavior contract for u.derive_*, u.pascalize, u.read_*, u.compose_*."""
 
     @pytest.mark.parametrize(

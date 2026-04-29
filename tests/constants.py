@@ -10,19 +10,19 @@ from flext_tests import FlextTestsConstants
 
 from flext_core import FlextConstants
 from tests import (
-    TestsFlextCoreConstantsDomain,
-    TestsFlextCoreConstantsErrors,
-    TestsFlextCoreConstantsFixtures,
-    TestsFlextCoreConstantsLoggings,
-    TestsFlextCoreConstantsOther,
-    TestsFlextCoreConstantsResult,
-    TestsFlextCoreConstantsServices,
-    TestsFlextCoreConstantsSettings,
-    TestsFlextCoreConstantsStrings,
+    TestsFlextConstantsDomain,
+    TestsFlextConstantsErrors,
+    TestsFlextConstantsFixtures,
+    TestsFlextConstantsLoggings,
+    TestsFlextConstantsOther,
+    TestsFlextConstantsResult,
+    TestsFlextConstantsServices,
+    TestsFlextConstantsSettings,
+    TestsFlextConstantsStrings,
 )
 
 
-class TestsFlextCoreConstants(
+class TestsFlextConstants(
     FlextTestsConstants,
     FlextConstants,
 ):
@@ -30,19 +30,19 @@ class TestsFlextCoreConstants(
 
     class Tests(
         FlextTestsConstants.Tests,
-        TestsFlextCoreConstantsDomain,
-        TestsFlextCoreConstantsErrors,
-        TestsFlextCoreConstantsFixtures,
-        TestsFlextCoreConstantsLoggings,
-        TestsFlextCoreConstantsOther,
-        TestsFlextCoreConstantsResult,
-        TestsFlextCoreConstantsServices,
-        TestsFlextCoreConstantsSettings,
-        TestsFlextCoreConstantsStrings,
+        TestsFlextConstantsDomain,
+        TestsFlextConstantsErrors,
+        TestsFlextConstantsFixtures,
+        TestsFlextConstantsLoggings,
+        TestsFlextConstantsOther,
+        TestsFlextConstantsResult,
+        TestsFlextConstantsServices,
+        TestsFlextConstantsSettings,
+        TestsFlextConstantsStrings,
     ):
         pass
 
 
-c = TestsFlextCoreConstants
+c = TestsFlextConstants
 
-__all__: list[str] = ["TestsFlextCoreConstants", "c"]
+__all__: list[str] = ["TestsFlextConstants", "c"]

@@ -5,7 +5,7 @@ from __future__ import annotations
 from flext_core import c, m, p, r, u
 
 
-class ExamplesFlextCoreModelsEx02:
+class ExamplesFlextModelsEx02:
     """Example 02 model namespace."""
 
     class DatabaseService(m.Value):

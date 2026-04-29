@@ -5,7 +5,7 @@ from __future__ import annotations
 from tests import m
 
 
-class TestsFlextCoreModelsContainer:
+class TestsFlextModelsContainer:
     def test_config_map_root_mapping(self) -> None:
         cfg = m.ConfigMap(root={"a": 1})
         assert cfg["a"] == 1

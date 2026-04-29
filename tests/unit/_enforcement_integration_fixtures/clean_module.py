@@ -12,10 +12,10 @@ from types import MappingProxyType
 from typing import Annotated, ClassVar, Final, Protocol, override, runtime_checkable
 
 from tests import m, p, r, t, u
-from tests.unit.base import TestsFlextCoreServiceBase
+from tests.unit.base import TestsFlextServiceBase
 
 
-class TestsFlextCoreCleanModels:
+class TestsFlextCleanModels:
     """Namespace holder with proper prefix and well-formed inner models."""
 
     class Core:
@@ -55,7 +55,7 @@ class TestsFlextCoreCleanModels:
                 ]
 
 
-class TestsFlextCoreCleanConstants:
+class TestsFlextCleanConstants:
     """Constants facade — UPPER_CASE names, frozen values."""
 
     class Core:
@@ -65,7 +65,7 @@ class TestsFlextCoreCleanConstants:
             BANNER: Final[str] = "clean"
 
 
-class TestsFlextCoreCleanProtocols:
+class TestsFlextCleanProtocols:
     """Protocols facade with @runtime_checkable inner protocols."""
 
     class Core:
@@ -77,7 +77,7 @@ class TestsFlextCoreCleanProtocols:
                 def run(self) -> None: ...
 
 
-class TestsFlextCoreCleanServiceBase(TestsFlextCoreServiceBase[bool]):
+class TestsFlextCleanServiceBase(TestsFlextServiceBase[bool]):
     """Service-base facade using the canonical alias-base pattern."""
 
     @override

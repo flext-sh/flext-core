@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_core import FlextConstants as c
 
 
-class TestsFlextCoreConstantsLoggings:
+class TestsFlextConstantsLoggings:
     class Logging(c):
         """Logging configuration for tests - real inheritance."""
 
