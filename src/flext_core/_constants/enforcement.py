@@ -34,25 +34,25 @@ class FlextConstantsEnforcement:
     class EnforcementMode(StrEnum):
         """Controls whether violations raise, warn, or are ignored."""
 
+        OFF = "off"
         STRICT = "strict"
         WARN = "warn"
-        OFF = "off"
 
     class EnforcementLayer(StrEnum):
         """Facade layer where a violation is raised."""
 
-        MODEL = "Model"
         CONSTANTS = "Constants"
+        MODEL = "Model"
+        NAMESPACE = "namespace"
+        PROTOCOLS = "Protocols"
         TYPES = "Types"
         UTILITIES = "Utilities"
-        PROTOCOLS = "Protocols"
-        NAMESPACE = "namespace"
 
     class EnforcementSeverity(StrEnum):
         """Severity label attached to every violation."""
 
-        HARD_RULES = "HARD rules"
         BEST_PRACTICES = "best practices"
+        HARD_RULES = "HARD rules"
         NAMESPACE_RULES = "namespace rules"
 
     @unique
@@ -66,21 +66,21 @@ class FlextConstantsEnforcement:
         from the rule row.
         """
 
-        LOOSE_SYMBOL = "loose_symbol"
-        IMPORT_BLACKLIST = "import_blacklist"
-        CLASS_PLACEMENT = "class_placement"
-        LOC_CAP = "loc_cap"
-        WRAPPER = "wrapper"
         ALIAS_REBIND = "alias_rebind"
-        LIBRARY_IMPORT = "library_import"
-        DUPLICATE_SYMBOL = "duplicate_symbol"
+        ATTR_SHAPE = "attr_shape"
+        CLASS_PLACEMENT = "class_placement"
         DEPRECATED_SYNTAX = "deprecated_syntax"
-        METHOD_SHAPE = "method_shape"
+        DUPLICATE_SYMBOL = "duplicate_symbol"
         FIELD_SHAPE = "field_shape"
+        IMPORT_BLACKLIST = "import_blacklist"
+        LIBRARY_IMPORT = "library_import"
+        LOC_CAP = "loc_cap"
+        LOOSE_SYMBOL = "loose_symbol"
+        METHOD_SHAPE = "method_shape"
         MODEL_CONFIG = "model_config"
         MRO_SHAPE = "mro_shape"
-        ATTR_SHAPE = "attr_shape"
         PROTOCOL_TREE = "protocol_tree"
+        WRAPPER = "wrapper"
 
     ENFORCEMENT_MODE: Final[EnforcementMode] = EnforcementMode.WARN
     """Controls behavior: strict (TypeError), warn (UserWarning), off."""
@@ -94,13 +94,13 @@ class FlextConstantsEnforcement:
     """
 
     BEARTYPE_CLAW_SKIP_PACKAGES: Final[tuple[str, ...]] = (
-        "flext_core._typings",
-        "flext_core.runtime",
-        "flext_core.loggings",
         "flext_core._models.context",
+        "flext_core._typings",
         "flext_core._utilities.logging_config",
         "flext_core._utilities.parser",
         "flext_core._utilities.reliability",
+        "flext_core.loggings",
+        "flext_core.runtime",
     )
     """Package paths skipped by the flext_core beartype bootstrap."""
 
@@ -113,28 +113,28 @@ class FlextConstantsEnforcement:
     """Base model names allowed to have relaxed extra= policies."""
 
     ENFORCEMENT_INFRASTRUCTURE_BASES: Final[frozenset[str]] = frozenset({
-        "ManagedModel",
-        "EnumManagedModel",
-        "NormalizedModel",
-        "StrictManagedModel",
         "ArbitraryTypesModel",
-        "StrictBoundaryModel",
-        "FlexibleInternalModel",
-        "ImmutableValueModel",
-        "TaggedModel",
-        "FlexibleModel",
         "ContractModel",
+        "EnumManagedModel",
+        "FlexibleInternalModel",
+        "FlexibleModel",
         "FrozenValueModel",
-        "MutableConfiguredMixin",
-        "NormalizedMutableConfiguredMixin",
-        "Metadata",
-        "TimestampableMixin",
-        "VersionableMixin",
         "IdentifiableMixin",
-        "TimestampedModel",
-        "RetryConfigurationMixin",
-        "ValidOutcome",
+        "ImmutableValueModel",
         "InvalidOutcome",
+        "ManagedModel",
+        "Metadata",
+        "MutableConfiguredMixin",
+        "NormalizedModel",
+        "NormalizedMutableConfiguredMixin",
+        "RetryConfigurationMixin",
+        "StrictBoundaryModel",
+        "StrictManagedModel",
+        "TaggedModel",
+        "TimestampableMixin",
+        "TimestampedModel",
+        "ValidOutcome",
+        "VersionableMixin",
         "WarningOutcome",
     })
     """FLEXT infrastructure base class names exempt from enforcement checks."""
@@ -164,32 +164,32 @@ class FlextConstantsEnforcement:
     # --- Per-layer metadata (single SSOT mappings keyed by EnforcementLayer) ---
 
     ENFORCEMENT_CONSTANTS_SKIP_ATTRS: Final[frozenset[str]] = frozenset({
-        "__module__",
-        "__qualname__",
-        "__doc__",
-        "__dict__",
-        "__weakref__",
-        "__init_subclass__",
-        "__subclasshook__",
         "__abstractmethods__",
-        "__orig_bases__",
         "__class_getitem__",
+        "__dict__",
+        "__doc__",
+        "__init_subclass__",
+        "__module__",
+        "__orig_bases__",
         "__pydantic_complete__",
+        "__qualname__",
+        "__subclasshook__",
+        "__weakref__",
         # Pydantic v2 class-level contract attributes — NOT constants,
         # they are framework metadata owned by the BaseModel machinery.
-        "model_config",
-        "model_fields",
         "model_computed_fields",
+        "model_config",
         "model_extra",
+        "model_fields",
         "model_post_init",
     })
     """Class-level attributes to skip during constants enforcement."""
 
     ENFORCEMENT_UTILITIES_EXEMPT_METHODS: Final[frozenset[str]] = frozenset({
+        "__class_getitem__",
         "__init__",
         "__init_subclass__",
         "__new__",
-        "__class_getitem__",
     })
     """Methods exempt from static/classmethod enforcement on utilities."""
 
@@ -223,8 +223,8 @@ class FlextConstantsEnforcement:
 
     ENFORCEMENT_LAYER_ALLOWS: Final[Mapping[str, frozenset[str]]] = MappingProxyType({
         "constants": frozenset({"StrEnum"}),
-        "protocols": frozenset({"Protocol"}),
         "models": frozenset(),
+        "protocols": frozenset({"Protocol"}),
         "types": frozenset(),
         "utilities": frozenset(),
     })
@@ -250,8 +250,8 @@ class FlextConstantsEnforcement:
     """Single message shape — location + problem + fix."""
 
     ENFORCEMENT_VALUE_OBJECT_BASES: Final[frozenset[str]] = frozenset({
-        "ImmutableValueModel",
         "FrozenValueModel",
+        "ImmutableValueModel",
     })
     """Base-class names that require ``frozen=True`` configuration."""
 
@@ -266,9 +266,9 @@ class FlextConstantsEnforcement:
     class EnforcementCategory(StrEnum):
         """Rule category — dispatches engine behaviour per row."""
 
+        ATTR = "attr"
         FIELD = "field"
         MODEL_CLASS = "model_class"
-        ATTR = "attr"
         NAMESPACE = "namespace"
         PROTOCOL_TREE = "protocol_tree"
 
@@ -292,16 +292,16 @@ class FlextConstantsEnforcement:
     """Path fragments identifying flext-core source files (ENFORCE-039 exemption)."""
 
     ENFORCE_NON_WORKSPACE_PATH_MARKERS: Final[frozenset[str]] = frozenset({
-        "site-packages",
-        "dist-packages",
         "/usr/lib/",
         "/usr/local/lib/",
+        "dist-packages",
+        "site-packages",
     })
     """Filesystem path fragments identifying third-party source."""
 
     ENFORCE_PRIVATE_PROBE_BUILTINS: Final[frozenset[str]] = frozenset({
-        "hasattr",
         "getattr",
+        "hasattr",
         "setattr",
     })
     """ENFORCE-044: builtins that probe attributes by name."""
@@ -315,58 +315,58 @@ class FlextConstantsEnforcement:
 
     ENFORCEMENT_TAG_CATEGORY: Final[Mapping[str, EnforcementCategory]] = (
         MappingProxyType({
-            "no_any": EnforcementCategory.FIELD,
-            "no_bare_collection": EnforcementCategory.FIELD,
-            "no_mutable_default": EnforcementCategory.FIELD,
-            "no_raw_collections_field_default": EnforcementCategory.FIELD,
-            "no_str_none_empty": EnforcementCategory.FIELD,
-            "no_inline_union": EnforcementCategory.FIELD,
-            "missing_description": EnforcementCategory.FIELD,
-            "no_v1_config": EnforcementCategory.MODEL_CLASS,
-            "extra_missing": EnforcementCategory.MODEL_CLASS,
-            "extra_wrong": EnforcementCategory.MODEL_CLASS,
-            "value_not_frozen": EnforcementCategory.MODEL_CLASS,
-            "const_mutable": EnforcementCategory.ATTR,
-            "const_lowercase": EnforcementCategory.ATTR,
             "alias_any": EnforcementCategory.ATTR,
-            "typeadapter_name": EnforcementCategory.ATTR,
-            "utility_not_static": EnforcementCategory.ATTR,
-            "class_prefix": EnforcementCategory.NAMESPACE,
-            "cross_strenum": EnforcementCategory.NAMESPACE,
-            "cross_protocol": EnforcementCategory.NAMESPACE,
-            "nested_mro": EnforcementCategory.NAMESPACE,
-            "proto_inner_kind": EnforcementCategory.PROTOCOL_TREE,
-            "proto_not_runtime": EnforcementCategory.PROTOCOL_TREE,
-            "no_accessor_methods": EnforcementCategory.NAMESPACE,
-            "settings_inheritance": EnforcementCategory.NAMESPACE,
-            "cast_outside_core": EnforcementCategory.NAMESPACE,
-            "model_rebuild_call": EnforcementCategory.NAMESPACE,
-            "pass_through_wrapper": EnforcementCategory.NAMESPACE,
-            "private_attr_probe": EnforcementCategory.NAMESPACE,
-            "no_core_tests_namespace": EnforcementCategory.NAMESPACE,
-            "no_wrapper_root_alias_import": EnforcementCategory.NAMESPACE,
-            "no_concrete_namespace_import": EnforcementCategory.NAMESPACE,
-            "no_pydantic_consumer_import": EnforcementCategory.NAMESPACE,
-            "facade_base_is_alias_or_peer": EnforcementCategory.NAMESPACE,
             "alias_first_multi_parent": EnforcementCategory.NAMESPACE,
             "alias_rebound_at_module_end": EnforcementCategory.NAMESPACE,
+            "cast_outside_core": EnforcementCategory.NAMESPACE,
+            "class_prefix": EnforcementCategory.NAMESPACE,
+            "const_lowercase": EnforcementCategory.ATTR,
+            "const_mutable": EnforcementCategory.ATTR,
+            "cross_project_duplicate": EnforcementCategory.NAMESPACE,
+            "cross_protocol": EnforcementCategory.NAMESPACE,
+            "cross_strenum": EnforcementCategory.NAMESPACE,
+            "deprecated_typealias_syntax": EnforcementCategory.NAMESPACE,
+            "extra_missing": EnforcementCategory.MODEL_CLASS,
+            "extra_wrong": EnforcementCategory.MODEL_CLASS,
+            "facade_base_is_alias_or_peer": EnforcementCategory.NAMESPACE,
+            "library_abstraction": EnforcementCategory.NAMESPACE,
+            "loc_cap": EnforcementCategory.NAMESPACE,
+            "missing_description": EnforcementCategory.FIELD,
+            "model_rebuild_call": EnforcementCategory.NAMESPACE,
+            "nested_layer_misplacement": EnforcementCategory.NAMESPACE,
+            "nested_mro": EnforcementCategory.NAMESPACE,
+            "no_accessor_methods": EnforcementCategory.NAMESPACE,
+            "no_any": EnforcementCategory.FIELD,
+            "no_bare_collection": EnforcementCategory.FIELD,
+            "no_concrete_namespace_import": EnforcementCategory.NAMESPACE,
+            "no_core_tests_namespace": EnforcementCategory.NAMESPACE,
+            "no_inline_union": EnforcementCategory.FIELD,
+            "no_mutable_default": EnforcementCategory.FIELD,
+            "no_pydantic_consumer_import": EnforcementCategory.NAMESPACE,
+            "no_raw_collections_field_default": EnforcementCategory.FIELD,
             "no_redundant_inner_namespace": EnforcementCategory.NAMESPACE,
             "no_self_root_import_in_core_files": EnforcementCategory.NAMESPACE,
+            "no_str_none_empty": EnforcementCategory.FIELD,
+            "no_v1_config": EnforcementCategory.MODEL_CLASS,
+            "no_wrapper_root_alias_import": EnforcementCategory.NAMESPACE,
+            "pass_through_wrapper": EnforcementCategory.NAMESPACE,
+            "private_attr_probe": EnforcementCategory.NAMESPACE,
+            "proto_inner_kind": EnforcementCategory.PROTOCOL_TREE,
+            "proto_not_runtime": EnforcementCategory.PROTOCOL_TREE,
+            "settings_inheritance": EnforcementCategory.NAMESPACE,
             "sibling_models_type_checking": EnforcementCategory.NAMESPACE,
+            "typeadapter_name": EnforcementCategory.ATTR,
             "utilities_explicit_class_when_self_ref": EnforcementCategory.NAMESPACE,
-            "loc_cap": EnforcementCategory.NAMESPACE,
-            "library_abstraction": EnforcementCategory.NAMESPACE,
-            "deprecated_typealias_syntax": EnforcementCategory.NAMESPACE,
-            "nested_layer_misplacement": EnforcementCategory.NAMESPACE,
-            "cross_project_duplicate": EnforcementCategory.NAMESPACE,
+            "utility_not_static": EnforcementCategory.ATTR,
+            "value_not_frozen": EnforcementCategory.MODEL_CLASS,
         })
     )
     """Tag → category mapping for old enforcement API."""
 
     ENFORCEMENT_TAG_LAYER: Final[Mapping[str, str]] = MappingProxyType({
-        "const_mutable": "Constants",
-        "const_lowercase": "Constants",
         "alias_any": "Types",
+        "const_lowercase": "Constants",
+        "const_mutable": "Constants",
         "typeadapter_name": "Types",
         "utility_not_static": "Utilities",
     })
@@ -549,36 +549,36 @@ class FlextConstantsEnforcement:
     """Tags that must recurse into inner namespace classes during scanning."""
 
     ENFORCEMENT_NAMESPACE_TARGET_TAGS: Final[frozenset[str]] = frozenset({
-        "settings_inheritance",
-        "cast_outside_core",
-        "model_rebuild_call",
-        "pass_through_wrapper",
-        "private_attr_probe",
-        "no_core_tests_namespace",
-        "no_wrapper_root_alias_import",
-        "no_concrete_namespace_import",
-        "no_pydantic_consumer_import",
-        "facade_base_is_alias_or_peer",
         "alias_first_multi_parent",
         "alias_rebound_at_module_end",
+        "cast_outside_core",
+        "cross_project_duplicate",
+        "deprecated_typealias_syntax",
+        "facade_base_is_alias_or_peer",
+        "library_abstraction",
+        "loc_cap",
+        "model_rebuild_call",
+        "nested_layer_misplacement",
+        "no_concrete_namespace_import",
+        "no_core_tests_namespace",
+        "no_pydantic_consumer_import",
         "no_redundant_inner_namespace",
         "no_self_root_import_in_core_files",
+        "no_wrapper_root_alias_import",
+        "pass_through_wrapper",
+        "private_attr_probe",
+        "settings_inheritance",
         "sibling_models_type_checking",
         "utilities_explicit_class_when_self_ref",
-        "loc_cap",
-        "library_abstraction",
-        "deprecated_typealias_syntax",
-        "nested_layer_misplacement",
-        "cross_project_duplicate",
     })
     """NAMESPACE tags that use simple class-target dispatch (yield qn, (target,))."""
 
     ENFORCEMENT_CANONICAL_FILES: Final[frozenset[str]] = frozenset({
-        "typings.py",
+        "constants.py",
         "models.py",
         "protocols.py",
+        "typings.py",
         "utilities.py",
-        "constants.py",
     })
     """The five canonical facade files per project (AGENTS.md §2.2)."""
 

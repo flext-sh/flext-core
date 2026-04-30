@@ -14,11 +14,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from types import MappingProxyType
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, Self
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as c
 from flext_core._models.pydantic import FlextModelsPydantic
@@ -87,11 +88,139 @@ class FlextModelsProjectMetadata:
         @property
         def class_stem(self) -> str:
             """Return the canonical PascalCase class stem (SSOT-derived)."""
-            override = c.SPECIAL_NAME_OVERRIDES.get(self.name)
-            if override is not None:
-                return override
             parts = self.name.replace("-", "_").split("_")
             return "".join(part[:1].upper() + part[1:] for part in parts if part)
+
+    class ProjectConstants(FlextModelsPydantic.BaseModel):
+        """Constants derived from installed package runtime metadata."""
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
+        )
+
+        PACKAGE_NAME: Annotated[str, Field(min_length=1)]
+        PACKAGE_VERSION: Annotated[str, Field(min_length=1)]
+        PACKAGE_LICENSE: Annotated[str, Field(min_length=1)]
+        PACKAGE_URL: str = ""
+        PACKAGE_AUTHORS: tuple[str, ...] = ()
+        PACKAGE_ROOT: Path
+        PYTHON_PACKAGE_NAME: Annotated[str, Field(min_length=1)]
+        CLASS_STEM: Annotated[str, Field(min_length=1)]
+        ALIAS_TO_SUFFIX: tb.StrMapping = Field(
+            default_factory=lambda: MappingProxyType({})
+        )
+        RUNTIME_ALIAS_NAMES: frozenset[str] = frozenset()
+        FACADE_ALIAS_NAMES: frozenset[str] = frozenset()
+        FACADE_MODULE_NAMES: frozenset[str] = frozenset()
+        UNIVERSAL_ALIAS_PARENT_SOURCES: tb.StrMapping = Field(
+            default_factory=lambda: MappingProxyType({})
+        )
+        TIER_FACADE_PREFIX: tb.StrMapping = Field(
+            default_factory=lambda: MappingProxyType({})
+        )
+        SCAN_DIRECTORIES: tuple[str, ...] = ()
+        TIER_SUB_NAMESPACE: tb.StrMapping = Field(
+            default_factory=lambda: MappingProxyType({})
+        )
+        PYPROJECT_FILENAME: str = c.PYPROJECT_FILENAME
+
+        @classmethod
+        def from_metadata(
+            cls,
+            metadata: FlextModelsProjectMetadata.ProjectMetadata,
+        ) -> Self:
+            """Build constants from the canonical project metadata model."""
+            return cls(
+                PACKAGE_NAME=metadata.name,
+                PACKAGE_VERSION=metadata.version,
+                PACKAGE_LICENSE=metadata.license,
+                PACKAGE_URL=metadata.url,
+                PACKAGE_AUTHORS=metadata.authors,
+                PACKAGE_ROOT=metadata.root,
+                PYTHON_PACKAGE_NAME=metadata.package_name,
+                CLASS_STEM=metadata.class_stem,
+            )
+
+    class LazyAliasMetadata(FlextModelsPydantic.BaseModel):
+        """Normalized runtime alias row derived from package ``_LAZY_IMPORTS``."""
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
+        )
+
+        alias: Annotated[str, Field(min_length=1)]
+        module: Annotated[str, Field(min_length=1)]
+        parent_source: Annotated[str, Field(min_length=1)]
+        suffix: Annotated[str, Field(min_length=1)]
+        facade: bool = False
+
+    class PyprojectProject(FlextModelsPydantic.BaseModel):
+        """PEP 621 ``[project]`` table normalized for ``ProjectMetadata``."""
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
+                frozen=True,
+                extra="ignore",
+                populate_by_name=True,
+            )
+        )
+
+        name: Annotated[str, Field(min_length=1)]
+        version: Annotated[str, Field(min_length=1)]
+        license: Annotated[str, Field(default="UNLICENSED", min_length=1)] = (
+            "UNLICENSED"
+        )
+        description: str = ""
+        authors: tuple[str, ...] = ()
+        urls: tb.StrMapping = Field(default_factory=lambda: MappingProxyType({}))
+        requires_python: str = Field(default="", alias="requires-python")
+
+        @field_validator("license", mode="before")
+        @classmethod
+        def _coerce_license(cls, value: tp.JsonValue) -> str:
+            if isinstance(value, Mapping):
+                return str(value.get("text", "UNLICENSED"))
+            if value is None:
+                return "UNLICENSED"
+            return str(value)
+
+        @field_validator("authors", mode="before")
+        @classmethod
+        def _coerce_authors(cls, value: tp.JsonValue) -> tuple[str, ...]:
+            if not isinstance(value, Sequence) or isinstance(value, str):
+                return ()
+            names: list[str] = []
+            for entry in value:
+                if isinstance(entry, Mapping):
+                    names.append(str(entry.get("name", "")))
+                else:
+                    names.append(str(entry))
+            return tuple(names)
+
+        @field_validator("urls", mode="before")
+        @classmethod
+        def _coerce_urls(cls, value: tp.JsonValue) -> tb.StrMapping:
+            if not isinstance(value, Mapping):
+                return MappingProxyType({})
+            return {key: str(item) for key, item in value.items()}
+
+        @field_validator("requires_python", mode="after")
+        @classmethod
+        def _normalize_requires_python(cls, value: str) -> str:
+            return value.lstrip(">= ").split(",")[0].split("<")[0].strip()
+
+        def to_metadata(self, root: Path) -> FlextModelsProjectMetadata.ProjectMetadata:
+            """Convert the PEP 621 table into the canonical metadata model."""
+            return FlextModelsProjectMetadata.ProjectMetadata(
+                name=self.name,
+                version=self.version,
+                license=self.license,
+                root=root,
+                description=self.description,
+                authors=self.authors,
+                url=self.urls.get("Homepage", ""),
+                requires_python=self.requires_python,
+            )
 
     class ProjectNamespaceConfig(FlextModelsPydantic.BaseModel):
         """Effective namespace configuration for a project.
@@ -115,10 +244,10 @@ class FlextModelsProjectMetadata:
         scan_dirs: Annotated[
             tuple[str, ...],
             Field(
-                default=c.SCAN_DIRECTORIES,
+                default=(),
                 description="Top-level directories to scan for facades.",
             ),
-        ] = c.SCAN_DIRECTORIES
+        ] = ()
         include_dynamic_dirs: Annotated[
             bool,
             Field(
@@ -146,19 +275,7 @@ class FlextModelsProjectMetadata:
             sources: dict[str, tp.JsonValue] = (
                 dict(sources_raw) if isinstance(sources_raw, dict) else {}
             )
-            unknown = set(sources) - set(c.RUNTIME_ALIAS_NAMES)
-            if unknown:
-                msg = f"unknown alias(es): {sorted(unknown)}"
-                raise ValueError(msg)
-            for alias, canonical in c.UNIVERSAL_ALIAS_PARENT_SOURCES.items():
-                if alias in sources and sources[alias] != canonical:
-                    msg = (
-                        f"cannot override universal alias {alias!r}: "
-                        f"must remain {canonical!r}"
-                    )
-                    raise ValueError(msg)
-            merged = {**c.UNIVERSAL_ALIAS_PARENT_SOURCES, **sources}
-            data["alias_parent_sources"] = dict(merged)
+            data["alias_parent_sources"] = dict(sources)
             return data
 
     class ProjectToolFlextProject(FlextModelsPydantic.BaseModel):
@@ -197,10 +314,10 @@ class FlextModelsProjectMetadata:
         scan_dirs: Annotated[
             tuple[str, ...],
             Field(
-                default=c.SCAN_DIRECTORIES,
+                default=(),
                 description="Top-level directories to scan.",
             ),
-        ] = c.SCAN_DIRECTORIES
+        ] = ()
         include_dynamic_dirs: Annotated[
             bool,
             Field(

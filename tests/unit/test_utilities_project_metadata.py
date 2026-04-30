@@ -101,6 +101,41 @@ class TestsFlextUtilitiesProjectMetadata:
             eq=("Alice Example", "Bob Example"),
         )
 
+    def test_derive_project_constants_returns_installed_package_values(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        root = _write_pyproject(
+            tmp_path,
+            """
+            [project]
+            name = "algar-oud-mig"
+            version = "1.2.3"
+            license = "MIT"
+            description = "OUD migration"
+            requires-python = ">=3.13,<3.14"
+            authors = [{name = "FLEXT Team"}]
+
+            [project.urls]
+            Homepage = "https://example.test/algar-oud-mig"
+            """,
+        )
+
+        constants = u.derive_project_constants(root)
+
+        tm.that(constants.PACKAGE_NAME, eq="algar-oud-mig")
+        tm.that(constants.PACKAGE_VERSION, eq="0.12.0.dev0")
+        tm.that(constants.PACKAGE_LICENSE, eq="LicenseRef-Proprietary")
+        tm.that(constants.PYTHON_PACKAGE_NAME, eq="algar_oud_mig")
+        tm.that(constants.CLASS_STEM, eq="AlgarOudMig")
+        tm.that(
+            constants.PACKAGE_AUTHORS,
+            eq=("Marlon Costa <marlon.costa@datacosmos.com.br>",),
+        )
+        tm.that(constants.ALIAS_TO_SUFFIX["c"], eq="Constants")
+        tm.that(constants.ALIAS_TO_SUFFIX["u"], eq="Utilities")
+        tm.that(constants.FACADE_ALIAS_NAMES, eq=frozenset({"c", "m", "p", "t", "u"}))
+
     def test_read_project_metadata_raises_on_missing_pyproject(
         self,
         tmp_path: Path,

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import dis
 import functools
+import importlib
 import inspect
+import sys
 import types as _types_mod
 from collections.abc import (
     Callable,
@@ -30,6 +32,56 @@ from flext_core._typings.base import FlextTypingBase as t
 
 class FlextUtilitiesBeartypeHelpers:
     """Annotation + bytecode inspection helpers."""
+
+    @staticmethod
+    def _lazy_suffix(module_path: str) -> str:
+        name = module_path.rsplit(".", 1)[-1]
+        if name == "typings":
+            return "Types"
+        return "".join(part[:1].upper() + part[1:] for part in name.split("_") if part)
+
+    @staticmethod
+    @functools.cache
+    def lazy_alias_suffixes(package_name: str) -> tuple[tuple[str, str, str], ...]:
+        """Return ``(alias, module_path, suffix)`` rows from package ``_LAZY_IMPORTS``."""
+        package = sys.modules.get(package_name) or importlib.import_module(package_name)
+        lazy_module = importlib.import_module("flext_core.lazy")
+        lazy_imports = lazy_module.normalize_lazy_imports(
+            package.__name__,
+            getattr(package, "_LAZY_IMPORTS"),
+        )
+        return tuple(
+            (
+                alias,
+                module_path,
+                FlextUtilitiesBeartypeHelpers._lazy_suffix(module_path),
+            )
+            for alias, entry in lazy_imports.items()
+            if len(alias) == 1 and alias.islower()
+            for module_path in (entry if isinstance(entry, str) else entry[0],)
+        )
+
+    @staticmethod
+    def runtime_alias_names(package_name: str) -> frozenset[str]:
+        """Return runtime alias names derived from generated lazy exports."""
+        return frozenset(
+            alias
+            for alias, _, _ in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
+                package_name
+            )
+        )
+
+    @staticmethod
+    def facade_module_names(package_name: str) -> frozenset[str]:
+        """Return local facade module names derived from generated lazy exports."""
+        return frozenset(
+            module_path.rsplit(".", 1)[-1]
+            for _, module_path, suffix in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
+                package_name
+            )
+            if module_path.split(".", 1)[0] == package_name
+            and suffix in {"Constants", "Models", "Protocols", "Types", "Utilities"}
+        )
 
     @staticmethod
     def unwrap_type_alias(

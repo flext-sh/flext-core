@@ -5,7 +5,6 @@ from __future__ import annotations
 from enum import EnumType
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cp
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities._beartype.helpers import (
@@ -103,12 +102,15 @@ class FlextUtilitiesBeartypeClassVisitor:
 
         outer_name, separator, _ = target.__qualname__.partition(".")
         is_module_level = not separator
-        is_facade = is_module_level and target.__name__.startswith((
-            "Flext",
-            "TestsFlext",
-            "ExamplesFlext",
-            "ScriptsFlext",
-        ))
+        project_prefix, _ = target.__name__, ""
+        if target.__module__:
+            project_prefix = "".join(
+                part[:1].upper() + part[1:]
+                for part in target.__module__.split(".", 1)[0].split("_")
+                if part
+            )
+        tier_facade_prefixes = (project_prefix, f"Tests{project_prefix}")
+        is_facade = is_module_level and target.__name__.startswith(tier_facade_prefixes)
         module_name = getattr(target, "__module__", "") or ""
         is_core_root = module_name.startswith(
             "flext_core."
@@ -123,9 +125,11 @@ class FlextUtilitiesBeartypeClassVisitor:
         first_name = getattr(first_base, "__name__", "")
         # Strip generic parameters so ``FlextService[T]`` → ``FlextService``
         unparametrized_name = first_name.split("[")[0]
-        valid_suffixes = tuple(cp.ALIAS_TO_SUFFIX.values()) + tuple(
-            f"{suffix}Base" for suffix in cp.ALIAS_TO_SUFFIX.values()
+        package_name = module_name.split(".", 1)[0]
+        suffixes = tuple(
+            suffix for _, _, suffix in ubh.lazy_alias_suffixes(package_name)
         )
+        valid_suffixes = suffixes + tuple(f"{suffix}Base" for suffix in suffixes)
         alias_base_sets = [
             {
                 ancestor
@@ -144,7 +148,7 @@ class FlextUtilitiesBeartypeClassVisitor:
             is_facade,
             not is_core_root,
             base_count == 1,
-            first_name.startswith("Flext"),
+            first_name.startswith(tier_facade_prefixes),
             not unparametrized_name.endswith(valid_suffixes),
             bool(alias_base_sets[0]) if alias_base_sets else False,
         ))
@@ -152,7 +156,7 @@ class FlextUtilitiesBeartypeClassVisitor:
             is_facade,
             not is_core_root,
             base_count >= _BINARY_ARITY,
-            first_name.startswith("Flext"),
+            first_name.startswith(tier_facade_prefixes),
             not unparametrized_name.endswith(valid_suffixes),
             bool(shared_peer_alias_base),
         ))
@@ -173,7 +177,8 @@ class FlextUtilitiesBeartypeClassVisitor:
                         {"bases": str(base_count), "first": first_name},
                     ),
                     (
-                        requires_alias_first and first_name.startswith("Flext"),
+                        requires_alias_first
+                        and first_name.startswith(tier_facade_prefixes),
                         {
                             "base": first_name,
                             "expected": "alias, alias-base, or FlextPeerXxx",

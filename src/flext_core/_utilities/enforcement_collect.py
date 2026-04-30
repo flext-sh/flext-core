@@ -8,7 +8,6 @@ from enum import EnumType
 from pathlib import Path
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
@@ -59,12 +58,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
                 return None
             src = top
         head, _, tail = src.partition("_")
-        namespace = upm.pascalize(tail or head)
-        project_prefix = cpm.SPECIAL_NAME_OVERRIDES.get(
-            src.replace("_", "-"),
-        ) or upm.pascalize(src)
+        namespace = upm.derive_class_stem(tail or head)
+        project_prefix = upm.derive_class_stem(src)
         if top in {"tests", "examples", "scripts"} and top != (src or ""):
-            return upm.pascalize(top) + project_prefix, namespace
+            return upm.derive_class_stem(top) + project_prefix, namespace
         return project_prefix, namespace
 
     @staticmethod

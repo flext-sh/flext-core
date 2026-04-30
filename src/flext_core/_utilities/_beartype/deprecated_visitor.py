@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import TypeAlias
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cp
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities._beartype.helpers import (
@@ -114,7 +113,9 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                 "file": wrapper_file_name,
                                 "line": "<runtime>",
                             }
-                            for alias_name in cp.RUNTIME_ALIAS_NAMES
+                            for alias_name in _ubh.runtime_alias_names(
+                                wrapper_module.__name__.split(".", 1)[0]
+                            )
                             if (
                                 alias_value := getattr(wrapper_module, alias_name, None)
                             )
@@ -130,7 +131,8 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                     wrapper_file_name = Path(
                         _ubh.module_filename_for(wrapper_module) or ""
                     ).name
-                    wrapper_submodules = cp.FACADE_MODULE_NAMES
+                    package_name = wrapper_module.__name__.split(".", 1)[0]
+                    wrapper_submodules = _ubh.facade_module_names(package_name)
                     violation = next(
                         (
                             {
@@ -138,7 +140,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                 "line": "<runtime>",
                                 "statement": f"from {origin} import {alias_name}",
                             }
-                            for alias_name in cp.RUNTIME_ALIAS_NAMES
+                            for alias_name in _ubh.runtime_alias_names(package_name)
                             if (
                                 alias_value := getattr(wrapper_module, alias_name, None)
                             )

@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from importlib import import_module
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from flext_core import (
     FlextConstants as c,
@@ -17,6 +17,8 @@ from flext_core import (
     FlextProtocols as p,
     FlextTypes as t,
 )
+
+TExceptionParams = TypeVar("TExceptionParams", bound=mp.BaseModel)
 
 if TYPE_CHECKING:
     from flext_core.result import FlextResult
@@ -68,7 +70,20 @@ class FlextExceptionsFactories:
         options: m.ExceptionFactoryOptions | None = None,
     ) -> tuple[m.ExceptionFactoryOptions, Exception | str | None]:
         options = options or m.ExceptionFactoryOptions()
+        options = m.ExceptionFactoryOptions.model_validate(options.model_dump())
         return options, options.error
+
+    @staticmethod
+    def _normalize_params(
+        params: TExceptionParams | None,
+        params_type: type[TExceptionParams],
+        update: dict[str, object | None],
+    ) -> TExceptionParams:
+        if params is None:
+            return params_type.model_validate(update)
+        return params.model_copy(
+            update={key: value for key, value in update.items() if value is not None}
+        )
 
     @staticmethod
     def _fail_result[

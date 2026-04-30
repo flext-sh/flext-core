@@ -32,10 +32,12 @@ class FlextVersion:
     )
     __title__: str = _metadata.get("Name", "")
     __description__: str = _metadata.get("Summary", "")
-    __author__: str = _metadata.get("Author", "")
+    __author__: str = _metadata.get("Author", "") or _metadata.get("Author-Email", "")
     __author_email__: str = _metadata.get("Author-Email", "")
-    __license__: str = _metadata.get("License", "")
-    __url__: str = _metadata.get("Home-Page", "")
+    __license__: str = _metadata.get("License-Expression", "") or _metadata.get(
+        "License", ""
+    )
+    __url__: str = _metadata.get("Home-Page", "") or _metadata.get("Project-URL", "")
 
     def __init_subclass__(cls, **kwargs: tp.JsonValue) -> None:
         """Recompute derived attributes when a subclass overrides ``_metadata``."""

@@ -110,6 +110,14 @@ class FlextLazy(BaseModel):
         self.normalized_map_cache[cache_key] = out
         return out
 
+    def normalize_map(
+        self,
+        module_path: str,
+        raw: Mapping[str, str | tuple[str, str]] | None,
+    ) -> dict[str, str | tuple[str, str]]:
+        """Return normalized lazy-import entries for runtime metadata readers."""
+        return self._norm_map(module_path, raw)
+
     def _load(self, module_path: str) -> ModuleType:
         cached = self.module_cache.get(module_path)
         if cached is not None:
@@ -300,6 +308,7 @@ build_lazy_import_map = lazy.build_map
 """Convenience alias for building flat lazy import maps."""
 lazy_getattr = lazy.get
 cleanup_submodule_namespace = lazy.cleanup
+normalize_lazy_imports = lazy.normalize_map
 merge_lazy_imports = lazy.merge
 install_lazy_exports = lazy.install
 
@@ -311,4 +320,5 @@ __all__ = (
     "lazy",
     "lazy_getattr",
     "merge_lazy_imports",
+    "normalize_lazy_imports",
 )

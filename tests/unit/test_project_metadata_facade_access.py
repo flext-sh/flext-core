@@ -15,9 +15,7 @@ from tests import c, m, u
 
 class TestsFlextFacadeFlatSsotAccess:
     def test_c_constants_flat(self) -> None:
-        assert c.ALIAS_TO_SUFFIX["c"] == "Constants"
-        assert c.TIER_FACADE_PREFIX["tests"] == "TestsFlext"
-        assert c.SPECIAL_NAME_OVERRIDES["flext-core"] == "Flext"
+        assert c.PYPROJECT_FILENAME == "pyproject.toml"
 
     def test_m_models_flat(self) -> None:
         assert isinstance(m.ProjectMetadata, type)
@@ -25,5 +23,10 @@ class TestsFlextFacadeFlatSsotAccess:
         assert isinstance(m.ProjectToolFlext, type)
 
     def test_u_utilities_flat(self) -> None:
-        assert u.derive_class_stem("flext-ldif") == "FlextLdif"
+        assert (
+            u.read_project_constants("flext-core").ALIAS_TO_SUFFIX["c"] == "Constants"
+        )
+        assert (
+            u.read_project_constants("flext-core").TIER_FACADE_PREFIX["src"] == "Flext"
+        )
         assert u.pascalize("flext-ldif") == "FlextLdif"

@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cp
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities._beartype.helpers import (
@@ -32,12 +31,17 @@ class FlextUtilitiesBeartypeImportVisitor:
         module_name = module.__name__
         violation = _NO_VIOLATION
         if filename in c.ENFORCEMENT_CANONICAL_FILES and not params.forbidden_symbols:
+            tier_prefixes = tuple(
+                value.__name__
+                for value in vars(module).values()
+                if isinstance(value, type)
+            )
             violation = next(
                 (
                     {"file": filename, "import": name}
                     for name, value in vars(module).items()
                     if isinstance(value, type)
-                    and name.startswith("Flext")
+                    and name.startswith(tier_prefixes)
                     and (origin := _ubh.object_module_name_for(value) or "").startswith(
                         "flext_"
                     )
@@ -87,8 +91,8 @@ class FlextUtilitiesBeartypeImportVisitor:
                 alias_char: str | None = next(
                     (
                         alias_name
-                        for alias_name, suffix in cp.ALIAS_TO_SUFFIX.items()
-                        if alias_name in cp.FACADE_ALIAS_NAMES and suffix in target_name
+                        for alias_name, _, suffix in _ubh.lazy_alias_suffixes(package)
+                        if suffix in target_name
                     ),
                     None,
                 )
@@ -100,7 +104,7 @@ class FlextUtilitiesBeartypeImportVisitor:
                 violation = next(
                     (
                         {"package": package, "alias": alias_char}
-                        for alias_char in cp.RUNTIME_ALIAS_NAMES
+                        for alias_char in _ubh.runtime_alias_names(package)
                         if (alias_value := getattr(module, alias_char, None))
                         is not None
                         and (
