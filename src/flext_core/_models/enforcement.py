@@ -53,6 +53,8 @@ class FlextModelsEnforcement:
         layer: str
         severity: str
         message: str
+        rule_id: str = ""
+        agents_md_anchor: str = ""
         file_path: str = ""
         line_number: int = 0
 

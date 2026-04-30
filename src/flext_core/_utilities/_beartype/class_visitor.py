@@ -142,6 +142,22 @@ class FlextUtilitiesBeartypeClassVisitor:
         shared_peer_alias_base = (
             set.intersection(*peer_alias_bases) if peer_alias_bases else set()
         )
+        first_base_package = first_base.__module__.split(".", 1)[0]
+        is_service_alias_base_first = all((
+            first_base_package == package_name,
+            first_name.startswith(tier_facade_prefixes),
+            any(
+                getattr(ancestor, "__name__", "").split("[")[0] == "FlextService"
+                for ancestor in first_base.__mro__[1:]
+            ),
+        ))
+        # `FlextService[T]` specializations are the canonical core service root
+        # for facade packages and should not be treated as a missing alias.
+        is_alias_or_alias_base_first = (
+            unparametrized_name == "FlextService"
+            or unparametrized_name.endswith(valid_suffixes)
+            or is_service_alias_base_first
+        )
         allows_single_peer_base = all((
             is_facade,
             not is_core_root,
@@ -162,6 +178,7 @@ class FlextUtilitiesBeartypeClassVisitor:
             params.require_alias_first
             and is_facade
             and not is_core_root
+            and not is_alias_or_alias_base_first
             and not unparametrized_name.endswith(valid_suffixes)
             and not allows_peer_first
         )

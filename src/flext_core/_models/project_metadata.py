@@ -14,17 +14,31 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from pathlib import Path
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import (
+    BeforeValidator,
+    Field,
+    TypeAdapter,
+    field_validator,
+    model_validator,
+)
 
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as c
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
+
+_author_name_ta = TypeAdapter(
+    Annotated[
+        str,
+        BeforeValidator(
+            lambda v: str(v.get("name", "")) if isinstance(v, dict) else str(v)
+        ),
+    ]
+)
 
 
 class FlextModelsProjectMetadata:
@@ -140,42 +154,38 @@ class FlextModelsProjectMetadata:
 
         name: Annotated[str, Field(min_length=1)]
         version: Annotated[str, Field(min_length=1)]
-        license: Annotated[str, Field(default="UNLICENSED", min_length=1)] = (
-            "UNLICENSED"
-        )
+        license: Annotated[
+            str,
+            Field(default="UNLICENSED", min_length=1),
+            BeforeValidator(
+                lambda v: (
+                    str(v.get("text") or "UNLICENSED")
+                    if isinstance(v, dict)
+                    else (str(v) if v is not None else "UNLICENSED")
+                )
+            ),
+        ] = "UNLICENSED"
         description: str = ""
         authors: tuple[str, ...] = ()
-        urls: tb.StrMapping = Field(default_factory=lambda: MappingProxyType({}))
+        urls: Annotated[
+            tb.StrMapping,
+            Field(default_factory=lambda: MappingProxyType({})),
+            BeforeValidator(
+                lambda v: (
+                    {k: str(val) for k, val in v.items()}
+                    if isinstance(v, dict)
+                    else MappingProxyType({})
+                )
+            ),
+        ] = Field(default_factory=lambda: MappingProxyType({}))
         requires_python: str = Field(default="", alias="requires-python")
-
-        @field_validator("license", mode="before")
-        @classmethod
-        def _coerce_license(cls, value: tp.JsonValue) -> str:
-            if isinstance(value, Mapping):
-                return str(value.get("text", "UNLICENSED"))
-            if value is None:
-                return "UNLICENSED"
-            return str(value)
 
         @field_validator("authors", mode="before")
         @classmethod
         def _coerce_authors(cls, value: tp.JsonValue) -> tuple[str, ...]:
-            if not isinstance(value, Sequence) or isinstance(value, str):
+            if not isinstance(value, (list, tuple)):
                 return ()
-            names: list[str] = []
-            for entry in value:
-                if isinstance(entry, Mapping):
-                    names.append(str(entry.get("name", "")))
-                else:
-                    names.append(str(entry))
-            return tuple(names)
-
-        @field_validator("urls", mode="before")
-        @classmethod
-        def _coerce_urls(cls, value: tp.JsonValue) -> tb.StrMapping:
-            if not isinstance(value, Mapping):
-                return MappingProxyType({})
-            return {key: str(item) for key, item in value.items()}
+            return tuple(_author_name_ta.validate_python(e) for e in value)
 
         @field_validator("requires_python", mode="after")
         @classmethod

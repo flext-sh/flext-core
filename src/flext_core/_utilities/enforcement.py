@@ -233,6 +233,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         tag: str,
         qualname: str,
         items: Iterator[tuple[str, tuple[object, ...]]],
+        category: c.EnforcementCategory,
     ) -> Sequence[me.Violation]:
         """Apply the visitor for ``tag`` to each item; emit violation on non-None.
 
@@ -244,7 +245,13 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             return ()
         kind, params = binding
         return [
-            FlextUtilitiesEnforcement._violation(tag, location, qualname, detail)
+            FlextUtilitiesEnforcement._violation(
+                tag,
+                location,
+                qualname,
+                detail,
+                category=category,
+            )
             for location, args in items
             if (detail := ub.apply(kind, params, *args)) is not None
         ]
@@ -342,6 +349,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                     tag,
                     qn,
                     items,
+                    category,
                 )
             )
             if (

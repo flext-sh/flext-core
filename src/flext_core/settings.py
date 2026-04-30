@@ -88,7 +88,8 @@ class FlextSettings(
         instance = cls()
         if not overrides:
             return instance
-        copied = instance.model_copy(update=dict(overrides), deep=True)
+        with cls._singleton_disabled():
+            copied = instance.model_copy(update=dict(overrides), deep=True)
         copied.__pydantic_validator__.validate_python(
             copied.__dict__, self_instance=copied
         )
@@ -110,8 +111,10 @@ class FlextSettings(
 
         """
         if not overrides:
-            return self.model_copy(deep=True)
-        copied = self.model_copy(update=dict(overrides), deep=True)
+            with self.__class__._singleton_disabled():
+                return self.model_copy(deep=True)
+        with self.__class__._singleton_disabled():
+            copied = self.model_copy(update=dict(overrides), deep=True)
         # ``model_copy(update=...)`` bypasses validators by design; re-run them
         # so field-level validators (e.g., ``log_level`` enum coercion) apply.
         copied.__pydantic_validator__.validate_python(

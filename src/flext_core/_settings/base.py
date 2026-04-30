@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
+from collections.abc import Generator
+from contextlib import contextmanager
 from typing import ClassVar, Self
 
 from flext_core import FlextTypes as t
@@ -62,6 +64,18 @@ class FlextSettingsBase:
         """
         with cls._lock:
             cls._instance = None
+
+    @classmethod
+    @contextmanager
+    def _singleton_disabled(cls) -> Generator[None]:
+        """Temporarily disable singleton enforcement for clone operations."""
+        with cls._lock:
+            original = cls._singleton_enabled
+            cls._singleton_enabled = False
+            try:
+                yield
+            finally:
+                cls._singleton_enabled = original
 
 
 __all__: list[str] = ["FlextSettingsBase"]

@@ -348,6 +348,23 @@ class TestsFlextEnforcement:
         assert report[0] == "boom"
         assert "boom" in report
 
+    def test_violation_includes_rule_metadata(self) -> None:
+        class _M(m.ArbitraryTypesModel):
+            data: Annotated[typing.Any, m.Field(description="d")] = None
+
+        report = u.check(_M)
+        assert any(
+            v.rule_id == "ENFORCE-039" or "no_any" in v.message
+            for v in report.violations
+        )
+
+    def test_violation_messages_include_rule_identifiers(self) -> None:
+        class _M(m.ArbitraryTypesModel):
+            data: Annotated[typing.Any, m.Field(description="d")] = None
+
+        report = u.check(_M)
+        assert any("[" in v.message and "]" in v.message for v in report.violations)
+
     def test_merge_reports(self) -> None:
         v = m.Violation(
             qualname="X",

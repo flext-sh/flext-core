@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import operator
 import re
 from collections.abc import Callable, Mapping, Sized
 from typing import ClassVar
@@ -42,8 +43,8 @@ class FlextUtilitiesGuards(
     _EQUALITY_OPS: ClassVar[
         Mapping[str, Callable[[t.GuardInput, t.GuardInput], bool]]
     ] = {
-        "eq": object.__eq__,
-        "ne": lambda value, comparator: not object.__eq__(value, comparator),
+        "eq": operator.eq,
+        "ne": operator.ne,
     }
     _MEMBERSHIP_OPS: ClassVar[
         Mapping[str, Callable[[t.GuardInput, t.JsonList], bool]]

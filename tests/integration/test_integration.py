@@ -102,5 +102,6 @@ class TestsFlextLibraryIntegration:
 
     def test_version_info_available(self) -> None:
         """Test that version info is available."""
-        assert isinstance(__version__, str)
-        assert __version__
+        resolved_version = __version__
+        assert resolved_version
+        assert "." in resolved_version
