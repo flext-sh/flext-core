@@ -46,7 +46,7 @@ class TestsFlextServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPayloa
     @override
     def execute(self) -> p.Result[TDomainResult]:
         """Execute domain service logic - must be implemented by subclasses."""
-        msg = c.Tests.TestErrors.SUBCLASSES_MUST_IMPLEMENT_EXECUTE
+        msg = c.Tests.SUBCLASSES_MUST_IMPLEMENT_EXECUTE
         raise NotImplementedError(msg)
 
     class HandlerTestCase(m.BaseModel):
@@ -193,7 +193,7 @@ class TestsFlextServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPayloa
 
                 def __init__(self) -> None:
                     if not handler_id:
-                        msg = c.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
+                        msg = c.Tests.HANDLER_ID_CANNOT_BE_EMPTY
                         raise ValueError(msg)
                     settings = m.Handler(
                         handler_id=handler_id,
@@ -239,7 +239,7 @@ class TestsFlextServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPayloa
 
             """
             if not handler_id:
-                msg = c.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
+                msg = c.Tests.HANDLER_ID_CANNOT_BE_EMPTY
                 raise ValueError(msg)
 
             def always_succeed(
@@ -269,10 +269,10 @@ class TestsFlextServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPayloa
 
             """
             if not handler_id:
-                msg = c.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
+                msg = c.Tests.HANDLER_ID_CANNOT_BE_EMPTY
                 raise ValueError(msg)
             if not error_message:
-                error_message = c.Tests.TestErrors.PROCESSING_ERROR_DEFAULT
+                error_message = c.Tests.PROCESSING_ERROR_DEFAULT
 
             def always_fail(
                 _msg: t.JsonPayload,
@@ -301,7 +301,7 @@ class TestsFlextServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPayloa
 
             """
             if not handler_id:
-                msg = c.Tests.TestErrors.HANDLER_ID_CANNOT_BE_EMPTY
+                msg = c.Tests.HANDLER_ID_CANNOT_BE_EMPTY
                 raise ValueError(msg)
 
             def transform(

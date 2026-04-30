@@ -61,7 +61,7 @@ class TestsFlextUtilities(u):
             @override
             def dispatch(self, message: p.Routable) -> p.Result[t.JsonPayload]:
                 _ = message
-                return r[t.JsonPayload].fail(c.Tests.TestErrors.DISPATCHER_UNCONFIGURED)
+                return r[t.JsonPayload].fail(c.Tests.DISPATCHER_UNCONFIGURED)
 
         class FailDispatcher(p.Dispatcher):
             """Dispatcher that rejects public handler registration."""
@@ -83,12 +83,12 @@ class TestsFlextUtilities(u):
             ) -> p.Result[bool]:
                 _ = handler
                 _ = is_event
-                return r[bool].fail(c.Tests.TestErrors.DISPATCHER_FAIL)
+                return r[bool].fail(c.Tests.DISPATCHER_FAIL)
 
             @override
             def dispatch(self, message: p.Routable) -> p.Result[t.JsonPayload]:
                 _ = message
-                return r[t.JsonPayload].fail(c.Tests.TestErrors.DISPATCHER_FAIL)
+                return r[t.JsonPayload].fail(c.Tests.DISPATCHER_FAIL)
 
         class OkDispatcher(p.Dispatcher):
             """Dispatcher that accepts public registry operations."""
@@ -120,16 +120,33 @@ class TestsFlextUtilities(u):
         @staticmethod
         def success_cases() -> Sequence[tuple[str, str]]:
             return [
-                ("123", "Valid user ID"),
-                ("456", "Another valid user ID"),
-                ("789", "Third valid user ID"),
+                (
+                    c.Tests.USER_IDS_SUCCESS[0],
+                    "Valid user ID",
+                ),
+                (
+                    c.Tests.USER_IDS_SUCCESS[1],
+                    "Another valid user ID",
+                ),
+                (
+                    c.Tests.USER_IDS_SUCCESS[2],
+                    "Third valid user ID",
+                ),
             ]
 
         @staticmethod
         def failure_cases() -> Sequence[tuple[str, str, str]]:
             return [
-                ("invalid", "not found", "Invalid user ID"),
-                ("", "not found", "Empty user ID"),
+                (
+                    "invalid",
+                    "not found",
+                    "Invalid user ID",
+                ),
+                (
+                    "",
+                    "not found",
+                    "Empty user ID",
+                ),
             ]
 
         @staticmethod
@@ -137,11 +154,25 @@ class TestsFlextUtilities(u):
             tuple[t.StrSequence, t.StrSequence, int, str]
         ]:
             return [
-                (["123"], [], 1, "Simple user retrieval"),
-                (["456"], ["get_email"], 2, "User to email transformation"),
                 (
-                    ["789"],
-                    ["get_email", "send_email", "get_status"],
+                    [c.Tests.USER_IDS_SUCCESS[0]],
+                    [],
+                    1,
+                    "Simple user retrieval",
+                ),
+                (
+                    [c.Tests.USER_IDS_SUCCESS[1]],
+                    [c.Tests.RailwayOperation.GET_EMAIL],
+                    2,
+                    "User to email transformation",
+                ),
+                (
+                    [c.Tests.USER_IDS_SUCCESS[2]],
+                    [
+                        c.Tests.RailwayOperation.GET_EMAIL,
+                        c.Tests.RailwayOperation.SEND_EMAIL,
+                        c.Tests.RailwayOperation.GET_STATUS,
+                    ],
                     4,
                     "Full pipeline: user -> email -> send -> status",
                 ),
@@ -151,29 +182,44 @@ class TestsFlextUtilities(u):
         def multi_operation_cases() -> Sequence[tuple[str, int, t.JsonMapping]]:
             return [
                 (
-                    "double",
+                    c.Tests.RailwayOperation.DOUBLE,
                     5,
-                    {"operation": "double", "result": 10},
+                    {
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.DOUBLE,
+                        c.Tests.OPERATION_RESULT_KEY: 10,
+                    },
                 ),
                 (
-                    "square",
+                    c.Tests.RailwayOperation.SQUARE,
                     4,
-                    {"operation": "square", "result": 16},
+                    {
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.SQUARE,
+                        c.Tests.OPERATION_RESULT_KEY: 16,
+                    },
                 ),
                 (
-                    "negate",
+                    c.Tests.RailwayOperation.NEGATE,
                     7,
-                    {"operation": "negate", "result": -7},
+                    {
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.NEGATE,
+                        c.Tests.OPERATION_RESULT_KEY: -7,
+                    },
                 ),
                 (
-                    "double",
+                    c.Tests.RailwayOperation.DOUBLE,
                     0,
-                    {"operation": "double", "result": 0},
+                    {
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.DOUBLE,
+                        c.Tests.OPERATION_RESULT_KEY: 0,
+                    },
                 ),
                 (
-                    "square",
+                    c.Tests.RailwayOperation.SQUARE,
                     1,
-                    {"operation": "square", "result": 1},
+                    {
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.SQUARE,
+                        c.Tests.OPERATION_RESULT_KEY: 1,
+                    },
                 ),
             ]
 
@@ -187,14 +233,14 @@ class TestsFlextUtilities(u):
 
             @override
             def execute(self) -> p.Result[tm.Tests.User]:
-                if self.user_id in {"invalid", ""}:
-                    return r[tm.Tests.User].fail(c.Tests.TestErrors.USER_NOT_FOUND)
+                if self.user_id in c.Tests.USER_IDS_INVALID:
+                    return r[tm.Tests.User].fail(c.Tests.USER_NOT_FOUND)
                 return r[tm.Tests.User].ok(
                     tm.Tests.User(
                         id=self.user_id,
                         unique_id=self.user_id,
-                        name=f"User {self.user_id}",
-                        email=f"user{self.user_id}@example.com",
+                        name=f"{c.Tests.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
+                        email=f"user{self.user_id}{c.Tests.DEFAULT_EMAIL_DOMAIN}",
                     ),
                 )
 
@@ -213,9 +259,7 @@ class TestsFlextUtilities(u):
             @override
             def execute(self) -> p.Result[m.Tests.EmailResponse]:
                 if "@" not in self.to:
-                    return r[m.Tests.EmailResponse].fail(
-                        c.Tests.TestErrors.INVALID_EMAIL
-                    )
+                    return r[m.Tests.EmailResponse].fail(c.Tests.INVALID_EMAIL)
                 return r[m.Tests.EmailResponse].ok(
                     m.Tests.EmailResponse(status="sent", message_id=f"msg-{self.to}"),
                 )
@@ -231,9 +275,9 @@ class TestsFlextUtilities(u):
             @override
             def execute(self) -> p.Result[t.JsonMapping]:
                 if self.value < 0:
-                    return r[t.JsonMapping].fail(c.Tests.TestErrors.VALUE_TOO_LOW)
-                if self.value > 100:
-                    return r[t.JsonMapping].fail(c.Tests.TestErrors.VALUE_TOO_HIGH)
+                    return r[t.JsonMapping].fail(c.Tests.VALUE_TOO_LOW)
+                if self.value > c.Tests.MAX_VALUE:
+                    return r[t.JsonMapping].fail(c.Tests.VALUE_TOO_HIGH)
                 return r[t.JsonMapping].ok(
                     {"valid": True, "value": self.value},
                 )
@@ -253,27 +297,36 @@ class TestsFlextUtilities(u):
             @override
             def execute(self) -> p.Result[t.JsonMapping]:
                 match self.operation:
-                    case "double":
+                    case c.Tests.RailwayOperation.DOUBLE:
                         return r[t.JsonMapping].ok(
                             {
-                                "operation": "double",
-                                "result": self.value * 2,
+                                c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.DOUBLE,
+                                c.Tests.OPERATION_RESULT_KEY: self.value
+                                * c.Tests.OPERATION_FACTORS[
+                                    c.Tests.RailwayOperation.DOUBLE
+                                ],
                             },
                         )
-                    case "square":
+                    case c.Tests.RailwayOperation.SQUARE:
                         return r[t.JsonMapping].ok(
                             {
-                                "operation": "square",
-                                "result": self.value**2,
+                                c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.SQUARE,
+                                c.Tests.OPERATION_RESULT_KEY: self.value**2,
                             },
                         )
-                    case "negate":
+                    case c.Tests.RailwayOperation.NEGATE:
                         return r[t.JsonMapping].ok(
-                            {"operation": "negate", "result": -self.value},
+                            {
+                                c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.NEGATE,
+                                c.Tests.OPERATION_RESULT_KEY: self.value
+                                * c.Tests.OPERATION_FACTORS[
+                                    c.Tests.RailwayOperation.NEGATE
+                                ],
+                            },
                         )
                     case _:
                         return r[t.JsonMapping].fail(
-                            f"Unknown operation: {self.operation}"
+                            f"{c.Tests.UNKNOWN_OPERATION_PREFIX} {self.operation}"
                         )
 
         @staticmethod
@@ -302,7 +355,7 @@ class TestsFlextUtilities(u):
             """Execute the documented V1 railway pipeline."""
             if not case.user_ids:
                 return r[str | tm.Tests.User | m.Tests.EmailResponse].fail(
-                    c.Tests.TestErrors.NO_USER_IDS_PROVIDED,
+                    c.Tests.NO_USER_IDS_PROVIDED,
                 )
             user_result: p.Result[tm.Tests.User] = TestsFlextUtilities.Tests.make(
                 TestsFlextUtilities.Tests.GetUserService,
@@ -343,18 +396,18 @@ class TestsFlextUtilities(u):
         ) -> tm.Tests.User | str:
             """Execute the documented V2 railway pipeline."""
             if not case.user_ids:
-                msg = c.Tests.TestErrors.NO_USER_IDS_PROVIDED
+                msg = c.Tests.NO_USER_IDS_PROVIDED
                 raise e.BaseError(msg)
             raw_user_result = TestsFlextUtilities.Tests.make(
                 TestsFlextUtilities.Tests.GetUserService,
                 user_id=case.user_ids[0],
             ).execute()
             if raw_user_result.failure:
-                msg = raw_user_result.error or c.Tests.TestErrors.USER_NOT_FOUND
+                msg = raw_user_result.error or c.Tests.USER_NOT_FOUND
                 raise e.BaseError(msg)
             raw_user = raw_user_result.unwrap_or(None)
             if not isinstance(raw_user, tm.Tests.User):
-                msg = c.Tests.TestErrors.USER_NOT_FOUND
+                msg = c.Tests.USER_NOT_FOUND
                 raise e.BaseError(msg)
             user: tm.Tests.User | str = raw_user
             for operation in case.operations:
@@ -368,14 +421,11 @@ class TestsFlextUtilities(u):
                         subject="Test",
                     ).execute()
                     if raw_response_result.failure:
-                        msg = (
-                            raw_response_result.error
-                            or c.Tests.TestErrors.INVALID_EMAIL
-                        )
+                        msg = raw_response_result.error or c.Tests.INVALID_EMAIL
                         raise e.BaseError(msg)
                     raw_response = raw_response_result.unwrap_or(None)
                     if not isinstance(raw_response, m.Tests.EmailResponse):
-                        msg = c.Tests.TestErrors.INVALID_EMAIL
+                        msg = c.Tests.INVALID_EMAIL
                         raise e.BaseError(msg)
                     response_obj: m.Tests.EmailResponse = raw_response
                     user = response_obj.status
@@ -1179,7 +1229,7 @@ class TestsFlextUtilities(u):
             min_length: Annotated[
                 int,
                 u.Field(description="Minimum accepted input length."),
-            ] = c.Tests.TestValidation.MIN_LENGTH_DEFAULT
+            ] = c.Tests.MIN_LENGTH_DEFAULT
 
             @override
             def execute(self) -> p.Result[str]:
@@ -1196,7 +1246,7 @@ class TestsFlextUtilities(u):
             error_message: Annotated[
                 str,
                 u.Field(description="Failure message emitted by execute()."),
-            ] = c.Tests.Services.DEFAULT_ERROR_MESSAGE
+            ] = c.Tests.DEFAULT_ERROR_MESSAGE
 
             @override
             def execute(self) -> p.Result[str]:
@@ -1320,7 +1370,7 @@ class TestsFlextUtilities(u):
             def build(
                 cls,
                 *,
-                error_message: str = c.Tests.Services.DEFAULT_ERROR_MESSAGE,
+                error_message: str = c.Tests.DEFAULT_ERROR_MESSAGE,
             ) -> TestsFlextUtilities.Tests.FailingService:
                 """Build a FailingService instance."""
                 return TestsFlextUtilities.Tests.FailingService(
@@ -1391,7 +1441,7 @@ class TestsFlextUtilities(u):
                 cls,
                 *,
                 value_input: str | None = None,
-                min_length: int = c.Tests.TestValidation.MIN_LENGTH_DEFAULT,
+                min_length: int = c.Tests.MIN_LENGTH_DEFAULT,
             ) -> TestsFlextUtilities.Tests.ValidatingServiceAuto:
                 """Build a ValidatingServiceAuto instance."""
                 actual_value = (
@@ -1417,7 +1467,7 @@ class TestsFlextUtilities(u):
                 cls,
                 *,
                 value_input: str | None = None,
-                min_length: int = c.Tests.TestValidation.MIN_LENGTH_DEFAULT,
+                min_length: int = c.Tests.MIN_LENGTH_DEFAULT,
             ) -> TestsFlextUtilities.Tests.ValidatingService:
                 """Build a `ValidatingService` instance."""
                 actual_value = (
@@ -1442,7 +1492,7 @@ class TestsFlextUtilities(u):
             def build(
                 cls,
                 *,
-                error_message: str = c.Tests.Services.DEFAULT_ERROR_MESSAGE,
+                error_message: str = c.Tests.DEFAULT_ERROR_MESSAGE,
             ) -> TestsFlextUtilities.Tests.FailingServiceAuto:
                 """Build a FailingServiceAuto instance."""
                 return TestsFlextUtilities.Tests.FailingServiceAuto(
@@ -1498,7 +1548,7 @@ class TestsFlextUtilities(u):
                 input_value: str | None = None,
                 expected_success: bool = True,
                 expected_error: str | None = None,
-                extra_param: int = c.Tests.TestValidation.MIN_LENGTH_DEFAULT,
+                extra_param: int = c.Tests.MIN_LENGTH_DEFAULT,
                 description: str | None = None,
             ) -> m.Tests.ServiceTestCase:
                 """Build a m.Tests.ServiceTestCase instance."""
@@ -1566,7 +1616,7 @@ class TestsFlextUtilities(u):
                     case c.Tests.ServiceTestType.FAIL:
                         service = TestsFlextUtilities.Tests.FailingServiceFactory.build(
                             error_message=case.input_value
-                            or c.Tests.Services.DEFAULT_ERROR_MESSAGE
+                            or c.Tests.DEFAULT_ERROR_MESSAGE
                         )
                     case _:
                         msg = f"Unsupported service type: {case.service_type}"

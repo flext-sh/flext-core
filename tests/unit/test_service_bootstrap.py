@@ -15,8 +15,6 @@ class TestsFlextServiceBootstrap:
     class RuntimeBootstrapSource(m.ArbitraryTypesModel):
         """Minimal service-like source for runtime bootstrap resolution tests."""
 
-        __test__ = False
-
         subproject: Annotated[
             str | None,
             m.Field(description="Runtime subproject value exposed by the source."),

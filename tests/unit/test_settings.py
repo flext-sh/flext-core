@@ -2,20 +2,24 @@
 
 from __future__ import annotations
 
+import ast
 import os
 import threading
 import time
 from collections.abc import (
     Generator,
+    Mapping,
     MutableSequence,
 )
 from pathlib import Path
+from time import perf_counter
 
 import pytest
-from flext_tests import tm
+from flext_tests import c as tc, tf, tm
+from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextSettings
-from tests import c, p, t, u
+from flext_core import FlextSettings, FlextUtilitiesGenerators
+from tests import c, m, p, t, u
 
 
 @pytest.fixture(autouse=True)
@@ -303,5 +307,181 @@ class TestsFlextSettings:
         tm.that(context.app_name, eq="ctx_app")
         tm.that(original.app_name, eq="flext")
 
+    @staticmethod
+    def _extract_config_payload(value: m.ConfigMap) -> Mapping[str, object]:
+        payload: Mapping[str, object] = value.root
+        nested = payload.get("root")
+        if isinstance(nested, Mapping):
+            return nested
 
-__all__: t.MutableSequenceOf[str] = ["TestsFlextSettings"]
+        embedded = payload.get("value")
+        if isinstance(embedded, str) and embedded.startswith("root="):
+            raw = embedded.removeprefix("root=").strip()
+            try:
+                parsed = ast.literal_eval(raw)
+            except (ValueError, SyntaxError):
+                return payload
+            if isinstance(parsed, Mapping):
+                return parsed
+
+        if isinstance(embedded, Mapping):
+            return embedded
+        return payload
+
+    def test_get_global_and_apply_override(self) -> None:
+        with tm.scope(settings={"debug": False}):
+            settings_obj = FlextSettings.fetch_global()
+        tm.that(settings_obj, is_=FlextSettings)
+        tm.that(settings_obj.apply_override("debug", True), eq=True)
+        tm.that(settings_obj.debug, eq=True)
+        tm.that(not settings_obj.apply_override("invalid_key", "x"), eq=True)
+
+    def test_for_context_overrides(self) -> None:
+        scoped = FlextSettings.for_context("ctx-1", debug=True, max_workers=99)
+        tm.that(scoped.debug, eq=True)
+        tm.that(scoped.max_workers, eq=99)
+
+    def test_register_namespace_and_get_namespace(self) -> None:
+        class DemoNamespace(FlextSettings):
+            model_config = m.SettingsConfigDict(
+                env_prefix="FLEXT_DEMO_",
+                extra="ignore",
+            )
+            enabled: bool = True
+
+        namespace = f"ns_{u.generate('ulid', options=FlextUtilitiesGenerators.GenerateOptions(length=6))}"
+        FlextSettings.register_namespace(namespace, DemoNamespace)
+        settings_obj = FlextSettings.fetch_global()
+        ns_cfg = settings_obj.fetch_namespace(namespace, DemoNamespace)
+        tm.that(ns_cfg, is_=DemoNamespace)
+        tm.that(ns_cfg.enabled, eq=True)
+
+    def test_auto_register_registers_namespace(self) -> None:
+        namespace = f"ns_{u.generate('ulid', options=FlextUtilitiesGenerators.GenerateOptions(length=6))}"
+
+        @FlextSettings.auto_register(namespace)
+        class DemoAutoNamespace(FlextSettings):
+            model_config = m.SettingsConfigDict(
+                env_prefix="FLEXT_DEMO_AUTO_",
+                extra="ignore",
+            )
+            enabled: bool = True
+
+        settings_obj = FlextSettings.fetch_global()
+        ns_cfg = settings_obj.fetch_namespace(namespace, DemoAutoNamespace)
+        tm.that(ns_cfg, is_=DemoAutoNamespace)
+        tm.that(ns_cfg.enabled, eq=True)
+
+    def test_effective_log_level_property(self) -> None:
+        settings_obj = FlextSettings.fetch_global(
+            overrides={"debug": True, "trace": False}
+        )
+        tm.that(settings_obj.effective_log_level, eq=c.LogLevel.INFO)
+
+    def test_reset_for_testing_creates_new_instance(self) -> None:
+        first = FlextSettings.fetch_global()
+        FlextSettings.reset_for_testing()
+        second = FlextSettings.fetch_global()
+        tm.that(first is not second, eq=True)
+
+    def test_create_and_read_config_file(self, tmp_path: Path) -> None:
+        files_cls: type[tf] = tf
+        files = files_cls(base_dir=tmp_path)
+        settings_payload = {
+            "app_name": "flext",
+            "debug": True,
+            "port": 8080,
+        }
+        config_path = files.create(
+            settings_payload,
+            "settings.yaml",
+            fmt=tc.Tests.Format.YAML,
+        )
+        tm.that(config_path.exists(), eq=True)
+        read_result = files.read(config_path, fmt=tc.Tests.Format.YAML)
+        tm.ok(read_result)
+        tm.that(read_result.value, is_=m.ConfigMap)
+        if isinstance(read_result.value, m.ConfigMap):
+            root_payload = self._extract_config_payload(read_result.value)
+            tm.that(str(root_payload.get("app_name")), eq="flext")
+
+    def test_create_and_read_json_config(self, tmp_path: Path) -> None:
+        files_cls: type[tf] = tf
+        files = files_cls(base_dir=tmp_path)
+        payload_mapping = {
+            "name": "flext-core",
+            "workers": 4,
+            "enabled": True,
+        }
+        config_path = files.create(
+            payload_mapping,
+            "settings.json",
+            fmt=tc.Tests.Format.JSON,
+        )
+        tm.that(config_path.exists(), eq=True)
+        read_result = files.read(config_path, fmt=tc.Tests.Format.JSON)
+        tm.ok(read_result)
+        tm.that(read_result.value, is_=m.ConfigMap)
+        if isinstance(read_result.value, m.ConfigMap):
+            root_payload = self._extract_config_payload(read_result.value)
+            workers = root_payload.get("workers")
+            tm.that(workers, is_=int)
+            if isinstance(workers, int):
+                tm.that(workers, eq=4)
+
+    def test_compare_identical_files(self, tmp_path: Path) -> None:
+        files_cls: type[tf] = tf
+        files = files_cls(base_dir=tmp_path)
+        first = files.create({"x": 1}, "a.json", fmt=tc.Tests.Format.JSON)
+        second = files.create({"x": 1}, "b.json", fmt=tc.Tests.Format.JSON)
+        result = files.compare(first, second)
+        tm.ok(result)
+        tm.that(result.value, eq=True)
+
+    @given(
+        pair=st.one_of(
+            st.tuples(st.just("debug"), st.booleans()),
+            st.tuples(st.just("trace"), st.booleans()),
+            st.tuples(st.just("max_workers"), st.integers(min_value=1, max_value=100)),
+            st.tuples(
+                st.just("log_level"),
+                st.sampled_from([
+                    c.LogLevel.DEBUG,
+                    c.LogLevel.INFO,
+                    c.LogLevel.WARNING,
+                    c.LogLevel.ERROR,
+                ]),
+            ),
+            st.tuples(st.just("invalid_key"), st.text(min_size=1, max_size=10)),
+        ),
+    )
+    @settings(max_examples=50)
+    def test_apply_override_returns_bool_property(
+        self,
+        pair: tuple[str, bool | int | str | c.LogLevel],
+    ) -> None:
+        """Property: apply_override always returns bool."""
+        key, value = pair
+        FlextSettings.reset_for_testing()
+        settings_obj = FlextSettings.fetch_global()
+        if key == "trace" and value is True:
+            tm.that(settings_obj.apply_override("debug", True), eq=True)
+        outcome = settings_obj.apply_override(key, value)
+        tm.that(outcome, is_=bool)
+
+    @pytest.mark.performance
+    def test_apply_override_benchmark(self) -> None:
+        settings_obj = FlextSettings.fetch_global()
+        keys = ["debug", "trace", "max_workers"]
+        start = perf_counter()
+        for idx in range(400):
+            key = keys[idx % len(keys)]
+            value = True if key in {"debug", "trace"} else len(f"w-{idx}")
+            tm.that(settings_obj.apply_override(key, value), eq=True)
+            _ = settings_obj.effective_log_level
+        tm.that(perf_counter() - start, gte=0.0)
+
+
+__all__: t.MutableSequenceOf[str] = [
+    "TestsFlextSettings",
+]

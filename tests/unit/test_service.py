@@ -2,45 +2,25 @@
 
 from __future__ import annotations
 
-from typing import Annotated, override
-
-from tests import m, p, r, s
-
-
-class TestsFlextServiceUserData(m.Value):
-    """Public result model used by service tests."""
-
-    __test__ = False
-
-    user_id: Annotated[int, m.Field(description="User identifier")]
-    name: Annotated[str, m.Field(description="User name")]
-
-
-class TestsFlextServiceUserService(s):
-    """Simple successful service."""
-
-    __test__ = False
-
-    @override
-    def execute(self) -> p.Result[TestsFlextServiceUserData]:
-        return r[TestsFlextServiceUserData].ok(
-            TestsFlextServiceUserData(user_id=1, name="test_user")
-        )
+from tests import m, s
 
 
 class TestsFlextService:
     """Validate stable behavior of FlextService subclasses."""
 
     def test_service_initializes_and_executes(self) -> None:
-        service = TestsFlextServiceUserService()
+        service = m.Tests.ServiceUserService()
         assert isinstance(service, s)
         result = service.execute()
         assert result.success
 
     def test_execute_returns_typed_payload(self) -> None:
-        result = TestsFlextServiceUserService().execute()
+        result = m.Tests.ServiceUserService().execute()
         assert result.success
-        assert result.value == TestsFlextServiceUserData(
+        assert result.value == m.Tests.ServiceUserData(
             user_id=1,
             name="test_user",
         )
+
+
+__all__: list[str] = ["TestsFlextService"]

@@ -6,8 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import StrEnum, unique
-from typing import Final, Literal
+from types import MappingProxyType
+from typing import Final
 
 
 class TestsFlextConstantsServices:
@@ -19,28 +21,16 @@ class TestsFlextConstantsServices:
         VALIDATE = "validate"
         FAIL = "fail"
 
-    class Services:
-        """Flext-core-specific service-related constants."""
+    DEFAULT_USER_NAME_PREFIX: Final[str] = "User "
+    DEFAULT_EMAIL_DOMAIN: Final[str] = "@example.com"
+    DEFAULT_ERROR_MESSAGE: Final[str] = "Test error"
+    USER_IDS_SUCCESS: Final[tuple[str, ...]] = ("123", "456", "789")
+    USER_IDS_INVALID: Final[frozenset[str]] = frozenset({"invalid", ""})
 
-        DEFAULT_USER_NAME_PREFIX: Final[str] = "User "
-        DEFAULT_EMAIL_DOMAIN: Final[str] = "@example.com"
-        DEFAULT_ERROR_MESSAGE: Final[str] = "Test error"
-
-    class HTTP:
-        """Flext-core-specific HTTP-related constants for testing."""
-
-        @unique
-        class Method(StrEnum):
-            """HTTP methods for testing."""
-
-            GET = "GET"
-            POST = "POST"
-
-        type StatusLiteral = Literal[200, 404, 400]
-        type MethodLiteral = Literal["GET", "POST"]
-        STATUS_OK: Final[int] = 200
-        STATUS_NOT_FOUND: Final[int] = 404
-        STATUS_BAD_REQUEST: Final[int] = 400
-        CONTENT_TYPE_JSON: Final[str] = "application/json"
-        METHOD_GET: Final[str] = Method.GET
-        METHOD_POST: Final[str] = Method.POST
+    OPERATION_RESULT_KEY: Final[str] = "result"
+    OPERATION_NAME_KEY: Final[str] = "operation"
+    OPERATION_FACTORS: Final[Mapping[str, int]] = MappingProxyType({
+        "double": 2,
+        "negate": -1,
+    })
+    UNKNOWN_OPERATION_PREFIX: Final[str] = "Unknown operation:"

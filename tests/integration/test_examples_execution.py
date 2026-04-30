@@ -9,8 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from tests import t
-from tests.constants import TestsFlextConstants
+from tests import c, t
 
 
 class TestsFlextExamplesExecution:
@@ -18,7 +17,7 @@ class TestsFlextExamplesExecution:
 
     @pytest.mark.parametrize(
         ("example_name", "module_name", "script_name"),
-        TestsFlextConstants.Tests.ExamplesExecution.PUBLIC_EXAMPLES,
+        c.Tests.PUBLIC_EXAMPLES,
     )
     def test_public_example_scripts_match_golden_files(
         self,
@@ -28,10 +27,8 @@ class TestsFlextExamplesExecution:
     ) -> None:
         """Examples must pass via real script execution and keep golden outputs stable."""
         script_path = (
-            Path(__file__)
-            .resolve()
-            .parents[TestsFlextConstants.Tests.Paths.REPO_ROOT_PARENT_DEPTH]
-            / TestsFlextConstants.Tests.Paths.EXAMPLES_DIR
+            Path(__file__).resolve().parents[c.Tests.REPO_ROOT_PARENT_DEPTH]
+            / c.Tests.EXAMPLES_DIR
             / script_name
         )
         actual_path = script_path.with_suffix(".actual")
@@ -41,9 +38,7 @@ class TestsFlextExamplesExecution:
         env.pop("PYTHONPATH", None)
         result = subprocess.run(
             [sys.executable, "-m", module_name],
-            cwd=Path(__file__)
-            .resolve()
-            .parents[TestsFlextConstants.Tests.Paths.REPO_ROOT_PARENT_DEPTH],
+            cwd=Path(__file__).resolve().parents[c.Tests.REPO_ROOT_PARENT_DEPTH],
             capture_output=True,
             text=True,
             check=False,

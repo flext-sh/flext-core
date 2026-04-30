@@ -12,7 +12,8 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_tests import d, e, h, r, s, td, tf, tk, tm, tv, x
+    from flext_infra import d, e, h, r, s, x
+    from flext_tests import td, tf, tk, tm, tv
 
     from tests._constants.domain import TestsFlextConstantsDomain
     from tests._constants.errors import TestsFlextConstantsErrors
@@ -63,23 +64,6 @@ if _t.TYPE_CHECKING:
     from tests.models import TestsFlextModels, m
     from tests.protocols import TestsFlextProtocols, p
     from tests.typings import TestsFlextTypes, t
-    from tests.unit._enforcement_integration_fixtures.bad_module import (
-        TestsFlextBadAccessors,
-        TestsFlextBadAnyField,
-        TestsFlextBadBareCollection,
-        TestsFlextBadConstants,
-        TestsFlextBadFrozen,
-        TestsFlextBadInlineUnion,
-        TestsFlextBadMissingDesc,
-        TestsFlextBadMutableDefault,
-        TestsFlextBadWorkerSettings,
-    )
-    from tests.unit._enforcement_integration_fixtures.clean_module import (
-        TestsFlextCleanConstants,
-        TestsFlextCleanModels,
-        TestsFlextCleanProtocols,
-        TestsFlextCleanServiceBase,
-    )
     from tests.unit._models.test_base import TestsFlextModelsBase
     from tests.unit._models.test_cqrs import TestsFlextModelsCQRS
     from tests.unit._models.test_enforcement_sources import (
@@ -97,7 +81,6 @@ if _t.TYPE_CHECKING:
     )
     from tests.unit.test_container import TestsFlextContainer
     from tests.unit.test_context import TestsFlextContext
-    from tests.unit.test_coverage_exceptions import TestsFlextCoverageExceptions
     from tests.unit.test_coverage_loggings import TestsFlextCoverageLoggings
     from tests.unit.test_decorators import TestsFlextDecoratorsLegacy
     from tests.unit.test_decorators_discovery_full_coverage import (
@@ -105,15 +88,15 @@ if _t.TYPE_CHECKING:
     )
     from tests.unit.test_decorators_full_coverage import TestsFlextDecorators
     from tests.unit.test_deprecation_warnings import TestsFlextDeprecationWarnings
-    from tests.unit.test_dispatcher_di import TestsFlextDispatcherDI
-    from tests.unit.test_dispatcher_minimal import TestsFlextDispatcherMinimal
-    from tests.unit.test_dispatcher_reliability import TestsFlextDispatcherReliability
     from tests.unit.test_enforcement import TestsFlextEnforcement
     from tests.unit.test_enforcement_apt_hooks import TestsFlextEnforcementAptHooks
     from tests.unit.test_enforcement_catalog import TestsFlextEnforcementCatalog
     from tests.unit.test_enforcement_integration import TestsFlextEnforcementIntegration
     from tests.unit.test_enum_utilities_coverage_100 import TestsFlextEnumUtilities
-    from tests.unit.test_exceptions import TestsFlextExceptions
+    from tests.unit.test_exceptions import (
+        TestsFlextCoverageExceptions,
+        TestsFlextExceptions,
+    )
     from tests.unit.test_handler_decorator_discovery import (
         TestsFlextHandlerDecoratorDiscovery,
     )
@@ -132,21 +115,15 @@ if _t.TYPE_CHECKING:
         TestsFlextFacadeFlatSsotAccess,
     )
     from tests.unit.test_registry import TestsFlextRegistry
-    from tests.unit.test_registry_full_coverage import TestsFlextRegistryFullCoverage
-    from tests.unit.test_result import TestsFlextResult
-    from tests.unit.test_result_exception_carrying import (
+    from tests.unit.test_result import (
+        TestsFlextResult,
         TestsFlextResultExceptionCarrying,
     )
     from tests.unit.test_runtime import TestsFlextRuntime
-    from tests.unit.test_service import (
-        TestsFlextService,
-        TestsFlextServiceUserData,
-        TestsFlextServiceUserService,
-    )
+    from tests.unit.test_service import TestsFlextService
     from tests.unit.test_service_bootstrap import TestsFlextServiceBootstrap
     from tests.unit.test_service_coverage_100 import TestsFlextService100Coverage
     from tests.unit.test_settings import TestsFlextSettings
-    from tests.unit.test_settings_coverage import TestsFlextSettingsCoverage
     from tests.unit.test_typings_new import TestsFlextTypesUnit
     from tests.unit.test_utilities import TestsFlextUtilitiesSmoke
     from tests.unit.test_utilities_collection_coverage_100 import (
@@ -241,23 +218,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextTypes",
                 "t",
             ),
-            ".unit._enforcement_integration_fixtures.bad_module": (
-                "TestsFlextBadAccessors",
-                "TestsFlextBadAnyField",
-                "TestsFlextBadBareCollection",
-                "TestsFlextBadConstants",
-                "TestsFlextBadFrozen",
-                "TestsFlextBadInlineUnion",
-                "TestsFlextBadMissingDesc",
-                "TestsFlextBadMutableDefault",
-                "TestsFlextBadWorkerSettings",
-            ),
-            ".unit._enforcement_integration_fixtures.clean_module": (
-                "TestsFlextCleanConstants",
-                "TestsFlextCleanModels",
-                "TestsFlextCleanProtocols",
-                "TestsFlextCleanServiceBase",
-            ),
             ".unit._models.test_base": ("TestsFlextModelsBase",),
             ".unit._models.test_cqrs": ("TestsFlextModelsCQRS",),
             ".unit._models.test_enforcement_sources": (
@@ -275,7 +235,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".unit.test_container": ("TestsFlextContainer",),
             ".unit.test_context": ("TestsFlextContext",),
-            ".unit.test_coverage_exceptions": ("TestsFlextCoverageExceptions",),
             ".unit.test_coverage_loggings": ("TestsFlextCoverageLoggings",),
             ".unit.test_decorators": ("TestsFlextDecoratorsLegacy",),
             ".unit.test_decorators_discovery_full_coverage": (
@@ -283,15 +242,15 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".unit.test_decorators_full_coverage": ("TestsFlextDecorators",),
             ".unit.test_deprecation_warnings": ("TestsFlextDeprecationWarnings",),
-            ".unit.test_dispatcher_di": ("TestsFlextDispatcherDI",),
-            ".unit.test_dispatcher_minimal": ("TestsFlextDispatcherMinimal",),
-            ".unit.test_dispatcher_reliability": ("TestsFlextDispatcherReliability",),
             ".unit.test_enforcement": ("TestsFlextEnforcement",),
             ".unit.test_enforcement_apt_hooks": ("TestsFlextEnforcementAptHooks",),
             ".unit.test_enforcement_catalog": ("TestsFlextEnforcementCatalog",),
             ".unit.test_enforcement_integration": ("TestsFlextEnforcementIntegration",),
             ".unit.test_enum_utilities_coverage_100": ("TestsFlextEnumUtilities",),
-            ".unit.test_exceptions": ("TestsFlextExceptions",),
+            ".unit.test_exceptions": (
+                "TestsFlextCoverageExceptions",
+                "TestsFlextExceptions",
+            ),
             ".unit.test_handler_decorator_discovery": (
                 "TestsFlextHandlerDecoratorDiscovery",
             ),
@@ -310,21 +269,15 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextFacadeFlatSsotAccess",
             ),
             ".unit.test_registry": ("TestsFlextRegistry",),
-            ".unit.test_registry_full_coverage": ("TestsFlextRegistryFullCoverage",),
-            ".unit.test_result": ("TestsFlextResult",),
-            ".unit.test_result_exception_carrying": (
+            ".unit.test_result": (
+                "TestsFlextResult",
                 "TestsFlextResultExceptionCarrying",
             ),
             ".unit.test_runtime": ("TestsFlextRuntime",),
-            ".unit.test_service": (
-                "TestsFlextService",
-                "TestsFlextServiceUserData",
-                "TestsFlextServiceUserService",
-            ),
+            ".unit.test_service": ("TestsFlextService",),
             ".unit.test_service_bootstrap": ("TestsFlextServiceBootstrap",),
             ".unit.test_service_coverage_100": ("TestsFlextService100Coverage",),
             ".unit.test_settings": ("TestsFlextSettings",),
-            ".unit.test_settings_coverage": ("TestsFlextSettingsCoverage",),
             ".unit.test_typings_new": ("TestsFlextTypesUnit",),
             ".unit.test_utilities": ("TestsFlextUtilitiesSmoke",),
             ".unit.test_utilities_collection_coverage_100": (
@@ -351,18 +304,20 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextUtilities",
                 "u",
             ),
-            "flext_tests": (
+            "flext_infra": (
                 "d",
                 "e",
                 "h",
                 "r",
                 "s",
+                "x",
+            ),
+            "flext_tests": (
                 "td",
                 "tf",
                 "tk",
                 "tm",
                 "tv",
-                "x",
             ),
         },
     ),
@@ -395,20 +350,7 @@ __all__: list[str] = [
     "TestsFlextAdvancedPatterns",
     "TestsFlextArchitecturalPatterns",
     "TestsFlextAutomatedArchitecture",
-    "TestsFlextBadAccessors",
-    "TestsFlextBadAnyField",
-    "TestsFlextBadBareCollection",
-    "TestsFlextBadConstants",
-    "TestsFlextBadFrozen",
-    "TestsFlextBadInlineUnion",
-    "TestsFlextBadMissingDesc",
-    "TestsFlextBadMutableDefault",
-    "TestsFlextBadWorkerSettings",
     "TestsFlextBeartypeEngine",
-    "TestsFlextCleanConstants",
-    "TestsFlextCleanModels",
-    "TestsFlextCleanProtocols",
-    "TestsFlextCleanServiceBase",
     "TestsFlextConstants",
     "TestsFlextConstantsDomain",
     "TestsFlextConstantsErrors",
@@ -431,9 +373,6 @@ __all__: list[str] = [
     "TestsFlextDecoratorsDiscovery",
     "TestsFlextDecoratorsLegacy",
     "TestsFlextDeprecationWarnings",
-    "TestsFlextDispatcherDI",
-    "TestsFlextDispatcherMinimal",
-    "TestsFlextDispatcherReliability",
     "TestsFlextDocumentedPatterns",
     "TestsFlextEnforcement",
     "TestsFlextEnforcementAptHooks",
@@ -468,7 +407,6 @@ __all__: list[str] = [
     "TestsFlextPatternsTesting",
     "TestsFlextProtocols",
     "TestsFlextRegistry",
-    "TestsFlextRegistryFullCoverage",
     "TestsFlextResult",
     "TestsFlextResultExceptionCarrying",
     "TestsFlextRuntime",
@@ -478,10 +416,7 @@ __all__: list[str] = [
     "TestsFlextServiceBootstrap",
     "TestsFlextServiceIntegration",
     "TestsFlextServiceResultProperty",
-    "TestsFlextServiceUserData",
-    "TestsFlextServiceUserService",
     "TestsFlextSettings",
-    "TestsFlextSettingsCoverage",
     "TestsFlextSettingsIntegration",
     "TestsFlextSystemIntegration",
     "TestsFlextTypes",

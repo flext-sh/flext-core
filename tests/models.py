@@ -38,7 +38,7 @@ class TestsFlextModels(m):
     """
 
     @override
-    class Tests(TestsFlextModelsMixins):
+    class Tests(m.Tests, TestsFlextModelsMixins):
         """flext-core test models namespace."""
 
 

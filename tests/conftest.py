@@ -105,7 +105,7 @@ def flext_result_success() -> p.Result[dict[str, bool]]:
 @pytest.fixture
 def flext_result_failure() -> p.Result[str]:
     """Failed r fixture available to all FLEXT projects."""
-    return r[str].fail(c.Tests.TestErrors.TEST_ERROR)
+    return r[str].fail(c.Tests.TEST_ERROR)
 
 
 @pytest.fixture

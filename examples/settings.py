@@ -9,16 +9,9 @@ from flext_core import FlextSettings, c, t, u
 class ExamplesSettings(FlextSettings):
     """Application settings model for settings examples."""
 
-    database_url: str = u.Field(
-        default_factory=lambda: f"postgresql://{c.LOCALHOST}:5432/testdb",
-        min_length=1,
-    )
     api_timeout: float = u.Field(
         default_factory=lambda: c.DEFAULT_TIMEOUT_SECONDS, gt=0
     )
-    debug: bool = u.Field(default_factory=lambda: False)
-    max_workers: int = u.Field(default_factory=lambda: 4, ge=1)
-    log_level: c.LogLevel = u.Field(default_factory=lambda: c.LogLevel.INFO)
 
     service_name: str = u.Field(
         default_factory=lambda: "example-service",

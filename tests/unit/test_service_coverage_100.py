@@ -23,8 +23,6 @@ class TestsFlextService100Coverage:
     class _ServiceStub(s[str]):
         """Test service for coverage tests."""
 
-        __test__ = False
-
         @override
         def execute(self, **kwargs: t.Scalar) -> p.Result[str]:
             """Execute service."""
@@ -32,8 +30,6 @@ class TestsFlextService100Coverage:
 
     class _ServiceWithValidationStub(s[str]):
         """Test service with validation."""
-
-        __test__ = False
 
         @override
         def execute(self, **kwargs: t.Scalar) -> p.Result[str]:

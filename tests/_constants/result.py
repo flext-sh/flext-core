@@ -13,85 +13,80 @@ from flext_core import FlextModels as m
 
 
 class TestsFlextConstantsResult:
-    class Railway:
-        """Flext-core-specific railway pattern operation constants."""
+    """Flat result and railway constants for flext-core tests."""
 
-        @unique
-        class Operation(StrEnum):
-            """Railway operation types for testing."""
+    @unique
+    class RailwayOperation(StrEnum):
+        """Railway operation types for testing."""
 
-            GET_EMAIL = "get_email"
-            SEND_EMAIL = "send_email"
-            GET_STATUS = "get_status"
-            DOUBLE = "double"
-            SQUARE = "square"
-            NEGATE = "negate"
+        GET_EMAIL = "get_email"
+        SEND_EMAIL = "send_email"
+        GET_STATUS = "get_status"
+        DOUBLE = "double"
+        SQUARE = "square"
+        NEGATE = "negate"
 
-        type OperationLiteral = Literal[
-            "get_email",
-            "send_email",
-            "get_status",
-            "double",
-            "square",
-            "negate",
-        ]
-        OP_GET_EMAIL: Final[str] = Operation.GET_EMAIL
-        OP_SEND_EMAIL: Final[str] = Operation.SEND_EMAIL
-        OP_GET_STATUS: Final[str] = Operation.GET_STATUS
-        OP_DOUBLE: Final[str] = Operation.DOUBLE
-        OP_SQUARE: Final[str] = Operation.SQUARE
-        OP_NEGATE: Final[str] = Operation.NEGATE
+    type RailwayOperationLiteral = Literal[
+        "get_email",
+        "send_email",
+        "get_status",
+        "double",
+        "square",
+        "negate",
+    ]
+    OP_GET_EMAIL: Final[str] = RailwayOperation.GET_EMAIL
+    OP_SEND_EMAIL: Final[str] = RailwayOperation.SEND_EMAIL
+    OP_GET_STATUS: Final[str] = RailwayOperation.GET_STATUS
+    OP_DOUBLE: Final[str] = RailwayOperation.DOUBLE
+    OP_SQUARE: Final[str] = RailwayOperation.SQUARE
+    OP_NEGATE: Final[str] = RailwayOperation.NEGATE
 
-    class Mapper:
-        """Flext-core-specific Mapper utilities test constants."""
+    # Mapper test constants
+    MAPPER_OLD_KEY: Final[str] = "old_key"
+    MAPPER_NEW_KEY: Final[str] = "new_key"
+    MAPPER_FOO: Final[str] = "foo"
+    MAPPER_BAR: Final[str] = "bar"
+    MAPPER_UNMAPPED: Final[str] = "unmapped"
+    MAPPER_VALUE1: Final[str] = "value1"
+    MAPPER_VALUE2: Final[str] = "value2"
+    MAPPER_FLAGS_READ: Final[str] = "read"
+    MAPPER_FLAGS_WRITE: Final[str] = "write"
+    MAPPER_FLAGS_DELETE: Final[str] = "delete"
+    MAPPER_CAN_READ: Final[str] = "can_read"
+    MAPPER_CAN_WRITE: Final[str] = "can_write"
+    MAPPER_CAN_DELETE: Final[str] = "can_delete"
+    MAPPER_HELLO: Final[str] = "hello"
+    MAPPER_WORLD: Final[str] = "world"
+    MAPPER_HELLO_UPPER: Final[str] = "HELLO"
+    MAPPER_WORLD_UPPER: Final[str] = "WORLD"
+    MAPPER_A: Final[str] = "a"
+    MAPPER_B: Final[str] = "b"
+    MAPPER_C: Final[str] = "c"
+    MAPPER_NUM_1: Final[int] = 1
+    MAPPER_NUM_2: Final[int] = 2
+    MAPPER_NUM_3: Final[int] = 3
+    MAPPER_X: Final[str] = "x"
+    MAPPER_Y: Final[str] = "y"
 
-        OLD_KEY: Final[str] = "old_key"
-        NEW_KEY: Final[str] = "new_key"
-        FOO: Final[str] = "foo"
-        BAR: Final[str] = "bar"
-        UNMAPPED: Final[str] = "unmapped"
-        VALUE1: Final[str] = "value1"
-        VALUE2: Final[str] = "value2"
-        FLAGS_READ: Final[str] = "read"
-        FLAGS_WRITE: Final[str] = "write"
-        FLAGS_DELETE: Final[str] = "delete"
-        CAN_READ: Final[str] = "can_read"
-        CAN_WRITE: Final[str] = "can_write"
-        CAN_DELETE: Final[str] = "can_delete"
-        HELLO: Final[str] = "hello"
-        WORLD: Final[str] = "world"
-        HELLO_UPPER: Final[str] = "HELLO"
-        WORLD_UPPER: Final[str] = "WORLD"
-        A: Final[str] = "a"
-        B: Final[str] = "b"
-        C: Final[str] = "c"
-        NUM_1: Final[int] = 1
-        NUM_2: Final[int] = 2
-        NUM_3: Final[int] = 3
-        X: Final[str] = "x"
-        Y: Final[str] = "y"
-
-    class Result:
-        """Flext-core-specific r test constants."""
-
-        TEST_VALUE: Final[str] = "test_value"
-        TEST_INT: Final[int] = 42
-        TEST_INT_DOUBLE: Final[int] = 84
-        TEST_ERROR: Final[str] = "test_error"
-        TEST_ERROR_CODE: Final[str] = "TEST_ERROR"
-        UNKNOWN_ERROR: Final[str] = "Unknown error occurred"
-        DEFAULT_VALUE: Final[str] = "default"
-        MISSING_VALUE: Final[str] = "Missing value"
-        INVALID_INDEX: Final[str] = "only supports indices 0 (data) and 1 (error)"
-        CANNOT_ACCEPT_NONE: Final[str] = "cannot accept None"
-        TEST_DATA: Final[m.ConfigMap] = m.ConfigMap(
-            root={
-                "key": "value",
-                "value": 5,
-            }
-        )
-        TEST_DICT: Final[m.ConfigMap] = m.ConfigMap(root={"key": "value"})
-        TEST_LIST: Final[tuple[int, ...]] = (1, 2, 3)
-        MAX_EXECUTION_TIME: Final[float] = 1.0
-        ITERATION_COUNT: Final[int] = 1000
-        TEST_BATCH_SIZE: Final[int] = 10
+    # Result test constants
+    RESULT_TEST_VALUE: Final[str] = "test_value"
+    RESULT_TEST_INT: Final[int] = 42
+    RESULT_TEST_INT_DOUBLE: Final[int] = 84
+    RESULT_TEST_ERROR: Final[str] = "test_error"
+    RESULT_TEST_ERROR_CODE: Final[str] = "TEST_ERROR"
+    RESULT_UNKNOWN_ERROR: Final[str] = "Unknown error occurred"
+    RESULT_DEFAULT_VALUE: Final[str] = "default"
+    RESULT_MISSING_VALUE: Final[str] = "Missing value"
+    RESULT_INVALID_INDEX: Final[str] = "only supports indices 0 (data) and 1 (error)"
+    RESULT_CANNOT_ACCEPT_NONE: Final[str] = "cannot accept None"
+    RESULT_TEST_DATA: Final[m.ConfigMap] = m.ConfigMap(
+        root={
+            "key": "value",
+            "value": 5,
+        }
+    )
+    RESULT_TEST_DICT: Final[m.ConfigMap] = m.ConfigMap(root={"key": "value"})
+    RESULT_TEST_LIST: Final[tuple[int, ...]] = (1, 2, 3)
+    RESULT_MAX_EXECUTION_TIME: Final[float] = 1.0
+    RESULT_ITERATION_COUNT: Final[int] = 1000
+    RESULT_TEST_BATCH_SIZE: Final[int] = 10

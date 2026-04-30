@@ -6,69 +6,60 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from typing import Final
 
 
 class TestsFlextConstantsStrings:
-    class Strings:
-        """Flext-core-specific test strings organized by complexity."""
+    # String test values
+    STR_EMPTY: Final[str] = ""
+    STR_SINGLE_CHAR: Final[str] = "a"
+    STR_BASIC_WORD: Final[str] = "hello"
+    STR_BASIC_LIST: Final[str] = "a,b,c"
+    STR_NUMERIC_LIST: Final[str] = "1,2,3"
+    STR_WITH_SPACES: Final[str] = "a, b, c"
+    STR_EXCESSIVE_SPACES: Final[str] = "  a  ,  b  ,  c  "
+    STR_LEADING_SPACES: Final[str] = "  hello"
+    STR_TRAILING_SPACES: Final[str] = "hello  "
+    STR_LEADING_TRAILING: Final[str] = ",a,b,c,"
+    STR_WITH_EMPTY: Final[str] = "a,,c"
+    STR_ONLY_DELIMITERS: Final[str] = ",,,"
+    STR_UNICODE_CHARS: Final[str] = "héllo,wörld"
+    STR_VALID_EMAIL: Final[str] = "test@example.com"
+    STR_INVALID_EMAIL: Final[str] = "invalid-email"
+    STR_USER_ID_VALID: Final[str] = "123"
+    STR_USER_ID_INVALID: Final[str] = "invalid"
+    STR_USER_ID_EMPTY: Final[str] = ""
 
-        EMPTY: Final[str] = ""
-        SINGLE_CHAR: Final[str] = "a"
-        BASIC_WORD: Final[str] = "hello"
-        BASIC_LIST: Final[str] = "a,b,c"
-        NUMERIC_LIST: Final[str] = "1,2,3"
-        WITH_SPACES: Final[str] = "a, b, c"
-        EXCESSIVE_SPACES: Final[str] = "  a  ,  b  ,  c  "
-        LEADING_SPACES: Final[str] = "  hello"
-        TRAILING_SPACES: Final[str] = "hello  "
-        LEADING_TRAILING: Final[str] = ",a,b,c,"
-        WITH_EMPTY: Final[str] = "a,,c"
-        ONLY_DELIMITERS: Final[str] = ",,,"
-        UNICODE_CHARS: Final[str] = "héllo,wörld"
-        VALID_EMAIL: Final[str] = "test@example.com"
-        INVALID_EMAIL: Final[str] = "invalid-email"
-        USER_ID_VALID: Final[str] = "123"
-        USER_ID_INVALID: Final[str] = "invalid"
-        USER_ID_EMPTY: Final[str] = ""
+    # Delimiter characters
+    DELIM_COMMA: Final[str] = ","
+    DELIM_SEMICOLON: Final[str] = ";"
+    DELIM_PIPE: Final[str] = "|"
+    DELIM_COLON: Final[str] = ":"
+    DELIM_TAB: Final[str] = "\t"
+    DELIM_NEWLINE: Final[str] = "\n"
 
-    class Delimiters:
-        """Flext-core-specific delimiter characters for string parsing."""
+    # Escape characters
+    ESCAPE_BACKSLASH: Final[str] = "\\"
+    ESCAPE_HASH: Final[str] = "#"
+    ESCAPE_AT: Final[str] = "@"
+    ESCAPE_QUOTE: Final[str] = '"'
+    ESCAPE_SINGLE_QUOTE: Final[str] = "'"
 
-        COMMA: Final[str] = ","
-        SEMICOLON: Final[str] = ";"
-        PIPE: Final[str] = "|"
-        COLON: Final[str] = ":"
-        TAB: Final[str] = "\t"
-        NEWLINE: Final[str] = "\n"
+    # Replacement strings
+    REPLACE_SPACE: Final[str] = " "
+    REPLACE_UNDERSCORE: Final[str] = "_"
+    REPLACE_DASH: Final[str] = "-"
+    REPLACE_EQUALS: Final[str] = "="
+    REPLACE_COMMA: Final[str] = ","
+    REPLACE_EMPTY: Final[str] = ""
 
-    class EscapeChars:
-        """Flext-core-specific escape characters for string parsing."""
-
-        BACKSLASH: Final[str] = "\\"
-        HASH: Final[str] = "#"
-        AT: Final[str] = "@"
-        QUOTE: Final[str] = '"'
-        SINGLE_QUOTE: Final[str] = "'"
-
-    class Replacements:
-        """Flext-core-specific replacement strings for string processing."""
-
-        SPACE: Final[str] = " "
-        UNDERSCORE: Final[str] = "_"
-        DASH: Final[str] = "-"
-        EQUALS: Final[str] = "="
-        COMMA: Final[str] = ","
-        EMPTY: Final[str] = ""
-
-    class Patterns:
-        """Flext-core-specific regex patterns for string processing."""
-
-        WHITESPACE: Final[str] = "\\s+"
-        DASH: Final[str] = "-+"
-        EQUALS_SPACE: Final[str] = "\\s+="
-        COMMA_SPACE: Final[str] = ",\\s+"
-        EMAIL: Final[str] = "^[^@]+@[^@]+\\.[^@]+$"
-        ALPHA_ONLY: Final[str] = "^[a-zA-Z]+$"
-        NUMERIC_ONLY: Final[str] = "^\\d+$"
-        SEMVER: Final[str] = "^\\d+\\.\\d+\\.\\d+"
+    # Compiled regex patterns
+    PATTERN_WHITESPACE: Final[re.Pattern[str]] = re.compile(r"\s+")
+    PATTERN_DASH: Final[re.Pattern[str]] = re.compile(r"-+")
+    PATTERN_EQUALS_SPACE: Final[re.Pattern[str]] = re.compile(r"\s+=")
+    PATTERN_COMMA_SPACE: Final[re.Pattern[str]] = re.compile(r",\s+")
+    PATTERN_EMAIL: Final[re.Pattern[str]] = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
+    PATTERN_ALPHA_ONLY: Final[re.Pattern[str]] = re.compile(r"^[a-zA-Z]+$")
+    PATTERN_NUMERIC_ONLY: Final[re.Pattern[str]] = re.compile(r"^\d+$")
+    PATTERN_SEMVER: Final[re.Pattern[str]] = re.compile(r"^\d+\.\d+\.\d+")

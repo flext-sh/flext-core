@@ -11,6 +11,8 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, Never, Self, override
 
+from flext_infra import p, r, s
+
 from flext_core import m
 from tests import c, t
 
@@ -25,7 +27,7 @@ class TestsFlextModelsMixins:
         def __getitem__(self, key: str) -> Never:
             """Raise error on get attempt."""
             _ = key
-            msg = c.Tests.TestErrors.BAD_DICT_GET
+            msg = c.Tests.BAD_DICT_GET
             raise RuntimeError(msg)
 
     class BadList(UserList[t.Tests.TestobjectSerializable]):
@@ -34,7 +36,7 @@ class TestsFlextModelsMixins:
         @override
         def __iter__(self) -> Iterator[t.Tests.TestobjectSerializable]:
             """Raise error on iteration."""
-            msg = c.Tests.TestErrors.BAD_LIST_ITERATION
+            msg = c.Tests.BAD_LIST_ITERATION
             raise RuntimeError(msg)
 
     class BadModelDump:
@@ -152,7 +154,7 @@ class TestsFlextModelsMixins:
         ) -> Never:
             _ = strict, extra, from_attributes, context, by_alias, by_name
             _ = obj
-            msg = c.Tests.TestErrors.PLAIN_BOOM
+            msg = c.Tests.PLAIN_BOOM
             raise RuntimeError(msg)
 
     class _TargetModel(m.BaseModel):
@@ -226,7 +228,7 @@ class TestsFlextModelsMixins:
         def __init__(self, **kwargs: t.Scalar) -> None:
             """Raise error on init."""
             super().__init__(**kwargs)
-            msg = c.Tests.TestErrors.CANNOT_INSTANTIATE
+            msg = c.Tests.CANNOT_INSTANTIATE
             raise ValueError(msg)
 
     class _DumpErrorModel(m.BaseModel):
@@ -716,6 +718,21 @@ class TestsFlextModelsMixins:
         id: str = ""
         username: str = ""
         email: str = ""
+
+    class ServiceUserData(m.Value):
+        """Public result model used by service tests."""
+
+        user_id: Annotated[int, m.Field(description="User identifier")]
+        name: Annotated[str, m.Field(description="User name")]
+
+    class ServiceUserService(s[bool]):
+        """Simple successful service for test scenarios."""
+
+        @override
+        def execute(self) -> p.Result[TestsFlextModelsMixins.ServiceUserData]:
+            return r[TestsFlextModelsMixins.ServiceUserData].ok(
+                TestsFlextModelsMixins.ServiceUserData(user_id=1, name="test_user")
+            )
 
     class ServiceTestCase(m.BaseModel):
         """Test case for service."""

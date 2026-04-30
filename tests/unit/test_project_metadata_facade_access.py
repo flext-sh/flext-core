@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests import c, m, u
+from tests import c, m
 
 
 class TestsFlextFacadeFlatSsotAccess:
@@ -25,5 +25,5 @@ class TestsFlextFacadeFlatSsotAccess:
         assert isinstance(m.ProjectToolFlext, type)
 
     def test_u_utilities_flat(self) -> None:
-        assert u.derive_class_stem("flext-core") == "Flext"
-        assert u.pascalize("flext-ldif") == "FlextLdif"
+        assert m.derive_class_stem("flext-core") == "Flext"
+        assert m.pascalize("flext-ldif") == "FlextLdif"

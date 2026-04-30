@@ -24,6 +24,16 @@ class FlextModelsContextData:
     """Namespace for context data models."""
 
     @staticmethod
+    def _coerce_scalar_mapping(
+        items: Mapping[str, object],
+    ) -> Mapping[str, t.Scalar]:
+        """Return an immutable mapping with non-scalar values stringified."""
+        return MappingProxyType({
+            k: val if isinstance(val, (str, int, float, bool)) else str(val)
+            for k, val in items.items()
+        })
+
+    @staticmethod
     def normalize_to_mapping(
         v: Mapping[str, t.Scalar] | t.JsonPayload | None,
     ) -> Mapping[str, t.Scalar]:
@@ -31,15 +41,9 @@ class FlextModelsContextData:
         if v is None:
             return MappingProxyType({})
         if isinstance(v, Mapping):
-            return MappingProxyType({
-                k: str(val) if not isinstance(val, (str, int, float, bool)) else val
-                for k, val in v.items()
-            })
+            return FlextModelsContextData._coerce_scalar_mapping(v)
         if isinstance(v, mp.BaseModel):
-            return MappingProxyType({
-                k: str(val) if not isinstance(val, (str, int, float, bool)) else val
-                for k, val in v.model_dump().items()
-            })
+            return FlextModelsContextData._coerce_scalar_mapping(v.model_dump())
         msg = c.ERR_CONTEXT_CANNOT_NORMALIZE_TYPE_TO_MAPPING.format(
             type_name=type(v).__name__,
         )

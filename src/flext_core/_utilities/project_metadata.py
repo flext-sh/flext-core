@@ -3,8 +3,10 @@
 Static helpers for deriving project metadata and reading standardized
 pyproject.toml tables. Every reader/writer across the monorepo routes
 through this class via ``u.*`` (``u.derive_class_stem``,
-``u.read_project_metadata``, etc.). Never hand-roll name derivation or
-pyproject parsing — duplication is forbidden.
+``u.read_project_metadata``, etc.). Project-name derivation
+(``pascalize``, ``derive_class_stem``) implementation is owned by
+Tier 3 ``FlextModelsProjectMetadata``; this class re-exposes the
+same callables on ``u.*`` via MRO without duplicating the logic.
 
 Architecture: Tier 4 — depends on Tier 0 (_constants) and Tier 3 (_models).
 
@@ -21,49 +23,20 @@ from functools import cache
 from importlib.metadata import PackageNotFoundError, metadata, packages_distributions
 from pathlib import Path
 from types import MappingProxyType
-from typing import ClassVar
 
 from flext_core import FlextTypes as t
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 
 
-class FlextUtilitiesProjectMetadata:
+class FlextUtilitiesProjectMetadata(mpm):
     """SSOT utilities for project-metadata derivation and pyproject reads.
 
-    Inherited into ``FlextUtilities`` via MRO so each static method is
-    callable as ``u.pascalize`` / ``u.derive_class_stem`` /
-    ``u.read_project_metadata`` / etc. (flat access).
+    Inherits from Tier 3 ``FlextModelsProjectMetadata`` so name-derivation
+    static methods (``pascalize``, ``derive_class_stem``) flow through the
+    real Python MRO — callable as ``u.pascalize`` / ``u.derive_class_stem``
+    via ``FlextUtilities`` composition without local wrappers.
     """
-
-    PYPROJECT_FILENAME: ClassVar[str] = cpm.PYPROJECT_FILENAME
-
-    @staticmethod
-    def pascalize(slug: str) -> str:
-        """Simple kebab/snake → PascalCase (no project-name override lookup).
-
-        Use this when the input is a Python package segment or an
-        arbitrary identifier — NOT a full kebab-case project name.
-        For project names use ``derive_class_stem``.
-        """
-        parts = slug.replace("-", "_").split("_")
-        return "".join(part[:1].upper() + part[1:] for part in parts if part)
-
-    @staticmethod
-    def derive_class_stem(project_name: str) -> str:
-        """Return the canonical PascalCase class stem for a project name.
-
-        Accepts either kebab-case (``flext-core``) or snake-case
-        (``flext_core``); project-specific exceptions live in ``c.*``.
-        """
-        if not project_name:
-            msg = "empty project name"
-            raise ValueError(msg)
-        normalized = project_name.replace("_", "-").lower()
-        override = cpm.SPECIAL_NAME_OVERRIDES.get(normalized)
-        if override is not None:
-            return override
-        return FlextUtilitiesProjectMetadata.pascalize(normalized)
 
     @staticmethod
     @cache
@@ -78,12 +51,9 @@ class FlextUtilitiesProjectMetadata:
         flext-infra ``pyproject_payload`` validation layer — shares the
         same disk read; no parallel file I/O.
         """
-        pyproject = root / FlextUtilitiesProjectMetadata.PYPROJECT_FILENAME
+        pyproject = root / cpm.PYPROJECT_FILENAME
         if not pyproject.is_file():
-            msg = (
-                f"{FlextUtilitiesProjectMetadata.PYPROJECT_FILENAME} "
-                f"not found under {root}"
-            )
+            msg = f"{cpm.PYPROJECT_FILENAME} not found under {root}"
             raise FileNotFoundError(msg)
         with pyproject.open("rb") as stream:
             validated_payload: t.JsonMapping = t.json_mapping_adapter().validate_python(
@@ -163,9 +133,7 @@ class FlextUtilitiesProjectMetadata:
             PYTHON_PACKAGE_NAME=FlextUtilitiesProjectMetadata._package_name(
                 distribution_name
             ),
-            CLASS_STEM=FlextUtilitiesProjectMetadata.derive_class_stem(
-                distribution_name
-            ),
+            CLASS_STEM=mpm.derive_class_stem(distribution_name),
         )
 
     @staticmethod

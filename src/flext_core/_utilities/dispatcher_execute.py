@@ -41,7 +41,12 @@ def execute_dispatcher_handler(
     try:
         raw_output = resolved_handler(message)
         result: p.Result[t.JsonPayload]
-        if FlextUtilitiesGuardsTypeProtocol.result_like(raw_output):
+        if raw_output is None:
+            result = dispatch_result.fail_op(
+                "validate handler return payload",
+                c.ERR_HANDLER_RETURNED_NONE,
+            )
+        elif FlextUtilitiesGuardsTypeProtocol.result_like(raw_output):
             if raw_output.failure:
                 error_data_value = raw_output.error_data
                 result = dispatch_result.fail(

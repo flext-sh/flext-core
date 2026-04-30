@@ -48,6 +48,28 @@ class FlextModelsProjectMetadata:
     wiring in ``flext_core/models.py``.
     """
 
+    @staticmethod
+    def pascalize(slug: str) -> str:
+        """Kebab/snake → PascalCase. SSOT for project-name derivation."""
+        parts = slug.replace("-", "_").split("_")
+        return "".join(part[:1].upper() + part[1:] for part in parts if part)
+
+    @staticmethod
+    def derive_class_stem(project_name: str) -> str:
+        """Return the canonical PascalCase class stem with override lookup.
+
+        Accepts kebab-case (``flext-core``) or snake-case (``flext_core``);
+        project-specific exceptions live in ``c.SPECIAL_NAME_OVERRIDES``.
+        """
+        if not project_name:
+            msg = "empty project name"
+            raise ValueError(msg)
+        normalized = project_name.replace("_", "-").lower()
+        override = c.SPECIAL_NAME_OVERRIDES.get(normalized)
+        if override is not None:
+            return override
+        return FlextModelsProjectMetadata.pascalize(normalized)
+
     class ProjectMetadata(FlextModelsPydantic.BaseModel):
         """Canonical per-project metadata (name, version, license, derived names)."""
 
@@ -102,11 +124,7 @@ class FlextModelsProjectMetadata:
         @property
         def class_stem(self) -> str:
             """Return the canonical PascalCase class stem (SSOT-derived)."""
-            override = c.SPECIAL_NAME_OVERRIDES.get(self.name)
-            if override is not None:
-                return override
-            parts = self.name.replace("-", "_").split("_")
-            return "".join(part[:1].upper() + part[1:] for part in parts if part)
+            return FlextModelsProjectMetadata.derive_class_stem(self.name)
 
     class ProjectConstants(FlextModelsPydantic.BaseModel):
         """Constants derived from installed package runtime metadata."""

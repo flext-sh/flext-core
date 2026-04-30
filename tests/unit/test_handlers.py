@@ -24,7 +24,7 @@ class TestsFlextFlextHandlers:
         @override
         def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
             if not isinstance(message, str):
-                return r[t.JsonPayload].fail(c.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE)
+                return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)
             return r[t.JsonPayload].ok(f"processed_{message}")
 
     class ValidationTestHandler(h[t.JsonPayload, t.JsonPayload]):
@@ -38,7 +38,7 @@ class TestsFlextFlextHandlers:
             return (
                 r[bool].ok(True)
                 if data
-                else r[bool].fail(c.Tests.TestErrors.VALIDATION_FAILED_FOR_TEST)
+                else r[bool].fail(c.Tests.VALIDATION_FAILED_FOR_TEST)
             )
 
         @override
@@ -54,7 +54,7 @@ class TestsFlextFlextHandlers:
         @override
         def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
             if not isinstance(message, str):
-                return r[t.JsonPayload].fail(c.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE)
+                return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)
             return r[t.JsonPayload].fail(f"Handler failed for: {message}")
 
     class HandlerTypeScenario(m.Value):
@@ -165,9 +165,7 @@ class TestsFlextFlextHandlers:
             @override
             def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
                 if not isinstance(message, int):
-                    return r[t.JsonPayload].fail(
-                        c.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
-                    )
+                    return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)
                 return r[t.JsonPayload].ok(f"processed_{message}")
 
         settings = u.Tests.create_handler_config(
@@ -243,9 +241,7 @@ class TestsFlextFlextHandlers:
                 message: Mapping[str, t.JsonValue],
             ) -> p.Result[t.JsonPayload]:
                 if not isinstance(message, dict):
-                    return r[t.JsonPayload].fail(
-                        c.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
-                    )
+                    return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)
                 return r[t.JsonPayload].ok(f"processed_{message}")
 
         settings = u.Tests.create_handler_config(
@@ -287,9 +283,7 @@ class TestsFlextFlextHandlers:
             @override
             def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
                 if not isinstance(message, str):
-                    return r[t.JsonPayload].fail(
-                        c.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
-                    )
+                    return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)
                 return r[t.JsonPayload].ok(f"processed_{message}")
 
         settings = u.Tests.create_handler_config(
@@ -313,14 +307,12 @@ class TestsFlextFlextHandlers:
             @override
             def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
                 _ = data
-                return r[bool].fail(c.Tests.TestErrors.VALIDATION_FAILED_FOR_TEST)
+                return r[bool].fail(c.Tests.VALIDATION_FAILED_FOR_TEST)
 
             @override
             def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
                 if not isinstance(message, str):
-                    return r[t.JsonPayload].fail(
-                        c.Tests.TestErrors.UNEXPECTED_MESSAGE_TYPE
-                    )
+                    return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)
                 return r[t.JsonPayload].ok(f"processed_{message}")
 
         settings = u.Tests.create_handler_config(

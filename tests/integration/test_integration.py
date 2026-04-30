@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextContainer, __version__
+from flext_core import FlextContainer
+from flext_core.__version__ import __version__
 from tests import p, r, t, u
 
 pytestmark = [pytest.mark.integration]
