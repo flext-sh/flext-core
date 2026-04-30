@@ -10,6 +10,7 @@ from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities._beartype.helpers import (
     FlextUtilitiesBeartypeHelpers as ubh,
 )
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
 
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}
@@ -104,11 +105,8 @@ class FlextUtilitiesBeartypeClassVisitor:
         is_module_level = not separator
         project_prefix, _ = target.__name__, ""
         if target.__module__:
-            project_prefix = "".join(
-                part[:1].upper() + part[1:]
-                for part in target.__module__.split(".", 1)[0].split("_")
-                if part
-            )
+            package_name = target.__module__.split(".", 1)[0]
+            project_prefix = upm.derive_class_stem(package_name)
         tier_facade_prefixes = (project_prefix, f"Tests{project_prefix}")
         is_facade = is_module_level and target.__name__.startswith(tier_facade_prefixes)
         module_name = getattr(target, "__module__", "") or ""

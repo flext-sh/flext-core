@@ -14,9 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import ast
 import importlib
-import importlib.util
 import tomllib
 from collections.abc import Mapping
 from functools import cache
@@ -28,7 +26,6 @@ from typing import ClassVar
 from flext_core import FlextTypes as t
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
-from flext_core.lazy import normalize_lazy_imports
 
 
 class FlextUtilitiesProjectMetadata:
@@ -47,8 +44,7 @@ class FlextUtilitiesProjectMetadata:
 
         Use this when the input is a Python package segment or an
         arbitrary identifier — NOT a full kebab-case project name.
-        For project names use ``derive_class_stem`` which additionally
-        applies ``SPECIAL_NAME_OVERRIDES`` (flext → FlextRoot etc.).
+        For project names use ``derive_class_stem``.
         """
         parts = slug.replace("-", "_").split("_")
         return "".join(part[:1].upper() + part[1:] for part in parts if part)
@@ -58,30 +54,16 @@ class FlextUtilitiesProjectMetadata:
         """Return the canonical PascalCase class stem for a project name.
 
         Accepts either kebab-case (``flext-core``) or snake-case
-        (``flext_core``) — inputs are normalized before the
-        ``SPECIAL_NAME_OVERRIDES`` lookup so that the SSOT is robust to
-        both Python package names and pyproject project names.
+        (``flext_core``); project-specific exceptions live in ``c.*``.
         """
         if not project_name:
             msg = "empty project name"
             raise ValueError(msg)
-        if "-" not in project_name and "_" not in project_name:
-            return FlextUtilitiesProjectMetadata.pascalize(project_name)
-        distribution_name = FlextUtilitiesProjectMetadata._distribution_name(
-            FlextUtilitiesProjectMetadata._package_name(project_name)
-        )
-        import_name = FlextUtilitiesProjectMetadata._package_name(distribution_name)
-        package = importlib.import_module(import_name)
-        lazy_imports = normalize_lazy_imports(
-            package.__name__,
-            getattr(package, "_LAZY_IMPORTS"),
-        )
-        entry = lazy_imports["c"]
-        module_path = entry if isinstance(entry, str) else entry[0]
-        return FlextUtilitiesProjectMetadata._class_prefix_from_module(
-            module_path,
-            "Constants",
-        )
+        normalized = project_name.replace("_", "-").lower()
+        override = cpm.SPECIAL_NAME_OVERRIDES.get(normalized)
+        if override is not None:
+            return override
+        return FlextUtilitiesProjectMetadata.pascalize(normalized)
 
     @staticmethod
     @cache
@@ -151,95 +133,6 @@ class FlextUtilitiesProjectMetadata:
         return distribution_name.replace("-", "_")
 
     @staticmethod
-    @cache
-    def _module_class_names(module_path: str) -> tuple[str, ...]:
-        """Read class names from a Python module without importing it."""
-        spec = importlib.util.find_spec(module_path)
-        if spec is None or spec.origin is None:
-            msg = f"module spec for {module_path!r} was not found"
-            raise RuntimeError(msg)
-        source = Path(spec.origin).read_text(encoding="utf-8")
-        tree = ast.parse(source)
-        return tuple(node.name for node in tree.body if isinstance(node, ast.ClassDef))
-
-    @staticmethod
-    def _class_prefix_from_module(module_path: str, suffix: str) -> str:
-        """Derive a class prefix from a module class ending with ``suffix``."""
-        for class_name in FlextUtilitiesProjectMetadata._module_class_names(
-            module_path
-        ):
-            if class_name.endswith(suffix):
-                return class_name.removesuffix(suffix)
-        msg = f"module {module_path!r} exposes no class ending with {suffix!r}"
-        raise RuntimeError(msg)
-
-    @staticmethod
-    def _alias_suffix(alias: str, module_path: str, class_stem: str) -> str:
-        """Derive an alias suffix from the generated runtime alias target."""
-        _ = alias
-        for class_name in FlextUtilitiesProjectMetadata._module_class_names(
-            module_path
-        ):
-            for prefix in (class_stem, "Flext"):
-                if not class_name.startswith(prefix):
-                    continue
-                suffix = class_name.removeprefix(prefix).removesuffix("Base")
-                if suffix:
-                    return suffix
-        msg = f"cannot derive alias suffix for {alias!r} from {module_path!r}"
-        raise RuntimeError(msg)
-
-    @staticmethod
-    @cache
-    def read_lazy_alias_metadata(
-        package_name: str,
-    ) -> tuple[mpm.LazyAliasMetadata, ...]:
-        """Read normalized alias metadata from an installed package ``_LAZY_IMPORTS``."""
-        import_name = FlextUtilitiesProjectMetadata._package_name(package_name)
-        package = importlib.import_module(import_name)
-        distribution_name = FlextUtilitiesProjectMetadata._distribution_name(
-            import_name
-        )
-        class_stem = FlextUtilitiesProjectMetadata.derive_class_stem(distribution_name)
-        lazy_imports = normalize_lazy_imports(
-            package.__name__,
-            getattr(package, "_LAZY_IMPORTS"),
-        )
-        rows: list[mpm.LazyAliasMetadata] = []
-        facade_suffixes = {"Constants", "Models", "Protocols", "Types", "Utilities"}
-        for alias, entry in lazy_imports.items():
-            if len(alias) != 1 or not alias.islower():
-                continue
-            module_path = entry if isinstance(entry, str) else entry[0]
-            parent_source = module_path.split(".", 1)[0]
-            suffix = (
-                next(
-                    row.suffix
-                    for row in FlextUtilitiesProjectMetadata.read_lazy_alias_metadata(
-                        parent_source
-                    )
-                    if row.alias == alias
-                )
-                if module_path == parent_source and parent_source != package.__name__
-                else FlextUtilitiesProjectMetadata._alias_suffix(
-                    alias,
-                    module_path,
-                    class_stem,
-                )
-            )
-            rows.append(
-                mpm.LazyAliasMetadata(
-                    alias=alias,
-                    module=module_path,
-                    parent_source=parent_source,
-                    suffix=suffix,
-                    facade=suffix in facade_suffixes
-                    and parent_source == package.__name__,
-                )
-            )
-        return tuple(rows)
-
-    @staticmethod
     def read_project_constants(
         package_name: str,
         root: Path | None = None,
@@ -251,27 +144,11 @@ class FlextUtilitiesProjectMetadata:
         import_name = FlextUtilitiesProjectMetadata._package_name(distribution_name)
         package = importlib.import_module(import_name)
         package_version = importlib.import_module(f"{import_name}.__version__")
-        aliases = FlextUtilitiesProjectMetadata.read_lazy_alias_metadata(
-            distribution_name
-        )
         package_file = package.__file__
         if package_file is None:
             msg = f"package {import_name!r} has no __file__"
             raise RuntimeError(msg)
         package_root = root or Path(package_file).resolve().parents[2]
-        scan_dirs = tuple(
-            name
-            for name in ("src", "tests", "examples", "scripts", "docs")
-            if (package_root / name).exists()
-        )
-        tier_prefix = MappingProxyType({
-            name: (
-                f"{FlextUtilitiesProjectMetadata.pascalize(name)}{FlextUtilitiesProjectMetadata.derive_class_stem(distribution_name)}"
-                if name != "src"
-                else FlextUtilitiesProjectMetadata.derive_class_stem(distribution_name)
-            )
-            for name in scan_dirs
-        })
         return mpm.ProjectConstants(
             PACKAGE_NAME=package_version.__title__,
             PACKAGE_VERSION=package_version.__version__,
@@ -289,27 +166,6 @@ class FlextUtilitiesProjectMetadata:
             CLASS_STEM=FlextUtilitiesProjectMetadata.derive_class_stem(
                 distribution_name
             ),
-            ALIAS_TO_SUFFIX=MappingProxyType({
-                row.alias: row.suffix for row in aliases
-            }),
-            RUNTIME_ALIAS_NAMES=frozenset(row.alias for row in aliases),
-            FACADE_ALIAS_NAMES=frozenset(row.alias for row in aliases if row.facade),
-            FACADE_MODULE_NAMES=frozenset(
-                row.module.rsplit(".", 1)[-1] for row in aliases if row.facade
-            ),
-            UNIVERSAL_ALIAS_PARENT_SOURCES=MappingProxyType({
-                row.alias: row.parent_source
-                for row in aliases
-                if not row.facade and row.parent_source != import_name
-            }),
-            TIER_FACADE_PREFIX=tier_prefix,
-            SCAN_DIRECTORIES=scan_dirs,
-            TIER_SUB_NAMESPACE=MappingProxyType({
-                name: tier_prefix[name].removesuffix(
-                    FlextUtilitiesProjectMetadata.derive_class_stem(distribution_name)
-                )
-                for name in scan_dirs
-            }),
         )
 
     @staticmethod
@@ -333,14 +189,13 @@ class FlextUtilitiesProjectMetadata:
         """Build the effective namespace config for a project."""
         meta = FlextUtilitiesProjectMetadata.read_project_metadata(root)
         cfg = FlextUtilitiesProjectMetadata.read_tool_flext_config(root)
-        constants = FlextUtilitiesProjectMetadata.read_project_constants(meta.name)
         return mpm.ProjectNamespaceConfig(
             project_name=meta.name,
             enabled=cfg.namespace.enabled,
             scan_dirs=cfg.namespace.scan_dirs,
             include_dynamic_dirs=cfg.namespace.include_dynamic_dirs,
             alias_parent_sources={
-                **dict(constants.UNIVERSAL_ALIAS_PARENT_SOURCES),
+                **dict(cpm.UNIVERSAL_ALIAS_PARENT_SOURCES),
                 **dict(cfg.namespace.alias_parent_sources),
             },
         )

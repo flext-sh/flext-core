@@ -132,9 +132,6 @@ class TestsFlextUtilitiesProjectMetadata:
             constants.PACKAGE_AUTHORS,
             eq=("Marlon Costa <marlon.costa@datacosmos.com.br>",),
         )
-        tm.that(constants.ALIAS_TO_SUFFIX["c"], eq="Constants")
-        tm.that(constants.ALIAS_TO_SUFFIX["u"], eq="Utilities")
-        tm.that(constants.FACADE_ALIAS_NAMES, eq=frozenset({"c", "m", "p", "t", "u"}))
 
     def test_read_project_metadata_raises_on_missing_pyproject(
         self,
@@ -221,3 +218,41 @@ class TestsFlextUtilitiesProjectMetadata:
         tm.that(ns.project_name, eq="flext-ldif")
         tm.that(ns.alias_parent_sources["c"], eq="flext_cli")
         tm.that(ns.alias_parent_sources["r"], eq="flext_core")
+
+    def test_compose_namespace_config_rejects_unknown_alias(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        root = _write_pyproject(
+            tmp_path,
+            """
+            [project]
+            name = "flext-ldif"
+            version = "0.12.0-dev"
+            license = "MIT"
+
+            [tool.flext.namespace]
+            alias_parent_sources = {z = "flext_cli"}
+            """,
+        )
+        with pytest.raises(ValueError, match="unknown alias"):
+            u.compose_namespace_config(root)
+
+    def test_compose_namespace_config_rejects_universal_alias_override(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        root = _write_pyproject(
+            tmp_path,
+            """
+            [project]
+            name = "flext-ldif"
+            version = "0.12.0-dev"
+            license = "MIT"
+
+            [tool.flext.namespace]
+            alias_parent_sources = {r = "flext_cli"}
+            """,
+        )
+        with pytest.raises(ValueError, match="cannot override universal alias"):
+            u.compose_namespace_config(root)

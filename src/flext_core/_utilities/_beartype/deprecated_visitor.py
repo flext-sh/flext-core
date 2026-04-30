@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import inspect
 from pathlib import Path
 from typing import TypeAlias
@@ -133,27 +134,65 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                     ).name
                     package_name = wrapper_module.__name__.split(".", 1)[0]
                     wrapper_submodules = _ubh.facade_module_names(package_name)
-                    violation = next(
-                        (
-                            {
-                                "file": wrapper_file_name,
-                                "line": "<runtime>",
-                                "statement": f"from {origin} import {alias_name}",
-                            }
-                            for alias_name in _ubh.runtime_alias_names(package_name)
-                            if (
-                                alias_value := getattr(wrapper_module, alias_name, None)
+                    violation = _NO_VIOLATION
+                    try:
+                        source = Path(
+                            _ubh.module_filename_for(wrapper_module) or ""
+                        ).read_text(encoding="utf-8")
+                    except OSError:
+                        source = ""
+                    if source:
+                        try:
+                            syntax = ast.parse(source)
+                        except SyntaxError:
+                            syntax = None
+                        if syntax is not None:
+                            violation = next(
+                                (
+                                    {
+                                        "file": wrapper_file_name,
+                                        "line": str(node.lineno),
+                                        "statement": f"from {node.module} import {alias.name}",
+                                    }
+                                    for node in ast.walk(syntax)
+                                    if isinstance(node, ast.ImportFrom)
+                                    and isinstance(node.module, str)
+                                    and node.module.split(".")[0]
+                                    in {
+                                        "tests",
+                                        "examples",
+                                        "scripts",
+                                    }
+                                    and "." in node.module
+                                    for alias in node.names
+                                ),
+                                _NO_VIOLATION,
                             )
-                            is not None
-                            and (
-                                origin := _ubh.object_module_name_for(alias_value) or ""
-                            )
-                            for parent, _, child in (origin.partition("."),)
-                            if parent in {"tests", "examples", "scripts"}
-                            and child in wrapper_submodules
-                        ),
-                        _NO_VIOLATION,
-                    )
+                    if violation is _NO_VIOLATION:
+                        violation = next(
+                            (
+                                {
+                                    "file": wrapper_file_name,
+                                    "line": "<runtime>",
+                                    "statement": f"from {origin} import {alias_name}",
+                                }
+                                for alias_name in _ubh.runtime_alias_names(package_name)
+                                if (
+                                    alias_value := getattr(
+                                        wrapper_module, alias_name, None
+                                    )
+                                )
+                                is not None
+                                and (
+                                    origin := _ubh.object_module_name_for(alias_value)
+                                    or ""
+                                )
+                                for parent, _, child in (origin.partition("."),)
+                                if parent in {"tests", "examples", "scripts"}
+                                and child in wrapper_submodules
+                            ),
+                            _NO_VIOLATION,
+                        )
             case _:
                 pass
         return violation

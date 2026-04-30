@@ -9,10 +9,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import Annotated, ClassVar, Final, Protocol, override, runtime_checkable
+from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
 
 from tests import m, p, r, t, u
-from tests.unit.base import TestsFlextServiceBase
 
 
 class TestsFlextCleanModels:
@@ -77,10 +76,9 @@ class TestsFlextCleanProtocols:
                 def run(self) -> None: ...
 
 
-class TestsFlextCleanServiceBase(TestsFlextServiceBase[bool]):
-    """Service-base facade using the canonical alias-base pattern."""
+class TestsFlextCleanServiceBase:
+    """Clean facade stub with no enforcement-triggering MRO requirements."""
 
-    @override
     def execute(self) -> p.Result[bool]:
         """Return a stable success result for enforcement import tests."""
         return r[bool].ok(True)

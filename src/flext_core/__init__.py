@@ -177,7 +177,12 @@ if _t.TYPE_CHECKING:
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.exceptions import FlextExceptions, e
     from flext_core.handlers import FlextHandlers, h
-    from flext_core.lazy import FlextLazy, build_lazy_import_map, lazy
+    from flext_core.lazy import (
+        FlextLazy,
+        build_lazy_import_map,
+        lazy,
+        normalize_lazy_imports,
+    )
     from flext_core.loggings import FlextLogger
     from flext_core.mixins import FlextMixins, x
     from flext_core.models import FlextModels, m
@@ -384,6 +389,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextLazy",
                 "build_lazy_import_map",
                 "lazy",
+                "normalize_lazy_imports",
             ),
             ".loggings": ("FlextLogger",),
             ".mixins": (
@@ -604,6 +610,7 @@ __all__: list[str] = [
     "lazy",
     "m",
     "mc",
+    "normalize_lazy_imports",
     "p",
     "r",
     "s",

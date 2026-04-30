@@ -44,7 +44,14 @@ class FlextUtilitiesBeartypeHelpers:
     @functools.cache
     def lazy_alias_suffixes(package_name: str) -> tuple[tuple[str, str, str], ...]:
         """Return ``(alias, module_path, suffix)`` rows from package ``_LAZY_IMPORTS``."""
-        package = sys.modules.get(package_name) or importlib.import_module(package_name)
+        package = sys.modules.get(package_name)
+        if package is None:
+            try:
+                package = importlib.import_module(package_name)
+            except (ImportError, ModuleNotFoundError):
+                return ()
+        if not hasattr(package, "_LAZY_IMPORTS"):
+            return ()
         lazy_module = importlib.import_module("flext_core.lazy")
         lazy_imports = lazy_module.normalize_lazy_imports(
             package.__name__,

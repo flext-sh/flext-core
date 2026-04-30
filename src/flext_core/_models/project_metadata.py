@@ -88,6 +88,9 @@ class FlextModelsProjectMetadata:
         @property
         def class_stem(self) -> str:
             """Return the canonical PascalCase class stem (SSOT-derived)."""
+            override = c.SPECIAL_NAME_OVERRIDES.get(self.name)
+            if override is not None:
+                return override
             parts = self.name.replace("-", "_").split("_")
             return "".join(part[:1].upper() + part[1:] for part in parts if part)
 
@@ -106,23 +109,6 @@ class FlextModelsProjectMetadata:
         PACKAGE_ROOT: Path
         PYTHON_PACKAGE_NAME: Annotated[str, Field(min_length=1)]
         CLASS_STEM: Annotated[str, Field(min_length=1)]
-        ALIAS_TO_SUFFIX: tb.StrMapping = Field(
-            default_factory=lambda: MappingProxyType({})
-        )
-        RUNTIME_ALIAS_NAMES: frozenset[str] = frozenset()
-        FACADE_ALIAS_NAMES: frozenset[str] = frozenset()
-        FACADE_MODULE_NAMES: frozenset[str] = frozenset()
-        UNIVERSAL_ALIAS_PARENT_SOURCES: tb.StrMapping = Field(
-            default_factory=lambda: MappingProxyType({})
-        )
-        TIER_FACADE_PREFIX: tb.StrMapping = Field(
-            default_factory=lambda: MappingProxyType({})
-        )
-        SCAN_DIRECTORIES: tuple[str, ...] = ()
-        TIER_SUB_NAMESPACE: tb.StrMapping = Field(
-            default_factory=lambda: MappingProxyType({})
-        )
-        PYPROJECT_FILENAME: str = c.PYPROJECT_FILENAME
 
         @classmethod
         def from_metadata(
@@ -140,19 +126,6 @@ class FlextModelsProjectMetadata:
                 PYTHON_PACKAGE_NAME=metadata.package_name,
                 CLASS_STEM=metadata.class_stem,
             )
-
-    class LazyAliasMetadata(FlextModelsPydantic.BaseModel):
-        """Normalized runtime alias row derived from package ``_LAZY_IMPORTS``."""
-
-        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
-            FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
-        )
-
-        alias: Annotated[str, Field(min_length=1)]
-        module: Annotated[str, Field(min_length=1)]
-        parent_source: Annotated[str, Field(min_length=1)]
-        suffix: Annotated[str, Field(min_length=1)]
-        facade: bool = False
 
     class PyprojectProject(FlextModelsPydantic.BaseModel):
         """PEP 621 ``[project]`` table normalized for ``ProjectMetadata``."""
@@ -244,10 +217,10 @@ class FlextModelsProjectMetadata:
         scan_dirs: Annotated[
             tuple[str, ...],
             Field(
-                default=(),
+                default=c.SCAN_DIRECTORIES,
                 description="Top-level directories to scan for facades.",
             ),
-        ] = ()
+        ] = c.SCAN_DIRECTORIES
         include_dynamic_dirs: Annotated[
             bool,
             Field(
@@ -275,7 +248,21 @@ class FlextModelsProjectMetadata:
             sources: dict[str, tp.JsonValue] = (
                 dict(sources_raw) if isinstance(sources_raw, dict) else {}
             )
-            data["alias_parent_sources"] = dict(sources)
+            unknown = set(sources) - set(c.RUNTIME_ALIAS_NAMES)
+            if unknown:
+                msg = f"unknown alias(es): {sorted(unknown)}"
+                raise ValueError(msg)
+            for alias, canonical in c.UNIVERSAL_ALIAS_PARENT_SOURCES.items():
+                if alias in sources and sources[alias] != canonical:
+                    msg = (
+                        f"cannot override universal alias {alias!r}: "
+                        f"must remain {canonical!r}"
+                    )
+                    raise ValueError(msg)
+            data["alias_parent_sources"] = {
+                **dict(c.UNIVERSAL_ALIAS_PARENT_SOURCES),
+                **dict(sources),
+            }
             return data
 
     class ProjectToolFlextProject(FlextModelsPydantic.BaseModel):
@@ -314,10 +301,10 @@ class FlextModelsProjectMetadata:
         scan_dirs: Annotated[
             tuple[str, ...],
             Field(
-                default=(),
+                default=c.SCAN_DIRECTORIES,
                 description="Top-level directories to scan.",
             ),
-        ] = ()
+        ] = c.SCAN_DIRECTORIES
         include_dynamic_dirs: Annotated[
             bool,
             Field(
