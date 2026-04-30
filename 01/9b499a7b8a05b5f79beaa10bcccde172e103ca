@@ -1,0 +1,30 @@
+tests/integration/test_integration.py
+  h_9db9d35f50cf33 105-107
+src/flext_core/_utilities/enforcement_emit.py
+  h_9db9d35f50cf33 6,15-18,37-54,59,61,75-83
+src/flext_core/_settings/base.py
+  h_9db9d35f50cf33 13-14,68-78
+src/flext_core/_utilities/_beartype/class_visitor.py
+  h_9db9d35f50cf33 145-160,181
+src/flext_core/_utilities/guards.py
+  h_9db9d35f50cf33 13,46-47
+src/flext_core/_utilities/enforcement.py
+  h_9db9d35f50cf33 236,252-253,352
+src/flext_core/_models/enforcement.py
+  h_9db9d35f50cf33 56-57
+tests/unit/test_enforcement.py
+  h_9db9d35f50cf33 351-367
+src/flext_core/settings.py
+  h_9db9d35f50cf33 91,114-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "019b499a7b8a05b5f79beaa10bcccde172e103ca",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
