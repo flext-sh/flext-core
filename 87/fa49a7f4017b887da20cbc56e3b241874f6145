@@ -1,0 +1,78 @@
+src/flext_core/_utilities/project_metadata.py
+  61a9284c8e0bc429 6-9,32,35-38,56,136
+  h_9db9d35f50cf33 54
+tests/_constants/errors.py
+  h_9db9d35f50cf33 9,14,33-53,57-60
+tests/unit/test_registry.py
+  h_9db9d35f50cf33 1,5,7,11-125,127
+tests/unit/base.py
+  h_9db9d35f50cf33 49,196,242,272,275,304
+tests/unit/test_project_metadata_facade_access.py
+  h_9db9d35f50cf33 28-29
+tests/conftest.py
+  h_9db9d35f50cf33 108
+tests/_constants/services.py
+  h_9db9d35f50cf33 9,11-12,24,27-36
+tests/unit/test_dispatcher.py
+  h_9db9d35f50cf33 1-72
+tests/unit/test_version.py
+  h_9db9d35f50cf33 9,20,35,37,39-40,44-45
+tests/constants.py
+  h_9db9d35f50cf33 3-4,14-24,30,33-38,40-43
+tests/unit/test_exceptions.py
+  h_9db9d35f50cf33 266-595
+tests/_constants/other.py
+  h_9db9d35f50cf33 9,15-46,48-53,55,71,89-107,113
+tests/_constants/domain.py
+  h_9db9d35f50cf33 14
+tests/benchmark/test_lazy_performance.py
+  h_9db9d35f50cf33 44,58
+tests/unit/test_utilities_project_metadata.py
+  h_9db9d35f50cf33 37,40-42
+tests/unit/test_handlers.py
+  h_9db9d35f50cf33 27,41,57
+src/flext_core/_models/_context/_data.py
+  61a9284c8e0bc429 27-35,44,46
+tests/unit/test_result.py
+  h_9db9d35f50cf33 26,35,863-1170,1172-1173
+tests/__init__.py
+  h_9db9d35f50cf33 15-16,96-99,118-119,123,252
+tests/unit/test_settings.py
+  h_9db9d35f50cf33 5,11,15,18-19,21-22,310-368,370-487
+tests/_constants/strings.py
+  h_9db9d35f50cf33 9,14-32,34-40,42-47,49-55,57-65
+tests/utilities.py
+  h_9db9d35f50cf33 124-125,128-129,132-133,143,148,158,161,164-165,167,170,172-174,185,188-189,193,196-197,201,204-205,209,212-213,217,220-221,236,242-243,279,300,303-307,310,313-314,317,320-324,329,424
+tests/models.py
+  h_9db9d35f50cf33 41
+src/flext_core/_utilities/enforcement_collect.py
+  h_9db9d35f50cf33 62-63,65
+tests/_constants/result.py
+  h_9db9d35f50cf33 16,19,29,37-42,44-69,71-82,88-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "87fa49a7f4017b887da20cbc56e3b241874f6145",
+  "prompts": {
+    "61a9284c8e0bc429": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bda0e333-7f3f-41d7-9129-e749cdf19e20",
+        "model": "<synthetic>"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 58,
+      "total_deletions": 67,
+      "accepted_lines": 27,
+      "overriden_lines": 3,
+      "messages_url": "https://usegitai.com/cas/70d79bd80810b0ee29fcf318e7339b82e0a686de0ce73afde1d0738746bfff7f"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
