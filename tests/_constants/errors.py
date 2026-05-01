@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from typing import Final
 
 
@@ -32,29 +31,6 @@ class TestsFlextConstantsErrors:
     CANNOT_INSTANTIATE: Final[str] = "Cannot instantiate"
     UNEXPECTED_MESSAGE_TYPE: Final[str] = "Unexpected message type"
     VALIDATION_FAILED_FOR_TEST: Final[str] = "Validation failed for test"
-    ACTIVE_ERROR_MESSAGES: Final[frozenset[str]] = frozenset({
-        USER_NOT_FOUND,
-        INVALID_EMAIL,
-        VALUE_TOO_LOW,
-        VALUE_TOO_HIGH,
-        TEST_ERROR,
-        DISPATCHER_UNCONFIGURED,
-        DISPATCHER_FAIL,
-        NO_USER_IDS_PROVIDED,
-        SUBCLASSES_MUST_IMPLEMENT_EXECUTE,
-        HANDLER_ID_CANNOT_BE_EMPTY,
-        PROCESSING_ERROR_DEFAULT,
-        BAD_DICT_GET,
-        BAD_LIST_ITERATION,
-        PLAIN_BOOM,
-        CANNOT_INSTANTIATE,
-        UNEXPECTED_MESSAGE_TYPE,
-        VALIDATION_FAILED_FOR_TEST,
-    })
 
     MIN_LENGTH_DEFAULT: Final[int] = 3
     MAX_VALUE: Final[int] = 100
-    ACTIVE_ERROR_MESSAGES_RE: Final[re.Pattern[str]] = re.compile(
-        "|".join(re.escape(message) for message in ACTIVE_ERROR_MESSAGES),
-        re.IGNORECASE,
-    )

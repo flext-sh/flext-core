@@ -17,7 +17,7 @@ class TestsFlextVersion:
             FlextVersion.resolve_version_string(),
             is_=str,
             empty=False,
-            match=c.Tests.SEMVER_PATTERN.pattern,
+            match=c.Tests.SEMVER_REGEX,
         )
 
     def test_resolve_version_info_returns_non_empty_tuple_starting_with_major(
@@ -37,7 +37,7 @@ class TestsFlextVersion:
         for key in c.Tests.PACKAGE_INFO_REQUIRED_KEYS:
             tm.that(info[key], is_=str, none=False)
         tm.that(info["name"], eq=c.Tests.CORE_PACKAGE_NAME)
-        tm.that(info["version"], match=c.Tests.SEMVER_PATTERN.pattern)
+        tm.that(info["version"], match=c.Tests.SEMVER_REGEX)
 
     @pytest.mark.parametrize(
         ("major", "minor", "patch", "expected"),

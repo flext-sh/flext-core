@@ -162,16 +162,16 @@ class TestsFlextUtilities(u):
                 ),
                 (
                     [c.Tests.USER_IDS_SUCCESS[1]],
-                    [c.Tests.RailwayOperation.GET_EMAIL],
+                    [c.Tests.RAILWAY_OPERATION_GET_EMAIL],
                     2,
                     "User to email transformation",
                 ),
                 (
                     [c.Tests.USER_IDS_SUCCESS[2]],
                     [
-                        c.Tests.RailwayOperation.GET_EMAIL,
-                        c.Tests.RailwayOperation.SEND_EMAIL,
-                        c.Tests.RailwayOperation.GET_STATUS,
+                        c.Tests.RAILWAY_OPERATION_GET_EMAIL,
+                        c.Tests.RAILWAY_OPERATION_SEND_EMAIL,
+                        c.Tests.RAILWAY_OPERATION_GET_STATUS,
                     ],
                     4,
                     "Full pipeline: user -> email -> send -> status",
@@ -182,42 +182,42 @@ class TestsFlextUtilities(u):
         def multi_operation_cases() -> Sequence[tuple[str, int, t.JsonMapping]]:
             return [
                 (
-                    c.Tests.RailwayOperation.DOUBLE,
+                    c.Tests.RAILWAY_OPERATION_DOUBLE,
                     5,
                     {
-                        c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.DOUBLE,
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_DOUBLE,
                         c.Tests.OPERATION_RESULT_KEY: 10,
                     },
                 ),
                 (
-                    c.Tests.RailwayOperation.SQUARE,
+                    c.Tests.RAILWAY_OPERATION_SQUARE,
                     4,
                     {
-                        c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.SQUARE,
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_SQUARE,
                         c.Tests.OPERATION_RESULT_KEY: 16,
                     },
                 ),
                 (
-                    c.Tests.RailwayOperation.NEGATE,
+                    c.Tests.RAILWAY_OPERATION_NEGATE,
                     7,
                     {
-                        c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.NEGATE,
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_NEGATE,
                         c.Tests.OPERATION_RESULT_KEY: -7,
                     },
                 ),
                 (
-                    c.Tests.RailwayOperation.DOUBLE,
+                    c.Tests.RAILWAY_OPERATION_DOUBLE,
                     0,
                     {
-                        c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.DOUBLE,
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_DOUBLE,
                         c.Tests.OPERATION_RESULT_KEY: 0,
                     },
                 ),
                 (
-                    c.Tests.RailwayOperation.SQUARE,
+                    c.Tests.RAILWAY_OPERATION_SQUARE,
                     1,
                     {
-                        c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.SQUARE,
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_SQUARE,
                         c.Tests.OPERATION_RESULT_KEY: 1,
                     },
                 ),
@@ -297,30 +297,30 @@ class TestsFlextUtilities(u):
             @override
             def execute(self) -> p.Result[t.JsonMapping]:
                 match self.operation:
-                    case c.Tests.RailwayOperation.DOUBLE:
+                    case c.Tests.RAILWAY_OPERATION_DOUBLE:
                         return r[t.JsonMapping].ok(
                             {
-                                c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.DOUBLE,
+                                c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_DOUBLE,
                                 c.Tests.OPERATION_RESULT_KEY: self.value
                                 * c.Tests.OPERATION_FACTORS[
-                                    c.Tests.RailwayOperation.DOUBLE
+                                    c.Tests.RAILWAY_OPERATION_DOUBLE
                                 ],
                             },
                         )
-                    case c.Tests.RailwayOperation.SQUARE:
+                    case c.Tests.RAILWAY_OPERATION_SQUARE:
                         return r[t.JsonMapping].ok(
                             {
-                                c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.SQUARE,
+                                c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_SQUARE,
                                 c.Tests.OPERATION_RESULT_KEY: self.value**2,
                             },
                         )
-                    case c.Tests.RailwayOperation.NEGATE:
+                    case c.Tests.RAILWAY_OPERATION_NEGATE:
                         return r[t.JsonMapping].ok(
                             {
-                                c.Tests.OPERATION_NAME_KEY: c.Tests.RailwayOperation.NEGATE,
+                                c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_NEGATE,
                                 c.Tests.OPERATION_RESULT_KEY: self.value
                                 * c.Tests.OPERATION_FACTORS[
-                                    c.Tests.RailwayOperation.NEGATE
+                                    c.Tests.RAILWAY_OPERATION_NEGATE
                                 ],
                             },
                         )
@@ -1061,20 +1061,20 @@ class TestsFlextUtilities(u):
                 m.Tests.PublicParseCase(
                     name="enum-exact",
                     input_value="inactive",
-                    target=c.Tests.StatusEnum,
+                    target=c.Tests.STATUS_ENUM,
                     should_succeed=True,
-                    expected_value=c.Tests.StatusEnum.INACTIVE,
+                    expected_value=c.Tests.STATUS_INACTIVE,
                     description="Public parse resolves StrEnum exact values",
                 ),
                 m.Tests.PublicParseCase(
                     name="enum-case-insensitive",
                     input_value="INACTIVE",
-                    target=c.Tests.StatusEnum,
+                    target=c.Tests.STATUS_ENUM,
                     options=u.ParseOptions(
                         case_insensitive=True,
                     ),
                     should_succeed=True,
-                    expected_value=c.Tests.StatusEnum.INACTIVE,
+                    expected_value=c.Tests.STATUS_INACTIVE,
                     description="Public parse resolves StrEnum values case-insensitively",
                 ),
                 m.Tests.PublicParseCase(
@@ -1095,7 +1095,7 @@ class TestsFlextUtilities(u):
                 m.Tests.PublicParseCase(
                     name="invalid-enum-fails",
                     input_value="missing",
-                    target=c.Tests.StatusEnum,
+                    target=c.Tests.STATUS_ENUM,
                     should_succeed=False,
                     description="Public parse fails for unknown enum values",
                 ),
@@ -1509,10 +1509,10 @@ class TestsFlextUtilities(u):
         class ServiceTestCaseFactory:
             """Factory for m.Tests.ServiceTestCase."""
 
-            _service_types: ClassVar[Sequence[c.Tests.ServiceTestType]] = [
-                c.Tests.ServiceTestType.GET_USER,
-                c.Tests.ServiceTestType.VALIDATE,
-                c.Tests.ServiceTestType.FAIL,
+            _service_types: ClassVar[Sequence[c.Tests.ServiceType]] = [
+                c.Tests.SERVICE_TEST_TYPE_GET_USER,
+                c.Tests.SERVICE_TEST_TYPE_VALIDATE,
+                c.Tests.SERVICE_TEST_TYPE_FAIL,
             ]
             _type_index: ClassVar[int] = 0
             _words: ClassVar[Sequence[str]] = [
@@ -1525,7 +1525,7 @@ class TestsFlextUtilities(u):
             _word_index: ClassVar[int] = 0
 
             @classmethod
-            def _next_type(cls) -> c.Tests.ServiceTestType:
+            def _next_type(cls) -> c.Tests.ServiceType:
                 """Get next service type from rotation."""
                 service_type = cls._service_types[
                     cls._type_index % len(cls._service_types)
@@ -1544,7 +1544,7 @@ class TestsFlextUtilities(u):
             def build(
                 cls,
                 *,
-                service_type: c.Tests.ServiceTestType | None = None,
+                service_type: c.Tests.ServiceType | None = None,
                 input_value: str | None = None,
                 expected_success: bool = True,
                 expected_error: str | None = None,
@@ -1602,18 +1602,18 @@ class TestsFlextUtilities(u):
                     | TestsFlextUtilities.Tests.FailingService
                 )
                 match case.service_type:
-                    case c.Tests.ServiceTestType.GET_USER:
+                    case c.Tests.SERVICE_TEST_TYPE_GET_USER:
                         service = TestsFlextUtilities.Tests.GetUserServiceFactory.build(
                             user_id=case.input_value
                         )
-                    case c.Tests.ServiceTestType.VALIDATE:
+                    case c.Tests.SERVICE_TEST_TYPE_VALIDATE:
                         service = (
                             TestsFlextUtilities.Tests.ValidatingServiceFactory.build(
                                 value_input=case.input_value,
                                 min_length=case.extra_param,
                             )
                         )
-                    case c.Tests.ServiceTestType.FAIL:
+                    case c.Tests.SERVICE_TEST_TYPE_FAIL:
                         service = TestsFlextUtilities.Tests.FailingServiceFactory.build(
                             error_message=case.input_value
                             or c.Tests.DEFAULT_ERROR_MESSAGE
@@ -1633,7 +1633,7 @@ class TestsFlextUtilities(u):
                 """Generate successful user service test cases."""
                 return [
                     m.Tests.ServiceTestCase(
-                        service_type=c.Tests.ServiceTestType.GET_USER,
+                        service_type=c.Tests.SERVICE_TEST_TYPE_GET_USER,
                         input_value=str(i * 100 + 1),
                         description=f"Valid user ID {i}",
                     )
@@ -1647,14 +1647,14 @@ class TestsFlextUtilities(u):
                 """Generate successful validation test cases."""
                 return [
                     m.Tests.ServiceTestCase(
-                        service_type=c.Tests.ServiceTestType.VALIDATE,
+                        service_type=c.Tests.SERVICE_TEST_TYPE_VALIDATE,
                         input_value=f"value_{i}",
                         description=f"Valid input {i}",
                     )
                     for i in range(1, num_cases + 1)
                 ] + [
                     m.Tests.ServiceTestCase(
-                        service_type=c.Tests.ServiceTestType.VALIDATE,
+                        service_type=c.Tests.SERVICE_TEST_TYPE_VALIDATE,
                         input_value="test",
                         extra_param=2,
                         description="Custom min length",
@@ -1668,14 +1668,14 @@ class TestsFlextUtilities(u):
                 """Generate validation failure test cases."""
                 return [
                     m.Tests.ServiceTestCase(
-                        service_type=c.Tests.ServiceTestType.VALIDATE,
+                        service_type=c.Tests.SERVICE_TEST_TYPE_VALIDATE,
                         input_value="ab",
                         expected_success=False,
                         expected_error="must be at least 3 characters",
                         description="Too short input",
                     ),
                     m.Tests.ServiceTestCase(
-                        service_type=c.Tests.ServiceTestType.VALIDATE,
+                        service_type=c.Tests.SERVICE_TEST_TYPE_VALIDATE,
                         input_value="x",
                         expected_success=False,
                         expected_error="must be at least 5 characters",

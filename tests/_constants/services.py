@@ -21,6 +21,12 @@ class TestsFlextConstantsServices:
         VALIDATE = "validate"
         FAIL = "fail"
 
+    type ServiceType = ServiceTestType
+
+    SERVICE_TEST_TYPE_GET_USER: Final[ServiceType] = ServiceTestType.GET_USER
+    SERVICE_TEST_TYPE_VALIDATE: Final[ServiceType] = ServiceTestType.VALIDATE
+    SERVICE_TEST_TYPE_FAIL: Final[ServiceType] = ServiceTestType.FAIL
+
     DEFAULT_USER_NAME_PREFIX: Final[str] = "User "
     DEFAULT_EMAIL_DOMAIN: Final[str] = "@example.com"
     DEFAULT_ERROR_MESSAGE: Final[str] = "Test error"

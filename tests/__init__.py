@@ -22,7 +22,6 @@ if _t.TYPE_CHECKING:
     from tests._constants.result import TestsFlextConstantsResult
     from tests._constants.services import TestsFlextConstantsServices
     from tests._constants.settings import TestsFlextConstantsSettings
-    from tests._constants.strings import TestsFlextConstantsStrings
     from tests._models.mixins import TestsFlextModelsMixins
     from tests.benchmark.test_container_memory import TestsFlextContainerMemory
     from tests.benchmark.test_container_performance import (
@@ -169,6 +168,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "._constants",
         "._models",
         ".benchmark",
+        ".fixtures",
         ".integration",
         ".unit",
     ),
@@ -182,7 +182,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._constants.result": ("TestsFlextConstantsResult",),
             "._constants.services": ("TestsFlextConstantsServices",),
             "._constants.settings": ("TestsFlextConstantsSettings",),
-            "._constants.strings": ("TestsFlextConstantsStrings",),
             "._models.mixins": ("TestsFlextModelsMixins",),
             ".benchmark.test_container_memory": ("TestsFlextContainerMemory",),
             ".benchmark.test_container_performance": (
@@ -408,7 +407,6 @@ __all__: list[str] = [
     "TestsFlextConstantsResult",
     "TestsFlextConstantsServices",
     "TestsFlextConstantsSettings",
-    "TestsFlextConstantsStrings",
     "TestsFlextContainer",
     "TestsFlextContainerMemory",
     "TestsFlextContainerPerformance",

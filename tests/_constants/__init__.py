@@ -15,7 +15,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".result": ("TestsFlextConstantsResult",),
         ".services": ("TestsFlextConstantsServices",),
         ".settings": ("TestsFlextConstantsSettings",),
-        ".strings": ("TestsFlextConstantsStrings",),
     },
 )
 

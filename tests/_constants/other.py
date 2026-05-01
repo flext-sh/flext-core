@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from collections.abc import Sequence
 from typing import ClassVar, Final
 
@@ -104,7 +103,7 @@ class TestsFlextConstantsOther:
         "at-or-above-zero",
         "below-impossibly-high-major",
     )
-    SEMVER_PATTERN: Final[re.Pattern[str]] = re.compile(r"^\d+\.\d+\.\d+")
+    SEMVER_REGEX: Final[str] = r"^\d+\.\d+\.\d+"
 
     SAFE_STRING_VALID_CASES: ClassVar[Sequence[tuple[str, str]]] = [
         ("hello", "hello"),
