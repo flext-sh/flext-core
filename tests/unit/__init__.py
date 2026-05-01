@@ -56,6 +56,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".test_decorators_full_coverage": ("TestsFlextDecorators",),
             ".test_deprecation_warnings": ("TestsFlextDeprecationWarnings",),
+            ".test_dispatcher": ("TestsFlextDispatcher",),
             ".test_enforcement": ("TestsFlextEnforcement",),
             ".test_enforcement_apt_hooks": ("TestsFlextEnforcementAptHooks",),
             ".test_enforcement_catalog": ("TestsFlextEnforcementCatalog",),

@@ -13,10 +13,9 @@ import pytest
 from hypothesis import given, strategies as st
 
 from tests import u
-from tests.utilities import TestsFlextUtilities
 
 
-class TestsFlextUtilitiesText(TestsFlextUtilities.Tests.Contract):
+class TestsFlextUtilitiesText(u.Tests.Contract):
     def test_logger_property_returns_logger(self) -> None:
         """Logger property returns a structlog logger instance."""
         logger = u.fetch_logger()
@@ -24,7 +23,7 @@ class TestsFlextUtilitiesText(TestsFlextUtilities.Tests.Contract):
 
     @pytest.mark.parametrize(
         ("value", "message"),
-        TestsFlextUtilities.Tests.Contract.SAFE_STRING_INVALID_CASES,
+        u.Tests.Contract.SAFE_STRING_INVALID_CASES,
     )
     def test_safe_string_invalid_values_raise(
         self,
@@ -37,7 +36,7 @@ class TestsFlextUtilitiesText(TestsFlextUtilities.Tests.Contract):
 
     @pytest.mark.parametrize(
         ("value", "expected"),
-        TestsFlextUtilities.Tests.Contract.SAFE_STRING_VALID_CASES,
+        u.Tests.Contract.SAFE_STRING_VALID_CASES,
     )
     def test_safe_string_valid_values_are_stripped(
         self,
@@ -52,7 +51,7 @@ class TestsFlextUtilitiesText(TestsFlextUtilities.Tests.Contract):
         [
             pytest.param(name, expected, id=f"format-{index}")
             for index, (name, expected) in enumerate(
-                TestsFlextUtilities.Tests.Contract.FORMAT_APP_ID_CASES,
+                u.Tests.Contract.FORMAT_APP_ID_CASES,
             )
         ],
     )

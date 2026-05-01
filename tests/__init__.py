@@ -12,8 +12,7 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_infra import d, e, h, r, s, x
-    from flext_tests import td, tf, tk, tm, tv
+    from flext_tests import d, e, h, r, s, td, tf, tk, tm, tv, x
 
     from tests._constants.domain import TestsFlextConstantsDomain
     from tests._constants.errors import TestsFlextConstantsErrors
@@ -64,6 +63,23 @@ if _t.TYPE_CHECKING:
     from tests.models import TestsFlextModels, m
     from tests.protocols import TestsFlextProtocols, p
     from tests.typings import TestsFlextTypes, t
+    from tests.unit._enforcement_integration_fixtures.bad_module import (
+        TestsFlextBadAccessors,
+        TestsFlextBadAnyField,
+        TestsFlextBadBareCollection,
+        TestsFlextBadConstants,
+        TestsFlextBadFrozen,
+        TestsFlextBadInlineUnion,
+        TestsFlextBadMissingDesc,
+        TestsFlextBadMutableDefault,
+        TestsFlextBadWorkerSettings,
+    )
+    from tests.unit._enforcement_integration_fixtures.clean_module import (
+        TestsFlextCleanConstants,
+        TestsFlextCleanModels,
+        TestsFlextCleanProtocols,
+        TestsFlextCleanServiceBase,
+    )
     from tests.unit._models.test_base import TestsFlextModelsBase
     from tests.unit._models.test_cqrs import TestsFlextModelsCQRS
     from tests.unit._models.test_enforcement_sources import (
@@ -88,6 +104,7 @@ if _t.TYPE_CHECKING:
     )
     from tests.unit.test_decorators_full_coverage import TestsFlextDecorators
     from tests.unit.test_deprecation_warnings import TestsFlextDeprecationWarnings
+    from tests.unit.test_dispatcher import TestsFlextDispatcher
     from tests.unit.test_enforcement import TestsFlextEnforcement
     from tests.unit.test_enforcement_apt_hooks import TestsFlextEnforcementAptHooks
     from tests.unit.test_enforcement_catalog import TestsFlextEnforcementCatalog
@@ -218,6 +235,23 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextTypes",
                 "t",
             ),
+            ".unit._enforcement_integration_fixtures.bad_module": (
+                "TestsFlextBadAccessors",
+                "TestsFlextBadAnyField",
+                "TestsFlextBadBareCollection",
+                "TestsFlextBadConstants",
+                "TestsFlextBadFrozen",
+                "TestsFlextBadInlineUnion",
+                "TestsFlextBadMissingDesc",
+                "TestsFlextBadMutableDefault",
+                "TestsFlextBadWorkerSettings",
+            ),
+            ".unit._enforcement_integration_fixtures.clean_module": (
+                "TestsFlextCleanConstants",
+                "TestsFlextCleanModels",
+                "TestsFlextCleanProtocols",
+                "TestsFlextCleanServiceBase",
+            ),
             ".unit._models.test_base": ("TestsFlextModelsBase",),
             ".unit._models.test_cqrs": ("TestsFlextModelsCQRS",),
             ".unit._models.test_enforcement_sources": (
@@ -242,6 +276,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".unit.test_decorators_full_coverage": ("TestsFlextDecorators",),
             ".unit.test_deprecation_warnings": ("TestsFlextDeprecationWarnings",),
+            ".unit.test_dispatcher": ("TestsFlextDispatcher",),
             ".unit.test_enforcement": ("TestsFlextEnforcement",),
             ".unit.test_enforcement_apt_hooks": ("TestsFlextEnforcementAptHooks",),
             ".unit.test_enforcement_catalog": ("TestsFlextEnforcementCatalog",),
@@ -304,20 +339,18 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextUtilities",
                 "u",
             ),
-            "flext_infra": (
+            "flext_tests": (
                 "d",
                 "e",
                 "h",
                 "r",
                 "s",
-                "x",
-            ),
-            "flext_tests": (
                 "td",
                 "tf",
                 "tk",
                 "tm",
                 "tv",
+                "x",
             ),
         },
     ),
@@ -350,7 +383,20 @@ __all__: list[str] = [
     "TestsFlextAdvancedPatterns",
     "TestsFlextArchitecturalPatterns",
     "TestsFlextAutomatedArchitecture",
+    "TestsFlextBadAccessors",
+    "TestsFlextBadAnyField",
+    "TestsFlextBadBareCollection",
+    "TestsFlextBadConstants",
+    "TestsFlextBadFrozen",
+    "TestsFlextBadInlineUnion",
+    "TestsFlextBadMissingDesc",
+    "TestsFlextBadMutableDefault",
+    "TestsFlextBadWorkerSettings",
     "TestsFlextBeartypeEngine",
+    "TestsFlextCleanConstants",
+    "TestsFlextCleanModels",
+    "TestsFlextCleanProtocols",
+    "TestsFlextCleanServiceBase",
     "TestsFlextConstants",
     "TestsFlextConstantsDomain",
     "TestsFlextConstantsErrors",
@@ -373,6 +419,7 @@ __all__: list[str] = [
     "TestsFlextDecoratorsDiscovery",
     "TestsFlextDecoratorsLegacy",
     "TestsFlextDeprecationWarnings",
+    "TestsFlextDispatcher",
     "TestsFlextDocumentedPatterns",
     "TestsFlextEnforcement",
     "TestsFlextEnforcementAptHooks",

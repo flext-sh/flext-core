@@ -79,9 +79,9 @@ class FlextUtilitiesProjectMetadata(mpm):
 
     @staticmethod
     def derive_project_constants(root: Path) -> mpm.ProjectConstants:
-        """Derive package constants from a project's pyproject.toml."""
+        """Derive package constants directly from a project's pyproject.toml."""
         metadata = FlextUtilitiesProjectMetadata.read_project_metadata(root)
-        return FlextUtilitiesProjectMetadata.read_project_constants(metadata.name, root)
+        return mpm.ProjectConstants.from_metadata(metadata)
 
     @staticmethod
     def _distribution_name(package_name: str) -> str:

@@ -106,23 +106,20 @@ class TestsFlextUtilitiesProjectMetadata:
             eq=(c.Tests.SAMPLE_AUTHOR_ALICE, c.Tests.SAMPLE_AUTHOR_BOB),
         )
 
-    def test_derive_project_constants_returns_installed_package_values(
+    def test_derive_project_constants_returns_local_project_metadata_values(
         self,
         tmp_path: Path,
     ) -> None:
         root = _write_pyproject(
             tmp_path,
-            """
+            f"""
             [project]
-            name = "{name}"
+            name = "{c.Tests.SAMPLE_PROJECT_NAME_MIGRATION}"
             version = "1.2.3"
-            license = "{license}".format(
-                name=c.Tests.SAMPLE_PROJECT_NAME_MIGRATION,
-                license=c.Tests.SAMPLE_PROJECT_LICENSE,
-            )
+            license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
             description = "OUD migration"
             requires-python = ">=3.13,<3.14"
-            authors = [{name = "FLEXT Team"}]
+            authors = [{{name = "FLEXT Team"}}]
 
             [project.urls]
             Homepage = "https://example.test/algar-oud-mig"
@@ -132,14 +129,11 @@ class TestsFlextUtilitiesProjectMetadata:
         constants = u.derive_project_constants(root)
 
         tm.that(constants.PACKAGE_NAME, eq=c.Tests.SAMPLE_PROJECT_NAME_MIGRATION)
-        tm.that(constants.PACKAGE_VERSION, eq="0.12.0.dev0")
-        tm.that(constants.PACKAGE_LICENSE, eq="LicenseRef-Proprietary")
+        tm.that(constants.PACKAGE_VERSION, eq="1.2.3")
+        tm.that(constants.PACKAGE_LICENSE, eq=c.Tests.SAMPLE_PROJECT_LICENSE)
         tm.that(constants.PYTHON_PACKAGE_NAME, eq="algar_oud_mig")
         tm.that(constants.CLASS_STEM, eq="AlgarOudMig")
-        tm.that(
-            constants.PACKAGE_AUTHORS,
-            eq=("Marlon Costa <marlon.costa@datacosmos.com.br>",),
-        )
+        tm.that(constants.PACKAGE_AUTHORS, eq=("FLEXT Team",))
 
     def test_read_project_metadata_raises_on_missing_pyproject(
         self,

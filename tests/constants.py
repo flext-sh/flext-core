@@ -19,7 +19,6 @@ from tests._constants.other import TestsFlextConstantsOther
 from tests._constants.result import TestsFlextConstantsResult
 from tests._constants.services import TestsFlextConstantsServices
 from tests._constants.settings import TestsFlextConstantsSettings
-from tests._constants.strings import TestsFlextConstantsStrings
 
 
 class TestsFlextConstants(FlextTestsConstants, FlextConstants):
@@ -27,7 +26,6 @@ class TestsFlextConstants(FlextTestsConstants, FlextConstants):
 
     class Tests(
         TestsFlextConstantsOther,
-        TestsFlextConstantsStrings,
         TestsFlextConstantsResult,
         TestsFlextConstantsSettings,
         TestsFlextConstantsLoggings,

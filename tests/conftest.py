@@ -33,7 +33,6 @@ from tests import c, m, p, r, t, u
 
 collect_ignore_glob = [
     "**/__init__.py",
-    "**/_enforcement_integration_fixtures/*.py",
 ]
 
 

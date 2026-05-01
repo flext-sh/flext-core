@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import sys
 from types import ModuleType
 
@@ -13,6 +14,47 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 class TestsFlextLazy:
     """Behavior contract for install_lazy_exports, merge_lazy_imports, lazy runtime."""
+
+    @pytest.mark.parametrize(
+        ("module_name", "facade_name", "alias_name"),
+        [
+            ("flext_core.constants", "FlextConstants", "c"),
+            ("flext_core.exceptions", "FlextExceptions", "e"),
+            ("flext_core.models", "FlextModels", "m"),
+            ("flext_core.protocols", "FlextProtocols", "p"),
+            ("flext_core.typings", "FlextTypes", "t"),
+            ("flext_core.utilities", "FlextUtilities", "u"),
+        ],
+    )
+    def test_thin_facade_modules_export_facade_and_alias(
+        self,
+        module_name: str,
+        facade_name: str,
+        alias_name: str,
+    ) -> None:
+        module = importlib.import_module(module_name)
+        module = importlib.reload(module)
+
+        facade = getattr(module, facade_name)
+        alias = getattr(module, alias_name)
+
+        assert alias is facade
+        assert facade_name in module.__all__
+        assert alias_name in module.__all__
+
+    def test_root_package_lazy_exports_resolve_primary_facades(self) -> None:
+        package = importlib.import_module("flext_core")
+        package = importlib.reload(package)
+
+        assert package.c is package.FlextConstants
+        assert package.e is package.FlextExceptions
+        assert package.m is package.FlextModels
+        assert package.p is package.FlextProtocols
+        assert package.t is package.FlextTypes
+        assert package.u is package.FlextUtilities
+        assert "FlextConstants" in package.__all__
+        assert "FlextUtilities" in package.__all__
+        assert "u" in package.__all__
 
     def test_install_without_publish_all_omits_dunder_all_attribute(self) -> None:
         module_globals: dict[str, object] = {}
