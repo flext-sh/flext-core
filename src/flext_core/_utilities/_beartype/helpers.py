@@ -422,11 +422,16 @@ class FlextUtilitiesBeartypeHelpers:
                 norm == en
                 or norm.startswith((
                     f"{en}[",
+                    f"{en}Of[",
                     f"typing.{en}[",
+                    f"typing.{en}Of[",
                     f"collections.abc.{en}[",
+                    f"t.{en}Of[",
                 ))
             )
         org = get_origin(norm)
+        if isinstance(org, TypeAliasType):
+            org = get_origin(org.__value__) or org.__value__
         tgt = org or norm
         return tgt is exp
 

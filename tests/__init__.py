@@ -153,9 +153,17 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_utilities_project_metadata import (
         TestsFlextUtilitiesProjectMetadata,
     )
+    from tests.unit.test_utilities_pydantic_coverage_100 import (
+        TestsFlextUtilitiesPydantic,
+    )
     from tests.unit.test_utilities_reliability import TestsFlextUtilitiesReliability
+    from tests.unit.test_utilities_runtime_violation_registry_coverage_100 import (
+        TestsFlextRuntimeViolationRegistry,
+    )
     from tests.unit.test_utilities_settings_coverage_100 import (
         TestsFlextUtilitiesSettings,
+        TestsFlextUtilitiesSettingsEnvFile,
+        TestsFlextUtilitiesSettingsRegisterFactory,
     )
     from tests.unit.test_utilities_text_full_coverage import TestsFlextUtilitiesText
     from tests.unit.test_utilities_type_guards_coverage_100 import (
@@ -325,9 +333,17 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_utilities_project_metadata": (
                 "TestsFlextUtilitiesProjectMetadata",
             ),
+            ".unit.test_utilities_pydantic_coverage_100": (
+                "TestsFlextUtilitiesPydantic",
+            ),
             ".unit.test_utilities_reliability": ("TestsFlextUtilitiesReliability",),
+            ".unit.test_utilities_runtime_violation_registry_coverage_100": (
+                "TestsFlextRuntimeViolationRegistry",
+            ),
             ".unit.test_utilities_settings_coverage_100": (
                 "TestsFlextUtilitiesSettings",
+                "TestsFlextUtilitiesSettingsEnvFile",
+                "TestsFlextUtilitiesSettingsRegisterFactory",
             ),
             ".unit.test_utilities_text_full_coverage": ("TestsFlextUtilitiesText",),
             ".unit.test_utilities_type_guards_coverage_100": (
@@ -455,6 +471,7 @@ __all__: list[str] = [
     "TestsFlextResult",
     "TestsFlextResultExceptionCarrying",
     "TestsFlextRuntime",
+    "TestsFlextRuntimeViolationRegistry",
     "TestsFlextService",
     "TestsFlextService100Coverage",
     "TestsFlextServiceBase",
@@ -474,8 +491,11 @@ __all__: list[str] = [
     "TestsFlextUtilitiesGuards",
     "TestsFlextUtilitiesMapper",
     "TestsFlextUtilitiesProjectMetadata",
+    "TestsFlextUtilitiesPydantic",
     "TestsFlextUtilitiesReliability",
     "TestsFlextUtilitiesSettings",
+    "TestsFlextUtilitiesSettingsEnvFile",
+    "TestsFlextUtilitiesSettingsRegisterFactory",
     "TestsFlextUtilitiesSmoke",
     "TestsFlextUtilitiesText",
     "TestsFlextUtilitiesTypeGuards",

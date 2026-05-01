@@ -8,17 +8,9 @@ helpers in :mod:`parser_targets` and :mod:`parser` via MRO composition.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TypeVar
+from typing import ClassVar
 
-from flext_core import (
-    FlextConstants as c,
-    FlextModels as m,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextTypes as t,
-)
-
-T = TypeVar("T")
+from flext_core import c, m, p, r, t
 
 
 class FlextUtilitiesParserCoerce:
