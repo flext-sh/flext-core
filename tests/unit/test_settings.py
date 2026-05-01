@@ -395,10 +395,10 @@ class TestsFlextSettings:
         config_path = files.create(
             settings_payload,
             "settings.yaml",
-            fmt=tc.Tests.Format.YAML,
+            fmt=tc.Tests.FILE_FORMAT_YAML,
         )
         tm.that(config_path.exists(), eq=True)
-        read_result = files.read(config_path, fmt=tc.Tests.Format.YAML)
+        read_result = files.read(config_path, fmt=tc.Tests.FILE_FORMAT_YAML)
         tm.ok(read_result)
         tm.that(read_result.value, is_=m.ConfigMap)
         if isinstance(read_result.value, m.ConfigMap):
@@ -416,10 +416,10 @@ class TestsFlextSettings:
         config_path = files.create(
             payload_mapping,
             "settings.json",
-            fmt=tc.Tests.Format.JSON,
+            fmt=tc.Tests.FILE_FORMAT_JSON,
         )
         tm.that(config_path.exists(), eq=True)
-        read_result = files.read(config_path, fmt=tc.Tests.Format.JSON)
+        read_result = files.read(config_path, fmt=tc.Tests.FILE_FORMAT_JSON)
         tm.ok(read_result)
         tm.that(read_result.value, is_=m.ConfigMap)
         if isinstance(read_result.value, m.ConfigMap):
@@ -432,8 +432,8 @@ class TestsFlextSettings:
     def test_compare_identical_files(self, tmp_path: Path) -> None:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
-        first = files.create({"x": 1}, "a.json", fmt=tc.Tests.Format.JSON)
-        second = files.create({"x": 1}, "b.json", fmt=tc.Tests.Format.JSON)
+        first = files.create({"x": 1}, "a.json", fmt=tc.Tests.FILE_FORMAT_JSON)
+        second = files.create({"x": 1}, "b.json", fmt=tc.Tests.FILE_FORMAT_JSON)
         result = files.compare(first, second)
         tm.ok(result)
         tm.that(result.value, eq=True)
