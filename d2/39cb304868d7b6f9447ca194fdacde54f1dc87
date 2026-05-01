@@ -1,0 +1,14 @@
+src/flext_core/_utilities/parser_coerce.py
+  h_9db9d35f50cf33 11,13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "d239cb304868d7b6f9447ca194fdacde54f1dc87",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
