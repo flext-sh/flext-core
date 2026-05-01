@@ -1757,13 +1757,13 @@ class TestsFlextUtilities(u):
             """Shared contract for text utility behavior."""
 
             SAFE_STRING_VALID_CASES: ClassVar[Sequence[tuple[str, str]]] = (
-                c.Tests.SAFE_STRING_VALID_CASES
+                c.Tests.CORE_SAFE_STRING_VALID_CASES
             )
             SAFE_STRING_INVALID_CASES: ClassVar[Sequence[tuple[str | None, str]]] = (
-                c.Tests.SAFE_STRING_INVALID_CASES
+                c.Tests.CORE_SAFE_STRING_INVALID_CASES
             )
             FORMAT_APP_ID_CASES: ClassVar[Sequence[tuple[str, str]]] = (
-                c.Tests.FORMAT_APP_ID_CASES
+                c.Tests.CORE_FORMAT_APP_ID_CASES
             )
 
             @staticmethod

@@ -198,6 +198,10 @@ class FlextLazy(BaseModel):
                 except ModuleNotFoundError:
                     child = None
                 if child is not None:
+                    if hasattr(child, name):
+                        value = getattr(child, name)
+                        module_globals[name] = value
+                        return value
                     module_globals[name] = child
                     return child
 
