@@ -18,7 +18,6 @@ import sys
 import warnings
 from collections.abc import (
     Iterator,
-    Sequence,
 )
 
 import pytest
@@ -37,14 +36,14 @@ def _import_fresh_silent(dotted: str) -> object:
 
 def _import_fresh_with_warnings(
     dotted: str,
-) -> tuple[object, Sequence[warnings.WarningMessage]]:
+) -> tuple[object, t.SequenceOf[warnings.WarningMessage]]:
     sys.modules.pop(dotted, None)
     with pytest.warns(FlextMroViolation, match="violates FLEXT") as caught:
         module = importlib.import_module(dotted)
     return module, tuple(caught)
 
 
-def _violation_lines(messages: Sequence[warnings.WarningMessage]) -> Iterator[str]:
+def _violation_lines(messages: t.SequenceOf[warnings.WarningMessage]) -> Iterator[str]:
     for entry in messages:
         text = str(entry.message)
         if "violates FLEXT" in text:

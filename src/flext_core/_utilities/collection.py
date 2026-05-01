@@ -33,7 +33,7 @@ class FlextUtilitiesCollection(
     @staticmethod
     def normalize_domain_event_data(
         value: mc.ConfigMap | t.JsonPayload | None,
-    ) -> Mapping[str, t.JsonValue]:
+    ) -> t.MappingKV[str, t.JsonValue]:
         """Normalize domain event payloads into plain flat mappings."""
         if value is None:
             return {}
@@ -50,7 +50,7 @@ class FlextUtilitiesCollection(
 
     @staticmethod
     def count[TItem](
-        items: Sequence[TItem],
+        items: t.SequenceOf[TItem],
         predicate: Callable[[TItem], bool] | None = None,
     ) -> int:
         """Count items, optionally matching predicate."""
@@ -60,7 +60,7 @@ class FlextUtilitiesCollection(
 
     @staticmethod
     def find[TItem](
-        items: Sequence[TItem] | tuple[TItem, ...] | Mapping[str, TItem],
+        items: t.SequenceOf[TItem] | tuple[TItem, ...] | t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
     ) -> p.Result[TItem]:
         """Find first item matching predicate; returns r[T]."""
@@ -77,7 +77,7 @@ class FlextUtilitiesCollection(
 
     @staticmethod
     def process[TItem, TMapped](
-        items: Sequence[TItem],
+        items: t.SequenceOf[TItem],
         processor: Callable[[TItem], TMapped],
         *,
         predicate: Callable[[TItem], bool] | None = None,

@@ -15,9 +15,7 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    Mapping,
     MutableSequence,
-    Sequence,
 )
 
 import pytest
@@ -284,7 +282,7 @@ class TestsFlextAdvancedPatterns:
 
         def add_success_cases(
             self,
-            cases: Sequence[m.Tests.FixtureCaseDict],
+            cases: t.SequenceOf[m.Tests.FixtureCaseDict],
         ) -> TestsFlextAdvancedPatterns.ParameterizedTestBuilder:
             """add_success_cases method.
 
@@ -297,7 +295,7 @@ class TestsFlextAdvancedPatterns:
 
         def add_failure_cases(
             self,
-            cases: Sequence[m.Tests.FixtureCaseDict],
+            cases: t.SequenceOf[m.Tests.FixtureCaseDict],
         ) -> TestsFlextAdvancedPatterns.ParameterizedTestBuilder:
             """add_failure_cases method.
 
@@ -308,20 +306,20 @@ class TestsFlextAdvancedPatterns:
             self._failure_cases.extend(cases)
             return self
 
-        def build(self) -> Sequence[m.Tests.FixtureCaseDict]:
+        def build(self) -> t.SequenceOf[m.Tests.FixtureCaseDict]:
             """Build method.
 
             Returns:
-                Sequence[FixtureCaseDict]: Copy of the test cases.
+                t.SequenceOf[FixtureCaseDict]: Copy of the test cases.
 
             """
             return list(self._cases)
 
-        def build_pytest_params(self) -> Sequence[tuple[str, str, bool]]:
+        def build_pytest_params(self) -> t.SequenceOf[tuple[str, str, bool]]:
             """build_pytest_params method.
 
             Returns:
-                Sequence[tuple[str, str, bool]]: Pytest parameters for testing.
+                t.SequenceOf[tuple[str, str, bool]]: Pytest parameters for testing.
 
             """
             success_params = [(c.email, c.input, True) for c in self._success_cases]
@@ -351,7 +349,7 @@ class TestsFlextAdvancedPatterns:
 
         def assert_equals(
             self,
-            expected: Mapping[str, bool | int | str],
+            expected: t.MappingKV[str, bool | int | str],
         ) -> TestsFlextAdvancedPatterns.AssertionBuilder:
             """assert_equals method.
 

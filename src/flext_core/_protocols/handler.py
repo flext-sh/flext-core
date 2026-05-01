@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    Sequence,
 )
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
@@ -182,7 +181,7 @@ class FlextProtocolsHandler:
 
         def publish(
             self,
-            event: p.Routable | Sequence[p.Routable],
+            event: p.Routable | t.SequenceOf[p.Routable],
         ) -> pr.Result[bool]:
             """Publish event(s) to all registered subscribers."""
             ...

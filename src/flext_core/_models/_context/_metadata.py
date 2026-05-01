@@ -6,9 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
 from types import MappingProxyType
 from typing import Annotated, Self
 
@@ -71,7 +68,7 @@ class FlextModelsContextMetadata:
             mp.Field(default=None, description="Unique message identifier"),
         ] = None
         custom_fields: Annotated[
-            Mapping[str, t.JsonPayload],
+            t.MappingKV[str, t.JsonPayload],
             mp.BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),
@@ -107,7 +104,7 @@ class FlextModelsContextMetadata:
             mp.Field(default=None, description="Type of domain"),
         ] = None
         domain_data: Annotated[
-            Mapping[str, t.JsonPayload],
+            t.MappingKV[str, t.JsonPayload],
             mp.Field(
                 default_factory=lambda: MappingProxyType({}),
                 description="Domain payload values scoped to the current business context.",

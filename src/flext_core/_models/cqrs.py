@@ -9,9 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Literal
 
@@ -138,7 +135,7 @@ class FlextModelsCqrs:
             ),
         ] = "query"
         filters: Annotated[
-            Mapping[str, t.Scalar],
+            t.MappingKV[str, t.Scalar],
             Field(
                 description="Filter values that restrict which records are returned by the query.",
                 title="Query Filters",
@@ -176,7 +173,7 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: BaseModel | Mapping[str, t.Scalar] | None,
+            v: BaseModel | t.MappingKV[str, t.Scalar] | None,
         ) -> BaseModel:
             """Convert pagination to Pagination instance."""
             # Allow subclasses to override Pagination via class attribute,
@@ -274,13 +271,13 @@ class FlextModelsCqrs:
             default_factory=lambda: ug.generate_prefixed_id("evt"),
         )
         data: Annotated[
-            Mapping[str, t.Scalar],
+            t.MappingKV[str, t.Scalar],
             Field(
                 description="Event payload data",
             ),
         ] = Field(default_factory=lambda: MappingProxyType({}))
         metadata: Annotated[
-            Mapping[str, t.Scalar],
+            t.MappingKV[str, t.Scalar],
             Field(
                 description="Event metadata (timestamps, correlation IDs, etc.)",
             ),

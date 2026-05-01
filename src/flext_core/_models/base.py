@@ -13,9 +13,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import (
-    Mapping,
-)
 from datetime import UTC, datetime
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
@@ -191,7 +188,7 @@ class FlextModelsBase:
             ),
         ] = mp.Field(default_factory=tuple)
         attributes: Annotated[
-            Mapping[str, t.JsonValue],
+            t.MappingKV[str, t.JsonValue],
             mp.BeforeValidator(ur.validate_metadata_attributes),
             mp.Field(
                 description="Arbitrary metadata attributes stored as key-value pairs.",

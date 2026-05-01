@@ -51,8 +51,8 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def _merge_replace(
-        other: Mapping[str, t.JsonValue],
-        base: Mapping[str, t.JsonValue],
+        other: t.MappingKV[str, t.JsonValue],
+        base: t.MappingKV[str, t.JsonValue],
     ) -> p.Result[Mapping[str, t.JsonValue]]:
         """Replace strategy: base values overwrite other."""
         result: dict[str, t.JsonValue] = dict(other)
@@ -61,8 +61,8 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def _merge_filter_none(
-        other: Mapping[str, t.JsonValue],
-        base: Mapping[str, t.JsonValue],
+        other: t.MappingKV[str, t.JsonValue],
+        base: t.MappingKV[str, t.JsonValue],
     ) -> p.Result[Mapping[str, t.JsonValue]]:
         """Filter-none strategy: skip None values from base."""
         result: dict[str, t.JsonValue] = dict(other)
@@ -71,8 +71,8 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def _merge_filter_empty(
-        other: Mapping[str, t.JsonValue],
-        base: Mapping[str, t.JsonValue],
+        other: t.MappingKV[str, t.JsonValue],
+        base: t.MappingKV[str, t.JsonValue],
     ) -> p.Result[Mapping[str, t.JsonValue]]:
         """Filter-empty strategy: skip empty values from base."""
         result: dict[str, t.JsonValue] = dict(other)
@@ -85,8 +85,8 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def _merge_append(
-        other: Mapping[str, t.JsonValue],
-        base: Mapping[str, t.JsonValue],
+        other: t.MappingKV[str, t.JsonValue],
+        base: t.MappingKV[str, t.JsonValue],
     ) -> p.Result[Mapping[str, t.JsonValue]]:
         """Append strategy: concatenate lists instead of replacing."""
         result: dict[str, t.JsonValue] = dict(other)
@@ -104,8 +104,8 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def _merge_deep(
-        other: Mapping[str, t.JsonValue],
-        base: Mapping[str, t.JsonValue],
+        other: t.MappingKV[str, t.JsonValue],
+        base: t.MappingKV[str, t.JsonValue],
     ) -> p.Result[Mapping[str, t.JsonValue]]:
         """Deep strategy: recursively merge nested dicts."""
         result: dict[str, t.JsonValue] = dict(other)
@@ -122,7 +122,7 @@ class FlextUtilitiesCollectionMerge:
         return r[Mapping[str, t.JsonValue]].ok(result)
 
     _MergeHandler = Callable[
-        [Mapping[str, t.JsonValue], Mapping[str, t.JsonValue]],
+        [Mapping[str, t.JsonValue], t.MappingKV[str, t.JsonValue]],
         "p.Result[Mapping[str, t.JsonValue]]",
     ]
 
@@ -138,8 +138,8 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def merge_mappings(
-        other: Mapping[str, t.JsonValue] | None,
-        base: Mapping[str, t.JsonValue],
+        other: t.MappingKV[str, t.JsonValue] | None,
+        base: t.MappingKV[str, t.JsonValue],
         *,
         strategy: str = _c_cqrs.MergeStrategy.DEEP,
     ) -> p.Result[Mapping[str, t.JsonValue]]:

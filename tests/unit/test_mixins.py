@@ -19,9 +19,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import (
-    Sequence,
-)
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
@@ -111,7 +108,7 @@ class TestsFlextMixins:
 
     def _service_scenarios(
         self,
-    ) -> Sequence[TestsFlextMixins.ServiceMixinScenario]:
+    ) -> t.SequenceOf[TestsFlextMixins.ServiceMixinScenario]:
         return [
             self.ServiceMixinScenario(
                 name="container_register_in_container",

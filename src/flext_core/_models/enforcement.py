@@ -11,9 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Sequence,
-)
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar, Literal
 
@@ -61,7 +58,7 @@ class FlextModelsEnforcement:
     class Report(_EnforcementSourceBase):
         """Aggregated violation report returned by a check or runner."""
 
-        violations: Sequence[FlextModelsEnforcement.Violation] = ()
+        violations: t.SequenceOf[FlextModelsEnforcement.Violation] = ()
 
         @property
         def messages(self) -> t.StrSequence:

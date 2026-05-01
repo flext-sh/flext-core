@@ -14,7 +14,6 @@ from __future__ import annotations
 import time
 from collections.abc import (
     MutableSequence,
-    Sequence,
 )
 from typing import Annotated, ClassVar
 
@@ -223,7 +222,7 @@ class FlextModelsHandler:
             ),
         ] = c.DEFAULT_TIMEOUT_SECONDS
         middleware: Annotated[
-            Sequence[type[p.Middleware]],
+            t.SequenceOf[type[p.Middleware]],
             mp.Field(description="Middleware types to apply to this handler"),
         ] = mp.Field(default_factory=tuple)
 

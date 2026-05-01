@@ -9,9 +9,6 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import (
-    Sequence,
-)
 
 import pytest
 
@@ -338,7 +335,7 @@ class TestsFlextPatternsLogging:
         """
         logger = self.make_result_logger("context_mgr_test")
         bound_logger = logger.bind(operation="batch_process", batch_id="batch-123")
-        results: Sequence[p.Result[bool] | None] = [
+        results: t.SequenceOf[p.Result[bool] | None] = [
             bound_logger.info("Starting batch process"),
             bound_logger.info("Processing item 1"),
             bound_logger.info("Processing item 2"),

@@ -6,11 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-    Sequence,
-)
-
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
@@ -21,5 +16,5 @@ class FlextTypesCore:
     type TextOrBinaryContent = tp.StrictStr | tp.StrictBytes
     type RegistryBindingKey = str | type
 
-    type FileContent = tp.StrictStr | tp.StrictBytes | Sequence[t.StrSequence]
-    type GeneralValueTypeMapping = Mapping[str, t.Scalar]
+    type FileContent = tp.StrictStr | tp.StrictBytes | t.SequenceOf[t.StrSequence]
+    type GeneralValueTypeMapping = t.MappingKV[str, t.Scalar]

@@ -6,9 +6,10 @@ collection facade stays under the 200-LOC cap (logical LOC, AGENTS.md §3.1).
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from typing import overload
 
+from flext_core import t
 from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
 
 
@@ -18,20 +19,20 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
     @overload
     @staticmethod
     def filter[TItem](
-        items: Sequence[TItem],
+        items: t.SequenceOf[TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> Sequence[TItem]: ...
+    ) -> t.SequenceOf[TItem]: ...
 
     @overload
     @staticmethod
     def filter[TItem, TMapped](
-        items: Sequence[TItem],
+        items: t.SequenceOf[TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped],
-    ) -> Sequence[TMapped]: ...
+    ) -> t.SequenceOf[TMapped]: ...
 
     @overload
     @staticmethod
@@ -54,43 +55,43 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
     @overload
     @staticmethod
     def filter[TItem](
-        items: Mapping[str, TItem],
+        items: t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> Mapping[str, TItem]: ...
+    ) -> t.MappingKV[str, TItem]: ...
 
     @overload
     @staticmethod
     def filter[TItem, TMapped](
-        items: Mapping[str, TItem],
+        items: t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped],
-    ) -> Mapping[str, TMapped]: ...
+    ) -> t.MappingKV[str, TMapped]: ...
 
     @staticmethod
     def filter[TItem, TMapped](
-        items: Sequence[TItem] | tuple[TItem, ...] | Mapping[str, TItem],
+        items: t.SequenceOf[TItem] | tuple[TItem, ...] | t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped] | None = None,
     ) -> (
-        Sequence[TItem]
-        | Sequence[TMapped]
+        t.SequenceOf[TItem]
+        | t.SequenceOf[TMapped]
         | tuple[TItem, ...]
         | tuple[TMapped, ...]
-        | Mapping[str, TItem]
-        | Mapping[str, TMapped]
+        | t.MappingKV[str, TItem]
+        | t.MappingKV[str, TMapped]
     ):
         """Unified filter function — preserves container type, optional mapper."""
         filtered_output: (
-            Sequence[TItem]
-            | Sequence[TMapped]
+            t.SequenceOf[TItem]
+            | t.SequenceOf[TMapped]
             | tuple[TItem, ...]
             | tuple[TMapped, ...]
-            | Mapping[str, TItem]
-            | Mapping[str, TMapped]
+            | t.MappingKV[str, TItem]
+            | t.MappingKV[str, TMapped]
         )
         if isinstance(items, Mapping):
             filtered_mapping = {
@@ -102,7 +103,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
                 else filtered_mapping
             )
         else:
-            sequence_items: Sequence[TItem] = items
+            sequence_items: t.SequenceOf[TItem] = items
             filtered_sequence: list[TItem] = [
                 sequence_items[index]
                 for index in range(len(sequence_items))
@@ -126,9 +127,9 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: Sequence[TItem],
+        items: t.SequenceOf[TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> Sequence[TMapped]: ...
+    ) -> t.SequenceOf[TMapped]: ...
 
     @overload
     @staticmethod
@@ -140,9 +141,9 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: Mapping[str, TItem],
+        items: t.MappingKV[str, TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> Mapping[str, TMapped]: ...
+    ) -> t.MappingKV[str, TMapped]: ...
 
     @overload
     @staticmethod
@@ -160,16 +161,16 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @staticmethod
     def map[TItem, TMapped](
-        items: Sequence[TItem]
+        items: t.SequenceOf[TItem]
         | tuple[TItem, ...]
-        | Mapping[str, TItem]
+        | t.MappingKV[str, TItem]
         | set[TItem]
         | frozenset[TItem],
         mapper: Callable[[TItem], TMapped],
     ) -> (
-        Sequence[TMapped]
+        t.SequenceOf[TMapped]
         | tuple[TMapped, ...]
-        | Mapping[str, TMapped]
+        | t.MappingKV[str, TMapped]
         | set[TMapped]
         | frozenset[TMapped]
     ):

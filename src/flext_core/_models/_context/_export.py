@@ -6,9 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
 from types import MappingProxyType
 from typing import Annotated
 
@@ -33,7 +30,7 @@ class FlextModelsContextExport:
         """Typed snapshot returned by export_snapshot."""
 
         data: Annotated[
-            Mapping[str, t.JsonPayload],
+            t.MappingKV[str, t.JsonPayload],
             Field(
                 default_factory=lambda: MappingProxyType({}),
                 description="All context data from all scopes",

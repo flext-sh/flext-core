@@ -15,7 +15,6 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
     MutableSequence,
-    Sequence,
 )
 from typing import Final
 
@@ -39,7 +38,7 @@ class TestsFlextUtilitiesReliability:
         def create_retry_operation(
             success_after: int,
             success_value: int = 42,
-        ) -> t.Pair[Callable[[], p.Result[int]], Sequence[int]]:
+        ) -> t.Pair[Callable[[], p.Result[int]], t.SequenceOf[int]]:
             """Create retry operation that succeeds after N attempts."""
             attempts: MutableSequence[int] = []
 

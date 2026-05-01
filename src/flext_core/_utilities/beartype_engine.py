@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from types import MappingProxyType
 from typing import ClassVar, no_type_check, override
 
@@ -143,7 +143,7 @@ class FlextUtilitiesBeartypeEngine(
         return _NO_VIOLATION if visitor is None else visitor(params, *args)
 
     _VISITORS: ClassVar[
-        Mapping[c.EnforcementPredicateKind, Callable[..., t.StrMapping | None]]
+        t.MappingKV[c.EnforcementPredicateKind, Callable[..., t.StrMapping | None]]
     ] = MappingProxyType({
         c.EnforcementPredicateKind.FIELD_SHAPE: FlextUtilitiesBeartypeFieldVisitor.v_field_shape,
         c.EnforcementPredicateKind.MODEL_CONFIG: FlextUtilitiesBeartypeFieldVisitor.v_model_config,

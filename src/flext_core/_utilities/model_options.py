@@ -24,7 +24,7 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
     def resolve_runtime_options(
         cls,
         source: (
-            m.RuntimeBootstrapOptions | Mapping[str, t.JsonPayload] | p.Base | None
+            m.RuntimeBootstrapOptions | t.MappingKV[str, t.JsonPayload] | p.Base | None
         ) = None,
         **overrides: t.JsonPayload,
     ) -> m.RuntimeBootstrapOptions:

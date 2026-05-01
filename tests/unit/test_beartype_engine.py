@@ -14,7 +14,6 @@ import textwrap
 import typing
 from collections.abc import (
     Mapping,
-    Sequence,
 )
 from pathlib import Path
 
@@ -29,7 +28,7 @@ from tests import c, m, t, u
 
 type _AnyAlias = str | typing.Any
 type _CleanAlias = str | int
-type _NestedAnyAlias = Mapping[str, typing.Any]
+type _NestedAnyAlias = t.MappingKV[str, typing.Any]
 
 
 class TestsFlextBeartypeEngine:
@@ -52,8 +51,8 @@ class TestsFlextBeartypeEngine:
         assert be.contains_any(Mapping[str, typing.Any]) is True
 
     def test_deep_nested_any(self) -> None:
-        """Mapping[str, Sequence[Any]] detected at 2 levels."""
-        assert be.contains_any(Mapping[str, Sequence[typing.Any]]) is True
+        """Mapping[str, t.SequenceOf[Any]] detected at 2 levels."""
+        assert be.contains_any(Mapping[str, t.SequenceOf[typing.Any]]) is True
 
     def test_clean_mapping(self) -> None:
         """t.IntMapping has no Any."""
@@ -76,8 +75,8 @@ class TestsFlextBeartypeEngine:
         assert be.contains_any(str | None) is False
 
     def test_complex_clean_type(self) -> None:
-        """Mapping[str, Sequence[int]] has no Any."""
-        assert be.contains_any(Mapping[str, Sequence[int]]) is False
+        """Mapping[str, t.SequenceOf[int]] has no Any."""
+        assert be.contains_any(Mapping[str, t.SequenceOf[int]]) is False
 
     # has_forbidden_collection_origin                                     #
 

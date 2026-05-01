@@ -6,10 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-    Sequence,
-)
 from contextlib import AbstractContextManager
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
@@ -85,7 +81,7 @@ class FlextProtocolsContext:
 
         def merge(
             self,
-            other: Self | Mapping[str, t.JsonPayload],
+            other: Self | t.MappingKV[str, t.JsonPayload],
         ) -> Self:
             """Merge another context or mapping into this one."""
             ...
@@ -273,13 +269,13 @@ class FlextProtocolsContext:
         dispatcher: FlextProtocolsHandler.Dispatcher | None
         registry: FlextProtocolsRegistry.Registry | None
         subproject: str | None
-        services: Mapping[str, t.RegisterableService] | None
-        factories: Mapping[str, t.FactoryCallable] | None
-        resources: Mapping[str, t.ResourceCallable] | None
+        services: t.MappingKV[str, t.RegisterableService] | None
+        factories: t.MappingKV[str, t.FactoryCallable] | None
+        resources: t.MappingKV[str, t.ResourceCallable] | None
         container_overrides: t.ScalarMapping | None
-        wire_modules: Sequence[ModuleType | str] | None
+        wire_modules: t.SequenceOf[ModuleType | str] | None
         wire_packages: t.StrSequence | None
-        wire_classes: Sequence[type] | None
+        wire_classes: t.SequenceOf[type] | None
 
 
 __all__: list[str] = ["FlextProtocolsContext"]

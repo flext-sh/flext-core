@@ -158,7 +158,7 @@ class FlextLazy(BaseModel):
         *,
         alias_groups: Mapping[str, Sequence[tuple[str, str]]] | None = None,
         sort_keys: bool = True,
-    ) -> Mapping[str, str | tuple[str, str]]:
+    ) -> dict[str, str | tuple[str, str]]:
         """Build one flat lazy-import map."""
         out: dict[str, str | tuple[str, str]] = {
             name: module
@@ -198,10 +198,6 @@ class FlextLazy(BaseModel):
                 except ModuleNotFoundError:
                     child = None
                 if child is not None:
-                    if hasattr(child, name):
-                        value = getattr(child, name)
-                        module_globals[name] = value
-                        return value
                     module_globals[name] = child
                     return child
 

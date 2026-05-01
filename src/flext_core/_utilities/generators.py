@@ -13,7 +13,6 @@ from __future__ import annotations
 import secrets
 import string
 import uuid
-from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import no_type_check
 
@@ -101,7 +100,7 @@ class FlextUtilitiesGenerators:
         parts: t.VariadicTuple[t.JsonValue] | None,
         *,
         include_timestamp: bool,
-    ) -> Sequence[t.JsonValue]:
+    ) -> t.SequenceOf[t.JsonValue]:
         """Collect ID parts including optional timestamp prefix."""
         all_parts: list[t.JsonValue] = []
         if include_timestamp:
@@ -113,7 +112,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_custom_separator_id(
         actual_prefix: str,
-        all_parts: Sequence[t.JsonValue],
+        all_parts: t.SequenceOf[t.JsonValue],
         separator: str,
         id_length: int,
     ) -> str:

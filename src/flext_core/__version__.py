@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from importlib.metadata import PackageMetadata, metadata
 
 from flext_core._typings.base import FlextTypingBase as t
@@ -56,7 +55,7 @@ class FlextVersion:
             cls.__url__ = m.get("Home-Page", "") or m.get("Project-URL", "")
 
     @classmethod
-    def resolve_package_info(cls) -> Mapping[str, str]:
+    def resolve_package_info(cls) -> t.MappingKV[str, str]:
         """Get comprehensive package information dictionary."""
         return {
             "name": cls.__title__,

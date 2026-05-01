@@ -12,7 +12,6 @@ from __future__ import annotations
 import operator
 from collections.abc import (
     MutableSequence,
-    Sequence,
 )
 from types import ModuleType
 
@@ -25,7 +24,7 @@ class FlextUtilitiesDiscovery:
     @staticmethod
     def scan_module(
         module: ModuleType,
-    ) -> Sequence[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]]:
+    ) -> t.SequenceOf[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]]:
         """Scan module for @factory()-decorated functions, sorted by name."""
         return sorted(
             [
@@ -45,18 +44,18 @@ class FlextUtilitiesDiscovery:
 
     @staticmethod
     def resolve_wire_targets(
-        wire_modules: Sequence[ModuleType | str] | None,
+        wire_modules: t.SequenceOf[ModuleType | str] | None,
         wire_packages: t.StrSequence | None,
-        wire_classes: Sequence[type] | None,
+        wire_classes: t.SequenceOf[type] | None,
     ) -> tuple[
-        Sequence[ModuleType] | None,
+        t.SequenceOf[ModuleType] | None,
         t.StrSequence | None,
-        Sequence[type] | None,
+        t.SequenceOf[type] | None,
     ]:
         """Separate mixed wire_modules into actual modules vs package name strings."""
-        resolved_modules: Sequence[ModuleType] | None = None
+        resolved_modules: t.SequenceOf[ModuleType] | None = None
         resolved_packages: t.StrSequence | None = None
-        resolved_classes: Sequence[type] | None = wire_classes
+        resolved_classes: t.SequenceOf[type] | None = wire_classes
 
         if wire_modules is not None:
             modules_list: MutableSequence[ModuleType] = []

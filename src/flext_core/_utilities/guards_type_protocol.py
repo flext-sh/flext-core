@@ -29,11 +29,13 @@ class FlextUtilitiesGuardsTypeProtocol:
     Uses caching for performance-critical protocol lookups.
     """
 
-    _protocol_specs_cache: Mapping[str, Callable[[t.GuardInput], bool]] | None = None
+    _protocol_specs_cache: t.MappingKV[str, Callable[[t.GuardInput], bool]] | None = (
+        None
+    )
     _protocol_type_map_cache: MappingProxyType[type, str] | None = None
 
     @staticmethod
-    def _get_protocol_specs() -> Mapping[str, Callable[[t.GuardInput], bool]]:
+    def _get_protocol_specs() -> t.MappingKV[str, Callable[[t.GuardInput], bool]]:
         """Get cached mapping of protocol names to type check predicates."""
         if FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache = MappingProxyType({
@@ -54,7 +56,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         return FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache
 
     @staticmethod
-    def _get_protocol_type_map() -> Mapping[type, str]:
+    def _get_protocol_type_map() -> t.MappingKV[type, str]:
         """Get cached mapping of protocol types to their string names."""
         if FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache = (

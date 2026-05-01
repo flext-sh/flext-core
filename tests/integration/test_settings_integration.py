@@ -18,9 +18,7 @@ from __future__ import annotations
 import os
 import threading
 from collections.abc import (
-    Mapping,
     MutableSequence,
-    Sequence,
 )
 from pathlib import Path
 from typing import Annotated, ClassVar
@@ -99,7 +97,7 @@ class TestsFlextSettingsIntegration:
         """Centralized factories for configuration tests."""
 
         @staticmethod
-        def basic_config_cases() -> Sequence[
+        def basic_config_cases() -> t.SequenceOf[
             TestsFlextSettingsIntegration._ConfigTestCase
         ]:
             """Generate basic configuration test cases."""
@@ -140,7 +138,7 @@ class TestsFlextSettingsIntegration:
             ]
 
         @staticmethod
-        def thread_safety_cases() -> Sequence[
+        def thread_safety_cases() -> t.SequenceOf[
             TestsFlextSettingsIntegration._ThreadSafetyTest
         ]:
             """Generate thread safety test cases."""
@@ -229,7 +227,7 @@ class TestsFlextSettingsIntegration:
         saved_app = os.environ.pop("FLEXT_APP_NAME", None)
         saved_level = os.environ.pop("FLEXT_LOG_LEVEL", None)
         try:
-            config_data: Mapping[str, t.Primitives] = {
+            config_data: t.MappingKV[str, t.Primitives] = {
                 "app_name": "test-app-from-json",
                 "environment": "test",
                 "log_level": "WARNING",
@@ -263,7 +261,7 @@ class TestsFlextSettingsIntegration:
         saved_debug = os.environ.pop("FLEXT_DEBUG", None)
         try:
             config_file = temp_directory / "settings.yaml"
-            config_data: Mapping[str, t.Primitives] = {
+            config_data: t.MappingKV[str, t.Primitives] = {
                 "app_name": "test-app-from-yaml",
                 "environment": "production",
                 "debug": False,
@@ -356,7 +354,7 @@ class TestsFlextSettingsIntegration:
         This is critical for CLI integration and automatic configuration.
         """
         FlextSettings.reset_for_testing()
-        saved_env_vars: Mapping[str, str | None] = {
+        saved_env_vars: t.MappingKV[str, str | None] = {
             "FLEXT_APP_NAME": os.environ.pop("FLEXT_APP_NAME", None),
             "FLEXT_LOG_LEVEL": os.environ.pop("FLEXT_LOG_LEVEL", None),
             "FLEXT_DEBUG": os.environ.pop("FLEXT_DEBUG", None),

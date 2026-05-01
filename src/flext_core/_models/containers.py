@@ -20,12 +20,12 @@ from __future__ import annotations
 from collections.abc import (
     ItemsView,
     KeysView,
-    Mapping,
     ValuesView,
 )
 from typing import Annotated
 
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.services import FlextTypesServices
 
 
@@ -99,7 +99,7 @@ class FlextModelsContainers:
 
         def update(
             self,
-            other: Mapping[str, FlextTypesServices.JsonPayload],
+            other: t.MappingKV[str, FlextTypesServices.JsonPayload],
         ) -> None:
             self.root.update(other)
 

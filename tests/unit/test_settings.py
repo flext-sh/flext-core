@@ -308,8 +308,8 @@ class TestsFlextSettings:
         tm.that(original.app_name, eq="flext")
 
     @staticmethod
-    def _extract_config_payload(value: m.ConfigMap) -> Mapping[str, object]:
-        payload: Mapping[str, object] = value.root
+    def _extract_config_payload(value: m.ConfigMap) -> t.MappingKV[str, object]:
+        payload: t.MappingKV[str, object] = value.root
         nested = payload.get("root")
         if isinstance(nested, Mapping):
             return nested

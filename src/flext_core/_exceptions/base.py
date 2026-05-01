@@ -92,12 +92,14 @@ class FlextExceptionsBase:
             message: str,
             *,
             error_code: str = c.ErrorCode.UNKNOWN_ERROR,
-            context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None = None,
+            context: t.MappingKV[str, t.JsonPayload | None]
+            | p.HasModelDump
+            | None = None,
             metadata: p.HasModelDump | t.JsonValue | None = None,
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
-            merged_kwargs: Mapping[str, t.JsonPayload | None]
+            merged_kwargs: t.MappingKV[str, t.JsonPayload | None]
             | p.HasModelDump
             | None = None,
             params: mp.BaseModel | None = None,
@@ -157,13 +159,15 @@ class FlextExceptionsBase:
             message: str,
             *,
             error_code: str,
-            context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
+            context: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
             metadata: p.HasModelDump | t.JsonValue | None,
             correlation_id: str | None,
             auto_correlation: bool,
             auto_log: bool,
-            merged_kwargs: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
-            extra_kwargs: Mapping[str, t.JsonPayload | None],
+            merged_kwargs: t.MappingKV[str, t.JsonPayload | None]
+            | p.HasModelDump
+            | None,
+            extra_kwargs: t.MappingKV[str, t.JsonPayload | None],
         ) -> None:
             """Initialize the shared base error state without subclass metaprogramming."""
             super().__init__(message)
@@ -209,7 +213,7 @@ class FlextExceptionsBase:
         @staticmethod
         def _normalize_metadata(
             metadata: p.HasModelDump | t.JsonValue | None,
-            merged_kwargs: Mapping[str, t.JsonPayload],
+            merged_kwargs: t.MappingKV[str, t.JsonPayload],
         ) -> m.Metadata:
             """Normalize metadata from various input types to m.Metadata model."""
             if metadata is None:
@@ -236,7 +240,7 @@ class FlextExceptionsBase:
                         c.FIELD_ATTRIBUTES: merged_attrs,
                     })
                 else:
-                    metadata_dict: Mapping[str, t.JsonPayload | None] | None = None
+                    metadata_dict: t.MappingKV[str, t.JsonPayload | None] | None = None
                     if isinstance(metadata, (Mapping, p.HasModelDump)):
                         try:
                             metadata_dict = (
@@ -260,8 +264,8 @@ class FlextExceptionsBase:
 
         @staticmethod
         def _normalize_metadata_from_dict(
-            metadata_dict: Mapping[str, t.JsonPayload | None],
-            merged_kwargs: Mapping[str, t.JsonPayload],
+            metadata_dict: t.MappingKV[str, t.JsonPayload | None],
+            merged_kwargs: t.MappingKV[str, t.JsonPayload],
         ) -> m.Metadata:
             """Normalize metadata from dict-like recursive containers."""
             merged_attrs: MutableMapping[str, t.JsonValue | None] = {}
@@ -282,7 +286,7 @@ class FlextExceptionsBase:
                 },
             })
 
-        def to_dict(self) -> Mapping[str, t.JsonPayload | None]:
+        def to_dict(self) -> t.MappingKV[str, t.JsonPayload | None]:
             """Convert exception to dictionary representation."""
             result: MutableMapping[str, t.JsonPayload | None] = {
                 "error_type": type(self).__name__,
@@ -328,10 +332,10 @@ class FlextExceptionsBase:
             message: str,
             *,
             error_code: str,
-            context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
+            context: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
             params: mp.BaseModel | None,
-            named_params: Mapping[str, t.JsonPayload | None] | None = None,
-            extra_kwargs: Mapping[str, t.JsonPayload | None] | None = None,
+            named_params: t.MappingKV[str, t.JsonPayload | None] | None = None,
+            extra_kwargs: t.MappingKV[str, t.JsonPayload | None] | None = None,
             param_keys: frozenset[str] | None = None,
             correlation_id: str | None = None,
             metadata: p.HasModelDump | t.JsonValue | None = None,

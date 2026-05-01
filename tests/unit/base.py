@@ -16,7 +16,6 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
     MutableSequence,
-    Sequence,
 )
 from datetime import datetime
 from pathlib import Path
@@ -28,7 +27,7 @@ from flext_tests.base import s
 from tests import c, h, m, p, r, t
 
 
-class TestsFlextServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPayload]](
+class TestsFlextServiceBase[TDomainResult: t.JsonPayload | t.SequenceOf[t.JsonPayload]](
     s[TDomainResult]
 ):
     """Service base for flext-core tests - extends s.
@@ -121,7 +120,7 @@ class TestsFlextServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPayloa
         def _build_cases(
             *,
             should_fail: bool,
-        ) -> Sequence[TestsFlextServiceBase.HandlerTestCase]:
+        ) -> t.SequenceOf[TestsFlextServiceBase.HandlerTestCase]:
             cases: MutableSequence[TestsFlextServiceBase.HandlerTestCase] = []
             for spec in td.default_handler_case_specs():
                 spec_should_fail = bool(spec.get("should_fail", False))
@@ -148,14 +147,14 @@ class TestsFlextServiceBase[TDomainResult: t.JsonPayload | Sequence[t.JsonPayloa
             return cases
 
         @staticmethod
-        def success_cases() -> Sequence[TestsFlextServiceBase.HandlerTestCase]:
+        def success_cases() -> t.SequenceOf[TestsFlextServiceBase.HandlerTestCase]:
             """Generate success handler test cases."""
             return TestsFlextServiceBase.HandlerFactories._build_cases(
                 should_fail=False,
             )
 
         @staticmethod
-        def failure_cases() -> Sequence[TestsFlextServiceBase.HandlerTestCase]:
+        def failure_cases() -> t.SequenceOf[TestsFlextServiceBase.HandlerTestCase]:
             """Generate failure handler test cases."""
             return TestsFlextServiceBase.HandlerFactories._build_cases(
                 should_fail=True,

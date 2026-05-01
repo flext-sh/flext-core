@@ -12,9 +12,6 @@ from __future__ import annotations
 import inspect
 import logging
 import types
-from collections.abc import (
-    Mapping,
-)
 from contextlib import suppress
 from pathlib import Path
 from typing import ClassVar
@@ -49,11 +46,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             incoming_context = {
                 key: cls._to_container_value(value) for key, value in context.items()
             }
-            current_context_obj: Mapping[str, t.JsonValue] = {
+            current_context_obj: t.MappingKV[str, t.JsonValue] = {
                 key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in current_context.items()
             }
-            incoming_context_obj: Mapping[str, t.JsonValue] = {
+            incoming_context_obj: t.MappingKV[str, t.JsonValue] = {
                 key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in incoming_context.items()
             }
@@ -130,7 +127,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @staticmethod
     def to_container_context(
-        context: Mapping[str, t.LogValue | t.JsonValue | t.JsonPayload],
+        context: t.MappingKV[str, t.LogValue | t.JsonValue | t.JsonPayload],
     ) -> t.JsonMapping:
         """Convert mapping to container context using normalization."""
         return {
@@ -141,7 +138,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     @classmethod
     def _to_scalar_context(
         cls,
-        context: Mapping[str, t.LogValue | t.JsonValue | t.JsonPayload | None],
+        context: t.MappingKV[str, t.LogValue | t.JsonValue | t.JsonPayload | None],
     ) -> t.JsonMapping:
         validated: t.JsonMapping = t.json_mapping_adapter().validate_python(
             {key: cls._to_container_value(value) for key, value in context.items()},

@@ -6,10 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-    Sequence,
-)
 from datetime import datetime
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
@@ -54,7 +50,7 @@ class FlextProtocolsLogging:
             *,
             exception: Exception | None,
             exc_info: bool,
-            context: Mapping[str, t.JsonPayload | Exception],
+            context: t.MappingKV[str, t.JsonPayload | Exception],
         ) -> t.JsonMapping:
             """Build normalized structured exception context."""
             ...
@@ -165,9 +161,11 @@ class FlextProtocolsLogging:
         @property
         def attributes(
             self,
-        ) -> Mapping[
+        ) -> t.MappingKV[
             str,
-            t.Scalar | Mapping[str, t.Scalar | Sequence[t.Scalar]] | Sequence[t.Scalar],
+            t.Scalar
+            | t.MappingKV[str, t.Scalar | t.SequenceOf[t.Scalar]]
+            | t.SequenceOf[t.Scalar],
         ]:
             """Metadata attributes."""
             ...
@@ -190,18 +188,18 @@ class FlextProtocolsLogging:
         @classmethod
         def model_validate(
             cls,
-            obj: Mapping[
+            obj: t.MappingKV[
                 str,
                 t.Scalar
-                | Mapping[str, t.Scalar | Sequence[t.Scalar]]
-                | Sequence[t.Scalar]
+                | t.MappingKV[str, t.Scalar | t.SequenceOf[t.Scalar]]
+                | t.SequenceOf[t.Scalar]
                 | None,
             ]
             | Self,
             *,
             strict: bool | None = None,
             from_attributes: bool | None = None,
-            context: Mapping[str, t.Scalar] | None = None,
+            context: t.MappingKV[str, t.Scalar] | None = None,
         ) -> Self:
             """Validate and create metadata from input data."""
             ...
@@ -263,7 +261,7 @@ class FlextProtocolsLogging:
         """Entry protocol (read-only)."""
 
         @property
-        def attributes(self) -> Mapping[str, t.StrSequence]:
+        def attributes(self) -> t.MappingKV[str, t.StrSequence]:
             """Entry attributes as immutable mapping."""
             ...
 
@@ -315,7 +313,7 @@ class FlextProtocolsLogging:
     type AccessibleData = (
         t.JsonPayload
         | FlextProtocolsBase.Model
-        | Mapping[
+        | t.MappingKV[
             str,
             t.JsonPayload | FlextProtocolsBase.Model | None,
         ]

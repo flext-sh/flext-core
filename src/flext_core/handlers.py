@@ -14,7 +14,6 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
     MutableSequence,
-    Sequence,
 )
 from types import ModuleType
 from typing import ClassVar, Unpack, override
@@ -256,7 +255,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         *,
         priority: int = c.DEFAULT_MAX_COMMAND_RETRIES,
         timeout: float | None = c.DEFAULT_TIMEOUT_SECONDS,
-        middleware: Sequence[type[p.Middleware]] | None = None,
+        middleware: t.SequenceOf[type[p.Middleware]] | None = None,
     ) -> Callable[[Callable[PHandler, TResult]], Callable[PHandler, TResult]]:
         """Decorator to mark methods as handlers for commands.
 
@@ -589,7 +588,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         @staticmethod
         def scan_class(
             target_class: type,
-        ) -> Sequence[tuple[str, m.DecoratorConfig]]:
+        ) -> t.SequenceOf[tuple[str, m.DecoratorConfig]]:
             """Scan class for methods decorated with @handler().
 
             Introspects the class to find all methods with handler configuration
@@ -607,7 +606,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 ...     print(f"{method_name}: {settings.command.__name__}")
 
             """
-            handlers: Sequence[tuple[str, m.DecoratorConfig]] = [
+            handlers: t.SequenceOf[tuple[str, m.DecoratorConfig]] = [
                 (name, getattr(method, c.HANDLER_ATTR))
                 for name in dir(target_class)
                 if hasattr(method := getattr(target_class, name, None), c.HANDLER_ATTR)
@@ -617,7 +616,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> Sequence[tuple[str, Callable[..., t.Scalar | None], m.DecoratorConfig]]:
+        ) -> t.SequenceOf[
+            tuple[str, Callable[..., t.Scalar | None], m.DecoratorConfig]
+        ]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration

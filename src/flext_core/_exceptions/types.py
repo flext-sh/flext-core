@@ -6,10 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-    Sequence,
-)
 from typing import ClassVar
 
 from pydantic import ValidationError as _PydanticValidationError
@@ -142,7 +138,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             failure_count: int | None = None,
             reset_timeout: t.Numeric | None = None,
             error_code: str = c.ErrorCode.EXTERNAL_SERVICE_ERROR,
-            context: Mapping[str, t.JsonValue] | None = None,
+            context: t.MappingKV[str, t.JsonValue] | None = None,
             correlation_id: str | None = None,
             params: mp.BaseModel | None = None,
             **extra_kwargs: t.JsonValue,
@@ -178,7 +174,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             error_code: str = c.ErrorCode.TYPE_ERROR,
             expected_type: type | str | None = None,
             actual_type: type | str | None = None,
-            context: Mapping[str, t.JsonValue] | None = None,
+            context: t.MappingKV[str, t.JsonValue] | None = None,
             correlation_id: str | None = None,
             params: mp.BaseModel | None = None,
             **extra_kwargs: t.JsonValue,
@@ -204,7 +200,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
                 extra_kwargs,
                 "actual_type",
             )
-            param_values: Mapping[str, str | None] = {
+            param_values: t.MappingKV[str, str | None] = {
                 "expected_type": normalized_expected_type.__qualname__
                 if normalized_expected_type is not None
                 else None,
@@ -217,7 +213,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
                 if params is not None
                 else m.TypeErrorParams.model_validate(param_values)
             )
-            normalized_extra_kwargs: Mapping[str, t.JsonValue] = {
+            normalized_extra_kwargs: t.MappingKV[str, t.JsonValue] = {
                 key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in extra_kwargs.items()
             }
@@ -243,9 +239,9 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         def _build_type_context(
             expected_type: type | str | None,
             actual_type: type | str | None,
-            context: Mapping[str, t.JsonValue] | None,
-            extra_kwargs: Mapping[str, t.JsonValue],
-        ) -> Mapping[str, t.JsonValue]:
+            context: t.MappingKV[str, t.JsonValue] | None,
+            extra_kwargs: t.MappingKV[str, t.JsonValue],
+        ) -> t.MappingKV[str, t.JsonValue]:
             """Build type context dictionary."""
             type_context = FlextExceptionsHelpers.build_context_map(
                 context,
@@ -264,7 +260,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             return type_context
 
         @staticmethod
-        def _get_type_map() -> Mapping[str, type]:
+        def _get_type_map() -> t.MappingKV[str, type]:
             """Get mapping of type names to actual types."""
             return {
                 "str": str,
@@ -281,7 +277,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         @staticmethod
         def _normalize_type(
             type_value: type | str | None,
-            type_map: Mapping[str, type],
+            type_map: t.MappingKV[str, type],
             extra_kwargs: t.MutableJsonMapping,
             key: str,
         ) -> type | None:
@@ -330,4 +326,4 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         )
 
 
-__all__: Sequence[str] = ["FlextExceptionsTypes"]
+__all__: t.SequenceOf[str] = ["FlextExceptionsTypes"]

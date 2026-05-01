@@ -23,61 +23,61 @@ from flext_core._typings.pydantic import FlextTypesPydantic as tp
 class FlextTypingBase:
     """Base type alias namespace for Flext core type-safe contracts."""
 
-    type Numeric = tp.StrictInt | tp.StrictFloat
-
-    type Primitives = tp.StrictStr | Numeric | tp.StrictBool
-
-    type Scalar = Primitives | tp.StrictBytes | datetime
-    type ScalarMapping = Mapping[str, Scalar]
-    type ScalarList = Sequence[Scalar]
-    type MutableScalarMapping = MutableMapping[str, Scalar]
-
-    type StrMapping = Mapping[str, str]
-    type StrSequence = Sequence[str]
-    type MutableStrMapping = MutableMapping[str, str]
-    type OptionalStrMapping = Mapping[str, str | None]
-    type MutableOptionalStrMapping = MutableMapping[str, str | None]
-
-    type SecretValue = tp.SecretStr | tp.SecretBytes
-    type SettingsValue = tp.JsonValue | SecretValue | Path
-
-    type JsonMapping = Mapping[str, tp.JsonValue]
-    type JsonList = Sequence[tp.JsonValue]
-    type MutableJsonMapping = MutableMapping[str, tp.JsonValue]
-    type MutableJsonList = MutableSequence[tp.JsonValue]
-    type FlatContainerList = Sequence[tp.JsonValue]
-    type MutableFlatContainerList = MutableSequence[tp.JsonValue]
-    type FlatContainerMapping = Mapping[str, tp.JsonValue]
-    type FlatContainer = FlatContainerMapping | Sequence[tp.JsonValue]
-    type MutableFlatContainerMapping = MutableMapping[str, tp.JsonValue]
-    type MutableFlatContainer = (
-        MutableFlatContainerMapping | MutableSequence[tp.JsonValue]
-    )
     type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
     type MutableMappingKV[KeyT, ValueT] = MutableMapping[KeyT, ValueT]
     type SequenceOf[ItemT] = Sequence[ItemT]
     type MutableSequenceOf[ItemT] = MutableSequence[ItemT]
 
+    type Numeric = tp.StrictInt | tp.StrictFloat
+
+    type Primitives = tp.StrictStr | Numeric | tp.StrictBool
+
+    type Scalar = Primitives | tp.StrictBytes | datetime
+    type ScalarMapping = MappingKV[str, Scalar]
+    type ScalarList = SequenceOf[Scalar]
+    type MutableScalarMapping = MutableMapping[str, Scalar]
+
+    type StrMapping = MappingKV[str, str]
+    type StrSequence = SequenceOf[str]
+    type MutableStrMapping = MutableMapping[str, str]
+    type OptionalStrMapping = MappingKV[str, str | None]
+    type MutableOptionalStrMapping = MutableMapping[str, str | None]
+
+    type SecretValue = tp.SecretStr | tp.SecretBytes
+    type SettingsValue = tp.JsonValue | SecretValue | Path
+
+    type JsonMapping = MappingKV[str, tp.JsonValue]
+    type JsonList = SequenceOf[tp.JsonValue]
+    type MutableJsonMapping = MutableMapping[str, tp.JsonValue]
+    type MutableJsonList = MutableSequenceOf[tp.JsonValue]
+    type FlatContainerList = SequenceOf[tp.JsonValue]
+    type MutableFlatContainerList = MutableSequenceOf[tp.JsonValue]
+    type FlatContainerMapping = MappingKV[str, tp.JsonValue]
+    type FlatContainer = FlatContainerMapping | SequenceOf[tp.JsonValue]
+    type MutableFlatContainerMapping = MutableMapping[str, tp.JsonValue]
+    type MutableFlatContainer = (
+        MutableFlatContainerMapping | MutableSequenceOf[tp.JsonValue]
+    )
     # Canonical consumer aliases (flat; no recursion — tp.JsonValue carries depth)
     type MutableOptionalFeatureFlagMapping = MutableMapping[str, str | bool | None]
-    type IntMapping = Mapping[str, int]
+    type IntMapping = MappingKV[str, int]
     type MutableIntMapping = MutableMapping[str, int]
-    type BoolMapping = Mapping[str, bool]
+    type BoolMapping = MappingKV[str, bool]
     type MutableBoolMapping = MutableMapping[str, bool]
-    type OptionalBoolMapping = Mapping[str, bool | None]
+    type OptionalBoolMapping = MappingKV[str, bool | None]
     type MutableOptionalBoolMapping = MutableMapping[str, bool | None]
-    type FrozensetMapping = Mapping[str, frozenset[str]]
+    type FrozensetMapping = MappingKV[str, frozenset[str]]
     type MutableFrozensetMapping = MutableMapping[str, frozenset[str]]
-    type StrSequenceMapping = Mapping[str, StrSequence]
-    type MutableStrSequenceMapping = MutableMapping[str, MutableSequence[str]]
-    type ScalarOrStrSequenceMapping = Mapping[str, Scalar | StrSequence]
+    type StrSequenceMapping = MappingKV[str, StrSequence]
+    type MutableStrSequenceMapping = MutableMapping[str, MutableSequenceOf[str]]
+    type ScalarOrStrSequenceMapping = MappingKV[str, Scalar | StrSequence]
 
     # Recurring domain-specific flat mapping aliases
-    type AttributeMapping = Mapping[str, str | MutableSequence[str]]
-    type MutableAttributeMapping = MutableMapping[str, str | MutableSequence[str]]
-    type ConfigValueMapping = Mapping[str, str | int | float]
-    type HeaderMapping = Mapping[str, int | str]
-    type FeatureFlagMapping = Mapping[str, str | bool]
+    type AttributeMapping = MappingKV[str, str | MutableSequenceOf[str]]
+    type MutableAttributeMapping = MutableMapping[str, str | MutableSequenceOf[str]]
+    type ConfigValueMapping = MappingKV[str, str | int | float]
+    type HeaderMapping = MappingKV[str, int | str]
+    type FeatureFlagMapping = MappingKV[str, str | bool]
     type MutableFeatureFlagMapping = MutableMapping[str, str | bool]
     type MutableHeaderMapping = MutableMapping[str, int | str]
     type MutableConfigValueMapping = MutableMapping[str, str | int | float]
@@ -100,7 +100,7 @@ class FlextTypingBase:
     class MutableContainerListBase(
         MutableSequence[tp.JsonValue],
     ):
-        """Concrete base for MutableSequence[tp.JsonValue] inheritance."""
+        """Concrete base for MutableSequenceOf[tp.JsonValue] inheritance."""
 
     PRIMITIVES_TYPES: tuple[type[str], type[int], type[float], type[bool]] = (
         str,

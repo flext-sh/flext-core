@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Generator, Mapping
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Annotated, ClassVar, Self
@@ -110,7 +110,7 @@ class FlextContext(m.ManagedModel):
 
     def merge(
         self,
-        other: FlextContext | Mapping[str, t.JsonPayload],
+        other: FlextContext | t.MappingKV[str, t.JsonPayload],
     ) -> Self:
         """Merge another context or mapping into this context's scope."""
         if isinstance(other, FlextContext):
@@ -289,7 +289,7 @@ class FlextContext(m.ManagedModel):
     # --- Contextvar snapshot / clear ---
 
     @staticmethod
-    def export_full_context() -> Mapping[str, t.Scalar]:
+    def export_full_context() -> t.MappingKV[str, t.Scalar]:
         """Export all active contextvar values as a flat mapping."""
         result: dict[str, t.Scalar] = {}
         if (v := u.CORRELATION_ID.get()) is not None:

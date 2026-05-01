@@ -6,9 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
 from datetime import datetime
 
 import structlog.contextvars
@@ -46,7 +43,9 @@ class FlextModelsContextProxyVar:
         def get(self) -> t.JsonPayload | datetime | None:
             """Get current value from structlog context."""
             contextvars_data = structlog.contextvars.get_contextvars()
-            structlog_context: Mapping[str, t.JsonPayload | datetime] = contextvars_data
+            structlog_context: t.MappingKV[str, t.JsonPayload | datetime] = (
+                contextvars_data
+            )
             if self._key not in structlog_context:
                 return self._default
             value = structlog_context[self._key]

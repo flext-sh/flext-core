@@ -13,9 +13,7 @@ import inspect
 import sys
 from collections.abc import (
     Callable,
-    Mapping,
     MutableMapping,
-    Sequence,
 )
 from typing import Annotated, ClassVar, Literal, Self, override
 
@@ -339,7 +337,7 @@ class FlextRegistry(s[bool]):
 
     def register_bindings(
         self,
-        bindings: Mapping[t.RegistryBindingKey, t.DispatchableHandler],
+        bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler],
     ) -> p.Result[m.RegistrySummary]:
         """Register message-to-handler bindings.
 
@@ -425,7 +423,7 @@ class FlextRegistry(s[bool]):
 
     def register_handlers(
         self,
-        handlers: Sequence[t.DispatchableHandler],
+        handlers: t.SequenceOf[t.DispatchableHandler],
     ) -> p.Result[m.RegistrySummary]:
         """Register multiple handlers in batch.
 

@@ -8,10 +8,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
-
 from flext_core import (
     FlextConstants as c,
     FlextExceptions as e,
@@ -27,7 +23,7 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def parse_model[M: m.BaseModel](
-        kwargs: Mapping[str, t.JsonPayload],
+        kwargs: t.MappingKV[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
@@ -59,7 +55,7 @@ class FlextUtilitiesArgs:
     @staticmethod
     def resolve_options[M: m.BaseModel](
         options: M | None,
-        kwargs: Mapping[str, t.JsonPayload],
+        kwargs: t.MappingKV[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,

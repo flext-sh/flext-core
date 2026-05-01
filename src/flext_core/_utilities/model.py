@@ -8,9 +8,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
 from importlib import import_module
 
 from flext_core import (
@@ -67,7 +64,7 @@ class FlextUtilitiesModel:
         model: mp.BaseModel,
         options: FlextUtilitiesModel.ModelDumpOptions | None = None,
         **kwargs: t.JsonPayload,
-    ) -> Mapping[str, t.JsonPayload]:
+    ) -> t.MappingKV[str, t.JsonPayload]:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.
@@ -120,7 +117,7 @@ class FlextUtilitiesModel:
     @classmethod
     def _normalize_runtime_override_mapping(
         cls,
-        value: Mapping[str, t.JsonPayload | t.Scalar] | None,
+        value: t.MappingKV[str, t.JsonPayload | t.Scalar] | None,
     ) -> t.JsonMapping | None:
         """Normalize runtime override mappings to canonical JsonMapping."""
         if value is None:

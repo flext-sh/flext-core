@@ -144,7 +144,7 @@ class FlextUtilitiesDomain:
         obj_dict = FlextUtilitiesDomain._get_obj_dict(obj)
         if obj_dict is None:
             return hash(repr(obj))
-        items: Sequence[t.Pair[str, t.JsonValue]] = [
+        items: t.SequenceOf[t.Pair[str, t.JsonValue]] = [
             (k, FlextUtilitiesDomain._to_hashable(v))
             for k, v in sorted(obj_dict.items())
         ]
@@ -154,7 +154,7 @@ class FlextUtilitiesDomain:
     def add_domain_event(
         entity: pb.HasDomainEvents,
         event_type: str,
-        data: mc.ConfigMap | Mapping[str, t.JsonPayload | None] | None = None,
+        data: mc.ConfigMap | t.MappingKV[str, t.JsonPayload | None] | None = None,
         aggregate_id: str | None = None,
     ) -> mde.Entry:
         """Create a domain event and append it to the entity's event buffer.

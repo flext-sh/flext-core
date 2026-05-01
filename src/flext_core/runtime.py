@@ -118,7 +118,7 @@ class FlextRuntime:
         | None,
     ) -> t.JsonValue:
         """Normalize arbitrary runtime input to one validated ``JsonValue``."""
-        normalized: t.JsonValue | Mapping[str, t.JsonPayload] | t.Scalar
+        normalized: t.JsonValue | t.MappingKV[str, t.JsonPayload] | t.Scalar
         if value is None:
             normalized = ""
         elif ugm.has_model_dump(value):
@@ -132,7 +132,7 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_json_mapping(
-        value: Mapping[str, t.JsonPayload | t.Scalar],
+        value: t.MappingKV[str, t.JsonPayload | t.Scalar],
     ) -> t.JsonMapping:
         """Normalize a mapping to a validated ``JsonMapping``."""
         return FlextRuntime._normalize_dict_entries(
@@ -141,7 +141,7 @@ class FlextRuntime:
 
     @staticmethod
     def _normalize_dict_entries(
-        items: Sequence[tuple[str, t.JsonPayload | t.Scalar]],
+        items: t.SequenceOf[tuple[str, t.JsonPayload | t.Scalar]],
     ) -> dict[str, t.JsonValue]:
         """Normalize key-value pairs for container dict construction."""
         return dict(
@@ -156,12 +156,12 @@ class FlextRuntime:
     @staticmethod
     def normalize_model_input_mapping(
         value: BaseModel | mc.Dict | t.ScalarMapping | None,
-    ) -> Mapping[str, t.JsonPayload] | None:
+    ) -> t.MappingKV[str, t.JsonPayload] | None:
         """Normalize model-like input to a plain mapping."""
         if value is None:
             return None
         if isinstance(value, mc.Dict):
-            raw_mapping: Mapping[str, t.JsonPayload | t.Scalar] = value.root
+            raw_mapping: t.MappingKV[str, t.JsonPayload | t.Scalar] = value.root
         elif isinstance(value, BaseModel):
             raw_mapping = value.model_dump()
         else:
@@ -172,8 +172,8 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_metadata_input_mapping(
-        value: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
-    ) -> Mapping[str, t.JsonPayload | None] | None:
+        value: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
+    ) -> t.MappingKV[str, t.JsonPayload | None] | None:
         """Normalize mapping-like metadata input while preserving explicit None.
 
         Defensively handles broken ``model_dump`` overrides that return a
@@ -183,7 +183,7 @@ class FlextRuntime:
         if value is None:
             return None
         if isinstance(value, Mapping):
-            raw: Mapping[str, t.JsonPayload | None] = value
+            raw: t.MappingKV[str, t.JsonPayload | None] = value
         else:
             try:
                 raw = dict(value.model_dump())
@@ -198,7 +198,7 @@ class FlextRuntime:
     @staticmethod
     def validate_metadata_attributes(
         value: t.MetadataInput,
-    ) -> Mapping[str, t.JsonValue]:
+    ) -> t.MappingKV[str, t.JsonValue]:
         """Normalize and validate metadata attributes input.
 
         Defensively asserts that a BaseModel's ``model_dump`` actually yields
@@ -219,7 +219,7 @@ class FlextRuntime:
                 raise ValueError(
                     c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key),
                 )
-        validated_metadata: Mapping[str, t.JsonValue] = (
+        validated_metadata: t.MappingKV[str, t.JsonValue] = (
             t.metadata_map_adapter().validate_python({
                 key: item for key, item in normalized_result.items() if item is not None
             })
@@ -481,12 +481,12 @@ class FlextRuntime:
             )
 
             settings: mc.ConfigMap | None = None
-            services: Mapping[str, t.RegisterableService] | None = None
-            factories: Mapping[str, t.FactoryCallable] | None = None
-            resources: Mapping[str, t.ResourceCallable] | None = None
-            wire_modules: Sequence[ModuleType] | None = None
+            services: t.MappingKV[str, t.RegisterableService] | None = None
+            factories: t.MappingKV[str, t.FactoryCallable] | None = None
+            resources: t.MappingKV[str, t.ResourceCallable] | None = None
+            wire_modules: t.SequenceOf[ModuleType] | None = None
             wire_packages: t.StrSequence | None = None
-            wire_classes: Sequence[type] | None = None
+            wire_classes: t.SequenceOf[type] | None = None
             factory_cache: bool = True
 
         ContainerCreationOptionsModel: ClassVar[
@@ -521,7 +521,7 @@ class FlextRuntime:
         def _parse_options(
             cls,
             container_options: p.ContainerCreationOptions
-            | Mapping[str, t.JsonPayload]
+            | t.MappingKV[str, t.JsonPayload]
             | None,
         ) -> p.ContainerCreationOptions:
             """Parse raw container options into a validated model."""
@@ -544,7 +544,7 @@ class FlextRuntime:
         def _merge_options(
             cls,
             base: p.ContainerCreationOptions,
-            overrides: Mapping[str, t.JsonPayload],
+            overrides: t.MappingKV[str, t.JsonPayload],
         ) -> p.ContainerCreationOptions:
             """Merge runtime kwargs over base options (override wins if not None)."""
             options_model = cls._require_container_creation_options_model()
@@ -558,7 +558,7 @@ class FlextRuntime:
                 for field in cls._OPTION_FIELDS
             }
             merged["factory_cache"] = override_opts.factory_cache
-            merged_options: Mapping[str, t.JsonPayload] = dict(merged)
+            merged_options: t.MappingKV[str, t.JsonPayload] = dict(merged)
             return options_model.model_validate(merged_options)
 
         @classmethod
@@ -596,7 +596,7 @@ class FlextRuntime:
         def create_container(
             cls,
             container_options: p.ContainerCreationOptions
-            | Mapping[str, t.JsonPayload]
+            | t.MappingKV[str, t.JsonPayload]
             | None = None,
             **runtime_kwargs: t.JsonPayload,
         ) -> containers.DynamicContainer:
@@ -737,9 +737,9 @@ class FlextRuntime:
         def wire(
             container: containers.Container,
             *,
-            modules: Sequence[ModuleType] | None = None,
+            modules: t.SequenceOf[ModuleType] | None = None,
             packages: t.StrSequence | None = None,
-            classes: Sequence[type] | None = None,
+            classes: t.SequenceOf[type] | None = None,
         ) -> None:
             """Wire modules or packages to a dependency-injector container for @inject usage."""
             modules_to_wire: MutableSequence[ModuleType] = list(modules or [])

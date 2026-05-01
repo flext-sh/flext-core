@@ -383,7 +383,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
     @classmethod
     def traverse[V, U](
         cls,
-        items: Sequence[V],
+        items: t.SequenceOf[V],
         func: Callable[[V], p.Result[U]],
         *,
         fail_fast: bool = True,

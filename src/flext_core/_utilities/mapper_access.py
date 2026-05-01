@@ -91,7 +91,7 @@ class FlextUtilitiesMapperAccess:
         current: t.JsonPayload
         | t.JsonMapping
         | FlextModelsContainers.ConfigMap
-        | Sequence[t.JsonValue | t.JsonPayload]
+        | t.SequenceOf[t.JsonValue | t.JsonPayload]
         | None,
         key_part: str,
     ) -> p.Result[t.JsonPayload]:
@@ -102,7 +102,7 @@ class FlextUtilitiesMapperAccess:
         )
         result: p.Result[t.JsonPayload]
         if isinstance(current, Mapping):
-            mapping_obj: Mapping[str, t.JsonValue | t.JsonPayload] = current
+            mapping_obj: t.MappingKV[str, t.JsonValue | t.JsonPayload] = current
             result = (
                 FlextUtilitiesMapperAccess._resolve_raw_value(
                     mapping_obj[key_part],
@@ -150,13 +150,13 @@ class FlextUtilitiesMapperAccess:
     def _extract_handle_array_index(
         current: t.JsonPayload
         | t.JsonMapping
-        | Sequence[t.JsonValue | t.JsonPayload]
+        | t.SequenceOf[t.JsonValue | t.JsonPayload]
         | FlextModelsContainers.ObjectList,
         array_match: str,
     ) -> p.Result[t.JsonPayload]:
         """Handle array indexing with negative index support."""
         if isinstance(current, FlextModelsContainers.ObjectList):
-            sequence: Sequence[t.JsonValue | t.JsonPayload] = current.root
+            sequence: t.SequenceOf[t.JsonValue | t.JsonPayload] = current.root
         elif isinstance(current, Sequence) and not isinstance(current, (str, bytes)):
             sequence = current
         else:

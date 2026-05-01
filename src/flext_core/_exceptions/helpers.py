@@ -28,8 +28,8 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def _normalized_source_entries(
-        context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
-        extra_kwargs: Mapping[str, t.JsonPayload | None],
+        context: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
+        extra_kwargs: t.MappingKV[str, t.JsonPayload | None],
     ) -> tuple[tuple[str, t.JsonValue], ...]:
         """Collect normalized metadata entries from context and kwargs once."""
         entries: list[tuple[str, t.JsonValue]] = []
@@ -52,7 +52,10 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def safe_metadata(
-        value: p.HasModelDump | Mapping[str, t.JsonPayload | None] | t.JsonValue | None,
+        value: p.HasModelDump
+        | t.MappingKV[str, t.JsonPayload | None]
+        | t.JsonValue
+        | None,
     ) -> m.Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model."""
         metadata: m.Metadata | None = None
@@ -87,8 +90,8 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_context_map(
-        context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
-        extra_kwargs: Mapping[str, t.JsonPayload | None],
+        context: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
+        extra_kwargs: t.MappingKV[str, t.JsonPayload | None],
         excluded_keys: set[str] | frozenset[str] | None = None,
     ) -> dict[str, t.JsonValue]:
         """Build normalized context map from context and kwargs."""
@@ -104,8 +107,8 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_param_map(
-        context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
-        extra_kwargs: Mapping[str, t.JsonPayload | None],
+        context: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
+        extra_kwargs: t.MappingKV[str, t.JsonPayload | None],
         keys: set[str] | frozenset[str],
     ) -> dict[str, t.JsonValue]:
         """Build parameter map restricted to declared param keys."""

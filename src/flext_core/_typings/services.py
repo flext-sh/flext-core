@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    Mapping,
     MutableMapping,
-    Sequence,
     Set as AbstractSet,
 )
 from datetime import date, time, tzinfo
@@ -37,12 +35,14 @@ class FlextTypesServices:
 
     type JsonPayloadLeaf = t.Scalar | Path | tp.JsonValue | mp.BaseModel
     type JsonPayloadCollectionValue = (
-        JsonPayloadLeaf | Mapping[str, JsonPayloadLeaf] | Sequence[JsonPayloadLeaf]
+        JsonPayloadLeaf
+        | t.MappingKV[str, JsonPayloadLeaf]
+        | t.SequenceOf[JsonPayloadLeaf]
     )
     type JsonPayload = (
         JsonPayloadLeaf
-        | Mapping[str, JsonPayloadCollectionValue]
-        | Sequence[JsonPayloadCollectionValue]
+        | t.MappingKV[str, JsonPayloadCollectionValue]
+        | t.SequenceOf[JsonPayloadCollectionValue]
     )
     type RegistryDict[T] = MutableMapping[str, T]
     type DomainModelCarrier = mp.BaseModel | p.Model
@@ -51,7 +51,7 @@ class FlextTypesServices:
     type LogArgument = tp.JsonValue | p.Model
     type LogValue = LogArgument | Exception
     type LogResult = prt.Result[bool]
-    type MetadataMapping = Mapping[str, JsonPayload]
+    type MetadataMapping = t.MappingKV[str, JsonPayload]
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
     type RuntimeData = tp.JsonValue | mp.BaseModel
     type BootstrapInput = mp.BaseModel | t.JsonMapping
@@ -64,7 +64,7 @@ class FlextTypesServices:
         | pcx.Context
         | ph.Dispatcher
     )
-    type UserOverridesMapping = Mapping[str, JsonPayload]
+    type UserOverridesMapping = t.MappingKV[str, JsonPayload]
     type RegisterableService = (
         ServiceValue
         | Callable[
@@ -74,14 +74,14 @@ class FlextTypesServices:
     )
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], RegisterableService]
-    type ModelInput = tp.JsonValue | prt.HasModelDump | Mapping[str, JsonPayload]
-    type ConfigModelInput = prt.HasModelDump | Mapping[str, JsonPayload]
-    type MetadataInput = prt.HasModelDump | Mapping[str, tp.JsonValue] | None
-    type ServiceMap = Mapping[str, RegisterableService]
-    type FactoryMap = Mapping[str, FactoryCallable]
-    type ResourceMap = Mapping[str, ResourceCallable]
+    type ModelInput = tp.JsonValue | prt.HasModelDump | t.MappingKV[str, JsonPayload]
+    type ConfigModelInput = prt.HasModelDump | t.MappingKV[str, JsonPayload]
+    type MetadataInput = prt.HasModelDump | t.MappingKV[str, tp.JsonValue] | None
+    type ServiceMap = t.MappingKV[str, RegisterableService]
+    type FactoryMap = t.MappingKV[str, FactoryCallable]
+    type ResourceMap = t.MappingKV[str, ResourceCallable]
     type ContextHookCallable = Callable[[t.Scalar], JsonPayload]
-    type ContextHookMap = Mapping[str, Sequence[ContextHookCallable]]
+    type ContextHookMap = t.MappingKV[str, t.SequenceOf[ContextHookCallable]]
 
     type HandlerCallable = Callable[
         ...,
@@ -113,9 +113,9 @@ class FlextTypesServices:
     type SortableObjectType = str | int | float
     type ValueAdapter[T] = mp.TypeAdapter[T]
     type MessageTypeSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
-    type IncEx = AbstractSet[str] | Mapping[str, AbstractSet[str] | bool]
+    type IncEx = AbstractSet[str] | t.MappingKV[str, AbstractSet[str] | bool]
 
-    type ConfigurationMapping = Mapping[str, t.Scalar]
+    type ConfigurationMapping = t.MappingKV[str, t.Scalar]
     type MutableConfigurationMapping = MutableMapping[str, t.Scalar]
     type ScopedContainerRegistry = MutableMapping[
         str,
@@ -127,7 +127,7 @@ class FlextTypesServices:
     ]
     type SettingsClass = type[ps.Settings]
     type LazyScalar = t.Scalar | bytes | date | time
-    type LazyCollection = Mapping[str, LazyScalar] | Sequence[LazyScalar]
+    type LazyCollection = t.MappingKV[str, LazyScalar] | t.SequenceOf[LazyScalar]
     type ModuleExportValue = tp.JsonValue | bytes | date | time
     type ModuleExport = (
         ModuleExportValue
@@ -137,7 +137,7 @@ class FlextTypesServices:
         | Callable[..., ModuleExportValue | LazyCollection]
     )
     type LazyGetattr = Callable[[str], ModuleExport]
-    type LazyDir = Callable[[], Sequence[str]]
+    type LazyDir = Callable[[], t.SequenceOf[str]]
 
     type ValidatorCallable = Callable[[ScalarOrModel], ScalarOrModel]
 
@@ -152,7 +152,7 @@ class FlextTypesServices:
         | t.JsonList
         | tuple[tp.JsonValue | t.Scalar, ...]
     )
-    type PaginationMeta = Mapping[str, int | bool]
+    type PaginationMeta = t.MappingKV[str, int | bool]
 
     type GuardInput = (
         type[BaseException | Enum]
@@ -168,7 +168,7 @@ class FlextTypesServices:
         | Enum
         | frozenset[str]
         | GenericAlias
-        | Mapping[str, JsonPayload]
+        | t.MappingKV[str, JsonPayload]
         | tp.JsonValue
         | ModuleType
         | mp.BaseModel
@@ -184,7 +184,7 @@ class FlextTypesServices:
         | prt.ResultLike[JsonPayload]
         | ps.Settings
         | RegisterableService
-        | Sequence[JsonPayload]
+        | t.SequenceOf[JsonPayload]
         | tuple[tp.JsonValue, ...]
         | tuple[type, ...]
         | type

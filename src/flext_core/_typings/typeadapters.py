@@ -28,7 +28,7 @@ from flext_core._typings.core import FlextTypesCore as tc
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 type SortableObjectType = str | int | float
-type ConfigurationMapping = Mapping[str, t.Scalar]
+type ConfigurationMapping = t.MappingKV[str, t.Scalar]
 StrictValue = (
     t.Scalar | ConfigurationMapping | t.JsonList | tuple[tp.JsonValue | t.Scalar, ...]
 )

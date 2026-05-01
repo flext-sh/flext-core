@@ -7,7 +7,7 @@ helpers in :mod:`parser_targets` and :mod:`parser` via MRO composition.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from typing import TypeVar
 
 from flext_core import (
@@ -53,7 +53,7 @@ class FlextUtilitiesParserCoerce:
             description="Source field name for error context",
         )
 
-    _CASE_OPS: Mapping[str, Callable[[str], str]] = {
+    _CASE_OPS: ClassVar[t.MutableMappingKV[str, Callable[[str], str]]] = {
         c.ParserCase.LOWER.value: str.lower,
         c.ParserCase.UPPER.value: str.upper,
         c.ParserCase.TITLE.value: str.title,

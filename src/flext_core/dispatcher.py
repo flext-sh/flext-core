@@ -82,7 +82,7 @@ class FlextDispatcher:
         _, resolved_handler = handler_entry
         return self._execute_handler(resolved_handler, message, route_name)
 
-    def publish(self, event: p.Routable | Sequence[p.Routable]) -> p.Result[bool]:
+    def publish(self, event: p.Routable | t.SequenceOf[p.Routable]) -> p.Result[bool]:
         """Publish events to all registered subscribers.
 
         Args:

@@ -13,10 +13,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-    Sequence,
-)
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_tests import p
@@ -73,7 +69,7 @@ class TestsFlextProtocols(p):
             def __call__(
                 self,
                 current: tuple[str, ...] | str | int,
-                operations: Mapping[str, t.MapperInput],
+                operations: t.MappingKV[str, t.MapperInput],
                 default_val: t.JsonValue,
                 on_error: str,
             ) -> t.JsonValue: ...
@@ -84,7 +80,7 @@ class TestsFlextProtocols(p):
 
             def __call__(
                 self,
-                transform_opts: Mapping[str, t.MapperInput],
+                transform_opts: t.MappingKV[str, t.MapperInput],
             ) -> tuple[
                 bool,
                 bool,
@@ -102,8 +98,8 @@ class TestsFlextProtocols(p):
                 self,
                 current: tuple[str, str]
                 | tuple[int, int, int]
-                | Sequence[TestsFlextModelsMixins.GroupModel],
-                operations: Mapping[str, t.MapperInput],
+                | t.SequenceOf[TestsFlextModelsMixins.GroupModel],
+                operations: t.MappingKV[str, t.MapperInput],
                 default_val: t.JsonValue,
                 on_error: str,
             ) -> t.JsonMapping | t.JsonList | t.JsonValue: ...

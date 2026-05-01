@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from importlib import import_module
 
 from flext_core import (
@@ -149,7 +148,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
     def build_service_runtime(
         cls,
         source: (
-            m.RuntimeBootstrapOptions | Mapping[str, t.JsonPayload] | p.Base | None
+            m.RuntimeBootstrapOptions | t.MappingKV[str, t.JsonPayload] | p.Base | None
         ) = None,
         **overrides: t.JsonPayload,
     ) -> m.ServiceRuntime:

@@ -11,7 +11,6 @@ import inspect
 import time
 import traceback
 import types
-from collections.abc import Mapping
 from contextlib import suppress
 from typing import ClassVar, Self
 
@@ -267,7 +266,7 @@ class FlextLogger(ulc):
         *,
         exception: Exception | None,
         exc_info: bool,
-        context: Mapping[str, t.JsonPayload | Exception],
+        context: t.MappingKV[str, t.JsonPayload | Exception],
     ) -> t.JsonMapping:
         """Build normalized structured exception context for logging."""
         result: dict[str, t.JsonValue] = {

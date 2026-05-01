@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import (
-    Mapping,
     MutableMapping,
 )
 from enum import StrEnum
@@ -29,7 +28,7 @@ class FlextUtilitiesEnum:
         """Return frozenset of values (cached for performance)."""
         if enum_cls in FlextUtilitiesEnum._values_cache:
             return FlextUtilitiesEnum._values_cache[enum_cls]
-        members_dict: Mapping[str, E] = enum_cls.__members__
+        members_dict: t.MappingKV[str, E] = enum_cls.__members__
         result = frozenset(m.value for m in members_dict.values())
         FlextUtilitiesEnum._values_cache[enum_cls] = result
         return result

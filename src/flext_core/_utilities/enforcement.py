@@ -15,8 +15,6 @@ from __future__ import annotations
 
 from collections.abc import (
     Iterator,
-    Mapping,
-    Sequence,
 )
 from enum import EnumType
 from types import MappingProxyType
@@ -25,6 +23,7 @@ from typing import ClassVar
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
 
@@ -32,7 +31,7 @@ _PydanticBaseModel = mp.BaseModel
 _KindParams = tuple[c.EnforcementPredicateKind, _PydanticBaseModel]
 
 
-def _bindings() -> Mapping[str, _KindParams]:
+def _bindings() -> t.MappingKV[str, _KindParams]:
     """Build the tag → (predicate_kind, params) dispatch mapping.
 
     Each entry pairs a tag in ``c.ENFORCEMENT_RULES`` with the typed
@@ -221,7 +220,7 @@ def _bindings() -> Mapping[str, _KindParams]:
     })
 
 
-PREDICATE_BINDINGS: Mapping[str, _KindParams] = _bindings()
+PREDICATE_BINDINGS: t.MappingKV[str, _KindParams] = _bindings()
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
@@ -234,7 +233,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         qualname: str,
         items: Iterator[tuple[str, tuple[object, ...]]],
         category: c.EnforcementCategory,
-    ) -> Sequence[me.Violation]:
+    ) -> t.SequenceOf[me.Violation]:
         """Apply the visitor for ``tag`` to each item; emit violation on non-None.
 
         Catalog rules without a runtime predicate binding (static-only or

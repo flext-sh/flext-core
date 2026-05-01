@@ -15,7 +15,6 @@ from collections.abc import (
     Callable,
     Mapping,
     MutableSequence,
-    Sequence,
 )
 from typing import TypeIs, get_args, get_origin, get_type_hints
 
@@ -118,7 +117,7 @@ class FlextUtilitiesChecker:
     def _extract_generic_message_types(
         cls,
         handler_class: type,
-    ) -> Sequence[t.TypeHintSpecifier]:
+    ) -> t.SequenceOf[t.TypeHintSpecifier]:
         """Extract message types from generic base annotations."""
         raw_bases: t.GuardInput = getattr(
             handler_class,
@@ -184,7 +183,7 @@ class FlextUtilitiesChecker:
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: Mapping[str, t.TypeHintSpecifier | None],
+        type_hints: t.MappingKV[str, t.TypeHintSpecifier | None],
         param_name: str,
     ) -> p.Result[t.TypeHintSpecifier]:
         """Extract message type from parameter hints or signature annotation."""
@@ -226,7 +225,7 @@ class FlextUtilitiesChecker:
         cls,
         handle_method: Callable[..., t.ModuleExport],
         handler_class: type,
-    ) -> Mapping[str, t.TypeHintSpecifier | None]:
+    ) -> t.MappingKV[str, t.TypeHintSpecifier | None]:
         """Safely extract type hints, returning empty dict on error."""
         try:
             return get_type_hints(

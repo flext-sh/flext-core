@@ -47,7 +47,7 @@ assert ko.failure
 ```text
 Internal state sketch (illustrative):
 
-self._context_stack: Sequence[t.JsonMapping] = []
+self._context_stack: t.SequenceOf[t.JsonMapping] = []
 self._metrics = {}
 
 Typical runtime interactions:

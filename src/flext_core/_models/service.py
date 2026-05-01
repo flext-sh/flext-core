@@ -9,10 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-    Sequence,
-)
 from types import ModuleType
 from typing import Annotated
 
@@ -111,17 +107,17 @@ class FlextModelsService:
             description="Subproject name used to scope configuration and wiring.",
             validate_default=True,
         )
-        services: Mapping[str, t.RegisterableService] | None = mp.Field(
+        services: t.MappingKV[str, t.RegisterableService] | None = mp.Field(
             None,
             description="Named services to register in the dependency container.",
             validate_default=True,
         )
-        factories: Mapping[str, t.FactoryCallable] | None = mp.Field(
+        factories: t.MappingKV[str, t.FactoryCallable] | None = mp.Field(
             None,
             description="Named factory callables to register in the dependency container.",
             validate_default=True,
         )
-        resources: Mapping[str, t.ResourceCallable] | None = mp.Field(
+        resources: t.MappingKV[str, t.ResourceCallable] | None = mp.Field(
             None,
             description="Named lifecycle resources to register in the dependency container.",
             validate_default=True,
@@ -131,7 +127,7 @@ class FlextModelsService:
             description="Provider overrides applied to the dependency container.",
             validate_default=True,
         )
-        wire_modules: Sequence[ModuleType | str] | None = mp.Field(
+        wire_modules: t.SequenceOf[ModuleType | str] | None = mp.Field(
             None,
             description="Modules to wire for dependency-injector resolution.",
             validate_default=True,
@@ -141,7 +137,7 @@ class FlextModelsService:
             description="Package names to consider for dependency wiring.",
             validate_default=True,
         )
-        wire_classes: Sequence[type] | None = mp.Field(
+        wire_classes: t.SequenceOf[type] | None = mp.Field(
             None,
             description="Classes whose modules are wired for dependency resolution.",
             validate_default=True,
@@ -161,31 +157,31 @@ class FlextModelsService:
     class DependencyContainerCreationOptions(m.ArbitraryTypesModel):
         """Options used to create and populate dependency container instances."""
 
-        settings: Mapping[str, t.JsonPayload] | None = mp.Field(
+        settings: t.MappingKV[str, t.JsonPayload] | None = mp.Field(
             None,
             title="Configuration",
             description="Optional configuration mapping bound to dependency container providers.",
             validate_default=True,
         )
-        services: Mapping[str, t.RegisterableService] | None = mp.Field(
+        services: t.MappingKV[str, t.RegisterableService] | None = mp.Field(
             None,
             title="Services",
             description="Object providers registered before optional wiring.",
             validate_default=True,
         )
-        factories: Mapping[str, t.FactoryCallable] | None = mp.Field(
+        factories: t.MappingKV[str, t.FactoryCallable] | None = mp.Field(
             None,
             title="Factories",
             description="Factory providers registered with singleton/factory semantics.",
             validate_default=True,
         )
-        resources: Mapping[str, t.ResourceCallable] | None = mp.Field(
+        resources: t.MappingKV[str, t.ResourceCallable] | None = mp.Field(
             None,
             title="Resources",
             description="Lifecycle resource providers registered before wiring.",
             validate_default=True,
         )
-        wire_modules: Sequence[ModuleType] | None = mp.Field(
+        wire_modules: t.SequenceOf[ModuleType] | None = mp.Field(
             None,
             title="Wire Modules",
             description="Modules wired for dependency-injector @inject resolution.",
@@ -197,7 +193,7 @@ class FlextModelsService:
             description="Package names considered for dependency wiring.",
             validate_default=True,
         )
-        wire_classes: Sequence[type] | None = mp.Field(
+        wire_classes: t.SequenceOf[type] | None = mp.Field(
             None,
             title="Wire Classes",
             description="Classes whose modules are wired for dependency resolution.",

@@ -85,7 +85,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         current: t.JsonPayload
         | t.JsonMapping
         | FlextModelsContainers.ConfigMap
-        | Sequence[t.JsonPayload]
+        | t.SequenceOf[t.JsonPayload]
         | None,
         part: str,
         *,

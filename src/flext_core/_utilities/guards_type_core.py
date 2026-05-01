@@ -46,7 +46,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def _all_container_sequence(
-        value: Sequence[t.JsonValue | t.JsonPayload],
+        value: t.SequenceOf[t.JsonValue | t.JsonPayload],
     ) -> bool:
         """Check if all items in sequence are valid containers."""
         for sequence_item in value:
@@ -56,7 +56,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def all_container_mapping_values(
-        value: Mapping[str, t.JsonValue | t.JsonPayload],
+        value: t.MappingKV[str, t.JsonValue | t.JsonPayload],
     ) -> bool:
         """Check if all values in mapping are valid containers."""
         for mapped_value in value.values():

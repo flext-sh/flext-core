@@ -17,9 +17,6 @@ import sys
 import threading
 import types
 import typing
-from collections.abc import (
-    Sequence,
-)
 from contextlib import suppress
 from typing import ClassVar, override
 
@@ -180,14 +177,14 @@ class FlextUtilitiesLoggingConfig:
         *,
         log_level: int | None,
         console_renderer: bool,
-        additional_processors: Sequence[Processor] | None,
+        additional_processors: t.SequenceOf[Processor] | None,
         wrapper_class_factory: t.LoggerWrapperFactory | None,
         logger_factory: t.LoggerFactory,
         cache_logger_on_first_use: bool,
     ) -> tuple[
         int,
         bool,
-        Sequence[Processor] | None,
+        t.SequenceOf[Processor] | None,
         t.LoggerWrapperFactory | None,
         t.LoggerFactory,
         bool,
@@ -229,8 +226,8 @@ class FlextUtilitiesLoggingConfig:
         cls,
         *,
         console_renderer: bool,
-        additional_processors: Sequence[Processor] | None,
-    ) -> Sequence[Processor]:
+        additional_processors: t.SequenceOf[Processor] | None,
+    ) -> t.SequenceOf[Processor]:
         """Assemble the structlog processor chain."""
         processors: t.MutableSequenceOf[Processor] = [
             structlog.contextvars.merge_contextvars,
@@ -285,7 +282,7 @@ class FlextUtilitiesLoggingConfig:
         settings: mp.BaseModel | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[Processor] | None = None,
+        additional_processors: t.SequenceOf[Processor] | None = None,
         wrapper_class_factory: t.LoggerWrapperFactory | None = None,
         logger_factory: t.LoggerFactory = None,
         cache_logger_on_first_use: bool = True,

@@ -38,7 +38,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         include_statistics: bool = False,
         include_metadata: bool = False,
         as_dict: bool = True,
-    ) -> m.ContextExport | Mapping[str, t.JsonPayload]:
+    ) -> m.ContextExport | t.MappingKV[str, t.JsonPayload]:
         """Export context state using canonical Pydantic models."""
         all_data: dict[str, t.JsonPayload] = {}
         all_scopes = self._scope_payloads()
@@ -103,7 +103,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     def _extract_config_map(
         self,
-        other: p.Context | Mapping[str, t.JsonPayload] | t.JsonMapping,
+        other: p.Context | t.MappingKV[str, t.JsonPayload] | t.JsonMapping,
     ) -> m.ConfigMap | None:
         """Extract a ConfigMap from any supported merge source."""
         if isinstance(other, p.Context):
@@ -130,7 +130,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     def merge(
         self,
-        other: p.Context | Mapping[str, t.JsonPayload] | t.JsonMapping,
+        other: p.Context | t.MappingKV[str, t.JsonPayload] | t.JsonMapping,
     ) -> Self:
         """Merge another context or dictionary into this context."""
         if not self.state.active:

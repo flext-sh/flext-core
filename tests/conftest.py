@@ -108,13 +108,13 @@ def flext_result_failure() -> p.Result[str]:
 
 
 @pytest.fixture
-def valid_port_numbers() -> Sequence[int]:
+def valid_port_numbers() -> t.SequenceOf[int]:
     """Valid port numbers for PortNumber validation (1-65535)."""
     return [1, 80, 443, 8080, 3306, 5432, 27017, 65535]
 
 
 @pytest.fixture
-def invalid_port_numbers() -> Sequence[int]:
+def invalid_port_numbers() -> t.SequenceOf[int]:
     """Invalid port numbers for PortNumber validation."""
     return [0, -1, -8080, 65536, 100000]
 
@@ -211,7 +211,7 @@ def whitespace_strings() -> t.StrSequence:
 
 
 @pytest.fixture
-def valid_ranges() -> Sequence[tuple[int, int, int]]:
+def valid_ranges() -> t.SequenceOf[tuple[int, int, int]]:
     """Valid numeric ranges (value, min, max) for range validation."""
     return [
         (5, 0, 10),
@@ -223,7 +223,7 @@ def valid_ranges() -> Sequence[tuple[int, int, int]]:
 
 
 @pytest.fixture
-def invalid_ranges() -> Sequence[tuple[int, int, int]]:
+def invalid_ranges() -> t.SequenceOf[tuple[int, int, int]]:
     """Invalid numeric ranges (value, min, max) for range validation."""
     return [
         (-1, 0, 10),
@@ -234,13 +234,13 @@ def invalid_ranges() -> Sequence[tuple[int, int, int]]:
 
 
 @pytest.fixture
-def valid_percentages() -> Sequence[float]:
+def valid_percentages() -> t.SequenceOf[float]:
     """Valid percentages (0.0 to 1.0) for percentage validation."""
     return [0.0, 0.5, 0.99, 1.0]
 
 
 @pytest.fixture
-def invalid_percentages() -> Sequence[float]:
+def invalid_percentages() -> t.SequenceOf[float]:
     """Invalid percentages for validation."""
     return [-0.1, 1.1, 2.0, -1.0]
 

@@ -9,7 +9,6 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
     Iterable,
-    Mapping,
     MutableSequence,
 )
 from types import TracebackType
@@ -45,7 +44,7 @@ class FlextProtocolsBase:
         in typings.py, preventing circular dependencies.
         """
 
-        model_fields: Mapping[str, object]
+        model_fields: t.MappingKV[str, object]
 
         def model_dump(
             self,
@@ -69,7 +68,7 @@ class FlextProtocolsBase:
                 | None
             ) = None,
             serialize_as_any: bool = False,
-        ) -> Mapping[str, object]:
+        ) -> t.MappingKV[str, object]:
             """Dump model to dictionary."""
             ...
 
@@ -91,7 +90,7 @@ class FlextProtocolsBase:
         def model_copy(
             self,
             *,
-            update: Mapping[str, object] | None = None,
+            update: t.MappingKV[str, object] | None = None,
             deep: bool = False,
         ) -> Self:
             """Copy a validated model, optionally updating fields."""

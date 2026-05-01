@@ -301,7 +301,11 @@ class TestsFlextResult:
             res2 = res1.map(lambda v: v * 2)
             res3 = res2.map(lambda v: f"result_{v}")
             expected = f"result_{value * 2}"
-            result_list: Sequence[p.Result[str]] = [res1.map(str), res2.map(str), res3]
+            result_list: t.SequenceOf[p.Result[str]] = [
+                res1.map(str),
+                res2.map(str),
+                res3,
+            ]
             u.Tests.assert_result_chain(
                 result_list,
                 expected_success_count=3,
@@ -372,7 +376,7 @@ class TestsFlextResult:
         """
         success_values: t.JsonList = ["value1", "value2", "value3"]
         failure_errors: t.StrSequence = ["error1", "error2"]
-        error_codes: Sequence[str | None] = ["CODE1", None]
+        error_codes: t.SequenceOf[str | None] = ["CODE1", None]
         cases = u.Tests.create_parametrized_cases(
             success_values,
             failure_errors,

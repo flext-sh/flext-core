@@ -42,7 +42,7 @@ class TestsFlextUtilities(u):
             @override
             def publish(
                 self,
-                event: p.Routable | Sequence[p.Routable],
+                event: p.Routable | t.SequenceOf[p.Routable],
             ) -> p.Result[bool]:
                 _ = event
                 return r[bool].ok(True)
@@ -69,7 +69,7 @@ class TestsFlextUtilities(u):
             @override
             def publish(
                 self,
-                event: p.Routable | Sequence[p.Routable],
+                event: p.Routable | t.SequenceOf[p.Routable],
             ) -> p.Result[bool]:
                 _ = event
                 return r[bool].ok(True)
@@ -96,7 +96,7 @@ class TestsFlextUtilities(u):
             @override
             def publish(
                 self,
-                event: p.Routable | Sequence[p.Routable],
+                event: p.Routable | t.SequenceOf[p.Routable],
             ) -> p.Result[bool]:
                 _ = event
                 return r[bool].ok(True)
@@ -118,7 +118,7 @@ class TestsFlextUtilities(u):
                 return r[t.JsonPayload].ok(True)
 
         @staticmethod
-        def success_cases() -> Sequence[tuple[str, str]]:
+        def success_cases() -> t.SequenceOf[tuple[str, str]]:
             return [
                 (
                     c.Tests.USER_IDS_SUCCESS[0],
@@ -135,7 +135,7 @@ class TestsFlextUtilities(u):
             ]
 
         @staticmethod
-        def failure_cases() -> Sequence[tuple[str, str, str]]:
+        def failure_cases() -> t.SequenceOf[tuple[str, str, str]]:
             return [
                 (
                     "invalid",
@@ -150,7 +150,7 @@ class TestsFlextUtilities(u):
             ]
 
         @staticmethod
-        def railway_success_cases() -> Sequence[
+        def railway_success_cases() -> t.SequenceOf[
             tuple[t.StrSequence, t.StrSequence, int, str]
         ]:
             return [
@@ -179,7 +179,7 @@ class TestsFlextUtilities(u):
             ]
 
         @staticmethod
-        def multi_operation_cases() -> Sequence[tuple[str, int, t.JsonMapping]]:
+        def multi_operation_cases() -> t.SequenceOf[tuple[str, int, t.JsonMapping]]:
             return [
                 (
                     c.Tests.RAILWAY_OPERATION_DOUBLE,
@@ -1193,7 +1193,7 @@ class TestsFlextUtilities(u):
                 ),
             ]
             CIRCUIT_BREAKER_SCENARIOS: ClassVar[
-                Sequence[m.Tests.ReliabilityScenario]
+                t.SequenceOf[m.Tests.ReliabilityScenario]
             ] = [
                 m.Tests.ReliabilityScenario(
                     name="circuit_initial_closed",
@@ -1313,7 +1313,7 @@ class TestsFlextUtilities(u):
                 )
 
             @classmethod
-            def build_batch(cls, size: int) -> Sequence[tm.Tests.User]:
+            def build_batch(cls, size: int) -> t.SequenceOf[tm.Tests.User]:
                 """Build multiple `tm.Tests.User` instances with auto-generated values."""
                 return [cls.build() for _ in range(size)]
 
@@ -1359,7 +1359,7 @@ class TestsFlextUtilities(u):
             @classmethod
             def build_batch(
                 cls, size: int
-            ) -> Sequence[TestsFlextUtilities.Tests.GetUserService]:
+            ) -> t.SequenceOf[TestsFlextUtilities.Tests.GetUserService]:
                 """Build multiple `GetUserService` instances with auto-generated values."""
                 return [cls.build() for _ in range(size)]
 
@@ -1380,7 +1380,7 @@ class TestsFlextUtilities(u):
             @classmethod
             def build_batch(
                 cls, size: int
-            ) -> Sequence[TestsFlextUtilities.Tests.FailingService]:
+            ) -> t.SequenceOf[TestsFlextUtilities.Tests.FailingService]:
                 """Build multiple FailingService instances with default error message."""
                 return [cls.build() for _ in range(size)]
 
@@ -1399,7 +1399,7 @@ class TestsFlextUtilities(u):
             @classmethod
             def build_batch(
                 cls, size: int
-            ) -> Sequence[TestsFlextUtilities.Tests.GetUserServiceAuto]:
+            ) -> t.SequenceOf[TestsFlextUtilities.Tests.GetUserServiceAuto]:
                 """Build multiple GetUserServiceAuto instances with auto-generated values."""
                 return [cls.build() for _ in range(size)]
 
@@ -1455,7 +1455,7 @@ class TestsFlextUtilities(u):
             @classmethod
             def build_batch(
                 cls, size: int
-            ) -> Sequence[TestsFlextUtilities.Tests.ValidatingServiceAuto]:
+            ) -> t.SequenceOf[TestsFlextUtilities.Tests.ValidatingServiceAuto]:
                 """Build multiple ValidatingServiceAuto instances."""
                 return [cls.build() for _ in range(size)]
 
@@ -1481,7 +1481,7 @@ class TestsFlextUtilities(u):
             @classmethod
             def build_batch(
                 cls, size: int
-            ) -> Sequence[TestsFlextUtilities.Tests.ValidatingService]:
+            ) -> t.SequenceOf[TestsFlextUtilities.Tests.ValidatingService]:
                 """Build multiple `ValidatingService` instances."""
                 return [cls.build() for _ in range(size)]
 
@@ -1502,7 +1502,7 @@ class TestsFlextUtilities(u):
             @classmethod
             def build_batch(
                 cls, size: int
-            ) -> Sequence[TestsFlextUtilities.Tests.FailingServiceAuto]:
+            ) -> t.SequenceOf[TestsFlextUtilities.Tests.FailingServiceAuto]:
                 """Build multiple FailingServiceAuto instances with default error message."""
                 return [cls.build() for _ in range(size)]
 
@@ -1573,7 +1573,7 @@ class TestsFlextUtilities(u):
                 )
 
             @classmethod
-            def build_batch(cls, size: int) -> Sequence[m.Tests.ServiceTestCase]:
+            def build_batch(cls, size: int) -> t.SequenceOf[m.Tests.ServiceTestCase]:
                 """Build multiple m.Tests.ServiceTestCase instances with auto-generated values."""
                 return [cls.build() for _ in range(size)]
 
@@ -1629,7 +1629,7 @@ class TestsFlextUtilities(u):
             @staticmethod
             def generate_user_success_cases(
                 num_cases: int = 3,
-            ) -> Sequence[m.Tests.ServiceTestCase]:
+            ) -> t.SequenceOf[m.Tests.ServiceTestCase]:
                 """Generate successful user service test cases."""
                 return [
                     m.Tests.ServiceTestCase(
@@ -1643,7 +1643,7 @@ class TestsFlextUtilities(u):
             @staticmethod
             def generate_validation_success_cases(
                 num_cases: int = 2,
-            ) -> Sequence[m.Tests.ServiceTestCase]:
+            ) -> t.SequenceOf[m.Tests.ServiceTestCase]:
                 """Generate successful validation test cases."""
                 return [
                     m.Tests.ServiceTestCase(
@@ -1662,7 +1662,7 @@ class TestsFlextUtilities(u):
                 ]
 
             @staticmethod
-            def generate_validation_failure_cases() -> Sequence[
+            def generate_validation_failure_cases() -> t.SequenceOf[
                 m.Tests.ServiceTestCase
             ]:
                 """Generate validation failure test cases."""
@@ -1688,17 +1688,17 @@ class TestsFlextUtilities(u):
             """Unified factory for all test cases using advanced patterns."""
 
             @staticmethod
-            def user_success() -> Sequence[m.Tests.ServiceTestCase]:
+            def user_success() -> t.SequenceOf[m.Tests.ServiceTestCase]:
                 """Generate cached-style success cases on demand."""
                 return TestsFlextUtilities.Tests.TestDataGenerators.generate_user_success_cases()
 
             @staticmethod
-            def validate_success() -> Sequence[m.Tests.ServiceTestCase]:
+            def validate_success() -> t.SequenceOf[m.Tests.ServiceTestCase]:
                 """Generate cached-style validation success cases on demand."""
                 return TestsFlextUtilities.Tests.TestDataGenerators.generate_validation_success_cases()
 
             @staticmethod
-            def validate_failure() -> Sequence[m.Tests.ServiceTestCase]:
+            def validate_failure() -> t.SequenceOf[m.Tests.ServiceTestCase]:
                 """Generate cached-style validation failure cases on demand."""
                 return TestsFlextUtilities.Tests.TestDataGenerators.generate_validation_failure_cases()
 

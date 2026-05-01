@@ -46,7 +46,7 @@ class TestTEMPLATECategory:
         ],
         ids=lambda case: case["description"],
     )
-    def test_template_operation_with_real_data(self, test_data: Mapping[str, Any]) -> None:
+    def test_template_operation_with_real_data(self, test_data: t.MappingKV[str, Any]) -> None:
         """Test TEMPLATE operation with real data (no mocks).
 
         Args:

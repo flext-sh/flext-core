@@ -238,7 +238,7 @@ class TestsFlextFlextHandlers:
             @override
             def handle(
                 self,
-                message: Mapping[str, t.JsonValue],
+                message: t.MappingKV[str, t.JsonValue],
             ) -> p.Result[t.JsonPayload]:
                 if not isinstance(message, dict):
                     return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)

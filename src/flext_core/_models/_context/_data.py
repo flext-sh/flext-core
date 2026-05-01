@@ -25,8 +25,8 @@ class FlextModelsContextData:
 
     @staticmethod
     def _coerce_scalar_mapping(
-        items: Mapping[str, object],
-    ) -> Mapping[str, t.Scalar]:
+        items: t.MappingKV[str, object],
+    ) -> t.MappingKV[str, t.Scalar]:
         """Return an immutable mapping with non-scalar values stringified."""
         return MappingProxyType({
             k: val if isinstance(val, (str, int, float, bool)) else str(val)
@@ -35,8 +35,8 @@ class FlextModelsContextData:
 
     @staticmethod
     def normalize_to_mapping(
-        v: Mapping[str, t.Scalar] | t.JsonPayload | None,
-    ) -> Mapping[str, t.Scalar]:
+        v: t.MappingKV[str, t.Scalar] | t.JsonPayload | None,
+    ) -> t.MappingKV[str, t.Scalar]:
         """Convert value to an immutable flat mapping with scalar values only."""
         if v is None:
             return MappingProxyType({})
@@ -72,8 +72,8 @@ class FlextModelsContextData:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: Mapping[str, t.Scalar] | mp.BaseModel | None,
-        ) -> Mapping[str, t.Scalar]:
+            v: t.MappingKV[str, t.Scalar] | mp.BaseModel | None,
+        ) -> t.MappingKV[str, t.Scalar]:
             """Validate that data values are JSON-serializable."""
             if v is None:
                 return MappingProxyType({})
@@ -98,13 +98,13 @@ class FlextModelsContextData:
         """Lightweight container for initializing context state."""
 
         data: Annotated[
-            Mapping[str, t.Scalar],
+            t.MappingKV[str, t.Scalar],
             mp.Field(
                 description="Initial context data as key-value pairs",
             ),
         ] = mp.Field(default_factory=lambda: MappingProxyType({}))
         metadata: Annotated[
-            m.Metadata | Mapping[str, t.Scalar] | None,
+            m.Metadata | t.MappingKV[str, t.Scalar] | None,
             BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_metadata_before(v),
             ),

@@ -6,9 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Sequence,
-)
 from typing import Self, override
 
 from flext_core import FlextConstants as c, FlextModelsBase as m, FlextTypes as t
@@ -36,8 +33,8 @@ class FlextModelsBuilder:
             def _set(
                 self,
                 **updates: t.JsonPayload
-                | Sequence[t.JsonPayload]
-                | Sequence[m.ContractModel],
+                | t.SequenceOf[t.JsonPayload]
+                | t.SequenceOf[m.ContractModel],
             ) -> Self:
                 """Apply one immutable ``model_copy(update=...)`` transition."""
                 return self._replace(self.state.model_copy(update=updates))
@@ -61,7 +58,7 @@ class FlextModelsBuilder:
             def _model[ModelT: m.ContractModel](
                 model_type: type[ModelT],
                 /,
-                **data: t.JsonPayload | Sequence[t.JsonPayload],
+                **data: t.JsonPayload | t.SequenceOf[t.JsonPayload],
             ) -> ModelT:
                 """Build one ContractModel payload for DSL composition."""
                 return model_type.model_validate(data)
@@ -71,14 +68,14 @@ class FlextModelsBuilder:
                 field_name: str,
                 model_type: type[ModelT],
                 /,
-                **data: t.JsonPayload | Sequence[t.JsonPayload],
+                **data: t.JsonPayload | t.SequenceOf[t.JsonPayload],
             ) -> Self:
                 """Build and append one ContractModel item to a sequence field."""
                 model_item = self._model(model_type, **data)
                 current_values: t.VariadicTuple[m.ContractModel] = tuple(
                     getattr(self.state, field_name)
                 )
-                updated: Sequence[m.ContractModel] = (*current_values, model_item)
+                updated: t.SequenceOf[m.ContractModel] = (*current_values, model_item)
                 return self._set(**{field_name: updated})
 
             def _build_product(self, state: StateT) -> ProductT:

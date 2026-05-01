@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 
 import pytest
 from flext_tests import tm
@@ -119,8 +119,8 @@ class TestsFlextUtilitiesCollection:
     # --- merge_mappings --------------------------------------------------
 
     def test_merge_mappings_deep_combines_nested_keys(self) -> None:
-        base: Mapping[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
-        other: Mapping[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
+        base: t.MappingKV[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
+        other: t.MappingKV[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base, other)
         tm.ok(result)
         tm.that(result.value["a"], eq=1)
@@ -128,8 +128,8 @@ class TestsFlextUtilitiesCollection:
         tm.that(result.value["b"], is_=dict)
 
     def test_merge_mappings_override_replaces_values(self) -> None:
-        base: Mapping[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
-        other: Mapping[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
+        base: t.MappingKV[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
+        other: t.MappingKV[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base, other, strategy="override")
         tm.ok(result)
         tm.that(result.value["a"], eq=1)

@@ -601,9 +601,9 @@ class FlextContainer(p.ContainerLifecycle):
     def wire(
         self,
         *,
-        modules: Sequence[ModuleType] | None = None,
+        modules: t.SequenceOf[ModuleType] | None = None,
         packages: t.StrSequence | None = None,
-        classes: Sequence[type] | None = None,
+        classes: t.SequenceOf[type] | None = None,
     ) -> None:
         """Wire modules/packages to the DI bridge for @inject/Provide usage."""
         u.DependencyIntegration.wire(

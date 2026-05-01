@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    Mapping,
-    Sequence,
 )
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
@@ -86,14 +84,14 @@ class FlextProtocolsRegistry:
 
         def register_handlers(
             self,
-            handlers: Sequence[t.DispatchableHandler],
+            handlers: t.SequenceOf[t.DispatchableHandler],
         ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register multiple handlers in batch."""
             ...
 
         def register_bindings(
             self,
-            bindings: Mapping[
+            bindings: t.MappingKV[
                 t.RegistryBindingKey,
                 t.DispatchableHandler,
             ],

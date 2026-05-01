@@ -12,9 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, no_type_check
 
@@ -302,7 +299,7 @@ class FlextModelsContainer:
                 description="Execution context attached to the container.",
             ),
         ]
-        services: Mapping[str, FlextModelsContainer.ServiceRegistration] | None = (
+        services: t.MappingKV[str, FlextModelsContainer.ServiceRegistration] | None = (
             mp.Field(
                 None,
                 title="Services",
@@ -310,7 +307,7 @@ class FlextModelsContainer:
                 validate_default=True,
             )
         )
-        factories: Mapping[str, FlextModelsContainer.FactoryRegistration] | None = (
+        factories: t.MappingKV[str, FlextModelsContainer.FactoryRegistration] | None = (
             mp.Field(
                 None,
                 title="Factories",
@@ -318,17 +315,19 @@ class FlextModelsContainer:
                 validate_default=True,
             )
         )
-        resources: Mapping[str, FlextModelsContainer.ResourceRegistration] | None = (
-            mp.Field(
-                None,
-                title="Resources",
-                description="Pre-registered resource factories for bootstrap.",
-                validate_default=True,
-            )
+        resources: (
+            t.MappingKV[str, FlextModelsContainer.ResourceRegistration] | None
+        ) = mp.Field(
+            None,
+            title="Resources",
+            description="Pre-registered resource factories for bootstrap.",
+            validate_default=True,
         )
         user_overrides: (
             FlextModelsContainers.ConfigMap
-            | Mapping[str, FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar]
+            | t.MappingKV[
+                str, FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar
+            ]
             | None
         ) = mp.Field(
             None,
@@ -348,13 +347,13 @@ class FlextModelsContainer:
         def validate_services(
             cls,
             value: (
-                Mapping[
+                t.MappingKV[
                     str,
                     FlextModelsContainer.ServiceRegistration | t.RegisterableService,
                 ]
                 | None
             ),
-        ) -> Mapping[str, FlextModelsContainer.ServiceRegistration] | None:
+        ) -> t.MappingKV[str, FlextModelsContainer.ServiceRegistration] | None:
             if value is None:
                 return None
             return {
@@ -378,12 +377,12 @@ class FlextModelsContainer:
         def validate_factories(
             cls,
             value: (
-                Mapping[
+                t.MappingKV[
                     str, FlextModelsContainer.FactoryRegistration | t.FactoryCallable
                 ]
                 | None
             ),
-        ) -> Mapping[str, FlextModelsContainer.FactoryRegistration] | None:
+        ) -> t.MappingKV[str, FlextModelsContainer.FactoryRegistration] | None:
             if value is None:
                 return None
             return {
@@ -406,12 +405,12 @@ class FlextModelsContainer:
         def validate_resources(
             cls,
             value: (
-                Mapping[
+                t.MappingKV[
                     str, FlextModelsContainer.ResourceRegistration | t.ResourceCallable
                 ]
                 | None
             ),
-        ) -> Mapping[str, FlextModelsContainer.ResourceRegistration] | None:
+        ) -> t.MappingKV[str, FlextModelsContainer.ResourceRegistration] | None:
             if value is None:
                 return None
             return {

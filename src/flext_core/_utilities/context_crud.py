@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator
 from typing import ClassVar, overload
 
 from flext_core import (
@@ -72,7 +72,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
             return False
         return key in self._contextvar_data(scope)
 
-    def items(self) -> Sequence[t.Pair[str, t.JsonValue]]:
+    def items(self) -> t.SequenceOf[t.Pair[str, t.JsonValue]]:
         """Get all items (key-value pairs) across scopes."""
         if not self.state.active:
             return []

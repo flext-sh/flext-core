@@ -41,13 +41,13 @@ class FlextUtilitiesGuards(
         return value not in container
 
     _EQUALITY_OPS: ClassVar[
-        Mapping[str, Callable[[t.GuardInput, t.GuardInput], bool]]
+        t.MappingKV[str, Callable[[t.GuardInput, t.GuardInput], bool]]
     ] = {
         "eq": operator.eq,
         "ne": operator.ne,
     }
     _MEMBERSHIP_OPS: ClassVar[
-        Mapping[str, Callable[[t.GuardInput, t.JsonList], bool]]
+        t.MappingKV[str, Callable[[t.GuardInput, t.JsonList], bool]]
     ] = {
         "in_": _in_list,
         "not_in": _not_in_list,

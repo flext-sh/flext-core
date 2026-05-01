@@ -42,7 +42,7 @@ class TestsFlextModelsMixins:
     class BadModelDump:
         """Object with model_dump that raises."""
 
-        model_dump: Callable[[], Mapping[str, t.Tests.TestobjectSerializable]] = (
+        model_dump: Callable[[], t.MappingKV[str, t.Tests.TestobjectSerializable]] = (
             staticmethod(
                 lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
             )
@@ -79,11 +79,11 @@ class TestsFlextModelsMixins:
     class _ValidationLikeError(ValueError):
         """Validation-like error for tests."""
 
-        def errors(self) -> Sequence[Mapping[str, t.JsonValue]]:
+        def errors(self) -> t.SequenceOf[Mapping[str, t.JsonValue]]:
             return [{"loc": ["value"], "msg": "bad value"}]
 
-    type TestCaseMap = Mapping[str, t.Tests.TestobjectSerializable]
-    type InputPayloadMap = Mapping[str, t.Tests.TestobjectSerializable]
+    type TestCaseMap = t.MappingKV[str, t.Tests.TestobjectSerializable]
+    type InputPayloadMap = t.MappingKV[str, t.Tests.TestobjectSerializable]
 
     class _MsgWithCommandId(m.BaseModel):
         command_id: str = "cmd-1"
@@ -431,7 +431,7 @@ class TestsFlextModelsMixins:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         text: str
-        patterns: Sequence[tuple[str, str] | tuple[str, str, int]]
+        patterns: t.SequenceOf[tuple[str, str] | tuple[str, str, int]]
         expected: str | None = None
         expected_error: str | None = None
         description: Annotated[str, m.Field(exclude=True)] = ""
@@ -493,9 +493,9 @@ class TestsFlextModelsMixins:
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        given: Mapping[str, t.Primitives]
-        when: Mapping[str, t.Primitives]
-        then: Mapping[str, t.Primitives]
+        given: t.MappingKV[str, t.Primitives]
+        when: t.MappingKV[str, t.Primitives]
+        then: t.MappingKV[str, t.Primitives]
         tags: t.StrSequence
         priority: str
 
@@ -521,7 +521,7 @@ class TestsFlextModelsMixins:
         email: str
         environment: str
         version: str
-        nested_data: Mapping[
+        nested_data: t.MappingKV[
             str,
             TestsFlextModelsMixins.NestedDataDict,
         ]
@@ -568,7 +568,7 @@ class TestsFlextModelsMixins:
         suite_name: str
         scenario_count: int
         tags: t.StrSequence
-        setup_data: Mapping[
+        setup_data: t.MappingKV[
             str,
             TestsFlextModelsMixins.SetupDataDict,
         ]
@@ -596,11 +596,11 @@ class TestsFlextModelsMixins:
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        user: Mapping[
+        user: t.MappingKV[
             str,
             TestsFlextModelsMixins.UserDataFixtureDict,
         ]
-        request: Mapping[
+        request: t.MappingKV[
             str,
             TestsFlextModelsMixins.RequestDataFixtureDict,
         ]
@@ -659,7 +659,7 @@ class TestsFlextModelsMixins:
 
         event_type: str
         timestamp: str
-        payload: Mapping[
+        payload: t.MappingKV[
             str,
             TestsFlextModelsMixins.AsyncPayloadDict,
         ]
@@ -686,7 +686,7 @@ class TestsFlextModelsMixins:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         target_user_id: str
-        updates: Mapping[
+        updates: t.MappingKV[
             str,
             TestsFlextModelsMixins.UpdateFieldDict,
         ]
@@ -1250,10 +1250,10 @@ class TestsFlextModelsMixins:
         """Centralized container test scenarios using c."""
 
         SERVICE_SCENARIOS: ClassVar[
-            Sequence[TestsFlextModelsMixins.ServiceScenario]
+            t.SequenceOf[TestsFlextModelsMixins.ServiceScenario]
         ] = []  # populated after class definition
         TYPED_RETRIEVAL_SCENARIOS: ClassVar[
-            Sequence[TestsFlextModelsMixins.TypedRetrievalScenario]
+            t.SequenceOf[TestsFlextModelsMixins.TypedRetrievalScenario]
         ] = []  # populated after class definition
         CONFIG_SCENARIOS: ClassVar[Sequence[t.ScalarMapping]] = [
             {"enable_singleton": False, "max_services": 8},
@@ -1369,7 +1369,7 @@ class TestsFlextModelsMixins:
 
 
 # Populate ContainerScenarios after class is fully defined to allow forward references
-_svc_scenarios: Sequence[TestsFlextModelsMixins.ServiceScenario] = [
+_svc_scenarios: t.SequenceOf[TestsFlextModelsMixins.ServiceScenario] = [
     TestsFlextModelsMixins.ServiceScenario(
         name="test_service",
         service="test_service_value",
@@ -1387,7 +1387,7 @@ _svc_scenarios: Sequence[TestsFlextModelsMixins.ServiceScenario] = [
     ),
 ]
 TestsFlextModelsMixins.ContainerScenarios.SERVICE_SCENARIOS = _svc_scenarios
-_typed_scenarios: Sequence[TestsFlextModelsMixins.TypedRetrievalScenario] = [
+_typed_scenarios: t.SequenceOf[TestsFlextModelsMixins.TypedRetrievalScenario] = [
     TestsFlextModelsMixins.TypedRetrievalScenario(
         name="dict_service",
         service="test_dict_service",

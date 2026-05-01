@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextvars
-from collections.abc import Mapping, MutableMapping
+from collections.abc import MutableMapping
 from datetime import datetime
 from typing import ClassVar
 
@@ -35,13 +35,13 @@ class FlextUtilitiesContextState:
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
-        ctx_value: m.ConfigMap | Mapping[str, t.JsonPayload] | p.Model | None,
+        ctx_value: m.ConfigMap | t.MappingKV[str, t.JsonPayload] | p.Model | None,
     ) -> t.JsonMapping:
         """Return contextvar payload as a flat container mapping with safe default."""
         if ctx_value is None:
             return {}
 
-        payload: Mapping[str, t.JsonPayload]
+        payload: t.MappingKV[str, t.JsonPayload]
         if isinstance(ctx_value, m.ConfigMap):
             payload = ctx_value.root
         elif isinstance(ctx_value, p.Model):
@@ -83,7 +83,7 @@ class FlextUtilitiesContextState:
             ).items(),
         )
 
-    def _scope_payloads(self) -> Mapping[str, t.JsonMapping]:
+    def _scope_payloads(self) -> t.MappingKV[str, t.JsonMapping]:
         """Get all scope registrations."""
         if not self.state.active:
             return {}
@@ -111,7 +111,7 @@ class FlextUtilitiesContextState:
         updated.update(dict(incoming))
         _ = ctx_var.set(updated)
         if scope == c.ContextScope.GLOBAL:
-            normalized_context: Mapping[str, t.JsonPayload] = {
+            normalized_context: t.MappingKV[str, t.JsonPayload] = {
                 key: FlextRuntime.normalize_to_container(value)
                 for key, value in incoming.items()
                 if value is not None
@@ -127,7 +127,7 @@ class FlextUtilitiesContextState:
     def _execute_hooks(
         self,
         event: str,
-        event_data: t.JsonPayload | Mapping[str, t.JsonPayload],
+        event_data: t.JsonPayload | t.MappingKV[str, t.JsonPayload],
     ) -> None:
         """Execute hooks for an event (DRY helper)."""
         if event not in self.state.hooks:
@@ -144,7 +144,7 @@ class FlextUtilitiesContextState:
                     hook_data = str(event_data)
                 _ = hook(hook_data)
 
-    def _metadata_map(self) -> Mapping[str, t.JsonPayload]:
+    def _metadata_map(self) -> t.MappingKV[str, t.JsonPayload]:
         """Get all metadata from the context."""
         data = dict(self.state.metadata.model_dump())
         custom_fields_raw = data.pop("custom_fields", {})

@@ -5,12 +5,11 @@ from __future__ import annotations
 import time
 from collections.abc import (
     Callable,
-    Sequence,
 )
 
 import pytest
 
-from tests import c, e, m, p
+from tests import c, e, m, p, t
 
 
 class TestsFlextExceptions:
@@ -238,7 +237,7 @@ class TestsFlextExceptions:
         assert attributes["actual_type"] == "int"
 
     def test_public_exceptions_serialize_consistently(self) -> None:
-        errors: Sequence[e.BaseError] = [
+        errors: t.SequenceOf[e.BaseError] = [
             e.BaseError("base", correlation_id="corr-001"),
             e.ValidationError("validation", correlation_id="corr-001"),
             e.TimeoutError("timeout", correlation_id="corr-001"),
@@ -272,7 +271,7 @@ type FailureFactory = Callable[[], p.Result[bool]]
 class TestsFlextCoverageExceptions:
     """Validate public exception behavior without depending on internals."""
 
-    STRUCTURED_ERRORS: Sequence[
+    STRUCTURED_ERRORS: t.SequenceOf[
         tuple[str, ErrorFactory, str, str, dict[str, str | int | None]]
     ] = [
         (
@@ -391,7 +390,7 @@ class TestsFlextCoverageExceptions:
         ),
     ]
 
-    FAILURES: Sequence[
+    FAILURES: t.SequenceOf[
         tuple[str, FailureFactory, str, str, dict[str, str | int | None]]
     ] = [
         (

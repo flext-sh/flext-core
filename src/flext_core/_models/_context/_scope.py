@@ -7,9 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextvars
-from collections.abc import (
-    Mapping,
-)
 from types import MappingProxyType
 from typing import Annotated, Self
 
@@ -42,7 +39,7 @@ class FlextModelsContextScope:
             ),
         ] = ""
         data: Annotated[
-            Mapping[str, t.JsonPayload],
+            t.MappingKV[str, t.JsonPayload],
             FlextModelsPydantic.BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_to_mapping(v)
             ),
@@ -92,7 +89,7 @@ class FlextModelsContextScope:
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         operations: Annotated[
-            Mapping[str, t.JsonValue],
+            t.MappingKV[str, t.JsonValue],
             FlextModelsPydantic.BeforeValidator(
                 lambda v: (
                     FlextModelsContextData.normalize_to_mapping(v)
@@ -145,7 +142,7 @@ class FlextModelsContextScope:
             ),
         ] = False
         scope_vars: Annotated[
-            Mapping[
+            t.MappingKV[
                 str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
             ],
             FlextUtilitiesPydantic.Field(

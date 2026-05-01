@@ -27,13 +27,13 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def agg[T](
-        items: Sequence[T] | tuple[T, ...],
+        items: t.SequenceOf[T] | tuple[T, ...],
         field: str | Callable[[T], t.Numeric],
         *,
         fn: Callable[[Sequence[t.Numeric]], t.Numeric] | None = None,
     ) -> t.Numeric:
         """Aggregate numeric field values from objects using fn (default: sum)."""
-        items_list: Sequence[T] = list(items)
+        items_list: t.SequenceOf[T] = list(items)
         if callable(field):
             numeric_values: list[t.Numeric] = [field(item) for item in items_list]
         else:
@@ -80,8 +80,8 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def deep_eq(
-        a: Mapping[str, t.JsonValue | t.JsonPayload],
-        b: Mapping[str, t.JsonValue | t.JsonPayload],
+        a: t.MappingKV[str, t.JsonValue | t.JsonPayload],
+        b: t.MappingKV[str, t.JsonValue | t.JsonPayload],
     ) -> bool:
         """Recursive deep equality for nested dicts/lists/primitives."""
         if a is b:
@@ -109,7 +109,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def transform(
-        source: Mapping[str, t.JsonValue] | m.ConfigMap,
+        source: t.MappingKV[str, t.JsonValue] | m.ConfigMap,
         *,
         normalize: bool = False,
         strip_none: bool = False,
@@ -117,16 +117,16 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         map_keys: t.StrMapping | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
-    ) -> p.Result[dict[str, t.JsonValue] | Mapping[str, t.JsonValue]]:
+    ) -> p.Result[dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue]]:
         """Apply normalize/strip_none/strip_empty/map_keys/filter_keys/exclude_keys to a dict."""
-        coerced: Mapping[str, t.JsonValue] = (
+        coerced: t.MappingKV[str, t.JsonValue] = (
             {k: FlextRuntime.normalize_to_metadata(v) for k, v in source.root.items()}
             if isinstance(source, m.ConfigMap)
             else source
         )
 
-        def _pipeline() -> dict[str, t.JsonValue] | Mapping[str, t.JsonValue]:
-            step: dict[str, t.JsonValue] | Mapping[str, t.JsonValue] = dict(coerced)
+        def _pipeline() -> dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue]:
+            step: dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue] = dict(coerced)
             if normalize:
                 normalized = FlextRuntime.normalize_to_metadata(
                     dict(step),
@@ -149,11 +149,11 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             return step
 
         transform_result = r[
-            dict[str, t.JsonValue] | Mapping[str, t.JsonValue]
+            dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue]
         ].create_from_callable(_pipeline)
         return transform_result.fold(
             on_failure=lambda exc: p.Result[
-                dict[str, t.JsonValue] | Mapping[str, t.JsonValue]
+                dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue]
             ].fail_op("transform", exc),
             on_success=lambda _: transform_result,
         )

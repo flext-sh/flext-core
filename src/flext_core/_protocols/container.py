@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    Mapping,
-    Sequence,
 )
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
@@ -36,7 +34,7 @@ class FlextProtocolsContainer:
         objects that wrap a dict with a root attribute.
         """
 
-        root: Mapping[str, RootValueT]
+        root: t.MappingKV[str, RootValueT]
 
     @runtime_checkable
     class ProviderLike[T_co](Protocol):
@@ -64,12 +62,12 @@ class FlextProtocolsContainer:
         """Structural contract for DI container bootstrap options."""
 
         settings: m.ConfigMap | None
-        services: Mapping[str, t.RegisterableService] | None
-        factories: Mapping[str, t.FactoryCallable] | None
-        resources: Mapping[str, t.ResourceCallable] | None
-        wire_modules: Sequence[ModuleType] | None
+        services: t.MappingKV[str, t.RegisterableService] | None
+        factories: t.MappingKV[str, t.FactoryCallable] | None
+        resources: t.MappingKV[str, t.ResourceCallable] | None
+        wire_modules: t.SequenceOf[ModuleType] | None
         wire_packages: t.StrSequence | None
-        wire_classes: Sequence[type] | None
+        wire_classes: t.SequenceOf[type] | None
         factory_cache: bool
 
     @runtime_checkable
@@ -79,7 +77,7 @@ class FlextProtocolsContainer:
         @classmethod
         def model_validate(
             cls,
-            obj: Mapping[str, t.JsonPayload],
+            obj: t.MappingKV[str, t.JsonPayload],
         ) -> FlextProtocolsContainer.ContainerCreationOptions:
             """Validate arbitrary input into container creation options."""
             ...
@@ -215,9 +213,9 @@ class FlextProtocolsContainer:
         def wire(
             self,
             *,
-            modules: Sequence[ModuleType] | None = None,
+            modules: t.SequenceOf[ModuleType] | None = None,
             packages: t.StrSequence | None = None,
-            classes: Sequence[type] | None = None,
+            classes: t.SequenceOf[type] | None = None,
         ) -> None:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...

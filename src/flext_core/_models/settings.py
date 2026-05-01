@@ -9,9 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Sequence,
-)
 from typing import Annotated, ClassVar, Final, Self
 
 from pydantic import (
@@ -98,13 +95,13 @@ class FlextModelsSettings:
             ),
         ] = c.DEFAULT_BACKOFF_MULTIPLIER
         retry_on_exceptions: Annotated[
-            Sequence[type[BaseException]],
+            t.SequenceOf[type[BaseException]],
             mp.Field(
                 description="Exception types to retry on",
             ),
         ] = mp.Field(default_factory=tuple)
         retry_on_status_codes: Annotated[
-            Sequence[int],
+            t.SequenceOf[int],
             mp.Field(
                 max_length=c.HTTP_STATUS_MIN,
                 description="HTTP status codes to retry on",
