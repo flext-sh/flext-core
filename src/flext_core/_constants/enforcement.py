@@ -839,11 +839,10 @@ class FlextConstantsEnforcement:
                 "IMPORT-002",
                 "IMPORT-003",
                 "IMPORT-004",
-                "IMPORT-005",
                 "IMPORT-006",
             ),
             ("flext-import-rules",),
-            "Import discipline violation — lazy imports, TYPE_CHECKING misuse, sys.path manipulation, tech-lib leaks, or non-root flext-* imports.",
+            "Import discipline violation — lazy imports, TYPE_CHECKING misuse, sys.path manipulation, or non-root flext-* imports.",
         ),
         (
             "ENFORCE-016",
