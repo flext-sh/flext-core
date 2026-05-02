@@ -28,11 +28,8 @@ from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
 
-_PydanticBaseModel = mp.BaseModel
-_KindParams = tuple[c.EnforcementPredicateKind, _PydanticBaseModel]
 
-
-def _bindings() -> t.MappingKV[str, _KindParams]:
+def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseModel]]:
     """Build the tag → (predicate_kind, params) dispatch mapping.
 
     Each entry pairs a tag in ``c.ENFORCEMENT_RULES`` with the typed
@@ -213,7 +210,9 @@ def _bindings() -> t.MappingKV[str, _KindParams]:
     })
 
 
-PREDICATE_BINDINGS: t.MappingKV[str, _KindParams] = _bindings()
+PREDICATE_BINDINGS: t.MappingKV[
+    str, tuple[c.EnforcementPredicateKind, mp.BaseModel]
+] = _bindings()
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):

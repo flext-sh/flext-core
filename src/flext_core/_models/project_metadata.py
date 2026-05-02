@@ -14,17 +14,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 from pathlib import Path
 from types import MappingProxyType
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar
 
 from pydantic import (
     BeforeValidator,
     Field,
     TypeAdapter,
     field_validator,
-    model_validator,
 )
 
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
@@ -61,8 +59,10 @@ class FlextModelsProjectMetadata:
         if not project_name:
             msg = "empty project name"
             raise ValueError(msg)
-        normalized = project_name.replace("_", "-").lower()
-        override = FlextConstantsProjectMetadata.SPECIAL_NAME_OVERRIDES.get(normalized)
+        normalized = project_name.lower()
+        override: str | None = FlextConstantsProjectMetadata.SPECIAL_NAME_OVERRIDES.get(
+            normalized
+        )
         if override is not None:
             return override
         return FlextModelsProjectMetadata.pascalize(normalized)
@@ -147,20 +147,6 @@ class FlextModelsProjectMetadata:
         SCAN_DIRECTORIES: tuple[str, ...]
         TIER_SUB_NAMESPACE: tb.StrMapping
         PYPROJECT_FILENAME: Annotated[str, Field(min_length=1)]
-
-        @classmethod
-        def from_metadata(
-            cls,
-            metadata: FlextModelsProjectMetadata.ProjectMetadata,
-        ) -> Self:
-            """Build constants from the canonical project metadata model."""
-            utilities = importlib.import_module(
-                "flext_core._utilities.project_metadata"
-            ).FlextUtilitiesProjectMetadata
-            constants = utilities.read_project_constants(
-                metadata.name, root=metadata.root
-            )
-            return cls.model_validate(constants.model_dump())
 
     class LazyAliasMetadata(FlextModelsPydantic.BaseModel):
         """Normalized runtime alias metadata derived from generated lazy exports."""
@@ -279,43 +265,6 @@ class FlextModelsProjectMetadata:
                 description="Per-alias parent package source overrides.",
             ),
         ] = Field(default_factory=lambda: MappingProxyType({}))
-
-        @model_validator(mode="before")
-        @classmethod
-        def _merge_alias_sources(
-            cls, data: tb.JsonMapping | tp.JsonValue
-        ) -> tb.JsonMapping | tp.JsonValue:
-            """Reject unknown aliases; merge universal sources into user input."""
-            if not isinstance(data, dict):
-                return data
-            utilities = importlib.import_module(
-                "flext_core._utilities.project_metadata"
-            ).FlextUtilitiesProjectMetadata
-            project_name_raw = data.get("project_name")
-            project_name = str(project_name_raw) if project_name_raw is not None else ""
-            constants = utilities.read_project_constants(project_name)
-            if not data.get("scan_dirs"):
-                data["scan_dirs"] = constants.SCAN_DIRECTORIES
-            sources_raw = data.get("alias_parent_sources")
-            sources: dict[str, tp.JsonValue] = (
-                dict(sources_raw) if isinstance(sources_raw, dict) else {}
-            )
-            unknown = set(sources) - set(constants.RUNTIME_ALIAS_NAMES)
-            if unknown:
-                msg = f"unknown alias(es): {sorted(unknown)}"
-                raise ValueError(msg)
-            for alias, canonical in constants.UNIVERSAL_ALIAS_PARENT_SOURCES.items():
-                if alias in sources and sources[alias] != canonical:
-                    msg = (
-                        f"cannot override universal alias {alias!r}: "
-                        f"must remain {canonical!r}"
-                    )
-                    raise ValueError(msg)
-            data["alias_parent_sources"] = {
-                **dict(constants.UNIVERSAL_ALIAS_PARENT_SOURCES),
-                **dict(sources),
-            }
-            return data
 
     class ProjectToolFlextProject(FlextModelsPydantic.BaseModel):
         """``[tool.flext.project]`` table contract."""

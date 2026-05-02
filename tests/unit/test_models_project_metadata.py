@@ -7,7 +7,7 @@ from types import MappingProxyType
 
 import pytest
 
-from tests import c, m, u
+from tests import c, m
 
 
 class TestsFlextModelsProjectMetadata:
@@ -38,7 +38,7 @@ class TestsFlextModelsProjectMetadata:
         assert metadata.package_name == "flext_ldif"
         assert metadata.class_stem == c.Tests.SAMPLE_PROJECT_CLASS_STEM
 
-    def test_project_constants_from_metadata_reuses_canonical_fields(self) -> None:
+    def test_project_constants_model_reuses_canonical_fields(self) -> None:
         metadata = m.ProjectMetadata(
             name=c.Tests.SAMPLE_PROJECT_NAME,
             version=c.Tests.SAMPLE_PROJECT_VERSION,
@@ -102,38 +102,19 @@ class TestsFlextModelsProjectMetadata:
         assert metadata.url == "https://example.test/flext-ldif"
         assert metadata.requires_python == "3.13"
 
-    def test_project_namespace_config_merges_universal_alias_sources(self) -> None:
+    def test_project_namespace_config_preserves_explicit_namespace_values(
+        self,
+    ) -> None:
         namespace = m.ProjectNamespaceConfig.model_validate({
             "project_name": c.Tests.SAMPLE_PROJECT_NAME,
+            "scan_dirs": ("src",),
             "alias_parent_sources": {"c": c.Tests.SAMPLE_ALIAS_PARENT_SOURCE},
+            "include_dynamic_dirs": True,
         })
-        dynamic_constants = u.read_project_constants(c.Tests.SAMPLE_PROJECT_NAME)
 
         assert namespace.alias_parent_sources["c"] == c.Tests.SAMPLE_ALIAS_PARENT_SOURCE
-        assert (
-            namespace.alias_parent_sources["r"]
-            == dynamic_constants.UNIVERSAL_ALIAS_PARENT_SOURCES["r"]
-        )
-        assert namespace.scan_dirs == dynamic_constants.SCAN_DIRECTORIES
-
-    @pytest.mark.parametrize(
-        ("sources", "match"),
-        [
-            ({"zzz": "custom"}, "unknown alias"),
-            ({"r": "custom_runtime"}, "cannot override universal alias"),
-        ],
-        ids=("unknown-alias", "override-universal-alias"),
-    )
-    def test_project_namespace_config_rejects_invalid_alias_sources(
-        self,
-        sources: dict[str, str],
-        match: str,
-    ) -> None:
-        with pytest.raises(ValueError, match=match):
-            _ = m.ProjectNamespaceConfig.model_validate({
-                "project_name": c.Tests.SAMPLE_PROJECT_NAME,
-                "alias_parent_sources": sources,
-            })
+        assert namespace.scan_dirs == ("src",)
+        assert namespace.include_dynamic_dirs is True
 
     def test_project_tool_flext_defaults_and_nested_overrides(self) -> None:
         tool_config = m.ProjectToolFlext.model_validate({

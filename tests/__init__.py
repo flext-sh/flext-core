@@ -46,21 +46,6 @@ if _t.TYPE_CHECKING:
         TestsFlextCleanProtocols,
         TestsFlextCleanServiceBase,
     )
-    from tests.integration.patterns.test_advanced_patterns import (
-        TestsFlextAdvancedPatterns,
-    )
-    from tests.integration.patterns.test_architectural_patterns import (
-        TestsFlextArchitecturalPatterns,
-    )
-    from tests.integration.patterns.test_patterns_commands import (
-        TestsFlextPatternsCommands,
-    )
-    from tests.integration.patterns.test_patterns_logging import (
-        TestsFlextPatternsLogging,
-    )
-    from tests.integration.patterns.test_patterns_testing import (
-        TestsFlextPatternsTesting,
-    )
     from tests.integration.test_architecture import TestsFlextAutomatedArchitecture
     from tests.integration.test_documented_patterns import TestsFlextDocumentedPatterns
     from tests.integration.test_examples_execution import TestsFlextExamplesExecution
@@ -216,21 +201,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextCleanModels",
                 "TestsFlextCleanProtocols",
                 "TestsFlextCleanServiceBase",
-            ),
-            ".integration.patterns.test_advanced_patterns": (
-                "TestsFlextAdvancedPatterns",
-            ),
-            ".integration.patterns.test_architectural_patterns": (
-                "TestsFlextArchitecturalPatterns",
-            ),
-            ".integration.patterns.test_patterns_commands": (
-                "TestsFlextPatternsCommands",
-            ),
-            ".integration.patterns.test_patterns_logging": (
-                "TestsFlextPatternsLogging",
-            ),
-            ".integration.patterns.test_patterns_testing": (
-                "TestsFlextPatternsTesting",
             ),
             ".integration.test_architecture": ("TestsFlextAutomatedArchitecture",),
             ".integration.test_documented_patterns": ("TestsFlextDocumentedPatterns",),
@@ -395,8 +365,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__: list[str] = [
-    "TestsFlextAdvancedPatterns",
-    "TestsFlextArchitecturalPatterns",
     "TestsFlextAutomatedArchitecture",
     "TestsFlextBadAccessors",
     "TestsFlextBadAnyField",
@@ -463,9 +431,6 @@ __all__: list[str] = [
     "TestsFlextModelsMixins",
     "TestsFlextModelsProjectMetadata",
     "TestsFlextModelsUnit",
-    "TestsFlextPatternsCommands",
-    "TestsFlextPatternsLogging",
-    "TestsFlextPatternsTesting",
     "TestsFlextProtocols",
     "TestsFlextRegistry",
     "TestsFlextResult",

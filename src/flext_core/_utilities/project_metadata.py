@@ -79,7 +79,10 @@ class FlextUtilitiesProjectMetadata(mpm):
         if "version" not in project:
             msg = f"{root}: missing [project].version in pyproject.toml"
             raise ValueError(msg)
-        return mpm.PyprojectProject.model_validate(project).to_metadata(root)
+        pyproject_project: mpm.PyprojectProject = mpm.PyprojectProject.model_validate(
+            project
+        )
+        return pyproject_project.to_metadata(root)
 
     @staticmethod
     def derive_project_constants(root: Path) -> mpm.ProjectConstants:
@@ -257,7 +260,9 @@ class FlextUtilitiesProjectMetadata(mpm):
     ) -> dict[str, str | tuple[str, str]]:
         """Read generated lazy imports through the shared lazy normalizer."""
         raw = vars(package).get("_LAZY_IMPORTS")
-        normalized = normalize_lazy_imports(package_name, raw)
+        normalized: dict[str, str | tuple[str, str]] = normalize_lazy_imports(
+            package_name, raw
+        )
         if not normalized:
             msg = f"package {package_name!r} has no generated lazy imports"
             raise RuntimeError(msg)
@@ -412,17 +417,36 @@ class FlextUtilitiesProjectMetadata(mpm):
             if isinstance(tool_flext_raw, Mapping)
             else MappingProxyType({})
         )
-        return mpm.ProjectToolFlext.model_validate(tool_flext)
+        project_tool_flext: mpm.ProjectToolFlext = mpm.ProjectToolFlext.model_validate(
+            tool_flext
+        )
+        return project_tool_flext
 
     @staticmethod
     def compose_namespace_config(root: Path) -> mpm.ProjectNamespaceConfig:
         """Build the effective namespace config for a project."""
         meta = FlextUtilitiesProjectMetadata.read_project_metadata(root)
         cfg = FlextUtilitiesProjectMetadata.read_tool_flext_config(root)
+        constants = FlextUtilitiesProjectMetadata.read_project_constants(meta.name)
+        sources = dict(cfg.namespace.alias_parent_sources)
+        unknown = set(sources) - set(constants.RUNTIME_ALIAS_NAMES)
+        if unknown:
+            msg = f"unknown alias(es): {sorted(unknown)}"
+            raise ValueError(msg)
+        for alias, canonical in constants.UNIVERSAL_ALIAS_PARENT_SOURCES.items():
+            if alias in sources and sources[alias] != canonical:
+                msg = (
+                    f"cannot override universal alias {alias!r}: "
+                    f"must remain {canonical!r}"
+                )
+                raise ValueError(msg)
         return mpm.ProjectNamespaceConfig(
             project_name=meta.name,
             enabled=cfg.namespace.enabled,
-            scan_dirs=cfg.namespace.scan_dirs,
+            scan_dirs=cfg.namespace.scan_dirs or constants.SCAN_DIRECTORIES,
             include_dynamic_dirs=cfg.namespace.include_dynamic_dirs,
-            alias_parent_sources=cfg.namespace.alias_parent_sources,
+            alias_parent_sources=MappingProxyType({
+                **dict(constants.UNIVERSAL_ALIAS_PARENT_SOURCES),
+                **sources,
+            }),
         )

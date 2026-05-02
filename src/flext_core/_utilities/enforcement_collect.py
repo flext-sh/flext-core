@@ -43,9 +43,11 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             if src.is_dir():
                 for child in src.iterdir():
                     if child.is_dir() and (child / "__init__.py").exists():
-                        return child.name
+                        child_name: str = child.name
+                        return child_name
             meta = upm.read_project_metadata(parent)
-            return meta.package_name
+            package_name: str = meta.package_name
+            return package_name
         return None
 
     @staticmethod
@@ -59,9 +61,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             if top == "fence":
                 return None
             src = top
-        head, _, tail = src.partition("_")
+        canonical_project_name = src.replace("_", "-")
+        head, _, tail = canonical_project_name.partition("-")
         namespace = mpm.derive_class_stem(tail or head)
-        project_prefix = mpm.derive_class_stem(src)
+        project_prefix = mpm.derive_class_stem(canonical_project_name)
         if top in {"tests", "examples", "scripts"} and top != (src or ""):
             return mpm.derive_class_stem(top) + project_prefix, namespace
         return project_prefix, namespace
@@ -104,10 +107,21 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     @staticmethod
     def _attr_filter(layer: str) -> Callable[[str, tp.JsonValue], bool]:
         if layer == c.EnforcementLayer.CONSTANTS.lower():
-            return ub.attr_accept_constants
+            accept: Callable[[str, tp.JsonValue], bool] = ub.attr_accept_constants
+            return accept
         if layer == c.EnforcementLayer.UTILITIES.lower():
-            return lambda name, _v: ub.attr_accept_utility(name)
-        return lambda name, _v: ub.attr_accept_public(name)
+
+            def accept_utility(name: str, _value: tp.JsonValue) -> bool:
+                allowed: bool = ub.attr_accept_utility(name)
+                return allowed
+
+            return accept_utility
+
+        def accept_public(name: str, _value: tp.JsonValue) -> bool:
+            allowed: bool = ub.attr_accept_public(name)
+            return allowed
+
+        return accept_public
 
     @staticmethod
     def _attr_items(
