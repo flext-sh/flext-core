@@ -18,4 +18,3 @@ class FlextConstantsTimeout:
     CACHE_TTL: Final[int] = 300
     DEFAULT_RECOVERY_TIMEOUT_SECONDS: Final[int] = 60
     DEFAULT_MAX_DELAY_SECONDS: Final[float] = 60.0
-    MAX_TIMEOUT_SECONDS_PERFORMANCE: Final[int] = 600
