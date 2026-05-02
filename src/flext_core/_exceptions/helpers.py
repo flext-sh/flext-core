@@ -41,7 +41,7 @@ class FlextExceptionsHelpers:
                 source_mapping = FlextRuntime.normalize_metadata_input_mapping(
                     source_value,
                 )
-            except (PydanticValidationError, TypeError, ValueError):
+            except c.EXC_PYDANTIC_TYPE_VALUE:
                 continue
             if not source_mapping:
                 continue
@@ -66,7 +66,7 @@ class FlextExceptionsHelpers:
                 if isinstance(value, (Mapping, p.HasModelDump)):
                     try:
                         attrs_map = FlextRuntime.normalize_metadata_input_mapping(value)
-                    except (PydanticValidationError, TypeError, ValueError):
+                    except c.EXC_PYDANTIC_TYPE_VALUE:
                         attrs_map = None
                     if attrs_map is not None:
                         attrs = {

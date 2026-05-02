@@ -14,8 +14,6 @@ from collections.abc import (
 )
 from typing import ClassVar, override
 
-from pydantic import ValidationError as PydanticValidationError
-
 from flext_core import (
     FlextConstants as c,
     FlextExceptionsHelpers,
@@ -118,7 +116,7 @@ class FlextExceptionsBase:
                     merged_kwargs_map = FlextRuntime.normalize_metadata_input_mapping(
                         merged_kwargs,
                     )
-                except (PydanticValidationError, TypeError, ValueError):
+                except c.EXC_PYDANTIC_TYPE_VALUE:
                     merged_kwargs_map = None
                 if merged_kwargs_map:
                     combined_extra.update({
@@ -246,7 +244,7 @@ class FlextExceptionsBase:
                     source_dict = FlextRuntime.normalize_metadata_input_mapping(
                         source_value,
                     )
-                except (PydanticValidationError, TypeError, ValueError):
+                except c.EXC_PYDANTIC_TYPE_VALUE:
                     continue
                 if not source_dict:
                     continue
@@ -313,7 +311,7 @@ class FlextExceptionsBase:
                                     metadata,
                                 )
                             )
-                        except (PydanticValidationError, TypeError, ValueError):
+                        except c.EXC_PYDANTIC_TYPE_VALUE:
                             metadata_dict = None
                     resolved_metadata = (
                         FlextExceptionsBase.BaseError._normalize_metadata_from_dict(

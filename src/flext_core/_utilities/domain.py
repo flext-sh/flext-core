@@ -45,7 +45,7 @@ class FlextUtilitiesDomain:
         """Extract __dict__ safely, returning None on failure."""
         try:
             return vars(obj)
-        except (AttributeError, TypeError):
+        except c.EXC_ATTR_TYPE:
             return None
 
     @staticmethod
