@@ -62,8 +62,16 @@ class FlextUtilitiesReliability:
     def try_[TResult](
         operation: Callable[[], TResult],
         catch: type[Exception] | t.VariadicTuple[type[Exception]] | None = None,
+        *,
+        op_name: str = "execute guarded operation",
     ) -> p.Result[TResult]:
-        """Execute a callable and capture configured exceptions as failed results."""
+        """Execute a callable and capture configured exceptions as failed results.
+
+        Wraps the callable's return value into ``r[T].ok(...)`` and translates
+        any matched exception into ``r[T].fail_op(op_name, exc)``. Use
+        ``op_name`` to give the failure a meaningful operation label without
+        wrapping in a custom try/except block.
+        """
         if catch is None:
             handled = FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS
         elif isinstance(catch, type):
@@ -73,7 +81,7 @@ class FlextUtilitiesReliability:
         try:
             return r[TResult].ok(operation())
         except handled as exc:
-            return r[TResult].fail_op("execute guarded operation", exc)
+            return r[TResult].fail_op(op_name, exc)
 
     @staticmethod
     def guard_result[TResult](
