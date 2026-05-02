@@ -29,12 +29,18 @@ class FlextProtocolsBase:
     class AttributeProbe(Protocol):
         """Structural marker for values inspected only via ``hasattr``/``getattr``.
 
-        Empty Protocol body — accepts any object structurally. Used by
+        Empty Protocol body — accepts any runtime value structurally. Used by
         ``FlextDecorators`` and other infrastructure helpers as a typed
-        parameter annotation when the actual contract is "any object that
+        parameter annotation when the actual contract is "any value that
         may carry inspectable attributes" (a substitute for the
         AGENTS.md-forbidden ``object`` annotation).
         """
+
+    @runtime_checkable
+    class ModuleOwned(Protocol):
+        """Structural contract for runtime symbols that expose owner module."""
+
+        __module__: str
 
     @runtime_checkable
     class FieldInfoLike(Base, Protocol):

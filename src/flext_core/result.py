@@ -192,7 +192,6 @@ class FlextResult[T](BaseModel, p.Result[T]):
 
     def __init__(
         self,
-        source: Result[T, str] | None = None,
         error_code: str | None = None,
         error_data: t.JsonMapping | t.ConfigModelInput | None = None,
         *,
@@ -200,37 +199,13 @@ class FlextResult[T](BaseModel, p.Result[T]):
         error: str | None = None,
         success: bool = True,
     ) -> None:
-        """Initialize a FlextResult with optional source, value, error, and metadata."""
-        validated_error_data = FlextResult._validate_error_data(error_data)
-
-        if source is not None and value is None and (error is None):
-            try:
-                failure_value = source.failure()
-            except UnwrapFailedError:
-                super().__init__(
-                    error_code=error_code,
-                    error=None,
-                    success=True,
-                    error_data=validated_error_data,
-                )
-                self._result = source
-                self._payload = source.unwrap()
-                return
-            super().__init__(
-                error_code=error_code,
-                error=failure_value,
-                success=False,
-                error_data=validated_error_data,
-            )
-            self._result = source
-            return
+        """Initialize a FlextResult with optional value, error, and metadata."""
         super().__init__(
             error=error,
             error_code=error_code,
             success=success,
-            error_data=validated_error_data,
+            error_data=FlextResult._validate_error_data(error_data),
         )
-        self._result = source
         if success:
             self._payload = value
 

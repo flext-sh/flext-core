@@ -239,6 +239,21 @@ class FlextConstantsErrors:
         UnicodeDecodeError,
     )
     """Filesystem read + unicode decoding catch for text-file boundaries."""
+
+    EXC_ATTR_RUNTIME_TYPE: Final[tuple[type[Exception], ...]] = (
+        AttributeError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    )
+    """Attribute access + runtime + typing catch for object-state boundaries."""
+
+    EXC_OS_TYPE_VALUE: Final[tuple[type[Exception], ...]] = (
+        OSError,
+        TypeError,
+        ValueError,
+    )
+    """Filesystem + typing catch for path/IO + value-validation boundaries."""
     ERR_DOMAIN_EVENT_NAME_REQUIRED: Final[str] = (
         "Domain event name must be a non-empty string"
     )
