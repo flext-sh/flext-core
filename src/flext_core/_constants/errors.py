@@ -233,6 +233,12 @@ class FlextConstantsErrors:
         ValueError,
     )
     """Filesystem + value-validation catch for path/IO boundaries."""
+
+    EXC_OS_DECODING: Final[tuple[type[Exception], ...]] = (
+        OSError,
+        UnicodeDecodeError,
+    )
+    """Filesystem read + unicode decoding catch for text-file boundaries."""
     ERR_DOMAIN_EVENT_NAME_REQUIRED: Final[str] = (
         "Domain event name must be a non-empty string"
     )
