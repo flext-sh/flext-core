@@ -76,6 +76,35 @@ class FlextUtilitiesReliability:
             return r[TResult].fail_op("execute guarded operation", exc)
 
     @staticmethod
+    def guard_result[TResult](
+        operation: Callable[[], p.Result[TResult]],
+        *,
+        catch: type[Exception] | t.VariadicTuple[type[Exception]] | None = None,
+        op_name: str = "execute guarded operation",
+    ) -> p.Result[TResult]:
+        """Boundary-guard a Result-returning operation.
+
+        Wraps any callable that already returns ``p.Result[T]`` with an
+        exception boundary translator. Eliminates the canonical
+        ``try/except + r.fail_op`` boilerplate at every adapter boundary
+        (LDAP/HTTP/DB/etc.) where library calls may raise but the domain
+        contract is ``r[T]``.
+
+        On exception: returns ``r[T].fail_op(op_name, exc)``.
+        On Result outcome: propagates the original Result unchanged.
+        """
+        if catch is None:
+            handled = FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS
+        elif isinstance(catch, type):
+            handled = (catch,)
+        else:
+            handled = catch
+        try:
+            return operation()
+        except handled as exc:
+            return r[TResult].fail_op(op_name, exc)
+
+    @staticmethod
     def retry[TResult](
         operation: Callable[[], p.Result[TResult]],
         options: FlextUtilitiesReliability.RetryOptions | None = None,
