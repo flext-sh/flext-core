@@ -200,7 +200,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             elif method_name and method_name != c.MODULE_FRAME_NAME:
                 source_parts.append(method_name)
             return " ".join(source_parts) if len(source_parts) > 1 else source_parts[0]
-        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+        except c.EXC_ATTR_RUNTIME_TYPE as exc:
             FlextUtilitiesLoggingContext._report_internal_logging_failure(
                 c.LoggingOperation.GET_CALLER_SOURCE,
                 exc,
@@ -243,7 +243,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     def _should_include_stack_trace() -> bool:
         try:
             return logging.getLogger().getEffectiveLevel() <= logging.DEBUG
-        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+        except c.EXC_ATTR_RUNTIME_TYPE as exc:
             FlextUtilitiesLoggingContext._report_internal_logging_failure(
                 c.LoggingOperation.SHOULD_INCLUDE_STACK,
                 exc,

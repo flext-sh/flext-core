@@ -388,7 +388,7 @@ class FlextContainer(p.ContainerLifecycle):
         try:
             u.DependencyIntegration.register_object(self._di_services, name, impl)
             setattr(self._di_bridge, name, getattr(self._di_services, name))
-        except (TypeError, ValueError, RuntimeError, AttributeError):
+        except c.EXC_ATTR_RUNTIME_TYPE:
             del self._services[name]
         return self
 
@@ -425,7 +425,7 @@ class FlextContainer(p.ContainerLifecycle):
                 cache=self._global_config.enable_factory_caching,
             )
             setattr(self._di_bridge, name, getattr(self._di_services, name))
-        except (TypeError, ValueError, RuntimeError, AttributeError):
+        except c.EXC_ATTR_RUNTIME_TYPE:
             del self._factories[name]
         return self
 
@@ -444,7 +444,7 @@ class FlextContainer(p.ContainerLifecycle):
         try:
             u.DependencyIntegration.register_resource(self._di_resources, name, impl)
             setattr(self._di_bridge, name, getattr(self._di_resources, name))
-        except (TypeError, ValueError, RuntimeError, AttributeError):
+        except c.EXC_ATTR_RUNTIME_TYPE:
             del self._resources[name]
         return self
 

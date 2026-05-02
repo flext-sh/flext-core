@@ -114,7 +114,7 @@ class FlextUtilitiesGuardsTypeProtocol:
             return FlextUtilitiesGuardsTypeProtocol.context(value)
         try:
             return FlextUtilitiesGuardsTypeProtocol._get_protocol_specs()[name](value)
-        except (TypeError, ValueError, AttributeError, RuntimeError):
+        except c.EXC_ATTR_RUNTIME_TYPE:
             return False
 
     @staticmethod

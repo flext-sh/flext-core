@@ -33,7 +33,6 @@ from pydantic import (
     ValidationError,
     computed_field,
 )
-from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
 from flext_core import (

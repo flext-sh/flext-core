@@ -160,7 +160,7 @@ class FlextLogger(ulc):
             settings: p.Settings | None
             try:
                 settings = container.settings
-            except (AttributeError, RuntimeError, TypeError, ValueError):
+            except c.EXC_ATTR_RUNTIME_TYPE:
                 settings = None
             level = getattr(settings, "log_level", "INFO")
         logger: p.Logger = FlextLogger(f"container_{id(container)}")
