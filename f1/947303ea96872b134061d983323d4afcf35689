@@ -1,0 +1,20 @@
+src/flext_core/_exceptions/factories.py
+  h_9db9d35f50cf33 72-73,75
+src/flext_core/_utilities/handler.py
+  h_9db9d35f50cf33 75,78-80
+src/flext_core/handlers.py
+  h_9db9d35f50cf33 423,533
+src/flext_core/result.py
+  h_9db9d35f50cf33 273-276,280,285-286,295
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "f1947303ea96872b134061d983323d4afcf35689",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
