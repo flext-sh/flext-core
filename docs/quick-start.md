@@ -1,12 +1,12 @@
 # Quick Start
 
 <!-- TOC START -->
-- [Step 1: r[T] basics](#step-1-rt-basics)
+- [Step 1: p.Result[T] basics](#step-1-rt-basics)
 - [Step 2: Container basics](#step-2-container-basics)
 - [Step 3: Dispatcher example](#step-3-dispatcher-example)
 <!-- TOC END -->
 
-## Step 1: r[T] basics
+## Step 1: p.Result[T] basics
 
 ```python
 from flext_core import p, r

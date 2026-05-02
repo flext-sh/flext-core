@@ -229,7 +229,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     @staticmethod
     def _report_internal_logging_failure(operation: str, exc: Exception) -> None:
         with suppress(*c.CONTEXT_EXCEPTIONS):
-            FlextUtilitiesLoggingContext.structlog().get_logger(
+            FlextUtilitiesLoggingContext.structlog().fetch_logger(
                 c.LOGGER_NAME_FLEXT_CORE
             ).warning(
                 c.LOG_INTERNAL_OPERATION_FAILED,

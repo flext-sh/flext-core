@@ -216,7 +216,7 @@ class ExamplesFlextShared(m.BaseModel):
 
     @staticmethod
     def bind_probe(result_obj: p.Result[int], delta: int) -> int | str:
-        """Safely attempt ``result_obj.bind(lambda n: r[int].ok(n + delta))``."""
+        """Safely attempt ``result_obj.bind(lambda  n:  r[int].ok(n + delta))``."""
         try:
             return result_obj.flat_map(lambda n: r[int].ok(n + delta)).unwrap_or(-1)
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:

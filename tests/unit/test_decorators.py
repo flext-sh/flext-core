@@ -350,7 +350,7 @@ class TestsFlextDecoratorsLegacy:
 
             @d.combined(
                 operation_name="wrapped",
-                railway_options={"enabled": True},
+                railway_enabled=True,
             )
             def operation() -> str:
                 return "success"

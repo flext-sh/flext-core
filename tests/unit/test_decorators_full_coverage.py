@@ -153,7 +153,7 @@ class TestsFlextDecorators:
 
         @d.combined(
             operation_name="rw",
-            railway_options={"enabled": True},
+            railway_enabled=True,
         )
         def fails() -> int:
             msg = "boom"

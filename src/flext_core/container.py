@@ -223,7 +223,7 @@ class FlextContainer(p.ContainerLifecycle):
         callable_obj: t.FactoryCallable,
         kind: str,
         type_cls: type[T] | None,
-    ) -> r[T] | r[t.RegisterableService]:
+    ) -> p.Result[T] | r[t.RegisterableService]:
         """Invoke a factory/resource callable and narrow to ``type_cls`` if given."""
         try:
             resolved = callable_obj()
@@ -242,17 +242,17 @@ class FlextContainer(p.ContainerLifecycle):
     @overload
     def resolve[T: t.RegisterableService](
         self, name: str, *, type_cls: type[T]
-    ) -> r[T]: ...
+    ) -> p.Result[T]: ...
 
     @overload
     def resolve(
         self, name: str, *, type_cls: None = None
-    ) -> r[t.RegisterableService]: ...
+    ) -> p.Result[t.RegisterableService]: ...
 
     @override
     def resolve[T: t.RegisterableService](
         self, name: str, *, type_cls: type[T] | None = None
-    ) -> r[T] | r[t.RegisterableService]:
+    ) -> p.Result[T] | r[t.RegisterableService]:
         """Resolve a registered service or factory by name."""
         service_registration = self._services.get(name)
         callable_registration = next(
@@ -269,9 +269,9 @@ class FlextContainer(p.ContainerLifecycle):
         if service_registration is not None:
             service = service_registration.service
             if type_cls is None:
-                result: r[T] | r[t.RegisterableService] = r[t.RegisterableService].ok(
-                    service
-                )
+                result: p.Result[T] | r[t.RegisterableService] = r[
+                    t.RegisterableService
+                ].ok(service)
             elif isinstance(service, type_cls):
                 result = r[T].ok(service)
             else:
@@ -578,7 +578,7 @@ class FlextContainer(p.ContainerLifecycle):
                 self.factory(factory_name, namespace_factory)
 
     @override
-    def drop(self, name: str) -> r[bool]:
+    def drop(self, name: str) -> p.Result[bool]:
         """Remove a service or factory registration by name."""
         removed = False
         if name in self._services:
@@ -611,7 +611,7 @@ class FlextContainer(p.ContainerLifecycle):
         )
 
     @override
-    def dispatcher(self) -> r[p.Dispatcher]:
+    def dispatcher(self) -> p.Result[p.Dispatcher]:
         """Resolve the canonical dispatcher / command bus."""
         result = self.resolve(c.ServiceName.COMMAND_BUS)
         if result.failure:

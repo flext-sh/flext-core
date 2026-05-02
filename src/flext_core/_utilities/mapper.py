@@ -150,7 +150,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue]
         ].create_from_callable(_pipeline)
         return transform_result.fold(
-            on_failure=lambda exc: p.Result[
+            on_failure=lambda exc: r[
                 dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue]
             ].fail_op("transform", exc),
             on_success=lambda _: transform_result,
