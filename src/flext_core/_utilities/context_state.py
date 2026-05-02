@@ -58,7 +58,7 @@ class FlextUtilitiesContextState:
                 normalized
             )
             return validated
-        except (TypeError, ValueError, AttributeError, KeyError) as exc:
+        except c.EXC_ATTR_KEY_TYPE_VALUE as exc:
             FlextUtilitiesContextState.logger.debug(
                 "Failed to normalize contextvar payload to configuration dict",
                 exc_info=exc,
