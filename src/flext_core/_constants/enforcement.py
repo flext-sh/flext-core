@@ -582,6 +582,29 @@ class FlextConstantsEnforcement:
     })
     """The five canonical facade files per project (AGENTS.md §2.2)."""
 
+    ENFORCEMENT_LIBRARY_OWNERS: Final[Mapping[str, str]] = MappingProxyType({
+        "pydantic": "flext-core",
+        "pydantic_settings": "flext-core",
+        "pydantic_core": "flext-core",
+        "dependency_injector": "flext-core",
+        "returns": "flext-core",
+        "structlog": "flext-observability",
+        "rich": "flext-cli",
+        "rope": "flext-infra",
+        "orjson": "flext-cli",
+        "yaml": "flext-cli",
+        "pyyaml": "flext-cli",
+    })
+    """SSOT mapping: external library → owning FLEXT abstraction project (§2.7).
+
+    Every consumer accesses these libraries via the owning project's facades
+    (``c/m/p/t/u``), never via a bare top-level import. The runtime
+    LIBRARY_IMPORT predicate (``m.Enforcement.LibraryImportParams``) and the
+    rope-based source-level tier-whitelist validator both source their data
+    from this mapping. Adding a new abstracted library = one entry here, no
+    parallel list elsewhere.
+    """
+
     # --- Cross-layer enforcement catalog (SSOT for the pytest dispatcher) ---
     #
     # Every rule is addressed by a stable ``ENFORCE-NNN`` identifier and

@@ -183,15 +183,7 @@ def _bindings() -> t.MappingKV[str, _KindParams]:
         ),
         "library_abstraction": (
             pk.LIBRARY_IMPORT,
-            me.LibraryImportParams(
-                library_owners=MappingProxyType({
-                    "pydantic": "flext-core",
-                    "dependency_injector": "flext-core",
-                    "structlog": "flext-observability",
-                    "rich": "flext-cli",
-                    "rope": "flext-infra",
-                }),
-            ),
+            me.LibraryImportParams(library_owners=c.ENFORCEMENT_LIBRARY_OWNERS),
         ),
         "deprecated_typealias_syntax": (
             pk.DEPRECATED_SYNTAX,
