@@ -159,6 +159,14 @@ class FlextModelsExceptionParams:
             ),
         ] = None
 
+        @property
+        def connection_target(self) -> str:
+            """Human-readable host:port string for log messages."""
+            host = self.host or "unknown"
+            if self.port is None:
+                return host
+            return f"{host}:{self.port}"
+
     class TimeoutErrorParams(ParamsModel):
         """Validated params for TimeoutError."""
 

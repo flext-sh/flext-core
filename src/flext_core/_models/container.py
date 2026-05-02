@@ -372,6 +372,23 @@ class FlextModelsContainer:
                 for name, registration in value.items()
             }
 
+        @staticmethod
+        def _norm_callable_reg[Reg: m.ArbitraryTypesModel](
+            value: t.MappingKV[str, Reg | t.FactoryCallable] | None,
+            reg_cls: type[Reg],
+        ) -> t.MappingKV[str, Reg] | None:
+            """Normalize a name→(Registration|callable) dict to name→Registration."""
+            if value is None:
+                return None
+            return {
+                name: (
+                    registration
+                    if isinstance(registration, reg_cls)
+                    else reg_cls.model_validate({"name": name, "factory": registration})
+                )
+                for name, registration in value.items()
+            }
+
         @up.field_validator("factories", mode="before")
         @classmethod
         def validate_factories(
@@ -383,22 +400,9 @@ class FlextModelsContainer:
                 | None
             ),
         ) -> t.MappingKV[str, FlextModelsContainer.FactoryRegistration] | None:
-            if value is None:
-                return None
-            return {
-                name: (
-                    registration
-                    if isinstance(
-                        registration,
-                        FlextModelsContainer.FactoryRegistration,
-                    )
-                    else FlextModelsContainer.FactoryRegistration(
-                        name=name,
-                        factory=registration,
-                    )
-                )
-                for name, registration in value.items()
-            }
+            return FlextModelsContainer.ServiceRegistry._norm_callable_reg(
+                value, FlextModelsContainer.FactoryRegistration
+            )
 
         @up.field_validator("resources", mode="before")
         @classmethod
@@ -411,22 +415,9 @@ class FlextModelsContainer:
                 | None
             ),
         ) -> t.MappingKV[str, FlextModelsContainer.ResourceRegistration] | None:
-            if value is None:
-                return None
-            return {
-                name: (
-                    registration
-                    if isinstance(
-                        registration,
-                        FlextModelsContainer.ResourceRegistration,
-                    )
-                    else FlextModelsContainer.ResourceRegistration(
-                        name=name,
-                        factory=registration,
-                    )
-                )
-                for name, registration in value.items()
-            }
+            return FlextModelsContainer.ServiceRegistry._norm_callable_reg(
+                value, FlextModelsContainer.ResourceRegistration
+            )
 
     class FactoryDecoratorConfig(m.ImmutableValueModel):
         """Configuration extracted from @d.factory() decorator.

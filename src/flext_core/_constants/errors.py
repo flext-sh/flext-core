@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final, override
 
+from pydantic import ValidationError as _PydanticValidationError
+
 
 class FlextConstantsErrors:
     """Error domain constants for structured error routing."""
@@ -254,6 +256,61 @@ class FlextConstantsErrors:
         ValueError,
     )
     """Filesystem + typing catch for path/IO + value-validation boundaries."""
+
+    EXC_ATTR_TYPE: Final[tuple[type[Exception], ...]] = (
+        AttributeError,
+        TypeError,
+    )
+    """Minimal attribute-access + type catch for object-shape boundaries."""
+
+    EXC_OS_TYPE: Final[tuple[type[Exception], ...]] = (
+        OSError,
+        TypeError,
+    )
+    """Filesystem + type-validation catch for path-handler boundaries."""
+
+    EXC_BROAD_RUNTIME_OS: Final[tuple[type[Exception], ...]] = (
+        AttributeError,
+        KeyError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    )
+    """Broad runtime + filesystem boundary catch (no ImportError)."""
+
+    EXC_OS_RUNTIME_VALUE: Final[tuple[type[Exception], ...]] = (
+        OSError,
+        RuntimeError,
+        ValueError,
+    )
+    """Filesystem + runtime + value-validation catch for IO-bound flows."""
+
+    EXC_VALIDATION_TYPE: Final[tuple[type[Exception], ...]] = (
+        TypeError,
+        _PydanticValidationError,
+    )
+    """Pydantic validation + type-validation catch for model-coercion boundaries."""
+
+    EXC_VALIDATION_VALUE: Final[tuple[type[Exception], ...]] = (
+        ValueError,
+        _PydanticValidationError,
+    )
+    """Pydantic validation + value-validation catch for input-coercion boundaries."""
+
+    EXC_PYDANTIC_TYPE_VALUE: Final[tuple[type[Exception], ...]] = (
+        _PydanticValidationError,
+        TypeError,
+        ValueError,
+    )
+    """Pydantic + typing + value-validation catch for model-construction flows."""
+
+    EXC_VALIDATION_TYPE_VALUE: Final[tuple[type[Exception], ...]] = (
+        TypeError,
+        ValueError,
+        _PydanticValidationError,
+    )
+    """Pydantic validation + typing + value catch for full validation boundaries."""
     ERR_DOMAIN_EVENT_NAME_REQUIRED: Final[str] = (
         "Domain event name must be a non-empty string"
     )

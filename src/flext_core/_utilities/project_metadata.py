@@ -110,8 +110,9 @@ class FlextUtilitiesProjectMetadata(mpm):
         return distribution_name.replace("-", "_")
 
     @staticmethod
-    def _module_class_names(module_path: str) -> tuple[str, ...]:
-        """Read class names from a module source without importing it."""
+    @cache
+    def _module_ast(module_path: str) -> ast.Module:
+        """Read and parse a module source without importing it."""
         spec = find_spec(module_path)
         if spec is None or spec.origin is None:
             msg = f"module spec for {module_path!r} was not found"
@@ -120,10 +121,30 @@ class FlextUtilitiesProjectMetadata(mpm):
         if not source_path.is_file():
             msg = f"module source for {module_path!r} was not found"
             raise RuntimeError(msg)
-        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+        return ast.parse(source_path.read_text(encoding="utf-8"))
+
+    @staticmethod
+    @cache
+    def _module_class_names(module_path: str) -> tuple[str, ...]:
+        """Read class names from a module source without importing it."""
+        tree = FlextUtilitiesProjectMetadata._module_ast(module_path)
         return tuple(
             node.name for node in tree.body if isinstance(node, ast.ClassDef)
         )
+
+    @staticmethod
+    def _module_alias_target_name(module_path: str, export_name: str) -> str | None:
+        """Return class target from ``alias = ClassName`` module assignment."""
+        tree = FlextUtilitiesProjectMetadata._module_ast(module_path)
+        for node in tree.body:
+            if not isinstance(node, ast.Assign) or not isinstance(node.value, ast.Name):
+                continue
+            if any(
+                isinstance(target, ast.Name) and target.id == export_name
+                for target in node.targets
+            ):
+                return node.value.id
+        return None
 
     @staticmethod
     def _class_stem_from_lazy(
@@ -147,6 +168,72 @@ class FlextUtilitiesProjectMetadata(mpm):
                 return class_name.removesuffix("Constants")
         msg = f"constants class stem for package {package_name!r} was not found"
         raise RuntimeError(msg)
+
+    @staticmethod
+    def _alias_target_name(
+        module_path: str,
+        export_name: str,
+        class_stem: str,
+    ) -> str:
+        """Return the facade class exported by a runtime alias module."""
+        assigned = FlextUtilitiesProjectMetadata._module_alias_target_name(
+            module_path,
+            export_name,
+        )
+        if assigned is not None:
+            return assigned
+        candidates = tuple(
+            class_name
+            for class_name in FlextUtilitiesProjectMetadata._module_class_names(
+                module_path
+            )
+            if class_name.startswith(class_stem)
+        )
+        if len(candidates) != 1:
+            msg = (
+                f"expected one {class_stem!r} facade class in {module_path!r}; "
+                f"found {candidates!r}"
+            )
+            raise RuntimeError(msg)
+        return candidates[0]
+
+    @staticmethod
+    def _alias_suffix_from_entry(
+        export_name: str,
+        entry: str | tuple[str, str],
+        import_name: str,
+        class_stem: str,
+    ) -> str:
+        """Resolve alias suffix against the package that owns the target."""
+        if not isinstance(entry, str):
+            return entry[1].removeprefix(class_stem)
+        module_path = entry
+        parent_source = module_path.split(".", 1)[0]
+        if parent_source == import_name:
+            return FlextUtilitiesProjectMetadata._alias_target_name(
+                module_path,
+                export_name,
+                class_stem,
+            ).removeprefix(class_stem)
+        parent_package = importlib.import_module(parent_source)
+        parent_lazy_map = FlextUtilitiesProjectMetadata._normalized_lazy_imports(
+            parent_source,
+            parent_package,
+        )
+        parent_entry = parent_lazy_map.get(export_name)
+        if parent_entry is None:
+            msg = f"alias {export_name!r} not found in parent package {parent_source!r}"
+            raise RuntimeError(msg)
+        parent_class_stem = FlextUtilitiesProjectMetadata._class_stem_from_lazy(
+            parent_source,
+            parent_package,
+        )
+        return FlextUtilitiesProjectMetadata._alias_suffix_from_entry(
+            export_name,
+            parent_entry,
+            parent_source,
+            parent_class_stem,
+        )
 
     @staticmethod
     @override
@@ -200,8 +287,12 @@ class FlextUtilitiesProjectMetadata(mpm):
                 continue
             module_path = entry if isinstance(entry, str) else entry[0]
             parent_source = module_path.split(".", 1)[0]
-            target_name = export_name if isinstance(entry, str) else entry[1]
-            suffix = target_name.removeprefix(class_stem)
+            suffix = FlextUtilitiesProjectMetadata._alias_suffix_from_entry(
+                export_name,
+                entry,
+                import_name,
+                class_stem,
+            )
             result.append(
                 mpm.LazyAliasMetadata(
                     alias=export_name,

@@ -32,8 +32,7 @@ class FlextProtocolsBase:
         Empty Protocol body — accepts any runtime value structurally. Used by
         ``FlextDecorators`` and other infrastructure helpers as a typed
         parameter annotation when the actual contract is "any value that
-        may carry inspectable attributes" (a substitute for the
-        AGENTS.md-forbidden ``object`` annotation).
+        may carry inspectable attributes" without loose top-type annotations.
         """
 
     @runtime_checkable
@@ -211,7 +210,7 @@ class FlextProtocolsBase:
     class HasDomainEvents(Protocol):
         """Protocol for DDD aggregate roots that buffer uncommitted domain events.
 
-        Any entity that carries a ``domain_events`` list and an identity
+        Every entity that carries a ``domain_events`` list and an identity
         satisfies this protocol. Use with ``u.add_domain_event`` utility.
         """
 

@@ -27,6 +27,7 @@ from pydantic import (
     model_validator,
 )
 
+from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
@@ -60,7 +61,11 @@ class FlextModelsProjectMetadata:
         if not project_name:
             msg = "empty project name"
             raise ValueError(msg)
-        return FlextModelsProjectMetadata.pascalize(project_name.replace("_", "-"))
+        normalized = project_name.replace("_", "-").lower()
+        override = FlextConstantsProjectMetadata.SPECIAL_NAME_OVERRIDES.get(normalized)
+        if override is not None:
+            return override
+        return FlextModelsProjectMetadata.pascalize(normalized)
 
     class ProjectMetadata(FlextModelsPydantic.BaseModel):
         """Canonical per-project metadata (name, version, license, derived names)."""
@@ -152,7 +157,9 @@ class FlextModelsProjectMetadata:
             utilities = importlib.import_module(
                 "flext_core._utilities.project_metadata"
             ).FlextUtilitiesProjectMetadata
-            constants = utilities.read_project_constants(metadata.name, root=metadata.root)
+            constants = utilities.read_project_constants(
+                metadata.name, root=metadata.root
+            )
             return cls.model_validate(constants.model_dump())
 
     class LazyAliasMetadata(FlextModelsPydantic.BaseModel):
