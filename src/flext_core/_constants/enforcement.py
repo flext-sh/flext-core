@@ -880,7 +880,7 @@ class FlextConstantsEnforcement:
             "ENFORCE-020",
             "HIGH",
             "validate_config",
-            ("CONFIG-001", "CONFIG-002", "CONFIG-003", "CONFIG-004", "CONFIG-005"),
+            ("CONFIG-001", "CONFIG-003", "CONFIG-004", "CONFIG-005"),
             ("flext-development-workflow",),
             "pyproject.toml deviation — mypy ignore_errors, unapproved ruff ignores, or incomplete type strictness.",
         ),
