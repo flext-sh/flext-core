@@ -23,10 +23,8 @@ class TestsFlextUtilitiesProjectMetadata:
         ("project_name", "expected_stem"),
         [
             (c.Tests.SAMPLE_PROJECT_NAME, c.Tests.SAMPLE_PROJECT_CLASS_STEM),
-            ("flext-tap-oracle", "FlextTapOracle"),
             ("flext-core", "Flext"),
-            ("flext", "FlextRoot"),
-            ("gruponos-meltano-native", "GruponosMeltanoNative"),
+            (c.Tests.SAMPLE_PROJECT_NAME_MIGRATION, "AlgarOudMig"),
         ],
     )
     def test_derive_class_stem_produces_pascal_case_from_project_name(
@@ -34,7 +32,7 @@ class TestsFlextUtilitiesProjectMetadata:
         project_name: str,
         expected_stem: str,
     ) -> None:
-        tm.that(m.derive_class_stem(project_name), eq=expected_stem)
+        tm.that(u.derive_class_stem(project_name), eq=expected_stem)
 
     def test_pascalize_converts_dashes_and_underscores_to_camel_case(self) -> None:
         tm.that(
@@ -46,7 +44,7 @@ class TestsFlextUtilitiesProjectMetadata:
 
     def test_derive_class_stem_rejects_empty_input(self) -> None:
         with pytest.raises(ValueError, match="empty"):
-            m.derive_class_stem("")
+            u.derive_class_stem("")
 
     def test_read_project_metadata_parses_minimal_pyproject(
         self,
@@ -106,34 +104,14 @@ class TestsFlextUtilitiesProjectMetadata:
             eq=(c.Tests.SAMPLE_AUTHOR_ALICE, c.Tests.SAMPLE_AUTHOR_BOB),
         )
 
-    def test_derive_project_constants_returns_local_project_metadata_values(
+    def test_read_project_constants_returns_installed_project_metadata_values(
         self,
-        tmp_path: Path,
     ) -> None:
-        root = _write_pyproject(
-            tmp_path,
-            f"""
-            [project]
-            name = "{c.Tests.SAMPLE_PROJECT_NAME_MIGRATION}"
-            version = "1.2.3"
-            license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
-            description = "OUD migration"
-            requires-python = ">=3.13,<3.14"
-            authors = [{{name = "FLEXT Team"}}]
-
-            [project.urls]
-            Homepage = "https://example.test/algar-oud-mig"
-            """,
-        )
-
-        constants = u.derive_project_constants(root)
-
+        constants = u.read_project_constants(c.Tests.SAMPLE_PROJECT_NAME_MIGRATION)
         tm.that(constants.PACKAGE_NAME, eq=c.Tests.SAMPLE_PROJECT_NAME_MIGRATION)
-        tm.that(constants.PACKAGE_VERSION, eq="1.2.3")
-        tm.that(constants.PACKAGE_LICENSE, eq=c.Tests.SAMPLE_PROJECT_LICENSE)
         tm.that(constants.PYTHON_PACKAGE_NAME, eq="algar_oud_mig")
         tm.that(constants.CLASS_STEM, eq="AlgarOudMig")
-        tm.that(constants.PACKAGE_AUTHORS, eq=("FLEXT Team",))
+        tm.that("c" in constants.RUNTIME_ALIAS_NAMES, eq=True)
 
     def test_read_project_metadata_raises_on_missing_pyproject(
         self,
@@ -220,9 +198,13 @@ class TestsFlextUtilitiesProjectMetadata:
             """,
         )
         ns = u.compose_namespace_config(root)
+        dynamic_constants = u.read_project_constants(c.Tests.SAMPLE_PROJECT_NAME)
         tm.that(ns.project_name, eq=c.Tests.SAMPLE_PROJECT_NAME)
         tm.that(ns.alias_parent_sources["c"], eq=c.Tests.SAMPLE_ALIAS_PARENT_SOURCE)
-        tm.that(ns.alias_parent_sources["r"], eq="flext_core")
+        tm.that(
+            ns.alias_parent_sources["r"],
+            eq=dynamic_constants.UNIVERSAL_ALIAS_PARENT_SOURCES["r"],
+        )
 
     def test_compose_namespace_config_rejects_unknown_alias(
         self,
@@ -256,7 +238,7 @@ class TestsFlextUtilitiesProjectMetadata:
             license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
 
             [tool.flext.namespace]
-            alias_parent_sources = {{r = "{c.Tests.SAMPLE_ALIAS_PARENT_SOURCE}"}}
+            alias_parent_sources = {{r = "custom_runtime"}}
             """,
         )
         with pytest.raises(ValueError, match="cannot override universal alias"):

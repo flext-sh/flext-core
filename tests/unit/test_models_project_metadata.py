@@ -7,7 +7,7 @@ from types import MappingProxyType
 
 import pytest
 
-from tests import c, m
+from tests import c, m, u
 
 
 class TestsFlextModelsProjectMetadata:
@@ -15,7 +15,7 @@ class TestsFlextModelsProjectMetadata:
         ("project_name", "expected_stem"),
         [
             (c.Tests.SAMPLE_PROJECT_NAME, c.Tests.SAMPLE_PROJECT_CLASS_STEM),
-            ("flext_core", "Flext"),
+            ("flext_core", "FlextCore"),
             (c.Tests.SAMPLE_PROJECT_NAME_MIGRATION, "AlgarOudMig"),
             ("gruponos-meltano-native", "GruponosMeltanoNative"),
         ],
@@ -48,7 +48,25 @@ class TestsFlextModelsProjectMetadata:
             url="https://example.test/flext-ldif",
         )
 
-        constants = m.ProjectConstants.from_metadata(metadata)
+        constants = m.ProjectConstants.model_validate({
+            "PACKAGE_NAME": metadata.name,
+            "PACKAGE_VERSION": metadata.version,
+            "PACKAGE_LICENSE": metadata.license,
+            "PACKAGE_URL": metadata.url,
+            "PACKAGE_AUTHORS": metadata.authors,
+            "PACKAGE_ROOT": metadata.root,
+            "PYTHON_PACKAGE_NAME": metadata.package_name,
+            "CLASS_STEM": metadata.class_stem,
+            "ALIAS_TO_SUFFIX": {"c": "Constants"},
+            "RUNTIME_ALIAS_NAMES": frozenset({"c"}),
+            "FACADE_ALIAS_NAMES": frozenset({"c"}),
+            "FACADE_MODULE_NAMES": frozenset({"constants"}),
+            "UNIVERSAL_ALIAS_PARENT_SOURCES": {},
+            "TIER_FACADE_PREFIX": {"src": metadata.class_stem},
+            "SCAN_DIRECTORIES": ("src",),
+            "TIER_SUB_NAMESPACE": {"src": ""},
+            "PYPROJECT_FILENAME": c.PYPROJECT_FILENAME,
+        })
 
         assert constants.PACKAGE_NAME == c.Tests.SAMPLE_PROJECT_NAME
         assert constants.PACKAGE_VERSION == c.Tests.SAMPLE_PROJECT_VERSION
@@ -89,10 +107,14 @@ class TestsFlextModelsProjectMetadata:
             "project_name": c.Tests.SAMPLE_PROJECT_NAME,
             "alias_parent_sources": {"c": c.Tests.SAMPLE_ALIAS_PARENT_SOURCE},
         })
+        dynamic_constants = u.read_project_constants(c.Tests.SAMPLE_PROJECT_NAME)
 
         assert namespace.alias_parent_sources["c"] == c.Tests.SAMPLE_ALIAS_PARENT_SOURCE
-        assert namespace.alias_parent_sources["r"] == "flext_core"
-        assert namespace.scan_dirs == c.SCAN_DIRECTORIES
+        assert (
+            namespace.alias_parent_sources["r"]
+            == dynamic_constants.UNIVERSAL_ALIAS_PARENT_SOURCES["r"]
+        )
+        assert namespace.scan_dirs == dynamic_constants.SCAN_DIRECTORIES
 
     @pytest.mark.parametrize(
         ("sources", "match"),

@@ -128,9 +128,7 @@ class FlextUtilitiesProjectMetadata(mpm):
     def _module_class_names(module_path: str) -> tuple[str, ...]:
         """Read class names from a module source without importing it."""
         tree = FlextUtilitiesProjectMetadata._module_ast(module_path)
-        return tuple(
-            node.name for node in tree.body if isinstance(node, ast.ClassDef)
-        )
+        return tuple(node.name for node in tree.body if isinstance(node, ast.ClassDef))
 
     @staticmethod
     def _module_alias_target_name(module_path: str, export_name: str) -> str | None:
@@ -266,7 +264,9 @@ class FlextUtilitiesProjectMetadata(mpm):
         return normalized
 
     @staticmethod
-    def read_lazy_alias_metadata(package_name: str) -> tuple[mpm.LazyAliasMetadata, ...]:
+    def read_lazy_alias_metadata(
+        package_name: str,
+    ) -> tuple[mpm.LazyAliasMetadata, ...]:
         """Return alias metadata derived from installed generated lazy exports."""
         distribution_name = FlextUtilitiesProjectMetadata._distribution_name(
             FlextUtilitiesProjectMetadata._package_name(package_name)
@@ -341,9 +341,7 @@ class FlextUtilitiesProjectMetadata(mpm):
         alias_to_suffix = {
             item.alias: item.suffix for item in alias_metadata if item.suffix
         }
-        facade_aliases = frozenset(
-            item.alias for item in alias_metadata if item.facade
-        )
+        facade_aliases = frozenset(item.alias for item in alias_metadata if item.facade)
         facade_modules = frozenset(
             Path(item.module_path.replace(".", "/")).name
             for item in alias_metadata

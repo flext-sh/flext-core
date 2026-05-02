@@ -150,7 +150,7 @@ class ExamplesFlextShared(m.BaseModel):
             result = v.isoformat()
         elif isinstance(v, Path):
             result = str(v)
-        elif isinstance(v, list | dict):
+        elif isinstance(v, (list, dict)):
             result = type(v).__name__.lower()
         else:
             result = type(v).__name__

@@ -400,7 +400,7 @@ class FlextModelsContainer:
                 | None
             ),
         ) -> t.MappingKV[str, FlextModelsContainer.FactoryRegistration] | None:
-            return FlextModelsContainer.ServiceRegistry._norm_callable_reg(
+            return cls._norm_callable_reg(
                 value, FlextModelsContainer.FactoryRegistration
             )
 
@@ -415,7 +415,7 @@ class FlextModelsContainer:
                 | None
             ),
         ) -> t.MappingKV[str, FlextModelsContainer.ResourceRegistration] | None:
-            return FlextModelsContainer.ServiceRegistry._norm_callable_reg(
+            return cls._norm_callable_reg(
                 value, FlextModelsContainer.ResourceRegistration
             )
 

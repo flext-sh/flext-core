@@ -1312,11 +1312,11 @@ class TestsFlextUtilities(u):
                 cls._counter = count(1)
                 cls._name_index = 0
 
-        class _GetUserFactoryBase:
+        class _GetUserFactoryBase[T]:
             """Shared counter-rotating state for GetUser-style factories.
 
-            Subclasses provide their own typed ``build``/``build_batch``;
-            the base owns the per-subclass ``_counter`` and ``reset``.
+            Subclasses provide their own typed ``build``;
+            the base owns the per-subclass ``_counter``, ``build_batch``, and ``reset``.
             """
 
             _counter: ClassVar[count[int]] = count(1)
@@ -1329,14 +1329,25 @@ class TestsFlextUtilities(u):
                 return f"user_{next(cls._counter):03d}"
 
             @classmethod
+            def build(cls, *, user_id: str | None = None) -> T:
+                """Build a GetUser-style instance; subclasses override with typed return."""
+                raise NotImplementedError
+
+            @classmethod
+            def build_batch(cls, size: int) -> list[T]:
+                """Build multiple GetUser-style instances with auto-generated values."""
+                return [cls.build() for _ in range(size)]
+
+            @classmethod
             def reset(cls) -> None:
                 """Reset per-subclass factory counter."""
                 cls._counter = count(1)
 
-        class GetUserServiceFactory(_GetUserFactoryBase):
+        class GetUserServiceFactory(_GetUserFactoryBase[GetUserService]):
             """Factory for `GetUserService`."""
 
             @classmethod
+            @override
             def build(
                 cls, *, user_id: str | None = None
             ) -> TestsFlextUtilities.Tests.GetUserService:
@@ -1345,17 +1356,28 @@ class TestsFlextUtilities(u):
                     user_id=cls._resolve_user_id(user_id),
                 )
 
+        class _FailingFactoryBase[T]:
+            """Shared constructor contract for failing-service factories."""
+
             @classmethod
-            def build_batch(
-                cls, size: int
-            ) -> t.SequenceOf[TestsFlextUtilities.Tests.GetUserService]:
-                """Build multiple `GetUserService` instances with auto-generated values."""
+            def build(
+                cls,
+                *,
+                error_message: str = c.Tests.DEFAULT_ERROR_MESSAGE,
+            ) -> T:
+                """Build a failing-service instance; subclasses provide the type."""
+                raise NotImplementedError
+
+            @classmethod
+            def build_batch(cls, size: int) -> list[T]:
+                """Build multiple failing-service instances."""
                 return [cls.build() for _ in range(size)]
 
-        class FailingServiceFactory:
+        class FailingServiceFactory(_FailingFactoryBase[FailingService]):
             """Factory for FailingService."""
 
             @classmethod
+            @override
             def build(
                 cls,
                 *,
@@ -1366,17 +1388,11 @@ class TestsFlextUtilities(u):
                     error_message=error_message,
                 )
 
-            @classmethod
-            def build_batch(
-                cls, size: int
-            ) -> t.SequenceOf[TestsFlextUtilities.Tests.FailingService]:
-                """Build multiple FailingService instances with default error message."""
-                return [cls.build() for _ in range(size)]
-
-        class GetUserServiceAutoFactory(_GetUserFactoryBase):
+        class GetUserServiceAutoFactory(_GetUserFactoryBase[GetUserServiceAuto]):
             """Factory for GetUserServiceAuto."""
 
             @classmethod
+            @override
             def build(
                 cls, *, user_id: str | None = None
             ) -> TestsFlextUtilities.Tests.GetUserServiceAuto:
@@ -1385,20 +1401,12 @@ class TestsFlextUtilities(u):
                     user_id=cls._resolve_user_id(user_id),
                 )
 
-            @classmethod
-            def build_batch(
-                cls, size: int
-            ) -> t.SequenceOf[TestsFlextUtilities.Tests.GetUserServiceAuto]:
-                """Build multiple GetUserServiceAuto instances with auto-generated values."""
-                return [cls.build() for _ in range(size)]
-
-        class _ValidatingFactoryBase:
+        class _ValidatingFactoryBase[T]:
             """Shared word-rotating state for validating-service factories.
 
-            Subclasses provide their own ``build`` (typed return) but
-            inherit ``_words``, ``_word_index``, ``_next_word``,
-            ``build_batch``, and ``reset``. ``_word_index`` reassignment
-            via ``cls._word_index += 1`` preserves per-subclass counter.
+            Subclasses override ``_make_instance`` with the typed return;
+            the base owns ``_words``, ``_word_index``, ``_next_word``,
+            ``build``, ``build_batch``, and ``reset``.
             """
 
             _words: ClassVar[Sequence[str]] = (
@@ -1418,66 +1426,68 @@ class TestsFlextUtilities(u):
                 return word
 
             @classmethod
+            def _make_instance(cls, value_input: str, min_length: int) -> T:
+                """Construct one instance; subclasses override with typed return."""
+                raise NotImplementedError
+
+            @classmethod
+            def build(
+                cls,
+                *,
+                value_input: str | None = None,
+                min_length: int = c.Tests.MIN_LENGTH_DEFAULT,
+            ) -> T:
+                """Build one validating-service instance."""
+                actual_value = (
+                    value_input if value_input is not None else cls._next_word()
+                )
+                return cls._make_instance(actual_value, min_length)
+
+            @classmethod
+            def build_batch(cls, size: int) -> list[T]:
+                """Build multiple validating-service instances."""
+                return [cls.build() for _ in range(size)]
+
+            @classmethod
             def reset(cls) -> None:
                 """Reset per-subclass factory counter."""
                 cls._word_index = 0
 
-        class ValidatingServiceAutoFactory(_ValidatingFactoryBase):
+        class ValidatingServiceAutoFactory(
+            _ValidatingFactoryBase[ValidatingServiceAuto]
+        ):
             """Factory for ValidatingServiceAuto."""
 
             @classmethod
-            def build(
-                cls,
-                *,
-                value_input: str | None = None,
-                min_length: int = c.Tests.MIN_LENGTH_DEFAULT,
+            @override
+            def _make_instance(
+                cls, value_input: str, min_length: int
             ) -> TestsFlextUtilities.Tests.ValidatingServiceAuto:
-                """Build a ValidatingServiceAuto instance."""
-                actual_value = (
-                    value_input if value_input is not None else cls._next_word()
-                )
+                """Construct a ValidatingServiceAuto instance."""
                 return TestsFlextUtilities.Tests.ValidatingServiceAuto(
-                    value_input=actual_value,
+                    value_input=value_input,
                     min_length=min_length,
                 )
 
-            @classmethod
-            def build_batch(
-                cls, size: int
-            ) -> t.SequenceOf[TestsFlextUtilities.Tests.ValidatingServiceAuto]:
-                """Build multiple ValidatingServiceAuto instances."""
-                return [cls.build() for _ in range(size)]
-
-        class ValidatingServiceFactory(_ValidatingFactoryBase):
+        class ValidatingServiceFactory(_ValidatingFactoryBase[ValidatingService]):
             """Factory for ``ValidatingService``."""
 
             @classmethod
-            def build(
-                cls,
-                *,
-                value_input: str | None = None,
-                min_length: int = c.Tests.MIN_LENGTH_DEFAULT,
+            @override
+            def _make_instance(
+                cls, value_input: str, min_length: int
             ) -> TestsFlextUtilities.Tests.ValidatingService:
-                """Build a `ValidatingService` instance."""
-                actual_value = (
-                    value_input if value_input is not None else cls._next_word()
-                )
+                """Construct a ValidatingService instance."""
                 return TestsFlextUtilities.Tests.ValidatingService(
-                    value_input=actual_value,
+                    value_input=value_input,
                     min_length=min_length,
                 )
 
-            @classmethod
-            def build_batch(
-                cls, size: int
-            ) -> t.SequenceOf[TestsFlextUtilities.Tests.ValidatingService]:
-                """Build multiple `ValidatingService` instances."""
-                return [cls.build() for _ in range(size)]
-
-        class FailingServiceAutoFactory:
+        class FailingServiceAutoFactory(_FailingFactoryBase[FailingServiceAuto]):
             """Factory for FailingServiceAuto."""
 
             @classmethod
+            @override
             def build(
                 cls,
                 *,
@@ -1487,13 +1497,6 @@ class TestsFlextUtilities(u):
                 return TestsFlextUtilities.Tests.FailingServiceAuto(
                     error_message=error_message,
                 )
-
-            @classmethod
-            def build_batch(
-                cls, size: int
-            ) -> t.SequenceOf[TestsFlextUtilities.Tests.FailingServiceAuto]:
-                """Build multiple FailingServiceAuto instances with default error message."""
-                return [cls.build() for _ in range(size)]
 
         class ServiceTestCaseFactory:
             """Factory for m.Tests.ServiceTestCase."""
