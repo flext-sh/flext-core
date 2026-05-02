@@ -330,13 +330,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
         """Create result from Pydantic validation."""
         try:
             return FlextResult[ModelT].ok(model.model_validate(data))
-        except (
-            c.ValidationError,
-            TypeError,
-            ValueError,
-            AttributeError,
-            RuntimeError,
-        ) as exc:
+        except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
             return FlextResult[ModelT].fail(str(exc), exception=exc)
 
     @classmethod
@@ -588,13 +582,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
             )
         try:
             return FlextResult[U].ok(model.model_validate(self.value))
-        except (
-            c.ValidationError,
-            TypeError,
-            ValueError,
-            AttributeError,
-            RuntimeError,
-        ) as exc:
+        except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
             return FlextResult[U].fail(str(exc), exception=exc)
 
     @override

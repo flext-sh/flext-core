@@ -43,13 +43,7 @@ class FlextUtilitiesArgs:
             kwargs = {}
         try:
             return r[M].ok(model_cls.model_validate(kwargs))
-        except (
-            c.ValidationError,
-            ValueError,
-            TypeError,
-            AttributeError,
-            RuntimeError,
-        ) as exc:
+        except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
             return e.fail_validation(error=exc)
 
     @staticmethod

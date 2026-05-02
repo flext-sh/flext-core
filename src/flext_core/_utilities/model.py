@@ -184,13 +184,7 @@ class FlextUtilitiesModel:
                     )
                 return r[TValue].ok(adapter.validate_json(data, strict=strict))
             return r[TValue].ok(adapter.validate_python(data, strict=strict))
-        except (
-            c.ValidationError,
-            TypeError,
-            ValueError,
-            AttributeError,
-            RuntimeError,
-        ) as exc:
+        except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
             return e.fail_validation(error=exc)
 
 
