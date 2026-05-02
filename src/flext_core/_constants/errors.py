@@ -350,6 +350,40 @@ class FlextConstantsErrors:
         SyntaxError,
     )
     """Filesystem + syntax catch for source-parsing boundaries."""
+
+    EXC_ATTR_RUNTIME_VALIDATION: Final[tuple[type[Exception], ...]] = (
+        AttributeError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+        _PydanticValidationError,
+    )
+    """Pydantic validation + runtime + attr catch for full model boundaries."""
+
+    EXC_OS_VALIDATION: Final[tuple[type[Exception], ...]] = (
+        OSError,
+        TypeError,
+        ValueError,
+        _PydanticValidationError,
+    )
+    """IO + validation + typing catch for config-file model boundaries."""
+
+    EXC_ATTR_KEY_OS_TYPE_VALUE: Final[tuple[type[Exception], ...]] = (
+        AttributeError,
+        KeyError,
+        OSError,
+        TypeError,
+        ValueError,
+    )
+    """Object + mapping + filesystem + typing catch for full IO+state flows."""
+
+    EXC_FS_TYPE_VALIDATION: Final[tuple[type[Exception], ...]] = (
+        FileNotFoundError,
+        TypeError,
+        ValueError,
+        _PydanticValidationError,
+    )
+    """Filesystem + typing + Pydantic validation catch for config-load flows."""
     ERR_DOMAIN_EVENT_NAME_REQUIRED: Final[str] = (
         "Domain event name must be a non-empty string"
     )
