@@ -306,9 +306,6 @@ class FlextConstantsEnforcement:
     })
     """ENFORCE-044: builtins that probe attributes by name."""
 
-    ENFORCE_PRIVATE_PROBE_MIN_ARGS: Final[int] = 2
-    """ENFORCE-044: minimum positional args required to inspect ``args[1]`` as the attribute-name literal."""
-
     # --- Legacy: tag metadata for old enforcement API ---
     # Mapping tags to their (problem_template, fix_template, category).
     # New code should use m.EnforcementCatalog instead.
