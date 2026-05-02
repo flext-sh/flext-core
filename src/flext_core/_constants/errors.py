@@ -149,6 +149,51 @@ class FlextConstantsErrors:
         TypeError,
         ValueError,
     )
+
+    EXC_BROAD_IO_TYPE: Final[tuple[type[Exception], ...]] = (
+        AttributeError,
+        ImportError,
+        KeyError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    )
+    """Broad-spectrum boundary catch: filesystem, import, type, runtime errors."""
+
+    EXC_RUNTIME_TYPE: Final[tuple[type[Exception], ...]] = (
+        RuntimeError,
+        TypeError,
+        ValueError,
+    )
+    """Runtime + type-validation catch for basic adapter boundaries."""
+
+    EXC_BASIC_TYPE: Final[tuple[type[Exception], ...]] = (
+        AttributeError,
+        TypeError,
+        ValueError,
+    )
+    """Attribute + type-validation catch for object-shape adapter boundaries."""
+
+    EXC_MAPPING_TYPE: Final[tuple[type[Exception], ...]] = (
+        KeyError,
+        TypeError,
+        ValueError,
+    )
+    """Mapping access + type-validation catch for dict-shape boundaries."""
+
+    EXC_TYPE_VALIDATION: Final[tuple[type[Exception], ...]] = (
+        TypeError,
+        ValueError,
+    )
+    """Minimal type-validation catch for value-coercion boundaries."""
+
+    EXC_NETWORK_TYPE: Final[tuple[type[Exception], ...]] = (
+        ConnectionError,
+        TimeoutError,
+        ValueError,
+    )
+    """Network connectivity + type-validation catch for HTTP/RPC boundaries."""
     ERR_DOMAIN_EVENT_NAME_REQUIRED: Final[str] = (
         "Domain event name must be a non-empty string"
     )
