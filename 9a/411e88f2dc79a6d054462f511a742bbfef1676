@@ -1,0 +1,35 @@
+src/flext_core/container.py
+  473c59be621cc5d5 391,428,447
+src/flext_core/_utilities/guards_type_protocol.py
+  473c59be621cc5d5 117
+src/flext_core/loggings.py
+  473c59be621cc5d5 163
+src/flext_core/_utilities/logging_context.py
+  473c59be621cc5d5 203,246
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "9a411e88f2dc79a6d054462f511a742bbfef1676",
+  "prompts": {
+    "473c59be621cc5d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6001f8b-afdd-4757-8812-9bff0bfd46d9",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 8,
+      "accepted_lines": 7,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/7d5821b8e2eabf84356c63dad08cd0aa4150f0724e2bb93eff1c573909139641"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
