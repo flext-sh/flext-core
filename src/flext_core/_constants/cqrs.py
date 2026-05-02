@@ -61,12 +61,6 @@ class FlextConstantsCqrs:
         ERRORS = "errors"
         THROUGHPUT = "throughput"
 
-    DEFAULT_METRIC_CATEGORIES: Final[tuple[str, ...]] = (
-        ServiceMetricCategory.PERFORMANCE,
-        ServiceMetricCategory.ERRORS,
-        ServiceMetricCategory.THROUGHPUT,
-    )
-    "Default metric categories for service metrics requests."
     DEFAULT_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
 
     @unique
