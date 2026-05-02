@@ -266,34 +266,24 @@ class FlextResult[T](BaseModel, p.Result[T]):
         except c.EXC_BROAD_RUNTIME as exc:
             return FlextResult[V].fail(str(exc), error_code=error_code, exception=exc)
 
-    class FailOptions(BaseModel):
-        """Validated kwargs envelope for `r.fail(...)` optional arguments."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra="forbid",
-            arbitrary_types_allowed=True,
-        )
-
-        error_code: str | None = None
-        error_data: t.JsonMapping | t.ConfigModelInput | None = None
-        exception: BaseException | None = None
-
     @classmethod
     def fail[V](
         cls: type[FlextResult[V]],
         error: str | None,
-        **kwargs: t.JsonMapping | t.ConfigModelInput | BaseException | str | None,
+        *,
+        error_code: str | None = None,
+        error_data: t.JsonMapping | t.ConfigModelInput | None = None,
+        exception: BaseException | None = None,
     ) -> FlextResult[V]:
         """Create failed result with error message, optional code and metadata."""
-        options = cls.FailOptions.model_validate(kwargs)
         error_msg = error if error is not None else ""
-        resolved_error_code = options.error_code or cls._extract_exception_error_code(
-            options.exception,
+        resolved_error_code = error_code or cls._extract_exception_error_code(
+            exception,
         )
         resolved_error_data = (
-            options.error_data
-            if options.error_data is not None
-            else cls._extract_exception_error_data(options.exception)
+            error_data
+            if error_data is not None
+            else cls._extract_exception_error_data(exception)
         )
         result = cls(
             error_code=resolved_error_code,
@@ -302,7 +292,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
             success=False,
         )
         result._result = Failure(error_msg)
-        result._exception = options.exception
+        result._exception = exception
         return result
 
     @classmethod

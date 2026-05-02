@@ -69,9 +69,10 @@ class FlextExceptionsFactories:
     def _resolve_options(
         options: m.ExceptionFactoryOptions | None = None,
     ) -> tuple[m.ExceptionFactoryOptions, Exception | str | None]:
-        options = options or m.ExceptionFactoryOptions()
-        options = m.ExceptionFactoryOptions.model_validate(options.model_dump())
-        return options, options.error
+        resolved_options = (
+            options if options is not None else m.ExceptionFactoryOptions()
+        )
+        return resolved_options, resolved_options.error
 
     @staticmethod
     def _normalize_params(

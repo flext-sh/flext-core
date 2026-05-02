@@ -72,9 +72,12 @@ class FlextUtilitiesHandler:
     @staticmethod
     def push_context(
         state: FlextModelsHandler.HandlerRuntimeState,
-        ctx: t.JsonMapping,
+        ctx: t.JsonMapping | FlextModelsHandler.ExecutionContext,
     ) -> p.Result[bool]:
         """Coerce a flat mapping into an ExecutionContext and push it."""
+        if isinstance(ctx, FlextModelsHandler.ExecutionContext):
+            state.context_stack.append(ctx.model_copy())
+            return r[bool].ok(True)
         handler_name = str(ctx.get("handler_name", c.IDENTIFIER_UNKNOWN))
         handler_mode_str = str(ctx.get(c.FIELD_HANDLER_MODE, c.HandlerType.OPERATION))
         handler_mode = (

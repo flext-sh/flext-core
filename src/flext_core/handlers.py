@@ -420,7 +420,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     def push_context(
         self,
-        ctx: t.JsonMapping,
+        ctx: t.JsonMapping | m.ExecutionContext,
     ) -> p.Result[bool]:
         """Push execution context onto the local handler stack."""
         return FlextUtilitiesHandler.push_context(self._runtime_state, ctx)
@@ -530,7 +530,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             )
             return r[ResultT].fail_op("validate handler message", error_msg)
         self._runtime_state = FlextUtilitiesHandler.start_execution(self._runtime_state)
-        _ = self.push_context(self._runtime_state.execution_context.model_dump())
+        _ = self.push_context(self._runtime_state.execution_context)
         try:
             result = self.handle(message)
             self._record_execution_metrics(success=result.success)
