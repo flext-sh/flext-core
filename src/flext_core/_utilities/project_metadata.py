@@ -16,17 +16,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import ast
 import importlib
 import tomllib
 from collections.abc import Mapping
 from functools import cache
 from importlib.metadata import PackageNotFoundError, metadata, packages_distributions
+from importlib.util import find_spec
 from pathlib import Path
-from types import MappingProxyType
+from types import MappingProxyType, ModuleType
+from typing import override
 
 from flext_core import FlextTypes as t
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core.lazy import normalize_lazy_imports
 
 
 class FlextUtilitiesProjectMetadata(mpm):
@@ -80,22 +84,25 @@ class FlextUtilitiesProjectMetadata(mpm):
     @staticmethod
     def derive_project_constants(root: Path) -> mpm.ProjectConstants:
         """Derive package constants directly from a project's pyproject.toml."""
-        metadata = FlextUtilitiesProjectMetadata.read_project_metadata(root)
-        return mpm.ProjectConstants.from_metadata(metadata)
+        return FlextUtilitiesProjectMetadata.read_project_constants(
+            FlextUtilitiesProjectMetadata.read_project_metadata(root).name,
+            root=root,
+        )
 
     @staticmethod
+    @cache
     def _distribution_name(package_name: str) -> str:
         """Resolve the installed distribution for an import package name."""
         root_name = package_name.split(".", 1)[0]
-        for candidate in packages_distributions().get(root_name, ()):
-            return candidate
         candidate = root_name.replace("_", "-")
         try:
             metadata(candidate)
-        except PackageNotFoundError as exc:
-            msg = f"installed distribution for package {root_name!r} was not found"
-            raise RuntimeError(msg) from exc
-        return candidate
+            return candidate
+        except PackageNotFoundError:
+            for distribution_name in packages_distributions().get(root_name, ()):
+                return distribution_name
+        msg = f"installed distribution for package {root_name!r} was not found"
+        raise RuntimeError(msg)
 
     @staticmethod
     def _package_name(distribution_name: str) -> str:
@@ -103,6 +110,124 @@ class FlextUtilitiesProjectMetadata(mpm):
         return distribution_name.replace("-", "_")
 
     @staticmethod
+    def _module_class_names(module_path: str) -> tuple[str, ...]:
+        """Read class names from a module source without importing it."""
+        spec = find_spec(module_path)
+        if spec is None or spec.origin is None:
+            msg = f"module spec for {module_path!r} was not found"
+            raise RuntimeError(msg)
+        source_path = Path(spec.origin)
+        if not source_path.is_file():
+            msg = f"module source for {module_path!r} was not found"
+            raise RuntimeError(msg)
+        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+        return tuple(
+            node.name for node in tree.body if isinstance(node, ast.ClassDef)
+        )
+
+    @staticmethod
+    def _class_stem_from_lazy(
+        package_name: str,
+        package: ModuleType,
+    ) -> str:
+        """Derive class stem from generated package lazy exports."""
+        lazy_map = FlextUtilitiesProjectMetadata._normalized_lazy_imports(
+            package_name,
+            package,
+        )
+        constants_module = f"{package_name}.constants"
+        for export_name, entry in lazy_map.items():
+            module_path = entry if isinstance(entry, str) else entry[0]
+            if module_path == constants_module and export_name.endswith("Constants"):
+                return export_name.removesuffix("Constants")
+        for class_name in FlextUtilitiesProjectMetadata._module_class_names(
+            constants_module
+        ):
+            if class_name.endswith("Constants"):
+                return class_name.removesuffix("Constants")
+        msg = f"constants class stem for package {package_name!r} was not found"
+        raise RuntimeError(msg)
+
+    @staticmethod
+    @override
+    def derive_class_stem(project_name: str) -> str:
+        """Derive the installed package class stem from generated lazy exports."""
+        if not project_name:
+            msg = "empty project name"
+            raise ValueError(msg)
+        distribution_name = FlextUtilitiesProjectMetadata._distribution_name(
+            FlextUtilitiesProjectMetadata._package_name(project_name)
+        )
+        import_name = FlextUtilitiesProjectMetadata._package_name(distribution_name)
+        package = importlib.import_module(import_name)
+        return FlextUtilitiesProjectMetadata._class_stem_from_lazy(
+            import_name,
+            package,
+        )
+
+    @staticmethod
+    def _normalized_lazy_imports(
+        package_name: str,
+        package: ModuleType,
+    ) -> dict[str, str | tuple[str, str]]:
+        """Read generated lazy imports through the shared lazy normalizer."""
+        raw = vars(package).get("_LAZY_IMPORTS")
+        normalized = normalize_lazy_imports(package_name, raw)
+        if not normalized:
+            msg = f"package {package_name!r} has no generated lazy imports"
+            raise RuntimeError(msg)
+        return normalized
+
+    @staticmethod
+    def read_lazy_alias_metadata(package_name: str) -> tuple[mpm.LazyAliasMetadata, ...]:
+        """Return alias metadata derived from installed generated lazy exports."""
+        distribution_name = FlextUtilitiesProjectMetadata._distribution_name(
+            FlextUtilitiesProjectMetadata._package_name(package_name)
+        )
+        import_name = FlextUtilitiesProjectMetadata._package_name(distribution_name)
+        package = importlib.import_module(import_name)
+        lazy_map = FlextUtilitiesProjectMetadata._normalized_lazy_imports(
+            import_name,
+            package,
+        )
+        class_stem = FlextUtilitiesProjectMetadata._class_stem_from_lazy(
+            import_name,
+            package,
+        )
+        result: list[mpm.LazyAliasMetadata] = []
+        for export_name, entry in lazy_map.items():
+            if len(export_name) != 1 or not export_name.islower():
+                continue
+            module_path = entry if isinstance(entry, str) else entry[0]
+            parent_source = module_path.split(".", 1)[0]
+            target_name = export_name if isinstance(entry, str) else entry[1]
+            suffix = target_name.removeprefix(class_stem)
+            result.append(
+                mpm.LazyAliasMetadata(
+                    alias=export_name,
+                    module_path=module_path,
+                    parent_source=parent_source,
+                    suffix=suffix,
+                    facade=parent_source == import_name,
+                )
+            )
+        if not result:
+            msg = f"package {import_name!r} exposes no runtime aliases"
+            raise RuntimeError(msg)
+        return tuple(sorted(result, key=lambda item: item.alias))
+
+    @staticmethod
+    def _scan_directories(package_root: Path) -> tuple[str, ...]:
+        """Derive workspace scan directories from existing project folders."""
+        candidates = ("docs", "examples", "scripts", "src", "tests")
+        scan_dirs = tuple(name for name in candidates if (package_root / name).is_dir())
+        if not scan_dirs:
+            msg = f"no scan directories found under {package_root}"
+            raise RuntimeError(msg)
+        return scan_dirs
+
+    @staticmethod
+    @cache
     def read_project_constants(
         package_name: str,
         root: Path | None = None,
@@ -119,6 +244,43 @@ class FlextUtilitiesProjectMetadata(mpm):
             msg = f"package {import_name!r} has no __file__"
             raise RuntimeError(msg)
         package_root = root or Path(package_file).resolve().parents[2]
+        alias_metadata = FlextUtilitiesProjectMetadata.read_lazy_alias_metadata(
+            distribution_name
+        )
+        alias_to_suffix = {
+            item.alias: item.suffix for item in alias_metadata if item.suffix
+        }
+        facade_aliases = frozenset(
+            item.alias for item in alias_metadata if item.facade
+        )
+        facade_modules = frozenset(
+            Path(item.module_path.replace(".", "/")).name
+            for item in alias_metadata
+            if item.facade
+        )
+        parent_sources = {
+            item.alias: item.parent_source
+            for item in alias_metadata
+            if item.parent_source != import_name
+        }
+        scan_dirs = FlextUtilitiesProjectMetadata._scan_directories(package_root)
+        tier_facade_prefix = {
+            directory: (
+                FlextUtilitiesProjectMetadata.derive_class_stem(distribution_name)
+                if directory == "src"
+                else f"{FlextUtilitiesProjectMetadata.pascalize(directory)}"
+                f"{FlextUtilitiesProjectMetadata.derive_class_stem(distribution_name)}"
+            )
+            for directory in scan_dirs
+        }
+        tier_sub_namespace = {
+            directory: (
+                ""
+                if directory == "src"
+                else FlextUtilitiesProjectMetadata.pascalize(directory)
+            )
+            for directory in scan_dirs
+        }
         return mpm.ProjectConstants(
             PACKAGE_NAME=package_version.__title__,
             PACKAGE_VERSION=package_version.__version__,
@@ -133,7 +295,18 @@ class FlextUtilitiesProjectMetadata(mpm):
             PYTHON_PACKAGE_NAME=FlextUtilitiesProjectMetadata._package_name(
                 distribution_name
             ),
-            CLASS_STEM=mpm.derive_class_stem(distribution_name),
+            CLASS_STEM=FlextUtilitiesProjectMetadata.derive_class_stem(
+                distribution_name
+            ),
+            ALIAS_TO_SUFFIX=MappingProxyType(alias_to_suffix),
+            RUNTIME_ALIAS_NAMES=frozenset(item.alias for item in alias_metadata),
+            FACADE_ALIAS_NAMES=facade_aliases,
+            FACADE_MODULE_NAMES=facade_modules,
+            UNIVERSAL_ALIAS_PARENT_SOURCES=MappingProxyType(parent_sources),
+            TIER_FACADE_PREFIX=MappingProxyType(tier_facade_prefix),
+            SCAN_DIRECTORIES=scan_dirs,
+            TIER_SUB_NAMESPACE=MappingProxyType(tier_sub_namespace),
+            PYPROJECT_FILENAME=cpm.PYPROJECT_FILENAME,
         )
 
     @staticmethod
@@ -162,8 +335,5 @@ class FlextUtilitiesProjectMetadata(mpm):
             enabled=cfg.namespace.enabled,
             scan_dirs=cfg.namespace.scan_dirs,
             include_dynamic_dirs=cfg.namespace.include_dynamic_dirs,
-            alias_parent_sources={
-                **dict(cpm.UNIVERSAL_ALIAS_PARENT_SOURCES),
-                **dict(cfg.namespace.alias_parent_sources),
-            },
+            alias_parent_sources=cfg.namespace.alias_parent_sources,
         )

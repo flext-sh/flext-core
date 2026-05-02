@@ -289,7 +289,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
                     error_code=error_code,
                 )
             return FlextResult[V].ok(value)
-        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
+        except c.EXC_BROAD_RUNTIME as exc:
             return FlextResult[V].fail(str(exc), error_code=error_code, exception=exc)
 
     class FailOptions(BaseModel):
@@ -522,13 +522,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
             try:
                 mapped_value = func(self.value)
                 return FlextResult[U](value=mapped_value, success=True)
-            except (
-                ValueError,
-                TypeError,
-                KeyError,
-                AttributeError,
-                RuntimeError,
-            ) as exc:
+            except c.EXC_BROAD_RUNTIME as exc:
                 result = FlextResult[U](error=str(exc), success=False)
                 result._exception = exc
                 return result

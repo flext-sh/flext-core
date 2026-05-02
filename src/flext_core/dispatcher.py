@@ -62,7 +62,7 @@ class FlextDispatcher:
         """
         try:
             route_name = u.resolve_message_route(message)
-        except (TypeError, ValueError) as exc:
+        except c.EXC_TYPE_VALIDATION as exc:
             return r[t.JsonPayload].fail_op("dispatch message", exc)
         handler_entry = self._handlers.get(route_name)
         if not handler_entry:
@@ -166,7 +166,7 @@ class FlextDispatcher:
                 case type() as route_type:
                     try:
                         route_name = u.resolve_message_route(route_type)
-                    except (TypeError, ValueError):
+                    except c.EXC_TYPE_VALIDATION:
                         continue
                 case _:
                     continue

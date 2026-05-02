@@ -211,7 +211,7 @@ class FlextUtilitiesChecker:
         """Extract signature from handle method, wrapping errors in Result."""
         try:
             return r[inspect.Signature].ok(inspect.signature(handle_method))
-        except (TypeError, ValueError):
+        except c.EXC_TYPE_VALIDATION:
             return r[inspect.Signature].fail(
                 c.ERR_CHECKER_INVALID_HANDLE_METHOD_SIGNATURE,
             )

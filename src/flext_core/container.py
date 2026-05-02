@@ -227,7 +227,7 @@ class FlextContainer(p.ContainerLifecycle):
         """Invoke a factory/resource callable and narrow to ``type_cls`` if given."""
         try:
             resolved = callable_obj()
-        except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as exc:
+        except c.EXC_BROAD_RUNTIME as exc:
             return r[t.RegisterableService].from_result(
                 e.fail_operation(f"resolve {kind}", exc)
             )

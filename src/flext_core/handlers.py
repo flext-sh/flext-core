@@ -200,13 +200,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                     if isinstance(result, r):
                         return result
                     return r[t.Scalar].ok(result)
-                except (
-                    ValueError,
-                    TypeError,
-                    KeyError,
-                    AttributeError,
-                    RuntimeError,
-                ) as exc:
+                except c.EXC_BROAD_RUNTIME as exc:
                     self.logger.debug("Callable handler execution failed", exc_info=exc)
                     return r[t.Scalar].fail_op("execute callable handler", exc)
 
@@ -541,7 +535,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             result = self.handle(message)
             self._record_execution_metrics(success=result.success)
             return result
-        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
+        except c.EXC_BROAD_RUNTIME as exc:
             self.logger.warning(c.LOG_HANDLER_PIPELINE_FAILURE, exc_info=exc)
             self._record_execution_metrics(success=False, error=str(exc))
             return r[ResultT].fail_op(

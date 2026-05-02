@@ -187,7 +187,7 @@ class FlextRuntime:
         else:
             try:
                 raw = dict(value.model_dump())
-            except (TypeError, ValueError) as exc:
+            except c.EXC_TYPE_VALIDATION as exc:
                 msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
                 raise TypeError(msg) from exc
         return {

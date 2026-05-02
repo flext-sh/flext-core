@@ -494,7 +494,7 @@ class FlextRegistry(s[bool]):
                         "validate plugin registration",
                         validation_result.error or c.ERR_VALIDATION_FAILED,
                     )
-            except (TypeError, ValueError, RuntimeError) as exc:
+            except c.EXC_RUNTIME_TYPE as exc:
                 result = e.fail_operation("validate plugin registration", exc)
         if result.success:
             key = f"{category}::{name}"

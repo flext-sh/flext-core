@@ -141,13 +141,7 @@ class FlextMixins(m.ArbitraryTypesModel):
                             metrics_map.get("duration_ms", 0.0),
                         )
                         stats["total_duration_ms"] = total_dur + dur_ms
-                except (
-                    ValueError,
-                    TypeError,
-                    KeyError,
-                    AttributeError,
-                    RuntimeError,
-                ) as exc:
+                except c.EXC_BROAD_RUNTIME as exc:
                     self.logger.debug(
                         c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION,
                         exc_info=exc,

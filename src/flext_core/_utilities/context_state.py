@@ -153,7 +153,7 @@ class FlextUtilitiesContextState:
             cf_map = m.ConfigMap(root=dict(custom_fields_raw))
             for ck, cv in cf_map.items():
                 custom_fields_dict[ck] = FlextRuntime.normalize_to_container(cv)
-        except (TypeError, ValueError, AttributeError) as exc:
+        except c.EXC_BASIC_TYPE as exc:
             self.logger.debug(
                 "Custom metadata field normalization failed",
                 exc_info=exc,

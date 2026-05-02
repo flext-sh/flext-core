@@ -102,7 +102,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
         filtered = {k: v for k, v in current.items() if k != key}
         try:
             _ = ctx_var.set(m.ConfigMap(root=dict(filtered)))
-        except (TypeError, ValueError, AttributeError) as exc:
+        except c.EXC_BASIC_TYPE as exc:
             self.logger.debug(
                 c.LOG_CONTEXT_REMOVAL_FAILED,
                 exc_info=exc,

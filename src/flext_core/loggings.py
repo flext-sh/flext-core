@@ -252,7 +252,7 @@ class FlextLogger(ulc):
                 **FlextLogger._to_scalar_context(context_dict),
             )
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+        except c.EXC_BROAD_RUNTIME as exc:
             FlextLogger._report_internal_logging_failure("exception", exc)
             return e.fail_operation("exception logging", exc)
 
@@ -316,14 +316,14 @@ class FlextLogger(ulc):
         try:
             try:
                 formatted_message = message % args if args else message
-            except (TypeError, ValueError):
+            except c.EXC_TYPE_VALIDATION:
                 formatted_message = f"{message} | args={args!r}"
             self.logger.debug(
                 formatted_message,
                 **FlextLogger._to_scalar_context(kwargs),
             )
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+        except c.EXC_BROAD_RUNTIME as exc:
             FlextLogger._report_internal_logging_failure("trace", exc)
             return e.fail_operation("trace logging", exc)
 
@@ -370,7 +370,7 @@ class FlextLogger(ulc):
             scalar_context = FlextLogger._to_scalar_context(context)
             getattr(self.logger, level_str)(event, **scalar_context)
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+        except c.EXC_BROAD_RUNTIME as exc:
             return e.fail_operation("logging", exc)
 
     def _log_standard_level(
