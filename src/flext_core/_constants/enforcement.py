@@ -582,11 +582,6 @@ class FlextConstantsEnforcement:
     })
     """The five canonical facade files per project (AGENTS.md §2.2)."""
 
-    ENFORCEMENT_PATTERN_B_UTILITIES_WHITELIST: Final[frozenset[str]] = frozenset({
-        "flext_quality",
-    })
-    """Projects where utilities.py legitimately uses explicit-class base (R10)."""
-
     # --- Cross-layer enforcement catalog (SSOT for the pytest dispatcher) ---
     #
     # Every rule is addressed by a stable ``ENFORCE-NNN`` identifier and

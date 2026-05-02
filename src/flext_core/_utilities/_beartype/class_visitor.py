@@ -229,7 +229,6 @@ class FlextUtilitiesBeartypeClassVisitor:
 
         module = maybe_module
         src_file = str(getattr(module, "__file__", "") or "")
-        package = module.__name__.split(".")[0]
         normalized_values = (
             value.__func__ if isinstance(value, (classmethod, staticmethod)) else value
             for value in vars(target).values()
@@ -239,7 +238,7 @@ class FlextUtilitiesBeartypeClassVisitor:
             if all((
                 violation is None,
                 src_file.endswith("utilities.py"),
-                package not in c.ENFORCEMENT_PATTERN_B_UTILITIES_WHITELIST,
+                not getattr(target, "__flext_pattern_b__", False),
                 base_count >= min_multi_parent,
                 first_name == "u",
             ))
