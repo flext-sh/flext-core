@@ -2,7 +2,7 @@
 
 Programmatic ``u.check(cls)`` calls (covered by ``test_enforcement.py``)
 prove the engine logic. These tests go one layer up: they import two real
-modules (``_enforcement_integration_fixtures/clean_module.py`` and
+modules (``tests.fixtures.clean_module`` and
 ``bad_module.py``) and assert the production path — Pydantic's
 ``__pydantic_init_subclass__`` + ``FlextModelsNamespace.__init_subclass__``
 hooks — actually fires the right warnings, and stays silent on clean code.
@@ -57,13 +57,13 @@ def _violation_lines(messages: t.SequenceOf[warnings.WarningMessage]) -> Iterato
 class TestsFlextEnforcementIntegration:
     def test_clean_fixture_is_silent(self) -> None:
         _import_fresh_silent(
-            "tests.unit._enforcement_integration_fixtures.clean_module",
+            "tests.fixtures.clean_module",
         )
 
     @pytest.fixture(scope="class")
     def violations(self) -> t.StrSequence:
         _module, messages = _import_fresh_with_warnings(
-            "tests.unit._enforcement_integration_fixtures.bad_module",
+            "tests.fixtures.bad_module",
         )
         return list(_violation_lines(messages))
 
@@ -100,7 +100,7 @@ class TestsFlextEnforcementIntegration:
     def test_rule_firings_cover_every_bad_class(self) -> None:
         """Every top-level bad class must produce at least one warning."""
         _module, messages = _import_fresh_with_warnings(
-            "tests.unit._enforcement_integration_fixtures.bad_module",
+            "tests.fixtures.bad_module",
         )
         expected_classes = {
             "TestsFlextBadAnyField",

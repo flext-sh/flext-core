@@ -379,7 +379,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         """
         module = getattr(target, "__module__", "") or ""
         qualname = getattr(target, "__qualname__", "") or ""
-        if "_enforcement_integration_fixtures" in module:
+        if "_enforcement_integration_fixtures" in module or "tests.fixtures" in module:
             return False
         if not module.startswith(("tests.", "tests_")):
             return False

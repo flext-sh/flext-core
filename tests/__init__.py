@@ -29,6 +29,23 @@ if _t.TYPE_CHECKING:
     )
     from tests.benchmark.test_lazy_performance import TestsFlextLazyPerformance
     from tests.constants import TestsFlextConstants, c
+    from tests.fixtures.bad_module import (
+        TestsFlextBadAccessors,
+        TestsFlextBadAnyField,
+        TestsFlextBadBareCollection,
+        TestsFlextBadConstants,
+        TestsFlextBadFrozen,
+        TestsFlextBadInlineUnion,
+        TestsFlextBadMissingDesc,
+        TestsFlextBadMutableDefault,
+        TestsFlextBadWorkerSettings,
+    )
+    from tests.fixtures.clean_module import (
+        TestsFlextCleanConstants,
+        TestsFlextCleanModels,
+        TestsFlextCleanProtocols,
+        TestsFlextCleanServiceBase,
+    )
     from tests.integration.patterns.test_advanced_patterns import (
         TestsFlextAdvancedPatterns,
     )
@@ -62,23 +79,6 @@ if _t.TYPE_CHECKING:
     from tests.models import TestsFlextModels, m
     from tests.protocols import TestsFlextProtocols, p
     from tests.typings import TestsFlextTypes, t
-    from tests.unit._enforcement_integration_fixtures.bad_module import (
-        TestsFlextBadAccessors,
-        TestsFlextBadAnyField,
-        TestsFlextBadBareCollection,
-        TestsFlextBadConstants,
-        TestsFlextBadFrozen,
-        TestsFlextBadInlineUnion,
-        TestsFlextBadMissingDesc,
-        TestsFlextBadMutableDefault,
-        TestsFlextBadWorkerSettings,
-    )
-    from tests.unit._enforcement_integration_fixtures.clean_module import (
-        TestsFlextCleanConstants,
-        TestsFlextCleanModels,
-        TestsFlextCleanProtocols,
-        TestsFlextCleanServiceBase,
-    )
     from tests.unit._models.test_base import TestsFlextModelsBase
     from tests.unit._models.test_cqrs import TestsFlextModelsCQRS
     from tests.unit._models.test_enforcement_sources import (
@@ -200,6 +200,23 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextConstants",
                 "c",
             ),
+            ".fixtures.bad_module": (
+                "TestsFlextBadAccessors",
+                "TestsFlextBadAnyField",
+                "TestsFlextBadBareCollection",
+                "TestsFlextBadConstants",
+                "TestsFlextBadFrozen",
+                "TestsFlextBadInlineUnion",
+                "TestsFlextBadMissingDesc",
+                "TestsFlextBadMutableDefault",
+                "TestsFlextBadWorkerSettings",
+            ),
+            ".fixtures.clean_module": (
+                "TestsFlextCleanConstants",
+                "TestsFlextCleanModels",
+                "TestsFlextCleanProtocols",
+                "TestsFlextCleanServiceBase",
+            ),
             ".integration.patterns.test_advanced_patterns": (
                 "TestsFlextAdvancedPatterns",
             ),
@@ -241,23 +258,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".typings": (
                 "TestsFlextTypes",
                 "t",
-            ),
-            ".unit._enforcement_integration_fixtures.bad_module": (
-                "TestsFlextBadAccessors",
-                "TestsFlextBadAnyField",
-                "TestsFlextBadBareCollection",
-                "TestsFlextBadConstants",
-                "TestsFlextBadFrozen",
-                "TestsFlextBadInlineUnion",
-                "TestsFlextBadMissingDesc",
-                "TestsFlextBadMutableDefault",
-                "TestsFlextBadWorkerSettings",
-            ),
-            ".unit._enforcement_integration_fixtures.clean_module": (
-                "TestsFlextCleanConstants",
-                "TestsFlextCleanModels",
-                "TestsFlextCleanProtocols",
-                "TestsFlextCleanServiceBase",
             ),
             ".unit._models.test_base": ("TestsFlextModelsBase",),
             ".unit._models.test_cqrs": ("TestsFlextModelsCQRS",),

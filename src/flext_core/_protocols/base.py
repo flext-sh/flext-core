@@ -37,6 +37,19 @@ class FlextProtocolsBase:
         """
 
     @runtime_checkable
+    class FieldInfoLike(Base, Protocol):
+        """Structural contract for Pydantic v2 field metadata.
+
+        Captures the attributes consumed across the monorepo without
+        importing ``pydantic.fields.FieldInfo`` directly in protocol
+        definitions, avoiding circular dependencies.
+        """
+
+        default: t.JsonValue | FlextProtocolsBase.AttributeProbe
+        description: str | None = None
+        title: str | None = None
+
+    @runtime_checkable
     class Model(Base, Protocol):
         """Structural typing protocol for Pydantic v2 models.
 
@@ -44,7 +57,7 @@ class FlextProtocolsBase:
         in typings.py, preventing circular dependencies.
         """
 
-        model_fields: t.MappingKV[str, object]
+        model_fields: t.MappingKV[str, FlextProtocolsBase.FieldInfoLike]
 
         def model_dump(
             self,
@@ -68,7 +81,7 @@ class FlextProtocolsBase:
                 | None
             ) = None,
             serialize_as_any: bool = False,
-        ) -> t.MappingKV[str, object]:
+        ) -> t.MappingKV[str, t.JsonValue]:
             """Dump model to dictionary."""
             ...
 
@@ -90,7 +103,7 @@ class FlextProtocolsBase:
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, object] | None = None,
+            update: t.MappingKV[str, t.JsonValue] | None = None,
             deep: bool = False,
         ) -> Self:
             """Copy a validated model, optionally updating fields."""

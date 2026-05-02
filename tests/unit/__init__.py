@@ -11,29 +11,11 @@ from flext_core.lazy import (
 
 _LAZY_IMPORTS = merge_lazy_imports(
     (
-        "._enforcement_integration_fixtures",
         "._models",
         "._utilities",
     ),
     build_lazy_import_map(
         {
-            "._enforcement_integration_fixtures.bad_module": (
-                "TestsFlextBadAccessors",
-                "TestsFlextBadAnyField",
-                "TestsFlextBadBareCollection",
-                "TestsFlextBadConstants",
-                "TestsFlextBadFrozen",
-                "TestsFlextBadInlineUnion",
-                "TestsFlextBadMissingDesc",
-                "TestsFlextBadMutableDefault",
-                "TestsFlextBadWorkerSettings",
-            ),
-            "._enforcement_integration_fixtures.clean_module": (
-                "TestsFlextCleanConstants",
-                "TestsFlextCleanModels",
-                "TestsFlextCleanProtocols",
-                "TestsFlextCleanServiceBase",
-            ),
             "._models.test_base": ("TestsFlextModelsBase",),
             "._models.test_cqrs": ("TestsFlextModelsCQRS",),
             "._models.test_enforcement_sources": (
