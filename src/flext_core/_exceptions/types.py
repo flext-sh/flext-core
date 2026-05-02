@@ -178,7 +178,12 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             """Resolve type name string or type object to actual type."""
             if isinstance(v, type):
                 return v
-            return FlextExceptionsTypes.TypeError._TYPE_MAP.get(v) if isinstance(v, str) else None
+            return (
+                FlextExceptionsTypes.TypeError._TYPE_MAP.get(v)
+                if isinstance(v, str)
+                else None
+            )
+
     class OperationError(FlextExceptionsBase.BaseError):
         """Exception raised for general operation failures."""
 

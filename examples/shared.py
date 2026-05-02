@@ -141,21 +141,20 @@ class ExamplesFlextShared(m.BaseModel):
             return "None"
         if isinstance(v, r):
             return "Result"
-        if isinstance(v, bool):
-            return str(v)
-        if isinstance(v, int | float):
-            return str(v)
-        if isinstance(v, str):
-            return repr(v)
-        if isinstance(v, list):
-            return "list"
-        if isinstance(v, dict):
-            return "dict"
-        if isinstance(v, datetime):
-            return v.isoformat()
-        if isinstance(v, Path):
-            return str(v)
-        return type(v).__name__
+        result: str
+        if isinstance(v, bool | int | float):
+            result = str(v)
+        elif isinstance(v, str):
+            result = repr(v)
+        elif isinstance(v, datetime):
+            result = v.isoformat()
+        elif isinstance(v, Path):
+            result = str(v)
+        elif isinstance(v, list | dict):
+            result = type(v).__name__.lower()
+        else:
+            result = type(v).__name__
+        return result
 
     def verify(self) -> None:
         """Compare accumulated results against the ``.expected`` golden file.

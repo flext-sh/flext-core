@@ -16,6 +16,37 @@ from flext_tests import tm
 
 from tests import c, m, t
 
+_ALL_PARAMS_MODELS = [
+    m.ValidationErrorParams,
+    m.ConfigurationErrorParams,
+    m.ConnectionErrorParams,
+    m.TimeoutErrorParams,
+    m.AuthenticationErrorParams,
+    m.AuthorizationErrorParams,
+    m.NotFoundErrorParams,
+    m.ConflictErrorParams,
+    m.RateLimitErrorParams,
+    m.CircuitBreakerErrorParams,
+    m.TypeErrorParams,
+    m.OperationErrorParams,
+    m.AttributeAccessErrorParams,
+]
+_ALL_PARAMS_IDS = [
+    "validation",
+    "configuration",
+    "connection",
+    "timeout",
+    "authentication",
+    "authorization",
+    "not-found",
+    "conflict",
+    "rate-limit",
+    "circuit-breaker",
+    "type-error",
+    "operation",
+    "attribute-access",
+]
+
 
 class TestsFlextModelsExceptionParams:
     """Tests for flext_core via the m facade."""
@@ -369,39 +400,7 @@ class TestsFlextModelsExceptionParams:
 
     # ── Cross-cutting: extra fields forbidden ─────────────────
 
-    @pytest.mark.parametrize(
-        "model_cls",
-        [
-            m.ValidationErrorParams,
-            m.ConfigurationErrorParams,
-            m.ConnectionErrorParams,
-            m.TimeoutErrorParams,
-            m.AuthenticationErrorParams,
-            m.AuthorizationErrorParams,
-            m.NotFoundErrorParams,
-            m.ConflictErrorParams,
-            m.RateLimitErrorParams,
-            m.CircuitBreakerErrorParams,
-            m.TypeErrorParams,
-            m.OperationErrorParams,
-            m.AttributeAccessErrorParams,
-        ],
-        ids=[
-            "validation",
-            "configuration",
-            "connection",
-            "timeout",
-            "authentication",
-            "authorization",
-            "not-found",
-            "conflict",
-            "rate-limit",
-            "circuit-breaker",
-            "type-error",
-            "operation",
-            "attribute-access",
-        ],
-    )
+    @pytest.mark.parametrize("model_cls", _ALL_PARAMS_MODELS, ids=_ALL_PARAMS_IDS)
     def test_all_params_reject_extra_fields(
         self,
         model_cls: type[m.ParamsModel],
@@ -411,39 +410,7 @@ class TestsFlextModelsExceptionParams:
 
     # ── Cross-cutting: all defaults to None ───────────────────
 
-    @pytest.mark.parametrize(
-        "model_cls",
-        [
-            m.ValidationErrorParams,
-            m.ConfigurationErrorParams,
-            m.ConnectionErrorParams,
-            m.TimeoutErrorParams,
-            m.AuthenticationErrorParams,
-            m.AuthorizationErrorParams,
-            m.NotFoundErrorParams,
-            m.ConflictErrorParams,
-            m.RateLimitErrorParams,
-            m.CircuitBreakerErrorParams,
-            m.TypeErrorParams,
-            m.OperationErrorParams,
-            m.AttributeAccessErrorParams,
-        ],
-        ids=[
-            "validation",
-            "configuration",
-            "connection",
-            "timeout",
-            "authentication",
-            "authorization",
-            "not-found",
-            "conflict",
-            "rate-limit",
-            "circuit-breaker",
-            "type-error",
-            "operation",
-            "attribute-access",
-        ],
-    )
+    @pytest.mark.parametrize("model_cls", _ALL_PARAMS_MODELS, ids=_ALL_PARAMS_IDS)
     def test_all_params_instantiate_with_no_args(self, model_cls: type) -> None:
         instance = model_cls()
         data = instance.model_dump()

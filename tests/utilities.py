@@ -1145,17 +1145,18 @@ class TestsFlextUtilities(u):
         class ReliabilityScenarios:
             """Centralized reliability scenarios - single source of truth."""
 
+            _RETRY_BASE_SETTINGS: ClassVar[m.ConfigMap] = m.ConfigMap(
+                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10}
+            )
+            _RETRY_EXHAUSTED_SETTINGS: ClassVar[m.ConfigMap] = m.ConfigMap(
+                root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10}
+            )
+
             RETRY_SCENARIOS: ClassVar[Sequence[m.Tests.ReliabilityScenario]] = [
                 m.Tests.ReliabilityScenario(
                     name="retry_immediate_success",
                     strategy="retry",
-                    settings=m.ConfigMap(
-                        root={
-                            "max_retries": 3,
-                            "backoff_type": "constant",
-                            "backoff_ms": 10,
-                        }
-                    ),
+                    settings=_RETRY_BASE_SETTINGS,
                     simulate_failures=0,
                     expected_state="success",
                     should_succeed=True,
@@ -1164,13 +1165,7 @@ class TestsFlextUtilities(u):
                 m.Tests.ReliabilityScenario(
                     name="retry_after_one_failure",
                     strategy="retry",
-                    settings=m.ConfigMap(
-                        root={
-                            "max_retries": 3,
-                            "backoff_type": "constant",
-                            "backoff_ms": 10,
-                        }
-                    ),
+                    settings=_RETRY_BASE_SETTINGS,
                     simulate_failures=1,
                     expected_state="success",
                     should_succeed=True,
@@ -1179,13 +1174,7 @@ class TestsFlextUtilities(u):
                 m.Tests.ReliabilityScenario(
                     name="retry_exhausted",
                     strategy="retry",
-                    settings=m.ConfigMap(
-                        root={
-                            "max_retries": 2,
-                            "backoff_type": "constant",
-                            "backoff_ms": 10,
-                        }
-                    ),
+                    settings=_RETRY_EXHAUSTED_SETTINGS,
                     simulate_failures=5,
                     expected_state="exhausted",
                     should_succeed=False,

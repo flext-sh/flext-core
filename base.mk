@@ -620,7 +620,7 @@ test: ## Run pytest only
 		--junit "$$junit_file" --log "$$log_file" \
 		--failed "$$failed_file" --errors "$$errors_file" \
 		--warnings "$$warnings_file" --slowest "$$slowest_file" \
-		--skips "$$skips_file" > "$$counts_file"; \
+		--skips "$$skips_file" 2>&1 | grep -v '^\[TYPER-DEBUG\]' > "$$counts_file"; \
 	. "$$counts_file"; \
 	if [ "$$rc" -eq 130 ] || [ "$$interrupted" = "1" ]; then run_state="INTERRUPTED"; else run_state="COMPLETED"; fi; \
 	echo "================================================" >&2; \

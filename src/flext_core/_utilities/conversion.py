@@ -85,7 +85,11 @@ class FlextUtilitiesConversion:
         if value is None or isinstance(value, bool):
             return default
         if isinstance(value, (int, float)):
-            return int(value) if isinstance(value, int) or math.isfinite(value) else default
+            return (
+                int(value)
+                if isinstance(value, int) or math.isfinite(value)
+                else default
+            )
         if isinstance(value, str):
             with suppress(ValueError, OverflowError):
                 parsed = float(value)
