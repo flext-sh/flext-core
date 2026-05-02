@@ -1,0 +1,12 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "01b21e9145d4d7ae2fcc88a5a1247a73b0c06c07",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
