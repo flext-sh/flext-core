@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 class FlextProtocolsContainer:
     """Protocols for DI container behavior."""
 
+    @runtime_checkable
     class RootDict[RootValueT](Protocol):
         """Protocol for dict-like root model objects.
 
@@ -220,6 +221,7 @@ class FlextProtocolsContainer:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...
 
+    @runtime_checkable
     class ContainerLifecycle(Container, Protocol):
         """Extended container contract for bootstrap and lifecycle operations."""
 
