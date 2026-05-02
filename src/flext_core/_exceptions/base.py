@@ -130,17 +130,80 @@ class FlextExceptionsBase:
                     key: FlextRuntime.normalize_to_metadata(value)
                     for key, value in extra_kwargs.items()
                 })
-                self._init_declared_error(
+                declared_param_keys = frozenset(declared_params_cls.model_fields)
+                remaining_extra: MutableMapping[str, t.JsonValue] = {}
+                if combined_extra:
+                    remaining_extra.update({
+                        key: FlextRuntime.normalize_to_metadata(value)
+                        for key, value in combined_extra.items()
+                        if value is not None
+                    })
+                resolved_named: MutableMapping[str, t.JsonPayload | None] = {}
+                for key in declared_param_keys:
+                    resolved_named.setdefault(key, remaining_extra.pop(key, None))
+                preserved_metadata_raw = remaining_extra.pop(c.FIELD_METADATA, None)
+                preserved_metadata = (
+                    FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
+                    if preserved_metadata_raw is not None
+                    else None
+                )
+                correlation_id_raw = remaining_extra.pop(
+                    c.ContextKey.CORRELATION_ID,
+                    None,
+                )
+                correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
+                    correlation_id_raw,
+                )
+                param_values = FlextExceptionsHelpers.build_param_map(
+                    context,
+                    remaining_extra,
+                    keys=declared_param_keys,
+                )
+                for key, value in resolved_named.items():
+                    if value is None:
+                        continue
+                    normalized_value = FlextRuntime.normalize_to_metadata(value)
+                    param_values[key] = (
+                        normalized_value
+                        if isinstance(normalized_value, t.SCALAR_TYPES)
+                        else str(normalized_value)
+                    )
+                resolved = (
+                    params
+                    if params is not None
+                    else declared_params_cls.model_validate(dict(param_values))
+                )
+                ctx = FlextExceptionsHelpers.build_context_map(
+                    context,
+                    remaining_extra,
+                    excluded_keys=type(self)._excluded_context_keys,
+                )
+                resolved_fields = declared_params_cls.__pydantic_fields__
+                for key in declared_param_keys:
+                    attr_val = getattr(resolved, key, None)
+                    if attr_val is not None:
+                        ctx[key] = FlextRuntime.normalize_to_metadata(attr_val)
+                    field_info = resolved_fields.get(key)
+                    if field_info is None:
+                        continue
+                    field_help = field_info.description or field_info.title
+                    if isinstance(field_help, str) and field_help:
+                        ctx[f"{key}_description"] = field_help
+                self._initialize_base_state(
                     message,
                     error_code=resolved_error_code,
-                    context=context,
-                    params=params,
-                    correlation_id=correlation_id,
-                    metadata=metadata,
+                    context=ctx or None,
+                    metadata=metadata if metadata is not None else preserved_metadata,
+                    correlation_id=(
+                        correlation_id if correlation_id is not None else correlation_id_str
+                    ),
                     auto_correlation=auto_correlation,
                     auto_log=auto_log,
-                    extra_kwargs=combined_extra,
+                    merged_kwargs=None,
+                    extra_kwargs={},
                 )
+                for key in declared_param_keys:
+                    setattr(self, key, getattr(resolved, key))
                 return
             self._initialize_base_state(
                 message,
@@ -326,110 +389,6 @@ class FlextExceptionsBase:
                 if key not in payload:
                     payload[key] = value
             return payload
-
-        def _init_declared_error(
-            self,
-            message: str,
-            *,
-            error_code: str,
-            context: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
-            params: mp.BaseModel | None,
-            named_params: t.MappingKV[str, t.JsonPayload | None] | None = None,
-            extra_kwargs: t.MappingKV[str, t.JsonPayload | None] | None = None,
-            param_keys: frozenset[str] | None = None,
-            correlation_id: str | None = None,
-            metadata: p.HasModelDump | t.JsonValue | None = None,
-            auto_correlation: bool = False,
-            auto_log: bool = True,
-        ) -> None:
-            """Initialize a typed error: resolve params, call BaseError.__init__, assign attrs."""
-            declared_params_cls = type(self)._params_cls
-            if declared_params_cls is None:
-                raise ValueError(
-                    c.ERR_EXCEPTIONS_PARAMS_CLS_MISSING.format(
-                        class_name=type(self).__qualname__,
-                    ),
-                )
-            declared_param_keys = (
-                param_keys
-                if param_keys is not None
-                else frozenset(declared_params_cls.model_fields)
-            )
-            remaining_extra: MutableMapping[str, t.JsonValue] = {}
-            if extra_kwargs:
-                remaining_extra.update({
-                    key: FlextRuntime.normalize_to_metadata(value)
-                    for key, value in extra_kwargs.items()
-                    if value is not None
-                })
-            resolved_named: MutableMapping[str, t.JsonPayload | None] = dict(
-                named_params or {},
-            )
-            for key in declared_param_keys:
-                resolved_named.setdefault(key, remaining_extra.pop(key, None))
-            preserved_metadata_raw = remaining_extra.pop(c.FIELD_METADATA, None)
-            preserved_metadata = (
-                FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
-                if preserved_metadata_raw is not None
-                else None
-            )
-            correlation_id_raw = remaining_extra.pop(
-                c.ContextKey.CORRELATION_ID,
-                None,
-            )
-            correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
-                correlation_id_raw,
-            )
-            param_values = FlextExceptionsHelpers.build_param_map(
-                context,
-                remaining_extra,
-                keys=declared_param_keys,
-            )
-            for key, value in resolved_named.items():
-                if value is None:
-                    continue
-                normalized_value = FlextRuntime.normalize_to_metadata(value)
-                param_values[key] = (
-                    normalized_value
-                    if isinstance(normalized_value, t.SCALAR_TYPES)
-                    else str(normalized_value)
-                )
-            resolved = (
-                params
-                if params is not None
-                else declared_params_cls.model_validate(dict(param_values))
-            )
-            ctx = FlextExceptionsHelpers.build_context_map(
-                context,
-                remaining_extra,
-                excluded_keys=type(self)._excluded_context_keys,
-            )
-            resolved_fields = declared_params_cls.__pydantic_fields__
-            for key in declared_param_keys:
-                attr_val = getattr(resolved, key, None)
-                if attr_val is not None:
-                    ctx[key] = FlextRuntime.normalize_to_metadata(attr_val)
-                field_info = resolved_fields.get(key)
-                if field_info is None:
-                    continue
-                field_help = field_info.description or field_info.title
-                if isinstance(field_help, str) and field_help:
-                    ctx[f"{key}_description"] = field_help
-            self._initialize_base_state(
-                message,
-                error_code=error_code,
-                context=ctx or None,
-                metadata=metadata if metadata is not None else preserved_metadata,
-                correlation_id=(
-                    correlation_id if correlation_id is not None else correlation_id_str
-                ),
-                auto_correlation=auto_correlation,
-                auto_log=auto_log,
-                merged_kwargs=None,
-                extra_kwargs={},
-            )
-            for key in declared_param_keys:
-                setattr(self, key, getattr(resolved, key))
 
 
 __all__: list[str] = ["FlextExceptionsBase"]

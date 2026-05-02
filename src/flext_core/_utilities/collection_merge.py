@@ -24,11 +24,13 @@ class FlextUtilitiesCollectionMerge:
     """Mapping-merge strategies + dispatcher (`merge_mappings`)."""
 
     @staticmethod
-    def _is_json_mapping(value: object) -> TypeGuard[Mapping[str, t.JsonValue]]:
+    def _is_json_mapping(
+        value: p.AttributeProbe,
+    ) -> TypeGuard[Mapping[str, t.JsonValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
-    def _is_json_list(value: object) -> TypeGuard[list[t.JsonValue]]:
+    def _is_json_list(value: p.AttributeProbe) -> TypeGuard[list[t.JsonValue]]:
         return isinstance(value, list)
 
     @staticmethod

@@ -77,15 +77,11 @@ class FlextSettings(
         validate_assignment=True,
     )
 
-    # ``__init__`` is intentionally omitted.  Pydantic v2 ``BaseSettings``
-    # handles both first-time construction and re-initialisation of an
-    # existing instance correctly when ``extra='ignore'``.  The singleton
-    # logic lives exclusively in ``__new__`` (see ``FlextSettingsBase``).
-
     @classmethod
     def fetch_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
         """Get global settings, optionally materialized with overrides."""
-        instance = cls()
+        existing = getattr(cls, "_instance", None)
+        instance = existing if existing is not None else cls()
         if not overrides:
             return instance
         with cls._singleton_disabled():
@@ -211,7 +207,14 @@ class FlextSettings(
                     namespace=namespace,
                 ),
             )
-        settings_instance = settings_class_raw()
+        raw_instance: FlextSettingsBase | None = getattr(
+            settings_class_raw,
+            "_instance",
+            None,
+        )
+        settings_instance = (
+            raw_instance if raw_instance is not None else settings_class_raw()
+        )
         if isinstance(settings_instance, settings_type):
             return settings_instance
         raise TypeError(

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from contextlib import suppress
 from enum import StrEnum
 from typing import no_type_check
 
@@ -194,13 +195,16 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         }
         coerce_fn = coerce_map.get(target)
         if coerce_fn is not None:
-            try:
-                coerced = coerce_fn(value)
-            except (TypeError, ValueError):
-                return None
-            if coerced.failure:
-                return None
-            return FlextUtilitiesModel.validate_value(target, coerced.value).unwrap()
+            coerced_val = None
+            with suppress(TypeError, ValueError):
+                result = coerce_fn(value)
+                if not result.failure:
+                    coerced_val = result.value
+            return (
+                FlextUtilitiesModel.validate_value(target, coerced_val).unwrap()
+                if coerced_val is not None
+                else None
+            )
         if target in {int, float, str, bool}:
             return FlextUtilitiesModel.validate_value(target, value).map_or(None)
         return None

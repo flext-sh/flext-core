@@ -39,7 +39,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         else:
             numeric_values = []
             for item in items_list:
-                raw: object | None
+                raw: p.AttributeProbe | None
                 if isinstance(item, FlextModelsPydantic.BaseModel):
                     raw = getattr(item, field, None)
                 elif isinstance(item, Mapping):
@@ -68,9 +68,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                 and FlextUtilitiesMapper.deep_eq(val_a, val_b)
             )
         if isinstance(val_a, list) and isinstance(val_b, list):
-            if len(val_a) != len(val_b):
-                return False
-            return all(
+            return len(val_a) == len(val_b) and all(
                 starmap(
                     FlextUtilitiesMapper._deep_eq_values,
                     zip(val_a, val_b, strict=True),

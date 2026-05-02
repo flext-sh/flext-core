@@ -27,6 +27,7 @@ from typing import (
 )
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._protocols.base import FlextProtocolsBase as p
 from flext_core._typings.base import FlextTypingBase as t
 
 
@@ -345,12 +346,12 @@ class FlextUtilitiesBeartypeHelpers:
         return filename if isinstance(filename, str) else None
 
     @staticmethod
-    def object_module_for(obj: object) -> _types_mod.ModuleType | None:
+    def object_module_for(obj: p.AttributeProbe) -> _types_mod.ModuleType | None:
         module = inspect.getmodule(obj)
         return module if isinstance(module, _types_mod.ModuleType) else None
 
     @staticmethod
-    def object_module_name_for(obj: object) -> str | None:
+    def object_module_name_for(obj: p.AttributeProbe) -> str | None:
         module = inspect.getmodule(obj)
         name = getattr(module, "__name__", None)
         return name if isinstance(name, str) else None
@@ -383,7 +384,7 @@ class FlextUtilitiesBeartypeHelpers:
             return "Any" in str(alias_value)
 
     @staticmethod
-    def mutable_kind(value: object) -> str | None:
+    def mutable_kind(value: p.AttributeProbe) -> str | None:
         for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
             if isinstance(value, kind):
                 return kind.__name__
@@ -391,7 +392,7 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def mutable_default_factory_kind(
-        factory: type | Callable[..., object] | None,
+        factory: type | Callable[..., p.AttributeProbe] | None,
     ) -> type | None:
         for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
             if factory is kind or get_origin(factory) is kind:
@@ -401,7 +402,7 @@ class FlextUtilitiesBeartypeHelpers:
     @staticmethod
     def allows_mutable_default_factory(
         hint: t.TypeHintSpecifier | None,
-        factory: type | Callable[..., object] | None,
+        factory: type | Callable[..., p.AttributeProbe] | None,
     ) -> bool:
         h = FlextUtilitiesBeartypeHelpers
         mk = h.mutable_default_factory_kind(factory)

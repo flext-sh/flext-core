@@ -23,6 +23,7 @@ from typing import ClassVar
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as p
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
@@ -231,7 +232,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         _target: type,
         tag: str,
         qualname: str,
-        items: Iterator[tuple[str, tuple[object, ...]]],
+        items: Iterator[tuple[str, tuple[p.AttributeProbe, ...]]],
         category: c.EnforcementCategory,
     ) -> t.SequenceOf[me.Violation]:
         """Apply the visitor for ``tag`` to each item; emit violation on non-None.
@@ -269,7 +270,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         tag: str,
         category: c.EnforcementCategory,
         effective_layer: str,
-    ) -> Iterator[tuple[str, tuple[object, ...]]]:
+    ) -> Iterator[tuple[str, tuple[p.AttributeProbe, ...]]]:
         """Return category-specific (location, args) pairs for one rule tag.
 
         This is the single category→iterator dispatch — ``check()`` runs
@@ -281,7 +282,9 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         if "[" in target.__name__:
             return
 
-        def walk(node: type, path: str) -> Iterator[tuple[str, tuple[object, ...]]]:
+        def walk(
+            node: type, path: str
+        ) -> Iterator[tuple[str, tuple[p.AttributeProbe, ...]]]:
             iterator = (
                 FlextUtilitiesEnforcement._iter_effective
                 if tag == "proto_inner_kind"
@@ -295,7 +298,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 ):
                     yield from walk(value, nested)
 
-        items: Iterator[tuple[str, tuple[object, ...]]] = iter(())
+        items: Iterator[tuple[str, tuple[p.AttributeProbe, ...]]] = iter(())
         if category is c.EnforcementCategory.FIELD:
             if is_model:
                 items = FlextUtilitiesEnforcement._field_items(target, tag)

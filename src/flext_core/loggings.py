@@ -48,11 +48,7 @@ class FlextLogger(ulc):
         *,
         settings: p.Settings | None = None,
         _bound_logger: p.Logger | None = None,
-        level: c.LogLevel | str | None = None,
-        service_name: str | None = None,
-        service_version: str | None = None,
-        correlation_id: str | None = None,
-        force_new: bool = False,
+        context: t.MappingKV[str, t.JsonPayload | None] | None = None,
     ) -> None:
         """Initialize FlextLogger with name and optional context."""
         super().__init__()
@@ -61,30 +57,28 @@ class FlextLogger(ulc):
         if _bound_logger is not None:
             self._structlog_instance = _bound_logger
             return
+        resolved_context: t.MutableJsonMapping = {}
+        if context is not None:
+            resolved_context = {
+                key: FlextLogger._to_container_value(value)
+                for key, value in context.items()
+                if value is not None
+            }
         if settings is not None:
-            level = getattr(settings, "level", level)
-            service_name = getattr(settings, c.ContextKey.SERVICE_NAME, service_name)
-            service_version = getattr(
-                settings,
-                c.ContextKey.SERVICE_VERSION,
-                service_version,
-            )
-            correlation_id = getattr(
-                settings,
-                c.ContextKey.CORRELATION_ID,
-                correlation_id,
-            )
-            force_new = getattr(settings, "force_new", force_new)
-        context: t.MutableStrMapping = {}
-        if service_name:
-            context[c.ContextKey.SERVICE_NAME] = service_name
-        if service_version:
-            context[c.ContextKey.SERVICE_VERSION] = service_version
-        if correlation_id:
-            context[c.ContextKey.CORRELATION_ID] = correlation_id
+            service_name = getattr(settings, c.ContextKey.SERVICE_NAME, None)
+            service_version = getattr(settings, c.ContextKey.SERVICE_VERSION, None)
+            correlation_id = getattr(settings, c.ContextKey.CORRELATION_ID, None)
+            if isinstance(service_name, str) and service_name:
+                resolved_context[c.ContextKey.SERVICE_NAME] = service_name
+            if isinstance(service_version, str) and service_version:
+                resolved_context[c.ContextKey.SERVICE_VERSION] = service_version
+            if isinstance(correlation_id, str) and correlation_id:
+                resolved_context[c.ContextKey.CORRELATION_ID] = correlation_id
         base_logger = type(self).resolve_bound_logger(resolved_name)
         self._structlog_instance = (
-            base_logger.bind(**context) if context else base_logger
+            base_logger.bind(**FlextLogger._to_scalar_context(resolved_context))
+            if resolved_context
+            else base_logger
         )
 
     def __call__(self) -> Self:
@@ -137,20 +131,21 @@ class FlextLogger(ulc):
         cls,
         name: str = "flext",
         *,
-        settings: p.Settings | None = None,
-        service_name: str | None = None,
-        service_version: str | None = None,
-        correlation_id: str | None = None,
+        context: t.MappingKV[str, t.JsonPayload | None] | None = None,
+        **legacy_context: t.JsonPayload,
     ) -> p.Logger:
         """Create a logger instance for a module."""
         FlextLogger.ensure_structlog_configured()
-        logger: p.Logger = FlextLogger(
-            name,
-            settings=settings,
-            service_name=service_name,
-            service_version=service_version,
-            correlation_id=correlation_id,
-        )
+        merged_context: t.MutableJsonMapping = {
+            key: FlextLogger._to_container_value(value)
+            for key, value in legacy_context.items()
+            if value is not None
+        }
+        if context is not None:
+            for key, value in context.items():
+                if value is not None:
+                    merged_context[key] = FlextLogger._to_container_value(value)
+        logger: p.Logger = FlextLogger(name, context=merged_context)
         return logger
 
     @classmethod

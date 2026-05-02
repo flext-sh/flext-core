@@ -23,6 +23,7 @@ from flext_core._utilities.beartype_typingext_patch import (
 _: type[_FlextUtilitiesBeartypeTypingExtPatch]
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as p
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities._beartype.attr_visitor import (
     FlextUtilitiesBeartypeAttrVisitor,
@@ -74,7 +75,7 @@ class FlextUtilitiesBeartypeEngine(
         return "<locals>" in getattr(target, "__qualname__", "")
 
     @staticmethod
-    def attr_accept_constants(name: str, value: object) -> bool:
+    def attr_accept_constants(name: str, value: p.AttributeProbe) -> bool:
         if name.startswith("_") or name in c.ENFORCEMENT_CONSTANTS_SKIP_ATTRS:
             return False
         if isinstance(value, (type, classmethod, staticmethod, property)):
@@ -136,7 +137,10 @@ class FlextUtilitiesBeartypeEngine(
 
     @classmethod
     def apply(
-        cls, kind: c.EnforcementPredicateKind, params: mp.BaseModel, *args: object
+        cls,
+        kind: c.EnforcementPredicateKind,
+        params: mp.BaseModel,
+        *args: p.AttributeProbe,
     ) -> t.StrMapping | None:
         """Dispatch a rule predicate to its visitor by ``predicate_kind``."""
         visitor = cls._VISITORS.get(kind)

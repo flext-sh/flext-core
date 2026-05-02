@@ -191,20 +191,16 @@ class FlextUtilitiesChecker:
             hint = type_hints[param_name]
             if hint is None:
                 return r[t.TypeHintSpecifier].fail(c.ERR_CHECKER_TYPE_HINT_NONE)
-            if isinstance(hint, str):
-                return r[t.TypeHintSpecifier].ok(hint)
-            if isinstance(hint, type):
-                return r[t.TypeHintSpecifier].ok(hint)
-            return r[t.TypeHintSpecifier].ok(str(hint))
+            return r[t.TypeHintSpecifier].ok(
+                hint if isinstance(hint, (str, type)) else str(hint)
+            )
         annotation = parameter.annotation
-        if annotation is not inspect.Signature.empty:
-            if isinstance(annotation, str):
-                return r[t.TypeHintSpecifier].ok(annotation)
-            if isinstance(annotation, type):
-                return r[t.TypeHintSpecifier].ok(annotation)
-            return r[t.TypeHintSpecifier].ok(str(annotation))
-        return r[t.TypeHintSpecifier].fail(
-            c.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
+        if annotation is inspect.Signature.empty:
+            return r[t.TypeHintSpecifier].fail(
+                c.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
+            )
+        return r[t.TypeHintSpecifier].ok(
+            annotation if isinstance(annotation, (str, type)) else str(annotation)
         )
 
     @classmethod

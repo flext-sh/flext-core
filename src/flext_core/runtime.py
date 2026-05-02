@@ -258,7 +258,7 @@ class FlextRuntime:
 
     @staticmethod
     def _normalize_payload_item(
-        item: object,
+        item: p.AttributeProbe,
         *,
         container_kind: Literal["mapping", "sequence"],
     ) -> t.JsonPayload:

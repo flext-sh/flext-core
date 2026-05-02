@@ -196,8 +196,8 @@ class FlextRegistry(s[bool]):
         if callable(value):
 
             def normalized_callable(
-                *args: object,
-                **kwargs: object,
+                *args: p.AttributeProbe,
+                **kwargs: p.AttributeProbe,
             ) -> t.JsonPayload | m.BaseModel | None:
                 result = value(*args, **kwargs)
                 return FlextRegistry._narrow_value(result)

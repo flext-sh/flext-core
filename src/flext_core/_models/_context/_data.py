@@ -25,7 +25,7 @@ class FlextModelsContextData:
 
     @staticmethod
     def _coerce_scalar_mapping(
-        items: t.MappingKV[str, object],
+        items: t.MappingKV[str, t.JsonPayload],
     ) -> t.MappingKV[str, t.Scalar]:
         """Return an immutable mapping with non-scalar values stringified."""
         return MappingProxyType({

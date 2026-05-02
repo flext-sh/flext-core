@@ -132,12 +132,13 @@ class FlextUtilitiesGuards(
                 check_val, spec_val_num
             ):
                 return False
+        if isinstance(value, str):
+            return FlextUtilitiesGuards._check_string_ops(value, guard_spec)
+
         match guard_spec.contains:
             case None:
                 return True
             case contains_value:
-                if isinstance(value, str):
-                    return FlextUtilitiesGuards._check_string_ops(value, guard_spec)
                 if not FlextUtilitiesGuardsTypeCore.container(value):
                     return False
                 return FlextUtilitiesGuards._check_iterable_contains(

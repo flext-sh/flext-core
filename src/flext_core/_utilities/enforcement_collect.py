@@ -10,6 +10,7 @@ from pathlib import Path
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as pb
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
@@ -90,12 +91,12 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     def _field_items(
         model_type: type[mp.BaseModel],
         tag: str,
-    ) -> Iterator[tuple[str, tuple[object, ...]]]:
+    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         own_ann = set(vars(model_type).get("__annotations__", {}))
         for name, info in model_type.model_fields.items():
             if name not in own_ann:
                 continue
-            args: tuple[object, ...] = (
+            args: tuple[pb.AttributeProbe, ...] = (
                 (model_type, name, info) if tag == "missing_description" else (info,)
             )
             yield f'Field "{name}"', args
@@ -112,7 +113,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     def _attr_items(
         target: type,
         layer: str,
-    ) -> Iterator[tuple[str, tuple[object, ...]]]:
+    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         accept = FlextUtilitiesEnforcementCollect._attr_filter(layer)
         qn = target.__qualname__
         for name, value in vars(target).items():
@@ -124,7 +125,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         target: type,
         qn: str,
         project: tuple[str, str],
-    ) -> Iterator[tuple[str, tuple[object, ...]]]:
+    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         skip_roots = (
             c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | c.ENFORCEMENT_INFRASTRUCTURE_BASES
         )
@@ -137,14 +138,16 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         target: type,
         qn: str,
         effective_layer: str,
-    ) -> Iterator[tuple[str, tuple[object, ...]]]:
+    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         layer = (
             effective_layer
             or FlextUtilitiesEnforcementCollect.detect_layer(target)
             or ""
         )
 
-        def walk(node: type, path: str) -> Iterator[tuple[str, tuple[object, ...]]]:
+        def walk(
+            node: type, path: str
+        ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
             for name, value in FlextUtilitiesEnforcementCollect._iter_inner(node):
                 if not ub.defined_inside(value, node.__qualname__):
                     continue
@@ -160,7 +163,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         target: type,
         qn: str,
         project: tuple[str, str],
-    ) -> Iterator[tuple[str, tuple[object, ...]]]:
+    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if top and top == FlextUtilitiesEnforcementCollect._discover_src_package(
             target
@@ -172,7 +175,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     def _ns_no_accessor_methods(
         target: type,
         qn: str,
-    ) -> Iterator[tuple[str, tuple[object, ...]]]:
+    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         for name, value in vars(target).items():
             if inspect.isfunction(value) or isinstance(
                 value,
@@ -185,7 +188,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         target: type,
         tag: str,
         effective_layer: str = "",
-    ) -> Iterator[tuple[str, tuple[object, ...]]]:
+    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         """Per-tag dispatcher for namespace-category rule inputs."""
         if (
             ub.defined_in_function_scope(target)

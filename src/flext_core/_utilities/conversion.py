@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+from contextlib import suppress
 
 from flext_core import FlextConstants as c, FlextTypes as t
 
@@ -84,17 +85,12 @@ class FlextUtilitiesConversion:
         if value is None or isinstance(value, bool):
             return default
         if isinstance(value, (int, float)):
-            if isinstance(value, float) and not math.isfinite(value):
-                return default
-            return int(value)
+            return int(value) if isinstance(value, int) or math.isfinite(value) else default
         if isinstance(value, str):
-            try:
+            with suppress(ValueError, OverflowError):
                 parsed = float(value)
-                if not math.isfinite(parsed):
-                    return default
-                return int(parsed)
-            except (ValueError, OverflowError):
-                return default
+                if math.isfinite(parsed):
+                    return int(parsed)
         return default
 
     @staticmethod

@@ -14,7 +14,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from typing import ClassVar, Self
 
-from flext_core import FlextTypes as t
+from flext_core import FlextProtocols as p, FlextTypes as t
 
 
 class FlextSettingsBase:
@@ -29,7 +29,7 @@ class FlextSettingsBase:
     _singleton_enabled: ClassVar[bool] = True
     _instance: ClassVar[FlextSettingsBase | None] = None
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
+    def __init_subclass__(cls, **kwargs: p.AttributeProbe) -> None:
         super().__init_subclass__(**kwargs)
         cls._instance = None
 

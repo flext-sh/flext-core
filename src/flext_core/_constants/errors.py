@@ -219,6 +219,20 @@ class FlextConstantsErrors:
         ValueError,
     )
     """Filesystem + runtime + typing catch for IO-bound boundary code."""
+
+    EXC_FS_DECODING: Final[tuple[type[Exception], ...]] = (
+        FileNotFoundError,
+        OSError,
+        PermissionError,
+        UnicodeDecodeError,
+    )
+    """Filesystem read + decoding catch for file-handler boundaries."""
+
+    EXC_OS_VALUE: Final[tuple[type[Exception], ...]] = (
+        OSError,
+        ValueError,
+    )
+    """Filesystem + value-validation catch for path/IO boundaries."""
     ERR_DOMAIN_EVENT_NAME_REQUIRED: Final[str] = (
         "Domain event name must be a non-empty string"
     )

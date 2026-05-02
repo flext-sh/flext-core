@@ -566,7 +566,7 @@ class FlextContainer(p.ContainerLifecycle):
             def namespace_factory(
                 _namespace: str = namespace, _settings_class: type = settings_class
             ) -> m.BaseModel:
-                ns_settings: object = FlextSettings.fetch_global().fetch_namespace(
+                ns_settings = FlextSettings.fetch_global().fetch_namespace(
                     _namespace, _settings_class
                 )
                 if not isinstance(ns_settings, m.BaseModel):
