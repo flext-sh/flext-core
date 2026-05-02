@@ -194,6 +194,31 @@ class FlextConstantsErrors:
         ValueError,
     )
     """Network connectivity + type-validation catch for HTTP/RPC boundaries."""
+
+    EXC_HTTP_PROCESSING: Final[tuple[type[Exception], ...]] = (
+        ConnectionError,
+        KeyError,
+        TypeError,
+        ValueError,
+    )
+    """HTTP-shape boundary: connection + parsing + typing for request handlers."""
+
+    EXC_BROAD_RUNTIME: Final[tuple[type[Exception], ...]] = (
+        AttributeError,
+        KeyError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    )
+    """Broad runtime catch for adapter-internal flows (no IO, no import)."""
+
+    EXC_OS_RUNTIME_TYPE: Final[tuple[type[Exception], ...]] = (
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    )
+    """Filesystem + runtime + typing catch for IO-bound boundary code."""
     ERR_DOMAIN_EVENT_NAME_REQUIRED: Final[str] = (
         "Domain event name must be a non-empty string"
     )
