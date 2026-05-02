@@ -404,7 +404,7 @@ class FlextLogger(ulc):
                 _ = sl.contextvars.bind_contextvars(
                     correlation_id=correlation_id,
                 )
-            sl.get_logger(__name__).info(
+            sl.fetch_logger(__name__).info(
                 "Service infrastructure initialized",
                 service_name=service_name,
                 service_version=service_version,
@@ -421,7 +421,7 @@ class FlextLogger(ulc):
             sl = FlextLogger.structlog()
             context_vars = sl.contextvars.get_contextvars()
             correlation_id = context_vars.get(c.ContextKey.CORRELATION_ID)
-            sl.get_logger(__name__).info(
+            sl.fetch_logger(__name__).info(
                 "Domain event emitted",
                 event_name=event_name,
                 aggregate_id=aggregate_id,
@@ -440,7 +440,7 @@ class FlextLogger(ulc):
             sl = FlextLogger.structlog()
             context_vars = sl.contextvars.get_contextvars()
             correlation_id = context_vars.get(c.ContextKey.CORRELATION_ID)
-            logger = sl.get_logger(__name__)
+            logger = sl.fetch_logger(__name__)
             if resolved:
                 logger.info(
                     "Service resolved",
