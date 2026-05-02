@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from examples import t
-
 from flext_core import m, u
 
 
