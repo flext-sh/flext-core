@@ -21,26 +21,8 @@ from tests._constants.services import TestsFlextConstantsServices
 from tests._constants.settings import TestsFlextConstantsSettings
 
 
-class TestsFlextConstants(FlextTestsConstants, FlextConstants):
-    """Layer 0 constants facade for flext-core tests."""
-
-    class Tests(
-        TestsFlextConstantsOther,
-        TestsFlextConstantsResult,
-        TestsFlextConstantsSettings,
-        TestsFlextConstantsLoggings,
-        TestsFlextConstantsFixtures,
-        TestsFlextConstantsServices,
-        TestsFlextConstantsErrors,
-        TestsFlextConstantsDomain,
-        FlextTestsConstants.Tests,
-    ):
-        """Flat constants for test composition and parametrization.
-
-        All constants come from MRO-composed mixins in _constants/.
-        """
 
 
 c = TestsFlextConstants
 
-__all__: list[str] = ["TestsFlextConstants", "c"]
+__all__: list[str] = ["c"]

@@ -64,6 +64,65 @@ class ExamplesFlextDatabaseService(s[m.ConfigMap]):
         )
 
 
+class ExamplesFlextMigrationService(s[m.ConfigMap]):
+    """Example migration service with settings log-once pattern."""
+
+    input_dir: Annotated[
+        str,
+        m.Field(description="Source migration directory."),
+    ]
+    output_dir: Annotated[
+        str,
+        m.Field(description="Target migration directory."),
+    ]
+    sync: Annotated[
+        bool,
+        m.Field(description="Whether to perform synchronous migration."),
+    ]
+
+    @override
+    def model_post_init(self, /, __context: t.ScalarMapping | None) -> None:
+        """Post-initialization hook.
+
+        Args:
+            __context: Pydantic context (unused)
+
+        """
+        super().model_post_init(__context)
+        settings = m.ConfigMap(
+            root={
+                "input_dir": self.input_dir,
+                "output_dir": self.output_dir,
+                "sync": self.sync,
+                "batch_size": 100,
+                "max_workers": 4,
+            },
+        )
+        normalized_settings = {
+            key: u.normalize_to_metadata(value) for key, value in settings.root.items()
+        }
+        self.logger.info(
+            "Migration configuration loaded",
+            **normalized_settings,
+        )
+
+    @override
+    @d.log_operation("migration_process")
+    def execute(self) -> p.Result[m.ConfigMap]:
+        """Execute migration.
+
+        Returns:
+            r[dict]: Migration results
+
+        """
+        self.logger.info(
+            "Starting migration process",
+            total_entries=1000,
+            batch_count=10,
+        )
+        self.logger.info("Processing batch 1 of 10")
+        self.logger.info("Processing batch 2 of 10")
+        return r[m.ConfigMap].ok(m.ConfigMap(root={"migrated": 1000, "failed": 0}))
 
 
 def main() -> None:
