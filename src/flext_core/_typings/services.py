@@ -95,16 +95,16 @@ class FlextTypesServices:
         | ph.AutoDiscoverableHandler
         | Callable[
             ...,
-            mp.BaseModel | JsonPayload | prt.ResultLike[JsonPayload],
+            mp.BaseModel | JsonPayload | prt.ResultLike[JsonPayload] | None,
         ]
     )
     type ResolvedHandlerCallable = Callable[
         ...,
-        mp.BaseModel | JsonPayload | prt.ResultLike[JsonPayload],
+        mp.BaseModel | JsonPayload | prt.ResultLike[JsonPayload] | None,
     ]
     type RoutedHandlerCallable = Callable[
         [p.Routable],
-        JsonPayload | prt.ResultLike[JsonPayload],
+        JsonPayload | prt.ResultLike[JsonPayload] | None,
     ]
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
     type LoggerFactory = Callable[..., pl.OutputLogger] | None

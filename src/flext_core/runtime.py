@@ -118,17 +118,18 @@ class FlextRuntime:
         | None,
     ) -> t.JsonValue:
         """Normalize arbitrary runtime input to one validated ``JsonValue``."""
-        normalized: t.JsonValue | t.MappingKV[str, t.JsonPayload] | t.Scalar
+        validated_value: t.JsonValue
         if value is None:
-            normalized = ""
+            validated_value = t.json_value_adapter().validate_python("")
         elif ugm.has_model_dump(value):
-            normalized = value.model_dump()
+            validated_value = t.json_value_adapter().validate_python(value.model_dump())
         elif isinstance(value, p.Model):
-            normalized = str(value)
+            validated_value = t.json_value_adapter().validate_python(str(value))
         else:
-            normalized = FlextRuntime.normalize_to_metadata(value)
-        validated: t.JsonValue = t.json_value_adapter().validate_python(normalized)
-        return validated
+            validated_value = t.json_value_adapter().validate_python(
+                FlextRuntime.normalize_to_metadata(value),
+            )
+        return validated_value
 
     @staticmethod
     def normalize_to_json_mapping(
@@ -141,7 +142,7 @@ class FlextRuntime:
 
     @staticmethod
     def _normalize_dict_entries(
-        items: t.SequenceOf[tuple[str, t.JsonPayload | t.Scalar]],
+        items: t.SequenceOf[tuple[str, t.JsonPayload]],
     ) -> dict[str, t.JsonValue]:
         """Normalize key-value pairs for container dict construction."""
         return dict(
@@ -165,74 +166,57 @@ class FlextRuntime:
         if value is None:
             return None
         if isinstance(value, mc.Dict):
-            raw_mapping: t.MappingKV[str, t.JsonPayload] = value.root
-        elif isinstance(value, Mapping):
-            raw_mapping = value
-        elif ugm.has_model_dump(value):
-            dumped_mapping = value.model_dump()
-            if not isinstance(dumped_mapping, Mapping):
-                msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
-                raise TypeError(msg)
-            raw_mapping = dumped_mapping
-        else:
-            msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
-            raise TypeError(msg)
-        return FlextRuntime._normalize_dict_entries(
-            [(key, item) for key, item in raw_mapping.items()],
-        )
+            return FlextRuntime._normalize_dict_entries(
+                [(key, item) for key, item in value.root.items()],
+            )
+        if isinstance(value, Mapping):
+            return FlextRuntime._normalize_dict_entries(
+                [(key, item) for key, item in value.items()],
+            )
+        return dict(t.json_mapping_adapter().validate_python(value.model_dump()))
 
     @staticmethod
     def normalize_metadata_input_mapping(
         value: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
     ) -> t.MappingKV[str, t.JsonPayload | None] | None:
-        """Normalize mapping-like metadata input while preserving explicit None.
-
-        Defensively handles broken ``model_dump`` overrides that return a
-        non-Mapping value by raising ``TypeError`` instead of surfacing an
-        opaque ``AttributeError`` from downstream iteration.
-        """
+        """Normalize mapping-like metadata input while preserving explicit None."""
         if value is None:
             return None
         if isinstance(value, Mapping):
-            raw: t.MappingKV[str, t.JsonPayload | None] = value
-        else:
-            raw_dump = value.model_dump()
-            if not isinstance(raw_dump, Mapping):
-                msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
-                raise TypeError(msg)
-            raw = raw_dump
+            return {
+                key: (
+                    None if item is None else FlextRuntime.normalize_to_json_value(item)
+                )
+                for key, item in value.items()
+            }
         return {
-            key: (None if item is None else FlextRuntime.normalize_to_json_value(item))
-            for key, item in raw.items()
+            key: (
+                None if item is None else t.json_value_adapter().validate_python(item)
+            )
+            for key, item in value.model_dump().items()
         }
 
     @staticmethod
     def validate_metadata_attributes(
         value: t.MetadataInput,
     ) -> t.MappingKV[str, t.JsonValue]:
-        """Normalize and validate metadata attributes input.
-
-        Defensively asserts that a BaseModel's ``model_dump`` actually yields
-        a Mapping — broken models that violate the :class:`p.HasModelDump`
-        protocol (e.g. returning a scalar) MUST surface as ``TypeError`` and
-        not as opaque ``AttributeError`` from downstream iteration.
-        """
+        """Normalize and validate metadata attributes input."""
         if value is None:
             return {}
-        if not (isinstance(value, Mapping) or ugm.has_model_dump(value)):
-            msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
-            raise TypeError(msg)
         normalized_result = FlextRuntime.normalize_metadata_input_mapping(value)
         if normalized_result is None:
             return {}
-        for key in normalized_result:
+        normalized_mapping = normalized_result
+        for key in normalized_mapping:
             if key.startswith("_"):
                 raise ValueError(
                     c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key),
                 )
         validated_metadata: t.MappingKV[str, t.JsonValue] = (
             t.metadata_map_adapter().validate_python({
-                key: item for key, item in normalized_result.items() if item is not None
+                key: item
+                for key, item in normalized_mapping.items()
+                if item is not None
             })
         )
         return validated_metadata
@@ -244,36 +228,18 @@ class FlextRuntime:
     ) -> TModel:
         """Normalize metadata-like input into the provided metadata model."""
         if value is None:
-            validated_model = metadata_model.model_validate({
+            return metadata_model.model_validate({
                 c.FIELD_ATTRIBUTES: {},
             })
-            if isinstance(validated_model, metadata_model):
-                return validated_model
-            msg = f"{metadata_model.__name__} validation did not return model instance"
-            raise TypeError(msg)
         if isinstance(value, metadata_model):
             return value
         if isinstance(value, Mapping):
-            raw_mapping = value
-        elif ugm.has_model_dump(value):
-            raw_dump = value.model_dump()
-            if not isinstance(raw_dump, Mapping):
-                msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
-                raise TypeError(msg)
-            raw_mapping = raw_dump
+            raw_mapping_obj: t.MappingKV[str, t.JsonPayload | None] = value
         else:
-            msg = (
-                "metadata must be None, dict, or "
-                f"{metadata_model.__name__}, got {value.__class__.__name__}"
-            )
-            raise TypeError(msg)
-        validated_model = metadata_model.model_validate({
-            c.FIELD_ATTRIBUTES: dict(raw_mapping),
+            raw_mapping_obj = value.model_dump()
+        return metadata_model.model_validate({
+            c.FIELD_ATTRIBUTES: dict(raw_mapping_obj),
         })
-        if isinstance(validated_model, metadata_model):
-            return validated_model
-        msg = f"{metadata_model.__name__} validation did not return model instance"
-        raise TypeError(msg)
 
     @staticmethod
     def _normalize_payload_item(

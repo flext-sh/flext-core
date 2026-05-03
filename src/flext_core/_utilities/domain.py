@@ -41,22 +41,6 @@ class FlextUtilitiesDomain:
         return type(obj_a) is type(obj_b)
 
     @staticmethod
-    def _get_obj_dict(obj: t.JsonPayload) -> t.JsonMapping | None:
-        """Extract __dict__ safely, returning None on failure."""
-        try:
-            return vars(obj)
-        except c.EXC_ATTR_TYPE:
-            return None
-
-    @staticmethod
-    def _to_hashable(value: t.JsonPayload) -> t.JsonValue:
-        """Coerce a value to something hashable for dict-based hashing."""
-        if isinstance(value, (str, int, float, bool, type(None))):
-            scalar_value: str | int | float | bool | None = value
-            return scalar_value
-        return u.type_name(value)
-
-    @staticmethod
     def compare_entities_by_id(
         entity_a: t.JsonPayload,
         entity_b: t.JsonPayload,
@@ -109,8 +93,14 @@ class FlextUtilitiesDomain:
             ):
                 result = obj_a.model_dump() == obj_b.model_dump()
             else:
-                dict_a = FlextUtilitiesDomain._get_obj_dict(obj_a)
-                dict_b = FlextUtilitiesDomain._get_obj_dict(obj_b)
+                try:
+                    dict_a = vars(obj_a)
+                except c.EXC_ATTR_TYPE:
+                    dict_a = None
+                try:
+                    dict_b = vars(obj_b)
+                except c.EXC_ATTR_TYPE:
+                    dict_b = None
                 result = (
                     dict_a == dict_b
                     if dict_a is not None and dict_b is not None
@@ -141,11 +131,19 @@ class FlextUtilitiesDomain:
             return hash(tuple(sorted((k, str(v)) for k, v in data.items())))
         if hasattr(obj, "__iter__"):
             return hash(repr(obj))
-        obj_dict = FlextUtilitiesDomain._get_obj_dict(obj)
+        try:
+            obj_dict = vars(obj)
+        except c.EXC_ATTR_TYPE:
+            obj_dict = None
         if obj_dict is None:
             return hash(repr(obj))
         items: t.SequenceOf[t.Pair[str, t.JsonValue]] = [
-            (k, FlextUtilitiesDomain._to_hashable(v))
+            (
+                k,
+                v
+                if isinstance(v, (str, int, float, bool, type(None)))
+                else u.type_name(v),
+            )
             for k, v in sorted(obj_dict.items())
         ]
         return hash(tuple(items))

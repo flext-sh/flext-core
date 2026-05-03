@@ -615,7 +615,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 f"c.NAMESPACE_CLASS_TO_MODULE_OVERRIDES"
             )
             raise ValueError(msg)
-        tail = class_name[len(flext_prefix):]
+        tail = class_name[len(flext_prefix) :]
         for layer in c.NAMESPACE_LAYER_NAMES:
             idx = tail.find(layer)
             if idx > 0:

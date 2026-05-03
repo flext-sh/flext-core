@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tests import m, t, u
+from tests import t, u
 
 
 class TestsFlextRuntime:
@@ -31,13 +31,6 @@ class TestsFlextRuntime:
         assert isinstance(normalized, int)
         assert normalized == 42
 
-    def test_normalize_model_input_mapping_accepts_model_dump_carrier(self) -> None:
-        carrier = self.ModelDumpCarrier({"alpha": 1, "beta": "two"})
-
-        normalized = u.normalize_model_input_mapping(carrier)
-
-        assert normalized == {"alpha": 1, "beta": "two"}
-
     def test_normalize_model_input_mapping_accepts_nested_payload_mapping(self) -> None:
         normalized = u.normalize_model_input_mapping({"alpha": {"beta": 1}})
 
@@ -47,17 +40,3 @@ class TestsFlextRuntime:
         normalized = u.normalize_metadata_input_mapping({"alpha": None, "beta": 2})
 
         assert normalized == {"alpha": None, "beta": 2}
-
-    def test_validate_metadata_attributes_accepts_model_dump_carrier(self) -> None:
-        carrier = self.ModelDumpCarrier({"alpha": 1})
-
-        normalized = u.validate_metadata_attributes(carrier)
-
-        assert normalized == {"alpha": 1}
-
-    def test_validate_metadata_model_input_accepts_model_dump_carrier(self) -> None:
-        carrier = self.ModelDumpCarrier({"alpha": 1})
-
-        metadata = u.validate_metadata_model_input(carrier, m.Metadata)
-
-        assert metadata.attributes["alpha"] == 1

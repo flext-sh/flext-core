@@ -28,9 +28,8 @@ from pydantic import (
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
-_author_name_ta = TypeAdapter(
+_author_name_ta: TypeAdapter[str] = TypeAdapter(
     Annotated[
         str,
         BeforeValidator(
@@ -186,7 +185,17 @@ class FlextModelsProjectMetadata:
             ),
         ] = "UNLICENSED"
         description: str = ""
-        authors: tuple[str, ...] = ()
+        authors: Annotated[
+            tuple[str, ...],
+            Field(default=()),
+            BeforeValidator(
+                lambda value: (
+                    tuple(_author_name_ta.validate_python(entry) for entry in value)
+                    if isinstance(value, (list, tuple))
+                    else ()
+                )
+            ),
+        ] = ()
         urls: Annotated[
             tb.StrMapping,
             Field(default_factory=lambda: MappingProxyType({})),
@@ -199,13 +208,6 @@ class FlextModelsProjectMetadata:
             ),
         ] = Field(default_factory=lambda: MappingProxyType({}))
         requires_python: str = Field(default="", alias="requires-python")
-
-        @field_validator("authors", mode="before")
-        @classmethod
-        def _coerce_authors(cls, value: tp.JsonValue) -> tuple[str, ...]:
-            if not isinstance(value, (list, tuple)):
-                return ()
-            return tuple(_author_name_ta.validate_python(e) for e in value)
 
         @field_validator("requires_python", mode="after")
         @classmethod

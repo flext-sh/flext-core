@@ -146,7 +146,9 @@ class FlextUtilitiesGuards(
                 case None:
                     pass
                 case contains_value:
-                    result = FlextUtilitiesGuardsTypeCore.container(value) and FlextUtilitiesGuards._check_iterable_contains(
+                    result = FlextUtilitiesGuardsTypeCore.container(
+                        value
+                    ) and FlextUtilitiesGuards._check_iterable_contains(
                         value,
                         contains_value,
                     )

@@ -60,9 +60,9 @@ class FlextLogger(ulc):
         resolved_context: t.MutableJsonMapping = {}
         if context is not None:
             resolved_context = dict(
-                FlextLogger.to_container_context(
-                    {key: value for key, value in context.items() if value is not None}
-                )
+                FlextLogger.to_container_context({
+                    key: value for key, value in context.items() if value is not None
+                })
             )
         if settings is not None:
             service_name = getattr(settings, c.ContextKey.SERVICE_NAME, None)
@@ -137,15 +137,15 @@ class FlextLogger(ulc):
         """Create a logger instance for a module."""
         FlextLogger.ensure_structlog_configured()
         merged_context: t.MutableJsonMapping = dict(
-            FlextLogger.to_container_context(
-                {key: value for key, value in legacy_context.items() if value is not None}
-            )
+            FlextLogger.to_container_context({
+                key: value for key, value in legacy_context.items() if value is not None
+            })
         )
         if context is not None:
             merged_context.update(
-                FlextLogger.to_container_context(
-                    {key: value for key, value in context.items() if value is not None}
-                )
+                FlextLogger.to_container_context({
+                    key: value for key, value in context.items() if value is not None
+                })
             )
         logger: p.Logger = FlextLogger(name, context=merged_context)
         return logger

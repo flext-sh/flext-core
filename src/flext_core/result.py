@@ -155,13 +155,12 @@ class FlextResult[T](BaseModel, p.Result[T]):
     def _validate_error_data(
         error_data: t.JsonMapping | t.ConfigModelInput | None,
     ) -> mc.ConfigMap | None:
-        if error_data is None:
-            return None
-        if isinstance(error_data, mc.ConfigMap):
-            return error_data
-        if isinstance(error_data, p.HasModelDump):
-            return mc.ConfigMap.model_validate(error_data.model_dump())
-        return mc.ConfigMap.model_validate(dict(error_data))
+        normalized_error_data = FlextRuntime.normalize_model_input_mapping(error_data)
+        return (
+            None
+            if normalized_error_data is None
+            else mc.ConfigMap.model_validate(normalized_error_data)
+        )
 
     @staticmethod
     def _extract_exception_error_code(exception: BaseException | None) -> str | None:
@@ -181,8 +180,10 @@ class FlextResult[T](BaseModel, p.Result[T]):
         if raw_attributes is None:
             return None
         try:
-            payload = mc.ConfigMap.model_validate(raw_attributes)
+            payload = FlextResult._validate_error_data(raw_attributes)
         except ValidationError:
+            return None
+        if payload is None:
             return None
         correlation_id = getattr(exception, "correlation_id", None)
         if isinstance(correlation_id, str) and correlation_id:

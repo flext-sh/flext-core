@@ -236,19 +236,6 @@ class TestsFlextExceptions:
         assert attributes["expected_type"] == "str"
         assert attributes["actual_type"] == "int"
 
-    def test_public_exceptions_serialize_consistently(self) -> None:
-        errors: t.SequenceOf[e.BaseError] = [
-            e.BaseError("base", correlation_id="corr-001"),
-            e.ValidationError("validation", correlation_id="corr-001"),
-            e.TimeoutError("timeout", correlation_id="corr-001"),
-            e.OperationError("operation", correlation_id="corr-001"),
-        ]
-        for error in errors:
-            payload = error.to_dict()
-            assert payload["message"] == error.message
-            assert payload["error_type"] == type(error).__name__
-            assert payload["correlation_id"] == "corr-001"
-
     def test_metrics_are_recorded_and_reset_through_public_api(self) -> None:
         e.clear_metrics()
         e.record_exception(e.ValidationError)
@@ -506,13 +493,8 @@ class TestsFlextCoverageExceptions:
         assert error.error_message == error.message
         assert error.matches_error_domain(expected_domain)
 
-        payload = error.to_dict()
-        assert payload["message"] == error.message
-        assert payload["error_type"] == type(error).__name__
-        assert payload["error_code"] == expected_code
-        assert payload["error_domain"] == expected_domain
         for key, value in expected_payload.items():
-            assert payload[key] == value
+            assert error.metadata.attributes[key] == value
 
     def test_base_error_defaults_to_unknown_domain_protocol_surface(self) -> None:
         error = e.BaseError("Base failure")
@@ -523,7 +505,7 @@ class TestsFlextCoverageExceptions:
         assert error.error_message == "Base failure"
         assert error.matches_error_domain(c.ErrorDomain.UNKNOWN.value)
 
-    def test_to_dict_flattens_metadata_and_preserves_correlation_id(self) -> None:
+    def test_metadata_attributes_preserve_correlation_id(self) -> None:
         error = e.OperationError(
             "Insert failed",
             operation="insert_user",
@@ -533,15 +515,14 @@ class TestsFlextCoverageExceptions:
             attempt=2,
         )
 
-        payload = error.to_dict()
-        assert payload["message"] == "Insert failed"
-        assert payload["error_code"] == c.ErrorCode.OPERATION_ERROR
-        assert payload["error_domain"] == c.ErrorDomain.INTERNAL.value
-        assert payload["correlation_id"] == "corr-123"
-        assert payload["scope"] == "users"
-        assert payload["operation"] == "insert_user"
-        assert payload["reason"] == "constraint"
-        assert payload["attempt"] == 2
+        assert error.message == "Insert failed"
+        assert error.error_code == c.ErrorCode.OPERATION_ERROR
+        assert error.error_domain == c.ErrorDomain.INTERNAL.value
+        assert error.correlation_id == "corr-123"
+        assert error.metadata.attributes["scope"] == "users"
+        assert error.metadata.attributes["operation"] == "insert_user"
+        assert error.metadata.attributes["reason"] == "constraint"
+        assert error.metadata.attributes["attempt"] == 2
 
     @pytest.mark.parametrize(
         ("name", "factory", "expected_fragment", "expected_code", "expected_data"),

@@ -57,13 +57,8 @@ class Ex07FlextExceptions(ExamplesFlextShared):
             "base.meta.operation",
             str(base.metadata.attributes.get("operation") or ""),
         )
-        payload = base.to_dict()
-        self.audit_check("base.to_dict.type", str(payload.get("error_type") or ""))
-        self.audit_check("base.to_dict.message", str(payload.get("message") or ""))
-        self.audit_check(
-            "base.to_dict.error_code", str(payload.get("error_code") or "")
-        )
-        self.audit_check("base.to_dict.has_timestamp", "timestamp" in payload)
+        self.audit_check("base.error_message", base.error_message)
+        self.audit_check("base.has_timestamp", base.timestamp > 0)
         auto_corr = e.BaseError(
             "auto corr",
             error_code="E_AUTO",

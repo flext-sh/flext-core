@@ -470,8 +470,8 @@ class FlextProtocolsResult:
         Used for Pydantic model compatibility and serialization.
         """
 
-        def model_dump(self) -> t.ScalarMapping:
-            """Dump model data to dictionary."""
+        def model_dump(self) -> t.MappingKV[str, t.JsonPayload | None]:
+            """Dump model data to a mapping that runtime helpers can normalize."""
             ...
 
     @runtime_checkable

@@ -606,6 +606,20 @@ class TestsFlextResult:
         success = r[str].ok("test")
         tm.that(success.error_data, none=True)
 
+    def test_error_data_property_accepts_model_dump_carrier(self) -> None:
+        """Result error_data accepts protocol carriers through runtime normalization."""
+
+        class ModelDumpCarrier:
+            def model_dump(self) -> t.ScalarMapping:
+                return {"alpha": 1, "beta": "two"}
+
+        result: p.Result[str] = r[str].fail(
+            "error",
+            error_data=ModelDumpCarrier(),
+        )
+
+        tm.that(result.error_data, eq={"alpha": 1, "beta": "two"})
+
     def test_unwrap_failure(self) -> None:
         """Test unwrap raises RuntimeError on failure."""
         result: p.Result[str] = r[str].fail("error")
@@ -926,6 +940,35 @@ class TestsFlextResultExceptionCarrying:
             tm.that(result.error_data.get("field"), eq="email")
             tm.that(result.error_data.get("reason"), eq="invalid format")
         tm.that(result.exception is exc, eq=True)
+
+    def test_fail_with_exception_extracts_exception_metadata(self) -> None:
+        class MetadataError(ValueError):
+            metadata: m.Metadata
+            correlation_id: str
+
+            def __init__(self) -> None:
+                super().__init__("invalid email")
+                self.metadata = m.Metadata(
+                    attributes={
+                        "field": "email",
+                        "details": {"retryable": False},
+                    }
+                )
+                self.correlation_id = "corr-123"
+
+        result: p.Result[str] = r[str].fail(
+            "Validation failed",
+            exception=MetadataError(),
+        )
+
+        tm.that(result.error_data, none=False)
+        if result.error_data is not None:
+            tm.that(result.error_data.get("field"), eq="email")
+            tm.that(result.error_data.get("details"), eq={"retryable": False})
+            tm.that(
+                result.error_data.get(c.ContextKey.CORRELATION_ID),
+                eq="corr-123",
+            )
 
     def test_fail_with_none_error_and_exception(self) -> None:
         exc = RuntimeError("something went wrong")

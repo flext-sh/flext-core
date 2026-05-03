@@ -541,15 +541,12 @@ class FlextContainer(p.ContainerLifecycle):
                 continue
 
             def namespace_factory(
-                _namespace: str = namespace, _settings_class: type = settings_class
-            ) -> m.BaseModel:
-                ns_settings = FlextSettings.fetch_global().fetch_namespace(
+                _namespace: str = namespace,
+                _settings_class: t.SettingsClass = settings_class,
+            ) -> p.Settings:
+                return FlextSettings.fetch_global().fetch_namespace(
                     _namespace, _settings_class
                 )
-                if not isinstance(ns_settings, m.BaseModel):
-                    error_msg = f"Namespace '{_namespace}' must be a Pydantic model"
-                    raise TypeError(error_msg)
-                return ns_settings
 
             if not self.has(factory_name):
                 self.factory(factory_name, namespace_factory)

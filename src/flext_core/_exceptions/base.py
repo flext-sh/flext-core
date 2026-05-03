@@ -19,7 +19,6 @@ from flext_core import (
     FlextExceptionsHelpers,
     FlextModelsBase as m,
     FlextModelsContainers as mc,
-    FlextModelsErrors,
     FlextModelsPydantic as mp,
     FlextProtocols as p,
     FlextRuntime,
@@ -348,47 +347,6 @@ class FlextExceptionsBase:
                     if v is not None
                 },
             })
-
-        def to_dict(self) -> t.MappingKV[str, t.JsonPayload | None]:
-            """Convert exception to dictionary representation."""
-            result: MutableMapping[str, t.JsonPayload | None] = {
-                "error_type": type(self).__name__,
-                "message": self.message,
-                "error_code": self.error_code,
-                "error_domain": self.error_domain,
-                c.ContextKey.CORRELATION_ID: self.correlation_id,
-                "timestamp": self.timestamp,
-            }
-            if self.metadata and self.metadata.attributes:
-                filtered_attrs: MutableMapping[str, t.JsonPayload | None] = {
-                    k: v for k, v in self.metadata.attributes.items() if k not in result
-                }
-            else:
-                filtered_attrs = {}
-            snapshot: FlextModelsErrors.StructuredErrorSnapshot = (
-                FlextModelsErrors.StructuredErrorSnapshot.model_validate({
-                    "error_type": type(self).__name__,
-                    "message": self.message,
-                    "error_code": self.error_code,
-                    "error_domain": self.error_domain,
-                    "correlation_id": self.correlation_id,
-                    "timestamp": self.timestamp,
-                    "attributes": mc.ConfigMap.model_validate(filtered_attrs).root,
-                })
-            )
-            payload: dict[str, t.JsonPayload | None] = {
-                "error_type": snapshot.error_type,
-                "message": snapshot.message,
-                "error_code": snapshot.error_code,
-                "error_domain": snapshot.error_domain,
-                "correlation_id": snapshot.correlation_id,
-                "timestamp": snapshot.timestamp,
-                "error_message": snapshot.error_message,
-            }
-            for key, value in snapshot.attributes.items():
-                if key not in payload:
-                    payload[key] = value
-            return payload
 
 
 __all__: list[str] = ["FlextExceptionsBase"]
