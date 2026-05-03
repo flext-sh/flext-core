@@ -38,26 +38,9 @@ class FlextUtilitiesContextState:
         ctx_value: m.ConfigMap | t.MappingKV[str, t.JsonPayload] | p.Model | None,
     ) -> t.JsonMapping:
         """Return contextvar payload as a flat container mapping with safe default."""
-        if ctx_value is None:
-            return {}
-
-        payload: t.MappingKV[str, t.JsonPayload]
-        if isinstance(ctx_value, m.ConfigMap):
-            payload = ctx_value.root
-        elif isinstance(ctx_value, p.Model):
-            dumped = ctx_value.model_dump(mode="python")
-            payload = t.json_mapping_adapter().validate_python(dumped)
-        else:
-            payload = ctx_value
-
         try:
-            normalized: dict[str, t.JsonPayload] = {}
-            for key, value in payload.items():
-                normalized[key] = FlextRuntime.normalize_to_container(value)
-            validated: t.JsonMapping = t.json_mapping_adapter().validate_python(
-                normalized
-            )
-            return validated
+            normalized = FlextRuntime.normalize_model_input_mapping(ctx_value)
+            return {} if normalized is None else normalized
         except c.EXC_ATTR_KEY_TYPE_VALUE as exc:
             FlextUtilitiesContextState.logger.debug(
                 "Failed to normalize contextvar payload to configuration dict",

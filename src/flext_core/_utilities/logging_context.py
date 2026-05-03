@@ -39,30 +39,14 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         """Bind context variables to a specific scope."""
         try:
             cls._scoped_contexts.setdefault(scope, {})
-            current_context = {
-                key: cls._to_container_value(value)
-                for key, value in cls._scoped_contexts[scope].items()
-            }
-            incoming_context = {
-                key: cls._to_container_value(value) for key, value in context.items()
-            }
-            current_context_obj: t.MappingKV[str, t.JsonValue] = {
-                key: FlextRuntime.normalize_to_metadata(value)
-                for key, value in current_context.items()
-            }
-            incoming_context_obj: t.MappingKV[str, t.JsonValue] = {
-                key: FlextRuntime.normalize_to_metadata(value)
-                for key, value in incoming_context.items()
-            }
+            current_context = cls.to_container_context(cls._scoped_contexts[scope])
+            incoming_context = cls.to_container_context(context)
             merge_result = FlextUtilitiesCollection.merge_mappings(
-                incoming_context_obj,
-                current_context_obj,
+                incoming_context,
+                current_context,
                 strategy=c.MergeStrategy.DEEP,
             )
-            merged_value = merge_result.unwrap_or(current_context_obj)
-            merged_context: t.MutableJsonMapping = {}
-            for key, value in merged_value.items():
-                merged_context[key] = cls._to_container_value(value)
+            merged_context = dict(merge_result.unwrap_or(current_context))
             cls._scoped_contexts[scope] = merged_context
             cls.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(True)

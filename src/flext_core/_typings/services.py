@@ -48,7 +48,7 @@ class FlextTypesServices:
     type DomainModelCarrier = mp.BaseModel | p.Model
     type ScalarOrModel = t.Scalar | mp.BaseModel
     type ModelClass[T: mp.BaseModel] = type[T]
-    type LogArgument = tp.JsonValue | p.Model
+    type LogArgument = JsonPayload | p.Model
     type LogValue = LogArgument | Exception
     type LogResult = prt.Result[bool]
     type MetadataMapping = t.MappingKV[str, JsonPayload]

@@ -10,7 +10,7 @@ from collections.abc import (
     Callable,
 )
 from types import ModuleType
-from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.context import FlextProtocolsContext
@@ -114,6 +114,7 @@ class FlextProtocolsContainer:
             """Clear all services and factories."""
             ...
 
+        @override
         def apply(
             self,
             settings: t.UserOverridesMapping | None = None,

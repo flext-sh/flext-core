@@ -38,6 +38,11 @@ class TestsFlextRuntime:
 
         assert normalized == {"alpha": 1, "beta": "two"}
 
+    def test_normalize_model_input_mapping_accepts_nested_payload_mapping(self) -> None:
+        normalized = u.normalize_model_input_mapping({"alpha": {"beta": 1}})
+
+        assert normalized == {"alpha": {"beta": 1}}
+
     def test_normalize_metadata_input_mapping_preserves_explicit_none(self) -> None:
         normalized = u.normalize_metadata_input_mapping({"alpha": None, "beta": 2})
 

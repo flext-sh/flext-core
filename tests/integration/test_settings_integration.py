@@ -237,7 +237,8 @@ class TestsFlextSettingsIntegration:
             config_file_path = temp_directory / "settings.json"
             u.Cli.json_write(config_file_path, config_data)
             assert config_file_path.exists()
-            loaded = u.Cli.json_read(config_file_path).unwrap_or({})
+            empty_config: t.JsonMapping = {}
+            loaded = u.Cli.json_read(config_file_path).unwrap_or(empty_config)
             assert loaded == config_data
             settings = FlextSettings.fetch_global()
             assert settings.app_name is not None
@@ -270,9 +271,10 @@ class TestsFlextSettingsIntegration:
             }
             u.Cli.yaml_dump(config_file, config_data)
             assert config_file.exists()
+            empty_config: t.JsonMapping = {}
             loaded_data = u.Cli.yaml_parse(
                 config_file.read_text(encoding="utf-8"),
-            ).unwrap_or({})
+            ).unwrap_or(empty_config)
             assert loaded_data == config_data
             settings = FlextSettings.fetch_global()
             assert settings.app_name is not None

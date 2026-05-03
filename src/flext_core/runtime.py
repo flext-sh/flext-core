@@ -155,13 +155,17 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_model_input_mapping(
-        value: p.HasModelDump | mc.Dict | t.ScalarMapping | None,
-    ) -> t.MappingKV[str, t.JsonPayload] | None:
+        value: p.HasModelDump
+        | p.Model
+        | mc.Dict
+        | t.MappingKV[str, t.JsonPayload]
+        | None,
+    ) -> t.JsonMapping | None:
         """Normalize model-like input to a plain mapping."""
         if value is None:
             return None
         if isinstance(value, mc.Dict):
-            raw_mapping: t.MappingKV[str, t.JsonPayload | t.Scalar] = value.root
+            raw_mapping: t.MappingKV[str, t.JsonPayload] = value.root
         elif ugm.has_model_dump(value):
             dumped_mapping = value.model_dump()
             if not isinstance(dumped_mapping, Mapping):
