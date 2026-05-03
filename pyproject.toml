@@ -25,7 +25,7 @@ classifiers = [
 ]
 dependencies = [
   "beartype @ git+https://github.com/beartype/beartype.git@ee481e0c6da5c0cf8a6b27a53a10354e9df4ac71",
-  "cachetools>=7.0.6",
+  "cachetools>=7.1.0",
   "dependency-injector>=4.49.0",
   "docker>=7.1.0",
   "jinja2>=3.1.6",
