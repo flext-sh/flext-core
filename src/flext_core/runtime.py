@@ -166,6 +166,8 @@ class FlextRuntime:
             return None
         if isinstance(value, mc.Dict):
             raw_mapping: t.MappingKV[str, t.JsonPayload] = value.root
+        elif isinstance(value, Mapping):
+            raw_mapping = value
         elif ugm.has_model_dump(value):
             dumped_mapping = value.model_dump()
             if not isinstance(dumped_mapping, Mapping):
@@ -173,7 +175,8 @@ class FlextRuntime:
                 raise TypeError(msg)
             raw_mapping = dumped_mapping
         else:
-            raw_mapping = value
+            msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
+            raise TypeError(msg)
         return FlextRuntime._normalize_dict_entries(
             [(key, item) for key, item in raw_mapping.items()],
         )
