@@ -55,8 +55,8 @@ class FlextDecorators:
     def _is_logger_carrier(
         value: p.AttributeProbe | None,
     ) -> TypeIs[FlextDecorators._LoggerCarrier]:
-        return isinstance(value, (p.Logger, m.BaseModel, *t.CONTAINER_TYPES)) or (
-            FlextDecorators._has_flext_logger(value)
+        return isinstance(
+            value, (p.Logger, p.HasLogger, m.BaseModel, *t.CONTAINER_TYPES)
         )
 
     @staticmethod
@@ -69,7 +69,7 @@ class FlextDecorators:
         """Resolve the logger associated with the decorated call."""
         if isinstance(first_arg, p.Logger):
             return first_arg
-        if first_arg is not None and FlextDecorators._has_flext_logger(first_arg):
+        if isinstance(first_arg, p.HasLogger):
             return first_arg.logger
         module_name = (
             func_module
@@ -434,20 +434,6 @@ class FlextDecorators:
             msg = c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
             return RuntimeError(msg)
         return last_exception
-
-    @staticmethod
-    def _has_flext_logger(
-        value: p.AttributeProbe | None,
-    ) -> TypeIs[p.HasLogger]:
-        if not hasattr(value, "logger"):
-            return False
-        logger_value = getattr(value, "logger", None)
-        return (
-            logger_value is not None
-            and hasattr(logger_value, "bind")
-            and hasattr(logger_value, "debug")
-            and hasattr(logger_value, "info")
-        )
 
     @overload
     @staticmethod
