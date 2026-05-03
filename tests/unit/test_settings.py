@@ -51,7 +51,11 @@ class TestsFlextSettings:
         config_data: t.FeatureFlagMapping,
     ) -> None:
         settings = u.Tests.create_test_config(**config_data)
-        u.Tests.assert_config_fields(settings, config_data)
+        dumped_settings = settings.model_dump()
+        for key, expected_value in config_data.items():
+            actual_value = dumped_settings.get(key)
+            msg = f"Config {key}: expected {expected_value}, got {actual_value}"
+            assert actual_value == expected_value, msg
         tm.that(settings, is_=FlextSettings)
 
     def test_model_dump_round_trips_values(self) -> None:
