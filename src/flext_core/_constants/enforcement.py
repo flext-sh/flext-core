@@ -665,7 +665,7 @@ class FlextConstantsEnforcement:
         "pydantic_core": "flext-core",
         "dependency_injector": "flext-core",
         "returns": "flext-core",
-        "structlog": "flext-observability",
+        "structlog": "flext-core",
         "rich": "flext-cli",
         "rope": "flext-infra",
         "orjson": "flext-cli",
