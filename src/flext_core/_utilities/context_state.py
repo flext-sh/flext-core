@@ -107,8 +107,9 @@ class FlextUtilitiesContextState:
                 self._narrow_contextvar_to_configuration_dict(ctx_var.get()),
             ),
         )
-        updated = current.model_copy()
-        updated.update(dict(incoming))
+        updated = current.model_copy(
+            update={"root": {**current.root, **incoming}},
+        )
         _ = ctx_var.set(updated)
         if scope == c.ContextScope.GLOBAL:
             normalized_context: t.MappingKV[str, t.JsonPayload] = {

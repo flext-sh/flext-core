@@ -40,6 +40,15 @@ class TestsFlextContext:
         assert ctx.get("added").value == "y"
         assert ctx.get("existing").value == "x"
 
+    def test_merge_overwrites_existing_key_with_new_value(self) -> None:
+        ctx = FlextContext()
+        ctx.set("existing", "x")
+
+        ctx.merge({"existing": "y"})
+
+        assert ctx.get("existing").success
+        assert ctx.get("existing").value == "y"
+
     def test_clone_is_independent_snapshot_of_original(self) -> None:
         ctx = FlextContext()
         ctx.set("k", "v")

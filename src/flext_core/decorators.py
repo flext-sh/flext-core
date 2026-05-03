@@ -469,7 +469,9 @@ class FlextDecorators:
         track_perf: bool = True,
         railway_enabled: Literal[True],
         railway_error_code: str | None = None,
-    ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, p.Result[TResult]]]: ...
+    ) -> Callable[
+        [Callable[PCallback, TResult]], Callable[PCallback, p.Result[TResult]]
+    ]: ...
 
     @staticmethod
     def combined[**PCallback, TResult](

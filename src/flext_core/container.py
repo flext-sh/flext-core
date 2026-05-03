@@ -103,8 +103,7 @@ class FlextContainer(p.ContainerLifecycle):
     @override
     def provide(self) -> Callable[[str], t.RegisterableService]:
         """Return the dependency-injector Provide helper scoped to the bridge."""
-        provide_fn = self._di_bridge.provide
-        return lambda name: provide_fn(name)
+        return self._di_bridge.provide
 
     @classmethod
     def shared(
@@ -147,10 +146,7 @@ class FlextContainer(p.ContainerLifecycle):
             if factory_func is None or not u.factory(factory_func):
                 continue
 
-            def make_wrapper(f: t.FactoryCallable) -> t.FactoryCallable:
-                return f
-
-            _ = instance.factory(factory_config.name, make_wrapper(factory_func))
+            _ = instance.factory(factory_config.name, factory_func)
 
     @classmethod
     def reset_for_testing(cls) -> None:
@@ -182,11 +178,6 @@ class FlextContainer(p.ContainerLifecycle):
         self.register_core_services()
 
     @override
-    def configure(self, settings: t.UserOverridesMapping | None = None) -> Self:
-        """Configure the container with flat validated overrides."""
-        return self.apply(settings)
-
-    @override
     def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
         """Apply user-provided overrides to container configuration."""
         if settings is None:
@@ -196,12 +187,9 @@ class FlextContainer(p.ContainerLifecycle):
             k: FlextRuntime.normalize_to_container(v) for k, v in settings.items()
         })
         self._user_overrides = merged
-        if applicable := {
-            k: v for k, v in merged.items() if k in m.ContainerConfig.model_fields
-        }:
-            self._global_config = self._global_config.model_copy(
-                update=applicable, deep=True
-            )
+        self._global_config = self._global_config.model_copy(
+            update=dict(merged), deep=True
+        )
         self.sync_config_to_di()
         return self
 
@@ -372,22 +360,11 @@ class FlextContainer(p.ContainerLifecycle):
     @override
     def bind(self, name: str, impl: t.RegisterableService) -> Self:
         """Bind a concrete service instance or value."""
-        if not name:
-            return self
-        if self.has(name):
+        if not name or self.has(name):
             return self
         self._internal_registrations.discard(name)
-        self._services[name] = m.ServiceRegistration(
-            name=name,
-            service=impl,
-            service_type=u.type_name(impl),
-        )
-        for di_ns in (self._di_services, self._di_resources):
-            if hasattr(di_ns, name):
-                delattr(di_ns, name)
         try:
-            u.DependencyIntegration.register_object(self._di_services, name, impl)
-            setattr(self._di_bridge, name, getattr(self._di_services, name))
+            self._update_registered_object_service(name, impl)
         except c.EXC_ATTR_RUNTIME_TYPE:
             del self._services[name]
         return self

@@ -22,11 +22,11 @@ class FlextProtocolsSettings:
     class Configurable(p.Base, Protocol):
         """Protocol for component configuration."""
 
-        def configure(
+        def apply(
             self,
             settings: t.UserOverridesMapping | None = None,
         ) -> Self:
-            """Configure component with settings."""
+            """Apply configuration overrides."""
             ...
 
     @runtime_checkable

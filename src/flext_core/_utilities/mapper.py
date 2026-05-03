@@ -126,11 +126,9 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         def _pipeline() -> dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue]:
             step: dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue] = dict(coerced)
             if normalize:
-                normalized = FlextRuntime.normalize_to_metadata(
-                    dict(step),
-                )
+                normalized = FlextRuntime.normalize_to_metadata(step)
                 if FlextUtilitiesGuardsTypeCore.mapping(normalized):
-                    step = dict(normalized)
+                    step = normalized
             if map_keys:
                 step = {map_keys.get(k, k): v for k, v in step.items()}
             if filter_keys:
