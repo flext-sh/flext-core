@@ -1,0 +1,20 @@
+src/flext_core/_utilities/mapper.py
+  h_9db9d35f50cf33 129,131
+tests/unit/_utilities/test_mapper.py
+  h_9db9d35f50cf33 18-28
+src/flext_core/_utilities/context_state.py
+  h_9db9d35f50cf33 110-111
+tests/unit/test_context.py
+  h_9db9d35f50cf33 43-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "e34f12a452ea72b5685defcb85fa33515e213eee",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
