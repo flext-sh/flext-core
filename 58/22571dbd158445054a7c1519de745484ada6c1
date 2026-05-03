@@ -1,0 +1,14 @@
+tests/unit/test_settings.py
+  h_9db9d35f50cf33 54-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "5822571dbd158445054a7c1519de745484ada6c1",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
