@@ -108,43 +108,49 @@ class FlextUtilitiesGuards(
         check_val: t.Numeric,
     ) -> bool:
         """Apply equality/membership/numeric op dicts against guard_spec."""
+        result = True
         for op_name, check_fn in FlextUtilitiesGuards._EQUALITY_OPS.items():
             spec_val = getattr(guard_spec, op_name, None)
             if spec_val is not None and not check_fn(value, spec_val):
-                return False
-        for mem_op, mem_fn in FlextUtilitiesGuards._MEMBERSHIP_OPS.items():
-            mem_raw = getattr(guard_spec, mem_op, None)
-            if mem_raw is not None and not mem_fn(
-                value,
-                t.json_list_adapter().validate_python(mem_raw),
-            ):
-                return False
-        for op_name, num_fn in FlextUtilitiesGuards._NUMERIC_OPS.items():
-            spec_val_num: float | str | None = getattr(guard_spec, op_name, None)
-            if spec_val_num is None:
-                continue
-            if isinstance(spec_val_num, str) and isinstance(value, str):
-                str_fn = FlextUtilitiesGuards._STRING_OPS[op_name]
-                if not str_fn(value, spec_val_num):
-                    return False
-                continue
-            if isinstance(spec_val_num, (int, float)) and not num_fn(
-                check_val, spec_val_num
-            ):
-                return False
-        if isinstance(value, str):
-            return FlextUtilitiesGuards._check_string_ops(value, guard_spec)
-
-        match guard_spec.contains:
-            case None:
-                return True
-            case contains_value:
-                if not FlextUtilitiesGuardsTypeCore.container(value):
-                    return False
-                return FlextUtilitiesGuards._check_iterable_contains(
+                result = False
+                break
+        if result:
+            for mem_op, mem_fn in FlextUtilitiesGuards._MEMBERSHIP_OPS.items():
+                mem_raw = getattr(guard_spec, mem_op, None)
+                if mem_raw is not None and not mem_fn(
                     value,
-                    contains_value,
-                )
+                    t.json_list_adapter().validate_python(mem_raw),
+                ):
+                    result = False
+                    break
+        if result:
+            for op_name, num_fn in FlextUtilitiesGuards._NUMERIC_OPS.items():
+                spec_val_num: float | str | None = getattr(guard_spec, op_name, None)
+                if spec_val_num is None:
+                    continue
+                if isinstance(spec_val_num, str) and isinstance(value, str):
+                    str_fn = FlextUtilitiesGuards._STRING_OPS[op_name]
+                    if not str_fn(value, spec_val_num):
+                        result = False
+                        break
+                    continue
+                if isinstance(spec_val_num, (int, float)) and not num_fn(
+                    check_val, spec_val_num
+                ):
+                    result = False
+                    break
+        if result and isinstance(value, str):
+            result = FlextUtilitiesGuards._check_string_ops(value, guard_spec)
+        if result:
+            match guard_spec.contains:
+                case None:
+                    pass
+                case contains_value:
+                    result = FlextUtilitiesGuardsTypeCore.container(value) and FlextUtilitiesGuards._check_iterable_contains(
+                        value,
+                        contains_value,
+                    )
+        return result
 
     @staticmethod
     def chk(
@@ -160,20 +166,16 @@ class FlextUtilitiesGuards(
                 criteria,
             )
             guard_spec = guard_spec.model_copy(update=criteria_spec.model_dump())
-        if guard_spec.none is True and value is not None:
-            return False
-        if guard_spec.none is False and value is None:
-            return False
-        if guard_spec.is_ is not None and not isinstance(value, guard_spec.is_):
-            return False
-        if guard_spec.not_ is not None and isinstance(value, guard_spec.not_):
-            return False
         check_val = FlextUtilitiesGuards._resolve_numeric(value)
-        if not FlextUtilitiesGuards._check_spec_ops(value, guard_spec, check_val):
-            return False
-        if guard_spec.empty is True and check_val != 0:
-            return False
-        return not (guard_spec.empty is False and check_val == 0)
+        return not (
+            (guard_spec.none is True and value is not None)
+            or (guard_spec.none is False and value is None)
+            or (guard_spec.is_ is not None and not isinstance(value, guard_spec.is_))
+            or (guard_spec.not_ is not None and isinstance(value, guard_spec.not_))
+            or not FlextUtilitiesGuards._check_spec_ops(value, guard_spec, check_val)
+            or (guard_spec.empty is True and check_val != 0)
+            or (guard_spec.empty is False and check_val == 0)
+        )
 
     @staticmethod
     def _to_container_or_str(value: t.JsonPayload) -> t.JsonValue:

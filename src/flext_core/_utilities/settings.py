@@ -28,6 +28,11 @@ class FlextUtilitiesSettings:
     """Settings utilities for environment resolution and DI registration."""
 
     @staticmethod
+    def resolve_process_environment() -> dict[str, str]:
+        """Resolve the inherited process environment as a plain string mapping."""
+        return dict(os.environ)
+
+    @staticmethod
     def resolve_env_file() -> str:
         """Resolve .env file path from FLEXT_ENV_FILE env var."""
         custom_env_file = os.environ.get(c.ENV_FILE_ENV_VAR)
