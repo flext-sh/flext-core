@@ -48,19 +48,6 @@ class FlextConstantsCqrs:
         HISTOGRAM = "histogram"
         SUMMARY = "summary"
 
-    @unique
-    class ServiceMetricCategory(StrEnum):
-        """Service metric categories enumeration.
-
-        DRY Pattern:
-            StrEnum is the single source of truth. Use ServiceMetricCategory.PERFORMANCE.value
-            or ServiceMetricCategory.PERFORMANCE directly - no base strings needed.
-        """
-
-        PERFORMANCE = "performance"
-        ERRORS = "errors"
-        THROUGHPUT = "throughput"
-
     DEFAULT_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
 
     @unique
@@ -71,22 +58,6 @@ class FlextConstantsCqrs:
         STREAM = "stream"
         PARALLEL = "parallel"
         SEQUENTIAL = "sequential"
-
-    @unique
-    class ProcessingPhase(StrEnum):
-        """CQRS processing phases enumeration."""
-
-        PREPARE = "prepare"
-        EXECUTE = "execute"
-        VALIDATE = "validate"
-        COMPLETE = "complete"
-
-    @unique
-    class BindType(StrEnum):
-        """CQRS binding types enumeration."""
-
-        TEMPORARY = "temporary"
-        PERMANENT = "permanent"
 
     @unique
     class MergeStrategy(StrEnum):
@@ -101,14 +72,6 @@ class FlextConstantsCqrs:
         FILTER_NONE = "filter_none"
         FILTER_EMPTY = "filter_empty"
         FILTER_BOTH = "filter_both"
-
-    @unique
-    class TokenType(StrEnum):
-        """CQRS token types enumeration."""
-
-        BEARER = "bearer"
-        API_KEY = "api_key"
-        JWT = "jwt"
 
     @unique
     class Aggregation(StrEnum):
@@ -136,22 +99,6 @@ class FlextConstantsCqrs:
         LIST = "list"
 
     @unique
-    class PersistenceLevel(StrEnum):
-        """CQRS persistence levels enumeration."""
-
-        MEMORY = "memory"
-        DISK = "disk"
-        DISTRIBUTED = "distributed"
-
-    @unique
-    class TargetFormat(StrEnum):
-        """CQRS target formats enumeration."""
-
-        FULL = "full"
-        COMPACT = "compact"
-        MINIMAL = "minimal"
-
-    @unique
     class WarningLevel(StrEnum):
         """CQRS warning levels enumeration.
 
@@ -165,18 +112,6 @@ class FlextConstantsCqrs:
         ERROR = "error"
 
     @unique
-    class OutputFormat(StrEnum):
-        """CQRS output formats enumeration.
-
-        DRY Pattern:
-            StrEnum is the single source of truth. Use OutputFormat.DICT.value
-            or OutputFormat.DICT directly - no base strings needed.
-        """
-
-        DICT = "dict"
-        JSON = "json"
-
-    @unique
     class Mode(StrEnum):
         """CQRS operation modes enumeration.
 
@@ -187,15 +122,3 @@ class FlextConstantsCqrs:
 
         VALIDATION = "validation"
         SERIALIZATION = "serialization"
-
-    @unique
-    class RegistrationStatus(StrEnum):
-        """CQRS registration status enumeration.
-
-        DRY Pattern:
-            Values match Cqrs.CommonStatus. These StrEnum values are the
-            single source of truth.
-        """
-
-        ACTIVE = "active"
-        INACTIVE = "inactive"

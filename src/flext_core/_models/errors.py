@@ -19,59 +19,6 @@ from flext_core import (
 class FlextModelsErrors:
     """Canonical Pydantic models for structured errors and error metrics."""
 
-    class StructuredErrorSnapshot(m.StrictModel):
-        """Validated public snapshot for structured error serialization."""
-
-        error_type: Annotated[
-            str,
-            mp.Field(description="Concrete exception type name."),
-        ]
-        message: Annotated[
-            str,
-            mp.Field(description="Human-readable error message."),
-        ]
-        error_code: Annotated[
-            str,
-            mp.Field(description="Canonical structured error code."),
-        ]
-        error_domain: Annotated[
-            str | None,
-            mp.Field(description="Canonical routing domain for the error."),
-        ] = None
-        correlation_id: Annotated[
-            str | None,
-            mp.Field(description="Correlation identifier propagated with the error."),
-        ] = None
-        timestamp: Annotated[
-            t.Numeric,
-            mp.Field(description="Unix timestamp when the error instance was created."),
-        ]
-        attributes: Annotated[
-            t.MutableJsonMapping,
-            mp.Field(
-                default_factory=dict,
-                description="Flattenable metadata attributes exposed publicly.",
-            ),
-        ]
-
-        @up.computed_field()
-        @property
-        def error_message(self) -> str:
-            """Public alias expected by structured error consumers."""
-            return self.message
-
-        def to_payload(self) -> t.JsonMapping:
-            """Flatten the snapshot into the public payload shape."""
-            payload: dict[str, t.JsonValue] = {
-                k: v
-                for k, v in self.model_dump(exclude={"attributes"}).items()
-                if isinstance(v, (str, int, float, bool))
-            }
-            for key, value in self.attributes.items():
-                if key not in payload and isinstance(value, (str, int, float, bool)):
-                    payload[key] = value
-            return payload
-
     class ExceptionMetricsSnapshot(m.StrictModel):
         """Validated public snapshot for exception metric exports."""
 

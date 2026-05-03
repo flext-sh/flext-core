@@ -82,26 +82,6 @@ class FlextTypingBase:
     type MutableHeaderMapping = MutableMapping[str, int | str]
     type MutableConfigValueMapping = MutableMapping[str, str | int | float]
 
-    class ContainerMappingBase(Mapping[str, tp.JsonValue]):
-        """Concrete base for JsonMapping inheritance.
-
-        PEP 695 ``type X = ...`` aliases cannot be subclassed (CPython limitation).
-        Use ``t.*Base`` classes when inheriting, ``t.*`` aliases for annotations.
-        """
-
-    class ContainerListBase(Sequence[tp.JsonValue]):
-        """Concrete base for JsonList inheritance."""
-
-    class MutableContainerMappingBase(
-        MutableMapping[str, tp.JsonValue],
-    ):
-        """Concrete base for MutableMapping[str, tp.JsonValue] inheritance."""
-
-    class MutableContainerListBase(
-        MutableSequence[tp.JsonValue],
-    ):
-        """Concrete base for MutableSequenceOf[tp.JsonValue] inheritance."""
-
     PRIMITIVES_TYPES: tuple[type[str], type[int], type[float], type[bool]] = (
         str,
         int,

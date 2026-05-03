@@ -31,32 +31,6 @@ from flext_core import (
 class FlextModelsHandler:
     """Handler state namespace."""
 
-    class RegistrationResult(m.ArbitraryTypesModel):
-        """Result of a handler registration operation."""
-
-        handler_name: Annotated[
-            t.NonEmptyStr,
-            mp.Field(description="Name of the handler"),
-        ]
-        status: Annotated[
-            t.NonEmptyStr,
-            mp.Field(
-                description="Registration status (registered, skipped, failed)",
-            ),
-        ]
-        mode: Annotated[
-            t.NonEmptyStr,
-            mp.Field(description="Registration mode (auto_discovery, explicit)"),
-        ]
-        handler_mode: Annotated[
-            c.HandlerType | None,
-            mp.Field(None, description="Handler mode (command/query/event)"),
-        ] = None
-        message_type: Annotated[
-            str | None,
-            mp.Field(None, description="Message type bound (for explicit mode)"),
-        ] = None
-
     class RegistrationDetails(m.ArbitraryTypesModel):
         """Registration details tracked by ``FlextRegistry``."""
 

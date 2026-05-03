@@ -286,13 +286,6 @@ class FlextModelsEnforcement:
         forbid_redundant_inner: bool = False
         require_explicit_class_when_self_ref: bool = False
 
-    class EnforcementRuleTarget(_EnforcementSourceBase):
-        """Single dispatch target passed to apply()."""
-
-        file_path: str = ""
-        module_qualname: str = ""
-        owning_project: str = ""
-
     class EnforcementRuleSpec(_EnforcementSourceBase):
         """Single rule entry in the enforcement catalog."""
 

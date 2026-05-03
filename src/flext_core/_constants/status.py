@@ -44,25 +44,6 @@ class FlextConstantsStatus:
         APPLY_UPDATE = "apply context update"
 
     @unique
-    class Currency(StrEnum):
-        """Currency enumeration for monetary operations."""
-
-        USD = "USD"
-        EUR = "EUR"
-        GBP = "GBP"
-        BRL = "BRL"
-
-    @unique
-    class OrderStatus(StrEnum):
-        """Order status enumeration for order lifecycle."""
-
-        PENDING = "pending"
-        CONFIRMED = "confirmed"
-        SHIPPED = "shipped"
-        DELIVERED = "delivered"
-        CANCELLED = "cancelled"
-
-    @unique
     class Status(StrEnum):
         """Unified lifecycle + operation status values."""
 

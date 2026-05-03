@@ -14,24 +14,6 @@ class FlextConstantsSerialization:
     """SSOT for serialization format, compression, and encoding constants."""
 
     @unique
-    class SerializationFormat(StrEnum):
-        """Serialization format identifiers."""
-
-        JSON = "json"
-        YAML = "yaml"
-        TOML = "toml"
-        MSGPACK = "msgpack"
-
-    @unique
-    class Compression(StrEnum):
-        """Compression algorithm identifiers."""
-
-        NONE = "none"
-        GZIP = "gzip"
-        BZIP2 = "bzip2"
-        LZ4 = "lz4"
-
-    @unique
     class DecodeErrorHandler(StrEnum):
         """Python bytes.decode error-handler identifiers (SSOT for ``errors=`` param)."""
 

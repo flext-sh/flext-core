@@ -25,34 +25,6 @@ from flext_core._models._context._data import FlextModelsContextData
 class FlextModelsContextScope:
     """Namespace for context scope and statistics models."""
 
-    class ContextScopeData(FlextModelsBase.ArbitraryTypesModel):
-        """Scope-specific data container for context management."""
-
-        scope_name: Annotated[
-            t.NonEmptyStr,
-            FlextUtilitiesPydantic.Field(description="Name of the scope"),
-        ] = c.ContextScope.GLOBAL
-        scope_type: Annotated[
-            str,
-            FlextUtilitiesPydantic.Field(
-                default="", description="Type/category of scope"
-            ),
-        ] = ""
-        data: Annotated[
-            t.MappingKV[str, t.JsonPayload],
-            FlextModelsPydantic.BeforeValidator(
-                lambda v: FlextModelsContextData.normalize_to_mapping(v)
-            ),
-            FlextUtilitiesPydantic.Field(description="Scope data"),
-        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
-        metadata: Annotated[
-            t.JsonMapping,
-            FlextModelsPydantic.BeforeValidator(
-                lambda v: FlextModelsContextData.normalize_to_mapping(v)
-            ),
-            FlextUtilitiesPydantic.Field(description="Scope metadata"),
-        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
-
     class ContextStatistics(FlextModelsBase.ArbitraryTypesModel):
         """Statistics tracking for context operations.
 

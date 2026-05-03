@@ -91,7 +91,6 @@ if _t.TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase
     from flext_core._typings.containers import FlextTypingContainers
     from flext_core._typings.core import FlextTypesCore
-    from flext_core._typings.lazy import FlextTypingLazy
     from flext_core._typings.project_metadata import FlextTypingProjectMetadata
     from flext_core._typings.pydantic import FlextTypesPydantic
     from flext_core._typings.services import FlextTypesServices
@@ -132,7 +131,6 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.context_crud import FlextUtilitiesContextCrud
     from flext_core._utilities.context_lifecycle import FlextUtilitiesContextLifecycle
     from flext_core._utilities.context_state import FlextUtilitiesContextState
-    from flext_core._utilities.context_tracing import FlextUtilitiesContextTracing
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
     from flext_core._utilities.dispatcher_execute import execute_dispatcher_handler
@@ -288,7 +286,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._typings.base": ("FlextTypingBase",),
             "._typings.containers": ("FlextTypingContainers",),
             "._typings.core": ("FlextTypesCore",),
-            "._typings.lazy": ("FlextTypingLazy",),
             "._typings.project_metadata": ("FlextTypingProjectMetadata",),
             "._typings.pydantic": ("FlextTypesPydantic",),
             "._typings.services": ("FlextTypesServices",),
@@ -332,7 +329,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._utilities.context_crud": ("FlextUtilitiesContextCrud",),
             "._utilities.context_lifecycle": ("FlextUtilitiesContextLifecycle",),
             "._utilities.context_state": ("FlextUtilitiesContextState",),
-            "._utilities.context_tracing": ("FlextUtilitiesContextTracing",),
             "._utilities.conversion": ("FlextUtilitiesConversion",),
             "._utilities.discovery": ("FlextUtilitiesDiscovery",),
             "._utilities.dispatcher_execute": ("execute_dispatcher_handler",),
@@ -539,7 +535,6 @@ __all__: list[str] = [
     "FlextTypesTypeAdapters",
     "FlextTypingBase",
     "FlextTypingContainers",
-    "FlextTypingLazy",
     "FlextTypingProjectMetadata",
     "FlextUtilities",
     "FlextUtilitiesArgs",
@@ -562,7 +557,6 @@ __all__: list[str] = [
     "FlextUtilitiesContextCrud",
     "FlextUtilitiesContextLifecycle",
     "FlextUtilitiesContextState",
-    "FlextUtilitiesContextTracing",
     "FlextUtilitiesConversion",
     "FlextUtilitiesDiscovery",
     "FlextUtilitiesDomain",

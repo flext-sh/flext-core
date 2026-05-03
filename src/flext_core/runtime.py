@@ -189,11 +189,18 @@ class FlextRuntime:
                 )
                 for key, item in value.items()
             }
+        if not hasattr(value, "model_dump"):
+            msg = "attributes must be dict-like"
+            raise TypeError(msg)
+        dumped = value.model_dump()
+        if not isinstance(dumped, Mapping):
+            msg = "attributes must be dict-like"
+            raise TypeError(msg)
         return {
             key: (
                 None if item is None else t.json_value_adapter().validate_python(item)
             )
-            for key, item in value.model_dump().items()
+            for key, item in dumped.items()
         }
 
     @staticmethod

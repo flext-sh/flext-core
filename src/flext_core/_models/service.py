@@ -154,57 +154,5 @@ class FlextModelsService:
             normalized = tuple(item for item in value if isinstance(item, str))
             return normalized if len(normalized) == len(value) else None
 
-    class DependencyContainerCreationOptions(m.ArbitraryTypesModel):
-        """Options used to create and populate dependency container instances."""
-
-        settings: t.MappingKV[str, t.JsonPayload] | None = mp.Field(
-            None,
-            title="Configuration",
-            description="Optional configuration mapping bound to dependency container providers.",
-            validate_default=True,
-        )
-        services: t.MappingKV[str, t.RegisterableService] | None = mp.Field(
-            None,
-            title="Services",
-            description="Object providers registered before optional wiring.",
-            validate_default=True,
-        )
-        factories: t.MappingKV[str, t.FactoryCallable] | None = mp.Field(
-            None,
-            title="Factories",
-            description="Factory providers registered with singleton/factory semantics.",
-            validate_default=True,
-        )
-        resources: t.MappingKV[str, t.ResourceCallable] | None = mp.Field(
-            None,
-            title="Resources",
-            description="Lifecycle resource providers registered before wiring.",
-            validate_default=True,
-        )
-        wire_modules: t.SequenceOf[ModuleType] | None = mp.Field(
-            None,
-            title="Wire Modules",
-            description="Modules wired for dependency-injector @inject resolution.",
-            validate_default=True,
-        )
-        wire_packages: t.StrSequence | None = mp.Field(
-            None,
-            title="Wire Packages",
-            description="Package names considered for dependency wiring.",
-            validate_default=True,
-        )
-        wire_classes: t.SequenceOf[type] | None = mp.Field(
-            None,
-            title="Wire Classes",
-            description="Classes whose modules are wired for dependency resolution.",
-            validate_default=True,
-        )
-        factory_cache: bool = mp.Field(
-            True,
-            title="Factory Cache",
-            description="Whether registered factories use singleton caching semantics.",
-            validate_default=True,
-        )
-
 
 __all__: t.MutableSequenceOf[str] = ["FlextModelsService"]

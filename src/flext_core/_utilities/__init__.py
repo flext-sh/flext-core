@@ -38,7 +38,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".context_crud": ("FlextUtilitiesContextCrud",),
             ".context_lifecycle": ("FlextUtilitiesContextLifecycle",),
             ".context_state": ("FlextUtilitiesContextState",),
-            ".context_tracing": ("FlextUtilitiesContextTracing",),
             ".conversion": ("FlextUtilitiesConversion",),
             ".discovery": ("FlextUtilitiesDiscovery",),
             ".dispatcher_execute": ("execute_dispatcher_handler",),

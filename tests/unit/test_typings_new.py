@@ -132,20 +132,6 @@ class TestsFlextTypesUnit:
         tm.that(dict in t.CONTAINER_AND_COLLECTION_TYPES, eq=True)
         tm.that(tuple in t.CONTAINER_AND_COLLECTION_TYPES, eq=True)
 
-    # -- Container base classes --
-
-    CONTAINER_BASE_NAMES: t.VariadicTuple[str] = (
-        "ContainerMappingBase",
-        "ContainerListBase",
-        "MutableContainerMappingBase",
-        "MutableContainerListBase",
-    )
-
-    @pytest.mark.parametrize("base_name", CONTAINER_BASE_NAMES)
-    def test_container_base_accessible(self, base_name: str) -> None:
-        """Container base classes are accessible for subclassing."""
-        tm.that(hasattr(t, base_name), eq=True)
-
     # -- Flat mapping aliases --
 
     FLAT_ALIAS_NAMES: t.VariadicTuple[str] = (
