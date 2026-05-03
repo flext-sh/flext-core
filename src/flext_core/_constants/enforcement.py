@@ -221,6 +221,17 @@ class FlextConstantsEnforcement:
     )
     """Class name suffix → layer name mapping for cross-layer detection."""
 
+    NAMESPACE_CLASS_TO_MODULE_OVERRIDES: Final[Mapping[str, str]] = MappingProxyType({})
+    """Class-name → owning-package overrides for facade-layer classes that
+    do not follow the ``Flext<Project><Layer><Concern>`` convention.
+
+    Consumed by ``FlextUtilitiesEnforcement.class_name_to_module`` for both
+    detection (rules that flag a wrong import path) and correction (refactor
+    verbs that emit the right ``from <module> import <Class>`` line). Keep
+    this empty until a real exception is encountered — adding an entry is a
+    declaration that the workspace genuinely deviates from the convention,
+    and that deviation must be justified at the call site that needs it."""
+
     ENFORCEMENT_LAYER_ALLOWS: Final[Mapping[str, frozenset[str]]] = MappingProxyType({
         "constants": frozenset({"StrEnum"}),
         "models": frozenset(),

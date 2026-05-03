@@ -111,7 +111,7 @@ class FlextConstantsErrors:
     )
     ERR_UNEXPECTED_MESSAGE_TYPE: Final[str] = "Unexpected message type"
     ERR_SERVICE_TYPE_MISMATCH: Final[str] = "Service is not of type {type_name}"
-    ERR_SERVICE_NOT_FOUND: Final[str] = "Service '{name}' not found"
+    ERR_SERVICE_NOT_FOUND: Final[str] = "{resource_type} '{name}' not found"
     ERR_RESOURCE_UNSUPPORTED_RUNTIME_TYPE: Final[str] = (
         "Resource '{name}' returned unsupported runtime type"
     )

@@ -162,6 +162,7 @@ class FlextExceptionsFactories:
         msg = FlextExceptionsTemplate.render_template(
             c.ERR_SERVICE_NOT_FOUND,
             name=resource_id,
+            resource_type=resource_type.capitalize(),
             params=params,
         )
         return FlextExceptionsFactories._fail_result(
