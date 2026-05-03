@@ -33,7 +33,6 @@ if _t.TYPE_CHECKING:
     from examples.constants import c
     from examples.ex_01_flext_result import Ex01r
     from examples.ex_02_flext_settings import Ex02FlextSettings
-    from examples.ex_03_flext_logger import Ex03LoggingDsl
     from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
     from examples.ex_05_flext_mixins import Ex05FlextMixins
     from examples.ex_06_flext_context import Ex06FlextContext
@@ -41,7 +40,7 @@ if _t.TYPE_CHECKING:
     from examples.ex_08_flext_container import Ex08FlextContainer
     from examples.ex_09_flext_decorators import Ex09FlextDecorators
     from examples.ex_10_flext_handlers import Ex10FlextHandlers
-    from examples.ex_11_flext_service import Ex11FlextService, ExampleService
+    from examples.ex_11_flext_service import ExampleService
     from examples.ex_12_flext_registry import Ex12RegistryDsl
     from examples.logging_config_once_pattern import (
         ExamplesFlextDatabaseService,
@@ -79,7 +78,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".constants": ("c",),
             ".ex_01_flext_result": ("Ex01r",),
             ".ex_02_flext_settings": ("Ex02FlextSettings",),
-            ".ex_03_flext_logger": ("Ex03LoggingDsl",),
             ".ex_04_flext_dispatcher": ("Ex04DispatchDsl",),
             ".ex_05_flext_mixins": ("Ex05FlextMixins",),
             ".ex_06_flext_context": ("Ex06FlextContext",),
@@ -88,7 +86,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".ex_09_flext_decorators": ("Ex09FlextDecorators",),
             ".ex_10_flext_handlers": ("Ex10FlextHandlers",),
             ".ex_11_flext_service": (
-                "Ex11FlextService",
                 "ExampleService",
             ),
             ".ex_12_flext_registry": ("Ex12RegistryDsl",),
@@ -146,7 +143,6 @@ install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 __all__: list[str] = [
     "Ex01r",
     "Ex02FlextSettings",
-    "Ex03LoggingDsl",
     "Ex04DispatchDsl",
     "Ex05FlextMixins",
     "Ex06FlextContext",
@@ -154,7 +150,6 @@ __all__: list[str] = [
     "Ex08FlextContainer",
     "Ex09FlextDecorators",
     "Ex10FlextHandlers",
-    "Ex11FlextService",
     "Ex12RegistryDsl",
     "ExampleService",
     "ExamplesFlextDatabaseService",

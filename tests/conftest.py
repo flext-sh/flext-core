@@ -46,12 +46,6 @@ def mock_external_service() -> u.Tests.FunctionalExternalService:
 
 
 @pytest.fixture
-def temp_directory(tmp_path: Path) -> Path:
-    """Provide temporary directory path for integration tests."""
-    return tmp_path
-
-
-@pytest.fixture
 def temp_file(temp_dir: Path) -> Path:
     """Temporary file fixture available to all FLEXT projects."""
     return temp_dir / "test_file.txt"
@@ -99,20 +93,6 @@ def valid_uris() -> t.StrSequence:
 
 
 @pytest.fixture
-def invalid_uris() -> t.StrSequence:
-    """Invalid URIs for UriString validation."""
-    return [
-        "",
-        "   ",
-        "localhost",
-        "example.com",
-        "://example.com",
-        "http://",
-        "http://:8080",
-    ]
-
-
-@pytest.fixture
 def valid_hostnames() -> t.StrSequence:
     """Valid hostnames for HostnameStr validation."""
     return [
@@ -144,38 +124,9 @@ def invalid_hostnames() -> t.StrSequence:
 
 
 @pytest.fixture
-def valid_strings() -> t.StrSequence:
-    """Valid non-empty strings for string validation."""
-    return [
-        "a",
-        "hello",
-        "Hello World",
-        "test-value",
-        "test_value",
-        "test.value",
-        "123",
-        "value with spaces",
-        "UPPERCASE",
-        "MixedCase",
-    ]
-
-
-@pytest.fixture
 def whitespace_strings() -> t.StrSequence:
     """Whitespace-only strings for validation."""
     return [" ", "   ", "\t", "\n", "  \t  "]
-
-
-@pytest.fixture
-def valid_ranges() -> t.SequenceOf[tuple[int, int, int]]:
-    """Valid numeric ranges (value, min, max) for range validation."""
-    return [
-        (5, 0, 10),
-        (0, 0, 10),
-        (10, 0, 10),
-        (100, 50, 150),
-        (-5, -10, 0),
-    ]
 
 
 @pytest.fixture

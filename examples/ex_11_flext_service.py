@@ -17,15 +17,6 @@ class ExampleService:
             raise RuntimeError(msg)
 
 
-class Ex11FlextService:
-    """Compatibility wrapper for lazy-exported example symbol."""
-
-    @staticmethod
-    def run() -> None:
-        """Execute the service example compatibility entrypoint."""
-        ExampleService.run()
-
-
 if __name__ == "__main__":
     ExampleService.run()
     print("PASS: ex_11_flext_service")

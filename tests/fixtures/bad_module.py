@@ -27,10 +27,6 @@ class TestsFlextBadAnyField(FlextModels.ArbitraryTypesModel):
     data: Annotated[typing.Any, u.Field(description="Intentionally Any.")] = None
 
 
-class TestsFlextBadBareCollection(FlextModels.ArbitraryTypesModel):
-    """Violates ``no_bare_collection`` — raw ``list[str]`` annotation."""
-
-    items: list[str] = u.Field(default_factory=list, description="Bare list.")
 
 
 class TestsFlextBadMutableDefault(FlextModels.ArbitraryTypesModel):
