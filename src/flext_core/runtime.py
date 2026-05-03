@@ -155,15 +155,19 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_model_input_mapping(
-        value: BaseModel | mc.Dict | t.ScalarMapping | None,
+        value: p.HasModelDump | mc.Dict | t.ScalarMapping | None,
     ) -> t.MappingKV[str, t.JsonPayload] | None:
         """Normalize model-like input to a plain mapping."""
         if value is None:
             return None
         if isinstance(value, mc.Dict):
             raw_mapping: t.MappingKV[str, t.JsonPayload | t.Scalar] = value.root
-        elif isinstance(value, BaseModel):
-            raw_mapping = value.model_dump()
+        elif ugm.has_model_dump(value):
+            dumped_mapping = value.model_dump()
+            if not isinstance(dumped_mapping, Mapping):
+                msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
+                raise TypeError(msg)
+            raw_mapping = dumped_mapping
         else:
             raw_mapping = value
         return FlextRuntime._normalize_dict_entries(
@@ -185,11 +189,11 @@ class FlextRuntime:
         if isinstance(value, Mapping):
             raw: t.MappingKV[str, t.JsonPayload | None] = value
         else:
-            try:
-                raw = dict(value.model_dump())
-            except c.EXC_TYPE_VALIDATION as exc:
+            raw_dump = value.model_dump()
+            if not isinstance(raw_dump, Mapping):
                 msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
-                raise TypeError(msg) from exc
+                raise TypeError(msg)
+            raw = raw_dump
         return {
             key: (None if item is None else FlextRuntime.normalize_to_json_value(item))
             for key, item in raw.items()
@@ -208,7 +212,7 @@ class FlextRuntime:
         """
         if value is None:
             return {}
-        if not isinstance(value, (BaseModel, Mapping)):
+        if not (isinstance(value, Mapping) or ugm.has_model_dump(value)):
             msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
             raise TypeError(msg)
         normalized_result = FlextRuntime.normalize_metadata_input_mapping(value)
@@ -242,14 +246,22 @@ class FlextRuntime:
             raise TypeError(msg)
         if isinstance(value, metadata_model):
             return value
-        if not isinstance(value, Mapping):
+        if isinstance(value, Mapping):
+            raw_mapping = value
+        elif ugm.has_model_dump(value):
+            raw_dump = value.model_dump()
+            if not isinstance(raw_dump, Mapping):
+                msg = c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE
+                raise TypeError(msg)
+            raw_mapping = raw_dump
+        else:
             msg = (
                 "metadata must be None, dict, or "
                 f"{metadata_model.__name__}, got {value.__class__.__name__}"
             )
             raise TypeError(msg)
         validated_model = metadata_model.model_validate({
-            c.FIELD_ATTRIBUTES: dict(value),
+            c.FIELD_ATTRIBUTES: dict(raw_mapping),
         })
         if isinstance(validated_model, metadata_model):
             return validated_model
