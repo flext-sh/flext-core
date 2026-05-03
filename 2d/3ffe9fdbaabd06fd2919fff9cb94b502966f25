@@ -1,0 +1,32 @@
+src/flext_core/_models/project_metadata.py
+  h_9db9d35f50cf33 32,188-197
+examples/ex_07_flext_exceptions.py
+  h_9db9d35f50cf33 60-61
+tests/unit/test_result.py
+  h_9db9d35f50cf33 609-622,944-971
+src/flext_core/_protocols/result.py
+  h_9db9d35f50cf33 473-474
+src/flext_core/runtime.py
+  h_9db9d35f50cf33 121,123,125,127,129-132,145,169-176,182,186-189,191,203,231
+src/flext_core/_typings/services.py
+  h_9db9d35f50cf33 98,103,107
+src/flext_core/_utilities/domain.py
+  h_9db9d35f50cf33 96-103,134-137,143-145
+src/flext_core/container.py
+  h_9db9d35f50cf33 545-547
+tests/unit/test_exceptions.py
+  h_9db9d35f50cf33 497,508,518-525
+src/flext_core/result.py
+  h_9db9d35f50cf33 158,160-162,183,186
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "2d3ffe9fdbaabd06fd2919fff9cb94b502966f25",
+  "prompts": {},
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
