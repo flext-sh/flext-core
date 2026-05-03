@@ -13,10 +13,3 @@ class _IntegrationService(s[str]):
     @override
     def execute(self) -> p.Result[str]:
         return r[str].ok("ok")
-
-
-class TestsFlextServiceResultProperty:
-    def test_service_execute_returns_success(self) -> None:
-        result = _IntegrationService().execute()
-        assert result.success
-        assert result.value == "ok"

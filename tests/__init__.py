@@ -54,9 +54,6 @@ if _t.TYPE_CHECKING:
         TestsFlextMigrationValidation,
     )
     from tests.integration.test_service import TestsFlextServiceIntegration
-    from tests.integration.test_service_result_property import (
-        TestsFlextServiceResultProperty,
-    )
     from tests.integration.test_settings_integration import (
         TestsFlextSettingsIntegration,
     )
@@ -210,9 +207,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextMigrationValidation",
             ),
             ".integration.test_service": ("TestsFlextServiceIntegration",),
-            ".integration.test_service_result_property": (
-                "TestsFlextServiceResultProperty",
-            ),
             ".integration.test_settings_integration": (
                 "TestsFlextSettingsIntegration",
             ),
@@ -442,7 +436,6 @@ __all__: list[str] = [
     "TestsFlextServiceBase",
     "TestsFlextServiceBootstrap",
     "TestsFlextServiceIntegration",
-    "TestsFlextServiceResultProperty",
     "TestsFlextSettings",
     "TestsFlextSettingsIntegration",
     "TestsFlextSystemIntegration",

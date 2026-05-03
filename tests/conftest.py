@@ -9,12 +9,9 @@ from __future__ import annotations
 import io
 import json
 import logging
-import math
 import os
-import tempfile
 import time
 from collections.abc import (
-    Generator,
     Iterator,
     Mapping,
     Sequence,
@@ -43,50 +40,15 @@ def test_context() -> FlextContext:
 
 
 @pytest.fixture
-def clean_container() -> FlextContainer:
-    """Provide a clean FlextContainer instance for testing.
-
-    Creates a container and clears all registered services for testing
-    in isolation regardless of what other tests may have registered.
-    """
-    container = FlextContainer()
-    container.clear()
-    return container
-
-
-@pytest.fixture
 def mock_external_service() -> u.Tests.FunctionalExternalService:
     """Provide mock external service for integration tests."""
     return u.Tests.FunctionalExternalService()
 
 
 @pytest.fixture
-def sample_data() -> dict[
-    str, str | int | float | bool | list[str] | dict[str, str] | None
-]:
-    """Provide sample test data for integration tests."""
-    return {
-        "string": "test_value",
-        "integer": 42,
-        "float": math.pi,
-        "boolean": True,
-        "none": None,
-        "list": ["item1", "item2"],
-        "dict": {"key": "value"},
-    }
-
-
-@pytest.fixture
 def temp_directory(tmp_path: Path) -> Path:
     """Provide temporary directory path for integration tests."""
     return tmp_path
-
-
-@pytest.fixture
-def temp_dir() -> Generator[Path]:
-    """Temporary directory fixture available to all FLEXT projects."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        yield Path(tmp_dir)
 
 
 @pytest.fixture
@@ -199,12 +161,6 @@ def valid_strings() -> t.StrSequence:
 
 
 @pytest.fixture
-def empty_strings() -> t.StrSequence:
-    """Empty strings for validation."""
-    return [""]
-
-
-@pytest.fixture
 def whitespace_strings() -> t.StrSequence:
     """Whitespace-only strings for validation."""
     return [" ", "   ", "\t", "\n", "  \t  "]
@@ -223,26 +179,9 @@ def valid_ranges() -> t.SequenceOf[tuple[int, int, int]]:
 
 
 @pytest.fixture
-def invalid_ranges() -> t.SequenceOf[tuple[int, int, int]]:
-    """Invalid numeric ranges (value, min, max) for range validation."""
-    return [
-        (-1, 0, 10),
-        (11, 0, 10),
-        (200, 50, 150),
-        (-15, -10, 0),
-    ]
-
-
-@pytest.fixture
 def valid_percentages() -> t.SequenceOf[float]:
     """Valid percentages (0.0 to 1.0) for percentage validation."""
     return [0.0, 0.5, 0.99, 1.0]
-
-
-@pytest.fixture
-def invalid_percentages() -> t.SequenceOf[float]:
-    """Invalid percentages for validation."""
-    return [-0.1, 1.1, 2.0, -1.0]
 
 
 class _DocsStub:

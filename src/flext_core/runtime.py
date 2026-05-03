@@ -30,6 +30,7 @@ from typing import (
     ClassVar,
     Literal,
     no_type_check,
+    overload,
 )
 
 from dependency_injector import containers, providers, wiring
@@ -176,6 +177,18 @@ class FlextRuntime:
         return dict(t.json_mapping_adapter().validate_python(value.model_dump()))
 
     @staticmethod
+    @overload
+    def normalize_metadata_input_mapping(
+        value: None,
+    ) -> None: ...
+
+    @staticmethod
+    @overload
+    def normalize_metadata_input_mapping(
+        value: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump,
+    ) -> t.MappingKV[str, t.JsonPayload | None]: ...
+
+    @staticmethod
     def normalize_metadata_input_mapping(
         value: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
     ) -> t.MappingKV[str, t.JsonPayload | None] | None:
@@ -189,13 +202,7 @@ class FlextRuntime:
                 )
                 for key, item in value.items()
             }
-        if not hasattr(value, "model_dump"):
-            msg = "attributes must be dict-like"
-            raise TypeError(msg)
         dumped = value.model_dump()
-        if not isinstance(dumped, Mapping):
-            msg = "attributes must be dict-like"
-            raise TypeError(msg)
         return {
             key: (
                 None if item is None else t.json_value_adapter().validate_python(item)
@@ -211,8 +218,6 @@ class FlextRuntime:
         if value is None:
             return {}
         normalized_result = FlextRuntime.normalize_metadata_input_mapping(value)
-        if normalized_result is None:
-            return {}
         normalized_mapping = normalized_result
         for key in normalized_mapping:
             if key.startswith("_"):
