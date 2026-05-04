@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import ast
 import inspect
 from pathlib import Path
 from typing import TypeAlias
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._constants.regex import FlextConstantsRegex as cre
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities._beartype.helpers import (
@@ -142,32 +142,31 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                     except OSError:
                         source = ""
                     if source:
-                        try:
-                            syntax = ast.parse(source)
-                        except SyntaxError:
-                            syntax = None
-                        if syntax is not None:
-                            violation = next(
-                                (
-                                    {
-                                        "file": wrapper_file_name,
-                                        "line": str(node.lineno),
-                                        "statement": f"from {node.module} import {alias.name}",
-                                    }
-                                    for node in ast.walk(syntax)
-                                    if isinstance(node, ast.ImportFrom)
-                                    and isinstance(node.module, str)
-                                    and node.module.split(".")[0]
-                                    in {
-                                        "tests",
-                                        "examples",
-                                        "scripts",
-                                    }
-                                    and "." in node.module
-                                    for alias in node.names
-                                ),
-                                _NO_VIOLATION,
-                            )
+                        violation = next(
+                            (
+                                {
+                                    "file": wrapper_file_name,
+                                    "line": str(
+                                        source.count("\n", 0, match.start()) + 1
+                                    ),
+                                    "statement": (
+                                        f"from {match.group(1)}.{match.group(2)} "
+                                        f"import {first_alias}"
+                                    ),
+                                }
+                                for match in cre.FORBIDDEN_FACADE_IMPORT_RE.finditer(
+                                    source
+                                )
+                                for first_alias in (
+                                    [
+                                        n.strip()
+                                        for n in match.group(3).split(",")
+                                        if n.strip()
+                                    ][:1]
+                                )
+                            ),
+                            _NO_VIOLATION,
+                        )
                     if violation is _NO_VIOLATION:
                         violation = next(
                             (

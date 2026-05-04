@@ -21,6 +21,7 @@ from types import MappingProxyType
 from typing import ClassVar
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._constants.regex import FlextConstantsRegex as cre
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.base import FlextProtocolsBase as p
@@ -619,7 +620,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             idx = tail.find(layer)
             if idx > 0:
                 project = tail[:idx]
-                snake = c.CAMEL_TO_SNAKE_RE.sub(r"\1_\2", project).lower()
+                snake = cre.CAMEL_TO_SNAKE_RE.sub(r"\1_\2", project).lower()
                 return f"flext_{snake}"
         msg = (
             f"class_name_to_module: {class_name!r} contains no facade "

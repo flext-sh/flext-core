@@ -38,6 +38,10 @@ class FlextConstantsRegex:
     "Pattern for lowercase identifiers with optional hyphens, underscores, and dots (max 64 chars)."
     PATTERN_CAMEL_TO_SNAKE: Final[str] = r"([a-z0-9])([A-Z])"
     "Boundary used to insert underscores when converting camelCase → snake_case."
+    PATTERN_FORBIDDEN_FACADE_IMPORT: Final[str] = (
+        r"^\s*from\s+(tests|examples|scripts)\.([\w.]+)\s+import\s+([\w,\s]+?)\s*$"
+    )
+    "Matches `from <forbidden>.<module> import …` lines (multiline source scan)."
 
     # === Pre-compiled regex authorities (consumers MUST use these) ===
     PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE: ClassVar[re.Pattern[str]] = re.compile(
@@ -54,6 +58,9 @@ class FlextConstantsRegex:
         PATTERN_IDENTIFIER_LOWERCASE
     )
     CAMEL_TO_SNAKE_RE: ClassVar[re.Pattern[str]] = re.compile(PATTERN_CAMEL_TO_SNAKE)
+    FORBIDDEN_FACADE_IMPORT_RE: ClassVar[re.Pattern[str]] = re.compile(
+        PATTERN_FORBIDDEN_FACADE_IMPORT, flags=re.MULTILINE
+    )
 
     @staticmethod
     def compile_pattern(
