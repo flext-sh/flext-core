@@ -10,22 +10,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._typings.annotateds import FlextTypesAnnotateds
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.containers import FlextTypingContainers
-from flext_core._typings.core import FlextTypesCore
-from flext_core._typings.project_metadata import FlextTypingProjectMetadata
-from flext_core._typings.pydantic import FlextTypesPydantic
-from flext_core._typings.services import FlextTypesServices
-from flext_core._typings.typeadapters import FlextTypesTypeAdapters
+from flext_core import (
+    FlextTypesCore,
+    FlextTypesServices,
+    FlextTypesTypeAdapters,
+    FlextTypingBase,
+    FlextTypingContainers,
+    FlextTypingProjectMetadata,
+)
 
 
 class FlextTypes(
     FlextTypingBase,
-    FlextTypesAnnotateds,
     FlextTypingContainers,
     FlextTypesCore,
-    FlextTypesPydantic,
     FlextTypesServices,
     FlextTypesTypeAdapters,
     FlextTypingProjectMetadata,

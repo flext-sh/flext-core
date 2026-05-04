@@ -85,9 +85,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".ex_08_flext_container": ("Ex08FlextContainer",),
             ".ex_09_flext_decorators": ("Ex09FlextDecorators",),
             ".ex_10_flext_handlers": ("Ex10FlextHandlers",),
-            ".ex_11_flext_service": (
-                "ExampleService",
-            ),
+            ".ex_11_flext_service": ("ExampleService",),
             ".ex_12_flext_registry": ("Ex12RegistryDsl",),
             ".logging_config_once_pattern": (
                 "ExamplesFlextDatabaseService",

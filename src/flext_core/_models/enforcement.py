@@ -16,7 +16,8 @@ from typing import Annotated, ClassVar, Literal
 
 from pydantic import Discriminator, Field, model_validator
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core import FlextConstants as c
+from flext_core._constants.enforcement import FlextConstantsEnforcement as ce
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.base import FlextTypingBase as t
 
@@ -140,7 +141,7 @@ class FlextModelsEnforcement:
         """Rule dispatched via predicate kind; params in c._PREDICATE_BINDINGS."""
 
         kind: Literal["beartype"] = "beartype"
-        predicate_kind: c.EnforcementPredicateKind
+        predicate_kind: ce.EnforcementPredicateKind
 
     class EnforcementMinimalAstSource(_EnforcementSourceBase):
         """Rule detected via minimal AST inspection; skips if source unavailable."""
@@ -289,7 +290,7 @@ class FlextModelsEnforcement:
     class EnforcementRuleSpec(_EnforcementSourceBase):
         """Single rule entry in the enforcement catalog."""
 
-        id: Annotated[str, Field(pattern=r"^ENFORCE-\d{3}$")]
+        id: Annotated[str, Field(pattern=c.PATTERN_ENFORCE_RULE_ID)]
         description: str
         severity: FlextModelsEnforcement.EnforcementRuleSeverity
         source: Annotated[

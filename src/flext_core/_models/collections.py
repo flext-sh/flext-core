@@ -12,7 +12,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextModelsBase as m, FlextModelsPydantic as mp, FlextTypes as t
+from flext_core import FlextModelsPydantic as mp, FlextTypes as t
+from flext_core._models.base import FlextModelsBase as m
 
 
 class FlextModelsCollections:
@@ -115,14 +116,6 @@ class FlextModelsCollections:
                 default=None,
                 title="Empty Constraint",
                 description="When True, require empty value; when False, require non-empty.",
-            ),
-        ] = None
-        match: Annotated[
-            str | None,
-            mp.Field(
-                default=None,
-                title="Regex Match",
-                description="Require string value to match this regular expression.",
             ),
         ] = None
         contains: Annotated[

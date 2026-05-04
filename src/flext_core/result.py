@@ -36,14 +36,14 @@ from pydantic import (
 from returns.result import Failure, Result, Success
 
 from flext_core import (
-    FlextConstants as c,
     FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
     FlextProtocolsLogging as pl,
     FlextProtocolsResult as p,
-    FlextTypes as t,
+    FlextRuntime,
+    c,
+    t,
 )
-from flext_core.runtime import FlextRuntime
 
 
 @no_type_check

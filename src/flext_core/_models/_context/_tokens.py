@@ -14,10 +14,10 @@ from typing import Annotated
 
 from flext_core import (
     FlextConstants as c,
-    FlextModelsEntity,
     FlextTypes as t,
     FlextUtilitiesPydantic,
 )
+from flext_core._models.entity import FlextModelsEntity
 
 
 class FlextModelsContextTokens:

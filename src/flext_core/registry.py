@@ -19,17 +19,7 @@ from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import PrivateAttr
 
-from flext_core import (
-    FlextConstants as c,
-    FlextExceptions as e,
-    FlextHandlers as h,
-    FlextModels as m,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextService as s,
-    FlextTypes as t,
-    FlextUtilities as u,
-)
+from flext_core import c, e, h, m, p, r, s, t, u
 
 
 class FlextRegistry(s[bool]):

@@ -12,14 +12,14 @@ from collections.abc import (
 from typing import Annotated
 
 from flext_core import (
-    FlextModelsBase as m,
-    FlextModelsEntity,
-    FlextModelsHandler,
     FlextModelsPydantic as mp,
     FlextProtocols as p,
     FlextTypes as t,
     FlextUtilitiesPydantic as up,
 )
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.handler import FlextModelsHandler
 
 
 class FlextModelsRegistry:

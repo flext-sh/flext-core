@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
+from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
 from flext_core import FlextModels, FlextModelsNamespace
@@ -27,15 +28,19 @@ class TestsFlextBadAnyField(FlextModels.ArbitraryTypesModel):
     data: Annotated[typing.Any, u.Field(description="Intentionally Any.")] = None
 
 
+class TestsFlextBadBareCollection(FlextModels.ArbitraryTypesModel):
+    """Violates ``no_bare_collection`` — bare ``list[...]`` annotation."""
+
+    items: list[str] = u.Field(default_factory=list, description="Bare list.")
 
 
 class TestsFlextBadMutableDefault(FlextModels.ArbitraryTypesModel):
-    """Violates ``no_mutable_default`` — mutable default instance."""
+    """Violates ``no_mutable_default`` — mutable list literal default."""
 
-    tags: Annotated[
-        list[str],
-        u.Field(description="Non-empty mutable default."),
-    ] = ["a"]
+    items: Annotated[
+        MutableSequence[str],
+        u.Field(description="Mutable default list."),
+    ] = ["x"]
 
 
 class TestsFlextBadMissingDesc(FlextModels.ArbitraryTypesModel):

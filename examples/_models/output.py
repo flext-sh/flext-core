@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import (
     Mapping,
 )
 from enum import StrEnum
-from re import Pattern, compile as re_compile
 from types import MappingProxyType
 from typing import ClassVar
+
+from examples import c
 
 
 class ExamplesFlextModelsOutput:
@@ -32,8 +34,8 @@ class ExamplesFlextModelsOutput:
             GENERATED = "{kind}: {expected_name} ({checks} checks)\\n"
 
         LABEL_VALUE_SEPARATOR: ClassVar[str] = ": "
-        RESULT_LINE_PATTERN: ClassVar[Pattern[str]] = re_compile(
-            r"^[^\[][^\n]+: .+$",
+        RESULT_LINE_PATTERN: ClassVar[re.Pattern[str]] = (
+            c.PATTERN_EXAMPLE_RESULT_LINE_RE
         )
         TEMPLATE_BY_KIND: ClassVar[Mapping[OutputKind, OutputTemplate]] = (
             MappingProxyType(

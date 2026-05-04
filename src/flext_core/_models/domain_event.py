@@ -13,12 +13,12 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import (
-    FlextModelsBase as m,
-    FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
     FlextTypes as t,
     FlextUtilitiesCollection as u,
 )
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers as mc
 
 
 class FlextModelsDomainEvent:

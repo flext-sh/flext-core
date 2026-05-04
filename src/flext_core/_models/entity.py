@@ -20,12 +20,12 @@ from typing import Annotated, override
 from pydantic import Field
 
 from flext_core import (
-    FlextModelsBase as m,
-    FlextModelsDomainEvent,
     FlextTypes as t,
-    FlextUtilitiesDomain as u,
     FlextUtilitiesGenerators,
 )
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core._utilities.domain import FlextUtilitiesDomain as u
 
 
 class FlextModelsEntity:

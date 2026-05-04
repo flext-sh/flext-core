@@ -37,12 +37,12 @@ from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel, ConfigDict
 
 from flext_core import (
-    FlextConstants as c,
     FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
-    FlextProtocols as p,
-    FlextTypes as t,
     FlextUtilitiesGuardsTypeCore as ugc,
+    c,
+    p,
+    t,
 )
 from flext_core._utilities.guards_type_model import (
     FlextUtilitiesGuardsTypeModel as ugm,

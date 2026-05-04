@@ -32,6 +32,8 @@ if _t.TYPE_CHECKING:
     from tests.fixtures.bad_module import (
         TestsFlextBadAccessors,
         TestsFlextBadAnyField,
+        TestsFlextBadBareCollection,
+        TestsFlextBadConstants,
         TestsFlextBadFrozen,
         TestsFlextBadInlineUnion,
         TestsFlextBadMissingDesc,
@@ -183,6 +185,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".fixtures.bad_module": (
                 "TestsFlextBadAccessors",
                 "TestsFlextBadAnyField",
+                "TestsFlextBadBareCollection",
+                "TestsFlextBadConstants",
                 "TestsFlextBadFrozen",
                 "TestsFlextBadInlineUnion",
                 "TestsFlextBadMissingDesc",
@@ -358,6 +362,8 @@ __all__: list[str] = [
     "TestsFlextAutomatedArchitecture",
     "TestsFlextBadAccessors",
     "TestsFlextBadAnyField",
+    "TestsFlextBadBareCollection",
+    "TestsFlextBadConstants",
     "TestsFlextBadFrozen",
     "TestsFlextBadInlineUnion",
     "TestsFlextBadMissingDesc",

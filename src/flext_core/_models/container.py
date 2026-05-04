@@ -17,8 +17,6 @@ from typing import Annotated, ClassVar, no_type_check
 
 from flext_core import (
     FlextConstants as c,
-    FlextModelsBase as m,
-    FlextModelsContainers,
     FlextModelsPydantic as mp,
     FlextProtocols as p,
     FlextRuntime,
@@ -26,6 +24,8 @@ from flext_core import (
     FlextTypesPydantic as tp,
     FlextUtilitiesPydantic as up,
 )
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextModelsContainer:

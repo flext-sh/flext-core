@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import re
-
 import pytest
 
 from tests import c, m, u
@@ -28,7 +26,7 @@ class TestsFlextEnforcementCatalog:
 
     def test_all_rule_ids_match_enforce_nnn_format(self) -> None:
         for rule in u.build_canonical_catalog().rules:
-            assert re.match(r"^ENFORCE-\d{3}$", rule.id)
+            assert c.PATTERN_ENFORCE_RULE_ID_RE.fullmatch(rule.id)
 
     def test_by_id_returns_rule_when_present_and_none_when_missing(self) -> None:
         first = u.build_canonical_catalog().rules[0]

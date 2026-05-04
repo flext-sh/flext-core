@@ -17,10 +17,11 @@ from pathlib import Path
 from types import GenericAlias, UnionType
 from typing import ForwardRef, TypeAliasType
 
+from flext_core._typings.annotateds import FlextTypesAnnotateds as ta
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
-class FlextTypingBase:
+class FlextTypingBase(tp, ta):
     """Base type alias namespace for Flext core type-safe contracts."""
 
     type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
@@ -46,6 +47,7 @@ class FlextTypingBase:
     type SecretValue = tp.SecretStr | tp.SecretBytes
     type SettingsValue = tp.JsonValue | SecretValue | Path
 
+    type JsonValue = tp.JsonValue
     type JsonMapping = MappingKV[str, tp.JsonValue]
     type JsonList = SequenceOf[tp.JsonValue]
     type MutableJsonMapping = MutableMapping[str, tp.JsonValue]

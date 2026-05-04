@@ -22,21 +22,21 @@ from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core import (
-    FlextConstants as c,
-    FlextExceptions as e,
-    FlextProtocols as p,
-    FlextTypes as t,
-    FlextUtilities as u,
+    FlextModelsSettings,
+    FlextSettingsBase,
+    FlextSettingsContext,
+    FlextSettingsCore,
+    FlextSettingsDatabase,
+    FlextSettingsDI,
+    FlextSettingsDispatcher,
+    FlextSettingsInfrastructure,
+    FlextSettingsRegistry,
+    c,
+    e,
+    p,
+    t,
+    u,
 )
-from flext_core._models.settings import FlextModelsSettings
-from flext_core._settings.base import FlextSettingsBase
-from flext_core._settings.context import FlextSettingsContext
-from flext_core._settings.core import FlextSettingsCore
-from flext_core._settings.database import FlextSettingsDatabase
-from flext_core._settings.di import FlextSettingsDI
-from flext_core._settings.dispatcher import FlextSettingsDispatcher
-from flext_core._settings.infrastructure import FlextSettingsInfrastructure
-from flext_core._settings.registry import FlextSettingsRegistry
 
 
 def _resolve_env_file_bootstrap() -> str:

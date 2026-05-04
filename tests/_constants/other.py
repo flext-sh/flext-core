@@ -104,7 +104,6 @@ class TestsFlextConstantsOther:
         "at-or-above-zero",
         "below-impossibly-high-major",
     )
-    SEMVER_REGEX: Final[str] = r"^\d+\.\d+\.\d+"
 
     CORE_SAFE_STRING_VALID_CASES: Final[tuple[tuple[str, str], ...]] = (
         ("hello", "hello"),

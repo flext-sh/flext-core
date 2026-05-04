@@ -12,14 +12,14 @@ from typing import Annotated, Self
 
 from flext_core import (
     FlextConstants as c,
-    FlextModelsBase,
-    FlextModelsContainers,
-    FlextModelsPydantic,
     FlextProtocols as p,
     FlextTypes as t,
     FlextUtilitiesPydantic,
 )
 from flext_core._models._context._data import FlextModelsContextData
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic
 
 
 class FlextModelsContextScope:

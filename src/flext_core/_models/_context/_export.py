@@ -12,12 +12,12 @@ from typing import Annotated
 from pydantic import BeforeValidator, Field
 
 from flext_core import (
-    FlextModelsBase as m,
-    FlextModelsContainers,
-    FlextModelsEntity,
     FlextTypes as t,
 )
 from flext_core._models._context._data import FlextModelsContextData
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.entity import FlextModelsEntity
 
 
 class FlextModelsContextExport:

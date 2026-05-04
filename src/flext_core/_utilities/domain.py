@@ -18,12 +18,12 @@ from typing import TYPE_CHECKING
 
 from flext_core import (
     FlextConstants as c,
-    FlextModelsBase as m,
-    FlextModelsContainers as mc,
-    FlextModelsDomainEvent as mde,
     FlextTypes as t,
-    FlextUtilitiesGuards as u,
 )
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers as mc
+from flext_core._models.domain_event import FlextModelsDomainEvent as mde
+from flext_core._utilities.guards import FlextUtilitiesGuards as u
 
 if TYPE_CHECKING:
     from flext_core import FlextProtocolsBase as pb

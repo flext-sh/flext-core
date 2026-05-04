@@ -34,7 +34,7 @@ from pydantic_core import (
     to_jsonable_python,
 )
 
-from flext_core import FlextModelsPydantic as mp
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextUtilitiesPydantic:

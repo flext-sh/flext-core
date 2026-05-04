@@ -16,20 +16,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import ast
 import importlib
 import tomllib
 from collections.abc import Mapping
 from functools import cache
 from importlib.metadata import PackageNotFoundError, metadata, packages_distributions
-from importlib.util import find_spec
 from pathlib import Path
 from types import MappingProxyType, ModuleType
 from typing import override
 
-from flext_core import FlextTypes as t
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.typeadapters import FlextTypesTypeAdapters as ta
 from flext_core.lazy import normalize_lazy_imports
 
 
@@ -46,7 +45,7 @@ class FlextUtilitiesProjectMetadata(mpm):
     @cache
     def load_pyproject_toml(
         root: Path,
-    ) -> t.JsonMapping:
+    ) -> tb.JsonMapping:
         """Load and return the parsed pyproject.toml under ``root``.
 
         Result is cached by ``root`` (``Path`` is hashable). The cache is
@@ -60,8 +59,8 @@ class FlextUtilitiesProjectMetadata(mpm):
             msg = f"{cpm.PYPROJECT_FILENAME} not found under {root}"
             raise FileNotFoundError(msg)
         with pyproject.open("rb") as stream:
-            validated_payload: t.JsonMapping = t.json_mapping_adapter().validate_python(
-                tomllib.load(stream)
+            validated_payload: tb.JsonMapping = (
+                ta.json_mapping_adapter().validate_python(tomllib.load(stream))
             )
             return validated_payload
 
@@ -70,7 +69,7 @@ class FlextUtilitiesProjectMetadata(mpm):
         """Read canonical project metadata from a project's pyproject.toml."""
         data = FlextUtilitiesProjectMetadata.load_pyproject_toml(root)
         project_raw = data.get("project")
-        project: dict[str, t.JsonValue] = (
+        project: dict[str, tb.JsonValue] = (
             dict(project_raw) if isinstance(project_raw, Mapping) else {}
         )
         if "name" not in project:
@@ -114,38 +113,24 @@ class FlextUtilitiesProjectMetadata(mpm):
 
     @staticmethod
     @cache
-    def _module_ast(module_path: str) -> ast.Module:
-        """Read and parse a module source without importing it."""
-        spec = find_spec(module_path)
-        if spec is None or spec.origin is None:
-            msg = f"module spec for {module_path!r} was not found"
-            raise RuntimeError(msg)
-        source_path = Path(spec.origin)
-        if not source_path.is_file():
-            msg = f"module source for {module_path!r} was not found"
-            raise RuntimeError(msg)
-        return ast.parse(source_path.read_text(encoding="utf-8"))
+    def _module_runtime(module_path: str) -> ModuleType:
+        """Import and cache one module for runtime metadata introspection."""
+        try:
+            return importlib.import_module(module_path)
+        except (ImportError, ModuleNotFoundError) as exc:
+            msg = f"module {module_path!r} could not be imported"
+            raise RuntimeError(msg) from exc
 
     @staticmethod
     @cache
     def _module_class_names(module_path: str) -> tuple[str, ...]:
-        """Read class names from a module source without importing it."""
-        tree = FlextUtilitiesProjectMetadata._module_ast(module_path)
-        return tuple(node.name for node in tree.body if isinstance(node, ast.ClassDef))
-
-    @staticmethod
-    def _module_alias_target_name(module_path: str, export_name: str) -> str | None:
-        """Return class target from ``alias = ClassName`` module assignment."""
-        tree = FlextUtilitiesProjectMetadata._module_ast(module_path)
-        for node in tree.body:
-            if not isinstance(node, ast.Assign) or not isinstance(node.value, ast.Name):
-                continue
-            if any(
-                isinstance(target, ast.Name) and target.id == export_name
-                for target in node.targets
-            ):
-                return node.value.id
-        return None
+        """Return locally declared class names from one runtime module."""
+        module = FlextUtilitiesProjectMetadata._module_runtime(module_path)
+        return tuple(
+            name
+            for name, value in vars(module).items()
+            if isinstance(value, type) and value.__module__ == module.__name__
+        )
 
     @staticmethod
     def _class_stem_from_lazy(
@@ -177,12 +162,10 @@ class FlextUtilitiesProjectMetadata(mpm):
         class_stem: str,
     ) -> str:
         """Return the facade class exported by a runtime alias module."""
-        assigned = FlextUtilitiesProjectMetadata._module_alias_target_name(
-            module_path,
-            export_name,
-        )
-        if assigned is not None:
-            return assigned
+        module = FlextUtilitiesProjectMetadata._module_runtime(module_path)
+        exported = vars(module).get(export_name)
+        if isinstance(exported, type) and exported.__module__ == module.__name__:
+            return exported.__name__
         candidates = tuple(
             class_name
             for class_name in FlextUtilitiesProjectMetadata._module_class_names(
@@ -210,17 +193,30 @@ class FlextUtilitiesProjectMetadata(mpm):
             return entry[1].removeprefix(class_stem)
         module_path = entry
         parent_source = module_path.split(".", 1)[0]
-        if parent_source == import_name:
-            return FlextUtilitiesProjectMetadata._alias_target_name(
-                module_path,
-                export_name,
-                class_stem,
-            ).removeprefix(class_stem)
         parent_package = importlib.import_module(parent_source)
         parent_lazy_map = FlextUtilitiesProjectMetadata._normalized_lazy_imports(
             parent_source,
             parent_package,
         )
+        if parent_source == import_name:
+            local_targets = tuple(
+                sibling_name
+                for sibling_name, sibling_entry in parent_lazy_map.items()
+                if sibling_name.startswith(class_stem)
+                and (
+                    sibling_entry
+                    if isinstance(sibling_entry, str)
+                    else sibling_entry[0]
+                )
+                == module_path
+            )
+            if len(local_targets) == 1:
+                return local_targets[0].removeprefix(class_stem)
+            return FlextUtilitiesProjectMetadata._alias_target_name(
+                module_path,
+                export_name,
+                class_stem,
+            ).removeprefix(class_stem)
         parent_entry = parent_lazy_map.get(export_name)
         if parent_entry is None:
             msg = f"alias {export_name!r} not found in parent package {parent_source!r}"
@@ -408,11 +404,11 @@ class FlextUtilitiesProjectMetadata(mpm):
         """Read ``[tool.flext.*]`` tables from pyproject.toml."""
         data = FlextUtilitiesProjectMetadata.load_pyproject_toml(root)
         tool_raw = data.get("tool")
-        tool: t.JsonMapping = (
+        tool: tb.JsonMapping = (
             dict(tool_raw) if isinstance(tool_raw, Mapping) else MappingProxyType({})
         )
         tool_flext_raw = tool.get("flext")
-        tool_flext: t.JsonMapping = (
+        tool_flext: tb.JsonMapping = (
             dict(tool_flext_raw)
             if isinstance(tool_flext_raw, Mapping)
             else MappingProxyType({})

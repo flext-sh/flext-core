@@ -9,11 +9,11 @@ from __future__ import annotations
 from typing import Annotated, Self
 
 from flext_core import (
-    FlextModelsBase as m,
     FlextModelsPydantic as mp,
     FlextTypes as t,
     FlextUtilitiesPydantic as up,
 )
+from flext_core._models.base import FlextModelsBase as m
 
 
 class FlextModelsErrors:

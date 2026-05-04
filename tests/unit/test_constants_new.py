@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
-import re
 
 import pytest
 from flext_tests import tm
@@ -97,7 +96,10 @@ class TestsFlextConstantsNew:
         normalized: str,
     ) -> None:
         """Shared flat test cases must produce identifiers accepted by core regex rules."""
-        tm.that(bool(re.fullmatch(c.PATTERN_IDENTIFIER_LOWERCASE, normalized)), eq=True)
+        tm.that(
+            bool(c.PATTERN_IDENTIFIER_LOWERCASE_RE.fullmatch(normalized)),
+            eq=True,
+        )
         assert " " not in normalized
         assert "\t" not in raw_app_id
 
@@ -111,7 +113,7 @@ class TestsFlextConstantsNew:
         tm.that(raw.strip(), eq=expected)
         has_inner_space = " " in expected
         tm.that(
-            bool(re.fullmatch(c.PATTERN_IDENTIFIER_WITH_UNDERSCORE, expected)),
+            bool(c.PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE.fullmatch(expected)),
             eq=not has_inner_space,
         )
 
@@ -124,7 +126,7 @@ class TestsFlextConstantsNew:
         """Invalid fixture values should fail core identifier matching."""
         candidate = "" if raw is None else raw.strip()
         tm.that(
-            bool(re.fullmatch(c.PATTERN_IDENTIFIER_WITH_UNDERSCORE, candidate)),
+            bool(c.PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE.fullmatch(candidate)),
             eq=False,
         )
 

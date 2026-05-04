@@ -21,15 +21,15 @@ from functools import wraps
 from typing import Literal, TypeIs, overload
 
 from flext_core import (
-    FlextConstants as c,
     FlextContainer,
     FlextContext,
-    FlextExceptions as e,
-    FlextModels as m,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextTypes as t,
-    FlextUtilities as u,
+    c,
+    e,
+    m,
+    p,
+    r,
+    t,
+    u,
 )
 
 

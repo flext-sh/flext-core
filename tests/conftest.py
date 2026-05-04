@@ -40,6 +40,16 @@ def test_context() -> FlextContext:
 
 
 @pytest.fixture
+def clean_container() -> Iterator[p.Container]:
+    """Provide an isolated empty container for tests that mutate DI state."""
+    FlextContainer.reset_for_testing()
+    try:
+        yield FlextContainer()
+    finally:
+        FlextContainer.reset_for_testing()
+
+
+@pytest.fixture
 def mock_external_service() -> u.Tests.FunctionalExternalService:
     """Provide mock external service for integration tests."""
     return u.Tests.FunctionalExternalService()

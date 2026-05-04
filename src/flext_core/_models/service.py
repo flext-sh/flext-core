@@ -13,12 +13,12 @@ from types import ModuleType
 from typing import Annotated
 
 from flext_core import (
-    FlextModelsBase as m,
     FlextModelsPydantic as mp,
     FlextProtocols as p,
     FlextTypes as t,
     FlextUtilitiesPydantic as up,
 )
+from flext_core._models.base import FlextModelsBase as m
 
 
 class FlextModelsService:

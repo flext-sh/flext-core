@@ -13,7 +13,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".test_integration": ("TestsFlextLibraryIntegration",),
         ".test_migration_validation": ("TestsFlextMigrationValidation",),
         ".test_service": ("TestsFlextServiceIntegration",),
-        ".test_service_result_property": ("TestsFlextServiceResultProperty",),
+        ".test_service_result_property": ("test_service_result_property",),
         ".test_settings_integration": ("TestsFlextSettingsIntegration",),
         ".test_system": ("TestsFlextSystemIntegration",),
     },

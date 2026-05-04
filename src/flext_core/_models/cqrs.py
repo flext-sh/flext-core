@@ -23,11 +23,11 @@ from pydantic import (
 
 from flext_core import (
     FlextConstants as c,
-    FlextModelsBase as m,
     FlextRuntime as ur,
     FlextTypes as t,
     FlextUtilitiesGenerators as ug,
 )
+from flext_core._models.base import FlextModelsBase as m
 
 
 class _CqrsPagination(m.FlexibleInternalModel):

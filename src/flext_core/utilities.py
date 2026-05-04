@@ -28,6 +28,7 @@ from flext_core import (
     FlextUtilitiesGenerators,
     FlextUtilitiesGuards,
     FlextUtilitiesMapper,
+    FlextUtilitiesModelRuntime,
     FlextUtilitiesParser,
     FlextUtilitiesProjectMetadata,
     FlextUtilitiesPydantic,
@@ -35,7 +36,6 @@ from flext_core import (
     FlextUtilitiesSettings,
     FlextUtilitiesText,
 )
-from flext_core._utilities.model_runtime import FlextUtilitiesModelRuntime
 
 
 class FlextUtilities(

@@ -15,13 +15,14 @@ from collections.abc import Callable, Mapping, Sized
 from typing import ClassVar
 
 from flext_core import (
-    FlextConstantsRegex,
-    FlextModelsCollections,
-    FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesGuardsTypeModel,
-    FlextUtilitiesGuardsTypeProtocol,
     r,
     t,
+)
+from flext_core._models.collections import FlextModelsCollections
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core._utilities.guards_type_protocol import (
+    FlextUtilitiesGuardsTypeProtocol,
 )
 
 
@@ -80,11 +81,7 @@ class FlextUtilitiesGuards(
         value: str,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
     ) -> bool:
-        """Check string-specific operations (match, starts, ends, contains)."""
-        if guard_spec.match is not None and not FlextConstantsRegex.compile_pattern(
-            guard_spec.match
-        ).search(value):
-            return False
+        """Check string-specific operations (starts, ends, contains)."""
         if guard_spec.starts is not None and not value.startswith(guard_spec.starts):
             return False
         return not (guard_spec.ends is not None and not value.endswith(guard_spec.ends))
