@@ -11,17 +11,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-import re
 from collections.abc import Callable, Mapping, Sized
 from typing import ClassVar
 
 from flext_core import (
+    FlextConstantsRegex,
     FlextModelsCollections,
-    FlextResult as r,
-    FlextTypes as t,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesGuardsTypeProtocol,
+    r,
+    t,
 )
 
 
@@ -81,7 +81,9 @@ class FlextUtilitiesGuards(
         guard_spec: FlextModelsCollections.GuardCheckSpec,
     ) -> bool:
         """Check string-specific operations (match, starts, ends, contains)."""
-        if guard_spec.match is not None and not re.search(guard_spec.match, value):
+        if guard_spec.match is not None and not FlextConstantsRegex.compile_pattern(
+            guard_spec.match
+        ).search(value):
             return False
         if guard_spec.starts is not None and not value.startswith(guard_spec.starts):
             return False

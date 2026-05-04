@@ -1,12 +1,18 @@
 """FlextConstantsRegex - regex pattern constants (SSOT).
 
+Owns every workspace-wide compiled ``re.Pattern``. Consumer modules
+import the pre-compiled ``*_RE`` constants directly; ``import re``
+outside this module (or another constants module) is forbidden by
+AGENTS.md §3.1 ``regex-from-constants`` rule.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from typing import Final
+import re
+from typing import ClassVar, Final
 
 
 class FlextConstantsRegex:
@@ -30,3 +36,44 @@ class FlextConstantsRegex:
         "^[a-z0-9](?:[a-z0-9\\-_.]{0,62}[a-z0-9])?$"
     )
     "Pattern for lowercase identifiers with optional hyphens, underscores, and dots (max 64 chars)."
+    PATTERN_CAMEL_TO_SNAKE: Final[str] = r"([a-z0-9])([A-Z])"
+    "Boundary used to insert underscores when converting camelCase → snake_case."
+
+    # === Pre-compiled regex authorities (consumers MUST use these) ===
+    PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        PATTERN_IDENTIFIER_WITH_UNDERSCORE
+    )
+    PATTERN_ISO8601_TIMESTAMP_RE: ClassVar[re.Pattern[str]] = re.compile(
+        PATTERN_ISO8601_TIMESTAMP
+    )
+    PATTERN_HOSTNAME_OR_IP_RE: ClassVar[re.Pattern[str]] = re.compile(
+        PATTERN_HOSTNAME_OR_IP
+    )
+    PATTERN_LDAP_DN_RE: ClassVar[re.Pattern[str]] = re.compile(PATTERN_LDAP_DN)
+    PATTERN_IDENTIFIER_LOWERCASE_RE: ClassVar[re.Pattern[str]] = re.compile(
+        PATTERN_IDENTIFIER_LOWERCASE
+    )
+    CAMEL_TO_SNAKE_RE: ClassVar[re.Pattern[str]] = re.compile(PATTERN_CAMEL_TO_SNAKE)
+
+    @staticmethod
+    def compile_pattern(
+        pattern: str,
+        *,
+        ignorecase: bool = False,
+        multiline: bool = False,
+        dotall: bool = False,
+    ) -> re.Pattern[str]:
+        """Compile a runtime-supplied regex pattern.
+
+        Sole sanctioned ``re.compile`` entry-point for non-constant
+        patterns workspace-wide. Consumer modules MUST call this
+        instead of importing ``re`` directly.
+        """
+        flags = 0
+        if ignorecase:
+            flags |= re.IGNORECASE
+        if multiline:
+            flags |= re.MULTILINE
+        if dotall:
+            flags |= re.DOTALL
+        return re.compile(pattern, flags=flags)

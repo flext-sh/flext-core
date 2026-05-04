@@ -13,7 +13,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from collections.abc import (
     Iterator,
 )
@@ -620,7 +619,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             idx = tail.find(layer)
             if idx > 0:
                 project = tail[:idx]
-                snake = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", project).lower()
+                snake = c.CAMEL_TO_SNAKE_RE.sub(r"\1_\2", project).lower()
                 return f"flext_{snake}"
         msg = (
             f"class_name_to_module: {class_name!r} contains no facade "
