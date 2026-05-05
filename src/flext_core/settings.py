@@ -1,12 +1,14 @@
-"""FlextSettings — Settings Management Facade.
+"""FlextSettings — root settings facade.
 
-Composes all settings concerns via MRO, matching the namespace pattern used
-by ``c``, ``m``, ``p``, ``t`` and ``u``.  The concrete implementation lives in
-``_settings/``; this file is a thin façade inheriting ``BaseSettings`` plus the
-relevant mixins.
+Composes ``BaseSettings`` with the per-class singleton + canonical helper API
+provided by :class:`FlextSettingsBase` and the root field mixins
+(``Core``/``Database``/``Dispatcher``/``Infrastructure``) plus DI/Registry/Context.
 
-Singleton storage is per-class (``cls._instance``) so every concrete settings
-class owns its own lifecycle.
+Helper methods (``fetch_global``, ``clone``, ``update_global``,
+``validate_overrides``, ``clone_for_injection``, ``reset_for_testing``,
+``resolve_env_file``) live on :class:`FlextSettingsBase` so project-specific
+settings classes can inherit them without contaminating their fields with the
+root concrete fields.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,8 +16,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
 from typing import ClassVar, Self
 
 from pydantic import model_validator
@@ -39,16 +39,6 @@ from flext_core import (
 )
 
 
-def _resolve_env_file_bootstrap() -> str:
-    """Resolve .env file path from FLEXT_ENV_FILE env var."""
-    custom_env_file = os.environ.get(c.ENV_FILE_ENV_VAR)
-    if custom_env_file:
-        custom_path = Path(custom_env_file)
-        return str(custom_path.resolve()) if custom_path.exists() else custom_env_file
-    default_path = Path.cwd() / c.ENV_FILE_DEFAULT
-    return str(default_path.resolve()) if default_path.exists() else c.ENV_FILE_DEFAULT
-
-
 class FlextSettings(
     BaseSettings,
     FlextSettingsBase,
@@ -63,67 +53,29 @@ class FlextSettings(
     """Enterprise-grade settings management composed via MRO.
 
     Architecture: Layer 0.5 (Settings Foundation)
-    Provides type-safe settings through Pydantic BaseSettings with environment
-    variable support, per-class singleton lifecycle, and namespace registry.
+    Provides type-safe settings through Pydantic ``BaseSettings`` with environment
+    variable support, per-class singleton lifecycle (via ``FlextSettingsBase``),
+    and namespace registry (via ``FlextSettingsRegistry``).
     """
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_prefix=c.ENV_PREFIX,
         env_nested_delimiter=c.ENV_NESTED_DELIMITER,
-        env_file=_resolve_env_file_bootstrap(),
+        env_file=FlextSettingsBase.resolve_env_file(),
         env_file_encoding=c.DEFAULT_ENCODING,
         case_sensitive=False,
         extra=c.EXTRA_CONFIG_IGNORE,
         validate_assignment=True,
     )
 
-    @classmethod
-    def fetch_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
-        """Get global settings, optionally materialized with overrides."""
-        existing = getattr(cls, "_instance", None)
-        instance = existing if existing is not None else cls()
-        if not overrides:
-            return instance
-        with cls._singleton_disabled():
-            copied = instance.model_copy(update=dict(overrides), deep=True)
-        copied.__pydantic_validator__.validate_python(
-            copied.__dict__, self_instance=copied
-        )
-        return copied
-
-    def clone(self, **overrides: t.JsonPayload | None) -> Self:
-        """Create a deep copy with optional field overrides and re-validation.
-
-        This is the canonical way for containers and services to obtain an
-        isolated settings snapshot without mutating the global singleton.
-        Nested models (e.g. ``Meltano`` inner classes) are deep-copied by
-        default so mutations in the clone do not leak back to the source.
-
-        Args:
-            **overrides: Keyword arguments mapped to model field names.
-
-        Returns:
-            A new settings instance with overrides applied.
-
-        """
-        if not overrides:
-            with self.__class__._singleton_disabled():
-                return self.model_copy(deep=True)
-        with self.__class__._singleton_disabled():
-            copied = self.model_copy(update=dict(overrides), deep=True)
-        # ``model_copy(update=...)`` bypasses validators by design; re-run them
-        # so field-level validators (e.g., ``log_level`` enum coercion) apply.
-        copied.__pydantic_validator__.validate_python(
-            copied.__dict__, self_instance=copied
-        )
-        return copied
-
     def apply_override(
         self,
         key: str,
         value: t.Scalar | t.ScalarList | t.ScalarMapping,
     ) -> bool:
-        """Validate and apply a settings override.
+        """DEPRECATED — replaced by ``update_global(**overrides)`` (Pydantic-2).
+
+        Kept until Phase 4.2 sweep. New code MUST use ``update_global``.
 
         Returns:
             True if override was valid and applied, False otherwise.
@@ -133,12 +85,6 @@ class FlextSettings(
             return False
         setattr(self, key, value)
         return True
-
-    @classmethod
-    def reset_for_testing(cls) -> None:
-        """Reset the global singleton instance for testing."""
-        cls._reset_instance()
-        cls._context_overrides.clear()
 
     def __getattr__(self, name: str) -> p.Settings:
         """Resolve namespace-style attribute access to registered settings."""

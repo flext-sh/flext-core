@@ -98,6 +98,24 @@ class FlextProtocolsSettings:
             """
             ...
 
+        @classmethod
+        def update_global(cls, **overrides: t.JsonPayload | None) -> Self:
+            """Replace the per-class singleton via Pydantic-2 ``model_copy(update=…)``.
+
+            Pure Pydantic-2 mutation — no ``setattr``, no ``__setattr__``
+            override, no ``apply_override`` ad-hoc method. Subsequent
+            ``fetch_global()`` calls return the new instance — propagates
+            globally per the singleton-unification rule.
+
+            Args:
+                **overrides: Keyword arguments mapped to model field names.
+
+            Returns:
+                The new settings instance now installed as the singleton.
+
+            """
+            ...
+
     @runtime_checkable
     class SettingsType(Protocol):
         """Protocol for concrete settings classes with singleton access."""

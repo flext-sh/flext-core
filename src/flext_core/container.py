@@ -340,7 +340,11 @@ class FlextContainer(p.ContainerLifecycle):
             )
         else:
             self._user_overrides = m.ConfigMap(root={})
-        self._config = spec.settings or FlextSettings.fetch_global()
+        self._config = (
+            spec.settings.clone()
+            if spec.settings is not None
+            else FlextSettings.fetch_global()
+        )
         context = spec.context
         self._context = context if context is not None else FlextContext.create()
 
