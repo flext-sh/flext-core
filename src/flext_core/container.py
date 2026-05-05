@@ -488,7 +488,11 @@ class FlextContainer(p.ContainerLifecycle):
             else self._config
         )
         base_config: p.Settings = settings_source.clone()
-        if subproject and scope_registration.settings is None:
+        if (
+            subproject
+            and scope_registration.settings is None
+            and isinstance(base_config, FlextSettings)
+        ):
             base_config = base_config.clone(
                 app_name=f"{base_config.app_name}.{subproject}"
             )

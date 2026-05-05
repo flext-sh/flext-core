@@ -35,26 +35,16 @@ class FlextProtocolsSettings:
         p.Base,
         Protocol,
     ):
-        """Configuration protocol based on Pydantic BaseSettings pattern.
+        """Minimal Pydantic-2 settings contract — operations only.
 
-        Reflects real implementations like FlextSettings which uses Pydantic BaseSettings.
-        Configuration items use direct field access (Pydantic standard) rather than
-        explicit get/set methods. Supports cloning via model_copy() and optional
-        override methods.
+        Declares only the operation surface (``fetch_global``, ``clone``,
+        ``update_global``, ``model_copy``, ``model_dump``) so root and project
+        subclasses can both satisfy it without sharing concrete fields.
+        Concrete root fields (``app_name``, ``version``, ``timeout_seconds``,
+        ``dispatcher_*``, …) are declared on ``FlextSettings`` itself, not on
+        the protocol — project subclasses must NOT inherit them
+        (workspace rule 3 isolation).
         """
-
-        app_name: str
-        "Application name bound to the configuration."
-        version: str
-        "Semantic version of the running application."
-        enable_caching: bool
-        "Enable caching for query operations."
-        timeout_seconds: float
-        "Default timeout in seconds for operations."
-        dispatcher_auto_context: bool
-        "Enable automatic context management in dispatcher."
-        dispatcher_enable_logging: bool
-        "Enable logging in dispatcher operations."
 
         @classmethod
         def fetch_global(

@@ -9,7 +9,7 @@ from typing import override
 
 from examples import c, m, p, t, u
 from examples.shared import ExamplesFlextShared
-from flext_core import FlextContainer, r
+from flext_core import FlextContainer, FlextSettings, r
 
 
 class _WireProbe:
@@ -422,12 +422,20 @@ class Ex08FlextContainer(ExamplesFlextShared):
             )
             == self._registered_service_value,
         )
+        scoped_sub_settings = scoped_subproject.settings
+        scoped_full_settings = scoped_full.settings
         self.audit_check(
             "scoped.subproject.app_name_suffix",
-            scoped_subproject.settings.app_name.endswith(f".{subproject_alpha}"),
+            isinstance(scoped_sub_settings, FlextSettings)
+            and scoped_sub_settings.app_name.endswith(f".{subproject_alpha}"),
         )
         self.audit_check("scoped.full.new_instance", scoped_full is not container)
-        self.audit_check("scoped.full.settings_app_name", scoped_full.settings.app_name)
+        self.audit_check(
+            "scoped.full.settings_app_name",
+            scoped_full_settings.app_name
+            if isinstance(scoped_full_settings, FlextSettings)
+            else "",
+        )
         self.audit_check(
             "scoped.full.uses_explicit_context",
             scoped_full.context is explicit_context,

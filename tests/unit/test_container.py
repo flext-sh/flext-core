@@ -454,6 +454,7 @@ class TestsFlextContainer:
             is_=FlextSettings,
             msg="Container settings property must expose FlextSettings",
         )
+        assert isinstance(settings, FlextSettings)
         tm.that(
             settings.app_name,
             eq=FlextSettings.fetch_global().app_name,
