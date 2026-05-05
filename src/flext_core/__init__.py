@@ -5,6 +5,16 @@ from __future__ import annotations
 
 import typing as _t
 
+from flext_core.__version__ import (
+    __author__,
+    __author_email__,
+    __description__,
+    __license__,
+    __title__,
+    __url__,
+    __version__,
+    __version_info__,
+)
 from flext_core.lazy import (
     build_lazy_import_map,
     install_lazy_exports,
@@ -12,16 +22,6 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_core.__version__ import (
-        __author__,
-        __author_email__,
-        __description__,
-        __license__,
-        __title__,
-        __url__,
-        __version__,
-        __version_info__,
-    )
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.enforcement import (
@@ -204,16 +204,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
-            ".__version__": (
-                "__author__",
-                "__author_email__",
-                "__description__",
-                "__license__",
-                "__title__",
-                "__url__",
-                "__version__",
-                "__version_info__",
-            ),
             "._constants.base": ("FlextConstantsBase",),
             "._constants.cqrs": ("FlextConstantsCqrs",),
             "._constants.enforcement": (
@@ -444,7 +434,21 @@ _LAZY_IMPORTS = merge_lazy_imports(
 )
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    [
+        "__author__",
+        "__author_email__",
+        "__description__",
+        "__license__",
+        "__title__",
+        "__url__",
+        "__version__",
+        "__version_info__",
+    ],
+)
 
 __all__: list[str] = [
     "FlextConstants",
