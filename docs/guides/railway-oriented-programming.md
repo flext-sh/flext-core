@@ -623,6 +623,10 @@ When retries exhaust, `@d.retry` raises `e.TimeoutError`; with outer
 
 from __future__ import annotations
 
+import io
+import time
+from contextlib import redirect_stdout
+
 from flext_core import d
 
 attempts = {"count": 0}
@@ -639,8 +643,14 @@ def flaky_operation() -> int:
         raise RuntimeError(message)
     return 123
 
+stream = io.StringIO()
+with redirect_stdout(stream):
+    result = flaky_operation()
+    deadline = time.monotonic() + 0.25
+    while time.monotonic() < deadline and "retry_attempt" not in stream.getvalue():
+        time.sleep(0.01)
+    assert "retry_attempt" in stream.getvalue()
 
-result = flaky_operation()
 expected_value = 123
 expected_attempts = 3
 if not result.success:

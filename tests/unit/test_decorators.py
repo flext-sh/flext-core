@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+import io
 import time
-from collections.abc import (
-    Generator,
-    Sequence,
-)
+from collections.abc import Callable, Generator, Sequence
+from contextlib import redirect_stdout
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
@@ -15,6 +14,17 @@ from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextContainer
 from tests import d, e, m, p, r, t, u
+
+
+def _capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
+    stream = io.StringIO()
+    with redirect_stdout(stream):
+        result = emit()
+        deadline = time.monotonic() + 0.25
+        while time.monotonic() < deadline and contains not in stream.getvalue():
+            time.sleep(0.01)
+    assert contains in stream.getvalue()
+    return result
 
 
 class TestsFlextDecoratorsLegacy:
@@ -209,8 +219,11 @@ class TestsFlextDecoratorsLegacy:
                 error_msg = "Test error"
                 raise ValueError(error_msg)
 
-            with pytest.raises(ValueError, match="Test error"):
-                failing_function()
+            def emit() -> None:
+                with pytest.raises(ValueError, match="Test error"):
+                    failing_function()
+
+            _ = _capture_stdout(emit, contains="failing_operation")
 
     @pytest.mark.parametrize("test_case", TRACK_SCENARIOS, ids=lambda case: case.name)
     def test_track_performance_decorator(
@@ -235,8 +248,11 @@ class TestsFlextDecoratorsLegacy:
                 error_msg = "Timed failure"
                 raise RuntimeError(error_msg)
 
-            with pytest.raises(RuntimeError, match="Timed failure"):
-                failing_function()
+            def emit() -> None:
+                with pytest.raises(RuntimeError, match="Timed failure"):
+                    failing_function()
+
+            _ = _capture_stdout(emit, contains="failing_operation")
 
     @pytest.mark.parametrize("test_case", RAILWAY_SCENARIOS, ids=lambda case: case.name)
     def test_railway_decorator(
@@ -301,11 +317,17 @@ class TestsFlextDecoratorsLegacy:
                 error_msg = "Always fails"
                 raise ValueError(error_msg)
 
-            with pytest.raises(
-                e.TimeoutError,
-                match="failed after 2 attempts",
-            ):
-                always_fails()
+            def emit() -> None:
+                with pytest.raises(
+                    e.TimeoutError,
+                    match="failed after 2 attempts",
+                ):
+                    always_fails()
+
+            _ = _capture_stdout(
+                emit,
+                contains="operation_failed_all_retries_exhausted",
+            )
 
     @pytest.mark.parametrize("test_case", TIMEOUT_SCENARIOS, ids=lambda case: case.name)
     def test_timeout_decorator(

@@ -72,7 +72,12 @@ assert valid.port == 8080
 ## examples-backed sanity check
 
 ```python
+import io
+from contextlib import redirect_stdout
+
 from examples.ex_02_flext_settings import Ex02FlextSettings
 
-Ex02FlextSettings("docs/guides/pydantic-v2-patterns.md").exercise()
+stream = io.StringIO()
+with redirect_stdout(stream):
+    Ex02FlextSettings("docs/guides/pydantic-v2-patterns.md").exercise()
 ```

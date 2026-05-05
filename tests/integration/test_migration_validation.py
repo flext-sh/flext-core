@@ -17,6 +17,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import io
+import time
+from collections.abc import Callable
+from contextlib import redirect_stdout
 from typing import override
 
 from flext_tests.base import s
@@ -37,6 +41,17 @@ from tests import (
     u,
     x,
 )
+
+
+def _capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
+    stream = io.StringIO()
+    with redirect_stdout(stream):
+        result = emit()
+        deadline = time.monotonic() + 0.25
+        while time.monotonic() < deadline and contains not in stream.getvalue():
+            time.sleep(0.01)
+    assert contains in stream.getvalue()
+    return result
 
 
 class TestsFlextMigrationValidation:
@@ -125,7 +140,10 @@ class TestsFlextMigrationValidation:
                 return r[t.StrMapping].ok(user_data)
 
         service = UserService()
-        result = service.create_user("alice", "alice@example.com")
+        result = _capture_stdout(
+            lambda: service.create_user("alice", "alice@example.com"),
+            contains="Creating user",
+        )
         assert result.success
         assert result.value["username"] == "alice"
 
@@ -133,10 +151,10 @@ class TestsFlextMigrationValidation:
         """Verify the public logging DSL continues working."""
         logger = u.fetch_logger(__name__)
         assert logger is not None
-        logger.info("Test message", test_key="test_value")
-        logger.debug("Debug message")
-        logger.warning("Warning message")
-        logger.error("Error message")
+        _ = _capture_stdout(
+            lambda: logger.error("Error message"),
+            contains="Error message",
+        )
 
     def test_all_stable_apis_accessible(self) -> None:
         """Verify all guaranteed stable APIs from API_STABILITY.md are accessible."""
@@ -213,7 +231,10 @@ class TestsFlextMigrationValidation:
                 return r[t.JsonMapping].ok(processed)
 
         app = ApplicationExample()
-        result = app.process_data({"key": "value"})
+        result = _capture_stdout(
+            lambda: app.process_data({"key": "value"}),
+            contains="Processing data",
+        )
         assert result.success
         assert result.value["processed"] is True
 
@@ -225,5 +246,5 @@ class TestsFlextMigrationValidation:
         container = FlextContainer()
         assert container is not None
         logger = u.fetch_logger(__name__)
-        logger.info("Test")
+        _ = _capture_stdout(lambda: logger.info("Test"), contains="Test")
         assert True

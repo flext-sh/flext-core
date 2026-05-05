@@ -2,9 +2,25 @@
 
 from __future__ import annotations
 
+import io
+import time
+from collections.abc import Callable
+from contextlib import redirect_stdout
+
 import pytest
 
 from tests import c, m, r, t, u
+
+
+def _capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
+    stream = io.StringIO()
+    with redirect_stdout(stream):
+        result = emit()
+        deadline = time.monotonic() + 0.25
+        while time.monotonic() < deadline and contains not in stream.getvalue():
+            time.sleep(0.01)
+    assert contains in stream.getvalue()
+    return result
 
 
 class TestsFlextRegistry:
@@ -38,7 +54,10 @@ class TestsFlextRegistry:
     def test_registry_runtime_exposes_dispatcher_from_central_dsl(self) -> None:
         registry = u.build_registry()
         assert registry.execute().success
-        registration = registry.register_handler(u.Tests.Handler())
+        registration = _capture_stdout(
+            lambda: registry.register_handler(u.Tests.Handler()),
+            contains="Registered auto-discovery handler",
+        )
         assert registration.success
         assert registration.value is not None
 

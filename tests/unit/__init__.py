@@ -69,7 +69,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_runtime": ("TestsFlextRuntime",),
             ".test_service": ("TestsFlextService",),
             ".test_service_bootstrap": ("TestsFlextServiceBootstrap",),
-            ".test_service_coverage_100": ("TestsFlextService100Coverage",),
             ".test_settings": ("TestsFlextSettings",),
             ".test_typings_new": ("TestsFlextTypesUnit",),
             ".test_utilities": ("TestsFlextUtilitiesSmoke",),

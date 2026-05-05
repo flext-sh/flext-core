@@ -24,11 +24,21 @@ All examples below are standalone and executable in markdown code-fence tests.
 Use global context for metadata that should be present in all messages.
 
 ```python
+import io
+import time
+from contextlib import redirect_stdout
+
 from flext_core import FlextLogger
 
 _ = FlextLogger.bind_global_context(service="flext-core", environment="dev")
-logger = FlextLogger.create_module_logger(__name__)
-_ = logger.info("application_started")
+stream = io.StringIO()
+with redirect_stdout(stream):
+    logger = FlextLogger.create_module_logger(__name__)
+    _ = logger.info("application_started")
+    deadline = time.monotonic() + 0.25
+    while time.monotonic() < deadline and "application_started" not in stream.getvalue():
+        time.sleep(0.01)
+    assert "application_started" in stream.getvalue()
 
 _ = FlextLogger.unbind_global_context("service", "environment")
 ```
@@ -47,13 +57,23 @@ _ = FlextLogger.clear_global_context()
 Use `bind_context` to attach context to a logical scope (for example, a request id).
 
 ```python
+import io
+import time
+from contextlib import redirect_stdout
+
 from flext_core import FlextLogger
 
 scope = "request"
 _ = FlextLogger.bind_context(scope=scope, request_id="req-123", user_id="u-42")
 
-logger = FlextLogger.create_module_logger(__name__)
-_ = logger.info("request_started")
+stream = io.StringIO()
+with redirect_stdout(stream):
+    logger = FlextLogger.create_module_logger(__name__)
+    _ = logger.info("request_started")
+    deadline = time.monotonic() + 0.25
+    while time.monotonic() < deadline and "request_started" not in stream.getvalue():
+        time.sleep(0.01)
+    assert "request_started" in stream.getvalue()
 
 _ = FlextLogger.clear_scope(scope)
 ```
@@ -65,6 +85,10 @@ _ = FlextLogger.clear_scope(scope)
 Use global context to enrich related log lines and clear it when the scope ends.
 
 ```python
+import io
+import time
+from contextlib import redirect_stdout
+
 from flext_core import FlextLogger
 
 _ = FlextLogger.bind_global_context(
@@ -72,9 +96,15 @@ _ = FlextLogger.bind_global_context(
     debug_trace="trace-xyz",
 )
 
-logger = FlextLogger.create_module_logger(__name__)
-_ = logger.debug("debug_message")
-_ = logger.info("info_message")
+stream = io.StringIO()
+with redirect_stdout(stream):
+    logger = FlextLogger.create_module_logger(__name__)
+    _ = logger.debug("debug_message")
+    _ = logger.info("info_message")
+    deadline = time.monotonic() + 0.25
+    while time.monotonic() < deadline and "info_message" not in stream.getvalue():
+        time.sleep(0.01)
+    assert "info_message" in stream.getvalue()
 
 _ = FlextLogger.clear_global_context()
 ```
@@ -84,15 +114,28 @@ _ = FlextLogger.clear_global_context()
 The typical flow is: bind request context, log, then clear scope in `finally`.
 
 ```python
+import io
+import time
+from contextlib import redirect_stdout
+
 from flext_core import FlextLogger
 
 
 def handle_request(request_id: str, user_id: str) -> None:
     scope = "request"
     _ = FlextLogger.bind_context(scope=scope, request_id=request_id, user_id=user_id)
-    logger = FlextLogger.create_module_logger(__name__)
     try:
-        _ = logger.info("request_processing")
+        stream = io.StringIO()
+        with redirect_stdout(stream):
+            logger = FlextLogger.create_module_logger(__name__)
+            _ = logger.info("request_processing")
+            deadline = time.monotonic() + 0.25
+            while (
+                time.monotonic() < deadline
+                and "request_processing" not in stream.getvalue()
+            ):
+                time.sleep(0.01)
+            assert "request_processing" in stream.getvalue()
     finally:
         _ = FlextLogger.clear_scope(scope)
 

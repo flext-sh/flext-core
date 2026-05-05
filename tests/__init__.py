@@ -120,7 +120,6 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_runtime import TestsFlextRuntime
     from tests.unit.test_service import TestsFlextService
     from tests.unit.test_service_bootstrap import TestsFlextServiceBootstrap
-    from tests.unit.test_service_coverage_100 import TestsFlextService100Coverage
     from tests.unit.test_settings import TestsFlextSettings
     from tests.unit.test_typings_new import TestsFlextTypesUnit
     from tests.unit.test_utilities import TestsFlextUtilitiesSmoke
@@ -282,7 +281,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_runtime": ("TestsFlextRuntime",),
             ".unit.test_service": ("TestsFlextService",),
             ".unit.test_service_bootstrap": ("TestsFlextServiceBootstrap",),
-            ".unit.test_service_coverage_100": ("TestsFlextService100Coverage",),
             ".unit.test_settings": ("TestsFlextSettings",),
             ".unit.test_typings_new": ("TestsFlextTypesUnit",),
             ".unit.test_utilities": ("TestsFlextUtilitiesSmoke",),
@@ -432,7 +430,6 @@ __all__: list[str] = [
     "TestsFlextRuntime",
     "TestsFlextRuntimeViolationRegistry",
     "TestsFlextService",
-    "TestsFlextService100Coverage",
     "TestsFlextServiceBase",
     "TestsFlextServiceBootstrap",
     "TestsFlextServiceIntegration",

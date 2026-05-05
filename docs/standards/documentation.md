@@ -24,7 +24,12 @@ assert isinstance(settings.model_dump(), dict)
 ## Examples-backed Reference
 
 ```python
+import io
+from contextlib import redirect_stdout
+
 from examples.ex_02_flext_settings import Ex02FlextSettings
 
-Ex02FlextSettings("docs/standards/documentation.md").exercise()
+stream = io.StringIO()
+with redirect_stdout(stream):
+	Ex02FlextSettings("docs/standards/documentation.md").exercise()
 ```

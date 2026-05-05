@@ -2,23 +2,53 @@
 
 from __future__ import annotations
 
+import io
+import time
+from collections.abc import Callable
+from contextlib import redirect_stdout
+
 import pytest
 from flext_tests import tm
 
 from tests import p, u
 
-LOG_LEVELS: tuple[str, ...] = (
-    "debug",
-    "info",
-    "warning",
-    "error",
-    "critical",
-    "trace",
+LOG_LEVELS: tuple[tuple[str, bool], ...] = (
+    ("debug", False),
+    ("info", True),
+    ("warning", True),
+    ("error", True),
+    ("critical", True),
+    ("trace", False),
 )
 
 
 class TestsFlextLoggings:
     """Behavior contract for FlextLogger public API: create, bind, log, track, strict returns."""
+
+    @classmethod
+    def _assert_log_output[TResult: p.ResultLike[bool] | None](
+        cls,
+        emit: Callable[[], TResult],
+        *,
+        contains: str,
+        expect_output: bool = True,
+        expected_tokens: tuple[str, ...] = (),
+    ) -> TResult:
+        stream = io.StringIO()
+        with redirect_stdout(stream):
+            result = emit()
+            deadline = time.monotonic() + 0.25
+            while expect_output and time.monotonic() < deadline and contains not in stream.getvalue():
+                time.sleep(0.01)
+        output = stream.getvalue()
+
+        if expect_output:
+            tm.that(contains in output, eq=True)
+            for token in expected_tokens:
+                tm.that(token in output, eq=True)
+        else:
+            tm.that(output, eq="")
+        return result
 
     @pytest.fixture
     def logger(self) -> p.Logger:
@@ -36,7 +66,11 @@ class TestsFlextLoggings:
     ) -> None:
         bound = logger.bind(service_name="svc", correlation_id="cid")
         tm.that(bound, none=False)
-        bound.info("bound ok")
+        result = self._assert_log_output(
+            lambda: bound.info("bound ok"),
+            contains="bound ok",
+        )
+        tm.ok(result)
 
     def test_new_returns_fresh_bound_logger_without_prior_context(
         self,
@@ -44,7 +78,11 @@ class TestsFlextLoggings:
     ) -> None:
         refreshed = logger.bind(initial="x").new(fresh="y")
         tm.that(refreshed, none=False)
-        refreshed.info("new ok")
+        result = self._assert_log_output(
+            lambda: refreshed.info("new ok"),
+            contains="new ok",
+        )
+        tm.ok(result)
 
     def test_unbind_with_safe_flag_ignores_missing_keys(
         self,
@@ -86,30 +124,49 @@ class TestsFlextLoggings:
         self,
         logger: p.Logger,
     ) -> None:
-        with u.PerformanceTracker(logger, "operation_under_test"):
-            result = 1 + 1
+        def emit() -> p.ResultLike[bool] | None:
+            with u.PerformanceTracker(logger, "operation_under_test"):
+                nonlocal result
+                result = 1 + 1
+            return None
+
+        result = 0
+        _ = self._assert_log_output(
+            emit,
+            contains="operation_under_test success",
+        )
         tm.that(result, eq=2)
 
-    @pytest.mark.parametrize("level", LOG_LEVELS)
+    @pytest.mark.parametrize(("level", "expect_output"), LOG_LEVELS)
     def test_every_log_level_returns_success_result_with_value_true(
         self,
         logger: p.Logger,
         level: str,
+        expect_output: bool,
     ) -> None:
-        result = getattr(logger, level)("test %s message", level)
+        result = self._assert_log_output(
+            lambda: getattr(logger, level)("test %s message", level),
+            contains="test %s message",
+            expect_output=expect_output,
+        )
         tm.ok(result)
         tm.that(result.value, eq=True)
 
-    @pytest.mark.parametrize("level", LOG_LEVELS)
+    @pytest.mark.parametrize(("level", "expect_output"), LOG_LEVELS)
     def test_every_log_level_accepts_structured_kwargs_and_returns_success(
         self,
         logger: p.Logger,
         level: str,
+        expect_output: bool,
     ) -> None:
-        result = getattr(logger, level)(
-            "test message",
-            request_id="r1",
-            actor="tester",
+        result = self._assert_log_output(
+            lambda: getattr(logger, level)(
+                "test message",
+                request_id="r1",
+                actor="tester",
+            ),
+            contains="test message",
+            expect_output=expect_output,
         )
         tm.ok(result)
         tm.that(result.value, eq=True)
@@ -118,8 +175,12 @@ class TestsFlextLoggings:
         self,
         logger: p.Logger,
     ) -> None:
-        for level in ("debug", "info", "warning", "error", "critical"):
-            result = logger.log(level, "test %s message", level)
+        for level, expect_output in LOG_LEVELS[:-1]:
+            result = self._assert_log_output(
+                lambda level=level: logger.log(level, "test %s message", level),
+                contains="test %s message",
+                expect_output=expect_output,
+            )
             tm.ok(result)
             tm.that(result.value, eq=True)
 
@@ -131,6 +192,9 @@ class TestsFlextLoggings:
         try:
             raise ValueError(message)
         except ValueError:
-            result = logger.exception(message)
+            result = self._assert_log_output(
+                lambda: logger.exception(message),
+                contains=message,
+            )
             tm.ok(result)
             tm.that(result.value, eq=True)

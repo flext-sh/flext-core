@@ -19,5 +19,5 @@ from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
 result = Ex04DispatchDsl.run()
 assert result.success
-assert result.value == "dispatcher-example"
+assert result.value == "pong:dispatcher-example"
 ```

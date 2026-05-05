@@ -29,7 +29,12 @@ assert normalize("").failure
 ## examples-backed sanity
 
 ```python
+import io
+from contextlib import redirect_stdout
+
 from examples.ex_03_flext_logger import Ex03FlextLogger
 
-Ex03FlextLogger().exercise()
+stream = io.StringIO()
+with redirect_stdout(stream):
+    Ex03FlextLogger().run()
 ```

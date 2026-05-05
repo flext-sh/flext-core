@@ -43,7 +43,12 @@ assert AuditSettings(debug=True).debug is True
 ## Check: examples-backed settings flow
 
 ```python
+import io
+from contextlib import redirect_stdout
+
 from examples.ex_02_flext_settings import Ex02FlextSettings
 
-Ex02FlextSettings("docs/improvements/pydantic-v2-audit.md").exercise()
+stream = io.StringIO()
+with redirect_stdout(stream):
+    Ex02FlextSettings("docs/improvements/pydantic-v2-audit.md").exercise()
 ```

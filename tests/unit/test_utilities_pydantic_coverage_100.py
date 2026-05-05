@@ -1,118 +1,83 @@
-"""Pydantic facade coverage tests.
-
-Exercises every class-level alias in FlextUtilitiesPydantic via the public
-``u.*`` surface.
-"""
+"""Behavior contract for the public Pydantic facade exposed via ``u.*``."""
 
 from __future__ import annotations
 
-from pydantic import with_config as _pydantic_with_config
-
-from tests import u
+from flext_core import u
+from tests import m
 
 
 class TestsFlextUtilitiesPydantic:
-    def test_field_is_callable(self) -> None:
-        assert callable(u.Field)
+    def test_public_facade_validates_serializes_and_tracks_private_state(self) -> None:
+        payload = m.Tests.PublicPayload.model_validate(
+            {"rawName": "  ada lovelace ", "visits": "3"}
+        )
+        payload_dump = payload.model_dump(mode="json", by_alias=True)
 
-    def test_private_attr_is_callable(self) -> None:
-        assert callable(u.PrivateAttr)
+        assert payload.raw_name == "Ada Lovelace"
+        assert payload._events == ["validated"]
+        assert payload_dump["rawName"] == "Ada Lovelace"
+        assert payload_dump["visits"] == "3 visits"
+        assert payload_dump["label"] == "Ada Lovelace:3"
 
-    def test_skip_validation_is_accessible(self) -> None:
-        assert u.SkipValidation is not None
+    def test_public_facade_supports_dynamic_models_and_json_roundtrip(self) -> None:
+        dynamic_model = u.create_model(
+            "DynamicPayload",
+            name=(str, ...),
+            count=(int, ...),
+            tags=(list[str], u.Field(default_factory=list)),
+        )
+        adapter = u.TypeAdapter(dynamic_model)
 
-    def test_computed_field_is_callable(self) -> None:
-        assert callable(u.computed_field)
+        payload = adapter.validate_python({"name": "queue", "count": "2", "tags": ["cli"]})
+        payload_dump = payload.model_dump()
+        payload_json = u.to_json(payload.model_dump())
+        payload_dict = u.from_json(payload_json)
+        payload_jsonable = u.to_jsonable_python(payload)
 
-    def test_field_validator_is_callable(self) -> None:
-        assert callable(u.field_validator)
+        assert payload_dump == {"name": "queue", "count": 2, "tags": ["cli"]}
+        assert payload_dict == {"name": "queue", "count": 2, "tags": ["cli"]}
+        assert payload_jsonable == payload_dict
 
-    def test_field_serializer_is_callable(self) -> None:
-        assert callable(u.field_serializer)
+    def test_public_facade_resolves_runtime_bootstrap_options_from_json(
+        self,
+    ) -> None:
+        runtime_options = m.RuntimeBootstrapOptions.model_validate_json(
+            u.to_json(
+                {
+                    "subproject": "source-runtime",
+                    "wire_packages": ["flext.core.runtime", "tests.runtime"],
+                    "settings_overrides": {"dry_run": True},
+                }
+            )
+        )
 
-    def test_model_validator_is_callable(self) -> None:
-        assert callable(u.model_validator)
-
-    def test_model_serializer_is_callable(self) -> None:
-        assert callable(u.model_serializer)
-
-    def test_after_validator_is_accessible(self) -> None:
-        assert u.AfterValidator is not None
-
-    def test_before_validator_is_accessible(self) -> None:
-        assert u.BeforeValidator is not None
-
-    def test_plain_validator_is_accessible(self) -> None:
-        assert u.PlainValidator is not None
-
-    def test_wrap_validator_is_accessible(self) -> None:
-        assert u.WrapValidator is not None
-
-    def test_plain_serializer_is_accessible(self) -> None:
-        assert u.PlainSerializer is not None
-
-    def test_wrap_serializer_is_accessible(self) -> None:
-        assert u.WrapSerializer is not None
-
-    def test_config_dict_is_accessible(self) -> None:
-        assert u.ConfigDict is not None
-
-    def test_field_serialization_info_is_accessible(self) -> None:
-        assert u.FieldSerializationInfo is not None
-
-    def test_type_adapter_is_accessible(self) -> None:
-        assert u.TypeAdapter is not None
-
-    def test_create_model_is_callable(self) -> None:
-        assert callable(u.create_model)
-
-    def test_validate_call_is_callable(self) -> None:
-        assert callable(u.validate_call)
-
-    def test_with_config_is_callable(self) -> None:
-        aliased = getattr(u, "with_config")
-        assert aliased is _pydantic_with_config
-        decorator = _pydantic_with_config(u.ConfigDict(populate_by_name=True))
-        assert callable(decorator)
-
-    def test_from_json_is_callable(self) -> None:
-        assert callable(u.from_json)
-
-    def test_to_json_is_callable(self) -> None:
-        assert callable(u.to_json)
-
-    def test_to_jsonable_python_is_callable(self) -> None:
-        assert callable(u.to_jsonable_python)
-
-    def test_create_model_produces_working_model(self) -> None:
-        dynamic_model = u.create_model("DynamicModel", name=(str, ...))
-        inst = dynamic_model(name="hello")
-        assert getattr(inst, "name") == "hello"
-
-    def test_to_json_serializes_dict(self) -> None:
-        result = u.to_json({"key": "value"})
-        assert result == b'{"key":"value"}'
-
-    def test_from_json_deserializes_bytes(self) -> None:
-        result = u.from_json(b'{"key":"value"}')
-        assert result == {"key": "value"}
-
-    def test_to_jsonable_python_converts_dict(self) -> None:
-        result = u.to_jsonable_python({"key": "value"})
-        assert result == {"key": "value"}
-
-    def test_type_adapter_validates_list(self) -> None:
-        ta = u.TypeAdapter(list[int])
-        result = ta.validate_python([1, 2, 3])
-        assert result == [1, 2, 3]
-
-    def test_field_creates_field_info(self) -> None:
-        fi = u.Field(description="test")
-        assert fi is not None
-
-    def test_validate_call_wraps_function(self) -> None:
         @u.validate_call()
-        def add(x: int, y: int) -> int:
-            return x + y
+        def build_runtime_options(
+            options: m.RuntimeBootstrapOptions,
+            override_subproject: str,
+            override_packages: tuple[str, ...],
+        ) -> m.RuntimeBootstrapOptions:
+            return u.resolve_runtime_options(
+                options,
+                subproject=override_subproject.strip().replace("_", "-"),
+                wire_packages=override_packages,
+            )
 
-        assert add(1, 2) == 3
+        resolved = build_runtime_options(
+            runtime_options,
+            " cli_runtime ",
+            ("flext.cli.runtime", "flext.cli.jobs"),
+        )
+
+        assert runtime_options.subproject == "source-runtime"
+        assert list(runtime_options.wire_packages or ()) == [
+            "flext.core.runtime",
+            "tests.runtime",
+        ]
+        assert runtime_options.settings_overrides == {"dry_run": True}
+        assert resolved.subproject == "cli-runtime"
+        assert list(resolved.wire_packages or ()) == [
+            "flext.cli.runtime",
+            "flext.cli.jobs",
+        ]
+        assert resolved.settings_overrides == {"dry_run": True}

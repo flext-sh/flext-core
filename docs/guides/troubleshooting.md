@@ -64,21 +64,36 @@ assert fail_result.failure
 When behavior drifts, execute the official examples used by maintainers.
 
 ```python
+import io
+from contextlib import redirect_stdout
+
 from examples.ex_02_flext_settings import Ex02FlextSettings
 from examples.ex_08_flext_container import Ex08FlextContainer
 
-Ex02FlextSettings("docs/guides/troubleshooting.md").exercise()
+stream = io.StringIO()
+with redirect_stdout(stream):
+    Ex02FlextSettings("docs/guides/troubleshooting.md").exercise()
 Ex08FlextContainer("docs/guides/troubleshooting.md").exercise()
 ```
 
 ## 5. Debug Logger Context
 
 ```python
+import io
+import time
+from contextlib import redirect_stdout
+
 from flext_core import FlextLogger
 
 _ = FlextLogger.bind_global_context(component="troubleshooting")
-logger = FlextLogger.create_module_logger(__name__)
-_ = logger.info("diagnostic_event")
+stream = io.StringIO()
+with redirect_stdout(stream):
+    logger = FlextLogger.create_module_logger(__name__)
+    _ = logger.info("diagnostic_event")
+    deadline = time.monotonic() + 0.25
+    while time.monotonic() < deadline and "diagnostic_event" not in stream.getvalue():
+        time.sleep(0.01)
+    assert "diagnostic_event" in stream.getvalue()
 _ = FlextLogger.clear_global_context()
 ```
 

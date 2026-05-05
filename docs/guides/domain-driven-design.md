@@ -56,11 +56,16 @@ assert created.success
 ## Use Maintainer DDD-Like Examples
 
 ```python
+import io
+from contextlib import redirect_stdout
+
 from examples.ex_11_flext_service import ExampleService
 from examples.ex_12_flext_registry import Ex12RegistryDsl
 
 ExampleService.run()
-Ex12RegistryDsl("docs/guides/domain-driven-design.md").exercise()
+stream = io.StringIO()
+with redirect_stdout(stream):
+    Ex12RegistryDsl("docs/guides/domain-driven-design.md").exercise()
 ```
 
 ## DDD Checklist

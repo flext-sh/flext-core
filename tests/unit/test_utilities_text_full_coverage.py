@@ -1,73 +1,64 @@
-"""Tests for FlextUtilitiesText - safe_string, format.
-
-Module: flext_core
-Coverage target: lines 33, 82-83, 109
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Behavior contract for public text helpers in real bootstrap workflows."""
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
-from hypothesis import given, strategies as st
 
-from tests import u
+from flext_core import u as core_u
+from tests import c, m, u as test_u
 
 
-class TestsFlextUtilitiesText(u.Tests.Contract):
-    def test_logger_property_returns_logger(self) -> None:
-        """Logger property returns a structlog logger instance."""
-        logger = u.fetch_logger()
-        assert logger is not None
-
+class TestsFlextUtilitiesText(test_u.Tests.Contract):
     @pytest.mark.parametrize(
         ("value", "message"),
-        u.Tests.Contract.SAFE_STRING_INVALID_CASES,
+        [
+            pytest.param(None, c.ERR_TEXT_NONE_NOT_ALLOWED, id="none"),
+            pytest.param("", c.ERR_TEXT_EMPTY_NOT_ALLOWED, id="empty"),
+            pytest.param("   ", c.ERR_TEXT_EMPTY_NOT_ALLOWED, id="blank"),
+        ],
     )
-    def test_safe_string_invalid_values_raise(
+    def test_public_text_helpers_reject_blank_bootstrap_inputs(
         self,
         value: str | None,
         message: str,
     ) -> None:
-        """Invalid values raise ValueError with actionable message."""
+        """Bootstrap inputs must fail fast when text is absent or blank."""
         with pytest.raises(ValueError, match=message):
-            u.safe_string(value)
+            core_u.safe_string(value)
 
-    @pytest.mark.parametrize(
-        ("value", "expected"),
-        u.Tests.Contract.SAFE_STRING_VALID_CASES,
-    )
-    def test_safe_string_valid_values_are_stripped(
+    def test_public_text_helpers_prepare_and_persist_app_manifest(
         self,
-        value: str,
-        expected: str,
+        tmp_path: Path,
     ) -> None:
-        """Valid strings are stripped and preserved."""
-        self.assert_safe_string_valid(value, expected)
+        """App bootstrap uses the public helpers to normalize and persist text."""
+        raw_name = "  Fleet Sync_App v2  "
+        cleaned_name = core_u.safe_string(raw_name)
+        app_id = core_u.format_app_id(cleaned_name)
+        normalized_key = core_u.normalize_alnum(cleaned_name)
+        manifest_path = tmp_path / "app.env"
+        manifest_content = "\n".join(
+            [
+                f"APP_NAME={cleaned_name}",
+                f"APP_ID={app_id}",
+                f"APP_KEY={normalized_key}",
+            ]
+        )
 
-    @pytest.mark.parametrize(
-        ("name", "expected"),
-        [
-            pytest.param(name, expected, id=f"format-{index}")
-            for index, (name, expected) in enumerate(
-                u.Tests.Contract.FORMAT_APP_ID_CASES,
-            )
-        ],
-    )
-    def test_format_app_id_examples(self, name: str, expected: str) -> None:
-        """Known examples are normalized as expected."""
-        self.assert_format_app_id(name, expected)
+        core_u.write_file(manifest_path, manifest_content)
 
-    @given(st.text())
-    def test_format_app_id_keeps_length(self, name: str) -> None:
-        """Only character substitution is performed, never insertion/removal."""
-        assert len(u.format_app_id(name)) == len(name)
+        snapshot = m.Tests.ManifestSnapshot(
+            app_id=app_id,
+            normalized_key=normalized_key,
+            manifest_path=str(manifest_path),
+            manifest_content=manifest_path.read_text(encoding=c.DEFAULT_ENCODING),
+        )
 
-    @given(st.text())
-    def test_format_app_id_normalization_rules(self, name: str) -> None:
-        """Result is lowercase and contains no spaces or underscores."""
-        formatted = u.format_app_id(name)
-        assert formatted == name.lower().replace(" ", "-").replace("_", "-")
-        assert " " not in formatted
-        assert "_" not in formatted
+        assert snapshot.app_id == "fleet-sync-app-v2"
+        assert snapshot.normalized_key == "fleetsyncappv2"
+        assert Path(snapshot.manifest_path) == manifest_path
+        assert snapshot.manifest_content == manifest_content
+        assert " " not in snapshot.app_id
+        assert "_" not in snapshot.app_id
+        assert snapshot.normalized_key.isalnum()

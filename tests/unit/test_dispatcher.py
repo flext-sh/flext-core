@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import io
+import time
+from contextlib import redirect_stdout
+
 import pytest
 
 from tests import m, p, r, t, u
@@ -66,7 +70,18 @@ class TestsFlextDispatcher:
             return "handled"
 
         setattr(handle, "message_type", m.Command)
-        assert dispatcher.register_handler(handle).success
+        stream = io.StringIO()
+        with redirect_stdout(stream):
+            result = dispatcher.register_handler(handle)
+            deadline = time.monotonic() + 0.25
+            while (
+                time.monotonic() < deadline
+                and "Registered handler" not in stream.getvalue()
+            ):
+                time.sleep(0.01)
+
+        assert result.success
+        assert "Registered handler" in stream.getvalue()
 
 
 __all__: t.MutableSequenceOf[str] = ["TestsFlextDispatcher"]

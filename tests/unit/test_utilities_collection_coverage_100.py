@@ -3,15 +3,47 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
 
 import pytest
 from flext_tests import tm
 
-from tests import t, u
+from flext_core import u
+from tests import m, t
 
 
 class TestsFlextUtilitiesCollection:
     """Behavior contract for u.map / u.find / u.filter / u.count / u.process / u.merge_mappings."""
+
+    def test_normalize_domain_event_data_flattens_public_payloads(self) -> None:
+        config_payload = m.ConfigMap.model_validate(
+            {
+                "event": "sync-users",
+                "workspace_root": Path("/tmp/flext"),
+                "attempt_count": 2,
+                "ignored": None,
+            }
+        )
+        mapping_payload: t.JsonMapping = {
+            "tenant": "acme",
+            "retry": 1,
+            "skip": None,
+        }
+
+        normalized_config = u.normalize_domain_event_data(config_payload)
+        normalized_mapping_payload = u.normalize_domain_event_data(mapping_payload)
+        normalized_none = u.normalize_domain_event_data(None)
+
+        tm.that(normalized_none, eq={})
+        tm.that(
+            normalized_config,
+            eq={
+                "event": "sync-users",
+                "workspace_root": "/tmp/flext",
+                "attempt_count": 2,
+            },
+        )
+        tm.that(normalized_mapping_payload, eq={"tenant": "acme", "retry": 1})
 
     # --- map -------------------------------------------------------------
 
@@ -54,6 +86,12 @@ class TestsFlextUtilitiesCollection:
             tm.that(result.value, eq=expected)
         else:
             tm.fail(result)
+
+    def test_find_returns_failure_when_mapping_has_no_matching_value(self) -> None:
+        result = u.find({"tenant": "acme", "mode": "full"}, lambda value: value == "delta")
+
+        tm.fail(result)
+        tm.that(result.error, eq="No matching item found")
 
     # --- filter ----------------------------------------------------------
 
@@ -115,6 +153,21 @@ class TestsFlextUtilitiesCollection:
         result = u.process(items, processor, on_error="collect", predicate=predicate)
         tm.ok(result)
         tm.that(result.value, eq=expected)
+
+    def test_process_supports_skip_and_fail_error_modes(self) -> None:
+        def project_identifier(value: t.JsonValue) -> str:
+            if value == 2:
+                error_message = "cannot process item"
+                raise ValueError(error_message)
+            return f"item:{value}"
+
+        skipped = u.process([1, 2, 3], project_identifier, on_error="skip")
+        failed = u.process([1, 2, 3], project_identifier, on_error="fail")
+
+        tm.ok(skipped)
+        tm.that(skipped.value, eq=["item:1", "item:3"])
+        tm.fail(failed)
+        tm.that(failed.error, eq="Processing failed for item: 2")
 
     # --- merge_mappings --------------------------------------------------
 

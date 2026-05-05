@@ -6,6 +6,7 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+import importlib
 import io
 import json
 import logging
@@ -20,13 +21,14 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Annotated, Literal, TypeVar
+from typing import TYPE_CHECKING, Annotated, Literal, TypeVar
 
 import pytest
 
-import flext_core as core
-from flext_core import FlextContainer, FlextContext, FlextSettings
 from tests import c, m, p, r, t, u
+
+if TYPE_CHECKING:
+    from flext_core import FlextContext
 
 collect_ignore_glob = [
     "**/__init__.py",
@@ -36,17 +38,18 @@ collect_ignore_glob = [
 @pytest.fixture
 def test_context() -> FlextContext:
     """Provide FlextContext instance for testing."""
-    return FlextContext()
+    return importlib.import_module("flext_core").FlextContext()
 
 
 @pytest.fixture
 def clean_container() -> Iterator[p.Container]:
     """Provide an isolated empty container for tests that mutate DI state."""
-    FlextContainer.reset_for_testing()
+    flext_container = importlib.import_module("flext_core").FlextContainer
+    flext_container.reset_for_testing()
     try:
-        yield FlextContainer()
+        yield flext_container()
     finally:
-        FlextContainer.reset_for_testing()
+        flext_container.reset_for_testing()
 
 
 @pytest.fixture
@@ -203,6 +206,11 @@ def _docs_open(file: str | Path, mode: str = "r") -> object:
 
 def pytest_markdown_docs_globals() -> dict[str, object]:
     """Provide shared globals for markdown-docs executable snippets."""
+    core = importlib.import_module("flext_core")
+    flext_container = core.FlextContainer
+    flext_context = core.FlextContext
+    flext_settings = core.FlextSettings
+
     T = TypeVar("T")
     T_co = TypeVar("T_co", covariant=True)
     empty_mapping: dict[str, object] = {}
@@ -244,12 +252,12 @@ def pytest_markdown_docs_globals() -> dict[str, object]:
         "p": p,
         "r": r,
         "u": u,
-        "FlextContainer": FlextContainer,
-        "FlextContext": FlextContext,
+        "FlextContainer": flext_container,
+        "FlextContext": flext_context,
         "FlextDispatcher": getattr(core, "FlextDispatcher", _DocsStub),
         "FlextLogger": getattr(core, "FlextLogger", _DocsStub),
         "FlextModels": getattr(core, "FlextModels", _DocsStub),
-        "FlextSettings": getattr(core, "FlextSettings", FlextSettings),
+        "FlextSettings": getattr(core, "FlextSettings", flext_settings),
         # Typing / stdlib helpers commonly referenced in snippets.
         "Annotated": Annotated,
         "Literal": Literal,
@@ -268,7 +276,7 @@ def pytest_markdown_docs_globals() -> dict[str, object]:
         "T_co": T_co,
         # Pydantic v2 symbols frequently referenced by docs.
         "ConfigDict": m.ConfigDict,
-        "BaseSettings": FlextSettings,
+        "BaseSettings": flext_settings,
         "field_validator": lambda *args, **kwargs: lambda fn: fn,
         "model_validator": lambda *args, **kwargs: lambda fn: fn,
         # Common helpers used by snippet examples.

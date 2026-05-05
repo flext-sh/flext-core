@@ -47,6 +47,8 @@ class FlextUtilitiesLoggingConfig:
         def __init__(self, stream: typing.TextIO) -> None:
             super().__init__()
             self.stream = stream
+            self._use_live_stdout = stream is sys.stdout
+            self._use_live_stderr = stream is sys.stderr
             self._stream_mode: str = str(getattr(stream, "mode", "w"))
             self._stream_name: str = str(
                 getattr(stream, "name", "<async-log-writer>"),
@@ -74,6 +76,14 @@ class FlextUtilitiesLoggingConfig:
             self._writer_logger: p.Logger | None = None
 
         @property
+        def _target_stream(self) -> typing.TextIO:
+            if self._use_live_stdout:
+                return sys.stdout
+            if self._use_live_stderr:
+                return sys.stderr
+            return self.stream
+
+        @property
         def _writer_log(self) -> p.Logger:
             """Logger for async log writer."""
             existing: p.Logger | None = getattr(self, "_writer_logger", None)
@@ -96,7 +106,7 @@ class FlextUtilitiesLoggingConfig:
         @property
         def buffer(self) -> typing.BinaryIO:
             """Return underlying binary buffer."""
-            buf: typing.BinaryIO | None = getattr(self.stream, "buffer", None)
+            buf: typing.BinaryIO | None = getattr(self._target_stream, "buffer", None)
             if buf is not None:
                 return buf
             return io.BytesIO()
@@ -104,12 +114,12 @@ class FlextUtilitiesLoggingConfig:
         @property
         def line_buffering(self) -> bool:
             """Return whether line buffering is enabled."""
-            return bool(getattr(self.stream, "line_buffering", False))
+            return bool(getattr(self._target_stream, "line_buffering", False))
 
         @override
         def flush(self) -> None:
             """Flush stream (best effort)."""
-            flush_fn = getattr(self.stream, "flush", None)
+            flush_fn = getattr(self._target_stream, "flush", None)
             if flush_fn is None or not callable(flush_fn):
                 return
             try:
@@ -142,8 +152,9 @@ class FlextUtilitiesLoggingConfig:
                     msg = self.queue.get(timeout=0.1)
                     if msg is None:
                         break
-                    _ = self.stream.write(msg)
-                    _ = self.stream.flush()
+                    target_stream = self._target_stream
+                    _ = target_stream.write(msg)
+                    _ = target_stream.flush()
                     self.queue.task_done()
                 except queue.Empty:
                     if self.stop_event.is_set():
@@ -155,7 +166,7 @@ class FlextUtilitiesLoggingConfig:
                         exc_info=exc,
                     )
                     with suppress(OSError, ValueError, TypeError):
-                        _ = self.stream.write("Error in async log writer\n")
+                        _ = self._target_stream.write("Error in async log writer\n")
 
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
 

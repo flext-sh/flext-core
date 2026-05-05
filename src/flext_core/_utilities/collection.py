@@ -32,15 +32,12 @@ class FlextUtilitiesCollection(
 
     @staticmethod
     def normalize_domain_event_data(
-        value: mc.ConfigMap | t.JsonPayload | None,
+        value: mc.ConfigMap | t.JsonMapping | None,
     ) -> t.MappingKV[str, t.JsonValue]:
         """Normalize domain event payloads into plain flat mappings."""
         if value is None:
             return {}
         raw_source = value.root if isinstance(value, mc.ConfigMap) else value
-        if not isinstance(raw_source, Mapping):
-            validated = mc.ConfigMap.model_validate(raw_source)
-            return FlextUtilitiesCollection.normalize_domain_event_data(validated)
         normalized: MutableMapping[str, t.JsonValue] = {}
         for key, item in raw_source.items():
             if item is None:

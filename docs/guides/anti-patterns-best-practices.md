@@ -80,11 +80,16 @@ assert service.value == "ready"
 ### Reuse Maintainer Examples
 
 ```python
+import io
+from contextlib import redirect_stdout
+
 from examples.ex_03_flext_logger import Ex03FlextLogger
 from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
-Ex03FlextLogger().exercise()
+stream = io.StringIO()
+with redirect_stdout(stream):
+    Ex03FlextLogger().run()
 result = Ex04DispatchDsl.run()
 assert result.success
-assert result.value == "dispatcher-example"
+assert result.value == "pong:dispatcher-example"
 ```
