@@ -40,8 +40,8 @@ from flext_core import (
 
 
 class FlextSettings(
-    BaseSettings,
     FlextSettingsBase,
+    BaseSettings,
     FlextSettingsCore,
     FlextSettingsDatabase,
     FlextSettingsDispatcher,
