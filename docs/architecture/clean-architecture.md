@@ -50,7 +50,7 @@ describes the dependency rules and per-layer responsibilities.
 - **Foundation purity:** `constants.py`, `typings.py`, and `protocols.py` avoid
   internal imports so they remain safe for all layers.
 
-```python
+```text
 # ✅ Correct: application layer depends on domain + foundation
 from flext_core import FlextDispatcher, r
 

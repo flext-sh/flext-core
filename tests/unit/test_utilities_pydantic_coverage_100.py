@@ -6,6 +6,8 @@ Exercises every class-level alias in FlextUtilitiesPydantic via the public
 
 from __future__ import annotations
 
+from pydantic import with_config as _pydantic_with_config
+
 from tests import u
 
 
@@ -68,7 +70,10 @@ class TestsFlextUtilitiesPydantic:
         assert callable(u.validate_call)
 
     def test_with_config_is_callable(self) -> None:
-        assert callable(u.with_config)
+        aliased = getattr(u, "with_config")
+        assert aliased is _pydantic_with_config
+        decorator = _pydantic_with_config(u.ConfigDict(populate_by_name=True))
+        assert callable(decorator)
 
     def test_from_json_is_callable(self) -> None:
         assert callable(u.from_json)

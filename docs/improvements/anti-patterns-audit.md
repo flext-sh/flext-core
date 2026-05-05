@@ -29,7 +29,7 @@ assert normalize("").failure
 ## examples-backed sanity
 
 ```python
-from examples.ex_03_flext_logger import Ex03LoggingDsl
+from examples.ex_03_flext_logger import Ex03FlextLogger
 
-Ex03LoggingDsl("docs/improvements/anti-patterns-audit.md").exercise()
+Ex03FlextLogger().exercise()
 ```

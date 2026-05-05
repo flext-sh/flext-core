@@ -56,6 +56,18 @@ def mock_external_service() -> u.Tests.FunctionalExternalService:
 
 
 @pytest.fixture
+def temp_dir(tmp_path: Path) -> Path:
+    """Temporary directory fixture available to all FLEXT projects."""
+    return tmp_path
+
+
+@pytest.fixture
+def temp_directory(temp_dir: Path) -> Path:
+    """Backward-compatible alias for tests expecting temp_directory."""
+    return temp_dir
+
+
+@pytest.fixture
 def temp_file(temp_dir: Path) -> Path:
     """Temporary file fixture available to all FLEXT projects."""
     return temp_dir / "test_file.txt"
@@ -71,6 +83,16 @@ def flext_result_success() -> p.Result[dict[str, bool]]:
 def flext_result_failure() -> p.Result[str]:
     """Failed r fixture available to all FLEXT projects."""
     return r[str].fail(c.Tests.TEST_ERROR)
+
+
+@pytest.fixture
+def sample_data() -> t.JsonMapping:
+    """Sample JSON-style mapping for integration tests."""
+    return {
+        "string": "test_value",
+        "number": 42,
+        "enabled": True,
+    }
 
 
 @pytest.fixture

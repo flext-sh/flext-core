@@ -21,22 +21,12 @@ from typing import Annotated, ClassVar
 from pydantic import (
     BeforeValidator,
     Field,
-    TypeAdapter,
     field_validator,
 )
 
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase as tb
-
-_author_name_ta: TypeAdapter[str] = TypeAdapter(
-    Annotated[
-        str,
-        BeforeValidator(
-            lambda v: str(v.get("name", "")) if isinstance(v, dict) else str(v)
-        ),
-    ]
-)
 
 
 class FlextModelsProjectMetadata:
@@ -190,7 +180,12 @@ class FlextModelsProjectMetadata:
             Field(default=()),
             BeforeValidator(
                 lambda value: (
-                    tuple(_author_name_ta.validate_python(entry) for entry in value)
+                    tuple(
+                        str(entry.get("name", ""))
+                        if isinstance(entry, dict)
+                        else str(entry)
+                        for entry in value
+                    )
                     if isinstance(value, (list, tuple))
                     else ()
                 )

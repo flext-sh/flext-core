@@ -94,15 +94,12 @@ assert worker_settings.log_level == "DEBUG"
 Register namespaced settings with `auto_register`.
 
 ```python
-from typing import ClassVar
 from flext_core import FlextSettings, m
 
 
 @FlextSettings.auto_register("docs_demo")
 class DocsDemoSettings(FlextSettings):
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-        env_prefix="FLEXT_DOCS_DEMO_", extra="ignore"
-    )
+    model_config = m.ConfigDict(env_prefix="FLEXT_DOCS_DEMO_", extra="ignore")
     feature_enabled: bool = True
 
 

@@ -33,12 +33,11 @@ assert result.value == "user_created"
 ```python
 from typing import Annotated
 
-from flext_core import p, r, s
-from pydantic import Field
+from flext_core import m, p, r, s
 
 
 class ValidateThenCreateService(s):
-    username: Annotated[str, Field(description="Username for the create flow.")] = ""
+    username: Annotated[str, m.Field(description="Username for the create flow.")] = ""
 
     def execute(self) -> p.Result[str]:
         if not self.username:
@@ -53,7 +52,7 @@ assert ValidateThenCreateService(username="").execute().failure
 ## examples-backed service flows
 
 ```python
-from examples.ex_11_flext_service import Ex11FlextService
+from examples.ex_11_flext_service import ExampleService
 
-Ex11FlextService.run()
+ExampleService.run()
 ```

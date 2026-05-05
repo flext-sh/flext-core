@@ -224,8 +224,6 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    make install
    ```
 
-````
-
 1. **Type Errors**
 
    ```bash
@@ -234,7 +232,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
    # Check specific files
    mypy src/flext_core/your_module.py
-````
+  ```
 
 1. **Test Failures**
 
@@ -245,8 +243,6 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    # Debug specific test
    pytest tests/unit/test_result.py::Testr::test_ok -v -s
    ```
-
-```
 
 ### Documentation Updates
 
@@ -300,10 +296,9 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
 **Module Structure:**
 
-```
-
+```text
 src/flext_core/
-├── **init**.py # Public API exports
+├── __init__.py # Public API exports
 ├── result.py # Railway pattern implementation
 ├── container.py # Dependency injection
 ├── models.py # DDD base classes
@@ -312,37 +307,25 @@ src/flext_core/
 ├── settings.py # Configuration management
 ├── loggings.py # Structured logging
 └── ... (other modules)
-
-````
+```
 
 **Import Guidelines:**
 
-```python
+```text
 # ✅ Good - Direct imports
-from flext_core import FlextDispatcher
-from flext_core import FlextSettings
-from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext
-from flext_core import d
-from flext_core import e
-from flext_core import h
-from flext_core import x
+from flext_core import FlextDispatcher
 from flext_core import FlextModels
-from flext_core import p
-from flext_core import u
-from flext_core import r, p
-from flext_core import u
-from flext_core import s
-from flext_core import t
-from flext_core import u
+from flext_core import FlextSettings
+from flext_core import d, e, h, p, r, s, t, u, x
 
 # ❌ Bad - Star imports in production code
 from flext_core import *
 
 # ❌ Bad - Relative imports in public APIs
 from .result import r, p
-````
+```
 
 ## Review Process
 
@@ -433,6 +416,3 @@ ______________________________________________________________________
 Thank you for contributing to FLEXT-Core! Your contributions help make this a better framework for the entire ecosystem.
 
 **Happy coding!** 🚀
-
-```
-```

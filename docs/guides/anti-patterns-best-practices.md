@@ -26,7 +26,7 @@ def process(data):
 ```
 
 ```text
-Wrong pattern: legacy API names in docs, e.g. FlextSettings.get_global().
+Wrong pattern: legacy API names in docs, e.g. FlextSettings.fetch_global().
 Use FlextSettings.fetch_global() instead.
 ```
 
@@ -80,10 +80,10 @@ assert service.value == "ready"
 ### Reuse Maintainer Examples
 
 ```python
-from examples.ex_03_flext_logger import Ex03LoggingDsl
+from examples.ex_03_flext_logger import Ex03FlextLogger
 from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
-Ex03LoggingDsl("docs/guides/anti-patterns-best-practices.md").exercise()
+Ex03FlextLogger().exercise()
 result = Ex04DispatchDsl.run()
 assert result.success
 assert result.value == "dispatcher-example"

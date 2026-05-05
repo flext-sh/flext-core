@@ -19,7 +19,8 @@ from flext_core import p, r
 
 
 def validate_sku(sku: str) -> p.Result[str]:
-    if not sku or len(sku) < 3:
+    minimum_sku_length = 3
+    if not sku or len(sku) < minimum_sku_length:
         return r[str].fail("invalid_sku")
     return r[str].ok(sku)
 
@@ -35,7 +36,8 @@ from flext_core import p, r
 
 
 def validate_sku(sku: str) -> p.Result[str]:
-    if not sku or len(sku) < 3:
+    minimum_sku_length = 3
+    if not sku or len(sku) < minimum_sku_length:
         return r[str].fail("invalid_sku")
     return r[str].ok(sku)
 
@@ -54,10 +56,10 @@ assert created.success
 ## Use Maintainer DDD-Like Examples
 
 ```python
-from examples.ex_11_flext_service import Ex11FlextService
+from examples.ex_11_flext_service import ExampleService
 from examples.ex_12_flext_registry import Ex12RegistryDsl
 
-Ex11FlextService.run()
+ExampleService.run()
 Ex12RegistryDsl("docs/guides/domain-driven-design.md").exercise()
 ```
 
@@ -66,3 +68,4 @@ Ex12RegistryDsl("docs/guides/domain-driven-design.md").exercise()
 - Keep domain validation deterministic.
 - Model failures explicitly with `r[T]`.
 - Keep orchestration in services/handlers, not in entities.
+de

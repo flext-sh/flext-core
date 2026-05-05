@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from collections.abc import (
     Mapping,
     MutableMapping,
@@ -28,6 +29,8 @@ class FlextTypingBase(tp, ta):
     type MutableMappingKV[KeyT, ValueT] = MutableMapping[KeyT, ValueT]
     type SequenceOf[ItemT] = Sequence[ItemT]
     type MutableSequenceOf[ItemT] = MutableSequence[ItemT]
+    type RegexPattern = re.Pattern[str]
+    type RegexMatch = re.Match[str]
 
     type Numeric = tp.StrictInt | tp.StrictFloat
 

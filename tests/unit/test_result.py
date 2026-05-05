@@ -610,7 +610,10 @@ class TestsFlextResult:
         """Result error_data accepts protocol carriers through runtime normalization."""
 
         class ModelDumpCarrier:
-            def model_dump(self) -> t.ScalarMapping:
+            def model_dump(
+                self, *, mode: str = "python"
+            ) -> t.MappingKV[str, t.JsonPayload | None]:
+                _ = mode
                 return {"alpha": 1, "beta": "two"}
 
         result: p.Result[str] = r[str].fail(

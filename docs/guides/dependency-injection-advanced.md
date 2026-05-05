@@ -22,9 +22,7 @@ Use the canonical container example as the reference path.
 from examples.ex_08_flext_container import Ex08FlextContainer
 
 demo = Ex08FlextContainer("docs/guides/dependency-injection-advanced.md")
-container = demo._exercise_singleton_and_creation()
-
-assert container is not None
+demo.exercise()
 ```
 
 The `Ex08FlextContainer` flow exercises binding, factories, resolution, and scoped containers.
@@ -66,8 +64,6 @@ assert tenant.value == "default"
 `FlextContainer` does not expose `batch_register`; use explicit loop registration for deterministic failure points.
 
 ```python
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
-
 from flext_core import FlextContainer, p, r, t
 
 

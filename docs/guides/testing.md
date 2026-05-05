@@ -47,11 +47,9 @@ assert resolved.value == "ready"
 ## Reuse Official Example Tests
 
 ```python
-from examples.ex_08_flext_container import Ex08FlextContainer
-from examples.ex_11_flext_service import Ex11FlextService
+from examples.ex_11_flext_service import ExampleService
 
-Ex08FlextContainer("docs/guides/testing.md").exercise()
-Ex11FlextService.run()
+ExampleService.run()
 ```
 
 ## Recommended Strategy

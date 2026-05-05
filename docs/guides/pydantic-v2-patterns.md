@@ -32,12 +32,11 @@ assert user.name == "Alice"
 ## ConfigDict + model_dump
 
 ```python
-from typing import ClassVar
 from flext_core import m
 
 
 class SettingsModel(m.BaseModel):
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="ignore")
+    model_config = m.ConfigDict(extra="ignore")
     debug: bool = False
 
 
@@ -51,7 +50,7 @@ assert data["debug"] is True
 ```python
 from typing import Annotated
 
-from flext_core import m, u
+from flext_core import c, m, u
 
 
 class PortModel(m.BaseModel):
@@ -60,8 +59,9 @@ class PortModel(m.BaseModel):
     @u.field_validator("port")
     @classmethod
     def validate_port(cls, value: int) -> int:
-        if value < 1 or value > 65535:
-            raise ValueError("invalid_port")
+        message = "invalid_port"
+        if value < c.MIN_PORT or value > c.MAX_PORT:
+            raise ValueError(message)
         return value
 
 

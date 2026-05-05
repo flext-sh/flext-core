@@ -123,7 +123,9 @@ class FlextRuntime:
         if value is None:
             validated_value = t.json_value_adapter().validate_python("")
         elif ugm.has_model_dump(value):
-            validated_value = t.json_value_adapter().validate_python(value.model_dump())
+            validated_value = t.json_value_adapter().validate_python(
+                value.model_dump(mode="json")
+            )
         elif isinstance(value, p.Model):
             validated_value = t.json_value_adapter().validate_python(str(value))
         else:
@@ -174,7 +176,9 @@ class FlextRuntime:
             return FlextRuntime._normalize_dict_entries(
                 [(key, item) for key, item in value.items()],
             )
-        return dict(t.json_mapping_adapter().validate_python(value.model_dump()))
+        return dict(
+            t.json_mapping_adapter().validate_python(value.model_dump(mode="json"))
+        )
 
     @staticmethod
     @overload
@@ -202,7 +206,9 @@ class FlextRuntime:
                 )
                 for key, item in value.items()
             }
-        dumped = value.model_dump()
+        if not hasattr(value, "model_dump"):
+            raise TypeError(c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE)
+        dumped = value.model_dump(mode="json")
         return {
             key: (
                 None if item is None else t.json_value_adapter().validate_python(item)
@@ -248,7 +254,7 @@ class FlextRuntime:
         if isinstance(value, Mapping):
             raw_mapping_obj: t.MappingKV[str, t.JsonPayload | None] = value
         else:
-            raw_mapping_obj = value.model_dump()
+            raw_mapping_obj = value.model_dump(mode="json")
         return metadata_model.model_validate({
             c.FIELD_ATTRIBUTES: dict(raw_mapping_obj),
         })

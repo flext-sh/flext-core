@@ -14,7 +14,7 @@ Use `r[T]` to keep errors explicit and composable.
 ## Basic Pattern
 
 ```python
-from flext_core import p, r
+from flext_core import c, p, r
 
 
 def parse_port(raw: str) -> p.Result[int]:
@@ -22,7 +22,7 @@ def parse_port(raw: str) -> p.Result[int]:
         port = int(raw)
     except ValueError:
         return r[int].fail("invalid_port")
-    if port < 1 or port > 65535:
+    if port < c.MIN_PORT or port > c.MAX_PORT:
         return r[int].fail("port_out_of_range")
     return r[int].ok(port)
 
@@ -36,9 +36,10 @@ assert parse_port("bad").failure
 ```python
 from flext_core import r
 
-result = r[int].fail("missing_value").recover(lambda _err: 80)
+default_port = 80
+result = r[int].fail("missing_value").recover(lambda _err: default_port)
 assert result.success
-assert result.value == 80
+assert result.value == default_port
 ```
 
 ## Error Mapping Pattern

@@ -548,8 +548,9 @@ class FlextContainer(p.ContainerLifecycle):
                     _namespace, _settings_class
                 )
 
-            if not self.has(factory_name):
+            if factory_name not in self._factories:
                 self.factory(factory_name, namespace_factory)
+                self._internal_registrations.add(factory_name)
 
     @override
     def drop(self, name: str) -> p.Result[bool]:

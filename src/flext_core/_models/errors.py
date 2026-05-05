@@ -10,8 +10,8 @@ from typing import Annotated, Self
 
 from flext_core import (
     FlextModelsPydantic as mp,
-    FlextTypes as t,
     FlextUtilitiesPydantic as up,
+    t,
 )
 from flext_core._models.base import FlextModelsBase as m
 
