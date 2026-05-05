@@ -1,0 +1,31 @@
+src/flext_core/_constants/enforcement.py
+  548c78fa8c16a5fc 892-963
+src/flext_core/service.py
+  548c78fa8c16a5fc 3-15,23-24,26,29,43-89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "22a7c932c37d27772d6875edb72bf5fdb67050cb",
+  "prompts": {
+    "548c78fa8c16a5fc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c3025bc4-c75c-4b6b-ba16-201893f0161d",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 196,
+      "total_deletions": 621,
+      "accepted_lines": 570,
+      "overriden_lines": 16,
+      "messages_url": "https://usegitai.com/cas/36ce56835703dec8f85141e7a6228e9048346c7e254e33563ef1a3105edfa4f6"
+    }
+  },
+  "humans": {
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  }
+}
