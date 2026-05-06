@@ -1,0 +1,61 @@
+tests/protocols.py
+  h_5cf852cc46bf92 71
+src/flext_core/runtime.py
+  h_5cf852cc46bf92 281
+tests/unit/test_enforcement_apt_hooks.py
+  h_5cf852cc46bf92 26,32,42
+src/flext_core/_utilities/guards.py
+  s_552d8e4891a938::t_6a1a242b57a5a4 169-173
+src/flext_core/constants.py
+  s_552d8e4891a938::t_ee078041f75182 30
+  h_5cf852cc46bf92 57
+tests/_models/mixins.py
+  h_5cf852cc46bf92 80
+tests/unit/test_enforcement.py
+  h_5cf852cc46bf92 208
+src/flext_core/loggings.py
+  h_5cf852cc46bf92 507
+tests/unit/test_utilities_pydantic_coverage_100.py
+  h_5cf852cc46bf92 6,61
+tests/unit/test_loggings_full_coverage.py
+  h_5cf852cc46bf92 13,35
+tests/_constants/services.py
+  h_5cf852cc46bf92 14-15,35
+src/flext_core/_typings/typeadapters.py
+  s_552d8e4891a938::t_b1811e65d0dd69 139-146
+  h_5cf852cc46bf92 52-59,114-116
+tests/unit/test_coverage_loggings.py
+  h_5cf852cc46bf92 13,38
+tests/_constants/other.py
+  h_5cf852cc46bf92 11,48,55,103
+src/flext_core/context.py
+  h_5cf852cc46bf92 117,119,336
+src/flext_core/_typings/base.py
+  s_552d8e4891a938::t_b1811e65d0dd69 47,73
+  s_552d8e4891a938::t_c33e9f4ec32083 140
+  s_552d8e4891a938::t_5666391dc377f9 11,31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "3bc5089300de8ff82efd06f74ffb55429ce7d7a1",
+  "prompts": {},
+  "humans": {
+    "h_5cf852cc46bf92": {
+      "author": "FLEXT Bot <team@flext.sh>"
+    },
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  },
+  "sessions": {
+    "s_552d8e4891a938": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "35c0040b-2ae9-466e-90aa-7721509e1e19",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    }
+  }
+}
