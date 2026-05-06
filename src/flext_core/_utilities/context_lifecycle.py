@@ -72,7 +72,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     @staticmethod
     def _normalize_mapping_payload(
-        source: (Mapping[str, t.JsonPayload] | t.JsonMapping),
+        source: (t.MappingKV[str, t.JsonPayload] | t.JsonMapping),
     ) -> t.JsonMapping:
         """Normalize and validate mapping payloads through canonical adapters."""
         normalized = {
@@ -83,7 +83,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     @staticmethod
     def _as_config_map(
-        source: (Mapping[str, t.JsonPayload] | t.JsonMapping),
+        source: (t.MappingKV[str, t.JsonPayload] | t.JsonMapping),
         label: str,
     ) -> m.ConfigMap | None:
         """Normalize an arbitrary mapping into a scope-compatible map."""

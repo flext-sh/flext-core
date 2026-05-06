@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_core import c
+from flext_core import c, t
 
 
 class TestsFlextConstantsOther:
@@ -45,14 +45,14 @@ class TestsFlextConstantsOther:
         ),
     )
 
-    VALIDATOR_METHODS: Final[tuple[str, ...]] = (
+    VALIDATOR_METHODS: Final[t.StrSequence] = (
         "imports",
         "types",
         "bypass",
         "layer",
     )
 
-    LAZY_BENCHMARK_REAL_SYMBOLS: Final[tuple[str, ...]] = (
+    LAZY_BENCHMARK_REAL_SYMBOLS: Final[t.StrSequence] = (
         "FlextConstants",
         "FlextContainer",
         "FlextContext",
@@ -100,7 +100,7 @@ class TestsFlextConstantsOther:
         (0, 0, 0, True),
         (999, 0, 0, False),
     )
-    AT_LEAST_CASE_IDS: Final[tuple[str, ...]] = (
+    AT_LEAST_CASE_IDS: Final[t.StrSequence] = (
         "at-or-above-zero",
         "below-impossibly-high-major",
     )

@@ -77,7 +77,7 @@ class TestsFlextModelsMixins:
         command_name: str
         correlation_id: str
         attempt_count: int
-        tags: tuple[str, ...]
+        tags: t.StrSequence
         started_at: datetime
 
     class ManifestSnapshot(m.BaseModel):

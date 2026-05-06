@@ -23,13 +23,13 @@ from flext_core._utilities.beartype_engine import (
     FlextUtilitiesBeartypeEngine as ube,
 )
 from flext_core._utilities.enforcement import PREDICATE_BINDINGS
-from tests import c, m, u
+from tests import c, m, t, u
 
 
 class TestsFlextEnforcementAptHooks:
     """Catalog entries + beartype dispatch table for A-PT rules."""
 
-    A_PT_RULE_IDS: ClassVar[tuple[str, ...]] = (
+    A_PT_RULE_IDS: ClassVar[t.StrSequence] = (
         "ENFORCE-039",
         "ENFORCE-040",
         "ENFORCE-041",
@@ -39,7 +39,7 @@ class TestsFlextEnforcementAptHooks:
         "ENFORCE-054",
         "ENFORCE-055",
     )
-    A_PT_BEARTYPE_TAGS: ClassVar[tuple[str, ...]] = (
+    A_PT_BEARTYPE_TAGS: ClassVar[t.StrSequence] = (
         "cast_outside_core",
         "model_rebuild_call",
         "pass_through_wrapper",

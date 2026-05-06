@@ -10,7 +10,7 @@ from contextlib import redirect_stdout
 import pytest
 from flext_tests import tm
 
-from tests import p, u
+from tests import p, t, u
 
 LOG_LEVELS: tuple[tuple[str, bool], ...] = (
     ("debug", False),
@@ -32,7 +32,7 @@ class TestsFlextLoggings:
         *,
         contains: str,
         expect_output: bool = True,
-        expected_tokens: tuple[str, ...] = (),
+        expected_tokens: t.StrSequence = (),
     ) -> TResult:
         stream = io.StringIO()
         with redirect_stdout(stream):

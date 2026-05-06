@@ -278,7 +278,7 @@ class FlextRuntime:
             case tuple():
                 normalized_item = FlextRuntime.normalize_to_metadata(item)
             case dict():
-                normalized_item = dict(t.json_mapping_adapter().validate_python(item))
+                normalized_item = t.json_dict_adapter().validate_python(item)
             case list():
                 normalized_item = list(t.json_list_adapter().validate_python(item))
             case bool() | int() | float() | str() | None | mp.BaseModel():

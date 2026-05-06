@@ -205,7 +205,7 @@ class TestsFlextEnforcement:
 
     def test_tuple_passes(self) -> None:
         class _CConstants:
-            ITEMS: Final[tuple[str, ...]] = ("a", "b")
+            ITEMS: Final[t.StrSequence] = ("a", "b")
 
         assert not _messages(
             u.check(_CConstants, layer="constants"),

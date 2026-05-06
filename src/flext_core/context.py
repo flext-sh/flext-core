@@ -114,9 +114,9 @@ class FlextContext(m.ManagedModel):
     ) -> Self:
         """Merge another context or mapping into this context's scope."""
         if isinstance(other, p.Context):
-            self.data.update(dict(other.items()))
+            self.data.root.update(other.items())
         else:
-            self.data.update(dict(other.items()))
+            self.data.update(other)
         return self
 
     def clone(self) -> Self:
@@ -333,4 +333,4 @@ class FlextContext(m.ManagedModel):
         _ = u.REQUEST_TIMESTAMP.set(None)
 
 
-__all__: t.StrSequence = ["FlextContext"]
+__all__: t.StrSequence = ("FlextContext",)

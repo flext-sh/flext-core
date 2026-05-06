@@ -10,7 +10,7 @@ from contextlib import redirect_stdout
 import pytest
 from flext_tests import tm
 
-from tests import p, u
+from tests import p, t, u
 
 
 class TestsFlextCoverageLoggings:
@@ -35,7 +35,7 @@ class TestsFlextCoverageLoggings:
         emit: Callable[[], TResult | None],
         *,
         contains: str,
-        expected_tokens: tuple[str, ...] = (),
+        expected_tokens: t.StrSequence = (),
     ) -> TResult:
         stream = io.StringIO()
         with redirect_stdout(stream):

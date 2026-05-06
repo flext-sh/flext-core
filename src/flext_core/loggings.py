@@ -504,4 +504,4 @@ class FlextLogger(ulc):
                 )
 
 
-__all__: t.StrSequence = ["FlextLogger"]
+__all__: t.StrSequence = ("FlextLogger",)

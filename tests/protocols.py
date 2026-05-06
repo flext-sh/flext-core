@@ -68,7 +68,7 @@ class TestsFlextProtocols(p):
 
             def __call__(
                 self,
-                current: tuple[str, ...] | str | int,
+                current: t.StrSequence | str | int,
                 operations: t.MappingKV[str, t.MapperInput],
                 default_val: t.JsonValue,
                 on_error: str,

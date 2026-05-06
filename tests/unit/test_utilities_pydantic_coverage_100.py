@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from flext_core import u
-from tests import m
+from tests import m, t
 
 
 class TestsFlextUtilitiesPydantic:
@@ -58,7 +58,7 @@ class TestsFlextUtilitiesPydantic:
         def build_runtime_options(
             options: m.RuntimeBootstrapOptions,
             override_subproject: str,
-            override_packages: tuple[str, ...],
+            override_packages: t.StrSequence,
         ) -> m.RuntimeBootstrapOptions:
             return u.resolve_runtime_options(
                 options,

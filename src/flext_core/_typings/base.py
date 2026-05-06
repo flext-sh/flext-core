@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import (
+    Iterable,
     Mapping,
     MutableMapping,
     MutableSequence,
@@ -27,6 +28,7 @@ class FlextTypingBase(tp, ta):
 
     type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
     type MutableMappingKV[KeyT, ValueT] = MutableMapping[KeyT, ValueT]
+    type IterableOf[ItemT] = Iterable[ItemT]
     type SequenceOf[ItemT] = Sequence[ItemT]
     type MutableSequenceOf[ItemT] = MutableSequence[ItemT]
     type RegexPattern = re.Pattern[str]
@@ -42,6 +44,7 @@ class FlextTypingBase(tp, ta):
     type MutableScalarMapping = MutableMapping[str, Scalar]
 
     type StrMapping = MappingKV[str, str]
+    type StrDict = dict[str, str]
     type StrSequence = SequenceOf[str]
     type MutableStrMapping = MutableMapping[str, str]
     type OptionalStrMapping = MappingKV[str, str | None]
@@ -67,6 +70,7 @@ class FlextTypingBase(tp, ta):
     # Canonical consumer aliases (flat; no recursion — tp.JsonValue carries depth)
     type MutableOptionalFeatureFlagMapping = MutableMapping[str, str | bool | None]
     type IntMapping = MappingKV[str, int]
+    type IntDict = dict[str, int]
     type MutableIntMapping = MutableMapping[str, int]
     type BoolMapping = MappingKV[str, bool]
     type MutableBoolMapping = MutableMapping[str, bool]
@@ -133,6 +137,7 @@ class FlextTypingBase(tp, ta):
         FifthT,
     ]
     type VariadicTuple[ItemT] = tuple[ItemT, ...]
+    type StrTuple = VariadicTuple[str]
     type IntPair = Pair[int, int]
 
     type TypeHintSpecifier = (

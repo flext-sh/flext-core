@@ -49,6 +49,16 @@ class FlextTypesTypeAdapters:
 
     @classmethod
     @cache
+    def json_dict_adapter(cls) -> mp.TypeAdapter[t.JsonDict]:
+        return mp.TypeAdapter(t.JsonDict)
+
+    @classmethod
+    @cache
+    def json_dict_sequence_adapter(cls) -> mp.TypeAdapter[t.SequenceOf[t.JsonDict]]:
+        return mp.TypeAdapter(t.SequenceOf[t.JsonDict])
+
+    @classmethod
+    @cache
     def json_list_adapter(cls) -> mp.TypeAdapter[t.JsonList]:
         return mp.TypeAdapter(t.JsonList)
 
@@ -101,6 +111,11 @@ class FlextTypesTypeAdapters:
 
     @classmethod
     @cache
+    def scalar_mapping_adapter(cls) -> mp.TypeAdapter[t.ScalarMapping]:
+        return mp.TypeAdapter(t.ScalarMapping)
+
+    @classmethod
+    @cache
     def float_adapter(cls) -> mp.TypeAdapter[tp.StrictFloat]:
         return mp.TypeAdapter(tp.StrictFloat)
 
@@ -118,6 +133,16 @@ class FlextTypesTypeAdapters:
     @cache
     def str_mapping_adapter(cls) -> mp.TypeAdapter[t.StrMapping]:
         return mp.TypeAdapter(t.StrMapping)
+
+    @classmethod
+    @cache
+    def str_dict_adapter(cls) -> mp.TypeAdapter[t.StrDict]:
+        return mp.TypeAdapter(t.StrDict)
+
+    @classmethod
+    @cache
+    def int_dict_adapter(cls) -> mp.TypeAdapter[t.IntDict]:
+        return mp.TypeAdapter(t.IntDict)
 
     @classmethod
     @cache

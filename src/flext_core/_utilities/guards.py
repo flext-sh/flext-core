@@ -166,7 +166,11 @@ class FlextUtilitiesGuards(
             criteria_spec = FlextModelsCollections.GuardCheckSpec.model_validate(
                 criteria,
             )
-            guard_spec = guard_spec.model_copy(update=criteria_spec.model_dump())
+            criteria_update: dict[str, t.GuardInput | None] = {
+                field_name: getattr(criteria_spec, field_name)
+                for field_name in criteria_spec.model_fields_set
+            }
+            guard_spec = guard_spec.model_copy(update=criteria_update)
         check_val = FlextUtilitiesGuards._resolve_numeric(value)
         return not (
             (guard_spec.none is True and value is not None)

@@ -27,6 +27,7 @@ from flext_core import (
     FlextConstantsStatus,
     FlextConstantsTimeout,
     FlextConstantsValidation,
+    t,
 )
 
 
@@ -53,7 +54,7 @@ class FlextConstants(
     """SSOT facade: all constants flat on c.* via MRO composition."""
 
 
-__all__: tuple[str, ...] = (
+__all__: t.StrSequence = (
     "FlextConstants",
     "c",
 )

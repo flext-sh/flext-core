@@ -11,6 +11,8 @@ from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import Final
 
+from flext_core import t
+
 
 class TestsFlextConstantsServices:
     @unique
@@ -30,7 +32,7 @@ class TestsFlextConstantsServices:
     DEFAULT_USER_NAME_PREFIX: Final[str] = "User "
     DEFAULT_EMAIL_DOMAIN: Final[str] = "@example.com"
     DEFAULT_ERROR_MESSAGE: Final[str] = "Test error"
-    USER_IDS_SUCCESS: Final[tuple[str, ...]] = ("123", "456", "789")
+    USER_IDS_SUCCESS: Final[t.StrSequence] = ("123", "456", "789")
     USER_IDS_INVALID: Final[frozenset[str]] = frozenset({"invalid", ""})
 
     OPERATION_RESULT_KEY: Final[str] = "result"
