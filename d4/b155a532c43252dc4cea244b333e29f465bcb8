@@ -1,0 +1,166 @@
+src/flext_core/_typings/typeadapters.py
+  s_b15aa8dbf80823::t_3df5852b6e3dc5 79-80
+  s_b15aa8dbf80823::t_f3b0d558429b71 29
+  s_b15aa8dbf80823::t_57aa48bcfdd039 84-85
+examples/ex_03_flext_logger.py
+  h_5cf852cc46bf92 40,53-55,82-85,133,135
+src/flext_core/_models/base.py
+  s_552d8e4891a938::t_e9693ba3f80526 188
+src/flext_core/mixins.py
+  h_5cf852cc46bf92 50-51,130,171
+tests/unit/test_container.py
+  h_5cf852cc46bf92 558-560,563
+src/flext_core/_utilities/mapper.py
+  s_552d8e4891a938::t_e9693ba3f80526 110,120
+  h_5cf852cc46bf92 118,131,139-140,143,147,155-159,162
+  s_552d8e4891a938::t_ac59e7a60bc498 126-127,151-152,154,160-161,163-164
+tests/unit/test_settings.py
+  h_5cf852cc46bf92 26-45
+pyproject.toml
+  s_5a9c2b140a8456::t_1acb94baa5dd08 444-445
+tests/unit/test_handlers.py
+  h_5cf852cc46bf92 24-84,91-98,305,310-315,352,375,399
+src/flext_core/runtime.py
+  h_5cf852cc46bf92 148
+  s_552d8e4891a938::t_e9693ba3f80526 222
+  s_552d8e4891a938::t_ac59e7a60bc498 149
+src/flext_core/_protocols/base.py
+  s_552d8e4891a938::t_e9693ba3f80526 89,111
+src/flext_core/_models/errors.py
+  s_552d8e4891a938::t_ac59e7a60bc498 53
+src/flext_core/_typings/base.py
+  s_552d8e4891a938::t_ac59e7a60bc498 55
+src/flext_core/decorators.py
+  h_5cf852cc46bf92 21,53-54,130,169
+src/flext_core/_protocols/handler.py
+  h_5cf852cc46bf92 23,35,115
+src/flext_core/handlers.py
+  h_5cf852cc46bf92 96-97,154,168
+tests/unit/test_utilities_type_guards_coverage_100.py
+  ee53baefb7cad0fc 7,42-48,98-100
+tests/conftest.py
+  ee53baefb7cad0fc 24,28,39
+src/flext_core/_exceptions/base.py
+  h_5cf852cc46bf92 131
+  s_552d8e4891a938::t_ac59e7a60bc498 238
+src/flext_core/_exceptions/types.py
+  s_552d8e4891a938::t_e9693ba3f80526 155
+src/flext_core/_models/_context/_scope.py
+  s_552d8e4891a938::t_e9693ba3f80526 64
+src/flext_core/loggings.py
+  s_552d8e4891a938::t_ac59e7a60bc498 225,269
+src/flext_core/_models/enforcement.py
+  h_5cf852cc46bf92 132,310
+src/flext_core/_utilities/collection_merge.py
+  s_552d8e4891a938::t_54069c62a06081 29,33,38,56-58,60,62,66-68,70,72,76-78,80,86,90-92,94,105,109-111,113,121,124,127-128,143-144,147,154
+src/flext_core/service.py
+  s_0290f35b98ef0c::t_f206e5212b737d 50-51,53-57
+  s_0290f35b98ef0c::t_13b7be3e9c0a24 52,58,60
+  h_5cf852cc46bf92 59,86-91,94-95
+src/flext_core/container.py
+  h_5cf852cc46bf92 22,52-53,179,348,493-494,498,500
+  s_0290f35b98ef0c::t_8c78fc5be6512d 546,549,557
+src/flext_core/_protocols/result.py
+  ee53baefb7cad0fc 365
+src/flext_core/_protocols/settings.py
+  h_5cf852cc46bf92 122-125,133-143
+  s_0290f35b98ef0c::t_8c78fc5be6512d 126-131,145-157
+src/flext_core/settings.py
+  h_5cf852cc46bf92 156,158
+tests/_models/mixins.py
+  h_5cf852cc46bf92 189
+src/flext_core/_exceptions/template.py
+  s_552d8e4891a938::t_ac59e7a60bc498 29
+src/flext_core/_models/project_metadata.py
+  h_5cf852cc46bf92 126
+  s_552d8e4891a938::t_3f5e520213aa4e 90,136,179,245,300
+src/flext_core/_utilities/collection.py
+  s_552d8e4891a938::t_eafa277bb8a93a 14
+  s_552d8e4891a938::t_e9693ba3f80526 36
+  h_5cf852cc46bf92 41
+src/flext_core/_utilities/_beartype/class_visitor.py
+  s_552d8e4891a938::t_6ae9d5a51ac28d 277
+tests/unit/test_context.py
+  h_5cf852cc46bf92 43-54
+  h_9db9d35f50cf33 82-96
+src/flext_core/context.py
+  ee53baefb7cad0fc 86,88-89
+  h_9db9d35f50cf33 93-100,140-145
+  h_5cf852cc46bf92 113,116-117
+src/flext_core/_utilities/project_metadata.py
+  h_5cf852cc46bf92 72,126,312
+src/flext_core/_protocols/context.py
+  h_5cf852cc46bf92 20,227,232,250-280,283-322
+tests/unit/test_service.py
+  h_5cf852cc46bf92 5,7,27-41
+src/flext_core/result.py
+  s_552d8e4891a938::t_ac59e7a60bc498 95
+  ee53baefb7cad0fc 126,129
+src/flext_core/_exceptions/helpers.py
+  s_552d8e4891a938::t_ac59e7a60bc498 96,113
+src/flext_core/_utilities/context_lifecycle.py
+  s_552d8e4891a938::t_ac59e7a60bc498 47,54
+src/flext_core/_utilities/_beartype/helpers.py
+  s_552d8e4891a938::t_6ae9d5a51ac28d 260,271
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "d4b155a532c43252dc4cea244b333e29f465bcb8",
+  "prompts": {
+    "ee53baefb7cad0fc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f1f4a05-4b57-4b6c-b7d8-374c863c4493",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "total_additions": 35,
+      "total_deletions": 36,
+      "accepted_lines": 17,
+      "overriden_lines": 9
+    }
+  },
+  "humans": {
+    "h_5cf852cc46bf92": {
+      "author": "FLEXT Bot <team@flext.sh>"
+    },
+    "h_9db9d35f50cf33": {
+      "author": "FLEXT Bot"
+    }
+  },
+  "sessions": {
+    "s_0290f35b98ef0c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0c4cc853-563f-48ad-a39a-f49b587090b8",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_552d8e4891a938": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "35c0040b-2ae9-466e-90aa-7721509e1e19",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_5a9c2b140a8456": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019dfddc-86ee-79a0-b5bf-0433a8110b6a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_b15aa8dbf80823": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d896ab0f-dd16-4dca-9ad4-b3d924a501e7",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    }
+  }
+}
