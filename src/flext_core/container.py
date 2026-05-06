@@ -19,7 +19,7 @@ from collections.abc import (
     Sequence,
 )
 from types import FrameType, ModuleType
-from typing import Self, overload, override
+from typing import ClassVar, Self, overload, override
 
 from dependency_injector import containers as di_containers
 
@@ -49,6 +49,8 @@ class FlextContainer(p.ContainerLifecycle):
 
     _global_instance: Self | None = None
     _global_lock: threading.RLock = threading.RLock()
+    _settings_type: ClassVar[p.NamespacedSettingsType] = FlextSettings
+    _context_type: ClassVar[p.ContextType] = FlextContext
     _context: p.Context
     _config: p.Settings
     _user_overrides: m.ConfigMap
@@ -174,7 +176,7 @@ class FlextContainer(p.ContainerLifecycle):
         self._factories.clear()
         self._resources.clear()
         self._internal_registrations.clear()
-        self._config = FlextSettings.fetch_global()
+        self._config = self._settings_type.fetch_global()
         self.register_core_services()
 
     @override
@@ -343,10 +345,10 @@ class FlextContainer(p.ContainerLifecycle):
         self._config = (
             spec.settings.clone()
             if spec.settings is not None
-            else FlextSettings.fetch_global()
+            else self._settings_type.fetch_global()
         )
         context = spec.context
-        self._context = context if context is not None else FlextContext.create()
+        self._context = context if context is not None else self._context_type.create()
 
     @override
     def names(self) -> t.StrSequence:
@@ -488,14 +490,14 @@ class FlextContainer(p.ContainerLifecycle):
             else self._config
         )
         base_config: p.Settings = settings_source.clone()
+        base_config_dump = base_config.model_dump()
+        base_app_name = base_config_dump.get("app_name")
         if (
             subproject
             and scope_registration.settings is None
-            and isinstance(base_config, FlextSettings)
+            and isinstance(base_app_name, str)
         ):
-            base_config = base_config.clone(
-                app_name=f"{base_config.app_name}.{subproject}"
-            )
+            base_config = base_config.clone(app_name=f"{base_app_name}.{subproject}")
         scoped_context = (
             self.context.clone()
             if scope_registration.context is None
@@ -541,10 +543,10 @@ class FlextContainer(p.ContainerLifecycle):
             root={k: u.normalize_to_container(v) for k, v in config_dict.items()}
         )
         _ = u.DependencyIntegration.bind_configuration(self._di_container, config_map)
-        namespaces = FlextSettings.registered_namespaces()
+        namespaces = self._settings_type.registered_namespaces()
         for namespace in namespaces or []:
             factory_name = f"settings.{namespace}"
-            settings_class = FlextSettings.resolve_namespace_settings(namespace)
+            settings_class = self._settings_type.resolve_namespace_settings(namespace)
             if settings_class is None:
                 continue
 
@@ -552,7 +554,7 @@ class FlextContainer(p.ContainerLifecycle):
                 _namespace: str = namespace,
                 _settings_class: t.SettingsClass = settings_class,
             ) -> p.Settings:
-                return FlextSettings.fetch_global().fetch_namespace(
+                return self._settings_type.fetch_global().fetch_namespace(
                     _namespace, _settings_class
                 )
 

@@ -643,6 +643,7 @@ def flaky_operation() -> int:
         raise RuntimeError(message)
     return 123
 
+
 stream = io.StringIO()
 with redirect_stdout(stream):
     result = flaky_operation()

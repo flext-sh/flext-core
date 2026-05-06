@@ -128,7 +128,7 @@ class FlextExceptionsBase:
                     for key, value in extra_kwargs.items()
                 })
                 declared_param_keys = frozenset(declared_params_cls.model_fields)
-                remaining_extra: MutableMapping[str, t.JsonValue] = {}
+                remaining_extra: t.MutableJsonMapping = {}
                 if combined_extra:
                     remaining_extra.update({
                         key: FlextRuntime.normalize_to_metadata(value)
@@ -235,7 +235,7 @@ class FlextExceptionsBase:
             super().__init__(message)
             self.message = message
             self.error_code = error_code
-            final_kwargs_dict: dict[str, t.JsonValue] = {}
+            final_kwargs_dict: t.JsonDict = {}
             for source_value in (merged_kwargs, context, extra_kwargs):
                 if source_value is None:
                     continue

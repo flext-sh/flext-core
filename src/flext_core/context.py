@@ -83,15 +83,22 @@ class FlextContext(m.ManagedModel):
 
     def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
         """Get a metadata value by key."""
-        v = self.metadata.get(key) if hasattr(self.metadata, "get") else None
-        if v is None:
+        if key not in self.metadata.attributes:
             return r[t.JsonPayload].fail(f"Metadata key '{key}' not found")
-        return r[t.JsonPayload].ok(v)
+        raw_value: t.JsonValue = self.metadata.attributes[key]
+        return r[t.JsonPayload].ok(u.normalize_to_container(raw_value))
 
     def apply_metadata(self, key: str, value: t.JsonValue) -> None:
         """Set a metadata value by key."""
-        if hasattr(self.metadata, "update"):
-            self.metadata.update({key: value})
+        updated_attributes = dict(self.metadata.attributes)
+        updated_attributes[key] = value
+        self.metadata = self.metadata.model_copy(
+            update={
+                "attributes": t.json_mapping_adapter().validate_python(
+                    updated_attributes,
+                ),
+            },
+        )
 
     def remove(self, key: str) -> None:
         """Remove a key from this context's scope."""
@@ -103,11 +110,11 @@ class FlextContext(m.ManagedModel):
 
     def merge(
         self,
-        other: FlextContext | t.MappingKV[str, t.JsonPayload],
+        other: p.Context | t.MappingKV[str, t.JsonPayload],
     ) -> Self:
         """Merge another context or mapping into this context's scope."""
-        if isinstance(other, FlextContext):
-            self.data.update(other.data.root)
+        if isinstance(other, p.Context):
+            self.data.update(dict(other.items()))
         else:
             self.data.update(dict(other.items()))
         return self
@@ -130,9 +137,12 @@ class FlextContext(m.ManagedModel):
         return self
 
     @classmethod
-    def create(cls, **_: t.JsonPayload) -> p.Context:
-        """Factory: build a default context instance."""
-        return cls()
+    def create(cls, **initial_data: t.JsonPayload) -> p.Context:
+        """Factory: build a context instance seeded with initial scope values."""
+        context = cls()
+        for key, value in initial_data.items():
+            _ = context.set(key, value)
+        return context
 
     # --- Container management ---
 

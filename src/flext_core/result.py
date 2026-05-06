@@ -92,7 +92,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
         data = self.result_error_data
         if data is None:
             return None
-        normalized_raw: dict[str, t.JsonValue] = {}
+        normalized_raw: t.JsonDict = {}
         for key, value in data.root.items():
             normalized_raw[key] = FlextRuntime.normalize_to_metadata(value)
         return normalized_raw
@@ -123,10 +123,10 @@ class FlextResult[T](BaseModel, p.Result[T]):
     @overload
     def __or__(self, default: T) -> T: ...
     @overload
-    def __or__[DefaultT](self, default: DefaultT) -> T | DefaultT: ...
+    def __or__[DefaultT](self, default: T | DefaultT) -> T | DefaultT: ...
 
     @override
-    def __or__[DefaultT](self, default: DefaultT) -> T | DefaultT:
+    def __or__[DefaultT](self, default: T | DefaultT) -> T | DefaultT:
         return self.unwrap_or(default)
 
     @property

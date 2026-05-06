@@ -23,6 +23,26 @@ def reset_flext_settings_singleton() -> Generator[None]:
 class TestsFlextSettings:
     """Coverage for the exported ``TestsFlextSettings`` test surface."""
 
+    def test_fetch_namespace_returns_registered_settings_singleton(self) -> None:
+        class NamespaceSettings(FlextSettings):
+            pass
+
+        namespace = "tests_flext_settings_namespace"
+        NamespaceSettings.reset_for_testing()
+        FlextSettings.register_namespace(namespace, NamespaceSettings)
+
+        try:
+            resolved = FlextSettings.fetch_global().fetch_namespace(
+                namespace,
+                NamespaceSettings,
+            )
+
+            assert namespace in FlextSettings.registered_namespaces()
+            assert isinstance(resolved, NamespaceSettings)
+            assert resolved is NamespaceSettings.fetch_global()
+        finally:
+            NamespaceSettings.reset_for_testing()
+
     def test_reset_for_testing_drops_cached_singleton(self) -> None:
         first = FlextSettings.fetch_global()
         assert FlextSettings.fetch_global() is first

@@ -222,7 +222,7 @@ class FlextLogger(ulc):
             raw_exception = kw.get("exception")
             exc_info_value = kw.get("exc_info", True)
             include_stack_trace = self._should_include_stack_trace()
-            context_dict: dict[str, t.JsonValue] = {}
+            context_dict: t.JsonDict = {}
 
             if resolved_exception is not None:
                 context_dict["exception_type"] = resolved_exception.__class__.__name__
@@ -266,7 +266,7 @@ class FlextLogger(ulc):
         context: t.MappingKV[str, t.JsonPayload | Exception],
     ) -> t.JsonMapping:
         """Build normalized structured exception context for logging."""
-        result: dict[str, t.JsonValue] = {
+        result: t.JsonDict = {
             k: str(v)
             if isinstance(v, Exception)
             else FlextLogger._to_container_value(v)

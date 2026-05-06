@@ -555,8 +555,12 @@ class TestsFlextContainer:
         tm.that(scoped.has("scoped_service"), eq=True)
         tm.ok(scoped.resolve("scoped_service", type_cls=str), eq="scoped-value")
         ctx_result = scoped.context.get("subproject")
+        scoped_settings = scoped.settings.model_dump()
+        base_settings = clean_container.settings.model_dump()
+
         assert ctx_result.success
         assert ctx_result.value == "unit"
+        assert scoped_settings["app_name"] == f"{base_settings['app_name']}.unit"
 
     _RESERVED_CONTAINER_ATTRS: frozenset[str] = frozenset({
         "override",

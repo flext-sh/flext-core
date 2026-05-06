@@ -153,13 +153,11 @@ class FlextSettings(
                     namespace=namespace,
                 ),
             )
-        raw_instance: FlextSettingsBase | None = getattr(
-            settings_class_raw,
-            "_instance",
-            None,
-        )
+        raw_instance = getattr(settings_class_raw, "_instance", None)
         settings_instance = (
-            raw_instance if raw_instance is not None else settings_class_raw()
+            raw_instance
+            if isinstance(raw_instance, p.Settings)
+            else settings_class_raw()
         )
         if isinstance(settings_instance, settings_type):
             return settings_instance

@@ -257,7 +257,7 @@ class FlextUtilitiesBeartypeHelpers:
                 yield value
 
     @staticmethod
-    def function_param_names(fn: _types_mod.FunctionType) -> tuple[str, ...]:
+    def function_param_names(fn: _types_mod.FunctionType) -> t.StrSequence:
         code = getattr(fn, "__code__", None)
         return (
             tuple(name for name in code.co_varnames[: code.co_argcount])
@@ -268,7 +268,7 @@ class FlextUtilitiesBeartypeHelpers:
     @staticmethod
     def is_pass_through_bytecode(
         fn: _types_mod.FunctionType,
-        param_names: tuple[str, ...],
+        param_names: t.StrSequence,
     ) -> bool:
         instructions = [
             ins

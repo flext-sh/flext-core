@@ -69,7 +69,7 @@ class FlextUtilitiesProjectMetadata(mpm):
         """Read canonical project metadata from a project's pyproject.toml."""
         data = FlextUtilitiesProjectMetadata.load_pyproject_toml(root)
         project_raw = data.get("project")
-        project: dict[str, tb.JsonValue] = (
+        project: tb.MutableJsonMapping = (
             dict(project_raw) if isinstance(project_raw, Mapping) else {}
         )
         if "name" not in project:
@@ -123,7 +123,7 @@ class FlextUtilitiesProjectMetadata(mpm):
 
     @staticmethod
     @cache
-    def _module_class_names(module_path: str) -> tuple[str, ...]:
+    def _module_class_names(module_path: str) -> tb.StrSequence:
         """Return locally declared class names from one runtime module."""
         module = FlextUtilitiesProjectMetadata._module_runtime(module_path)
         return tuple(
@@ -309,7 +309,7 @@ class FlextUtilitiesProjectMetadata(mpm):
         return tuple(sorted(result, key=lambda item: item.alias))
 
     @staticmethod
-    def _scan_directories(package_root: Path) -> tuple[str, ...]:
+    def _scan_directories(package_root: Path) -> tb.StrSequence:
         """Derive workspace scan directories from existing project folders."""
         candidates = ("docs", "examples", "scripts", "src", "tests")
         scan_dirs = tuple(name for name in candidates if (package_root / name).is_dir())

@@ -274,7 +274,7 @@ class FlextUtilitiesBeartypeClassVisitor:
                 return _NO_VIOLATION
         target_name = target.__name__
         is_top_level = "." not in target.__qualname__
-        allowed_prefixes: tuple[str, ...] = tuple(params.allowed_prefixes)
+        allowed_prefixes: t.StrSequence = tuple(params.allowed_prefixes)
         skip_roots = (
             c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | c.ENFORCEMENT_INFRASTRUCTURE_BASES
         )

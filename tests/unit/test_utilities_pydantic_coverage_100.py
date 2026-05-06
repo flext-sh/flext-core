@@ -8,9 +8,10 @@ from tests import m
 
 class TestsFlextUtilitiesPydantic:
     def test_public_facade_validates_serializes_and_tracks_private_state(self) -> None:
-        payload = m.Tests.PublicPayload.model_validate(
-            {"rawName": "  ada lovelace ", "visits": "3"}
-        )
+        payload = m.Tests.PublicPayload.model_validate({
+            "rawName": "  ada lovelace ",
+            "visits": "3",
+        })
         payload_dump = payload.model_dump(mode="json", by_alias=True)
 
         assert payload.raw_name == "Ada Lovelace"
@@ -28,7 +29,11 @@ class TestsFlextUtilitiesPydantic:
         )
         adapter = u.TypeAdapter(dynamic_model)
 
-        payload = adapter.validate_python({"name": "queue", "count": "2", "tags": ["cli"]})
+        payload = adapter.validate_python({
+            "name": "queue",
+            "count": "2",
+            "tags": ["cli"],
+        })
         payload_dump = payload.model_dump()
         payload_json = u.to_json(payload.model_dump())
         payload_dict = u.from_json(payload_json)
@@ -42,13 +47,11 @@ class TestsFlextUtilitiesPydantic:
         self,
     ) -> None:
         runtime_options = m.RuntimeBootstrapOptions.model_validate_json(
-            u.to_json(
-                {
-                    "subproject": "source-runtime",
-                    "wire_packages": ["flext.core.runtime", "tests.runtime"],
-                    "settings_overrides": {"dry_run": True},
-                }
-            )
+            u.to_json({
+                "subproject": "source-runtime",
+                "wire_packages": ["flext.core.runtime", "tests.runtime"],
+                "settings_overrides": {"dry_run": True},
+            })
         )
 
         @u.validate_call()

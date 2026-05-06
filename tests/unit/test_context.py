@@ -40,6 +40,18 @@ class TestsFlextContext:
         assert ctx.get("added").value == "y"
         assert ctx.get("existing").value == "x"
 
+    def test_merge_accepts_another_context_through_protocol_surface(self) -> None:
+        ctx = FlextContext()
+        ctx.set("existing", "x")
+        other = FlextContext()
+        other.set("added", "y")
+
+        merged = ctx.merge(other)
+
+        assert merged is ctx
+        assert ctx.get("existing").value == "x"
+        assert ctx.get("added").value == "y"
+
     def test_merge_overwrites_existing_key_with_new_value(self) -> None:
         ctx = FlextContext()
         ctx.set("existing", "x")
@@ -66,6 +78,21 @@ class TestsFlextContext:
         assert isinstance(exported, dict)
         assert exported["a"] == 1
         assert exported["b"] == "two"
+
+    def test_create_with_initial_values_seeds_the_context_scope(self) -> None:
+        ctx = FlextContext.create(operation_id="op-1", user_id="user-1")
+
+        assert ctx.get("operation_id").unwrap_or("") == "op-1"
+        assert ctx.get("user_id").unwrap_or("") == "user-1"
+
+    def test_apply_metadata_then_resolve_metadata_returns_stored_value(self) -> None:
+        ctx = FlextContext()
+
+        ctx.apply_metadata("source", "api")
+
+        resolved = ctx.resolve_metadata("source")
+        assert resolved.success
+        assert resolved.value == "api"
 
     def test_contextvar_apply_and_resolve_correlation_id(self) -> None:
         FlextContext.apply_correlation_id("test-corr-123")

@@ -5,7 +5,6 @@ from collections.abc import (
     Callable,
     ItemsView,
     Iterator,
-    Mapping,
     MutableSequence,
     Sequence,
 )
@@ -187,7 +186,7 @@ class TestsFlextModelsMixins:
     class _ValidationLikeError(ValueError):
         """Validation-like error for tests."""
 
-        def errors(self) -> t.SequenceOf[Mapping[str, t.JsonValue]]:
+        def errors(self) -> t.SequenceOf[t.JsonMapping]:
             return [{"loc": ["value"], "msg": "bad value"}]
 
     type TestCaseMap = t.MappingKV[str, t.Tests.TestobjectSerializable]

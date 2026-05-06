@@ -26,16 +26,16 @@ class FlextUtilitiesCollectionMerge:
     @staticmethod
     def _is_json_mapping(
         value: p.AttributeProbe,
-    ) -> TypeGuard[Mapping[str, t.JsonValue]]:
+    ) -> TypeGuard[t.JsonMapping]:
         return isinstance(value, Mapping)
 
     @staticmethod
-    def _is_json_list(value: p.AttributeProbe) -> TypeGuard[list[t.JsonValue]]:
+    def _is_json_list(value: p.AttributeProbe) -> TypeGuard[t.MutableJsonList]:
         return isinstance(value, list)
 
     @staticmethod
     def _merge_deep_single_key(
-        result: dict[str, t.JsonValue],
+        result: t.MutableJsonMapping,
         key: str,
         value: t.JsonValue,
     ) -> p.Result[bool]:
@@ -53,45 +53,45 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def _merge_replace(
-        other: t.MappingKV[str, t.JsonValue],
-        base: t.MappingKV[str, t.JsonValue],
-    ) -> p.Result[Mapping[str, t.JsonValue]]:
+        other: t.JsonMapping,
+        base: t.JsonMapping,
+    ) -> p.Result[t.JsonMapping]:
         """Replace strategy: base values overwrite other."""
-        result: dict[str, t.JsonValue] = dict(other)
+        result: t.MutableJsonMapping = dict(other)
         result.update(base)
-        return r[Mapping[str, t.JsonValue]].ok(result)
+        return r[t.JsonMapping].ok(result)
 
     @staticmethod
     def _merge_filter_none(
-        other: t.MappingKV[str, t.JsonValue],
-        base: t.MappingKV[str, t.JsonValue],
-    ) -> p.Result[Mapping[str, t.JsonValue]]:
+        other: t.JsonMapping,
+        base: t.JsonMapping,
+    ) -> p.Result[t.JsonMapping]:
         """Filter-none strategy: skip None values from base."""
-        result: dict[str, t.JsonValue] = dict(other)
+        result: t.MutableJsonMapping = dict(other)
         result.update({k: v for k, v in base.items() if v is not None})
-        return r[Mapping[str, t.JsonValue]].ok(result)
+        return r[t.JsonMapping].ok(result)
 
     @staticmethod
     def _merge_filter_empty(
-        other: t.MappingKV[str, t.JsonValue],
-        base: t.MappingKV[str, t.JsonValue],
-    ) -> p.Result[Mapping[str, t.JsonValue]]:
+        other: t.JsonMapping,
+        base: t.JsonMapping,
+    ) -> p.Result[t.JsonMapping]:
         """Filter-empty strategy: skip empty values from base."""
-        result: dict[str, t.JsonValue] = dict(other)
+        result: t.MutableJsonMapping = dict(other)
         result.update({
             k: v
             for k, v in base.items()
             if not FlextUtilitiesGuardsTypeCore.empty_value(v)
         })
-        return r[Mapping[str, t.JsonValue]].ok(result)
+        return r[t.JsonMapping].ok(result)
 
     @staticmethod
     def _merge_append(
-        other: t.MappingKV[str, t.JsonValue],
-        base: t.MappingKV[str, t.JsonValue],
-    ) -> p.Result[Mapping[str, t.JsonValue]]:
+        other: t.JsonMapping,
+        base: t.JsonMapping,
+    ) -> p.Result[t.JsonMapping]:
         """Append strategy: concatenate lists instead of replacing."""
-        result: dict[str, t.JsonValue] = dict(other)
+        result: t.MutableJsonMapping = dict(other)
         for key, value in base.items():
             current_val = result.get(key)
             if FlextUtilitiesCollectionMerge._is_json_list(
@@ -102,15 +102,15 @@ class FlextUtilitiesCollectionMerge:
                 )
                 continue
             result[key] = value
-        return r[Mapping[str, t.JsonValue]].ok(result)
+        return r[t.JsonMapping].ok(result)
 
     @staticmethod
     def _merge_deep(
-        other: t.MappingKV[str, t.JsonValue],
-        base: t.MappingKV[str, t.JsonValue],
-    ) -> p.Result[Mapping[str, t.JsonValue]]:
+        other: t.JsonMapping,
+        base: t.JsonMapping,
+    ) -> p.Result[t.JsonMapping]:
         """Deep strategy: recursively merge nested dicts."""
-        result: dict[str, t.JsonValue] = dict(other)
+        result: t.MutableJsonMapping = dict(other)
         for key, value in base.items():
             merge_result = FlextUtilitiesCollectionMerge._merge_deep_single_key(
                 result,
@@ -118,14 +118,14 @@ class FlextUtilitiesCollectionMerge:
                 value,
             )
             if merge_result.failure:
-                return r[Mapping[str, t.JsonValue]].fail(
+                return r[t.JsonMapping].fail(
                     merge_result.error or "Unknown error",
                 )
-        return r[Mapping[str, t.JsonValue]].ok(result)
+        return r[t.JsonMapping].ok(result)
 
     _MergeHandler = Callable[
-        [Mapping[str, t.JsonValue], t.MappingKV[str, t.JsonValue]],
-        "p.Result[Mapping[str, t.JsonValue]]",
+        [t.JsonMapping, t.JsonMapping],
+        "p.Result[t.JsonMapping]",
     ]
 
     _MERGE_STRATEGIES: ClassVar[Mapping[str, _MergeHandler]] = {
@@ -140,18 +140,18 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def merge_mappings(
-        other: t.MappingKV[str, t.JsonValue] | None,
-        base: t.MappingKV[str, t.JsonValue],
+        other: t.JsonMapping | None,
+        base: t.JsonMapping,
         *,
         strategy: str = _c_cqrs.MergeStrategy.DEEP,
-    ) -> p.Result[Mapping[str, t.JsonValue]]:
+    ) -> p.Result[t.JsonMapping]:
         """Merge two dictionaries with configurable strategy."""
         if other is None:
             msg = "merge_mappings requires an iterable mapping for 'other', got None"
             raise TypeError(msg)
         handler = FlextUtilitiesCollectionMerge._MERGE_STRATEGIES.get(strategy)
         if handler is None:
-            return r[Mapping[str, t.JsonValue]].fail(
+            return r[t.JsonMapping].fail(
                 f"Unknown merge strategy: {strategy}",
             )
         return handler(other, base)

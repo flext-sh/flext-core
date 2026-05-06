@@ -50,7 +50,7 @@ class FlextModelsErrors:
 
         def to_config_map(self) -> t.JsonMapping:
             """Expose the snapshot through the canonical flat config contract."""
-            payload: dict[str, t.JsonValue] = {
+            payload: t.JsonDict = {
                 "total_exceptions": self.total_exceptions,
                 "exception_counts_summary": self.exception_counts_summary,
                 "unique_exception_types": self.unique_exception_types,

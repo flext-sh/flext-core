@@ -38,7 +38,11 @@ class TestsFlextLoggings:
         with redirect_stdout(stream):
             result = emit()
             deadline = time.monotonic() + 0.25
-            while expect_output and time.monotonic() < deadline and contains not in stream.getvalue():
+            while (
+                expect_output
+                and time.monotonic() < deadline
+                and contains not in stream.getvalue()
+            ):
                 time.sleep(0.01)
         output = stream.getvalue()
 

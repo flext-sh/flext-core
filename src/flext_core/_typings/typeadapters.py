@@ -26,12 +26,7 @@ from flext_core._typings.annotateds import FlextTypesAnnotateds as ta
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.core import FlextTypesCore as tc
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
-
-type SortableObjectType = str | int | float
-type ConfigurationMapping = t.MappingKV[str, t.Scalar]
-StrictValue = (
-    t.Scalar | ConfigurationMapping | t.JsonList | tuple[tp.JsonValue | t.Scalar, ...]
-)
+from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextTypesTypeAdapters:
@@ -81,13 +76,13 @@ class FlextTypesTypeAdapters:
     @cache
     def sortable_dict_adapter(
         cls,
-    ) -> mp.TypeAdapter[Mapping[SortableObjectType, tp.JsonValue | None]]:
-        return mp.TypeAdapter(Mapping[SortableObjectType, tp.JsonValue | None])
+    ) -> mp.TypeAdapter[Mapping[ts.SortableObjectType, tp.JsonValue | None]]:
+        return mp.TypeAdapter(Mapping[ts.SortableObjectType, tp.JsonValue | None])
 
     @classmethod
     @cache
-    def strict_json_list_adapter(cls) -> mp.TypeAdapter[Sequence[StrictValue]]:
-        return mp.TypeAdapter(Sequence[StrictValue])
+    def strict_json_list_adapter(cls) -> mp.TypeAdapter[Sequence[ts.StrictValue]]:
+        return mp.TypeAdapter(Sequence[ts.StrictValue])
 
     @classmethod
     @cache

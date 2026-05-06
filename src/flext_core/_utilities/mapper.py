@@ -107,7 +107,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def transform(
-        source: t.MappingKV[str, t.JsonValue] | m.ConfigMap,
+        source: t.JsonMapping | m.ConfigMap,
         *,
         normalize: bool = False,
         strip_none: bool = False,
@@ -115,20 +115,20 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         map_keys: t.StrMapping | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
-    ) -> p.Result[dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue]]:
+    ) -> p.Result[t.JsonMapping]:
         """Apply normalize/strip_none/strip_empty/map_keys/filter_keys/exclude_keys to a dict."""
-        coerced: t.MappingKV[str, t.JsonValue] = (
+        coerced: t.JsonMapping = (
             {k: FlextRuntime.normalize_to_metadata(v) for k, v in source.root.items()}
             if isinstance(source, m.ConfigMap)
             else source
         )
 
-        def _pipeline() -> dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue]:
-            step: dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue] = dict(coerced)
+        def _pipeline() -> t.JsonDict:
+            step: t.JsonDict = dict(coerced)
             if normalize:
                 normalized = FlextRuntime.normalize_to_metadata(step)
                 if FlextUtilitiesGuardsTypeCore.mapping(normalized):
-                    step = normalized
+                    step = dict(normalized)
             if map_keys:
                 step = {map_keys.get(k, k): v for k, v in step.items()}
             if filter_keys:
@@ -136,23 +136,32 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             if exclude_keys:
                 step = {k: v for k, v in step.items() if k not in exclude_keys}
             if strip_none:
-                step = FlextUtilitiesCollection.filter(step, lambda v: v is not None)
+                step = dict(
+                    FlextUtilitiesCollection.filter(step, lambda v: v is not None)
+                )
             if strip_empty:
-                step = FlextUtilitiesCollection.filter(
-                    step,
-                    lambda v: not FlextUtilitiesGuardsTypeCore.empty_value(v),
+                step = dict(
+                    FlextUtilitiesCollection.filter(
+                        step,
+                        lambda v: not FlextUtilitiesGuardsTypeCore.empty_value(v),
+                    )
                 )
             return step
 
-        transform_result = r[
-            dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue]
+        transform_result: p.Result[t.JsonMapping] = r[
+            t.JsonMapping
         ].create_from_callable(_pipeline)
-        return transform_result.fold(
-            on_failure=lambda exc: r[
-                dict[str, t.JsonValue] | t.MappingKV[str, t.JsonValue]
-            ].fail_op("transform", exc),
-            on_success=lambda _: transform_result,
-        )
+        if transform_result.failure:
+            failure_reason = (
+                transform_result.exception
+                if isinstance(transform_result.exception, Exception)
+                else transform_result.error
+            )
+            return r[t.JsonMapping].fail_op(
+                "transform",
+                failure_reason,
+            )
+        return transform_result
 
 
 __all__: list[str] = ["FlextUtilitiesMapper"]

@@ -52,6 +52,7 @@ class FlextTypingBase(tp, ta):
 
     type JsonValue = tp.JsonValue
     type JsonMapping = MappingKV[str, tp.JsonValue]
+    type JsonDict = dict[str, tp.JsonValue]
     type JsonList = SequenceOf[tp.JsonValue]
     type MutableJsonMapping = MutableMapping[str, tp.JsonValue]
     type MutableJsonList = MutableSequenceOf[tp.JsonValue]

@@ -20,6 +20,7 @@ from flext_core._protocols.result import FlextProtocolsResult as pr
 
 if TYPE_CHECKING:
     from flext_core.constants import FlextConstants as c
+    from flext_core.models import FlextModels as m
     from flext_core.typings import FlextTypes as t
 
 
@@ -31,7 +32,7 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Handler[MessageT: p.Model, ResultT](
+    class Handler[MessageT, ResultT](
         p.Base,
         Protocol,
     ):
@@ -111,7 +112,7 @@ class FlextProtocolsHandler:
 
         def pop_context(
             self,
-        ) -> pr.Result[t.JsonMapping]:
+        ) -> pr.Result[m.ConfigMap]:
             """Pop execution context from the local handler stack."""
             ...
 

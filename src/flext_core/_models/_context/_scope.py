@@ -61,7 +61,7 @@ class FlextModelsContextScope:
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         operations: Annotated[
-            t.MappingKV[str, t.JsonValue],
+            t.JsonMapping,
             FlextModelsPydantic.BeforeValidator(
                 lambda v: (
                     FlextModelsContextData.normalize_to_mapping(v)

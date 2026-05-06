@@ -44,14 +44,14 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         all_scopes = self._scope_payloads()
         for scope_name, scope_payload in all_scopes.items():
             all_data[scope_name] = self._normalize_mapping_payload(scope_payload)
-        stats_dict_export: dict[str, t.JsonValue] = {}
+        stats_dict_export: t.JsonDict = {}
         if include_statistics and self.state.statistics:
             stats_dict_export = dict(
                 self._normalize_mapping_payload(
                     self.state.statistics.model_dump(mode="python"),
                 ),
             )
-        metadata_attributes: dict[str, t.JsonValue] | None = None
+        metadata_attributes: t.JsonDict | None = None
         if include_metadata:
             metadata_attributes = {
                 k: FlextRuntime.normalize_to_metadata(v)

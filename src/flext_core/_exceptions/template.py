@@ -26,7 +26,7 @@ class FlextExceptionsTemplate:
         values: FlextExceptionsTemplate.TemplateValues,
     ) -> mc.ConfigMap:
         """Build template substitution values using params data and field metadata."""
-        payload: dict[str, t.JsonValue] = (
+        payload: t.JsonDict = (
             {
                 key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in params.model_dump(exclude_none=True).items()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 
 from flext_tests import tm
 
@@ -38,15 +39,13 @@ class TestsFlextUtilitiesTypeGuards:
         assert isinstance(payload, dict)
         assert isinstance(normalized_modes, list)
 
-        command_spec = m.GuardCheckSpec.model_validate(
-            {
-                "starts": "sync",
-                "contains": "users",
-                "ends": "users",
-                "none": False,
-                "empty": False,
-            }
-        )
+        command_spec = m.GuardCheckSpec.model_validate({
+            "starts": "sync",
+            "contains": "users",
+            "ends": "users",
+            "none": False,
+            "empty": False,
+        })
 
         assert u.dict_non_empty(metadata)
         assert u.matches_type(payload, "dict_non_empty")
@@ -96,8 +95,8 @@ class TestsFlextUtilitiesTypeGuards:
         )
         failed_guard = failed_guard_result
 
-        assert guarded_payload == payload
-        assert fallback_tags == ["cli"]
-        assert guarded_attempt == 2
+        assert cast("dict[str, t.JsonValue]", guarded_payload) == payload
+        assert cast("list[str]", fallback_tags) == ["cli"]
+        assert cast("int", guarded_attempt) == 2
         tm.fail(failed_guard)
         assert failed_guard.error == "Guard validation raised an exception"

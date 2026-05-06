@@ -87,7 +87,7 @@ class FlextModelsProjectMetadata:
             Field(default="", description="Free-text project description."),
         ] = ""
         authors: Annotated[
-            tuple[str, ...],
+            tb.StrSequence,
             Field(default=(), description="Author/maintainer display names."),
         ] = ()
         url: Annotated[
@@ -123,7 +123,7 @@ class FlextModelsProjectMetadata:
         PACKAGE_VERSION: Annotated[str, Field(min_length=1)]
         PACKAGE_LICENSE: Annotated[str, Field(min_length=1)]
         PACKAGE_URL: str = ""
-        PACKAGE_AUTHORS: tuple[str, ...] = ()
+        PACKAGE_AUTHORS: tb.StrSequence = ()
         PACKAGE_ROOT: Path
         PYTHON_PACKAGE_NAME: Annotated[str, Field(min_length=1)]
         CLASS_STEM: Annotated[str, Field(min_length=1)]
@@ -133,7 +133,7 @@ class FlextModelsProjectMetadata:
         FACADE_MODULE_NAMES: frozenset[str]
         UNIVERSAL_ALIAS_PARENT_SOURCES: tb.StrMapping
         TIER_FACADE_PREFIX: tb.StrMapping
-        SCAN_DIRECTORIES: tuple[str, ...]
+        SCAN_DIRECTORIES: tb.StrSequence
         TIER_SUB_NAMESPACE: tb.StrMapping
         PYPROJECT_FILENAME: Annotated[str, Field(min_length=1)]
 
@@ -176,7 +176,7 @@ class FlextModelsProjectMetadata:
         ] = "UNLICENSED"
         description: str = ""
         authors: Annotated[
-            tuple[str, ...],
+            tb.StrSequence,
             Field(default=()),
             BeforeValidator(
                 lambda value: (
@@ -242,7 +242,7 @@ class FlextModelsProjectMetadata:
             Field(default=True, description="Whether namespace enforcement is active."),
         ] = True
         scan_dirs: Annotated[
-            tuple[str, ...],
+            tb.StrSequence,
             Field(
                 default=(),
                 description="Top-level directories to scan for facades.",
@@ -297,7 +297,7 @@ class FlextModelsProjectMetadata:
             Field(default=True, description="Enable namespace enforcement."),
         ] = True
         scan_dirs: Annotated[
-            tuple[str, ...],
+            tb.StrSequence,
             Field(
                 default=(),
                 description="Top-level directories to scan.",

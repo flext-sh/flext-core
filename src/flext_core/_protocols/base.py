@@ -86,7 +86,7 @@ class FlextProtocolsBase:
                 | None
             ) = None,
             serialize_as_any: bool = False,
-        ) -> t.MappingKV[str, t.JsonValue]:
+        ) -> t.JsonMapping:
             """Dump model to dictionary."""
             ...
 
@@ -108,7 +108,7 @@ class FlextProtocolsBase:
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonValue] | None = None,
+            update: t.JsonMapping | None = None,
             deep: bool = False,
         ) -> Self:
             """Copy a validated model, optionally updating fields."""

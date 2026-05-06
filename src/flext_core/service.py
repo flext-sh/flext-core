@@ -23,10 +23,9 @@ from __future__ import annotations
 import threading
 from typing import ClassVar, Self, Unpack
 
-from pydantic import ConfigDict, PrivateAttr
+from pydantic import ConfigDict
 
 from flext_core import p, t, x
-from flext_core._settings.base import FlextSettingsBase
 
 
 class FlextService[TDomainResult: p.Base = p.Base](x):
@@ -43,12 +42,21 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _instance: ClassVar[Self | None] = None
 
-    _injected_settings: FlextSettingsBase | None = PrivateAttr(default=None)
-
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
         """Inject a per-class singleton slot for every concrete subclass."""
         super().__init_subclass__(**kwargs)
         cls._instance = None
+
+    def __init__(self, **model_data: t.GuardInput | None) -> None:
+        """Initialize the service model through the canonical Pydantic bag.
+
+        ``FlextService`` is the shared kernel for many project-specific facades,
+        so subclasses pass both common runtime fields and their own model fields
+        through ``super().__init__(...)``. Keeping that owner entrypoint explicit
+        avoids ``super().__init__`` self-type mismatches without narrowing the
+        accepted field surface of descendant services.
+        """
+        self.__pydantic_validator__.validate_python(model_data, self_instance=self)
 
     @classmethod
     def fetch_global(cls) -> Self:
@@ -75,17 +83,16 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
             cls._instance = None
 
     @classmethod
-    def with_settings(cls, settings: FlextSettingsBase) -> Self:
-        """Return the per-class singleton with `settings` deep-cloned for injection.
+    def with_settings(cls, settings: p.Settings) -> Self:
+        """Return the per-class singleton with one isolated runtime settings clone.
 
-        Reuses `FlextSettingsBase.clone_for_injection` so the caller's lifetime
-        owns an isolated snapshot; the global settings singleton is unaffected.
-        Per-project `Flext<X>ServiceBase` overrides may narrow `settings` parameter
-        to their concrete leaf type via PEP 696 TypeVar default — see ENFORCE-058
-        carve-out for infrastructure base classes.
+        Uses the structural `p.Settings.clone()` contract already consumed by the
+        runtime bootstrap path so callers can inject a settings snapshot without
+        coupling this service kernel to `FlextSettingsBase`.
         """
         instance = cls.fetch_global()
-        instance._injected_settings = FlextSettingsBase.clone_for_injection(settings)
+        instance.runtime_settings = settings.clone()
+        instance._runtime = None
         return instance
 
     def execute(self) -> p.Result[TDomainResult]:

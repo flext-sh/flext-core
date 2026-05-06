@@ -17,6 +17,7 @@ if TYPE_CHECKING:
         FlextProtocolsRegistry,
         FlextProtocolsResult,
         FlextProtocolsSettings,
+        m,
         t,
     )
 
@@ -223,24 +224,12 @@ class FlextProtocolsContext:
 
     @runtime_checkable
     class ContextType(Protocol):
-        """Protocol for context classes exposing the canonical factory surface."""
-
-        Service: FlextProtocolsContext.ContextServiceNamespace
-        Correlation: FlextProtocolsContext.ContextCorrelationNamespace
-        Request: FlextProtocolsContext.ContextRequestNamespace
-        Performance: FlextProtocolsContext.ContextPerformanceNamespace
-        Serialization: FlextProtocolsContext.ContextSerializationNamespace
-        Utilities: FlextProtocolsContext.ContextUtilitiesNamespace
+        """Protocol for flat context classes exposing the canonical class API."""
 
         @classmethod
         def create(
             cls,
-            initial_data: t.JsonMapping | None = None,
-            *,
-            operation_id: str | None = None,
-            user_id: str | None = None,
-            metadata: t.JsonMapping | None = None,
-            auto_correlation_id: bool = True,
+            **initial_data: t.JsonPayload,
         ) -> FlextProtocolsContext.Context:
             """Create a new context instance."""
             ...
@@ -256,6 +245,79 @@ class FlextProtocolsContext:
             container: FlextProtocolsContainer.Container,
         ) -> None:
             """Configure the container used by the context service namespace."""
+            ...
+
+        @staticmethod
+        def fetch_service(
+            service_name: str,
+        ) -> FlextProtocolsResult.Result[t.RegisterableService]:
+            """Resolve a named service from the configured container."""
+            ...
+
+        @staticmethod
+        def register_service(
+            service_name: str,
+            service: t.RegisterableService,
+        ) -> FlextProtocolsResult.Result[bool]:
+            """Register a named service through the configured container."""
+            ...
+
+        @staticmethod
+        def resolve_correlation_id() -> str | None:
+            """Resolve the active correlation id."""
+            ...
+
+        @staticmethod
+        def new_correlation(
+            correlation_id: str | None = None,
+            parent_id: str | None = None,
+        ) -> AbstractContextManager[str]:
+            """Create a scoped correlation-id context manager."""
+            ...
+
+        @staticmethod
+        def apply_correlation_id(correlation_id: str | None) -> None:
+            """Apply or clear the active correlation id."""
+            ...
+
+        @staticmethod
+        def ensure_correlation_id() -> str:
+            """Ensure and return the active correlation id."""
+            ...
+
+        @staticmethod
+        def service_context(
+            service_name: str,
+            version: str | None = None,
+        ) -> AbstractContextManager[None]:
+            """Create a service-scoped context manager."""
+            ...
+
+        @staticmethod
+        def resolve_operation_name() -> str | None:
+            """Resolve the active operation name."""
+            ...
+
+        @staticmethod
+        def apply_operation_name(operation_name: str) -> None:
+            """Apply the current operation name."""
+            ...
+
+        @staticmethod
+        def timed_operation(
+            operation_name: str | None = None,
+        ) -> AbstractContextManager[m.ConfigMap]:
+            """Create a timed operation scope."""
+            ...
+
+        @staticmethod
+        def export_full_context() -> t.MappingKV[str, t.Scalar]:
+            """Export the active process context state."""
+            ...
+
+        @staticmethod
+        def clear_context() -> None:
+            """Clear all active process context state."""
             ...
 
     @runtime_checkable

@@ -152,7 +152,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             expected_type: type | str | None = None,
             actual_type: type | str | None = None,
             error_code: str = c.ErrorCode.TYPE_ERROR,
-            context: t.MappingKV[str, t.JsonValue] | None = None,
+            context: t.JsonMapping | None = None,
             correlation_id: str | None = None,
         ) -> None:
             """Initialize type error with type information."""

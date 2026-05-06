@@ -145,8 +145,8 @@ class FlextRuntime:
 
     @staticmethod
     def _normalize_dict_entries(
-        items: t.SequenceOf[tuple[str, t.JsonPayload]],
-    ) -> dict[str, t.JsonValue]:
+        items: t.SequenceOf[t.Pair[str, t.JsonPayload]],
+    ) -> t.JsonDict:
         """Normalize key-value pairs for container dict construction."""
         return dict(
             t.json_mapping_adapter().validate_python(
@@ -219,7 +219,7 @@ class FlextRuntime:
     @staticmethod
     def validate_metadata_attributes(
         value: t.MetadataInput,
-    ) -> t.MappingKV[str, t.JsonValue]:
+    ) -> t.JsonMapping:
         """Normalize and validate metadata attributes input."""
         if value is None:
             return {}
@@ -230,13 +230,9 @@ class FlextRuntime:
                 raise ValueError(
                     c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key),
                 )
-        validated_metadata: t.MappingKV[str, t.JsonValue] = (
-            t.metadata_map_adapter().validate_python({
-                key: item
-                for key, item in normalized_mapping.items()
-                if item is not None
-            })
-        )
+        validated_metadata: t.JsonMapping = t.metadata_map_adapter().validate_python({
+            key: item for key, item in normalized_mapping.items() if item is not None
+        })
         return validated_metadata
 
     @staticmethod

@@ -36,7 +36,9 @@ with redirect_stdout(stream):
     logger = FlextLogger.create_module_logger(__name__)
     _ = logger.info("application_started")
     deadline = time.monotonic() + 0.25
-    while time.monotonic() < deadline and "application_started" not in stream.getvalue():
+    while (
+        time.monotonic() < deadline and "application_started" not in stream.getvalue()
+    ):
         time.sleep(0.01)
     assert "application_started" in stream.getvalue()
 

@@ -47,7 +47,8 @@ class FlextMixins(m.ArbitraryTypesModel):
     )
     _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
     _cache_lock: ClassVar[p.Lock] = threading.Lock()
-    _container_type: ClassVar[type[p.Container]] = FlextContainer
+    _container_type: ClassVar[p.ContainerType] = FlextContainer
+    _context_type: ClassVar[p.ContextType] = FlextContext
     _auto_context_scope: ClassVar[bool] = True
 
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
@@ -126,7 +127,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         )
         stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
         try:
-            with FlextContext.timed_operation(operation_name) as metrics:
+            with self._context_type.timed_operation(operation_name) as metrics:
                 metrics_map: MutableMapping[str, t.JsonPayload] = {
                     k: u.normalize_to_container(v) for k, v in metrics.items()
                 }
@@ -167,7 +168,7 @@ class FlextMixins(m.ArbitraryTypesModel):
                     self._operation_stats[operation_name] = stats
         finally:
             _ = u.clear_scope(c.ContextScope.OPERATION)
-            FlextContext.apply_operation_name("")
+            self._context_type.apply_operation_name("")
 
     def _get_runtime(self) -> m.ServiceRuntime:
         """Return or create a runtime triple shared across mixin consumers."""

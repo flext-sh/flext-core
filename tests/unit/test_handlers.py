@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 from collections.abc import (
-    Mapping,
     Sequence,
 )
 from typing import Annotated, ClassVar, override
@@ -22,10 +21,81 @@ class TestsFlextFlextHandlers:
             super().__init__(settings=settings)
 
         @override
+        def dispatch_message(
+            self,
+            message: t.JsonPayload,
+            operation: str = c.DEFAULT_HANDLER_MODE,
+        ) -> p.Result[t.JsonPayload]:
+            handler_mode = getattr(
+                self._config_model.handler_mode,
+                "value",
+                self._config_model.handler_mode,
+            )
+            valid_operations = {
+                c.DEFAULT_HANDLER_MODE,
+                c.HandlerMode.QUERY,
+                c.HandlerType.EVENT.value,
+            }
+            if operation != handler_mode and operation in valid_operations:
+                error_msg = c.ERR_HANDLER_INCOMPATIBLE_PIPELINE_MODE.format(
+                    handler_mode=handler_mode,
+                    operation=operation,
+                )
+                return r[t.JsonPayload].fail_op(
+                    "validate handler pipeline mode",
+                    error_msg,
+                )
+            message_type = message.__class__
+            if not self.can_handle(message_type):
+                error_msg = c.ERR_HANDLER_CANNOT_HANDLE_MESSAGE_TYPE.format(
+                    type_name=message_type.__name__,
+                )
+                return r[t.JsonPayload].fail_op(
+                    "validate handler message type",
+                    error_msg,
+                )
+            validation = self.validate_message(message)
+            if validation.failure:
+                error_detail = validation.error or c.ERR_VALIDATION_FAILED
+                error_msg = c.ERR_HANDLER_MESSAGE_VALIDATION_FAILED.format(
+                    error=error_detail,
+                )
+                return r[t.JsonPayload].fail_op(
+                    "validate handler message",
+                    error_msg,
+                )
+            try:
+                return self.handle(message)
+            except c.EXC_BROAD_RUNTIME as exc:
+                return r[t.JsonPayload].fail_op(
+                    "run handler pipeline",
+                    c.ERR_HANDLER_CRITICAL_FAILURE.format(error=str(exc)),
+                )
+
+        @override
+        def execute(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
+            validation = self.validate_message(message)
+            if validation.failure:
+                return r[t.JsonPayload].fail_op(
+                    "execute handler validation",
+                    validation.error or c.ERR_VALIDATION_FAILED,
+                )
+            return self.handle(message)
+
+        @override
         def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
             if not isinstance(message, str):
                 return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)
             return r[t.JsonPayload].ok(f"processed_{message}")
+
+        @override
+        def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
+            if data is None:
+                return r[bool].fail_op(
+                    "validate handler message",
+                    c.ERR_MESSAGE_CANNOT_BE_NONE,
+                )
+            return r[bool].ok(True)
 
     class ValidationTestHandler(h[t.JsonPayload, t.JsonPayload]):
         """Test handler for validation."""
@@ -153,7 +223,9 @@ class TestsFlextFlextHandlers:
             "test_handler_6",
             "Test Handler 6",
         )
-        handler = self.ConcreteTestHandler(settings=settings)
+        handler: TestsFlextFlextHandlers.ConcreteTestHandler = self.ConcreteTestHandler(
+            settings=settings
+        )
         result = handler.execute("test_message")
         u.Tests.assert_success(result, expected_value="processed_test_message")
 
@@ -230,10 +302,17 @@ class TestsFlextFlextHandlers:
         assert isinstance(handler, x)
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        class DictHandler(h[Mapping[str, t.JsonValue], t.JsonPayload]):
+        class DictHandler(h[t.JsonMapping, t.JsonPayload]):
             @override
             def __init__(self, settings: m.Handler) -> None:
                 super().__init__(settings=settings)
+
+            @override
+            def execute(
+                self,
+                message: t.JsonMapping,
+            ) -> p.Result[t.JsonPayload]:
+                return self.handle(message)
 
             @override
             def handle(
@@ -270,7 +349,7 @@ class TestsFlextFlextHandlers:
         )
 
     def test_handlers_dispatch_message_cannot_handle_message_type(self) -> None:
-        class RestrictiveHandler(h[t.JsonPayload, t.JsonPayload]):
+        class RestrictiveHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
             @override
             def __init__(self, settings: m.Handler) -> None:
                 super().__init__(settings=settings)
@@ -279,12 +358,6 @@ class TestsFlextFlextHandlers:
             def can_handle(self, message_type: type) -> bool:
                 _ = message_type
                 return False
-
-            @override
-            def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
-                if not isinstance(message, str):
-                    return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)
-                return r[t.JsonPayload].ok(f"processed_{message}")
 
         settings = u.Tests.create_handler_config(
             "test_pipeline_cannot_handle",
@@ -299,7 +372,7 @@ class TestsFlextFlextHandlers:
         )
 
     def test_handlers_dispatch_message_validation_failure(self) -> None:
-        class ValidationFailingHandler(h[t.JsonPayload, t.JsonPayload]):
+        class ValidationFailingHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
             @override
             def __init__(self, settings: m.Handler) -> None:
                 super().__init__(settings=settings)
@@ -308,12 +381,6 @@ class TestsFlextFlextHandlers:
             def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
                 _ = data
                 return r[bool].fail(c.Tests.VALIDATION_FAILED_FOR_TEST)
-
-            @override
-            def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
-                if not isinstance(message, str):
-                    return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)
-                return r[t.JsonPayload].ok(f"processed_{message}")
 
         settings = u.Tests.create_handler_config(
             "test_pipeline_validation_failure",
@@ -329,7 +396,7 @@ class TestsFlextFlextHandlers:
         )
 
     def test_handlers_dispatch_message_handler_exception(self) -> None:
-        class ExceptionHandler(h[t.JsonPayload, t.JsonPayload]):
+        class ExceptionHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
             @override
             def __init__(self, settings: m.Handler) -> None:
                 super().__init__(settings=settings)
@@ -449,7 +516,9 @@ class TestsFlextFlextHandlers:
             handler_type=handler_type,
             handler_mode=handler_mode,
         )
-        handler = self.ConcreteTestHandler(settings=settings)
+        handler: TestsFlextFlextHandlers.ConcreteTestHandler = self.ConcreteTestHandler(
+            settings=settings
+        )
         result = handler.validate_message("test_message")
         _ = u.Tests.assert_success(result)
 

@@ -185,7 +185,7 @@ class FlextModelsBase:
             ),
         ] = mp.Field(default_factory=tuple)
         attributes: Annotated[
-            t.MappingKV[str, t.JsonValue],
+            t.JsonMapping,
             mp.BeforeValidator(ur.validate_metadata_attributes),
             mp.Field(
                 description="Arbitrary metadata attributes stored as key-value pairs.",

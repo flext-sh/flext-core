@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
 from flext_core import (
     FlextConstants as c,
@@ -33,12 +33,12 @@ class FlextUtilitiesCollection(
     @staticmethod
     def normalize_domain_event_data(
         value: mc.ConfigMap | t.JsonMapping | None,
-    ) -> t.MappingKV[str, t.JsonValue]:
+    ) -> t.JsonMapping:
         """Normalize domain event payloads into plain flat mappings."""
         if value is None:
             return {}
         raw_source = value.root if isinstance(value, mc.ConfigMap) else value
-        normalized: MutableMapping[str, t.JsonValue] = {}
+        normalized: t.MutableJsonMapping = {}
         for key, item in raw_source.items():
             if item is None:
                 continue

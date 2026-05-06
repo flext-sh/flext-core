@@ -21,14 +21,12 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Literal, TypeVar
+from typing import Annotated, Literal, TypeVar
 
 import pytest
 
+from flext_core import FlextContext
 from tests import c, m, p, r, t, u
-
-if TYPE_CHECKING:
-    from flext_core import FlextContext
 
 collect_ignore_glob = [
     "**/__init__.py",
@@ -38,7 +36,7 @@ collect_ignore_glob = [
 @pytest.fixture
 def test_context() -> FlextContext:
     """Provide FlextContext instance for testing."""
-    return importlib.import_module("flext_core").FlextContext()
+    return FlextContext()
 
 
 @pytest.fixture

@@ -16,14 +16,12 @@ class TestsFlextUtilitiesCollection:
     """Behavior contract for u.map / u.find / u.filter / u.count / u.process / u.merge_mappings."""
 
     def test_normalize_domain_event_data_flattens_public_payloads(self) -> None:
-        config_payload = m.ConfigMap.model_validate(
-            {
-                "event": "sync-users",
-                "workspace_root": Path("/tmp/flext"),
-                "attempt_count": 2,
-                "ignored": None,
-            }
-        )
+        config_payload = m.ConfigMap.model_validate({
+            "event": "sync-users",
+            "workspace_root": Path("/tmp/flext"),
+            "attempt_count": 2,
+            "ignored": None,
+        })
         mapping_payload: t.JsonMapping = {
             "tenant": "acme",
             "retry": 1,
@@ -88,7 +86,9 @@ class TestsFlextUtilitiesCollection:
             tm.fail(result)
 
     def test_find_returns_failure_when_mapping_has_no_matching_value(self) -> None:
-        result = u.find({"tenant": "acme", "mode": "full"}, lambda value: value == "delta")
+        result = u.find(
+            {"tenant": "acme", "mode": "full"}, lambda value: value == "delta"
+        )
 
         tm.fail(result)
         tm.that(result.error, eq="No matching item found")

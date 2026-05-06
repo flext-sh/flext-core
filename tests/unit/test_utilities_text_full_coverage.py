@@ -38,13 +38,11 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
         app_id = core_u.format_app_id(cleaned_name)
         normalized_key = core_u.normalize_alnum(cleaned_name)
         manifest_path = tmp_path / "app.env"
-        manifest_content = "\n".join(
-            [
-                f"APP_NAME={cleaned_name}",
-                f"APP_ID={app_id}",
-                f"APP_KEY={normalized_key}",
-            ]
-        )
+        manifest_content = "\n".join([
+            f"APP_NAME={cleaned_name}",
+            f"APP_ID={app_id}",
+            f"APP_KEY={normalized_key}",
+        ])
 
         core_u.write_file(manifest_path, manifest_content)
 

@@ -32,7 +32,6 @@ from flext_core import (
     x,
 )
 from flext_core._models.handler import FlextModelsHandler
-from flext_core.context import FlextContext
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):
@@ -94,8 +93,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         if not self._auto_context_scope:
             return self.handle(message)
         operation_name = f"{self.__class__.__qualname__}.handle"
-        with FlextContext.new_correlation():
-            FlextContext.apply_operation_name(operation_name)
+        with self._context_type.new_correlation():
+            self._context_type.apply_operation_name(operation_name)
             return self.handle(message)
 
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
@@ -152,7 +151,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         handler_type: c.HandlerType | None = None,
         mode: c.HandlerType | str | None = None,
         handler_config: m.Handler | None = None,
-    ) -> FlextHandlers[t.Scalar, t.Scalar]:
+    ) -> p.Handler[t.Scalar, t.Scalar]:
         """Create a handler instance from a callable function.
 
         Factory method that wraps a callable function in a h instance,
@@ -166,7 +165,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             handler_config: Optional m configuration
 
         Returns:
-            FlextHandlers[t.Scalar, t.Scalar]: Handler instance wrapping the callable
+            p.Handler[t.Scalar, t.Scalar]: Handler instance wrapping the callable
 
         Raises:
             e.ValidationError: If invalid mode is provided

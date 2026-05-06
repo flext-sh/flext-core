@@ -119,5 +119,43 @@ class FlextProtocolsSettings:
             """Return the global singleton settings instance."""
             ...
 
+    @runtime_checkable
+    class NamespacedSettings(Settings, Protocol):
+        """Settings instances that can resolve registered namespace settings."""
+
+        def fetch_namespace[TNamespace: FlextProtocolsSettings.Settings](
+            self,
+            namespace: str,
+            settings_type: type[TNamespace],
+        ) -> TNamespace:
+            """Resolve one registered namespace settings instance."""
+            ...
+
+    @runtime_checkable
+    class NamespacedSettingsType(Protocol):
+        """Concrete settings classes that expose namespace registry APIs."""
+
+        @classmethod
+        def fetch_global(
+            cls,
+            *,
+            overrides: t.ScalarMapping | None = None,
+        ) -> FlextProtocolsSettings.NamespacedSettings:
+            """Return the global singleton settings instance."""
+            ...
+
+        @classmethod
+        def resolve_namespace_settings(
+            cls,
+            namespace: str,
+        ) -> t.SettingsClass | None:
+            """Resolve the concrete settings class registered for a namespace."""
+            ...
+
+        @classmethod
+        def registered_namespaces(cls) -> t.StrSequence:
+            """Return the currently registered settings namespaces."""
+            ...
+
 
 __all__: list[str] = ["FlextProtocolsSettings"]

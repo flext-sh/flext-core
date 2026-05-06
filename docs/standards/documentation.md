@@ -31,5 +31,5 @@ from examples.ex_02_flext_settings import Ex02FlextSettings
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-	Ex02FlextSettings("docs/standards/documentation.md").exercise()
+    Ex02FlextSettings("docs/standards/documentation.md").exercise()
 ```

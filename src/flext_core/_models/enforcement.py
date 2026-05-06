@@ -129,7 +129,7 @@ class FlextModelsEnforcement:
 
         kind: Literal["flext_tests_validator"] = "flext_tests_validator"
         method: str
-        rule_ids: tuple[str, ...] = ()
+        rule_ids: t.StrSequence = ()
 
     class EnforcementRuntimeWarningSource(_EnforcementSourceBase):
         """Rule backed by a ``warnings``-category raised at runtime."""
@@ -307,7 +307,7 @@ class FlextModelsEnforcement:
             Discriminator("kind"),
         ]
         agents_md_anchor: str = ""
-        skills: tuple[str, ...] = ()
+        skills: t.StrSequence = ()
         enabled: bool = True
         promote_to_error_when_strict: bool = True
         notes: str = ""

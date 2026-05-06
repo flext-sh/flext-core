@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from tests import m, s
+from typing import override
+
+from tests import m, p, r, s
 
 
 class TestsFlextService:
@@ -21,6 +23,22 @@ class TestsFlextService:
             user_id=1,
             name="test_user",
         )
+
+    class _PureService(s[bool]):
+        @override
+        def execute(self) -> p.Result[bool]:
+            return r[bool].ok(True)
+
+    def test_with_settings_uses_provided_runtime_settings_snapshot(self) -> None:
+        settings = m.Tests.ServiceUserService().settings.clone(
+            app_name="service-settings-override",
+        )
+
+        service = self._PureService.with_settings(settings)
+        service_settings_dump = service.settings.model_dump()
+
+        assert service_settings_dump == settings.model_dump()
+        assert service_settings_dump["app_name"] == "service-settings-override"
 
 
 __all__: list[str] = ["TestsFlextService"]

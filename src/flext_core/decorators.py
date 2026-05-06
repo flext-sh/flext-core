@@ -18,7 +18,7 @@ from collections.abc import (
 )
 from contextlib import suppress
 from functools import wraps
-from typing import Literal, TypeIs, overload
+from typing import ClassVar, Literal, TypeIs, overload
 
 from flext_core import (
     FlextContainer,
@@ -50,6 +50,8 @@ class FlextDecorators:
         RuntimeError,
         KeyError,
     )
+    _container_type: ClassVar[p.ContainerType] = FlextContainer
+    _context_type: ClassVar[p.ContextType] = FlextContext
 
     @staticmethod
     def _is_logger_carrier(
@@ -125,7 +127,7 @@ class FlextDecorators:
 
             @wraps(func)
             def wrapper(*args: PCallback.args, **kwargs: PCallback.kwargs) -> TResult:
-                container = FlextContainer.shared()
+                container = FlextDecorators._container_type.shared()
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
                         result = container.resolve(service_key)
@@ -164,12 +166,14 @@ class FlextDecorators:
                 )
                 correlation_id: str | None = None
                 if ensure_correlation:
-                    correlation_id = FlextContext.ensure_correlation_id()
+                    correlation_id = (
+                        FlextDecorators._context_type.ensure_correlation_id()
+                    )
                 else:
                     current_id = u.CORRELATION_ID.get()
                     if isinstance(current_id, str):
                         correlation_id = current_id
-                FlextContext.apply_operation_name(op_name)
+                FlextDecorators._context_type.apply_operation_name(op_name)
                 binding_result = u.bind_context(
                     c.ContextScope.OPERATION,
                     operation=op_name,
@@ -653,7 +657,7 @@ class FlextDecorators:
 
             @wraps(func)
             def wrapper(*args: PCallback.args, **kwargs: PCallback.kwargs) -> TResult:
-                _ = FlextContext.ensure_correlation_id()
+                _ = FlextDecorators._context_type.ensure_correlation_id()
                 return func(*args, **kwargs)
 
             return wrapper
