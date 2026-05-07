@@ -58,7 +58,7 @@ class FlextProtocolsSettings:
         def model_copy(
             self,
             *,
-            update: t.JsonMapping | None = None,
+            update: t.SettingsOverridesMapping | None = None,
             deep: bool = False,
         ) -> Self:
             """Create a copy of the model, optionally updating fields or deep copying.
@@ -73,7 +73,7 @@ class FlextProtocolsSettings:
             """
             ...
 
-        def clone(self, **overrides: t.JsonPayload | None) -> Self:
+        def clone(self, **overrides: t.SettingsOverride | None) -> Self:
             """Create a deep copy with optional field overrides.
 
             This is the canonical way for containers and services to obtain an
@@ -89,7 +89,7 @@ class FlextProtocolsSettings:
             ...
 
         @classmethod
-        def update_global(cls, **overrides: t.JsonPayload | None) -> Self:
+        def update_global(cls, **overrides: t.SettingsOverride | None) -> Self:
             """Replace the per-class singleton via Pydantic-2 ``model_copy(update=…)``.
 
             Pure Pydantic-2 mutation — no ``setattr``, no ``__setattr__``

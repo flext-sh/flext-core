@@ -31,12 +31,12 @@ from __future__ import annotations
 
 import os
 import threading
-from collections.abc import Generator
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import ClassVar, Self, Unpack
 
-from pydantic import ConfigDict
+from pydantic import BaseModel, ConfigDict
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core import (
@@ -121,7 +121,30 @@ class FlextSettingsBase(BaseSettings):
             return instance
         return instance.clone(**overrides)
 
-    def clone(self, **overrides: t.JsonPayload | None) -> Self:
+    @classmethod
+    def merge_overrides(
+        cls,
+        settings: Self,
+        **overrides: t.SettingsOverride | None,
+    ) -> dict[str, t.SettingsOverride | None]:
+        """Merge partial nested-model overrides onto the current settings state."""
+        cls.validate_overrides(**overrides)
+        merged_overrides: dict[str, t.SettingsOverride | None] = {}
+        for field_name, override_value in overrides.items():
+            current_value = getattr(settings, field_name, None)
+            if isinstance(current_value, BaseModel) and isinstance(
+                override_value,
+                Mapping,
+            ):
+                merged_overrides[field_name] = {
+                    **current_value.model_dump(mode="python"),
+                    **override_value,
+                }
+                continue
+            merged_overrides[field_name] = override_value
+        return merged_overrides
+
+    def clone(self, **overrides: t.SettingsOverride | None) -> Self:
         """Deep copy with optional field overrides + re-validation (rule 2).
 
         Used by service/container constructors that accept an explicit
@@ -131,15 +154,16 @@ class FlextSettingsBase(BaseSettings):
         if not overrides:
             with self.__class__.singleton_disabled():
                 return self.model_copy(deep=True)
+        merged_overrides = self.__class__.merge_overrides(self, **overrides)
         with self.__class__.singleton_disabled():
-            copied = self.model_copy(update=overrides, deep=True)
+            copied = self.model_copy(update=merged_overrides, deep=True)
         copied.__pydantic_validator__.validate_python(
             copied.__dict__, self_instance=copied
         )
         return copied
 
     @classmethod
-    def update_global(cls, **overrides: t.JsonPayload | None) -> Self:
+    def update_global(cls, **overrides: t.SettingsOverride | None) -> Self:
         """Replace ``cls._instance`` via ``model_copy(update=…)`` + revalidate.
 
         Pure Pydantic-2 mutation: no ``setattr``, no ``__setattr__`` override,
@@ -152,10 +176,10 @@ class FlextSettingsBase(BaseSettings):
         """
         if not overrides:
             return cls.fetch_global()
-        cls.validate_overrides(**overrides)
         current = cls.fetch_global()
+        merged_overrides = cls.merge_overrides(current, **overrides)
         with cls.singleton_disabled():
-            new_instance = current.model_copy(update=overrides, deep=True)
+            new_instance = current.model_copy(update=merged_overrides, deep=True)
         new_instance.__pydantic_validator__.validate_python(
             new_instance.__dict__, self_instance=new_instance
         )
@@ -164,7 +188,7 @@ class FlextSettingsBase(BaseSettings):
         return new_instance
 
     @classmethod
-    def validate_overrides(cls, **overrides: t.JsonPayload | None) -> None:
+    def validate_overrides(cls, **overrides: t.SettingsOverride | None) -> None:
         """Reject override keys that are not declared model fields.
 
         Typo guard at CLI/runtime override boundaries.

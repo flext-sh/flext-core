@@ -44,6 +44,18 @@ class FlextTypesServices:
         | t.MappingKV[str, JsonPayloadCollectionValue]
         | t.SequenceOf[JsonPayloadCollectionValue]
     )
+    type SettingsOverrideLeaf = JsonPayloadLeaf | p.Model
+    type SettingsOverrideCollectionValue = (
+        SettingsOverrideLeaf
+        | t.MappingKV[str, SettingsOverrideLeaf]
+        | t.SequenceOf[SettingsOverrideLeaf]
+    )
+    type SettingsOverride = (
+        SettingsOverrideLeaf
+        | t.MappingKV[str, SettingsOverrideCollectionValue]
+        | t.SequenceOf[SettingsOverrideCollectionValue]
+    )
+    type SettingsOverridesMapping = t.MappingKV[str, SettingsOverride | None]
     type RegistryDict[T] = MutableMapping[str, T]
     type DomainModelCarrier = mp.BaseModel | p.Model
     type ScalarOrModel = t.Scalar | mp.BaseModel
@@ -55,7 +67,7 @@ class FlextTypesServices:
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
     type RuntimeData = tp.JsonValue | mp.BaseModel
     type BootstrapInput = mp.BaseModel | t.JsonMapping
-    type SettingsInput = JsonPayload
+    type SettingsInput = SettingsOverride
     type ServiceValue = (
         JsonPayload
         | mp.BaseModel

@@ -108,7 +108,7 @@ class FlextProtocolsBase:
         def model_copy(
             self,
             *,
-            update: t.JsonMapping | None = None,
+            update: t.SettingsOverridesMapping | None = None,
             deep: bool = False,
         ) -> Self:
             """Copy a validated model, optionally updating fields."""
