@@ -1,0 +1,16 @@
+src/flext_core/settings.py
+  h_5cf852cc46bf92 3-4,22
+src/flext_core/_settings/base.py
+  h_5cf852cc46bf92 20,22,39-40,49,53-54,57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "d188988c457fedcddd310684b2643bdcbdc27b72",
+  "prompts": {},
+  "humans": {
+    "h_5cf852cc46bf92": {
+      "author": "FLEXT Bot <team@flext.sh>"
+    }
+  }
+}
