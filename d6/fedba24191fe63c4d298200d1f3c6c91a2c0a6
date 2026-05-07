@@ -1,0 +1,137 @@
+src/flext_core/_utilities/generators.py
+  s_5a9c2b140a8456::t_96e9c3ad10d4e5 105
+src/flext_core/context.py
+  h_5cf852cc46bf92 125,274
+src/flext_core/_settings/base.py
+  s_552d8e4891a938::t_2cf1bc38bb3803 121,134,157
+src/flext_core/_utilities/collection.py
+  s_b15aa8dbf80823::t_1e9040751a1ff8 69
+  h_5cf852cc46bf92 68
+tests/unit/test_typings_new.py
+  h_5cf852cc46bf92 115
+src/flext_core/_exceptions/base.py
+  h_5cf852cc46bf92 171
+src/flext_core/_utilities/enforcement_emit.py
+  s_5a9c2b140a8456::t_b3c7d799451bc8 15
+src/flext_core/_typings/base.py
+  s_5a9c2b140a8456::t_18838fc515f372 149,151-152
+  s_b15aa8dbf80823::t_a6ec64d7c162d5 104-109
+  s_5a9c2b140a8456::t_a44a42a39bf344 163-164,166-172
+  s_5a9c2b140a8456::t_0bb9cd7cfaeb21 154,165
+  s_b15aa8dbf80823::t_f041331d831416 103
+  s_5a9c2b140a8456::t_a9dcb9d03d39eb 157-158
+  s_5a9c2b140a8456::t_4c5abedc858050 173-175
+  s_5a9c2b140a8456::t_ae107dad2262c7 150,159-162
+  s_5a9c2b140a8456::t_d8a48c03b54559 59
+  s_5a9c2b140a8456::t_d73bc9425b409d 153,155-156
+src/flext_core/_utilities/enforcement_collect.py
+  s_5a9c2b140a8456::t_b3c7d799451bc8 14,55,142,180
+src/flext_core/_utilities/_beartype/helpers.py
+  s_5a9c2b140a8456::t_b3c7d799451bc8 324
+src/flext_core/_utilities/mapper_extract.py
+  s_b15aa8dbf80823::t_8a790106f8b84d 120
+src/flext_core/_typings/typeadapters.py
+  s_552d8e4891a938::t_4dc33ac2e5db21 66-72
+  s_552d8e4891a938::t_c43dab1e4e867a 73-77
+  s_552d8e4891a938::t_588d655f10fe38 157-159
+  s_552d8e4891a938::t_576b2cf212486f 51-53,83-86,185-188
+src/flext_core/handlers.py
+  h_5cf852cc46bf92 418
+src/flext_core/_models/service.py
+  h_5cf852cc46bf92 12,153-154
+  s_b15aa8dbf80823::t_1e9040751a1ff8 155
+src/flext_core/_models/_context/_scope.py
+  s_b15aa8dbf80823::t_574b6fdf7c220f 198
+src/flext_core/_utilities/model.py
+  s_b15aa8dbf80823::t_8a790106f8b84d 180
+src/flext_core/_utilities/context_state.py
+  s_b15aa8dbf80823::t_c47e0baecd5313 125
+  s_b15aa8dbf80823::t_43ddfdfaf6c780 133
+  h_5cf852cc46bf92 137
+src/flext_core/_utilities/guards_type_protocol.py
+  s_b15aa8dbf80823::t_1e9040751a1ff8 108
+  h_5cf852cc46bf92 12,105-107,109
+src/flext_core/_utilities/mapper_access.py
+  s_0290f35b98ef0c::t_d6a2317f5e48c3 41-64
+  s_b15aa8dbf80823::t_8a790106f8b84d 153-155
+src/flext_core/_utilities/mapper.py
+  s_b15aa8dbf80823::t_e797b4ac4a16ae 49
+src/flext_core/_utilities/context_crud.py
+  h_5cf852cc46bf92 104
+src/flext_core/_utilities/guards_type_core.py
+  h_5cf852cc46bf92 122
+  s_b15aa8dbf80823::t_8a790106f8b84d 81,159-160
+  s_b15aa8dbf80823::t_574b6fdf7c220f 123
+  s_b15aa8dbf80823::t_1e9040751a1ff8 38
+src/flext_core/runtime.py
+  s_b15aa8dbf80823::t_3a6a24d1dc1c6f 426-428
+  s_b15aa8dbf80823::t_052d2b6f1f6fa6 379-381
+  s_0290f35b98ef0c::t_87047fa61d02f4 452
+  s_b15aa8dbf80823::t_06f8c1ea978d0a 440
+  s_0290f35b98ef0c::t_51845555a5829a 441-443
+  s_b15aa8dbf80823::t_574b6fdf7c220f 435
+  s_b15aa8dbf80823::t_8a790106f8b84d 312,396
+  s_b15aa8dbf80823::t_05c4a9fb49ccf9 395
+src/flext_core/_utilities/project_metadata.py
+  s_5a9c2b140a8456::t_b3c7d799451bc8 187,256,259
+src/flext_core/_models/project_metadata.py
+  h_5cf852cc46bf92 189
+src/flext_core/_utilities/context_lifecycle.py
+  h_5cf852cc46bf92 96
+src/flext_core/_models/_context/_data.py
+  s_b15aa8dbf80823::t_574b6fdf7c220f 32,82,86,126
+src/flext_core/_constants/enforcement.py
+  s_5a9c2b140a8456::t_b3c7d799451bc8 19-20,221,385
+src/flext_core/_utilities/guards.py
+  s_b15aa8dbf80823::t_e797b4ac4a16ae 72,136
+src/flext_core/lazy.py
+  s_5a9c2b140a8456::t_f575b239a7257f 248,250
+  s_5a9c2b140a8456::t_1779b68bb748a2 25-26,38-39,42-43,50-51,53-54,79,86-87,99,114-115,129,157,159,161,174,222,241,245,267
+src/flext_core/_utilities/conversion.py
+  s_b15aa8dbf80823::t_e797b4ac4a16ae 87,105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "d6fedba24191fe63c4d298200d1f3c6c91a2c0a6",
+  "prompts": {},
+  "humans": {
+    "h_5cf852cc46bf92": {
+      "author": "FLEXT Bot <team@flext.sh>"
+    }
+  },
+  "sessions": {
+    "s_0290f35b98ef0c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0c4cc853-563f-48ad-a39a-f49b587090b8",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_552d8e4891a938": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "35c0040b-2ae9-466e-90aa-7721509e1e19",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_5a9c2b140a8456": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019dfddc-86ee-79a0-b5bf-0433a8110b6a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    },
+    "s_b15aa8dbf80823": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d896ab0f-dd16-4dca-9ad4-b3d924a501e7",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>"
+    }
+  }
+}
