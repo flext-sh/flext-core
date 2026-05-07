@@ -122,7 +122,7 @@ class FlextUtilitiesContextState:
                 hook_data: t.Scalar
                 if event_data is None:
                     hook_data = ""
-                elif isinstance(event_data, (str, int, float, bool, datetime)):
+                elif isinstance(event_data, t.SCALAR_TYPES):
                     hook_data = event_data
                 else:
                     hook_data = str(event_data)
@@ -130,11 +130,11 @@ class FlextUtilitiesContextState:
 
     def _metadata_map(self) -> t.MappingKV[str, t.JsonPayload]:
         """Get all metadata from the context."""
-        data = dict(self.state.metadata.model_dump())
+        data = self.state.metadata.model_dump()
         custom_fields_raw = data.pop("custom_fields", {})
         custom_fields_dict: dict[str, t.JsonPayload] = {}
         try:
-            cf_map = m.ConfigMap(root=dict(custom_fields_raw))
+            cf_map = m.ConfigMap.model_validate(custom_fields_raw)
             for ck, cv in cf_map.items():
                 custom_fields_dict[ck] = FlextRuntime.normalize_to_container(cv)
         except c.EXC_BASIC_TYPE as exc:

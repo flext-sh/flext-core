@@ -177,7 +177,7 @@ class FlextUtilitiesModel:
                 target if isinstance(target, mp.TypeAdapter) else mp.TypeAdapter(target)
             )
             if from_json:
-                if not isinstance(data, (str, bytes, bytearray)):
+                if not isinstance(data, t.STR_BINARY_TYPES):
                     return e.fail_validation(
                         "json_input",
                         error="JSON validation requires str or bytes input",

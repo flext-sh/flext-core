@@ -37,38 +37,31 @@ class FlextUtilitiesMapperAccess:
         value: t.JsonPayload | p.Model | p.HasModelDump | p.ValidatorSpec | None,
     ) -> t.JsonPayload | t.JsonValue:
         """Normalize protocol-accessible values to canonical runtime/container shapes."""
-        normalized_value: t.JsonPayload | t.JsonValue
         if value is None:
-            normalized_value = ""
-        elif isinstance(value, FlextModelsPydantic.BaseModel):
-            normalized_value = value
-        else:
-            model_dump_attr = getattr(value, "model_dump", None)
-            if callable(model_dump_attr):
-                normalized_value = FlextRuntime.normalize_to_container(
-                    m.ConfigMap.model_validate(model_dump_attr()),
-                )
-            elif isinstance(value, p.ValidatorSpec):
-                normalized_value = str(value)
-            elif (
-                isinstance(value, (*t.SCALAR_TYPES, Path))
-                or (
-                    isinstance(value, Mapping)
-                    and (
-                        FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value)
-                    )
-                )
-                or (
-                    isinstance(value, (list, tuple))
-                    and all(
-                        FlextUtilitiesGuardsTypeCore.container(item) for item in value
-                    )
-                )
-            ):
-                normalized_value = value
-            else:
-                normalized_value = str(value)
-        return normalized_value
+            return ""
+        if isinstance(value, FlextModelsPydantic.BaseModel):
+            return value
+        model_dump_attr = getattr(value, "model_dump", None)
+        if callable(model_dump_attr):
+            return FlextRuntime.normalize_to_container(
+                m.ConfigMap.model_validate(model_dump_attr()),
+            )
+        if isinstance(value, p.ValidatorSpec):
+            return str(value)
+        if isinstance(value, (*t.SCALAR_TYPES, Path)):
+            return value
+        if isinstance(
+            value,
+            Mapping,
+        ) and FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value):
+            return value
+        if (
+            isinstance(value, Sequence)
+            and not isinstance(value, (str, bytes, bytearray))
+            and all(FlextUtilitiesGuardsTypeCore.container(item) for item in value)
+        ):
+            return value
+        return str(value)
 
     @staticmethod
     def _resolve_raw_value(
@@ -157,7 +150,9 @@ class FlextUtilitiesMapperAccess:
         """Handle array indexing with negative index support."""
         if isinstance(current, FlextModelsContainers.ObjectList):
             sequence: t.SequenceOf[t.JsonValue | t.JsonPayload] = current.root
-        elif isinstance(current, Sequence) and not isinstance(current, (str, bytes)):
+        elif isinstance(current, Sequence) and not isinstance(
+            current, t.STR_BYTES_TYPES
+        ):
             sequence = current
         else:
             return r[t.JsonPayload].fail_op(

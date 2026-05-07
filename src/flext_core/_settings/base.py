@@ -118,7 +118,7 @@ class FlextSettingsBase(BaseModel):
         instance = existing if isinstance(existing, cls) else cls()
         if not overrides:
             return instance
-        return instance.clone(**dict(overrides))
+        return instance.clone(**overrides)
 
     def clone(self, **overrides: t.JsonPayload | None) -> Self:
         """Deep copy with optional field overrides + re-validation (rule 2).
@@ -131,7 +131,7 @@ class FlextSettingsBase(BaseModel):
             with self.__class__.singleton_disabled():
                 return self.model_copy(deep=True)
         with self.__class__.singleton_disabled():
-            copied = self.model_copy(update=dict(overrides), deep=True)
+            copied = self.model_copy(update=overrides, deep=True)
         copied.__pydantic_validator__.validate_python(
             copied.__dict__, self_instance=copied
         )
@@ -154,7 +154,7 @@ class FlextSettingsBase(BaseModel):
         cls.validate_overrides(**overrides)
         current = cls.fetch_global()
         with cls.singleton_disabled():
-            new_instance = current.model_copy(update=dict(overrides), deep=True)
+            new_instance = current.model_copy(update=overrides, deep=True)
         new_instance.__pydantic_validator__.validate_python(
             new_instance.__dict__, self_instance=new_instance
         )

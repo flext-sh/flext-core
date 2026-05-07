@@ -16,6 +16,8 @@ from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import Final
 
+from flext_core._typings.base import FlextTypingBase as t
+
 
 class FlextMroViolation(UserWarning):
     """Runtime governance violation emitted by the FLEXT enforcement engine.
@@ -216,7 +218,7 @@ class FlextConstantsEnforcement:
     )
     """Root facade class names — skip namespace prefix check on these."""
 
-    ENFORCEMENT_NAMESPACE_LAYER_MAP: Final[tuple[tuple[str, str], ...]] = tuple(
+    ENFORCEMENT_NAMESPACE_LAYER_MAP: Final[t.StrPairTuple] = tuple(
         (name, name.lower()) for name in NAMESPACE_LAYER_NAMES
     )
     """Class name suffix → layer name mapping for cross-layer detection."""
@@ -380,7 +382,7 @@ class FlextConstantsEnforcement:
     })
     """Per-tag layer for ATTR-category rules (layer guard in _items_for)."""
 
-    ENFORCEMENT_RULES_TEXT: Final[Mapping[str, tuple[str, str]]] = MappingProxyType({
+    ENFORCEMENT_RULES_TEXT: Final[Mapping[str, t.StrPair]] = MappingProxyType({
         "no_any": (
             "Any is FORBIDDEN (detected recursively)",
             "Use a t.* type contract.",
@@ -590,78 +592,76 @@ class FlextConstantsEnforcement:
     })
     """The five canonical facade files per project (AGENTS.md §2.2)."""
 
-    ENFORCEMENT_ACCESSOR_RENAMES: Final[Mapping[str, tuple[str, str]]] = (
-        MappingProxyType({
-            "is_success_result": (
-                "successful_result",
-                "Rename result helper to the canonical success helper",
-            ),
-            "is_failure_result": (
-                "failed_result",
-                "Rename result helper to the canonical failure helper",
-            ),
-            "is_success": (
-                "success",
-                "Rename boolean result predicate to the canonical success field",
-            ),
-            "is_failure": (
-                "failure",
-                "Rename boolean result predicate to the canonical failure field",
-            ),
-            "set_attribute": (
-                "update_attribute",
-                "Rewrite attribute mutator to the canonical update verb",
-            ),
-            "get_beartype_conf": (
-                "build_beartype_conf",
-                "Rewrite beartype settings accessor to the canonical build verb",
-            ),
-            "get_message_route": (
-                "resolve_message_route",
-                "Rewrite route accessor to the canonical resolve helper",
-            ),
-            "set_container_adapter": (
-                "container_set_adapter",
-                "Rewrite type adapter accessor to the canonical container_* name",
-            ),
-            "set_str_adapter": (
-                "string_set_adapter",
-                "Rewrite type adapter accessor to the canonical string_* name",
-            ),
-            "set_scalar_adapter": (
-                "scalar_set_adapter",
-                "Rewrite type adapter accessor to the canonical scalar_* name",
-            ),
-            "get_logger": (
-                "fetch_logger",
-                "Rewrite logger accessor to the canonical fetch verb",
-            ),
-            "is_structlog_configured": (
-                "structlog_configured",
-                "Rewrite structlog predicate to the canonical boolean helper",
-            ),
-            "get_log_level_from_config": (
-                "resolve_log_level_from_config",
-                "Rewrite log-level accessor to the canonical resolve helper",
-            ),
-            "get_version_string": (
-                "resolve_version_string",
-                "Rewrite version accessor to the canonical resolve helper",
-            ),
-            "get_version_info": (
-                "resolve_version_info",
-                "Rewrite version info accessor to the canonical resolve helper",
-            ),
-            "get_package_info": (
-                "resolve_package_info",
-                "Rewrite package info accessor to the canonical resolve helper",
-            ),
-            "is_version_at_least": (
-                "version_at_least",
-                "Rewrite version predicate to the canonical boolean helper",
-            ),
-        })
-    )
+    ENFORCEMENT_ACCESSOR_RENAMES: Final[Mapping[str, t.StrPair]] = MappingProxyType({
+        "is_success_result": (
+            "successful_result",
+            "Rename result helper to the canonical success helper",
+        ),
+        "is_failure_result": (
+            "failed_result",
+            "Rename result helper to the canonical failure helper",
+        ),
+        "is_success": (
+            "success",
+            "Rename boolean result predicate to the canonical success field",
+        ),
+        "is_failure": (
+            "failure",
+            "Rename boolean result predicate to the canonical failure field",
+        ),
+        "set_attribute": (
+            "update_attribute",
+            "Rewrite attribute mutator to the canonical update verb",
+        ),
+        "get_beartype_conf": (
+            "build_beartype_conf",
+            "Rewrite beartype settings accessor to the canonical build verb",
+        ),
+        "get_message_route": (
+            "resolve_message_route",
+            "Rewrite route accessor to the canonical resolve helper",
+        ),
+        "set_container_adapter": (
+            "container_set_adapter",
+            "Rewrite type adapter accessor to the canonical container_* name",
+        ),
+        "set_str_adapter": (
+            "string_set_adapter",
+            "Rewrite type adapter accessor to the canonical string_* name",
+        ),
+        "set_scalar_adapter": (
+            "scalar_set_adapter",
+            "Rewrite type adapter accessor to the canonical scalar_* name",
+        ),
+        "get_logger": (
+            "fetch_logger",
+            "Rewrite logger accessor to the canonical fetch verb",
+        ),
+        "is_structlog_configured": (
+            "structlog_configured",
+            "Rewrite structlog predicate to the canonical boolean helper",
+        ),
+        "get_log_level_from_config": (
+            "resolve_log_level_from_config",
+            "Rewrite log-level accessor to the canonical resolve helper",
+        ),
+        "get_version_string": (
+            "resolve_version_string",
+            "Rewrite version accessor to the canonical resolve helper",
+        ),
+        "get_version_info": (
+            "resolve_version_info",
+            "Rewrite version info accessor to the canonical resolve helper",
+        ),
+        "get_package_info": (
+            "resolve_package_info",
+            "Rewrite package info accessor to the canonical resolve helper",
+        ),
+        "is_version_at_least": (
+            "version_at_least",
+            "Rewrite version predicate to the canonical boolean helper",
+        ),
+    })
     """SSOT: legacy accessor name → (canonical replacement, human-readable reason).
 
     All entries target flext-core surface (origin="flext_core") — the data

@@ -122,7 +122,7 @@ class FlextContext(m.ManagedModel):
     def clone(self) -> Self:
         """Create an independent copy of this context scope."""
         return self.__class__(
-            data=m.ConfigMap(root=dict(self.data.root)),
+            data=self.data.model_copy(deep=True),
             metadata=self.metadata.model_copy(),
         )
 
@@ -271,7 +271,7 @@ class FlextContext(m.ManagedModel):
             str(c.MetadataKey.START_TIME): start_time.isoformat(),
             str(c.ContextKey.OPERATION_NAME): operation_name or "",
         })
-        op_meta: m.ConfigMap = m.ConfigMap(root=dict(payload))
+        op_meta = m.ConfigMap.model_validate(payload)
         start_token = u.OPERATION_START_TIME.set(start_time)
         meta_token = u.OPERATION_METADATA.set(payload)
         op_token = u.OPERATION_NAME.set(operation_name) if operation_name else None

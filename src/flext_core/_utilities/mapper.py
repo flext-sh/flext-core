@@ -46,7 +46,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                     raw = item.get(field)
                 else:
                     continue
-                if isinstance(raw, (int, float)):
+                if isinstance(raw, t.NUMERIC_TYPES):
                     numeric_values.append(raw)
         agg_fn = fn if fn is not None else sum
         return agg_fn(numeric_values) if numeric_values else 0

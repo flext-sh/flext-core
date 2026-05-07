@@ -321,7 +321,7 @@ class FlextUtilitiesBeartypeHelpers:
     def has_private_attr_probe(
         fn: _types_mod.FunctionType,
         builtins_set: frozenset[str],
-    ) -> tuple[str, str] | None:
+    ) -> t.StrPair | None:
         last_builtin: str | None = None
         for ins in dis.get_instructions(fn):
             if ins.opname == "LOAD_GLOBAL" and ins.argval in builtins_set:

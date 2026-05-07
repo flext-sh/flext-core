@@ -93,7 +93,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
                     source,
                 )
             )
-            return m.ConfigMap(root=dict(normalized_payload))
+            return m.ConfigMap.model_validate(normalized_payload)
         except c.EXC_BASIC_TYPE as exc:
             FlextUtilitiesContextLifecycle.logger.debug(
                 f"Context {label} validation failed",

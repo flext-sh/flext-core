@@ -61,15 +61,16 @@ class FlextUtilitiesCollection(
         predicate: Callable[[TItem], bool],
     ) -> p.Result[TItem]:
         """Find first item matching predicate; returns r[T]."""
-        if isinstance(items, (list, tuple)):
-            for item in items:
-                if predicate(item):
-                    return r[TItem].ok(item)
-            return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
         if isinstance(items, Mapping):
             for v in items.values():
                 if predicate(v):
                     return r[TItem].ok(v)
+            return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
+        if isinstance(items, t.SEQUENCE_PAIR_TYPES):
+            for item in items:
+                if predicate(item):
+                    return r[TItem].ok(item)
+            return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
         return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
 
     @staticmethod

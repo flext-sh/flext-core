@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
     Mapping,
+    Sequence,
 )
 from types import MappingProxyType
 from typing import TypeIs
@@ -101,7 +102,11 @@ class FlextUtilitiesGuardsTypeProtocol:
         if type_name == "dict_non_empty":
             return isinstance(value, Mapping) and len(value) > 0
         if type_name == "list_non_empty":
-            return isinstance(value, (list, tuple)) and len(value) > 0
+            return (
+                isinstance(value, Sequence)
+                and not isinstance(value, (str, bytes, bytearray))
+                and len(value) > 0
+            )
         checker = c.STRING_TYPE_PREDICATES.get(type_name)
         if checker is None:
             return False

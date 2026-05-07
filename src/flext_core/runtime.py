@@ -309,7 +309,7 @@ class FlextRuntime:
                         for key_s, item in value.items()
                     }
                 )
-            case Sequence() if not isinstance(value, (str, bytes, bytearray)):
+            case Sequence() if not isinstance(value, t.STR_BINARY_TYPES):
                 normalized_service = mc.ObjectList(
                     root=[
                         FlextRuntime._normalize_payload_item(
@@ -376,8 +376,9 @@ class FlextRuntime:
         if val is None:
             normalized_data = ""
         elif isinstance(val, (mc.ConfigMap, mc.Dict)):
-            entries = [(k, v) for k, v in val.root.items()]
-            normalized_data = FlextRuntime._normalize_dict_entries(entries)
+            normalized_data = FlextRuntime._normalize_dict_entries(
+                list(val.root.items())
+            )
         elif isinstance(val, mc.ObjectList):
             normalized_data = list(
                 t.json_list_adapter().validate_python(
@@ -391,9 +392,8 @@ class FlextRuntime:
         elif ugc.scalar(val):
             normalized_data = FlextRuntime.normalize_to_json_value(val)
         elif isinstance(val, Mapping):
-            entries = [(k, v) for k, v in val.items()]
-            normalized_data = FlextRuntime._normalize_dict_entries(entries)
-        elif isinstance(val, Sequence) and not isinstance(val, (str, bytes)):
+            normalized_data = FlextRuntime._normalize_dict_entries(list(val.items()))
+        elif isinstance(val, Sequence) and not isinstance(val, t.STR_BYTES_TYPES):
             normalized_data = list(
                 t.json_list_adapter().validate_python(
                     [
@@ -423,24 +423,24 @@ class FlextRuntime:
         """
         normalized_value: t.JsonValue
         if isinstance(val, (mc.ConfigMap, mc.Dict)):
-            normalized_value = FlextRuntime._normalize_dict_entries([
-                (key, item) for key, item in val.root.items()
-            ])
+            normalized_value = FlextRuntime._normalize_dict_entries(
+                list(val.root.items())
+            )
         elif val is None:
             normalized_value = ""
         elif isinstance(val, datetime):
             normalized_value = val.isoformat()
         elif isinstance(val, Path):
             normalized_value = str(val)
-        elif isinstance(val, (str, int, float, bool)):
+        elif isinstance(val, t.PRIMITIVES_TYPES):
             normalized_value = val
         elif ugm.has_model_dump(val):
             normalized_value = FlextRuntime.normalize_to_json_value(val)
         elif isinstance(val, Mapping):
-            normalized_value = FlextRuntime._normalize_dict_entries([
-                (key, item) for key, item in val.items()
-            ])
-        elif isinstance(val, AbstractSet):
+            normalized_value = FlextRuntime._normalize_dict_entries(list(val.items()))
+        elif isinstance(val, AbstractSet) or (
+            isinstance(val, Sequence) and not isinstance(val, (str, bytes, bytearray))
+        ):
             normalized_value = list(
                 t.json_list_adapter().validate_python([
                     FlextRuntime.normalize_to_json_value(item) for item in val
@@ -449,11 +449,7 @@ class FlextRuntime:
         elif isinstance(val, (bytes, bytearray)):
             normalized_value = str(val)
         else:
-            normalized_value = list(
-                t.json_list_adapter().validate_python([
-                    FlextRuntime.normalize_to_json_value(item) for item in val
-                ])
-            )
+            normalized_value = val
         return normalized_value
 
     @no_type_check

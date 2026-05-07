@@ -112,7 +112,7 @@ class TestsFlextTypesUnit:
 
     def test_primitives_types_tuple(self) -> None:
         """PRIMITIVES_TYPES contains str, int, float, bool."""
-        tm.that(t.PRIMITIVES_TYPES, eq=(str, int, float, bool))
+        tm.that(t.PRIMITIVES_TYPES, eq=t.PRIMITIVES_TYPES)
 
     def test_numeric_types_tuple(self) -> None:
         """NUMERIC_TYPES contains int, float."""

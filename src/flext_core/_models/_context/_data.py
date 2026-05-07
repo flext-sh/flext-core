@@ -29,7 +29,7 @@ class FlextModelsContextData:
     ) -> t.MappingKV[str, t.Scalar]:
         """Return an immutable mapping with non-scalar values stringified."""
         return MappingProxyType({
-            k: val if isinstance(val, (str, int, float, bool)) else str(val)
+            k: val if isinstance(val, t.PRIMITIVES_TYPES) else str(val)
             for k, val in items.items()
         })
 
@@ -79,15 +79,11 @@ class FlextModelsContextData:
                 return MappingProxyType({})
             if isinstance(v, Mapping):
                 return MappingProxyType({
-                    k: (
-                        str(val)
-                        if not isinstance(val, (str, int, float, bool))
-                        else val
-                    )
+                    k: (str(val) if not isinstance(val, t.PRIMITIVES_TYPES) else val)
                     for k, val in v.items()
                 })
             return MappingProxyType({
-                k: (str(val) if not isinstance(val, (str, int, float, bool)) else val)
+                k: (str(val) if not isinstance(val, t.PRIMITIVES_TYPES) else val)
                 for k, val in v.model_dump().items()
             })
 
@@ -127,7 +123,7 @@ class FlextModelsContextData:
             val: t.Scalar,
         ) -> t.Scalar:
             """Return scalar value as-is."""
-            return val if isinstance(val, (str, int, float, bool)) else str(val)
+            return val if isinstance(val, t.PRIMITIVES_TYPES) else str(val)
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextModelsContextData"]

@@ -415,7 +415,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 "pop handler context",
                 result.error or c.ERR_HANDLER_FAILED,
             )
-        return r[m.ConfigMap].ok(m.ConfigMap(root=dict(result.value)))
+        return r[m.ConfigMap].ok(m.ConfigMap.model_validate(result.value))
 
     def push_context(
         self,

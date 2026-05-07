@@ -117,7 +117,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
             narrowed_for_index = (
                 next_val
                 if isinstance(next_val, Sequence)
-                and not isinstance(next_val, (str, bytes))
+                and not isinstance(next_val, t.STR_BYTES_TYPES)
                 else FlextRuntime.normalize_to_container(next_val)
             )
             index_result = FlextUtilitiesMapperExtract._extract_handle_array_index(

@@ -184,7 +184,7 @@ class FlextUtilitiesProjectMetadata(mpm):
     @staticmethod
     def _alias_suffix_from_entry(
         export_name: str,
-        entry: str | tuple[str, str],
+        entry: tb.LazyImportEntry,
         import_name: str,
         class_stem: str,
     ) -> str:
@@ -253,12 +253,10 @@ class FlextUtilitiesProjectMetadata(mpm):
     def _normalized_lazy_imports(
         package_name: str,
         package: ModuleType,
-    ) -> dict[str, str | tuple[str, str]]:
+    ) -> tb.LazyImportDict:
         """Read generated lazy imports through the shared lazy normalizer."""
         raw = vars(package).get("_LAZY_IMPORTS")
-        normalized: dict[str, str | tuple[str, str]] = normalize_lazy_imports(
-            package_name, raw
-        )
+        normalized: tb.LazyImportDict = normalize_lazy_imports(package_name, raw)
         if not normalized:
             msg = f"package {package_name!r} has no generated lazy imports"
             raise RuntimeError(msg)

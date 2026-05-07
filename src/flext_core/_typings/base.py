@@ -56,6 +56,7 @@ class FlextTypingBase(tp, ta):
     type JsonValue = tp.JsonValue
     type JsonMapping = MappingKV[str, tp.JsonValue]
     type JsonDict = dict[str, tp.JsonValue]
+    type JsonValueList = list[tp.JsonValue]
     type JsonList = SequenceOf[tp.JsonValue]
     type MutableJsonMapping = MutableMapping[str, tp.JsonValue]
     type MutableJsonList = MutableSequenceOf[tp.JsonValue]
@@ -99,6 +100,13 @@ class FlextTypingBase(tp, ta):
         bool,
     )
     NUMERIC_TYPES: tuple[type[int], type[float]] = (int, float)
+    SEQUENCE_PAIR_TYPES: tuple[type, ...] = (list, tuple)
+    STR_BYTES_TYPES: tuple[type[str], type[bytes]] = (str, bytes)
+    STR_BINARY_TYPES: tuple[type[str], type[bytes], type[bytearray]] = (
+        str,
+        bytes,
+        bytearray,
+    )
     SCALAR_TYPES: tuple[
         type[str],
         type[int],
@@ -138,6 +146,33 @@ class FlextTypingBase(tp, ta):
     ]
     type VariadicTuple[ItemT] = tuple[ItemT, ...]
     type StrTuple = VariadicTuple[str]
+    type StrPair = Pair[str, str]
+    type OptionalStrPair = StrPair | None
+    type StrIntPair = Pair[str, int]
+    type StrPairSequence = SequenceOf[StrPair]
+    type MutableStrPairSequence = MutableSequenceOf[StrPair]
+    type StrPairTuple = tuple[StrPair, ...]
+    type StrPairMapping = MappingKV[str, StrPair]
+    type MutableStrPairMapping = MutableMappingKV[str, StrPair]
+    type StrPairTupleMapping = MappingKV[str, StrPairTuple]
+    type MutableStrPairTupleMapping = MutableMappingKV[str, StrPairTuple]
+    type OptionalStrPairList = list[OptionalStrPair]
+    type OptionalStrPairMapping = MappingKV[str, OptionalStrPair]
+    type OptionalStrPairCollection = OptionalStrPairList | OptionalStrPairMapping
+    type MutableOptionalStrPairSequence = MutableSequenceOf[OptionalStrPair]
+    type StrSequencePair = Pair[str, StrSequence]
+    type StrSequencePairSequence = SequenceOf[StrSequencePair]
+    type StrSequencePairTuple = tuple[StrSequencePair, ...]
+    type StrPairSequencePair = Pair[str, StrPairSequence]
+    type StrPairSequencePairSequence = SequenceOf[StrPairSequencePair]
+    type LazyImportEntry = str | StrPair
+    type LazyImportMap = MappingKV[str, LazyImportEntry]
+    type LazyImportDict = dict[str, LazyImportEntry]
+    type MutableLazyImportMap = MutableMappingKV[str, LazyImportEntry]
+    type LazyImportAliasGroups = MappingKV[str, StrPairSequence]
+    type LazyAliasMap = MappingKV[str, StrPair]
+    type LazyAliasDict = dict[str, StrPair]
+    type MutableLazyAliasMap = MutableMappingKV[str, StrPair]
     type IntPair = Pair[int, int]
 
     type TypeHintSpecifier = (

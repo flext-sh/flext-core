@@ -22,6 +22,8 @@ from pydantic import (
     computed_field,
 )
 
+from flext_core._typings.base import FlextTypingBase as t
+
 
 class FlextLazy(BaseModel):
     """Canonical lazy API as a container with runtime reuse caches."""
@@ -33,27 +35,23 @@ class FlextLazy(BaseModel):
     )
 
     module_cache: dict[str, ModuleType] = Field(default_factory=dict)
-    child_lazy_cache: dict[str, dict[str, str | tuple[str, str]]] = Field(
-        default_factory=dict
-    )
-    child_merge_cache: dict[tuple[str, ...], dict[str, str | tuple[str, str]]] = Field(
+    child_lazy_cache: dict[str, t.LazyImportDict] = Field(default_factory=dict)
+    child_merge_cache: dict[tuple[str, ...], t.LazyImportDict] = Field(
         default_factory=dict,
     )
-    normalized_map_cache: dict[tuple[str, int], dict[str, str | tuple[str, str]]] = (
-        Field(
-            default_factory=dict,
-        )
+    normalized_map_cache: dict[tuple[str, int], t.LazyImportDict] = Field(
+        default_factory=dict,
     )
     install_cache: dict[str, tuple[int, int, int, bool]] = Field(default_factory=dict)
 
     _import_module: Callable[[str], ModuleType] = PrivateAttr(
         default_factory=lambda: importlib.import_module,
     )
-    _map_adapter: TypeAdapter[dict[str, str | tuple[str, str]]] = PrivateAttr(
-        default_factory=lambda: TypeAdapter(dict[str, str | tuple[str, str]]),
+    _map_adapter: TypeAdapter[t.LazyImportDict] = PrivateAttr(
+        default_factory=lambda: TypeAdapter(t.LazyImportDict),
     )
-    _alias_adapter: TypeAdapter[tuple[str, str]] = PrivateAttr(
-        default_factory=lambda: TypeAdapter(tuple[str, str]),
+    _alias_adapter: TypeAdapter[t.StrPair] = PrivateAttr(
+        default_factory=lambda: TypeAdapter(t.StrPair),
     )
     _activate_core_beartype: Callable[[], None] = PrivateAttr(
         default_factory=lambda: (
@@ -78,15 +76,15 @@ class FlextLazy(BaseModel):
     def _norm_cache_key(
         self,
         module_path: str,
-        raw: Mapping[str, str | tuple[str, str]] | None,
+        raw: t.LazyImportMap | None,
     ) -> tuple[str, int]:
         return (module_path, id(raw))
 
     def _norm_map(
         self,
         module_path: str,
-        raw: Mapping[str, str | tuple[str, str]] | None,
-    ) -> dict[str, str | tuple[str, str]]:
+        raw: t.LazyImportMap | None,
+    ) -> t.LazyImportDict:
         cache_key = self._norm_cache_key(module_path, raw)
         cached = self.normalized_map_cache.get(cache_key)
         if cached is not None:
@@ -98,7 +96,7 @@ class FlextLazy(BaseModel):
             msg = f"module {module_path!r} has no valid _LAZY_IMPORTS mapping"
             raise TypeError(msg) from exc
 
-        out: dict[str, str | tuple[str, str]] = {}
+        out: t.LazyImportDict = {}
         for name, entry in validated.items():
             if isinstance(entry, str):
                 out[name] = f"{module_path}{entry}" if entry.startswith(".") else entry
@@ -113,8 +111,8 @@ class FlextLazy(BaseModel):
     def normalize_map(
         self,
         module_path: str,
-        raw: Mapping[str, str | tuple[str, str]] | None,
-    ) -> dict[str, str | tuple[str, str]]:
+        raw: t.LazyImportMap | None,
+    ) -> t.LazyImportDict:
         """Return normalized lazy-import entries for runtime metadata readers."""
         return self._norm_map(module_path, raw)
 
@@ -128,7 +126,7 @@ class FlextLazy(BaseModel):
         self.module_cache[module_path] = mod
         return mod
 
-    def _child_map(self, module_path: str) -> dict[str, str | tuple[str, str]]:
+    def _child_map(self, module_path: str) -> t.LazyImportDict:
         cached = self.child_lazy_cache.get(module_path)
         if cached is not None:
             return cached
@@ -156,11 +154,11 @@ class FlextLazy(BaseModel):
         self,
         module_groups: Mapping[str, Sequence[str]] | None = None,
         *,
-        alias_groups: Mapping[str, Sequence[tuple[str, str]]] | None = None,
+        alias_groups: t.LazyImportAliasGroups | None = None,
         sort_keys: bool = True,
-    ) -> dict[str, str | tuple[str, str]]:
+    ) -> t.LazyImportDict:
         """Build one flat lazy-import map."""
-        out: dict[str, str | tuple[str, str]] = {
+        out: t.LazyImportDict = {
             name: module
             for module, names in (module_groups or {}).items()
             for name in names
@@ -173,7 +171,7 @@ class FlextLazy(BaseModel):
     def get(
         self,
         name: str,
-        lazy_imports: Mapping[str, str | tuple[str, str]],
+        lazy_imports: t.LazyImportMap,
         module_globals: MutableMapping[str, object],
         module_name: str,
     ) -> object:
@@ -221,7 +219,7 @@ class FlextLazy(BaseModel):
     def cleanup(
         self,
         module_name: str,
-        lazy_imports: Mapping[str, str | tuple[str, str]],
+        lazy_imports: t.LazyImportMap,
     ) -> None:
         """Remove eager child module attrs."""
         current = sys.modules.get(module_name)
@@ -240,16 +238,16 @@ class FlextLazy(BaseModel):
     def merge(
         self,
         child_module_paths: Sequence[str],
-        local_lazy_imports: Mapping[str, str | tuple[str, str]],
+        local_lazy_imports: t.LazyImportMap,
         *,
         exclude_names: Sequence[str] = (),
         module_name: str | None = None,
-    ) -> MutableMapping[str, str | tuple[str, str]]:
+    ) -> t.MutableLazyImportMap:
         """Merge child lazy maps with local entries."""
         key = tuple(self._child_path(path, module_name) for path in child_module_paths)
-        children = self.child_merge_cache.get(key)
+        children: t.LazyImportDict | None = self.child_merge_cache.get(key)
         if children is None:
-            children = dict[str, str | tuple[str, str]]()
+            children = {}
             for path in key:
                 for name, entry in self._child_map(path).items():
                     if name not in children or name.lower() != name:
@@ -266,7 +264,7 @@ class FlextLazy(BaseModel):
         self,
         module_name: str,
         module_globals: MutableMapping[str, object],
-        lazy_imports: Mapping[str, str | tuple[str, str]],
+        lazy_imports: t.LazyImportMap,
         all_exports: Sequence[str] | None = None,
         *,
         publish_all: bool = True,

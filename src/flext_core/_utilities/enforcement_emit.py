@@ -12,7 +12,7 @@ from flext_core._constants.enforcement import (
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
 
-_BEARTYPE_TAG_TO_RULE: MappingProxyType[str, tuple[str, str]] = MappingProxyType({
+_BEARTYPE_TAG_TO_RULE: MappingProxyType[str, t.StrPair] = MappingProxyType({
     tag: (rule_id, anchor) for rule_id, _sev, tag, anchor, *_ in c.BEARTYPE_ROWS
 })
 

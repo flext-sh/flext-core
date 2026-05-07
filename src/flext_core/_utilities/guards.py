@@ -69,7 +69,7 @@ class FlextUtilitiesGuards(
     @staticmethod
     def _resolve_numeric(value: t.GuardInput) -> t.Numeric:
         """Extract numeric value (raw for numbers, len for sized types)."""
-        if isinstance(value, (int, float)):
+        if isinstance(value, t.NUMERIC_TYPES):
             return value
         if isinstance(value, (str, bytes, list, tuple, dict, set, frozenset)):
             sized_value: Sized = value
@@ -133,7 +133,7 @@ class FlextUtilitiesGuards(
                         result = False
                         break
                     continue
-                if isinstance(spec_val_num, (int, float)) and not num_fn(
+                if isinstance(spec_val_num, t.NUMERIC_TYPES) and not num_fn(
                     check_val, spec_val_num
                 ):
                     result = False

@@ -101,7 +101,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
             return
         filtered = {k: v for k, v in current.items() if k != key}
         try:
-            _ = ctx_var.set(m.ConfigMap(root=dict(filtered)))
+            _ = ctx_var.set(m.ConfigMap.model_validate(filtered))
         except c.EXC_BASIC_TYPE as exc:
             self.logger.debug(
                 c.LOG_CONTEXT_REMOVAL_FAILED,

@@ -16,7 +16,6 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
     Mapping,
-    Sequence,
 )
 from enum import StrEnum
 from functools import cache
@@ -49,6 +48,11 @@ class FlextTypesTypeAdapters:
 
     @classmethod
     @cache
+    def strict_json_mapping_adapter(cls) -> mp.TypeAdapter[t.JsonMapping]:
+        return mp.TypeAdapter(t.JsonMapping, config=mp.ConfigDict(strict=True))
+
+    @classmethod
+    @cache
     def json_dict_adapter(cls) -> mp.TypeAdapter[t.JsonDict]:
         return mp.TypeAdapter(t.JsonDict)
 
@@ -59,8 +63,27 @@ class FlextTypesTypeAdapters:
 
     @classmethod
     @cache
+    def json_mapping_sequence_adapter(
+        cls,
+    ) -> mp.TypeAdapter[t.SequenceOf[t.JsonMapping]]:
+        return mp.TypeAdapter(t.SequenceOf[t.JsonMapping])
+
+    @classmethod
+    @cache
+    def json_mapping_by_str_adapter(
+        cls,
+    ) -> mp.TypeAdapter[t.MappingKV[str, t.JsonMapping]]:
+        return mp.TypeAdapter(t.MappingKV[str, t.JsonMapping])
+
+    @classmethod
+    @cache
     def json_list_adapter(cls) -> mp.TypeAdapter[t.JsonList]:
         return mp.TypeAdapter(t.JsonList)
+
+    @classmethod
+    @cache
+    def strict_json_list_adapter(cls) -> mp.TypeAdapter[t.JsonList]:
+        return mp.TypeAdapter(t.JsonList, config=mp.ConfigDict(strict=True))
 
     @classmethod
     @cache
@@ -88,11 +111,6 @@ class FlextTypesTypeAdapters:
         cls,
     ) -> mp.TypeAdapter[Mapping[ts.SortableObjectType, tp.JsonValue | None]]:
         return mp.TypeAdapter(Mapping[ts.SortableObjectType, tp.JsonValue | None])
-
-    @classmethod
-    @cache
-    def strict_json_list_adapter(cls) -> mp.TypeAdapter[Sequence[ts.StrictValue]]:
-        return mp.TypeAdapter(Sequence[ts.StrictValue])
 
     @classmethod
     @cache
@@ -136,6 +154,11 @@ class FlextTypesTypeAdapters:
 
     @classmethod
     @cache
+    def header_mapping_adapter(cls) -> mp.TypeAdapter[t.HeaderMapping]:
+        return mp.TypeAdapter(t.HeaderMapping)
+
+    @classmethod
+    @cache
     def str_dict_adapter(cls) -> mp.TypeAdapter[t.StrDict]:
         return mp.TypeAdapter(t.StrDict)
 
@@ -158,6 +181,11 @@ class FlextTypesTypeAdapters:
     @cache
     def str_sequence_adapter(cls) -> mp.TypeAdapter[t.StrSequence]:
         return mp.TypeAdapter(t.StrSequence)
+
+    @classmethod
+    @cache
+    def strict_str_sequence_adapter(cls) -> mp.TypeAdapter[t.StrSequence]:
+        return mp.TypeAdapter(t.StrSequence, config=mp.ConfigDict(strict=True))
 
     @classmethod
     @cache

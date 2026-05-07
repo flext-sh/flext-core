@@ -186,7 +186,7 @@ class FlextModelsProjectMetadata:
                         else str(entry)
                         for entry in value
                     )
-                    if isinstance(value, (list, tuple))
+                    if isinstance(value, tb.SEQUENCE_PAIR_TYPES)
                     else ()
                 )
             ),

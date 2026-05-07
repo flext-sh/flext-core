@@ -11,6 +11,7 @@ from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.base import FlextProtocolsBase as pb
+from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
@@ -51,7 +52,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         return None
 
     @staticmethod
-    def _project(target: type) -> tuple[str, str] | None:
+    def _project(target: type) -> t.StrPair | None:
         """Return (derived_prefix, inner_namespace) or None if unknowable."""
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if not top:
@@ -138,7 +139,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     def _ns_class_prefix(
         target: type,
         qn: str,
-        project: tuple[str, str],
+        project: t.StrPair,
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         skip_roots = (
             c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | c.ENFORCEMENT_INFRASTRUCTURE_BASES
@@ -176,7 +177,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     def _ns_nested_mro(
         target: type,
         qn: str,
-        project: tuple[str, str],
+        project: t.StrPair,
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if top and top == FlextUtilitiesEnforcementCollect._discover_src_package(

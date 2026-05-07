@@ -168,7 +168,7 @@ class FlextExceptionsBase:
                 resolved = (
                     params
                     if params is not None
-                    else declared_params_cls.model_validate(dict(param_values))
+                    else declared_params_cls.model_validate(param_values)
                 )
                 ctx = FlextExceptionsHelpers.build_context_map(
                     context,

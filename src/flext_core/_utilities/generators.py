@@ -102,7 +102,7 @@ class FlextUtilitiesGenerators:
         include_timestamp: bool,
     ) -> t.SequenceOf[t.JsonValue]:
         """Collect ID parts including optional timestamp prefix."""
-        all_parts: list[t.JsonValue] = []
+        all_parts: t.JsonValueList = []
         if include_timestamp:
             all_parts.append(int(datetime.now(UTC).timestamp()))
         if parts:
