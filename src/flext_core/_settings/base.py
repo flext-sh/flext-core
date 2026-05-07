@@ -17,10 +17,11 @@ project-specific settings classes (`FlextLdifSettings`, `FlextApiSettings`, …)
 - ``reset_for_testing()`` — drop singleton slot,
 - ``resolve_env_file(namespace=None)`` — centralised .env discovery (rule 5).
 
-Extends ``pydantic.BaseModel`` so Pydantic-only operations (``model_copy``,
-``__pydantic_validator__``, ``model_fields``) are typed at this layer.
-Project subclasses inherit ``(FlextSettingsBase, BaseSettings)`` directly,
-giving them the helper API without inheriting root concrete fields (rule 3).
+Extends ``pydantic_settings.BaseSettings`` so env-loading plus Pydantic-only
+operations (``model_copy``, ``__pydantic_validator__``, ``model_fields``)
+are typed at this layer. Project subclasses inherit ``FlextSettingsBase``
+directly, giving them the helper API without inheriting root concrete fields
+(rule 3).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -35,7 +36,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import ClassVar, Self, Unpack
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import ConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core import (
     FlextConstants as c,
@@ -44,16 +46,15 @@ from flext_core import (
 )
 
 
-class FlextSettingsBase(BaseModel):
+class FlextSettingsBase(BaseSettings):
     """Pydantic-2 base + per-class singleton + canonical helper API.
 
     Every settings class in the workspace inherits from this base, gaining the
-    fetch/clone/update API plus an isolated singleton slot. Subclasses still
-    layer in ``BaseSettings`` (or ``BaseModel``) for env-loading and field
-    declarations.
+    fetch/clone/update API, env-loading support, and an isolated singleton
+    slot.
     """
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
+    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         arbitrary_types_allowed=True,
         validate_assignment=True,
     )

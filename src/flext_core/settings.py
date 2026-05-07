@@ -1,7 +1,7 @@
 """FlextSettings — root settings facade.
 
-Composes ``BaseSettings`` with the per-class singleton + canonical helper API
-provided by :class:`FlextSettingsBase` and the root field mixins
+Composes the per-class singleton + canonical helper API provided by
+:class:`FlextSettingsBase` with the root field mixins
 (``Core``/``Database``/``Dispatcher``/``Infrastructure``) plus DI/Registry/Context.
 
 Helper methods (``fetch_global``, ``clone``, ``update_global``,
@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import ClassVar, Self
 
 from pydantic import model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import SettingsConfigDict
 
 from flext_core import (
     FlextModelsSettings,
@@ -41,7 +41,6 @@ from flext_core import (
 
 class FlextSettings(
     FlextSettingsBase,
-    BaseSettings,
     FlextSettingsCore,
     FlextSettingsDatabase,
     FlextSettingsDispatcher,
