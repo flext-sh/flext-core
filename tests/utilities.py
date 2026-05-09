@@ -10,11 +10,9 @@ from itertools import count
 from typing import Annotated, ClassVar, override
 
 from flext_tests import e, h, m as tm, r, u
-from flext_tests.base import s
 
-from tests import p, t
-from tests.constants import c
-from tests.models import m
+from tests import c, m, p, s, t
+from tests._models.mixins import TestsFlextModelsMixins
 
 
 class TestsFlextUtilities(u):
@@ -331,8 +329,10 @@ class TestsFlextUtilities(u):
 
         @staticmethod
         def value_lt_100(data: t.JsonMapping) -> bool:
-            value = data.get("value")
-            return isinstance(value, int) and value < 100
+            target: TestsFlextModelsMixins._TargetModel = (
+                TestsFlextModelsMixins._TargetModel.model_validate(data)
+            )
+            return target.value < 100
 
         @staticmethod
         def make[T](service_type: type[T], **kwargs: t.Scalar) -> T:

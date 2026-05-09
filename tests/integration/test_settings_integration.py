@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
 import threading
 from collections.abc import (
     MutableSequence,
@@ -200,33 +199,32 @@ class TestsFlextSettingsIntegration:
     def test_environment_variable_override(self) -> None:
         """Test that environment variables override default settings."""
         FlextSettings.reset_for_testing()
-        os.environ["FLEXT_APP_NAME"] = "test-app-from-env"
-        os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
-        os.environ["FLEXT_MAX_WORKERS"] = "8"
-        os.environ["FLEXT_TIMEOUT_SECONDS"] = "90"
-        os.environ["FLEXT_DEBUG"] = "true"
-        try:
+        with u.Tests.env_vars_context({
+            "FLEXT_APP_NAME": "test-app-from-env",
+            "FLEXT_LOG_LEVEL": "DEBUG",
+            "FLEXT_MAX_WORKERS": "8",
+            "FLEXT_TIMEOUT_SECONDS": "90",
+            "FLEXT_DEBUG": "true",
+        }):
             settings = FlextSettings.fetch_global()
             assert settings.app_name == "test-app-from-env"
             assert settings.log_level == "DEBUG"
             assert settings.max_workers == 8
             assert settings.timeout_seconds == 90
             assert settings.debug is True
-        finally:
-            del os.environ["FLEXT_APP_NAME"]
-            del os.environ["FLEXT_LOG_LEVEL"]
-            del os.environ["FLEXT_MAX_WORKERS"]
-            del os.environ["FLEXT_TIMEOUT_SECONDS"]
-            del os.environ["FLEXT_DEBUG"]
-            FlextSettings.reset_for_testing()
+        FlextSettings.reset_for_testing()
 
-    def test_json_config_file_loading(self, temp_directory: Path) -> None:
+    def test_json_config_file_loading(self, temp_dir: Path) -> None:
         """Test loading configuration from JSON file."""
         FlextSettings.reset_for_testing()
-        saved_env = os.environ.pop("FLEXT_ENVIRONMENT", None)
-        saved_app = os.environ.pop("FLEXT_APP_NAME", None)
-        saved_level = os.environ.pop("FLEXT_LOG_LEVEL", None)
-        try:
+        with u.Tests.env_vars_context(
+            {},
+            vars_to_clear=(
+                "FLEXT_ENVIRONMENT",
+                "FLEXT_APP_NAME",
+                "FLEXT_LOG_LEVEL",
+            ),
+        ):
             config_data: t.MappingKV[str, t.Primitives] = {
                 "app_name": "test-app-from-json",
                 "environment": "test",
@@ -234,7 +232,7 @@ class TestsFlextSettingsIntegration:
                 "max_name_length": 150,
                 "cache_enabled": False,
             }
-            config_file_path = temp_directory / "settings.json"
+            config_file_path = temp_dir / "settings.json"
             u.Cli.json_write(config_file_path, config_data)
             assert config_file_path.exists()
             empty_config: t.JsonMapping = {}
@@ -245,23 +243,20 @@ class TestsFlextSettingsIntegration:
             assert settings.log_level is not None
             assert settings.max_workers is not None
             assert settings.cache_ttl is not None
-        finally:
-            if saved_env is not None:
-                os.environ["FLEXT_ENVIRONMENT"] = saved_env
-            if saved_app is not None:
-                os.environ["FLEXT_APP_NAME"] = saved_app
-            if saved_level is not None:
-                os.environ["FLEXT_LOG_LEVEL"] = saved_level
-            FlextSettings.reset_for_testing()
+        FlextSettings.reset_for_testing()
 
-    def test_yaml_config_file_loading(self, temp_directory: Path) -> None:
+    def test_yaml_config_file_loading(self, temp_dir: Path) -> None:
         """Test loading configuration from YAML file."""
         FlextSettings.reset_for_testing()
-        saved_env = os.environ.pop("FLEXT_ENVIRONMENT", None)
-        saved_app = os.environ.pop("FLEXT_APP_NAME", None)
-        saved_debug = os.environ.pop("FLEXT_DEBUG", None)
-        try:
-            config_file = temp_directory / "settings.yaml"
+        with u.Tests.env_vars_context(
+            {},
+            vars_to_clear=(
+                "FLEXT_ENVIRONMENT",
+                "FLEXT_APP_NAME",
+                "FLEXT_DEBUG",
+            ),
+        ):
+            config_file = temp_dir / "settings.yaml"
             config_data: t.MappingKV[str, t.Primitives] = {
                 "app_name": "test-app-from-yaml",
                 "environment": "production",
@@ -281,47 +276,38 @@ class TestsFlextSettingsIntegration:
             assert settings.debug is not None
             assert settings.timeout_seconds is not None
             assert settings.max_batch_size is not None
-        finally:
-            if saved_env is not None:
-                os.environ["FLEXT_ENVIRONMENT"] = saved_env
-            if saved_app is not None:
-                os.environ["FLEXT_APP_NAME"] = saved_app
-            if saved_debug is not None:
-                os.environ["FLEXT_DEBUG"] = saved_debug
-            FlextSettings.reset_for_testing()
+        FlextSettings.reset_for_testing()
 
-    def test_config_priority_order(self, temp_directory: Path) -> None:
+    def test_config_priority_order(self, temp_dir: Path) -> None:
         """Test that configuration sources have correct priority.
 
-        Uses temp_directory fixture to avoid writing files to current directory.
+        Uses temp_dir fixture to avoid writing files to current directory.
         Validates priority order: env var > .env > json.
         """
         FlextSettings.reset_for_testing()
-        try:
+        with u.Tests.env_vars_context(
+            {"FLEXT_APP_NAME": "from-env-var"},
+        ):
             json_config: t.HeaderMapping = {
                 "app_name": "from-json",
                 "port": 3000,
             }
-            json_file = temp_directory / "settings.json"
+            json_file = temp_dir / "settings.json"
             u.Cli.json_write(json_file, json_config)
             assert json_file.exists()
             assert u.Cli.json_read(json_file).unwrap_or({}) == json_config
-            env_file = temp_directory / ".env"
+            env_file = temp_dir / ".env"
             env_file.write_text(
                 "FLEXT_APP_NAME=from-env\nFLEXT_HOST=env-host\n",
                 encoding="utf-8",
             )
             assert env_file.exists()
             assert "FLEXT_APP_NAME=from-env" in env_file.read_text(encoding="utf-8")
-            os.environ["FLEXT_APP_NAME"] = "from-env-var"
             settings = FlextSettings.fetch_global()
             assert settings.app_name in {"from-env-var", "flext"}
             assert settings.cache_ttl in {300, 600}
             assert settings.max_retry_attempts in {3, 5}
-        finally:
-            if "FLEXT_APP_NAME" in os.environ:
-                del os.environ["FLEXT_APP_NAME"]
-            FlextSettings.reset_for_testing()
+        FlextSettings.reset_for_testing()
 
     def test_config_singleton_thread_safety(self) -> None:
         """Test that singleton is thread-safe."""
@@ -343,10 +329,10 @@ class TestsFlextSettingsIntegration:
         for settings in configs[1:]:
             assert settings is first_config
 
-    def test_pydantic_settings_precedence_order(self, temp_directory: Path) -> None:
+    def test_pydantic_settings_precedence_order(self, temp_dir: Path) -> None:
         """Test comprehensive Pydantic 2 Settings precedence order.
 
-        Uses temp_directory fixture to avoid writing files to current directory.
+        Uses temp_dir fixture to avoid writing files to current directory.
         Validates the complete precedence chain:
         1. Field defaults (lowest priority)
         2. .env file values (override defaults)
@@ -356,26 +342,29 @@ class TestsFlextSettingsIntegration:
         This is critical for CLI integration and automatic configuration.
         """
         FlextSettings.reset_for_testing()
-        saved_env_vars: t.MappingKV[str, str | None] = {
-            "FLEXT_APP_NAME": os.environ.pop("FLEXT_APP_NAME", None),
-            "FLEXT_LOG_LEVEL": os.environ.pop("FLEXT_LOG_LEVEL", None),
-            "FLEXT_DEBUG": os.environ.pop("FLEXT_DEBUG", None),
-            "FLEXT_TIMEOUT_SECONDS": os.environ.pop("FLEXT_TIMEOUT_SECONDS", None),
-        }
-        try:
+        with u.Tests.env_vars_context(
+            {},
+            vars_to_clear=(
+                "FLEXT_APP_NAME",
+                "FLEXT_LOG_LEVEL",
+                "FLEXT_DEBUG",
+                "FLEXT_TIMEOUT_SECONDS",
+                "FLEXT_ENV_FILE",
+            ),
+        ):
             config_defaults = FlextSettings.fetch_global()
             assert config_defaults.app_name == "flext"
             assert config_defaults.log_level == "INFO"
             assert config_defaults.debug is False
             assert config_defaults.timeout_seconds == 30
             FlextSettings.reset_for_testing()
-            env_file = temp_directory / ".env"
+            env_file = temp_dir / ".env"
             env_content = "FLEXT_APP_NAME=from-dotenv\nFLEXT_LOG_LEVEL=WARNING\nFLEXT_DEBUG=true\nFLEXT_TIMEOUT_SECONDS=45\n"
             env_file.write_text(env_content, encoding="utf-8")
             assert env_file.exists()
             assert env_file.read_text(encoding="utf-8") == env_content
-            os.environ["FLEXT_ENV_FILE"] = str(env_file)
-            config_dotenv = FlextSettings.fetch_global()
+            with u.Tests.env_vars_context({"FLEXT_ENV_FILE": str(env_file)}):
+                config_dotenv = FlextSettings.fetch_global()
             assert config_dotenv.app_name in {"from-dotenv", "flext"}, (
                 f"Expected 'from-dotenv' or 'flext' (default), got '{config_dotenv.app_name}'"
             )
@@ -384,12 +373,13 @@ class TestsFlextSettingsIntegration:
                 assert config_dotenv.debug is True
                 assert config_dotenv.timeout_seconds == 45
             FlextSettings.reset_for_testing()
-            os.environ.pop("FLEXT_ENV_FILE", None)
-            os.environ["FLEXT_APP_NAME"] = "from-env-var"
-            os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
-            os.environ["FLEXT_DEBUG"] = "false"
-            os.environ["FLEXT_TIMEOUT_SECONDS"] = "90"
-            config_env = FlextSettings.fetch_global()
+            with u.Tests.env_vars_context({
+                "FLEXT_APP_NAME": "from-env-var",
+                "FLEXT_LOG_LEVEL": "DEBUG",
+                "FLEXT_DEBUG": "false",
+                "FLEXT_TIMEOUT_SECONDS": "90",
+            }):
+                config_env = FlextSettings.fetch_global()
             assert config_env.app_name == "from-env-var"
             assert config_env.log_level == "DEBUG"
             assert config_env.debug is False
@@ -429,18 +419,4 @@ class TestsFlextSettingsIntegration:
                     getattr(config_no_debug, "debug", False),
                 ),
             )
-        finally:
-            for key, value in saved_env_vars.items():
-                if value is not None:
-                    os.environ[key] = value
-                elif key in os.environ:
-                    del os.environ[key]
-            for key in [
-                "FLEXT_APP_NAME",
-                "FLEXT_LOG_LEVEL",
-                "FLEXT_DEBUG",
-                "FLEXT_TIMEOUT_SECONDS",
-            ]:
-                if key in os.environ and key not in saved_env_vars:
-                    del os.environ[key]
-            FlextSettings.reset_for_testing()
+        FlextSettings.reset_for_testing()

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import io
 import time
-from collections.abc import Callable, Generator, Sequence
+from collections.abc import Callable, Sequence
 from contextlib import redirect_stdout
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
@@ -12,7 +12,6 @@ from typing import Annotated, ClassVar
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextContainer
 from tests import d, e, m, p, r, t, u
 
 
@@ -154,14 +153,6 @@ class TestsFlextDecoratorsLegacy:
             operation=DecoratorOperationType.COMBINED_WITH_RAILWAY,
         ),
     ]
-
-    @staticmethod
-    @pytest.fixture(autouse=True)
-    def reset_flext_container_singleton() -> Generator[None]:
-        """Isolate FlextContainer singleton state across decorator tests."""
-        FlextContainer.reset_for_testing()
-        yield
-        FlextContainer.reset_for_testing()
 
     @pytest.mark.parametrize("test_case", INJECT_SCENARIOS, ids=lambda case: case.name)
     def test_inject_decorator(

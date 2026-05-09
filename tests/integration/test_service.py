@@ -17,9 +17,8 @@ from pathlib import Path
 from typing import Annotated, override
 
 import pytest
-from flext_tests.base import s
 
-from tests import m, p, r, t, u
+from tests import m, p, r, s, t, u
 
 
 class TestsFlextServiceIntegration:
@@ -429,20 +428,20 @@ class TestsFlextServiceIntegration:
     def test_lifecycle_service_initialization(
         self,
         clean_container: p.Container,
-        temp_directory: Path,
+        temp_dir: Path,
     ) -> None:
         """Test lifecycle service initialization with settings.
 
         Args:
             clean_container: Isolated container fixture.
-            temp_directory: Temporary directory fixture.
+            temp_dir: Temporary directory fixture.
 
         """
         lifecycle_service = self.LifecycleService()
         service_config = self._build_service_config(
             name="test_service",
             version="1.0.0",
-            temp_dir=str(temp_directory),
+            temp_dir=str(temp_dir),
         )
         result = lifecycle_service.initialize(service_config)
         _ = u.Tests.assert_success(result)
@@ -455,20 +454,20 @@ class TestsFlextServiceIntegration:
     def test_lifecycle_service_health_check(
         self,
         clean_container: p.Container,
-        temp_directory: Path,
+        temp_dir: Path,
     ) -> None:
         """Test lifecycle service health check.
 
         Args:
             clean_container: Isolated container fixture.
-            temp_directory: Temporary directory fixture.
+            temp_dir: Temporary directory fixture.
 
         """
         lifecycle_service = self.LifecycleService()
         service_config = self._build_service_config(
             name="test_service",
             version="1.0.0",
-            temp_dir=str(temp_directory),
+            temp_dir=str(temp_dir),
         )
         health_before = lifecycle_service.health_check()
         _ = lifecycle_service.initialize(service_config)
@@ -480,20 +479,20 @@ class TestsFlextServiceIntegration:
     def test_lifecycle_service_shutdown(
         self,
         clean_container: p.Container,
-        temp_directory: Path,
+        temp_dir: Path,
     ) -> None:
         """Test lifecycle service shutdown.
 
         Args:
             clean_container: Isolated container fixture.
-            temp_directory: Temporary directory fixture.
+            temp_dir: Temporary directory fixture.
 
         """
         lifecycle_service = self.LifecycleService()
         service_config = self._build_service_config(
             name="test_service",
             version="1.0.0",
-            temp_dir=str(temp_directory),
+            temp_dir=str(temp_dir),
         )
         _ = lifecycle_service.initialize(service_config)
         result = lifecycle_service.shutdown()
@@ -506,20 +505,20 @@ class TestsFlextServiceIntegration:
     def test_lifecycle_service_failure_modes(
         self,
         clean_container: p.Container,
-        temp_directory: Path,
+        temp_dir: Path,
     ) -> None:
         """Test lifecycle service failure modes.
 
         Args:
             clean_container: Isolated container fixture.
-            temp_directory: Temporary directory fixture.
+            temp_dir: Temporary directory fixture.
 
         """
         lifecycle_service = self.LifecycleService()
         service_config = self._build_service_config(
             name="test_service",
             version="1.0.0",
-            temp_dir=str(temp_directory),
+            temp_dir=str(temp_dir),
         )
         lifecycle_service.configure_failure_mode(fail_init=True)
         init_result = lifecycle_service.initialize(service_config)

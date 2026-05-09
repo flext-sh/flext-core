@@ -22,10 +22,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Generator,
-)
+from collections.abc import Callable
 
 import pytest
 from flext_tests import tm
@@ -36,23 +33,7 @@ from tests import c, m, p, t, u
 from tests.models import TestsFlextModels
 
 
-@pytest.fixture(autouse=True)
-def reset_flext_container_singleton() -> Generator[None]:
-    """Isolate FlextContainer singleton state across tests in this module."""
-    FlextContainer.reset_for_testing()
-    try:
-        yield
-    finally:
-        FlextContainer.reset_for_testing()
-
-
 class TestsFlextContainer:
-    @pytest.fixture(autouse=True)
-    def _reset_container_state(self) -> Generator[None]:
-        FlextContainer.reset_for_testing()
-        yield
-        FlextContainer.reset_for_testing()
-
     def test_container_initialization(self, clean_container: p.Container) -> None:
         """Test container initialization creates valid instance using fixtures."""
         assert isinstance(clean_container, p.Container), (
@@ -265,24 +246,30 @@ class TestsFlextContainer:
         """Test typed retrieval with correct types using fixtures."""
         container = clean_container
         _ = container.bind(scenario.name, scenario.service)
-        typed_result = container.resolve(
-            scenario.name,
-            type_cls=scenario.expected_type,
-        )
         if scenario.should_pass:
-            _ = u.Tests.assert_success(typed_result)
+            resolved_service: str | int = u.Tests.assert_success(
+                container.resolve(
+                    scenario.name,
+                    type_cls=scenario.expected_type,
+                )
+            )
             tm.that(
-                str(typed_result.value),
+                str(resolved_service),
                 eq=str(scenario.service),
                 msg=f"Typed result value must match service for {scenario.name}",
             )
             tm.that(
-                isinstance(typed_result.value, scenario.expected_type),
+                isinstance(resolved_service, scenario.expected_type),
                 eq=True,
                 msg=f"Typed result must be instance of {scenario.expected_type.__name__}",
             )
         else:
-            _ = u.Tests.assert_failure(typed_result)
+            _ = u.Tests.assert_failure(
+                container.resolve(
+                    scenario.name,
+                    type_cls=scenario.expected_type,
+                )
+            )
 
     def test_get_typed_wrong_type(self, clean_container: p.Container) -> None:
         """Test typed retrieval with wrong type fails using fixtures."""

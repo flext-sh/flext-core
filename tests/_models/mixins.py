@@ -11,10 +11,8 @@ from collections.abc import (
 from datetime import datetime
 from typing import Annotated, ClassVar, Never, Self, override
 
-from flext_infra import p, r, s
-
 from flext_core import m, u
-from tests import c, t
+from tests import c, p, r, s, t
 
 
 class TestsFlextModelsMixins:
@@ -1344,9 +1342,13 @@ class TestsFlextModelsMixins:
         )
         name: Annotated[str, m.Field(description="Typed retrieval scenario name")]
         service: Annotated[
-            t.Primitives, m.Field(description="Registered service value")
+            str | int,
+            m.Field(description="Registered service value"),
         ]
-        expected_type: Annotated[type, m.Field(description="Expected service type")]
+        expected_type: Annotated[
+            type[str | int],
+            m.Field(description="Expected service type"),
+        ]
         should_pass: Annotated[
             bool,
             m.Field(description="Whether typed retrieval should succeed"),

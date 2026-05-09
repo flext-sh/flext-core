@@ -12,7 +12,7 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_tests import d, e, h, r, s, td, tf, tk, tm, tv, x
+    from flext_tests import d, e, h, r, td, tf, tk, tm, tv, x
 
     from tests._constants.domain import TestsFlextConstantsDomain
     from tests._constants.errors import TestsFlextConstantsErrors
@@ -23,6 +23,7 @@ if _t.TYPE_CHECKING:
     from tests._constants.services import TestsFlextConstantsServices
     from tests._constants.settings import TestsFlextConstantsSettings
     from tests._models.mixins import TestsFlextModelsMixins
+    from tests.base import TestsFlextServiceBase, s
     from tests.benchmark.test_container_memory import TestsFlextContainerMemory
     from tests.benchmark.test_container_performance import (
         TestsFlextContainerPerformance,
@@ -70,7 +71,6 @@ if _t.TYPE_CHECKING:
     from tests.unit._models.test_exception_params import TestsFlextModelsExceptionParams
     from tests.unit._utilities.test_guards import TestsFlextUtilitiesGuards
     from tests.unit._utilities.test_mapper import TestsFlextUtilitiesMapper
-    from tests.unit.base import TestsFlextServiceBase
     from tests.unit.test_beartype_engine import TestsFlextBeartypeEngine
     from tests.unit.test_constants_new import TestsFlextConstantsNew
     from tests.unit.test_constants_project_metadata import (
@@ -172,6 +172,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._constants.services": ("TestsFlextConstantsServices",),
             "._constants.settings": ("TestsFlextConstantsSettings",),
             "._models.mixins": ("TestsFlextModelsMixins",),
+            ".base": (
+                "TestsFlextServiceBase",
+                "s",
+            ),
             ".benchmark.test_container_memory": ("TestsFlextContainerMemory",),
             ".benchmark.test_container_performance": (
                 "TestsFlextContainerPerformance",
@@ -231,7 +235,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit._models.test_exception_params": ("TestsFlextModelsExceptionParams",),
             ".unit._utilities.test_guards": ("TestsFlextUtilitiesGuards",),
             ".unit._utilities.test_mapper": ("TestsFlextUtilitiesMapper",),
-            ".unit.base": ("TestsFlextServiceBase",),
             ".unit.test_beartype_engine": ("TestsFlextBeartypeEngine",),
             ".unit.test_constants_new": ("TestsFlextConstantsNew",),
             ".unit.test_constants_project_metadata": (
@@ -321,7 +324,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "e",
                 "h",
                 "r",
-                "s",
                 "td",
                 "tf",
                 "tk",

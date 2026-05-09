@@ -24,9 +24,29 @@ from pathlib import Path
 from typing import Annotated, Literal, TypeVar
 
 import pytest
+from flext_tests import (
+    clean_container as _shared_clean_container,
+    reset_settings as _shared_reset_settings,
+    sample_data as _shared_sample_data,
+    settings as _shared_settings,
+    settings_factory as _shared_settings_factory,
+    temp_dir as _shared_temp_dir,
+    temp_file as _shared_temp_file,
+    test_context as _shared_test_context,
+    test_runtime as _shared_test_runtime,
+)
 
-from flext_core import FlextContext
-from tests import c, m, p, r, t, u
+from tests import c, m, p, r, u
+
+clean_container = _shared_clean_container
+reset_settings = _shared_reset_settings
+sample_data = _shared_sample_data
+settings = _shared_settings
+settings_factory = _shared_settings_factory
+temp_dir = _shared_temp_dir
+temp_file = _shared_temp_file
+test_context = _shared_test_context
+test_runtime = _shared_test_runtime
 
 collect_ignore_glob = [
     "**/__init__.py",
@@ -34,138 +54,9 @@ collect_ignore_glob = [
 
 
 @pytest.fixture
-def test_context() -> FlextContext:
-    """Provide FlextContext instance for testing."""
-    return FlextContext()
-
-
-@pytest.fixture
-def clean_container() -> Iterator[p.Container]:
-    """Provide an isolated empty container for tests that mutate DI state."""
-    flext_container = importlib.import_module("flext_core").FlextContainer
-    flext_container.reset_for_testing()
-    try:
-        yield flext_container()
-    finally:
-        flext_container.reset_for_testing()
-
-
-@pytest.fixture
 def mock_external_service() -> u.Tests.FunctionalExternalService:
     """Provide mock external service for integration tests."""
     return u.Tests.FunctionalExternalService()
-
-
-@pytest.fixture
-def temp_dir(tmp_path: Path) -> Path:
-    """Temporary directory fixture available to all FLEXT projects."""
-    return tmp_path
-
-
-@pytest.fixture
-def temp_directory(temp_dir: Path) -> Path:
-    """Backward-compatible alias for tests expecting temp_directory."""
-    return temp_dir
-
-
-@pytest.fixture
-def temp_file(temp_dir: Path) -> Path:
-    """Temporary file fixture available to all FLEXT projects."""
-    return temp_dir / "test_file.txt"
-
-
-@pytest.fixture
-def flext_result_success() -> p.Result[dict[str, bool]]:
-    """Successful r fixture available to all FLEXT projects."""
-    return r[dict[str, bool]].ok({"success": True})
-
-
-@pytest.fixture
-def flext_result_failure() -> p.Result[str]:
-    """Failed r fixture available to all FLEXT projects."""
-    return r[str].fail(c.Tests.TEST_ERROR)
-
-
-@pytest.fixture
-def sample_data() -> t.JsonMapping:
-    """Sample JSON-style mapping for integration tests."""
-    return {
-        "string": "test_value",
-        "number": 42,
-        "enabled": True,
-    }
-
-
-@pytest.fixture
-def valid_port_numbers() -> t.SequenceOf[int]:
-    """Valid port numbers for PortNumber validation (1-65535)."""
-    return [1, 80, 443, 8080, 3306, 5432, 27017, 65535]
-
-
-@pytest.fixture
-def invalid_port_numbers() -> t.SequenceOf[int]:
-    """Invalid port numbers for PortNumber validation."""
-    return [0, -1, -8080, 65536, 100000]
-
-
-@pytest.fixture
-def valid_uris() -> t.StrSequence:
-    """Valid URIs for UriString validation."""
-    return [
-        "http://localhost",
-        "https://example.com",
-        "https://example.com:8080",
-        "https://example.com/path",
-        "https://example.com/path?query=value",
-        "https://user:pass@example.com",
-        "ftp://files.example.com",
-        "grpc://service:50051",
-        "postgresql://localhost:5432/db",
-        "mongodb://localhost:27017/db",
-    ]
-
-
-@pytest.fixture
-def valid_hostnames() -> t.StrSequence:
-    """Valid hostnames for HostnameStr validation."""
-    return [
-        "localhost",
-        "example.com",
-        "sub.example.com",
-        "my-server",
-        "server-01",
-        "api-gateway-v2",
-        "db.prod.internal",
-        "a",
-        "a.b",
-    ]
-
-
-@pytest.fixture
-def invalid_hostnames() -> t.StrSequence:
-    """Invalid hostnames for HostnameStr validation."""
-    return [
-        "",
-        "   ",
-        "-invalid",
-        "invalid-",
-        "invalid..com",
-        "invalid .com",
-        "invalid@com",
-        "invalid_com",
-    ]
-
-
-@pytest.fixture
-def whitespace_strings() -> t.StrSequence:
-    """Whitespace-only strings for validation."""
-    return [" ", "   ", "\t", "\n", "  \t  "]
-
-
-@pytest.fixture
-def valid_percentages() -> t.SequenceOf[float]:
-    """Valid percentages (0.0 to 1.0) for percentage validation."""
-    return [0.0, 0.5, 0.99, 1.0]
 
 
 class _DocsStub:

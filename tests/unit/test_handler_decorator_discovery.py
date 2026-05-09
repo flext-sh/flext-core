@@ -9,9 +9,8 @@ from collections.abc import (
 from typing import override
 
 from flext_tests import tm
-from flext_tests.base import s
 
-from tests import c, h, m, p, r, t
+from tests import c, h, m, p, r, s, t
 
 
 class TestsFlextHandlerDecoratorDiscovery:
@@ -85,7 +84,7 @@ class TestsFlextHandlerDecoratorDiscovery:
         class CreateCommand:
             pass
 
-        def original_handler(self: s, cmd: CreateCommand) -> p.Result[str]:
+        def original_handler(self: s[str], cmd: CreateCommand) -> p.Result[str]:
             _ = self
             _ = cmd
             return r[str].ok("handled")

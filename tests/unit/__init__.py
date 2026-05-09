@@ -25,7 +25,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "._models.test_exception_params": ("TestsFlextModelsExceptionParams",),
             "._utilities.test_guards": ("TestsFlextUtilitiesGuards",),
             "._utilities.test_mapper": ("TestsFlextUtilitiesMapper",),
-            ".base": ("TestsFlextServiceBase",),
             ".test_beartype_engine": ("TestsFlextBeartypeEngine",),
             ".test_constants_new": ("TestsFlextConstantsNew",),
             ".test_constants_project_metadata": ("TestsFlextConstantsProjectMetadata",),

@@ -23,8 +23,6 @@ from collections.abc import Callable
 from contextlib import redirect_stdout
 from typing import override
 
-from flext_tests.base import s
-
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -37,6 +35,7 @@ from tests import (
     m,
     p,
     r,
+    s,
     t,
     u,
     x,

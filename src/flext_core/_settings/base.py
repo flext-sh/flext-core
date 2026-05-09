@@ -136,9 +136,10 @@ class FlextSettingsBase(BaseSettings):
                 override_value,
                 Mapping,
             ):
+                computed = set(type(current_value).model_computed_fields)
                 merged_overrides[field_name] = {
-                    **current_value.model_dump(mode="python"),
-                    **override_value,
+                    **current_value.model_dump(mode="python", exclude=computed),
+                    **{k: v for k, v in override_value.items() if k not in computed},
                 }
                 continue
             merged_overrides[field_name] = override_value
