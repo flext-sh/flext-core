@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Self, override
 
@@ -21,6 +21,7 @@ from flext_core import FlextConstants as c, FlextRuntime as ur
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement as ue
+from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
 
@@ -136,19 +137,19 @@ class FlextModelsBase:
         created_at: Annotated[
             datetime,
             mp.Field(
-                description="Timestamp when the metadata record was first created in UTC.",
+                description="Timestamp when the metadata record was first created (configured timezone).",
                 title="Created At",
                 examples=["2026-03-03T10:00:00+00:00"],
             ),
-        ] = mp.Field(default_factory=lambda: datetime.now(UTC))
+        ] = mp.Field(default_factory=lambda: ug.now())
         updated_at: Annotated[
             datetime,
             mp.Field(
-                description="Timestamp of the most recent metadata update in UTC.",
+                description="Timestamp of the most recent metadata update (configured timezone).",
                 title="Updated At",
                 examples=["2026-03-03T10:05:00+00:00"],
             ),
-        ] = mp.Field(default_factory=lambda: datetime.now(UTC))
+        ] = mp.Field(default_factory=lambda: ug.now())
         version: Annotated[
             str,
             mp.Field(
@@ -256,14 +257,14 @@ class FlextModelsBase:
             datetime,
             mp.AfterValidator(lambda v: ur.ensure_utc_datetime(v)),
             mp.Field(
-                description="Creation timestamp (UTC)",
+                description="Creation timestamp (configured timezone)",
                 frozen=True,
             ),
-        ] = mp.Field(default_factory=lambda: datetime.now(UTC))
+        ] = mp.Field(default_factory=lambda: ug.now())
         updated_at: Annotated[
             datetime | None,
             mp.AfterValidator(lambda v: ur.ensure_utc_datetime(v)),
-            mp.Field(default=None, description="Last update timestamp (UTC)"),
+            mp.Field(default=None, description="Last update timestamp (configured timezone)"),
         ] = None
 
         @up.field_serializer("created_at", "updated_at", when_used="json")
