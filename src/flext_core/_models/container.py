@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Annotated, ClassVar, no_type_check
 
 from flext_core import (
@@ -26,6 +26,7 @@ from flext_core import (
 )
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.containers import FlextModelsContainers
+from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 
 
 class FlextModelsContainer:
@@ -57,8 +58,8 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             mp.Field(
-                default_factory=lambda: datetime.now(UTC),
-                description="UTC timestamp when service was registered",
+                default_factory=lambda: ug.now(),
+                description="Timestamp when service was registered (configured timezone)",
             ),
         ]
         metadata: Annotated[
@@ -126,8 +127,8 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             mp.Field(
-                default_factory=lambda: datetime.now(UTC),
-                description="UTC timestamp when factory was registered",
+                default_factory=lambda: ug.now(),
+                description="Timestamp when factory was registered (configured timezone)",
             ),
         ]
         is_singleton: Annotated[
@@ -192,8 +193,8 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             mp.Field(
-                default_factory=lambda: datetime.now(UTC),
-                description="UTC timestamp when resource was registered",
+                default_factory=lambda: ug.now(),
+                description="Timestamp when resource was registered (configured timezone)",
             ),
         ]
         metadata: Annotated[
