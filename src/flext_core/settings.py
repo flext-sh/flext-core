@@ -22,7 +22,6 @@ from pydantic import model_validator
 from pydantic_settings import SettingsConfigDict
 
 from flext_core import (
-    FlextModelsSettings,
     FlextSettingsBase,
     FlextSettingsContext,
     FlextSettingsCore,
@@ -181,10 +180,6 @@ class FlextSettings(
         if self.trace and not self.debug:
             raise ValueError(c.ERR_CONFIG_TRACE_REQUIRES_DEBUG)
         return self
-
-    AutoSettings: ClassVar[type[FlextModelsSettings.AutoSettings]] = (
-        FlextModelsSettings.AutoSettings
-    )
 
 
 __all__: list[str] = ["FlextSettings"]
