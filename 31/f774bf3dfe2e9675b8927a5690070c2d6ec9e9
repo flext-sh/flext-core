@@ -1,0 +1,20 @@
+examples/ex_02_flext_settings.py
+  s_73cbfc60e45e37::t_c8da873d3c6739 202
+  s_73cbfc60e45e37::t_4b6e9dd50010d8 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "31f774bf3dfe2e9675b8927a5690070c2d6ec9e9",
+  "prompts": {},
+  "sessions": {
+    "s_73cbfc60e45e37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80f2c44c-f1f2-49a0-8035-ccac60ac602b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
