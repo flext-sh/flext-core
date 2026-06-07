@@ -13,8 +13,9 @@ from __future__ import annotations
 import secrets
 import string
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, tzinfo
 from typing import no_type_check
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -205,6 +206,50 @@ class FlextUtilitiesGenerators:
     def generate_iso_timestamp() -> str:
         """Generate ISO timestamp without microseconds (use generate_datetime_utc for precision)."""
         return datetime.now(UTC).replace(microsecond=0).isoformat()
+
+    @staticmethod
+    def resolve_timezone(name: str) -> tzinfo:
+        """Resolve an IANA timezone name to a tzinfo (``UTC`` maps to ``datetime.UTC``)."""
+        return UTC if name.upper() == "UTC" else ZoneInfo(name)
+
+    @staticmethod
+    def configured_timezone() -> tzinfo:
+        """Resolve the configured timezone from ``FlextSettings.timezone``."""
+        # Why: deferred import — generators is loaded while building the ``u``
+        # facade, so a module-level settings import perturbs the root
+        # lazy-facade bootstrap; settings is leaf so this never cycles.
+        from flext_core.settings import FlextSettings  # noqa: PLC0415
+
+        return FlextUtilitiesGenerators.resolve_timezone(FlextSettings().timezone)
+
+    @staticmethod
+    def now() -> datetime:
+        """Current timezone-aware datetime in the configured timezone (FlextSettings.timezone)."""
+        return datetime.now(FlextUtilitiesGenerators.configured_timezone())
+
+    @staticmethod
+    def now_iso() -> str:
+        """Current ISO timestamp (no microseconds) in the configured timezone."""
+        return (
+            datetime.now(FlextUtilitiesGenerators.configured_timezone())
+            .replace(microsecond=0)
+            .isoformat()
+        )
+
+    @staticmethod
+    def from_timestamp(timestamp: float) -> datetime:
+        """Convert a POSIX timestamp to an aware datetime in the configured timezone."""
+        return datetime.fromtimestamp(
+            timestamp, FlextUtilitiesGenerators.configured_timezone()
+        )
+
+    @staticmethod
+    def from_iso(value: str) -> datetime:
+        """Parse an ISO-8601 string, assuming the configured timezone when naive."""
+        parsed = datetime.fromisoformat(value)
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=FlextUtilitiesGenerators.configured_timezone())
+        return parsed
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextUtilitiesGenerators"]
