@@ -35,6 +35,10 @@ class FlextSettingsCore:
         c.ASYNC_ENABLED
     )
     cache_ttl: Annotated[t.PositiveInt, Field(description="Cache TTL")] = c.CACHE_TTL
+    timezone: Annotated[
+        str,
+        Field(description="IANA timezone name for all datetime operations"),
+    ] = c.DEFAULT_TIMEZONE
 
     @computed_field
     @property

@@ -28,3 +28,4 @@ class FlextConstantsEnvironment:
     ENV_FILE_ENV_VAR: Final[str] = "FLEXT_ENV_FILE"
     ENV_NESTED_DELIMITER: Final[str] = "__"
     DEFAULT_APP_NAME: Final[str] = "flext"
+    DEFAULT_TIMEZONE: Final[str] = "UTC"
