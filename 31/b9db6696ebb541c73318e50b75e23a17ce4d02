@@ -1,0 +1,66 @@
+docs/guides/error-handling.md
+  s_73cbfc60e45e37::t_8cc58e9a1f3cdd 17-18
+docs/guides/pydantic-v2-patterns.md
+  s_73cbfc60e45e37::t_f9914e7ba7f9eb 55-56
+  s_73cbfc60e45e37::t_afbdf4ce3f5017 37-38
+  s_73cbfc60e45e37::t_babbe62ac6124b 18-19
+docs/guides/logging.md
+  s_73cbfc60e45e37::t_fc27e19106c1ae 119-120
+docs/guides/settings.md
+  s_73cbfc60e45e37::t_f4eb19dab88372 97-98
+docs/improvements/anti-patterns-audit.md
+  s_73cbfc60e45e37::t_3b7d48e0b493f7 16-17
+docs/architecture/patterns.md
+  s_73cbfc60e45e37::t_694a5f3054af2f 17-18
+docs/guides/development.md
+  s_73cbfc60e45e37::t_9b006d1e75330c 18-19
+docs/guides/getting-started.md
+  s_73cbfc60e45e37::t_4b41582df2a817 19-20
+docs/improvements/pydantic-v2-audit.md
+  s_73cbfc60e45e37::t_a44360c03f9190 17-18
+  s_73cbfc60e45e37::t_80bf3f5f5c1dbb 34-35
+docs/architecture/cqrs.md
+  s_73cbfc60e45e37::t_9e61193856bfe8 29-30
+docs/standards/python.md
+  s_73cbfc60e45e37::t_52aace4324f92a 19-20
+src/flext_core/README.md
+  s_73cbfc60e45e37::t_2f76e78c328521 13-14
+docs/improvements/railway-programming-audit.md
+  s_73cbfc60e45e37::t_25075dfe88effb 16-17
+docs/architecture/decisions.md
+  s_73cbfc60e45e37::t_04904db6ceae02 17-18
+docs/guides/testing.md
+  s_73cbfc60e45e37::t_d32280118c7e15 18-19
+docs/guides/service-patterns.md
+  s_73cbfc60e45e37::t_615998f9948e50 17-18
+  s_73cbfc60e45e37::t_7caef5a431ff30 36-37
+docs/standards/development.md
+  s_73cbfc60e45e37::t_5a7a03d271b868 18-19
+docs/guides/troubleshooting.md
+  s_73cbfc60e45e37::t_e9c0c69419143c 46-47
+docs/guides/dependency-injection-advanced.md
+  s_73cbfc60e45e37::t_53d5b2199cd0ce 67-68
+docs/guides/domain-driven-design.md
+  s_73cbfc60e45e37::t_f897900430c70b 18-19
+  s_73cbfc60e45e37::t_f8408da386ed5d 37-38
+docs/guides/anti-patterns-best-practices.md
+  s_73cbfc60e45e37::t_427b7cd76b52d6 43-44
+docs/quick-start.md
+  s_73cbfc60e45e37::t_3afd75414107de 12-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "31b9db6696ebb541c73318e50b75e23a17ce4d02",
+  "prompts": {},
+  "sessions": {
+    "s_73cbfc60e45e37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80f2c44c-f1f2-49a0-8035-ccac60ac602b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
