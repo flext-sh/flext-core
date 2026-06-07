@@ -6,7 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConstants as c, FlextTypes as t, FlextUtilities as u
+from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core.runtime import FlextRuntime
 
 
 class FlextSettingsDI:
@@ -24,7 +25,7 @@ class FlextSettingsDI:
         Type annotation stays framework-level to avoid DI imports in this module.
         """
         if not hasattr(self, "_di_provider") or self._di_provider is None:
-            providers_module = u.dependency_providers()
+            providers_module = FlextRuntime.dependency_providers()
             self._di_provider = providers_module.Singleton(lambda: self)
         provider = self._di_provider
         if provider is None:
