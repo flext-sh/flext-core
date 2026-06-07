@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextSettings, c, u
+from flext_core import FlextSettings, c, m, u
 
 from .shared import ExamplesFlextShared
 
@@ -199,7 +199,7 @@ class Ex02FlextSettings(ExamplesFlextShared):
         try:
             resolved = u.resolve_env_file()
             self.audit_check("resolve_env_file.custom_path", resolved)
-            auto = FlextSettings.AutoSettings(
+            auto = m.AutoSettings(
                 settings_class=self._TestConfig,
                 env_prefix=c.ENV_PREFIX,
                 env_file=resolved,
