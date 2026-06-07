@@ -14,6 +14,8 @@ These patterns are executable references for core runtime behavior.
 ## Result Composition Pattern
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

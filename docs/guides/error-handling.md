@@ -14,6 +14,8 @@ Use `r[T]` to keep errors explicit and composable.
 ## Basic Pattern
 
 ```python
+from __future__ import annotations
+
 from flext_core import c, p, r
 
 

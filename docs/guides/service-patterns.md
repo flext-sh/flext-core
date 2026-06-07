@@ -14,6 +14,8 @@ Service classes should keep orchestration explicit and failures modeled with `r[
 ## Simple Service Pattern
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r, s
 
 
@@ -31,6 +33,8 @@ assert result.value == "user_created"
 ## Validate Before Execute
 
 ```python
+from __future__ import annotations
+
 from typing import Annotated
 
 from flext_core import m, p, r, s

@@ -26,6 +26,8 @@ assert result.value == "pong:dispatcher-example"
 ## Command Handling with r[T]
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

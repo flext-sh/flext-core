@@ -9,6 +9,8 @@
 ## Step 1: p.Result[T] basics
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

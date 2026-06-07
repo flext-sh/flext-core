@@ -94,6 +94,8 @@ assert worker_settings.log_level == "DEBUG"
 Register namespaced settings with `auto_register`.
 
 ```python
+from __future__ import annotations
+
 from flext_core import FlextSettings, m
 
 

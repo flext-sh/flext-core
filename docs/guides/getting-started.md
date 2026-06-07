@@ -16,6 +16,8 @@ This quick start uses current `flext-core` APIs and runnable snippets.
 ## Result Basics
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

@@ -15,6 +15,8 @@ This page summarizes the daily development loop using executable examples.
 ## 1. Build a Result Pipeline
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

@@ -15,6 +15,8 @@ This guide shows practical test patterns aligned with current FLEXT APIs.
 ## Assert r[T] Outcomes
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

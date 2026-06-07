@@ -14,6 +14,8 @@ This audit page keeps only executable checks aligned to the current codebase.
 ## Check: model_dump usage
 
 ```python
+from __future__ import annotations
+
 from flext_core import m
 
 
@@ -29,6 +31,8 @@ assert data["value"] == 1
 ## Check: ConfigDict usage
 
 ```python
+from __future__ import annotations
+
 from flext_core import m
 
 

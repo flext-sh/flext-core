@@ -14,6 +14,8 @@
 ## Decision Check: Result Contract
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

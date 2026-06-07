@@ -40,6 +40,8 @@ Use explicit bind/factory loops.
 ### Prefer r[T] for Fallible Paths
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

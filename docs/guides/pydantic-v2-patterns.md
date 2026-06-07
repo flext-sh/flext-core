@@ -15,6 +15,8 @@ This guide shows practical Pydantic v2 patterns used in `flext-core`.
 ## Base Model + Field
 
 ```python
+from __future__ import annotations
+
 from typing import Annotated
 
 from flext_core import m
@@ -32,6 +34,8 @@ assert user.name == "Alice"
 ## ConfigDict + model_dump
 
 ```python
+from __future__ import annotations
+
 from flext_core import m
 
 
@@ -48,6 +52,8 @@ assert data["debug"] is True
 ## field_validator
 
 ```python
+from __future__ import annotations
+
 from typing import Annotated
 
 from flext_core import c, m, u

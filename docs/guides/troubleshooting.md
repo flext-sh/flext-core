@@ -43,6 +43,8 @@ assert resolved.value == "demo"
 ## 3. Validate Result Flow
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

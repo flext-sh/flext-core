@@ -10,6 +10,8 @@ and dispatcher-driven orchestration.
 ### Result
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

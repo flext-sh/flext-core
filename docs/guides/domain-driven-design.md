@@ -15,6 +15,8 @@ This DDD guide focuses on practical boundaries and executable flows.
 ## Value Validation with r[T]
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 
@@ -32,6 +34,8 @@ assert validate_sku("A").failure
 ## Entity Command Flow
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

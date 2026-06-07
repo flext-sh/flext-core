@@ -13,6 +13,8 @@ This page contains executable checks only.
 ## Result pattern sanity
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

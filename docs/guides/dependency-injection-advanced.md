@@ -64,6 +64,8 @@ assert tenant.value == "default"
 `FlextContainer` does not expose `batch_register`; use explicit loop registration for deterministic failure points.
 
 ```python
+from __future__ import annotations
+
 from flext_core import FlextContainer, p, r, t
 
 

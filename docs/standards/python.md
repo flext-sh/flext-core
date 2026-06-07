@@ -16,6 +16,8 @@
 ## Result Contract Example
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 

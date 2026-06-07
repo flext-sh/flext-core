@@ -13,6 +13,8 @@ Core railway behaviors are verified through executable examples and docs snippet
 ## Audit Check: map + flat_map
 
 ```python
+from __future__ import annotations
+
 from flext_core import p, r
 
 even_divisor = 2

@@ -116,6 +116,8 @@ _ = FlextLogger.clear_global_context()
 The typical flow is: bind request context, log, then clear scope in `finally`.
 
 ```python
+from __future__ import annotations
+
 import io
 import time
 from contextlib import redirect_stdout

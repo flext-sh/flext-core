@@ -378,7 +378,6 @@ exclude = [
   "**/tests/fixtures/**",
   "**/venv",
   "**/venv/**",
-  ".sisyphus",
   ".venv",
 ]
 extraPaths = [ ".", "../typings", "src" ]
