@@ -35,8 +35,8 @@ from flext_core import (
     e,
     p,
     t,
-    u,
 )
+from flext_core.runtime import FlextRuntime
 
 
 class FlextSettings(
@@ -107,10 +107,10 @@ class FlextSettings(
         namespace_key = namespace
         settings_class = self._namespace_registry.get(namespace_key)
         if settings_class is None:
-            normalized = u.normalize_alnum(namespace)
+            normalized = FlextRuntime.normalize_alnum(namespace)
             if normalized:
                 for key, value in self._namespace_registry.items():
-                    key_normalized = u.normalize_alnum(key)
+                    key_normalized = FlextRuntime.normalize_alnum(key)
                     if normalized == key_normalized or normalized.startswith(
                         key_normalized,
                     ):

@@ -56,22 +56,6 @@ class FlextUtilitiesText:
         return stripped
 
     @staticmethod
-    def normalize_alnum(text: str) -> str:
-        """Strip non-alphanumeric characters and lowercase the result.
-
-        Useful for fuzzy matching and case-insensitive namespace comparison
-        where hyphens, underscores, and punctuation should be ignored.
-
-        Args:
-            text: Text to normalize.
-
-        Returns:
-            Lowercase string with only alphanumeric characters.
-
-        """
-        return "".join(ch for ch in text.lower() if ch.isalnum())
-
-    @staticmethod
     def write_file(
         path: str | Path, content: str, encoding: str = c.DEFAULT_ENCODING
     ) -> None:

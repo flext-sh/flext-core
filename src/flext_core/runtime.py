@@ -114,6 +114,11 @@ class FlextRuntime:
         return log_level
 
     @staticmethod
+    def normalize_alnum(text: str) -> str:
+        """Strip non-alphanumeric characters and lowercase the result."""
+        return "".join(ch for ch in text.lower() if ch.isalnum())
+
+    @staticmethod
     def to_scalar(item: t.GuardInput | None) -> t.Scalar:
         """Coerce any runtime value to ``t.Scalar`` (flat Container invariant)."""
         if item is None:
