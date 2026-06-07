@@ -10,7 +10,8 @@ from typing import Annotated
 
 from pydantic import BeforeValidator, Field, computed_field
 
-from flext_core import FlextConstants as c, FlextTypes as t, FlextUtilities as u
+from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core.runtime import FlextRuntime
 
 
 class FlextSettingsCore:
@@ -44,7 +45,7 @@ class FlextSettingsCore:
     @property
     def effective_log_level(self) -> c.LogLevel:
         """Get effective log level based on debug/trace flags."""
-        return u.resolve_effective_log_level(
+        return FlextRuntime.resolve_effective_log_level(
             trace=self.trace,
             debug=self.debug,
             log_level=self.log_level,

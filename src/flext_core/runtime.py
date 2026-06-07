@@ -100,6 +100,20 @@ class FlextRuntime:
         return providers
 
     @staticmethod
+    def resolve_effective_log_level(
+        *,
+        trace: bool,
+        debug: bool,
+        log_level: c.LogLevel,
+    ) -> c.LogLevel:
+        """Resolve log level: DEBUG if trace, INFO if debug, else log_level."""
+        if trace:
+            return c.LogLevel.DEBUG
+        if debug:
+            return c.LogLevel.INFO
+        return log_level
+
+    @staticmethod
     def to_scalar(item: t.GuardInput | None) -> t.Scalar:
         """Coerce any runtime value to ``t.Scalar`` (flat Container invariant)."""
         if item is None:
