@@ -264,7 +264,9 @@ class FlextModelsBase:
         updated_at: Annotated[
             datetime | None,
             mp.AfterValidator(lambda v: ur.ensure_utc_datetime(v)),
-            mp.Field(default=None, description="Last update timestamp (configured timezone)"),
+            mp.Field(
+                default=None, description="Last update timestamp (configured timezone)"
+            ),
         ] = None
 
         @up.field_serializer("created_at", "updated_at", when_used="json")

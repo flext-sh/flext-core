@@ -231,7 +231,8 @@ class FlextUtilitiesGenerators:
     def now_iso() -> str:
         """Current ISO timestamp (no microseconds) in the configured timezone."""
         return (
-            datetime.now(FlextUtilitiesGenerators.configured_timezone())
+            datetime
+            .now(FlextUtilitiesGenerators.configured_timezone())
             .replace(microsecond=0)
             .isoformat()
         )

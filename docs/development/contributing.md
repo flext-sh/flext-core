@@ -232,6 +232,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
    # Check specific files
    mypy src/flext_core/your_module.py
+
   ```
 
 1. **Test Failures**
