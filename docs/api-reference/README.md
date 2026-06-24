@@ -19,7 +19,7 @@ This section is generated from public exports and real docstrings.
 
 ## Surface Summary
 
-- Primary facades: `FlextModelsEnforcement`, `FlextUtilitiesGuards`, `FlextProtocolsLogging`, `FlextUtilitiesLoggingContext`, `FlextModelsCollections`, `FlextConstantsCqrs` (+118 more)
-- Generated module pages: `20`
+- Primary facades: _none_
+- Generated module pages: `19`
 
 - [Back to project docs](../index.md)
