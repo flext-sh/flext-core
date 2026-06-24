@@ -177,7 +177,6 @@ if _t.TYPE_CHECKING:
     from flext_core.handlers import FlextHandlers, h
     from flext_core.lazy import (
         FlextLazy,
-        build_lazy_import_map,
         lazy,
         normalize_lazy_imports,
     )
