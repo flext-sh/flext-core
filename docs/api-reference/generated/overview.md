@@ -3,15 +3,15 @@
 # flext-core API Overview
 
 - Package: `flext_core`
-- Version: ``
+- Version: `0.12.0-dev`
 - Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
 - Project class: `platform`
 - Keywords: `clean-architecture`, `ddd`, `enterprise`, `flext`, `modern`, `solid`
-- Main facades: `FlextModelsEnforcement`, `FlextUtilitiesGuards`, `FlextProtocolsLogging`, `FlextUtilitiesLoggingContext`, `FlextModelsCollections`, `FlextConstantsCqrs`, `FlextConstantsTimeout`, `FlextTypingBase` (+116 more)
+- Main facades: _none_
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextModelsEnforcement`, `FlextUtilitiesGuards`, `FlextProtocolsLogging`, `FlextUtilitiesLoggingContext`, `FlextModelsCollections`, `FlextConstantsCqrs`, `FlextConstantsTimeout`, `FlextTypingBase`, `FlextTypesTypeAdapters`, `mc` (+117 more)
+- Public symbol exports: `FlextConstantsRegex`, `FlextConstantsPydantic`, `FlextModelsExceptionParams`, `FlextExceptionsTypes`, `FlextUtilitiesMapperExtract`, `FlextConstantsCqrs`, `FlextModelsCollections`, `FlextExceptionsFactories`, `FlextMixins`, `FlextConstantsErrors` (+135 more)
 - Exported module shortcuts: `lazy`
-- Generated module pages: `20`
+- Generated module pages: `19`
 
 ## Next Pages
 

@@ -4,7 +4,6 @@
 
 These pages are generated from public modules and their docstrings.
 
-- [flext_core](flext_core.md)
 - [flext_core.constants](constants.md)
 - [flext_core.container](container.md)
 - [flext_core.context](context.md)

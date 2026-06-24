@@ -1,10 +1,5 @@
 # Documentation Templates
 
-<!-- TOC START -->
-- [Template: API Example](#template-api-example)
-- [Template: Runtime Example](#template-runtime-example)
-<!-- TOC END -->
-
 ## Template: API Example
 
 ```python

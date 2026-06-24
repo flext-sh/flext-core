@@ -1,28 +1,5 @@
 # Railway-Oriented Programming with r[T]
 
-<!-- TOC START -->
-- [Overview](#overview)
-- [Creating Results](#creating-results)
-- [Reading State Safely](#reading-state-safely)
-- [flat_map Composition](#flatmap-composition)
-- [map, map_error, and recover](#map-maperror-and-recover)
-- [map_or for Defaulted Reads](#mapor-for-defaulted-reads)
-- [Factory Helpers](#factory-helpers)
-- [unwrap_or and unwrap_or_else](#unwrapor-and-unwraporelse)
-- [lash for Failure Branching](#lash-for-failure-branching)
-- [FlextExceptions at Result Boundaries](#flextexceptions-at-result-boundaries)
-- [Typed Exceptions with Metadata](#typed-exceptions-with-metadata)
-- [None Handling Techniques](#none-handling-techniques)
-- [Exception Propagation with Context](#exception-propagation-with-context)
-- [traverse and with_resource](#traverse-and-withresource)
-- [Decorator Integration](#decorator-integration)
-  - [@d.railway](#drailway)
-  - [@d.retry + @d.railway](#dretry-drailway)
-  - [@d.combined](#dcombined)
-- [Organizing Error Handling](#organizing-error-handling)
-- [Best Practices](#best-practices)
-<!-- TOC END -->
-
 ## Overview
 
 `r[T]` is FLEXT's result container for explicit success and failure flows, while

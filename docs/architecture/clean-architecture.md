@@ -1,14 +1,5 @@
 # Clean Architecture
 
-<!-- TOC START -->
-- [Layer Hierarchy](#layer-hierarchy)
-- [Dependency Rules](#dependency-rules)
-- [Layer Responsibilities](#layer-responsibilities)
-- [Next Steps](#next-steps)
-- [See Also](#see-also)
-- [Verification Commands](#verification-commands)
-<!-- TOC END -->
-
 **Status**: Current | **Version**: 0.12.0-dev | **Date**: 2026-04-14
 
 Canonical references:

@@ -1,13 +1,5 @@
 # Testing Guide
 
-<!-- TOC START -->
-- [Overview](#overview)
-- [Assert r[T] Outcomes](#assert-rt-outcomes)
-- [Test Container Registration](#test-container-registration)
-- [Reuse Official Example Tests](#reuse-official-example-tests)
-- [Recommended Strategy](#recommended-strategy)
-<!-- TOC END -->
-
 ## Overview
 
 This guide shows practical test patterns aligned with current FLEXT APIs.
