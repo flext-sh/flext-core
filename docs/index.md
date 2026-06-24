@@ -27,7 +27,7 @@ This project portal is generated from `pyproject.toml`, package exports, and rea
 
 ## Collection Rules
 
-Read [`/flext/AGENTS.md`](../../../AGENTS.md) §9 — Agent Execution Pre-requisites — for the canonical pre-change checklist (parent MRO chain, Scope bootstrap, skill loading, zero-debt baseline, slot registry verification).
+Read [`/flext/AGENTS.md`](../../AGENTS.md) §9 — Agent Execution Pre-requisites — for the canonical pre-change checklist (parent MRO chain, Scope bootstrap, skill loading, zero-debt baseline, slot registry verification).
 
 ## Quality Gates
 
@@ -35,6 +35,6 @@ Canonical `make` verbs (`check`, `test`, `val`, `docs`) — see `AGENTS.md` §5 
 
 ## Governance Pointer
 
-- Engineering law: [`/flext/AGENTS.md`](../../../AGENTS.md)
-- Skills index: [`/flext/.agents/skills/`](../../../.agents/skills/)
-- Onboarding: [`/flext/docs/guides/onboarding.md`](../../../docs/guides/onboarding.md)
+- Engineering law: [`/flext/AGENTS.md`](../../AGENTS.md)
+- Skills index: [`/flext/.agents/skills/`](../../.agents/skills/)
+- Onboarding: [`/flext/docs/guides/onboarding.md`](../../docs/guides/onboarding.md)

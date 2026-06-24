@@ -9,7 +9,7 @@
 - Keywords: `clean-architecture`, `ddd`, `enterprise`, `flext`, `modern`, `solid`
 - Main facades: _none_
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextModelsExceptionParams`, `FlextModelsDispatcher`, `FlextUtilitiesGuardsTypeProtocol`, `FlextUtilitiesModelOptions`, `FlextUtilitiesModelRuntime`, `FlextUtilitiesText`, `ube`, `FlextUtilitiesGenerators`, `FlextConstantsPydantic`, `FlextProtocols` (+135 more)
+- Public symbol exports: `FlextConstantsMixins`, `FlextConstantsCqrs`, `FlextUtilitiesContext`, `FlextUtilitiesContextLifecycle`, `FlextModelsExceptionParams`, `FlextTypesAnnotateds`, `FlextUtilities`, `FlextUtilitiesBeartypeAttrVisitor`, `FlextUtilitiesCollectionMerge`, `FlextConstants` (+135 more)
 - Exported module shortcuts: `lazy`
 - Generated module pages: `19`
 
