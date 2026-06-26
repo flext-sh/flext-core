@@ -220,7 +220,9 @@ class FlextUtilitiesGenerators:
         # lazy-facade bootstrap; settings is leaf so this never cycles.
         from flext_core.settings import FlextSettings  # noqa: PLC0415
 
-        return FlextUtilitiesGenerators.resolve_timezone(FlextSettings().timezone)
+        return FlextUtilitiesGenerators.resolve_timezone(
+            FlextSettings.fetch_global().timezone,
+        )
 
     @staticmethod
     def now() -> datetime:
