@@ -267,6 +267,7 @@ search-path = [
   "../flext-infra/src",
   "../flext-infra/tmp_flow_test",
   "../flext-tests/src",
+  "scripts",
   "src",
 ]
 use-ignore-files = false
