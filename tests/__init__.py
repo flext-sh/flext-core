@@ -12,8 +12,9 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_tests import d, e, h, r, td, tf, tk, tm, tv, x
+    from flext_tests import td, tf, tk, tm, tv
 
+    from flext_core import d, e, h, r, x
     from tests._constants.domain import TestsFlextConstantsDomain
     from tests._constants.errors import TestsFlextConstantsErrors
     from tests._constants.fixtures import TestsFlextConstantsFixtures
@@ -112,6 +113,7 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_project_metadata_facade_access import (
         TestsFlextFacadeFlatSsotAccess,
     )
+    from tests.unit.test_public_api_contract import TestsFlextCorePublicApiContract
     from tests.unit.test_registry import TestsFlextRegistry
     from tests.unit.test_result import (
         TestsFlextResult,
@@ -163,15 +165,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
-            "._constants.domain": ("TestsFlextConstantsDomain",),
-            "._constants.errors": ("TestsFlextConstantsErrors",),
-            "._constants.fixtures": ("TestsFlextConstantsFixtures",),
-            "._constants.loggings": ("TestsFlextConstantsLoggings",),
-            "._constants.other": ("TestsFlextConstantsOther",),
-            "._constants.result": ("TestsFlextConstantsResult",),
-            "._constants.services": ("TestsFlextConstantsServices",),
-            "._constants.settings": ("TestsFlextConstantsSettings",),
-            "._models.mixins": ("TestsFlextModelsMixins",),
             ".base": (
                 "TestsFlextServiceBase",
                 "s",
@@ -226,15 +219,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextTypes",
                 "t",
             ),
-            ".unit._models.test_base": ("TestsFlextModelsBase",),
-            ".unit._models.test_cqrs": ("TestsFlextModelsCQRS",),
-            ".unit._models.test_enforcement_sources": (
-                "TestsFlextModelsEnforcementSources",
-            ),
-            ".unit._models.test_entity": ("TestsFlextModelsEntity",),
-            ".unit._models.test_exception_params": ("TestsFlextModelsExceptionParams",),
-            ".unit._utilities.test_guards": ("TestsFlextUtilitiesGuards",),
-            ".unit._utilities.test_mapper": ("TestsFlextUtilitiesMapper",),
             ".unit.test_beartype_engine": ("TestsFlextBeartypeEngine",),
             ".unit.test_constants_new": ("TestsFlextConstantsNew",),
             ".unit.test_constants_project_metadata": (
@@ -276,6 +260,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_project_metadata_facade_access": (
                 "TestsFlextFacadeFlatSsotAccess",
             ),
+            ".unit.test_public_api_contract": ("TestsFlextCorePublicApiContract",),
             ".unit.test_registry": ("TestsFlextRegistry",),
             ".unit.test_result": (
                 "TestsFlextResult",
@@ -319,17 +304,19 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextUtilities",
                 "u",
             ),
-            "flext_tests": (
+            "flext_core": (
                 "d",
                 "e",
                 "h",
                 "r",
+                "x",
+            ),
+            "flext_tests": (
                 "td",
                 "tf",
                 "tk",
                 "tm",
                 "tv",
-                "x",
             ),
         },
     ),
@@ -375,20 +362,13 @@ __all__: list[str] = [
     "TestsFlextCleanProtocols",
     "TestsFlextCleanServiceBase",
     "TestsFlextConstants",
-    "TestsFlextConstantsDomain",
-    "TestsFlextConstantsErrors",
-    "TestsFlextConstantsFixtures",
-    "TestsFlextConstantsLoggings",
     "TestsFlextConstantsNew",
-    "TestsFlextConstantsOther",
     "TestsFlextConstantsProjectMetadata",
-    "TestsFlextConstantsResult",
-    "TestsFlextConstantsServices",
-    "TestsFlextConstantsSettings",
     "TestsFlextContainer",
     "TestsFlextContainerMemory",
     "TestsFlextContainerPerformance",
     "TestsFlextContext",
+    "TestsFlextCorePublicApiContract",
     "TestsFlextCoverageExceptions",
     "TestsFlextCoverageLoggings",
     "TestsFlextDecorators",
@@ -414,15 +394,9 @@ __all__: list[str] = [
     "TestsFlextMigrationValidation",
     "TestsFlextMixins",
     "TestsFlextModels",
-    "TestsFlextModelsBase",
     "TestsFlextModelsBaseFullCoverage",
-    "TestsFlextModelsCQRS",
     "TestsFlextModelsContainer",
     "TestsFlextModelsCqrs",
-    "TestsFlextModelsEnforcementSources",
-    "TestsFlextModelsEntity",
-    "TestsFlextModelsExceptionParams",
-    "TestsFlextModelsMixins",
     "TestsFlextModelsProjectMetadata",
     "TestsFlextModelsUnit",
     "TestsFlextProtocols",
@@ -445,8 +419,6 @@ __all__: list[str] = [
     "TestsFlextUtilitiesCoverage",
     "TestsFlextUtilitiesDomain",
     "TestsFlextUtilitiesGenerators",
-    "TestsFlextUtilitiesGuards",
-    "TestsFlextUtilitiesMapper",
     "TestsFlextUtilitiesProjectMetadata",
     "TestsFlextUtilitiesPydantic",
     "TestsFlextUtilitiesReliability",

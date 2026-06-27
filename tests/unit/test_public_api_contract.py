@@ -132,10 +132,7 @@ class TestsFlextCorePublicApiContract:
 
     def test_all_symbols_importable(self) -> None:
         """Every name in ``__all__`` must be reachable via ``getattr``."""
-        missing = [
-            name for name in flext_core.__all__
-            if not hasattr(flext_core, name)
-        ]
+        missing = [name for name in flext_core.__all__ if not hasattr(flext_core, name)]
         assert not missing, f"Not importable from flext_core: {missing}"
 
     def test_alias_identity(self) -> None:
@@ -168,18 +165,11 @@ class TestsFlextCorePublicApiContract:
             extra = sorted(set(actual) - set(expected))
             missing = sorted(set(expected) - set(actual))
             if extra or missing:
-                drift.append(
-                    f"{facade_name}: extra={extra!r} missing={missing!r}"
-                )
+                drift.append(f"{facade_name}: extra={extra!r} missing={missing!r}")
         assert not drift, "Facade surface drift:\n" + "\n".join(drift)
 
     def test_dropped_symbols_still_lazy_importable(self) -> None:
         """Sub-facades removed from ``__all__`` must still resolve via lazy ``__getattr__``."""
         fc = import_module("flext_core")
-        not_resolvable = [
-            sym for sym in _DROPPED_BUT_LAZY
-            if not hasattr(fc, sym)
-        ]
-        assert not not_resolvable, (
-            f"Lazy resolution broken for: {not_resolvable}"
-        )
+        not_resolvable = [sym for sym in _DROPPED_BUT_LAZY if not hasattr(fc, sym)]
+        assert not not_resolvable, f"Lazy resolution broken for: {not_resolvable}"

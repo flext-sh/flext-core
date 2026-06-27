@@ -60,6 +60,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_models_cqrs_full_coverage": ("TestsFlextModelsCqrs",),
             ".test_models_project_metadata": ("TestsFlextModelsProjectMetadata",),
             ".test_project_metadata_facade_access": ("TestsFlextFacadeFlatSsotAccess",),
+            ".test_public_api_contract": ("TestsFlextCorePublicApiContract",),
             ".test_registry": ("TestsFlextRegistry",),
             ".test_result": (
                 "TestsFlextResult",
