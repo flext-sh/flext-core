@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from flext_core import (
     FlextExceptionsBase,
     FlextExceptionsFactories,
@@ -17,6 +19,7 @@ from flext_core import (
     FlextExceptionsTemplate,
     FlextExceptionsTypes,
 )
+from flext_core._constants.enforcement import FlextMroViolation
 
 
 class FlextExceptions(
@@ -32,6 +35,8 @@ class FlextExceptions(
     Provides structured exceptions with error codes and correlation tracking
     for consistent error handling and logging.
     """
+
+    MroViolation: ClassVar[type[FlextMroViolation]] = FlextMroViolation
 
 
 e = FlextExceptions

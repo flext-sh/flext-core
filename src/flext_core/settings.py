@@ -21,20 +21,15 @@ from typing import ClassVar, Self
 from pydantic import model_validator
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import (
-    FlextSettingsBase,
-    FlextSettingsContext,
-    FlextSettingsCore,
-    FlextSettingsDatabase,
-    FlextSettingsDI,
-    FlextSettingsDispatcher,
-    FlextSettingsInfrastructure,
-    FlextSettingsRegistry,
-    c,
-    e,
-    p,
-    t,
-)
+from flext_core import c, e, p, t
+from flext_core._settings.base import FlextSettingsBase
+from flext_core._settings.context import FlextSettingsContext
+from flext_core._settings.core import FlextSettingsCore
+from flext_core._settings.database import FlextSettingsDatabase
+from flext_core._settings.di import FlextSettingsDI
+from flext_core._settings.dispatcher import FlextSettingsDispatcher
+from flext_core._settings.infrastructure import FlextSettingsInfrastructure
+from flext_core._settings.registry import FlextSettingsRegistry
 from flext_core.runtime import FlextRuntime
 
 
@@ -55,6 +50,8 @@ class FlextSettings(
     variable support, per-class singleton lifecycle (via ``FlextSettingsBase``),
     and namespace registry (via ``FlextSettingsRegistry``).
     """
+
+    Base: ClassVar[type[FlextSettingsBase]] = FlextSettingsBase
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_prefix=c.ENV_PREFIX,
