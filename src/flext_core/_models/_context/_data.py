@@ -61,7 +61,7 @@ class FlextModelsContextData:
                 return m.Metadata.model_validate({
                     c.FIELD_ATTRIBUTES: v,
                 })
-            except Exception:
+            except mp.ValidationError:
                 return v
         return v
 
