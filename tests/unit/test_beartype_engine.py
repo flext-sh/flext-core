@@ -568,7 +568,7 @@ class TestsFlextBeartypeEngine:
                     warnings.simplefilter("always")
                     try:
                         flext_core.FlextUtilitiesProjectMetadata.derive_class_stem(1)
-                    except Exception as exc:
+                    except AttributeError as exc:
                         print("runtime_exc", type(exc).__name__)
                     print("warning_count", len(caught))
                 """
@@ -608,7 +608,7 @@ class TestsFlextBeartypeEngine:
                     warnings.simplefilter("always")
                     try:
                         flext_core.FlextUtilitiesProjectMetadata.derive_class_stem(1)
-                    except Exception as exc:
+                    except AttributeError as exc:
                         print("runtime_exc", type(exc).__name__)
                         print("runtime_msg", str(exc))
                     print("warning_count", len(caught))
