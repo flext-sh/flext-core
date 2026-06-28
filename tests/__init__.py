@@ -20,6 +20,7 @@ if _t.TYPE_CHECKING:
         td as td,
         tf as tf,
         tk as tk,
+        tm as tm,
         tv as tv,
         x as x,
     )
@@ -429,6 +430,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "td",
                 "tf",
                 "tk",
+                "tm",
                 "tv",
                 "x",
             ),
@@ -555,6 +557,7 @@ __all__: list[str] = [
     "td",
     "tf",
     "tk",
+    "tm",
     "tv",
     "u",
     "x",

@@ -583,14 +583,16 @@ test: ## Run pytest only
 	skips_file="$$report_dir/skipped-tests.txt"; \
 	command_file="$$report_dir/command.txt"; \
 	interrupted=0; \
-	echo "$(VENV_PYTHON) -m pytest $$_pytest_run $(PYTEST_REPORT_ARGS) $(if $(filter 1,$(DIAG)),$(PYTEST_DIAG_ARGS),) -p no:metadata --junitxml=$$junit_file --cov --cov-report=xml:$$coverage_file $(if $(filter 1,$(DIAG)),-vv,-q) $$_all_pytest_args" > "$$command_file"; \
+	_coverage_args="--cov --cov-report=xml:$$coverage_file"; \
+	if [ -n "$$_files" ] || [ -n "$(MATCH)" ]; then _coverage_args=""; fi; \
+	echo "$(VENV_PYTHON) -m pytest $$_pytest_run $(PYTEST_REPORT_ARGS) $(if $(filter 1,$(DIAG)),$(PYTEST_DIAG_ARGS),) -p no:metadata --junitxml=$$junit_file $$_coverage_args $(if $(filter 1,$(DIAG)),-vv,-q) $$_all_pytest_args" > "$$command_file"; \
 	trap 'interrupted=1; trap "" INT TERM' INT TERM; \
 	$(VENV_PYTHON) -m pytest $$_pytest_run \
 		$(PYTEST_REPORT_ARGS) \
 		$(if $(filter 1,$(DIAG)),$(PYTEST_DIAG_ARGS),) \
 		-p no:metadata \
 		--junitxml="$$junit_file" \
-		--cov --cov-report=xml:$$coverage_file \
+		$$_coverage_args \
 		$(if $(filter 1,$(DIAG)),-vv,-q) $$_all_pytest_args 2>&1 | tee "$$log_file"; \
 	rc=$${PIPESTATUS[0]}; \
 	if [ "$$interrupted" = "1" ]; then rc=130; fi; \
@@ -632,7 +634,8 @@ test: ## Run pytest only
 	echo "Error trace excerpt (from $$errors_file):" >&2; \
 	if [ -s "$$errors_file" ]; then awk 'NR<=40 {print}' "$$errors_file" >&2; \
 	else echo "(none)" >&2; fi; \
-	ln -sfn "$$run_id" "$(PYTEST_REPORTS_DIR)/latest"; \
+	rm -f "$(PYTEST_REPORTS_DIR)/latest"; \
+	ln -s "$$run_id" "$(PYTEST_REPORTS_DIR)/latest"; \
 	echo "Reports: $$report_dir (latest: $(PYTEST_REPORTS_DIR)/latest)" >&2; \
 	echo "Details: $$summary_file | $$failed_file | $$errors_file | $$warnings_file | $$slowest_file | $$skips_file | $$log_file" >&2; \
 	exit $$rc; \

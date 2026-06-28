@@ -16,7 +16,7 @@ class TestsFlextModelsProjectMetadata:
         [
             (c.Tests.SAMPLE_PROJECT_NAME, c.Tests.SAMPLE_PROJECT_CLASS_STEM),
             ("flext_core", "FlextCore"),
-            (c.Tests.SAMPLE_PROJECT_NAME_MIGRATION, "OudMigrationTool"),
+            (c.Tests.SAMPLE_PROJECT_NAME_MIGRATION, "DemoMigrationTool"),
             ("data-pipeline-native", "DataPipelineNative"),
         ],
     )

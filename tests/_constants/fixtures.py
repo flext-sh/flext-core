@@ -28,4 +28,4 @@ class TestsFlextConstantsFixtures:
     SAMPLE_PROJECT_CLASS_PLATFORM: ClassVar[str] = "platform"
     SAMPLE_AUTHOR_ALICE: ClassVar[str] = "Alice Example"
     SAMPLE_AUTHOR_BOB: ClassVar[str] = "Bob Example"
-    SAMPLE_PROJECT_NAME_MIGRATION: ClassVar[str] = "oud-migration-tool"
+    SAMPLE_PROJECT_NAME_MIGRATION: ClassVar[str] = "demo-migration-tool"

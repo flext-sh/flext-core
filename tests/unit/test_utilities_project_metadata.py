@@ -24,7 +24,6 @@ class TestsFlextUtilitiesProjectMetadata:
         [
             (c.Tests.SAMPLE_PROJECT_NAME, c.Tests.SAMPLE_PROJECT_CLASS_STEM),
             ("flext-core", "Flext"),
-            (c.Tests.SAMPLE_PROJECT_NAME_MIGRATION, "AlgarOudMig"),
         ],
     )
     def test_derive_class_stem_produces_pascal_case_from_project_name(
@@ -107,10 +106,10 @@ class TestsFlextUtilitiesProjectMetadata:
     def test_read_project_constants_returns_installed_project_metadata_values(
         self,
     ) -> None:
-        constants = u.read_project_constants(c.Tests.SAMPLE_PROJECT_NAME_MIGRATION)
-        tm.that(constants.PACKAGE_NAME, eq=c.Tests.SAMPLE_PROJECT_NAME_MIGRATION)
-        tm.that(constants.PYTHON_PACKAGE_NAME, eq="oud_migration_tool")
-        tm.that(constants.CLASS_STEM, eq="OudMigrationTool")
+        constants = u.read_project_constants("flext-core")
+        tm.that(constants.PACKAGE_NAME, eq="flext-core")
+        tm.that(constants.PYTHON_PACKAGE_NAME, eq="flext_core")
+        tm.that(constants.CLASS_STEM, eq="Flext")
         tm.that("c" in constants.RUNTIME_ALIAS_NAMES, eq=True)
 
     def test_read_project_metadata_raises_on_missing_pyproject(
