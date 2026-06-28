@@ -109,8 +109,8 @@ class TestsFlextUtilitiesProjectMetadata:
     ) -> None:
         constants = u.read_project_constants(c.Tests.SAMPLE_PROJECT_NAME_MIGRATION)
         tm.that(constants.PACKAGE_NAME, eq=c.Tests.SAMPLE_PROJECT_NAME_MIGRATION)
-        tm.that(constants.PYTHON_PACKAGE_NAME, eq="algar_oud_mig")
-        tm.that(constants.CLASS_STEM, eq="AlgarOudMig")
+        tm.that(constants.PYTHON_PACKAGE_NAME, eq="oud_migration_tool")
+        tm.that(constants.CLASS_STEM, eq="OudMigrationTool")
         tm.that("c" in constants.RUNTIME_ALIAS_NAMES, eq=True)
 
     def test_read_project_metadata_raises_on_missing_pyproject(

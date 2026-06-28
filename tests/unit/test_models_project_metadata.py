@@ -16,8 +16,8 @@ class TestsFlextModelsProjectMetadata:
         [
             (c.Tests.SAMPLE_PROJECT_NAME, c.Tests.SAMPLE_PROJECT_CLASS_STEM),
             ("flext_core", "FlextCore"),
-            (c.Tests.SAMPLE_PROJECT_NAME_MIGRATION, "AlgarOudMig"),
-            ("gruponos-meltano-native", "GruponosMeltanoNative"),
+            (c.Tests.SAMPLE_PROJECT_NAME_MIGRATION, "OudMigrationTool"),
+            ("data-pipeline-native", "DataPipelineNative"),
         ],
     )
     def test_derive_class_stem_covers_overrides_and_pascalization(
