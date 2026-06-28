@@ -1,3 +1,7 @@
+<!-- TOC START -->
+- [Next Pages](#next-pages)
+<!-- TOC END -->
+
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 # flext-core API Overview
@@ -9,8 +13,8 @@
 - Keywords: `clean-architecture`, `ddd`, `enterprise`, `flext`, `modern`, `solid`
 - Main facades: _none_
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextConstantsMixins`, `FlextConstantsCqrs`, `FlextUtilitiesContext`, `FlextUtilitiesContextLifecycle`, `FlextModelsExceptionParams`, `FlextTypesAnnotateds`, `FlextUtilities`, `FlextUtilitiesBeartypeAttrVisitor`, `FlextUtilitiesCollectionMerge`, `FlextConstants` (+135 more)
-- Exported module shortcuts: `lazy`
+- Public symbol exports: `FlextService`, `FlextModels`, `FlextSettings`, `FlextProtocols`, `FlextLazy`, `FlextRegistry`, `FlextContainer`, `FlextResult`, `FlextDecorators`, `FlextConstants` (+9 more)
+- Exported module shortcuts: _none_
 - Generated module pages: `19`
 
 ## Next Pages
