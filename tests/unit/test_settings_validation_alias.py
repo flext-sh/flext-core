@@ -12,20 +12,15 @@ flext_core/_settings/_base_parts/flextsettingsbase_part_01.py
 from __future__ import annotations
 
 from pydantic import AliasChoices, Field
-from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextSettings
+from flext_core import FlextSettings, m
 from tests import t
 
 
 class _AliasFieldSettings(FlextSettings):
     """Minimal subclass: one field declared only via validation_alias (no populate_by_name)."""
 
-    _base_cfg: t.JsonMapping = dict(FlextSettings.model_config)
-    _base_cfg.pop("extra", None)
-
-    model_config = SettingsConfigDict(
-        **_base_cfg,
+    model_config = m.SettingsConfigDict(
         extra="forbid",
         populate_by_name=False,
     )
