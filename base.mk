@@ -584,7 +584,7 @@ test: ## Run pytest only
 	command_file="$$report_dir/command.txt"; \
 	interrupted=0; \
 	_coverage_args="--cov --cov-report=xml:$$coverage_file"; \
-	if [ -n "$$_files" ] || [ -n "$(MATCH)" ]; then _coverage_args=""; fi; \
+	if [ -n "$$_files" ] || [ -n "$(MATCH)" ]; then _coverage_args="--no-cov"; fi; \
 	echo "$(VENV_PYTHON) -m pytest $$_pytest_run $(PYTEST_REPORT_ARGS) $(if $(filter 1,$(DIAG)),$(PYTEST_DIAG_ARGS),) -p no:metadata --junitxml=$$junit_file $$_coverage_args $(if $(filter 1,$(DIAG)),-vv,-q) $$_all_pytest_args" > "$$command_file"; \
 	trap 'interrupted=1; trap "" INT TERM' INT TERM; \
 	$(VENV_PYTHON) -m pytest $$_pytest_run \
