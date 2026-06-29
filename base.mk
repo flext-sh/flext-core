@@ -341,7 +341,7 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 	exit $$?
 
 scan: ## Run all security checks
-	project_key="$(PROJECT_NAME)"; \
+	$(Q)project_key="$(PROJECT_NAME)"; \
 	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
 		project_key="."; \
 	fi; \
@@ -505,7 +505,7 @@ test: ## Run pytest only
 	ln -s "$$run_id" "$(PYTEST_REPORTS_DIR)/latest"; \
 	echo "Reports: $$report_dir (latest: $(PYTEST_REPORTS_DIR)/latest)" >&2; \
 	echo "Details: $$summary_file | $$failed_file | $$errors_file | $$warnings_file | $$slowest_file | $$skips_file | $$log_file" >&2; \
-	exit $$rc; \
+	exit $$rc
 
 val: ## Run validate gates (VALIDATE_GATES=complexity,docstring to select, FIX=1)
 	$(Q)if [ -n "$(FIX)" ] && [ "$(FIX)" != "1" ]; then \
