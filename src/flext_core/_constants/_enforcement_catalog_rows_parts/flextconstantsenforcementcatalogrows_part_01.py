@@ -1,0 +1,143 @@
+"""Infrastructure enforcement catalog rows."""
+
+from __future__ import annotations
+
+from typing import Final
+
+
+class FlextConstantsEnforcementCatalogInfraRows:
+    """Infra detector rows for the enforcement catalog."""
+
+    INFRA_DETECTOR_ROWS: Final[
+        tuple[tuple[str, str, str, str, tuple[str, ...], bool, str], ...]
+    ] = (
+        (
+            "ENFORCE-001",
+            "HIGH",
+            "loose_objects",
+            "2-architecture-law",
+            ("flext-mro-namespace-rules",),
+            False,
+            "Loose object detected at module level — every public symbol must be nested inside its facade family.",
+        ),
+        (
+            "ENFORCE-002",
+            "HIGH",
+            "import_violations",
+            "",
+            ("flext-import-rules",),
+            False,
+            "Import alias source is wrong — alias imported from a non-canonical module.",
+        ),
+        (
+            "ENFORCE-003",
+            "HIGH",
+            "namespace_source_violations",
+            "",
+            ("flext-import-rules", "flext-mro-namespace-rules"),
+            False,
+            "Namespace source violation — canonical alias imported from a project that does not own that slot.",
+        ),
+        (
+            "ENFORCE-004",
+            "MEDIUM",
+            "internal_import_violations",
+            "",
+            ("flext-import-rules",),
+            False,
+            "Internal (private) module import reaches outside its owning package boundary.",
+        ),
+        (
+            "ENFORCE-005",
+            "MEDIUM",
+            "manual_protocol_violations",
+            "",
+            ("flext-patterns",),
+            False,
+            "Manual Protocol class declared outside protocols.py / _protocols/ tree.",
+        ),
+        (
+            "ENFORCE-006",
+            "CRITICAL",
+            "cyclic_imports",
+            "",
+            ("flext-import-rules",),
+            False,
+            "Cyclic import detected between modules.",
+        ),
+        (
+            "ENFORCE-007",
+            "HIGH",
+            "runtime_alias_violations",
+            "",
+            ("flext-mro-namespace-rules",),
+            False,
+            "Runtime alias (c/p/t/m/u/r/s/x/d/e/h) rebound in a module that should not own it.",
+        ),
+        (
+            "ENFORCE-008",
+            "MEDIUM",
+            "future_violations",
+            "",
+            ("rules-examples",),
+            False,
+            "Python module missing `from __future__ import annotations`.",
+        ),
+        (
+            "ENFORCE-009",
+            "MEDIUM",
+            "manual_typing_violations",
+            "",
+            ("flext-type-system",),
+            False,
+            "Manual typing alias declared outside typings.py / _typings/ tree.",
+        ),
+        (
+            "ENFORCE-010",
+            "LOW",
+            "compatibility_alias_violations",
+            "",
+            ("flext-refactoring-workflow",),
+            False,
+            "Backwards-compatibility alias retained after refactor — should be removed.",
+        ),
+        (
+            "ENFORCE-011",
+            "HIGH",
+            "class_placement_violations",
+            "",
+            ("flext-mro-namespace-rules",),
+            False,
+            "Class placed in the wrong facade layer (e.g. Protocol in models.py).",
+        ),
+        (
+            "ENFORCE-012",
+            "CRITICAL",
+            "mro_completeness_violations",
+            "",
+            ("flext-mro-namespace-rules",),
+            False,
+            "MRO composition incomplete — facade does not compose all its domain mixin trees.",
+        ),
+        (
+            "ENFORCE-013",
+            "HIGH",
+            "parse_failures",
+            "",
+            (),
+            False,
+            "Source file failed to parse during enforcement.",
+        ),
+        (
+            "ENFORCE-014",
+            "CRITICAL",
+            "facade_statuses",
+            "",
+            ("flext-mro-namespace-rules",),
+            True,
+            "Canonical facade family is missing (no constants.py / models.py / typings.py / protocols.py / utilities.py).",
+        ),
+    )
+
+
+__all__ = ["FlextConstantsEnforcementCatalogInfraRows"]

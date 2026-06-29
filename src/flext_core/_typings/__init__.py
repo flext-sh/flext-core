@@ -11,6 +11,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".base": ("FlextTypingBase",),
         ".containers": ("FlextTypingContainers",),
         ".core": ("FlextTypesCore",),
+        ".lazy": ("FlextTypesLazy",),
         ".project_metadata": ("FlextTypingProjectMetadata",),
         ".pydantic": ("FlextTypesPydantic",),
         ".services": ("FlextTypesServices",),

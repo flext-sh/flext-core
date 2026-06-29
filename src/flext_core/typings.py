@@ -18,12 +18,14 @@ from flext_core import (
     FlextTypingContainers,
     FlextTypingProjectMetadata,
 )
+from flext_core._typings.lazy import FlextTypesLazy
 
 
 class FlextTypes(
     FlextTypingBase,
     FlextTypingContainers,
     FlextTypesCore,
+    FlextTypesLazy,
     FlextTypesServices,
     FlextTypesTypeAdapters,
     FlextTypingProjectMetadata,
