@@ -7,17 +7,15 @@ from collections.abc import Callable, Iterator
 from enum import EnumType
 from pathlib import Path
 
-from flext_core import (
-    FlextConstantsEnforcement as c,
-    FlextModelsProjectMetadata as mpm,
-    FlextModelsPydantic as mp,
-    FlextProtocolsBase as pb,
-    FlextTypesPydantic as tp,
-    FlextTypingBase as t,
-    FlextUtilitiesBeartypeEngine as ub,
-    FlextUtilitiesEnforcementEmit,
-    FlextUtilitiesProjectMetadata as upm,
-)
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as pb
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
+from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
 
 
 class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):

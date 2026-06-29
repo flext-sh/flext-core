@@ -21,12 +21,10 @@ from .beartype_typingext_patch import (
 )
 
 _: type[_FlextUtilitiesBeartypeTypingExtPatch]
-from flext_core import (
-    FlextConstantsEnforcement as c,
-    FlextModelsPydantic as mp,
-    FlextProtocolsBase as p,
-    FlextTypingBase as t,
-)
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._typings.base import FlextTypingBase as t
 
 from ._beartype._helpers_parts.helpers_part_03 import (
     FlextUtilitiesBeartypeHelpers,

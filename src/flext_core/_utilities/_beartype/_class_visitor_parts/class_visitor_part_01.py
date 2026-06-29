@@ -4,12 +4,10 @@ from __future__ import annotations
 
 from enum import EnumType
 
-from flext_core import (
-    FlextConstantsEnforcement as c,
-    FlextModelsEnforcement as me,
-    FlextTypingBase as t,
-    FlextUtilitiesBeartypeHelpers as ubh,
-)
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
 
 NO_VIOLATION: t.StrMapping | None = None
 BARE_VIOLATION: t.StrMapping = {}

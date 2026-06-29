@@ -111,23 +111,26 @@ class FlextLazy(FlextLazyPart01):
         all_exports: Sequence[str] | None = None,
         *,
         publish_all: bool = True,
+        public_exports: Sequence[str] | None = None,
     ) -> None:
         """Install __getattr__/__dir__/__all__."""
-        pre_signature: tuple[int, int, int, bool] = (
+        pre_signature: tuple[int, int, int, int, bool] = (
             id(module_globals),
             id(lazy_imports),
             0 if all_exports is None else id(all_exports),
+            0 if public_exports is None else id(public_exports),
             publish_all,
         )
         if self.install_cache.get(module_name) == pre_signature:
             return
 
         normalized = self._norm_map(module_name, lazy_imports)
-        names = (
-            tuple(normalized)
-            if all_exports is None
-            else tuple(dict.fromkeys((*normalized, *all_exports)))
-        )
+        if public_exports is not None:
+            names = tuple(dict.fromkeys(public_exports))
+        elif all_exports is None:
+            names = tuple(normalized)
+        else:
+            names = tuple(dict.fromkeys((*normalized, *all_exports)))
 
         module_globals["__getattr__"] = lambda name: self.get(
             name,

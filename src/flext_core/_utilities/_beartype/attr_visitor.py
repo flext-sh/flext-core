@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from flext_core import (
-    FlextModelsEnforcement as me,
-    FlextTypesPydantic as tp,
-    FlextTypingBase as t,
-)
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 from .helpers import (
     FlextUtilitiesBeartypeHelpers as _ubh,

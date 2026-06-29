@@ -16,7 +16,8 @@ from typing import (
     get_origin,
 )
 
-from flext_core import FlextConstantsEnforcement as c, FlextTypingBase as t
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._typings.base import FlextTypingBase as t
 
 from .helpers_part_01 import (
     FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpersPart01,

@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from flext_core import (
-    FlextModelsEnforcement as me,
-    FlextModelsProjectMetadata as mpm,
-    FlextTypingBase as t,
-    FlextUtilitiesBeartypeHelpers as ubh,
-)
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
 
 from .class_visitor_part_01 import (
     BINARY_ARITY,

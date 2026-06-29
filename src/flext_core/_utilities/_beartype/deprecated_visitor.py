@@ -6,12 +6,10 @@ import inspect
 from pathlib import Path
 from typing import TypeAlias
 
-from flext_core import (
-    FlextConstantsEnforcement as c,
-    FlextConstantsRegex as cre,
-    FlextModelsEnforcement as me,
-    FlextTypingBase as t,
-)
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._constants.regex import FlextConstantsRegex as cre
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
 
 from .helpers import (
     FlextUtilitiesBeartypeHelpers as _ubh,

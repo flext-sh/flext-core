@@ -12,7 +12,7 @@ from typing import (
     get_origin,
 )
 
-from flext_core import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeHelpers:

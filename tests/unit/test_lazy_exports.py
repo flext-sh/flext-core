@@ -81,6 +81,22 @@ class TestsFlextLazy:
         assert callable(dir_fn)
         assert dir_fn() == ["Alpha"]
 
+    def test_install_with_public_exports_keeps_contract_thin(self) -> None:
+        module_globals: t.ModuleGlobals = {}
+        install_lazy_exports(
+            "test_pkg",
+            module_globals,
+            {
+                "Alpha": ("test_pkg.alpha", "Alpha"),
+                "InternalAlpha": ("test_pkg._alpha", "InternalAlpha"),
+            },
+            public_exports=("Alpha",),
+        )
+        assert module_globals["__all__"] == ("Alpha",)
+        dir_fn = module_globals["__dir__"]
+        assert callable(dir_fn)
+        assert dir_fn() == ["Alpha"]
+
     def test_install_resolves_relative_lazy_targets_against_installing_module(
         self,
         monkeypatch: pytest.MonkeyPatch,

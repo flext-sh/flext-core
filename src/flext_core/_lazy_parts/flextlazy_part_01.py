@@ -50,7 +50,9 @@ class FlextLazy(BaseModel):
         default_factory=dict,
     )
 
-    install_cache: dict[str, tuple[int, int, int, bool]] = Field(default_factory=dict)
+    install_cache: dict[str, tuple[int, int, int, int, bool]] = Field(
+        default_factory=dict,
+    )
 
     _import_module: Callable[[str], ModuleType] = PrivateAttr(
         default_factory=lambda: importlib.import_module,
