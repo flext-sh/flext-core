@@ -1026,6 +1026,25 @@ class TestsFlextResultExceptionCarrying:
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=TypeError)
 
+    @pytest.mark.parametrize(
+        "exception_type",
+        [OSError, IndexError],
+        ids=("os-error", "lookup-index-error"),
+    )
+    def test_safe_captures_boundary_exceptions(
+        self,
+        exception_type: type[Exception],
+    ) -> None:
+        @r.safe
+        def raise_boundary_error() -> int:
+            msg = "boundary failure"
+            raise exception_type(msg)
+
+        result: p.Result[int] = raise_boundary_error()
+        tm.that(result.failure, eq=True)
+        tm.that(result.exception, none=False)
+        tm.that(result.exception, is_=exception_type)
+
     def test_create_from_callable_carries_exception(self) -> None:
         def risky_operation() -> int:
             msg = "operation failed"

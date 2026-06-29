@@ -396,16 +396,7 @@ class FlextResult[T](BaseModel, p.Result[T]):
             try:
                 result = func(*args, **kwargs)
                 return FlextResult[U].ok(result)
-            except (
-                TypeError,
-                ValueError,
-                RuntimeError,
-                KeyError,
-                AttributeError,
-                OSError,
-                LookupError,
-                ArithmeticError,
-            ) as exc:
+            except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
                 return FlextResult[U].fail(str(exc), exception=exc)
 
         return wrapper
