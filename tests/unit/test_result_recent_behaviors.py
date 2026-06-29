@@ -81,7 +81,7 @@ class TestsFlextResultRecentBehaviors:
         tm.that(result.success, eq=True)
 
     def test_map_returning_none_returns_success(self) -> None:
-        """map returning None produces a success result with None payload.
+        """Map returning None produces a success result with None payload.
 
         map uses ok(func(self.value)) directly — no from_result involved.
         Checks .success only — .value raises by design for r[None] success payloads.
