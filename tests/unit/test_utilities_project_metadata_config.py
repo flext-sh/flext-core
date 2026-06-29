@@ -76,8 +76,8 @@ class TestsFlextUtilitiesProjectMetadataConfig:
         tm.that(ns.project_name, eq=c.Tests.SAMPLE_PROJECT_NAME)
         tm.that(ns.alias_parent_sources["c"], eq=c.Tests.SAMPLE_ALIAS_PARENT_SOURCE)
         tm.that(
-            ns.alias_parent_sources["r"],
-            eq=dynamic_constants.UNIVERSAL_ALIAS_PARENT_SOURCES["r"],
+            ns.alias_parent_sources["d"],
+            eq=dynamic_constants.UNIVERSAL_ALIAS_PARENT_SOURCES["d"],
         )
 
     def test_compose_namespace_config_rejects_unknown_alias(
@@ -112,7 +112,7 @@ class TestsFlextUtilitiesProjectMetadataConfig:
             license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
 
             [tool.flext.namespace]
-            alias_parent_sources = {{r = "custom_runtime"}}
+            alias_parent_sources = {{d = "custom_driver"}}
             """,
         )
         with pytest.raises(ValueError, match="cannot override universal alias"):
