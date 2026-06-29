@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
-import typing as _t
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-if _t.TYPE_CHECKING:
+if TYPE_CHECKING:
     from flext_core._root_typing_parts.contracts import (
         FlextProtocolsBase as FlextProtocolsBase,
         FlextProtocolsContainer as FlextProtocolsContainer,

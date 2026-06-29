@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
-import typing as _t
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-if _t.TYPE_CHECKING:
+if TYPE_CHECKING:
     from flext_core._utilities._logging_config_parts.logging_config_part_03 import (
         FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfig,
     )

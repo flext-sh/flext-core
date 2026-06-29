@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-import typing as _t
+from typing import TYPE_CHECKING
 
 from flext_core.__version__ import (
     __author__,
@@ -22,7 +22,7 @@ from flext_core._root_exports import (
 )
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-if _t.TYPE_CHECKING:
+if TYPE_CHECKING:
     from flext_core.constants import FlextConstants, c
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
