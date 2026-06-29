@@ -182,4 +182,4 @@ class FlextSettings(
         return self
 
 
-__all__: list[str] = ["FlextSettings"]
+__all__: list[str] = ["FlextSettings", "FlextSettingsBase"]
