@@ -3,14 +3,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-if TYPE_CHECKING:
-    from flext_core._settings._base_parts.flextsettingsbase_part_02 import (
-        FlextSettingsBase as FlextSettingsBase,
-    )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".flextsettingsbase_part_02": ("FlextSettingsBase",),
