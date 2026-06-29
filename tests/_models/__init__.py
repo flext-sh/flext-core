@@ -79,4 +79,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
 )
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)
