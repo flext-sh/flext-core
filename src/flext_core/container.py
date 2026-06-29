@@ -211,7 +211,7 @@ class FlextContainer(p.ContainerLifecycle):
         callable_obj: t.FactoryCallable,
         kind: str,
         type_cls: type[T] | None,
-    ) -> p.Result[T] | r[t.RegisterableService]:
+    ) -> p.Result[T] | p.Result[t.RegisterableService]:
         """Invoke a factory/resource callable and narrow to ``type_cls`` if given."""
         try:
             resolved = callable_obj()
@@ -240,7 +240,7 @@ class FlextContainer(p.ContainerLifecycle):
     @override
     def resolve[T: t.RegisterableService](
         self, name: str, *, type_cls: type[T] | None = None
-    ) -> p.Result[T] | r[t.RegisterableService]:
+    ) -> p.Result[T] | p.Result[t.RegisterableService]:
         """Resolve a registered service or factory by name."""
         service_registration = self._services.get(name)
         callable_registration = next(
@@ -257,7 +257,7 @@ class FlextContainer(p.ContainerLifecycle):
         if service_registration is not None:
             service = service_registration.service
             if type_cls is None:
-                result: p.Result[T] | r[t.RegisterableService] = r[
+                result: p.Result[T] | p.Result[t.RegisterableService] = r[
                     t.RegisterableService
                 ].ok(service)
             elif isinstance(service, type_cls):

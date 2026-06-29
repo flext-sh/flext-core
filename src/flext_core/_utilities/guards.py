@@ -15,6 +15,7 @@ from collections.abc import Callable, Mapping, Sized
 from typing import ClassVar
 
 from flext_core import (
+    FlextProtocolsResult as p,
     r,
     t,
 )
@@ -217,7 +218,7 @@ class FlextUtilitiesGuards(
         *,
         default: t.Scalar | t.JsonList | t.JsonMapping | None = None,
         return_value: bool = False,
-    ) -> t.JsonValue | bool | r[t.JsonValue]:
+    ) -> t.JsonValue | bool | p.Result[t.JsonValue]:
         fail_msg = "Guard validation failed"
         try:
             validation_passed = FlextUtilitiesGuards._check_validator(value, validator)
