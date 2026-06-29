@@ -206,6 +206,7 @@ class FlextConstantsErrors:
     """HTTP-shape boundary: connection + parsing + typing for request handlers."""
 
     EXC_BROAD_RUNTIME: Final[tuple[type[Exception], ...]] = (
+        ArithmeticError,
         AttributeError,
         KeyError,
         RuntimeError,
