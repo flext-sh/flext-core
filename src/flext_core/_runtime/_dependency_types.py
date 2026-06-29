@@ -1,0 +1,81 @@
+"""Dependency-injector runtime bridge types.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from types import ModuleType
+from typing import ClassVar
+
+from dependency_injector import containers, providers
+from pydantic import BaseModel, ConfigDict
+
+from flext_core._models.containers import FlextModelsContainers as mc
+from flext_core._protocols.container import FlextProtocolsContainer as pc
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.services import FlextTypesServices as ts
+
+
+class FlextRuntimeDependencyTypes:
+    """Type owners for dependency-injector runtime bridge."""
+
+    class DynamicContainerWithConfig(containers.DynamicContainer):
+        """Dynamic container with declared configuration provider."""
+
+        settings: providers.Configuration = providers.Configuration()
+
+    class BridgeContainer(containers.DeclarativeContainer):
+        """Declarative container grouping settings and resource modules."""
+
+        settings = providers.Configuration()
+        services = providers.Object(containers.DynamicContainer())
+        resources = providers.Object(containers.DynamicContainer())
+
+    class ContainerCreationOptions(BaseModel):
+        """Validated options for dependency container creation."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            arbitrary_types_allowed=True,
+        )
+
+        settings: mc.ConfigMap | None = None
+        services: tb.MappingKV[str, ts.RegisterableService] | None = None
+        factories: tb.MappingKV[str, ts.FactoryCallable] | None = None
+        resources: tb.MappingKV[str, ts.ResourceCallable] | None = None
+        wire_modules: tb.SequenceOf[ModuleType] | None = None
+        wire_packages: tb.StrSequence | None = None
+        wire_classes: tb.SequenceOf[type] | None = None
+        factory_cache: bool = True
+
+    ContainerCreationOptionsModel: ClassVar[pc.ContainerCreationOptionsType | None] = (
+        ContainerCreationOptions
+    )
+
+    _OPTION_FIELDS: ClassVar[tb.StrSequence] = (
+        "settings",
+        "services",
+        "factories",
+        "resources",
+        "wire_modules",
+        "wire_packages",
+        "wire_classes",
+    )
+
+    @classmethod
+    def _require_container_creation_options_model(
+        cls,
+    ) -> pc.ContainerCreationOptionsType:
+        """Return the bound container options model or raise a contract error."""
+        options_model = cls.ContainerCreationOptionsModel
+        if options_model is None:
+            msg = (
+                "FlextRuntime.DependencyIntegration.ContainerCreationOptionsModel "
+                "is not bound to a concrete implementation"
+            )
+            raise RuntimeError(msg)
+        return options_model
+
+
+__all__: list[str] = ["FlextRuntimeDependencyTypes"]
