@@ -41,7 +41,9 @@ class FlextContainer(FlextContainerPart01, ABC):
     ) -> p.Logger:
         """Create a module logger for the specified runtime scope."""
         _ = service_name, service_version, correlation_id
-        logger: p.Logger = FlextLogger.fetch_logger(module_name or c.DEFAULT_LOGGER_MODULE)
+        logger: p.Logger = FlextLogger.fetch_logger(
+            module_name or c.DEFAULT_LOGGER_MODULE
+        )
         return logger
 
     def _resolve_callable[T: t.RegisterableService](

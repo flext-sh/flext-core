@@ -12,7 +12,6 @@ SRC_DIR ?= src
 TESTS_DIR ?= tests
 DOCSTRING_MIN ?= 80
 COMPLEXITY_MAX ?= 10
-CORE_STACK ?= python
 PYTEST_ARGS ?= 
 DIAG ?= 0
 CHECK_GATES ?= 
@@ -94,20 +93,7 @@ VENV_PYTHON := $(ACTIVE_VENV)/bin/python
 VENV_ACTIVATE := source $(ACTIVE_VENV)/bin/activate
 export VIRTUAL_ENV := $(ACTIVE_VENV)
 
-# Go tooling/caches (zero-settings defaults for make targets).
-GO_TOOLS_BIN ?= $(WORKSPACE_ROOT)/.tools/bin
-GO_CACHE_ROOT ?= $(if $(XDG_CACHE_HOME),$(XDG_CACHE_HOME)/flext/go,$(WORKSPACE_ROOT)/.cache/go)
-GO_BUILD_CACHE ?= $(GO_CACHE_ROOT)/build
-GO_MOD_CACHE ?= $(GO_CACHE_ROOT)/mod
-GO_LINT_CACHE ?= $(GO_CACHE_ROOT)/golangci-lint
-GOLANGCI_LINT_CMD ?= golangci-lint
-GOLANGCI_LINT_INSTALL ?= go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
-
-export GOBIN ?= $(GO_TOOLS_BIN)
-export GOCACHE ?= $(GO_BUILD_CACHE)
-export GOMODCACHE ?= $(GO_MOD_CACHE)
-export GOLANGCI_LINT_CACHE ?= $(GO_LINT_CACHE)
-export PATH := $(GO_TOOLS_BIN):$(ACTIVE_VENV)/bin:$(PATH)
+export PATH := $(ACTIVE_VENV)/bin:$(PATH)
 
 # Poetry command (uses workspace venv automatically)
 POETRY := poetry
@@ -237,7 +223,7 @@ help: ## Show commands
 	$(Q)echo ""
 	$(Q)echo "Selectors and options:"
 
-	$(Q)echo "  CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,markdown,go,type"
+	$(Q)echo "  CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,markdown,type"
 
 	$(Q)echo "  VALIDATE_GATES=complexity,docstring"
 
@@ -284,11 +270,6 @@ help: ## Show commands
 
 
 boot: ## Complete setup
-	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
-		go mod download; \
-		go mod tidy; \
-		exit 0; \
-	fi
 	$(Q)$(PROJECT_INFRA_DEPS) path-sync --mode auto --apply --workspace "$(CURDIR)"
 	$(Q)$(PROJECT_INFRA_DEPS) internal-sync --workspace "$(CURDIR)"
 	$(Q)$(POETRY) lock
@@ -300,111 +281,21 @@ boot: ## Complete setup
 	fi
 
 build: ## Build distributable artifacts
-	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
-		mkdir -p .reports/build; \
-		build_start=$$(date +%s); \
-		go build -o .reports/build/$(PROJECT_NAME) ./...; \
-		echo "Build complete: $(PROJECT_NAME) ($$(($$(date +%s) - $$build_start))s)"; \
-		exit 0; \
-	fi
 	$(Q)build_start=$$(date +%s); \
 	$(POETRY) build; \
 	echo "Build complete: $(PROJECT_NAME) ($$(($$(date +%s) - $$build_start))s)"
 
-check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,markdown,go,type to select)
-	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
-		gates="$(CHECK_GATES)"; \
-		if [ -n "$$gates" ]; then \
-			for g in $$(echo "$$gates" | tr ',' ' '); do \
-				case "$$g" in \
-					lint|format|pyrefly|mypy|pyright|security|markdown|go|type) ;; \
-					*) echo "ERROR: unknown CHECK_GATES value '$$g' (allowed: lint,format,pyrefly,mypy,pyright,security,markdown,go,type)"; exit 2;; \
-				esac; \
-			done; \
-		else \
-			gates="lint,format,security,markdown,go"; \
-		fi; \
-		gates=$$(echo "$$gates" | tr ',' ' ' | sed 's/\btype\b/go/g' | tr ' ' ','); \
-		if echo "$$gates" | grep -qw lint; then \
-			mkdir -p "$(GO_TOOLS_BIN)" "$(GO_BUILD_CACHE)" "$(GO_MOD_CACHE)" "$(GO_LINT_CACHE)"; \
-			if ! command -v $(GOLANGCI_LINT_CMD) >/dev/null 2>&1; then \
-				echo "INFO: installing golangci-lint into $(GO_TOOLS_BIN)"; \
-				$(GOLANGCI_LINT_INSTALL) || { echo "FAIL: lint (golangci-lint install)"; exit 1; }; \
-			fi; \
-			lint_log=$$(mktemp); \
-			if ! $(GOLANGCI_LINT_CMD) run >"$$lint_log" 2>&1; then \
-				if grep -q "used to build golangci-lint is lower than the targeted Go version" "$$lint_log"; then \
-					echo "INFO: refreshing golangci-lint for current Go toolchain"; \
-					$(GOLANGCI_LINT_INSTALL) || { cat "$$lint_log"; rm -f "$$lint_log"; echo "FAIL: lint"; exit 1; }; \
-					if ! $(GOLANGCI_LINT_CMD) run; then rm -f "$$lint_log"; echo "FAIL: lint"; exit 1; fi; \
-				else \
-					cat "$$lint_log"; rm -f "$$lint_log"; echo "FAIL: lint"; exit 1; \
-				fi; \
-			fi; \
-			rm -f "$$lint_log"; \
-		fi; \
-		if echo "$$gates" | grep -qw format; then \
-			if [ -n "$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*' ! -path './.cache/*')" ]; then \
-				gofmt_diff=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*' ! -path './.cache/*' -print0 | xargs -0 gofmt -l); \
-				if [ -n "$$gofmt_diff" ]; then \
-					echo "FAIL: gofmt"; \
-					printf '%s\n' "$$gofmt_diff"; \
-					exit 1; \
-				fi; \
-			fi; \
-		fi; \
-		if echo "$$gates" | grep -qw security; then \
-			gosec ./... || { echo "FAIL: security"; exit 1; }; \
-		fi; \
-		if echo "$$gates" | grep -qw markdown; then \
-			if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ] && [ -n "$(ALL_PROJECTS)" ]; then \
-				md_roots=". $(ALL_PROJECTS)"; \
-			else \
-				md_roots="."; \
-			fi; \
-			md_files=$$(for md_root in $$md_roots; do \
-				[ -d "$$md_root" ] || continue; \
-				if git -C "$$md_root" rev-parse --git-dir >/dev/null 2>&1; then \
-					md_prefix=""; \
-					if [ "$$md_root" != "." ]; then md_prefix="$$md_root/"; fi; \
-					git -C "$$md_root" ls-files -- '*.md' ':!vendor/' | sed "s#^#$$md_prefix#"; \
-					git -C "$$md_root" ls-files --others --exclude-standard -- '*.md' ':!vendor/' | sed "s#^#$$md_prefix#"; \
-				else \
-					find "$$md_root" -type f -name '*.md' ! -path '*/.git/*' ! -path '*/.reports/*' ! -path '*/reports/*' ! -path '*/.venv/*' ! -path '*/vendor/*' ! -path '*/node_modules/*' ! -path '*/dist/*' ! -path '*/build/*'; \
-				fi; \
-			done); \
-			md_files=$$(printf '%s\n' "$$md_files" | awk 'NF' | while IFS= read -r f; do [ -f "$$f" ] && printf '%s\n' "$$f"; done | sort -u); \
-			md_config=""; \
-			if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
-				md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
-			elif [ -f ".markdownlint.json" ]; then \
-				md_config="--config .markdownlint.json"; \
-			fi; \
-			if [ -n "$$md_files" ]; then echo "$$md_files" | xargs -r markdownlint $$md_config || { echo "FAIL: markdown"; exit 1; }; fi; \
-		fi; \
-		if echo "$$gates" | grep -qw go; then \
-			go vet ./... || { echo "FAIL: go"; exit 1; }; \
-		fi; \
-		python_gates=$$(printf '%s\n' "$$gates" | tr ',' '\n' | grep -E '^(pyrefly|mypy|pyright)$$' | tr '\n' ',' | sed 's/,$$//'); \
-		if [ -n "$$python_gates" ]; then \
-			project_key="$(PROJECT_NAME)"; \
-			if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
-				project_key="."; \
-			fi; \
-			$(PROJECT_INFRA_CHECK) run --workspace "$(WORKSPACE_ROOT)" --gates "$$python_gates" --reports-dir "$(CURDIR)/.reports/check" --projects "$$project_key" $(if $(filter 1,$(FIX)),$(if $(filter 1,$(CHECK_ONLY)),,--fix),) $(if $(filter 1,$(CHECK_ONLY)),--check-only,) $(if $(RUFF_ARGS),--ruff-args "$(RUFF_ARGS)",) $(if $(PYRIGHT_ARGS),--pyright-args "$(PYRIGHT_ARGS)",) || exit $$?; \
-		fi; \
-		exit 0; \
-	fi
+check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,markdown,type to select)
 	$(Q)gates="$(CHECK_GATES)"; \
 	if [ -n "$$gates" ]; then \
 		for g in $$(echo "$$gates" | tr ',' ' '); do \
 			case "$$g" in \
-				lint|format|pyrefly|mypy|pyright|security|markdown|go|type) ;; \
-				*) echo "ERROR: unknown CHECK_GATES value '$$g' (allowed: lint,format,pyrefly,mypy,pyright,security,markdown,go,type)"; exit 2;; \
+				lint|format|pyrefly|mypy|pyright|security|markdown|type) ;; \
+				*) echo "ERROR: unknown CHECK_GATES value '$$g' (allowed: lint,format,pyrefly,mypy,pyright,security,markdown,type)"; exit 2;; \
 			esac; \
 		done; \
 	else \
-		gates="lint,format,pyrefly,mypy,pyright,security,markdown,go"; \
+		gates="lint,format,pyrefly,mypy,pyright,security,markdown"; \
 	fi; \
 	gates=$$(echo "$$gates" | tr ',' ' ' | sed 's/\btype\b/pyrefly/g' | tr ' ' ','); \
 	_files=""; \
@@ -418,7 +309,7 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 	fi; \
 	if [ -n "$$_files" ]; then \
 		if [ -z "$(CHECK_GATES)" ]; then gates="lint,format,pyrefly,mypy,pyright"; fi; \
-		unsupported_gates=$$(printf '%s\n' "$$gates" | tr ',' '\n' | grep -E '^(security|markdown|go)$$' || true); \
+		unsupported_gates=$$(printf '%s\n' "$$gates" | tr ',' '\n' | grep -E '^(security|markdown)$$' || true); \
 		if [ -n "$$unsupported_gates" ]; then \
 			echo "ERROR: FILE/FILES/CHANGED_ONLY fast-path only supports lint,format,pyrefly,mypy,pyright"; \
 			exit 2; \
@@ -450,10 +341,6 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 	exit $$?
 
 scan: ## Run all security checks
-	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
-		gosec ./...; \
-		exit 0; \
-	fi; \
 	project_key="$(PROJECT_NAME)"; \
 	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
 		project_key="."; \
@@ -465,35 +352,19 @@ scan: ## Run all security checks
 		--projects "$$project_key"; \
 	exit $$?
 
-fmt: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
-	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
-		go_files=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*' ! -path './.cache/*'); \
-		if [ -n "$$go_files" ]; then \
-			printf '%s\n' "$$go_files" | xargs gofmt -w; \
-			if command -v goimports >/dev/null 2>&1; then \
-				printf '%s\n' "$$go_files" | xargs goimports -w; \
-			fi; \
-		fi; \
+fmt: ## Run code formatting (ruff + markdownlint on tracked files)
+	$(Q)_fmt_target="."; \
+	_fmt_files=""; \
+	if [ -n "$(FILES)" ]; then _fmt_files="$(FILES)"; fi; \
+	if [ -n "$(FILE)" ]; then \
+		if [ -n "$$_fmt_files" ]; then _fmt_files="$$_fmt_files $(FILE)"; \
+		else _fmt_files="$(FILE)"; fi; \
+	fi; \
+	if [ -n "$$_fmt_files" ]; then _fmt_target="$$_fmt_files"; fi; \
+	if [ "$(CHECK_ONLY)" = "1" ]; then \
+		$(POETRY) run ruff format $$_fmt_target --check; \
 	else \
-		_fmt_target="."; \
-		_fmt_files=""; \
-		if [ -n "$(FILES)" ]; then _fmt_files="$(FILES)"; fi; \
-		if [ -n "$(FILE)" ]; then \
-			if [ -n "$$_fmt_files" ]; then _fmt_files="$$_fmt_files $(FILE)"; \
-			else _fmt_files="$(FILE)"; fi; \
-		fi; \
-		if [ -n "$$_fmt_files" ]; then _fmt_target="$$_fmt_files"; fi; \
-		if [ "$(CHECK_ONLY)" = "1" ]; then \
-			$(POETRY) run ruff format $$_fmt_target --check; \
-		else \
-			$(POETRY) run ruff format $$_fmt_target --quiet; \
-		fi; \
-		if [ -f go.mod ]; then \
-			go_files=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*' ! -path './.cache/*'); \
-			if [ -n "$$go_files" ]; then \
-				printf '%s\n' "$$go_files" | xargs gofmt -w; \
-			fi; \
-		fi; \
+		$(POETRY) run ruff format $$_fmt_target --quiet; \
 	fi
 	$(Q)if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ] && [ -n "$(ALL_PROJECTS)" ]; then \
 		md_roots=". $(ALL_PROJECTS)"; \
@@ -553,23 +424,19 @@ docs: ## Build docs
 	done
 
 test: ## Run pytest only
-	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
-		go test -v -race -coverprofile=coverage.out -covermode=atomic ./...; \
-		go tool cover -func=coverage.out; \
-	else \
-		_files=""; \
-		if [ -n "$(FILES)" ]; then _files="$(FILES)"; fi; \
-		if [ -n "$(FILE)" ]; then \
-			if [ -n "$$_files" ]; then _files="$$_files $(FILE)"; \
-			else _files="$(FILE)"; fi; \
-		fi; \
-		_pytest_run="$(TESTS_DIR)"; \
-		if [ -n "$$_files" ]; then _pytest_run="$$_files"; fi; \
-		_all_pytest_args="$(PYTEST_ARGS)"; \
-		if [ -n "$(MATCH)" ]; then _all_pytest_args="$$_all_pytest_args -k $(MATCH)"; fi; \
-		if [ "$(FAIL_FAST)" = "1" ]; then _all_pytest_args="$$_all_pytest_args -x"; fi; \
-		if [ "$(VERBOSE)" = "1" ]; then _all_pytest_args="$$_all_pytest_args -vv -s"; fi; \
-		run_id=$$(date -u +%Y%m%dT%H%M%SZ)-$$$$; \
+	$(Q)_files=""; \
+	if [ -n "$(FILES)" ]; then _files="$(FILES)"; fi; \
+	if [ -n "$(FILE)" ]; then \
+		if [ -n "$$_files" ]; then _files="$$_files $(FILE)"; \
+		else _files="$(FILE)"; fi; \
+	fi; \
+	_pytest_run="$(TESTS_DIR)"; \
+	if [ -n "$$_files" ]; then _pytest_run="$$_files"; fi; \
+	_all_pytest_args="$(PYTEST_ARGS)"; \
+	if [ -n "$(MATCH)" ]; then _all_pytest_args="$$_all_pytest_args -k $(MATCH)"; fi; \
+	if [ "$(FAIL_FAST)" = "1" ]; then _all_pytest_args="$$_all_pytest_args -x"; fi; \
+	if [ "$(VERBOSE)" = "1" ]; then _all_pytest_args="$$_all_pytest_args -vv -s"; fi; \
+	run_id=$$(date -u +%Y%m%dT%H%M%SZ)-$$$$; \
 	report_dir="$(PYTEST_REPORTS_DIR)/$$run_id"; \
 	mkdir -p "$$report_dir"; \
 	log_file="$$report_dir/pytest.log"; \
@@ -639,16 +506,8 @@ test: ## Run pytest only
 	echo "Reports: $$report_dir (latest: $(PYTEST_REPORTS_DIR)/latest)" >&2; \
 	echo "Details: $$summary_file | $$failed_file | $$errors_file | $$warnings_file | $$slowest_file | $$skips_file | $$log_file" >&2; \
 	exit $$rc; \
-	fi
 
 val: ## Run validate gates (VALIDATE_GATES=complexity,docstring to select, FIX=1)
-	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
-		if [ "$(FIX)" = "1" ]; then \
-			$(MAKE) fmt; \
-		fi; \
-		go mod verify; \
-		exit 0; \
-	fi
 	$(Q)if [ -n "$(FIX)" ] && [ "$(FIX)" != "1" ]; then \
 		echo "ERROR: FIX must be empty or 1, got '$(FIX)'"; \
 		exit 1; \
@@ -763,10 +622,6 @@ pr: ## Manage pull requests for this repository
 		--release-on-merge "$(PR_RELEASE_ON_MERGE)"
 
 clean: ## Clean artifacts
-	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
-		rm -f coverage.out coverage.html; \
-		go clean; \
-	fi
 	$(Q)rm -rf build/ dist/ *.egg-info/ .pytest_cache/ htmlcov/ .coverage* \
 		.mypy_cache/ .pyrefly_cache/ .ruff_cache/ $(LINT_CACHE_DIR)/ \
 		.pyright/ .pytype/ .pyrefly-report.json .pyrefly-output.txt

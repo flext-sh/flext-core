@@ -142,7 +142,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         if not FlextUtilitiesGuardsTypeModel.model_type(target):
             raise TypeError(
                 c.ERR_PARSER_TARGET_NOT_BASEMODEL.format(field_prefix=fp),
-        )
+            )
         if value is None:
             parsed_default: T = FlextUtilitiesParserTargets._parse_with_default(
                 opts.default,
