@@ -76,12 +76,22 @@ class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):
         cleanup: Callable[[R], None] | None = None,
     ) -> p.Result[U]:
         """Manage resource lifecycle with automatic cleanup."""
-        resource = factory()
+        result_class = cast("type[FlextResultConstructionMixin[U]]", cls)
         try:
-            return cls.from_result(op(resource))
-        finally:
-            if cleanup:
+            resource = factory()
+        except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+            return result_class.fail(str(exc), exception=exc)
+        result: p.Result[U]
+        try:
+            result = cls.from_result(op(resource))
+        except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+            result = result_class.fail(str(exc), exception=exc)
+        if cleanup:
+            try:
                 cleanup(resource)
+            except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+                return result_class.fail(str(exc), exception=exc)
+        return result
 
     @staticmethod
     def _model_error_message(error: BaseException) -> str:

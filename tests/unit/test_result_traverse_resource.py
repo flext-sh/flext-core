@@ -82,6 +82,66 @@ class TestsFlextResultTraverseResource:
         tm.that(len(resource_created), eq=1)
         tm.that(len(resource_cleaned), eq=1)
 
+    def test_with_resource_factory_exception_returns_failure(self) -> None:
+        """Test with_resource converts factory exceptions into failed results."""
+        cleanup_calls: MutableSequence[str] = []
+
+        def factory() -> MutableSequence[str]:
+            msg = "factory failed"
+            raise RuntimeError(msg)
+
+        def op(resource: MutableSequence[str]) -> p.Result[str]:
+            resource.append("used")
+            return r[str].ok("success")
+
+        def cleanup(_resource: MutableSequence[str]) -> None:
+            cleanup_calls.append("cleaned")
+
+        result: p.Result[str] = r[str].with_resource(factory, op, cleanup)
+
+        tm.fail(result)
+        tm.that(result.error, eq="factory failed")
+        tm.that(tuple(cleanup_calls), eq=())
+
+    def test_with_resource_operation_exception_returns_failure_and_cleans(self) -> None:
+        """Test with_resource converts operation exceptions and still cleans."""
+        cleanup_calls: MutableSequence[str] = []
+
+        def factory() -> MutableSequence[str]:
+            return ["resource"]
+
+        def op(_resource: MutableSequence[str]) -> p.Result[str]:
+            msg = "operation failed"
+            raise RuntimeError(msg)
+
+        def cleanup(resource: MutableSequence[str]) -> None:
+            resource.clear()
+            cleanup_calls.append("cleaned")
+
+        result: p.Result[str] = r[str].with_resource(factory, op, cleanup)
+
+        tm.fail(result)
+        tm.that(result.error, eq="operation failed")
+        tm.that(tuple(cleanup_calls), eq=("cleaned",))
+
+    def test_with_resource_cleanup_exception_returns_failure(self) -> None:
+        """Test with_resource converts cleanup exceptions into failed results."""
+
+        def factory() -> MutableSequence[str]:
+            return ["resource"]
+
+        def op(_resource: MutableSequence[str]) -> p.Result[str]:
+            return r[str].ok("success")
+
+        def cleanup(_resource: MutableSequence[str]) -> None:
+            msg = "cleanup failed"
+            raise RuntimeError(msg)
+
+        result: p.Result[str] = r[str].with_resource(factory, op, cleanup)
+
+        tm.fail(result)
+        tm.that(result.error, eq="cleanup failed")
+
     def test_context_manager(self) -> None:
         """Test context manager protocol."""
         result = r[str].ok("value")
