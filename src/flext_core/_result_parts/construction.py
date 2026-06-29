@@ -64,7 +64,11 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
         source: p.Result[V],
     ) -> p.Result[V]:
         if source.success:
-            return cls.ok(source.value)
+            # Cannot use source.value: it raises ValueError when _payload is None.
+            # r[None].ok(None) is a valid success with a None payload — access the
+            # private attribute directly to bypass the non-None guard on the property.
+            raw: V | None = getattr(source, "_payload", None)
+            return cls.ok(cast("V", raw))
         # Type bridge: normalized failures carry the source result payload type.
         result_class = cast("type[FlextResultConstructionMixin[V]]", cls)
         return result_class.fail(

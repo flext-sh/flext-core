@@ -15,7 +15,7 @@ from typing import overload, override
 
 from dependency_injector import containers as di_containers
 
-from flext_core._loggings_parts import FlextLogger
+from flext_core._loggings_parts.flextlogger_part_05 import FlextLogger
 from flext_core.constants import c
 from flext_core.exceptions import e
 from flext_core.models import m

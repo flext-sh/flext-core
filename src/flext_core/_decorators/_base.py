@@ -11,7 +11,7 @@ from collections.abc import Callable
 from functools import wraps
 from typing import ClassVar, TypeIs
 
-from flext_core._loggings_parts import FlextLogger
+from flext_core._loggings_parts.flextlogger_part_05 import FlextLogger
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.base import FlextProtocolsBase as pb
 from flext_core._protocols.container import FlextProtocolsContainer as pc

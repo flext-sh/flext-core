@@ -19,6 +19,8 @@ from __future__ import annotations
 
 from typing import override
 
+from flext_tests import e, h, r, x
+
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -26,18 +28,12 @@ from flext_core import (
 )
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core.service import FlextService
-from tests import (
-    c,
-    e,
-    h,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-    x,
-)
+from tests.base import s
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 from .migration_validation_cases import (
     FlextMigrationApplicationCase,

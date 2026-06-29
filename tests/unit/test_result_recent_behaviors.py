@@ -71,6 +71,24 @@ class TestsFlextResultRecentBehaviors:
         tm.fail(error_result)
         tm.that(error_result.error, contains="boom")
 
+    def test_flat_map_chained_to_r_none_ok_none_returns_success(self) -> None:
+        """flat_map chaining into r[None].ok(None) must not raise ValueError.
+
+        Root issue: from_result calls source.value which raises when _payload is None.
+        Checks .success only — .value raises by design for r[None] success payloads.
+        """
+        result: p.Result[None] = r[str].ok("x").flat_map(lambda _: r[None].ok(None))
+        tm.that(result.success, eq=True)
+
+    def test_map_returning_none_returns_success(self) -> None:
+        """map returning None produces a success result with None payload.
+
+        map uses ok(func(self.value)) directly — no from_result involved.
+        Checks .success only — .value raises by design for r[None] success payloads.
+        """
+        result: p.Result[None] = r[str].ok("x").map(lambda _: None)
+        tm.that(result.success, eq=True)
+
     def test_with_resource_invokes_cleanup_after_success(self) -> None:
         cleanup_calls: MutableSequence[str] = []
 
