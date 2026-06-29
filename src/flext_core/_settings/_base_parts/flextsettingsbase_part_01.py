@@ -129,10 +129,7 @@ class FlextSettingsBase(BaseSettings):
         merged_overrides = self.__class__.merge_overrides(self, **overrides)
         with self.__class__.singleton_disabled():
             copied = self.model_copy(update=merged_overrides, deep=True)
-        copied.__pydantic_validator__.validate_python(
-            copied.__dict__, self_instance=copied
-        )
-        return copied
+            return type(copied).model_validate(copied, from_attributes=True)
 
     @classmethod
     def update_global(cls, **overrides: ts.SettingsOverride | None) -> Self:
@@ -152,12 +149,10 @@ class FlextSettingsBase(BaseSettings):
         merged_overrides = cls.merge_overrides(current, **overrides)
         with cls.singleton_disabled():
             new_instance = current.model_copy(update=merged_overrides, deep=True)
-        new_instance.__pydantic_validator__.validate_python(
-            new_instance.__dict__, self_instance=new_instance
-        )
+            validated = cls.model_validate(new_instance, from_attributes=True)
         with cls._lock:
-            cls._instance = new_instance
-        return new_instance
+            cls._instance = validated
+        return validated
 
     @classmethod
     def validate_overrides(cls, **overrides: ts.SettingsOverride | None) -> None:
