@@ -22,7 +22,9 @@ from collections.abc import (
 from pathlib import Path
 
 from flext_core import FlextContainer, FlextSettings
-from tests import p, t, u
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 from .settings_integration_precedence import FlextSettingsPrecedenceCase
 

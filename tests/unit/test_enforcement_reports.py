@@ -7,7 +7,8 @@ from typing import Annotated
 
 import pytest
 
-from tests import m, u
+from tests.models import m
+from tests.utilities import u
 
 
 class TestsFlextEnforcementReports:

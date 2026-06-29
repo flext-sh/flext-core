@@ -26,6 +26,7 @@ from typing import Annotated, Literal, TypeVar
 import pytest
 from flext_tests import (
     clean_container as _shared_clean_container,
+    r,
     reset_settings as _shared_reset_settings,
     sample_data as _shared_sample_data,
     settings as _shared_settings,
@@ -36,7 +37,10 @@ from flext_tests import (
     test_runtime as _shared_test_runtime,
 )
 
-from tests import c, m, p, r, u
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.utilities import u
 
 clean_container = _shared_clean_container
 reset_settings = _shared_reset_settings

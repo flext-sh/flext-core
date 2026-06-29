@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextSettings
-from tests import t
+from tests.typings import t
 
 
 class TestsFlextSettings:

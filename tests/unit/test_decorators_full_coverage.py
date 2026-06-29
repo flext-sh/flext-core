@@ -6,10 +6,11 @@ import time
 import warnings
 
 import pytest
-from flext_tests import tm
+from flext_tests import d, e, r, tm
 
 from flext_core import FlextContainer
-from tests import d, e, m, p, r
+from tests.models import m
+from tests.protocols import p
 
 
 class TestsFlextDecorators:

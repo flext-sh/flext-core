@@ -5,8 +5,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import ClassVar
 
-from tests import c, m, t
 from tests._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
 
 
 class TestsFlextUtilitiesCaseServiceFactoriesMixin(

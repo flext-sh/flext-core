@@ -8,10 +8,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_tests import r
 
 from flext_core import FlextContainer
 from flext_core.__version__ import __version__
-from tests import p, r, t, u
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 pytestmark = [pytest.mark.integration]
 

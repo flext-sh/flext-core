@@ -4,10 +4,15 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_tests import FlextTestsCase
+from flext_tests import FlextTestsCase, e, r
 from flext_tests.settings import FlextTestsSettings
 
-from tests import c, e, m, p, r, s, t, u
+from tests.base import s
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextService(FlextTestsCase):

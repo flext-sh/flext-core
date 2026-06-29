@@ -8,8 +8,10 @@ import pytest
 from flext_tests import tm
 
 from flext_core.container import FlextContainer
-from tests import p, t, u
 from tests.models import TestsFlextModels
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextContainerRegistration:

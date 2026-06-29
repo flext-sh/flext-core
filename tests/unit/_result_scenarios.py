@@ -6,7 +6,8 @@ from collections.abc import Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
-from tests import m, t
+from tests.models import m
+from tests.typings import t
 
 
 @unique

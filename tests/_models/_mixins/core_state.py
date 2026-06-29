@@ -6,7 +6,8 @@ from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
 from flext_core import m
-from tests import c, t
+from tests.constants import c
+from tests.typings import t
 
 
 class TestsFlextModelsCoreStateMixin:

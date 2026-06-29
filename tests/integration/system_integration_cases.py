@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from tests import c, p, r, t, u
+from flext_tests import r
+
+from tests.constants import c
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 class FlextSystemWorkflowCases:

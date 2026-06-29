@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import pytest
 
-from tests import p, u
+from tests.protocols import p
+from tests.utilities import u
 
 from .service_lifecycle_cases import FlextServiceLifecycleCases
 

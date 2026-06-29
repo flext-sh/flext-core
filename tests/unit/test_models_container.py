@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tests import m
+from tests.models import m
 
 
 class TestsFlextModelsContainer:

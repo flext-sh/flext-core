@@ -22,8 +22,13 @@ import time
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
+from flext_tests import x
+
 from flext_core import FlextContext
-from tests import m, p, t, u, x
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextMixins:

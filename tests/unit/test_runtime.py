@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import flext_core
 from flext_core.runtime import FlextRuntime
-from tests import t, u
+from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextRuntime:

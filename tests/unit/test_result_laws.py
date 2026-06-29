@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from flext_tests import tm
+from flext_tests import r, tm
 from hypothesis import given, settings, strategies as st
 
-from tests import p, r
+from tests.protocols import p
 from tests.unit._result_scenarios import (
     ResultOperationType,
 )

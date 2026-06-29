@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import pytest
+from flext_tests import d, r
 from hypothesis import given, settings, strategies as st
 
-from tests import d, p, r, u
+from tests.protocols import p
 from tests.unit._decorators_support import (
     TestsFlextDecoratorsLegacy,
 )
+from tests.utilities import u
 
 COMBINED_SCENARIOS = TestsFlextDecoratorsLegacy.COMBINED_SCENARIOS
 

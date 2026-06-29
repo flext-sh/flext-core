@@ -7,7 +7,8 @@ from collections.abc import Callable, Iterator
 from typing import Annotated, Never, override
 
 from flext_core import m
-from tests import c, t
+from tests.constants import c
+from tests.typings import t
 
 
 class TestsFlextModelsCoreErrorsMixin:

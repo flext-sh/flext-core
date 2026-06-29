@@ -6,8 +6,9 @@ import typing
 from abc import ABC, abstractmethod
 from typing import Final, Protocol, runtime_checkable
 
-from tests import t, u
+from tests.typings import t
 from tests.unit._enforcement_support import messages
+from tests.utilities import u
 
 
 class TestsFlextEnforcementLayers:

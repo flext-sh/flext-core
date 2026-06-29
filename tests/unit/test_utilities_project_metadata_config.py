@@ -7,8 +7,9 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
-from tests import c, u
+from tests.constants import c
 from tests.unit._project_metadata_support import write_pyproject
+from tests.utilities import u
 
 
 class TestsFlextUtilitiesProjectMetadataConfig:

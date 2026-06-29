@@ -10,7 +10,9 @@ from contextlib import redirect_stdout
 import pytest
 from flext_tests import tm
 
-from tests import p, t, u
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextCoverageLoggings:

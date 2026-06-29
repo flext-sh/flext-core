@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from flext_core import FlextUtilitiesRuntimeViolationRegistry as runtime_registry
-from tests import m
+from tests.models import m
 
 
 class TestsFlextRuntimeViolationRegistry:

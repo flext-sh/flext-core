@@ -14,7 +14,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests import m, t
+from tests.models import m
+from tests.typings import t
 
 
 class TestsFlextUtilitiesCoverage:

@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from typing import Annotated, ClassVar
 
 from flext_core import m
-from tests import t
+from tests.typings import t
 
 
 class TestsFlextModelsContainerMixin:

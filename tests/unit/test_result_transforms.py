@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from flext_tests import tm
+from flext_tests import r, tm
 
-from tests import p, r, u
+from tests.protocols import p
 from tests.unit._result_scenarios import (
     ResultOperationType,
 )
+from tests.utilities import u
 
 
 class TestsFlextResultTransforms:

@@ -4,8 +4,14 @@ from __future__ import annotations
 
 from typing import override
 
-from tests import c, h, m, p, r, t, u
+from flext_tests import h, r
+
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
+from tests.utilities import u
 
 HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
 HandlerTypeScenario = TestsFlextFlextHandlers.HandlerTypeScenario

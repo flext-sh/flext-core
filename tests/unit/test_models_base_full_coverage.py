@@ -6,8 +6,10 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 import pytest
+from flext_tests import r
 
-from tests import c, m, r
+from tests.constants import c
+from tests.models import m
 
 
 class TestsFlextModelsBaseFullCoverage:

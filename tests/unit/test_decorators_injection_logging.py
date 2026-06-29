@@ -5,8 +5,9 @@ from __future__ import annotations
 import time
 
 import pytest
+from flext_tests import d
 
-from tests import d, m
+from tests.models import m
 from tests.unit._decorators_support import (
     TestsFlextDecoratorsLegacy,
     capture_stdout,

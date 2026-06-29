@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from tests import c, e, t
+from flext_tests import e
+
+from tests.constants import c
+from tests.typings import t
 
 type ErrorFactory = Callable[[], e.BaseError]
 

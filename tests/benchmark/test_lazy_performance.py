@@ -10,7 +10,7 @@ import pytest
 
 import flext_core
 from flext_core.lazy import install_lazy_exports, lazy
-from tests import c
+from tests.constants import c
 
 type LazyImportEntry = str | tuple[str, str]
 type LazyImportMap = dict[str, LazyImportEntry]

@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import pytest
+from flext_tests import e, h, r
 
-from tests import c, e, h, r, t, u
+from tests.constants import c
+from tests.typings import t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
+from tests.utilities import u
 
 HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
 HandlerTypeScenario = TestsFlextFlextHandlers.HandlerTypeScenario

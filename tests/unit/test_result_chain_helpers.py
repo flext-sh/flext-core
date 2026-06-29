@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_tests import tm
+from flext_tests import r, tm
 
-from tests import p, r, t, u
+from tests.protocols import p
+from tests.typings import t
 from tests.unit._result_scenarios import (
     ResultOperationType,
 )
+from tests.utilities import u
 
 
 class TestsFlextResultChainHelpers:

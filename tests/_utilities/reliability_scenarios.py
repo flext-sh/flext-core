@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import ClassVar
 
-from tests import m, t
+from tests.models import m
+from tests.typings import t
 
 
 class TestsFlextUtilitiesReliabilityScenariosMixin:

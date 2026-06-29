@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tests import r
+from flext_tests import r
 
 
 class TestsFlextDeprecationWarnings:

@@ -23,7 +23,7 @@ from collections.abc import (
 import pytest
 
 from flext_core import FlextMroViolation
-from tests import t
+from tests.typings import t
 
 
 def _import_fresh_silent(dotted: str) -> object:

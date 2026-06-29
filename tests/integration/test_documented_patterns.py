@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import pytest
+from flext_tests import d, e, r
 
-from tests import d, e, p, r
+from tests.protocols import p
 
 
 class TestsFlextDocumentedPatterns:

@@ -8,8 +8,8 @@ from typing import ClassVar, override
 
 from flext_tests import m as tm
 
-from tests import t
 from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
+from tests.typings import t
 
 
 class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMixin):

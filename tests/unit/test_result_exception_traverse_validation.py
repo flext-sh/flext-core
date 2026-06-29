@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from flext_tests import tm
+from flext_tests import r, tm
 
-from tests import c, p, r
+from tests.constants import c
+from tests.protocols import p
 from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
 
 

@@ -4,8 +4,12 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar, override
 
+from flext_tests import r
+
 from flext_core import m
-from tests import p, r, s, t
+from tests.base import s
+from tests.protocols import p
+from tests.typings import t
 
 
 class TestsFlextModelsServiceCaseCoreMixin:

@@ -6,7 +6,7 @@ from collections.abc import Callable
 from typing import Annotated, ClassVar, override
 
 from flext_core import m
-from tests import t
+from tests.typings import t
 
 
 class TestsFlextModelsDomainMixin:

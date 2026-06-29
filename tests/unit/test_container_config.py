@@ -7,8 +7,9 @@ from flext_tests import tm
 
 from flext_core.container import FlextContainer
 from flext_core.settings import FlextSettings
-from tests import m, p, t
-from tests.models import TestsFlextModels
+from tests.models import TestsFlextModels, m
+from tests.protocols import p
+from tests.typings import t
 
 
 class TestsFlextContainerConfig:

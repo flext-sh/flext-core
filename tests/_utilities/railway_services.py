@@ -6,8 +6,12 @@ from typing import Annotated, override
 
 from flext_tests import m as tm, r, u
 
-from tests import c, m, p, s, t
 from tests._models.mixins import TestsFlextModelsMixins
+from tests.base import s
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 
 
 class TestsFlextUtilitiesRailwayServicesMixin:

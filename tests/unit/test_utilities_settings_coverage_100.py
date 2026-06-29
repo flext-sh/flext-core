@@ -8,7 +8,9 @@ from pathlib import Path
 from flext_tests import tm
 
 from flext_core import FlextContainer, u
-from tests import c, m, t
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
 
 
 class TestsFlextUtilitiesSettings:

@@ -5,8 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import pytest
+from flext_tests import e
 
-from tests import c, e, m
+from tests.constants import c
+from tests.models import m
 
 
 class TestsFlextExceptionsTypedMetrics:

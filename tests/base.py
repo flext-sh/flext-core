@@ -6,7 +6,9 @@ from typing import override
 
 from flext_tests import s as tests_s
 
-from tests import c, p, t
+from tests.constants import c
+from tests.protocols import p
+from tests.typings import t
 
 
 class TestsFlextServiceBase[TDomainResult: t.JsonPayload | t.SequenceOf[t.JsonPayload]](

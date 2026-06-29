@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import ClassVar, override
 
-from tests import c
 from tests._utilities.services import TestsFlextUtilitiesServicesMixin
 from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
+from tests.constants import c
 
 
 class TestsFlextUtilitiesValidationFactoriesMixin(

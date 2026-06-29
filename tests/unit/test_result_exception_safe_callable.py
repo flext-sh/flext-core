@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Sized
 
 import pytest
-from flext_tests import tm
+from flext_tests import r, tm
 
-from tests import p, r
+from tests.protocols import p
 from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
 
 

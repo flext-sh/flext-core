@@ -7,7 +7,8 @@ from typing import ClassVar
 
 from flext_tests import r, u
 
-from tests import c, p
+from tests.constants import c
+from tests.protocols import p
 
 
 class TestsFlextUtilitiesContractsMixin:

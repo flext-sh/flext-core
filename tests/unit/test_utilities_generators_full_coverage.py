@@ -6,7 +6,8 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from flext_core import u
-from tests import c, m
+from tests.constants import c
+from tests.models import m
 
 
 class TestsFlextUtilitiesGenerators:

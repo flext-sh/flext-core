@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from flext_tests import tm
+from flext_tests import h, tm
 from hypothesis import given, strategies as st
 
-from tests import h
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 
 HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES

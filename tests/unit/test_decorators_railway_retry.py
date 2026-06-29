@@ -5,12 +5,13 @@ from __future__ import annotations
 import time
 
 import pytest
+from flext_tests import d, e, r
 
-from tests import d, e, r, u
 from tests.unit._decorators_support import (
     TestsFlextDecoratorsLegacy,
     capture_stdout,
 )
+from tests.utilities import u
 
 RAILWAY_SCENARIOS = TestsFlextDecoratorsLegacy.RAILWAY_SCENARIOS
 RETRY_SCENARIOS = TestsFlextDecoratorsLegacy.RETRY_SCENARIOS

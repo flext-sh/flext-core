@@ -6,7 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from tests import p, u
+from tests.protocols import p
+from tests.utilities import u
 
 from .service_fixtures import FlextServiceFixtures
 

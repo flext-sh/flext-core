@@ -7,7 +7,8 @@ from types import ModuleType
 
 import pytest
 
-from tests import c, m
+from tests.constants import c
+from tests.models import m
 
 
 class TestsFlextModelsCqrs:

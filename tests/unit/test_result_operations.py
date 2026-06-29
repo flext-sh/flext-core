@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
+from flext_tests import r, tm
 
-from tests import p, r, t, u
+from tests.protocols import p
+from tests.typings import t
 from tests.unit._result_scenarios import (
     BOOL_SCENARIOS,
     INT_SCENARIOS,
@@ -13,6 +14,7 @@ from tests.unit._result_scenarios import (
     ResultOperationType,
     ResultScenario,
 )
+from tests.utilities import u
 
 
 class TestsFlextResultOperations:

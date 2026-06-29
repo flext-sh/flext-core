@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from typing import Annotated, override
 
-from tests import m, p, r, s, t, u
+from flext_tests import r
+
+from tests.base import s
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextServiceBootstrap:

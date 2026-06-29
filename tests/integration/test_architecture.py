@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from flext_tests import tm, tv
 
-from tests import c
+from tests.constants import c
 
 
 class TestsFlextAutomatedArchitecture:

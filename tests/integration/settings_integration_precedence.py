@@ -5,7 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core import FlextSettings
-from tests import c, u
+from tests.constants import c
+from tests.utilities import u
 
 from .settings_integration_factories import FlextSettingsFactories
 

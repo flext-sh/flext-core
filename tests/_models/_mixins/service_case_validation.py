@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_core import m
-from tests import t
+from tests.typings import t
 
 
 class TestsFlextModelsServiceCaseValidationMixin:

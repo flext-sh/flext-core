@@ -7,8 +7,12 @@ import time
 from contextlib import redirect_stdout
 
 import pytest
+from flext_tests import r
 
-from tests import m, p, r, t, u
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextDispatcher:

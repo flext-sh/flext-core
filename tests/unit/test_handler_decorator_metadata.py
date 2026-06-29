@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_tests import tm
+from flext_tests import h, r, tm
 
-from tests import c, h, m, p, r, s
+from tests.base import s
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
 
 
 class TestsFlextHandlerDecoratorMetadata:

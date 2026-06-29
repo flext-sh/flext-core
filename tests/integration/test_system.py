@@ -13,8 +13,13 @@ from __future__ import annotations
 
 import uuid
 
+from flext_tests import e, r
+
 from flext_core import FlextContainer
-from tests import c, e, p, r, t, u
+from tests.constants import c
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 from .system_integration_cases import FlextSystemWorkflowCases
 

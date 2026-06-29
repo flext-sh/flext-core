@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from flext_tests import tm
 
-from tests import c, m, p, t, u
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextContainerLifecycle:

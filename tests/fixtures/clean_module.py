@@ -11,7 +11,11 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
 
-from tests import m, p, r, t, u
+from tests.models import m
+from tests.protocols import p
+from flext_tests import r
+from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextCleanModels:

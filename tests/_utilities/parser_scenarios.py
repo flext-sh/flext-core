@@ -7,7 +7,8 @@ from typing import ClassVar
 
 from flext_tests import u
 
-from tests import c, m
+from tests.constants import c
+from tests.models import m
 
 
 class TestsFlextUtilitiesParserScenariosMixin:

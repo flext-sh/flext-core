@@ -17,7 +17,8 @@ from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
 from flext_core import FlextModels, FlextModelsNamespace
-from tests import m, u
+from tests.models import m
+from tests.utilities import u
 
 # --- Pydantic hook rules ------------------------------------------------
 

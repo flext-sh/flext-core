@@ -7,8 +7,12 @@ import time
 from collections.abc import Callable
 from contextlib import redirect_stdout
 
+from flext_tests import r
+
 from flext_core import FlextContainer
-from tests import p, r, t, u
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
-from tests import TestsFlextModelsMixins, u
+from tests.models import TestsFlextModelsMixins
+from tests.utilities import u
 
 
 class TestsFlextEnforcementNamespace:

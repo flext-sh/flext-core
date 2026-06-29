@@ -6,10 +6,11 @@ import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
-from tests import c, u
+from tests.constants import c
 from tests.unit._beartype_engine_support import (
     TestsFlextBeartypeEngine,
 )
+from tests.utilities import u
 
 
 class TestsFlextBeartypeEngineConfig(TestsFlextBeartypeEngine):

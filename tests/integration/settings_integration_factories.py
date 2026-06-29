@@ -5,7 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated, ClassVar
 
-from tests import m, t, u
+from tests.models import m
+from tests.typings import t
+from tests.utilities import u
 
 
 class SettingsConfigTestCase(m.BaseModel):

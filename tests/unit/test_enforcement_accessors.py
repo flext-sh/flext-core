@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
-from tests import m, u
+from tests.models import m
 from tests.unit._enforcement_support import make_class
+from tests.utilities import u
 
 
 class TestsFlextEnforcementAccessors:

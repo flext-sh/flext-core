@@ -14,7 +14,7 @@ from __future__ import annotations
 from pydantic import AliasChoices, Field
 
 from flext_core import FlextSettings, m
-from tests import t
+from tests.typings import t
 
 
 class _AliasFieldSettings(FlextSettings):

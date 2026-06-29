@@ -9,7 +9,8 @@ from contextlib import redirect_stdout
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
-from tests import m, u
+from tests.models import m
+from tests.utilities import u
 
 
 def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:

@@ -16,7 +16,7 @@ import importlib
 import pytest
 from flext_tests import tm
 
-from tests import c
+from tests.constants import c
 
 
 class TestsFlextConstantsNew:

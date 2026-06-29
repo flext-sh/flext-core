@@ -8,8 +8,12 @@ from collections.abc import Callable
 from contextlib import redirect_stdout
 
 import pytest
+from flext_tests import r
 
-from tests import c, m, r, t, u
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
+from tests.utilities import u
 
 
 def _capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:

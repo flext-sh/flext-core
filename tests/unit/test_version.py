@@ -6,7 +6,7 @@ import pytest
 from flext_tests import tm
 
 from flext_core.__version__ import FlextVersion, __version__, __version_info__
-from tests import c
+from tests.constants import c
 
 
 class TestsFlextVersion:

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from flext_tests import tm
+from flext_tests import h, r, tm
 
-from tests import h, p, r
+from tests.protocols import p
 
 
 class TestsFlextHandlerDiscoveryClass:

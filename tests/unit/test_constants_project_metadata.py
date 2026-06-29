@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tests import c
+from tests.constants import c
 
 
 class TestsFlextConstantsProjectMetadata:

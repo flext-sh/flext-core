@@ -6,7 +6,9 @@ from typing import override
 
 from flext_tests import h, r
 
-from tests import c, p, t
+from tests.constants import c
+from tests.protocols import p
+from tests.typings import t
 
 
 class TestsFlextUtilitiesDispatchMixin:

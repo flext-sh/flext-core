@@ -8,7 +8,12 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar, override
 
-from tests import m, p, r, s, t
+from flext_tests import r
+
+from tests.base import s
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 
 
 class UserServiceEntity(m.BaseModel):

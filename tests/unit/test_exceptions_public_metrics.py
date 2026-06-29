@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from tests import e, m
+from flext_tests import e
+
+from tests.models import m
 
 
 class TestsFlextCoverageExceptionMetrics:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tests import t
+from tests.typings import t
 
 TYPE_ALIAS_NAMES: t.VariadicTuple[str] = (
     "Primitives",

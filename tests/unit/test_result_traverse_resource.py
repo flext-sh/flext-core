@@ -5,12 +5,15 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 
 import pytest
-from flext_tests import tm
+from flext_tests import r, tm
 
-from tests import m, p, r, t, u
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 from tests.unit._result_scenarios import (
     ResultOperationType,
 )
+from tests.utilities import u
 
 
 class TestsFlextResultTraverseResource:
