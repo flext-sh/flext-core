@@ -3,8 +3,20 @@
 
 from __future__ import annotations
 
+import typing as _t
+
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
+if _t.TYPE_CHECKING:
+    from flext_core._exceptions._base_parts.flextexceptionsbase_part_01 import (
+        FlextBaseErrorMetadataMixin as FlextBaseErrorMetadataMixin,
+    )
+    from flext_core._exceptions._base_parts.flextexceptionsbase_part_02 import (
+        FlextBaseErrorStateMixin as FlextBaseErrorStateMixin,
+    )
+    from flext_core._exceptions._base_parts.flextexceptionsbase_part_03 import (
+        FlextExceptionsBase as FlextExceptionsBase,
+    )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".flextexceptionsbase_part_01": ("FlextBaseErrorMetadataMixin",),

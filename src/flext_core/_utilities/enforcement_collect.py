@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ._enforcement_collect_parts import (
+from ._enforcement_collect_parts.enforcement_collect_part_02 import (
     FlextUtilitiesEnforcementCollect,
 )
 

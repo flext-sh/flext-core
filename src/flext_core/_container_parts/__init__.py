@@ -3,8 +3,14 @@
 
 from __future__ import annotations
 
+import typing as _t
+
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
+if _t.TYPE_CHECKING:
+    from flext_core._container_parts.flextcontainer_part_05 import (
+        FlextContainer as FlextContainer,
+    )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".flextcontainer_part_05": ("FlextContainer",),

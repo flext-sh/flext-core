@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ._class_visitor_parts import (
+from ._class_visitor_parts.class_visitor_part_03 import (
     FlextUtilitiesBeartypeClassVisitor,
 )
 
