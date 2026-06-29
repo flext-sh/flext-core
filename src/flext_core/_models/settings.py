@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, Final, Self
+from typing import Annotated, ClassVar, Self
 
 from pydantic import (
     AliasChoices,
@@ -126,7 +126,7 @@ class FlextModelsSettings:
                 raise ValueError(c.ERR_MODEL_MAX_DELAY_LESS_THAN_INITIAL)
             return self
 
-    DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(
+    DOMAIN_MODEL_CONFIG: ClassVar[ConfigDict] = ConfigDict(
         use_enum_values=True,
         validate_assignment=True,
         validate_return=True,
