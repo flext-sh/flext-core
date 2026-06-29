@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 from flext_tests import r, tm
 
 from tests.protocols import p
@@ -37,6 +39,44 @@ class TestsFlextResultTransforms:
         unchanged = success.map_error(lambda e: f"PREFIX: {e}")
         tm.ok(unchanged)
         tm.that(unchanged.value, eq="value")
+
+    def test_recover_converts_failure_to_success(self) -> None:
+        """Test recover maps failure errors into success values."""
+        failure: p.Result[int] = r[int].fail("missing")
+        recovered = failure.recover(lambda error: len(error))
+        _ = u.Tests.assert_success(recovered)
+        tm.that(recovered.value, eq=7)
+
+        success: p.Result[int] = r[int].ok(3)
+        unchanged = success.recover(lambda _error: 99)
+        _ = u.Tests.assert_success(unchanged)
+        tm.that(unchanged.value, eq=3)
+
+    def test_tap_runs_success_side_effect_only(self) -> None:
+        """Test tap runs only on successful values and keeps the original result."""
+        events: MutableSequence[str] = []
+        success: p.Result[str] = r[str].ok("ready")
+        tapped = success.tap(events.append)
+        tm.that(tapped is success, eq=True)
+        tm.that(tuple(events), eq=("ready",))
+
+        failure: p.Result[str] = r[str].fail("broken")
+        tapped_failure = failure.tap(events.append)
+        tm.that(tapped_failure is failure, eq=True)
+        tm.that(tuple(events), eq=("ready",))
+
+    def test_tap_error_runs_failure_side_effect_only(self) -> None:
+        """Test tap_error runs only on failures and keeps the original result."""
+        errors: MutableSequence[str] = []
+        failure: p.Result[str] = r[str].fail("broken")
+        tapped_failure = failure.tap_error(errors.append)
+        tm.that(tapped_failure is failure, eq=True)
+        tm.that(tuple(errors), eq=("broken",))
+
+        success: p.Result[str] = r[str].ok("ready")
+        tapped_success = success.tap_error(errors.append)
+        tm.that(tapped_success is success, eq=True)
+        tm.that(tuple(errors), eq=("broken",))
 
     def test_filter_success(self) -> None:
         """Test filter with success result."""
