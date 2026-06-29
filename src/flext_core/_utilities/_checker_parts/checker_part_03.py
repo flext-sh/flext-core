@@ -24,7 +24,6 @@ from flext_core import (
     FlextProtocolsResult as p,
     FlextTypesServices as ts,
     FlextTypingBase as tb,
-    FlextUtilitiesGuards,
 )
 from flext_core.result import FlextResult as r
 
@@ -40,14 +39,12 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
         handler_class: type,
     ) -> tb.SequenceOf[tb.TypeHintSpecifier]:
         """Extract message types from generic base annotations."""
-        raw_bases: ts.GuardInput = getattr(
+        raw_bases: tb.VariadicTuple[tb.TypeHintSpecifier] | tuple[()] = getattr(
             handler_class,
             "__orig_bases__",
             (),
         )
-        generic_bases = (
-            raw_bases if FlextUtilitiesGuards.object_tuple(raw_bases) else ()
-        )
+        generic_bases: tb.VariadicTuple[tb.TypeHintSpecifier] = raw_bases
         message_types: MutableSequence[tb.TypeHintSpecifier] = [
             args[0]
             for base in generic_bases

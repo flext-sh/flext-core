@@ -35,6 +35,7 @@ class FlextRegistry(s[bool]):
     """
 
     _state: m.RegistryState = PrivateAttr(default_factory=lambda: m.RegistryState())
+    _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
 
     _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
 

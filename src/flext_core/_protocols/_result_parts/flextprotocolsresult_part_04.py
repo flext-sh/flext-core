@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
+    from flext_core.models import FlextModels as m
     from flext_core.typings import FlextTypes as t
 from flext_core._protocols._result_parts.flextprotocolsresult_part_03 import (
     FlextProtocolsResult as FlextProtocolsResultPart03,
@@ -53,6 +54,16 @@ class FlextProtocolsResult(FlextProtocolsResultPart03):
         @property
         def error_message(self) -> str | None:
             """Human-readable error message."""
+            ...
+
+        @property
+        def message(self) -> str:
+            """Canonical exception message."""
+            ...
+
+        @property
+        def metadata(self) -> m.Metadata:
+            """Structured metadata attached to the error."""
             ...
 
         def matches_error_domain(self, domain: str) -> bool:
