@@ -1,11 +1,3 @@
-<!-- TOC START -->
-- [Start Here](#start-here)
-- [Public Surface Summary](#public-surface-summary)
-- [Collection Rules](#collection-rules)
-- [Quality Gates](#quality-gates)
-- [Governance Pointer](#governance-pointer)
-<!-- TOC END -->
-
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 # flext-core Documentation

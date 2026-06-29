@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import flext_core
+from flext_core.runtime import FlextRuntime
 from tests import t, u
 
 
@@ -40,3 +42,14 @@ class TestsFlextRuntime:
         normalized = u.normalize_metadata_input_mapping({"alpha": None, "beta": 2})
 
         assert normalized == {"alpha": None, "beta": 2}
+
+    def test_runtime_public_identity_stays_in_runtime_module(self) -> None:
+        assert FlextRuntime.__module__ == "flext_core.runtime"
+        assert flext_core.FlextRuntime is FlextRuntime
+
+    def test_dependency_integration_registers_object_provider(self) -> None:
+        container = FlextRuntime.DependencyIntegration.create_container(
+            services={"alpha": "beta"},
+        )
+
+        assert container.alpha() == "beta"
