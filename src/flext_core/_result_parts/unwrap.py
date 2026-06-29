@@ -6,8 +6,9 @@ from abc import ABC
 from collections.abc import Callable
 from typing import overload, override
 
-from flext_core import c
-from flext_core._result_parts.behavior import FlextResultBehaviorMixin
+from flext_core._constants.errors import FlextConstantsErrors as c
+
+from .behavior import FlextResultBehaviorMixin
 
 
 class FlextResultUnwrapMixin[T](FlextResultBehaviorMixin[T], ABC):

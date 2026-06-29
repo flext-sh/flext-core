@@ -9,7 +9,10 @@ from typing import TypeIs
 
 from pydantic import BaseModel as PydanticBaseModel
 
-from flext_core import FlextModelsPydantic as mp, FlextProtocols as p, FlextTypes as t
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as pb
+from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesGuardsTypeModel:
@@ -17,8 +20,8 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def has_model_dump(
-        value: t.GuardInput | p.HasModelDump | p.Model | t.JsonValue | None,
-    ) -> TypeIs[p.HasModelDump]:
+        value: t.GuardInput | pr.HasModelDump | pb.Model | t.JsonValue | None,
+    ) -> TypeIs[pr.HasModelDump]:
         """Narrow value to objects exposing a callable ``model_dump``."""
         model_dump = getattr(value, "model_dump", None)
         return callable(model_dump)
@@ -42,7 +45,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def pydantic_model(
-        value: t.GuardInput | p.Model | t.JsonValue | PydanticBaseModel | None,
+        value: t.GuardInput | pb.Model | t.JsonValue | PydanticBaseModel | None,
     ) -> TypeIs[mp.BaseModel]:
         """Narrow value to the canonical Pydantic model carrier.
 

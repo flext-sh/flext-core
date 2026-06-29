@@ -12,12 +12,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated
 
-from flext_core import (
-    FlextConstants as c,
-    FlextTypes as t,
-    FlextUtilitiesPydantic,
-)
 from flext_core._models.entity import FlextModelsEntity
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core.constants import FlextConstants as c
+from flext_core.typings import FlextTypes as t
 
 
 class FlextModelsContextTokens:

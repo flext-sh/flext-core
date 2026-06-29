@@ -21,11 +21,12 @@ from flext_core._protocols.context import FlextProtocolsContext as pcx
 from flext_core._protocols.handler import FlextProtocolsHandler as ph
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
 from flext_core._protocols.settings import FlextProtocolsSettings as ps
-from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ugc
+
+from ._metadata_validation import FlextRuntimeMetadataValidation
 
 
 class FlextRuntimeContainer(FlextRuntimeMetadataValidation):

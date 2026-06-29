@@ -12,8 +12,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core._protocols.base import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core.models import FlextModels as m
-    from flext_core.typings import FlextTypes as t
+    from flext_core import FlextModels as m, FlextTypes as t
 
 
 class FlextProtocolsContainer:

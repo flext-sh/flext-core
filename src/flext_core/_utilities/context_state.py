@@ -40,21 +40,27 @@ class FlextUtilitiesContextState:
         """Return contextvar payload as a flat container mapping with safe default."""
         try:
             normalized = FlextRuntime.normalize_model_input_mapping(ctx_value)
-            return {} if normalized is None else normalized
+            if normalized is None:
+                empty_normalized_context: t.JsonMapping = {}
+                return empty_normalized_context
+            return normalized
         except c.EXC_ATTR_KEY_TYPE_VALUE as exc:
             FlextUtilitiesContextState.logger.debug(
                 "Failed to normalize contextvar payload to configuration dict",
                 exc_info=exc,
             )
-            return {}
+            empty_context: t.JsonMapping = {}
+            return empty_context
 
     def _scope_var(
         self,
         scope: str,
     ) -> contextvars.ContextVar[m.ConfigMap | None]:
         """Get or create contextvar for scope."""
-        self.state, scope_var = self.state.resolve_scope_var(scope)
-        return scope_var
+        state, scope_var = self.state.resolve_scope_var(scope)
+        self.state = state
+        resolved_scope_var: contextvars.ContextVar[m.ConfigMap | None] = scope_var
+        return resolved_scope_var
 
     def _contextvar_data(self, scope: str) -> t.JsonMapping:
         """Get all values from contextvar scope."""
@@ -69,7 +75,8 @@ class FlextUtilitiesContextState:
     def _scope_payloads(self) -> t.MappingKV[str, t.JsonMapping]:
         """Get all scope registrations."""
         if not self.state.active:
-            return {}
+            empty_scopes: dict[str, t.JsonMapping] = {}
+            return empty_scopes
         scopes: MutableMapping[str, t.JsonMapping] = {}
         for scope_name, ctx_var in self.state.scope_vars.items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())

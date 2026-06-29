@@ -12,8 +12,8 @@ from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.result import FlextProtocolsResult
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes as t
-from flext_core._protocols._logging_parts.flextprotocolslogging_part_02 import (
+    from flext_core import FlextTypes as t
+from .flextprotocolslogging_part_02 import (
     FlextProtocolsLogging as FlextProtocolsLoggingPart02,
 )
 

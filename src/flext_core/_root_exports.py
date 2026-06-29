@@ -1,0 +1,96 @@
+"""Generated root lazy export configuration."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from types import MappingProxyType
+from typing import Final
+
+from ._root_exports_parts.lazy_core import ROOT_LAZY_CORE
+from ._root_exports_parts.lazy_facades import ROOT_LAZY_FACADES
+from ._root_exports_parts.lazy_utilities import ROOT_LAZY_UTILITIES
+
+ROOT_PACKAGE_MODULES: Final[tuple[str, ...]] = ()
+ROOT_LAZY_MODULES: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType({
+    **ROOT_LAZY_CORE,
+    **ROOT_LAZY_UTILITIES,
+    **ROOT_LAZY_FACADES,
+})
+ROOT_EXCLUDE_NAMES: Final[tuple[str, ...]] = (
+    "cleanup_submodule_namespace",
+    "install_lazy_exports",
+    "lazy_getattr",
+    "logger",
+    "merge_lazy_imports",
+    "output",
+    "output_reporting",
+    "pytest_addoption",
+    "pytest_collect_file",
+    "pytest_collection_modifyitems",
+    "pytest_configure",
+    "pytest_runtest_setup",
+    "pytest_runtest_teardown",
+    "pytest_sessionfinish",
+    "pytest_sessionstart",
+    "pytest_terminal_summary",
+    "pytest_warning_recorded",
+)
+ROOT_METADATA_NAMES: Final[tuple[str, ...]] = (
+    "__author__",
+    "__author_email__",
+    "__description__",
+    "__license__",
+    "__title__",
+    "__url__",
+    "__version__",
+    "__version_info__",
+)
+ROOT_ALL: Final[tuple[str, ...]] = (
+    "FlextConstants",
+    "FlextContainer",
+    "FlextContext",
+    "FlextDecorators",
+    "FlextDispatcher",
+    "FlextExceptions",
+    "FlextHandlers",
+    "FlextLazy",
+    "FlextLogger",
+    "FlextMixins",
+    "FlextModels",
+    "FlextProtocols",
+    "FlextRegistry",
+    "FlextResult",
+    "FlextRuntime",
+    "FlextService",
+    "FlextSettings",
+    "FlextTypes",
+    "FlextUtilities",
+    "__author__",
+    "__author_email__",
+    "__description__",
+    "__license__",
+    "__title__",
+    "__url__",
+    "__version__",
+    "__version_info__",
+    "c",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
+    "x",
+)
+
+
+__all__: list[str] = [
+    "ROOT_ALL",
+    "ROOT_EXCLUDE_NAMES",
+    "ROOT_LAZY_MODULES",
+    "ROOT_METADATA_NAMES",
+    "ROOT_PACKAGE_MODULES",
+]

@@ -15,18 +15,24 @@ import time
 from collections.abc import (
     Callable,
 )
-from typing import Annotated, no_type_check
+from typing import Annotated
 
 from pydantic import Field
 
-from flext_core import FlextUtilitiesArgs, c, m, p, r, t
+from flext_core._models.base import FlextModelsBase
+from flext_core._utilities.args import FlextUtilitiesArgs
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import r
+from flext_core.typings import t
+
+type _HandledExceptions = tuple[type[Exception], ...]
 
 
-@no_type_check
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
-    class RetryOptions(m.FlexibleInternalModel):
+    class RetryOptions(FlextModelsBase.FlexibleInternalModel):
         """Configuration options for retry logic."""
 
         max_attempts: Annotated[
@@ -42,7 +48,7 @@ class FlextUtilitiesReliability:
             ),
         ] = None
 
-    _RETRYABLE_EXCEPTIONS: t.VariadicTuple[type[Exception]] = (
+    _RETRYABLE_EXCEPTIONS: _HandledExceptions = (
         AttributeError,
         TypeError,
         ValueError,
@@ -54,7 +60,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def try_[TResult](
         operation: Callable[[], TResult],
-        catch: type[Exception] | t.VariadicTuple[type[Exception]] | None = None,
+        catch: type[Exception] | _HandledExceptions | None = None,
         *,
         op_name: str = "execute guarded operation",
     ) -> p.Result[TResult]:
@@ -80,7 +86,7 @@ class FlextUtilitiesReliability:
     def guard_result[TResult](
         operation: Callable[[], p.Result[TResult]],
         *,
-        catch: type[Exception] | t.VariadicTuple[type[Exception]] | None = None,
+        catch: type[Exception] | _HandledExceptions | None = None,
         op_name: str = "execute guarded operation",
     ) -> p.Result[TResult]:
         """Boundary-guard a Result-returning operation.

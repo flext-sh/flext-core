@@ -119,6 +119,12 @@ class FlextLazy(BaseModel):
         self.normalized_map_cache[cache_key] = out
         return out
 
+    def _must_activate_core_beartype(self, module_path: str) -> bool:
+        """Return whether importing a module should activate flext_core beartype."""
+        return module_path.startswith("flext_core.") and not module_path.startswith(
+            "flext_core._constants",
+        )
+
     def normalize_map(
         self,
         module_path: str,
@@ -131,7 +137,7 @@ class FlextLazy(BaseModel):
         cached = self.module_cache.get(module_path)
         if cached is not None:
             return cached
-        if module_path.startswith("flext_core."):
+        if self._must_activate_core_beartype(module_path):
             self._activate_core_beartype()
         mod = sys.modules.get(module_path) or self._import_module(module_path)
         self.module_cache[module_path] = mod
@@ -142,7 +148,12 @@ class FlextLazy(BaseModel):
         if cached is not None:
             return cached
         child = self._load(module_path)
-        normalized = self._norm_map(child.__name__, vars(child).get("_LAZY_IMPORTS"))
+        raw_lazy_imports = vars(child).get("_LAZY_IMPORTS")
+        if raw_lazy_imports is None:
+            normalized: LazyImportDict = {}
+            self.child_lazy_cache[module_path] = normalized
+            return normalized
+        normalized = self._norm_map(child.__name__, raw_lazy_imports)
         self.child_lazy_cache[module_path] = normalized
         return normalized
 

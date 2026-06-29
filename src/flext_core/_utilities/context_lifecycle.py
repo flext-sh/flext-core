@@ -21,7 +21,6 @@ from flext_core import (
     FlextRuntime,
     FlextTypes as t,
     FlextUtilitiesContextCrud,
-    FlextUtilitiesGuardsTypeCore,
 )
 
 
@@ -57,7 +56,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
                 k: FlextRuntime.normalize_to_metadata(v)
                 for k, v in self._metadata_map().items()
             }
-        export_model = m.ContextExport.model_validate({
+        export_model: m.ContextExport = m.ContextExport.model_validate({
             "data": dict(all_data),
             "metadata": (
                 m.Metadata.model_validate({"attributes": metadata_attributes})
@@ -67,7 +66,10 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
             "statistics": dict(stats_dict_export),
         })
         if as_dict:
-            return export_model.model_dump(mode="python")
+            export_payload: t.MappingKV[str, t.JsonPayload] = (
+                m.ConfigMap.model_validate(export_model.model_dump(mode="python")).root
+            )
+            return export_payload
         return export_model
 
     @staticmethod
@@ -83,14 +85,17 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     @staticmethod
     def _as_config_map(
-        source: (t.MappingKV[str, t.JsonPayload] | t.JsonMapping),
+        source: (t.JsonPayload | t.MappingKV[str, t.JsonPayload] | t.JsonMapping),
         label: str,
     ) -> m.ConfigMap | None:
         """Normalize an arbitrary mapping into a scope-compatible map."""
         try:
+            source_mapping: t.JsonMapping = t.json_mapping_adapter().validate_python(
+                source
+            )
             normalized_payload = (
                 FlextUtilitiesContextLifecycle._normalize_mapping_payload(
-                    source,
+                    source_mapping,
                 )
             )
             return m.ConfigMap.model_validate(normalized_payload)
@@ -122,7 +127,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         for scope_name, scope_payload in exported_map.items():
             if scope_name not in c.CONTEXT_MERGEABLE_SCOPES:
                 continue
-            if not FlextUtilitiesGuardsTypeCore.mapping(scope_payload):
+            if not isinstance(scope_payload, Mapping):
                 continue
             scope_data = self._as_config_map(scope_payload, "scope payload")
             if scope_data is not None:

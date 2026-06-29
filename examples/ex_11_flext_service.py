@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated, override
 
 from examples import ExamplesFlextShared, m, p, r, s, t, u
+from flext_core.protocols import p as core_p
 
 
 class _EchoService(s[str]):
@@ -34,12 +35,13 @@ class _EchoService(s[str]):
         }
 
     def valid(self) -> bool:
-        return self.validate_business_rules().success
+        validation: core_p.SuccessCheckable = self.validate_business_rules()
+        return validation.success
 
     def validate_business_rules(self) -> p.Result[bool]:
         if self.rule_error:
-            return r[bool].fail(self.rule_error)
-        return r[bool].ok(True)
+            return r[bool](error=self.rule_error, success=False)
+        return r[bool](value=True, success=True)
 
 
 class ExampleService:

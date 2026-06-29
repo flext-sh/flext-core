@@ -4,19 +4,22 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Callable
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from pydantic import ValidationError
 from returns.result import Failure, Success
 
-from flext_core import (
-    FlextModelsContainers as mc,
-    FlextModelsPydantic as mp,
-    FlextProtocolsResult as p,
-    c,
-    t,
-)
-from flext_core._result_parts.behavior import FlextResultBehaviorMixin
+from flext_core._constants.errors import FlextConstantsErrors as c
+from flext_core._constants.infrastructure import FlextConstantsInfrastructure
+from flext_core._constants.mixins import FlextConstantsMixins
+from flext_core._models.containers import FlextModelsContainers as mc
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.result import FlextProtocolsResult as p
+
+if TYPE_CHECKING:
+    from flext_core.typings import FlextTypes as t
+
+from .behavior import FlextResultBehaviorMixin
 
 
 class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
@@ -39,7 +42,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
         if exception is None:
             return None
         metadata = getattr(exception, "metadata", None)
-        raw_attributes = getattr(metadata, c.FIELD_ATTRIBUTES, None)
+        raw_attributes = getattr(metadata, FlextConstantsMixins.FIELD_ATTRIBUTES, None)
         if raw_attributes is None:
             return None
         try:
@@ -50,7 +53,9 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
             return None
         correlation_id = getattr(exception, "correlation_id", None)
         if isinstance(correlation_id, str) and correlation_id:
-            payload[c.ContextKey.CORRELATION_ID] = correlation_id
+            payload[FlextConstantsInfrastructure.ContextKey.CORRELATION_ID] = (
+                correlation_id
+            )
         return payload
 
     @classmethod

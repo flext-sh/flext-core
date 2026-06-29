@@ -17,9 +17,11 @@ from flext_core import (
     FlextModelsPydantic as mp,
     FlextProtocols as p,
     FlextTypes as t,
+    FlextTypesPydantic as tp,
     FlextUtilitiesPydantic as up,
 )
-from flext_core._models.base import FlextModelsBase as m
+
+from .base import FlextModelsBase as m
 
 
 class FlextModelsService:
@@ -39,24 +41,28 @@ class FlextModelsService:
 
         settings: Annotated[
             p.Settings,
+            tp.SkipValidation,
             mp.Field(
                 description="Service configuration settings for runtime behavior."
             ),
         ]
         context: Annotated[
             p.Context,
+            tp.SkipValidation,
             mp.Field(
                 description="Execution context carrying correlation and tracing metadata.",
             ),
         ]
         container: Annotated[
             p.Container,
+            tp.SkipValidation,
             mp.Field(
                 description="Dependency injection container for service resolution."
             ),
         ]
         dispatcher: Annotated[
             p.Dispatcher | None,
+            tp.SkipValidation,
             mp.Field(
                 None,
                 description="Dispatcher resolved for CQRS routing in this runtime.",
@@ -64,6 +70,7 @@ class FlextModelsService:
         ] = None
         registry: Annotated[
             p.Registry | None,
+            tp.SkipValidation,
             mp.Field(
                 None,
                 description="Registry bound to the runtime when one is materialized.",
@@ -73,11 +80,15 @@ class FlextModelsService:
     class RuntimeBootstrapOptions(m.ArbitraryTypesModel):
         """Options for runtime bootstrapping."""
 
-        settings: p.Settings | None = mp.Field(
-            None,
-            description="Pre-built settings instance used directly for the runtime.",
-            validate_default=True,
-        )
+        settings: Annotated[
+            p.Settings | None,
+            tp.SkipValidation,
+            mp.Field(
+                None,
+                description="Pre-built settings instance used directly for the runtime.",
+                validate_default=True,
+            ),
+        ] = None
         settings_type: type | None = mp.Field(
             None,
             description="FlextSettings class used to load runtime settings.",
@@ -88,41 +99,63 @@ class FlextModelsService:
             description="Key-value overrides applied on top of the loaded configuration.",
             validate_default=True,
         )
-        context: p.Context | None = mp.Field(
-            None,
-            description="Pre-built execution context to inject into the runtime.",
-            validate_default=True,
-        )
-        dispatcher: p.Dispatcher | None = mp.Field(
-            None,
-            description="Pre-built dispatcher injected into the runtime DSL.",
-            validate_default=True,
-        )
-        registry: p.Registry | None = mp.Field(
-            None,
-            description="Pre-built registry injected into the runtime DSL.",
-            validate_default=True,
-        )
+        context: Annotated[
+            p.Context | None,
+            tp.SkipValidation,
+            mp.Field(
+                None,
+                description="Pre-built execution context to inject into the runtime.",
+                validate_default=True,
+            ),
+        ] = None
+        dispatcher: Annotated[
+            p.Dispatcher | None,
+            tp.SkipValidation,
+            mp.Field(
+                None,
+                description="Pre-built dispatcher injected into the runtime DSL.",
+                validate_default=True,
+            ),
+        ] = None
+        registry: Annotated[
+            p.Registry | None,
+            tp.SkipValidation,
+            mp.Field(
+                None,
+                description="Pre-built registry injected into the runtime DSL.",
+                validate_default=True,
+            ),
+        ] = None
         subproject: str | None = mp.Field(
             None,
             description="Subproject name used to scope configuration and wiring.",
             validate_default=True,
         )
-        services: t.MappingKV[str, t.RegisterableService] | None = mp.Field(
-            None,
-            description="Named services to register in the dependency container.",
-            validate_default=True,
-        )
-        factories: t.MappingKV[str, t.FactoryCallable] | None = mp.Field(
-            None,
-            description="Named factory callables to register in the dependency container.",
-            validate_default=True,
-        )
-        resources: t.MappingKV[str, t.ResourceCallable] | None = mp.Field(
-            None,
-            description="Named lifecycle resources to register in the dependency container.",
-            validate_default=True,
-        )
+        services: Annotated[
+            t.MappingKV[str, Annotated[t.RegisterableService, tp.SkipValidation]]
+            | None,
+            mp.Field(
+                None,
+                description="Named services to register in the dependency container.",
+                validate_default=True,
+            ),
+        ] = None
+        factories: Annotated[
+            t.MappingKV[str, Annotated[t.FactoryCallable, tp.SkipValidation]] | None,
+            mp.Field(
+                None,
+                description="Named factory callables to register in the dependency container.",
+                validate_default=True,
+            ),
+        ] = None
+        resources: Annotated[
+            t.MappingKV[str, Annotated[t.ResourceCallable, tp.SkipValidation]] | None,
+            mp.Field(
+                None,
+                description="Named lifecycle resources to register in the dependency container.",
+                validate_default=True,
+            ),
+        ] = None
         container_overrides: t.ScalarMapping | None = mp.Field(
             None,
             description="Provider overrides applied to the dependency container.",

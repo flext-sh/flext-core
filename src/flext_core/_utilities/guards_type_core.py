@@ -14,14 +14,13 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import TypeIs, no_type_check
+from typing import TypeIs
 
 from pydantic import BaseModel as PydanticBaseModel
 
 from flext_core import FlextTypes as t
 
 
-@no_type_check
 class FlextUtilitiesGuardsTypeCore:
     """Type guards for core scalar and container types.
 
@@ -134,7 +133,7 @@ class FlextUtilitiesGuardsTypeCore:
         value: t.GuardInput | t.JsonPayload | t.JsonValue | None,
     ) -> str:
         """Return the concrete runtime type name for any FLEXT payload value."""
-        return str(type(value).__name__)
+        return type(value).__qualname__
 
     @staticmethod
     def _has_dict_protocol(

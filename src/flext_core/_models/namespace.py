@@ -10,10 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement as ue
+from flext_core import (
+    FlextConstantsEnforcement as c,
+    FlextTypesPydantic as tp,
+    FlextTypingBase as t,
+    FlextUtilitiesEnforcement as ue,
+)
 
 
 class FlextModelsNamespace:
@@ -33,7 +35,8 @@ class FlextModelsNamespace:
         ``utility_not_static``, ``proto_*``) additionally fire when the
         class name ends in a recognised layer suffix.
         """
-        super().__init_subclass__(**kwargs)
+        _ = kwargs
+        super().__init_subclass__()
         if c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.OFF:
             return
         layer = ue.detect_layer(cls) or ""

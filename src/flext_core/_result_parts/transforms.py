@@ -6,8 +6,11 @@ from abc import ABC
 from collections.abc import Callable
 from typing import Self, cast, overload, override
 
-from flext_core import FlextModelsPydantic as mp, FlextProtocolsResult as p, c
-from flext_core._result_parts.construction import FlextResultConstructionMixin
+from flext_core._constants.errors import FlextConstantsErrors as c
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.result import FlextProtocolsResult as p
+
+from .construction import FlextResultConstructionMixin
 
 
 class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):

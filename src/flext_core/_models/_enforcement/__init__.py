@@ -6,8 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._enforcement._catalog import FlextModelsEnforcementCatalog
-from flext_core._models._enforcement._params import FlextModelsEnforcementParams
+from ._catalog import FlextModelsEnforcementCatalog
+from ._params import FlextModelsEnforcementParams
 
 
 class FlextModelsEnforcement(

@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import ModuleType
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 from dependency_injector import containers, providers
 from pydantic import BaseModel, ConfigDict
@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict
 from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._protocols.container import FlextProtocolsContainer as pc
 from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._typings.services import FlextTypesServices as ts
 
 
@@ -41,9 +42,16 @@ class FlextRuntimeDependencyTypes:
         )
 
         settings: mc.ConfigMap | None = None
-        services: tb.MappingKV[str, ts.RegisterableService] | None = None
-        factories: tb.MappingKV[str, ts.FactoryCallable] | None = None
-        resources: tb.MappingKV[str, ts.ResourceCallable] | None = None
+        services: (
+            tb.MappingKV[str, Annotated[ts.RegisterableService, tp.SkipValidation]]
+            | None
+        ) = None
+        factories: (
+            tb.MappingKV[str, Annotated[ts.FactoryCallable, tp.SkipValidation]] | None
+        ) = None
+        resources: (
+            tb.MappingKV[str, Annotated[ts.ResourceCallable, tp.SkipValidation]] | None
+        ) = None
         wire_modules: tb.SequenceOf[ModuleType] | None = None
         wire_packages: tb.StrSequence | None = None
         wire_classes: tb.SequenceOf[type] | None = None

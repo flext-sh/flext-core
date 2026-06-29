@@ -15,13 +15,11 @@ from collections.abc import (
 )
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase as p
-from flext_core._protocols.result import FlextProtocolsResult as pr
+from .base import FlextProtocolsBase as p
+from .result import FlextProtocolsResult as pr
 
 if TYPE_CHECKING:
-    from flext_core.constants import FlextConstants as c
-    from flext_core.models import FlextModels as m
-    from flext_core.typings import FlextTypes as t
+    from flext_core import FlextConstants as c, FlextModels as m, FlextTypes as t
 
 
 class FlextProtocolsHandler:

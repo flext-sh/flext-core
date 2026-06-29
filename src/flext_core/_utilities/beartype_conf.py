@@ -13,8 +13,7 @@ from typing import ClassVar
 
 from beartype import BeartypeConf, BeartypeStrategy
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core import FlextConstantsEnforcement as c, FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeConf:

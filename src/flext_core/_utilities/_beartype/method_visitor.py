@@ -5,8 +5,7 @@ from __future__ import annotations
 import inspect
 import types as _types_mod
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core import FlextModelsEnforcement as me, FlextTypingBase as t
 
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}

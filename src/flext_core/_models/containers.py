@@ -24,9 +24,10 @@ from collections.abc import (
 )
 from typing import Annotated
 
-from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.services import FlextTypesServices
+
+from .pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsContainers:

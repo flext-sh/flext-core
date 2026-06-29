@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import ClassVar, override
+from typing import ClassVar, cast, override
 
-from flext_core import m, u
+from flext_core.models import m
+from flext_core.utilities import u
 
 
 class ExamplesFlextModelsEx05:
@@ -50,13 +51,15 @@ class ExamplesFlextModelsEx05:
         def process(self) -> bool:
             return True
 
-        @classmethod
         @override
+        @classmethod
         def validate(
             cls,
             value: m.ConfigMap,
         ) -> ExamplesFlextModelsEx05.GoodProcessor:
-            return cls.model_validate(value)
+            return cast(
+                "ExamplesFlextModelsEx05.GoodProcessor", cls.model_validate(value)
+            )
 
     class BadProcessor(m.Value):
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._runtime._dependency_bindings import FlextRuntimeDependencyBindings
+from ._dependency_bindings import FlextRuntimeDependencyBindings
 
 
 class FlextRuntimeDependencyIntegration:

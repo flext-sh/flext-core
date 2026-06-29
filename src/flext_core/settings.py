@@ -21,16 +21,22 @@ from typing import ClassVar, Self
 from pydantic import model_validator
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import c, e, p, t
-from flext_core._settings.base import FlextSettingsBase
-from flext_core._settings.context import FlextSettingsContext
-from flext_core._settings.core import FlextSettingsCore
-from flext_core._settings.database import FlextSettingsDatabase
-from flext_core._settings.di import FlextSettingsDI
-from flext_core._settings.dispatcher import FlextSettingsDispatcher
-from flext_core._settings.infrastructure import FlextSettingsInfrastructure
-from flext_core._settings.registry import FlextSettingsRegistry
-from flext_core.runtime import FlextRuntime
+from flext_core._runtime._base import FlextRuntimeBase as FlextRuntime
+
+from ._constants.environment import FlextConstantsEnvironment
+from ._constants.errors import FlextConstantsErrors
+from ._constants.serialization import FlextConstantsSerialization
+from ._constants.settings import FlextConstantsSettings
+from ._protocols.settings import FlextProtocolsSettings as p
+from ._settings.base import FlextSettingsBase
+from ._settings.context import FlextSettingsContext
+from ._settings.core import FlextSettingsCore
+from ._settings.database import FlextSettingsDatabase
+from ._settings.di import FlextSettingsDI
+from ._settings.dispatcher import FlextSettingsDispatcher
+from ._settings.infrastructure import FlextSettingsInfrastructure
+from ._settings.registry import FlextSettingsRegistry
+from ._typings.base import FlextTypingBase as t
 
 
 class FlextSettings(
@@ -54,12 +60,12 @@ class FlextSettings(
     Base: ClassVar[type[FlextSettingsBase]] = FlextSettingsBase
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
-        env_prefix=c.ENV_PREFIX,
-        env_nested_delimiter=c.ENV_NESTED_DELIMITER,
+        env_prefix=FlextConstantsEnvironment.ENV_PREFIX,
+        env_nested_delimiter=FlextConstantsEnvironment.ENV_NESTED_DELIMITER,
         env_file=FlextSettingsBase.resolve_env_file(),
-        env_file_encoding=c.DEFAULT_ENCODING,
+        env_file_encoding=FlextConstantsSerialization.DEFAULT_ENCODING,
         case_sensitive=False,
-        extra=c.EXTRA_CONFIG_IGNORE,
+        extra=FlextConstantsSettings.EXTRA_CONFIG_IGNORE,
         validate_assignment=True,
     )
 
@@ -116,7 +122,10 @@ class FlextSettings(
         if settings_class is None:
             msg = f"Namespace '{name}' not registered"
             raise AttributeError(msg)
-        return self.fetch_namespace(namespace_key, settings_class)
+        namespace_settings: p.Settings = self.fetch_namespace(
+            namespace_key, settings_class
+        )
+        return namespace_settings
 
     @classmethod
     def for_context(cls, context_id: str, **overrides: t.Scalar) -> Self:
@@ -142,12 +151,8 @@ class FlextSettings(
         """
         settings_class_raw = self._namespace_registry.get(namespace)
         if settings_class_raw is None:
-            raise ValueError(
-                e.render_template(
-                    "Namespace '{namespace}' not registered",
-                    namespace=namespace,
-                ),
-            )
+            error_message = f"Namespace '{namespace}' not registered"
+            raise ValueError(error_message)
         raw_instance = getattr(settings_class_raw, "_instance", None)
         settings_instance = (
             raw_instance
@@ -156,14 +161,12 @@ class FlextSettings(
         )
         if isinstance(settings_instance, settings_type):
             return settings_instance
-        raise TypeError(
-            e.render_template(
-                "Namespace '{namespace}' settings instance {instance_class} is not instance of {expected_type}",
-                namespace=namespace,
-                instance_class=settings_instance.__class__.__name__,
-                expected_type=settings_type.__name__,
-            ),
+        error_message = (
+            f"Namespace '{namespace}' settings instance "
+            f"{settings_instance.__class__.__name__} is not instance of "
+            f"{settings_type.__name__}"
         )
+        raise TypeError(error_message)
 
     @model_validator(mode="after")
     def _validate_settings(self) -> Self:
@@ -173,9 +176,9 @@ class FlextSettings(
             "mysql://",
             "sqlite://",
         )):
-            raise ValueError(c.ERR_CONFIG_INVALID_DB_URL_SCHEME)
+            raise ValueError(FlextConstantsErrors.ERR_CONFIG_INVALID_DB_URL_SCHEME)
         if self.trace and not self.debug:
-            raise ValueError(c.ERR_CONFIG_TRACE_REQUIRES_DEBUG)
+            raise ValueError(FlextConstantsErrors.ERR_CONFIG_TRACE_REQUIRES_DEBUG)
         return self
 
 

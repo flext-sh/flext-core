@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Final
 
-from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
+from .flextconstantsenforcement_part_01 import (
     FlextConstantsEnforcementEnums,
 )
 

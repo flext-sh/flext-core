@@ -5,7 +5,7 @@ import.constant: <ErrorCode.UNKNOWN_ERROR: 'UNKNOWN_ERROR'>
 style.raise_msg: 'boom'
 
 [base_error]
-base.class: 'BaseError'
+base.class: 'FlextBaseError'
 base.message: 'base boom'
 base.error_code: 'E_BASE'
 base.correlation_id: 'corr-base-1'

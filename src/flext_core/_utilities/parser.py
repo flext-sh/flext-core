@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import no_type_check
 
 from flext_core import (
     FlextConstants as c,
@@ -21,10 +20,10 @@ from flext_core import (
     FlextTypes as t,
     FlextUtilitiesGuardsTypeModel,
 )
-from flext_core._utilities.parser_targets import FlextUtilitiesParserTargets
+
+from .parser_targets import FlextUtilitiesParserTargets
 
 
-@no_type_check
 class FlextUtilitiesParser(FlextUtilitiesParserTargets):
     """Universal type parser dispatch — strings, enums, models, primitives."""
 

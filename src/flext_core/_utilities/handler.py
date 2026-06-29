@@ -15,14 +15,12 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from flext_core import (
-    FlextModelsHandler,
-    FlextRuntime,
-    c,
-    p,
-    r,
-    t,
-)
+from flext_core._models.handler import FlextModelsHandler
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import r
+from flext_core.runtime import FlextRuntime
+from flext_core.typings import t
 
 
 class FlextUtilitiesHandler:
@@ -46,13 +44,14 @@ class FlextUtilitiesHandler:
         state: FlextModelsHandler.HandlerRuntimeState,
     ) -> FlextModelsHandler.HandlerRuntimeState:
         """Stamp the current monotonic time on the active execution context."""
-        return state.model_copy(
+        updated_state: FlextModelsHandler.HandlerRuntimeState = state.model_copy(
             update={
                 "execution_context": state.execution_context.model_copy(
                     update={"started_at": time.time()},
                 ),
             },
         )
+        return updated_state
 
     @staticmethod
     def record_metric(
@@ -105,7 +104,8 @@ class FlextUtilitiesHandler:
     ) -> p.Result[t.ScalarMapping]:
         """Pop the top context and return its identity as a scalar mapping."""
         if not state.context_stack:
-            return r[t.ScalarMapping].ok({})
+            empty_context: t.ScalarMapping = {}
+            return r[t.ScalarMapping].ok(empty_context)
         popped = state.context_stack.pop()
         return r[t.ScalarMapping].ok({
             "handler_name": popped.handler_name,

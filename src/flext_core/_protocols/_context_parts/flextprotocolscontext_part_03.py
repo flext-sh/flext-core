@@ -16,7 +16,7 @@ if TYPE_CHECKING:
         FlextProtocolsSettings,
         t,
     )
-from flext_core._protocols._context_parts.flextprotocolscontext_part_02 import (
+from .flextprotocolscontext_part_02 import (
     FlextProtocolsContext as FlextProtocolsContextPart02,
 )
 

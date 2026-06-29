@@ -5,10 +5,8 @@ from __future__ import annotations
 import warnings
 from types import MappingProxyType
 
-from flext_core._constants.enforcement import (
-    FlextConstantsEnforcement as c,
-    FlextMroViolation,
-)
+from flext_core import FlextMroViolation
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
 

@@ -5,9 +5,9 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
+from flext_core import FlextModelsEnforcement as me, FlextTypingBase as t
+
+from .helpers import FlextUtilitiesBeartypeHelpers
 
 _NO_VIOLATION: t.StrMapping | None = None
 

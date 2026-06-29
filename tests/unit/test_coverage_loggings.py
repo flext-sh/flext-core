@@ -20,9 +20,9 @@ class TestsFlextCoverageLoggings:
         return u.create_module_logger(name)
 
     @staticmethod
-    def assert_log_result_success[TResult: p.ResultLike[bool]](
-        result: TResult | None,
-    ) -> TResult:
+    def assert_log_result_success(
+        result: p.ResultLike[bool] | None,
+    ) -> p.ResultLike[bool]:
         if result is None:
             msg = "Expected result to not be None"
             raise AssertionError(msg)
@@ -30,13 +30,13 @@ class TestsFlextCoverageLoggings:
         tm.that(result.value, eq=True)
         return result
 
-    def assert_captured_log_success[TResult: p.ResultLike[bool]](
+    def assert_captured_log_success(
         self,
-        emit: Callable[[], TResult | None],
+        emit: Callable[[], p.ResultLike[bool] | None],
         *,
         contains: str,
         expected_tokens: t.StrSequence = (),
-    ) -> TResult:
+    ) -> p.ResultLike[bool]:
         stream = io.StringIO()
         with redirect_stdout(stream):
             result = emit()

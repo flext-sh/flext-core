@@ -11,15 +11,13 @@ from datetime import datetime
 from pathlib import Path
 
 from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._protocols.base import FlextProtocolsBase as pb
-from flext_core._protocols.result import FlextProtocolsResult as pr
-from flext_core._runtime._base import FlextRuntimeBase
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
-from flext_core._utilities.guards_type_model import (
-    FlextUtilitiesGuardsTypeModel as ugm,
-)
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel as ugm
+
+from ._base import FlextRuntimeBase
 
 
 class FlextRuntimeMetadata(FlextRuntimeBase):
@@ -33,8 +31,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         | mc.ConfigMap
         | mc.Dict
         | AbstractSet[tb.Scalar]
-        | pb.Model
-        | pr.HasModelDump
+        | mp.BaseModel
         | None,
     ) -> tb.JsonValue:
         """Normalize arbitrary runtime input to one validated ``JsonValue``."""
@@ -45,7 +42,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             validated_value = tta.json_value_adapter().validate_python(
                 value.model_dump(mode="json")
             )
-        elif isinstance(value, pb.Model):
+        elif isinstance(value, mp.BaseModel):
             validated_value = tta.json_value_adapter().validate_python(str(value))
         else:
             validated_value = tta.json_value_adapter().validate_python(
@@ -78,9 +75,9 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
     @staticmethod
     def normalize_model_input_mapping(
-        value: pr.HasModelDump
-        | pb.Model
+        value: mp.BaseModel
         | mc.Dict
+        | ts.ConfigModelInput
         | tb.MappingKV[str, ts.JsonPayload]
         | None,
     ) -> tb.JsonMapping | None:

@@ -16,9 +16,10 @@ from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.file import FlextConstantsFile as cf
 from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._protocols.container import FlextProtocolsContainer as pc
-from flext_core._runtime._dependency_options import FlextRuntimeDependencyOptions
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
+
+from ._dependency_options import FlextRuntimeDependencyOptions
 
 
 class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):

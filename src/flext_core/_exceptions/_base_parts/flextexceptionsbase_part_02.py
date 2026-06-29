@@ -7,15 +7,18 @@ import uuid
 from collections.abc import Mapping
 from typing import ClassVar, override
 
-from flext_core import (
-    FlextConstants as c,
-    FlextModelsBase as m,
-    FlextModelsContainers as mc,
-    FlextProtocols as p,
-    FlextRuntime,
-    FlextTypes as t,
+from flext_core._constants.errors import FlextConstantsErrors as ce
+from flext_core._constants.validation import FlextConstantsValidation as cv
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers as mc
+from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._runtime._metadata_validation import (
+    FlextRuntimeMetadataValidation as FlextRuntime,
 )
-from flext_core._exceptions._base_parts.flextexceptionsbase_part_01 import (
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.services import FlextTypesServices as ts
+
+from .flextexceptionsbase_part_01 import (
     FlextBaseErrorMetadataMixin,
 )
 
@@ -29,24 +32,24 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
     auto_log: bool
     args: tuple[str, ...]
 
-    _error_domains: ClassVar[Mapping[str, c.ErrorDomain]] = {
-        c.ErrorCode.VALIDATION_ERROR: c.ErrorDomain.VALIDATION,
-        c.ErrorCode.TYPE_ERROR: c.ErrorDomain.VALIDATION,
-        c.ErrorCode.ALREADY_EXISTS: c.ErrorDomain.VALIDATION,
-        c.ErrorCode.CONFIG_ERROR: c.ErrorDomain.INTERNAL,
-        c.ErrorCode.CONFIGURATION_ERROR: c.ErrorDomain.INTERNAL,
-        c.ErrorCode.ATTRIBUTE_ERROR: c.ErrorDomain.INTERNAL,
-        c.ErrorCode.OPERATION_ERROR: c.ErrorDomain.INTERNAL,
-        c.ErrorCode.AUTHENTICATION_ERROR: c.ErrorDomain.AUTH,
-        c.ErrorCode.AUTHORIZATION_ERROR: c.ErrorDomain.AUTH,
-        c.ErrorCode.PERMISSION_ERROR: c.ErrorDomain.AUTH,
-        c.ErrorCode.CONNECTION_ERROR: c.ErrorDomain.NETWORK,
-        c.ErrorCode.EXTERNAL_SERVICE_ERROR: c.ErrorDomain.NETWORK,
-        c.ErrorCode.TIMEOUT_ERROR: c.ErrorDomain.TIMEOUT,
-        c.ErrorCode.NOT_FOUND_ERROR: c.ErrorDomain.NOT_FOUND,
-        c.ErrorCode.NOT_FOUND: c.ErrorDomain.NOT_FOUND,
-        c.ErrorCode.RESOURCE_NOT_FOUND: c.ErrorDomain.NOT_FOUND,
-        c.ErrorCode.UNKNOWN_ERROR: c.ErrorDomain.UNKNOWN,
+    _error_domains: ClassVar[Mapping[str, ce.ErrorDomain]] = {
+        cv.ErrorCode.VALIDATION_ERROR: ce.ErrorDomain.VALIDATION,
+        cv.ErrorCode.TYPE_ERROR: ce.ErrorDomain.VALIDATION,
+        cv.ErrorCode.ALREADY_EXISTS: ce.ErrorDomain.VALIDATION,
+        cv.ErrorCode.CONFIG_ERROR: ce.ErrorDomain.INTERNAL,
+        cv.ErrorCode.CONFIGURATION_ERROR: ce.ErrorDomain.INTERNAL,
+        cv.ErrorCode.ATTRIBUTE_ERROR: ce.ErrorDomain.INTERNAL,
+        cv.ErrorCode.OPERATION_ERROR: ce.ErrorDomain.INTERNAL,
+        cv.ErrorCode.AUTHENTICATION_ERROR: ce.ErrorDomain.AUTH,
+        cv.ErrorCode.AUTHORIZATION_ERROR: ce.ErrorDomain.AUTH,
+        cv.ErrorCode.PERMISSION_ERROR: ce.ErrorDomain.AUTH,
+        cv.ErrorCode.CONNECTION_ERROR: ce.ErrorDomain.NETWORK,
+        cv.ErrorCode.EXTERNAL_SERVICE_ERROR: ce.ErrorDomain.NETWORK,
+        cv.ErrorCode.TIMEOUT_ERROR: ce.ErrorDomain.TIMEOUT,
+        cv.ErrorCode.NOT_FOUND_ERROR: ce.ErrorDomain.NOT_FOUND,
+        cv.ErrorCode.NOT_FOUND: ce.ErrorDomain.NOT_FOUND,
+        cv.ErrorCode.RESOURCE_NOT_FOUND: ce.ErrorDomain.NOT_FOUND,
+        cv.ErrorCode.UNKNOWN_ERROR: ce.ErrorDomain.UNKNOWN,
     }
 
     @property
@@ -56,7 +59,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
             return None
         domain = self._error_domains.get(
             self.error_code,
-            c.ErrorDomain.UNKNOWN,
+            ce.ErrorDomain.UNKNOWN,
         )
         return domain.value
 
@@ -74,19 +77,21 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         message: str,
         *,
         error_code: str,
-        context: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
-        metadata: p.HasModelDump | t.JsonValue | None,
+        context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+        metadata: pr.HasModelDump | tb.JsonValue | None,
         correlation_id: str | None,
         auto_correlation: bool,
         auto_log: bool,
-        merged_kwargs: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
-        extra_kwargs: t.MappingKV[str, t.JsonPayload | None],
+        merged_kwargs: tb.MappingKV[str, ts.JsonPayload | None]
+        | pr.HasModelDump
+        | None,
+        extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
     ) -> None:
         """Initialize the shared base error state without subclass metaprogramming."""
         self.args = (message,)
         self.message = message
         self.error_code = error_code
-        final_kwargs_dict: t.JsonDict = {}
+        final_kwargs_dict: tb.JsonDict = {}
         for source_value in (merged_kwargs, context, extra_kwargs):
             if source_value is None:
                 continue
@@ -94,7 +99,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
                 source_dict = FlextRuntime.normalize_metadata_input_mapping(
                     source_value,
                 )
-            except c.EXC_PYDANTIC_TYPE_VALUE:
+            except ce.EXC_PYDANTIC_TYPE_VALUE:
                 continue
             if not source_dict:
                 continue

@@ -11,13 +11,13 @@ from collections.abc import Callable, Mapping
 from typing import ClassVar, TypeGuard
 
 from flext_core import (
+    FlextConstantsCqrs as _c_cqrs,
     FlextProtocols as p,
     FlextResult as r,
     FlextRuntime,
     FlextTypes as t,
     FlextUtilitiesGuardsTypeCore,
 )
-from flext_core._constants.cqrs import FlextConstantsCqrs as _c_cqrs
 
 
 class FlextUtilitiesCollectionMerge:

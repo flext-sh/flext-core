@@ -16,19 +16,17 @@ from collections.abc import (
 from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import (
-    FlextProtocolsBase,
-    FlextProtocolsContainer,
-    FlextProtocolsContext,
-    FlextProtocolsHandler,
-    FlextProtocolsLogging,
-    FlextProtocolsRegistry,
-    FlextProtocolsResult,
-    FlextProtocolsSettings,
-)
+from .base import FlextProtocolsBase
+from .container import FlextProtocolsContainer
+from .context import FlextProtocolsContext
+from .handler import FlextProtocolsHandler
+from .logging import FlextProtocolsLogging
+from .registry import FlextProtocolsRegistry
+from .result import FlextProtocolsResult
+from .settings import FlextProtocolsSettings
 
 if TYPE_CHECKING:
-    from flext_core import t
+    from flext_core import FlextTypesServices as ts, FlextTypingBase as tb
 
 
 class FlextProtocolsService:
@@ -128,7 +126,7 @@ class FlextProtocolsService:
         def track(
             self,
             operation_name: str,
-        ) -> AbstractContextManager[Mapping[str, t.JsonPayload]]:
+        ) -> AbstractContextManager[Mapping[str, ts.JsonPayload]]:
             """Track operation performance with timing and context cleanup."""
             ...
 
@@ -167,7 +165,7 @@ class FlextProtocolsService:
             """Execute domain service logic."""
             ...
 
-        def service_info(self) -> t.JsonMapping:
+        def service_info(self) -> tb.JsonMapping:
             """Get service metadata and configuration information."""
             ...
 

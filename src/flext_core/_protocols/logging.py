@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._protocols._logging_parts.flextprotocolslogging_part_03 import (
+from ._logging_parts.flextprotocolslogging_part_03 import (
     FlextProtocolsLogging as FlextProtocolsLoggingPartFinal,
 )
 

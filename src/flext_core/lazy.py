@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core._lazy_parts import FlextLazy
+from ._lazy_parts import FlextLazy
 
 lazy = FlextLazy()
 """Shared ``FlextLazy`` singleton used by package-level lazy exports."""

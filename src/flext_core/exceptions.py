@@ -11,15 +11,15 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import (
-    FlextExceptionsBase,
-    FlextExceptionsFactories,
-    FlextExceptionsHelpers,
-    FlextExceptionsMetrics,
-    FlextExceptionsTemplate,
+from ._constants.enforcement import FlextMroViolation
+from ._exceptions.base import FlextExceptionsBase
+from ._exceptions.factories import FlextExceptionsFactories
+from ._exceptions.helpers import FlextExceptionsHelpers
+from ._exceptions.metrics import FlextExceptionsMetrics
+from ._exceptions.template import FlextExceptionsTemplate
+from ._exceptions.types import (
     FlextExceptionsTypes,
 )
-from flext_core._constants.enforcement import FlextMroViolation
 
 
 class FlextExceptions(

@@ -3,21 +3,8 @@
 
 from __future__ import annotations
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+from flext_core._typings.lazy import FlextTypesLazy
 
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".annotateds": ("FlextTypesAnnotateds",),
-        ".base": ("FlextTypingBase",),
-        ".containers": ("FlextTypingContainers",),
-        ".core": ("FlextTypesCore",),
-        ".lazy": ("FlextTypesLazy",),
-        ".project_metadata": ("FlextTypingProjectMetadata",),
-        ".pydantic": ("FlextTypesPydantic",),
-        ".services": ("FlextTypesServices",),
-        ".typeadapters": ("FlextTypesTypeAdapters",),
-    },
-)
-
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
+__all__: list[str] = [
+    "FlextTypesLazy",
+]

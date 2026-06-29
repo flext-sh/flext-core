@@ -1,12 +1,4 @@
-"""Message dispatch orchestration with reliability features.
-
-Coordinates command and query execution with routing, reliability policies,
-and observability features for handler registration and execution.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""Message dispatch orchestration with reliability features."""
 
 from __future__ import annotations
 
@@ -16,23 +8,21 @@ from collections.abc import (
 )
 
 from flext_core import c, p, r, t, u
-from flext_core._utilities.dispatcher_execute import execute_dispatcher_handler
+
+from ._utilities.dispatcher_execute import execute_dispatcher_handler
 
 
 class FlextDispatcher:
-    """Application-level dispatcher that satisfies the command bus protocol.
-
-    The dispatcher exposes CQRS routing, handler registration, and execution
-    with layered reliability controls for message dispatching and handler execution.
-    """
+    """Application-level dispatcher that satisfies the command bus protocol."""
 
     def __init__(self) -> None:
         """Initialize dispatcher."""
         super().__init__()
         self.logger = u.fetch_logger(__name__)
-        self._handlers: t.RegistryDict[
+        handlers: t.RegistryDict[
             tuple[t.DispatchableHandler, t.RoutedHandlerCallable]
         ] = {}
+        self._handlers = handlers
         self._auto_handlers: MutableSequence[
             tuple[
                 t.DispatchableHandler,
@@ -40,20 +30,13 @@ class FlextDispatcher:
                 tuple[t.TypeHintSpecifier, ...],
             ]
         ] = []
-        self._event_subscribers: t.RegistryDict[
+        event_subscribers: t.RegistryDict[
             MutableSequence[tuple[t.DispatchableHandler, t.RoutedHandlerCallable]]
         ] = {}
+        self._event_subscribers = event_subscribers
 
     def dispatch(self, message: p.Routable) -> p.Result[t.JsonPayload]:
-        """Dispatch a CQRS message to its registered handler.
-
-        Args:
-            message: The Pydantic model representing command or query.
-
-        Returns:
-            Result containing the handler result or failure message.
-
-        """
+        """Dispatch a CQRS message to its registered handler."""
         try:
             route_name = u.resolve_message_route(message)
         except c.EXC_TYPE_VALIDATION as exc:
@@ -77,15 +60,7 @@ class FlextDispatcher:
         return self._execute_handler(resolved_handler, message, route_name)
 
     def publish(self, event: p.Routable | t.SequenceOf[p.Routable]) -> p.Result[bool]:
-        """Publish events to all registered subscribers.
-
-        Args:
-            event: Single event model or list of event models.
-
-        Returns:
-            Result indicating if publication started successfully.
-
-        """
+        """Publish events to all registered subscribers."""
         if isinstance(event, Sequence):
             for evt in event:
                 _ = self.publish(evt)
@@ -100,7 +75,9 @@ class FlextDispatcher:
                     isinstance(auto_h, p.AutoDiscoverableHandler)
                     and auto_h.can_handle(evt_type)
                 )
-            ) and all(existing_handler != auto_h for existing_handler, _ in handlers):
+            ) and all(
+                existing_handler is not auto_h for existing_handler, _ in handlers
+            ):
                 handlers.append((auto_h, resolved_handler))
         if not handlers:
             return r[bool].ok(True)
@@ -114,21 +91,10 @@ class FlextDispatcher:
         *,
         is_event: bool = False,
     ) -> p.Result[bool]:
-        """Register a handler for a specific message type.
-
-        Args:
-            handler: A callable or canonical handler value with handle/can_handle methods.
-                     Must expose message_type, event_type, or can_handle
-                     for route discovery.
-            is_event: If True, register as event subscriber.
-
-        Returns:
-            r[bool]: Success or failure with error message.
-
-        """
+        """Register a handler for a specific message type."""
         route_name: str | None = None
         accepted_message_types: tuple[t.TypeHintSpecifier, ...] = tuple(
-            u.compute_accepted_message_types(handler.__class__),
+            u.compute_accepted_message_types(type(handler)),
         )
         resolved_handler: t.RoutedHandlerCallable
         is_auto_discoverable = isinstance(handler, p.AutoDiscoverableHandler)

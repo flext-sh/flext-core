@@ -19,8 +19,8 @@ from pathlib import Path
 from types import GenericAlias, UnionType
 from typing import ForwardRef, TypeAliasType
 
-from flext_core._typings.annotateds import FlextTypesAnnotateds as ta
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from .annotateds import FlextTypesAnnotateds as ta
+from .pydantic import FlextTypesPydantic as tp
 
 
 class FlextTypingBase(tp, ta):

@@ -10,7 +10,8 @@ from collections.abc import Callable, Mapping
 from typing import overload
 
 from flext_core import t
-from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
+
+from .collection_merge import FlextUtilitiesCollectionMerge
 
 
 class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):

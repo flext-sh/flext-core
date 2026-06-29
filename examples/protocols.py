@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from flext_core import p as _p
+from flext_core.protocols import FlextProtocols
 
-p = _p
+p: type[FlextProtocols] = FlextProtocols
 
 __all__: list[str] = ["p"]

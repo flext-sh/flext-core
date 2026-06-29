@@ -10,9 +10,9 @@ from flext_core import (
     FlextConstants as c,
     FlextModelsContainers as mc,
     FlextModelsPydantic as mp,
+    FlextRuntime,
     FlextTypes as t,
 )
-from flext_core.runtime import FlextRuntime
 
 
 class FlextExceptionsTemplate:

@@ -8,8 +8,11 @@ from typing import cast
 
 from pydantic import ValidationError
 
-from flext_core import FlextProtocolsResult as p, c, t
-from flext_core._result_parts.construction import FlextResultConstructionMixin
+from flext_core._constants.errors import FlextConstantsErrors as c
+from flext_core._protocols.result import FlextProtocolsResult as p
+from flext_core._typings.base import FlextTypingBase as t
+
+from .construction import FlextResultConstructionMixin
 
 
 class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):

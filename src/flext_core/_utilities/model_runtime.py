@@ -11,7 +11,8 @@ from flext_core import (
     FlextUtilitiesDiscovery,
     FlextUtilitiesGuardsTypeProtocol,
 )
-from flext_core._utilities.model_options import FlextUtilitiesModelOptions
+
+from .model_options import FlextUtilitiesModelOptions
 
 
 class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
@@ -121,7 +122,8 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
                 runtime_options.wire_classes,
             )
         )
-        runtime_container = container_type.shared().scope(
+        shared_container: p.Container = container_type.shared()
+        runtime_container: p.Container = shared_container.scope(
             subproject=runtime_options.subproject,
             registration=m.ServiceRegistrationSpec.model_validate({
                 "settings": runtime_settings,
@@ -156,9 +158,10 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         runtime_options = cls.resolve_runtime_options(source, **overrides)
         context_type = cls._context_type()
         runtime_settings = cls._resolve_runtime_settings(runtime_options)
-        runtime_context = (
-            runtime_options.context
-            if FlextUtilitiesGuardsTypeProtocol.context(runtime_options.context)
+        runtime_context_candidate = runtime_options.context
+        runtime_context: p.Context = (
+            runtime_context_candidate
+            if FlextUtilitiesGuardsTypeProtocol.context(runtime_context_candidate)
             else context_type.create()
         )
         runtime_container = cls._build_runtime_container(
@@ -185,7 +188,10 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         runtime_registry = cls._resolve_runtime_registry(
             runtime_options, service_runtime
         )
-        return service_runtime.model_copy(update={"registry": runtime_registry})
+        resolved_runtime: m.ServiceRuntime = service_runtime.model_copy(
+            update={"registry": runtime_registry},
+        )
+        return resolved_runtime
 
 
 __all__: list[str] = ["FlextUtilitiesModelRuntime"]

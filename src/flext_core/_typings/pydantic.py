@@ -119,6 +119,9 @@ class FlextTypesPydantic:
     # and the mypy plugin recognize as type markers.
     Json = pydantic.Json
     JsonValue = pydantic.JsonValue
+    BaseModel = pydantic.BaseModel
+    TypeAdapter = pydantic.TypeAdapter
+    ConfigDict = pydantic.ConfigDict
     ImportString = pydantic.ImportString
     InstanceOf = pydantic.InstanceOf
     Secret = pydantic.Secret

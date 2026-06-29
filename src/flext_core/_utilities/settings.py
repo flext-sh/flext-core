@@ -15,13 +15,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from flext_core import (
-    FlextConstants as c,
-    FlextExceptions as e,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextTypes as t,
-)
+from flext_core._exceptions.factories import FlextExceptionsFactories as e
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import r
+from flext_core.typings import t
 
 
 class FlextUtilitiesSettings:
@@ -56,10 +54,11 @@ class FlextUtilitiesSettings:
         _ = container.factory(name, factory)
         resolved = container.resolve(name)
         if resolved.failure:
-            return e.fail_operation(
+            failure: p.Result[bool] = e.fail_operation(
                 "resolve registered config factory",
                 resolved.error or c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
             )
+            return failure
         return r[bool].ok(True)
 
 

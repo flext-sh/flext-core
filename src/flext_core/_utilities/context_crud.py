@@ -75,7 +75,8 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
     def items(self) -> t.SequenceOf[t.Pair[str, t.JsonValue]]:
         """Get all items (key-value pairs) across scopes."""
         if not self.state.active:
-            return []
+            empty_items: list[t.Pair[str, t.JsonValue]] = []
+            return empty_items
         return [item for d in self._iter_scoped_dicts() for item in d.items()]
 
     def keys(self) -> t.StrSequence:

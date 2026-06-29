@@ -21,8 +21,9 @@ from flext_core import (
     FlextRuntime,
     FlextTypes as t,
 )
-from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
-from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
+
+from .collection_iter import FlextUtilitiesCollectionIter
+from .collection_merge import FlextUtilitiesCollectionMerge
 
 
 class FlextUtilitiesCollection(
@@ -36,7 +37,8 @@ class FlextUtilitiesCollection(
     ) -> t.JsonMapping:
         """Normalize domain event payloads into plain flat mappings."""
         if value is None:
-            return {}
+            empty_data: t.JsonMapping = {}
+            return empty_data
         raw_source = value.root if isinstance(value, mc.ConfigMap) else value
         normalized: t.MutableJsonMapping = {}
         for key, item in raw_source.items():

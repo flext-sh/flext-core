@@ -19,6 +19,8 @@ from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core.constants import FlextConstants as c
 from flext_core.typings import FlextTypes as t
 
+_EMPTY_SCALAR_MAPPING: t.MappingKV[str, t.Scalar] = MappingProxyType({})
+
 
 class FlextModelsContextData:
     """Namespace for context data models."""
@@ -39,7 +41,7 @@ class FlextModelsContextData:
     ) -> t.MappingKV[str, t.Scalar]:
         """Convert value to an immutable flat mapping with scalar values only."""
         if v is None:
-            return MappingProxyType({})
+            return _EMPTY_SCALAR_MAPPING
         if isinstance(v, Mapping):
             return FlextModelsContextData._coerce_scalar_mapping(v)
         if isinstance(v, mp.BaseModel):
@@ -76,7 +78,7 @@ class FlextModelsContextData:
         ) -> t.MappingKV[str, t.Scalar]:
             """Validate that data values are JSON-serializable."""
             if v is None:
-                return MappingProxyType({})
+                return _EMPTY_SCALAR_MAPPING
             if isinstance(v, Mapping):
                 return MappingProxyType({
                     k: (str(val) if not isinstance(val, t.PRIMITIVES_TYPES) else val)
@@ -98,7 +100,7 @@ class FlextModelsContextData:
             mp.Field(
                 description="Initial context data as key-value pairs",
             ),
-        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
+        ] = mp.Field(default_factory=lambda: _EMPTY_SCALAR_MAPPING)
         metadata: Annotated[
             m.Metadata | t.MappingKV[str, t.Scalar] | None,
             BeforeValidator(

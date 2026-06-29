@@ -14,12 +14,10 @@ from collections.abc import (
 from types import MappingProxyType
 from typing import TypeIs
 
-from flext_core import (
-    FlextConstants as c,
-    FlextProtocols as p,
-    FlextTypes as t,
-    FlextUtilitiesGuardsTypeModel as ugm,
-)
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel as ugm
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.typings import t
 
 
 class FlextUtilitiesGuardsTypeProtocol:

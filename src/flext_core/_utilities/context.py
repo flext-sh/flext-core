@@ -14,8 +14,11 @@ from __future__ import annotations
 from datetime import datetime
 from typing import ClassVar
 
-from flext_core import FlextModelsContext, FlextTypes as t
-from flext_core._constants.infrastructure import FlextConstantsInfrastructure as _c
+from flext_core import (
+    FlextConstantsInfrastructure as _c,
+    FlextModelsContext,
+    FlextTypes as t,
+)
 
 
 class FlextUtilitiesContext:

@@ -9,10 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from importlib.metadata import PackageMetadata, metadata
-
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextVersion:
@@ -26,7 +24,7 @@ class FlextVersion:
 
     # -- Base-class derivation (inline; subclass derivation via __init_subclass__) --
     __version__: str = _metadata["Version"]
-    __version_info__: t.VariadicTuple[int | str] = tuple(
+    __version_info__: tuple[int | str, ...] = tuple(
         int(part) if part.isdigit() else part for part in __version__.split(".")
     )
     __title__: str = _metadata.get("Name", "")
@@ -38,9 +36,13 @@ class FlextVersion:
     )
     __url__: str = _metadata.get("Home-Page", "") or _metadata.get("Project-URL", "")
 
-    def __init_subclass__(cls, **kwargs: tp.JsonValue) -> None:
+    def __init_subclass__(
+        cls,
+        **kwargs: str | float | bool | None,
+    ) -> None:
         """Recompute derived attributes when a subclass overrides ``_metadata``."""
-        super().__init_subclass__(**kwargs)
+        _ = kwargs
+        super().__init_subclass__()
         if "_metadata" in cls.__dict__:
             m = cls._metadata
             cls.__version__ = m["Version"]
@@ -55,7 +57,7 @@ class FlextVersion:
             cls.__url__ = m.get("Home-Page", "") or m.get("Project-URL", "")
 
     @classmethod
-    def resolve_package_info(cls) -> t.MappingKV[str, str]:
+    def resolve_package_info(cls) -> Mapping[str, str]:
         """Get comprehensive package information dictionary."""
         return {
             "name": cls.__title__,
@@ -68,7 +70,7 @@ class FlextVersion:
         }
 
     @classmethod
-    def resolve_version_info(cls) -> t.VariadicTuple[int | str]:
+    def resolve_version_info(cls) -> tuple[int | str, ...]:
         """Get package version as comparison-friendly tuple."""
         return cls.__version_info__
 
@@ -91,7 +93,7 @@ __author__ = FlextVersion.__author__
 __author_email__ = FlextVersion.__author_email__
 __license__ = FlextVersion.__license__
 __url__ = FlextVersion.__url__
-__all__: t.MutableSequenceOf[str] = [
+__all__: list[str] = [
     "FlextVersion",
     "__author__",
     "__author_email__",

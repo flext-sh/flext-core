@@ -17,10 +17,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import io
-import time
-from collections.abc import Callable
-from contextlib import redirect_stdout
 from typing import override
 
 from flext_core import (
@@ -28,6 +24,8 @@ from flext_core import (
     FlextContext,
     FlextSettings,
 )
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core.service import FlextService
 from tests import (
     c,
     e,
@@ -41,19 +39,13 @@ from tests import (
     x,
 )
 
-
-def _capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
-    stream = io.StringIO()
-    with redirect_stdout(stream):
-        result = emit()
-        deadline = time.monotonic() + 0.25
-        while time.monotonic() < deadline and contains not in stream.getvalue():
-            time.sleep(0.01)
-    assert contains in stream.getvalue()
-    return result
+from .migration_validation_cases import (
+    FlextMigrationApplicationCase,
+    capture_stdout,
+)
 
 
-class TestsFlextMigrationValidation:
+class TestsFlextMigrationValidation(FlextMigrationApplicationCase):
     def test_flext_result_value_access_pattern(self) -> None:
         """Verify .value access pattern works correctly."""
 
@@ -95,22 +87,24 @@ class TestsFlextMigrationValidation:
         """Verify service registration and resolution."""
         container = FlextContainer()
 
-        class TestService(m.BaseModel):
+        class TestService(FlextModelsPydantic.BaseModel):
             name: str = "test"
 
         test_service = TestService()
         registration_result = container.bind("test_migration_service", test_service)
         assert registration_result is container
-        resolution_result = container.resolve("test_migration_service")
+        resolution_result = container.resolve(
+            "test_migration_service",
+            type_cls=TestService,
+        )
         assert resolution_result.success
         service = resolution_result.value
-        assert isinstance(service, TestService)
         assert service.name == "test"
 
     def test_service_base_class_extension(self) -> None:
         """Verify s extension pattern continues working."""
 
-        class UserService(s[None]):
+        class UserService(FlextService[None]):
             """User service extending s."""
 
             _logger: p.Logger = u.PrivateAttr(
@@ -139,7 +133,7 @@ class TestsFlextMigrationValidation:
                 return r[t.StrMapping].ok(user_data)
 
         service = UserService()
-        result = _capture_stdout(
+        result = capture_stdout(
             lambda: service.create_user("alice", "alice@example.com"),
             contains="Creating user",
         )
@@ -150,7 +144,7 @@ class TestsFlextMigrationValidation:
         """Verify the public logging DSL continues working."""
         logger = u.fetch_logger(__name__)
         assert logger is not None
-        _ = _capture_stdout(
+        _ = capture_stdout(
             lambda: logger.error("Error message"),
             contains="Error message",
         )
@@ -204,39 +198,6 @@ class TestsFlextMigrationValidation:
         container = FlextContainer()
         assert container is not None
 
-    def test_application_functionality_works(self) -> None:
-        """Verify application functionality works correctly."""
-
-        class ApplicationExample:
-            """Example application using r and logging."""
-
-            def __init__(self) -> None:
-                super().__init__()
-                self.logger = u.fetch_logger(__name__)
-                self.container = FlextContainer()
-
-            def process_data(
-                self,
-                data: t.StrMapping,
-            ) -> p.Result[t.JsonMapping]:
-                """Typical data processing method."""
-                if not data:
-                    return r[t.JsonMapping].fail("Data required")
-                self.logger.info("Processing data", size=len(data))
-                processed: t.JsonMapping = {
-                    "original": str(data),
-                    "processed": True,
-                }
-                return r[t.JsonMapping].ok(processed)
-
-        app = ApplicationExample()
-        result = _capture_stdout(
-            lambda: app.process_data({"key": "value"}),
-            contains="Processing data",
-        )
-        assert result.success
-        assert result.value["processed"] is True
-
     def test_all_core_apis_functional(self) -> None:
         """Verify all core APIs remain functional."""
         result = r[str].ok("test")
@@ -245,5 +206,5 @@ class TestsFlextMigrationValidation:
         container = FlextContainer()
         assert container is not None
         logger = u.fetch_logger(__name__)
-        _ = _capture_stdout(lambda: logger.info("Test"), contains="Test")
+        _ = capture_stdout(lambda: logger.info("Test"), contains="Test")
         assert True

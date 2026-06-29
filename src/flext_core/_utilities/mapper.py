@@ -9,17 +9,15 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from itertools import starmap
 
-from flext_core import (
-    FlextModels as m,
-    FlextModelsPydantic,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextRuntime,
-    FlextTypes as t,
-    FlextUtilitiesCollection,
-    FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesMapperExtract,
-)
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.collection import FlextUtilitiesCollection
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
+from flext_core.models import m
+from flext_core.protocols import p
+from flext_core.result import r
+from flext_core.runtime import FlextRuntime
+from flext_core.typings import t
 
 
 class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):

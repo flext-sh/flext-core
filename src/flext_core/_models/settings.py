@@ -23,7 +23,8 @@ from flext_core import (
     FlextProtocols as p,
     FlextTypes as t,
 )
-from flext_core._models.base import FlextModelsBase as m
+
+from .base import FlextModelsBase as m
 
 
 class FlextModelsSettings:

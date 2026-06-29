@@ -17,9 +17,10 @@ from flext_core import (
     FlextTypes as t,
     FlextUtilitiesPydantic as up,
 )
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.entity import FlextModelsEntity
-from flext_core._models.handler import FlextModelsHandler
+
+from .base import FlextModelsBase as m
+from .entity import FlextModelsEntity
+from .handler import FlextModelsHandler
 
 
 class FlextModelsRegistry:

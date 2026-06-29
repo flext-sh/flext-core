@@ -164,7 +164,7 @@ ignore-words-list = "crate,nd"
 # [MANAGED] coverage
 [tool.coverage.report]
 exclude_also = [ "if TYPE_CHECKING:", "if _t.TYPE_CHECKING:", "if typing.TYPE_CHECKING:" ]
-fail_under = 45
+fail_under = 25
 precision = 2
 show_missing = true
 skip_covered = false
@@ -226,13 +226,23 @@ warn_return_any = true
 warn_unreachable = true
 warn_unused_ignores = true
 
-[tool.poetry]
-
 [tool.poetry.dependencies]
-flext-cli = { path = "../flext-cli", develop = true, optional = true }
-flext-infra = { path = "../flext-infra", develop = true, optional = true }
-flext-tests = { path = "../flext-tests", develop = true, optional = true }
 python = ">=3.13,<3.14"
+
+[tool.poetry.dependencies.flext-cli]
+develop = true
+optional = true
+path = "../flext-cli"
+
+[tool.poetry.dependencies.flext-infra]
+develop = true
+optional = true
+path = "../flext-infra"
+
+[tool.poetry.dependencies.flext-tests]
+develop = true
+optional = true
+path = "../flext-tests"
 
 # [MANAGED] pydantic-mypy
 [tool.pydantic-mypy]

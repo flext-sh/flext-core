@@ -16,17 +16,16 @@ from collections.abc import (
 )
 from typing import TYPE_CHECKING
 
-from flext_core import (
-    FlextConstants as c,
-    FlextTypes as t,
-)
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._models.domain_event import FlextModelsDomainEvent as mde
-from flext_core._utilities.guards import FlextUtilitiesGuards as u
+from flext_core.constants import c
+from flext_core.typings import t
+
+from .guards import FlextUtilitiesGuards as u
 
 if TYPE_CHECKING:
-    from flext_core import FlextProtocolsBase as pb
+    from flext_core._protocols.base import FlextProtocolsBase as pb
 
 
 class FlextUtilitiesDomain:
@@ -73,8 +72,9 @@ class FlextUtilitiesDomain:
 
         Returns True if same type and all attributes equal.
         """
-        if u.scalar(obj_a):
-            result = obj_a == obj_b
+        result: bool
+        if isinstance(obj_a, t.SCALAR_TYPES):
+            result = obj_a == obj_b if isinstance(obj_b, t.SCALAR_TYPES) else False
         elif u.scalar(obj_b):
             result = False
         else:
@@ -85,7 +85,12 @@ class FlextUtilitiesDomain:
                 obj_b, "model_dump"
             )
             if obj_a_iterable or obj_b_iterable:
-                result = obj_a == obj_b
+                if isinstance(obj_a, Mapping) and isinstance(obj_b, Mapping):
+                    result = dict(obj_a.items()) == dict(obj_b.items())
+                elif isinstance(obj_a, Sequence) and isinstance(obj_b, Sequence):
+                    result = tuple(obj_a) == tuple(obj_b)
+                else:
+                    result = False
             elif not FlextUtilitiesDomain.same_type(obj_b, obj_a):
                 result = False
             elif isinstance(obj_a, m.EnforcedModel) and isinstance(

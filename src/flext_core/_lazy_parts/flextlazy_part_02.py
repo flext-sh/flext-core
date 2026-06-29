@@ -8,13 +8,14 @@ from collections.abc import (
 )
 from types import ModuleType
 
-from flext_core._lazy_parts.flextlazy_part_01 import (
+from flext_core._typings.lazy import FlextTypesLazy
+
+from .flextlazy_part_01 import (
     FlextLazy as FlextLazyPart01,
     LazyImportDict,
     LazyImportMap,
     MutableLazyImportMap,
 )
-from flext_core._typings.lazy import FlextTypesLazy
 
 type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
 type ModuleGlobals = FlextTypesLazy.ModuleGlobals
@@ -40,17 +41,6 @@ class FlextLazy(FlextLazyPart01):
             if isinstance(entry, str)
             else self._alias_adapter.validate_python(entry)
         )
-
-        if isinstance(entry, str):
-            child_path = f"{module_name}.{name}"
-            if child_path != entry:
-                try:
-                    child = self._load(child_path)
-                except ModuleNotFoundError:
-                    child = None
-                if child is not None:
-                    module_globals[name] = child
-                    return child
 
         mod = self._load(module_path)
         if not attr:

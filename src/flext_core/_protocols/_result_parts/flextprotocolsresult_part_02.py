@@ -19,12 +19,12 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Self, overload, override
 
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-
-if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes as t
 from flext_core._protocols._result_parts.flextprotocolsresult_part_01 import (
     FlextProtocolsResult as FlextProtocolsResultPart01,
 )
+
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextProtocolsResult(FlextProtocolsResultPart01):

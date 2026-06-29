@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 from contextlib import redirect_stdout
+from pathlib import Path
 from typing import override
 
 from examples import ExamplesFlextShared, p
@@ -15,7 +16,7 @@ class Ex03FlextLogger(ExamplesFlextShared):
 
     def __init__(self) -> None:
         """Bind this example to its expected golden file."""
-        super().__init__(__file__)
+        super().__init__(caller_file=Path(__file__))
 
     @staticmethod
     def _ok(result: p.Result[bool]) -> bool:

@@ -9,9 +9,10 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 
 from flext_core._protocols.container import FlextProtocolsContainer as pc
-from flext_core._runtime._dependency_types import FlextRuntimeDependencyTypes
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
+
+from ._dependency_types import FlextRuntimeDependencyTypes
 
 
 class FlextRuntimeDependencyOptions(FlextRuntimeDependencyTypes):

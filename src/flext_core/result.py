@@ -8,16 +8,15 @@ from typing import Annotated, ClassVar, Self, TypeIs, overload, override
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
 from returns.result import Failure, Result, Success
 
-from flext_core import (
-    FlextModelsContainers as mc,
-    FlextProtocolsLogging as pl,
-    FlextRuntime,
-    c,
-    t,
-)
-from flext_core._result_parts.composition import FlextResultCompositionMixin
-from flext_core._result_parts.transforms import FlextResultTransformsMixin
-from flext_core._result_parts.unwrap import FlextResultUnwrapMixin
+from ._constants.errors import FlextConstantsErrors as c
+from ._models.containers import FlextModelsContainers as mc
+from ._protocols.logging import FlextProtocolsLogging as pl
+from ._result_parts.composition import FlextResultCompositionMixin
+from ._result_parts.transforms import FlextResultTransformsMixin
+from ._result_parts.unwrap import FlextResultUnwrapMixin
+from ._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
+from ._typings.base import FlextTypingBase as tb
+from ._typings.services import FlextTypesServices as ts
 
 
 class FlextResult[T](
@@ -65,12 +64,12 @@ class FlextResult[T](
 
     @property
     @override
-    def error_data(self) -> t.JsonMapping | None:
+    def error_data(self) -> tb.JsonMapping | None:
         """Error metadata."""
         data = self.result_error_data
         if data is None:
             return None
-        normalized_raw: t.JsonDict = {}
+        normalized_raw: tb.JsonDict = {}
         for key, value in data.root.items():
             normalized_raw[key] = FlextRuntime.normalize_to_metadata(value)
         return normalized_raw
@@ -132,7 +131,7 @@ class FlextResult[T](
     @staticmethod
     @override
     def _validate_error_data(
-        error_data: t.JsonMapping | t.ConfigModelInput | None,
+        error_data: tb.JsonMapping | ts.ConfigModelInput | None,
     ) -> mc.ConfigMap | None:
         normalized_error_data = FlextRuntime.normalize_model_input_mapping(error_data)
         return (
@@ -144,7 +143,7 @@ class FlextResult[T](
     def __init__(
         self,
         error_code: str | None = None,
-        error_data: t.JsonMapping | t.ConfigModelInput | None = None,
+        error_data: tb.JsonMapping | ts.ConfigModelInput | None = None,
         *,
         value: T | None = None,
         error: str | None = None,

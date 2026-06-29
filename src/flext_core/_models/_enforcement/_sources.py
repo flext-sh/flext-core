@@ -10,12 +10,12 @@ from typing import Literal
 
 from pydantic import Field
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as ce
-from flext_core._models._enforcement._base import (
+from flext_core import FlextConstantsEnforcement as ce, FlextTypingBase as t
+
+from ._base import (
     EnforcementModelBase,
     FlextModelsEnforcementBase,
 )
-from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextModelsEnforcementSources(FlextModelsEnforcementBase):

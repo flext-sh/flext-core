@@ -8,12 +8,11 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import (
-    FlextModelsPydantic as mp,
-    FlextUtilitiesPydantic as up,
-    t,
-)
-from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+
+from .base import FlextModelsBase as m
 
 
 class FlextModelsErrors:
@@ -96,17 +95,22 @@ class FlextModelsErrors:
             name = exception_type.__qualname__
             counts = dict(self.exception_counts)
             counts[name] = counts.get(name, 0) + 1
-            return self.model_copy(update={"exception_counts": counts})
+            updated: Self = self.model_copy(update={"exception_counts": counts})
+            return updated
 
         def clear(self) -> Self:
             """Return a cleared metrics state."""
-            return self.model_copy(update={"exception_counts": {}})
+            cleared: Self = self.model_copy(update={"exception_counts": {}})
+            return cleared
 
         def snapshot(self) -> FlextModelsErrors.ExceptionMetricsSnapshot:
             """Build the validated public metrics snapshot."""
-            return FlextModelsErrors.ExceptionMetricsSnapshot.model_validate({
-                "total_exceptions": self.total_exceptions,
-                "exception_counts": dict(self.exception_counts),
-                "exception_counts_summary": self.exception_counts_summary,
-                "unique_exception_types": self.unique_exception_types,
-            })
+            snapshot: FlextModelsErrors.ExceptionMetricsSnapshot = (
+                FlextModelsErrors.ExceptionMetricsSnapshot.model_validate({
+                    "total_exceptions": self.total_exceptions,
+                    "exception_counts": dict(self.exception_counts),
+                    "exception_counts_summary": self.exception_counts_summary,
+                    "unique_exception_types": self.unique_exception_types,
+                })
+            )
+            return snapshot

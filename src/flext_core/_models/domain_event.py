@@ -17,8 +17,9 @@ from flext_core import (
     FlextTypes as t,
     FlextUtilitiesCollection as u,
 )
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.containers import FlextModelsContainers as mc
+
+from .base import FlextModelsBase as m
+from .containers import FlextModelsContainers as mc
 
 
 class FlextModelsDomainEvent:

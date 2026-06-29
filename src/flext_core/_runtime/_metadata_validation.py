@@ -7,17 +7,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import overload
+from typing import TYPE_CHECKING, overload
 
 from pydantic import BaseModel
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.mixins import FlextConstantsMixins as cm
-from flext_core._protocols.result import FlextProtocolsResult as pr
-from flext_core._runtime._metadata import FlextRuntimeMetadata
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
+
+if TYPE_CHECKING:
+    from flext_core._protocols.result import FlextProtocolsResult as pr
+
+from ._metadata import FlextRuntimeMetadata
 
 
 class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):

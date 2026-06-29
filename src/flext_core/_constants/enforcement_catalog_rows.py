@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants._enforcement_catalog_rows_parts import (
+from ._enforcement_catalog_rows_parts import (
     FlextConstantsEnforcementCatalogBeartypeRows,
     FlextConstantsEnforcementCatalogInfraRows,
     FlextConstantsEnforcementCatalogSkillRows,

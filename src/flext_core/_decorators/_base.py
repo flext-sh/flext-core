@@ -11,6 +11,7 @@ from collections.abc import Callable
 from functools import wraps
 from typing import ClassVar, TypeIs
 
+from flext_core._loggings_parts import FlextLogger
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.base import FlextProtocolsBase as pb
 from flext_core._protocols.container import FlextProtocolsContainer as pc
@@ -20,7 +21,6 @@ from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
-from flext_core.utilities import FlextUtilities as u
 
 
 class FlextDecoratorsBase:
@@ -67,7 +67,8 @@ class FlextDecoratorsBase:
             if isinstance(func_module, str)
             else (func.__module__ if callable(func) else __name__)
         )
-        return u.fetch_logger(module_name)
+        logger: pl.Logger = FlextLogger.fetch_logger(module_name)
+        return logger
 
     @staticmethod
     def deprecated[**PCallback, TResult](

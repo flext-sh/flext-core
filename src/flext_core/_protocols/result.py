@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._protocols._result_parts.flextprotocolsresult_part_04 import (
+from ._result_parts.flextprotocolsresult_part_04 import (
     FlextProtocolsResult as FlextProtocolsResultPartFinal,
 )
 

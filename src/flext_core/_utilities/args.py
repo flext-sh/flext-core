@@ -10,12 +10,11 @@ from __future__ import annotations
 
 from flext_core import (
     FlextConstants as c,
-    FlextExceptions as e,
-    FlextModels as m,
-    FlextProtocols as p,
-    FlextResult as r,
+    FlextModelsPydantic as m,
+    FlextProtocolsResult as p,
     FlextTypes as t,
 )
+from flext_core.result import FlextResult as r
 
 
 class FlextUtilitiesArgs:
@@ -40,11 +39,12 @@ class FlextUtilitiesArgs:
 
         """
         if not kwargs and allow_empty:
-            kwargs = {}
+            empty_kwargs: t.JsonMapping = {}
+            kwargs = empty_kwargs
         try:
             return r[M].ok(model_cls.model_validate(kwargs))
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
-            return e.fail_validation(error=exc)
+            return r[M].fail_op("parse options model", exc)
 
     @staticmethod
     def resolve_options[M: m.BaseModel](

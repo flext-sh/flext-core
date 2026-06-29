@@ -6,6 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._enforcement import FlextModelsEnforcement
+from ._enforcement import FlextModelsEnforcement
 
 __all__: list[str] = ["FlextModelsEnforcement"]
