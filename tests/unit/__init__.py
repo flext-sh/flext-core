@@ -1,11 +1,216 @@
-# AUTO-GENERATED FILE - Regenerate with: make gen
-"""tests.unit package."""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Unit package."""
 
 from __future__ import annotations
 
-from flext_core.lazy import install_lazy_exports
-from tests.unit._exports import TESTS_FLEXT_CORE_UNIT_LAZY_IMPORTS
+from flext_core.lazy import (
+    build_lazy_import_map,
+    install_lazy_exports,
+    merge_lazy_imports,
+)
 
-_LAZY_IMPORTS = TESTS_FLEXT_CORE_UNIT_LAZY_IMPORTS
+_LAZY_IMPORTS = merge_lazy_imports(
+    (
+        "._models",
+        "._utilities",
+    ),
+    build_lazy_import_map(
+        {
+            "._models": ("_models",),
+            "._models.test_base": ("TestsFlextModelsBase",),
+            "._models.test_cqrs": ("TestsFlextModelsCQRS",),
+            "._models.test_enforcement_sources": (
+                "TestsFlextModelsEnforcementSources",
+            ),
+            "._models.test_entity": ("TestsFlextModelsEntity",),
+            "._models.test_exception_params_core": (
+                "TestsFlextModelsExceptionParamsCore",
+            ),
+            "._models.test_exception_params_operations": (
+                "TestsFlextModelsExceptionParamsOperations",
+            ),
+            "._models.test_exception_params_resources": (
+                "TestsFlextModelsExceptionParamsResources",
+            ),
+            "._utilities": ("_utilities",),
+            "._utilities.test_guards": ("TestsFlextUtilitiesGuards",),
+            "._utilities.test_mapper": ("TestsFlextUtilitiesMapper",),
+            ".test_beartype_engine": ("test_beartype_engine",),
+            ".test_beartype_engine_annotations": (
+                "TestsFlextBeartypeEngineAnnotations",
+            ),
+            ".test_beartype_engine_claw_packages": (
+                "TestsFlextBeartypeEngineClawPackages",
+            ),
+            ".test_beartype_engine_config": ("TestsFlextBeartypeEngineConfig",),
+            ".test_beartype_engine_import_hooks": (
+                "TestsFlextBeartypeEngineImportHooks",
+            ),
+            ".test_beartype_engine_namespace_hooks": (
+                "TestsFlextBeartypeEngineNamespaceHooks",
+            ),
+            ".test_beartype_engine_runtime": ("TestsFlextBeartypeEngineRuntime",),
+            ".test_constants_new": ("TestsFlextConstantsNew",),
+            ".test_constants_project_metadata": ("TestsFlextConstantsProjectMetadata",),
+            ".test_container": ("test_container",),
+            ".test_container_config": ("TestsFlextContainerConfig",),
+            ".test_container_lifecycle": ("TestsFlextContainerLifecycle",),
+            ".test_container_properties": ("TestsFlextContainerProperties",),
+            ".test_container_registration": ("TestsFlextContainerRegistration",),
+            ".test_container_resolution": ("TestsFlextContainerResolution",),
+            ".test_context": ("TestsFlextContext",),
+            ".test_coverage_loggings": ("TestsFlextCoverageLoggings",),
+            ".test_decorators": ("test_decorators",),
+            ".test_decorators_combined": ("TestsFlextDecoratorsCombined",),
+            ".test_decorators_discovery_full_coverage": (
+                "TestsFlextDecoratorsDiscovery",
+            ),
+            ".test_decorators_full_coverage": ("TestsFlextDecorators",),
+            ".test_decorators_injection_logging": (
+                "TestsFlextDecoratorsInjectionLogging",
+            ),
+            ".test_decorators_railway_retry": ("TestsFlextDecoratorsRailwayRetry",),
+            ".test_deprecation_warnings": ("TestsFlextDeprecationWarnings",),
+            ".test_dispatcher": ("TestsFlextDispatcher",),
+            ".test_enforcement": ("test_enforcement",),
+            ".test_enforcement_accessors": ("TestsFlextEnforcementAccessors",),
+            ".test_enforcement_apt_hooks": ("TestsFlextEnforcementAptHooks",),
+            ".test_enforcement_catalog": ("TestsFlextEnforcementCatalog",),
+            ".test_enforcement_integration": ("TestsFlextEnforcementIntegration",),
+            ".test_enforcement_layers": ("TestsFlextEnforcementLayers",),
+            ".test_enforcement_models": ("TestsFlextEnforcementModels",),
+            ".test_enforcement_namespace": ("TestsFlextEnforcementNamespace",),
+            ".test_enforcement_reports": ("TestsFlextEnforcementReports",),
+            ".test_enum_utilities_coverage_100": ("TestsFlextEnumUtilities",),
+            ".test_exceptions": ("test_exceptions",),
+            ".test_exceptions_base": ("TestsFlextExceptionsBase",),
+            ".test_exceptions_public_metrics": ("TestsFlextCoverageExceptionMetrics",),
+            ".test_exceptions_structured_contracts": (
+                "TestsFlextCoverageExceptionContracts",
+            ),
+            ".test_exceptions_typed_metrics": ("TestsFlextExceptionsTypedMetrics",),
+            ".test_handler_decorator_discovery": ("test_handler_decorator_discovery",),
+            ".test_handler_decorator_edges": ("TestsFlextHandlerDecoratorEdges",),
+            ".test_handler_decorator_metadata": ("TestsFlextHandlerDecoratorMetadata",),
+            ".test_handler_discovery_class": ("TestsFlextHandlerDiscoveryClass",),
+            ".test_handler_discovery_module": ("TestsFlextHandlerDiscoveryModule",),
+            ".test_handlers": ("test_handlers",),
+            ".test_handlers_dispatch": ("TestsFlextHandlersDispatch",),
+            ".test_handlers_factory": ("TestsFlextHandlersFactory",),
+            ".test_handlers_lifecycle": ("TestsFlextHandlersLifecycle",),
+            ".test_handlers_properties": ("TestsFlextHandlersProperties",),
+            ".test_handlers_validation_context": (
+                "TestsFlextHandlersValidationContext",
+            ),
+            ".test_lazy_exports": ("TestsFlextLazy",),
+            ".test_lazy_exports_merge": ("TestsFlextLazyMerge",),
+            ".test_loggings_full_coverage": ("TestsFlextLoggings",),
+            ".test_mixins": ("TestsFlextMixins",),
+            ".test_models": ("TestsFlextModelsUnit",),
+            ".test_models_base_full_coverage": ("TestsFlextModelsBaseFullCoverage",),
+            ".test_models_container": ("TestsFlextModelsContainer",),
+            ".test_models_cqrs_full_coverage": ("TestsFlextModelsCqrs",),
+            ".test_models_project_metadata": ("TestsFlextModelsProjectMetadata",),
+            ".test_project_metadata_facade_access": ("TestsFlextFacadeFlatSsotAccess",),
+            ".test_public_api_contract": ("TestsFlextCorePublicApiContract",),
+            ".test_registry": ("TestsFlextRegistry",),
+            ".test_result": ("test_result",),
+            ".test_result_callables_fold": ("TestsFlextResultCallablesFold",),
+            ".test_result_chain_helpers": ("TestsFlextResultChainHelpers",),
+            ".test_result_exception_failures": ("TestsFlextResultExceptionFailures",),
+            ".test_result_exception_mapping": ("TestsFlextResultExceptionMapping",),
+            ".test_result_exception_safe_callable": (
+                "TestsFlextResultExceptionSafeCallable",
+            ),
+            ".test_result_exception_traverse_validation": (
+                "TestsFlextResultExceptionTraverseValidation",
+            ),
+            ".test_result_laws": ("TestsFlextResultLaws",),
+            ".test_result_operations": ("TestsFlextResultOperations",),
+            ".test_result_recent_behaviors": ("TestsFlextResultRecentBehaviors",),
+            ".test_result_transforms": ("TestsFlextResultTransforms",),
+            ".test_result_traverse_resource": ("TestsFlextResultTraverseResource",),
+            ".test_runtime": ("TestsFlextRuntime",),
+            ".test_service": ("TestsFlextService",),
+            ".test_service_bootstrap": ("TestsFlextServiceBootstrap",),
+            ".test_settings": ("TestsFlextSettings",),
+            ".test_typings_aliases": ("TestsFlextTypesAliases",),
+            ".test_typings_containers": ("TestsFlextTypesContainers",),
+            ".test_typings_new": ("test_typings_new",),
+            ".test_typings_validation_numbers": ("TestsFlextTypesValidationNumbers",),
+            ".test_typings_validation_scalars": ("TestsFlextTypesValidationScalars",),
+            ".test_utilities": ("TestsFlextUtilitiesSmoke",),
+            ".test_utilities_collection_coverage_100": (
+                "TestsFlextUtilitiesCollection",
+            ),
+            ".test_utilities_coverage": ("TestsFlextUtilitiesCoverage",),
+            ".test_utilities_domain": ("TestsFlextUtilitiesDomain",),
+            ".test_utilities_generators_full_coverage": (
+                "TestsFlextUtilitiesGenerators",
+            ),
+            ".test_utilities_project_metadata": ("test_utilities_project_metadata",),
+            ".test_utilities_project_metadata_config": (
+                "TestsFlextUtilitiesProjectMetadataConfig",
+            ),
+            ".test_utilities_project_metadata_read": (
+                "TestsFlextUtilitiesProjectMetadataRead",
+            ),
+            ".test_utilities_pydantic_coverage_100": ("TestsFlextUtilitiesPydantic",),
+            ".test_utilities_reliability": ("TestsFlextUtilitiesReliability",),
+            ".test_utilities_runtime_violation_registry_coverage_100": (
+                "TestsFlextRuntimeViolationRegistry",
+            ),
+            ".test_utilities_settings_coverage_100": (
+                "TestsFlextUtilitiesSettings",
+                "TestsFlextUtilitiesSettingsEnvFile",
+                "TestsFlextUtilitiesSettingsRegisterFactory",
+            ),
+            ".test_utilities_text_full_coverage": ("TestsFlextUtilitiesText",),
+            ".test_utilities_type_guards_coverage_100": (
+                "TestsFlextUtilitiesTypeGuards",
+            ),
+            ".test_version": ("TestsFlextVersion",),
+            "flext_tests": (
+                "c",
+                "d",
+                "e",
+                "h",
+                "m",
+                "p",
+                "r",
+                "s",
+                "t",
+                "td",
+                "tf",
+                "tk",
+                "tm",
+                "tv",
+                "u",
+                "x",
+            ),
+        },
+    ),
+    exclude_names=(
+        "cleanup_submodule_namespace",
+        "install_lazy_exports",
+        "lazy_getattr",
+        "logger",
+        "merge_lazy_imports",
+        "output",
+        "output_reporting",
+        "pytest_addoption",
+        "pytest_collect_file",
+        "pytest_collection_modifyitems",
+        "pytest_configure",
+        "pytest_runtest_setup",
+        "pytest_runtest_teardown",
+        "pytest_sessionfinish",
+        "pytest_sessionstart",
+        "pytest_terminal_summary",
+        "pytest_warning_recorded",
+    ),
+    module_name=__name__,
+)
+
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

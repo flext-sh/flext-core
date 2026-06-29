@@ -10,12 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import (
-    FlextConstantsEnforcement as c,
-    FlextTypesPydantic as tp,
-    FlextTypingBase as t,
-    FlextUtilitiesEnforcement as ue,
-)
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._utilities.enforcement import FlextUtilitiesEnforcement as ue
 
 
 class FlextModelsNamespace:

@@ -10,7 +10,8 @@ from typing import ClassVar, Self, Unpack
 from pydantic import BaseModel, ConfigDict
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from flext_core import FlextTypesServices as ts, FlextTypingBase as tb
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextSettingsBase(BaseSettings):

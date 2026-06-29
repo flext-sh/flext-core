@@ -7,6 +7,7 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
+        "._beartype": ("_beartype",),
         "._beartype._class_visitor_parts.class_visitor_part_03": (
             "FlextUtilitiesBeartypeClassVisitor",
         ),
@@ -17,26 +18,38 @@ _LAZY_IMPORTS = build_lazy_import_map(
         "._beartype.import_visitor": ("FlextUtilitiesBeartypeImportVisitor",),
         "._beartype.method_visitor": ("FlextUtilitiesBeartypeMethodVisitor",),
         "._beartype.module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),
+        "._checker_parts": ("_checker_parts",),
         "._checker_parts.checker_part_03": ("FlextUtilitiesChecker",),
+        "._enforcement_collect_parts": ("_enforcement_collect_parts",),
         "._enforcement_collect_parts.enforcement_collect_part_02": (
             "FlextUtilitiesEnforcementCollect",
         ),
+        "._enforcement_parts": ("_enforcement_parts",),
+        "._enforcement_parts.enforcement_part_01": ("PREDICATE_BINDINGS",),
         "._enforcement_parts.enforcement_part_05": ("FlextUtilitiesEnforcement",),
+        "._generators_parts": ("_generators_parts",),
         "._generators_parts.generators_part_02": ("FlextUtilitiesGenerators",),
+        "._guards_parts": ("_guards_parts",),
         "._guards_parts.guards_part_02": ("FlextUtilitiesGuards",),
+        "._logging_config_parts": ("_logging_config_parts",),
         "._logging_config_parts.logging_config_part_03": (
             "FlextUtilitiesLoggingConfig",
         ),
+        "._logging_context_parts": ("_logging_context_parts",),
         "._logging_context_parts.logging_context_part_02": (
             "FlextUtilitiesLoggingContext",
         ),
+        "._mapper_access_parts": ("_mapper_access_parts",),
         "._mapper_access_parts.mapper_access_part_02": ("FlextUtilitiesMapperAccess",),
+        "._mapper_extract_parts": ("_mapper_extract_parts",),
         "._mapper_extract_parts.mapper_extract_part_02": (
             "FlextUtilitiesMapperExtract",
         ),
+        "._parser_targets_parts": ("_parser_targets_parts",),
         "._parser_targets_parts.parser_targets_part_02": (
             "FlextUtilitiesParserTargets",
         ),
+        "._project_metadata_parts": ("_project_metadata_parts",),
         "._project_metadata_parts.project_metadata_part_03": (
             "FlextUtilitiesProjectMetadata",
         ),

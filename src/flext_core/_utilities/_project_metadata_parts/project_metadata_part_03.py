@@ -22,11 +22,9 @@ from functools import cache
 from pathlib import Path
 from types import MappingProxyType
 
-from flext_core import (
-    FlextConstantsProjectMetadata as cpm,
-    FlextModelsProjectMetadata as mpm,
-    FlextTypingBase as tb,
-)
+from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
+from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core._typings.base import FlextTypingBase as tb
 
 from .project_metadata_part_02 import (
     FlextUtilitiesProjectMetadata as FlextUtilitiesProjectMetadataPart02,

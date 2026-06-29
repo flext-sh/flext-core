@@ -24,8 +24,8 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import FlextTypingBase as tb
 from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.base import FlextTypingBase as tb
 
 from .flextmodelsprojectmetadata_part_01 import (
     FlextModelsProjectMetadata as FlextModelsProjectMetadataPart01,

@@ -20,7 +20,8 @@ import importlib
 from types import ModuleType
 from typing import override
 
-from flext_core import FlextModelsProjectMetadata as mpm, FlextTypingBase as tb
+from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core._typings.base import FlextTypingBase as tb
 
 from .project_metadata_part_01 import (
     FlextUtilitiesProjectMetadata as FlextUtilitiesProjectMetadataPart01,

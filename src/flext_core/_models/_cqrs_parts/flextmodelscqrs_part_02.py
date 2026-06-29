@@ -21,8 +21,8 @@ from flext_core import (
     FlextConstants as c,
     FlextModelsBase as m,
     FlextTypes as t,
-    FlextUtilitiesGenerators as ug,
 )
+from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 
 from .flextmodelscqrs_part_01 import (
     FlextModelsCqrs as FlextModelsCqrsPart01,

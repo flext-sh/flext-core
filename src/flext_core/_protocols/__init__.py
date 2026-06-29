@@ -3,46 +3,19 @@
 
 from __future__ import annotations
 
-import typing as _t
-
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-if _t.TYPE_CHECKING:
-    from flext_core._protocols._container_parts import (
-        FlextProtocolsContainer as FlextProtocolsContainer,
-    )
-    from flext_core._protocols._context_parts import (
-        FlextProtocolsContext as FlextProtocolsContext,
-    )
-    from flext_core._protocols._logging_parts import (
-        FlextProtocolsLogging as FlextProtocolsLogging,
-    )
-    from flext_core._protocols._result_parts import (
-        FlextProtocolsResult as FlextProtocolsResult,
-    )
-    from flext_core._protocols.base import FlextProtocolsBase as FlextProtocolsBase
-    from flext_core._protocols.handler import (
-        FlextProtocolsHandler as FlextProtocolsHandler,
-    )
-    from flext_core._protocols.pydantic import (
-        FlextProtocolsPydantic as FlextProtocolsPydantic,
-    )
-    from flext_core._protocols.registry import (
-        FlextProtocolsRegistry as FlextProtocolsRegistry,
-    )
-    from flext_core._protocols.service import (
-        FlextProtocolsService as FlextProtocolsService,
-    )
-    from flext_core._protocols.settings import (
-        FlextProtocolsSettings as FlextProtocolsSettings,
-    )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
+        "._container_parts": ("_container_parts",),
         "._container_parts.flextprotocolscontainer_part_03": (
             "FlextProtocolsContainer",
         ),
+        "._context_parts": ("_context_parts",),
         "._context_parts.flextprotocolscontext_part_03": ("FlextProtocolsContext",),
+        "._logging_parts": ("_logging_parts",),
         "._logging_parts.flextprotocolslogging_part_03": ("FlextProtocolsLogging",),
+        "._result_parts": ("_result_parts",),
         "._result_parts.flextprotocolsresult_part_04": ("FlextProtocolsResult",),
         ".base": ("FlextProtocolsBase",),
         ".handler": ("FlextProtocolsHandler",),

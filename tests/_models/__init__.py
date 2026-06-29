@@ -3,58 +3,17 @@
 
 from __future__ import annotations
 
-import typing as _t
-
 from flext_core.lazy import (
     build_lazy_import_map,
     install_lazy_exports,
     merge_lazy_imports,
 )
 
-if _t.TYPE_CHECKING:
-    from flext_tests import (
-        c as c,
-        d as d,
-        e as e,
-        h as h,
-        m as m,
-        p as p,
-        r as r,
-        s as s,
-        t as t,
-        td as td,
-        tf as tf,
-        tk as tk,
-        tm as tm,
-        tv as tv,
-        u as u,
-        x as x,
-    )
-
-    from tests._models._mixins import (
-        TestsFlextModelsContainerMixin as TestsFlextModelsContainerMixin,
-        TestsFlextModelsCoreErrorsMixin as TestsFlextModelsCoreErrorsMixin,
-        TestsFlextModelsCoreMixin as TestsFlextModelsCoreMixin,
-        TestsFlextModelsCorePublicMixin as TestsFlextModelsCorePublicMixin,
-        TestsFlextModelsCoreStateMixin as TestsFlextModelsCoreStateMixin,
-        TestsFlextModelsDomainMixin as TestsFlextModelsDomainMixin,
-        TestsFlextModelsFixtureDictsMixin as TestsFlextModelsFixtureDictsMixin,
-        TestsFlextModelsFixturePayloadsMixin as TestsFlextModelsFixturePayloadsMixin,
-        TestsFlextModelsFixtureSuiteMixin as TestsFlextModelsFixtureSuiteMixin,
-        TestsFlextModelsGuardsMapperMixin as TestsFlextModelsGuardsMapperMixin,
-        TestsFlextModelsServiceCaseCoreMixin as TestsFlextModelsServiceCaseCoreMixin,
-        TestsFlextModelsServiceCaseReliabilityMixin as TestsFlextModelsServiceCaseReliabilityMixin,
-        TestsFlextModelsServiceCasesMixin as TestsFlextModelsServiceCasesMixin,
-        TestsFlextModelsServiceCaseValidationMixin as TestsFlextModelsServiceCaseValidationMixin,
-        TestsFlextModelsTestDataIdentityMixin as TestsFlextModelsTestDataIdentityMixin,
-        TestsFlextModelsTestDataMixin as TestsFlextModelsTestDataMixin,
-        TestsFlextModelsTestDataValuesMixin as TestsFlextModelsTestDataValuesMixin,
-    )
-    from tests._models.mixins import TestsFlextModelsMixins as TestsFlextModelsMixins
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._mixins",),
     build_lazy_import_map(
         {
+            "._mixins": ("_mixins",),
             "._mixins.container": ("TestsFlextModelsContainerMixin",),
             "._mixins.core": ("TestsFlextModelsCoreMixin",),
             "._mixins.core_errors": ("TestsFlextModelsCoreErrorsMixin",),

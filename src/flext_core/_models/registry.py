@@ -11,12 +11,10 @@ from collections.abc import (
 )
 from typing import Annotated
 
-from flext_core import (
-    FlextModelsPydantic as mp,
-    FlextProtocols as p,
-    FlextTypes as t,
-    FlextUtilitiesPydantic as up,
-)
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.handler import FlextProtocolsHandler as p
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+from flext_core.typings import FlextTypes as t
 
 from .base import FlextModelsBase as m
 from .entity import FlextModelsEntity

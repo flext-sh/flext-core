@@ -1,9 +1,9 @@
-# AUTO-GENERATED FILE - Regenerate with: make gen
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Flext Core package."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import typing as _t
 
 from flext_core.__version__ import (
     __author__,
@@ -22,7 +22,7 @@ from flext_core._root_exports import (
 )
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-if TYPE_CHECKING:
+if _t.TYPE_CHECKING:
     from flext_core.constants import FlextConstants, c
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
@@ -43,58 +43,16 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes, t
     from flext_core.utilities import FlextUtilities, u
 
-__all__: tuple[str, ...] = (
-    "FlextConstants",
-    "FlextContainer",
-    "FlextContext",
-    "FlextDecorators",
-    "FlextDispatcher",
-    "FlextExceptions",
-    "FlextHandlers",
-    "FlextLazy",
-    "FlextLogger",
-    "FlextMixins",
-    "FlextModels",
-    "FlextProtocols",
-    "FlextRegistry",
-    "FlextResult",
-    "FlextRuntime",
-    "FlextService",
-    "FlextSettings",
-    "FlextTypes",
-    "FlextUtilities",
-    "__author__",
-    "__author_email__",
-    "__description__",
-    "__license__",
-    "__title__",
-    "__url__",
-    "__version__",
-    "__version_info__",
-    "c",
-    "d",
-    "e",
-    "h",
-    "m",
-    "p",
-    "r",
-    "s",
-    "t",
-    "u",
-    "x",
-)
-
 _LAZY_IMPORTS = build_lazy_import_map(ROOT_LAZY_MODULES, sort_keys=False)
 _PUBLISHED_NAMES = frozenset({*_LAZY_IMPORTS, *ROOT_METADATA_NAMES})
-_PUBLIC_NAMES = frozenset(__all__)
+_PUBLIC_NAMES = frozenset(ROOT_ALL)
 _ROOT_EXPORTS_DRIFT_ERROR = "flext_core root exports drift from ROOT_ALL"
-if frozenset(ROOT_ALL) != _PUBLIC_NAMES or not _PUBLIC_NAMES <= _PUBLISHED_NAMES:
+if not _PUBLIC_NAMES <= _PUBLISHED_NAMES:
     raise RuntimeError(_ROOT_EXPORTS_DRIFT_ERROR)
 
 install_lazy_exports(
     __name__,
     globals(),
     _LAZY_IMPORTS,
-    ROOT_METADATA_NAMES,
-    publish_all=False,
+    public_exports=ROOT_ALL,
 )

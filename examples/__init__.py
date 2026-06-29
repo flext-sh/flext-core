@@ -16,6 +16,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ),
     build_lazy_import_map(
         {
+            "._models": ("_models",),
             "._models.errors": ("ExamplesFlextModelsErrors",),
             "._models.ex00": ("ExamplesFlextModelsEx00",),
             "._models.ex01": ("ExamplesFlextModelsEx01",),
@@ -34,6 +35,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "ExamplesFlextSharedHandle",
                 "ExamplesFlextSharedPerson",
             ),
+            "._shared_parts": ("_shared_parts",),
             "._shared_parts.shared_part_01": ("ExamplesFlextSharedBase",),
             ".constants": ("c",),
             ".ex_01_flext_result": ("Ex01r",),
@@ -106,4 +108,4 @@ _LAZY_IMPORTS = merge_lazy_imports(
 )
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

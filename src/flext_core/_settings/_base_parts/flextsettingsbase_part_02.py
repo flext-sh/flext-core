@@ -33,7 +33,7 @@ import os
 from pathlib import Path
 from typing import Self
 
-from flext_core import FlextConstantsEnvironment
+from flext_core._constants.environment import FlextConstantsEnvironment
 
 from .flextsettingsbase_part_01 import (
     FlextSettingsBase as FlextSettingsBasePart01,

@@ -21,8 +21,9 @@ from pydantic import (
     Field,
 )
 
-from flext_core import FlextConstantsProjectMetadata, FlextTypingBase as tb
+from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
 from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextModelsProjectMetadata:

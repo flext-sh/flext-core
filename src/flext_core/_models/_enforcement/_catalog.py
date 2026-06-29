@@ -10,7 +10,8 @@ from typing import Annotated
 
 from pydantic import Discriminator, Field, model_validator
 
-from flext_core import FlextConstants as c, FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core.constants import FlextConstants as c
 
 from ._base import (
     EnforcementModelBase,

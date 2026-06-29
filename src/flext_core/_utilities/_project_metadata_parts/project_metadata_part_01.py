@@ -24,12 +24,10 @@ from importlib.metadata import PackageNotFoundError, metadata, packages_distribu
 from pathlib import Path
 from types import ModuleType
 
-from flext_core import (
-    FlextConstantsProjectMetadata as cpm,
-    FlextModelsProjectMetadata as mpm,
-    FlextTypesTypeAdapters as ta,
-    FlextTypingBase as tb,
-)
+from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
+from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.typeadapters import FlextTypesTypeAdapters as ta
 from flext_core.lazy import normalize_lazy_imports
 
 
