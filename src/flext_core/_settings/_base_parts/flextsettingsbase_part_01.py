@@ -108,10 +108,13 @@ class FlextSettingsBase(BaseSettings):
                 Mapping,
             ):
                 computed = set(type(current_value).model_computed_fields)
-                merged_overrides[field_name] = {
+                merged_dict = {
                     **current_value.model_dump(mode="python", exclude=computed),
                     **{k: v for k, v in override_value.items() if k not in computed},
                 }
+                merged_overrides[field_name] = type(current_value).model_validate(
+                    merged_dict,
+                )
                 continue
             merged_overrides[field_name] = override_value
         return merged_overrides
