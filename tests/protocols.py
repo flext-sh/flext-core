@@ -20,7 +20,10 @@ from flext_tests import p
 from tests.typings import t
 
 if TYPE_CHECKING:
-    from tests import TestsFlextModelsMixins, TestsFlextModelsMixins as _Mixins
+    from tests._models.mixins import (
+        TestsFlextModelsMixins,
+        TestsFlextModelsMixins as _Mixins,
+    )
 
     AttrObject = _Mixins.AttrObject
     BadMapping = _Mixins.BadMapping

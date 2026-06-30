@@ -31,7 +31,7 @@ FLEXT_CORE__UTILITIES_LAZY_IMPORTS_PART_02 = build_lazy_import_map(
         "._parser_targets_parts.parser_targets_part_02": (
             "FlextUtilitiesParserTargets",
         ),
-        "._project_metadata_parts.project_metadata_part_03": (
+        "._project_metadata_parts.project_metadata_part_04": (
             "FlextUtilitiesProjectMetadata",
         ),
         ".guards_type_core": ("FlextUtilitiesGuardsTypeCore",),
