@@ -20,7 +20,7 @@ import importlib
 from collections.abc import Mapping
 from functools import cache
 from pathlib import Path
-from types import MappingProxyType
+from types import MappingProxyType, ModuleType
 
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
@@ -32,6 +32,31 @@ from .project_metadata_part_02 import (
 
 
 class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart02):
+    @staticmethod
+    def _discover_eager_alias_parent_sources(
+        import_name: str,
+        package: ModuleType,
+    ) -> dict[str, str]:
+        """Discover canonical one-letter aliases exported directly by package module."""
+        eager_parent_sources: dict[str, str] = {}
+        published_aliases = getattr(package, "__all__", ())
+        if not isinstance(published_aliases, (tuple, list, frozenset, set)):
+            return eager_parent_sources
+        for alias in published_aliases:
+            if not isinstance(alias, str) or len(alias) != 1 or not alias.islower():
+                continue
+            exported = vars(package).get(alias)
+            module_name = getattr(exported, "__module__", "")
+            if not isinstance(module_name, str) or not module_name:
+                continue
+            parent_source = module_name.split(".", 1)[0]
+            if parent_source == import_name:
+                continue
+            if parent_source.startswith("_"):
+                continue
+            eager_parent_sources[alias] = parent_source
+        return eager_parent_sources
+
     @staticmethod
     def _scan_directories(package_root: Path) -> tb.StrSequence:
         """Derive workspace scan directories from existing project folders."""
@@ -72,11 +97,21 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart02):
             for item in alias_metadata
             if item.facade
         )
+        eager_parent_sources = FlextUtilitiesProjectMetadata._discover_eager_alias_parent_sources(
+            import_name, package
+        )
         parent_sources = {
             item.alias: item.parent_source
             for item in alias_metadata
             if item.parent_source != import_name
         }
+        parent_sources.update(
+            {
+                alias: parent_source
+                for alias, parent_source in eager_parent_sources.items()
+                if alias not in parent_sources
+            }
+        )
         scan_dirs = FlextUtilitiesProjectMetadata._scan_directories(package_root)
         tier_facade_prefix = {
             directory: (
@@ -113,7 +148,9 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart02):
                 distribution_name
             ),
             ALIAS_TO_SUFFIX=MappingProxyType(alias_to_suffix),
-            RUNTIME_ALIAS_NAMES=frozenset(item.alias for item in alias_metadata),
+            RUNTIME_ALIAS_NAMES=frozenset(
+                {item.alias for item in alias_metadata} | set(parent_sources),
+            ),
             FACADE_ALIAS_NAMES=facade_aliases,
             FACADE_MODULE_NAMES=facade_modules,
             UNIVERSAL_ALIAS_PARENT_SOURCES=MappingProxyType(parent_sources),
