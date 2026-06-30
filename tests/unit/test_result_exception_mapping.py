@@ -74,6 +74,19 @@ class TestsFlextResultExceptionMapping(TestsFlextResultExceptionCarrying):
         tm.that(flat_mapped.failure, eq=True)
         tm.that(flat_mapped.exception is exc, eq=True)
 
+    def test_flow_through_callback_exception_returns_failure(self) -> None:
+        result: p.Result[int] = r[int].ok(5)
+        exc = RuntimeError("flow-through callback failed")
+
+        def callback(_value: int) -> p.Result[int]:
+            raise exc
+
+        flowed = result.flow_through(callback)
+
+        tm.that(flowed.failure, eq=True)
+        tm.that(flowed.exception is exc, eq=True)
+        tm.that(flowed.error, eq=str(exc))
+
     def test_alt_propagates_exception(self) -> None:
         exc = ValueError("original")
         result: p.Result[int] = r[int].fail("error", exception=exc)
@@ -169,6 +182,19 @@ class TestsFlextResultExceptionMapping(TestsFlextResultExceptionCarrying):
             raise exc
 
         tapped = result.tap(callback)
+
+        tm.that(tapped.failure, eq=True)
+        tm.that(tapped.exception is exc, eq=True)
+        tm.that(tapped.error, eq=str(exc))
+
+    def test_tap_error_callback_exception_returns_failure(self) -> None:
+        result: p.Result[int] = r[int].fail("error")
+        exc = RuntimeError("tap-error callback failed")
+
+        def callback(_error: str) -> None:
+            raise exc
+
+        tapped = result.tap_error(callback)
 
         tm.that(tapped.failure, eq=True)
         tm.that(tapped.exception is exc, eq=True)

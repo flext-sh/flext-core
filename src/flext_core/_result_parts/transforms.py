@@ -51,11 +51,15 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
     def flow_through(self, *funcs: Callable[[T], p.Result[T]]) -> p.Result[T]:
         """Chain multiple homogeneous Result-returning operations in sequence."""
         current = self
+        result_class = cast("type[FlextResultConstructionMixin[T]]", self.__class__)
         for func in funcs:
             if current.success:
                 result_value = current.value
                 if result_value is not None:
-                    current = self.__class__.from_result(func(result_value))
+                    try:
+                        current = self.__class__.from_result(func(result_value))
+                    except c.EXC_BROAD_RUNTIME as exc:
+                        current = result_class.fail(str(exc), exception=exc)
                 else:
                     break
             else:
@@ -161,7 +165,10 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
     def tap_error(self, func: Callable[[str], None]) -> Self:
         """Side effect on failure; return unchanged."""
         if self.failure:
-            func(self.error or "")
+            try:
+                func(self.error or "")
+            except c.EXC_BROAD_RUNTIME as exc:
+                return cast("Self", self.__class__.fail(str(exc), exception=exc))
         return self
 
     @override
