@@ -37,7 +37,12 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
                 error_data=self.error_data,
                 exception=self.exception,
             )
-        return self.__class__.from_result(func(self.value))
+        try:
+            return self.__class__.from_result(func(self.value))
+        except c.EXC_BROAD_RUNTIME as exc:
+            # Type bridge: callback exceptions adopt the chained payload type.
+            result_class = cast("type[FlextResultConstructionMixin[U]]", self.__class__)
+            return result_class.fail(str(exc), exception=exc)
 
     @override
     def flow_through(self, *funcs: Callable[[T], p.Result[T]]) -> p.Result[T]:
@@ -67,7 +72,10 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
     def lash(self, func: Callable[[str], p.Result[T]]) -> p.Result[T]:
         """Apply recovery function on failure; returns self if success."""
         if self.failure:
-            return self.__class__._from_result(func(self.error or ""))
+            try:
+                return self.__class__._from_result(func(self.error or ""))
+            except c.EXC_BROAD_RUNTIME as exc:
+                return self.__class__.fail(str(exc), exception=exc)
         return self
 
     @override

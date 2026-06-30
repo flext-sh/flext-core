@@ -50,6 +50,19 @@ class TestsFlextResultExceptionMapping(TestsFlextResultExceptionCarrying):
         tm.that(flat_mapped.value, eq="5")
         tm.that(flat_mapped.exception, none=True)
 
+    def test_flat_map_callback_exception_returns_failure(self) -> None:
+        result: p.Result[int] = r[int].ok(5)
+        exc = RuntimeError("flat-map callback failed")
+
+        def callback(_value: int) -> p.Result[str]:
+            raise exc
+
+        flat_mapped = result.flat_map(callback)
+
+        tm.that(flat_mapped.failure, eq=True)
+        tm.that(flat_mapped.exception is exc, eq=True)
+        tm.that(flat_mapped.error, eq=str(exc))
+
     def test_flat_map_chain_preserves_exception(self) -> None:
         exc = KeyError("missing key")
         result: p.Result[int] = r[int].fail("error", exception=exc)
@@ -95,3 +108,16 @@ class TestsFlextResultExceptionMapping(TestsFlextResultExceptionCarrying):
         )
         tm.that(recovered.failure, eq=True)
         tm.that(recovered.exception is recovery_exc, eq=True)
+
+    def test_lash_callback_exception_returns_failure(self) -> None:
+        result: p.Result[int] = r[int].fail("error")
+        exc = RuntimeError("lash callback failed")
+
+        def callback(_error: str) -> p.Result[int]:
+            raise exc
+
+        recovered = result.lash(callback)
+
+        tm.that(recovered.failure, eq=True)
+        tm.that(recovered.exception is exc, eq=True)
+        tm.that(recovered.error, eq=str(exc))
