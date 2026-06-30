@@ -1,142 +1,21 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
 
-from flext_tests import d, e, h, r, td, tf, tk, tm, tv, x
+from flext_tests import c, d, e, h, m, p, r, s, t, td, tf, tk, tm, tv, u, x
 
-from tests import (
-    _constants,
+from tests.unit import (
     _models,
     _utilities,
-    benchmark,
-    conftest,
-    fixtures,
-    integration,
-    unit,
+    test_beartype_engine,
+    test_container,
+    test_decorators,
+    test_enforcement,
+    test_exceptions,
+    test_handler_decorator_discovery,
+    test_handlers,
+    test_result,
+    test_typings_new,
+    test_utilities_project_metadata,
 )
-from tests._constants.domain import TestsFlextConstantsDomain
-from tests._constants.errors import TestsFlextConstantsErrors
-from tests._constants.fixtures import TestsFlextConstantsFixtures
-from tests._constants.loggings import TestsFlextConstantsLoggings
-from tests._constants.other import TestsFlextConstantsOther
-from tests._constants.result import TestsFlextConstantsResult
-from tests._constants.services import TestsFlextConstantsServices
-from tests._constants.settings import TestsFlextConstantsSettings
-from tests._models._mixins.container import TestsFlextModelsContainerMixin
-from tests._models._mixins.core import TestsFlextModelsCoreMixin
-from tests._models._mixins.core_errors import TestsFlextModelsCoreErrorsMixin
-from tests._models._mixins.core_public import TestsFlextModelsCorePublicMixin
-from tests._models._mixins.core_state import TestsFlextModelsCoreStateMixin
-from tests._models._mixins.domain import TestsFlextModelsDomainMixin
-from tests._models._mixins.fixture_payloads import TestsFlextModelsFixturePayloadsMixin
-from tests._models._mixins.fixture_suite import TestsFlextModelsFixtureSuiteMixin
-from tests._models._mixins.fixtures import TestsFlextModelsFixtureDictsMixin
-from tests._models._mixins.guards_mapper import TestsFlextModelsGuardsMapperMixin
-from tests._models._mixins.service_case_core import TestsFlextModelsServiceCaseCoreMixin
-from tests._models._mixins.service_case_reliability import (
-    TestsFlextModelsServiceCaseReliabilityMixin,
-)
-from tests._models._mixins.service_case_validation import (
-    TestsFlextModelsServiceCaseValidationMixin,
-)
-from tests._models._mixins.service_cases import TestsFlextModelsServiceCasesMixin
-from tests._models._mixins.test_data import TestsFlextModelsTestDataMixin
-from tests._models._mixins.test_data_identity import (
-    TestsFlextModelsTestDataIdentityMixin,
-)
-from tests._models._mixins.test_data_values import TestsFlextModelsTestDataValuesMixin
-from tests._models.mixins import TestsFlextModelsMixins
-from tests._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin
-from tests._utilities.case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
-from tests._utilities.case_service_factories import (
-    TestsFlextUtilitiesCaseServiceFactoriesMixin,
-)
-from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
-from tests._utilities.dispatch import TestsFlextUtilitiesDispatchMixin
-from tests._utilities.parser_reliability import (
-    TestsFlextUtilitiesParserReliabilityMixin,
-)
-from tests._utilities.parser_scenarios import TestsFlextUtilitiesParserScenariosMixin
-from tests._utilities.railway import TestsFlextUtilitiesRailwayMixin
-from tests._utilities.railway_cases import TestsFlextUtilitiesRailwayCasesMixin
-from tests._utilities.railway_pipelines import TestsFlextUtilitiesRailwayPipelinesMixin
-from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
-from tests._utilities.reliability_scenarios import (
-    TestsFlextUtilitiesReliabilityScenariosMixin,
-)
-from tests._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
-from tests._utilities.services import TestsFlextUtilitiesServicesMixin
-from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
-from tests._utilities.validation_factories import (
-    TestsFlextUtilitiesValidationFactoriesMixin,
-)
-from tests._utilities.validation_network import (
-    TestsFlextUtilitiesValidationNetworkScenarios,
-)
-from tests._utilities.validation_numeric import (
-    TestsFlextUtilitiesValidationNumericScenarios,
-)
-from tests._utilities.validation_pattern import (
-    TestsFlextUtilitiesValidationPatternScenarios,
-)
-from tests._utilities.validation_scenarios import (
-    TestsFlextUtilitiesValidationScenariosMixin,
-)
-from tests._utilities.validation_string import (
-    TestsFlextUtilitiesValidationStringScenarios,
-)
-from tests._utilities.validation_uri import TestsFlextUtilitiesValidationUriScenarios
-from tests.base import TestsFlextServiceBase, s
-from tests.benchmark.test_container_memory import TestsFlextContainerMemory
-from tests.benchmark.test_container_performance import TestsFlextContainerPerformance
-from tests.benchmark.test_lazy_performance import TestsFlextLazyPerformance
-from tests.constants import TestsFlextConstants, c
-from tests.fixtures.bad_module import (
-    TestsFlextBadAccessors,
-    TestsFlextBadAnyField,
-    TestsFlextBadBareCollection,
-    TestsFlextBadConstants,
-    TestsFlextBadFrozen,
-    TestsFlextBadInlineUnion,
-    TestsFlextBadMissingDesc,
-    TestsFlextBadMutableDefault,
-    TestsFlextBadWorkerSettings,
-)
-from tests.fixtures.clean_module import (
-    TestsFlextCleanConstants,
-    TestsFlextCleanModels,
-    TestsFlextCleanProtocols,
-    TestsFlextCleanServiceBase,
-)
-from tests.integration.migration_validation_cases import FlextMigrationApplicationCase
-from tests.integration.service_fixtures import (
-    FlextServiceFixtures,
-    LifecycleService,
-    NotificationService,
-    ServiceConfig,
-    UserQueryService,
-    UserServiceEntity,
-)
-from tests.integration.service_lifecycle_cases import FlextServiceLifecycleCases
-from tests.integration.settings_integration_factories import (
-    FlextSettingsFactories,
-    SettingsConfigTestCase,
-    SettingsConfigTestFactories,
-    SettingsThreadSafetyTest,
-)
-from tests.integration.settings_integration_precedence import (
-    FlextSettingsPrecedenceCase,
-)
-from tests.integration.system_integration_cases import FlextSystemWorkflowCases
-from tests.integration.test_architecture import TestsFlextAutomatedArchitecture
-from tests.integration.test_documented_patterns import TestsFlextDocumentedPatterns
-from tests.integration.test_examples_execution import TestsFlextExamplesExecution
-from tests.integration.test_integration import TestsFlextLibraryIntegration
-from tests.integration.test_migration_validation import TestsFlextMigrationValidation
-from tests.integration.test_service import TestsFlextServiceIntegration
-from tests.integration.test_settings_integration import TestsFlextSettingsIntegration
-from tests.integration.test_system import TestsFlextSystemIntegration
-from tests.models import TestsFlextModels, m
-from tests.protocols import TestsFlextProtocols, p
-from tests.typings import TestsFlextTypes, t
 from tests.unit._models.test_base import TestsFlextModelsBase
 from tests.unit._models.test_cqrs import TestsFlextModelsCQRS
 from tests.unit._models.test_enforcement_sources import (
@@ -288,57 +167,19 @@ from tests.unit.test_utilities_type_guards_coverage_100 import (
     TestsFlextUtilitiesTypeGuards,
 )
 from tests.unit.test_version import TestsFlextVersion
-from tests.utilities import TestsFlextUtilities, u
 
 __all__: tuple[str, ...] = (
-    "FlextMigrationApplicationCase",
-    "FlextServiceFixtures",
-    "FlextServiceLifecycleCases",
-    "FlextSettingsFactories",
-    "FlextSettingsPrecedenceCase",
-    "FlextSystemWorkflowCases",
-    "LifecycleService",
-    "NotificationService",
-    "ServiceConfig",
-    "SettingsConfigTestCase",
-    "SettingsConfigTestFactories",
-    "SettingsThreadSafetyTest",
     "TestUpdateGlobalWithValidationAlias",
-    "TestsFlextAutomatedArchitecture",
-    "TestsFlextBadAccessors",
-    "TestsFlextBadAnyField",
-    "TestsFlextBadBareCollection",
-    "TestsFlextBadConstants",
-    "TestsFlextBadFrozen",
-    "TestsFlextBadInlineUnion",
-    "TestsFlextBadMissingDesc",
-    "TestsFlextBadMutableDefault",
-    "TestsFlextBadWorkerSettings",
     "TestsFlextBeartypeEngineAnnotations",
     "TestsFlextBeartypeEngineClawPackages",
     "TestsFlextBeartypeEngineConfig",
     "TestsFlextBeartypeEngineImportHooks",
     "TestsFlextBeartypeEngineNamespaceHooks",
     "TestsFlextBeartypeEngineRuntime",
-    "TestsFlextCleanConstants",
-    "TestsFlextCleanModels",
-    "TestsFlextCleanProtocols",
-    "TestsFlextCleanServiceBase",
-    "TestsFlextConstants",
-    "TestsFlextConstantsDomain",
-    "TestsFlextConstantsErrors",
-    "TestsFlextConstantsFixtures",
-    "TestsFlextConstantsLoggings",
     "TestsFlextConstantsNew",
-    "TestsFlextConstantsOther",
     "TestsFlextConstantsProjectMetadata",
-    "TestsFlextConstantsResult",
-    "TestsFlextConstantsServices",
-    "TestsFlextConstantsSettings",
     "TestsFlextContainerConfig",
     "TestsFlextContainerLifecycle",
-    "TestsFlextContainerMemory",
-    "TestsFlextContainerPerformance",
     "TestsFlextContainerProperties",
     "TestsFlextContainerRegistration",
     "TestsFlextContainerResolution",
@@ -354,7 +195,6 @@ __all__: tuple[str, ...] = (
     "TestsFlextDecoratorsRailwayRetry",
     "TestsFlextDeprecationWarnings",
     "TestsFlextDispatcher",
-    "TestsFlextDocumentedPatterns",
     "TestsFlextEnforcementAccessors",
     "TestsFlextEnforcementAptHooks",
     "TestsFlextEnforcementCatalog",
@@ -364,7 +204,6 @@ __all__: tuple[str, ...] = (
     "TestsFlextEnforcementNamespace",
     "TestsFlextEnforcementReports",
     "TestsFlextEnumUtilities",
-    "TestsFlextExamplesExecution",
     "TestsFlextExceptionsBase",
     "TestsFlextExceptionsTypedMetrics",
     "TestsFlextFacadeFlatSsotAccess",
@@ -379,43 +218,20 @@ __all__: tuple[str, ...] = (
     "TestsFlextHandlersValidationContext",
     "TestsFlextLazy",
     "TestsFlextLazyMerge",
-    "TestsFlextLazyPerformance",
-    "TestsFlextLibraryIntegration",
     "TestsFlextLoggings",
-    "TestsFlextMigrationValidation",
     "TestsFlextMixins",
-    "TestsFlextModels",
     "TestsFlextModelsBase",
     "TestsFlextModelsBaseFullCoverage",
     "TestsFlextModelsCQRS",
     "TestsFlextModelsContainer",
-    "TestsFlextModelsContainerMixin",
-    "TestsFlextModelsCoreErrorsMixin",
-    "TestsFlextModelsCoreMixin",
-    "TestsFlextModelsCorePublicMixin",
-    "TestsFlextModelsCoreStateMixin",
     "TestsFlextModelsCqrs",
-    "TestsFlextModelsDomainMixin",
     "TestsFlextModelsEnforcementSources",
     "TestsFlextModelsEntity",
     "TestsFlextModelsExceptionParamsCore",
     "TestsFlextModelsExceptionParamsOperations",
     "TestsFlextModelsExceptionParamsResources",
-    "TestsFlextModelsFixtureDictsMixin",
-    "TestsFlextModelsFixturePayloadsMixin",
-    "TestsFlextModelsFixtureSuiteMixin",
-    "TestsFlextModelsGuardsMapperMixin",
-    "TestsFlextModelsMixins",
     "TestsFlextModelsProjectMetadata",
-    "TestsFlextModelsServiceCaseCoreMixin",
-    "TestsFlextModelsServiceCaseReliabilityMixin",
-    "TestsFlextModelsServiceCaseValidationMixin",
-    "TestsFlextModelsServiceCasesMixin",
-    "TestsFlextModelsTestDataIdentityMixin",
-    "TestsFlextModelsTestDataMixin",
-    "TestsFlextModelsTestDataValuesMixin",
     "TestsFlextModelsUnit",
-    "TestsFlextProtocols",
     "TestsFlextRegistry",
     "TestsFlextResultCallablesFold",
     "TestsFlextResultChainHelpers",
@@ -431,81 +247,55 @@ __all__: tuple[str, ...] = (
     "TestsFlextRuntime",
     "TestsFlextRuntimeViolationRegistry",
     "TestsFlextService",
-    "TestsFlextServiceBase",
     "TestsFlextServiceBootstrap",
-    "TestsFlextServiceIntegration",
     "TestsFlextSettings",
-    "TestsFlextSettingsIntegration",
-    "TestsFlextSystemIntegration",
-    "TestsFlextTypes",
     "TestsFlextTypesAliases",
     "TestsFlextTypesContainers",
     "TestsFlextTypesValidationNumbers",
     "TestsFlextTypesValidationScalars",
-    "TestsFlextUtilities",
-    "TestsFlextUtilitiesCaseFactoriesMixin",
-    "TestsFlextUtilitiesCaseGeneratorsMixin",
-    "TestsFlextUtilitiesCaseServiceFactoriesMixin",
     "TestsFlextUtilitiesCollection",
-    "TestsFlextUtilitiesContractsMixin",
     "TestsFlextUtilitiesCoverage",
-    "TestsFlextUtilitiesDispatchMixin",
     "TestsFlextUtilitiesDomain",
     "TestsFlextUtilitiesGenerators",
     "TestsFlextUtilitiesGuards",
     "TestsFlextUtilitiesMapper",
-    "TestsFlextUtilitiesParserReliabilityMixin",
-    "TestsFlextUtilitiesParserScenariosMixin",
     "TestsFlextUtilitiesProjectMetadataConfig",
     "TestsFlextUtilitiesProjectMetadataRead",
     "TestsFlextUtilitiesPydantic",
-    "TestsFlextUtilitiesRailwayCasesMixin",
-    "TestsFlextUtilitiesRailwayMixin",
-    "TestsFlextUtilitiesRailwayPipelinesMixin",
-    "TestsFlextUtilitiesRailwayServicesMixin",
     "TestsFlextUtilitiesReliability",
-    "TestsFlextUtilitiesReliabilityScenariosMixin",
-    "TestsFlextUtilitiesServiceFactoriesMixin",
-    "TestsFlextUtilitiesServicesMixin",
     "TestsFlextUtilitiesSettings",
     "TestsFlextUtilitiesSettingsEnvFile",
     "TestsFlextUtilitiesSettingsRegisterFactory",
     "TestsFlextUtilitiesSmoke",
     "TestsFlextUtilitiesText",
     "TestsFlextUtilitiesTypeGuards",
-    "TestsFlextUtilitiesUserFactoriesMixin",
-    "TestsFlextUtilitiesValidationFactoriesMixin",
-    "TestsFlextUtilitiesValidationNetworkScenarios",
-    "TestsFlextUtilitiesValidationNumericScenarios",
-    "TestsFlextUtilitiesValidationPatternScenarios",
-    "TestsFlextUtilitiesValidationScenariosMixin",
-    "TestsFlextUtilitiesValidationStringScenarios",
-    "TestsFlextUtilitiesValidationUriScenarios",
     "TestsFlextVersion",
-    "UserQueryService",
-    "UserServiceEntity",
-    "_constants",
     "_models",
     "_utilities",
-    "benchmark",
     "c",
-    "conftest",
     "d",
     "e",
-    "fixtures",
     "h",
-    "integration",
     "m",
     "p",
     "r",
     "s",
     "t",
     "td",
+    "test_beartype_engine",
+    "test_container",
+    "test_decorators",
+    "test_enforcement",
+    "test_exceptions",
+    "test_handler_decorator_discovery",
+    "test_handlers",
+    "test_result",
+    "test_typings_new",
+    "test_utilities_project_metadata",
     "tf",
     "tk",
     "tm",
     "tv",
     "u",
-    "unit",
     "x",
 )

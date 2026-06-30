@@ -3,8 +3,14 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
+if TYPE_CHECKING:
+    from flext_core._utilities._mapper_extract_parts.mapper_extract_part_02 import (
+        FlextUtilitiesMapperExtract as FlextUtilitiesMapperExtract,
+    )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".mapper_extract_part_02": ("FlextUtilitiesMapperExtract",),

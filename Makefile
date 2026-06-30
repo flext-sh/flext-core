@@ -70,7 +70,7 @@ base.mk: Makefile
 	@test -s $@ || { echo "ERROR: base.mk generation failed"; rm -f $@; exit 1; }
 	@echo "==> base.mk generated. Restarting make..."
 
-.PHONY: _bootstrap-venv venv setup help
+.PHONY: _bootstrap-venv venv setup
 
 _bootstrap-venv:
 	@if [ ! -d "$(BOOTSTRAP_VENV)" ]; then \
@@ -105,6 +105,9 @@ setup: venv ## Full standalone setup (venv + dependencies + base.mk)
 		--project-name $(PROJECT_NAME) --output base.mk
 	@echo "==> Setup complete. All 'make' verbs now available."
 
+ifeq ("$(wildcard base.mk)", "")
+.PHONY: help
+
 help: ## Show available commands
 	@echo "================================================"
 	@echo "  $(PROJECT_NAME) (standalone bootstrap)"
@@ -123,6 +126,7 @@ help: ## Show available commands
 	@echo "  check, test, fmt, build, val, clean, docs, pr"
 	@echo ""
 	@echo "Run 'make setup' first, then 'make help' for full verb list."
+endif
 endif
 
 # Project-specific targets (optional, never overwritten by sync)
