@@ -23,6 +23,20 @@ class TestsFlextResultExceptionTraverseValidation(TestsFlextResultExceptionCarry
         tm.that(result.failure, eq=True)
         tm.that(result.exception is exc, eq=True)
 
+    def test_traverse_callback_exception_returns_failure(self) -> None:
+        exc = RuntimeError("traverse callback failed")
+
+        def process_with_exception(value: int) -> p.Result[int]:
+            if value == 2:
+                raise exc
+            return r[int].ok(value * 2)
+
+        result = r[int].traverse([1, 2, 3], process_with_exception, fail_fast=True)
+
+        tm.that(result.failure, eq=True)
+        tm.that(result.exception is exc, eq=True)
+        tm.that(result.error, eq=str(exc))
+
     def test_traverse_accumulate_preserves_exceptions(self) -> None:
         exc1 = ValueError("error 1")
         exc2 = TypeError("error 2")
@@ -40,6 +54,20 @@ class TestsFlextResultExceptionTraverseValidation(TestsFlextResultExceptionCarry
         tm.that(result.error, none=False)
         if result.error is not None:
             tm.that("error 1" in result.error and "error 2" in result.error, eq=True)
+
+    def test_traverse_accumulates_callback_exceptions(self) -> None:
+        def process_with_exception(value: int) -> p.Result[int]:
+            if value in {1, 3}:
+                raise RuntimeError(f"callback error {value}")
+            return r[int].ok(value * 2)
+
+        result = r[int].traverse([1, 2, 3], process_with_exception, fail_fast=False)
+
+        tm.that(result.failure, eq=True)
+        tm.that(result.error, none=False)
+        if result.error is not None:
+            tm.that("callback error 1" in result.error, eq=True)
+            tm.that("callback error 3" in result.error, eq=True)
 
     def test_from_validation_carries_exception(self) -> None:
         invalid_data = {"name": "Alice", "age": "not_an_int"}

@@ -50,13 +50,13 @@ class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):
         """Map sequence via func; fail_fast stops on first error."""
         if fail_fast:
             results: MutableSequence[U] = []
+            result_class = cast("type[FlextResultConstructionMixin[Sequence[U]]]", cls)
             for item in items:
-                result = func(item)
+                try:
+                    result = func(item)
+                except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+                    return result_class.fail(str(exc), exception=exc)
                 if result.failure:
-                    # Type bridge: fail-fast returns the sequence result shape.
-                    result_class = cast(
-                        "type[FlextResultConstructionMixin[Sequence[U]]]", cls
-                    )
                     return result_class.fail(
                         result.error or "Unknown error",
                         error_code=result.error_code,
@@ -65,7 +65,13 @@ class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):
                     )
                 results.append(result.value)
             return cls.ok(results)
-        all_results = [cls.from_result(func(item)) for item in items]
+        item_result_class = cast("type[FlextResultConstructionMixin[U]]", cls)
+        all_results: MutableSequence[p.Result[U]] = []
+        for item in items:
+            try:
+                all_results.append(cls.from_result(func(item)))
+            except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+                all_results.append(item_result_class.fail(str(exc), exception=exc))
         return cls.accumulate_errors(*all_results)
 
     @classmethod
