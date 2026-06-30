@@ -89,12 +89,38 @@ class TestsFlextResultExceptionMapping(TestsFlextResultExceptionCarrying):
         tm.that(altered.value, eq=42)
         tm.that(altered.exception, none=True)
 
+    def test_map_error_callback_exception_returns_failure(self) -> None:
+        result: p.Result[int] = r[int].fail("error")
+        exc = RuntimeError("map-error callback failed")
+
+        def callback(_error: str) -> str:
+            raise exc
+
+        mapped = result.map_error(callback)
+
+        tm.that(mapped.failure, eq=True)
+        tm.that(mapped.exception is exc, eq=True)
+        tm.that(mapped.error, eq=str(exc))
+
     def test_lash_propagates_exception(self) -> None:
         exc = RuntimeError("recovery needed")
         result: p.Result[int] = r[int].fail("error", exception=exc)
         recovered = result.lash(lambda _: r[int].ok(0))
         tm.that(recovered.success, eq=True)
         tm.that(recovered.value, eq=0)
+
+    def test_recover_callback_exception_returns_failure(self) -> None:
+        result: p.Result[int] = r[int].fail("error")
+        exc = RuntimeError("recover callback failed")
+
+        def callback(_error: str) -> int:
+            raise exc
+
+        recovered = result.recover(callback)
+
+        tm.that(recovered.failure, eq=True)
+        tm.that(recovered.exception is exc, eq=True)
+        tm.that(recovered.error, eq=str(exc))
 
     def test_lash_preserves_exception_on_recovery_failure(self) -> None:
         exc = ValueError("original error")
@@ -121,3 +147,29 @@ class TestsFlextResultExceptionMapping(TestsFlextResultExceptionCarrying):
         tm.that(recovered.failure, eq=True)
         tm.that(recovered.exception is exc, eq=True)
         tm.that(recovered.error, eq=str(exc))
+
+    def test_filter_callback_exception_returns_failure(self) -> None:
+        result: p.Result[int] = r[int].ok(5)
+        exc = RuntimeError("filter callback failed")
+
+        def predicate(_value: int) -> bool:
+            raise exc
+
+        filtered = result.filter(predicate)
+
+        tm.that(filtered.failure, eq=True)
+        tm.that(filtered.exception is exc, eq=True)
+        tm.that(filtered.error, eq=str(exc))
+
+    def test_tap_callback_exception_returns_failure(self) -> None:
+        result: p.Result[int] = r[int].ok(5)
+        exc = RuntimeError("tap callback failed")
+
+        def callback(_value: int) -> None:
+            raise exc
+
+        tapped = result.tap(callback)
+
+        tm.that(tapped.failure, eq=True)
+        tm.that(tapped.exception is exc, eq=True)
+        tm.that(tapped.error, eq=str(exc))

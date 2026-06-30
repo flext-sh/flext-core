@@ -20,9 +20,12 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
     def filter(self, predicate: Callable[[T], bool]) -> p.Result[T]:
         """Filter success value; returns self or failure if predicate fails."""
         if self.success and self.value is not None:
-            if predicate(self.value):
-                return self
-            return self.__class__.fail(c.ERR_RESULT_FILTER_PREDICATE_FAILED)
+            try:
+                if predicate(self.value):
+                    return self
+                return self.__class__.fail(c.ERR_RESULT_FILTER_PREDICATE_FAILED)
+            except c.EXC_BROAD_RUNTIME as exc:
+                return self.__class__.fail(str(exc), exception=exc)
         return self
 
     @override
@@ -103,12 +106,15 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
     def map_error(self, func: Callable[[str], str]) -> p.Result[T]:
         """Transform error message; returns self if success."""
         if self.failure:
-            return self.__class__.fail(
-                func(self.error or ""),
-                error_code=self.error_code,
-                error_data=self.error_data,
-                exception=self.exception,
-            )
+            try:
+                return self.__class__.fail(
+                    func(self.error or ""),
+                    error_code=self.error_code,
+                    error_data=self.error_data,
+                    exception=self.exception,
+                )
+            except c.EXC_BROAD_RUNTIME as exc:
+                return self.__class__.fail(str(exc), exception=exc)
         return self
 
     @overload
@@ -133,13 +139,22 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
         if self.success:
             value: T | U = self.value
             return self.__class__.ok(value)
-        return self.__class__.ok(func(self.error or ""))
+        try:
+            return self.__class__.ok(func(self.error or ""))
+        except c.EXC_BROAD_RUNTIME as exc:
+            result_class = cast(
+                "type[FlextResultConstructionMixin[T | U]]", self.__class__
+            )
+            return result_class.fail(str(exc), exception=exc)
 
     @override
     def tap(self, func: Callable[[T], None]) -> p.Result[T]:
         """Apply side effect to success value; return unchanged."""
         if self.success and self.value is not None:
-            func(self.value)
+            try:
+                func(self.value)
+            except c.EXC_BROAD_RUNTIME as exc:
+                return self.__class__.fail(str(exc), exception=exc)
         return self
 
     @override
