@@ -15,15 +15,17 @@ FLEXT_CORE__UTILITIES_LAZY_IMPORTS_PART_02 = build_lazy_import_map(
         "._generators_parts": ("_generators_parts",),
         "._guards_parts": ("_guards_parts",),
         "._guards_parts.guards_part_02": ("FlextUtilitiesGuards",),
-        "._logging_config_parts": ("_logging_config_parts",),
+        "._guards_type_protocol_specs": ("FlextUtilitiesGuardsTypeProtocolSpecsMixin",),
+        "._guards_type_protocol_string": (
+            "FlextUtilitiesGuardsTypeProtocolStringMixin",
+        ),
+        "._guards_type_protocol_types": ("ProtocolGuardInput",),
         "._logging_config_parts.logging_config_part_03": (
             "FlextUtilitiesLoggingConfig",
         ),
-        "._logging_context_parts": ("_logging_context_parts",),
         "._logging_context_parts.logging_context_part_02": (
             "FlextUtilitiesLoggingContext",
         ),
-        "._mapper_access_parts": ("_mapper_access_parts",),
         "._mapper_access_parts.mapper_access_part_02": ("FlextUtilitiesMapperAccess",),
         "._mapper_extract_parts.mapper_extract_part_02": (
             "FlextUtilitiesMapperExtract",

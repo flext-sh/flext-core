@@ -7,6 +7,9 @@ from flext_core.lazy import build_lazy_import_map
 
 FLEXT_CORE__UTILITIES_LAZY_IMPORTS_PART_03 = build_lazy_import_map(
     {
+        "._logging_config_parts": ("_logging_config_parts",),
+        "._logging_context_parts": ("_logging_context_parts",),
+        "._mapper_access_parts": ("_mapper_access_parts",),
         "._mapper_extract_parts": ("_mapper_extract_parts",),
         "._parser_targets_parts": ("_parser_targets_parts",),
         "._project_metadata_parts": ("_project_metadata_parts",),
