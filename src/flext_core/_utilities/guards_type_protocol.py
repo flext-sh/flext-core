@@ -14,10 +14,32 @@ from collections.abc import (
 from types import MappingProxyType
 from typing import TypeIs
 
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel as ugm
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.container import FlextProtocolsContainer as pc
+from flext_core._protocols.context import FlextProtocolsContext as pcx
+from flext_core._protocols.handler import FlextProtocolsHandler as ph
+from flext_core._protocols.logging import FlextProtocolsLogging as pl
+from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._protocols.service import FlextProtocolsService as psrv
+from flext_core._protocols.settings import FlextProtocolsSettings as ps
 from flext_core.constants import c
-from flext_core.protocols import p
 from flext_core.typings import t
+
+type ProtocolGuardInput = (
+    t.JsonPayload
+    | t.TypeHintSpecifier
+    | Callable[..., t.JsonPayload]
+    | pc.Container
+    | pcx.Context
+    | ph.Dispatcher
+    | ph.Handle
+    | ph.Middleware
+    | pl.Logger
+    | pr.ResultLike[t.JsonPayload]
+    | ps.Settings
+    | psrv.Service[t.JsonPayload]
+    | None
+)
 
 
 class FlextUtilitiesGuardsTypeProtocol:
@@ -28,29 +50,29 @@ class FlextUtilitiesGuardsTypeProtocol:
     Uses caching for performance-critical protocol lookups.
     """
 
-    _protocol_specs_cache: t.MappingKV[str, Callable[[t.GuardInput], bool]] | None = (
+    _protocol_specs_cache: t.MappingKV[str, Callable[[ProtocolGuardInput], bool]] | None = (
         None
     )
     _protocol_type_map_cache: MappingProxyType[type, str] | None = None
 
     @staticmethod
-    def _get_protocol_specs() -> t.MappingKV[str, Callable[[t.GuardInput], bool]]:
+    def _get_protocol_specs() -> t.MappingKV[str, Callable[[ProtocolGuardInput], bool]]:
         """Get cached mapping of protocol names to type check predicates."""
         if FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache = MappingProxyType({
-                c.Directory.CONFIG.value: lambda v: isinstance(v, p.Settings),
-                c.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
-                "container": lambda v: isinstance(v, p.Container),
+                c.Directory.CONFIG.value: lambda v: isinstance(v, ps.Settings),
+                c.FIELD_CONTEXT: lambda v: isinstance(v, pcx.Context),
+                "container": lambda v: isinstance(v, pc.Container),
                 "command_bus": lambda v: (
                     hasattr(v, "dispatch")
                     and hasattr(v, "publish")
                     and hasattr(v, "register_handler")
                 ),
-                "handler": lambda v: isinstance(v, p.Handler),
-                "logger": lambda v: isinstance(v, p.Logger),
+                "handler": lambda v: isinstance(v, ph.Handler),
+                "logger": lambda v: isinstance(v, pl.Logger),
                 "result": lambda v: FlextUtilitiesGuardsTypeProtocol.result_like(v),
-                "service": lambda v: isinstance(v, p.Service),
-                "middleware": lambda v: isinstance(v, p.Middleware),
+                "service": lambda v: isinstance(v, psrv.Service),
+                "middleware": lambda v: isinstance(v, ph.Middleware),
             })
         return FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache
 
@@ -60,58 +82,97 @@ class FlextUtilitiesGuardsTypeProtocol:
         if FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache = (
                 MappingProxyType({
-                    p.Settings: c.Directory.CONFIG.value,
-                    p.Context: c.FIELD_CONTEXT,
-                    p.Container: "container",
-                    p.Dispatcher: "command_bus",
-                    p.Handler: "handler",
-                    p.Logger: "logger",
-                    p.Result: "result",
-                    p.Service: "service",
-                    p.Middleware: "middleware",
+                    ps.Settings: c.Directory.CONFIG.value,
+                    pcx.Context: c.FIELD_CONTEXT,
+                    pc.Container: "container",
+                    ph.Dispatcher: "command_bus",
+                    ph.Handler: "handler",
+                    pl.Logger: "logger",
+                    pr.Result: "result",
+                    psrv.Service: "service",
+                    ph.Middleware: "middleware",
                 })
             )
         return FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache
 
     @staticmethod
     def context(
-        value: t.GuardInput | None,
-    ) -> TypeIs[p.Context]:
+        value: ProtocolGuardInput,
+    ) -> TypeIs[pcx.Context]:
         """Narrow value to Context protocol."""
-        return isinstance(value, p.Context)
+        return isinstance(value, pcx.Context)
 
     @staticmethod
     def factory(
-        value: t.GuardInput,
-    ) -> TypeIs[t.FactoryCallable]:
-        """Narrow value to factory callable."""
+        value: ProtocolGuardInput,
+    ) -> bool:
+        """Return whether value is callable as a factory."""
         return callable(value)
 
     @staticmethod
     def result_like(
-        value: t.GuardInput,
-    ) -> TypeIs[p.Result[t.JsonPayload]]:
-        """Narrow any value to Result protocol (runtime isinstance check)."""
-        return isinstance(value, p.Result)
+        value: ProtocolGuardInput,
+    ) -> bool:
+        """Return whether value satisfies the Result protocol at runtime."""
+        return isinstance(value, pr.Result)
 
     @staticmethod
-    def _run_string_type_check(type_name: str, value: t.GuardInput) -> bool:
+    def _run_string_type_check(type_name: str, value: ProtocolGuardInput) -> bool:
         """Check value against a string type specification (e.g., 'str', 'list', 'dict')."""
-        if type_name == "dict_non_empty":
-            return isinstance(value, Mapping) and len(value) > 0
-        if type_name == "list_non_empty":
-            return (
-                isinstance(value, Sequence)
-                and not isinstance(value, (str, bytes, bytearray))
-                and len(value) > 0
-            )
-        checker = c.STRING_TYPE_PREDICATES.get(type_name)
-        if checker is None:
-            return False
-        return checker(value)
+        match type_name:
+            case "str":
+                return isinstance(value, str)
+            case "dict":
+                return isinstance(value, dict)
+            case "list":
+                return isinstance(value, list)
+            case "tuple":
+                return isinstance(value, tuple)
+            case "sequence":
+                return isinstance(value, (list, tuple, range))
+            case "mapping":
+                return isinstance(value, Mapping)
+            case "list_or_tuple":
+                return isinstance(value, (list, tuple))
+            case "sequence_not_str":
+                return isinstance(value, (list, tuple, range)) and not isinstance(
+                    value,
+                    str,
+                )
+            case "sequence_not_str_bytes":
+                return isinstance(value, (list, tuple, range)) and not isinstance(
+                    value,
+                    (str, bytes),
+                )
+            case "sized":
+                return hasattr(value, "__len__")
+            case "callable":
+                return callable(value)
+            case "bytes":
+                return isinstance(value, bytes)
+            case "int":
+                return isinstance(value, int)
+            case "float":
+                return isinstance(value, float)
+            case "bool":
+                return isinstance(value, bool)
+            case "none":
+                return value is None
+            case "string_non_empty":
+                return isinstance(value, str) and bool(value.strip())
+            case "dict_non_empty":
+                return isinstance(value, Mapping) and len(value) > 0
+            case "list_non_empty":
+                return (
+                    isinstance(value, Sequence)
+                    and not isinstance(value, (str, bytes, bytearray))
+                    and len(value) > 0
+                )
+            case _:
+                return False
 
     @staticmethod
-    def _check_protocol(value: t.GuardInput, name: str) -> bool:
+    def _check_protocol(value: ProtocolGuardInput, name: str) -> bool:
         """Check if value implements a named protocol."""
         if name == c.FIELD_CONTEXT:
             return FlextUtilitiesGuardsTypeProtocol.context(value)
@@ -122,7 +183,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def matches_type(
-        value: t.GuardInput,
+        value: ProtocolGuardInput,
         type_spec: str
         | type
         | tuple[type, ...]
@@ -141,7 +202,7 @@ class FlextUtilitiesGuardsTypeProtocol:
                 matched = not (
                     type_name
                     in {"string_non_empty", "dict_non_empty", "list_non_empty"}
-                    and ugm.pydantic_model(value)
+                    and isinstance(value, (mp.BaseModel, mp.RootModel))
                 ) and FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
                     type_name,
                     value,
