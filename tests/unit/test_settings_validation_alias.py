@@ -11,10 +11,9 @@ flext_core/_settings/_base_parts/flextsettingsbase_part_01.py
 
 from __future__ import annotations
 
-from pydantic import AliasChoices, Field
+from typing import Annotated
 
-from flext_core import FlextSettings, m
-from tests.typings import t
+from flext_core import FlextSettings, m, t
 
 
 class _AliasFieldSettings(FlextSettings):
@@ -25,10 +24,10 @@ class _AliasFieldSettings(FlextSettings):
         populate_by_name=False,
     )
 
-    pandoc_bin: str = Field(
-        default="pandoc",
-        validation_alias=AliasChoices("PANDOC", "FLEXT_PANDOC"),
-    )
+    pandoc_bin: Annotated[
+        str,
+        m.Field(validation_alias=t.AliasChoices("PANDOC", "FLEXT_PANDOC")),
+    ] = "pandoc"
 
 
 class TestUpdateGlobalWithValidationAlias:

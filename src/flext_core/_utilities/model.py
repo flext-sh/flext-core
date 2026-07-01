@@ -13,13 +13,13 @@ from importlib import import_module
 from flext_core import (
     FlextConstants as c,
     FlextExceptions as e,
-    FlextModelsBase as m,
-    FlextModelsPydantic as mp,
     FlextProtocols as p,
     FlextResult as r,
     FlextTypes as t,
-    FlextUtilitiesArgs as ua,
 )
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._utilities.args import FlextUtilitiesArgs as ua
 
 
 class FlextUtilitiesModel:
@@ -84,7 +84,10 @@ class FlextUtilitiesModel:
             FlextUtilitiesModel.ModelDumpOptions,
         ).unwrap_or(FlextUtilitiesModel.ModelDumpOptions())
         opts_dict = opts.model_dump(exclude_none=True)
-        return model.model_dump(**opts_dict)
+        dumped: t.JsonMapping = t.json_mapping_adapter().validate_python(
+            model.model_dump(mode="json", **opts_dict),
+        )
+        return dumped
 
     @staticmethod
     def _settings_base() -> t.SettingsClass:
