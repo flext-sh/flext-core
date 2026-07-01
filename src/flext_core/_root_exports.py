@@ -85,6 +85,13 @@ ROOT_ALL: Final[tuple[str, ...]] = (
     "u",
     "x",
 )
+ROOT_TYPING_ONLY_NAMES: Final[tuple[str, ...]] = (
+    "FlextSettingsBase",
+    "FlextModelsBase",
+    "FlextUtilitiesText",
+    "mc",
+    "ube",
+)
 
 
 __all__: list[str] = [
@@ -92,5 +99,6 @@ __all__: list[str] = [
     "ROOT_EXCLUDE_NAMES",
     "ROOT_LAZY_MODULES",
     "ROOT_METADATA_NAMES",
+    "ROOT_TYPING_ONLY_NAMES",
     "ROOT_PACKAGE_MODULES",
 ]
