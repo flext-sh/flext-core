@@ -16,13 +16,13 @@ from typing import ClassVar, Unpack
 from pydantic import ConfigDict
 
 from flext_core import (
-    FlextModelsHandler,
-    FlextUtilitiesHandler,
     c,
     e,
     m,
     x,
 )
+from flext_core._models.handler import FlextModelsHandler
+from flext_core._utilities.handler import FlextUtilitiesHandler
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):
@@ -118,7 +118,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             str: The handler name
 
         """
-        return self._runtime_state.handler_name
+        return self._runtime_state.execution_context.handler_name
 
     @property
     def mode(self) -> c.HandlerType:
@@ -128,7 +128,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             c.HandlerType: The handler mode (command, query, event, saga)
 
         """
-        return self._runtime_state.handler_mode
+        return self._runtime_state.execution_context.handler_mode
 
     @staticmethod
     def _handler_type_to_literal(

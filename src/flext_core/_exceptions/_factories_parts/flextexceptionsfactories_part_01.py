@@ -11,11 +11,11 @@ from typing import TYPE_CHECKING, TypeVar
 
 from flext_core import (
     FlextConstants as c,
-    FlextExceptionsTemplate,
-    FlextModelsExceptionParams as m,
-    FlextModelsPydantic as mp,
     FlextProtocols as p,
 )
+from flext_core._exceptions.template import FlextExceptionsTemplate
+from flext_core._models.exception_params import FlextModelsExceptionParams as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 TExceptionParams = TypeVar("TExceptionParams", bound=mp.BaseModel)
 
