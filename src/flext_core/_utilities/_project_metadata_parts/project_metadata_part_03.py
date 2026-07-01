@@ -96,21 +96,21 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart02):
             for item in alias_metadata
             if item.facade
         )
-        eager_parent_sources = FlextUtilitiesProjectMetadata._discover_eager_alias_parent_sources(
-            import_name, package
+        eager_parent_sources = (
+            FlextUtilitiesProjectMetadata._discover_eager_alias_parent_sources(
+                import_name, package
+            )
         )
         parent_sources = {
             item.alias: item.parent_source
             for item in alias_metadata
             if item.parent_source != import_name
         }
-        parent_sources.update(
-            {
-                alias: parent_source
-                for alias, parent_source in eager_parent_sources.items()
-                if alias not in parent_sources
-            }
-        )
+        parent_sources.update({
+            alias: parent_source
+            for alias, parent_source in eager_parent_sources.items()
+            if alias not in parent_sources
+        })
         scan_dirs = FlextUtilitiesProjectMetadata._scan_directories(package_root)
         tier_facade_prefix = {
             directory: (
