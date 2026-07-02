@@ -10,10 +10,6 @@ from tests.typings import t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 from tests.utilities import u
 
-HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
-HandlerTypeScenario = TestsFlextFlextHandlers.HandlerTypeScenario
-VALIDATION_TYPES = TestsFlextFlextHandlers.VALIDATION_TYPES
-
 
 class TestsFlextHandlersFactory(TestsFlextFlextHandlers):
     def test_handlers_create_from_callable_basic(self) -> None:

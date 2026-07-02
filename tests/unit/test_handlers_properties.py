@@ -7,10 +7,6 @@ from hypothesis import given, strategies as st
 
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 
-HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
-HandlerTypeScenario = TestsFlextFlextHandlers.HandlerTypeScenario
-VALIDATION_TYPES = TestsFlextFlextHandlers.VALIDATION_TYPES
-
 
 class TestsFlextHandlersProperties(TestsFlextFlextHandlers):
     @given(st.text(min_size=1))

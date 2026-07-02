@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import inspect
 from pathlib import Path
 
@@ -17,6 +18,17 @@ _MODULE_EXEMPT_FILES: frozenset[str] = frozenset({
     "__main__.py",
     "conftest.py",
 })
+
+
+def _is_synthetic_parametrized_type(value: object) -> bool:
+    """Return True for synthetic ``Foo[int]`` specializations.
+
+    Pydantic generic BaseModel subclasses leak parameterized specializations
+    into the defining module's namespace (e.g. ``FlextInfraServiceBase[bool]``).
+    These are not source-level declarations and must not count toward module
+    class caps or backwards-compat alias rules.
+    """
+    return isinstance(value, type) and "[" in getattr(value, "__qualname__", "")
 
 
 class FlextUtilitiesBeartypeModuleVisitor:
@@ -37,18 +49,29 @@ class FlextUtilitiesBeartypeModuleVisitor:
             package = module.__name__.split(".")[0]
             if not package.startswith("flext_") or filename.startswith("_"):
                 return _NO_VIOLATION
-            top_level = {
-                id(value): value
-                for value in vars(module).values()
-                if isinstance(value, type)
-                and value.__module__ == module.__name__
-                and "." not in getattr(value, "__qualname__", ".")
-                and not issubclass(value, Warning)
-            }
-            if len(top_level) > params.max_top_level_classes:
+            try:
+                source_lines, _start = inspect.getsourcelines(module)
+            except (OSError, TypeError):
+                return _NO_VIOLATION
+            source = "".join(source_lines)
+            try:
+                tree = ast.parse(source, filename=src_file)
+            except SyntaxError:
+                return _NO_VIOLATION
+            top_level_class_count = sum(
+                1
+                for node in tree.body
+                if isinstance(node, ast.ClassDef)
+                and not any(
+                    base.id == "Warning"
+                    for base in node.bases
+                    if isinstance(base, ast.Name)
+                )
+            )
+            if top_level_class_count > params.max_top_level_classes:
                 return {
                     "file": filename,
-                    "count": str(len(top_level)),
+                    "count": str(top_level_class_count),
                     "cap": str(params.max_top_level_classes),
                 }
             return _NO_VIOLATION
@@ -96,6 +119,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
                 {"alias": name, "target": value.__name__, "file": filename}
                 for name, value in vars(module).items()
                 if isinstance(value, type)
+                and not _is_synthetic_parametrized_type(value)
                 and name[:1].isupper()
                 and not name.isupper()
                 and (
