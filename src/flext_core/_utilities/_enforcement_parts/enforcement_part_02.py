@@ -6,6 +6,7 @@ from collections.abc import (
     Iterator,
 )
 from enum import EnumType
+from typing import ClassVar
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
@@ -13,14 +14,18 @@ from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.base import FlextProtocolsBase as p
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
+from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
 
 from .enforcement_part_01 import (
     PREDICATE_BINDINGS,
-    FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart01,
 )
 
 
-class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart01):
+class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
+    """Rule-driven runtime enforcement (static-only)."""
+
+    _canonical_catalog: ClassVar[me.EnforcementCatalog | None] = None
+
     @staticmethod
     def _apply_rule(
         _target: type,

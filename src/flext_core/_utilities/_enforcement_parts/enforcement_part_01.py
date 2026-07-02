@@ -3,23 +3,15 @@
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import ClassVar
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
 
 
 def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseModel]]:
-    """Build the tag → (predicate_kind, params) dispatch mapping.
-
-    Each entry pairs a tag in ``c.ENFORCEMENT_RULES`` with the typed
-    predicate descriptor consumed by ``FlextUtilitiesBeartypeEngine.apply``.
-    Adding a new rule = one row in ``c.ENFORCEMENT_RULES`` (messaging) plus
-    one row here (routing). No additional code change.
-    """
+    """Build the tag → (predicate_kind, params) dispatch mapping (1 row = 1 rule)."""
     pk = c.EnforcementPredicateKind
     fp = me.FieldShapeParams
     mc = me.ModelConfigParams
@@ -162,10 +154,7 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
             msh(require_explicit_class_when_self_ref=True),
         ),
         # --- Phase 3 data-only additions ---
-        "loc_cap": (
-            pk.LOC_CAP,
-            me.LocCapParams(max_logical_loc=200),
-        ),
+        "loc_cap": (pk.LOC_CAP, me.LocCapParams(max_logical_loc=200)),
         "library_abstraction": (
             pk.LIBRARY_IMPORT,
             me.LibraryImportParams(library_owners=c.ENFORCEMENT_LIBRARY_OWNERS),
@@ -195,6 +184,16 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
                 }),
             ),
         ),
+        "no_module_compat_alias": (
+            pk.MODULE_ALIAS,
+            arp(expected_form="no_module_compat_alias"),
+        ),
+        "one_class_per_module": (pk.LOC_CAP, me.LocCapParams(max_top_level_classes=1)),
+        "no_private_module_bypass": (
+            pk.IMPORT_BLACKLIST,
+            iblp(private_package_only=True),
+        ),
+        "forbid_deep_namespace": (pk.CLASS_PLACEMENT, cpp(max_nested_class_depth=2)),
     })
 
 
@@ -204,10 +203,4 @@ PREDICATE_BINDINGS: t.MappingKV[
 ] = _bindings()
 
 
-class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
-    """Rule-driven runtime enforcement (static-only)."""
-
-    _canonical_catalog: ClassVar[me.EnforcementCatalog | None] = None
-
-
-__all__: list[str] = ["PREDICATE_BINDINGS", "FlextUtilitiesEnforcement"]
+__all__: list[str] = ["PREDICATE_BINDINGS"]

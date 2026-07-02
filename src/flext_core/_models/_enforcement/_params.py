@@ -68,12 +68,14 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         forbidden_bases: frozenset[str] = frozenset()
         canonical_path_fragment: str = ""
         check_nested: bool = False
+        max_nested_class_depth: int = 0
 
     class LocCapParams(EnforcementModelBase):
         """Parameters for LOC_CAP predicate."""
 
         kind: Literal["loc_cap"] = "loc_cap"
         max_logical_loc: int = 200
+        max_top_level_classes: int = 0
 
     class WrapperParams(EnforcementModelBase):
         """Parameters for WRAPPER predicate."""

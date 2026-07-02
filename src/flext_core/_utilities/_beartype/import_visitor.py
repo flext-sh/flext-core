@@ -31,7 +31,11 @@ class FlextUtilitiesBeartypeImportVisitor:
         filename = Path(src_file).name
         module_name = module.__name__
         violation = _NO_VIOLATION
-        if filename in c.ENFORCEMENT_CANONICAL_FILES and not params.forbidden_symbols:
+        if (
+            filename in c.ENFORCEMENT_CANONICAL_FILES
+            and not params.forbidden_symbols
+            and not params.private_package_only
+        ):
             tier_prefixes = tuple(
                 value.__name__
                 for value in vars(module).values()
@@ -50,6 +54,32 @@ class FlextUtilitiesBeartypeImportVisitor:
                 ),
                 _NO_VIOLATION,
             )
+        elif params.private_package_only:
+            package = module_name.split(".")[0]
+            subpath = module_name.split(".")[1:]
+            families = frozenset(
+                f"_{name.removesuffix('.py')}" for name in c.ENFORCEMENT_CANONICAL_FILES
+            )
+            consumer_exempt = (
+                filename in c.ENFORCEMENT_CANONICAL_FILES
+                or any(part.startswith("_") for part in subpath)
+                or len(subpath) <= 1
+            )
+            if package.startswith("flext_"):
+                violation = next(
+                    (
+                        {"import": name, "origin": origin, "file": filename}
+                        for name, value in vars(module).items()
+                        if isinstance(value, type)
+                        and (origin := _ubh.object_module_name_for(value) or "")
+                        and origin.startswith("flext_")
+                        and families.intersection(origin.split("."))
+                        and (
+                            not origin.startswith(f"{package}.") or not consumer_exempt
+                        )
+                    ),
+                    _NO_VIOLATION,
+                )
         elif params.forbidden_symbols:
             package = module_name.split(".")[0]
             if not (

@@ -42,6 +42,16 @@ class FlextUtilitiesBeartypeClassVisitor:
                     for base_name, is_match in forbidden_base_matches
                 ):
                     violation = BARE_VIOLATION
+            case (target,) if (
+                isinstance(target, type)
+                and params.max_nested_class_depth
+                and "[" not in target.__name__
+            ):
+                deep = FlextUtilitiesBeartypeClassVisitor._deep_nested(
+                    target,
+                    params.max_nested_class_depth,
+                )
+                violation = {"qn": deep} if deep else NO_VIOLATION
             case (target, expected) if isinstance(target, type) and isinstance(
                 expected,
                 str,
@@ -66,6 +76,28 @@ class FlextUtilitiesBeartypeClassVisitor:
             case _:
                 pass
         return violation
+
+    @staticmethod
+    def _deep_nested(node: type, budget: int) -> str | None:
+        """Return qualname of first locally-defined non-Enum class past ``budget``."""
+        for value in vars(node).values():
+            if not (
+                isinstance(value, type)
+                and not isinstance(value, EnumType)
+                and getattr(value, "__qualname__", "").startswith(
+                    f"{node.__qualname__}.",
+                )
+            ):
+                continue
+            if budget == 0:
+                return value.__qualname__
+            found = FlextUtilitiesBeartypeClassVisitor._deep_nested(
+                value,
+                budget - 1,
+            )
+            if found:
+                return found
+        return None
 
     @staticmethod
     def v_protocol_tree(

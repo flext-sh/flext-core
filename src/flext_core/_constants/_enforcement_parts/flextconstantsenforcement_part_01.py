@@ -49,6 +49,7 @@ class FlextConstantsEnforcementEnums:
         LOOSE_SYMBOL = "loose_symbol"
         METHOD_SHAPE = "method_shape"
         MODEL_CONFIG = "model_config"
+        MODULE_ALIAS = "module_alias"
         MRO_SHAPE = "mro_shape"
         PROTOCOL_TREE = "protocol_tree"
         WRAPPER = "wrapper"
