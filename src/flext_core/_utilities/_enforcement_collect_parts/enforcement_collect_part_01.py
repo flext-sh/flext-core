@@ -62,10 +62,23 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             if top == "fence":
                 return None
             src = top
+            class_stem_override = None
+        else:
+            try:
+                src_file = inspect.getsourcefile(target)
+            except (OSError, TypeError):
+                src_file = None
+            class_stem_override = None
+            if src_file is not None:
+                for parent in Path(src_file).parents:
+                    pyproject = parent / "pyproject.toml"
+                    if pyproject.exists():
+                        class_stem_override = upm.read_tool_flext_config(parent).project.class_stem_override
+                        break
         canonical_project_name = src.replace("_", "-")
         head, _, tail = canonical_project_name.partition("-")
         namespace = mpm.derive_class_stem(tail or head)
-        project_prefix = mpm.derive_class_stem(canonical_project_name)
+        project_prefix = class_stem_override or mpm.derive_class_stem(canonical_project_name)
         if top in {"tests", "examples", "scripts"} and top != (src or ""):
             return mpm.derive_class_stem(top) + project_prefix, namespace
         return project_prefix, namespace
@@ -161,7 +174,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         )
 
         def walk(
-            node: type, path: str
+            node: type, path: str,
         ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
             for name, value in FlextUtilitiesEnforcementCollect._iter_inner(node):
                 if not ub.defined_inside(value, node.__qualname__):
