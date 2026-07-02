@@ -51,6 +51,8 @@ Used in: protocols (for future extensions)."""
 E = TypeVar("E")
 """Element type - for collections and sequences.
 Used in: collection, enum, args utilities."""
+EnumT = TypeVar("EnumT", bound=StrEnum)
+"""Enum type variable - for StrEnum utility helpers."""
 U = TypeVar("U")
 """Utility type - for utility functions and helpers.
 Used in: result (for map/flat_map operations)."""
@@ -168,6 +170,8 @@ class FlextTypes:
     # Tier 2: Pydantic-safe metadata values
     MetadataScalarValue: TypeAlias = str | int | float | bool | None
     MetadataListValue: TypeAlias = list[str | int | float | bool | None]
+    MetadataValue: TypeAlias = GeneralValueType
+    ResultErrorData: TypeAlias = Mapping[str, MetadataValue | None]
 
     # Tier 2.5: Pydantic-safe config types for Field() annotations
     PydanticConfigValue: TypeAlias = (
@@ -181,6 +185,7 @@ class FlextTypes:
     Scalar: TypeAlias = ScalarValue
     Container: TypeAlias = GeneralValueType
     ContainerValue: TypeAlias = GeneralValueType
+    NormalizedValue: TypeAlias = GeneralValueType
 
     # =========================================================================
     # GeneralValueType - Re-exported from module level (recursive)
@@ -215,8 +220,6 @@ class FlextTypes:
 
         Replaces: Sequence[GeneralValueType]
         """
-
-        root: list[GeneralValueType]
 
     # File content type supporting all serializable formats
     FileContent: TypeAlias = str | bytes | BaseModel | Sequence[Sequence[str]]
@@ -382,8 +385,6 @@ class FlextTypes:
         Replaces: dict[str, Any], dict[str, GeneralValueType]
         """
 
-        root: dict[str, GeneralValueType] = Field(default_factory=dict)
-
     class ConfigMap(
         _DictMixin[GeneralValueType],
         RootModel[dict[str, GeneralValueType]],
@@ -392,8 +393,6 @@ class FlextTypes:
 
         Replaces: ConfigurationDict, ConfigurationMapping
         """
-
-        root: dict[str, GeneralValueType] = Field(default_factory=dict)
 
     ConfigurationMapping: TypeAlias = ConfigMap
     ConfigurationDict: TypeAlias = ConfigMap
@@ -407,8 +406,6 @@ class FlextTypes:
         Replaces: ServiceMapping
         """
 
-        root: dict[str, GeneralValueType]
-
     class ErrorMap(
         _DictMixin[int | str | dict[str, int]],
         RootModel[dict[str, int | str | dict[str, int]]],
@@ -417,8 +414,6 @@ class FlextTypes:
 
         Replaces: ErrorTypeMapping
         """
-
-        root: dict[str, int | str | dict[str, int]]
 
     IncEx: TypeAlias = set[str] | dict[str, set[str] | bool]
 
@@ -437,8 +432,6 @@ class FlextTypes:
         Replaces: Mapping[str, FactoryRegistrationCallable]
         """
 
-        root: dict[str, FactoryRegistrationCallable]
-
     class ResourceMap(
         _DictMixin[ResourceCallable],
         RootModel[dict[str, ResourceCallable]],
@@ -448,15 +441,11 @@ class FlextTypes:
         Replaces: Mapping[str, ResourceCallable]
         """
 
-        root: dict[str, ResourceCallable]
-
     # =========================================================================
     # Validation mapping types (used in _models/validation.py)
     # =========================================================================
     class ValidatorCallable(RootModel[Callable[[GeneralValueType], GeneralValueType]]):
         """Callable validator container."""
-
-        root: Callable[[GeneralValueType], GeneralValueType]
 
         def __call__(self, value: GeneralValueType) -> GeneralValueType:
             """Execute validator."""
@@ -485,23 +474,17 @@ class FlextTypes:
     ):
         """Map of field validators."""
 
-        root: dict[str, Callable[[GeneralValueType], GeneralValueType]]
-
     class ConsistencyRuleMap(
         _ValidatorMapMixin,
         RootModel[dict[str, Callable[[GeneralValueType], GeneralValueType]]],
     ):
         """Map of consistency rules."""
 
-        root: dict[str, Callable[[GeneralValueType], GeneralValueType]]
-
     class EventValidatorMap(
         _ValidatorMapMixin,
         RootModel[dict[str, Callable[[GeneralValueType], GeneralValueType]]],
     ):
         """Map of event validators."""
-
-        root: dict[str, Callable[[GeneralValueType], GeneralValueType]]
 
     # Error/Exception types (used in exceptions.py)
     # ErrorTypeMapping removed - Use m.ErrorMap
@@ -516,13 +499,11 @@ class FlextTypes:
     # =====================================================================
     # Pydantic Models
     # =====================================================================
-    class BatchResultDict(BaseModel):
-        """Result payload model for batch operation outputs."""
+    class _BatchResultBase:
+        model_config = ConfigDict(validate_assignment=True, extra="forbid")
 
-        model_config = ConfigDict(
-            validate_assignment=True,
-            extra="forbid",
-        )
+    class BatchResultDict(_BatchResultBase, BaseModel):
+        """Result payload model for batch operation outputs."""
 
         results: list[GeneralValueType] = Field(default_factory=list)
         errors: list[tuple[int, str]] = Field(default_factory=list)
@@ -557,6 +538,7 @@ t = FlextTypes
 
 
 __all__ = [
+    "EnumT",
     "FlextTypes",
     "GeneralValueType",
     "JsonDict",
