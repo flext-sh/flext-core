@@ -8,10 +8,10 @@ from flext_core import FlextSettings
 from tests.constants import c
 from tests.utilities import u
 
-from .settings_integration_factories import FlextSettingsFactories
+from .settings_integration_factories import TestsFlextFlextSettingsFactories
 
 
-class FlextSettingsPrecedenceCase(FlextSettingsFactories):
+class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
     def test_pydantic_settings_precedence_order(self, temp_dir: Path) -> None:
         """Test comprehensive Pydantic 2 Settings precedence order."""
         FlextSettings.reset_for_testing()

@@ -10,7 +10,7 @@ from tests.typings import t
 from tests.utilities import u
 
 
-class SettingsConfigTestCase(m.BaseModel):
+class TestsFlextSettingsConfigTestCase(m.BaseModel):
     """Factory for configuration test cases."""
 
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
@@ -49,7 +49,7 @@ class SettingsConfigTestCase(m.BaseModel):
         return file_path
 
 
-class SettingsThreadSafetyTest(m.BaseModel):
+class TestsFlextSettingsThreadSafetyTest(m.BaseModel):
     """Factory for thread safety test configurations."""
 
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
@@ -65,14 +65,14 @@ class SettingsThreadSafetyTest(m.BaseModel):
     ] = ""
 
 
-class SettingsConfigTestFactories:
+class TestsFlextSettingsConfigTestFactories:
     """Centralized factories for configuration tests."""
 
     @staticmethod
-    def basic_config_cases() -> t.SequenceOf[SettingsConfigTestCase]:
+    def basic_config_cases() -> t.SequenceOf[TestsFlextSettingsConfigTestCase]:
         """Generate basic configuration test cases."""
         return [
-            SettingsConfigTestCase(
+            TestsFlextSettingsConfigTestCase(
                 test_name="basic_json",
                 config_data={
                     "app_name": "test_app",
@@ -87,14 +87,14 @@ class SettingsConfigTestFactories:
                 file_format="json",
                 description="Basic JSON configuration",
             ),
-            SettingsConfigTestCase(
+            TestsFlextSettingsConfigTestCase(
                 test_name="basic_yaml",
                 config_data={"database_url": "sqlite:///test.db", "timeout": 30},
                 expected_values={"database_url": "sqlite:///test.db", "timeout": 30},
                 file_format="yaml",
                 description="Basic YAML configuration",
             ),
-            SettingsConfigTestCase(
+            TestsFlextSettingsConfigTestCase(
                 test_name="env_override",
                 config_data={"max_connections": 10},
                 expected_values={"max_connections": 20},
@@ -105,15 +105,15 @@ class SettingsConfigTestFactories:
         ]
 
     @staticmethod
-    def thread_safety_cases() -> t.SequenceOf[SettingsThreadSafetyTest]:
+    def thread_safety_cases() -> t.SequenceOf[TestsFlextSettingsThreadSafetyTest]:
         """Generate thread safety test cases."""
         return [
-            SettingsThreadSafetyTest(
+            TestsFlextSettingsThreadSafetyTest(
                 thread_count=3,
                 operations_per_thread=5,
                 description="Light concurrent access",
             ),
-            SettingsThreadSafetyTest(
+            TestsFlextSettingsThreadSafetyTest(
                 thread_count=10,
                 operations_per_thread=20,
                 description="Heavy concurrent access",
@@ -121,13 +121,13 @@ class SettingsConfigTestFactories:
         ]
 
 
-class FlextSettingsFactories:
+class TestsFlextFlextSettingsFactories:
     """Expose the previous nested factory names through inheritance."""
 
-    _ConfigTestCase: ClassVar[type[SettingsConfigTestCase]] = SettingsConfigTestCase
-    _ThreadSafetyTest: ClassVar[type[SettingsThreadSafetyTest]] = (
-        SettingsThreadSafetyTest
+    _ConfigTestCase: ClassVar[type[TestsFlextSettingsConfigTestCase]] = TestsFlextSettingsConfigTestCase
+    _ThreadSafetyTest: ClassVar[type[TestsFlextSettingsThreadSafetyTest]] = (
+        TestsFlextSettingsThreadSafetyTest
     )
-    _ConfigTestFactories: ClassVar[type[SettingsConfigTestFactories]] = (
-        SettingsConfigTestFactories
+    _ConfigTestFactories: ClassVar[type[TestsFlextSettingsConfigTestFactories]] = (
+        TestsFlextSettingsConfigTestFactories
     )

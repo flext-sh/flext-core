@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import FlextTypes as t
+from flext_core import t
 
 from ._loggings_parts.flextlogger_part_05 import FlextLogger
 

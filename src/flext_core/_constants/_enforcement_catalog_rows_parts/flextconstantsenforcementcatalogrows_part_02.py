@@ -57,7 +57,7 @@ class FlextConstantsEnforcementCatalogSkillRows:
             "Never flatten organic namespace paths — preserve `m.TargetOracle.ExecuteResult` etc., don't rebind to `m.ExecuteResult`.",
         ),
         (
-            "ENFORCE-056",
+            "ENFORCE-065",
             "HIGH",
             "flext-mro-namespace-rules",
             "facade-purity",

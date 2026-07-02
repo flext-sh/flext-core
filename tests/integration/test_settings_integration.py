@@ -26,10 +26,10 @@ from tests.protocols import p
 from tests.typings import t
 from tests.utilities import u
 
-from .settings_integration_precedence import FlextSettingsPrecedenceCase
+from .settings_integration_precedence import TestsFlextFlextSettingsPrecedenceCase
 
 
-class TestsFlextSettingsIntegration(FlextSettingsPrecedenceCase):
+class TestsFlextSettingsIntegration(TestsFlextFlextSettingsPrecedenceCase):
     """Test FlextSettings singleton pattern and integration with all modules using factories."""
 
     def setup_method(self) -> None:

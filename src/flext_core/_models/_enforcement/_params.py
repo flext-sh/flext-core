@@ -88,6 +88,12 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         alias_names: t.StrSequence = ()
         expected_form: str = ""
 
+    class CompatibilityAliasParams(EnforcementModelBase):
+        """Parameters for COMPATIBILITY_ALIAS predicate."""
+
+        kind: Literal["compatibility_alias"] = "compatibility_alias"
+        alias_renames: t.StrMapping = Field(default_factory=dict)
+
     class LibraryImportParams(EnforcementModelBase):
         """Parameters for LIBRARY_IMPORT predicate."""
 

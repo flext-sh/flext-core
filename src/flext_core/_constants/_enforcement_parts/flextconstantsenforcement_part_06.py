@@ -21,6 +21,7 @@ class FlextConstantsEnforcementTargets:
         "alias_first_multi_parent",
         "alias_rebound_at_module_end",
         "cast_outside_core",
+        "compatibility_alias_import",
         "cross_project_duplicate",
         "deprecated_typealias_syntax",
         "facade_base_is_alias_or_peer",
@@ -127,6 +128,41 @@ class FlextConstantsEnforcementTargets:
     necessarily lives here because flext-core owns the names being renamed.
     Refactor verbs in flext-infra read this mapping; adding a new rename =
     one entry here, no parallel list.
+    """
+
+    ENFORCEMENT_COMPATIBILITY_ALIAS_RENAMES: Final[Mapping[str, str]] = MappingProxyType({
+        # flext-core canonical facade aliases
+        "FlextConstants": "c",
+        "FlextModels": "m",
+        "FlextProtocols": "p",
+        "FlextTypes": "t",
+        "FlextUtilities": "u",
+        "FlextResult": "r",
+        # flext-cli canonical facade aliases
+        "FlextCliConstants": "c",
+        "FlextCliModels": "m",
+        "FlextCliProtocols": "p",
+        "FlextCliTypes": "t",
+        "FlextCliUtilities": "u",
+        # flext-infra canonical facade aliases
+        "FlextInfraConstants": "c",
+        "FlextInfraModels": "m",
+        "FlextInfraProtocols": "p",
+        "FlextInfraTypes": "t",
+        "FlextInfraUtilities": "u",
+        # flext-tests canonical facade aliases
+        "FlextTestsConstants": "c",
+        "FlextTestsModels": "m",
+        "FlextTestsProtocols": "p",
+        "FlextTestsTypes": "t",
+        "FlextTestsUtilities": "u",
+    })
+    """SSOT: long facade class name → canonical short alias.
+
+    Any ``from <pkg> import <long_name>`` where ``<long_name>`` is present in
+    this mapping must be rewritten to ``from <pkg> import <alias>``. The
+    detector/rewriter in flext-infra sources this mapping from flext-core;
+    adding a new compatibility alias = one entry here, no parallel list.
     """
 
     ENFORCEMENT_LIBRARY_OWNERS: Final[Mapping[str, str]] = MappingProxyType({

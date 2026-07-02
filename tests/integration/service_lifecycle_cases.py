@@ -9,10 +9,10 @@ import pytest
 from tests.protocols import p
 from tests.utilities import u
 
-from .service_fixtures import FlextServiceFixtures
+from .service_fixtures import TestsFlextFlextServiceFixtures
 
 
-class FlextServiceLifecycleCases(FlextServiceFixtures):
+class TestsFlextFlextServiceLifecycleCases(TestsFlextFlextServiceFixtures):
     @pytest.mark.integration
     def test_lifecycle_service_execution(self, clean_container: p.Container) -> None:
         """Test lifecycle service execution."""

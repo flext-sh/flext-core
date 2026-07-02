@@ -14,10 +14,10 @@ import pytest
 from tests.protocols import p
 from tests.utilities import u
 
-from .service_lifecycle_cases import FlextServiceLifecycleCases
+from .service_lifecycle_cases import TestsFlextFlextServiceLifecycleCases
 
 
-class TestsFlextServiceIntegration(FlextServiceLifecycleCases):
+class TestsFlextServiceIntegration(TestsFlextFlextServiceLifecycleCases):
     pytestmark = [pytest.mark.integration]
 
     @pytest.mark.integration

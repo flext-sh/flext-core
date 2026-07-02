@@ -21,10 +21,10 @@ from tests.protocols import p
 from tests.typings import t
 from tests.utilities import u
 
-from .system_integration_cases import FlextSystemWorkflowCases
+from .system_integration_cases import TestsFlextFlextSystemWorkflowCases
 
 
-class TestsFlextSystemIntegration(FlextSystemWorkflowCases):
+class TestsFlextSystemIntegration(TestsFlextFlextSystemWorkflowCases):
     """Teste de integração completo do sistema FLEXT.
 
     Este teste único valida todo o ecosistema flext-core através de cenários

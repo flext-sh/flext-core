@@ -16,7 +16,7 @@ from tests.protocols import p
 from tests.typings import t
 
 
-class UserServiceEntity(m.BaseModel):
+class TestsFlextUserServiceEntity(m.BaseModel):
     """Test user entity model."""
 
     unique_id: Annotated[str, m.Field(description="Unique user identifier")]
@@ -25,11 +25,11 @@ class UserServiceEntity(m.BaseModel):
     active: Annotated[bool, m.Field(description="Whether user is active")] = True
 
 
-class UserQueryService(s[bool]):
+class TestsFlextUserQueryService(s[bool]):
     """Real user query service using ``s``."""
 
-    _users: MutableMapping[str, UserServiceEntity] = m.PrivateAttr(
-        default_factory=lambda: dict[str, UserServiceEntity](),
+    _users: MutableMapping[str, TestsFlextUserServiceEntity] = m.PrivateAttr(
+        default_factory=lambda: dict[str, TestsFlextUserServiceEntity](),
     )
     _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)
     _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
@@ -41,22 +41,22 @@ class UserQueryService(s[bool]):
             return r[bool].fail("User service unavailable")
         return r[bool].ok(True)
 
-    def fetch_user(self, user_id: str) -> p.Result[UserServiceEntity]:
+    def fetch_user(self, user_id: str) -> p.Result[TestsFlextUserServiceEntity]:
         """Fetch user by ID."""
         self._call_count += 1
         if self._should_fail:
-            return r[UserServiceEntity].fail("User service unavailable")
+            return r[TestsFlextUserServiceEntity].fail("User service unavailable")
         if user_id in self._users:
-            return r[UserServiceEntity].ok(self._users[user_id])
-        default_user = UserServiceEntity(
+            return r[TestsFlextUserServiceEntity].ok(self._users[user_id])
+        default_user = TestsFlextUserServiceEntity(
             unique_id=user_id,
             name=f"User {user_id}",
             email=f"user{user_id}@example.com",
             active=True,
         )
-        return r[UserServiceEntity].ok(default_user)
+        return r[TestsFlextUserServiceEntity].ok(default_user)
 
-    def apply_user_data(self, user_id: str, user: UserServiceEntity) -> None:
+    def apply_user_data(self, user_id: str, user: TestsFlextUserServiceEntity) -> None:
         """Apply user data for testing."""
         self._users[user_id] = user
 
@@ -70,7 +70,7 @@ class UserQueryService(s[bool]):
         return self._call_count
 
 
-class NotificationService(s[str]):
+class TestsFlextNotificationService(s[str]):
     """Real notification service using ``s``."""
 
     _sent_notifications: MutableSequence[str] = m.PrivateAttr(
@@ -109,7 +109,7 @@ class NotificationService(s[str]):
         return self._call_count
 
 
-class ServiceConfig(m.Value):
+class TestsFlextServiceConfig(m.Value):
     """Service configuration model with required fields."""
 
     name: Annotated[str, m.Field(description="Service name")]
@@ -119,11 +119,11 @@ class ServiceConfig(m.Value):
     )
 
 
-class LifecycleService(s[str]):
+class TestsFlextLifecycleService(s[str]):
     """Real lifecycle service using ``s`` with settings model."""
 
     _initialized: bool = m.PrivateAttr(default_factory=lambda: False)
-    _service_config: ServiceConfig | None = m.PrivateAttr(default_factory=lambda: None)
+    _service_config: TestsFlextServiceConfig | None = m.PrivateAttr(default_factory=lambda: None)
     _shutdown_called: bool = m.PrivateAttr(default_factory=lambda: False)
     _should_fail_init: bool = m.PrivateAttr(default_factory=lambda: False)
     _should_fail_shutdown: bool = m.PrivateAttr(default_factory=lambda: False)
@@ -135,7 +135,7 @@ class LifecycleService(s[str]):
             return r[str].ok("initialized")
         return r[str].ok("ready")
 
-    def initialize(self, settings: ServiceConfig) -> p.Result[str]:
+    def initialize(self, settings: TestsFlextServiceConfig) -> p.Result[str]:
         """Initialize service with settings model."""
         if self._should_fail_init:
             return r[str].fail("Initialization failed")
@@ -169,7 +169,7 @@ class LifecycleService(s[str]):
         return self._initialized
 
     @property
-    def service_config(self) -> ServiceConfig | None:
+    def service_config(self) -> TestsFlextServiceConfig | None:
         """Get service configuration."""
         return self._service_config
 
@@ -179,14 +179,14 @@ class LifecycleService(s[str]):
         return self._shutdown_called
 
 
-class FlextServiceFixtures:
+class TestsFlextFlextServiceFixtures:
     """Expose previous nested service names through inheritance."""
 
-    UserServiceEntity: ClassVar[type[UserServiceEntity]] = UserServiceEntity
-    UserQueryService: ClassVar[type[UserQueryService]] = UserQueryService
-    NotificationService: ClassVar[type[NotificationService]] = NotificationService
-    ServiceConfig: ClassVar[type[ServiceConfig]] = ServiceConfig
-    LifecycleService: ClassVar[type[LifecycleService]] = LifecycleService
+    UserServiceEntity: ClassVar[type[TestsFlextUserServiceEntity]] = TestsFlextUserServiceEntity
+    UserQueryService: ClassVar[type[TestsFlextUserQueryService]] = TestsFlextUserQueryService
+    NotificationService: ClassVar[type[TestsFlextNotificationService]] = TestsFlextNotificationService
+    ServiceConfig: ClassVar[type[TestsFlextServiceConfig]] = TestsFlextServiceConfig
+    LifecycleService: ClassVar[type[TestsFlextLifecycleService]] = TestsFlextLifecycleService
 
     @staticmethod
     def _build_service_config(
@@ -194,5 +194,5 @@ class FlextServiceFixtures:
         name: str,
         version: str,
         temp_dir: str,
-    ) -> ServiceConfig:
-        return ServiceConfig(name=name, version=version, temp_dir=temp_dir)
+    ) -> TestsFlextServiceConfig:
+        return TestsFlextServiceConfig(name=name, version=version, temp_dir=temp_dir)

@@ -124,6 +124,10 @@ class FlextConstantsEnforcementRuleText:
             'wrapper alias import must use root package in {file}:{line}: "{statement}"',
             "Use `from tests|examples|scripts import c, p, t, m, u` (no submodule alias imports).",
         ),
+        "compatibility_alias_import": (
+            'non-canonical compatibility alias import "{name}" from {module} in {file}',
+            "Use the canonical alias `{alias}`: `from {module} import {alias}`.",
+        ),
         "no_concrete_namespace_import": (
             "bare Flext* class import FORBIDDEN (R1, R3)",
             "Import alias (t, m, c, u, p) from parent; use in class bases.",

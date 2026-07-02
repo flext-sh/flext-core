@@ -126,6 +126,42 @@ class FlextUtilitiesBeartypeImportVisitor:
         return violation
 
     @staticmethod
+    def v_compatibility_alias(
+        params: me.CompatibilityAliasParams,
+        target: type,
+    ) -> t.StrMapping | None:
+        """COMPATIBILITY_ALIAS — long facade class name must use canonical alias."""
+        if not params.alias_renames:
+            return _NO_VIOLATION
+        module = _ubh.runtime_module_for(target)
+        if module is None:
+            return _NO_VIOLATION
+        src_file = _ubh.module_filename_for(module) or ""
+        filename = Path(src_file).name
+        if filename in c.ENFORCEMENT_CANONICAL_FILES:
+            return _NO_VIOLATION
+        alias_renames = dict(params.alias_renames)
+        for name, value in vars(module).items():
+            alias = alias_renames.get(name)
+            if alias is None:
+                continue
+            origin = _ubh.object_module_name_for(value)
+            if origin is None:
+                continue
+            origin_package = origin.split(".")[0]
+            current_package = module.__name__.split(".")[0]
+            if origin_package == current_package:
+                # Same-package definitions are not compatibility imports.
+                continue
+            return {
+                "file": filename,
+                "name": name,
+                "alias": alias,
+                "module": origin_package,
+            }
+        return _NO_VIOLATION
+
+    @staticmethod
     def v_library_import(
         params: me.LibraryImportParams,
         target: type,

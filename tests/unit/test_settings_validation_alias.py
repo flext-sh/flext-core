@@ -30,7 +30,7 @@ class _AliasFieldSettings(FlextSettings):
     ] = "pandoc"
 
 
-class TestUpdateGlobalWithValidationAlias:
+class TestsFlextTestUpdateGlobalWithValidationAlias:
     """update_global and clone must not raise with validation_alias fields."""
 
     def setup_method(self) -> None:
@@ -58,4 +58,4 @@ class TestUpdateGlobalWithValidationAlias:
         assert _AliasFieldSettings.fetch_global().pandoc_bin == "/usr/bin/pandoc"
 
 
-__all__: t.MutableSequenceOf[str] = ["TestUpdateGlobalWithValidationAlias"]
+__all__: t.MutableSequenceOf[str] = ["TestsFlextTestUpdateGlobalWithValidationAlias"]

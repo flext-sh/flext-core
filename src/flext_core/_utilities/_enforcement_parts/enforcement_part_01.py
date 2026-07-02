@@ -32,6 +32,7 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
     wp = me.WrapperParams
     iblp = me.ImportBlacklistParams
     arp = me.AliasRebindParams
+    cap = me.CompatibilityAliasParams
     dsp = me.DeprecatedSyntaxParams
     return MappingProxyType({
         "no_any": (pk.FIELD_SHAPE, fp(forbid_any=True)),
@@ -108,6 +109,10 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
         "no_wrapper_root_alias_import": (
             pk.DEPRECATED_SYNTAX,
             dsp(ast_shape="no_wrapper_root_alias_import"),
+        ),
+        "compatibility_alias_import": (
+            pk.COMPATIBILITY_ALIAS,
+            cap(alias_renames=c.ENFORCEMENT_COMPATIBILITY_ALIAS_RENAMES),
         ),
         "no_concrete_namespace_import": (pk.IMPORT_BLACKLIST, iblp()),
         "no_pydantic_consumer_import": (

@@ -26,7 +26,7 @@ def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
     return result
 
 
-class FlextMigrationApplicationCase:
+class TestsFlextFlextMigrationApplicationCase:
     def test_application_functionality_works(self) -> None:
         """Verify application functionality works correctly."""
 

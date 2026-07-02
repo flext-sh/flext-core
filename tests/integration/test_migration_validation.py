@@ -36,12 +36,12 @@ from tests.typings import t
 from tests.utilities import u
 
 from .migration_validation_cases import (
-    FlextMigrationApplicationCase,
+    TestsFlextFlextMigrationApplicationCase,
     capture_stdout,
 )
 
 
-class TestsFlextMigrationValidation(FlextMigrationApplicationCase):
+class TestsFlextMigrationValidation(TestsFlextFlextMigrationApplicationCase):
     def test_flext_result_value_access_pattern(self) -> None:
         """Verify .value access pattern works correctly."""
 

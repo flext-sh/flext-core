@@ -139,6 +139,14 @@ class FlextConstantsEnforcementCatalogBeartypeRows:
             ("flext-import-rules", "flext-mro-namespace-rules", "rules-scripts"),
             "Wrapper alias imports in tests/examples/scripts must come from wrapper root package (`from tests|examples|scripts import ...`). Submodule alias imports are forbidden outside `__init__.py`.",
         ),
+        (
+            "ENFORCE-064",
+            "HIGH",
+            "compatibility_alias_import",
+            "4-import-law",
+            ("flext-import-rules", "flext-agent-strict-rules"),
+            "Long facade class name import must use the canonical short alias (e.g. `from flext_core import FlextConstants` → `from flext_core import c`). Violates AGENTS.md §4 (Import Law).",
+        ),
     )
 
 

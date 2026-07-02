@@ -10,7 +10,7 @@ from tests.typings import t
 from tests.utilities import u
 
 
-class FlextSystemWorkflowCases:
+class TestsFlextFlextSystemWorkflowCases:
     def _test_complex_integration(self) -> None:
         """Test complex integration scenarios."""
 
