@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import Field
-
 from flext_core._constants.enforcement import FlextConstantsEnforcement as ce
 from flext_core._typings.base import FlextTypingBase as t
 
@@ -47,13 +45,6 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
 
         kind: Literal["beartype"] = "beartype"
         predicate_kind: ce.EnforcementPredicateKind
-
-    class EnforcementMinimalAstSource(EnforcementModelBase):
-        """Rule detected through minimal AST inspection."""
-
-        kind: Literal["minimal_ast"] = "minimal_ast"
-        pattern: str = Field(min_length=1)
-        require_source: bool = True
 
     class EnforcementRuffSource(EnforcementModelBase):
         """Rule delegated to ruff."""

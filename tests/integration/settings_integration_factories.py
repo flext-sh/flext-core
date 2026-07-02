@@ -124,7 +124,9 @@ class TestsFlextSettingsConfigTestFactories:
 class TestsFlextFlextSettingsFactories:
     """Expose the previous nested factory names through inheritance."""
 
-    _ConfigTestCase: ClassVar[type[TestsFlextSettingsConfigTestCase]] = TestsFlextSettingsConfigTestCase
+    _ConfigTestCase: ClassVar[type[TestsFlextSettingsConfigTestCase]] = (
+        TestsFlextSettingsConfigTestCase
+    )
     _ThreadSafetyTest: ClassVar[type[TestsFlextSettingsThreadSafetyTest]] = (
         TestsFlextSettingsThreadSafetyTest
     )

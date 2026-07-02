@@ -37,14 +37,14 @@ class FlextUtilitiesBeartypeModuleVisitor:
             package = module.__name__.split(".")[0]
             if not package.startswith("flext_") or filename.startswith("_"):
                 return _NO_VIOLATION
-            top_level = [
-                value
+            top_level = {
+                id(value): value
                 for value in vars(module).values()
                 if isinstance(value, type)
                 and value.__module__ == module.__name__
                 and "." not in getattr(value, "__qualname__", ".")
                 and not issubclass(value, Warning)
-            ]
+            }
             if len(top_level) > params.max_top_level_classes:
                 return {
                     "file": filename,

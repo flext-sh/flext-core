@@ -24,7 +24,6 @@ type EnforcementRuleSource = (
     | FlextModelsEnforcementSources.EnforcementTestsValidatorSource
     | FlextModelsEnforcementSources.EnforcementRuntimeWarningSource
     | FlextModelsEnforcementSources.EnforcementBeartypeSource
-    | FlextModelsEnforcementSources.EnforcementMinimalAstSource
     | FlextModelsEnforcementSources.EnforcementRuffSource
     | FlextModelsEnforcementSources.EnforcementAstGrepSource
     | FlextModelsEnforcementSources.EnforcementSkillPointerSource

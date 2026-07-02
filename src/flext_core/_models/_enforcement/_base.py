@@ -87,7 +87,6 @@ class FlextModelsEnforcementBase:
         FLEXT_TESTS_VALIDATOR = "flext_tests_validator"
         RUNTIME_WARNING = "runtime_warning"
         BEARTYPE = "beartype"
-        MINIMAL_AST = "minimal_ast"
         RUFF = "ruff"
         AST_GREP = "ast_grep"
         SKILL_POINTER = "skill_pointer"

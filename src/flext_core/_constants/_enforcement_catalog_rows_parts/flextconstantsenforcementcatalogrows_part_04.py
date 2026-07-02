@@ -147,6 +147,46 @@ class FlextConstantsEnforcementCatalogBeartypeRows:
             ("flext-import-rules", "flext-agent-strict-rules"),
             "Long facade class name import must use the canonical short alias (e.g. `from flext_core import FlextConstants` → `from flext_core import c`). Violates AGENTS.md §4 (Import Law).",
         ),
+        (
+            "ENFORCE-066",
+            "MEDIUM",
+            "no_module_compat_alias",
+            "2-4-no-backwards-compat-aliases",
+            ("flext-mro-namespace-rules",),
+            "Module-level CapWords alias (`LegacyName = NewName` rename shim or nested-class hoist `X = Facade.Domain.X`) is a backwards-compat alias. Violates AGENTS.md §2.4 (No Backward-Compat Aliases).",
+        ),
+        (
+            "ENFORCE-067",
+            "HIGH",
+            "one_class_per_module",
+            "3-1-supreme-law",
+            ("flext-mro-namespace-rules",),
+            "Module declares more than one top-level class (Warning subclasses exempt — filterwarnings needs module-level categories). Violates AGENTS.md §3.1 / NS-000 (one class per module).",
+        ),
+        (
+            "ENFORCE-068",
+            "HIGH",
+            "no_private_module_bypass",
+            "4-import-law",
+            ("flext-import-rules", "flext-mro-namespace-rules"),
+            "Import of a class defined in a private facade tree (_constants/_models/_protocols/_typings/_utilities) from a non-facade, non-private, nested module — or from ANY module of another project — bypasses the canonical facades. Violates AGENTS.md §4 (Import Law).",
+        ),
+        (
+            "ENFORCE-069",
+            "HIGH",
+            "forbid_deep_namespace",
+            "2-3-mro-inheritance-namespace-composition",
+            ("flext-mro-namespace-rules",),
+            "Namespace nesting deeper than facade→domain→leaf (class-in-class-in-class; Enum leaves exempt) breaks the flat single-nesting law. Violates AGENTS.md §2.3.",
+        ),
+        (
+            "ENFORCE-070",
+            "HIGH",
+            "library_abstraction",
+            "2-7-library-abstraction-boundaries",
+            ("flext-import-rules",),
+            "External library imported outside its owning abstraction project (ENFORCEMENT_LIBRARY_OWNERS SSOT: pydantic/structlog/dependency_injector→flext-core, rich/click→flext-cli, ldap3→flext-ldap, singer_sdk→flext-meltano, sqlalchemy/oracledb→flext-db-oracle, grpc→flext-grpc, fastapi→flext-web, httpx→flext-api, rope→flext-infra). Violates AGENTS.md §2.7.",
+        ),
     )
 
 

@@ -123,7 +123,9 @@ class TestsFlextLifecycleService(s[str]):
     """Real lifecycle service using ``s`` with settings model."""
 
     _initialized: bool = m.PrivateAttr(default_factory=lambda: False)
-    _service_config: TestsFlextServiceConfig | None = m.PrivateAttr(default_factory=lambda: None)
+    _service_config: TestsFlextServiceConfig | None = m.PrivateAttr(
+        default_factory=lambda: None
+    )
     _shutdown_called: bool = m.PrivateAttr(default_factory=lambda: False)
     _should_fail_init: bool = m.PrivateAttr(default_factory=lambda: False)
     _should_fail_shutdown: bool = m.PrivateAttr(default_factory=lambda: False)
@@ -182,11 +184,19 @@ class TestsFlextLifecycleService(s[str]):
 class TestsFlextFlextServiceFixtures:
     """Expose previous nested service names through inheritance."""
 
-    UserServiceEntity: ClassVar[type[TestsFlextUserServiceEntity]] = TestsFlextUserServiceEntity
-    UserQueryService: ClassVar[type[TestsFlextUserQueryService]] = TestsFlextUserQueryService
-    NotificationService: ClassVar[type[TestsFlextNotificationService]] = TestsFlextNotificationService
+    UserServiceEntity: ClassVar[type[TestsFlextUserServiceEntity]] = (
+        TestsFlextUserServiceEntity
+    )
+    UserQueryService: ClassVar[type[TestsFlextUserQueryService]] = (
+        TestsFlextUserQueryService
+    )
+    NotificationService: ClassVar[type[TestsFlextNotificationService]] = (
+        TestsFlextNotificationService
+    )
     ServiceConfig: ClassVar[type[TestsFlextServiceConfig]] = TestsFlextServiceConfig
-    LifecycleService: ClassVar[type[TestsFlextLifecycleService]] = TestsFlextLifecycleService
+    LifecycleService: ClassVar[type[TestsFlextLifecycleService]] = (
+        TestsFlextLifecycleService
+    )
 
     @staticmethod
     def _build_service_config(

@@ -25,13 +25,17 @@ class FlextConstantsEnforcementTargets:
         "cross_project_duplicate",
         "deprecated_typealias_syntax",
         "facade_base_is_alias_or_peer",
+        "forbid_deep_namespace",
         "library_abstraction",
         "loc_cap",
         "model_rebuild_call",
         "nested_layer_misplacement",
         "no_concrete_namespace_import",
         "no_core_tests_namespace",
+        "no_module_compat_alias",
+        "no_private_module_bypass",
         "no_pydantic_consumer_import",
+        "one_class_per_module",
         "no_redundant_inner_namespace",
         "no_self_root_import_in_core_files",
         "no_wrapper_root_alias_import",
@@ -130,33 +134,35 @@ class FlextConstantsEnforcementTargets:
     one entry here, no parallel list.
     """
 
-    ENFORCEMENT_COMPATIBILITY_ALIAS_RENAMES: Final[Mapping[str, str]] = MappingProxyType({
-        # flext-core canonical facade aliases
-        "FlextConstants": "c",
-        "FlextModels": "m",
-        "FlextProtocols": "p",
-        "FlextTypes": "t",
-        "FlextUtilities": "u",
-        "FlextResult": "r",
-        # flext-cli canonical facade aliases
-        "FlextCliConstants": "c",
-        "FlextCliModels": "m",
-        "FlextCliProtocols": "p",
-        "FlextCliTypes": "t",
-        "FlextCliUtilities": "u",
-        # flext-infra canonical facade aliases
-        "FlextInfraConstants": "c",
-        "FlextInfraModels": "m",
-        "FlextInfraProtocols": "p",
-        "FlextInfraTypes": "t",
-        "FlextInfraUtilities": "u",
-        # flext-tests canonical facade aliases
-        "FlextTestsConstants": "c",
-        "FlextTestsModels": "m",
-        "FlextTestsProtocols": "p",
-        "FlextTestsTypes": "t",
-        "FlextTestsUtilities": "u",
-    })
+    ENFORCEMENT_COMPATIBILITY_ALIAS_RENAMES: Final[Mapping[str, str]] = (
+        MappingProxyType({
+            # flext-core canonical facade aliases
+            "FlextConstants": "c",
+            "FlextModels": "m",
+            "FlextProtocols": "p",
+            "FlextTypes": "t",
+            "FlextUtilities": "u",
+            "FlextResult": "r",
+            # flext-cli canonical facade aliases
+            "FlextCliConstants": "c",
+            "FlextCliModels": "m",
+            "FlextCliProtocols": "p",
+            "FlextCliTypes": "t",
+            "FlextCliUtilities": "u",
+            # flext-infra canonical facade aliases
+            "FlextInfraConstants": "c",
+            "FlextInfraModels": "m",
+            "FlextInfraProtocols": "p",
+            "FlextInfraTypes": "t",
+            "FlextInfraUtilities": "u",
+            # flext-tests canonical facade aliases
+            "FlextTestsConstants": "c",
+            "FlextTestsModels": "m",
+            "FlextTestsProtocols": "p",
+            "FlextTestsTypes": "t",
+            "FlextTestsUtilities": "u",
+        })
+    )
     """SSOT: long facade class name → canonical short alias.
 
     Any ``from <pkg> import <long_name>`` where ``<long_name>`` is present in
@@ -177,6 +183,14 @@ class FlextConstantsEnforcementTargets:
         "orjson": "flext-cli",
         "yaml": "flext-cli",
         "pyyaml": "flext-cli",
+        "click": "flext-cli",
+        "ldap3": "flext-ldap",
+        "singer_sdk": "flext-meltano",
+        "sqlalchemy": "flext-db-oracle",
+        "oracledb": "flext-db-oracle",
+        "grpc": "flext-grpc",
+        "fastapi": "flext-web",
+        "httpx": "flext-api",
     })
     """SSOT mapping: external library → owning FLEXT abstraction project (§2.7).
 

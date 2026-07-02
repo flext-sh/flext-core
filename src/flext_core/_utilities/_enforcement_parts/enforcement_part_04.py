@@ -154,28 +154,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                     agents_md_anchor="3-5-integrity",
                     skills=("flext-strict-typing", "flext-quality-gates"),
                 ),
-                *beartype_specs[1:],  # ENFORCE-041..055
-                # ENFORCE-066+: plan §1.2 source-rule range (shifted from plan IDs
-                # 053..065 because off-plan 045..053 already occupy the original
-                # slots — IDs are flexible per AGENTS.md, semantic content matches
-                # the plan exactly). First entry registers MINIMAL_AST in the
-                # catalog (catalog completeness invariant).
-                me.EnforcementRuleSpec(
-                    id="ENFORCE-066",
-                    description=(
-                        "Module-level alias assignment (``LegacyName = NewName``) "
-                        "where both sides are CapWords and the LHS is unreferenced"
-                        " is a backwards-compat shim. Violates AGENTS.md §2.4 "
-                        "(No Backward-Compat Aliases) — plan §1.2 row 053."
-                    ),
-                    severity=me.EnforcementRuleSeverity.MEDIUM,
-                    source=me.EnforcementMinimalAstSource(
-                        pattern="$X = $Y",
-                        require_source=True,
-                    ),
-                    agents_md_anchor="2-4-no-backwards-compat-aliases",
-                    skills=("flext-mro-namespace-rules",),
-                ),
+                *beartype_specs[1:],  # ENFORCE-041..070 (066+ runtime-enforced)
             ),
         )
         return cls._canonical_catalog

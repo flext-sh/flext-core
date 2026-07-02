@@ -184,6 +184,22 @@ class FlextConstantsEnforcementRuleText:
             "{qn} duplicated across {owners} (AGENTS.md §2.3, §3.5)",
             "Move the symbol to the highest project in hierarchy and re-export.",
         ),
+        "no_module_compat_alias": (
+            "module-level compat alias '{alias} = {target}' in {file} (AGENTS.md §2.4)",
+            "Delete the alias and use the canonical class path at every call site.",
+        ),
+        "one_class_per_module": (
+            "module {file} declares {count} top-level classes > cap {cap} (NS-000)",
+            "Keep exactly one top-level class per module; absorb extras as MRO mixins.",
+        ),
+        "no_private_module_bypass": (
+            "import '{import}' reaches private tree {origin} from {file} (AGENTS.md §4)",
+            "Import via the owning facade (constants/models/protocols/typings/utilities).",
+        ),
+        "forbid_deep_namespace": (
+            "nested namespace depth > 2 at {qn} (AGENTS.md §2.3, single nesting)",
+            "Flatten: prefix-merge the inner class into its parent domain class.",
+        ),
     })
     """Legacy: problem/fix text indexed by tag. Use m.EnforcementCatalog for new code."""
 
