@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import warnings
 from pathlib import Path
 
+from flext_core import FlextMroViolation
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from tests.constants import c
 from tests.models import TestsFlextModelsMixins
+from tests.unit._enforcement_support import make_class
 from tests.utilities import u
 
 
@@ -96,3 +100,61 @@ class_stem_override = "XmlAPI"
         report = u.check(module.XmlAPIModels)
 
         assert not any("class name missing project prefix" in v.message for v in report.violations)
+
+    def test_run_layer_emits_mro_violation_under_default_warn_mode(self) -> None:
+        """``run_layer`` gates on ``c.ENFORCEMENT_NAMESPACE_MODE`` (Final, WARN).
+
+        Coverage note: the OFF/STRICT branches of this gate cannot be driven
+        directly — ``run_layer`` takes no ``mode`` parameter and the module
+        constant is ``Final`` (mutating globals is forbidden). Mode dispatch
+        itself is fully covered by the explicit ``emit(mode=...)`` tests in
+        ``test_enforcement_reports.py``; ``run_layer`` delegates to ``emit``
+        with the namespace-mode constant asserted here as precondition.
+        """
+        assert c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.WARN
+        bad = make_class(
+            "FlextSyntheticConstants",
+            {"ITEMS": ["a"], "__annotations__": {"ITEMS": list[str]}},
+        )
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            FlextUtilitiesEnforcement.run_layer(bad, "constants")
+        assert len(recorded) == 1
+        assert recorded[0].category is FlextMroViolation
+        text = str(recorded[0].message)
+        assert "FlextSyntheticConstants violates FLEXT Constants HARD rules" in text
+        assert "[const_mutable]" in text
+        assert "Fix: See AGENTS.md § Constants governance." in text
+
+    def test_run_layer_skips_function_local_classes(self) -> None:
+        class FlextLocalConstants:
+            ITEMS: list[str] = ["a"]  # violating shape, but function-local
+
+        assert "<locals>" in FlextLocalConstants.__qualname__
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            FlextUtilitiesEnforcement.run_layer(FlextLocalConstants, "constants")
+        assert recorded == []
+
+    def test_run_layer_exempts_tests_qualified_classes(self) -> None:
+        fake = type(
+            "TestsFlextSyntheticConstants",
+            (),
+            {"ITEMS": ["a"], "__annotations__": {"ITEMS": list[str]}},
+        )
+        fake.__qualname__ = "TestsFlextSyntheticConstants"
+        fake.__module__ = "tests.unit.synthetic"
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            FlextUtilitiesEnforcement.run_layer(fake, "constants")
+        assert recorded == []
+
+    def test_run_layer_silent_for_clean_class(self) -> None:
+        clean = make_class(
+            "FlextSyntheticCleanConstants",
+            {"ITEMS": ("a",), "__annotations__": {"ITEMS": tuple[str, ...]}},
+        )
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            FlextUtilitiesEnforcement.run_layer(clean, "constants")
+        assert recorded == []
