@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import dis
-import functools
 import inspect
 import types as _types_mod
 from collections.abc import (
@@ -11,6 +10,7 @@ from collections.abc import (
 )
 from typing import (
     Annotated,
+    ClassVar,
     ForwardRef,
     get_args,
     get_origin,
@@ -74,9 +74,19 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
                 return annotation_text[:index].strip()
         return annotation_text.strip()
 
+    _RUNTIME_MODULE_CACHE: ClassVar[dict[type, _types_mod.ModuleType]] = {}
+
     @staticmethod
-    @functools.cache
     def runtime_module_for(target: type) -> _types_mod.ModuleType | None:
+        """Resolve the defining module once the class is bound to it.
+
+        Misses are NOT cached: during ``__init_subclass__`` the class is not
+        yet assigned to its module namespace, so a cached miss would poison
+        every later post-import check for the same class.
+        """
+        cached = FlextUtilitiesBeartypeHelpers._RUNTIME_MODULE_CACHE.get(target)
+        if cached is not None:
+            return cached
         if "." in target.__qualname__:
             return None
         module = inspect.getmodule(target)
@@ -85,11 +95,10 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
         src_file = getattr(module, "__file__", None)
         if not isinstance(src_file, str):
             return None
-        return (
-            None
-            if any(m in src_file for m in c.ENFORCE_NON_WORKSPACE_PATH_MARKERS)
-            else module
-        )
+        if any(m in src_file for m in c.ENFORCE_NON_WORKSPACE_PATH_MARKERS):
+            return None
+        FlextUtilitiesBeartypeHelpers._RUNTIME_MODULE_CACHE[target] = module
+        return module
 
     @staticmethod
     def runtime_wrapper_module_for(target: type) -> _types_mod.ModuleType | None:
