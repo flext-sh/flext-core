@@ -5,7 +5,7 @@ from __future__ import annotations
 import typing
 from collections.abc import Mapping
 
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
+from flext_core import FlextUtilitiesBeartypeEngine as be
 from tests.typings import t
 from tests.unit._beartype_engine_support import (
     AnyAlias,

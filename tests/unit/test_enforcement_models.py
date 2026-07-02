@@ -10,7 +10,7 @@ from typing import Annotated
 import pytest
 from pydantic.warnings import PydanticDeprecatedSince20
 
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import m
 from tests.typings import t

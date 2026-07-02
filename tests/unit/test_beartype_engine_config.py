@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
-from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
+from flext_core import FlextUtilitiesBeartypeConf
 from tests.constants import c
 from tests.unit._beartype_engine_support import (
     TestsFlextBeartypeEngine,

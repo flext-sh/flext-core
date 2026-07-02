@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
+from flext_core import FlextUtilitiesBeartypeEngine
 from tests.models import m
 from tests.unit._enforcement_support import make_class
 from tests.utilities import u

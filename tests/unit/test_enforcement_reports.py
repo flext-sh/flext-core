@@ -8,8 +8,7 @@ from typing import Annotated
 
 import pytest
 
-from flext_core import FlextMroViolation
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core import FlextMroViolation, FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import m
 from tests.utilities import u

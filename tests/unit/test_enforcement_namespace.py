@@ -7,8 +7,7 @@ import sys
 import warnings
 from pathlib import Path
 
-from flext_core import FlextMroViolation
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core import FlextMroViolation, FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import TestsFlextModelsMixins
 from tests.unit._enforcement_support import make_class

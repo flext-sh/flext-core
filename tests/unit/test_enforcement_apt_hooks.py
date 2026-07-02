@@ -19,9 +19,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core._utilities.beartype_engine import (
-    FlextUtilitiesBeartypeEngine as ube,
-)
+from flext_core import FlextUtilitiesBeartypeEngine as ube
 from flext_core._utilities.enforcement import PREDICATE_BINDINGS
 from tests.constants import c
 from tests.models import m

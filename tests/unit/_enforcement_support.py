@@ -10,11 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core import m
 
 
 def messages(
-    report: FlextModelsEnforcement.Report,
+    report: m.Report,
     *,
     fragment: str,
 ) -> list[str]:
