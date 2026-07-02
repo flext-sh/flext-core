@@ -23,7 +23,7 @@ class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart0
         """LOOSE_SYMBOL — top-level class/function naming + settings inheritance."""
         match args:
             case (target, expected_prefix, *_) if isinstance(
-                target, type
+                target, type,
             ) and isinstance(
                 expected_prefix,
                 str,
@@ -57,7 +57,7 @@ class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart0
             and any(target_name.startswith(prefix) for prefix in allowed_prefixes)
         )
         has_expected_named_prefix = bool(
-            expected_prefix_text
+            expected_prefix_text,
         ) and target_name.startswith(expected_prefix_text)
         is_prefixed_target = all((
             has_expected_prefix,

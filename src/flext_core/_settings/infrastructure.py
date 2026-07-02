@@ -47,10 +47,10 @@ class FlextSettingsInfrastructure:
         ),
     ] = c.MAX_RETRY_ATTEMPTS
     enable_timeout_executor: Annotated[
-        bool, Field(description="Enable timeout executor")
+        bool, Field(description="Enable timeout executor"),
     ] = True
     timeout_seconds: Annotated[
-        t.PositiveTimeout, Field(description="Default timeout")
+        t.PositiveTimeout, Field(description="Default timeout"),
     ] = c.DEFAULT_TIMEOUT_SECONDS
     max_workers: Annotated[t.WorkerCount, Field(description="Max workers")] = (
         c.DEFAULT_MAX_WORKERS

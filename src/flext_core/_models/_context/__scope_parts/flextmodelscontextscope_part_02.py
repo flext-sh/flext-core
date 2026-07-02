@@ -46,12 +46,12 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 description="Operation counters for this context instance",
             ),
         ] = FlextUtilitiesPydantic.Field(
-            default_factory=lambda: FlextModelsContextScope.ContextStatistics()
+            default_factory=lambda: FlextModelsContextScope.ContextStatistics(),
         )
         active: Annotated[
             bool,
             FlextUtilitiesPydantic.Field(
-                default=True, description="Whether the context accepts operations"
+                default=True, description="Whether the context accepts operations",
             ),
         ] = True
         suspended: Annotated[
@@ -63,7 +63,7 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
         ] = False
         scope_vars: Annotated[
             t.MappingKV[
-                str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
+                str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
             ],
             FlextUtilitiesPydantic.Field(
                 default_factory=lambda: MappingProxyType({}),
@@ -113,7 +113,7 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             self,
             scope: str,
         ) -> tuple[
-            Self, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
+            Self, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
         ]:
             """Resolve an existing scope var or create one immutably."""
             existing = self.scope_vars.get(scope)
@@ -126,11 +126,11 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 default=None,
             )
             updated_scope_vars: dict[
-                str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
+                str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
             ] = dict(self.scope_vars)
             updated_scope_vars[scope] = scope_var
             updated_state: Self = self.model_copy(
-                update={"scope_vars": updated_scope_vars}
+                update={"scope_vars": updated_scope_vars},
             )
             return updated_state, scope_var
 
@@ -164,7 +164,7 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 update=statistics_updates,
             )
             updated_state: Self = self.model_copy(
-                update={"statistics": updated_statistics}
+                update={"statistics": updated_statistics},
             )
             return updated_state
 

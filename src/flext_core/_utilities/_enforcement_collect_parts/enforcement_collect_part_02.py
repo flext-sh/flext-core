@@ -24,7 +24,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if top and top == FlextUtilitiesEnforcementCollect._discover_src_package(
-            target
+            target,
         ):
             return
         yield qn, (target, project[0])

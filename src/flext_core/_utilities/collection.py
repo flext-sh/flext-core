@@ -27,7 +27,7 @@ from .collection_merge import FlextUtilitiesCollectionMerge
 
 
 class FlextUtilitiesCollection(
-    FlextUtilitiesCollectionIter, FlextUtilitiesCollectionMerge
+    FlextUtilitiesCollectionIter, FlextUtilitiesCollectionMerge,
 ):
     """Facade composing iter + merge utilities; small helpers live here."""
 

@@ -42,7 +42,7 @@ class FlextContainer(FlextContainerPart01, ABC):
         """Create a module logger for the specified runtime scope."""
         _ = service_name, service_version, correlation_id
         logger: p.Logger = FlextLogger.fetch_logger(
-            module_name or c.DEFAULT_LOGGER_MODULE
+            module_name or c.DEFAULT_LOGGER_MODULE,
         )
         return logger
 
@@ -57,29 +57,29 @@ class FlextContainer(FlextContainerPart01, ABC):
             resolved = callable_obj()
         except c.EXC_BROAD_RUNTIME as exc:
             return r[t.RegisterableService].from_result(
-                e.fail_operation(f"resolve {kind}", exc)
+                e.fail_operation(f"resolve {kind}", exc),
             )
         if type_cls is not None:
             if isinstance(resolved, type_cls):
                 return r[T].ok(resolved)
             return r[T].from_result(
-                e.fail_type_mismatch(type_cls.__name__, type(resolved).__name__)
+                e.fail_type_mismatch(type_cls.__name__, type(resolved).__name__),
             )
         return r[t.RegisterableService].ok(resolved)
 
     @overload
     def resolve[T: t.RegisterableService](
-        self, name: str, *, type_cls: type[T]
+        self, name: str, *, type_cls: type[T],
     ) -> p.Result[T]: ...
 
     @overload
     def resolve(
-        self, name: str, *, type_cls: None = None
+        self, name: str, *, type_cls: None = None,
     ) -> p.Result[t.RegisterableService]: ...
 
     @override
     def resolve[T: t.RegisterableService](
-        self, name: str, *, type_cls: type[T] | None = None
+        self, name: str, *, type_cls: type[T] | None = None,
     ) -> p.Result[T] | p.Result[t.RegisterableService]:
         """Resolve a registered service or factory by name."""
         service_registration = self._services.get(name)
@@ -104,14 +104,14 @@ class FlextContainer(FlextContainerPart01, ABC):
                 result = r[T].ok(service)
             else:
                 result = r[T].from_result(
-                    e.fail_type_mismatch(type_cls.__name__, type(service).__name__)
+                    e.fail_type_mismatch(type_cls.__name__, type(service).__name__),
                 )
         elif callable_registration is not None:
             kind, callable_obj = callable_registration
             result = self._resolve_callable(callable_obj, kind, type_cls)
         else:
             result = r[t.RegisterableService].from_result(
-                e.fail_not_found("service", name)
+                e.fail_not_found("service", name),
             )
         return result
 
@@ -120,7 +120,7 @@ class FlextContainer(FlextContainerPart01, ABC):
         """Return the merged settings exposed by this container."""
         config_dict = self._global_config.model_dump()
         return m.ConfigMap(
-            root={k: u.normalize_to_container(v) for k, v in config_dict.items()}
+            root={k: u.normalize_to_container(v) for k, v in config_dict.items()},
         )
 
     @override

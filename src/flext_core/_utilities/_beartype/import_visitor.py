@@ -44,7 +44,7 @@ class FlextUtilitiesBeartypeImportVisitor:
                     if isinstance(value, type)
                     and name.startswith(tier_prefixes)
                     and (origin := _ubh.object_module_name_for(value) or "").startswith(
-                        "flext_"
+                        "flext_",
                     )
                     and origin != module_name
                 ),
@@ -57,7 +57,7 @@ class FlextUtilitiesBeartypeImportVisitor:
             ):
                 forbidden = frozenset(params.forbidden_symbols)
                 allowed_roots = frozenset(params.forbidden_modules) or frozenset({
-                    "pydantic"
+                    "pydantic",
                 })
                 violation = next(
                     (
@@ -110,7 +110,7 @@ class FlextUtilitiesBeartypeImportVisitor:
                         is not None
                         and (
                             (_ubh.object_module_name_for(alias_value) or "").split(
-                                ".", 1
+                                ".", 1,
                             )[0]
                         )
                         == package

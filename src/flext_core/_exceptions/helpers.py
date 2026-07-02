@@ -75,7 +75,7 @@ class FlextExceptionsHelpers:
                             if item is not None
                         }
                         metadata = m.Metadata.model_validate({
-                            cm.FIELD_ATTRIBUTES: attrs
+                            cm.FIELD_ATTRIBUTES: attrs,
                         })
         return metadata
 

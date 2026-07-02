@@ -48,7 +48,7 @@ class FlextModelsContainer:
             t.RegisterableService,
             tp.SkipValidation,
             mp.Field(
-                ..., description="Service instance (protocols, models, callables)"
+                ..., description="Service instance (protocols, models, callables)",
             ),
         ]
         registration_time: Annotated[
@@ -81,7 +81,7 @@ class FlextModelsContainer:
         tags: Annotated[
             t.StrSequence,
             mp.Field(
-                default_factory=tuple, description="Service tags for categorization"
+                default_factory=tuple, description="Service tags for categorization",
             ),
         ]
 
@@ -117,7 +117,7 @@ class FlextModelsContainer:
             t.FactoryCallable,
             tp.SkipValidation,
             mp.Field(
-                ..., description="Factory function that creates service instances"
+                ..., description="Factory function that creates service instances",
             ),
         ]
         registration_time: Annotated[

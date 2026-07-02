@@ -54,7 +54,7 @@ class FlextModelsProjectMetadata(FlextModelsProjectMetadataPart01):
                     str(v.get("text") or "UNLICENSED")
                     if isinstance(v, dict)
                     else (str(v) if v is not None else "UNLICENSED")
-                )
+                ),
             ),
         ] = "UNLICENSED"
         description: str = ""
@@ -71,7 +71,7 @@ class FlextModelsProjectMetadata(FlextModelsProjectMetadataPart01):
                     )
                     if isinstance(value, tb.SEQUENCE_PAIR_TYPES)
                     else ()
-                )
+                ),
             ),
         ] = ()
         urls: Annotated[
@@ -82,7 +82,7 @@ class FlextModelsProjectMetadata(FlextModelsProjectMetadataPart01):
                     {k: str(val) for k, val in v.items()}
                     if isinstance(v, dict)
                     else MappingProxyType({})
-                )
+                ),
             ),
         ] = Field(default_factory=lambda: MappingProxyType({}))
         requires_python: str = Field(default="", alias="requires-python")

@@ -96,7 +96,7 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart01):
             if module_path == constants_module and export_name.endswith("Constants"):
                 return export_name.removesuffix("Constants")
         for class_name in FlextUtilitiesProjectMetadata._module_class_names(
-            constants_module
+            constants_module,
         ):
             if class_name.endswith("Constants"):
                 return class_name.removesuffix("Constants")
@@ -111,7 +111,7 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart01):
             msg = "empty project name"
             raise ValueError(msg)
         distribution_name = FlextUtilitiesProjectMetadata._distribution_name(
-            FlextUtilitiesProjectMetadata._package_name(project_name)
+            FlextUtilitiesProjectMetadata._package_name(project_name),
         )
         import_name = FlextUtilitiesProjectMetadata._package_name(distribution_name)
         package = importlib.import_module(import_name)
@@ -126,7 +126,7 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart01):
     ) -> tuple[mpm.LazyAliasMetadata, ...]:
         """Return alias metadata derived from installed generated lazy exports."""
         distribution_name = FlextUtilitiesProjectMetadata._distribution_name(
-            FlextUtilitiesProjectMetadata._package_name(package_name)
+            FlextUtilitiesProjectMetadata._package_name(package_name),
         )
         import_name = FlextUtilitiesProjectMetadata._package_name(distribution_name)
         package = importlib.import_module(import_name)
@@ -157,7 +157,7 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart01):
                     parent_source=parent_source,
                     suffix=suffix,
                     facade=parent_source == import_name,
-                )
+                ),
             )
         if not result:
             msg = f"package {import_name!r} exposes no runtime aliases"

@@ -73,7 +73,7 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
             cls.dump(
                 cls.resolve_runtime_options(overrides),
                 exclude_none=True,
-            )
+            ),
         )
         return (
             resolved.model_copy(update=override_updates)

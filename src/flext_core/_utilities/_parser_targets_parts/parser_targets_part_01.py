@@ -97,7 +97,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         options_text = [member.value for member in target]
         if not opts.case_insensitive:
             validation_result: p.Result[T] = FlextUtilitiesModel.validate_value(
-                target, value_str
+                target, value_str,
             )
             if validation_result.success:
                 validated_enum: T = validation_result.value
@@ -151,7 +151,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
             ).unwrap()
             return parsed_default
         if not isinstance(value, Mapping) and not isinstance(
-            value, FlextModelsPydantic.BaseModel
+            value, FlextModelsPydantic.BaseModel,
         ):
             raise TypeError(
                 c.ERR_PARSER_CANNOT_PARSE_SCALAR_TO_MODEL.format(

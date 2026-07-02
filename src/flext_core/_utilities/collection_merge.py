@@ -42,7 +42,7 @@ class FlextUtilitiesCollectionMerge:
         """Merge single key in deep merge strategy."""
         current_val = result.get(key)
         if FlextUtilitiesCollectionMerge._is_json_mapping(
-            current_val
+            current_val,
         ) and FlextUtilitiesCollectionMerge._is_json_mapping(value):
             result[key] = FlextRuntime.normalize_to_metadata(
                 {**current_val, **value},
@@ -95,7 +95,7 @@ class FlextUtilitiesCollectionMerge:
         for key, value in base.items():
             current_val = result.get(key)
             if FlextUtilitiesCollectionMerge._is_json_list(
-                current_val
+                current_val,
             ) and FlextUtilitiesCollectionMerge._is_json_list(value):
                 result[key] = FlextRuntime.normalize_to_metadata(
                     [*current_val, *value],

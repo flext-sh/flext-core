@@ -83,7 +83,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         user_overrides: (
             FlextModelsContainers.ConfigMap
             | t.MappingKV[
-                str, FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar
+                str, FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar,
             ]
             | None
         ) = mp.Field(
@@ -152,13 +152,13 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             cls,
             value: (
                 t.MappingKV[
-                    str, FlextModelsContainer.FactoryRegistration | t.FactoryCallable
+                    str, FlextModelsContainer.FactoryRegistration | t.FactoryCallable,
                 ]
                 | None
             ),
         ) -> t.MappingKV[str, FlextModelsContainer.FactoryRegistration] | None:
             return cls._norm_callable_reg(
-                value, FlextModelsContainer.FactoryRegistration
+                value, FlextModelsContainer.FactoryRegistration,
             )
 
         @up.field_validator("resources", mode="before")
@@ -167,13 +167,13 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             cls,
             value: (
                 t.MappingKV[
-                    str, FlextModelsContainer.ResourceRegistration | t.ResourceCallable
+                    str, FlextModelsContainer.ResourceRegistration | t.ResourceCallable,
                 ]
                 | None
             ),
         ) -> t.MappingKV[str, FlextModelsContainer.ResourceRegistration] | None:
             return cls._norm_callable_reg(
-                value, FlextModelsContainer.ResourceRegistration
+                value, FlextModelsContainer.ResourceRegistration,
             )
 
 

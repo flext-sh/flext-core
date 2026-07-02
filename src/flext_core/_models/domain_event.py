@@ -44,7 +44,7 @@ class FlextModelsDomainEvent:
         event_type: Annotated[
             t.NonEmptyStr,
             mp.Field(
-                description="Domain event type identifier for subscriber routing."
+                description="Domain event type identifier for subscriber routing.",
             ),
         ]
         aggregate_id: Annotated[

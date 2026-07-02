@@ -82,7 +82,7 @@ class FlextExceptionsFactories:
         if params is None:
             return params_type.model_validate(update)
         return params.model_copy(
-            update={key: value for key, value in update.items() if value is not None}
+            update={key: value for key, value in update.items() if value is not None},
         )
 
     @staticmethod

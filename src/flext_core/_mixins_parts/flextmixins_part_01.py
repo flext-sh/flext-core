@@ -133,7 +133,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         stats: m.ConfigMap = self._operation_stats.get(
             operation_name,
             m.ConfigMap(
-                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0}
+                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0},
             ),
         )
         stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1

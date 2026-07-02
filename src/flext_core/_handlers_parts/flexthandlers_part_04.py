@@ -27,7 +27,7 @@ from .flexthandlers_part_03 import (
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart03[MessageT_contra, ResultT]
+    FlextHandlersPart03[MessageT_contra, ResultT],
 ):
     def handle(self, message: MessageT_contra) -> p.Result[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.
@@ -104,7 +104,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         if data is None:
             return r[bool].fail_op(
-                "validate handler message", c.ERR_MESSAGE_CANNOT_BE_NONE
+                "validate handler message", c.ERR_MESSAGE_CANNOT_BE_NONE,
             )
         return r[bool].ok(True)
 

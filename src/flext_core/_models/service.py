@@ -40,7 +40,7 @@ class FlextModelsService:
             p.Settings,
             tp.SkipValidation,
             mp.Field(
-                description="Service configuration settings for runtime behavior."
+                description="Service configuration settings for runtime behavior.",
             ),
         ]
         context: Annotated[
@@ -54,7 +54,7 @@ class FlextModelsService:
             p.Container,
             tp.SkipValidation,
             mp.Field(
-                description="Dependency injection container for service resolution."
+                description="Dependency injection container for service resolution.",
             ),
         ]
         dispatcher: Annotated[
@@ -181,7 +181,7 @@ class FlextModelsService:
             value: t.JsonPayload | None,
         ) -> t.JsonPayload | None:
             if not isinstance(value, Sequence) or isinstance(
-                value, (str, bytes, bytearray)
+                value, (str, bytes, bytearray),
             ):
                 return value
             normalized = tuple(item for item in value if isinstance(item, str))

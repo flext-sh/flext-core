@@ -47,7 +47,7 @@ class FlextModelsBase(FlextModelsBasePart02):
             datetime | None,
             mp.AfterValidator(lambda v: ur.ensure_utc_datetime(v)),
             mp.Field(
-                default=None, description="Last update timestamp (configured timezone)"
+                default=None, description="Last update timestamp (configured timezone)",
             ),
         ] = None
 

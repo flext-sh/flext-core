@@ -29,7 +29,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         cls,
         error_code: str | None = None,
     ) -> Callable[
-        [Callable[PCallback, TValue]], Callable[PCallback, pr.Result[TValue]]
+        [Callable[PCallback, TValue]], Callable[PCallback, pr.Result[TValue]],
     ]:
         """Wrap a callable in the FLEXT railway result pattern."""
 

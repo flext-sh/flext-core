@@ -34,7 +34,7 @@ class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart0
         is_facade = is_module_level and target.__name__.startswith(tier_facade_prefixes)
         module_name = getattr(target, "__module__", "") or ""
         is_core_root = module_name.startswith(
-            "flext_core."
+            "flext_core.",
         ) and not module_name.startswith((
             "flext_core.tests",
             "flext_core.examples",

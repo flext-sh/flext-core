@@ -127,7 +127,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
         """Register a factory using Singleton/Factory providers."""
         if hasattr(di_container, name):
             raise ValueError(
-                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name)
+                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name),
             )
         provider: providers.Provider[T] = (
             providers.Singleton(factory) if cache else providers.Factory(factory)
@@ -144,7 +144,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
         """Register a concrete instance using ``providers.Object``."""
         if hasattr(di_container, name):
             raise ValueError(
-                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name)
+                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name),
             )
         provider: providers.Provider[T] = providers.Object(instance)
         setattr(di_container, name, provider)
@@ -159,7 +159,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
         """Register a resource provider for lifecycle-managed dependencies."""
         if hasattr(di_container, name):
             raise ValueError(
-                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name)
+                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name),
             )
         provider: providers.Provider[T] = providers.Resource(factory)
         setattr(di_container, name, provider)
@@ -181,7 +181,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
                 if module is not None:
                     modules_to_wire.append(module)
         _ = packages
-        wire_runtime = getattr(wiring, "wire")
+        wire_runtime = wiring.wire
         wire_runtime(
             modules=modules_to_wire or None,
             packages=None,

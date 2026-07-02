@@ -13,7 +13,7 @@ from .flexthandlers_part_06 import (
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart06[MessageT_contra, ResultT]
+    FlextHandlersPart06[MessageT_contra, ResultT],
 ):
     class Discovery:
         """Auto-discovery mechanism for handler decorators.

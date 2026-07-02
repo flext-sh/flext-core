@@ -52,26 +52,26 @@ class FlextConstantsRegex:
 
     # === Pre-compiled regex authorities (consumers MUST use these) ===
     PATTERN_ENFORCE_RULE_ID_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_ENFORCE_RULE_ID
+        PATTERN_ENFORCE_RULE_ID,
     )
     PATTERN_SEMVER_RE: ClassVar[t.RegexPattern] = re.compile(PATTERN_SEMVER)
     PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_IDENTIFIER_WITH_UNDERSCORE
+        PATTERN_IDENTIFIER_WITH_UNDERSCORE,
     )
     PATTERN_ISO8601_TIMESTAMP_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_ISO8601_TIMESTAMP
+        PATTERN_ISO8601_TIMESTAMP,
     )
     PATTERN_HOSTNAME_OR_IP_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_HOSTNAME_OR_IP
+        PATTERN_HOSTNAME_OR_IP,
     )
     PATTERN_LDAP_DN_RE: ClassVar[t.RegexPattern] = re.compile(PATTERN_LDAP_DN)
     PATTERN_IDENTIFIER_LOWERCASE_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_IDENTIFIER_LOWERCASE
+        PATTERN_IDENTIFIER_LOWERCASE,
     )
     CAMEL_TO_SNAKE_RE: ClassVar[t.RegexPattern] = re.compile(PATTERN_CAMEL_TO_SNAKE)
     FORBIDDEN_FACADE_IMPORT_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_FORBIDDEN_FACADE_IMPORT, flags=re.MULTILINE
+        PATTERN_FORBIDDEN_FACADE_IMPORT, flags=re.MULTILINE,
     )
     PATTERN_EXAMPLE_RESULT_LINE_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_EXAMPLE_RESULT_LINE
+        PATTERN_EXAMPLE_RESULT_LINE,
     )

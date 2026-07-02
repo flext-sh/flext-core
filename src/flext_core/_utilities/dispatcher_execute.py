@@ -58,7 +58,7 @@ def _adapt_dispatcher_output(
                     c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
                 )
     elif FlextUtilitiesGuardsTypeCore.container(
-        raw_output
+        raw_output,
     ) or FlextUtilitiesGuardsTypeModel.pydantic_model(raw_output):
         result = dispatch_result.ok(raw_output)
     else:

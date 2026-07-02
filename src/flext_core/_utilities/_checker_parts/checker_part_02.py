@@ -43,7 +43,7 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
             if hint is None:
                 return r[tb.TypeHintSpecifier].fail(c.ERR_CHECKER_TYPE_HINT_NONE)
             return r[tb.TypeHintSpecifier].ok(
-                hint if isinstance(hint, (str, type)) else str(hint)
+                hint if isinstance(hint, (str, type)) else str(hint),
             )
         annotation = parameter.annotation
         if annotation is inspect.Signature.empty:
@@ -51,7 +51,7 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
                 c.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
             )
         return r[tb.TypeHintSpecifier].ok(
-            annotation if isinstance(annotation, (str, type)) else str(annotation)
+            annotation if isinstance(annotation, (str, type)) else str(annotation),
         )
 
     @classmethod

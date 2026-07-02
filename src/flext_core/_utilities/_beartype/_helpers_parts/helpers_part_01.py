@@ -59,7 +59,7 @@ class FlextUtilitiesBeartypeHelpers:
         return frozenset(
             alias
             for alias, _, _ in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
-                package_name
+                package_name,
             )
         )
 
@@ -69,7 +69,7 @@ class FlextUtilitiesBeartypeHelpers:
         return frozenset(
             module_path.rsplit(".", 1)[-1]
             for _, module_path, suffix in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
-                package_name
+                package_name,
             )
             if module_path.split(".", 1)[0] == package_name
             and suffix in {"Constants", "Models", "Protocols", "Types", "Utilities"}

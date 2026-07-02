@@ -134,7 +134,7 @@ class FlextUtilitiesGuards(
                         break
                     continue
                 if isinstance(spec_val_num, t.NUMERIC_TYPES) and not num_fn(
-                    check_val, spec_val_num
+                    check_val, spec_val_num,
                 ):
                     result = False
                     break
@@ -146,7 +146,7 @@ class FlextUtilitiesGuards(
                     pass
                 case contains_value:
                     result = FlextUtilitiesGuardsTypeCore.container(
-                        value
+                        value,
                     ) and FlextUtilitiesGuards._check_iterable_contains(
                         value,
                         contains_value,

@@ -28,7 +28,7 @@ from .flextcontainer_part_02 import (
 
 class FlextContainer(FlextContainerPart02, ABC):
     def initialize_registrations(
-        self, *, registration: m.ServiceRegistrationSpec | None = None
+        self, *, registration: m.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Initialize service registrations and configuration."""
         spec = registration or m.ServiceRegistrationSpec()
@@ -57,7 +57,7 @@ class FlextContainer(FlextContainerPart02, ABC):
                     if isinstance(v, Sequence) and not isinstance(v, str | bytes)
                     else v
                     for k, v in user_overrides_input.items()
-                }
+                },
             )
         else:
             self._user_overrides = m.ConfigMap(root={})
@@ -112,12 +112,12 @@ class FlextContainer(FlextContainerPart02, ABC):
                 _ = u.normalize_registerable_service(raw)
             except ValueError as exc:
                 raise ValueError(
-                    c.ERR_CONTAINER_FACTORY_INVALID_REGISTERABLE.format(name=name)
+                    c.ERR_CONTAINER_FACTORY_INVALID_REGISTERABLE.format(name=name),
                 ) from exc
             return raw
 
         self._factories[name] = m.FactoryRegistration(
-            name=name, factory=normalized_factory
+            name=name, factory=normalized_factory,
         )
         try:
             u.DependencyIntegration.register_factory(
@@ -151,7 +151,7 @@ class FlextContainer(FlextContainerPart02, ABC):
         return self
 
     def _update_registered_object_service(
-        self, name: str, service: t.RegisterableService
+        self, name: str, service: t.RegisterableService,
     ) -> None:
         """Replace or insert an object-backed service across local and DI state."""
         self._services[name] = m.ServiceRegistration(

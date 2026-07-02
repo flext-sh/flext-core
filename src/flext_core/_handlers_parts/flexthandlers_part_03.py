@@ -28,7 +28,7 @@ from .flexthandlers_part_02 import (
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart02[MessageT_contra, ResultT]
+    FlextHandlersPart02[MessageT_contra, ResultT],
 ):
     @staticmethod
     def handler[**PHandler, TResult](
@@ -77,7 +77,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 )
                 if middleware is not None:
                     settings = settings.model_copy(
-                        update={"middleware": list(middleware)}
+                        update={"middleware": list(middleware)},
                     )
                 setattr(func, c.HANDLER_ATTR, settings)
             return func

@@ -48,7 +48,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                     func_module=func.__module__,
                 )
                 correlation_id = cls._resolve_correlation_id(
-                    ensure_correlation=ensure_correlation
+                    ensure_correlation=ensure_correlation,
                 )
                 cls._context_type.apply_operation_name(op_name)
                 binding_result = u.bind_context(

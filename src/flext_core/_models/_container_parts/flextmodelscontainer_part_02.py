@@ -48,7 +48,7 @@ class FlextModelsContainer(FlextModelsContainerPart01):
             t.ResourceCallable,
             tp.SkipValidation,
             mp.Field(
-                ..., description="Factory returning the lifecycle-managed resource"
+                ..., description="Factory returning the lifecycle-managed resource",
             ),
         ]
         registration_time: Annotated[

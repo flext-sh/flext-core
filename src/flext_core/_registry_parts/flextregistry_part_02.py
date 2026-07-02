@@ -36,7 +36,7 @@ class FlextRegistry(FlextRegistryPart01):
         elif isinstance(value, m.BaseModel):
             narrowed = value
         elif isinstance(
-            value, (p.Logger, p.Settings, p.Context, p.Dispatcher)
+            value, (p.Logger, p.Settings, p.Context, p.Dispatcher),
         ) or callable(value):
             narrowed = str(value)
         else:
@@ -188,7 +188,7 @@ class FlextRegistry(FlextRegistryPart01):
         """
         if summary.errors:
             return e.fail_operation(
-                "finalize registry summary", "; ".join(summary.errors)
+                "finalize registry summary", "; ".join(summary.errors),
             )
         return r[m.RegistrySummary].ok(summary)
 

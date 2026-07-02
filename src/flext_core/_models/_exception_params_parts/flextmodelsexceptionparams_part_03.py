@@ -41,7 +41,7 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
         ] = None
 
     class ServiceLookupParams(
-        FlextModelsExceptionParamsPart01.ExpectedActualTypeParams
+        FlextModelsExceptionParamsPart01.ExpectedActualTypeParams,
     ):
         """Validated params for service lookup and narrowing failures."""
 

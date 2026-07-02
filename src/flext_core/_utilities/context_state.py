@@ -183,7 +183,7 @@ class FlextUtilitiesContextState:
                 "metadata": meta.model_copy(
                     update={"attributes": {**meta.attributes, key: value}},
                 ),
-            }
+            },
         )
 
 

@@ -36,21 +36,21 @@ class FlextContainer(FlextContainerPart03, ABC):
                 hasattr(self._di_services, name) or hasattr(self._di_container, name)
             ):
                 u.DependencyIntegration.register_object(
-                    self._di_services, name, reg.service
+                    self._di_services, name, reg.service,
                 )
         for name, reg in self._factories.items():
             if not (
                 hasattr(self._di_services, name) or hasattr(self._di_container, name)
             ):
                 u.DependencyIntegration.register_factory(
-                    self._di_services, name, reg.factory, cache=cache
+                    self._di_services, name, reg.factory, cache=cache,
                 )
         for name, reg in self._resources.items():
             if not (
                 hasattr(self._di_resources, name) or hasattr(self._di_container, name)
             ):
                 u.DependencyIntegration.register_resource(
-                    self._di_resources, name, reg.factory
+                    self._di_resources, name, reg.factory,
                 )
 
     @override
@@ -61,7 +61,7 @@ class FlextContainer(FlextContainerPart03, ABC):
             self._internal_registrations.add(str(c.Directory.CONFIG))
         if str(c.ServiceName.LOGGER) not in self._internal_registrations:
             self.factory(
-                c.ServiceName.LOGGER, lambda: u.fetch_logger(c.DEFAULT_LOGGER_MODULE)
+                c.ServiceName.LOGGER, lambda: u.fetch_logger(c.DEFAULT_LOGGER_MODULE),
             )
             self._internal_registrations.add(str(c.ServiceName.LOGGER))
         if c.FIELD_CONTEXT not in self._internal_registrations:
@@ -124,7 +124,7 @@ class FlextContainer(FlextContainerPart03, ABC):
                 resources=cloned_resources,
                 user_overrides=self._user_overrides.model_copy(),
                 container_config=self._global_config.model_copy(deep=True),
-            )
+            ),
         )
         scoped.sync_config_to_di()
         scoped.register_existing_providers()
@@ -135,7 +135,7 @@ class FlextContainer(FlextContainerPart03, ABC):
         """Synchronize FlextSettings to DI providers.Configuration."""
         config_dict = self._global_config.model_dump()
         config_map = m.ConfigMap(
-            root={k: u.normalize_to_container(v) for k, v in config_dict.items()}
+            root={k: u.normalize_to_container(v) for k, v in config_dict.items()},
         )
         _ = u.DependencyIntegration.bind_configuration(self._di_container, config_map)
         namespaces = self._settings_type.registered_namespaces()
@@ -150,7 +150,7 @@ class FlextContainer(FlextContainerPart03, ABC):
                 _settings_class: t.SettingsClass = settings_class,
             ) -> p.Settings:
                 return self._settings_type.fetch_global().fetch_namespace(
-                    _namespace, _settings_class
+                    _namespace, _settings_class,
                 )
 
             if factory_name not in self._factories:
@@ -187,7 +187,7 @@ class FlextContainer(FlextContainerPart03, ABC):
     ) -> None:
         """Wire modules/packages to the DI bridge for @inject/Provide usage."""
         u.DependencyIntegration.wire(
-            self._di_container, modules=modules, packages=packages, classes=classes
+            self._di_container, modules=modules, packages=packages, classes=classes,
         )
 
 

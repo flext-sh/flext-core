@@ -135,14 +135,14 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                 step = {k: v for k, v in step.items() if k not in exclude_keys}
             if strip_none:
                 step = dict(
-                    FlextUtilitiesCollection.filter(step, lambda v: v is not None)
+                    FlextUtilitiesCollection.filter(step, lambda v: v is not None),
                 )
             if strip_empty:
                 step = dict(
                     FlextUtilitiesCollection.filter(
                         step,
                         lambda v: not FlextUtilitiesGuardsTypeCore.empty_value(v),
-                    )
+                    ),
                 )
             return step
 

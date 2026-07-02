@@ -27,7 +27,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
 
     @classmethod
     def _extract_exception_error_code(
-        cls, exception: BaseException | None
+        cls, exception: BaseException | None,
     ) -> str | None:
         if exception is None:
             return None
@@ -91,7 +91,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
                 # Type bridge: callable failures carry the callable payload type.
                 result_class = cast("type[FlextResultConstructionMixin[V]]", cls)
                 return result_class.fail(
-                    "Callable returned None", error_code=error_code
+                    "Callable returned None", error_code=error_code,
                 )
             return cls.ok(value)
         except c.EXC_BROAD_RUNTIME as exc:

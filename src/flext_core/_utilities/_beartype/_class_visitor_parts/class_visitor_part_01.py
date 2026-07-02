@@ -43,7 +43,7 @@ class FlextUtilitiesBeartypeClassVisitor:
                 ):
                     violation = BARE_VIOLATION
             case (target, expected) if isinstance(target, type) and isinstance(
-                expected, str
+                expected, str,
             ):
                 if params.check_nested:
                     parts = target.__qualname__.split(".")

@@ -44,7 +44,7 @@ class FlextUtilitiesGuardsTypeProtocol(
             protocol_specs = FlextUtilitiesGuardsTypeProtocol._get_protocol_specs()
             if type_name in protocol_specs:
                 matched = FlextUtilitiesGuardsTypeProtocol._check_protocol(
-                    value, type_name
+                    value, type_name,
                 )
             elif type_name in c.STRING_METHOD_MAP:
                 matched = not (

@@ -119,7 +119,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             )
             return dumped_value
         normalized_value: t.JsonValue = t.json_value_adapter().validate_python(
-            FlextRuntime.normalize_to_json_value(value)
+            FlextRuntime.normalize_to_json_value(value),
         )
         return normalized_value
 

@@ -50,7 +50,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart02):
 
     @runtime_checkable
     class ContainerType[
-        TContainer: FlextProtocolsContainerPart02.Container = FlextProtocolsContainerPart02.Container
+        TContainer: FlextProtocolsContainerPart02.Container = FlextProtocolsContainerPart02.Container,
     ](Protocol):
         """Protocol for concrete container classes exposing canonical factories."""
 

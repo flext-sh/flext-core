@@ -39,7 +39,7 @@ class FlextExceptionsTemplate:
                 f"{field_name}_description": field_help
                 for field_name, field_info in params.__class__.model_fields.items()
                 if isinstance(
-                    (field_help := field_info.description or field_info.title), str
+                    (field_help := field_info.description or field_info.title), str,
                 )
                 and field_help
             }

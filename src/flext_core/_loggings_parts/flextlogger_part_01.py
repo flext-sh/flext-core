@@ -53,7 +53,7 @@ class FlextLogger(ulc):
             resolved_context = dict(
                 FlextLogger.to_container_context({
                     key: value for key, value in context.items() if value is not None
-                })
+                }),
             )
         if settings is not None:
             service_name = getattr(settings, c.ContextKey.SERVICE_NAME, None)

@@ -24,7 +24,7 @@ from .flexthandlers_part_04 import (
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart04[MessageT_contra, ResultT]
+    FlextHandlersPart04[MessageT_contra, ResultT],
 ):
     def _run_pipeline(
         self,

@@ -194,7 +194,7 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
 
 
 PREDICATE_BINDINGS: t.MappingKV[
-    str, tuple[c.EnforcementPredicateKind, mp.BaseModel]
+    str, tuple[c.EnforcementPredicateKind, mp.BaseModel],
 ] = _bindings()
 
 

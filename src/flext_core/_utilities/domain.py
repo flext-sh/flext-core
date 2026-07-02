@@ -79,10 +79,10 @@ class FlextUtilitiesDomain:
             result = False
         else:
             obj_a_iterable = hasattr(obj_a, "__iter__") and not hasattr(
-                obj_a, "model_dump"
+                obj_a, "model_dump",
             )
             obj_b_iterable = hasattr(obj_b, "__iter__") and not hasattr(
-                obj_b, "model_dump"
+                obj_b, "model_dump",
             )
             if obj_a_iterable or obj_b_iterable:
                 if isinstance(obj_a, Mapping) and isinstance(obj_b, Mapping):
@@ -94,7 +94,7 @@ class FlextUtilitiesDomain:
             elif not FlextUtilitiesDomain.same_type(obj_b, obj_a):
                 result = False
             elif isinstance(obj_a, m.EnforcedModel) and isinstance(
-                obj_b, m.EnforcedModel
+                obj_b, m.EnforcedModel,
             ):
                 result = obj_a.model_dump() == obj_b.model_dump()
             else:

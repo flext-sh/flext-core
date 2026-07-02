@@ -62,7 +62,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
     def _report_internal_logging_failure(operation: str, exc: Exception) -> None:
         with suppress(*c.CONTEXT_EXCEPTIONS):
             FlextUtilitiesLoggingContext.structlog().fetch_logger(
-                c.LOGGER_NAME_FLEXT_CORE
+                c.LOGGER_NAME_FLEXT_CORE,
             ).warning(
                 c.LOG_INTERNAL_OPERATION_FAILED,
                 operation=operation,

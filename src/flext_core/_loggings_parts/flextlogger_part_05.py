@@ -37,13 +37,13 @@ class FlextLogger(FlextLoggerPart04):
         merged_context: t.MutableJsonMapping = dict(
             cls.to_container_context({
                 key: value for key, value in legacy_context.items() if value is not None
-            })
+            }),
         )
         if context is not None:
             merged_context.update(
                 cls.to_container_context({
                     key: value for key, value in context.items() if value is not None
-                })
+                }),
             )
         logger: p.Logger = cls(name, context=merged_context)
         return logger

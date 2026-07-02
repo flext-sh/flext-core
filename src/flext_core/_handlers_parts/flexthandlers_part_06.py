@@ -32,7 +32,7 @@ from .flexthandlers_part_05 import (
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart05[MessageT_contra, ResultT]
+    FlextHandlersPart05[MessageT_contra, ResultT],
 ):
     @staticmethod
     def create_from_callable(

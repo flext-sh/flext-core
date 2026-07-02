@@ -51,7 +51,7 @@ class FlextLogger(FlextLoggerPart03):
                     c.MetadataKey.DURATION_SECONDS: elapsed,
                     c.HandlerType.OPERATION: self._operation_name,
                     c.FIELD_STATUS: status,
-                }
+                },
             )
             if not success:
                 context["exception_type"] = exc_type.__name__ if exc_type else ""

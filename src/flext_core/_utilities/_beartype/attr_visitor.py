@@ -31,7 +31,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
         if params.require_uppercase_name and name != name.upper():
             return _BARE_VIOLATION
         if params.forbid_any_in_alias and _ubh.alias_contains_any(
-            getattr(value, "__value__", None)
+            getattr(value, "__value__", None),
         ):
             return _BARE_VIOLATION
         if (

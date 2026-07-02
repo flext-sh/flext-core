@@ -47,7 +47,7 @@ class FlextModelsProjectMetadata:
             raise ValueError(msg)
         normalized = project_name.lower()
         override: str | None = FlextConstantsProjectMetadata.SPECIAL_NAME_OVERRIDES.get(
-            normalized
+            normalized,
         )
         if override is not None:
             return override

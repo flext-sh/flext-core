@@ -34,7 +34,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
         if target is str:
             coerced_value = value if isinstance(value, str) else str(value)
             validated_str: T = FlextUtilitiesModel.validate_value(
-                target, coerced_value
+                target, coerced_value,
             ).unwrap()
             return validated_str
         cls = FlextUtilitiesParserTargets
@@ -57,7 +57,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
             )
         if target in {int, float, str, bool}:
             validated_primitive: T | None = FlextUtilitiesModel.validate_value(
-                target, value
+                target, value,
             ).map_or(None)
             return validated_primitive
         return None

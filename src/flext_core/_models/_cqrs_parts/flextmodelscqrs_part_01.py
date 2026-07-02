@@ -179,7 +179,7 @@ class FlextModelsCqrs:
             # Allow subclasses to override Pagination via class attribute,
             # fallback to the default _CqrsPagination
             pagination_cls: type[BaseModel] = getattr(
-                cls, "Pagination", _CqrsPagination
+                cls, "Pagination", _CqrsPagination,
             )
             normalized_input = ur.normalize_model_input_mapping(v)
             if normalized_input is None:

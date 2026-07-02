@@ -74,7 +74,7 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart02):
     ) -> mpm.ProjectConstants:
         """Read package constants from installed metadata and generated lazy exports."""
         distribution_name = FlextUtilitiesProjectMetadata._distribution_name(
-            FlextUtilitiesProjectMetadata._package_name(package_name)
+            FlextUtilitiesProjectMetadata._package_name(package_name),
         )
         import_name = FlextUtilitiesProjectMetadata._package_name(distribution_name)
         package = importlib.import_module(import_name)
@@ -85,7 +85,7 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart02):
             raise RuntimeError(msg)
         package_root = root or Path(package_file).resolve().parents[2]
         alias_metadata = FlextUtilitiesProjectMetadata.read_lazy_alias_metadata(
-            distribution_name
+            distribution_name,
         )
         alias_to_suffix = {
             item.alias: item.suffix for item in alias_metadata if item.suffix
@@ -98,7 +98,7 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart02):
         )
         eager_parent_sources = (
             FlextUtilitiesProjectMetadata._discover_eager_alias_parent_sources(
-                import_name, package
+                import_name, package,
             )
         )
         parent_sources = {
@@ -141,10 +141,10 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart02):
             ),
             PACKAGE_ROOT=package_root,
             PYTHON_PACKAGE_NAME=FlextUtilitiesProjectMetadata._package_name(
-                distribution_name
+                distribution_name,
             ),
             CLASS_STEM=FlextUtilitiesProjectMetadata.derive_class_stem(
-                distribution_name
+                distribution_name,
             ),
             ALIAS_TO_SUFFIX=MappingProxyType(alias_to_suffix),
             RUNTIME_ALIAS_NAMES=frozenset(

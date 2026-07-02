@@ -38,7 +38,7 @@ class FlextCoreBeartypeBootstrap:
                 return
             conf_module = import_module("flext_core._utilities.beartype_conf")
             beartype_this_package(
-                conf=conf_module.FlextUtilitiesBeartypeConf.build_beartype_conf()
+                conf=conf_module.FlextUtilitiesBeartypeConf.build_beartype_conf(),
             )
             cls._activated = True
         finally:

@@ -91,7 +91,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         """Normalize an arbitrary mapping into a scope-compatible map."""
         try:
             source_mapping: t.JsonMapping = t.json_mapping_adapter().validate_python(
-                source
+                source,
             )
             normalized_payload = (
                 FlextUtilitiesContextLifecycle._normalize_mapping_payload(

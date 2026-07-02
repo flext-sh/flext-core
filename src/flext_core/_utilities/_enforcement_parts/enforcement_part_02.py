@@ -69,7 +69,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart01):
             return
 
         def walk(
-            node: type, path: str
+            node: type, path: str,
         ) -> Iterator[tuple[str, tuple[p.AttributeProbe, ...]]]:
             iterator = (
                 FlextUtilitiesEnforcement._iter_effective
@@ -80,7 +80,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart01):
                 nested = f"{path}.{name}"
                 yield nested, (value,)
                 if ub.has_runtime_protocol_marker(value) or ub.has_nested_namespace(
-                    value
+                    value,
                 ):
                     yield from walk(value, nested)
 
@@ -138,7 +138,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart01):
                     qn,
                     items,
                     category,
-                )
+                ),
             )
             if (
                 category is c.EnforcementCategory.ATTR
@@ -152,7 +152,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart01):
                         FlextUtilitiesEnforcement.check(
                             inner,
                             layer=effective_layer,
-                        ).violations
+                        ).violations,
                     )
         return me.Report(violations=violations)
 
