@@ -16,26 +16,26 @@ import typing
 from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
-from flext_core import FlextModels, FlextModelsNamespace
+from flext_core import FlextModelsNamespace, m as core_m
 from tests.models import m
 from tests.utilities import u
 
 # --- Pydantic hook rules ------------------------------------------------
 
 
-class TestsFlextBadAnyField(FlextModels.ArbitraryTypesModel):
+class TestsFlextBadAnyField(core_m.ArbitraryTypesModel):
     """Violates ``no_any`` — field annotated as ``typing.Any``."""
 
     data: Annotated[typing.Any, u.Field(description="Intentionally Any.")] = None
 
 
-class TestsFlextBadBareCollection(FlextModels.ArbitraryTypesModel):
+class TestsFlextBadBareCollection(core_m.ArbitraryTypesModel):
     """Violates ``no_bare_collection`` — bare ``list[...]`` annotation."""
 
     items: list[str] = u.Field(default_factory=list, description="Bare list.")
 
 
-class TestsFlextBadMutableDefault(FlextModels.ArbitraryTypesModel):
+class TestsFlextBadMutableDefault(core_m.ArbitraryTypesModel):
     """Violates ``no_mutable_default`` — mutable list literal default."""
 
     items: Annotated[
@@ -44,13 +44,13 @@ class TestsFlextBadMutableDefault(FlextModels.ArbitraryTypesModel):
     ] = ["x"]
 
 
-class TestsFlextBadMissingDesc(FlextModels.ArbitraryTypesModel):
+class TestsFlextBadMissingDesc(core_m.ArbitraryTypesModel):
     """Violates ``missing_description`` — field without ``description=``."""
 
     undocumented: str = ""
 
 
-class TestsFlextBadInlineUnion(FlextModels.ArbitraryTypesModel):
+class TestsFlextBadInlineUnion(core_m.ArbitraryTypesModel):
     """Violates ``no_inline_union`` — inline union with > max arms."""
 
     value: Annotated[
@@ -59,7 +59,7 @@ class TestsFlextBadInlineUnion(FlextModels.ArbitraryTypesModel):
     ] = ""
 
 
-class TestsFlextBadFrozen(FlextModels.ImmutableValueModel):
+class TestsFlextBadFrozen(core_m.ImmutableValueModel):
     """Violates ``value_not_frozen`` — value-object base with ``frozen=False``."""
 
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
