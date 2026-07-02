@@ -24,9 +24,20 @@ class FlextConstantsEnforcementRuntime:
     )
     """Controls flext_core beartype.claw bootstrap: strict, warn, or off.
 
-    Override at process start with the ``BEARTYPE_MODE`` env var
-    (``strict`` / ``warn`` / ``off``). Default is ``off`` to keep regular
-    runs free of runtime overhead; CI / strict gates set ``strict``.
+    Compile-time constant (ENFORCE-037 forbids ``os.environ`` reads; no code
+    reads an env var). ``warn`` surfaces runtime type violations as
+    ``UserWarning``; ``strict`` raises ``TypeError``; ``off`` disables the claw
+    bootstrap. Change the value here to flip.
+
+    Currently ``off``. The ``pydantic.JsonValue`` forward-ref crash that blocked
+    WARN is fixed in ``beartype_typingext_patch`` (bead mro-31mj.2). WARN is
+    still blocked by a second upstream beartype defect: decorating a class whose
+    nested ``@beartype``-decorated class defines ``__init__`` shadows the outer
+    class's *inherited* ``__init__`` with the nested one, breaking the c/m/p/t/u
+    nested-class facades (e.g. ``FlextLogger.PerformanceTracker``). Fixing it
+    requires changes to beartype's core class decorator / the enforcement
+    decoration path, outside the beartype-patch surface — see
+    ``.beads/artifacts/mro-31mj/fix-waves/L0-beartype``.
     """
 
     BEARTYPE_CLAW_SKIP_PACKAGES: Final[tuple[str, ...]] = (

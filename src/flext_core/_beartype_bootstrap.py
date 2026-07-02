@@ -36,6 +36,13 @@ class FlextCoreBeartypeBootstrap:
                 is enforcement_constants.EnforcementMode.OFF
             ):
                 return
+            # Install the typing_extensions PEP 695 patches (alias recognition +
+            # forward-ref module scoping) BEFORE claw hooks activate; the lazy
+            # import path never loads beartype_engine, so this is the only site
+            # that guarantees the patches are live for pydantic.JsonValue et al.
+            import_module(
+                "flext_core._utilities.beartype_typingext_patch",
+            ).FlextUtilitiesBeartypeTypingExtPatch.apply()
             conf_module = import_module("flext_core._utilities.beartype_conf")
             beartype_this_package(
                 conf=conf_module.FlextUtilitiesBeartypeConf.build_beartype_conf(),
