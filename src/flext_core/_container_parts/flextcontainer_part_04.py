@@ -14,13 +14,7 @@ from abc import ABC
 from types import ModuleType
 from typing import Self, override
 
-from flext_core.constants import c
-from flext_core.exceptions import e
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import c, e, m, p, r, t, u
 
 from .flextcontainer_part_03 import (
     FlextContainer as FlextContainerPart03,
@@ -36,21 +30,28 @@ class FlextContainer(FlextContainerPart03, ABC):
                 hasattr(self._di_services, name) or hasattr(self._di_container, name)
             ):
                 u.DependencyIntegration.register_object(
-                    self._di_services, name, reg.service,
+                    self._di_services,
+                    name,
+                    reg.service,
                 )
         for name, reg in self._factories.items():
             if not (
                 hasattr(self._di_services, name) or hasattr(self._di_container, name)
             ):
                 u.DependencyIntegration.register_factory(
-                    self._di_services, name, reg.factory, cache=cache,
+                    self._di_services,
+                    name,
+                    reg.factory,
+                    cache=cache,
                 )
         for name, reg in self._resources.items():
             if not (
                 hasattr(self._di_resources, name) or hasattr(self._di_container, name)
             ):
                 u.DependencyIntegration.register_resource(
-                    self._di_resources, name, reg.factory,
+                    self._di_resources,
+                    name,
+                    reg.factory,
                 )
 
     @override
@@ -61,7 +62,8 @@ class FlextContainer(FlextContainerPart03, ABC):
             self._internal_registrations.add(str(c.Directory.CONFIG))
         if str(c.ServiceName.LOGGER) not in self._internal_registrations:
             self.factory(
-                c.ServiceName.LOGGER, lambda: u.fetch_logger(c.DEFAULT_LOGGER_MODULE),
+                c.ServiceName.LOGGER,
+                lambda: u.fetch_logger(c.DEFAULT_LOGGER_MODULE),
             )
             self._internal_registrations.add(str(c.ServiceName.LOGGER))
         if c.FIELD_CONTEXT not in self._internal_registrations:
@@ -150,7 +152,8 @@ class FlextContainer(FlextContainerPart03, ABC):
                 _settings_class: t.SettingsClass = settings_class,
             ) -> p.Settings:
                 return self._settings_type.fetch_global().fetch_namespace(
-                    _namespace, _settings_class,
+                    _namespace,
+                    _settings_class,
                 )
 
             if factory_name not in self._factories:
@@ -187,7 +190,10 @@ class FlextContainer(FlextContainerPart03, ABC):
     ) -> None:
         """Wire modules/packages to the DI bridge for @inject/Provide usage."""
         u.DependencyIntegration.wire(
-            self._di_container, modules=modules, packages=packages, classes=classes,
+            self._di_container,
+            modules=modules,
+            packages=packages,
+            classes=classes,
         )
 
 

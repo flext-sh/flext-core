@@ -69,7 +69,8 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart01):
             return
 
         def walk(
-            node: type, path: str,
+            node: type,
+            path: str,
         ) -> Iterator[tuple[str, tuple[p.AttributeProbe, ...]]]:
             iterator = (
                 FlextUtilitiesEnforcement._iter_effective

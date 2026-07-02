@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
+from flext_core import t
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core.typings import t
 
 from .flextmodelsexceptionparams_part_01 import (
     FlextModelsExceptionParams as FlextModelsExceptionParamsPart01,

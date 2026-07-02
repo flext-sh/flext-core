@@ -181,7 +181,8 @@ class FlextModelsService:
             value: t.JsonPayload | None,
         ) -> t.JsonPayload | None:
             if not isinstance(value, Sequence) or isinstance(
-                value, (str, bytes, bytearray),
+                value,
+                (str, bytes, bytearray),
             ):
                 return value
             normalized = tuple(item for item in value if isinstance(item, str))

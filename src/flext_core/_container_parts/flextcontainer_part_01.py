@@ -20,11 +20,9 @@ from typing import ClassVar, Self, override
 
 from dependency_injector import containers as di_containers
 
+from flext_core import m, p, t
 from flext_core.context import FlextContext
-from flext_core.models import m
-from flext_core.protocols import p
 from flext_core.settings import FlextSettings
-from flext_core.typings import t
 
 
 class FlextContainer(p.Container, ABC):

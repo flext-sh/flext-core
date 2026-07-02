@@ -97,7 +97,8 @@ class FlextSettings(
             raise AttributeError(msg)
         try:
             pydantic_private: dict[str, p.Settings] | None = object.__getattribute__(
-                self, "__pydantic_private__",
+                self,
+                "__pydantic_private__",
             )
         except AttributeError:
             pydantic_private = None
@@ -123,7 +124,8 @@ class FlextSettings(
             msg = f"Namespace '{name}' not registered"
             raise AttributeError(msg)
         namespace_settings: p.Settings = self.fetch_namespace(
-            namespace_key, settings_class,
+            namespace_key,
+            settings_class,
         )
         return namespace_settings
 

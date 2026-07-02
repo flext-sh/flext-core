@@ -134,7 +134,8 @@ class FlextUtilitiesGuards(
                         break
                     continue
                 if isinstance(spec_val_num, t.NUMERIC_TYPES) and not num_fn(
-                    check_val, spec_val_num,
+                    check_val,
+                    spec_val_num,
                 ):
                     result = False
                     break

@@ -21,13 +21,12 @@ from pydantic import (
     field_validator,
 )
 
+from flext_core import c, t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as ur,
 )
 from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
-from flext_core.constants import c
-from flext_core.typings import t
 
 
 class _CqrsPagination(m.FlexibleInternalModel):
@@ -179,7 +178,9 @@ class FlextModelsCqrs:
             # Allow subclasses to override Pagination via class attribute,
             # fallback to the default _CqrsPagination
             pagination_cls: type[BaseModel] = getattr(
-                cls, "Pagination", _CqrsPagination,
+                cls,
+                "Pagination",
+                _CqrsPagination,
             )
             normalized_input = ur.normalize_model_input_mapping(v)
             if normalized_input is None:

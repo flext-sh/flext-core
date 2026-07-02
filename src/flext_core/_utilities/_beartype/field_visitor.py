@@ -52,12 +52,14 @@ class FlextUtilitiesBeartypeFieldVisitor:
     ) -> t.StrMapping | None:
         violation: t.StrMapping | None = None
         if params.forbid_any and _ubh.contains_any_recursive(
-            info.annotation, seen=set(),
+            info.annotation,
+            seen=set(),
         ):
             violation = {}
         elif params.forbid_bare_collection:
             bad, origin = _ubh.has_forbidden_collection_origin(
-                info.annotation, c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
+                info.annotation,
+                c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
             )
             if bad:
                 replacement = next(
@@ -77,7 +79,8 @@ class FlextUtilitiesBeartypeFieldVisitor:
             params.forbid_raw_default_factory
             and info.default_factory is not None
             and not _ubh.allows_mutable_default_factory(
-                info.annotation, info.default_factory,
+                info.annotation,
+                info.default_factory,
             )
         ):
             factory_kind = _ubh.mutable_default_factory_kind(info.default_factory)
@@ -127,7 +130,8 @@ class FlextUtilitiesBeartypeFieldVisitor:
         """MODEL_CONFIG — Pydantic model_config governance via flags."""
         violation: t.StrMapping | None = None
         has_v1_config = params.forbid_v1_config and isinstance(
-            target.__dict__.get("Config"), type,
+            target.__dict__.get("Config"),
+            type,
         )
         if has_v1_config:
             violation = {}

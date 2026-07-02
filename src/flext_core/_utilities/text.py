@@ -57,7 +57,9 @@ class FlextUtilitiesText:
 
     @staticmethod
     def write_file(
-        path: str | Path, content: str, encoding: str = c.DEFAULT_ENCODING,
+        path: str | Path,
+        content: str,
+        encoding: str = c.DEFAULT_ENCODING,
     ) -> None:
         """Write text content to a file path using explicit encoding."""
         Path(path).write_text(content, encoding=encoding)

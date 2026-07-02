@@ -110,7 +110,8 @@ class FlextUtilitiesBeartypeImportVisitor:
                         is not None
                         and (
                             (_ubh.object_module_name_for(alias_value) or "").split(
-                                ".", 1,
+                                ".",
+                                1,
                             )[0]
                         )
                         == package

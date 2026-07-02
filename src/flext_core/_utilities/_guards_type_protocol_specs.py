@@ -4,6 +4,7 @@ from collections.abc import Callable
 from types import MappingProxyType
 from typing import TypeIs
 
+from flext_core import c, t
 from flext_core._protocols.container import FlextProtocolsContainer as pc
 from flext_core._protocols.context import FlextProtocolsContext as pcx
 from flext_core._protocols.handler import FlextProtocolsHandler as ph
@@ -12,8 +13,6 @@ from flext_core._protocols.result import FlextProtocolsResult as pr
 from flext_core._protocols.service import FlextProtocolsService as psrv
 from flext_core._protocols.settings import FlextProtocolsSettings as ps
 from flext_core._utilities._guards_type_protocol_types import ProtocolGuardInput
-from flext_core.constants import c
-from flext_core.typings import t
 
 
 class FlextUtilitiesGuardsTypeProtocolSpecsMixin:

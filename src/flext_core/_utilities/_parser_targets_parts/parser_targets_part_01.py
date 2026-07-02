@@ -5,14 +5,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from enum import StrEnum
 
+from flext_core import c, p, r, t
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
 
 
 class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
@@ -97,7 +94,8 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         options_text = [member.value for member in target]
         if not opts.case_insensitive:
             validation_result: p.Result[T] = FlextUtilitiesModel.validate_value(
-                target, value_str,
+                target,
+                value_str,
             )
             if validation_result.success:
                 validated_enum: T = validation_result.value
@@ -151,7 +149,8 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
             ).unwrap()
             return parsed_default
         if not isinstance(value, Mapping) and not isinstance(
-            value, FlextModelsPydantic.BaseModel,
+            value,
+            FlextModelsPydantic.BaseModel,
         ):
             raise TypeError(
                 c.ERR_PARSER_CANNOT_PARSE_SCALAR_TO_MODEL.format(

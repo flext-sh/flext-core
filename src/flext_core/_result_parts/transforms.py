@@ -68,7 +68,9 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
 
     @override
     def fold[U](
-        self, on_failure: Callable[[str], U], on_success: Callable[[T], U],
+        self,
+        on_failure: Callable[[str], U],
+        on_success: Callable[[T], U],
     ) -> U:
         """Catamorphism: reduce result to a single value via callbacks."""
         if self.success and self.value is not None:
@@ -94,7 +96,8 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
             except c.EXC_BROAD_RUNTIME as exc:
                 # Type bridge: mapper exceptions adopt the mapped payload type.
                 result_class = cast(
-                    "type[FlextResultConstructionMixin[U]]", self.__class__,
+                    "type[FlextResultConstructionMixin[U]]",
+                    self.__class__,
                 )
                 return result_class.fail(str(exc), exception=exc)
         # Type bridge: propagated failures adopt the mapped payload type.
@@ -147,7 +150,8 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
             return self.__class__.ok(func(self.error or ""))
         except c.EXC_BROAD_RUNTIME as exc:
             result_class = cast(
-                "type[FlextResultConstructionMixin[T | U]]", self.__class__,
+                "type[FlextResultConstructionMixin[T | U]]",
+                self.__class__,
             )
             return result_class.fail(str(exc), exception=exc)
 

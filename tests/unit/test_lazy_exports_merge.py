@@ -7,8 +7,8 @@ from types import ModuleType
 
 import pytest
 
+from flext_core import t
 from flext_core.lazy import install_lazy_exports, lazy, merge_lazy_imports
-from flext_core.typings import t
 
 
 class TestsFlextLazyMerge:

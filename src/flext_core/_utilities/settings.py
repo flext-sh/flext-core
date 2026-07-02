@@ -15,11 +15,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from flext_core import c, p, r, t
 from flext_core._exceptions.factories import FlextExceptionsFactories as e
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
 
 
 class FlextUtilitiesSettings:

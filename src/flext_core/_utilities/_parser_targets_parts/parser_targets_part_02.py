@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from contextlib import suppress
 
+from flext_core import c, t
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
-from flext_core.constants import c
-from flext_core.typings import t
 
 from .parser_targets_part_01 import (
     FlextUtilitiesParserTargets as FlextUtilitiesParserTargetsPart01,
@@ -34,7 +33,8 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
         if target is str:
             coerced_value = value if isinstance(value, str) else str(value)
             validated_str: T = FlextUtilitiesModel.validate_value(
-                target, coerced_value,
+                target,
+                coerced_value,
             ).unwrap()
             return validated_str
         cls = FlextUtilitiesParserTargets
@@ -57,7 +57,8 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
             )
         if target in {int, float, str, bool}:
             validated_primitive: T | None = FlextUtilitiesModel.validate_value(
-                target, value,
+                target,
+                value,
             ).map_or(None)
             return validated_primitive
         return None

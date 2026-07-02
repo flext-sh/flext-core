@@ -34,7 +34,8 @@ class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):
         if errors:
             # Type bridge: accumulated failures carry no payload value.
             result_class = cast(
-                "type[FlextResultConstructionMixin[Sequence[ValueT]]]", cls,
+                "type[FlextResultConstructionMixin[Sequence[ValueT]]]",
+                cls,
             )
             return result_class.fail("; ".join(errors))
         return cls.ok(successes)

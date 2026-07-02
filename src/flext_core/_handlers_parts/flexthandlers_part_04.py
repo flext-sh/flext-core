@@ -104,7 +104,8 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         if data is None:
             return r[bool].fail_op(
-                "validate handler message", c.ERR_MESSAGE_CANNOT_BE_NONE,
+                "validate handler message",
+                c.ERR_MESSAGE_CANNOT_BE_NONE,
             )
         return r[bool].ok(True)
 

@@ -15,14 +15,8 @@ from typing import overload, override
 
 from dependency_injector import containers as di_containers
 
+from flext_core import c, e, m, p, r, t, u
 from flext_core._loggings_parts.flextlogger_part_05 import FlextLogger
-from flext_core.constants import c
-from flext_core.exceptions import e
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
-from flext_core.utilities import u
 
 from .flextcontainer_part_01 import (
     FlextContainer as FlextContainerPart01,
@@ -69,17 +63,26 @@ class FlextContainer(FlextContainerPart01, ABC):
 
     @overload
     def resolve[T: t.RegisterableService](
-        self, name: str, *, type_cls: type[T],
+        self,
+        name: str,
+        *,
+        type_cls: type[T],
     ) -> p.Result[T]: ...
 
     @overload
     def resolve(
-        self, name: str, *, type_cls: None = None,
+        self,
+        name: str,
+        *,
+        type_cls: None = None,
     ) -> p.Result[t.RegisterableService]: ...
 
     @override
     def resolve[T: t.RegisterableService](
-        self, name: str, *, type_cls: type[T] | None = None,
+        self,
+        name: str,
+        *,
+        type_cls: type[T] | None = None,
     ) -> p.Result[T] | p.Result[t.RegisterableService]:
         """Resolve a registered service or factory by name."""
         service_registration = self._services.get(name)

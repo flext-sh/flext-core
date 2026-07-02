@@ -49,12 +49,15 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
         ).with_operation_update(c.ContextOperation.CLEAR.value)
 
     def get(
-        self, key: str, scope: str = c.ContextScope.GLOBAL,
+        self,
+        key: str,
+        scope: str = c.ContextScope.GLOBAL,
     ) -> p.Result[t.JsonPayload]:
         """Get a value from the context (fail-fast, no default fallback)."""
         if not self.state.active:
             return r[t.JsonPayload].fail_op(
-                c.ContextCrudOperation.GET_VALUE, c.ERR_CONTEXT_NOT_ACTIVE,
+                c.ContextCrudOperation.GET_VALUE,
+                c.ERR_CONTEXT_NOT_ACTIVE,
             )
         scope_data = self._contextvar_data(scope)
         if key not in scope_data:
@@ -140,7 +143,8 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
         prepared_update: tuple[t.JsonMapping, t.JsonMapping] | None = None
         if not self.state.active:
             operation_result = r[bool].fail_op(
-                c.ContextCrudOperation.SET_VALUE, c.ERR_CONTEXT_NOT_ACTIVE,
+                c.ContextCrudOperation.SET_VALUE,
+                c.ERR_CONTEXT_NOT_ACTIVE,
             )
         else:
             match key_or_data, value:
@@ -208,7 +212,8 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
                 self._execute_hooks(c.ContextOperation.SET.value, hook_context)
             except TypeError as exc:
                 operation_result = e.fail_operation(
-                    c.ContextCrudOperation.APPLY_UPDATE, exc,
+                    c.ContextCrudOperation.APPLY_UPDATE,
+                    exc,
                 )
         return operation_result
 

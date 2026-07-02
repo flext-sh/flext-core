@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import c, t
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._utilities._guards_type_protocol_specs import (
     FlextUtilitiesGuardsTypeProtocolSpecsMixin,
@@ -14,8 +15,6 @@ from flext_core._utilities._guards_type_protocol_string import (
     FlextUtilitiesGuardsTypeProtocolStringMixin,
 )
 from flext_core._utilities._guards_type_protocol_types import ProtocolGuardInput
-from flext_core.constants import c
-from flext_core.typings import t
 
 
 class FlextUtilitiesGuardsTypeProtocol(
@@ -44,7 +43,8 @@ class FlextUtilitiesGuardsTypeProtocol(
             protocol_specs = FlextUtilitiesGuardsTypeProtocol._get_protocol_specs()
             if type_name in protocol_specs:
                 matched = FlextUtilitiesGuardsTypeProtocol._check_protocol(
-                    value, type_name,
+                    value,
+                    type_name,
                 )
             elif type_name in c.STRING_METHOD_MAP:
                 matched = not (

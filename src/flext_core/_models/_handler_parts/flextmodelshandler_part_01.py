@@ -17,12 +17,11 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar
 
+from flext_core import c, t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
-from flext_core.constants import c
-from flext_core.typings import t
 
 
 class FlextModelsHandler:

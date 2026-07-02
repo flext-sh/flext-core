@@ -76,7 +76,8 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
                 normalized_service = mc.ConfigMap(
                     root={
                         key_s: FlextRuntimeContainer._normalize_payload_item(
-                            item, container_kind="mapping",
+                            item,
+                            container_kind="mapping",
                         )
                         for key_s, item in value.items()
                     },
@@ -85,7 +86,8 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
                 normalized_service = mc.ObjectList(
                     root=[
                         FlextRuntimeContainer._normalize_payload_item(
-                            item, container_kind="sequence",
+                            item,
+                            container_kind="sequence",
                         )
                         for item in value
                     ],

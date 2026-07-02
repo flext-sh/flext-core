@@ -16,11 +16,10 @@ from collections.abc import (
 )
 from typing import TYPE_CHECKING
 
+from flext_core import c, t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._models.domain_event import FlextModelsDomainEvent as mde
-from flext_core.constants import c
-from flext_core.typings import t
 
 from .guards import FlextUtilitiesGuards as u
 
@@ -79,10 +78,12 @@ class FlextUtilitiesDomain:
             result = False
         else:
             obj_a_iterable = hasattr(obj_a, "__iter__") and not hasattr(
-                obj_a, "model_dump",
+                obj_a,
+                "model_dump",
             )
             obj_b_iterable = hasattr(obj_b, "__iter__") and not hasattr(
-                obj_b, "model_dump",
+                obj_b,
+                "model_dump",
             )
             if obj_a_iterable or obj_b_iterable:
                 if isinstance(obj_a, Mapping) and isinstance(obj_b, Mapping):
@@ -94,7 +95,8 @@ class FlextUtilitiesDomain:
             elif not FlextUtilitiesDomain.same_type(obj_b, obj_a):
                 result = False
             elif isinstance(obj_a, m.EnforcedModel) and isinstance(
-                obj_b, m.EnforcedModel,
+                obj_b,
+                m.EnforcedModel,
             ):
                 result = obj_a.model_dump() == obj_b.model_dump()
             else:

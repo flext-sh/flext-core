@@ -16,10 +16,7 @@ from collections.abc import (
 )
 from typing import Self, override
 
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import c, m, t, u
 
 from .flextcontainer_part_02 import (
     FlextContainer as FlextContainerPart02,
@@ -28,7 +25,9 @@ from .flextcontainer_part_02 import (
 
 class FlextContainer(FlextContainerPart02, ABC):
     def initialize_registrations(
-        self, *, registration: m.ServiceRegistrationSpec | None = None,
+        self,
+        *,
+        registration: m.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Initialize service registrations and configuration."""
         spec = registration or m.ServiceRegistrationSpec()
@@ -117,7 +116,8 @@ class FlextContainer(FlextContainerPart02, ABC):
             return raw
 
         self._factories[name] = m.FactoryRegistration(
-            name=name, factory=normalized_factory,
+            name=name,
+            factory=normalized_factory,
         )
         try:
             u.DependencyIntegration.register_factory(
@@ -151,7 +151,9 @@ class FlextContainer(FlextContainerPart02, ABC):
         return self
 
     def _update_registered_object_service(
-        self, name: str, service: t.RegisterableService,
+        self,
+        name: str,
+        service: t.RegisterableService,
     ) -> None:
         """Replace or insert an object-backed service across local and DI state."""
         self._services[name] = m.ServiceRegistration(

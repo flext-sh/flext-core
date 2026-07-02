@@ -180,7 +180,8 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             dispatcher=runtime_dispatcher,
         )
         runtime_registry = cls._resolve_runtime_registry(
-            runtime_options, service_runtime,
+            runtime_options,
+            service_runtime,
         )
         resolved_runtime: m.ServiceRuntime = service_runtime.model_copy(
             update={"registry": runtime_registry},

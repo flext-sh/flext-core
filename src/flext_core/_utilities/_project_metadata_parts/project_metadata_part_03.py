@@ -98,7 +98,8 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart02):
         )
         eager_parent_sources = (
             FlextUtilitiesProjectMetadata._discover_eager_alias_parent_sources(
-                import_name, package,
+                import_name,
+                package,
             )
         )
         parent_sources = {

@@ -117,7 +117,8 @@ class FlextRegistry(s[bool]):
                 else runtime.dispatcher
             )
             instance = cls(
-                initial_context=runtime.context, dispatcher=resolved,
+                initial_context=runtime.context,
+                dispatcher=resolved,
             ).configure_runtime(runtime, dispatcher=resolved)
         if auto_discover_handlers:
             frame = inspect.currentframe()

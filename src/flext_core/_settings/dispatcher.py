@@ -41,7 +41,8 @@ class FlextSettingsDispatcher:
         ),
     ] = c.ASYNC_ENABLED
     executor_workers: Annotated[
-        t.WorkerCount, Field(description="Executor workers"),
+        t.WorkerCount,
+        Field(description="Executor workers"),
     ] = c.DEFAULT_MAX_WORKERS
 
 

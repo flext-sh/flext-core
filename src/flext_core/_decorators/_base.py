@@ -45,7 +45,8 @@ class FlextDecoratorsBase:
         """Return whether value carries or can route logging context."""
         _ = cls
         return isinstance(
-            value, (pl.Logger, pl.HasLogger, mp.BaseModel, *tb.CONTAINER_TYPES),
+            value,
+            (pl.Logger, pl.HasLogger, mp.BaseModel, *tb.CONTAINER_TYPES),
         )
 
     @classmethod

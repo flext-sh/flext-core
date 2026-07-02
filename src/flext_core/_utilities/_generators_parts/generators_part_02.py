@@ -141,7 +141,8 @@ class FlextUtilitiesGenerators(FlextUtilitiesGeneratorsPart01):
     def from_timestamp(timestamp: float) -> datetime:
         """Convert a POSIX timestamp to an aware datetime in the configured timezone."""
         return datetime.fromtimestamp(
-            timestamp, FlextUtilitiesGenerators.configured_timezone(),
+            timestamp,
+            FlextUtilitiesGenerators.configured_timezone(),
         )
 
     @staticmethod

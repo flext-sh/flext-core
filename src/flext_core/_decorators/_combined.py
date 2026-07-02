@@ -41,7 +41,8 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
         railway_enabled: Literal[True],
         railway_error_code: str | None = None,
     ) -> Callable[
-        [Callable[PCallback, TResult]], Callable[PCallback, pr.Result[TResult]],
+        [Callable[PCallback, TResult]],
+        Callable[PCallback, pr.Result[TResult]],
     ]: ...
 
     @classmethod

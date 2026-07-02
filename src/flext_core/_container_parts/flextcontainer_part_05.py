@@ -15,13 +15,7 @@ import sys
 from types import FrameType, ModuleType
 from typing import Self, override
 
-from flext_core.constants import c
-from flext_core.exceptions import e
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import c, e, m, p, r, t, u
 
 from .flextcontainer_part_04 import (
     FlextContainer as FlextContainerPart04,
@@ -44,7 +38,9 @@ class FlextContainer(FlextContainerPart04):
         )
 
     def __init__(
-        self, *, registration: m.ServiceRegistrationSpec | None = None,
+        self,
+        *,
+        registration: m.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Initialize the singleton container (idempotent)."""
         if hasattr(self, "_di_container"):
@@ -89,7 +85,8 @@ class FlextContainer(FlextContainerPart04):
 
     @staticmethod
     def _auto_register_module_factories(
-        instance: p.Container, caller_module: ModuleType,
+        instance: p.Container,
+        caller_module: ModuleType,
     ) -> None:
         """Scan module for @d.factory() functions and register them."""
         factories = u.scan_module(caller_module)
@@ -102,19 +99,22 @@ class FlextContainer(FlextContainerPart04):
             _ = instance.factory(factory_config.name, factory_func)
 
     def _apply_explicit_bootstrap(
-        self, registration: m.ServiceRegistrationSpec,
+        self,
+        registration: m.ServiceRegistrationSpec,
     ) -> None:
         """Apply explicit bootstrap overrides to an existing singleton instance."""
         if registration.settings is not None:
             self._config = registration.settings
             self._update_registered_object_service(
-                c.Directory.CONFIG, registration.settings,
+                c.Directory.CONFIG,
+                registration.settings,
             )
             self.sync_config_to_di()
         if registration.context is not None:
             self._context = registration.context
             self._update_registered_object_service(
-                c.FIELD_CONTEXT, registration.context,
+                c.FIELD_CONTEXT,
+                registration.context,
             )
 
     @override
@@ -149,7 +149,8 @@ class FlextContainer(FlextContainerPart04):
         merged.update({k: u.normalize_to_container(v) for k, v in settings.items()})
         self._user_overrides = merged
         self._global_config = self._global_config.model_copy(
-            update=dict(merged), deep=True,
+            update=dict(merged),
+            deep=True,
         )
         self.sync_config_to_di()
         return self

@@ -73,7 +73,9 @@ class TestsFlextEnforcementNamespace:
         # "TestsFlext" — the composed prefix — so no class_prefix violation.
         assert not namespace_msgs
 
-    def test_project_class_stem_override_controls_class_prefix(self, tmp_path: Path) -> None:
+    def test_project_class_stem_override_controls_class_prefix(
+        self, tmp_path: Path
+    ) -> None:
         root = tmp_path / "sample"
         package = root / "src" / "xmlapi"
         package.mkdir(parents=True)
@@ -91,7 +93,9 @@ class_stem_override = "XmlAPI"
         )
         module_path = package / "__init__.py"
         module_path.write_text("class XmlAPIModels:\n    pass\n", encoding="utf-8")
-        spec = importlib.util.spec_from_file_location("xmlapi_override_sample", module_path)
+        spec = importlib.util.spec_from_file_location(
+            "xmlapi_override_sample", module_path
+        )
         assert spec is not None and spec.loader is not None
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
@@ -99,7 +103,9 @@ class_stem_override = "XmlAPI"
 
         report = u.check(module.XmlAPIModels)
 
-        assert not any("class name missing project prefix" in v.message for v in report.violations)
+        assert not any(
+            "class name missing project prefix" in v.message for v in report.violations
+        )
 
     def test_run_layer_emits_mro_violation_under_default_warn_mode(self) -> None:
         """``run_layer`` gates on ``c.ENFORCEMENT_NAMESPACE_MODE`` (Final, WARN).

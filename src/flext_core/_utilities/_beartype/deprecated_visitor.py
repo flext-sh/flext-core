@@ -179,7 +179,9 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                 for alias_name in _ubh.runtime_alias_names(package_name)
                                 if (
                                     alias_value := getattr(
-                                        wrapper_module, alias_name, None,
+                                        wrapper_module,
+                                        alias_name,
+                                        None,
                                     )
                                 )
                                 is not None

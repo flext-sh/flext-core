@@ -32,7 +32,8 @@ class FlextVersion:
     __author__: str = _metadata.get("Author", "") or _metadata.get("Author-Email", "")
     __author_email__: str = _metadata.get("Author-Email", "")
     __license__: str = _metadata.get("License-Expression", "") or _metadata.get(
-        "License", "",
+        "License",
+        "",
     )
     __url__: str = _metadata.get("Home-Page", "") or _metadata.get("Project-URL", "")
 

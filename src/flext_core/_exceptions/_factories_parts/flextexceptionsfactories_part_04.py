@@ -6,21 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 from flext_core import (
     FlextConstants as c,
     FlextModelsExceptionParams as m,
-    FlextModelsPydantic as mp,
     FlextProtocols as p,
 )
 
 from .flextexceptionsfactories_part_03 import (
     FlextExceptionsFactories as FlextExceptionsFactoriesPart03,
 )
-
-TExceptionParams = TypeVar("TExceptionParams", bound=mp.BaseModel)
-
 
 if TYPE_CHECKING:
     from flext_core.result import FlextResult
