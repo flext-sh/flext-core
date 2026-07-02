@@ -89,21 +89,15 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             if settings_instance is not None
             else cls.service_settings_type(runtime_options.settings_type)
         )
-        settings_overrides = cls._normalize_runtime_override_mapping(
-            runtime_options.settings_overrides,
-        )
+        settings_overrides = runtime_options.settings_overrides
         if settings_instance is not None:
             return (
                 settings_instance.clone(**settings_overrides)
                 if settings_overrides
                 else settings_instance
             )
-        fetch_global = getattr(settings_cls, "fetch_global")
-        candidate = fetch_global(overrides=settings_overrides)
-        if not isinstance(candidate, p.Settings):
-            msg = "Resolved settings class returned non-settings instance"
-            raise TypeError(msg)
-        return candidate
+        settings_source: p.SettingsType = settings_cls
+        return settings_source.fetch_global(overrides=settings_overrides)
 
     @classmethod
     def _build_runtime_container(
@@ -186,7 +180,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             dispatcher=runtime_dispatcher,
         )
         runtime_registry = cls._resolve_runtime_registry(
-            runtime_options, service_runtime
+            runtime_options, service_runtime,
         )
         resolved_runtime: m.ServiceRuntime = service_runtime.model_copy(
             update={"registry": runtime_registry},

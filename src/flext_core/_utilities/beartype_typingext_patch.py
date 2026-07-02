@@ -52,7 +52,6 @@ class FlextUtilitiesBeartypeTypingExtPatch:
             new_value = (current, te)
 
         if new_value is not current:
-            # Use setattr to avoid pyrefly strict type-check on external attr.
             setattr(cf, "HintPep695TypeAlias", new_value)
             # Modules that did ``from _cavefast import HintPep695TypeAlias`` hold
             # a stale reference; patch only loaded beartype modules and avoid

@@ -58,10 +58,9 @@ class FlextUtilitiesProjectMetadata(mpm):
             msg = f"{cpm.PYPROJECT_FILENAME} not found under {root}"
             raise FileNotFoundError(msg)
         with pyproject.open("rb") as stream:
-            validated_payload: tb.JsonMapping = (
-                ta.json_mapping_adapter().validate_python(tomllib.load(stream))
-            )
-            return validated_payload
+            # No PEP 526 local annotation: beartype.claw resolves local-variable
+            # alias hints in the wrong namespace (JsonValue unresolvable here).
+            return ta.json_mapping_adapter().validate_python(tomllib.load(stream))
 
     @staticmethod
     def read_project_metadata(root: Path) -> mpm.ProjectMetadata:
@@ -78,7 +77,7 @@ class FlextUtilitiesProjectMetadata(mpm):
             msg = f"{root}: missing [project].version in pyproject.toml"
             raise ValueError(msg)
         pyproject_project: mpm.PyprojectProject = mpm.PyprojectProject.model_validate(
-            project
+            project,
         )
         return pyproject_project.to_metadata(root)
 
@@ -150,7 +149,7 @@ class FlextUtilitiesProjectMetadata(mpm):
         candidates = tuple(
             class_name
             for class_name in FlextUtilitiesProjectMetadata._module_class_names(
-                module_path
+                module_path,
             )
             if class_name.startswith(class_stem)
         )
