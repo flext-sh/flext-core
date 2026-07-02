@@ -527,7 +527,7 @@ exclude = [
   "vendor",
   "venv",
 ]
-fix = true
+fix = false
 line-length = 88
 preview = true
 respect-gitignore = true
