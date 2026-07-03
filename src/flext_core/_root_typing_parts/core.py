@@ -13,6 +13,7 @@ from flext_core._constants.cqrs import (
 from flext_core._constants.enforcement import (
     FlextConstantsEnforcement,
     FlextMroViolation,
+    FlextSmellViolation,
 )
 from flext_core._constants.environment import (
     FlextConstantsEnvironment,
@@ -107,6 +108,7 @@ ROOT_TYPING_CORE_ALL: Final[tuple[str, ...]] = (
     "FlextConstantsCqrs",
     "FlextConstantsEnforcement",
     "FlextMroViolation",
+    "FlextSmellViolation",
     "FlextConstantsEnvironment",
     "FlextConstantsErrors",
     "FlextConstantsFile",
@@ -171,4 +173,5 @@ __all__: tuple[str, ...] = (
     "FlextSettingsDispatcher",
     "FlextSettingsInfrastructure",
     "FlextSettingsRegistry",
+    "FlextSmellViolation",
 )

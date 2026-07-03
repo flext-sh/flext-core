@@ -36,6 +36,7 @@ from flext_core._root_typing_parts.core import (
     FlextExceptionsTemplate as FlextExceptionsTemplate,
     FlextMroViolation as FlextMroViolation,
     FlextSettingsBase as FlextSettingsBase,
+    FlextSmellViolation as FlextSmellViolation,
 )
 from flext_core._root_typing_parts.facades import (
     FlextConstants as FlextConstants,
