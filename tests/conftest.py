@@ -89,12 +89,14 @@ class _DocsStub:
 
 def _docs_open(file: str | Path, mode: str = "r") -> object:
     """Safe open used in markdown snippets to avoid fixture file coupling."""
-    if "r" in mode and "b" not in mode:
-        try:
-            return Path(file).open(mode, encoding="utf-8")
-        except FileNotFoundError:
+    if "b" in mode:
+        return Path(file).open(mode)
+    try:
+        return Path(file).open(mode, encoding="utf-8")
+    except FileNotFoundError:
+        if "r" in mode:
             return io.StringIO("")
-    return Path(file).open(mode, encoding="utf-8")
+        raise
 
 
 def pytest_markdown_docs_globals() -> dict[str, object]:
