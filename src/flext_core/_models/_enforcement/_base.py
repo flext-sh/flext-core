@@ -89,7 +89,6 @@ class FlextModelsEnforcementBase:
         BEARTYPE = "beartype"
         CODE_SMELL = "code_smell"
         RUFF = "ruff"
-        AST_GREP = "ast_grep"
         SKILL_POINTER = "skill_pointer"
 
 

@@ -54,13 +54,6 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
         kind: Literal["ruff"] = "ruff"
         rule_code: str
 
-    class EnforcementAstGrepSource(EnforcementModelBase):
-        """Rule delegated to ast-grep via ``sgconfig.yml``."""
-
-        kind: Literal["ast_grep"] = "ast_grep"
-        skill: str
-        rule_id: str
-
     class EnforcementSkillPointerSource(EnforcementModelBase):
         """Rule as narrative skill content only."""
 

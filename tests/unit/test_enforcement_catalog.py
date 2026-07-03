@@ -57,11 +57,11 @@ class TestsFlextEnforcementCatalog:
     def test_infra_detector_rules_match_project_enforcement_report_field_count(
         self,
     ) -> None:
-        # ProjectEnforcementReport has 14 violation fields; catalog must match.
+        # ProjectEnforcementReport has 22 violation fields; catalog must match.
         infra = u.build_canonical_catalog().by_kind(
             m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR,
         )
-        assert len(infra) == 14
+        assert len(infra) == 22
 
     def test_tests_validator_rules_cover_all_seven_public_dispatch_methods(
         self,

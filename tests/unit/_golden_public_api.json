@@ -1,6 +1,5 @@
 {
     "FlextConstants": [
-        "AST_GREP_ROWS",
         "ASYNC_BLOCK_ON_FULL",
         "ASYNC_ENABLED",
         "Action",
@@ -59,6 +58,7 @@
         "ENFORCEMENT_ACCESSOR_RENAMES",
         "ENFORCEMENT_CANONICAL_ALIASES",
         "ENFORCEMENT_CANONICAL_FILES",
+        "ENFORCEMENT_CLASSVAR_EXEMPT_NAMES",
         "ENFORCEMENT_COMPATIBILITY_ALIAS_RENAMES",
         "ENFORCEMENT_CONSTANTS_SKIP_ATTRS",
         "ENFORCEMENT_FIX_ACTIONS",
@@ -757,7 +757,6 @@
         "DuplicateSymbolParams",
         "DynamicModel",
         "EnforcedModel",
-        "EnforcementAstGrepSource",
         "EnforcementBeartypeSource",
         "EnforcementCatalog",
         "EnforcementCodeSmellSource",

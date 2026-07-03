@@ -104,21 +104,6 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
             )
             for rid, sev, method, rule_ids, skills, desc in c.TESTS_VALIDATOR_ROWS
         )
-        # AST_GREP family — every row's ``skills`` mirrors its source skill.
-        ast_grep_specs = tuple(
-            me.EnforcementRuleSpec(
-                id=rid,
-                description=desc,
-                severity=me.EnforcementRuleSeverity(sev),
-                source=me.EnforcementAstGrepSource(
-                    skill=skill,
-                    rule_id=rule_id,
-                ),
-                skills=(skill,),
-                fix_action=cls._fix_action_for(rid),
-            )
-            for rid, sev, skill, rule_id, desc in c.AST_GREP_ROWS
-        )
         # SKILL_POINTER family — narrative entries, all ``enabled=False``.
         skill_pointer_specs = tuple(
             me.EnforcementRuleSpec(
@@ -155,7 +140,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
 
         cls._canonical_catalog = me.EnforcementCatalog(
             rules=(
-                # --- FLEXT_INFRA_DETECTOR (14 rules, table-driven above) ---
+                # --- FLEXT_INFRA_DETECTOR (22 rules, table-driven above) ---
                 *infra_specs,
                 # --- FLEXT_TESTS_VALIDATOR (7 rules, table-driven) ---
                 *tests_validator_specs,
@@ -175,8 +160,6 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                 ),
                 # --- RUFF (3 rules, table-driven) ---
                 *ruff_specs,
-                # --- AST_GREP (8 rules, table-driven via AST_GREP_ROWS) ---
-                *ast_grep_specs,
                 # --- SKILL_POINTER (5 rules — narrative, all enabled=False) ---
                 *skill_pointer_specs,
                 # ENFORCE-039..044 + 045..055: 15 BEARTYPE rules built from the
