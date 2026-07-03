@@ -284,6 +284,12 @@ class FlextConstantsEnforcementFixActions:
             "params": {},
             "safe": True,
         },
+        "ENFORCE-097": {
+            "kind": "manual",
+            "target": "extract_magic_literal",
+            "params": {},
+            "safe": False,
+        },
     }
 
 

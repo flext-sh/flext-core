@@ -69,6 +69,18 @@ class TestsFlextEnforcementCatalog:
         assert len(infra) == len(c.INFRA_DETECTOR_ROWS)
         assert actual_fields == declared_fields
 
+    def test_auto_fix_infra_detector_violation_fields_are_unique(self) -> None:
+        """Each auto-fixable infra detector field maps to one catalog rule."""
+        fields: list[str] = []
+        for rule in u.build_canonical_catalog().by_kind(
+            m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR,
+        ):
+            assert isinstance(rule.source, m.EnforcementInfraDetectorSource)
+            if rule.fix_action is not None:
+                fields.append(rule.source.violation_field)
+
+        assert len(fields) == len(set(fields))
+
     def test_tests_validator_rules_cover_all_seven_public_dispatch_methods(
         self,
     ) -> None:
