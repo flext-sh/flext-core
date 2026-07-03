@@ -130,6 +130,7 @@ ROOT_TYPING_ONLY_NAMES: Final[tuple[str, ...]] = (
     "FlextExceptionsBase",
     "FlextExceptionsTemplate",
     "FlextMroViolation",
+    "FlextSmellViolation",
     "build_lazy_import_map",
     "c",
     "d",

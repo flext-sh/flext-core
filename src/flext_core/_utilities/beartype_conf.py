@@ -9,12 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
-
 from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeConf:
@@ -23,9 +20,6 @@ class FlextUtilitiesBeartypeConf:
     All methods are static. Exposed via u.build_beartype_conf() for
     downstream projects to use in their beartype_this_package() calls.
     """
-
-    CLAW_SKIP_PACKAGES: ClassVar[t.VariadicTuple[str]] = c.BEARTYPE_CLAW_SKIP_PACKAGES
-    """Packages skipped by the centralized flext_core beartype bootstrap."""
 
     @staticmethod
     def build_beartype_conf() -> BeartypeConf:
@@ -41,5 +35,5 @@ class FlextUtilitiesBeartypeConf:
         return BeartypeConf(
             violation_type=UserWarning if mode is c.EnforcementMode.WARN else TypeError,
             strategy=BeartypeStrategy.O1,
-            claw_skip_package_names=FlextUtilitiesBeartypeConf.CLAW_SKIP_PACKAGES,
+            claw_skip_package_names=c.BEARTYPE_CLAW_SKIP_PACKAGES,
         )

@@ -47,14 +47,16 @@ class TestsFlextBeartypeEngineRuntime(TestsFlextBeartypeEngine):
                 from beartype import BeartypeConf, BeartypeStrategy
                 from beartype.claw import beartype_package
 
-                from flext_core import FlextUtilitiesBeartypeConf
+                from flext_core._constants.enforcement import (
+                    FlextConstantsEnforcement as c,
+                )
 
                 beartype_package(
                     "flext_core",
                     conf=BeartypeConf(
                         violation_type=UserWarning,
                         strategy=BeartypeStrategy.O1,
-                        claw_skip_package_names=FlextUtilitiesBeartypeConf.CLAW_SKIP_PACKAGES,
+                        claw_skip_package_names=c.BEARTYPE_CLAW_SKIP_PACKAGES,
                     ),
                 )
 

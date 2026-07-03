@@ -9,7 +9,11 @@ from typing import Final
 ROOT_LAZY_CORE: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType({
     "._constants.base": ("FlextConstantsBase",),
     "._constants.cqrs": ("FlextConstantsCqrs",),
-    "._constants.enforcement": ("FlextConstantsEnforcement", "FlextMroViolation"),
+    "._constants.enforcement": (
+        "FlextConstantsEnforcement",
+        "FlextMroViolation",
+        "FlextSmellViolation",
+    ),
     "._constants.environment": ("FlextConstantsEnvironment",),
     "._constants.errors": ("FlextConstantsErrors",),
     "._constants.file": ("FlextConstantsFile",),

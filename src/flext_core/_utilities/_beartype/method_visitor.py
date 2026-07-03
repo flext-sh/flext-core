@@ -33,11 +33,7 @@ def _param_count(name: str, value: object) -> int | None:
     code = getattr(func, "__code__", None)
     if code is None:
         return None
-    if (
-        offset == 0
-        and code.co_argcount > 0
-        and code.co_varnames[0] in {"self", "cls"}
-    ):
+    if offset == 0 and code.co_argcount > 0 and code.co_varnames[0] in {"self", "cls"}:
         offset = 1
     return code.co_argcount + code.co_kwonlyargcount - offset
 

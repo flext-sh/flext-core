@@ -38,6 +38,9 @@ if TYPE_CHECKING:
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_06 import (
         FlextConstantsEnforcementTargets as FlextConstantsEnforcementTargets,
     )
+    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_07 import (
+        FlextConstantsEnforcementSmellData as FlextConstantsEnforcementSmellData,
+    )
     from flext_core._constants._errors_parts.flextconstantserrors_part_01 import (
         FlextConstantsErrorsMessages as FlextConstantsErrorsMessages,
     )
@@ -118,6 +121,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_04": (
             "FlextConstantsEnforcementCatalogBeartypeRows",
         ),
+        "._enforcement_data": ("_enforcement_data",),
         "._enforcement_parts": ("_enforcement_parts",),
         "._enforcement_parts.flextconstantsenforcement_part_01": (
             "FlextConstantsEnforcementEnums",
@@ -136,6 +140,9 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ),
         "._enforcement_parts.flextconstantsenforcement_part_06": (
             "FlextConstantsEnforcementTargets",
+        ),
+        "._enforcement_parts.flextconstantsenforcement_part_07": (
+            "FlextConstantsEnforcementSmellData",
         ),
         "._errors_parts": ("_errors_parts",),
         "._errors_parts.flextconstantserrors_part_01": (

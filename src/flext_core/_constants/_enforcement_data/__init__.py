@@ -43,8 +43,11 @@ class _SmellData(BaseModel):
 
 def _load_smell_data() -> _SmellData:
     """Load and validate smells.json from package data."""
-    text = importlib.resources.files(__package__).joinpath("smells.json").read_text(
-        encoding="utf-8"
+    text = (
+        importlib.resources
+        .files(__package__)
+        .joinpath("smells.json")
+        .read_text(encoding="utf-8")
     )
     return _SmellData.model_validate_json(text)
 
@@ -69,8 +72,4 @@ SMELL_CODE_SMELL_ROWS: Final[
 
 __all__: list[str] = [
     "ENFORCEMENT_SMELL_TAGS",
-    "SMELL_BEARTYPE_ROWS",
-    "SMELL_CODE_SMELL_ROWS",
-    "SMELL_RULES_TEXT",
-    "SMELL_THRESHOLDS",
 ]
