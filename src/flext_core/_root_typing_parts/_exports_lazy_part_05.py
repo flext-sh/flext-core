@@ -25,6 +25,7 @@ FLEXT_CORE__ROOT_TYPING_PARTS_LAZY_IMPORTS_PART_05 = build_lazy_import_map(
         ),
         ".models": ("mc",),
         ".utilities_part_03": (
+            "FlextUtilitiesMapperExtract",
             "FlextUtilitiesModel",
             "FlextUtilitiesModelOptions",
             "FlextUtilitiesModelRuntime",

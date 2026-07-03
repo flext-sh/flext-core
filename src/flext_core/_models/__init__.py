@@ -11,11 +11,42 @@ if TYPE_CHECKING:
     from flext_core._models._base_parts.flextmodelsbase_part_03 import (
         FlextModelsBase as FlextModelsBase,
     )
+    from flext_core._models._container_parts.flextmodelscontainer_part_04 import (
+        FlextModelsContainer as FlextModelsContainer,
+    )
     from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_03 import (
         FlextModelsContextScope as FlextModelsContextScope,
     )
+    from flext_core._models._context._data import (
+        FlextModelsContextData as FlextModelsContextData,
+    )
+    from flext_core._models._context._export import (
+        FlextModelsContextExport as FlextModelsContextExport,
+    )
+    from flext_core._models._context._metadata import (
+        FlextModelsContextMetadata as FlextModelsContextMetadata,
+    )
+    from flext_core._models._context._proxy_var import (
+        FlextModelsContextProxyVar as FlextModelsContextProxyVar,
+    )
+    from flext_core._models._context._tokens import (
+        FlextModelsContextTokens as FlextModelsContextTokens,
+    )
     from flext_core._models._cqrs_parts.flextmodelscqrs_part_02 import (
         FlextModelsCqrs as FlextModelsCqrs,
+    )
+    from flext_core._models._enforcement._base import (
+        EnforcementModelBase as EnforcementModelBase,
+        FlextModelsEnforcementBase as FlextModelsEnforcementBase,
+    )
+    from flext_core._models._enforcement._catalog import (
+        FlextModelsEnforcementCatalog as FlextModelsEnforcementCatalog,
+    )
+    from flext_core._models._enforcement._params import (
+        FlextModelsEnforcementParams as FlextModelsEnforcementParams,
+    )
+    from flext_core._models._enforcement._sources import (
+        FlextModelsEnforcementSources as FlextModelsEnforcementSources,
     )
     from flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_03 import (
         FlextModelsExceptionParams as FlextModelsExceptionParams,
@@ -29,9 +60,6 @@ if TYPE_CHECKING:
     from flext_core._models.builder import FlextModelsBuilder as FlextModelsBuilder
     from flext_core._models.collections import (
         FlextModelsCollections as FlextModelsCollections,
-    )
-    from flext_core._models.container import (
-        FlextModelsContainer as FlextModelsContainer,
     )
     from flext_core._models.containers import (
         FlextModelsContainers as FlextModelsContainers,
@@ -61,13 +89,26 @@ _LAZY_IMPORTS = build_lazy_import_map(
         "._base_parts": ("_base_parts",),
         "._base_parts.flextmodelsbase_part_03": ("FlextModelsBase",),
         "._container_parts": ("_container_parts",),
+        "._container_parts.flextmodelscontainer_part_04": ("FlextModelsContainer",),
         "._context": ("_context",),
         "._context.__scope_parts.flextmodelscontextscope_part_03": (
             "FlextModelsContextScope",
         ),
+        "._context._data": ("FlextModelsContextData",),
+        "._context._export": ("FlextModelsContextExport",),
+        "._context._metadata": ("FlextModelsContextMetadata",),
+        "._context._proxy_var": ("FlextModelsContextProxyVar",),
+        "._context._tokens": ("FlextModelsContextTokens",),
         "._cqrs_parts": ("_cqrs_parts",),
         "._cqrs_parts.flextmodelscqrs_part_02": ("FlextModelsCqrs",),
         "._enforcement": ("_enforcement",),
+        "._enforcement._base": (
+            "EnforcementModelBase",
+            "FlextModelsEnforcementBase",
+        ),
+        "._enforcement._catalog": ("FlextModelsEnforcementCatalog",),
+        "._enforcement._params": ("FlextModelsEnforcementParams",),
+        "._enforcement._sources": ("FlextModelsEnforcementSources",),
         "._exception_params_parts": ("_exception_params_parts",),
         "._exception_params_parts.flextmodelsexceptionparams_part_03": (
             "FlextModelsExceptionParams",
@@ -80,7 +121,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ),
         ".builder": ("FlextModelsBuilder",),
         ".collections": ("FlextModelsCollections",),
-        ".container": ("FlextModelsContainer",),
         ".containers": (
             "FlextModelsContainers",
             "mc",

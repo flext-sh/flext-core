@@ -8,6 +8,7 @@ from flext_core.lazy import build_lazy_import_map
 FLEXT_CORE__ROOT_TYPING_PARTS_LAZY_IMPORTS_PART_04 = build_lazy_import_map(
     {
         ".utilities_part_01": (
+            "FlextUtilitiesBeartypeEngine",
             "FlextUtilitiesBeartypeFieldVisitor",
             "FlextUtilitiesBeartypeHelpers",
             "FlextUtilitiesBeartypeImportVisitor",
@@ -41,10 +42,7 @@ FLEXT_CORE__ROOT_TYPING_PARTS_LAZY_IMPORTS_PART_04 = build_lazy_import_map(
             "FlextUtilitiesLoggingContext",
             "FlextUtilitiesMapper",
         ),
-        ".utilities_part_03": (
-            "FlextUtilitiesMapperAccess",
-            "FlextUtilitiesMapperExtract",
-        ),
+        ".utilities_part_03": ("FlextUtilitiesMapperAccess",),
     },
 )
 

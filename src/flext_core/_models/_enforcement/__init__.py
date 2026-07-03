@@ -1,20 +1,42 @@
-"""Composed enforcement model namespace.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Enforcement package."""
 
 from __future__ import annotations
 
-from ._catalog import FlextModelsEnforcementCatalog
-from ._params import FlextModelsEnforcementParams
+from typing import TYPE_CHECKING
+
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+
+if TYPE_CHECKING:
+    from flext_core._models._enforcement._base import (
+        EnforcementModelBase as EnforcementModelBase,
+        FlextModelsEnforcementBase as FlextModelsEnforcementBase,
+    )
+    from flext_core._models._enforcement._catalog import (
+        FlextModelsEnforcementCatalog as FlextModelsEnforcementCatalog,
+    )
+    from flext_core._models._enforcement._params import (
+        FlextModelsEnforcementParams as FlextModelsEnforcementParams,
+    )
+    from flext_core._models._enforcement._sources import (
+        FlextModelsEnforcementSources as FlextModelsEnforcementSources,
+    )
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        "._base": (
+            "EnforcementModelBase",
+            "FlextModelsEnforcementBase",
+        ),
+        "._catalog": ("FlextModelsEnforcementCatalog",),
+        "._params": ("FlextModelsEnforcementParams",),
+        "._sources": ("FlextModelsEnforcementSources",),
+    },
+)
 
 
-class FlextModelsEnforcement(
-    FlextModelsEnforcementCatalog,
-    FlextModelsEnforcementParams,
-):
-    """Namespace for enforcement violation, predicate, and catalog models."""
-
-
-__all__: list[str] = ["FlextModelsEnforcement"]
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)

@@ -29,6 +29,7 @@ FLEXT_CORE__ROOT_TYPING_PARTS_LAZY_IMPORTS_PART_03 = build_lazy_import_map(
             "FlextSettingsDispatcher",
             "FlextSettingsInfrastructure",
             "FlextSettingsRegistry",
+            "FlextSmellViolation",
         ),
         ".facades": (
             "FlextRegistry",
@@ -45,7 +46,6 @@ FLEXT_CORE__ROOT_TYPING_PARTS_LAZY_IMPORTS_PART_03 = build_lazy_import_map(
             "FlextUtilitiesBeartypeClassVisitor",
             "FlextUtilitiesBeartypeConf",
             "FlextUtilitiesBeartypeDeprecatedVisitor",
-            "FlextUtilitiesBeartypeEngine",
         ),
     },
 )
