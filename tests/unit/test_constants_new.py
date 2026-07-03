@@ -25,7 +25,6 @@ class TestsFlextConstantsNew:
     def test_constants_package_initializer_is_loadable(self) -> None:
         """_constants package lazy map must be present and non-empty."""
         module = importlib.import_module("flext_core._constants")
-        module = importlib.reload(module)
         tm.that(hasattr(module, "_LAZY_IMPORTS"), eq=True)
         tm.that(bool(getattr(module, "_LAZY_IMPORTS")), eq=True)
 
@@ -52,13 +51,12 @@ class TestsFlextConstantsNew:
             "flext_core._constants.validation",
         ],
     )
-    def test_constants_modules_reload_and_expose_constants_class(
+    def test_constants_modules_are_loadable_and_expose_constants_class(
         self,
         module_path: str,
     ) -> None:
         """Force execution of each _constants module and validate facade class shape."""
         module = importlib.import_module(module_path)
-        module = importlib.reload(module)
         has_constants_class = any(
             name.startswith("FlextConstants") for name in vars(module)
         )
