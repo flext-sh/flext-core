@@ -1,14 +1,26 @@
-"""Public re-export of lazy import utilities.
-
-This module provides a public interface to the lazy import utilities,
-avoiding PLC2701 (private name import) lint errors in downstream projects.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""PEP 562 lazy export helpers."""
 
 from __future__ import annotations
 
-from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
+from ._lazy_parts import FlextLazy
 
-__all__ = ["cleanup_submodule_namespace", "lazy_getattr"]
+lazy = FlextLazy()
+"""Shared ``FlextLazy`` singleton used by package-level lazy exports."""
+build_lazy_import_map = lazy.build_map
+"""Convenience alias for building flat lazy import maps."""
+lazy_getattr = lazy.get
+cleanup_submodule_namespace = lazy.cleanup
+normalize_lazy_imports = lazy.normalize_map
+merge_lazy_imports = lazy.merge
+install_lazy_exports = lazy.install
+
+__all__ = (
+    "FlextLazy",
+    "build_lazy_import_map",
+    "cleanup_submodule_namespace",
+    "install_lazy_exports",
+    "lazy",
+    "lazy_getattr",
+    "merge_lazy_imports",
+    "normalize_lazy_imports",
+)

@@ -123,10 +123,9 @@ class TestGeneratorHelpers:
     def test_sanitize_internal_anchor_links_preserves_external(
         self, gen: FlextInfraDocGenerator
     ) -> None:
-        result = gen._sanitize_internal_anchor_links(
-            "[Local](local.md) [External](https://example.com)"
-        )
-        tm.that("https://example.com" in result, eq=True)
+        source = "[Local](local.md) [External](https://example.com)"
+        result = gen._sanitize_internal_anchor_links(source)
+        tm.that(result, eq=source)
 
     def test_normalize_anchor_converts_to_slug(
         self, gen: FlextInfraDocGenerator
