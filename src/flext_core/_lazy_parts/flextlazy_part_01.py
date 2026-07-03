@@ -74,6 +74,8 @@ class FlextLazy(BaseModel):
         ),
     )
 
+    _activating_core_beartype: bool = PrivateAttr(default=False)
+
     @computed_field(return_type=dict[str, int])
     @property
     def cache_stats(self) -> dict[str, int]:
@@ -123,8 +125,12 @@ class FlextLazy(BaseModel):
 
     def _must_activate_core_beartype(self, module_path: str) -> bool:
         """Return whether importing a module should activate flext_core beartype."""
-        return module_path.startswith("flext_core.") and not module_path.startswith(
-            "flext_core._constants",
+        root_module = sys.modules.get("flext_core")
+        root_ready = root_module is not None and "t" in vars(root_module)
+        return (
+            root_ready
+            and module_path.startswith("flext_core.")
+            and not module_path.startswith("flext_core._constants")
         )
 
     def normalize_map(
@@ -139,8 +145,15 @@ class FlextLazy(BaseModel):
         cached = self.module_cache.get(module_path)
         if cached is not None:
             return cached
-        if self._must_activate_core_beartype(module_path):
-            self._activate_core_beartype()
+        if (
+            self._must_activate_core_beartype(module_path)
+            and not self._activating_core_beartype
+        ):
+            self._activating_core_beartype = True
+            try:
+                self._activate_core_beartype()
+            finally:
+                self._activating_core_beartype = False
         mod = sys.modules.get(module_path) or self._import_module(module_path)
         self.module_cache[module_path] = mod
         return mod
