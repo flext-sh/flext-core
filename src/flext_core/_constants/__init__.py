@@ -41,6 +41,9 @@ if TYPE_CHECKING:
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_07 import (
         FlextConstantsEnforcementSmellData as FlextConstantsEnforcementSmellData,
     )
+    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_08 import (
+        FlextConstantsEnforcementFixActions as FlextConstantsEnforcementFixActions,
+    )
     from flext_core._constants._errors_parts.flextconstantserrors_part_01 import (
         FlextConstantsErrorsMessages as FlextConstantsErrorsMessages,
     )
@@ -143,6 +146,9 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ),
         "._enforcement_parts.flextconstantsenforcement_part_07": (
             "FlextConstantsEnforcementSmellData",
+        ),
+        "._enforcement_parts.flextconstantsenforcement_part_08": (
+            "FlextConstantsEnforcementFixActions",
         ),
         "._errors_parts": ("_errors_parts",),
         "._errors_parts.flextconstantserrors_part_01": (

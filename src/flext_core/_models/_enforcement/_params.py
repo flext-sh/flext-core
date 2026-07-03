@@ -95,6 +95,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
 
         kind: Literal["compatibility_alias"] = "compatibility_alias"
         alias_renames: t.StrMapping = Field(default_factory=dict)
+        project_alias_owners: t.StrMapping = Field(default_factory=dict)
 
     class LibraryImportParams(EnforcementModelBase):
         """Parameters for LIBRARY_IMPORT predicate."""

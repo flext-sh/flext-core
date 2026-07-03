@@ -45,7 +45,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):
             return
         if FlextUtilitiesEnforcement._is_exempt(model_type):
             return
-        report = FlextUtilitiesEnforcement.check(model_type)
+        report = FlextUtilitiesEnforcement.check_model_construction(model_type)
         FlextUtilitiesEnforcement.emit(report)
 
     @staticmethod

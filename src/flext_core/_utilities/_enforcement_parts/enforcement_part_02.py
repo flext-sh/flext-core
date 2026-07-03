@@ -25,6 +25,12 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
     """Rule-driven runtime enforcement (static-only)."""
 
     _canonical_catalog: ClassVar[me.EnforcementCatalog | None] = None
+    _MODEL_CONSTRUCTION_CATEGORIES: ClassVar[frozenset[c.EnforcementCategory]] = frozenset(
+        {
+            c.EnforcementCategory.FIELD,
+            c.EnforcementCategory.MODEL_CLASS,
+        }
+    )
 
     @staticmethod
     def _apply_rule(
@@ -118,8 +124,13 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         yield from items
 
     @staticmethod
-    def check(target: type, *, layer: str | None = None) -> me.Report:
-        """Query all applicable rules and return a typed report (no emission).
+    def _check(
+        target: type,
+        *,
+        layer: str | None = None,
+        categories: frozenset[c.EnforcementCategory] | None = None,
+    ) -> me.Report:
+        """Query applicable rules and return a typed report (no emission).
 
         Every rule dispatches through the unified :meth:`_apply_rule` —
         no per-category engine duplication; item iterators live in the
@@ -130,6 +141,8 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         effective_layer = layer or FlextUtilitiesEnforcement.detect_layer(target) or ""
         qn = target.__qualname__
         for tag, category in c.ENFORCEMENT_TAG_CATEGORY.items():
+            if categories is not None and category not in categories:
+                continue
             rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
             items = FlextUtilitiesEnforcement._items_for(
                 target,
@@ -161,6 +174,19 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                         ).violations,
                     )
         return me.Report(violations=violations)
+
+    @staticmethod
+    def check(target: type, *, layer: str | None = None) -> me.Report:
+        """Query all applicable rules and return a typed report (no emission)."""
+        return FlextUtilitiesEnforcement._check(target, layer=layer)
+
+    @staticmethod
+    def check_model_construction(target: type[mp.BaseModel]) -> me.Report:
+        """Run only Pydantic construction rules for ``__pydantic_init_subclass__``."""
+        return FlextUtilitiesEnforcement._check(
+            target,
+            categories=FlextUtilitiesEnforcement._MODEL_CONSTRUCTION_CATEGORIES,
+        )
 
 
 __all__: list[str] = ["FlextUtilitiesEnforcement"]

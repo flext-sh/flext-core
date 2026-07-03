@@ -95,5 +95,34 @@ class FlextConstantsEnforcementNamespace:
     ENFORCEMENT_NESTED_MRO_MIN_DEPTH: Final[int] = 2
     """Minimum qualname depth for a class to count as nested inside a container."""
 
+    ENFORCEMENT_CANONICAL_ALIASES: Final[frozenset[str]] = frozenset({
+        "c",
+        "m",
+        "p",
+        "t",
+        "u",
+        "d",
+        "e",
+        "h",
+        "r",
+        "s",
+        "x",
+    })
+    """Canonical short aliases exposed by FLEXT facade namespaces."""
+
+    ENFORCEMENT_PROJECT_ALIAS_OWNERS: Final[Mapping[str, tuple[str, ...]]] = (
+        MappingProxyType({
+            "flext_cli": ("c", "m", "p", "t", "u", "d", "e", "h", "r", "s", "x"),
+            "flext_core": ("c", "m", "p", "t", "u", "d", "e", "h", "r", "s", "x"),
+            "flext_infra": ("c", "m", "p", "t", "u"),
+            "flext_tests": ("c", "m", "p", "t", "u"),
+        })
+    )
+    """SSOT: project package name → canonical aliases it re-exports locally.
+
+    Used by runtime census and flext-infra detectors to flag
+    ``from flext_core import c`` inside a project that owns ``c`` locally.
+    """
+
 
 __all__: list[str] = ["FlextConstantsEnforcementNamespace"]

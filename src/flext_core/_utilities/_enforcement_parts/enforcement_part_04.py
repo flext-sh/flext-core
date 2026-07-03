@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Literal, cast
+
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
 
 from .enforcement_part_01 import (
     PREDICATE_BINDINGS,
@@ -14,6 +17,23 @@ from .enforcement_part_03 import (
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
+    @classmethod
+    def _fix_action_for(cls, rule_id: str) -> me.EnforcementFixAction | None:
+        """Return the catalog fix-action for ``rule_id`` when one exists."""
+        raw = c.ENFORCEMENT_FIX_ACTIONS.get(rule_id)
+        if raw is None:
+            return None
+        fix = cast("dict[str, t.JsonValue]", raw)
+        return me.EnforcementFixAction(
+            kind=cast(
+                "Literal['gate', 'manual', 'rope', 'transformer']",
+                fix["kind"],
+            ),
+            target=cast("str", fix["target"]),
+            params=cast("t.JsonMapping", fix.get("params", {})),
+            safe=cast("bool", fix.get("safe", True)),
+        )
+
     @classmethod
     def build_canonical_catalog(cls) -> me.EnforcementCatalog:
         """Build (cached) the canonical enforcement catalog from constants rows."""
@@ -33,6 +53,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                 ),
                 agents_md_anchor=anchor,
                 skills=skills,
+                fix_action=cls._fix_action_for(rid),
             )
             for rid, sev, vf, anchor, skills, mm, desc in c.INFRA_DETECTOR_ROWS
         )
@@ -48,6 +69,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                 ),
                 agents_md_anchor=anchor,
                 skills=skills,
+                fix_action=cls._fix_action_for(rid),
             )
             for rid, sev, tag, anchor, skills, desc in (
                 *c.BEARTYPE_ROWS,
@@ -63,6 +85,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                 source=me.EnforcementCodeSmellSource(smell_tag=tag),
                 agents_md_anchor=anchor,
                 skills=skills,
+                fix_action=cls._fix_action_for(rid),
             )
             for rid, sev, tag, anchor, skills, desc in c.SMELL_CODE_SMELL_ROWS
         )
@@ -77,6 +100,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                     rule_ids=rule_ids,
                 ),
                 skills=skills,
+                fix_action=cls._fix_action_for(rid),
             )
             for rid, sev, method, rule_ids, skills, desc in c.TESTS_VALIDATOR_ROWS
         )
@@ -91,6 +115,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                     rule_id=rule_id,
                 ),
                 skills=(skill,),
+                fix_action=cls._fix_action_for(rid),
             )
             for rid, sev, skill, rule_id, desc in c.AST_GREP_ROWS
         )
@@ -107,6 +132,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                 agents_md_anchor=md_anchor,
                 skills=skills,
                 enabled=False,
+                fix_action=cls._fix_action_for(rid),
             )
             for rid, sev, src_skill, src_anchor, md_anchor, skills, desc in c.SKILL_POINTER_ROWS
         )
@@ -122,6 +148,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                 source=me.EnforcementRuffSource(rule_code=rule_code),
                 skills=skills,
                 notes=ruff_notes,
+                fix_action=cls._fix_action_for(rid),
             )
             for rid, sev, rule_code, skills, desc in c.RUFF_ROWS
         )
@@ -144,6 +171,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                         category="flext_core._constants.enforcement.FlextMroViolation",
                     ),
                     skills=("flext-mro-namespace-rules", "pydantic-v2-governance"),
+                    fix_action=cls._fix_action_for("ENFORCE-022"),
                 ),
                 # --- RUFF (3 rules, table-driven) ---
                 *ruff_specs,
@@ -169,6 +197,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                     ),
                     agents_md_anchor="3-5-integrity",
                     skills=("flext-strict-typing", "flext-quality-gates"),
+                    fix_action=cls._fix_action_for("ENFORCE-040"),
                 ),
                 *beartype_specs[1:],  # ENFORCE-041..071 (066+ runtime-enforced)
                 # --- CODE_SMELL (7 rules, JSON-loaded via SMELL_CODE_SMELL_ROWS) ---
