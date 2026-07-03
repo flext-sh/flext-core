@@ -124,6 +124,76 @@ class FlextConstantsEnforcementFixActions:
             },
             "safe": True,
         },
+        "ENFORCE-091": {
+            "kind": "transformer",
+            "target": "pattern",
+            "params": {
+                "patterns": [
+                    {
+                        "regex": r"\bList\s*\[",
+                        "replacement": "t.SequenceOf[",
+                        "change_message": "Rewrote List[...] to t.SequenceOf[...]",
+                    },
+                ],
+                "required_alias": "t",
+            },
+            "safe": True,
+        },
+        "ENFORCE-092": {
+            "kind": "transformer",
+            "target": "pattern",
+            "params": {
+                "patterns": [
+                    {
+                        "regex": r"\btyping\s*\.\s*List\s*\[",
+                        "replacement": "t.SequenceOf[",
+                        "change_message": "Rewrote typing.List[...] to t.SequenceOf[...]",
+                    },
+                ],
+                "required_alias": "t",
+            },
+            "safe": True,
+        },
+        "ENFORCE-093": {
+            "kind": "transformer",
+            "target": "import_modernizer",
+            "params": {
+                "imports_to_remove": ["pydantic"],
+                "symbols_to_replace": {
+                    "BaseModel": "m.BaseModel",
+                    "ConfigDict": "m.ConfigDict",
+                    "Field": "u.Field",
+                    "PrivateAttr": "u.PrivateAttr",
+                    "TypeAdapter": "m.TypeAdapter",
+                    "computed_field": "u.computed_field",
+                    "field_validator": "u.field_validator",
+                    "model_validator": "u.model_validator",
+                },
+                "runtime_aliases": ["m", "u"],
+                "blocked_aliases": [],
+            },
+            "safe": True,
+        },
+        "ENFORCE-094": {
+            "kind": "transformer",
+            "target": "pattern",
+            "params": {
+                "patterns": [
+                    {
+                        "regex": r"\bstructlog\s*\.\s*get_logger\s*\(\s*\)",
+                        "replacement": "u.fetch_logger(__name__)",
+                        "change_message": "Rewrote structlog.get_logger() to u.fetch_logger(__name__)",
+                    },
+                    {
+                        "regex": r"\bstructlog\s*\.\s*get_logger\s*\(\s*['\"](?P<name>[^'\"]*)['\"]\s*\)",
+                        "replacement": r'u.fetch_logger("\g<name>")',
+                        "change_message": "Rewrote structlog.get_logger(name) to u.fetch_logger(name)",
+                    },
+                ],
+                "required_alias": "u",
+            },
+            "safe": False,
+        },
         "ENFORCE-048": {
             "kind": "transformer",
             "target": "mro_remover",
@@ -206,6 +276,12 @@ class FlextConstantsEnforcementFixActions:
             "kind": "gate",
             "target": "smells",
             "params": {"smell_tag": "noqa"},
+            "safe": True,
+        },
+        "ENFORCE-090": {
+            "kind": "rope",
+            "target": "remove_stub_file",
+            "params": {},
             "safe": True,
         },
     }
