@@ -14,29 +14,48 @@ from .class_visitor_part_01 import (
 )
 
 
-class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart01):
-    @staticmethod
-    def peer_first_allowed(
-        *,
-        is_facade: bool,
-        is_core_root: bool,
-        base_count: int,
-        first_name: str,
-        unparametrized_name: str,
-        valid_suffixes: tuple[str, ...],
-        tier_facade_prefixes: tuple[str, ...],
-        shared_peer_alias_base: set[type],
-    ) -> bool:
-        """Return True when a facade may place a peer base first."""
-        return (
-            is_facade
-            and not is_core_root
-            and base_count >= BINARY_ARITY
-            and first_name.startswith(tier_facade_prefixes)
-            and not unparametrized_name.endswith(valid_suffixes)
-            and bool(shared_peer_alias_base)
-        )
+def _peer_first_allowed(
+    *,
+    is_facade: bool,
+    is_core_root: bool,
+    base_count: int,
+    first_name: str,
+    unparametrized_name: str,
+    valid_suffixes: tuple[str, ...],
+    tier_facade_prefixes: tuple[str, ...],
+    shared_peer_alias_base: set[type],
+) -> bool:
+    """Return True when a facade may place a peer base first."""
+    if not is_facade or is_core_root or base_count < BINARY_ARITY:
+        return False
+    if not first_name.startswith(tier_facade_prefixes):
+        return False
+    if unparametrized_name.endswith(valid_suffixes):
+        return False
+    return bool(shared_peer_alias_base)
 
+
+def _requires_alias_first(
+    *,
+    require_alias_first: bool,
+    is_facade: bool,
+    is_core_root: bool,
+    is_alias_or_alias_base_first: bool,
+    unparametrized_name: str,
+    valid_suffixes: tuple[str, ...],
+    allows_peer_first: bool,
+) -> bool:
+    """Return True when a facade base must be an alias/alias-base first."""
+    if not require_alias_first or not is_facade or is_core_root:
+        return False
+    if is_alias_or_alias_base_first:
+        return False
+    if unparametrized_name.endswith(valid_suffixes):
+        return False
+    return not allows_peer_first
+
+
+class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart01):
     @staticmethod
     def v_mro_shape(
         params: me.MroShapeParams,
@@ -111,25 +130,24 @@ class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart0
             not unparametrized_name.endswith(valid_suffixes),
             bool(alias_base_sets[0]) if alias_base_sets else False,
         ))
-        allows_peer_first = allows_single_peer_base or (
-            FlextUtilitiesBeartypeClassVisitor.peer_first_allowed(
-                is_facade=is_facade,
-                is_core_root=is_core_root,
-                base_count=base_count,
-                first_name=first_name,
-                unparametrized_name=unparametrized_name,
-                valid_suffixes=valid_suffixes,
-                tier_facade_prefixes=tier_facade_prefixes,
-                shared_peer_alias_base=shared_peer_alias_base,
-            )
+        allows_peer_first = allows_single_peer_base or _peer_first_allowed(
+            is_facade=is_facade,
+            is_core_root=is_core_root,
+            base_count=base_count,
+            first_name=first_name,
+            unparametrized_name=unparametrized_name,
+            valid_suffixes=valid_suffixes,
+            tier_facade_prefixes=tier_facade_prefixes,
+            shared_peer_alias_base=shared_peer_alias_base,
         )
-        requires_alias_first = (
-            params.require_alias_first
-            and is_facade
-            and not is_core_root
-            and not is_alias_or_alias_base_first
-            and not unparametrized_name.endswith(valid_suffixes)
-            and not allows_peer_first
+        requires_alias_first = _requires_alias_first(
+            require_alias_first=params.require_alias_first,
+            is_facade=is_facade,
+            is_core_root=is_core_root,
+            is_alias_or_alias_base_first=is_alias_or_alias_base_first,
+            unparametrized_name=unparametrized_name,
+            valid_suffixes=valid_suffixes,
+            allows_peer_first=allows_peer_first,
         )
         min_multi_parent = 2
         alias_violation = next(

@@ -31,6 +31,23 @@ def _is_synthetic_parametrized_type(value: object) -> bool:
     return isinstance(value, type) and "[" in getattr(value, "__qualname__", "")
 
 
+def _is_module_alias_candidate(
+    name: str,
+    value: object,
+) -> bool:
+    """Return True when a module-level symbol looks like a compat alias."""
+    if not isinstance(value, type):
+        return False
+    if _is_synthetic_parametrized_type(value):
+        return False
+    if not name[:1].isupper() or name.isupper():
+        return False
+    if value.__name__ == name and "." not in getattr(value, "__qualname__", ""):
+        return False
+    origin = FlextUtilitiesBeartypeHelpers.object_module_name_for(value) or ""
+    return origin.startswith("flext_")
+
+
 class FlextUtilitiesBeartypeModuleVisitor:
     """LOC_CAP + MODULE_ALIAS + DUPLICATE_SYMBOL visitors."""
 
@@ -118,30 +135,13 @@ class FlextUtilitiesBeartypeModuleVisitor:
             (
                 {"alias": name, "target": value.__name__, "file": filename}
                 for name, value in vars(module).items()
-                if FlextUtilitiesBeartypeModuleVisitor.is_module_alias_candidate(
+                if _is_module_alias_candidate(
                     name,
                     value,
                 )
             ),
             _NO_VIOLATION,
         )
-
-    @staticmethod
-    def is_module_alias_candidate(
-        name: str,
-        value: object,
-    ) -> bool:
-        """Return True when a module-level symbol looks like a compat alias."""
-        if not isinstance(value, type):
-            return False
-        if _is_synthetic_parametrized_type(value):
-            return False
-        if not name[:1].isupper() or name.isupper():
-            return False
-        if value.__name__ == name and "." not in getattr(value, "__qualname__", ""):
-            return False
-        origin = FlextUtilitiesBeartypeHelpers.object_module_name_for(value) or ""
-        return origin.startswith("flext_")
 
     @staticmethod
     def v_duplicate_symbol(

@@ -15,26 +15,26 @@ from .helpers import (
 _NO_VIOLATION: t.StrMapping | None = None
 
 
+def _is_private_family_import(
+    value: object,
+    origin: str,
+    package: str,
+    families: frozenset[str],
+    *,
+    consumer_exempt: bool,
+) -> bool:
+    """Return True when a module re-exports a private-family flext symbol."""
+    if not isinstance(value, type):
+        return False
+    if not origin.startswith("flext_"):
+        return False
+    if not families.intersection(origin.split(".")):
+        return False
+    return not origin.startswith(f"{package}.") or not consumer_exempt
+
+
 class FlextUtilitiesBeartypeImportVisitor:
     """IMPORT_BLACKLIST + ALIAS_REBIND + LIBRARY_IMPORT visitors."""
-
-    @staticmethod
-    def is_private_family_import(
-        value: object,
-        origin: str,
-        package: str,
-        families: frozenset[str],
-        *,
-        consumer_exempt: bool,
-    ) -> bool:
-        """Return True when a module re-exports a private-family flext symbol."""
-        if not isinstance(value, type):
-            return False
-        if not origin.startswith("flext_"):
-            return False
-        if not families.intersection(origin.split(".")):
-            return False
-        return not origin.startswith(f"{package}.") or not consumer_exempt
 
     @staticmethod
     def v_import_blacklist(
@@ -88,7 +88,7 @@ class FlextUtilitiesBeartypeImportVisitor:
                     (
                         {"import": name, "origin": origin, "file": filename}
                         for name, value in vars(module).items()
-                        if FlextUtilitiesBeartypeImportVisitor.is_private_family_import(
+                        if _is_private_family_import(
                             value,
                             origin := _ubh.object_module_name_for(value) or "",
                             package,
