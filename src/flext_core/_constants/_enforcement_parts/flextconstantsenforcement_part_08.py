@@ -53,10 +53,52 @@ class FlextConstantsEnforcementFixActions:
             "params": {"targets": ["dict"]},
             "safe": True,
         },
+        "ENFORCE-066": {
+            "kind": "rope",
+            "target": "rewrite_compatibility_alias",
+            "params": {},
+            "safe": True,
+        },
+        "ENFORCE-067": {
+            "kind": "rope",
+            "target": "one_class_per_module",
+            "params": {},
+            "safe": False,
+        },
+        "ENFORCE-068": {
+            "kind": "rope",
+            "target": "rewrite_private_import_bypass",
+            "params": {},
+            "safe": True,
+        },
+        "ENFORCE-069": {
+            "kind": "manual",
+            "target": "deep_namespace_refactor",
+            "params": {},
+            "safe": False,
+        },
+        "ENFORCE-070": {
+            "kind": "rope",
+            "target": "rewrite_library_abstraction",
+            "params": {},
+            "safe": True,
+        },
         "ENFORCE-074": {
             "kind": "gate",
             "target": "smells",
             "params": {"smell_tag": "smell_boolean_logic"},
+            "safe": True,
+        },
+        "ENFORCE-079": {
+            "kind": "rope",
+            "target": "classvar_relocation",
+            "params": {},
+            "safe": True,
+        },
+        "ENFORCE-080": {
+            "kind": "rope",
+            "target": "rewrite_foreign_canonical_alias",
+            "params": {},
             "safe": True,
         },
     }
