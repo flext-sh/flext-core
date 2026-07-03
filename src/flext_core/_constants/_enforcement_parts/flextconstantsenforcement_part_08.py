@@ -25,20 +25,53 @@ class FlextConstantsEnforcementFixActions:
         },
         "ENFORCE-026": {
             "kind": "transformer",
-            "target": "bare_except",
-            "params": {},
+            "target": "pattern",
+            "params": {
+                "patterns": [
+                    {
+                        "regex": r"^(?P<indent>\s*)except\s*:(?P<trail>.*)$",
+                        "replacement": r"\g<indent>except Exception:\g<trail>",
+                        "change_message": "Rewrote bare except to except Exception",
+                        "flags": ["MULTILINE"],
+                    },
+                ],
+            },
             "safe": True,
         },
         "ENFORCE-027": {
             "kind": "transformer",
-            "target": "print_to_logger",
-            "params": {},
+            "target": "pattern",
+            "params": {
+                "patterns": [
+                    {
+                        "regex": r"\bprint\s*\(\s*(?P<args>[^)]*)\s*\)",
+                        "replacement": r"u.fetch_logger(__name__).info(\g<args>)",
+                        "change_message": "Rewrote print() to u.fetch_logger(__name__).info()",
+                    },
+                ],
+                "required_alias": "u",
+            },
             "safe": False,
         },
         "ENFORCE-028": {
             "kind": "transformer",
-            "target": "remove_breakpoint",
-            "params": {},
+            "target": "pattern",
+            "params": {
+                "patterns": [
+                    {
+                        "regex": r"^[ \t]*breakpoint\s*\(\s*\)\s*[;\n]",
+                        "replacement": "\n",
+                        "change_message": "Removed debugger statement",
+                        "flags": ["MULTILINE"],
+                    },
+                    {
+                        "regex": r"^[ \t]*import\s+pdb\s*;\s*pdb\.set_trace\s*\(\s*\)\s*[;\n]",
+                        "replacement": "\n",
+                        "change_message": "Removed debugger statement",
+                        "flags": ["MULTILINE"],
+                    },
+                ],
+            },
             "safe": True,
         },
         "ENFORCE-029": {
