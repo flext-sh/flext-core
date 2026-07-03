@@ -9,12 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextvars
 from collections.abc import Iterator
-from typing import ClassVar, overload
+from typing import ClassVar
 
 from flext_core import (
     FlextConstants as c,
-    FlextExceptions as e,
     FlextModels as m,
     FlextProtocols as p,
     FlextResult as r,
@@ -22,11 +22,15 @@ from flext_core import (
     FlextTypes as t,
     FlextUtilitiesContextState,
     FlextUtilitiesLoggingContext,
-    FlextUtilitiesModel,
 )
 
+from ._context_crud_set import FlextUtilitiesContextCrudSetMixin
 
-class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
+
+class FlextUtilitiesContextCrud(
+    FlextUtilitiesContextCrudSetMixin,
+    FlextUtilitiesContextState,
+):
     """CRUD operations on context scopes for FlextContext."""
 
     logger: ClassVar[p.Logger]
@@ -76,7 +80,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
         return key in self._contextvar_data(scope)
 
     def items(self) -> t.SequenceOf[t.Pair[str, t.JsonValue]]:
-        """Get all items (key-value pairs) across scopes."""
+        """Get all items across scopes."""
         if not self.state.active:
             empty_items: list[t.Pair[str, t.JsonValue]] = []
             return empty_items
@@ -99,7 +103,7 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
         """Remove a key from the context."""
         if not self.state.active:
             return
-        ctx_var = self._scope_var(scope)
+        ctx_var: contextvars.ContextVar[m.ConfigMap | None] = self._scope_var(scope)
         current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
         if key not in current:
             return
@@ -112,110 +116,6 @@ class FlextUtilitiesContextCrud(FlextUtilitiesContextState):
                 exc_info=exc,
             )
         self._update_statistics(c.ContextOperation.REMOVE.value)
-
-    @overload
-    def set(
-        self,
-        key_or_data: str,
-        value: t.JsonPayload,
-        *,
-        scope: str = ...,
-    ) -> p.Result[bool]: ...
-
-    @overload
-    def set(
-        self,
-        key_or_data: t.JsonMapping,
-        value: None = ...,
-        *,
-        scope: str = ...,
-    ) -> p.Result[bool]: ...
-
-    def set(
-        self,
-        key_or_data: str | t.JsonMapping,
-        value: t.JsonPayload | None = None,
-        *,
-        scope: str = c.ContextScope.GLOBAL,
-    ) -> p.Result[bool]:
-        """Set one or many values in the context."""
-        operation_result = r[bool].ok(True)
-        prepared_update: tuple[t.JsonMapping, t.JsonMapping] | None = None
-        if not self.state.active:
-            operation_result = r[bool].fail_op(
-                c.ContextCrudOperation.SET_VALUE,
-                c.ERR_CONTEXT_NOT_ACTIVE,
-            )
-        else:
-            match key_or_data, value:
-                case str(), None:
-                    operation_result = r[bool].fail_op(
-                        c.ContextCrudOperation.SET_SINGLE_VALUE,
-                        c.ERR_CONTEXT_SINGLE_KEY_VALUE_REQUIRED,
-                    )
-                case "", _:
-                    operation_result = r[bool].fail_op(
-                        c.ContextCrudOperation.VALIDATE_KEY,
-                        c.ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED,
-                    )
-                case str() as key, raw_value:
-                    normalized_value_result: p.Result[t.JsonValue] = (
-                        FlextUtilitiesModel.validate_value(
-                            t.JsonValue,
-                            FlextRuntime.normalize_to_container(raw_value),
-                        )
-                    )
-                    if normalized_value_result.failure:
-                        operation_result = r[bool].fail_op(
-                            c.ContextCrudOperation.VALIDATE_VALUE,
-                            c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
-                        )
-                    else:
-                        normalized_value = normalized_value_result.value
-                        prepared_update = (
-                            {key: normalized_value},
-                            {
-                                "key": key,
-                                "value": normalized_value,
-                            },
-                        )
-                case data, _ if not data:
-                    operation_result = r[bool].ok(True)
-                case payload_mapping, _:
-                    mapping_payload = t.json_mapping_adapter().validate_python(
-                        payload_mapping,
-                    )
-                    normalized_mapping_result: p.Result[t.JsonValue] = (
-                        FlextUtilitiesModel.validate_value(
-                            t.JsonValue,
-                            FlextRuntime.normalize_to_container(dict(mapping_payload)),
-                        )
-                    )
-                    if normalized_mapping_result.failure:
-                        operation_result = r[bool].fail_op(
-                            c.ContextCrudOperation.VALIDATE_PAYLOAD,
-                            c.ERR_CONTEXT_VALUE_NOT_SERIALIZABLE,
-                        )
-                    else:
-                        prepared_update = (
-                            mapping_payload,
-                            {
-                                c.Directory.DATA.value: normalized_mapping_result.value,
-                            },
-                        )
-
-        if prepared_update is not None and operation_result.success:
-            payload, hook_context = prepared_update
-            try:
-                self._update_contextvar(scope, payload)
-                self._update_statistics(c.ContextOperation.SET.value)
-                self._execute_hooks(c.ContextOperation.SET.value, hook_context)
-            except TypeError as exc:
-                operation_result = e.fail_operation(
-                    c.ContextCrudOperation.APPLY_UPDATE,
-                    exc,
-                )
-        return operation_result
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextUtilitiesContextCrud"]

@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from typing import overload
+import contextvars
+from typing import Protocol, overload
 
 from flext_core import (
     FlextConstants as c,
     FlextExceptions as e,
+    FlextModels as m,
+    FlextProtocols as p,
     FlextResult as r,
     FlextRuntime,
     FlextTypes as t,
@@ -14,36 +17,48 @@ from flext_core import (
 )
 
 
+class _ContextCrudState(Protocol):
+    """Protocol for the state/methods required by the set mixin."""
+
+    state: m.ContextRuntimeState
+
+    def _scope_var(self, scope: str) -> contextvars.ContextVar[m.ConfigMap | None]: ...
+    def _narrow_contextvar_to_configuration_dict(self, value: object) -> t.JsonMapping: ...
+    def _update_contextvar(self, scope: str, payload: t.JsonMapping) -> None: ...
+    def _update_statistics(self, operation: str) -> None: ...
+    def _execute_hooks(self, operation: str, context: t.JsonMapping) -> None: ...
+
+
 class FlextUtilitiesContextCrudSetMixin:
     """Bulk/single value assignment logic for FlextUtilitiesContextCrud."""
 
     @overload
     def set(
-        self,
+        self: _ContextCrudState,
         key_or_data: str,
         value: t.JsonPayload,
         *,
         scope: str = ...,
-    ) -> r.Result[bool, object]: ...
+    ) -> p.Result[bool]: ...
 
     @overload
     def set(
-        self,
+        self: _ContextCrudState,
         key_or_data: t.JsonMapping,
         value: None = ...,
         *,
         scope: str = ...,
-    ) -> r.Result[bool, object]: ...
+    ) -> p.Result[bool]: ...
 
     def set(
-        self,
+        self: _ContextCrudState,
         key_or_data: str | t.JsonMapping,
         value: t.JsonPayload | None = None,
         *,
         scope: str = c.ContextScope.GLOBAL,
-    ) -> r.Result[bool, object]:
+    ) -> p.Result[bool]:
         """Set one or many values in the context."""
-        operation_result = r[bool].ok(True)
+        operation_result: p.Result[bool] = r[bool].ok(True)
         prepared_update: tuple[t.JsonMapping, t.JsonMapping] | None = None
         if not self.state.active:
             operation_result = r[bool].fail_op(
@@ -76,10 +91,7 @@ class FlextUtilitiesContextCrudSetMixin:
                         normalized_value = normalized_value_result.value
                         prepared_update = (
                             {key: normalized_value},
-                            {
-                                "key": key,
-                                "value": normalized_value,
-                            },
+                            {"key": key, "value": normalized_value},
                         )
                 case data, _ if not data:
                     operation_result = r[bool].ok(True)
@@ -99,9 +111,7 @@ class FlextUtilitiesContextCrudSetMixin:
                     else:
                         prepared_update = (
                             mapping_payload,
-                            {
-                                c.Directory.DATA.value: normalized_mapping_result.value,
-                            },
+                            {c.Directory.DATA.value: normalized_mapping_result.value},
                         )
 
         if prepared_update is not None and operation_result.success:

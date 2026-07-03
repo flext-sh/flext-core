@@ -61,9 +61,13 @@ class TestsFlextEnforcementCatalog:
         infra = u.build_canonical_catalog().by_kind(
             m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR,
         )
+        actual_fields: set[str] = set()
+        for rule in infra:
+            assert isinstance(rule.source, m.EnforcementInfraDetectorSource)
+            actual_fields.add(rule.source.violation_field)
 
         assert len(infra) == len(c.INFRA_DETECTOR_ROWS)
-        assert {rule.source.violation_field for rule in infra} == declared_fields
+        assert actual_fields == declared_fields
 
     def test_tests_validator_rules_cover_all_seven_public_dispatch_methods(
         self,

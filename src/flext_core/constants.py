@@ -53,6 +53,7 @@ class FlextConstants(
 
 __all__: tuple[str, ...] = (
     "FlextConstants",
+    "FlextConstantsEnforcement",
     "c",
 )
 
