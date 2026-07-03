@@ -125,6 +125,8 @@ class FlextLazy(FlextLazyPart01):
             return
 
         normalized = self._norm_map(module_name, lazy_imports)
+        for name in normalized:
+            module_globals.pop(name, None)
         if public_exports is not None:
             names = tuple(dict.fromkeys(public_exports))
         elif all_exports is None:
