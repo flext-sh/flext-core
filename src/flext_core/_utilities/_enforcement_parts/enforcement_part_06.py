@@ -10,7 +10,9 @@ from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.base import FlextTypingBase as t
 
 
-def _extended_bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseModel]]:
+def _extended_bindings() -> t.MappingKV[
+    str, tuple[c.EnforcementPredicateKind, mp.BaseModel]
+]:
     """Extended tag → (predicate_kind, params) dispatch mapping."""
     pk = c.EnforcementPredicateKind
     dsp = me.DeprecatedSyntaxParams

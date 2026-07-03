@@ -2,39 +2,26 @@
 
 from __future__ import annotations
 
-import contextvars
-from typing import Protocol, overload
+from typing import overload
 
 from flext_core import (
     FlextConstants as c,
     FlextExceptions as e,
-    FlextModels as m,
     FlextProtocols as p,
     FlextResult as r,
     FlextRuntime,
     FlextTypes as t,
+    FlextUtilitiesContextState,
     FlextUtilitiesModel,
 )
 
 
-class _ContextCrudState(Protocol):
-    """Protocol for the state/methods required by the set mixin."""
-
-    state: m.ContextRuntimeState
-
-    def _scope_var(self, scope: str) -> contextvars.ContextVar[m.ConfigMap | None]: ...
-    def _narrow_contextvar_to_configuration_dict(self, value: object) -> t.JsonMapping: ...
-    def _update_contextvar(self, scope: str, payload: t.JsonMapping) -> None: ...
-    def _update_statistics(self, operation: str) -> None: ...
-    def _execute_hooks(self, operation: str, context: t.JsonMapping) -> None: ...
-
-
-class FlextUtilitiesContextCrudSetMixin:
+class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
     """Bulk/single value assignment logic for FlextUtilitiesContextCrud."""
 
     @overload
     def set(
-        self: _ContextCrudState,
+        self,
         key_or_data: str,
         value: t.JsonPayload,
         *,
@@ -43,7 +30,7 @@ class FlextUtilitiesContextCrudSetMixin:
 
     @overload
     def set(
-        self: _ContextCrudState,
+        self,
         key_or_data: t.JsonMapping,
         value: None = ...,
         *,
@@ -51,7 +38,7 @@ class FlextUtilitiesContextCrudSetMixin:
     ) -> p.Result[bool]: ...
 
     def set(
-        self: _ContextCrudState,
+        self,
         key_or_data: str | t.JsonMapping,
         value: t.JsonPayload | None = None,
         *,
@@ -78,9 +65,11 @@ class FlextUtilitiesContextCrudSetMixin:
                         c.ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED,
                     )
                 case str() as key, raw_value:
-                    normalized_value_result = FlextUtilitiesModel.validate_value(
-                        t.JsonValue,
-                        FlextRuntime.normalize_to_container(raw_value),
+                    normalized_value_result: p.Result[t.JsonValue] = (
+                        FlextUtilitiesModel.validate_value(
+                            t.JsonValue,
+                            FlextRuntime.normalize_to_container(raw_value),
+                        )
                     )
                     if normalized_value_result.failure:
                         operation_result = r[bool].fail_op(
@@ -99,9 +88,11 @@ class FlextUtilitiesContextCrudSetMixin:
                     mapping_payload = t.json_mapping_adapter().validate_python(
                         payload_mapping,
                     )
-                    normalized_mapping_result = FlextUtilitiesModel.validate_value(
-                        t.JsonValue,
-                        FlextRuntime.normalize_to_container(dict(mapping_payload)),
+                    normalized_mapping_result: p.Result[t.JsonValue] = (
+                        FlextUtilitiesModel.validate_value(
+                            t.JsonValue,
+                            FlextRuntime.normalize_to_container(dict(mapping_payload)),
+                        )
                     )
                     if normalized_mapping_result.failure:
                         operation_result = r[bool].fail_op(
