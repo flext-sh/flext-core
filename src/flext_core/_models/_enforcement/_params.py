@@ -61,6 +61,12 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         private_package_only: bool = False
         detect_cycles: bool = False
 
+    class ForeignCanonicalAliasImportParams(EnforcementModelBase):
+        """Parameters for FOREIGN_CANONICAL_ALIAS_IMPORT predicate."""
+
+        kind: Literal["foreign_canonical_alias_import"] = "foreign_canonical_alias_import"
+        project_alias_owners: t.StrSequenceMapping = Field(default_factory=dict)
+
     class ClassPlacementParams(EnforcementModelBase):
         """Parameters for CLASS_PLACEMENT predicate."""
 
@@ -95,7 +101,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
 
         kind: Literal["compatibility_alias"] = "compatibility_alias"
         alias_renames: t.StrMapping = Field(default_factory=dict)
-        project_alias_owners: t.StrMapping = Field(default_factory=dict)
+        project_alias_owners: t.StrSequenceMapping = Field(default_factory=dict)
 
     class LibraryImportParams(EnforcementModelBase):
         """Parameters for LIBRARY_IMPORT predicate."""

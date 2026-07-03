@@ -44,6 +44,7 @@ class FlextConstantsEnforcementEnums:
         DEPRECATED_SYNTAX = "deprecated_syntax"
         DUPLICATE_SYMBOL = "duplicate_symbol"
         FIELD_SHAPE = "field_shape"
+        FOREIGN_CANONICAL_ALIAS_IMPORT = "foreign_canonical_alias_import"
         IMPORT_BLACKLIST = "import_blacklist"
         LIBRARY_IMPORT = "library_import"
         LOC_CAP = "loc_cap"

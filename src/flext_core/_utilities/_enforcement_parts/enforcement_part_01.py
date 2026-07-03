@@ -106,13 +106,6 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
             pk.COMPATIBILITY_ALIAS,
             cap(alias_renames=c.ENFORCEMENT_COMPATIBILITY_ALIAS_RENAMES),
         ),
-        "foreign_canonical_alias_import": (
-            pk.COMPATIBILITY_ALIAS,
-            cap(
-                alias_renames={},
-                project_alias_owners=c.ENFORCEMENT_PROJECT_ALIAS_OWNERS,
-            ),
-        ),
         "no_concrete_namespace_import": (pk.IMPORT_BLACKLIST, iblp()),
         "no_pydantic_consumer_import": (
             pk.IMPORT_BLACKLIST,
@@ -210,6 +203,12 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
         "classvar_constant_outside_constants": (
             pk.CLASSVAR_CONSTANT,
             me.ClassVarConstantParams(),
+        ),
+        "foreign_canonical_alias_import": (
+            pk.FOREIGN_CANONICAL_ALIAS_IMPORT,
+            me.ForeignCanonicalAliasImportParams(
+                project_alias_owners=c.ENFORCEMENT_PROJECT_ALIAS_OWNERS,
+            ),
         ),
     })
 
