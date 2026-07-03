@@ -69,7 +69,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
                 yield from cls._ns_cross(target, qn, effective_layer)
             case "nested_mro":
                 yield from cls._ns_nested_mro(target, qn, project)
-            case "no_accessor_methods":
+            case "no_accessor_methods" | "smell_function_parameters":
                 yield from cls._ns_no_accessor_methods(target, qn)
             case _:
                 return

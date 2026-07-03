@@ -36,7 +36,8 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
             )
             for rid, sev, vf, anchor, skills, mm, desc in c.INFRA_DETECTOR_ROWS
         )
-        # Same comprehension applied to the BEARTYPE family.
+        # Same comprehension applied to the BEARTYPE family, including the
+        # JSON-loaded function-parameters smell rule (ENFORCE-071).
         beartype_specs = tuple(
             me.EnforcementRuleSpec(
                 id=rid,
@@ -48,7 +49,22 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                 agents_md_anchor=anchor,
                 skills=skills,
             )
-            for rid, sev, tag, anchor, skills, desc in c.BEARTYPE_ROWS
+            for rid, sev, tag, anchor, skills, desc in (
+                *c.BEARTYPE_ROWS,
+                *c.SMELL_BEARTYPE_ROWS,
+            )
+        )
+        # CODE_SMELL family — qlty-detected smells documented in the catalog.
+        code_smell_specs = tuple(
+            me.EnforcementRuleSpec(
+                id=rid,
+                description=desc,
+                severity=me.EnforcementRuleSeverity(sev),
+                source=me.EnforcementCodeSmellSource(smell_tag=tag),
+                agents_md_anchor=anchor,
+                skills=skills,
+            )
+            for rid, sev, tag, anchor, skills, desc in c.SMELL_CODE_SMELL_ROWS
         )
         # FLEXT_TESTS_VALIDATOR family — one ``tv.<method>`` per row.
         tests_validator_specs = tuple(
@@ -154,7 +170,9 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                     agents_md_anchor="3-5-integrity",
                     skills=("flext-strict-typing", "flext-quality-gates"),
                 ),
-                *beartype_specs[1:],  # ENFORCE-041..070 (066+ runtime-enforced)
+                *beartype_specs[1:],  # ENFORCE-041..071 (066+ runtime-enforced)
+                # --- CODE_SMELL (7 rules, JSON-loaded via SMELL_CODE_SMELL_ROWS) ---
+                *code_smell_specs,
             ),
         )
         return cls._canonical_catalog

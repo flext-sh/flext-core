@@ -194,6 +194,11 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
             iblp(private_package_only=True),
         ),
         "forbid_deep_namespace": (pk.CLASS_PLACEMENT, cpp(max_nested_class_depth=2)),
+        # --- Smell rules (JSON-loaded thresholds) ---
+        "smell_function_parameters": (
+            pk.METHOD_SHAPE,
+            msp(max_params=c.SMELL_THRESHOLDS["params"]),
+        ),
     })
 
 

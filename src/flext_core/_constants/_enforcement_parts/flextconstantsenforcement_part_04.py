@@ -105,6 +105,7 @@ class FlextConstantsEnforcementRules:
             "proto_not_runtime": EnforcementCategory.PROTOCOL_TREE,
             "settings_inheritance": EnforcementCategory.NAMESPACE,
             "sibling_models_type_checking": EnforcementCategory.NAMESPACE,
+            "smell_function_parameters": EnforcementCategory.NAMESPACE,
             "typeadapter_name": EnforcementCategory.ATTR,
             "utilities_explicit_class_when_self_ref": EnforcementCategory.NAMESPACE,
             "utility_not_static": EnforcementCategory.ATTR,

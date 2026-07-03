@@ -11,7 +11,10 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from ._constants.enforcement import FlextMroViolation
+from ._constants.enforcement import (
+    FlextMroViolation,
+    FlextSmellViolation,
+)
 from ._exceptions.base import FlextExceptionsBase
 from ._exceptions.factories import FlextExceptionsFactories
 from ._exceptions.helpers import FlextExceptionsHelpers
@@ -20,10 +23,6 @@ from ._exceptions.template import FlextExceptionsTemplate
 from ._exceptions.types import (
     FlextExceptionsTypes,
 )
-
-
-class FlextSmellViolation(FlextMroViolation):
-    """Runtime code-smell violation emitted by the FLEXT enforcement engine."""
 
 
 class FlextExceptions(
@@ -46,4 +45,4 @@ class FlextExceptions(
 
 e = FlextExceptions
 
-__all__: list[str] = ["FlextExceptions", "FlextSmellViolation", "e"]
+__all__: list[str] = ["FlextExceptions", "e"]

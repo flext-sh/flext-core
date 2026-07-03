@@ -13,6 +13,35 @@ _BARE_VIOLATION: t.StrMapping = {}
 _BINARY_ARITY: int = 2
 
 
+def _param_count(name: str, value: object) -> int | None:
+    """Return effective parameter count for ``value`` or None if exempt."""
+    if name.startswith("__") and name.endswith("__"):
+        return None
+    if name.startswith("model_"):
+        return None
+    func = None
+    offset = 0
+    if isinstance(value, (staticmethod, classmethod)):
+        func = value.__func__
+    elif inspect.isfunction(value):
+        func = value
+    elif inspect.ismethod(value):
+        func = value.__func__
+        offset = 1
+    if func is None:
+        return None
+    code = getattr(func, "__code__", None)
+    if code is None:
+        return None
+    if (
+        offset == 0
+        and code.co_argcount > 0
+        and code.co_varnames[0] in {"self", "cls"}
+    ):
+        offset = 1
+    return code.co_argcount + code.co_kwonlyargcount - offset
+
+
 class FlextUtilitiesBeartypeMethodVisitor:
     """METHOD_SHAPE — accessor-prefix and staticmethod-required governance."""
 
@@ -21,7 +50,7 @@ class FlextUtilitiesBeartypeMethodVisitor:
         params: me.MethodShapeParams,
         *args: type | str | _types_mod.FunctionType,
     ) -> t.StrMapping | None:
-        """METHOD_SHAPE — accessor-prefix and staticmethod-required governance.
+        """METHOD_SHAPE — accessor-prefix, staticmethod-required, and param-cap governance.
 
         Args shape varies: ``(target, name)`` for accessor checks (NAMESPACE
         category); ``(name, value)`` for utility-tier static-method checks
@@ -54,6 +83,16 @@ class FlextUtilitiesBeartypeMethodVisitor:
                             _NO_VIOLATION,
                         ),
                     )
+                if violation is _NO_VIOLATION and params.max_params > 0:
+                    target = args[0]
+                    value = vars(target).get(name)
+                    count = _param_count(name, value)
+                    if count is not None and count > params.max_params:
+                        violation = {
+                            "name": name,
+                            "count": str(count),
+                            "max": str(params.max_params),
+                        }
             case (name, value) if isinstance(name, str) and not isinstance(value, type):
                 if all((
                     params.require_static_or_classmethod,
@@ -61,6 +100,16 @@ class FlextUtilitiesBeartypeMethodVisitor:
                     inspect.isfunction(value),
                 )):
                     violation = _BARE_VIOLATION
+                if violation is _BARE_VIOLATION:
+                    violation = _BARE_VIOLATION
+                if violation is _NO_VIOLATION and params.max_params > 0:
+                    count = _param_count(name, value)
+                    if count is not None and count > params.max_params:
+                        violation = {
+                            "name": name,
+                            "count": str(count),
+                            "max": str(params.max_params),
+                        }
             case _:
                 pass
         return violation

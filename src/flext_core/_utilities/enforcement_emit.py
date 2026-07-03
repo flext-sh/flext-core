@@ -8,12 +8,14 @@ from types import MappingProxyType
 from flext_core._constants.enforcement import (
     FlextConstantsEnforcement as c,
     FlextMroViolation,
+    FlextSmellViolation,
 )
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
 
 _BEARTYPE_TAG_TO_RULE: MappingProxyType[str, t.StrPair] = MappingProxyType({
-    tag: (rule_id, anchor) for rule_id, _sev, tag, anchor, *_ in c.BEARTYPE_ROWS
+    tag: (rule_id, anchor)
+    for rule_id, _sev, tag, anchor, *_ in (*c.BEARTYPE_ROWS, *c.SMELL_CODE_SMELL_ROWS)
 })
 
 
@@ -85,7 +87,12 @@ class FlextUtilitiesEnforcementEmit:
                 f"\n{v.qualname} violates FLEXT {v.layer} {v.severity}:\n  - "
                 f"{v.message}\n\nFix: {fix_note}"
             )
-            warnings.warn(msg, FlextMroViolation, stacklevel=4)
+            category = (
+                FlextSmellViolation
+                if v.rule_id and v.rule_id.startswith("ENFORCE-07")
+                else FlextMroViolation
+            )
+            warnings.warn(msg, category, stacklevel=4)
             if active is c.EnforcementMode.STRICT:
                 raise TypeError(msg)
 

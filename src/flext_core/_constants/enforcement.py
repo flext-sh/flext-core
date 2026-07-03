@@ -39,6 +39,10 @@ class FlextMroViolation(UserWarning):
     """Runtime governance violation emitted by the FLEXT enforcement engine."""
 
 
+class FlextSmellViolation(FlextMroViolation):
+    """Runtime code-smell violation emitted by the FLEXT enforcement engine."""
+
+
 class FlextConstantsEnforcement(
     FlextConstantsEnforcementCatalogRows,
     FlextConstantsEnforcementEnums,
