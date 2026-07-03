@@ -31,7 +31,7 @@ def _param_count(name: str, value: object) -> int | None:
     if func is None:
         return None
     code = getattr(func, "__code__", None)
-    if code is None:
+    if not isinstance(code, _types_mod.CodeType):
         return None
     if offset == 0 and code.co_argcount > 0 and code.co_varnames[0] in {"self", "cls"}:
         offset = 1

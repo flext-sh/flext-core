@@ -22,22 +22,32 @@ class FlextUtilitiesDiscovery:
     """Auto-discovery for @factory() decorated functions in modules."""
 
     @staticmethod
+    def _factory_config_for(
+        module: ModuleType,
+        name: str,
+    ) -> FlextModelsContainer.FactoryDecoratorConfig | None:
+        func = vars(module).get(name)
+        if func is None or not callable(func):
+            return None
+        config_raw = vars(func).get(c.FACTORY_ATTR)
+        if not isinstance(config_raw, FlextModelsContainer.FactoryDecoratorConfig):
+            return None
+        return config_raw
+
+    @staticmethod
     def scan_module(
         module: ModuleType,
     ) -> t.SequenceOf[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]]:
         """Scan module for @factory()-decorated functions, sorted by name."""
         return sorted(
             [
-                (name, config_raw)
+                (name, config)
                 for name in dir(module)
                 if not name.startswith("_")
-                and (func := vars(module).get(name)) is not None
-                and callable(func)
-                and hasattr(func, c.FACTORY_ATTR)
-                and isinstance(
-                    (config_raw := vars(func).get(c.FACTORY_ATTR)),
-                    FlextModelsContainer.FactoryDecoratorConfig,
+                and (
+                    config := FlextUtilitiesDiscovery._factory_config_for(module, name)
                 )
+                is not None
             ],
             key=operator.itemgetter(0),
         )

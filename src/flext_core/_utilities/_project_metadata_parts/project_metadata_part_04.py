@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import typing as _typing
 from pathlib import Path
 from types import MappingProxyType
 
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core._typings.base import FlextTypingBase as tb
 
 from .project_metadata_part_03 import (
     FlextUtilitiesProjectMetadata as FlextUtilitiesProjectMetadataPart03,
@@ -18,14 +19,12 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart03):
     def read_tool_flext_config(root: Path) -> mpm.ProjectToolFlext:
         """Read ``[tool.flext.*]`` tables from pyproject.toml."""
         data = FlextUtilitiesProjectMetadata.load_pyproject_toml(root)
-        tool_raw = data.get("tool")
+        tool_raw = data.get("tool", {})
         # No PEP 526 local annotations: beartype.claw resolves local-variable
         # alias hints in the wrong namespace (JsonValue unresolvable here).
-        tool = dict(tool_raw) if isinstance(tool_raw, Mapping) else {}
-        tool_flext_raw = tool.get("flext")
-        if not isinstance(tool_flext_raw, Mapping):
-            return mpm.ProjectToolFlext()
-        return mpm.ProjectToolFlext.model_validate(dict(tool_flext_raw))
+        tool = _typing.cast("tb.JsonMapping", tool_raw)
+        tool_flext = _typing.cast("tb.JsonMapping", tool.get("flext", {}))
+        return mpm.ProjectToolFlext.model_validate(dict(tool_flext))
 
     @staticmethod
     def compose_namespace_config(root: Path) -> mpm.ProjectNamespaceConfig:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 from types import MappingProxyType
-from typing import ClassVar, get_origin
+from typing import get_origin
 
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
@@ -79,15 +79,20 @@ class FlextUtilitiesBeartypeAttrVisitor:
     @staticmethod
     def _has_classvar_annotation(target: type, name: str) -> bool:
         """Return True when ``name`` is annotated as ClassVar on ``target``."""
+        annotations_map: dict[str, object]
         try:
-            annotations = inspect.get_annotations(target, eval_str=True)
+            annotations_map = inspect.get_annotations(target, eval_str=True)
         except Exception:
-            annotations: dict[str, object] = {}
-        ann = annotations.get(name)
-        if ann is ClassVar:
-            return True
+            annotations_map = {}
+        ann = annotations_map.get(name)
         if ann is not None:
-            return get_origin(ann) is ClassVar
+            origin = get_origin(ann)
+            origin_name = getattr(origin, "__qualname__", "") or getattr(
+                origin,
+                "_name",
+                "",
+            )
+            return origin_name == "ClassVar" or str(ann).endswith("ClassVar")
         # Fallback for string annotations whose defining module is unavailable
         # (e.g. synthetic test classes) — keep detection strict but do not fail.
         try:

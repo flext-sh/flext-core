@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_tests import u
+from flext_tests import u as tests_u
 
 from tests._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin
 from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
@@ -20,7 +20,7 @@ from tests._utilities.validation_scenarios import (
 )
 
 
-class TestsFlextUtilities(u):
+class TestsFlextUtilities(tests_u):
     """Utilities for flext-core tests."""
 
     class Tests(
@@ -32,7 +32,7 @@ class TestsFlextUtilities(u):
         TestsFlextUtilitiesValidationScenariosMixin,
         TestsFlextUtilitiesRailwayMixin,
         TestsFlextUtilitiesDispatchMixin,
-        u.Tests,
+        tests_u.Tests,
     ):
         """flext-core test utilities namespace."""
 

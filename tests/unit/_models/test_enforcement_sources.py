@@ -35,4 +35,6 @@ class TestsFlextModelsEnforcementSources:
 
     def test_beartype_source_rejects_unknown_predicate_kind(self) -> None:
         with pytest.raises(c.ValidationError):
-            m.EnforcementBeartypeSource(predicate_kind="not_a_kind")
+            m.EnforcementBeartypeSource.model_validate(
+                {"predicate_kind": "not_a_kind"},
+            )

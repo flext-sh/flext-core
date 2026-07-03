@@ -16,6 +16,28 @@ from .class_visitor_part_01 import (
 
 class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart01):
     @staticmethod
+    def peer_first_allowed(
+        *,
+        is_facade: bool,
+        is_core_root: bool,
+        base_count: int,
+        first_name: str,
+        unparametrized_name: str,
+        valid_suffixes: tuple[str, ...],
+        tier_facade_prefixes: tuple[str, ...],
+        shared_peer_alias_base: set[type],
+    ) -> bool:
+        """Return True when a facade may place a peer base first."""
+        return (
+            is_facade
+            and not is_core_root
+            and base_count >= BINARY_ARITY
+            and first_name.startswith(tier_facade_prefixes)
+            and not unparametrized_name.endswith(valid_suffixes)
+            and bool(shared_peer_alias_base)
+        )
+
+    @staticmethod
     def v_mro_shape(
         params: me.MroShapeParams,
         target: type,
@@ -89,14 +111,18 @@ class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart0
             not unparametrized_name.endswith(valid_suffixes),
             bool(alias_base_sets[0]) if alias_base_sets else False,
         ))
-        allows_peer_first = allows_single_peer_base or all((
-            is_facade,
-            not is_core_root,
-            base_count >= BINARY_ARITY,
-            first_name.startswith(tier_facade_prefixes),
-            not unparametrized_name.endswith(valid_suffixes),
-            bool(shared_peer_alias_base),
-        ))
+        allows_peer_first = allows_single_peer_base or (
+            FlextUtilitiesBeartypeClassVisitor.peer_first_allowed(
+                is_facade=is_facade,
+                is_core_root=is_core_root,
+                base_count=base_count,
+                first_name=first_name,
+                unparametrized_name=unparametrized_name,
+                valid_suffixes=valid_suffixes,
+                tier_facade_prefixes=tier_facade_prefixes,
+                shared_peer_alias_base=shared_peer_alias_base,
+            )
+        )
         requires_alias_first = (
             params.require_alias_first
             and is_facade

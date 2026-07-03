@@ -173,15 +173,28 @@ class FlextUtilitiesGuards(
             }
             guard_spec = guard_spec.model_copy(update=criteria_update)
         check_val = FlextUtilitiesGuards._resolve_numeric(value)
-        return not (
-            (guard_spec.none is True and value is not None)
-            or (guard_spec.none is False and value is None)
-            or (guard_spec.is_ is not None and not isinstance(value, guard_spec.is_))
-            or (guard_spec.not_ is not None and isinstance(value, guard_spec.not_))
-            or not FlextUtilitiesGuards._check_spec_ops(value, guard_spec, check_val)
-            or (guard_spec.empty is True and check_val != 0)
-            or (guard_spec.empty is False and check_val == 0)
-        )
+        return FlextUtilitiesGuards._check_special_constraints(
+            value, guard_spec, check_val
+        ) and FlextUtilitiesGuards._check_spec_ops(value, guard_spec, check_val)
+
+    @staticmethod
+    def _check_special_constraints(
+        value: t.GuardInput,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+        check_val: t.Numeric,
+    ) -> bool:
+        """Validate none/is_/not_/empty constraints independently of op checks."""
+        if guard_spec.none is True and value is not None:
+            return False
+        if guard_spec.none is False and value is None:
+            return False
+        if guard_spec.is_ is not None and not isinstance(value, guard_spec.is_):
+            return False
+        if guard_spec.not_ is not None and isinstance(value, guard_spec.not_):
+            return False
+        if guard_spec.empty is True and check_val != 0:
+            return False
+        return not (guard_spec.empty is False and check_val == 0)
 
 
 __all__: list[str] = ["FlextUtilitiesGuards"]

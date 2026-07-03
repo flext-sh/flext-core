@@ -60,7 +60,11 @@ class FlextUtilitiesProjectMetadata(mpm):
         with pyproject.open("rb") as stream:
             # No PEP 526 local annotation: beartype.claw resolves local-variable
             # alias hints in the wrong namespace (JsonValue unresolvable here).
-            return ta.json_mapping_adapter().validate_python(tomllib.load(stream))
+            parsed = tomllib.load(stream)
+            validated: tb.JsonMapping = ta.json_mapping_adapter().validate_python(
+                parsed
+            )
+            return validated
 
     @staticmethod
     def read_project_metadata(root: Path) -> mpm.ProjectMetadata:

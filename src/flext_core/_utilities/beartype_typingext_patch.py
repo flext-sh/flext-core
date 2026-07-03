@@ -102,7 +102,7 @@ class FlextUtilitiesBeartypeTypingExtPatch:
             module_name = getattr(hint, "__module__", None)
             if module_name:
                 return cls._tag_forward_refs(reduced, module_name)
-            return reduced
+            return _typing.cast("t.TypeHintSpecifier", reduced)
 
         # Replace the getter across every beartype module that imported it by
         # name (``redpep695``) as well as its defining module.
@@ -136,8 +136,8 @@ class FlextUtilitiesBeartypeTypingExtPatch:
         if new_args == args:
             return hint
         if len(new_args) == 1:
-            return origin[new_args[0]]
-        return origin[new_args]
+            return _typing.cast("t.TypeHintSpecifier", origin[new_args[0]])
+        return _typing.cast("t.TypeHintSpecifier", origin[new_args])
 
 
 # Apply immediately so any subsequent beartype.claw usage sees both fixes.

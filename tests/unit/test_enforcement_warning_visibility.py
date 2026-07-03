@@ -11,7 +11,9 @@ from __future__ import annotations
 import sys
 import textwrap
 from pathlib import Path
+from typing import cast
 
+from tests.typings import t
 from tests.utilities import u
 
 
@@ -23,14 +25,10 @@ class TestsFlextEnforcementWarningVisibility:
         tmp_path: Path,
     ) -> None:
         payload = u.load_pyproject_toml(self._PROJECT_ROOT)
-        tool = payload["tool"]
-        assert isinstance(tool, dict)
-        pytest_tool = tool["pytest"]
-        assert isinstance(pytest_tool, dict)
-        ini_options = pytest_tool["ini_options"]
-        assert isinstance(ini_options, dict)
-        filters = ini_options["filterwarnings"]
-        assert isinstance(filters, list)
+        tool = cast("t.JsonMapping", payload.get("tool", {}))
+        pytest_tool = cast("t.JsonMapping", tool.get("pytest", {}))
+        ini_options = cast("t.JsonMapping", pytest_tool.get("ini_options", {}))
+        filters = cast("list[str]", ini_options.get("filterwarnings", []))
 
         filter_lines = "\n".join(f"    {item}" for item in filters)
         (tmp_path / "pytest.ini").write_text(
