@@ -65,6 +65,7 @@ class FlextConstantsEnforcementRules:
             "alias_rebound_at_module_end": EnforcementCategory.NAMESPACE,
             "cast_outside_core": EnforcementCategory.NAMESPACE,
             "class_prefix": EnforcementCategory.NAMESPACE,
+            "classvar_constant_outside_constants": EnforcementCategory.NAMESPACE,
             "compatibility_alias_import": EnforcementCategory.NAMESPACE,
             "const_lowercase": EnforcementCategory.ATTR,
             "const_mutable": EnforcementCategory.ATTR,

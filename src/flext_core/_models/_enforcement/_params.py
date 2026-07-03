@@ -132,6 +132,11 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         forbid_any_in_alias: bool = False
         require_typeadapter_naming: bool = False
 
+    class ClassVarConstantParams(EnforcementModelBase):
+        """Parameters for CLASSVAR_CONSTANT predicate."""
+
+        kind: Literal["classvar_constant"] = "classvar_constant"
+
     class ProtocolTreeParams(EnforcementModelBase):
         """Parameters for PROTOCOL_TREE predicate."""
 

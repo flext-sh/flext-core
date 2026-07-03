@@ -199,6 +199,11 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
             pk.METHOD_SHAPE,
             msp(max_params=c.SMELL_THRESHOLDS["params"]),
         ),
+        # --- Constants discipline ---
+        "classvar_constant_outside_constants": (
+            pk.CLASSVAR_CONSTANT,
+            me.ClassVarConstantParams(),
+        ),
     })
 
 

@@ -82,6 +82,7 @@ class TestsFlextEnforcementIntegration:
             ("must inherit FlextSettings", "settings_inheritance"),
             ("mutable constant value", "const_mutable"),
             ("UPPER_CASE", "const_lowercase"),
+            ("ClassVar constant 'GROUPS' declared", "classvar_constant_outside_constants"),
         ],
     )
     def test_rule_fires_for_fragment(
@@ -112,6 +113,7 @@ class TestsFlextEnforcementIntegration:
             "TestsFlextBadAccessors",
             "TestsFlextBadWorkerSettings",
             "TestsFlextBadConstants",
+            "TestsFlextBadClassVarConstant",
         }
         seen: set[str] = set()
         for entry in messages:

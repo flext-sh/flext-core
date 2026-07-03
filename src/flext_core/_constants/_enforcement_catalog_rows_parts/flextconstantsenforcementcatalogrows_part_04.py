@@ -187,6 +187,14 @@ class FlextConstantsEnforcementCatalogBeartypeRows:
             ("flext-import-rules",),
             "External library imported outside its owning abstraction project (ENFORCEMENT_LIBRARY_OWNERS SSOT: pydantic/structlog/dependency_injector→flext-core, rich/click→flext-cli, ldap3→flext-ldap, singer_sdk→flext-meltano, sqlalchemy/oracledb→flext-db-oracle, grpc→flext-grpc, fastapi→flext-web, httpx→flext-api, rope→flext-infra). Violates AGENTS.md §2.7.",
         ),
+        (
+            "ENFORCE-079",
+            "MEDIUM",
+            "classvar_constant_outside_constants",
+            "2-2-facades-namespaces-naming-patterns",
+            ("flext-mro-namespace-rules", "flext-constants-discipline"),
+            "ClassVar constant declared outside a _constants module; move to the canonical constants surface and re-export via c.*.",
+        ),
     )
 
 

@@ -91,3 +91,9 @@ class TestsFlextBadConstants(FlextModelsNamespace):
     """Violates ``const_mutable`` + ``const_lowercase``."""
 
     items: ClassVar[list[str]] = ["a", "b"]  # mutable + lowercase
+
+
+class TestsFlextBadClassVarConstant(FlextModelsNamespace):
+    """Violates ``classvar_constant_outside_constants``."""
+
+    GROUPS: ClassVar[frozenset[str]] = frozenset({"a", "b"})

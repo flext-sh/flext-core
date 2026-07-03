@@ -216,3 +216,60 @@ class_stem_override = "XmlAPI"
             warnings.simplefilter("always")
             FlextUtilitiesEnforcement.run_layer(clean, "constants")
         assert recorded == []
+
+    def test_classvar_constant_outside_constants_emits_enforce_079(self) -> None:
+        """ClassVar UPPER_CASE attributes outside _constants trigger ENFORCE-079."""
+        bad = make_class(
+            "FlextSyntheticCli",
+            {
+                "GROUPS": frozenset({"foo"}),
+                "__annotations__": {"GROUPS": "ClassVar[frozenset[str]]"},
+            },
+        )
+        report = u.check(bad)
+        assert any(
+            "ClassVar constant 'GROUPS' declared" in v.message
+            and v.rule_id == "ENFORCE-079"
+            for v in report.violations
+        )
+
+    def test_classvar_constant_inside_constants_is_exempt(self) -> None:
+        """ClassVar UPPER_CASE attributes inside _constants modules are allowed."""
+        good = make_class(
+            "FlextSyntheticConstantsRefactor",
+            {
+                "GROUPS": frozenset({"foo"}),
+                "__annotations__": {"GROUPS": "ClassVar[frozenset[str]]"},
+            },
+        )
+        good.__module__ = "flext_infra._constants.refactor"
+        report = u.check(good)
+        assert not any(v.rule_id == "ENFORCE-079" for v in report.violations)
+
+    def test_classvar_constant_exempt_model_config_and_logger(self) -> None:
+        """model_config and logger ClassVar names are framework idioms."""
+        good = make_class(
+            "FlextSyntheticModel",
+            {
+                "model_config": {"title": "x"},
+                "logger": None,
+                "__annotations__": {
+                    "model_config": "ClassVar[dict[str, str]]",
+                    "logger": "ClassVar[object | None]",
+                },
+            },
+        )
+        report = u.check(good)
+        assert not any(v.rule_id == "ENFORCE-079" for v in report.violations)
+
+    def test_classvar_constant_lowercase_name_skipped(self) -> None:
+        """Non-UPPER_CASE ClassVar attributes are not treated as constants."""
+        good = make_class(
+            "FlextSyntheticCli",
+            {
+                "groups": frozenset({"foo"}),
+                "__annotations__": {"groups": "ClassVar[frozenset[str]]"},
+            },
+        )
+        report = u.check(good)
+        assert not any(v.rule_id == "ENFORCE-079" for v in report.violations)

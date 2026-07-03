@@ -39,6 +39,7 @@ class FlextConstantsEnforcementEnums:
         ALIAS_REBIND = "alias_rebind"
         ATTR_SHAPE = "attr_shape"
         CLASS_PLACEMENT = "class_placement"
+        CLASSVAR_CONSTANT = "classvar_constant"
         COMPATIBILITY_ALIAS = "compatibility_alias"
         DEPRECATED_SYNTAX = "deprecated_syntax"
         DUPLICATE_SYMBOL = "duplicate_symbol"
