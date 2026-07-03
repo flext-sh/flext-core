@@ -53,6 +53,24 @@ class FlextConstantsEnforcementFixActions:
             "params": {"targets": ["dict"]},
             "safe": True,
         },
+        "ENFORCE-031": {
+            "kind": "transformer",
+            "target": "typing_dict_import",
+            "params": {},
+            "safe": True,
+        },
+        "ENFORCE-032": {
+            "kind": "transformer",
+            "target": "typing_dict_attr",
+            "params": {},
+            "safe": True,
+        },
+        "ENFORCE-033": {
+            "kind": "transformer",
+            "target": "hardcoded_version",
+            "params": {},
+            "safe": False,
+        },
         "ENFORCE-066": {
             "kind": "rope",
             "target": "rewrite_compatibility_alias",

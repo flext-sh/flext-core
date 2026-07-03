@@ -124,5 +124,11 @@ class FlextConstantsEnforcementNamespace:
     ``from flext_core import c`` inside a project that owns ``c`` locally.
     """
 
+    ENFORCEMENT_CLASSVAR_EXEMPT_NAMES: Final[frozenset[str]] = frozenset({
+        "model_config",
+        "logger",
+    })
+    """ClassVar attribute names that are framework idioms and stay in place."""
+
 
 __all__: list[str] = ["FlextConstantsEnforcementNamespace"]
