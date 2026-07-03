@@ -22,6 +22,12 @@ class _SmellThresholds(BaseModel):
     file_cx: int
 
 
+class _SmellFixStrategy(BaseModel):
+    auto: bool
+    fixer: str | None
+    description: str
+
+
 class _SmellCatalogRow(BaseModel):
     id: str
     severity: str
@@ -34,6 +40,7 @@ class _SmellCatalogRow(BaseModel):
 class _SmellData(BaseModel):
     thresholds: _SmellThresholds
     tags: tuple[str, ...]
+    fix_strategy: dict[str, _SmellFixStrategy]
     rules_text: dict[str, tuple[str, str]]
     beartype_rows: tuple[_SmellCatalogRow, ...] = Field(alias="beartype_rows")
     code_smell_rows: tuple[_SmellCatalogRow, ...] = Field(alias="code_smell_rows")
@@ -56,6 +63,9 @@ _SMELL_DATA: Final[_SmellData] = _load_smell_data()
 
 ENFORCEMENT_SMELL_TAGS: Final[tuple[str, ...]] = _SMELL_DATA.tags
 SMELL_THRESHOLDS: Final[t.MappingKV[str, int]] = _SMELL_DATA.thresholds.model_dump()
+SMELL_FIX_STRATEGIES: Final[
+    t.MappingKV[str, _SmellFixStrategy]
+] = _SMELL_DATA.fix_strategy
 SMELL_RULES_TEXT: Final[t.MappingKV[str, tuple[str, str]]] = _SMELL_DATA.rules_text
 SMELL_BEARTYPE_ROWS: Final[
     tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
@@ -72,4 +82,7 @@ SMELL_CODE_SMELL_ROWS: Final[
 
 __all__: list[str] = [
     "ENFORCEMENT_SMELL_TAGS",
+    "SMELL_FIX_STRATEGIES",
+    "SMELL_RULES_TEXT",
+    "SMELL_THRESHOLDS",
 ]

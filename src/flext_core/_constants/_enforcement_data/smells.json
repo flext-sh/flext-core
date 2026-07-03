@@ -16,6 +16,48 @@
     "smell_identical_code",
     "smell_similar_code"
   ],
+  "fix_strategy": {
+    "smell_boolean_logic": {
+      "auto": true,
+      "fixer": "boolean_logic",
+      "description": "Simplify boolean expressions using any()/all()/named predicates."
+    },
+    "smell_return_statements": {
+      "auto": false,
+      "fixer": null,
+      "description": "Refactor to a single result path; manual review required."
+    },
+    "smell_nested_control_flow": {
+      "auto": false,
+      "fixer": null,
+      "description": "Extract helper functions to flatten control flow; manual review required."
+    },
+    "smell_function_parameters": {
+      "auto": false,
+      "fixer": null,
+      "description": "Decompose function or introduce a domain context object; manual review required."
+    },
+    "smell_function_complexity": {
+      "auto": false,
+      "fixer": null,
+      "description": "Decompose the function into smaller helpers; manual review required."
+    },
+    "smell_file_complexity": {
+      "auto": false,
+      "fixer": null,
+      "description": "Split the module into focused units; manual review required."
+    },
+    "smell_identical_code": {
+      "auto": false,
+      "fixer": null,
+      "description": "Extract a shared helper or canonical constant; manual review required."
+    },
+    "smell_similar_code": {
+      "auto": false,
+      "fixer": null,
+      "description": "Refactor to a shared abstraction; manual review required."
+    }
+  },
   "rules_text": {
     "smell_function_parameters": [
       "function {name} has {count} parameters > max {max}",

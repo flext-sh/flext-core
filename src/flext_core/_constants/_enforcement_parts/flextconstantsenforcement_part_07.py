@@ -8,6 +8,7 @@ from flext_core._constants._enforcement_data import (
     ENFORCEMENT_SMELL_TAGS,
     SMELL_BEARTYPE_ROWS,
     SMELL_CODE_SMELL_ROWS,
+    SMELL_FIX_STRATEGIES,
     SMELL_RULES_TEXT,
     SMELL_THRESHOLDS,
 )
@@ -19,6 +20,9 @@ class FlextConstantsEnforcementSmellData:
 
     ENFORCEMENT_SMELL_TAGS: Final[tuple[str, ...]] = ENFORCEMENT_SMELL_TAGS
     SMELL_THRESHOLDS: Final[t.IntMapping] = SMELL_THRESHOLDS
+    SMELL_FIX_STRATEGIES: Final[
+        t.MappingKV[str, t.MappingKV[str, t.JsonValue]]
+    ] = {tag: strategy.model_dump() for tag, strategy in SMELL_FIX_STRATEGIES.items()}
     SMELL_RULES_TEXT: Final[t.StrPairMapping] = SMELL_RULES_TEXT
     SMELL_BEARTYPE_ROWS: Final[
         tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
