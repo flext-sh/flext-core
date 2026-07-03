@@ -10,6 +10,9 @@ from flext_core._constants._enforcement_catalog_rows_parts._parts.flextconstants
 from flext_core._constants._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_b import (
     INFRA_DETECTOR_ROWS_PATTERNS,
 )
+from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_05 import (
+    FlextConstantsEnforcementCatalogInfraRowsExtended,
+)
 
 
 class FlextConstantsEnforcementCatalogInfraRows:
@@ -20,6 +23,7 @@ class FlextConstantsEnforcementCatalogInfraRows:
     ] = (
         *INFRA_DETECTOR_ROWS_CORE,
         *INFRA_DETECTOR_ROWS_PATTERNS,
+        *FlextConstantsEnforcementCatalogInfraRowsExtended.INFRA_DETECTOR_ROWS_EXTENDED,
     )
 
 

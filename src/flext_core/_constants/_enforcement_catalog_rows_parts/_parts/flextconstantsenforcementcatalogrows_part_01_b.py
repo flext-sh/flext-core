@@ -170,15 +170,6 @@ INFRA_DETECTOR_ROWS_PATTERNS: Final[
         "`# noqa` comment silences lint — remove the bypass and fix the underlying issue.",
     ),
     (
-        "ENFORCE-090",
-        "HIGH",
-        "stub_file_violations",
-        "3-4-tools-and-modules",
-        ("flext-strict-typing",),
-        False,
-        "Hand-written `.pyi` stub file detected — source type hints are the SSOT; stubs are prohibited.",
-    ),
-    (
         "ENFORCE-097",
         "MEDIUM",
         "magic_literal_violations",
