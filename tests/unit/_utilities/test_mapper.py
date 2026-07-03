@@ -1,0 +1,28 @@
+"""Mapper utility smoke tests aligned to current public mapper helpers."""
+
+from __future__ import annotations
+
+from tests.utilities import u
+
+
+class TestsFlextUtilitiesMapper:
+    def test_extract_simple(self) -> None:
+        result = u.extract({"a": 1}, "a")
+        assert result.success
+        assert result.value == 1
+
+    def test_extract_default(self) -> None:
+        result = u.extract({"a": 1}, "b", default=0)
+        assert result.success
+        assert result.value == 0
+
+    def test_transform_keeps_pipeline_after_normalize(self) -> None:
+        result = u.transform(
+            {"alpha": {"beta": 1}, "drop": None},
+            normalize=True,
+            map_keys={"alpha": "renamed"},
+            exclude_keys={"drop"},
+        )
+
+        assert result.success
+        assert result.value == {"renamed": {"beta": 1}}

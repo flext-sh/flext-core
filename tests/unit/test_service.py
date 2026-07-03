@@ -1,304 +1,93 @@
-"""s core functionality tests.
-
-Module: flext_core.service
-Scope: s abstract base class - execution, validation, metadata
-
-Tests core s functionality including:
-- Service creation and Pydantic configuration
-- Service immutability (frozen model)
-- Abstract execute method implementation
-- Basic service execution with r
-- Business rules validation (success, failure, exception handling)
-- Service metadata retrieval
-
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
-and aggressive parametrization for DRY testing.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Behavioral tests for the current slim service contract."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from enum import StrEnum
-from typing import Annotated, ClassVar, override
+from typing import override
 
-import pytest
-from pydantic import BaseModel, ConfigDict, Field
+from flext_tests import FlextTestsCase, e, r
+from flext_tests.settings import FlextTestsSettings
 
-from flext_core import m, r, s, t
-from flext_tests import FlextTestsUtilities, u
-
-
-class ServiceScenarioType(StrEnum):
-    """Service scenario types for parametrized testing."""
-
-    BASIC_USER = "basic_user"
-    COMPLEX_VALID = "complex_valid"
-    COMPLEX_INVALID = "complex_invalid"
-    FAILING = "failing"
-    EXCEPTION = "exception"
+from tests.base import s
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
-class ServiceScenario(BaseModel):
-    """Service test scenario definition."""
+class TestsFlextService(FlextTestsCase):
+    """Validate stable behavior of FlextService subclasses."""
 
-    model_config = ConfigDict(frozen=True)
+    def test_shared_pytest_runtime_binds_aliases_to_self(self) -> None:
+        assert self.service is type(self.service).fetch_global()
+        assert self.settings is self.service.settings
+        assert self.logger is self.service.logger
+        assert self.c is c
+        assert self.e is e
+        assert self.m is m
+        assert self.p is p
+        assert self.r is r
+        assert self.t is t
+        assert self.u is u
 
-    name: Annotated[str, Field(description="Service scenario name")]
-    scenario_type: Annotated[
-        ServiceScenarioType, Field(description="Service scenario type")
-    ]
-    is_valid_expected: Annotated[bool, Field(description="Expected is_valid result")]
-    service_kwargs: Annotated[
-        Mapping[str, t.Scalar] | None,
-        Field(default=None, description="Optional scenario service kwargs"),
-    ] = None
-
-
-class UserService(s[m.ConfigMap]):
-    """Basic user service for standard testing."""
-
-    @override
-    def execute(self) -> r[m.ConfigMap]:
-        """Execute service and return data."""
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"user_id": 1, "name": "test_user"}))
-
-
-class ComplexService(s[str]):
-    """Service with custom validation rules."""
-
-    name: str = "test"
-    amount: int = 0
-    enabled: bool = True
-
-    @override
-    def validate_business_rules(self) -> r[bool]:
-        """Validate business rules."""
-        if not self.name:
-            return r[bool].fail("Missing value")
-        if self.amount < 0:
-            return r[bool].fail("Value too low")
-        return r[bool].ok(True)
-
-    @override
-    def execute(self) -> r[str]:
-        """Execute operation."""
-        if not self.name:
-            return r[str].fail("Missing value")
-        return r[str].ok(f"Processed: {self.name}")
-
-
-class FailingService(s[bool]):
-    """Service that fails validation."""
-
-    @override
-    def validate_business_rules(self) -> r[bool]:
-        """Always fail validation."""
-        return r[bool].fail("Processing error")
-
-    @override
-    def execute(self) -> r[bool]:
-        """Execute failing operation."""
-        return r[bool].fail("Processing error")
-
-
-class ExceptionService(s[str]):
-    """Service that raises exceptions during validation."""
-
-    should_raise: bool = False
-
-    @override
-    def validate_business_rules(self) -> r[bool]:
-        """Validation that can raise exceptions."""
-        if self.should_raise:
-            error_msg = "Processing error"
-            raise ValueError(error_msg)
-        return r[bool].ok(True)
-
-    @override
-    def execute(self) -> r[str]:
-        """Execute operation that can raise."""
-        if self.should_raise:
-            error_msg = "Processing error"
-            raise RuntimeError(error_msg)
-        return r[str].ok("test_value")
-
-
-class ServiceScenarios:
-    """Centralized service test scenarios using FlextConstants."""
-
-    SCENARIOS: ClassVar[list[ServiceScenario]] = [
-        ServiceScenario(
-            name="basic_user_service",
-            scenario_type=ServiceScenarioType.BASIC_USER,
-            is_valid_expected=True,
-        ),
-        ServiceScenario(
-            name="complex_valid",
-            scenario_type=ServiceScenarioType.COMPLEX_VALID,
-            is_valid_expected=True,
-            service_kwargs={"name": "test"},
-        ),
-        ServiceScenario(
-            name="complex_invalid",
-            scenario_type=ServiceScenarioType.COMPLEX_INVALID,
-            is_valid_expected=False,
-            service_kwargs={"name": ""},
-        ),
-        ServiceScenario(
-            name="failing_service",
-            scenario_type=ServiceScenarioType.FAILING,
-            is_valid_expected=False,
-        ),
-        ServiceScenario(
-            name="exception_handling",
-            scenario_type=ServiceScenarioType.EXCEPTION,
-            is_valid_expected=False,
-            service_kwargs={"should_raise": True},
-        ),
-    ]
-
-    @staticmethod
-    def create_service(scenario: ServiceScenario) -> s[m.ConfigMap] | s[str] | s[bool]:
-        """Create service instance for scenario."""
-        kwargs_raw: Mapping[str, t.Scalar] = scenario.service_kwargs or {}
-        if scenario.scenario_type == ServiceScenarioType.BASIC_USER:
-            return UserService()
-        if scenario.scenario_type in {
-            ServiceScenarioType.COMPLEX_VALID,
-            ServiceScenarioType.COMPLEX_INVALID,
-        }:
-            name_val = kwargs_raw.get("name", "test")
-            name = str(name_val)
-            amount_val = kwargs_raw.get("amount", 0)
-            amount = int(amount_val) if isinstance(amount_val, (int, float)) else 0
-            enabled_val = kwargs_raw.get("enabled", True)
-            enabled = bool(enabled_val)
-            complex_service = ComplexService()
-            complex_service.name = name
-            complex_service.amount = amount
-            complex_service.enabled = enabled
-            return complex_service
-        if scenario.scenario_type == ServiceScenarioType.FAILING:
-            return FailingService()
-        if scenario.scenario_type == ServiceScenarioType.EXCEPTION:
-            should_raise_val = kwargs_raw.get("should_raise", False)
-            should_raise = bool(should_raise_val)
-            exception_service = ExceptionService()
-            exception_service.should_raise = should_raise
-            return exception_service
-        error_msg = f"Unknown scenario type: {scenario.scenario_type}"
-        raise ValueError(error_msg)
-
-
-class TestsCore:
-    """Unified test suite for s using FlextTestsUtilities."""
-
-    def test_basic_service_creation(self) -> None:
-        """Test basic service creation and Pydantic configuration."""
-        service = UserService()
+    def test_service_initializes_and_executes(self) -> None:
+        service = m.Tests.ServiceUserService()
         assert isinstance(service, s)
-        assert isinstance(service.model_config, Mapping)
-        assert service.model_config.get("validate_assignment") is True
-
-    def test_service_immutability(self) -> None:
-        """Test service mutability (frozen removed for compatibility with FlextMixins)."""
-        service = UserService()
-        assert (
-            service.model_config.get("frozen") is None
-            or service.model_config.get("frozen") is False
-        )
-
-    def test_execute_abstract_method(self) -> None:
-        """Test execute method implementation."""
-
-        class ConcreteService(s[str]):
-            @override
-            def execute(self) -> r[str]:
-                return r[str].ok("test_value")
-
-        service = ConcreteService()
         result = service.execute()
-        u.Tests.Result.assert_success_with_value(result, "test_value")
+        assert result.success
 
-    def test_basic_execution(self) -> None:
-        """Test basic service execution returns expected type."""
-        service = UserService()
-        result = service.execute()
-        _ = u.Tests.Result.assert_success(result)
-        data = result.value
-        assert isinstance(data, m.ConfigMap)
-        assert "user_id" in data
-
-    @pytest.mark.parametrize(
-        "scenario",
-        ServiceScenarios.SCENARIOS,
-        ids=lambda s: s.name,
-    )
-    def test_is_valid_scenarios(self, scenario: ServiceScenario) -> None:
-        """Test is_valid with various service scenarios."""
-        service = ServiceScenarios.create_service(scenario)
-        assert service.is_valid() is scenario.is_valid_expected
-
-    def test_validate_business_rules_default(self) -> None:
-        """Test default business rules validation."""
-        service = UserService()
-        result = service.validate_business_rules()
-        _ = u.Tests.Result.assert_success(result)
-
-    def test_validate_business_rules_custom_success(self) -> None:
-        """Test custom business rules validation success."""
-        service = ComplexService()
-        service.name = "test"
-        result = service.validate_business_rules()
-        _ = u.Tests.Result.assert_success(result)
-
-    def test_validate_business_rules_custom_failure(self) -> None:
-        """Test custom business rules validation failure."""
-        service = ComplexService()
-        service.name = ""
-        result = service.validate_business_rules()
-        u.Tests.Result.assert_failure_with_error(result, "Missing value")
-
-    def test_get_service_info(self) -> None:
-        """Test get_service_info returns proper metadata."""
-        service = UserService()
-        info = service.get_service_info()
-        assert isinstance(info, Mapping)
-        assert "service_type" in info
-
-    def test_service_validation_using_generic_helpers(self) -> None:
-        """Test service validation using generic helpers - real behavior."""
-        service = ComplexService()
-        service.name = "test"
-        service.amount = 10
-        service.enabled = True
-        validation_result = (
-            FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
-                service,
-                required_attrs=["name", "amount", "enabled"],
-                optional_attrs=["validate_business_rules"],
-            )
+    def test_execute_returns_typed_payload(self) -> None:
+        result = m.Tests.ServiceUserService().execute()
+        assert result.success
+        assert result.value == m.Tests.ServiceUserData(
+            user_id=1,
+            name="test_user",
         )
-        assert validation_result.is_success
 
-    def test_service_validation_failure_limits(self) -> None:
-        """Test service validation failure - limit cases."""
-        service = ComplexService()
-        service.name = ""
-        service.amount = -1
-        service.enabled = False
-        validation_result = (
-            FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
-                service,
-                required_attrs=["name"],
-            )
+    def test_test_service_settings_include_tests_namespace(self) -> None:
+        settings = m.Tests.ServiceUserService().settings
+
+        assert isinstance(settings, FlextTestsSettings)
+        assert isinstance(settings.Tests, m.SettingsValue)
+
+    class _PureService(s[bool]):
+        @override
+        def execute(self) -> p.Result[bool]:
+            return r[bool].ok(True)
+
+    def test_fetch_settings_returns_typed_tests_settings(self) -> None:
+        with self._PureService.isolated_test_runtime():
+            settings = self._PureService.fetch_settings()
+
+            assert isinstance(settings, FlextTestsSettings)
+            assert isinstance(settings.Tests, m.SettingsValue)
+
+    def test_fetch_logger_reuses_service_logger(self) -> None:
+        with self._PureService.isolated_test_runtime():
+            logger = self._PureService.fetch_logger()
+
+            assert logger is self._PureService.fetch_global().logger
+
+    def test_with_settings_uses_provided_runtime_settings_snapshot(self) -> None:
+        settings = m.Tests.ServiceUserService().settings.clone(
+            app_name="service-settings-override",
         )
-        _ = u.Tests.Result.assert_success(validation_result)
-        business_result = service.validate_business_rules()
-        _ = u.Tests.Result.assert_failure(business_result)
+
+        service = self._PureService.with_settings(settings)
+        service_settings_dump = service.settings.model_dump()
+
+        assert service_settings_dump == settings.model_dump()
+        assert service_settings_dump["app_name"] == "service-settings-override"
+
+    def test_with_test_settings_clones_current_runtime_settings(self) -> None:
+        with self._PureService.isolated_test_runtime(
+            app_name="service-test-helper",
+        ):
+            global_settings = FlextTestsSettings.fetch_global()
+
+            assert self._PureService.fetch_settings().app_name == "service-test-helper"
+            assert FlextTestsSettings.fetch_global() is global_settings
+            assert FlextTestsSettings.fetch_global().app_name != "service-test-helper"
 
 
-__all__ = ["TestsCore"]
+__all__: list[str] = ["TestsFlextService"]

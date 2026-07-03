@@ -2,40 +2,43 @@
 
 from __future__ import annotations
 
-from pydantic import Field, field_validator
+from typing import Annotated
 
-from flext_core import c, m, r
-
-
-class Ex00UserProfile(m.Entity):
-    """User profile transport model."""
-
-    name: str = Field(min_length=1)
-    email: str = Field(min_length=1)
-    status: c.Domain.Status = c.Domain.Status.ACTIVE
-
-    def activate(self) -> r[None]:
-        """Activate user once."""
-        if self.status == c.Domain.Status.ACTIVE:
-            return r[None].fail("Already active")
-        return r.ok(None)
+from examples import ExamplesFlextModelsErrors as _err
+from flext_core import c, m, p, r, t, u
 
 
-class Ex00UserInput(m.Value):
-    """Raw user input model."""
+class ExamplesFlextModelsEx00:
+    """Example 00 model namespace."""
 
-    name: str = Field(min_length=1)
-    email: str = Field(min_length=1)
+    class UserProfile(m.Entity):
+        """User profile transport model."""
 
-    @field_validator("name", "email", mode="before")
-    @classmethod
-    def validate_non_empty_text(cls, value: object) -> str:
-        """Validate text input."""
-        if not isinstance(value, str):
-            msg = "Expected text input"
-            raise TypeError(msg)
-        normalized = value.strip()
-        if not normalized:
-            msg = "Text input cannot be empty"
-            raise ValueError(msg)
-        return normalized
+        name: Annotated[str, u.Field(min_length=1, description="User display name")]
+        email: Annotated[str, u.Field(min_length=1, description="User email address")]
+        status: Annotated[c.Status, u.Field(description="User account status")] = (
+            c.Status.ACTIVE
+        )
+
+        def activate(self) -> p.Result[None]:
+            """Activate user once."""
+            if self.status == c.Status.ACTIVE:
+                return r[None].fail("Already active")
+            return r[None].ok(None)
+
+    class UserInput(m.Value):
+        """Raw user input model."""
+
+        name: Annotated[str, u.Field(min_length=1, description="User display name")]
+        email: Annotated[str, u.Field(min_length=1, description="User email address")]
+
+        @u.field_validator("name", "email", mode="before")
+        @classmethod
+        def validate_non_empty_text(cls, value: t.JsonPayload) -> str:
+            """Validate text input."""
+            if not isinstance(value, str):
+                raise TypeError(_err.Examples.ErrorMessages.EXPECTED_TEXT_INPUT)
+            normalized = value.strip()
+            if not normalized:
+                raise ValueError(_err.Examples.ErrorMessages.TEXT_INPUT_CANNOT_BE_EMPTY)
+            return normalized

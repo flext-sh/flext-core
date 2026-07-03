@@ -1,271 +1,173 @@
-"""Message dispatch orchestration with reliability features.
-
-Coordinates command and query execution with routing, reliability policies,
-and observability features for handler registration and execution.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""Message dispatch orchestration with reliability features."""
 
 from __future__ import annotations
 
-import contextlib
-from collections.abc import Callable
-from typing import Protocol, runtime_checkable
-
-from pydantic import BaseModel
-
-from flext_core import c, p, r, t, u
-from flext_core.loggings import FlextLogger
-
-
-@runtime_checkable
-class DispatchMessage(Protocol):
-    """Protocol for objects that can dispatch messages."""
-
-    __slots__: tuple[()] = ()
-
-    def dispatch_message(
-        self, message: p.Routable
-    ) -> p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None:
-        """Dispatch a message."""
-        ...
-
-
-@runtime_checkable
-class Handle(Protocol):
-    """Protocol for objects that can handle messages."""
-
-    __slots__: tuple[()] = ()
-
-    def handle(
-        self, message: p.Routable
-    ) -> p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None:
-        """Handle a message."""
-        ...
-
-
-@runtime_checkable
-class Execute(Protocol):
-    """Protocol for objects that can execute messages."""
-
-    __slots__: tuple[()] = ()
-
-    def execute(
-        self, message: p.Routable
-    ) -> p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None:
-        """Execute a message."""
-        ...
-
-
-type _DispatchableHandler = (
-    Callable[
-        ...,
-        p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None,
-    ]
-    | DispatchMessage
-    | Handle
-    | Execute
+from collections.abc import (
+    MutableSequence,
+    Sequence,
 )
 
-type _ResolvedHandlerCallable = Callable[
-    [p.Routable], p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None
-]
-type _RegisteredHandler = tuple[_DispatchableHandler, _ResolvedHandlerCallable]
-type _AutoHandlerRegistration = tuple[
-    _DispatchableHandler,
-    _ResolvedHandlerCallable,
-    tuple[t.MessageTypeSpecifier, ...],
-]
+from flext_core import c, p, r, t, u
+
+from ._utilities.dispatcher_execute import execute_dispatcher_handler
 
 
 class FlextDispatcher:
-    """Application-level dispatcher that satisfies the command bus protocol.
-
-    The dispatcher exposes CQRS routing, handler registration, and execution
-    with layered reliability controls for message dispatching and handler execution.
-    """
+    """Application-level dispatcher that satisfies the command bus protocol."""
 
     def __init__(self) -> None:
         """Initialize dispatcher."""
         super().__init__()
-        self._logger = FlextLogger.create_module_logger(__name__)
-        self._handlers: dict[str, _RegisteredHandler] = {}
-        self._auto_handlers: list[_AutoHandlerRegistration] = []
-        self._event_subscribers: dict[str, list[_RegisteredHandler]] = {}
+        self.logger = u.fetch_logger(__name__)
+        handlers: t.RegistryDict[
+            tuple[t.DispatchableHandler, t.RoutedHandlerCallable]
+        ] = {}
+        self._handlers = handlers
+        self._auto_handlers: MutableSequence[
+            tuple[
+                t.DispatchableHandler,
+                t.RoutedHandlerCallable,
+                tuple[t.TypeHintSpecifier, ...],
+            ]
+        ] = []
+        event_subscribers: t.RegistryDict[
+            MutableSequence[tuple[t.DispatchableHandler, t.RoutedHandlerCallable]]
+        ] = {}
+        self._event_subscribers = event_subscribers
 
-    def dispatch(self, message: p.Routable) -> r[t.Container | BaseModel]:
-        """Dispatch a CQRS message to its registered handler.
-
-        Args:
-            message: The Pydantic model representing command or query.
-
-        Returns:
-            Result containing the handler result or failure message.
-
-        """
+    def dispatch(self, message: p.Routable) -> p.Result[t.JsonPayload]:
+        """Dispatch a CQRS message to its registered handler."""
         try:
-            route_name = u.get_message_route(message)
-        except (TypeError, ValueError) as e:
-            return r[t.Container | BaseModel].fail(
-                f"Dispatch failed: {e!s}", error_code=c.Errors.COMMAND_PROCESSING_FAILED
-            )
+            route_name = u.resolve_message_route(message)
+        except c.EXC_TYPE_VALIDATION as exc:
+            return r[t.JsonPayload].fail_op("dispatch message", exc)
         handler_entry = self._handlers.get(route_name)
         if not handler_entry:
             msg_type = message.__class__
             for auto_h, resolved_handler, accepted in self._auto_handlers:
-                if u.can_handle_message_type(accepted, msg_type):
+                if u.can_handle_message_type(accepted, msg_type) or (
+                    isinstance(auto_h, p.AutoDiscoverableHandler)
+                    and auto_h.can_handle(msg_type)
+                ):
                     handler_entry = (auto_h, resolved_handler)
                     break
         if not handler_entry:
-            return r[t.Container | BaseModel].fail(
+            return r[t.JsonPayload].fail_op(
+                "resolve message handler",
                 f"No handler found for {route_name}",
-                error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
             )
         _, resolved_handler = handler_entry
         return self._execute_handler(resolved_handler, message, route_name)
 
-    def dispatch_typed[DispatchValueT](
-        self, message: p.Routable, expected_type: type[DispatchValueT]
-    ) -> r[DispatchValueT]:
-        """Dispatch a message and return a strongly typed payload.
-
-        This is the canonical ergonomic API for examples and application code that
-        expects a concrete payload type and should avoid ad-hoc narrowing logic.
-        """
-
-        def _coerce(value: t.Container | BaseModel) -> r[DispatchValueT]:
-            if isinstance(value, expected_type):
-                return r[DispatchValueT].ok(value)
-            if isinstance(value, BaseModel):
-                return r[DispatchValueT].fail(
-                    f"Expected {expected_type.__name__}, got {value.__class__.__name__}"
-                )
-            return u.parse(value, expected_type)
-
-        return self.dispatch(message).flat_map(_coerce)
-
-    def publish(self, event: p.Routable | list[p.Routable]) -> r[bool]:
-        """Publish events to all registered subscribers.
-
-        Args:
-            event: Single event model or list of event models.
-
-        Returns:
-            Result indicating if publication started successfully.
-
-        """
-        if isinstance(event, list):
-            for e in event:
-                _ = self.publish(e)
-            return r[bool].ok(value=True)
-        route_name = u.get_message_route(event)
+    def publish(self, event: p.Routable | t.SequenceOf[p.Routable]) -> p.Result[bool]:
+        """Publish events to all registered subscribers."""
+        if isinstance(event, Sequence):
+            for evt in event:
+                _ = self.publish(evt)
+            return r[bool].ok(True)
+        route_name = u.resolve_message_route(event)
         handlers = self._event_subscribers.get(route_name, [])
         evt_type = event.__class__
         for auto_h, resolved_handler, accepted in self._auto_handlers:
-            if u.can_handle_message_type(accepted, evt_type) and (
-                all(existing_handler != auto_h for existing_handler, _ in handlers)
+            if (
+                u.can_handle_message_type(accepted, evt_type)
+                or (
+                    isinstance(auto_h, p.AutoDiscoverableHandler)
+                    and auto_h.can_handle(evt_type)
+                )
+            ) and all(
+                existing_handler is not auto_h for existing_handler, _ in handlers
             ):
                 handlers.append((auto_h, resolved_handler))
         if not handlers:
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         for _, resolved_handler in handlers:
             _ = self._execute_handler(resolved_handler, event, route_name)
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
     def register_handler(
-        self, handler: _DispatchableHandler, *, is_event: bool = False
-    ) -> r[bool]:
-        """Register a handler for a specific message type.
-
-        Args:
-            handler: A callable or object with handle/can_handle methods.
-                     Must expose message_type, event_type, or can_handle
-                     for route discovery.
-            is_event: If True, register as event subscriber.
-
-        Returns:
-            r[bool]: Success or failure with error message.
-
-        """
+        self,
+        handler: t.DispatchableHandler,
+        *,
+        is_event: bool = False,
+    ) -> p.Result[bool]:
+        """Register a handler for a specific message type."""
         route_name: str | None = None
-        accepted_message_types = u.compute_accepted_message_types(handler.__class__)
-        if isinstance(handler, DispatchMessage):
-            resolved_handler = handler.dispatch_message
-        elif isinstance(handler, Handle):
-            resolved_handler = handler.handle
-        elif isinstance(handler, Execute):
-            resolved_handler = handler.execute
-        else:
-            resolved_handler = handler
+        accepted_message_types: tuple[t.TypeHintSpecifier, ...] = tuple(
+            u.compute_accepted_message_types(type(handler)),
+        )
+        resolved_handler: t.RoutedHandlerCallable
+        is_auto_discoverable = isinstance(handler, p.AutoDiscoverableHandler)
+        match handler:
+            case p.DispatchMessage():
+                resolved_handler = handler.dispatch_message
+            case p.Handle():
+                resolved_handler = handler.handle
+            case p.Execute():
+                resolved_handler = handler.execute
+            case callable_handler if callable(callable_handler):
+                resolved_handler = callable_handler
+            case _:
+                return r[bool].fail_op(
+                    "register handler",
+                    c.ERR_HANDLER_MUST_BE_CALLABLE,
+                )
         handler_message_type = getattr(handler, "message_type", None)
-        if isinstance(handler_message_type, str):
-            route_name = handler_message_type
-        elif handler_message_type is not None:
-            with contextlib.suppress(TypeError, ValueError):
-                route_name = u.get_message_route(handler_message_type)
-        if route_name is None and accepted_message_types:
-            with contextlib.suppress(TypeError, ValueError):
-                route_name = u.get_message_route(accepted_message_types[0])
+        route_candidates: tuple[t.TypeHintSpecifier | str | None, ...] = (
+            handler_message_type,
+            accepted_message_types[0] if accepted_message_types else None,
+        )
+        for candidate in route_candidates:
+            match candidate:
+                case None:
+                    continue
+                case str() as route_text:
+                    route_name = route_text
+                case type() as route_type:
+                    try:
+                        route_name = u.resolve_message_route(route_type)
+                    except c.EXC_TYPE_VALIDATION:
+                        continue
+                case _:
+                    continue
+            break
         if route_name is None:
-            if callable(getattr(handler, "can_handle", None)):
+            if is_auto_discoverable:
                 self._auto_handlers.append((
                     handler,
                     resolved_handler,
                     accepted_message_types,
                 ))
-                self._logger.info(
-                    "Registered auto-discovery handler", handler=str(handler)
+                self.logger.info(
+                    c.LOG_REGISTERED_AUTO_DISCOVERY_HANDLER,
+                    handler=str(handler),
                 )
-                return r[bool].ok(value=True)
-            return r[bool].fail(
-                "Handler must expose message_type, event_type, or can_handle"
+                return r[bool].ok(True)
+            return r[bool].fail_op(
+                "discover handler route",
+                c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED,
             )
         if is_event:
-            if route_name not in self._event_subscribers:
-                self._event_subscribers[route_name] = []
-            self._event_subscribers[route_name].append((handler, resolved_handler))
-            self._logger.info("Registered event subscriber", route=route_name)
+            self._event_subscribers.setdefault(route_name, []).append((
+                handler,
+                resolved_handler,
+            ))
+            self.logger.info(c.LOG_REGISTERED_EVENT_SUBSCRIBER, route=route_name)
         else:
             self._handlers[route_name] = (handler, resolved_handler)
-            self._logger.info("Registered handler", route=route_name)
-        return r[bool].ok(value=True)
+            self.logger.info(c.LOG_REGISTERED_HANDLER, route=route_name)
+        return r[bool].ok(True)
 
     def _execute_handler(
         self,
-        resolved_handler: _ResolvedHandlerCallable,
+        resolved_handler: t.RoutedHandlerCallable,
         message: p.Routable,
         route_name: str,
-    ) -> r[t.Container | BaseModel]:
-        """Execute a handler against a message."""
-        dispatch_result = r[t.Container | BaseModel]
-        try:
-            raw_output = resolved_handler(message)
-            if u.is_result_like(raw_output):
-                if raw_output.is_failure:
-                    error_data_value = raw_output.error_data
-                    return dispatch_result.fail(
-                        raw_output.error or "Handler failed",
-                        error_code=raw_output.error_code,
-                        error_data=error_data_value
-                        if isinstance(error_data_value, BaseModel)
-                        else None,
-                    )
-                value: t.Container | BaseModel | None = raw_output.value
-                if not u.is_container(value):
-                    return dispatch_result.fail(
-                        "Handler returned non-container value in success result"
-                    )
-                return dispatch_result.ok(value)
-            if raw_output is None:
-                return dispatch_result.fail("Handler returned None")
-            if not u.is_container(raw_output):
-                return dispatch_result.fail("Handler returned non-container value")
-            return dispatch_result.ok(raw_output)
-        except Exception as exc:
-            self._logger.exception("Handler execution failed", route=route_name)
-            return dispatch_result.fail(
-                f"Handler execution failed: {exc}",
-                error_code=c.Errors.COMMAND_PROCESSING_FAILED,
-            )
+    ) -> p.Result[t.JsonPayload]:
+        """Execute a handler against a message via the extracted helper."""
+        return execute_dispatcher_handler(
+            resolved_handler=resolved_handler,
+            message=message,
+            route_name=route_name,
+            logger=self.logger,
+        )

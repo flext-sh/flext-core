@@ -10,41 +10,55 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from importlib.metadata import PackageMetadata, PackageNotFoundError, metadata
+from importlib.metadata import PackageMetadata, metadata
 
 
 class FlextVersion:
-    """Package version and metadata information.
+    """Package version and metadata — SSOT base class.
 
-    Provides version information and package metadata using standard library
-    metadata extraction.
+    Subclasses override only ``_metadata``.  ``__init_subclass__``
+    recomputes every derived attribute via MRO — zero duplication.
     """
 
-    try:
-        _metadata: PackageMetadata | Mapping[str, str] = metadata("flext-core")
-    except PackageNotFoundError:
-        _metadata = {
-            "Version": "0.12.0-dev",
-            "Name": "flext-core",
-            "Summary": "",
-            "Author": "",
-            "Author-Email": "",
-            "License": "",
-            "Home-Page": "",
-        }
-    __version__ = _metadata["Version"]
-    __version_info__ = tuple(
+    _metadata: PackageMetadata = metadata("flext-core")
+
+    # -- Base-class derivation (inline; subclass derivation via __init_subclass__) --
+    __version__: str = _metadata["Version"]
+    __version_info__: tuple[int | str, ...] = tuple(
         int(part) if part.isdigit() else part for part in __version__.split(".")
     )
-    __title__ = _metadata["Name"]
-    __description__ = _metadata.get("Summary", "")
-    __author__ = _metadata.get("Author", "")
-    __author_email__ = _metadata.get("Author-Email", "")
-    __license__ = _metadata.get("License", "")
-    __url__ = _metadata.get("Home-Page", "")
+    __title__: str = _metadata.get("Name", "")
+    __description__: str = _metadata.get("Summary", "")
+    __author__: str = _metadata.get("Author", "") or _metadata.get("Author-Email", "")
+    __author_email__: str = _metadata.get("Author-Email", "")
+    __license__: str = _metadata.get("License-Expression", "") or _metadata.get(
+        "License",
+        "",
+    )
+    __url__: str = _metadata.get("Home-Page", "") or _metadata.get("Project-URL", "")
+
+    def __init_subclass__(
+        cls,
+        **kwargs: str | float | bool | None,
+    ) -> None:
+        """Recompute derived attributes when a subclass overrides ``_metadata``."""
+        _ = kwargs
+        super().__init_subclass__()
+        if "_metadata" in cls.__dict__:
+            m = cls._metadata
+            cls.__version__ = m["Version"]
+            cls.__version_info__ = tuple(
+                int(p) if p.isdigit() else p for p in cls.__version__.split(".")
+            )
+            cls.__title__ = m.get("Name", "")
+            cls.__description__ = m.get("Summary", "")
+            cls.__author__ = m.get("Author", "") or m.get("Author-Email", "")
+            cls.__author_email__ = m.get("Author-Email", "")
+            cls.__license__ = m.get("License-Expression", "") or m.get("License", "")
+            cls.__url__ = m.get("Home-Page", "") or m.get("Project-URL", "")
 
     @classmethod
-    def get_package_info(cls) -> Mapping[str, str]:
+    def resolve_package_info(cls) -> Mapping[str, str]:
         """Get comprehensive package information dictionary."""
         return {
             "name": cls.__title__,
@@ -57,34 +71,17 @@ class FlextVersion:
         }
 
     @classmethod
-    def get_version_info(cls) -> tuple[int | str, ...]:
-        """Get package version as comparison-friendly tuple.
-
-        Returns version information as a tuple for easy numeric comparison.
-        Each element is either an integer (for numeric version parts) or
-        string (for pre-release identifiers).
-
-        Returns:
-            tuple[int | str, ...]: Version tuple for comparison (e.g., (1, 0, 0))
-
-        """
+    def resolve_version_info(cls) -> tuple[int | str, ...]:
+        """Get package version as comparison-friendly tuple."""
         return cls.__version_info__
 
     @classmethod
-    def get_version_string(cls) -> str:
-        """Get package version as human-readable string.
-
-        Returns the package version in string format suitable for display
-        and logging. Follows PEP 440 semantic versioning format.
-
-        Returns:
-            str: Version string (e.g., "1.0.0", "1.0.0rc1")
-
-        """
+    def resolve_version_string(cls) -> str:
+        """Get package version as human-readable string."""
         return cls.__version__
 
     @classmethod
-    def is_version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
+    def version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
         """Check if current version meets minimum version requirement."""
         return cls.__version_info__ >= (major, minor, patch)
 
@@ -97,7 +94,7 @@ __author__ = FlextVersion.__author__
 __author_email__ = FlextVersion.__author_email__
 __license__ = FlextVersion.__license__
 __url__ = FlextVersion.__url__
-__all__ = [
+__all__: list[str] = [
     "FlextVersion",
     "__author__",
     "__author_email__",

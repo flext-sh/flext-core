@@ -16,12 +16,14 @@ Usage:
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+
 from typing import Any
 
 import pytest
-from tests.conftest import test_framework
+from tests import test_framework
 
-from flext_core import r, u
+from flext_core import r, p, u
 
 
 @pytest.mark.skip(reason="Template placeholder - replace TEMPLATE with actual module")
@@ -44,7 +46,7 @@ class TestTEMPLATECategory:
         ],
         ids=lambda case: case["description"],
     )
-    def test_template_operation_with_real_data(self, test_data: dict[str, Any]) -> None:
+    def test_template_operation_with_real_data(self, test_data: t.MappingKV[str, Any]) -> None:
         """Test TEMPLATE operation with real data (no mocks).
 
         Args:
@@ -81,7 +83,7 @@ class TestTEMPLATECategory:
     def test_template_operation_performance(self) -> None:
         """Test TEMPLATE operation performance with real execution."""
 
-        def operation() -> object:
+        def operation():
             result = u.TEMPLATE.process_large_dataset()
             return test_framework.assert_result_success(result)
 
@@ -114,7 +116,6 @@ class TestTEMPLATECategory:
         )
 
         # Verify entity was processed correctly
-        assert hasattr(processed_entity, "unique_id")
         assert processed_entity.unique_id == "integration-test"
 
     def test_template_business_rules_validation(self) -> None:
@@ -135,7 +136,7 @@ class TestTEMPLATECategory:
         """Test TEMPLATE error propagation through r chain."""
 
         # Create failing operation
-        def failing_operation() -> r[str]:
+        def failing_operation() -> p.Result[str]:
             return r[str].fail("Simulated failure")
 
         # Chain operations (railway-oriented programming)

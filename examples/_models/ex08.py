@@ -1,13 +1,17 @@
+"""Example models for ex08."""
+
 from __future__ import annotations
 
-from flext_core import c, m
+from typing import Annotated
+
+from flext_core import m, u
 
 
-class Ex08User(m.Entity):
-    name: str
-    email: str
+class ExamplesFlextModelsEx08:
+    """Examples namespace wrapper for ex08 models."""
 
+    class UserEntity(m.Entity):
+        name: Annotated[str, u.Field(description="User display name")]
 
-class Ex08Order(m.AggregateRoot):
-    customer_id: str
-    status: c.Domain.Status = c.Domain.Status.ACTIVE
+    class OrderEntity(m.Entity):
+        status: Annotated[str, u.Field(description="Order lifecycle status")] = "active"

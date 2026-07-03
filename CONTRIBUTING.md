@@ -21,11 +21,11 @@ This file is the fast entrypoint. Canonical contributor guidance lives in:
 
 ## Quick Workflow
 
-1. Create a focused branch from `0.10.0-dev`.
-1. Keep changes scoped to one concern per commit.
-1. Add or update tests in the same change when behavior changes.
-1. Run quality gates before opening a PR.
-1. Update docs for API, behavior, or architecture changes.
+1. Create a focused branch from `0.12.0-dev`.
+2. Keep changes scoped to one concern per commit.
+3. Add or update tests in the same change when behavior changes.
+4. Run quality gates before opening a PR.
+5. Update docs for API, behavior, or architecture changes.
 
 ## Required Local Checks
 

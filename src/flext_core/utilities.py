@@ -10,75 +10,68 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from flext_core.loggings import FlextLogger
+from flext_core.runtime import FlextRuntime
 
-from flext_core import FlextRuntime, t
-from flext_core._utilities.args import FlextUtilitiesArgs
-from flext_core._utilities.cache import FlextUtilitiesCache
-from flext_core._utilities.checker import FlextUtilitiesChecker
-from flext_core._utilities.collection import FlextUtilitiesCollection
-from flext_core._utilities.configuration import FlextUtilitiesConfiguration
-from flext_core._utilities.context import FlextUtilitiesContext
-from flext_core._utilities.conversion import FlextUtilitiesConversion
-from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
-from flext_core._utilities.domain import FlextUtilitiesDomain
-from flext_core._utilities.enum import FlextUtilitiesEnum
-from flext_core._utilities.file_ops import FlextUtilitiesFileOps
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.guards import FlextUtilitiesGuards, validate_pydantic_model
-from flext_core._utilities.mapper import FlextUtilitiesMapper
-from flext_core._utilities.model import FlextUtilitiesModel
-from flext_core._utilities.pagination import FlextUtilitiesPagination
-from flext_core._utilities.parser import FlextUtilitiesParser
-from flext_core._utilities.reliability import FlextUtilitiesReliability
-from flext_core._utilities.result_helpers import (
-    ResultHelpers as FlextUtilitiesResultHelpers,
-)
-from flext_core._utilities.text import FlextUtilitiesText
+from ._models.namespace import FlextModelsNamespace
+from ._utilities.args import FlextUtilitiesArgs
+from ._utilities.beartype_conf import FlextUtilitiesBeartypeConf
+from ._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
+from ._utilities.checker import FlextUtilitiesChecker
+from ._utilities.collection import FlextUtilitiesCollection
+from ._utilities.context import FlextUtilitiesContext
+from ._utilities.conversion import FlextUtilitiesConversion
+from ._utilities.discovery import FlextUtilitiesDiscovery
+from ._utilities.domain import FlextUtilitiesDomain
+from ._utilities.enforcement import FlextUtilitiesEnforcement
+from ._utilities.enum import FlextUtilitiesEnum
+from ._utilities.generators import FlextUtilitiesGenerators
+from ._utilities.guards import FlextUtilitiesGuards
+from ._utilities.mapper import FlextUtilitiesMapper
+from ._utilities.model_runtime import FlextUtilitiesModelRuntime
+from ._utilities.parser import FlextUtilitiesParser
+from ._utilities.project_metadata import FlextUtilitiesProjectMetadata
+from ._utilities.pydantic import FlextUtilitiesPydantic
+from ._utilities.reliability import FlextUtilitiesReliability
+from ._utilities.settings import FlextUtilitiesSettings
+from ._utilities.text import FlextUtilitiesText
 
 
 class FlextUtilities(
+    FlextLogger,
     FlextRuntime,
     FlextUtilitiesArgs,
-    FlextUtilitiesCache,
+    FlextUtilitiesBeartypeConf,
+    FlextUtilitiesBeartypeEngine,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,
-    FlextUtilitiesConfiguration,
+    FlextUtilitiesSettings,
     FlextUtilitiesContext,
     FlextUtilitiesConversion,
-    FlextUtilitiesDeprecation,
+    FlextUtilitiesDiscovery,
     FlextUtilitiesDomain,
+    FlextUtilitiesEnforcement,
     FlextUtilitiesEnum,
-    FlextUtilitiesFileOps,
     FlextUtilitiesGenerators,
     FlextUtilitiesGuards,
     FlextUtilitiesMapper,
-    FlextUtilitiesModel,
-    FlextUtilitiesPagination,
+    FlextUtilitiesModelRuntime,
     FlextUtilitiesParser,
+    FlextUtilitiesProjectMetadata,
+    FlextUtilitiesPydantic,
     FlextUtilitiesReliability,
-    FlextUtilitiesResultHelpers,
     FlextUtilitiesText,
+    FlextModelsNamespace,
 ):
     """Unified facade for all FLEXT utility functionality.
 
     Runtime alias u exposes a flat namespace directly via inheritance.
-    Use direct methods only: u.get, u.parse, u.map, u.from_kwargs, u.batch, u.extract,
+    Use direct methods only: u.get, u.parse, u.map, u.batch, u.extract,
     u.warn_once, etc. No subdivided namespaces (no u.* at call sites).
     Subprojects use their project u. Aliases/namespaces: MRO registration protocol only.
-
-    Usage:
-        from flext_core import u
-        result = u.parse(value, int)
-        value = u.get(data, "key")
-        mapped = u.map(items, fn)
     """
 
-    @staticmethod
-    @override
-    def empty(items: t.NormalizedValue | None) -> bool:
-        return FlextUtilitiesResultHelpers.empty(items)
 
+__all__: list[str] = ["FlextUtilities", "u"]
 
 u = FlextUtilities
-__all__ = ["FlextUtilities", "u", "validate_pydantic_model"]

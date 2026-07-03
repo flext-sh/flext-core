@@ -1,16 +1,14 @@
-"""PEP 562 lazy export installers."""
+"""PEP 562 lazy export helpers."""
 
 from __future__ import annotations
 
 import sys
 from collections.abc import (
-    Callable,
-    MutableMapping,
     Sequence,
 )
 from types import ModuleType
 
-from flext_core.typings import FlextTypes
+from flext_core._typings.lazy import FlextTypesLazy
 
 from .flextlazy_part_01 import (
     FlextLazy as FlextLazyPart01,
@@ -19,22 +17,11 @@ from .flextlazy_part_01 import (
     MutableLazyImportMap,
 )
 
-type ModuleGlobalValue = (
-    FlextTypes.JsonValue
-    | LazyImportMap
-    | Sequence[str]
-    | ModuleType
-    | type
-    | Callable[..., ModuleGlobalValue]
-    | Callable[..., FlextTypes.JsonValue | Sequence[str] | ModuleType | type | None]
-    | None
-)
-type ModuleGlobals = MutableMapping[str, ModuleGlobalValue]
+type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
+type ModuleGlobals = FlextTypesLazy.ModuleGlobals
 
 
 class FlextLazy(FlextLazyPart01):
-    """Package-level lazy export installer."""
-
     def get(
         self,
         name: str,
@@ -113,7 +100,7 @@ class FlextLazy(FlextLazyPart01):
         merged = dict(children)
         merged.update(local_lazy_imports)
         for name in exclude_names:
-            _ = merged.pop(name, None)
+            merged.pop(name, None)
         return merged
 
     def install(
@@ -138,6 +125,8 @@ class FlextLazy(FlextLazyPart01):
             return
 
         normalized = self._norm_map(module_name, lazy_imports)
+        for name in normalized:
+            module_globals.pop(name, None)
         if public_exports is not None:
             names = tuple(dict.fromkeys(public_exports))
         elif all_exports is None:
@@ -145,14 +134,13 @@ class FlextLazy(FlextLazyPart01):
         else:
             names = tuple(dict.fromkeys((*normalized, *all_exports)))
 
-        def module_getattr(name: str) -> ModuleGlobalValue:
-            return self.get(name, normalized, module_globals, module_name)
-
-        def module_dir() -> list[str]:
-            return list(names)
-
-        module_globals["__getattr__"] = module_getattr
-        module_globals["__dir__"] = module_dir
+        module_globals["__getattr__"] = lambda name: self.get(
+            name,
+            normalized,
+            module_globals,
+            module_name,
+        )
+        module_globals["__dir__"] = lambda: list(names)
         if publish_all:
             module_globals["__all__"] = names
 

@@ -15,33 +15,38 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import Annotated, override
 
-from flext_core import c, m, r, s, t
+from examples import c, d, m, p, r, s, t, u
 
 
-class DatabaseService(s[m.ConfigMap]):
-    """Example service showing config log-once pattern."""
+class ExamplesFlextDatabaseService(s[m.ConfigMap]):
+    """Example service showing settings log-once pattern."""
 
-    db_config: m.ConfigMap
+    db_config: Annotated[
+        m.ConfigMap,
+        m.Field(description="Database connection settings."),
+    ]
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    @d.log_operation("database_query")
+    def execute(self) -> p.Result[m.ConfigMap]:
         """Execute database operations.
 
         Returns:
             r[dict]: Operation results
 
         """
-        self._with_operation_context(
-            "database_query", operation_type="select", table="users"
+        self.logger.info(
+            "Executing database query",
+            operation_type="select",
+            table="users",
         )
-        self.logger.info("Executing database query")
         results = m.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
         return r[m.ConfigMap].ok(results)
 
     @override
-    def model_post_init(self, /, __context: t.Container | None) -> None:
+    def model_post_init(self, /, __context: t.ScalarMapping | None) -> None:
         """Post-initialization hook.
 
         Args:
@@ -49,18 +54,34 @@ class DatabaseService(s[m.ConfigMap]):
 
         """
         super().model_post_init(__context)
-        self._log_config_once(self.db_config, message="Database configuration loaded")
+        normalized_db_config: t.JsonMapping = {
+            key: u.normalize_to_metadata(value)
+            for key, value in self.db_config.root.items()
+        }
+        self.logger.info(
+            "Database configuration loaded",
+            **normalized_db_config,
+        )
 
 
-class MigrationService(s[m.ConfigMap]):
-    """Example migration service with config log-once pattern."""
+class ExamplesFlextMigrationService(s[m.ConfigMap]):
+    """Example migration service with settings log-once pattern."""
 
-    input_dir: str
-    output_dir: str
-    sync: bool
+    input_dir: Annotated[
+        str,
+        m.Field(description="Source migration directory."),
+    ]
+    output_dir: Annotated[
+        str,
+        m.Field(description="Target migration directory."),
+    ]
+    sync: Annotated[
+        bool,
+        m.Field(description="Whether to perform synchronous migration."),
+    ]
 
     @override
-    def model_post_init(self, /, __context: t.Container | None) -> None:
+    def model_post_init(self, /, __context: t.ScalarMapping | None) -> None:
         """Post-initialization hook.
 
         Args:
@@ -68,62 +89,71 @@ class MigrationService(s[m.ConfigMap]):
 
         """
         super().model_post_init(__context)
-        config = m.ConfigMap(
+        settings = m.ConfigMap(
             root={
                 "input_dir": self.input_dir,
                 "output_dir": self.output_dir,
                 "sync": self.sync,
                 "batch_size": 100,
                 "max_workers": 4,
-            }
+            },
         )
-        self._log_config_once(config, message="Migration configuration loaded")
+        normalized_settings = {
+            key: u.normalize_to_metadata(value) for key, value in settings.root.items()
+        }
+        self.logger.info(
+            "Migration configuration loaded",
+            **normalized_settings,
+        )
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    @d.log_operation("migration_process")
+    def execute(self) -> p.Result[m.ConfigMap]:
         """Execute migration.
 
         Returns:
             r[dict]: Migration results
 
         """
-        self._with_operation_context(
-            "migration_process", total_entries=1000, batch_count=10
+        self.logger.info(
+            "Starting migration process",
+            total_entries=1000,
+            batch_count=10,
         )
-        self.logger.info("Starting migration process")
         self.logger.info("Processing batch 1 of 10")
         self.logger.info("Processing batch 2 of 10")
         return r[m.ConfigMap].ok(m.ConfigMap(root={"migrated": 1000, "failed": 0}))
 
 
 def main() -> None:
-    """Demonstrate config log-once pattern."""
+    """Demonstrate settings log-once pattern."""
     print("=== Example 1: Database Service ===")
     db_config = m.ConfigMap(
         root={
-            "host": c.Network.LOCALHOST,
+            "host": c.LOCALHOST,
             "port": 5432,
             "database": "mydb",
             "pool_size": 10,
-        }
+        },
     )
-    db_service = DatabaseService.model_construct()
-    setattr(db_service, "db_config", db_config)
+    db_service = ExamplesFlextDatabaseService.model_construct(db_config=db_config)
     result = db_service.execute()
-    if result.is_success:
+    if result.success:
         print(f"✅ Database query successful: {result.value}")
     print("\n=== Example 2: Migration Service ===")
-    migration_service = MigrationService(
-        input_dir="/data/input", output_dir="/data/output", sync=True
+    migration_service = ExamplesFlextMigrationService(
+        input_dir="/data/input",
+        output_dir="/data/output",
+        sync=True,
     )
     result = migration_service.execute()
-    if result.is_success:
+    if result.success:
         print(f"✅ Migration successful: {result.value}")
     print("\n=== Key Observations ===")
     print("1. Config logged ONCE when service initialized")
     print("2. Config does NOT appear in subsequent logs")
     print("3. Operation context (total_entries, batch_count) appears in all logs")
-    print("4. Clean, relevant logs without config repetition!")
+    print("4. Clean, relevant logs without settings repetition!")
 
 
 if __name__ == "__main__":

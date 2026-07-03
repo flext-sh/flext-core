@@ -1,4 +1,5 @@
-"""Lazy export helper parts."""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Lazy Parts package."""
 
 from __future__ import annotations
 

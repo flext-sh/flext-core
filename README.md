@@ -1,146 +1,45 @@
-# FLEXT-Core
+<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-<!-- TOC START -->
+# flext-core
 
-- [🚀 Key Features](#-key-features)
-- [📦 Installation](#-installation)
-- [🛠️ Usage](#-usage)
-  - [Railway-Oriented Results](#railway-oriented-results)
-  - [Dependency Injection](#dependency-injection)
-  - [CQRS Dispatching](#cqrs-dispatching)
-- [🏗️ Architecture](#-architecture)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
+**Version**: `0.12.0-dev` | **Python**: 3.13+ | **Project class**: `platform`
 
-<!-- TOC END -->
+## Purpose
 
-**FLEXT-Core** is the foundational library for the FLEXT ecosystem, providing a robust set of architectural primitives, patterns, and utilities for building enterprise-grade Python applications. It enforces Railway-Oriented Programming (ROP), Dependency Injection (DI), and Command Query Responsibility Segregation (CQRS) to ensure type safety, scalability, and maintainability.
+Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
 
-**Reviewed**: 2026-02-17 | **Version**: 0.10.0-dev
+## Module Map
 
-Part of the [FLEXT](https://github.com/flext-sh/flext) ecosystem.
+::: flext_core
+    options:
+      members: false
+      show_root_heading: false
+      show_root_toc_entry: false
+      show_source: false
 
-## 🚀 Key Features
+## Collection Rules
 
-- **Railway-Oriented Programming**: handling errors as values using `r[T, E]`, eliminating unexpected exceptions in business logic.
-- **Dependency Injection**: A lightweight, type-safe DI container (`FlextContainer`) with scoped services and bridge integration.
-- **CQRS Dispatcher**: A strictly typed `FlextDispatcher` for routing commands, queries, and events to their respective handlers.
-- **Domain-Driven Design**: Base classes (`FlextModels`, `FlextService`) and mixins for rich domain modeling.
-- **Protocol-Based Architecture**: Extensive use of Python `` for loose coupling and improved testability.
-- **Infrastructure Helpers**: Built-in support for structured logging, configuration management, and context propagation.
+Read [`/flext/AGENTS.md`](../AGENTS.md) §9 — Agent Execution Pre-requisites — for the canonical pre-change checklist (parent MRO chain, Scope bootstrap, skill loading, zero-debt baseline, slot registry verification).
 
-## 📦 Installation
+## Operation Flow
 
-Install `flext-core` using pip:
+- Public surface: see [`docs/index.md`](docs/index.md) and [`docs/api-reference/README.md`](docs/api-reference/README.md).
+- Generated module overview: [`docs/api-reference/generated/overview.md`](docs/api-reference/generated/overview.md).
+- Settings env prefix: see project `pyproject.toml` `[tool.flext]` and `FlextSettings` ConfigDict.
 
-```bash
-pip install flext-core
-```
+## Integration Points
 
-Or with Poetry:
+- Parent MRO chain: read this project's `pyproject.toml` `dependencies` array filtered by `flext-*`. The MRO cascade is encoded in the inheritance lists of the facade classes listed under Module Map above.
+- Public extensions exposed by this project: _none_.
+- Library abstraction boundaries: see AGENTS.md §2.7.
 
-```bash
-poetry add flext-core
-```
+## Quality Gates
 
-## 🛠️ Usage
+Canonical `make` verbs (`check`, `test`, `val`, `docs`) — see `AGENTS.md` §5 (Make Contract) and the [`flext-quality-gates`](../.agents/skills/flext-quality-gates/SKILL.md) skill for selectors and thresholds.
 
-### Railway-Oriented Results
+## Governance Pointer
 
-Replace exception handling with `r` for predictable control flow.
-
-```python
-from flext_core import r
-
-
-def divide(a: int, b: int) -> r[float]:
-    if b == 0:
-        return r[float].fail("Division by zero")
-    return r[float].ok(a / b)
-
-
-result = divide(10, 2)
-if result.is_success:
-    print(f"Result: {result.unwrap()}")
-else:
-    print(f"Error: {result.error}")
-```
-
-### Dependency Injection
-
-Manage your application's dependencies cleanly using `FlextContainer` and `FlextRuntime`.
-
-```python
-from flext_core import FlextContainer, Provide, inject, FlextService
-
-# 1. Register a service
-container = FlextContainer.get_global()
-container.register_factory("db_client", lambda: DatabaseClient())
-
-
-# 2. Inject into functions
-@inject
-def get_user(user_id: str, db=Provide["db_client"]):
-    return db.query(user_id)
-
-
-# 3. Inject into Services
-class UserService(FlextService):
-    def get_user(self, user_id: str):
-        # Access container directly via self.container
-        db = self.container.get("db_client").unwrap()
-        return db.query(user_id)
-```
-
-### CQRS Dispatching
-
-Decouple your business logic using the `FlextDispatcher`.
-
-```python
-from dataclasses import dataclass
-from flext_core import FlextDispatcher, r
-
-
-# 1. Define a Command
-@dataclass
-class CreateUser:
-    username: str
-    email: str
-
-
-# 2. Define a Handler
-def handle_create_user(cmd: CreateUser) -> r[str]:
-    # Business logic here...
-    return r[str].ok(f"User {cmd.username} created")
-
-
-# 3. Register and Dispatch
-dispatcher = FlextDispatcher()
-dispatcher.register_handler(CreateUser, handle_create_user)
-
-result = dispatcher.dispatch(CreateUser("alice", "alice@example.com"))
-```
-
-## 🏗️ Architecture
-
-FLEXT-Core is designed around Clean Architecture and SOLID principles.
-
-- **Protocols First**: Interfaces are defined using `` to adhere to the Dependency Inversion Principle.
-- **Layered Structure**:
-  - **Runtime**: Bridges external libraries and provides the DI surface.
-  - **Container**: Manages service lifecycles (Singleton, Factory, Scoped).
-  - **Handlers/Dispatcher**: Orchestrates application flow.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read our [Contributing Guide](docs/development/contributing.md) to get started.
-
-1. Fork the repository
-1. Create your feature branch (`git checkout -b feature/amazing-feature`)
-1. Commit your changes (`git commit -m 'Add amazing feature'`)
-1. Push to the branch (`git push origin feature/amazing-feature`)
-1. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- Engineering law: [`/flext/AGENTS.md`](../AGENTS.md)
+- Skills index: [`/flext/.agents/skills/`](../.agents/skills/)
+- Onboarding: [`/flext/docs/guides/onboarding.md`](../docs/guides/onboarding.md)
+- Full project portal: [`docs/index.md`](docs/index.md).

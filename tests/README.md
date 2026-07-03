@@ -19,7 +19,7 @@ ______________________________________________________________________
 ```text
 tests/
 ├── unit/                # Module-level guarantees (result, container, dispatcher, etc.)
-├── integration/         # Cross-module flows (config + container + dispatcher)
+├── integration/         # Cross-module flows (settings + container + dispatcher)
 ├── patterns/            # Behavioural contracts shared with ecosystem packages
 └── conftest.py          # Fixtures that bootstrap FlextContext and the global container
 ```

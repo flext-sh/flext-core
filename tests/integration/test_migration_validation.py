@@ -19,43 +19,40 @@ from __future__ import annotations
 
 from typing import override
 
-from pydantic import BaseModel as PydanticBaseModel, PrivateAttr
+from flext_tests import e, h, r, x
 
 from flext_core import (
-    FlextConstants,
     FlextContainer,
     FlextContext,
-    FlextDispatcher,
-    FlextExceptions,
-    FlextHandlers,
-    FlextLogger,
-    FlextMixins,
-    FlextModels,
-    FlextProtocols,
-    FlextRegistry,
-    FlextService,
     FlextSettings,
-    FlextTypes,
-    FlextUtilities,
-    r,
-    t,
+)
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core.service import FlextService
+from tests.base import s
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
+
+from .migration_validation_cases import (
+    TestsFlextFlextMigrationApplicationCase,
+    capture_stdout,
 )
 
 
-class TestMigrationScenario1:
-    """Test Scenario 1: Existing Application Using r (No Changes Required)."""
-
+class TestsFlextMigrationValidation(TestsFlextFlextMigrationApplicationCase):
     def test_flext_result_value_access_pattern(self) -> None:
         """Verify .value access pattern works correctly."""
 
-        def process_user(user_id: str) -> r[dict[str, str]]:
+        def process_user(user_id: str) -> p.Result[t.StrMapping]:
             if not user_id:
-                return r[dict[str, str]].fail("User ID required")
-            user_data: dict[str, str] = {"id": user_id, "name": "Alice"}
-            return r[dict[str, str]].ok(user_data)
+                return r[t.StrMapping].fail("User ID required")
+            user_data: t.StrMapping = {"id": user_id, "name": "Alice"}
+            return r[t.StrMapping].ok(user_data)
 
         result = process_user("user_123")
-        assert result.is_success
+        assert result.success
         assert result.value == {"id": "user_123", "name": "Alice"}
         assert result.value["id"] == "user_123"
         assert result.value["name"] == "Alice"
@@ -63,21 +60,17 @@ class TestMigrationScenario1:
     def test_flext_result_error_handling(self) -> None:
         """Verify error handling patterns continue working."""
 
-        def validate_email(email: str) -> r[str]:
+        def validate_email(email: str) -> p.Result[str]:
             if "@" not in email:
                 return r[str].fail("Invalid email format")
             return r[str].ok(email)
 
         failure_result = validate_email("invalid")
-        assert failure_result.is_failure
+        assert failure_result.failure
         assert failure_result.error and "Invalid email format" in failure_result.error
         success_result = validate_email("user@example.com")
-        assert success_result.is_success
+        assert success_result.success
         assert success_result.value == "user@example.com"
-
-
-class TestMigrationScenario2:
-    """Test Scenario 2: Using FlextContainer for Dependency Injection."""
 
     def test_container_global_instance(self) -> None:
         """Verify FlextContainer() continues working."""
@@ -90,112 +83,106 @@ class TestMigrationScenario2:
         """Verify service registration and resolution."""
         container = FlextContainer()
 
-        class TestService(PydanticBaseModel):
+        class TestService(FlextModelsPydantic.BaseModel):
             name: str = "test"
 
         test_service = TestService()
-        registration_result = container.register("test_migration_service", test_service)
+        registration_result = container.bind("test_migration_service", test_service)
         assert registration_result is container
-        resolution_result = container.get("test_migration_service")
-        assert resolution_result.is_success
+        resolution_result = container.resolve(
+            "test_migration_service",
+            type_cls=TestService,
+        )
+        assert resolution_result.success
         service = resolution_result.value
-        assert isinstance(service, TestService)
         assert service.name == "test"
 
-
-class TestMigrationScenario4:
-    """Test Scenario 4: Service Layer with FlextService."""
-
     def test_service_base_class_extension(self) -> None:
-        """Verify FlextService extension pattern continues working."""
+        """Verify s extension pattern continues working."""
 
         class UserService(FlextService[None]):
-            """User service extending FlextService."""
+            """User service extending s."""
 
-            _logger: FlextLogger = PrivateAttr(
-                default_factory=lambda: FlextLogger(__name__)
+            _logger: p.Logger = u.PrivateAttr(
+                default_factory=lambda: u.fetch_logger(__name__),
             )
 
             @override
-            def model_post_init(self, __context: t.Container | None, /) -> None:
+            def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
                 super().model_post_init(__context)
 
             @override
-            def execute(self, **_kwargs: t.Scalar) -> r[None]:
-                """Execute method required by FlextService abstract class."""
+            def execute(self, **kwargs: t.Scalar) -> p.Result[None]:
+                """Execute method required by s abstract class."""
                 return r[None].ok(None)
 
             def create_user(
                 self,
                 username: str,
                 email: str,
-            ) -> r[dict[str, str]]:
+            ) -> p.Result[t.StrMapping]:
                 """Create user with validation."""
                 if not username or not email:
-                    return r[dict[str, str]].fail(
-                        "Username and email required",
-                    )
+                    return r[t.StrMapping].fail("Username and email required")
                 self._logger.info("Creating user", username=username)
                 user_data = {"username": username, "email": email}
-                return r[dict[str, str]].ok(user_data)
+                return r[t.StrMapping].ok(user_data)
 
         service = UserService()
-        result = service.create_user("alice", "alice@example.com")
-        assert result.is_success
+        result = capture_stdout(
+            lambda: service.create_user("alice", "alice@example.com"),
+            contains="Creating user",
+        )
+        assert result.success
         assert result.value["username"] == "alice"
 
-
-class TestMigrationScenario5:
-    """Test Scenario 5: Logging with FlextLogger."""
-
     def test_logger_structured_logging(self) -> None:
-        """Verify FlextLogger continues working."""
-        logger = FlextLogger(__name__)
+        """Verify the public logging DSL continues working."""
+        logger = u.fetch_logger(__name__)
         assert logger is not None
-        logger.info("Test message", test_key="test_value")
-        logger.debug("Debug message")
-        logger.warning("Warning message")
-        logger.error("Error message")
-
-
-class TestBackwardCompatibility:
-    """Test complete backward compatibility with 0.9.9 API surface."""
+        _ = capture_stdout(
+            lambda: logger.error("Error message"),
+            contains="Error message",
+        )
 
     def test_all_stable_apis_accessible(self) -> None:
         """Verify all guaranteed stable APIs from API_STABILITY.md are accessible."""
         assert r is not None
         assert FlextContainer is not None
-        assert FlextModels is not None
-        assert FlextService is not None
-        assert FlextLogger is not None
+        assert m is not None
+        assert s is not None
+        assert callable(u.create_module_logger)
+        assert callable(u.build_dispatcher)
+        assert callable(u.build_registry)
         assert FlextSettings is not None
-        assert FlextConstants is not None
+        assert c is not None
         assert FlextContext is not None
-        assert FlextDispatcher is not None
-        assert FlextExceptions is not None
-        assert FlextHandlers is not None
-        assert FlextMixins is not None
-        assert FlextProtocols is not None
-        assert FlextRegistry is not None
-        assert FlextTypes is not None
-        assert FlextUtilities is not None
+        assert e is not None
+        assert h is not None
+        assert x is not None
+        assert p is not None
+        assert t is not None
+        assert u is not None
+
+        assert isinstance(u.build_dispatcher(), p.Dispatcher)
+        assert isinstance(u.build_registry(), p.Registry)
 
     def test_flext_result_all_methods(self) -> None:
         """Verify all r methods work correctly."""
         success = r[str].ok("test_value")
-        assert success.is_success
-        assert not success.is_failure
+        assert success.success
+        assert not success.failure
         assert success.error is None
         assert success.value == "test_value"
         assert success.value == "test_value"
         assert success.unwrap_or("default") == "test_value"
-        failure: r[str] = r[str].fail("test_error")
-        assert not failure.is_success
-        assert failure.is_failure
+        failure: p.Result[str] = r[str].fail("test_error")
+        assert not failure.success
+        assert failure.failure
         assert failure.error == "test_error"
         assert failure.unwrap_or("default") == "default"
         mapped = success.map(lambda x: x.upper())
-        assert mapped.is_success
+        assert mapped.success
         assert mapped.value == "TEST_VALUE"
 
     def test_core_apis_work_correctly(self) -> None:
@@ -207,49 +194,13 @@ class TestBackwardCompatibility:
         container = FlextContainer()
         assert container is not None
 
-
-class TestMigrationComplexity:
-    """Verify migration guide complexity rating (0/5 difficulty, <5 minutes)."""
-
-    def test_application_functionality_works(self) -> None:
-        """Verify application functionality works correctly."""
-
-        class ApplicationExample:
-            """Example application using r and logging."""
-
-            def __init__(self) -> None:
-                super().__init__()
-                self.logger = FlextLogger(__name__)
-                self.container = FlextContainer()
-
-            def process_data(
-                self,
-                data: dict[str, str],
-            ) -> r[dict[str, object]]:
-                """Typical data processing method."""
-                if not data:
-                    return r[dict[str, object]].fail(
-                        "Data required",
-                    )
-                self.logger.info("Processing data", size=len(data))
-                processed: dict[str, object] = {
-                    "original": str(data),
-                    "processed": True,
-                }
-                return r[dict[str, object]].ok(processed)
-
-        app = ApplicationExample()
-        result = app.process_data({"key": "value"})
-        assert result.is_success
-        assert result.value["processed"] is True
-
     def test_all_core_apis_functional(self) -> None:
         """Verify all core APIs remain functional."""
         result = r[str].ok("test")
-        assert result.is_success
+        assert result.success
         assert result.value == "test"
         container = FlextContainer()
         assert container is not None
-        logger = FlextLogger(__name__)
-        logger.info("Test")
+        logger = u.fetch_logger(__name__)
+        _ = capture_stdout(lambda: logger.info("Test"), contains="Test")
         assert True

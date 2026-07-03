@@ -1,0 +1,192 @@
+"""Runtime DI builders + ``build_service_runtime`` orchestration."""
+
+from __future__ import annotations
+
+from importlib import import_module
+
+from flext_core import (
+    FlextModels as m,
+    FlextProtocols as p,
+    FlextTypes as t,
+    FlextUtilitiesDiscovery,
+    FlextUtilitiesGuardsTypeProtocol,
+)
+
+from .model_options import FlextUtilitiesModelOptions
+
+
+class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
+    """Runtime DSL: dispatcher, registry, and service-runtime construction."""
+
+    @staticmethod
+    def _resolve_runtime_dispatcher(
+        runtime_options: m.RuntimeBootstrapOptions,
+        runtime_container: p.Container,
+    ) -> p.Dispatcher | None:
+        """Resolve the dispatcher from explicit options or the built container."""
+        explicit_dispatcher = runtime_options.dispatcher
+        if isinstance(explicit_dispatcher, p.Dispatcher):
+            return explicit_dispatcher
+        dispatcher_result = runtime_container.dispatcher()
+        return None if dispatcher_result.failure else dispatcher_result.value
+
+    @classmethod
+    def build_dispatcher(cls) -> p.Dispatcher:
+        """Materialize the canonical dispatcher implementation behind ``p.Dispatcher``."""
+        dispatcher_module = import_module("flext_core.dispatcher")
+        dispatcher_candidate = dispatcher_module.FlextDispatcher()
+        if not isinstance(dispatcher_candidate, p.Dispatcher):
+            msg = "Resolved dispatcher implementation does not satisfy p.Dispatcher"
+            raise TypeError(msg)
+        return dispatcher_candidate
+
+    @classmethod
+    def build_registry(
+        cls,
+        dispatcher: p.Dispatcher | None = None,
+        *,
+        runtime: m.ServiceRuntime | None = None,
+        auto_discover_handlers: bool = False,
+    ) -> p.Registry:
+        """Materialize the canonical registry implementation behind ``p.Registry``."""
+        resolved_dispatcher = dispatcher or (runtime.dispatcher if runtime else None)
+        registry_module = import_module("flext_core.registry")
+        registry_candidate = registry_module.FlextRegistry.create(
+            dispatcher=resolved_dispatcher,
+            runtime=runtime,
+            auto_discover_handlers=auto_discover_handlers,
+        )
+        if not isinstance(registry_candidate, p.Registry):
+            msg = "Resolved registry implementation does not satisfy p.Registry"
+            raise TypeError(msg)
+        return registry_candidate
+
+    @classmethod
+    def _resolve_runtime_registry(
+        cls,
+        runtime_options: m.RuntimeBootstrapOptions,
+        runtime: m.ServiceRuntime,
+    ) -> p.Registry:
+        """Resolve the registry from explicit options or the shared runtime DSL."""
+        explicit_registry = runtime_options.registry
+        if isinstance(explicit_registry, p.Registry):
+            return explicit_registry
+        return cls.build_registry(dispatcher=runtime.dispatcher, runtime=runtime)
+
+    @classmethod
+    def _resolve_runtime_settings(
+        cls,
+        runtime_options: m.RuntimeBootstrapOptions,
+    ) -> p.Settings:
+        """Resolve the runtime settings instance + apply overrides."""
+        settings_instance = (
+            runtime_options.settings
+            if isinstance(runtime_options.settings, p.Settings)
+            else None
+        )
+        settings_cls = (
+            type(settings_instance)
+            if settings_instance is not None
+            else cls.service_settings_type(runtime_options.settings_type)
+        )
+        settings_overrides = runtime_options.settings_overrides
+        if settings_instance is not None:
+            return (
+                settings_instance.clone(**settings_overrides)
+                if settings_overrides
+                else settings_instance
+            )
+        settings_source: p.SettingsType = settings_cls
+        return settings_source.fetch_global(overrides=settings_overrides)
+
+    @classmethod
+    def _build_runtime_container(
+        cls,
+        runtime_options: m.RuntimeBootstrapOptions,
+        runtime_settings: p.Settings,
+        runtime_context: p.Context,
+    ) -> p.Container:
+        """Construct + wire the runtime container from resolved options."""
+        container_type = cls._container_type()
+        bootstrap_services = runtime_options.services or {}
+        wire_modules, wire_packages, wire_classes = (
+            FlextUtilitiesDiscovery.resolve_wire_targets(
+                runtime_options.wire_modules,
+                runtime_options.wire_packages,
+                runtime_options.wire_classes,
+            )
+        )
+        shared_container: p.Container = container_type.shared()
+        runtime_container: p.Container = shared_container.scope(
+            subproject=runtime_options.subproject,
+            registration=m.ServiceRegistrationSpec.model_validate({
+                "settings": runtime_settings,
+                "context": runtime_context,
+                "services": bootstrap_services,
+                "factories": runtime_options.factories,
+                "resources": runtime_options.resources,
+            }),
+        )
+        normalized_container_overrides = cls._normalize_runtime_override_mapping(
+            runtime_options.container_overrides,
+        )
+        if normalized_container_overrides:
+            runtime_container.apply(normalized_container_overrides)
+        if wire_modules or wire_packages or wire_classes:
+            runtime_container.wire(
+                modules=wire_modules,
+                packages=wire_packages,
+                classes=wire_classes,
+            )
+        return runtime_container
+
+    @classmethod
+    def build_service_runtime(
+        cls,
+        source: (
+            m.RuntimeBootstrapOptions | t.MappingKV[str, t.JsonPayload] | p.Base | None
+        ) = None,
+        **overrides: t.JsonPayload,
+    ) -> m.ServiceRuntime:
+        """Materialize settings, context, and container from one runtime specification."""
+        runtime_options = cls.resolve_runtime_options(source, **overrides)
+        context_type = cls._context_type()
+        runtime_settings = cls._resolve_runtime_settings(runtime_options)
+        runtime_context_candidate = runtime_options.context
+        runtime_context: p.Context = (
+            runtime_context_candidate
+            if FlextUtilitiesGuardsTypeProtocol.context(runtime_context_candidate)
+            else context_type.create()
+        )
+        runtime_container = cls._build_runtime_container(
+            runtime_options,
+            runtime_settings,
+            runtime_context,
+        )
+        runtime_container_context = getattr(runtime_container, "context", None)
+        resolved_context = (
+            runtime_container_context
+            if FlextUtilitiesGuardsTypeProtocol.context(runtime_container_context)
+            else runtime_context
+        )
+        runtime_dispatcher = cls._resolve_runtime_dispatcher(
+            runtime_options,
+            runtime_container,
+        )
+        service_runtime = m.ServiceRuntime(
+            settings=runtime_settings,
+            context=resolved_context,
+            container=runtime_container,
+            dispatcher=runtime_dispatcher,
+        )
+        runtime_registry = cls._resolve_runtime_registry(
+            runtime_options,
+            service_runtime,
+        )
+        resolved_runtime: m.ServiceRuntime = service_runtime.model_copy(
+            update={"registry": runtime_registry},
+        )
+        return resolved_runtime
+
+
+__all__: list[str] = ["FlextUtilitiesModelRuntime"]

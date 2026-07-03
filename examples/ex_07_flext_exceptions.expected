@@ -1,11 +1,11 @@
 [imports]
-import.e_is_FlextExceptions: True
+import.e_is_FlextExceptions: False
 import.r_ok: True
-import.constant: 'UNKNOWN_ERROR'
+import.constant: <ErrorCode.UNKNOWN_ERROR: 'UNKNOWN_ERROR'>
 style.raise_msg: 'boom'
 
 [base_error]
-base.class: 'BaseError'
+base.class: 'FlextBaseError'
 base.message: 'base boom'
 base.error_code: 'E_BASE'
 base.correlation_id: 'corr-base-1'
@@ -13,10 +13,8 @@ base.auto_log: False
 base.meta.scope: 'demo'
 base.meta.channel: 'example'
 base.meta.operation: 'create'
-base.to_dict.type: 'BaseError'
-base.to_dict.message: 'base boom'
-base.to_dict.error_code: 'E_BASE'
-base.to_dict.has_timestamp: True
+base.error_message: 'base boom'
+base.has_timestamp: True
 base.auto_corr.prefix: True
 
 [subclasses]

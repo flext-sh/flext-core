@@ -1,0 +1,64 @@
+"""Context export and snapshot models.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from types import MappingProxyType
+from typing import Annotated
+
+from pydantic import BeforeValidator, Field
+
+from flext_core import t
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.entity import FlextModelsEntity
+
+from ._data import FlextModelsContextData
+
+
+class FlextModelsContextExport:
+    """Namespace for context export models."""
+
+    class ContextExport(
+        FlextModelsContextData.SerializableDataValidatorMixin,
+        FlextModelsEntity.Value,
+    ):
+        """Typed snapshot returned by export_snapshot."""
+
+        data: Annotated[
+            t.MappingKV[str, t.JsonPayload],
+            Field(
+                default_factory=lambda: MappingProxyType({}),
+                description="All context data from all scopes",
+            ),
+        ]
+        metadata: Annotated[
+            m.Metadata | FlextModelsContainers.Dict | None,
+            BeforeValidator(
+                lambda v: FlextModelsContextData.normalize_metadata_before(v),
+            ),
+            Field(
+                default=None,
+                description="Context metadata (creation info, source, etc.)",
+            ),
+        ] = None
+        statistics: Annotated[
+            t.JsonMapping,
+            BeforeValidator(
+                lambda v: (
+                    FlextModelsContextData.normalize_to_mapping(v)
+                    if v is not None
+                    else {}
+                ),
+            ),
+            Field(
+                default_factory=lambda: MappingProxyType({}),
+                description="Usage statistics (operation counts, timing info)",
+            ),
+        ]
+
+
+__all__: t.MutableSequenceOf[str] = ["FlextModelsContextExport"]

@@ -1,11 +1,18 @@
 """Domain service base class for FLEXT applications.
 
-FlextService[T] supplies validation, dependency injection, and railway-style
-result handling for domain services. It relies on structural typing to satisfy
-``p.Service`` and provides a clean service lifecycle.
+`FlextService[TDomainResult]` supplies validation, dependency injection, and
+railway-style result handling for domain services. It relies on structural
+typing to satisfy `p.Service` and provides a clean service lifecycle.
 
-Note: CQRS components (FlextDispatcher, FlextRegistry) should be used directly,
-not through FlextService. This keeps FlextService focused on service concerns.
+Singleton kernel (mirrors `FlextSettingsBase`):
+
+- per-class `_instance` ClassVar with thread-safe lock,
+- `fetch_global()` — return the per-class shared singleton,
+- `reset_for_testing()` — drop the singleton slot for test isolation.
+
+Per-project `Flext<X>ServiceBase` MUST inherit `fetch_global` /
+`reset_for_testing` from this root rather than redeclaring them
+(ENFORCE-057 rejects per-project singleton hand-rolling).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,423 +20,90 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from collections.abc import Mapping, Sequence
-from types import ModuleType
-from typing import Annotated, override
+import threading
+from typing import ClassVar, Self, Unpack
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    PrivateAttr,
-    ValidationError,
-    computed_field,
-    field_validator,
-)
+from pydantic import ConfigDict
 
-from flext_core import (
-    FlextContainer,
-    FlextContext,
-    FlextSettings,
-    e,
-    h,
-    m,
-    p,
-    r,
-    t,
-    u,
-    x,
-)
+from flext_core import p, t, x
 
 
-class FlextService[
-    TDomainResult: t.NormalizedValue
-    | BaseModel
-    | list[t.NormalizedValue | BaseModel] = t.NormalizedValue
-    | BaseModel
-    | list[t.NormalizedValue | BaseModel]
-](x, ABC):
-    """Base class for domain services in FLEXT applications.
+class FlextService[TDomainResult: p.Base = p.Base](x):
+    """Base class for domain services in FLEXT applications."""
 
-    Subclasses implement ``execute`` to run business logic and return
-    ``r`` (r) values. The base inherits :class:`x` (which extends
-    :class:`FlextRuntime`) so services can reuse runtime automation for creating
-    scoped config/context/container triples via :meth:`create_service_runtime`
-    while remaining protocol compliant via structural typing.
-
-    Example:
-        class UserService(FlextService[User]):
-            def execute(self) -> r[User]:
-                return r.ok(User(id="123", name="Alice"))
-
-        # Usage
-        service = UserService()
-        result = service.execute()
-        if result.is_success:
-            user = result.value
-
-    """
-
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         strict=True,
         arbitrary_types_allowed=True,
         extra="forbid",
         use_enum_values=True,
         validate_assignment=True,
     )
-    # --- Service Bootstrap Configuration ---
-    config_type: Annotated[
-        type[FlextSettings] | None, Field(default=None, exclude=True)
-    ]
-    config_overrides: Annotated[
-        Mapping[str, t.Scalar] | None, Field(default=None, exclude=True)
-    ]
-    initial_context: Annotated[FlextContext | None, Field(default=None, exclude=True)]
-    subproject: Annotated[str | None, Field(default=None, exclude=True)]
-    services: Annotated[
-        Mapping[str, t.RegisterableService] | None, Field(default=None, exclude=True)
-    ]
-    factories: Annotated[
-        Mapping[str, t.FactoryCallable] | None, Field(default=None, exclude=True)
-    ]
-    resources: Annotated[
-        Mapping[str, t.ResourceCallable] | None, Field(default=None, exclude=True)
-    ]
-    container_overrides: Annotated[
-        Mapping[str, t.Scalar] | None, Field(default=None, exclude=True)
-    ]
-    wire_modules: Annotated[
-        Sequence[ModuleType] | None, Field(default=None, exclude=True)
-    ]
-    wire_packages: Annotated[Sequence[str] | None, Field(default=None, exclude=True)]
-    wire_classes: Annotated[Sequence[type] | None, Field(default=None, exclude=True)]
 
-    # --- Internal State ---
-    _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
+    _lock: ClassVar[threading.RLock] = threading.RLock()
+    _instance: ClassVar[Self | None] = None
 
-    @override
-    def model_post_init(self, __context: t.Container | None, /) -> None:
-        """Post-initialization hook.
+    def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
+        """Inject a per-class singleton slot for every concrete subclass."""
+        _ = kwargs
+        super().__init_subclass__()
+        cls._instance = None
 
-        Sets up the service instance with runtime configuration after Pydantic
-        has populated the fields.
+    def __init__(self, **model_data: t.GuardInput | None) -> None:
+        """Initialize the service model through the canonical Pydantic bag.
 
-        Auto-discovery of handler-decorated methods enables zero-config handler
-        registration: developers can mark methods with @h.handler() and they are
-        automatically discovered.
+        ``FlextService`` is the shared kernel for many project-specific facades,
+        so subclasses pass both common runtime fields and their own model fields
+        through ``super().__init__(...)``. Keeping that owner entrypoint explicit
+        avoids ``super().__init__`` self-type mismatches without narrowing the
+        accepted field surface of descendant services.
         """
-        runtime = self._create_initial_runtime()
-        with FlextContext.create().Service.service_context(
-            self.__class__.__name__, runtime.config.version
-        ):
-            pass
-        if not isinstance(runtime.context, FlextContext):
-            msg = "Expected FlextContext"
-            raise TypeError(msg)
-        if not isinstance(runtime.config, FlextSettings):
-            msg = "Expected FlextSettings"
-            raise TypeError(msg)
-        self._context = runtime.context
-        self._config = runtime.config
-        self._container = runtime.container
-        self._runtime = runtime
-        self._discovered_handlers = (
-            h.Discovery.scan_class(self.__class__)
-            if h.Discovery.has_handlers(self.__class__)
-            else []
-        )
-
-    @computed_field
-    @property
-    def result(self) -> TDomainResult:
-        """Get the execution result, raising exception on failure."""
-        if self._execution_result is None:
-            self._execution_result = self.execute()
-        execution_result: r[TDomainResult] = self._execution_result
-        if execution_result.is_success:
-            return execution_result.unwrap()
-        raise e.BaseError(execution_result.error or "Service execution failed")
-
-    _context: p.Context | None = PrivateAttr(default=None)
-    _config: FlextSettings | None = PrivateAttr(default=None)
-    _container: p.DI | None = PrivateAttr(default=None)
-    _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _discovered_handlers: list[tuple[str, m.DecoratorConfig]] = PrivateAttr(
-        default_factory=lambda: list[tuple[str, m.DecoratorConfig]]()
-    )
-
-    @property
-    @override
-    def config(self) -> p.Config:
-        """Service-scoped configuration clone."""
-        return u.require_initialized(self._config, "Config")
-
-    @property
-    @override
-    def container(self) -> p.DI:
-        """Container bound to the service context/config."""
-        return u.require_initialized(self._container, "Container")
-
-    @property
-    @override
-    def context(self) -> p.Context:
-        """Service-scoped execution context."""
-        return u.require_initialized(self._context, "Context")
-
-    @computed_field
-    def runtime(self) -> m.ServiceRuntime:
-        """View of the runtime triple for this service instance."""
-        return u.require_initialized(self._runtime, "Runtime")
-
-    @property
-    def settings(self) -> FlextSettings:
-        """Return service config narrowed to FlextSettings."""
-        config = self.config
-        if isinstance(config, FlextSettings):
-            return config
-        msg = "Service config is not FlextSettings"
-        raise TypeError(msg)
+        self.__pydantic_validator__.validate_python(model_data, self_instance=self)
 
     @classmethod
-    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions | None:
-        return None
+    def fetch_global(cls) -> Self:
+        """Return the per-class shared singleton.
 
-    def _create_initial_runtime(self) -> m.ServiceRuntime:
-        """Build the initial runtime triple for a new service instance."""
-        bootstrap_opts = self._runtime_bootstrap_options()
-        config_type = self._get_service_config_type()
-        config_type_raw = self.config_type or (
-            bootstrap_opts.config_type if bootstrap_opts is not None else None
-        )
-        config_type_val: type[FlextSettings] | None
-        if (
-            config_type_raw is not None
-            and isinstance(config_type_raw, type)
-            and issubclass(config_type_raw, FlextSettings)
-        ):
-            config_type_val = config_type_raw
-        else:
-            config_type_val = config_type
-        ctx_raw = self.initial_context or (
-            bootstrap_opts.context if bootstrap_opts is not None else None
-        )
-        context_val: p.Context | None = ctx_raw if u.is_context(ctx_raw) else None
-        config_overrides = self.config_overrides or (
-            bootstrap_opts.config_overrides if bootstrap_opts is not None else None
-        )
-        subproject = self.subproject or (
-            bootstrap_opts.subproject if bootstrap_opts is not None else None
-        )
-        services = self.services or (
-            bootstrap_opts.services if bootstrap_opts is not None else None
-        )
-        factories = self.factories or (
-            bootstrap_opts.factories if bootstrap_opts is not None else None
-        )
-        resources = self.resources or (
-            bootstrap_opts.resources if bootstrap_opts is not None else None
-        )
-        container_overrides = self.container_overrides or (
-            bootstrap_opts.container_overrides if bootstrap_opts is not None else None
-        )
-        wire_modules = self.wire_modules or (
-            bootstrap_opts.wire_modules if bootstrap_opts is not None else None
-        )
-        wire_packages = self.wire_packages or (
-            bootstrap_opts.wire_packages if bootstrap_opts is not None else None
-        )
-        wire_classes = self.wire_classes or (
-            bootstrap_opts.wire_classes if bootstrap_opts is not None else None
-        )
-        return self._create_runtime(
-            config_type=config_type_val,
-            config_overrides=config_overrides,
-            context=context_val,
-            subproject=subproject,
-            services=services,
-            factories=factories,
-            resources=resources,
-            container_overrides=container_overrides,
-            wire_modules=wire_modules,
-            wire_packages=wire_packages,
-            wire_classes=wire_classes,
-        )
+        Mirrors `FlextSettingsBase.fetch_global` so consumers have a single
+        canonical accessor across services and settings (§3.5).
+        """
+        existing = getattr(cls, "_instance", None)
+        if isinstance(existing, cls):
+            return existing
+        with cls._lock:
+            existing = getattr(cls, "_instance", None)
+            if isinstance(existing, cls):
+                return existing
+            instance = cls()
+            cls._instance = instance
+            return instance
 
     @classmethod
-    def _create_runtime(
-        cls,
-        *,
-        config_type: type[FlextSettings] | None = None,
-        config_overrides: Mapping[str, t.Scalar] | None = None,
-        context: p.Context | None = None,
-        subproject: str | None = None,
-        services: Mapping[str, t.RegisterableService] | None = None,
-        factories: Mapping[str, t.FactoryCallable] | None = None,
-        resources: Mapping[str, t.ResourceCallable] | None = None,
-        container_overrides: Mapping[str, t.Scalar] | None = None,
-        wire_modules: Sequence[ModuleType] | None = None,
-        wire_packages: Sequence[str] | None = None,
-        wire_classes: Sequence[type] | None = None,
-    ) -> m.ServiceRuntime:
-        """Materialize config, context, and container with DI wiring in one call.
-
-        This method provides the same parameterized automation previously found in
-        ``FlextRuntime.create_service_runtime`` but uses the factory methods of each
-        class directly (Clean Architecture - each class knows how to instantiate itself).
-
-        All runtime components are created via the bootstrap options pattern:
-        1. Config materialization with overrides
-        2. Context creation with initial data
-        3. Container creation with registrations
-        4. Dispatcher creation with auto-discovery
-        5. Registry creation
-
-        All parameters are optional and allow callers to:
-        - Clone or materialize configuration models with optional overrides.
-        - Seed containers with services/factories/resources without additional
-          registration calls.
-        - Apply container configuration overrides before wiring modules, packages,
-          or classes for ``@inject`` usage.
-
-        This method is called by :meth:`_create_initial_runtime` which uses
-        :meth:`_runtime_bootstrap_options` to get the configuration options.
-        """
-        config_cls = config_type or FlextSettings
-        runtime_config = config_cls.model_validate(config_overrides or {})
-        runtime_context_input = (
-            context if context is not None else FlextContext.create()
-        )
-        runtime_config_typed: p.Config = runtime_config
-        runtime_container = FlextContainer.create().scoped(
-            config=runtime_config_typed,
-            context=runtime_context_input,
-            subproject=subproject,
-            services=services,
-            factories=factories,
-            resources=resources,
-        )
-        if container_overrides:
-            runtime_container.configure(container_overrides)
-        if wire_modules or wire_packages or wire_classes:
-            runtime_container.wire_modules(
-                modules=wire_modules, packages=wire_packages, classes=wire_classes
-            )
-        return m.ServiceRuntime(
-            config=runtime_config,
-            context=runtime_container.context,
-            container=runtime_container,
-        )
+    def reset_for_testing(cls) -> None:
+        """Drop the per-class singleton slot for test isolation."""
+        with cls._lock:
+            cls._instance = None
 
     @classmethod
-    def _get_service_config_type(cls) -> type[FlextSettings]:
-        """Get the config type for this service class.
+    def with_settings(cls, settings: p.Settings) -> Self:
+        """Return the per-class singleton with one isolated runtime settings clone.
 
-        Services can override this method to specify their specific config type.
-        Defaults to FlextSettings for generic services.
-
-        Returns:
-            type[FlextSettings]: The config class to use for this service
-
+        Uses the structural `p.Settings.clone()` contract already consumed by the
+        runtime bootstrap path so callers can inject a settings snapshot without
+        coupling this service kernel to `FlextSettingsBase`.
         """
-        return FlextSettings
+        instance = cls.fetch_global()
+        instance.runtime_settings = settings.clone()
+        instance._runtime = None
+        return instance
 
-    @field_validator("services", mode="before")
-    @classmethod
-    def _normalize_scoped_services(
-        cls, services: Mapping[str, t.RegisterableService] | None
-    ) -> Mapping[str, t.RegisterableService] | None:
-        """Normalize and validate scoped services using Pydantic model."""
-        if services is None:
-            return None
-        normalized: dict[str, t.RegisterableService] = {}
-        for name, service in services.items():
-            try:
-                m.ServiceRegistration(name=str(name), service=service)
-                normalized[str(name)] = service
-            except ValidationError:
-                continue
-        return normalized or None
+    def execute(self) -> p.Result[TDomainResult]:
+        """Execute the service domain logic.
 
-    @abstractmethod
-    def execute(self) -> r[TDomainResult]:
-        """Execute domain service logic.
-
-        This is the core business logic method that must be implemented by all
-        concrete service subclasses. It contains the actual domain operations,
-        business rules, and result generation logic specific to each service.
-
-        Business Rule: Executes the domain service business logic and returns
-        a r indicating success or failure. This method is the primary
-        entry point for all domain service operations in the FLEXT ecosystem.
-        All business logic, domain rules, and operational workflows are executed
-        through this method. The method must follow railway-oriented programming
-        principles, returning ``r[TDomainResult]`` instead of raising exceptions,
-        ensuring predictable error handling and composable service pipelines.
-
-        Audit Implication: Service execution is a critical audit event that
-        represents the execution of business logic and domain operations. All
-        service executions should be logged with appropriate context and
-        correlation IDs. The r return type ensures audit trail
-        completeness by tracking both successful operations (with domain results)
-        and failed operations (with error details and error codes). Audit logs
-        should capture service identity, execution context, input parameters,
-        execution duration, and result status.
-
-        The method should follow railway-oriented programming principles,
-        returning ``r[T]`` for consistent error handling and success
-        indication.
-
-        Returns:
-            r[TDomainResult]: Success with domain result or failure
-                with error details
-
-        Note:
-            Implementations should focus on business logic only. Infrastructure
-            concerns like validation and error handling are handled by the base class.
-
-        Raises:
-            None: Uses r for error handling instead of exceptions.
-
+        Concrete services must override this method with their typed runtime result.
         """
-        ...
-
-    def get_service_info(self) -> Mapping[str, t.Scalar]:
-        """Get service metadata and configuration information."""
-        return {"service_type": self.__class__.__name__}
-
-    def is_valid(self) -> bool:
-        """Check if service is in valid state for execution."""
-        try:
-            return self.validate_business_rules().is_success
-        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
-            self.logger.debug("Service business rule validation failed", exc_info=exc)
-            return False
-
-    def validate_business_rules(self) -> r[bool]:
-        """Validate business rules with extensible validation pipeline.
-
-        Base method for business rule validation that can be overridden by subclasses
-        to implement custom validation logic. By default, returns success. Subclasses
-        should extend this method to add domain-specific business rule validation.
-
-        Note: Cannot be @staticmethod because subclasses override this method and
-        may need to access instance state. The base implementation doesn't use self,
-        but the method signature must remain an instance method for polymorphism.
-
-        Returns:
-            r[bool]: Success (True) if all business rules pass, failure with error details
-
-        Example:
-            >>> class ValidatedService(s[Data]):
-            ...     def validate_business_rules(self) -> r[bool]:
-            ...         if not self.has_required_data():
-            ...             return r[bool].fail("Missing required data")
-            ...         return r[bool].ok(True)
-
-        """
-        return r[bool].ok(value=True)
+        msg = f"{type(self).__name__}.execute() must be implemented"
+        raise NotImplementedError(msg)
 
 
 s = FlextService
-__all__ = ["FlextService", "s"]
+__all__: t.MutableSequenceOf[str] = ["FlextService", "s"]

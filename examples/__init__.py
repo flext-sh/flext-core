@@ -1,319 +1,195 @@
-# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
-#
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Examples package."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import (
+    build_lazy_import_map,
+    install_lazy_exports,
+    merge_lazy_imports,
+)
 
 if TYPE_CHECKING:
-    from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
-    from examples._models.ex01 import (
-        Ex01DemonstrationResult,
-        Ex01DemonstrationResult as r,
-        Ex01InvalidPersonPayload,
-        Ex01RunDemonstrationCommand,
-        Ex01User,
-        Ex01ValidPersonPayload,
+    from examples._models.errors import (
+        ExamplesFlextModelsErrors as ExamplesFlextModelsErrors,
     )
-    from examples._models.ex02 import (
-        Ex02CacheService,
-        Ex02DatabaseService,
-        Ex02DatabaseService as s,
-        Ex02EmailService,
-        Ex02TestConfig,
+    from examples._models.ex00 import ExamplesFlextModelsEx00 as ExamplesFlextModelsEx00
+    from examples._models.ex01 import ExamplesFlextModelsEx01 as ExamplesFlextModelsEx01
+    from examples._models.ex02 import ExamplesFlextModelsEx02 as ExamplesFlextModelsEx02
+    from examples._models.ex03 import ExamplesFlextModelsEx03 as ExamplesFlextModelsEx03
+    from examples._models.ex04 import ExamplesFlextModelsEx04 as ExamplesFlextModelsEx04
+    from examples._models.ex05 import ExamplesFlextModelsEx05 as ExamplesFlextModelsEx05
+    from examples._models.ex07 import ExamplesFlextModelsEx07 as ExamplesFlextModelsEx07
+    from examples._models.ex08 import ExamplesFlextModelsEx08 as ExamplesFlextModelsEx08
+    from examples._models.ex10 import ExamplesFlextModelsEx10 as ExamplesFlextModelsEx10
+    from examples._models.ex11 import ExamplesFlextModelsEx11 as ExamplesFlextModelsEx11
+    from examples._models.ex12 import ExamplesFlextModelsEx12 as ExamplesFlextModelsEx12
+    from examples._models.ex14 import ExamplesFlextModelsEx14 as ExamplesFlextModelsEx14
+    from examples._models.output import (
+        ExamplesFlextModelsOutput as ExamplesFlextModelsOutput,
     )
-    from examples._models.ex03 import (
-        Ex03Email,
-        Ex03Money,
-        Ex03Order,
-        Ex03OrderItem,
-        Ex03User,
+    from examples._models.shared import (
+        ExamplesFlextSharedHandle as ExamplesFlextSharedHandle,
+        ExamplesFlextSharedPerson as ExamplesFlextSharedPerson,
     )
-    from examples._models.ex04 import (
-        Ex04AutoCommand,
-        Ex04CreateUser,
-        Ex04DeleteUser,
-        Ex04FailingDelete,
-        Ex04GetUser,
-        Ex04NoSubscriberEvent,
-        Ex04Ping,
-        Ex04UnknownQuery,
-        Ex04UserCreated,
+    from examples._shared_parts.shared_part_01 import (
+        ExamplesFlextSharedBase as ExamplesFlextSharedBase,
     )
-    from examples._models.ex05 import (
-        Ex05BadProcessor,
-        Ex05GoodProcessor,
-        Ex05HandlerBad,
-        Ex05HandlerLike,
-        Ex05StatusEnum,
-        Ex05UserModel,
+    from examples.constants import c as c
+    from examples.ex_01_flext_result import Ex01r as Ex01r
+    from examples.ex_01_flext_result_helpers import (
+        Ex01ResultAdvancedSections as Ex01ResultAdvancedSections,
     )
-    from examples._models.ex07 import (
-        Ex07CreateUserCommand,
-        Ex07DemoPlugin,
-        Ex07GetUserQuery,
-        Ex07UserCreatedEvent,
+    from examples.ex_02_flext_settings import Ex02FlextSettings as Ex02FlextSettings
+    from examples.ex_02_flext_settings_helpers import (
+        Ex02FlextSettingsFieldChecks as Ex02FlextSettingsFieldChecks,
     )
-    from examples._models.ex08 import Ex08Order, Ex08User
-    from examples._models.ex10 import (
-        Ex10CommandBusStub,
-        Ex10ContextPayload,
-        Ex10DerivedMessage,
-        Ex10Entity,
-        Ex10Message,
-        Ex10ProcessorBad,
-        Ex10ProcessorGood,
-        Ex10ProtocolHandler,
-        Ex10ServiceStub,
-    )
-    from examples._models.ex11 import (
-        Ex11CommandBusStub,
-        Ex11EntityStub,
-        Ex11HandlerLike,
-        Ex11HandlerLikeService,
-        Ex11Payload,
-        Ex11ProcessorProtocolBad,
-        Ex11ProcessorProtocolGood,
-    )
-    from examples._models.ex12 import Ex12CommandA, Ex12CommandB
-    from examples._models.ex14 import (
-        Ex14CreateUserCommand,
-        Ex14GetUserQuery,
-        Ex14UserDTO,
-    )
-    from examples._models.exconfig import ExConfigAppConfig
-    from examples._models.shared import SharedHandle, SharedPerson
-    from examples.ex_01_flext_result import Ex01r
-    from examples.ex_02_flext_settings import Ex02FlextSettings
-    from examples.ex_03_flext_logger import Ex03FlextLogger
-    from examples.ex_04_flext_dispatcher import Ex04FlextDispatcher
-    from examples.ex_05_flext_mixins import Ex05FlextMixins, Ex05FlextMixins as x
-    from examples.ex_06_flext_context import Ex06FlextContext
+    from examples.ex_03_flext_logger import Ex03FlextLogger as Ex03FlextLogger
+    from examples.ex_04_flext_dispatcher import Ex04DispatchDsl as Ex04DispatchDsl
+    from examples.ex_05_flext_mixins import Ex05FlextMixins as Ex05FlextMixins
+    from examples.ex_06_flext_context import Ex06FlextContext as Ex06FlextContext
     from examples.ex_07_flext_exceptions import (
-        Ex07FlextExceptions,
-        Ex07FlextExceptions as e,
+        Ex07FlextExceptions as Ex07FlextExceptions,
     )
-    from examples.ex_08_flext_container import Ex08FlextContainer
+    from examples.ex_07_flext_exceptions_helpers import (
+        Ex07FlextExceptionSubclasses as Ex07FlextExceptionSubclasses,
+    )
+    from examples.ex_08_container_lifecycle import (
+        Ex08ContainerLifecycle as Ex08ContainerLifecycle,
+    )
+    from examples.ex_08_container_registration import (
+        Ex08ContainerRegistration as Ex08ContainerRegistration,
+    )
+    from examples.ex_08_container_scoped import (
+        Ex08ContainerScoped as Ex08ContainerScoped,
+    )
+    from examples.ex_08_flext_container import Ex08FlextContainer as Ex08FlextContainer
     from examples.ex_09_flext_decorators import (
-        Ex09FlextDecorators,
-        Ex09FlextDecorators as d,
+        Ex09FlextDecorators as Ex09FlextDecorators,
     )
-    from examples.ex_10_flext_handlers import Ex10FlextHandlers, Ex10FlextHandlers as h
-    from examples.ex_11_flext_service import Ex11FlextService
-    from examples.ex_12_flext_registry import Ex12FlextRegistry
+    from examples.ex_10_flext_handlers import Ex10FlextHandlers as Ex10FlextHandlers
+    from examples.ex_11_flext_service import ExampleService as ExampleService
+    from examples.ex_12_flext_registry import Ex12RegistryDsl as Ex12RegistryDsl
+    from examples.ex_12_registry_flow import Ex12RegistryFlow as Ex12RegistryFlow
+    from examples.ex_12_registry_plugins import (
+        Ex12RegistryPlugins as Ex12RegistryPlugins,
+    )
+    from examples.ex_12_registry_support import ProtocolHandler as ProtocolHandler
     from examples.logging_config_once_pattern import (
-        DatabaseService,
-        MigrationService,
-        main,
+        ExamplesFlextDatabaseService as ExamplesFlextDatabaseService,
+        ExamplesFlextMigrationService as ExamplesFlextMigrationService,
     )
-    from examples.models import (
-        FlextCoreExampleModels,
-        FlextCoreExampleModels as m,
-        UserInput,
-        UserProfile,
-        em,
-    )
-    from examples.shared import Examples
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
-_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "DatabaseService": ("examples.logging_config_once_pattern", "DatabaseService"),
-    "Ex00UserInput": ("examples._models.ex00", "Ex00UserInput"),
-    "Ex00UserProfile": ("examples._models.ex00", "Ex00UserProfile"),
-    "Ex01DemonstrationResult": ("examples._models.ex01", "Ex01DemonstrationResult"),
-    "Ex01InvalidPersonPayload": ("examples._models.ex01", "Ex01InvalidPersonPayload"),
-    "Ex01RunDemonstrationCommand": (
-        "examples._models.ex01",
-        "Ex01RunDemonstrationCommand",
+    from examples.models import ExamplesFlextModels as ExamplesFlextModels, m as m
+    from examples.protocols import p as p
+    from examples.settings import ExamplesSettings as ExamplesSettings
+    from examples.shared import ExamplesFlextShared as ExamplesFlextShared
+    from examples.typings import ExamplesFlextTypes as ExamplesFlextTypes, t as t
+    from examples.utilities import u as u
+    from flext_core import d as d, e as e, h as h, r as r, s as s, x as x
+_LAZY_IMPORTS = merge_lazy_imports(
+    (
+        "._models",
+        "._shared_parts",
     ),
-    "Ex01User": ("examples._models.ex01", "Ex01User"),
-    "Ex01ValidPersonPayload": ("examples._models.ex01", "Ex01ValidPersonPayload"),
-    "Ex01r": ("examples.ex_01_flext_result", "Ex01r"),
-    "Ex02CacheService": ("examples._models.ex02", "Ex02CacheService"),
-    "Ex02DatabaseService": ("examples._models.ex02", "Ex02DatabaseService"),
-    "Ex02EmailService": ("examples._models.ex02", "Ex02EmailService"),
-    "Ex02FlextSettings": ("examples.ex_02_flext_settings", "Ex02FlextSettings"),
-    "Ex02TestConfig": ("examples._models.ex02", "Ex02TestConfig"),
-    "Ex03Email": ("examples._models.ex03", "Ex03Email"),
-    "Ex03FlextLogger": ("examples.ex_03_flext_logger", "Ex03FlextLogger"),
-    "Ex03Money": ("examples._models.ex03", "Ex03Money"),
-    "Ex03Order": ("examples._models.ex03", "Ex03Order"),
-    "Ex03OrderItem": ("examples._models.ex03", "Ex03OrderItem"),
-    "Ex03User": ("examples._models.ex03", "Ex03User"),
-    "Ex04AutoCommand": ("examples._models.ex04", "Ex04AutoCommand"),
-    "Ex04CreateUser": ("examples._models.ex04", "Ex04CreateUser"),
-    "Ex04DeleteUser": ("examples._models.ex04", "Ex04DeleteUser"),
-    "Ex04FailingDelete": ("examples._models.ex04", "Ex04FailingDelete"),
-    "Ex04FlextDispatcher": ("examples.ex_04_flext_dispatcher", "Ex04FlextDispatcher"),
-    "Ex04GetUser": ("examples._models.ex04", "Ex04GetUser"),
-    "Ex04NoSubscriberEvent": ("examples._models.ex04", "Ex04NoSubscriberEvent"),
-    "Ex04Ping": ("examples._models.ex04", "Ex04Ping"),
-    "Ex04UnknownQuery": ("examples._models.ex04", "Ex04UnknownQuery"),
-    "Ex04UserCreated": ("examples._models.ex04", "Ex04UserCreated"),
-    "Ex05BadProcessor": ("examples._models.ex05", "Ex05BadProcessor"),
-    "Ex05FlextMixins": ("examples.ex_05_flext_mixins", "Ex05FlextMixins"),
-    "Ex05GoodProcessor": ("examples._models.ex05", "Ex05GoodProcessor"),
-    "Ex05HandlerBad": ("examples._models.ex05", "Ex05HandlerBad"),
-    "Ex05HandlerLike": ("examples._models.ex05", "Ex05HandlerLike"),
-    "Ex05StatusEnum": ("examples._models.ex05", "Ex05StatusEnum"),
-    "Ex05UserModel": ("examples._models.ex05", "Ex05UserModel"),
-    "Ex06FlextContext": ("examples.ex_06_flext_context", "Ex06FlextContext"),
-    "Ex07CreateUserCommand": ("examples._models.ex07", "Ex07CreateUserCommand"),
-    "Ex07DemoPlugin": ("examples._models.ex07", "Ex07DemoPlugin"),
-    "Ex07FlextExceptions": ("examples.ex_07_flext_exceptions", "Ex07FlextExceptions"),
-    "Ex07GetUserQuery": ("examples._models.ex07", "Ex07GetUserQuery"),
-    "Ex07UserCreatedEvent": ("examples._models.ex07", "Ex07UserCreatedEvent"),
-    "Ex08FlextContainer": ("examples.ex_08_flext_container", "Ex08FlextContainer"),
-    "Ex08Order": ("examples._models.ex08", "Ex08Order"),
-    "Ex08User": ("examples._models.ex08", "Ex08User"),
-    "Ex09FlextDecorators": ("examples.ex_09_flext_decorators", "Ex09FlextDecorators"),
-    "Ex10CommandBusStub": ("examples._models.ex10", "Ex10CommandBusStub"),
-    "Ex10ContextPayload": ("examples._models.ex10", "Ex10ContextPayload"),
-    "Ex10DerivedMessage": ("examples._models.ex10", "Ex10DerivedMessage"),
-    "Ex10Entity": ("examples._models.ex10", "Ex10Entity"),
-    "Ex10FlextHandlers": ("examples.ex_10_flext_handlers", "Ex10FlextHandlers"),
-    "Ex10Message": ("examples._models.ex10", "Ex10Message"),
-    "Ex10ProcessorBad": ("examples._models.ex10", "Ex10ProcessorBad"),
-    "Ex10ProcessorGood": ("examples._models.ex10", "Ex10ProcessorGood"),
-    "Ex10ProtocolHandler": ("examples._models.ex10", "Ex10ProtocolHandler"),
-    "Ex10ServiceStub": ("examples._models.ex10", "Ex10ServiceStub"),
-    "Ex11CommandBusStub": ("examples._models.ex11", "Ex11CommandBusStub"),
-    "Ex11EntityStub": ("examples._models.ex11", "Ex11EntityStub"),
-    "Ex11FlextService": ("examples.ex_11_flext_service", "Ex11FlextService"),
-    "Ex11HandlerLike": ("examples._models.ex11", "Ex11HandlerLike"),
-    "Ex11HandlerLikeService": ("examples._models.ex11", "Ex11HandlerLikeService"),
-    "Ex11Payload": ("examples._models.ex11", "Ex11Payload"),
-    "Ex11ProcessorProtocolBad": ("examples._models.ex11", "Ex11ProcessorProtocolBad"),
-    "Ex11ProcessorProtocolGood": ("examples._models.ex11", "Ex11ProcessorProtocolGood"),
-    "Ex12CommandA": ("examples._models.ex12", "Ex12CommandA"),
-    "Ex12CommandB": ("examples._models.ex12", "Ex12CommandB"),
-    "Ex12FlextRegistry": ("examples.ex_12_flext_registry", "Ex12FlextRegistry"),
-    "Ex14CreateUserCommand": ("examples._models.ex14", "Ex14CreateUserCommand"),
-    "Ex14GetUserQuery": ("examples._models.ex14", "Ex14GetUserQuery"),
-    "Ex14UserDTO": ("examples._models.ex14", "Ex14UserDTO"),
-    "ExConfigAppConfig": ("examples._models.exconfig", "ExConfigAppConfig"),
-    "Examples": ("examples.shared", "Examples"),
-    "FlextCoreExampleModels": ("examples.models", "FlextCoreExampleModels"),
-    "MigrationService": ("examples.logging_config_once_pattern", "MigrationService"),
-    "SharedHandle": ("examples._models.shared", "SharedHandle"),
-    "SharedPerson": ("examples._models.shared", "SharedPerson"),
-    "UserInput": ("examples.models", "UserInput"),
-    "UserProfile": ("examples.models", "UserProfile"),
-    "d": ("examples.ex_09_flext_decorators", "Ex09FlextDecorators"),
-    "e": ("examples.ex_07_flext_exceptions", "Ex07FlextExceptions"),
-    "em": ("examples.models", "em"),
-    "h": ("examples.ex_10_flext_handlers", "Ex10FlextHandlers"),
-    "m": ("examples.models", "FlextCoreExampleModels"),
-    "main": ("examples.logging_config_once_pattern", "main"),
-    "r": ("examples._models.ex01", "Ex01DemonstrationResult"),
-    "s": ("examples._models.ex02", "Ex02DatabaseService"),
-    "x": ("examples.ex_05_flext_mixins", "Ex05FlextMixins"),
-}
-
-__all__ = [
-    "DatabaseService",
-    "Ex00UserInput",
-    "Ex00UserProfile",
-    "Ex01DemonstrationResult",
-    "Ex01InvalidPersonPayload",
-    "Ex01RunDemonstrationCommand",
-    "Ex01User",
-    "Ex01ValidPersonPayload",
-    "Ex01r",
-    "Ex02CacheService",
-    "Ex02DatabaseService",
-    "Ex02EmailService",
-    "Ex02FlextSettings",
-    "Ex02TestConfig",
-    "Ex03Email",
-    "Ex03FlextLogger",
-    "Ex03Money",
-    "Ex03Order",
-    "Ex03OrderItem",
-    "Ex03User",
-    "Ex04AutoCommand",
-    "Ex04CreateUser",
-    "Ex04DeleteUser",
-    "Ex04FailingDelete",
-    "Ex04FlextDispatcher",
-    "Ex04GetUser",
-    "Ex04NoSubscriberEvent",
-    "Ex04Ping",
-    "Ex04UnknownQuery",
-    "Ex04UserCreated",
-    "Ex05BadProcessor",
-    "Ex05FlextMixins",
-    "Ex05GoodProcessor",
-    "Ex05HandlerBad",
-    "Ex05HandlerLike",
-    "Ex05StatusEnum",
-    "Ex05UserModel",
-    "Ex06FlextContext",
-    "Ex07CreateUserCommand",
-    "Ex07DemoPlugin",
-    "Ex07FlextExceptions",
-    "Ex07GetUserQuery",
-    "Ex07UserCreatedEvent",
-    "Ex08FlextContainer",
-    "Ex08Order",
-    "Ex08User",
-    "Ex09FlextDecorators",
-    "Ex10CommandBusStub",
-    "Ex10ContextPayload",
-    "Ex10DerivedMessage",
-    "Ex10Entity",
-    "Ex10FlextHandlers",
-    "Ex10Message",
-    "Ex10ProcessorBad",
-    "Ex10ProcessorGood",
-    "Ex10ProtocolHandler",
-    "Ex10ServiceStub",
-    "Ex11CommandBusStub",
-    "Ex11EntityStub",
-    "Ex11FlextService",
-    "Ex11HandlerLike",
-    "Ex11HandlerLikeService",
-    "Ex11Payload",
-    "Ex11ProcessorProtocolBad",
-    "Ex11ProcessorProtocolGood",
-    "Ex12CommandA",
-    "Ex12CommandB",
-    "Ex12FlextRegistry",
-    "Ex14CreateUserCommand",
-    "Ex14GetUserQuery",
-    "Ex14UserDTO",
-    "ExConfigAppConfig",
-    "Examples",
-    "FlextCoreExampleModels",
-    "MigrationService",
-    "SharedHandle",
-    "SharedPerson",
-    "UserInput",
-    "UserProfile",
-    "d",
-    "e",
-    "em",
-    "h",
-    "m",
-    "main",
-    "r",
-    "s",
-    "x",
-]
+    build_lazy_import_map(
+        {
+            "._models": ("_models",),
+            "._models.errors": ("ExamplesFlextModelsErrors",),
+            "._models.ex00": ("ExamplesFlextModelsEx00",),
+            "._models.ex01": ("ExamplesFlextModelsEx01",),
+            "._models.ex02": ("ExamplesFlextModelsEx02",),
+            "._models.ex03": ("ExamplesFlextModelsEx03",),
+            "._models.ex04": ("ExamplesFlextModelsEx04",),
+            "._models.ex05": ("ExamplesFlextModelsEx05",),
+            "._models.ex07": ("ExamplesFlextModelsEx07",),
+            "._models.ex08": ("ExamplesFlextModelsEx08",),
+            "._models.ex10": ("ExamplesFlextModelsEx10",),
+            "._models.ex11": ("ExamplesFlextModelsEx11",),
+            "._models.ex12": ("ExamplesFlextModelsEx12",),
+            "._models.ex14": ("ExamplesFlextModelsEx14",),
+            "._models.output": ("ExamplesFlextModelsOutput",),
+            "._models.shared": (
+                "ExamplesFlextSharedHandle",
+                "ExamplesFlextSharedPerson",
+            ),
+            "._shared_parts": ("_shared_parts",),
+            "._shared_parts.shared_part_01": ("ExamplesFlextSharedBase",),
+            ".constants": ("c",),
+            ".ex_01_flext_result": ("Ex01r",),
+            ".ex_01_flext_result_helpers": ("Ex01ResultAdvancedSections",),
+            ".ex_02_flext_settings": ("Ex02FlextSettings",),
+            ".ex_02_flext_settings_helpers": ("Ex02FlextSettingsFieldChecks",),
+            ".ex_03_flext_logger": ("Ex03FlextLogger",),
+            ".ex_04_flext_dispatcher": ("Ex04DispatchDsl",),
+            ".ex_05_flext_mixins": ("Ex05FlextMixins",),
+            ".ex_06_flext_context": ("Ex06FlextContext",),
+            ".ex_07_flext_exceptions": ("Ex07FlextExceptions",),
+            ".ex_07_flext_exceptions_helpers": ("Ex07FlextExceptionSubclasses",),
+            ".ex_08_container_lifecycle": ("Ex08ContainerLifecycle",),
+            ".ex_08_container_registration": ("Ex08ContainerRegistration",),
+            ".ex_08_container_scoped": ("Ex08ContainerScoped",),
+            ".ex_08_flext_container": ("Ex08FlextContainer",),
+            ".ex_09_flext_decorators": ("Ex09FlextDecorators",),
+            ".ex_10_flext_handlers": ("Ex10FlextHandlers",),
+            ".ex_11_flext_service": ("ExampleService",),
+            ".ex_12_flext_registry": ("Ex12RegistryDsl",),
+            ".ex_12_registry_flow": ("Ex12RegistryFlow",),
+            ".ex_12_registry_plugins": ("Ex12RegistryPlugins",),
+            ".ex_12_registry_support": ("ProtocolHandler",),
+            ".logging_config_once_pattern": (
+                "ExamplesFlextDatabaseService",
+                "ExamplesFlextMigrationService",
+            ),
+            ".models": (
+                "ExamplesFlextModels",
+                "m",
+            ),
+            ".protocols": ("p",),
+            ".settings": ("ExamplesSettings",),
+            ".shared": ("ExamplesFlextShared",),
+            ".typings": (
+                "ExamplesFlextTypes",
+                "t",
+            ),
+            ".utilities": ("u",),
+            "flext_core": (
+                "d",
+                "e",
+                "h",
+                "r",
+                "s",
+                "x",
+            ),
+        },
+    ),
+    exclude_names=(
+        "cleanup_submodule_namespace",
+        "install_lazy_exports",
+        "lazy_getattr",
+        "logger",
+        "merge_lazy_imports",
+        "output",
+        "output_reporting",
+        "pytest_addoption",
+        "pytest_collect_file",
+        "pytest_collection_modifyitems",
+        "pytest_configure",
+        "pytest_runtest_setup",
+        "pytest_runtest_teardown",
+        "pytest_sessionfinish",
+        "pytest_sessionstart",
+        "pytest_terminal_summary",
+        "pytest_warning_recorded",
+    ),
+    module_name=__name__,
+)
 
 
-def __getattr__(name: str) -> Any:
-    """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-
-
-def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)

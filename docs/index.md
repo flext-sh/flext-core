@@ -1,46 +1,40 @@
-# FLEXT-Core Documentation Index
+<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-<!-- TOC START -->
-- [Quick Navigation](#quick-navigation)
-- [Repository Structure (docs)](#repository-structure-docs)
-- [Notes on Accuracy and Duplication](#notes-on-accuracy-and-duplication)
-<!-- TOC END -->
+# flext-core Documentation
 
-**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+- Version: `0.12.0-dev`
+- Project class: `platform`
+- Package: `flext_core`
+- Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
 
-Concise navigation for FLEXT-Core reference materials. All documents follow the repository documentation standards and PEP 8/257 guidance.
+This project portal is generated from `pyproject.toml`, package exports, and real docstrings.
 
-## Quick Navigation
+## Start Here
 
-- **Onboarding:** `quick-start.md`
-- **Architecture overview:** `architecture/overview.md`
-- **CQRS architecture:** `architecture/cqrs.md`
-- **Clean architecture details:** `architecture/clean-architecture.md`
-- **API reference by layer:** `api-reference/` (foundation, domain, application, infrastructure)
-- **Guides:** `guides/` covering railway-oriented programming, DI, DDD, configuration, error handling, testing, and troubleshooting
-- **Service patterns:** `guides/service-patterns.md`
-- **Standards:** `standards/` for development, documentation, and templates
-- **Contributing:** `development/contributing.md`
+- [Guides](guides/README.md)
+- [API Reference](api-reference/README.md)
+- [Generated API Overview](api-reference/generated/overview.md)
+- [Generated Module Index](api-reference/generated/modules/index.md)
 
-## Repository Structure (docs)
+## Public Surface Summary
 
-```
-docs/
-├── INDEX.md              # This file
-├── quick-start.md        # Five-minute introduction
-├── api-reference/        # Layered API reference
-├── architecture/         # System and pattern descriptions
-├── development/          # Contribution workflow
-├── guides/               # How-to guides and patterns
-├── improvements/         # Audit and quality reports
-└── standards/            # Coding and documentation standards
-```
+::: flext_core
+    options:
+      members: false
+      show_root_heading: false
+      show_root_toc_entry: false
+      show_source: false
 
-## Notes on Accuracy and Duplication
+## Collection Rules
 
-- Prefer linking to authoritative guides instead of repeating the same content across files.
-- Align terminology with the dispatcher-centric CQRS architecture: `FlextDispatcher`, handler registry, middleware, and domain-event publishing.
-- Update dates and version references only when `pyproject.toml` changes to avoid drift.
+Read [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/main/AGENTS.md) §9 — Agent Execution Pre-requisites — for the canonical pre-change checklist (parent MRO chain, Scope bootstrap, skill loading, zero-debt baseline, slot registry verification).
 
-```
-```
+## Quality Gates
+
+Canonical `make` verbs (`check`, `test`, `val`, `docs`) — see `AGENTS.md` §5 (Make Contract) and the [`flext-quality-gates`](https://github.com/flext-sh/flext/blob/main/.agents/skills/flext-quality-gates/SKILL.md) skill for selectors and thresholds.
+
+## Governance Pointer
+
+- Engineering law: [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/main/AGENTS.md)
+- Skills index: [`/flext/.agents/skills/`](https://github.com/flext-sh/flext/tree/main/.agents/skills/)
+- Onboarding: [`/flext/docs/guides/onboarding.md`](https://github.com/flext-sh/flext/blob/main/docs/guides/onboarding.md)

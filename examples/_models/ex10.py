@@ -1,88 +1,66 @@
-"""Example 10 handlers models."""
+"""Example models for ex10."""
 
 from __future__ import annotations
 
-from pydantic import ConfigDict
+from collections.abc import (
+    Callable,
+)
+from typing import Annotated
 
-from flext_core import m, r
-
-
-class Ex10Message(m.Command):
-    """Command message payload."""
-
-    text: str
+from flext_core import m, p, r, t, u
 
 
-class Ex10DerivedMessage(Ex10Message):
-    """Derived message used for covariance checks."""
+class ExamplesFlextModelsEx10:
+    """Examples namespace wrapper for ex10 models."""
 
+    class Message(m.Command):
+        text: Annotated[str, u.Field(description="Message text content")]
 
-class Ex10Entity(m.Value):
-    """Entity-like value payload for runtime checks."""
+    class DerivedMessage(Message):
+        pass
 
-    unique_id: str
+    class ContextPayload(m.Value):
+        text: Annotated[str, u.Field(description="Text payload for context")]
 
+    class Entity(m.Value):
+        unique_id: Annotated[str, u.Field(description="Unique identifier for entity")]
 
-class Ex10ProcessorGood(m.Value):
-    """Good processor for protocol checks."""
+    class ProcessorGood(m.Value):
+        marker: Annotated[
+            str,
+            u.Field(description="Marker indicating successful processing"),
+        ] = "good"
 
-    marker: str = "good"
+        def process(self) -> bool:
+            return True
 
-    def process(self) -> str:
-        """Process successfully."""
-        return "ok"
+    class ProcessorBad(m.Value):
+        marker: Annotated[
+            str,
+            u.Field(description="Marker indicating failed processing"),
+        ] = "bad"
 
+    class ProtocolHandler(m.BaseModel):
+        message_type: Annotated[
+            type[m.Command],
+            u.Field(description="Message type for protocol handler"),
+        ] = m.Command
 
-class Ex10ProcessorBad(m.Value):
-    """Bad processor for protocol checks."""
+        def handle(
+            self,
+            message: ExamplesFlextModelsEx10.Message,
+        ) -> p.Result[str]:
+            return r[str].ok(message.text)
 
-    marker: str = "bad"
+    class CommandBusStub(m.BaseModel):
+        def dispatch(
+            self,
+            message: ExamplesFlextModelsEx10.Message,
+        ) -> p.Result[str]:
+            return r[str].ok(message.text)
 
-    def process(self) -> str:
-        """Process successfully despite bad protocol metadata."""
-        return "ok"
-
-
-class Ex10ContextPayload(m.Value):
-    handler_name: str
-    handler_mode: str
-
-
-class Ex10ProtocolHandler(m.Value):
-    model_config = ConfigDict(frozen=False)
-
-    def handle(self, message: object) -> r[str]:
-        return r[str].ok(str(message))
-
-    def check_data(self, data: object) -> r[bool]:
-        return r[bool].ok(data is not None)
-
-
-class Ex10ServiceStub(m.Value):
-    model_config = ConfigDict(frozen=False)
-
-    @property
-    def is_valid(self) -> bool:
-        return True
-
-    def execute(self) -> r[m.ConfigMap]:
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"ok": True}))
-
-    def get_service_info(self) -> m.ConfigMap:
-        return m.ConfigMap(root={"service": "stub"})
-
-    def validate_business_rules(self) -> r[bool]:
-        return r[bool].ok(True)
-
-
-class Ex10CommandBusStub(m.Value):
-    model_config = ConfigDict(frozen=False)
-
-    def dispatch(self, message: object) -> r[str]:
-        return r[str].ok(str(message))
-
-    def publish(self, event: object) -> None:
-        del event
-
-    def register_handler(self, _handler: object) -> r[bool]:
-        return r[bool].ok(True)
+    class ServiceStub(m.BaseModel):
+        run: Annotated[
+            Callable[[], t.JsonValue] | None,
+            u.Field(description="Callable returning JSON value or None"),
+        ] = None

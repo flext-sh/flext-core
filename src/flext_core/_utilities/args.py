@@ -8,193 +8,64 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from enum import Enum, StrEnum
-from functools import wraps
-from types import UnionType
-from typing import (
-    Annotated,
-    ParamSpec,
-    TypeVar,
-    get_args,
-    get_origin,
-    get_type_hints,
+from flext_core import (
+    FlextConstants as c,
+    FlextModelsPydantic as m,
+    FlextProtocolsResult as p,
+    FlextTypes as t,
 )
-
-from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError, validate_call
-
-from flext_core import p, r, t
-from flext_core._models.base import FlextModelFoundation
-
-_ValidatedParams = ParamSpec("_ValidatedParams")
-_ValidatedReturn = TypeVar("_ValidatedReturn")
+from flext_core.result import FlextResult as r
 
 
 class FlextUtilitiesArgs:
-    """Utilities for automatic args/kwargs parsing.
-
-    PHILOSOPHY:
-    ──────────
-    - Parse once, use everywhere
-    - Decorators that eliminate manual validation
-    - Integration with inspect.signature for introspection
-    - ParamSpec (PEP 612) for correct decorator typing
-
-    References:
-    ────────────
-    - PEP 612: https://peps.python.org/pep-0612/
-    - inspect.signature: https://docs.python.org/3/library/inspect.html
-    - validate_call: https://docs.pydantic.dev/latest/concepts/validation_decorator/
-
-    """
-
-    _V = FlextModelFoundation.Validators
+    """Utilities for model-based option parsing."""
 
     @staticmethod
-    def _validate_enum_type(candidate: type[Enum] | str) -> r[type[StrEnum]]:
-        """Validate that candidate is a StrEnum subclass."""
+    def parse_model[M: m.BaseModel](
+        kwargs: t.MappingKV[str, t.JsonPayload],
+        model_cls: t.ModelClass[M],
+        *,
+        allow_empty: bool = True,
+    ) -> p.Result[M]:
+        """Parse kwargs directly into a Pydantic model with detailed error collection.
+
+        Args:
+            kwargs: Dictionary of arguments.
+            model_cls: BaseModel subclass to populate.
+            allow_empty: If true, empty kwargs will validate empty model instances successfully.
+
+        Returns:
+            Result containing hydrated model, or detailed string of failed validation fields.
+
+        """
+        if not kwargs and allow_empty:
+            empty_kwargs: t.JsonMapping = {}
+            kwargs = empty_kwargs
         try:
-            return r[type[StrEnum]].ok(
-                FlextUtilitiesArgs._V.enum_type_adapter().validate_python(candidate)
-            )
-        except ValidationError:
-            return r[type[StrEnum]].fail("Candidate is not a valid StrEnum type")
+            return r[M].ok(model_cls.model_validate(kwargs))
+        except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
+            return r[M].fail_op("parse options model", exc)
 
     @staticmethod
-    def get_enum_params(func: p.CallableWithHints) -> Mapping[str, type[StrEnum]]:
-        """Extract parameters that are StrEnum from function signature.
+    def resolve_options[M: m.BaseModel](
+        options: M | None,
+        kwargs: t.MappingKV[str, t.JsonPayload],
+        model_cls: t.ModelClass[M],
+        *,
+        allow_empty: bool = True,
+    ) -> p.Result[M]:
+        """Resolve options from a pre-instantiated model or kwargs concisely.
 
-        Example:
-             def process(self, status: Status, name: str) -> bool: ...
-
-             params = FlextUtilitiesArgs.get_enum_params(process)
-             # params = {"status": Status}
-
+        Reduces boilerplate by returning an r[M] which callers can unwrap_or()
+        or gracefully fail.
         """
-        try:
-            hints = get_type_hints(func)
-        except (NameError, TypeError, AttributeError):
-            return {}
-        enum_params: dict[str, type[StrEnum]] = {}
-        for name, hint in hints.items():
-            if name == "return":
-                continue
-            current_hint = hint
-            origin = get_origin(hint)
-            if origin is Annotated:
-                current_hint = get_args(hint)[0]
-                origin = get_origin(current_hint)
-            validated_hint = FlextUtilitiesArgs._validate_enum_type(current_hint)
-            if validated_hint.is_success:
-                enum_params[name] = validated_hint.value
-            elif origin is UnionType:
-                for arg in get_args(current_hint):
-                    validated_arg = FlextUtilitiesArgs._validate_enum_type(arg)
-                    if validated_arg.is_success:
-                        enum_params[name] = validated_arg.value
-                        break
-        return enum_params
-
-    @staticmethod
-    def parse_kwargs[E: StrEnum](
-        kwargs: Mapping[str, t.NormalizedValue | BaseModel],
-        enum_fields: Mapping[str, type[E]],
-    ) -> r[Mapping[str, t.NormalizedValue | BaseModel]]:
-        """Parse kwargs converting specific fields to StrEnums.
-
-        Example:
-             result = FlextUtilitiesArgs.parse_kwargs(
-                 kwargs={"status": "active", "name": "John"},
-                 enum_fields={"status": Status},
-             )
-             if result.is_success:
-                 # result.value = {"status": Status.ACTIVE, "name": "John"}
-
-        """
-        parsed = dict(kwargs)
-        errors: list[str] = []
-        for field, enum_cls in enum_fields.items():
-            if field in parsed:
-                value = parsed[field]
-                adapter = TypeAdapter(enum_cls)
-                try:
-                    parsed[field] = adapter.validate_python(value)
-                except ValidationError:
-                    members_dict = getattr(enum_cls, "__members__", {})
-                    enum_members = list(members_dict.values())
-                    valid = ", ".join(m.value for m in enum_members)
-                    errors.append(f"{field}: '{value}' not in [{valid}]")
-        if errors:
-            return r[Mapping[str, t.NormalizedValue | BaseModel]].fail(
-                f"Invalid values: {'; '.join(errors)}"
-            )
-        return r[Mapping[str, t.NormalizedValue | BaseModel]].ok(parsed)
-
-    @staticmethod
-    def validated(
-        func: Callable[_ValidatedParams, _ValidatedReturn],
-    ) -> Callable[_ValidatedParams, _ValidatedReturn]:
-        """Decorator that uses @validate_call from Pydantic internally.
-
-        ADVANTAGE:
-        - Zero validation code in method
-        - Pydantic handles ALL conversion and validation
-        - Automatic friendly errors
-        - Works with StrEnum, Pydantic models, etc.
-
-        BEFORE:
-             def process(self, status: str) -> bool:
-                 if status not in Status._value2member_map_:
-                     raise ValueError(...)
-                 status = Status(status)
-                 ...
-
-        AFTER:
-             @FlextUtilitiesArgs.validated
-             def process(self, status: Status) -> bool:
-                 # status is already Status, validated automatically!
-                 ...
-
-        HOW IT WORKS:
-        - Annotate parameters with StrEnum → accepts string OR enum
-        - Pydantic converts automatically
-        - Validation error → ValidationError (can be caught)
-        """
-        return validate_call(
-            config=ConfigDict(arbitrary_types_allowed=True, use_enum_values=False),
-            validate_return=False,
-        )(func)
-
-    @staticmethod
-    def validated_with_result[V, **P](func: Callable[P, r[V]]) -> Callable[P, r[V]]:
-        """Decorator that converts ValidationError to r.fail().
-
-        USE WHEN:
-        - Method returns r
-        - Want validation errors to become r.fail()
-        - Don't want exceptions leaking
-
-        Example:
-             @FlextUtilitiesArgs.validated_with_result
-             def process(self, status: Status) -> "r[bool]":
-                 # If status invalid → returns r.fail()
-                 # If status valid → executes normally
-                 return r[bool].ok(True)
-
-        """
-        validated_func: Callable[P, r[V]] = validate_call(
-            config=ConfigDict(arbitrary_types_allowed=True, use_enum_values=False),
-            validate_return=False,
-        )(func)
-
-        @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> r[V]:
-            try:
-                return validated_func(*args, **kwargs)
-            except (ValidationError, TypeError, ValueError) as e:
-                return r[V].fail(str(e))
-
-        return wrapper
+        if options is not None:
+            return r[M].ok(options)
+        return FlextUtilitiesArgs.parse_model(
+            kwargs,
+            model_cls,
+            allow_empty=allow_empty,
+        )
 
 
-__all__ = ["FlextUtilitiesArgs"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesArgs"]

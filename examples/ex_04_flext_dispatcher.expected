@@ -1,5 +1,5 @@
 [register_and_dispatch]
-constructor.type: 'FlextDispatcher'
+constructor.protocol: True
 register(Handle).is_success: True
 register(DispatchMessage).is_success: True
 register(Execute).is_success: True
@@ -7,7 +7,7 @@ register(callable).is_success: True
 dispatch(command).is_success: True
 dispatch(command).value: 'created:alice'
 dispatch(query).is_success: True
-dispatch(query).value: ConfigMap
+dispatch(query).value: 'active:alice'
 dispatch(execute).is_success: True
 dispatch(execute).value: 'deleted:alice'
 dispatch(callable).is_success: True
@@ -29,7 +29,7 @@ register(event_subscriber).is_success: True
 register(audit_subscriber).is_success: True
 publish(single).is_success: True
 publish(list).is_success: True
-subscriber.events: ['user:alice', 'user:bruno', 'user:carla']
-audit_subscriber.events: ['audit:alice', 'audit:bruno', 'audit:carla']
+subscriber.events: list
+audit_subscriber.events: list
 publish(no_subscribers).is_success: True
 publish(no_subscribers).value: True

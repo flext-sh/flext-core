@@ -34,7 +34,7 @@
 !.tool-versions
 !.gitignore
 !.gitattributes
-!.pre-commit-config.yaml
+!.pre-commit-settings.yaml
 !sonar-project.properties
 
 # Environment templates (NOT .env - keep secrets out!)
@@ -174,7 +174,7 @@ state.json
 *.state
 *.state.json
 catalog.json
-target_config.json
+target_settings.json
 dbt.log
 dbt_packages/
 target/
@@ -314,11 +314,19 @@ staging/
 # Claude AI files
 .claude/
 
-# Auto-added by workspace-maintenance
-__pycache__/
+# Auto-added by maintenance
 *.egg-info
 .github/*.rej
 
+
+
+
+# --- workspace-sync: required ignores (auto-managed) -base.mk
+!base.mk
+
 # --- workspace-sync: required ignores (auto-managed) ---
+.direnv/
 .reports/
 .venv/
+__pycache__/
+base.mk

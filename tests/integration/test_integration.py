@@ -1,27 +1,5 @@
 """Integration tests for FLEXT Core foundation library.
 
-Enterprise-grade integration testing suite validating cross-component interactions,
-service integration patterns, and end-to-end functionality of the FLEXT Core
-foundation library.
-
-Architecture:
-    Integration Testing → Cross-Component Validation → Service Integration
-
-    This module validates:
-    - r integration with FlextContainer dependency injection
-    - Type system coherence across foundation patterns
-    - Service registration and retrieval workflows
-    - Mock-based external service integration patterns
-    - Performance characteristics of integrated components
-
-Integration Testing Strategy:
-    - Component Interaction: Test how core components work together
-    - Service Integration: Validate DI container with mocked services
-    - Type Safety: Ensure type system works across component boundaries
-    - Performance: Validate integrated workflows meet performance standards
-    - Error Handling: Test error propagation across component boundaries
-
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -30,16 +8,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_tests import r
 
-from flext_core import FlextContainer, __version__, r, u
-from tests.test_utils import assertion_helpers
-
-from ..conftest import FunctionalExternalService
+from flext_core import FlextContainer
+from flext_core.__version__ import __version__
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 pytestmark = [pytest.mark.integration]
 
 
-class TestLibraryIntegration:
+class TestsFlextLibraryIntegration:
     """Integration tests for FLEXT Core library components.
 
     Validates that core foundation components work together correctly
@@ -50,8 +30,8 @@ class TestLibraryIntegration:
     @pytest.mark.core
     def test_all_exports_work(
         self,
-        clean_container: FlextContainer,
-        sample_data: dict[str, object],
+        clean_container: p.Container,
+        sample_data: t.JsonMapping,
     ) -> None:
         """Test comprehensive integration of core library exports.
 
@@ -65,25 +45,25 @@ class TestLibraryIntegration:
         """
         test_value = str(sample_data["string"])
         result = r[str].ok(test_value)
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         assert result.value == test_value
         entity_id = u.generate()
         assert isinstance(entity_id, str)
-        assert len(entity_id) > 0
-        register_result = clean_container.register("test_service", test_value)
+        assert entity_id
+        register_result = clean_container.bind("test_service", test_value)
         assert register_result is clean_container
-        service_result = clean_container.get("test_service")
-        assert service_result.is_success is True
+        service_result = clean_container.resolve("test_service")
+        assert service_result.success is True
         assert service_result.value == test_value
         global_container = FlextContainer()
-        assert isinstance(global_container, FlextContainer)
+        assert isinstance(global_container, p.Container)
 
     @pytest.mark.integration
     @pytest.mark.core
     def test_flext_result_with_container(
         self,
-        clean_container: FlextContainer,
-        mock_external_service: FunctionalExternalService,
+        clean_container: p.Container,
+        mock_external_service: u.Tests.FunctionalExternalService,
     ) -> None:
         """Test r integration with DI container factory pattern.
 
@@ -100,16 +80,15 @@ class TestLibraryIntegration:
 
         def create_result() -> str:
             process_result = mock_external_service.process(input_data)
-            return process_result.unwrap_or("")
+            if process_result.success and process_result.value is not None:
+                processed_value: str = process_result.value
+                return processed_value
+            return ""
 
-        register_result = clean_container.register(
-            "result_factory",
-            create_result,
-            kind="factory",
-        )
+        register_result = clean_container.factory("result_factory", create_result)
         assert register_result is clean_container
-        factory_result = clean_container.get("result_factory")
-        assert factory_result.is_success is True
+        factory_result = clean_container.resolve("result_factory")
+        assert factory_result.success is True
         result_value = factory_result.value
         assert isinstance(result_value, str)
         assert result_value == expected_result_data
@@ -120,12 +99,13 @@ class TestLibraryIntegration:
         """Test entity ID used in r."""
         entity_id = u.generate()
         result = r[str].ok(entity_id)
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         assert isinstance(result.value, str)
         assert len(result.value) == 36
         assert result.value.count("-") == 4
 
     def test_version_info_available(self) -> None:
         """Test that version info is available."""
-        assert isinstance(__version__, str)
-        assert len(__version__) > 0
+        resolved_version = __version__
+        assert resolved_version
+        assert "." in resolved_version

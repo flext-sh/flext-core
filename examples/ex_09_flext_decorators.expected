@@ -49,11 +49,11 @@ timeout.failure.error_code: True
 log_operation.named_matches: True
 log_operation.default_track_perf: True
 
-[track_operation]
-track_operation.with_corr.operation: True
-track_operation.with_corr.has_corr: True
-track_operation.no_corr.operation: True
-track_operation.no_corr.has_corr: False
+[operation_context]
+operation_context.with_corr.operation: True
+operation_context.with_corr.has_corr: True
+operation_context.no_corr.operation: True
+operation_context.no_corr.has_corr: False
 
 [track_performance]
 track_performance.named.value: True

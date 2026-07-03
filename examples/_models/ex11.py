@@ -1,70 +1,43 @@
-"""Example 11 service models."""
+"""Example models for ex11."""
 
 from __future__ import annotations
 
-from typing import override
+from typing import Annotated
 
-from pydantic import ConfigDict, Field
-
-from flext_core import FlextSettings, m, r
+from flext_core import FlextSettings, m, p, r, u
 
 
-class Ex11HandlerLikeService(FlextSettings):
-    """Service-like handler stub."""
+class ExamplesFlextModelsEx11:
+    """Examples namespace wrapper for ex11 models."""
 
-    @classmethod
-    @override
-    def validate(cls, value: object) -> Ex11HandlerLikeService:
-        """Validate service payload."""
-        return cls.model_validate(value)
+    class Payload(m.Value):
+        text: Annotated[str, u.Field(description="Payload text content")]
 
-    def can_handle(self, message_type: type) -> bool:
-        """Check whether message type is handled."""
-        return bool(message_type)
+    class EntityStub(m.Value):
+        unique_id: Annotated[str, u.Field(description="Unique entity identifier")]
 
-    def handle(self, message: object) -> r[str]:
-        """Handle service message."""
-        return r[str].ok(str(message))
+    class ServiceHandlerConfig(FlextSettings):
+        enabled: Annotated[
+            bool, u.Field(description="Whether the service is enabled")
+        ] = True
 
+    class ServiceHandlerLike(m.BaseModel):
+        message_type: Annotated[
+            type[m.Value],
+            u.Field(description="Message type handled by this handler"),
+        ] = m.Value
 
-class Ex11Payload(m.Value):
-    text: str
-    count: int
+        def handle(
+            self,
+            message: ExamplesFlextModelsEx11.Payload,
+        ) -> p.Result[str]:
+            return r[str].ok(message.text)
 
+    class ProcessorProtocolGood(m.Value):
+        status: Annotated[str, u.Field(description="Processing outcome status")] = "ok"
 
-class Ex11HandlerLike(m.Value):
-    model_config = ConfigDict(frozen=False)
-    data: m.ConfigMap = Field(default_factory=lambda: m.ConfigMap(root={}))
+    class ProcessorProtocolBad(m.Value):
+        status: Annotated[str, u.Field(description="Processing failure status")] = "bad"
 
-    def handle(self) -> str:
-        return "ok"
-
-
-class Ex11EntityStub(m.Value):
-    unique_id: str
-
-
-class Ex11ProcessorProtocolGood(m.Value):
-    model_config = ConfigDict(frozen=False)
-    status: str = "ok"
-
-    def process(self) -> str:
-        return "ok"
-
-
-class Ex11ProcessorProtocolBad(m.Value):
-    model_config = ConfigDict(frozen=False)
-    status: str = "bad"
-
-
-class Ex11CommandBusStub(m.Value):
-    model_config = ConfigDict(frozen=False)
-
-    def dispatch(self, message: object) -> r[str]:
-        return r[str].ok(str(message))
-
-    def publish(self, _event: object) -> None:
-        return
-
-    def register_handler(self, _handler: object) -> r[bool]:
-        return r[bool].ok(True)
+    class ServiceCommandBusStub(m.BaseModel):
+        pass

@@ -8,386 +8,187 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from importlib import import_module
 
-import orjson
-from pydantic import BaseModel, ValidationError
-
-from flext_core import FlextRuntime, m, r, t
-from flext_core._models.base import FlextModelFoundation
+from flext_core import (
+    FlextConstants as c,
+    FlextExceptions as e,
+    FlextProtocols as p,
+    FlextResult as r,
+    FlextTypes as t,
+)
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._utilities.args import FlextUtilitiesArgs as ua
 
 
 class FlextUtilitiesModel:
-    """Utilities for Pydantic model initialization.
+    """Utilities for Pydantic model initialization."""
 
-    PHILOSOPHY:
-    ──────────
-    - model_validate() to create from dicts
-    - Automatic StrEnum coercion
-    - Merge defaults with overrides
-    - No initialization code bloat
+    class ModelDumpOptions(m.FlexibleInternalModel):
+        """Options controlling Pydantic model_dump() serialization behavior."""
 
-    References:
-    ────────────
-    - model_validate: https://docs.pydantic.dev/latest/api/base_model/
-    - ConfigDict: https://docs.pydantic.dev/latest/api/config/
-
-    """
-
-    _V = FlextModelFoundation.Validators
-
-    @staticmethod
-    def _normalize_str_object_mapping(
-        value: t.NormalizedValue
-        | BaseModel
-        | Mapping[str, t.NormalizedValue | BaseModel],
-    ) -> dict[str, t.NormalizedValue | BaseModel]:
-        try:
-            validated = (
-                FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
-                    value
-                )
-            )
-            return {
-                str(k): FlextRuntime.normalize_to_container(v)
-                for k, v in dict(validated).items()
-            }
-        except ValidationError:
-            return {}
-
-    @staticmethod
-    def _normalize_to_pydantic_value(
-        value: t.NormalizedValue | BaseModel,
-    ) -> t.Scalar | list[t.Primitives]:
-        """Normalize object to Pydantic-safe PydanticConfigValue.
-
-        Converts complex types to strings, preserves primitives.
-
-        Args:
-            value: input value to normalize
-
-        Returns:
-            t.PydanticConfigValue: Pydantic-safe value
-
-        """
-        if value is None:
-            return ""
-        if isinstance(value, (bool, int, float, str)):
-            return value
-        if isinstance(value, (list, tuple)):
-            sequence_items: list[t.NormalizedValue | BaseModel] = [
-                FlextRuntime.normalize_to_container(item_value) for item_value in value
-            ]
-            normalized_items: list[t.Primitives] = []
-            for item in sequence_items:
-                if item is None:
-                    normalized_items.append("")
-                elif isinstance(item, (bool, int, float, str)):
-                    normalized_items.append(item)
-                else:
-                    normalized_items.append(str(item))
-            return normalized_items
-        return str(value)
+        by_alias: bool | None = mp.Field(
+            None,
+            description="Serialize using field aliases",
+            validate_default=True,
+        )
+        exclude_none: bool | None = mp.Field(
+            None,
+            description="Exclude None-valued fields",
+            validate_default=True,
+        )
+        exclude_unset: bool | None = mp.Field(
+            None,
+            description="Exclude fields not explicitly set",
+            validate_default=True,
+        )
+        exclude_defaults: bool | None = mp.Field(
+            None,
+            description="Exclude fields matching defaults",
+            validate_default=True,
+        )
+        include: set[str] | None = mp.Field(
+            None,
+            description="Whitelist of field names to include",
+            validate_default=True,
+        )
+        exclude: set[str] | None = mp.Field(
+            None,
+            description="Blacklist of field names to exclude",
+            validate_default=True,
+        )
 
     @staticmethod
     def dump(
-        model: BaseModel,
-        *,
-        by_alias: bool = False,
-        exclude_none: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        include: set[str] | None = None,
-        exclude: set[str] | None = None,
-    ) -> Mapping[str, t.Scalar]:
+        model: mp.BaseModel,
+        options: FlextUtilitiesModel.ModelDumpOptions | None = None,
+        **kwargs: t.JsonPayload,
+    ) -> t.MappingKV[str, t.JsonPayload]:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.
 
-        Common usage patterns from codebase:
-        - dump(model) - no arguments
-        - dump(model, exclude_none=True) - bool flag
-        - dump(model, exclude={"key"}) - set[str] for exclude/include
-        - dump(model, exclude_unset=True) - bool flag
-
         Args:
             model: Pydantic model instance to serialize.
-            by_alias: Whether to use field aliases.
-            exclude_none: Whether to exclude None values.
-            exclude_unset: Whether to exclude unset values.
-            exclude_defaults: Whether to exclude default values.
-            include: Set of field names to include.
-            exclude: Set of field names to exclude.
+            options: Optional Pydantic model_dump arguments within the settings model.
+            **kwargs: Inline fallback serialization arguments mapped to ModelDumpOptions automatically.
 
         Returns:
             Dictionary representation of the model.
 
-        Example:
-            >>> user = UserModel(status=Status.ACTIVE, name="John")
-            >>> data = u.dump(user, exclude_none=True)
-            >>> # {"status": "active", "name": "John"}
-
         """
-        return model.model_dump(
-            by_alias=by_alias,
-            exclude_none=exclude_none,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            include=include,
-            exclude=exclude,
+        opts = ua.resolve_options(
+            options,
+            kwargs,
+            FlextUtilitiesModel.ModelDumpOptions,
+        ).unwrap_or(FlextUtilitiesModel.ModelDumpOptions())
+        opts_dict = opts.model_dump(exclude_none=True)
+        dumped: t.JsonMapping = t.json_mapping_adapter().validate_python(
+            model.model_dump(mode="json", **opts_dict),
         )
+        return dumped
 
     @staticmethod
-    def from_kwargs[M: BaseModel](model_cls: type[M], **kwargs: t.Scalar) -> r[M]:
-        """Create Pydantic model from kwargs with r.
-
-        Accepts any type in kwargs - Pydantic 2 field_validators will handle
-        type conversions automatically (e.g., str → Path, dict → BaseModel, etc.).
-        All parameter validation and conversion happens via Pydantic 2 Field constraints
-        and field_validators defined in the model.
-
-        Example:
-             result = u.from_kwargs(
-                 CreateParams,
-                 content={"key": "value"},
-                 name="file.json",
-                 directory=Path("/tmp"),  # Pydantic field_validator converts str → Path
-                 indent=2,                # Pydantic Field(ge=0) validates
-             )
-             if result.is_success:
-                 params: CreateParams = result.value
-
-        """
-        try:
-            instance = model_cls(**kwargs)
-            return r[M].ok(instance)
-        except (ValidationError, TypeError, ValueError) as e:
-            return r[M].fail(f"Model validation failed: {e}")
+    def _settings_base() -> t.SettingsClass:
+        """Resolve FlextSettings lazily to avoid runtime import cycles."""
+        settings_module = import_module("flext_core")
+        settings_cls: t.SettingsClass = settings_module.FlextSettings
+        return settings_cls
 
     @staticmethod
-    def load[T_Model: BaseModel](
-        model_cls: type[T_Model], data: m.ConfigMap, *, strict: bool = False
-    ) -> r[T_Model]:
-        """Load Pydantic model from mapping with r.
-
-        Generic replacement for: Model(data) with error handling.
-
-        Args:
-            model_cls: Pydantic model class to instantiate.
-            data: Dictionary or mapping to validate.
-            strict: If True, enforce strict type checking during validation.
-
-        Returns:
-            r containing model instance or error message.
-
-        Example:
-            >>> result = u.load(UserModel, {"status": "active", "name": "John"})
-            >>> if result.is_success:
-            ...     user: UserModel = result.value
-
-        """
-        try:
-            instance = model_cls.model_validate(data, strict=strict)
-            return r[T_Model].ok(instance)
-        except ValidationError as e:
-            return r[T_Model].fail(f"Model validation failed: {e}")
+    def _container_type() -> p.ContainerType:
+        """Resolve FlextContainer lazily to avoid runtime import cycles."""
+        container_module = import_module("flext_core")
+        container_cls: p.ContainerType = container_module.FlextContainer
+        return container_cls
 
     @staticmethod
-    def merge_defaults[M: BaseModel](
-        model_cls: type[M],
-        defaults: Mapping[str, t.NormalizedValue],
-        overrides: Mapping[str, t.NormalizedValue],
-    ) -> r[M]:
-        """Merge defaults with overrides and create model.
-
-        Example:
-             DEFAULTS = {"status": Status.PENDING, "retries": 3}
-
-             result = u.merge_defaults(
-                 ConfigModel,
-                 defaults=DEFAULTS,
-                 overrides={"status": "active"},  # Overrides
-             )
-             # result.value.status = Status.ACTIVE
-             # result.value.retries = 3
-
-        """
-        merged = {**defaults, **overrides}
-        try:
-            instance = model_cls.model_validate(merged)
-            return r[M].ok(instance)
-        except (ValidationError, TypeError, ValueError) as e:
-            return r[M].fail(f"Model validation failed: {e}")
+    def _context_type() -> p.ContextType:
+        """Resolve FlextContext lazily to avoid runtime import cycles."""
+        context_module = import_module("flext_core")
+        context_cls: p.ContextType = context_module.FlextContext
+        return context_cls
 
     @staticmethod
-    def ensure_metadata(
-        value: t.Scalar | m.ConfigMap | m.Metadata | None,
-    ) -> m.Metadata:
-        """Normalize any value to m.Metadata.
+    def _runtime_type() -> type:
+        """Resolve FlextRuntime lazily to avoid runtime import cycles."""
+        runtime_module = import_module("flext_core")
+        runtime_cls: type = runtime_module.FlextRuntime
+        return runtime_cls
 
-        Business Rule: Always returns Metadata, never None.
-        Uses FlextRuntime guards and normalization methods for automatic
-        type checking and value normalization. Eliminates need for defensive
-        fallbacks by centralizing all metadata normalization logic.
-
-        Args:
-            value: None, dict, Mapping, Metadata, or any object
-
-        Returns:
-            m.Metadata: Normalized metadata (empty attributes
-                if input was None or empty dict)
-
-        Raises:
-            TypeError: If value is not None, dict-like, or Metadata instance
-
-        Example:
-            >>> u.ensure_metadata(None)
-            Metadata(attributes={})
-            >>> u.ensure_metadata({"key": "value"})
-            Metadata(attributes={"key": "value"})
-            >>> u.ensure_metadata(Metadata(attributes={"a": 1}))
-            Metadata(attributes={"a": 1})
-
-        """
+    @classmethod
+    def _normalize_runtime_override_mapping(
+        cls,
+        value: t.MappingKV[str, t.JsonPayload | t.Scalar] | None,
+    ) -> t.JsonMapping | None:
+        """Normalize runtime override mappings to canonical JsonMapping."""
         if value is None:
-            return m.Metadata.model_validate({"attributes": {}})
-        if isinstance(value, m.Metadata):
-            return value
-        if FlextRuntime.is_dict_like(value):
-            safe_attrs: dict[str, t.MetadataValue] = {}
-            for k, v in value.items():
-                str_k = str(k)
-                if v is None:
-                    safe_attrs[str_k] = ""
-                elif isinstance(v, (str, int, float, bool)):
-                    safe_attrs[str_k] = v
-                elif FlextRuntime.is_dict_like(v):
-                    nested_mapping = FlextUtilitiesModel._normalize_str_object_mapping(
-                        v
-                    )
-                    plain_mapping: dict[str, t.NormalizedValue] = {}
-                    for nested_key, nested_value in nested_mapping.items():
-                        if isinstance(nested_value, BaseModel):
-                            dumped_nested = nested_value.model_dump()
-                            plain_mapping[str(nested_key)] = (
-                                dumped_nested
-                                if isinstance(dumped_nested, dict)
-                                else str(dumped_nested)
-                            )
-                        else:
-                            plain_mapping[str(nested_key)] = nested_value
-                    safe_attrs[str_k] = orjson.dumps(plain_mapping).decode()
-                else:
-                    safe_attrs[str_k] = str(v)
-            return m.Metadata.model_validate({"attributes": safe_attrs})
-        msg = f"metadata must be None, dict, or m.Metadata, got {value.__class__.__name__}"
-        raise TypeError(msg)
+            return None
+        runtime_type = cls._runtime_type()
+        validated: t.JsonMapping = t.json_mapping_adapter().validate_python(
+            {
+                key: runtime_type.normalize_to_metadata(item)
+                for key, item in value.items()
+            },
+        )
+        return validated
 
     @staticmethod
-    def normalize_to_pydantic_dict(
-        data: m.ConfigMap | None,
-    ) -> Mapping[str, t.Scalar | list[t.Primitives]]:
-        """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
-
-        Normalizes object values to the restricted PydanticConfigValue type
-        that Pydantic can generate schemas for without recursion issues.
-
-        Args:
-            data: EventDataMapping (Mapping[str, Any]) or None
-
-        Returns:
-            Mapping[str, Any]: Mapping with Pydantic-safe values
-
-        Example:
-            >>> u.normalize_to_pydantic_dict(None)
-            {}
-            >>> u.normalize_to_pydantic_dict({"key": "value"})
-            {"key": "value"}
-            >>> u.normalize_to_pydantic_dict({"obj": SomeModel()})
-            {"obj": "SomeModel(...)"}  # Complex types converted to string
-
-        """
-        if not data:
-            empty_result: dict[str, t.Scalar | list[t.Primitives]] = {}
-            return empty_result
-        result: dict[str, t.Scalar | list[t.Primitives]] = {}
-        for key, value in data.root.items():
-            result[key] = FlextUtilitiesModel._normalize_to_pydantic_value(value)
-        return result
+    def service_settings_type(
+        service_or_cls: p.Base | p.SettingsType | t.SettingsClass,
+    ) -> t.SettingsClass:
+        """Resolve the concrete settings type used by a service-like object."""
+        settings_base = FlextUtilitiesModel._settings_base()
+        fetch_global = getattr(service_or_cls, "fetch_global", None)
+        model_copy = getattr(service_or_cls, "model_copy", None)
+        if (
+            isinstance(service_or_cls, type)
+            and callable(fetch_global)
+            and callable(model_copy)
+        ):
+            return service_or_cls
+        candidate = getattr(service_or_cls, "settings_type", None)
+        if (
+            isinstance(candidate, type)
+            and callable(getattr(candidate, "fetch_global", None))
+            and callable(getattr(candidate, "model_copy", None))
+        ):
+            return candidate
+        resolver = getattr(service_or_cls, "_get_service_settings_type", None)
+        if callable(resolver):
+            resolved = resolver()
+            if (
+                isinstance(resolved, type)
+                and callable(getattr(resolved, "fetch_global", None))
+                and callable(getattr(resolved, "model_copy", None))
+            ):
+                return resolved
+        return settings_base
 
     @staticmethod
-    def update[M: BaseModel](instance: M, **updates: t.Scalar) -> r[M]:
-        """Update existing model with new values.
-
-        Example:
-             user = UserModel(status=Status.ACTIVE, name="John")
-             result = u.update(user, status="inactive")
-             # result.value = UserModel with status=Status.INACTIVE
-
-        """
+    def validate_value[TValue](
+        target: t.ValueAdapter[TValue] | t.TypeHintSpecifier,
+        data: t.JsonPayload,
+        *,
+        from_json: bool = False,
+        strict: bool | None = None,
+    ) -> p.Result[TValue]:
+        """Validate one value through a model class or TypeAdapter."""
         try:
-            updated_instance = instance.model_copy(update=updates)
-            return r[M].ok(updated_instance)
-        except (AttributeError, TypeError, ValueError) as e:
-            return r[M].fail(f"Model update failed: {e}")
-
-    @staticmethod
-    def to_config_map(
-        obj: BaseModel | Mapping[str, t.NormalizedValue] | t.NormalizedValue | None,
-    ) -> m.ConfigMap:
-        """Convert BaseModel/dict to ConfigMap (None → empty ConfigMap)."""
-        if obj is None:
-            return m.ConfigMap(root={})
-        if isinstance(obj, m.ConfigMap):
-            return obj
-        if isinstance(obj, BaseModel):
-            model_dump_result = obj.model_dump()
-            try:
-                normalized_model_dump: dict[str, t.NormalizedValue | BaseModel] = {}
-                for key, value in model_dump_result.items():
-                    normalized_value: t.NormalizedValue | BaseModel
-                    if value is None:
-                        normalized_value = ""
-                    elif isinstance(
-                        value, (str, int, float, bool, type(None), BaseModel)
-                    ):
-                        normalized_value = FlextRuntime.normalize_to_container(value)
-                    else:
-                        normalized_value = str(value)
-                    normalized_model_dump[str(key)] = normalized_value
-                return m.ConfigMap(normalized_model_dump)
-            except (TypeError, ValueError, AttributeError):
-                return m.ConfigMap(root={"value": str(model_dump_result)})
-        if isinstance(obj, Mapping):
-            try:
-                normalized_mapping: dict[str, t.NormalizedValue | BaseModel] = {}
-                obj_mapping = (
-                    FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
-                        obj
-                    )
-                )
-                for key, value in obj_mapping.items():
-                    normalized_mapping_value: t.NormalizedValue | BaseModel = (
-                        FlextRuntime.normalize_to_container(value)
-                        if isinstance(
-                            value, (str, int, float, bool, type(None), BaseModel)
-                        )
-                        else str(value)
-                    )
-                    normalized_mapping[str(key)] = normalized_mapping_value
-                return m.ConfigMap(normalized_mapping)
-            except (TypeError, ValueError, AttributeError):
-                return m.ConfigMap(root={})
-
-        # Fallback to general value normalization
-        normalized = FlextRuntime.normalize_to_container(obj)
-        if isinstance(normalized, Mapping):
-            normalized_obj: t.NormalizedValue | BaseModel = normalized
-            normalized_map = FlextUtilitiesModel._normalize_str_object_mapping(
-                normalized_obj
+            adapter = (
+                target if isinstance(target, mp.TypeAdapter) else mp.TypeAdapter(target)
             )
-            return m.ConfigMap(root=normalized_map)
-        return m.ConfigMap(root={})
+            if from_json:
+                if not isinstance(data, t.STR_BINARY_TYPES):
+                    return e.fail_validation(
+                        "json_input",
+                        error="JSON validation requires str or bytes input",
+                    )
+                return r[TValue].ok(adapter.validate_json(data, strict=strict))
+            return r[TValue].ok(adapter.validate_python(data, strict=strict))
+        except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
+            return e.fail_validation(error=exc)
 
 
-__all__ = ["FlextUtilitiesModel"]
+__all__: list[str] = ["FlextUtilitiesModel"]

@@ -10,101 +10,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from datetime import datetime
-from typing import Annotated, override
+from typing import Annotated
 
-from pydantic import BaseModel, BeforeValidator, Field
+from flext_core import (
+    FlextModelsPydantic as mp,
+    FlextTypes as t,
+    FlextUtilitiesCollection as u,
+)
 
-from flext_core import c, t
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.containers import FlextModelsContainers
-
-_V = FlextModelFoundation.Validators
-
-
-def _metadata_to_normalized(item: t.MetadataValue | None) -> t.NormalizedValue:
-    if item is None:
-        return None
-    if isinstance(item, str):
-        return item
-    if isinstance(item, int):
-        return item
-    if isinstance(item, float):
-        return item
-    if isinstance(item, bool):
-        return item
-    if isinstance(item, datetime):
-        return item
-    if isinstance(item, Mapping):
-        normalized_map: dict[str, t.NormalizedValue] = {}
-        for key, value in item.items():
-            normalized_map[str(key)] = _metadata_to_normalized(
-                value
-                if isinstance(value, (str, int, float, bool, datetime))
-                else str(value)
-            )
-        return normalized_map
-    if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
-        return [
-            _metadata_to_normalized(
-                value
-                if isinstance(value, (str, int, float, bool, datetime))
-                else str(value)
-            )
-            for value in item
-        ]
-    return str(item)
-
-
-class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
-    """ConfigMap with equality support for domain event data."""
-
-    @override
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, dict):
-            return self.root == other
-        if isinstance(other, Mapping):
-            typed_other = _V.dict_str_metadata_adapter().validate_python(other)
-            other_mapping = FlextModelsContainers.ConfigMap(
-                root={
-                    key: _metadata_to_normalized(value)
-                    for key, value in typed_other.items()
-                }
-            ).root
-            return self.root == other_mapping
-        return super().__eq__(other)
-
-    __hash__ = FlextModelsContainers.ConfigMap.__hash__
-
-
-def _normalize_event_data(value: t.NormalizedValue | BaseModel) -> _ComparableConfigMap:
-    """BeforeValidator: normalize event data to _ComparableConfigMap."""
-    if isinstance(value, _ComparableConfigMap):
-        return value
-    if isinstance(value, FlextModelsContainers.ConfigMap):
-        return _ComparableConfigMap(root=dict(value.items()))
-    if isinstance(value, dict):
-        typed_value = _V.dict_str_metadata_adapter().validate_python(value)
-        intermediate = FlextModelsContainers.ConfigMap(
-            root={
-                key: _metadata_to_normalized(item) for key, item in typed_value.items()
-            }
-        )
-        return _ComparableConfigMap(root=intermediate.root)
-    if isinstance(value, Mapping):
-        typed_mapping = _V.dict_str_metadata_adapter().validate_python(value)
-        intermediate = FlextModelsContainers.ConfigMap(
-            root={
-                key: _metadata_to_normalized(item)
-                for key, item in typed_mapping.items()
-            }
-        )
-        return _ComparableConfigMap(root=intermediate.root)
-    if value is None:
-        return _ComparableConfigMap(root={})
-    msg = "Domain event data must be a dictionary or None"
-    raise TypeError(msg)
+from .base import FlextModelsBase as m
+from .containers import FlextModelsContainers as mc
 
 
 class FlextModelsDomainEvent:
@@ -114,53 +29,40 @@ class FlextModelsDomainEvent:
     Split into its own module so Entity can import without forward references.
     """
 
-    ComparableConfigMap = _ComparableConfigMap
-
-    @staticmethod
-    def _normalize_event_data(
-        value: t.NormalizedValue | BaseModel,
-    ) -> _ComparableConfigMap:
-        """BeforeValidator: normalize event data to _ComparableConfigMap."""
-        return _normalize_event_data(value)
-
-    @staticmethod
-    def to_config_map(
-        data: FlextModelsContainers.ConfigMap | None,
-    ) -> _ComparableConfigMap:
-        """Convert optional ConfigMap to a comparable variant."""
-        if not data:
-            return _ComparableConfigMap(root={})
-        return _ComparableConfigMap(
-            root={
-                str(key): (
-                    value if isinstance(value, (str, int, float, bool)) else str(value)
-                )
-                for key, value in data.items()
-            }
-        )
-
     class Entry(
-        FlextModelFoundation.ArbitraryTypesModel,
-        FlextModelFoundation.IdentifiableMixin,
-        FlextModelFoundation.TimestampableMixin,
+        m.IdentifiableMixin,
+        m.TimestampedModel,
     ):
         """Base class for domain events."""
 
-        message_type: Annotated[
-            c.Cqrs.EventMessageTypeLiteral,
-            Field(
-                default="event",
-                frozen=True,
-                description="Message type discriminator for union routing - always 'event'",
+        message_type: str = mp.Field(
+            "event",
+            frozen=True,
+            description="Message type discriminator for union routing - always 'event'",
+            validate_default=True,
+        )
+        event_type: Annotated[
+            t.NonEmptyStr,
+            mp.Field(
+                description="Domain event type identifier for subscriber routing.",
             ),
-        ] = "event"
-        event_type: Annotated[str, Field(min_length=c.Reliability.RETRY_COUNT_MIN)]
-        aggregate_id: Annotated[str, Field(min_length=c.Reliability.RETRY_COUNT_MIN)]
+        ]
+        aggregate_id: Annotated[
+            t.NonEmptyStr,
+            mp.Field(
+                description="Identifier of the aggregate root that produced this event.",
+            ),
+        ]
         data: Annotated[
-            _ComparableConfigMap, BeforeValidator(_normalize_event_data)
-        ] = Field(
-            default_factory=_ComparableConfigMap, description="Event data container"
+            mc.ConfigMap,
+            mp.BeforeValidator(u.normalize_domain_event_data),
+        ] = mp.Field(
+            validate_default=True,
+            description="Event data container",
+            default_factory=lambda: mc.ConfigMap(root={}),
         )
 
+    DomainEvent = Entry
 
-__all__ = ["FlextModelsDomainEvent"]
+
+__all__: t.MutableSequenceOf[str] = ["FlextModelsDomainEvent"]

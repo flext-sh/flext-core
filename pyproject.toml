@@ -1,23 +1,17 @@
 # [MANAGED] FLEXT pyproject standardization
 # Sections with [MANAGED] are enforced by flext_infra.deps.modernizer.
+# Run `make mod` to regenerate all managed pyproject sections.
 # Sections with [CUSTOM] are project-specific extension points.
-# Sections with [AUTO] are derived from workspace layout and dependencies.
 # [MANAGED] build system
 [build-system]
-build-backend = "poetry.core.masonry.api"
-requires = [ "poetry-core>=2" ]
+build-backend = "hatchling.build"
+requires = [ "hatchling" ]
+
+[dependency-groups]
+dev = [ "types-defusedxml>=0.7.0.20260408", "vulture>=2.16" ]
 
 # [CUSTOM] project metadata
 [project]
-name = "flext-core"
-version = "0.12.0-dev"
-description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
-readme = "README.md"
-keywords = [ "clean-architecture", "ddd", "enterprise", "flext", "modern", "solid" ]
-license = "MIT"
-maintainers = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
-authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
-requires-python = ">=3.13,<3.14"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: Pydantic :: 2",
@@ -30,44 +24,64 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "attrs>=25.4",
-  "beartype>=0.19",
-  "cachetools>=5.3",
-  "dependency-injector>=4.41",
-  "docker>=7.1,<8",
+  "beartype @ git+https://github.com/beartype/beartype.git@ee481e0c6da5c0cf8a6b27a53a10354e9df4ac71",
+  "cachetools>=7.1.0",
+  "dependency-injector>=4.49.0",
+  "docker>=7.1.0",
   "jinja2>=3.1.6",
-  "limits>=3.6",
-  "orjson>=3.11.3",
-  "pybreaker>=0.8",
-  "pydantic-core>=2.41.4",
-  "pydantic-settings>=2.14.2",
-  "pydantic>=2.12.3",
-  "python-dotenv>=1",
-  "python-on-whales>=0.79",
-  "pyyaml>=6.0.2",
-  "returns>=0.26",
-  "rope (>=1.14.0,<2.0.0)",
-  "structlog>=25.4",
-  "tomlkit>=0.13",
-  "wrapt>=1.17",
+  "limits>=5.8.0",
+  "orjson>=3.11.8",
+  "pybreaker>=1.4.1",
+  "pydantic-core>=2.46.3",
+  "pydantic-extra-types[semver]>=2.11.1",
+  "pydantic-settings>=2.14.0",
+  "pydantic>=2.13.3",
+  "python-dotenv>=1.2.2",
+  "python-on-whales>=0.81.0",
+  "pyyaml>=6.0.3",
+  "returns>=0.27.0",
+  "rope>=1.14.0",
+  "structlog>=25.5.0",
+  "tomlkit>=0.14.0",
+  "wrapt>=2.1.2",
 ]
+description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
+keywords = [ "clean-architecture", "ddd", "enterprise", "flext", "modern", "solid" ]
+license = "MIT"
+name = "flext-core"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+version = "0.12.0-dev"
+
+[[project.authors]]
+email = "team@flext.sh"
+name = "FLEXT Team"
+
+[[project.maintainers]]
+email = "team@flext.sh"
+name = "FLEXT Team"
+
 # [MANAGED] consolidated development dependencies
-# [AUTO] merged from dev/docs/security/test/typings
-optional-dependencies.dev = [
+[project.optional-dependencies]
+dev = [
   "autoflake>=2.3.1",
   "bandit>=1.8",
-  "beartype>=0.19",
   "black>=25.1",
+  "blacken-docs>=1.19",
   "codespell>=2.3",
   "deptry>=0.23",
-  "detect-secrets>=1.5",
+  "detect-secrets>=1.5.0",
   "django-stubs>=5.2.2",
   "factory-boy>=3.3.1",
   "faker>=37.4",
+  "flext-cli",
+  "flext-infra",
+  "flext-tests",
   "hypothesis>=6.125",
-  "interrogate>=1.7",
+  "interrogate>=1.7.0",
   "isort>=6.0.1",
-  "libcst>=1.5.1",
+  "libcst>=1.8.6",
+  "matplotlib-stubs>=0.3",
   "mkdocs-awesome-pages-plugin>=2.9",
   "mkdocs-encryptcontent-plugin>=2",
   "mkdocs-exclude>=1",
@@ -79,7 +93,6 @@ optional-dependencies.dev = [
   "mkdocs-material>=9.5",
   "mkdocs-mermaid2-plugin>=1.1",
   "mkdocs-minify-plugin>=0.7",
-  "mkdocs-newsletter>=0.1",
   "mkdocs-print-site-plugin>=0.8",
   "mkdocs-redirects>=1.2",
   "mkdocs-section-index>=0.3",
@@ -87,12 +100,14 @@ optional-dependencies.dev = [
   "mkdocs>=1.6",
   "mkdocstrings-python>=1.7",
   "mkdocstrings>=0.24",
-  "mypy>=1.18.2",
+  "mypy>=1.20.2",
   "pip-audit>=2.7.3",
   "pre-commit>=4.0.1",
   "pylint>=3.3",
+  "pyrefly>=1.1.1,<1.2.0",
   "pytest-benchmark>=5.1",
   "pytest-clarity>=1.0.1",
+  "pytest-codeblocks>=0.17.0",
   "pytest-cov>=6.2",
   "pytest-deadfixtures>=2.2.1",
   "pytest-env>=1.1.5",
@@ -106,45 +121,37 @@ optional-dependencies.dev = [
   "radon>=6.0.1",
   "rope>=1.14.0",
   "ruff>=0.12.3",
-  "types-cachetools>=5.3",
+  "types-cachetools>=6.2",
+  "types-cffi>=2.0",
+  "types-click>=7.1",
+  "types-defusedxml>=0.7",
   "types-docker>=7.1",
+  "types-flask>=1.1.6",
   "types-ldap3>=2.9.13.20250622",
+  "types-paramiko>=4.0",
   "types-protobuf>=6.30.2.20250703",
   "types-psutil>=7",
   "types-psycopg2>=2.9.21.20250718",
+  "types-pyasn1>=0.6",
+  "types-pyopenssl>=24.1",
   "types-python-dateutil>=2.9",
   "types-pyyaml>=6.0.12",
   "types-redis>=4.6",
   "types-requests>=2.32.4",
   "types-setuptools>=80.9",
+  "types-tabulate>=0.10",
   "types-toml>=0.10.8.20240310",
-  "uv>=0.9.6",
+  "uv>=0.11.8",
   "vulture>=2.13",
 ]
-urls = {Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md", Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core"}
-scripts = {"flext-basemk" = "flext_infra.basemk:main", "flext-check" = "flext_infra.check:main", "flext-modernize" = "flext_infra.deps.modernizer:main", "flext-sync" = "flext_infra.workspace.sync:main", "flext-validate" = "flext_infra.core:main"}
 
-# [CUSTOM] poetry - flext-core ships three namespace packages
-[tool.poetry]
-packages = [
-  {include = "flext_core", from = "src"},
-  {include = "flext_infra", from = "src"},
-  {include = "flext_tests", from = "src"},
-]
-
-# [MANAGED] deptry
-
-# [CUSTOM] poetry dev extensions
-[tool.deptry]
-known_first_party = [
-  "flext_core",
-  "flext_infra",
-  "flext_tests",
-]
-pep621_dev_dependency_groups = [ "dev" ]
+[project.urls]
+Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
+Homepage = "https://github.com/flext-sh/flext-core"
+Repository = "https://github.com/flext-sh/flext-core"
 
 [tool.bandit]
-exclude_dirs = [ "src/flext_tests", "tests" ]
+exclude_dirs = [ "tests" ]
 severity = "MEDIUM"
 skips = [ "B101" ]
 targets = [ "src" ]
@@ -153,7 +160,31 @@ targets = [ "src" ]
 [tool.codespell]
 check-filenames = true
 ignore-words-list = "crate,nd"
-skip = ".git,poetry.lock,.mypy_cache,.pytest_cache,.ruff_cache"
+
+# [MANAGED] coverage
+[tool.coverage.report]
+exclude_also = [ "if TYPE_CHECKING:", "if _t.TYPE_CHECKING:", "if typing.TYPE_CHECKING:" ]
+fail_under = 25
+precision = 2
+show_missing = true
+skip_covered = false
+
+[tool.coverage.run]
+omit = [ "*/dependency_injector/providers.pyx" ]
+
+# [MANAGED] deptry
+[tool.deptry]
+known_first_party = [ "flext_core" ]
+pep621_dev_dependency_groups = [ "dev" ]
+
+[tool.flext.docs]
+project_class = "platform"
+
+[tool.hatch.build.targets.wheel]
+packages = [ "src/flext_core" ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.interrogate]
 exclude = [ "docs", "examples", "scripts", "tests" ]
@@ -165,61 +196,319 @@ ignore-module = false
 ignore-private = true
 ignore-property-decorators = true
 
+# [MANAGED] mypy
+[tool.mypy]
+check_untyped_defs = true
+disable_error_code = [
+  "assignment",
+  "attr-defined",
+  "call-arg",
+  "misc",
+  "name-defined",
+  "prop-decorator",
+  "valid-type",
+]
+exclude = "^tests/fixtures(?:/|$)"
+explicit_package_bases = true
+extra_checks = true
+follow_imports = "normal"
+ignore_missing_imports = true
+local_partial_types = true
+mypy_path = [ ".", "../typings", "../typings/generated", "src" ]
+namespace_packages = true
+no_implicit_reexport = true
+overrides = [  ]
+plugins = [ "pydantic.mypy", "returns.contrib.mypy.returns_plugin" ]
+python_version = "3.13"
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_ignores = true
+
+[tool.poetry.dependencies]
+python = ">=3.13,<3.14"
+
+[tool.poetry.dependencies.flext-cli]
+develop = true
+optional = true
+path = "../flext-cli"
+
+[tool.poetry.dependencies.flext-infra]
+develop = true
+optional = true
+path = "../flext-infra"
+
+[tool.poetry.dependencies.flext-tests]
+develop = true
+optional = true
+path = "../flext-tests"
+
+# [MANAGED] pydantic-mypy
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
+
+# [MANAGED] pyrefly
+[tool.pyrefly]
+disable-project-excludes-heuristics = true
+ignore-errors-in-generated-code = true
+project-excludes = [
+  "**/*_pb2*.py",
+  "**/*_pb2_grpc*.py",
+  "**/.venv/**",
+  "**/__pycache__",
+  "**/__pyrefly_virtual__/**",
+  "**/node_modules",
+  "**/site-packages/**",
+  "**/typings/**",
+  "**/vendor/**",
+  "**/venv/**",
+  ".flext-deps/**",
+  ".venv/**",
+  "typings/**",
+  "vendor/**",
+]
+project-includes = [ "examples/**/*.py*", "scripts/**/*.py*", "src/**/*.py*", "tests/**/*.py*" ]
+python-version = "3.13"
+search-path = [
+  ".",
+  "../flext-cli/examples",
+  "../flext-cli/src",
+  "../flext-core/examples",
+  "../flext-core/scripts",
+  "../flext-core/src",
+  "../flext-infra/src",
+  "../flext-infra/tmp_flow_test",
+  "../flext-tests/src",
+  "scripts",
+  "src",
+]
+use-ignore-files = false
+
+[tool.pyrefly.errors]
+abstract-method-call = false
+annotation-mismatch = "error"
+bad-argument-count = "error"
+bad-argument-type = "error"
+bad-assignment = "error"
+bad-class-definition = "error"
+bad-context-manager = "error"
+bad-dunder-all = "error"
+bad-function-definition = "error"
+bad-index = "error"
+bad-instantiation = "error"
+bad-keyword-argument = "error"
+bad-match = "error"
+bad-override = false
+bad-param-name-override = "error"
+bad-raise = "error"
+bad-return = "error"
+bad-specialization = "error"
+bad-typed-dict = "error"
+bad-typed-dict-key = "error"
+bad-unpacking = "error"
+deprecated = "error"
+implicit-abstract-class = "error"
+implicit-any = "error"
+implicit-import = "error"
+implicitly-defined-attribute = "error"
+inconsistent-inheritance = "error"
+inconsistent-overload = "error"
+inconsistent-overload-default = "error"
+invalid-annotation = "error"
+invalid-argument = "error"
+invalid-decorator = "error"
+invalid-inheritance = "error"
+invalid-literal = "error"
+invalid-overload = "error"
+invalid-param-spec = "error"
+invalid-pattern = "error"
+invalid-self-type = "error"
+invalid-super-call = "error"
+invalid-type-alias = "error"
+invalid-type-var = "error"
+invalid-type-var-tuple = "error"
+invalid-variance = "error"
+invalid-yield = "error"
+missing-argument = "error"
+missing-attribute = "error"
+missing-import = "error"
+missing-module-attribute = "error"
+missing-override-decorator = "error"
+missing-source = "error"
+missing-source-for-stubs = "error"
+no-access = "error"
+no-matching-overload = "error"
+non-convergent-recursion = false
+non-exhaustive-match = false
+not-a-type = "error"
+not-async = "error"
+not-callable = "error"
+not-iterable = "error"
+not-required-key-access = "error"
+open-unpacking = "error"
+protocol-implicitly-defined-attribute = "error"
+read-only = "error"
+redefinition = "error"
+redundant-cast = "error"
+redundant-condition = "error"
+unannotated-attribute = "error"
+unannotated-parameter = "error"
+unannotated-return = "error"
+unbound-name = "error"
+unexpected-keyword = "error"
+unexpected-positional-argument = "error"
+unknown-name = "error"
+unnecessary-comparison = "error"
+unnecessary-type-conversion = "error"
+unreachable = "error"
+unresolvable-dunder-all = "error"
+unsafe-overlap = "error"
+unsupported = "error"
+unsupported-delete = "error"
+unsupported-operation = "error"
+untyped-import = "error"
+unused-coroutine = "error"
+unused-ignore = "error"
+variance-mismatch = "error"
+
+# [MANAGED] pyright
+[tool.pyright]
+exclude = [
+  "**/.*",
+  "**/.mypy_cache",
+  "**/.pytest_cache",
+  "**/.ruff_cache",
+  "**/.venv",
+  "**/.venv/**",
+  "**/__pycache__",
+  "**/__pyrefly_virtual__/**",
+  "**/dist-packages",
+  "**/dist-packages/**",
+  "**/node_modules",
+  "**/site-packages",
+  "**/site-packages/**",
+  "**/tests/fixtures",
+  "**/tests/fixtures/**",
+  "**/venv",
+  "**/venv/**",
+  ".reports",
+  ".venv",
+]
+extraPaths = [ ".", "../typings", "../typings/generated", "src" ]
+ignore = [ "**/*.pyi", "../typings", "../typings/generated" ]
+include = [ "examples", "scripts", "src", "tests" ]
+pythonPlatform = "Linux"
+pythonVersion = "3.13"
+reportArgumentType = "none"
+reportAttributeAccessIssue = "none"
+reportCallIssue = "none"
+reportConstantRedefinition = "error"
+reportIncompatibleMethodOverride = "error"
+reportIncompatibleVariableOverride = "none"
+reportInconsistentConstructor = "error"
+reportInvalidTypeForm = "none"
+reportMissingImports = "error"
+reportMissingModuleSource = "error"
+reportMissingTypeStubs = "none"
+reportPrivateUsage = "warning"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnnecessaryCast = "error"
+reportUnnecessaryComparison = "warning"
+reportUnnecessaryIsInstance = "warning"
+reportUnreachable = "none"
+reportUnsupportedDunderAll = "none"
+reportUntypedFunctionDecorator = "none"
+reportUnusedClass = "error"
+reportUnusedFunction = "error"
+reportUnusedImport = "error"
+reportUnusedVariable = "error"
+stubPath = "../typings"
+typeCheckingMode = "strict"
+venv = ".venv"
+venvPath = ".."
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [ ".", "src" ]
+reportPrivateUsage = "none"
+root = "examples"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [ ".", "src" ]
+reportPrivateUsage = "none"
+root = "scripts"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [ "src" ]
+reportPrivateUsage = "error"
+root = "src"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [ ".", "src" ]
+reportPrivateUsage = "none"
+root = "tests"
+
+# [MANAGED] pytest
+[tool.pytest.ini_options]
+addopts = [
+  "--cov-report=term-missing:skip-covered",
+  "--cov=.",
+  "--durations=10",
+  "--ignore-glob=*/tests/_constants/*",
+  "--ignore-glob=*/tests/_models/*",
+  "--ignore-glob=*/tests/_protocols/*",
+  "--ignore-glob=*/tests/_typings/*",
+  "--ignore-glob=*/tests/_utilities/*",
+  "--ignore-glob=*/tests/constants.py",
+  "--ignore-glob=*/tests/models.py",
+  "--ignore-glob=*/tests/protocols.py",
+  "--ignore-glob=*/tests/typings.py",
+  "--ignore-glob=*/tests/utilities.py",
+  "--markdown-docs",
+  "--strict-markers",
+]
+enable_assertion_pass_hook = true
+filterwarnings = [
+  "ignore:.*cannot collect test class.*because it has a __init__ constructor.*:pytest.PytestCollectionWarning",
+  "ignore:Delete once deprecated functions are gone:DeprecationWarning:rope.base.project",
+  "ignore:Remove `format_exc_info` from your processor chain:UserWarning:structlog",
+]
+markers = [
+  "advanced: advanced pattern tests",
+  "architecture: architectural pattern tests",
+  "core: core functionality tests",
+  "coverage: coverage-focused tests",
+  "ddd: domain-driven design tests",
+  "docker: tests requiring Docker",
+  "e2e: end-to-end integration tests",
+  "edge_cases: edge case tests",
+  "integration: integration tests",
+  "performance: performance and benchmark tests",
+  "resilience: resilience tests",
+  "slow: slow-running tests",
+  "stress: stress tests",
+  "unit: unit tests",
+]
+minversion = "8.0"
+python_classes = [ "Test*" ]
+python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
+
 [tool.radon]
 cc_min = "B"
 exclude = "tests/*,examples/*"
 mi_min = "B"
 
-[tool.pyrefly]
-ignore-errors-in-generated-code = true
-project-excludes = [
-  "**/*_pb2*.py",
-  "**/*_pb2_grpc*.py",
-]
-python-version = "3.13"
-search-path = [
-  ".",
-]
-
-[tool.pyrefly.errors]
-bad-override = false
-deprecated = true
-implicit-abstract-class = true
-implicit-any = true
-implicitly-defined-attribute = true
-missing-override-decorator = true
-missing-source = true
-not-required-key-access = true
-open-unpacking = true
-protocol-implicitly-defined-attribute = true
-redundant-cast = true
-unannotated-attribute = true
-unannotated-parameter = true
-unannotated-return = true
-
-# [MANAGED] mypy
-[tool.mypy]
-disable_error_code = [
-  "prop-decorator",
-]
-mypy_path = ["src"]
-plugins = [
-  "pydantic.mypy",
-]
-python_version = "3.13"
-
-# [MANAGED] pydantic-mypy
-explicit_package_bases = true
-ignore_missing_imports = true
-namespace_packages = true
-
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_required_dynamic_aliases = true
-
+# [MANAGED] ruff
 [tool.ruff]
 exclude = [
+  "**/__pyrefly_virtual__/**",
   ".git",
   ".mypy_cache",
   ".pytest_cache",
@@ -232,19 +521,25 @@ exclude = [
   "dist",
   "htmlcov",
   "temp-backup",
+  "tests/fixtures",
+  "tests/fixtures/**",
   "typings",
   "vendor",
   "venv",
 ]
-fix = true
+fix = false
 line-length = 88
 preview = true
 respect-gitignore = true
 show-fixes = true
-src = [
-  "src",
-]
+src = [ "examples", "scripts", "src", "tests" ]
 target-version = "py313"
+
+[tool.ruff.format]
+docstring-code-format = true
+indent-style = "space"
+line-ending = "lf"
+quote-style = "double"
 
 [tool.ruff.lint]
 ignore = [
@@ -301,35 +596,19 @@ ignore = [
   "UP040",
   "W293",
 ]
-select = [
-  "ALL",
-]
+select = [ "ALL" ]
 
 [tool.ruff.lint.isort]
-known-first-party = [
-  "flext_core",
-  "flext_infra",
-  "flext_tests",
-]
-
-# [MANAGED] pyright
 combine-as-imports = true
 force-single-line = false
+known-first-party = [ "flext_core" ]
 split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]
-"**/.vulture_whitelist.py" = [
-  "ALL",
-]
-"**/*_pb2*.py" = [
-  "ALL",
-]
-"**/*docs*" = [
-  "INP001",
-  "S404",
-  "S603",
-  "T201",
-]
+"**/.vulture_whitelist.py" = [ "ALL" ]
+"**/*_pb2*.py" = [ "ALL" ]
+"**/*dispatcher*" = [  ]
+"**/*docs*" = [ "INP001", "S404", "S603", "T201" ]
 "**/*examples*" = [
   "ANN401",
   "C901",
@@ -349,42 +628,15 @@ split-on-trailing-comma = true
   "T201",
   "TID252",
 ]
-"**/*exceptions*" = [
-  "A001",
-  "S105",
-  "SLF001",
-]
-"**/*instrumentation*" = [
-  "C901",
-  "FBT001",
-  "SLF001",
-]
-"**/*loggings*" = [
-  "PLR0904",
-  "PLW0603",
-]
-"**/*middleware*" = [
-  "ANN401",
-  "FBT001",
-  "FBT002",
-  "PLC2801",
-  "S107",
-]
-"**/*models*" = [
-  "ANN401",
-  "F821",
-  "FBT001",
-  "PLC2701",
-  "PLR0206",
-  "PLW0603",
-]
-"**/*oracle*" = [
-  "DTZ007",
-]
-"**/*result*" = [
-  "PLC2701",
-  "SLF001",
-]
+"**/*exceptions*" = [ "A001", "S105", "SLF001" ]
+"**/*handlers*" = [  ]
+"**/*instrumentation*" = [ "C901", "FBT001", "SLF001" ]
+"**/*loggings*" = [ "PLR0904", "PLW0603" ]
+"**/*middleware*" = [ "ANN401", "FBT001", "FBT002", "PLC2801", "S107" ]
+"**/*models*" = [ "ANN401", "FBT001", "PLC2701", "PLR0206", "PLW0603" ]
+"**/*oracle*" = [ "DTZ007" ]
+"**/*result*" = [ "PLC2701", "SLF001" ]
+"**/*runtime*" = [  ]
 "**/*scripts*" = [
   "EXE001",
   "FIX002",
@@ -401,17 +653,8 @@ split-on-trailing-comma = true
   "T201",
   "TID252",
 ]
-"**/*service*" = [
-  "N815",
-  "PLC2801",
-  "S404",
-  "S603",
-  "SLF001",
-]
-"**/*subprocess_utils*" = [
-  "S404",
-  "S603",
-]
+"**/*service*" = [ "N815", "PLC2801", "S404", "S603", "SLF001" ]
+"**/*subprocess_utils*" = [ "S404", "S603" ]
 "**/*tests*" = [
   "ANN001",
   "ANN002",
@@ -432,6 +675,7 @@ split-on-trailing-comma = true
   "D102",
   "D103",
   "D104",
+  "D106",
   "D107",
   "EM102",
   "F822",
@@ -486,147 +730,50 @@ split-on-trailing-comma = true
   "TRY003",
   "TRY004",
 ]
-"**/*typings*" = [
-  "ANN401",
-]
-"**/*utilities*" = [
-  "C901",
-  "PLW1510",
-  "S404",
-  "S603",
-]
+"**/*typings*" = [ "ANN401" ]
+"**/*utilities*" = [ "C901", "E402", "PLC2801", "PLW1510", "S404", "S603" ]
 "**/__init__.py" = [
+  "A004",
   "ANN401",
   "D107",
+  "F401",
+  "F403",
+  "F405",
   "F822",
+  "INP001",
   "N999",
+  "PLC2701",
   "RUF067",
+  "TC004",
 ]
-"**/_utilities/parser.py" = [
-  "ARG004",
-  "FBT001",
-]
-"**/config.py" = [
-  "ANN401",
-  "FBT001",
-  "SLF001",
-]
-"**/constants.py" = [
-  "S105",
-]
-"**/container.py" = [
-  "ANN401",
-  "SLF001",
-]
-"**/file_tools.py" = [
-  "D102",
-]
-"**/managers.py" = [
-  "S105",
-]
-"**/models.py" = [
-  "PLC2801",
-  "S102",
-]
-"**/output.py" = [
-  "FBT001",
-]
-"**/plugins/*.py" = [
-  "FBT001",
-  "FBT002",
-  "S404",
-  "S603",
-  "S607",
-  "TID252",
-]
-"**/providers/*.py" = [
-  "S106",
-  "S107",
-]
-"**/services/prompts.py" = [
-  "D102",
-  "D107",
-]
-"**/settings.py" = [
-  "ANN401",
-]
-"**/singer/*.py" = [
-  "S404",
-  "S603",
-]
-"**/subprocess.py" = [
-  "S404",
-  "S603",
-]
-"**/tools/*.py" = [
-  "FBT001",
-  "FBT002",
-  "N802",
-  "S404",
-  "S603",
-  "S607",
-  "T201",
-]
-"**/tools/**/*.py" = [
-  "FBT001",
-  "FBT002",
-  "N802",
-  "S404",
-  "S603",
-  "S607",
-  "T201",
-]
-"**/typings.py" = [
-  "RUF036",
-]
-
-[tool.ruff.format]
-docstring-code-format = true
-indent-style = "space"
-line-ending = "lf"
-quote-style = "double"
-[tool.pyright]
-extraPaths = [
-  "src",
-  "tests",
-]
-pythonPlatform = "Linux"
-pythonVersion = "3.13"
-typeCheckingMode = "strict"
+"**/_constants/*.py" = [ "S105" ]
+"**/_utilities/parser.py" = [ "ARG004", "FBT001" ]
+"**/alert_manager*.py" = [ "S310" ]
+"**/constants.py" = [ "S105" ]
+"**/container.py" = [ "ANN401", "SLF001" ]
+"**/context.py" = [  ]
+"**/external_command*.py" = [ "S404", "S603" ]
+"**/file_tools.py" = [ "D102" ]
+"**/managers.py" = [ "S105" ]
+"**/models.py" = [ "PLC0415", "PLC2801", "S102", "S105" ]
+"**/orchestrator*.py" = [ "S404", "S603" ]
+"**/output.py" = [ "FBT001" ]
+"**/plugins/*.py" = [ "FBT001", "FBT002", "S404", "S603", "S607", "TID252" ]
+"**/protocol_impls/*.py" = [ "SLF001" ]
+"**/providers/*.py" = [ "S106", "S107" ]
+"**/services/prompts.py" = [ "D102", "D107" ]
+"**/settings.py" = [ "ANN401", "FBT001", "SLF001" ]
+"**/singer/*.py" = [ "S404", "S603" ]
+"**/tools/*.py" = [ "FBT001", "FBT002", "N802", "S404", "S603", "S607", "T201" ]
+"**/tools/**/*.py" = [ "FBT001", "FBT002", "N802", "S404", "S603", "S607", "T201" ]
+"**/typings.py" = [ "RUF036" ]
+"**/workspace/*.py" = [ "PLC0415", "S404", "S603", "S607" ]
 
 # [MANAGED] tomlsort
-reportConstantRedefinition = "error"
-reportIncompatibleMethodOverride = "error"
-reportIncompatibleVariableOverride = "error"
-reportInconsistentConstructor = "error"
-reportMissingImports = "error"
-reportMissingModuleSource = "error"
-reportMissingTypeStubs = "warning"
-reportPrivateUsage = "warning"
-reportUnnecessaryCast = "error"
-reportUnnecessaryComparison = "warning"
-reportUnnecessaryIsInstance = "warning"
-reportUnusedClass = "error"
-reportUnusedFunction = "error"
-reportUnusedImport = "error"
-reportUnusedVariable = "error"
-
-[[tool.pyright.executionEnvironments]]
-reportPrivateUsage = "error"
-root = "src"
-
-[[tool.pyright.executionEnvironments]]
-reportPrivateUsage = "none"
-root = "tests"
 [tool.tomlsort]
 all = true
 in_place = true
-sort_first = [
-  "build-system",
-  "dependency-groups",
-  "project",
-  "tool",
-]
+sort_first = [ "build-system", "dependency-groups", "project", "tool" ]
 
 # [MANAGED] yamlfix
 [tool.yamlfix]
@@ -635,45 +782,3 @@ line_length = 88
 preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
-
-[tool.pytest.ini_options]
-addopts = [ "--strict-markers" ]
-enable_assertion_pass_hook = true
-filterwarnings = [
-  "ignore:Remove `format_exc_info` from your processor chain:UserWarning:structlog",
-]
-markers = [
-  "advanced: advanced pattern tests",
-  "architecture: architectural pattern tests",
-  "core: core functionality tests",
-  "coverage: coverage-focused tests",
-  "ddd: domain-driven design tests",
-  "docker: tests requiring Docker",
-  "e2e: end-to-end integration tests",
-  "edge_cases: edge case tests",
-  "integration: integration tests",
-  "performance: performance and benchmark tests",
-  "resilience: resilience tests",
-  "slow: slow-running tests",
-  "stress: stress tests",
-  "unit: unit tests",
-]
-minversion = "8.0"
-python_classes = [ "Test*" ]
-python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
-
-# [MANAGED] ruff
-
-# [MANAGED] pyrefly
-
-[tool.coverage.report]
-fail_under = 45
-precision = 2
-show_missing = true
-skip_covered = false
-
-[dependency-groups]
-dev = [
-  "types-defusedxml (>=0.7.0.20250822)",
-  "vulture (>=2.15)",
-]

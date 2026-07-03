@@ -1,65 +1,40 @@
-# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
-#
-"""Benchmark tests for flext container performance and memory usage."""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Benchmark package."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
-
-if TYPE_CHECKING:
-    from tests.benchmark.test_container_memory import (
-        TestContainerMemory,
-        get_memory_usage,
-    )
-    from tests.benchmark.test_container_performance import (
-        PerformanceBenchmark,
-        TestContainerPerformance,
-    )
-    from tests.benchmark.test_refactor_nesting_performance import (
-        TestPerformanceBenchmarks,
-    )
-
-# Lazy import mapping: export_name -> (module_path, attr_name)
-_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "PerformanceBenchmark": (
-        "tests.benchmark.test_container_performance",
-        "PerformanceBenchmark",
-    ),
-    "TestContainerMemory": (
-        "tests.benchmark.test_container_memory",
-        "TestContainerMemory",
-    ),
-    "TestContainerPerformance": (
-        "tests.benchmark.test_container_performance",
-        "TestContainerPerformance",
-    ),
-    "TestPerformanceBenchmarks": (
-        "tests.benchmark.test_refactor_nesting_performance",
-        "TestPerformanceBenchmarks",
-    ),
-    "get_memory_usage": ("tests.benchmark.test_container_memory", "get_memory_usage"),
-}
-
-__all__ = [
-    "PerformanceBenchmark",
-    "TestContainerMemory",
-    "TestContainerPerformance",
-    "TestPerformanceBenchmarks",
-    "get_memory_usage",
-]
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        ".test_container_memory": ("TestsFlextContainerMemory",),
+        ".test_container_performance": ("TestsFlextContainerPerformance",),
+        ".test_lazy_performance": ("TestsFlextLazyPerformance",),
+        "flext_tests": (
+            "c",
+            "d",
+            "e",
+            "h",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "td",
+            "tf",
+            "tk",
+            "tm",
+            "tv",
+            "u",
+            "x",
+        ),
+    },
+)
 
 
-def __getattr__(name: str) -> Any:
-    """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-
-
-def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    publish_all=False,
+)

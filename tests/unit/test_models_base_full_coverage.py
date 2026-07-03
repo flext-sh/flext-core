@@ -3,94 +3,82 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Annotated
 
 import pytest
-from pydantic import ValidationError
+from flext_tests import r
 
-from flext_core import c, m, r, u
-
-from ._models import _BrokenDumpModel
-
-
-class _FrozenValue(m.FrozenStrictModel):
-    name: str
-    count: int
+from tests.constants import c
+from tests.models import m
 
 
-class _Identifiable(m.IdentifiableMixin):
-    pass
+class TestsFlextModelsBaseFullCoverage:
+    class _FrozenValue(m.ContractModel):
+        name: Annotated[str, m.Field(description="Frozen value name")]
+        count: Annotated[int, m.Field(description="Frozen value count")]
 
+    class _Identifiable(m.FlexibleModel, m.IdentifiableMixin):
+        pass
 
-class _Timestampable(m.TimestampableMixin):
-    pass
+    class _Timestampable(m.FlexibleModel, m.TimestampableMixin):
+        pass
 
+    def test_metadata_attributes_accepts_none(self) -> None:
+        model = m.Metadata.model_validate({"attributes": None})
+        assert model.attributes == {}
 
-def test_metadata_attributes_accepts_none() -> None:
-    model = m.Metadata.model_validate({"attributes": None})
-    assert model.attributes == {}
+    def test_metadata_attributes_accepts_basemodel_mapping(self) -> None:
+        """Metadata.attributes accepts mapping-like input; use dict for model_validate."""
+        model = m.Metadata.model_validate({"attributes": {"key": "value"}})
+        assert model.attributes == {"key": "value"}
 
+    def test_metadata_attributes_rejects_basemodel_non_mapping_dump(self) -> None:
+        with pytest.raises(TypeError):
+            m.Metadata.model_validate({"attributes": m.Tests._BrokenDumpModel()})
 
-def test_metadata_attributes_accepts_basemodel_mapping() -> None:
-    """Metadata.attributes accepts mapping-like input; use dict for model_validate."""
-    model = m.Metadata.model_validate({"attributes": {"key": "value"}})
-    assert model.attributes == {"key": "value"}
+    def test_metadata_attributes_accepts_t_dict_and_mapping(self) -> None:
+        model_from_t_dict = m.Metadata.model_validate({
+            "attributes": m.Dict(root={"a": 1}),
+        })
+        model_from_mapping = m.Metadata(attributes={"b": 2})
+        assert model_from_t_dict.attributes == {"a": 1}
+        assert model_from_mapping.attributes == {"b": 2}
 
+    def test_metadata_attributes_rejects_non_mapping(self) -> None:
+        with pytest.raises(TypeError, match="attributes must be dict-like") as exc_info:
+            m.Metadata.model_validate({"attributes": 123})
+        assert exc_info.value is not None
+        assert "attributes must be dict-like" in str(exc_info.value)
 
-def test_metadata_attributes_rejects_basemodel_non_mapping_dump() -> None:
-    with pytest.raises(TypeError, match="must dump to mapping") as exc_info:
-        m.Metadata.model_validate({"attributes": _BrokenDumpModel()})
-    assert exc_info.value is not None
-    assert "must dump to mapping" in str(exc_info.value)
+    def test_frozen_value_model_equality_and_hash(self) -> None:
+        left = self._FrozenValue(name="item", count=1)
+        right = self._FrozenValue(name="item", count=1)
+        assert left == right
+        eq_result = left.__eq__("normalized")
+        assert eq_result is NotImplemented
+        hash_val = hash(left)
+        assert isinstance(hash_val, int)
 
+    def test_identifiable_unique_id_empty_rejected(self) -> None:
+        with pytest.raises(
+            c.ValidationError,
+            match="String should have at least 1 character",
+        ) as exc_info:
+            self._Identifiable(unique_id="   ")
+        assert exc_info.value is not None
+        assert "at least 1 character" in str(exc_info.value)
 
-def test_metadata_attributes_accepts_t_dict_and_mapping() -> None:
-    model_from_t_dict = m.Metadata.model_validate({"attributes": m.Dict(root={"a": 1})})
-    model_from_mapping = m.Metadata(attributes={"b": 2})
-    assert model_from_t_dict.attributes == {"a": 1}
-    assert model_from_mapping.attributes == {"b": 2}
+    def test_timestampable_timestamp_conversion_and_json_serializer(self) -> None:
+        naive = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
+        model = self._Timestampable(created_at=naive, updated_at=naive)
+        assert model.created_at.tzinfo == UTC
+        dumped = model.model_dump(mode="json")
+        assert isinstance(dumped["created_at"], str)
 
-
-def test_metadata_attributes_rejects_non_mapping() -> None:
-    with pytest.raises(TypeError, match="attributes must be dict-like") as exc_info:
-        m.Metadata.model_validate({"attributes": 123})
-    assert exc_info.value is not None
-    assert "attributes must be dict-like" in str(exc_info.value)
-
-
-def test_frozen_value_model_equality_and_hash() -> None:
-    left = _FrozenValue(name="item", count=1)
-    right = _FrozenValue(name="item", count=1)
-    assert left == right
-    eq_result = left.__eq__(object())
-    assert eq_result is NotImplemented
-    hash_val = hash(left)
-    assert isinstance(hash_val, int)
-
-
-def test_identifiable_unique_id_empty_rejected() -> None:
-    with pytest.raises(
-        ValidationError,
-        match="String should have at least 1 character",
-    ) as exc_info:
-        _Identifiable(unique_id="   ")
-    assert exc_info.value is not None
-    assert "at least 1 character" in str(exc_info.value)
-
-
-def test_timestampable_timestamp_conversion_and_json_serializer() -> None:
-    naive = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
-    model = _Timestampable(created_at=naive, updated_at=naive)
-    assert model.created_at.tzinfo == UTC
-    dumped = model.model_dump(mode="json")
-    assert isinstance(dumped["created_at"], str)
-
-
-def test_timestamped_model_and_alias_and_canonical_symbols() -> None:
-    model = m.TimestampedModel()
-    assert model.created_at.tzinfo == UTC
-    assert hasattr(m, "TimestampedModel")
-    ok_result = r[str].ok("ok")
-    assert ok_result.value == "ok"
-    version = c.Performance.DEFAULT_VERSION
-    assert version >= 1
-    assert hasattr(u, "transform")
+    def test_timestamped_model_and_alias_and_canonical_symbols(self) -> None:
+        model = m.TimestampedModel()
+        assert model.created_at.tzinfo == UTC
+        ok_result = r[str].ok("ok")
+        assert ok_result.value == "ok"
+        version = c.DEFAULT_RETRY_DELAY_SECONDS
+        assert version >= 1

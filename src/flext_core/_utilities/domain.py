@@ -10,180 +10,177 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextRuntime, c, p, t
-from flext_core.runtime import RuntimeData
+from collections.abc import (
+    Mapping,
+    Sequence,
+)
+from typing import TYPE_CHECKING
+
+from flext_core import c, t
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers as mc
+from flext_core._models.domain_event import FlextModelsDomainEvent as mde
+
+from .guards import FlextUtilitiesGuards as u
+
+if TYPE_CHECKING:
+    from flext_core._protocols.base import FlextProtocolsBase as pb
 
 
 class FlextUtilitiesDomain:
     """Reusable DDD helpers for dispatcher-driven domain workflows."""
 
-    @property
-    def logger(self) -> p.Log.StructlogLogger:
-        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
-        return FlextRuntime.get_logger(__name__)
-
     @staticmethod
-    def same_type(
-        obj_a: RuntimeData,
-        obj_b: RuntimeData,
-    ) -> bool:
+    def same_type(obj_a: t.JsonPayload, obj_b: t.JsonPayload) -> bool:
+        """Exact-type identity comparison (no MRO traversal).
+
+        Returns True only when both objects are the exact same concrete type.
+        """
         return type(obj_a) is type(obj_b)
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: RuntimeData,
-        entity_b: RuntimeData,
-        id_attr: str = c.Mixins.FIELD_ID,
+        entity_a: t.JsonPayload,
+        entity_b: t.JsonPayload,
+        id_attr: str = c.FIELD_ID,
     ) -> bool:
-        """Compare two entities by their unique ID attribute.
+        """Compare two entities by unique ID (identity, not value).
 
-        Generic comparison for DDD entities - compares by identity, not by value.
-
-        Args:
-            entity_a: First entity
-            entity_b: Second entity
-            id_attr: Attribute name for unique ID (default: "unique_id")
-
-        Returns:
-            True if same entity (same ID and type), False otherwise
-
-        Example:
-            >>> user1 = User(unique_id="123", name="Alice")
-            >>> user2 = User(unique_id="123", name="Bob")  # Same ID
-            >>> FlextUtilitiesDomain.compare_entities_by_id(user1, user2)
-            True
-
+        Returns True if both entities have same type and ID.
         """
-        if not FlextUtilitiesDomain.same_type(entity_b, entity_a):
-            return False
-        id_a = getattr(entity_a, id_attr, None)
-        id_b = getattr(entity_b, id_attr, None)
-        return id_a is not None and id_a == id_b
+        invalid_entity = u.scalar(entity_a) or isinstance(entity_a, (Sequence, Mapping))
+        invalid_other = u.scalar(entity_b) or isinstance(entity_b, (Sequence, Mapping))
+        if (
+            invalid_entity
+            or invalid_other
+            or not FlextUtilitiesDomain.same_type(entity_b, entity_a)
+        ):
+            result = False
+        else:
+            id_a = getattr(entity_a, id_attr, None)
+            id_b = getattr(entity_b, id_attr, None)
+            result = id_a is not None and id_a == id_b
+        return result
 
     @staticmethod
     def compare_value_objects_by_value(
-        obj_a: RuntimeData,
-        obj_b: RuntimeData,
+        obj_a: t.JsonPayload,
+        obj_b: t.JsonPayload,
     ) -> bool:
-        """Compare two value objects by their values (all attributes).
+        """Compare two value objects by all attributes (value, not identity).
 
-        Generic comparison for DDD Value Objects - compares by value, not identity.
-
-        Args:
-            obj_a: First value object
-            obj_b: Second value object
-
-        Returns:
-            True if same values (same type and all attributes equal)
-
-        Example:
-            >>> addr1 = Address(street="123 Main", city="NYC")
-            >>> addr2 = Address(street="123 Main", city="NYC")
-            >>> FlextUtilitiesDomain.compare_value_objects_by_value(addr1, addr2)
-            True
-
+        Returns True if same type and all attributes equal.
         """
-        if not FlextUtilitiesDomain.same_type(obj_b, obj_a):
-            return False
-        try:
-            return obj_a.__dict__ == obj_b.__dict__
-        except (AttributeError, TypeError):
-            return repr(obj_a) == repr(obj_b)
+        result: bool
+        if isinstance(obj_a, t.SCALAR_TYPES):
+            result = obj_a == obj_b if isinstance(obj_b, t.SCALAR_TYPES) else False
+        elif u.scalar(obj_b):
+            result = False
+        else:
+            obj_a_iterable = hasattr(obj_a, "__iter__") and not hasattr(
+                obj_a,
+                "model_dump",
+            )
+            obj_b_iterable = hasattr(obj_b, "__iter__") and not hasattr(
+                obj_b,
+                "model_dump",
+            )
+            if obj_a_iterable or obj_b_iterable:
+                if isinstance(obj_a, Mapping) and isinstance(obj_b, Mapping):
+                    result = dict(obj_a.items()) == dict(obj_b.items())
+                elif isinstance(obj_a, Sequence) and isinstance(obj_b, Sequence):
+                    result = tuple(obj_a) == tuple(obj_b)
+                else:
+                    result = False
+            elif not FlextUtilitiesDomain.same_type(obj_b, obj_a):
+                result = False
+            elif isinstance(obj_a, m.EnforcedModel) and isinstance(
+                obj_b,
+                m.EnforcedModel,
+            ):
+                result = obj_a.model_dump() == obj_b.model_dump()
+            else:
+                try:
+                    dict_a = vars(obj_a)
+                except c.EXC_ATTR_TYPE:
+                    dict_a = None
+                try:
+                    dict_b = vars(obj_b)
+                except c.EXC_ATTR_TYPE:
+                    dict_b = None
+                result = (
+                    dict_a == dict_b
+                    if dict_a is not None and dict_b is not None
+                    else repr(obj_a) == repr(obj_b)
+                )
+        return result
 
     @staticmethod
-    def hash_entity_by_id(entity: RuntimeData, id_attr: str = c.Mixins.FIELD_ID) -> int:
-        """Generate hash for entity based on unique ID and type.
-
-        Generic hashing for DDD entities - uses identity (ID + type), not value.
-
-        Args:
-            entity: Entity to hash
-            id_attr: Attribute name for unique ID (default: "unique_id")
-
-        Returns:
-            Hash value based on entity ID and type
-
-        Example:
-            >>> user = User(unique_id="123", name="Alice")
-            >>> hash_val = FlextUtilitiesDomain.hash_entity_by_id(user)
-
-        """
+    def hash_entity_by_id(
+        entity: t.JsonPayload,
+        id_attr: str = c.FIELD_ID,
+    ) -> int:
+        """Hash entity by ID + type. Falls back to identity hash if ID missing."""
+        if u.scalar(entity):
+            return hash(entity)
         entity_id = getattr(entity, id_attr, None)
         if entity_id is None:
             return hash(id(entity))
-        return hash((entity.__class__.__name__, entity_id))
+        return hash((u.type_name(entity), entity_id))
 
     @staticmethod
-    def hash_value_object_by_value(obj: RuntimeData) -> int:
-        """Generate hash for value object based on all attribute values.
-
-        Generic hashing for DDD Value Objects - uses values, not identity.
-
-        Args:
-            obj: Value object to hash
-
-        Returns:
-            Hash value based on all object attributes
-
-        Example:
-            >>> addr = Address(street="123 Main", city="NYC")
-            >>> hash_val = FlextUtilitiesDomain.hash_value_object_by_value(addr)
-
-        """
-        try:
-            obj_dict = obj.__dict__
-            hashable_items: list[tuple[str, t.NormalizedValue]] = []
-            for key, value in sorted(obj_dict.items()):
-                key_str = str(key)
-                if isinstance(value, (str, int, float, bool, type(None))):
-                    hashable_items.append((key_str, value))
-                else:
-                    hashable_items.append((key_str, value.__class__.__name__))
-            return hash(tuple(hashable_items))
-        except (AttributeError, TypeError):
+    def hash_value_object_by_value(obj: t.JsonPayload) -> int:
+        """Hash value object by all attributes. Falls back to repr hash."""
+        if u.scalar(obj):
+            return hash(obj)
+        if isinstance(obj, m.EnforcedModel):
+            data = obj.model_dump()
+            return hash(tuple(sorted((k, str(v)) for k, v in data.items())))
+        if hasattr(obj, "__iter__"):
             return hash(repr(obj))
+        try:
+            obj_dict = vars(obj)
+        except c.EXC_ATTR_TYPE:
+            obj_dict = None
+        if obj_dict is None:
+            return hash(repr(obj))
+        items: t.SequenceOf[t.Pair[str, t.JsonValue]] = [
+            (
+                k,
+                v
+                if isinstance(v, (str, int, float, bool, type(None)))
+                else u.type_name(v),
+            )
+            for k, v in sorted(obj_dict.items())
+        ]
+        return hash(tuple(items))
 
     @staticmethod
-    def validate_entity_has_id(
-        entity: RuntimeData, id_attr: str = c.Mixins.FIELD_ID
-    ) -> bool:
-        """Validate that entity has a non-None unique ID.
+    def add_domain_event(
+        entity: pb.HasDomainEvents,
+        event_type: str,
+        data: mc.ConfigMap | t.MappingKV[str, t.JsonPayload | None] | None = None,
+        aggregate_id: str | None = None,
+    ) -> mde.Entry:
+        """Create a domain event and append it to the entity's event buffer.
 
-        Args:
-            entity: Entity to validate
-            id_attr: Attribute name for unique ID (default: "unique_id")
-
-        Returns:
-            True if entity has non-None ID, False otherwise
-
+        Pass ``aggregate_id`` explicitly when the entity's stable identity
+        differs from ``unique_id`` (e.g. a surrogate ``id`` field). Pydantic's
+        ``BeforeValidator`` on ``Entry.data`` handles all normalization.
         """
-        entity_id = getattr(entity, id_attr, None)
-        return bool(entity_id)
-
-    @staticmethod
-    def validate_value_object_immutable(
-        obj: RuntimeData,
-    ) -> bool:
-        """Check if value object appears to be immutable (frozen).
-
-        Args:
-            obj: Value object to check
-
-        Returns:
-            True if appears immutable (frozen=True or no __setattr__)
-
-        """
-        if hasattr(obj, "model_config"):
-            try:
-                config = getattr(obj, "model_config", {})
-                if FlextRuntime.is_dict_like(config) and config.get("frozen"):
-                    return True
-            except (AttributeError, TypeError):
-                pass
-        if hasattr(obj, "__setattr__"):
-            setattr_method = getattr(obj.__class__, "__setattr__", None)
-            return setattr_method is not object.__setattr__
-        return False
+        if data is None:
+            normalized_data = mc.ConfigMap(root={})
+        elif isinstance(data, mc.ConfigMap):
+            normalized_data = data
+        else:
+            normalized_data = mc.ConfigMap.model_validate(data)
+        entry = mde.Entry(
+            event_type=event_type,
+            aggregate_id=aggregate_id if aggregate_id is not None else entity.unique_id,
+            data=normalized_data,
+        )
+        entity.domain_events.append(entry)
+        return entry
 
 
-__all__ = ["FlextUtilitiesDomain"]
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesDomain"]

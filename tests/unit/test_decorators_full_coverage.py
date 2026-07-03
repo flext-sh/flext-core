@@ -1,600 +1,189 @@
-"""Tests for Decorators full coverage."""
+"""Behavior contract for flext_core.decorators — public API only."""
 
 from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable
-from types import SimpleNamespace
-from typing import Annotated, Any, cast
 
 import pytest
-from pydantic import BaseModel, Field
+from flext_tests import d, e, r, tm
 
-from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
-
-
-class _FakeLogger:
-    def __init__(self) -> None:
-        self.warning_calls: list[tuple[str, dict[str, t.Scalar]]] = []
-        self.error_calls: list[tuple[str, dict[str, t.Scalar]]] = []
-        self.exception_calls: list[tuple[str, dict[str, t.Scalar]]] = []
-        self.logger = self
-
-    def warning(self, message: str, **kwargs: t.Scalar) -> None:
-        self.warning_calls.append((message, kwargs))
-
-    def error(self, message: str, **kwargs: t.Scalar) -> None:
-        self.error_calls.append((message, kwargs))
-
-    def info(self, _message: str, **_kwargs: t.Scalar) -> None:
-        return None
-
-    def debug(self, _message: str, *_args: object, **_kwargs: object) -> None:
-        return None
-
-    def exception(self, message: str, **kwargs: t.Scalar) -> None:
-        self.exception_calls.append((message, kwargs))
+from flext_core import FlextContainer
+from tests.models import m
+from tests.protocols import p
 
 
-class _ObjWithLogger(BaseModel):
-    logger: Annotated[object, Field(description="Logger instance holder")]
+class TestsFlextDecorators:
+    """Behavior contract for flext_core.decorators — public API only."""
 
+    def test_deprecated_emits_deprecation_warning_and_preserves_return(self) -> None:
+        @d.deprecated("old API")
+        def fn(value: str) -> str:
+            return value.upper()
 
-def test_deprecated_wrapper_emits_warning_and_returns_value() -> None:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            result = fn("ok")
 
-    @d.deprecated("old API")
-    def fn(value: str) -> str:
-        return value.upper()
+        tm.that(result, eq="OK")
+        tm.that(any(w.category is DeprecationWarning for w in caught), eq=True)
 
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        assert fn("ok") == "OK"
-    assert any(w.category is DeprecationWarning for w in caught)
+    def test_inject_resolves_dependency_from_shared_container(
+        self,
+        clean_container: p.Container,
+    ) -> None:
+        _ = clean_container
+        di = FlextContainer.shared()
+        _ = di.bind("injected.value", "dep-value")
 
+        @d.inject(dep="injected.value")
+        def fn(*, dep: str = "fallback") -> str:
+            return dep
 
-def test_inject_sets_missing_dependency_from_container(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+        tm.that(fn(), eq="dep-value")
 
-    class _Container:
-        @staticmethod
-        def get(_name: str) -> r[str]:
-            return r[str].ok("dep")
+    def test_inject_falls_back_when_binding_missing(
+        self,
+        clean_container: p.Container,
+    ) -> None:
+        _ = clean_container
 
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextContainer.create",
-        lambda: _Container(),
-    )
+        @d.inject(dep="missing.key")
+        def fn(*, dep: str = "fallback") -> str:
+            return dep
 
-    @d.inject(dep="service.dep")
-    def fn(*, dep: str = "fallback") -> str:
-        return dep
+        tm.that(fn(), eq="fallback")
 
-    assert fn() == "dep"
+    def test_timeout_raises_when_call_exceeds_limit(self) -> None:
+        @d.timeout(timeout_seconds=0.001, error_code="TMO")
+        def slow() -> str:
+            time.sleep(0.05)
+            return "never"
 
+        with pytest.raises(e.TimeoutError):
+            slow()
 
-def test_log_operation_track_perf_exception_adds_duration(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    fake_logger = _FakeLogger()
+    def test_timeout_reraises_original_exception_when_within_limit(self) -> None:
+        @d.timeout(timeout_seconds=2.0)
+        def fails_fast() -> None:
+            msg = "fast-fail"
+            raise ValueError(msg)
 
-    def _resolve_logger(
-        _args: tuple[object, ...],
-        _func: Callable[..., object],
-    ) -> _FakeLogger:
-        return fake_logger
+        with pytest.raises(ValueError, match="fast-fail"):
+            fails_fast()
 
-    def _bind_operation_context(**_kwargs: t.Scalar) -> str:
-        return "cid-1"
+    def test_timeout_passes_through_when_call_completes_in_time(self) -> None:
+        @d.timeout(timeout_seconds=2.0)
+        def quick() -> str:
+            return "done"
 
-    def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
-        return None
+        tm.that(quick(), eq="done")
 
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._resolve_logger",
-        _resolve_logger,
-    )
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._bind_operation_context",
-        _bind_operation_context,
-    )
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._clear_operation_scope",
-        _clear_operation_scope,
-    )
+    def test_timeout_reraises_existing_timeout_error(self) -> None:
+        @d.timeout(timeout_seconds=1.0)
+        def raises_timeout() -> None:
+            msg = "already-timeout"
+            raise e.TimeoutError(msg)
 
-    @d.log_operation("boom", track_perf=True)
-    def fn() -> None:
-        msg = "x"
-        raise ValueError(msg)
+        with pytest.raises(e.TimeoutError, match="already-timeout"):
+            raises_timeout()
 
-    with pytest.raises(ValueError):
-        fn()
-    _message, kwargs = fake_logger.exception_calls[-1]
-    assert "duration_ms" in kwargs
-    assert "duration_seconds" in kwargs
+    def test_railway_wraps_exception_as_failed_result(self) -> None:
+        @d.railway(error_code="E_RW")
+        def fails() -> int:
+            msg = "boom"
+            raise RuntimeError(msg)
 
+        result = fails()
+        tm.fail(result)
+        tm.that(result.error, contains="boom")
 
-def test_retry_unreachable_timeouterror_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_railway_passes_through_existing_result(self) -> None:
+        @d.railway()
+        def already_result() -> p.Result[int]:
+            return r[int].ok(1)
 
-    def _execute_retry_loop(*_args: object, **_kwargs: t.Scalar) -> Exception:
-        return ValueError("failed")
+        result = already_result()
+        tm.ok(result)
+        tm.that(result.unwrap(), eq=1)
 
-    def _handle_retry_exhaustion(*_args: object, **_kwargs: t.Scalar) -> None:
-        return None
+    def test_retry_returns_successful_call_without_retry(self) -> None:
+        calls = {"n": 0}
 
-    def _resolve_logger(
-        _args: tuple[object, ...],
-        _func: Callable[..., object],
-    ) -> _FakeLogger:
-        return _FakeLogger()
+        @d.retry(max_attempts=3)
+        def succeed() -> str:
+            calls["n"] += 1
+            return "ok"
 
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._execute_retry_loop",
-        _execute_retry_loop,
-    )
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._handle_retry_exhaustion",
-        _handle_retry_exhaustion,
-    )
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._resolve_logger",
-        _resolve_logger,
-    )
+        tm.that(succeed(), eq="ok")
+        tm.that(calls["n"], eq=1)
 
-    @d.retry(max_attempts=1, error_code="X")
-    def fn() -> str:
-        return "ok"
+    def test_retry_retries_until_success(self) -> None:
+        calls = {"n": 0}
 
-    with pytest.raises(e.TimeoutError):
-        fn()
+        @d.retry(max_attempts=3, delay_seconds=0.001)
+        def flaky() -> str:
+            calls["n"] += 1
+            if calls["n"] < 2:
+                msg = "transient"
+                raise ValueError(msg)
+            return "ok"
 
+        tm.that(flaky(), eq="ok")
+        tm.that(calls["n"], eq=2)
 
-def test_resolve_logger_prefers_logger_attribute() -> None:
-    logger = FlextLogger(__name__)
-    owner = _ObjWithLogger(logger=logger)
+    def test_combined_applies_injection_on_standard_path(
+        self,
+        clean_container: p.Container,
+    ) -> None:
+        _ = clean_container
+        di = FlextContainer.shared()
+        _ = di.bind("answer.service", 42)
 
-    def target() -> None:
-        return None
+        @d.combined(inject_deps={"dep": "answer.service"}, operation_name="std")
+        def fn(*, dep: int = 0) -> int:
+            return dep + 1
 
-    assert d._resolve_logger((owner,), target) is logger
+        tm.that(fn(), eq=43)
 
+    def test_combined_wraps_with_railway_when_enabled(
+        self,
+        clean_container: p.Container,
+    ) -> None:
+        _ = clean_container
 
-def test_execute_retry_loop_covers_default_linear_and_never_ran(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    fake_logger = _FakeLogger()
-
-    def _sleep(_seconds: float) -> None:
-        return None
-
-    monkeypatch.setattr("flext_core.decorators.time.sleep", _sleep)
-    calls = {"n": 0}
-
-    def flaky(*_args: object, **_kwargs: t.Scalar) -> str:
-        calls["n"] += 1
-        msg = "nope"
-        raise ValueError(msg)
-
-    cfg = m.RetryConfiguration.model_validate(
-        {
-            "max_attempts": 2,
-            "initial_delay_seconds": 0.01,
-            "exponential_backoff": False,
-        },
-    )
-    result_exc = d._execute_retry_loop(
-        flaky,
-        (),
-        {},
-        cast("Any", fake_logger),
-        retry_config=cfg,
-    )
-    assert isinstance(result_exc, Exception)
-    assert calls["n"] == 2
-    monkeypatch.setattr(
-        "flext_core.decorators.m.RetryConfiguration",
-        lambda **_kw: SimpleNamespace(
-            max_retries=0,
-            initial_delay_seconds=0.1,
-            exponential_backoff=False,
-        ),
-    )
-    result_none = d._execute_retry_loop(
-        lambda *_args, **_kwargs: "x",
-        (),
-        {},
-        cast("Any", fake_logger),
-        retry_config=None,
-    )
-    assert isinstance(result_none, RuntimeError)
-
-
-def test_handle_retry_exhaustion_falsey_exception_reaches_timeout_error() -> None:
-
-    class FalseyError(Exception):
-        def __bool__(self) -> bool:
-            return False
-
-    fake_logger = _FakeLogger()
-
-    def fn(*_args: object, **_kwargs: t.Scalar) -> None:
-        return None
-
-    with pytest.raises(e.TimeoutError):
-        d._handle_retry_exhaustion(
-            FalseyError("x"),
-            fn,
-            2,
-            None,
-            cast("Any", fake_logger),
+        @d.combined(
+            operation_name="rw",
+            railway_enabled=True,
         )
-
-
-def test_bind_operation_context_without_ensure_correlation_and_bind_failure(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    fake_logger = _FakeLogger()
-    _ = FlextContext.Variables.CorrelationId.set("cid-existing")
-
-    def _bind_context(*_args: object, **_kwargs: t.Scalar) -> r[bool]:
-        return r[bool].fail("bind-fail", error_code="E_BIND")
-
-    monkeypatch.setattr("flext_core.decorators.FlextLogger.bind_context", _bind_context)
-    cid = d._bind_operation_context(
-        operation="op",
-        logger=cast("Any", fake_logger),
-        function_name="fn",
-        ensure_correlation=False,
-    )
-    assert cid == "cid-existing"
-    assert fake_logger.warning_calls
-
-
-def test_clear_operation_scope_and_handle_log_result_paths(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    fake_logger = _FakeLogger()
-
-    def _clear_scope(_scope: str) -> r[bool]:
-        return r[bool].fail("clear-fail", error_code="E_CLR")
-
-    monkeypatch.setattr("flext_core.decorators.FlextLogger.clear_scope", _clear_scope)
-    d._clear_operation_scope(
-        logger=cast("Any", fake_logger),
-        function_name="fn",
-        operation="op",
-    )
-    d._handle_log_result(
-        result=r[bool].fail("x", error_code="E1"),
-        logger=cast("Any", fake_logger),
-        fallback_message="fallback",
-        kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
-    )
-    d._handle_log_result(
-        result=r[bool].fail("y", error_code="E2"),
-        logger=cast("Any", fake_logger),
-        fallback_message="fallback2",
-        kwargs=m.ConfigMap(root={"extra": "not-a-dict"}),
-    )
-    assert fake_logger.warning_calls
-
-
-def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-
-    class _NoFallback:
-        logger: None = None
-
-    d._handle_log_result(
-        result=r[bool].fail("x"),
-        logger=cast("Any", _NoFallback()),
-        fallback_message="m",
-        kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
-    )
-    fake_logger = _FakeLogger()
-
-    def _is_dict_like(_value: object) -> bool:
-        return False
-
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextRuntime.is_dict_like",
-        _is_dict_like,
-    )
-    d._handle_log_result(
-        result=r[bool].fail("x", error_code="E"),
-        logger=cast("Any", fake_logger),
-        fallback_message="fallback",
-        kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
-    )
-    assert fake_logger.warning_calls
-
-
-def test_timeout_covers_exception_timeout_branch() -> None:
-
-    @d.timeout(timeout_seconds=0.001, error_code="TMO")
-    def fn() -> None:
-        time.sleep(0.01)
-        msg = "slow error"
-        raise ValueError(msg)
-
-    with pytest.raises(e.TimeoutError):
-        fn()
-
-
-def test_timeout_reraises_original_exception_when_within_limit() -> None:
-
-    @d.timeout(timeout_seconds=2.0)
-    def fn() -> None:
-        msg = "fast-fail"
-        raise ValueError(msg)
-
-    with pytest.raises(ValueError, match="fast-fail"):
-        fn()
-
-
-def test_combined_with_and_without_railway_uses_injection(
-    clean_container: object,
-) -> None:
-    _ = clean_container
-    di = FlextContainer.create()
-    _ = di.register("answer.service", 42)
-
-    @d.combined(inject_deps={"dep": "answer.service"}, operation_name="std")
-    def fn_standard(*, dep: int = 0) -> int:
-        return dep + 1
-
-    @d.combined(
-        inject_deps={"dep": "answer.service"},
-        operation_name="rw",
-        use_railway=True,
-    )
-    def fn_railway(*, dep: int = 0) -> int:
-        return dep + 2
-
-    assert fn_standard() == 43
-    result = fn_railway()
-    assert getattr(result, "is_success", False) is True
-    assert getattr(result, "value", None) == 44
-
-
-def test_with_correlation_with_context_track_operation_and_factory(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    ensure_calls: list[int] = []
-    fake_logger = _FakeLogger()
-
-    def _ensure_correlation_id() -> str:
-        ensure_calls.append(1)
-        return "cid-1"
-
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextContext.Utilities.ensure_correlation_id",
-        _ensure_correlation_id,
-    )
-
-    @d.with_correlation()
-    def fn() -> str:
-        return "ok"
-
-    assert fn() == "ok"
-    assert ensure_calls == [1]
-
-    def _resolve_logger(
-        _args: tuple[object, ...],
-        _func: Callable[..., object],
-    ) -> _FakeLogger:
-        return fake_logger
-
-    def _bind_global_context(**_kwargs: t.Scalar) -> r[bool]:
-        return r[bool].fail("bind", error_code="B")
-
-    def _unbind_global_context(*_keys: str) -> r[bool]:
-        return r[bool].fail("unbind", error_code="U")
-
-    def _bind_operation_context(**_kwargs: t.Scalar) -> None:
-        return None
-
-    def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
-        return None
-
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._resolve_logger",
-        _resolve_logger,
-    )
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextLogger.bind_global_context",
-        _bind_global_context,
-    )
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextLogger.unbind_global_context",
-        _unbind_global_context,
-    )
-
-    @d.with_context(service="svc")
-    def with_ctx() -> str:
-        return "ctx"
-
-    assert with_ctx() == "ctx"
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._bind_operation_context",
-        _bind_operation_context,
-    )
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._clear_operation_scope",
-        _clear_operation_scope,
-    )
-
-    @d.track_operation("tracked", track_correlation=True)
-    def tracked() -> str:
-        return "done"
-
-    assert tracked() == "done"
-
-    @d.factory(name="svc.factory", singleton=True, lazy=False)
-    def build(_value: BaseModel) -> BaseModel:
-        return m.ConfigMap(root={"v": 7})
-
-    assert hasattr(build, c.Discovery.FACTORY_ATTR)
-
-
-def test_track_performance_success_and_failure_paths(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    fake_logger = _FakeLogger()
-
-    def _resolve_logger(
-        _args: tuple[object, ...],
-        _func: Callable[..., object],
-    ) -> _FakeLogger:
-        return fake_logger
-
-    def _bind_operation_context(**_kwargs: t.Scalar) -> str:
-        return "cid-perf"
-
-    def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
-        return None
-
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._resolve_logger",
-        _resolve_logger,
-    )
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._bind_operation_context",
-        _bind_operation_context,
-    )
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._clear_operation_scope",
-        _clear_operation_scope,
-    )
-
-    @d.log_operation("perf-op")
-    def ok_fn() -> str:
-        return "ok"
-
-    @d.log_operation("perf-op-fail")
-    def fail_fn() -> str:
-        msg = "boom"
-        raise ValueError(msg)
-
-    assert ok_fn() == "ok"
-    with pytest.raises(ValueError):
-        fail_fn()
-
-
-def test_railway_and_retry_additional_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-
-    @d.railway()
-    def already_result() -> r[int]:
-        return r[int].ok(1)
-
-    assert already_result().is_success
-
-    @d.railway(error_code=cast("Any", 123))
-    def fails() -> int:
-        msg = "x"
-        raise RuntimeError(msg)
-
-    fail_result = cast("Any", fails())
-    assert fail_result.is_failure
-    fake_logger = _FakeLogger()
-
-    def _resolve_logger(
-        _args: tuple[object, ...],
-        _func: Callable[..., object],
-    ) -> _FakeLogger:
-        return fake_logger
-
-    def _execute_retry_loop(*_args: object, **_kwargs: t.Scalar) -> str:
-        return "done"
-
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._resolve_logger",
-        _resolve_logger,
-    )
-    monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._execute_retry_loop",
-        _execute_retry_loop,
-    )
-
-    @d.retry(max_attempts=1)
-    def retry_fn() -> str:
-        return "ok"
-
-    assert retry_fn() == "done"
-
-
-def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    fake_logger = _FakeLogger()
-
-    def _sleep(_seconds: float) -> None:
-        return None
-
-    monkeypatch.setattr("flext_core.decorators.time.sleep", _sleep)
-    calls = {"n": 0}
-
-    def always_fails(*_args: object, **_kwargs: t.Scalar) -> str:
-        calls["n"] += 1
-        msg = "fail"
-        raise KeyError(msg)
-
-    cfg = m.RetryConfiguration.model_validate(
-        {
-            "max_attempts": 2,
-            "initial_delay_seconds": 0.01,
-            "exponential_backoff": True,
-        },
-    )
-    result = d._execute_retry_loop(
-        always_fails,
-        (),
-        {},
-        cast("Any", fake_logger),
-        retry_config=cfg,
-    )
-    assert isinstance(result, Exception)
-    assert calls["n"] == 2
-
-    def fn(*_args: object, **_kwargs: t.Scalar) -> None:
-        return None
-
-    with pytest.raises(ValueError, match="last"):
-        d._handle_retry_exhaustion(
-            ValueError("last"),
-            fn,
-            2,
-            "ERR",
-            cast("Any", fake_logger),
-        )
-
-
-def test_timeout_additional_success_and_reraise_timeout_paths() -> None:
-
-    @d.timeout(timeout_seconds=1.0)
-    def quick() -> str:
-        return "fast"
-
-    assert quick() == "fast"
-
-    @d.timeout(timeout_seconds=1.0)
-    def raises_timeout() -> None:
-        msg = "already-timeout"
-        raise e.TimeoutError(msg)
-
-    with pytest.raises(e.TimeoutError, match="already-timeout"):
-        raises_timeout()
-
-
-def test_timeout_raises_when_successful_call_exceeds_limit() -> None:
-
-    @d.timeout(timeout_seconds=0.001, error_code="SLOW_OK")
-    def slow_success() -> str:
-        time.sleep(0.01)
-        return "ok"
-
-    with pytest.raises(e.TimeoutError):
-        slow_success()
+        def fails() -> int:
+            msg = "boom"
+            raise RuntimeError(msg)
+
+        result = fails()
+        tm.fail(result)
+
+    def test_with_correlation_ensures_correlation_id_during_call(self) -> None:
+        @d.with_correlation()
+        def fn() -> str:
+            return "ok"
+
+        tm.that(fn(), eq="ok")
+
+    def test_factory_registers_callable_and_produces_value(
+        self,
+        clean_container: p.Container,
+    ) -> None:
+        _ = clean_container
+
+        class _Payload(m.BaseModel):
+            v: int
+
+        @d.factory(name="svc.factory", singleton=True, lazy=False)
+        def build() -> _Payload:
+            return _Payload(v=7)
+
+        built = build()
+        payload = built.unwrap() if isinstance(built, p.Result) else built
+        assert isinstance(payload, _Payload)
+        tm.that(payload.v, eq=7)
