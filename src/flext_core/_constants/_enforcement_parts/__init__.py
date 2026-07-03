@@ -29,6 +29,9 @@ if TYPE_CHECKING:
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_07 import (
         FlextConstantsEnforcementSmellData as FlextConstantsEnforcementSmellData,
     )
+    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_08 import (
+        FlextConstantsEnforcementFixActions as FlextConstantsEnforcementFixActions,
+    )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".flextconstantsenforcement_part_01": ("FlextConstantsEnforcementEnums",),
@@ -38,6 +41,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".flextconstantsenforcement_part_05": ("FlextConstantsEnforcementRuleText",),
         ".flextconstantsenforcement_part_06": ("FlextConstantsEnforcementTargets",),
         ".flextconstantsenforcement_part_07": ("FlextConstantsEnforcementSmellData",),
+        ".flextconstantsenforcement_part_08": ("FlextConstantsEnforcementFixActions",),
     },
 )
 

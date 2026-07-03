@@ -20,9 +20,14 @@ class FlextConstantsEnforcementSmellData:
 
     ENFORCEMENT_SMELL_TAGS: Final[tuple[str, ...]] = ENFORCEMENT_SMELL_TAGS
     SMELL_THRESHOLDS: Final[t.IntMapping] = SMELL_THRESHOLDS
-    SMELL_FIX_STRATEGIES: Final[
+    ENFORCEMENT_SMELL_FIX_STRATEGIES: Final[
         t.MappingKV[str, t.MappingKV[str, t.JsonValue]]
-    ] = {tag: strategy.model_dump() for tag, strategy in SMELL_FIX_STRATEGIES.items()}
+    ] = {
+        tag: strategy.model_dump() for tag, strategy in SMELL_FIX_STRATEGIES.items()
+    }
+    SMELL_FIX_STRATEGIES: Final[t.MappingKV[str, t.MappingKV[str, t.JsonValue]]] = {
+        tag: strategy.model_dump() for tag, strategy in SMELL_FIX_STRATEGIES.items()
+    }
     SMELL_RULES_TEXT: Final[t.StrPairMapping] = SMELL_RULES_TEXT
     SMELL_BEARTYPE_ROWS: Final[
         tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]

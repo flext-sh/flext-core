@@ -46,6 +46,7 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
         enabled: bool = True
         promote_to_error_when_strict: bool = True
         notes: str = ""
+        fix_action: FlextModelsEnforcementSources.EnforcementFixAction | None = None
 
     class EnforcementCatalog(EnforcementModelBase):
         """Frozen catalog of all enforcement rules."""

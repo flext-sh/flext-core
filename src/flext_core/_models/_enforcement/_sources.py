@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Literal
 
+from pydantic import Field
+
 from flext_core._constants.enforcement import FlextConstantsEnforcement as ce
 from flext_core._typings.base import FlextTypingBase as t
 
@@ -71,6 +73,18 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
 
         kind: Literal["code_smell"] = "code_smell"
         smell_tag: str
+
+    class EnforcementFixAction(EnforcementModelBase):
+        """Actionable fix contract for an enforcement rule.
+
+        Stored on ``EnforcementRuleSpec.fix_action`` and consumed by the
+        flext-infra fix orchestrator to route violations to the right fixer.
+        """
+
+        kind: Literal["gate", "transformer", "rope", "manual"]
+        target: str
+        params: t.JsonMapping = Field(default_factory=dict)
+        safe: bool = True
 
 
 __all__: list[str] = ["FlextModelsEnforcementSources"]
