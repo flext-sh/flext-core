@@ -209,6 +209,24 @@ class FlextConstantsEnforcementCatalogInfraRows:
             False,
             "Hardcoded `__version__` string — use importlib.metadata.",
         ),
+        (
+            "ENFORCE-081",
+            "HIGH",
+            "inline_import_violations",
+            "4-import-law",
+            ("flext-import-rules", "flext-patterns"),
+            False,
+            "Inline or lazy import declared inside a function body or dynamic importlib.import_module call.",
+        ),
+        (
+            "ENFORCE-082",
+            "HIGH",
+            "silent_failure_violations",
+            "3-1-supreme-law",
+            ("flext-patterns",),
+            False,
+            "Exception-silencing pattern (contextlib.suppress, except...: pass, broad except, unwrap_or sentinel, or sentinel return on failure branch).",
+        ),
     )
 
 

@@ -119,6 +119,18 @@ class FlextConstantsEnforcementFixActions:
             "params": {},
             "safe": True,
         },
+        "ENFORCE-081": {
+            "kind": "rope",
+            "target": "hoist_inline_import",
+            "params": {},
+            "safe": True,
+        },
+        "ENFORCE-082": {
+            "kind": "rope",
+            "target": "fix_silent_failure_sentinels",
+            "params": {},
+            "safe": True,
+        },
     }
 
 
