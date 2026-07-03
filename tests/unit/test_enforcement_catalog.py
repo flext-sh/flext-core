@@ -54,14 +54,16 @@ class TestsFlextEnforcementCatalog:
         expected = {member.value for member in m.EnforcementSourceKind}
         assert expected <= present
 
-    def test_infra_detector_rules_match_project_enforcement_report_field_count(
+    def test_infra_detector_rules_match_declared_infra_rows(
         self,
     ) -> None:
-        # ProjectEnforcementReport has 25 violation fields; catalog must match.
+        declared_fields = {row[2] for row in c.INFRA_DETECTOR_ROWS}
         infra = u.build_canonical_catalog().by_kind(
             m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR,
         )
-        assert len(infra) == 25
+
+        assert len(infra) == len(c.INFRA_DETECTOR_ROWS)
+        assert {rule.source.violation_field for rule in infra} == declared_fields
 
     def test_tests_validator_rules_cover_all_seven_public_dispatch_methods(
         self,
