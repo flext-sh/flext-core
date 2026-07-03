@@ -71,6 +71,38 @@ class FlextConstantsEnforcementFixActions:
             "params": {},
             "safe": False,
         },
+        "ENFORCE-045": {
+            "kind": "transformer",
+            "target": "import_modernizer",
+            "params": {
+                "imports_to_remove": ["pydantic"],
+                "symbols_to_replace": {
+                    "BaseModel": "m.BaseModel",
+                    "ConfigDict": "m.ConfigDict",
+                    "Field": "u.Field",
+                    "PrivateAttr": "u.PrivateAttr",
+                    "TypeAdapter": "m.TypeAdapter",
+                    "computed_field": "u.computed_field",
+                    "field_validator": "u.field_validator",
+                    "model_validator": "u.model_validator",
+                },
+                "runtime_aliases": ["m", "u"],
+                "blocked_aliases": [],
+            },
+            "safe": True,
+        },
+        "ENFORCE-048": {
+            "kind": "transformer",
+            "target": "mro_remover",
+            "params": {},
+            "safe": True,
+        },
+        "ENFORCE-064": {
+            "kind": "transformer",
+            "target": "compatibility_alias",
+            "params": {},
+            "safe": True,
+        },
         "ENFORCE-066": {
             "kind": "rope",
             "target": "rewrite_compatibility_alias",
@@ -114,7 +146,7 @@ class FlextConstantsEnforcementFixActions:
             "safe": True,
         },
         "ENFORCE-080": {
-            "kind": "rope",
+            "kind": "transformer",
             "target": "rewrite_foreign_canonical_alias",
             "params": {},
             "safe": True,
@@ -129,6 +161,18 @@ class FlextConstantsEnforcementFixActions:
             "kind": "rope",
             "target": "fix_silent_failure_sentinels",
             "params": {},
+            "safe": True,
+        },
+        "ENFORCE-083": {
+            "kind": "gate",
+            "target": "smells",
+            "params": {"smell_tag": "type_ignore"},
+            "safe": True,
+        },
+        "ENFORCE-084": {
+            "kind": "gate",
+            "target": "smells",
+            "params": {"smell_tag": "noqa"},
             "safe": True,
         },
     }

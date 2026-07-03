@@ -236,6 +236,24 @@ class FlextConstantsEnforcementCatalogInfraRows:
             False,
             "Exception-silencing pattern (contextlib.suppress, except...: pass, broad except, unwrap_or sentinel, or sentinel return on failure branch).",
         ),
+        (
+            "ENFORCE-083",
+            "HIGH",
+            "type_ignore_violations",
+            "3-1-supreme-law",
+            ("flext-strict-typing",),
+            True,
+            "`# type: ignore` comment silences type checker — remove the bypass and fix the type error.",
+        ),
+        (
+            "ENFORCE-084",
+            "HIGH",
+            "noqa_violations",
+            "3-1-supreme-law",
+            ("flext-patterns",),
+            True,
+            "`# noqa` comment silences lint — remove the bypass and fix the underlying issue.",
+        ),
     )
 
 
