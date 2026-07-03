@@ -81,6 +81,13 @@ class FlextModelsProjectMetadata(FlextModelsProjectMetadataPart02):
                 description="Optional human-readable site title override.",
             ),
         ] = None
+        exclude_docs: Annotated[
+            tb.StrSequence,
+            Field(
+                default=(),
+                description="Markdown paths excluded from generated docs.",
+            ),
+        ] = ()
 
     class ProjectToolFlextAliases(FlextModelsPydantic.BaseModel):
         """``[tool.flext.aliases]`` table contract."""

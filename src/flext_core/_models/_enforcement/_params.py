@@ -121,6 +121,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         kind: Literal["method_shape"] = "method_shape"
         forbidden_prefixes: t.StrSequence = ()
         require_static_or_classmethod: bool = False
+        max_params: int = 0
 
     class AttrShapeParams(EnforcementModelBase):
         """Parameters for ATTR_SHAPE predicate."""

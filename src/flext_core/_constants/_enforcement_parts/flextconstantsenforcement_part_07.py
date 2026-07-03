@@ -1,0 +1,31 @@
+"""Smell-rule enforcement constants loaded from JSON package-data."""
+
+from __future__ import annotations
+
+from typing import Final
+
+from flext_core._constants._enforcement_data import (
+    ENFORCEMENT_SMELL_TAGS,
+    SMELL_BEARTYPE_ROWS,
+    SMELL_CODE_SMELL_ROWS,
+    SMELL_RULES_TEXT,
+    SMELL_THRESHOLDS,
+)
+from flext_core._typings.base import FlextTypingBase as t
+
+
+class FlextConstantsEnforcementSmellData:
+    """JSON-loaded smell enforcement rules and thresholds."""
+
+    ENFORCEMENT_SMELL_TAGS: Final[tuple[str, ...]] = ENFORCEMENT_SMELL_TAGS
+    SMELL_THRESHOLDS: Final[t.IntMapping] = SMELL_THRESHOLDS
+    SMELL_RULES_TEXT: Final[t.StrPairMapping] = SMELL_RULES_TEXT
+    SMELL_BEARTYPE_ROWS: Final[
+        tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
+    ] = SMELL_BEARTYPE_ROWS
+    SMELL_CODE_SMELL_ROWS: Final[
+        tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
+    ] = SMELL_CODE_SMELL_ROWS
+
+
+__all__: list[str] = ["FlextConstantsEnforcementSmellData"]

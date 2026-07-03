@@ -1,0 +1,121 @@
+{
+  "thresholds": {
+    "params": 5,
+    "returns": 5,
+    "nesting": 4,
+    "fn_cx": 14,
+    "file_cx": 49
+  },
+  "tags": [
+    "smell_function_parameters",
+    "smell_return_statements",
+    "smell_nested_control_flow",
+    "smell_boolean_logic",
+    "smell_function_complexity",
+    "smell_file_complexity",
+    "smell_identical_code",
+    "smell_similar_code"
+  ],
+  "rules_text": {
+    "smell_function_parameters": [
+      "function {name} has {count} parameters > max {max}",
+      "Decompose into smaller functions or pass a context/model object only when it carries domain meaning; adding a params model solely to silence this rule is abominable."
+    ],
+    "smell_return_statements": [
+      "function {name} has {count} return statements > max {max}",
+      "Refactor to a single result path; use early returns only when they improve readability."
+    ],
+    "smell_nested_control_flow": [
+      "function {name} has {count} nested control-flow levels > max {max}",
+      "Extract helper functions to flatten control flow."
+    ],
+    "smell_boolean_logic": [
+      "function {name} has boolean-logic complexity {count} > max {max}",
+      "Simplify boolean expressions or introduce named predicates."
+    ],
+    "smell_function_complexity": [
+      "function {name} cyclomatic complexity {count} > max {max}",
+      "Decompose the function into smaller, single-responsibility helpers."
+    ],
+    "smell_file_complexity": [
+      "module {file} cyclomatic complexity {count} > max {max}",
+      "Split the module into focused units."
+    ],
+    "smell_identical_code": [
+      "identical code block detected ({count} occurrences)",
+      "Extract a shared helper or canonical constant."
+    ],
+    "smell_similar_code": [
+      "similar code block detected ({count} occurrences)",
+      "Refactor to a shared abstraction or delegate to a common helper."
+    ]
+  },
+  "beartype_rows": [
+    {
+      "id": "ENFORCE-071",
+      "severity": "MEDIUM",
+      "tag": "smell_function_parameters",
+      "anchor": "3-1-supreme-law",
+      "skills": ["flext-quality-gates"],
+      "description": "Function parameter count exceeds FLEXT threshold; decompose or use a domain context object."
+    }
+  ],
+  "code_smell_rows": [
+    {
+      "id": "ENFORCE-072",
+      "severity": "MEDIUM",
+      "tag": "smell_return_statements",
+      "anchor": "3-1-supreme-law",
+      "skills": ["flext-quality-gates"],
+      "description": "Function has too many return statements; prefer a single result path."
+    },
+    {
+      "id": "ENFORCE-073",
+      "severity": "MEDIUM",
+      "tag": "smell_nested_control_flow",
+      "anchor": "3-1-supreme-law",
+      "skills": ["flext-quality-gates"],
+      "description": "Function nesting depth exceeds FLEXT threshold; flatten with helpers."
+    },
+    {
+      "id": "ENFORCE-074",
+      "severity": "MEDIUM",
+      "tag": "smell_boolean_logic",
+      "anchor": "3-1-supreme-law",
+      "skills": ["flext-quality-gates"],
+      "description": "Boolean-logic complexity exceeds FLEXT threshold; simplify or name predicates."
+    },
+    {
+      "id": "ENFORCE-075",
+      "severity": "MEDIUM",
+      "tag": "smell_function_complexity",
+      "anchor": "3-1-supreme-law",
+      "skills": ["flext-quality-gates"],
+      "description": "Function cyclomatic complexity exceeds FLEXT threshold; decompose."
+    },
+    {
+      "id": "ENFORCE-076",
+      "severity": "MEDIUM",
+      "tag": "smell_file_complexity",
+      "anchor": "3-1-supreme-law",
+      "skills": ["flext-quality-gates"],
+      "description": "Module cyclomatic complexity exceeds FLEXT threshold; split the module."
+    },
+    {
+      "id": "ENFORCE-077",
+      "severity": "LOW",
+      "tag": "smell_identical_code",
+      "anchor": "3-1-supreme-law",
+      "skills": ["flext-quality-gates"],
+      "description": "Identical code blocks detected across the workspace; extract shared helpers."
+    },
+    {
+      "id": "ENFORCE-078",
+      "severity": "LOW",
+      "tag": "smell_similar_code",
+      "anchor": "3-1-supreme-law",
+      "skills": ["flext-quality-gates"],
+      "description": "Similar code blocks detected across the workspace; refactor to shared abstractions."
+    }
+  ]
+}

@@ -22,6 +22,10 @@ from ._exceptions.types import (
 )
 
 
+class FlextSmellViolation(FlextMroViolation):
+    """Runtime code-smell violation emitted by the FLEXT enforcement engine."""
+
+
 class FlextExceptions(
     FlextExceptionsFactories,
     FlextExceptionsTemplate,
@@ -37,8 +41,9 @@ class FlextExceptions(
     """
 
     MroViolation: ClassVar[type[FlextMroViolation]] = FlextMroViolation
+    SmellViolation: ClassVar[type[FlextSmellViolation]] = FlextSmellViolation
 
 
 e = FlextExceptions
 
-__all__: list[str] = ["FlextExceptions", "e"]
+__all__: list[str] = ["FlextExceptions", "FlextSmellViolation", "e"]

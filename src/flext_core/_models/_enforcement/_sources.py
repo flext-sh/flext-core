@@ -66,5 +66,11 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
         skill: str
         anchor: str = ""
 
+    class EnforcementCodeSmellSource(EnforcementModelBase):
+        """Rule backed by a code-smell predicate (qlty/ metrics)."""
+
+        kind: Literal["code_smell"] = "code_smell"
+        smell_tag: str
+
 
 __all__: list[str] = ["FlextModelsEnforcementSources"]
