@@ -10,8 +10,11 @@ from __future__ import annotations
 from contextlib import suppress
 from typing import Self
 
-from flext_core import FlextConstants as c, FlextExceptions as e, FlextTypes as t
+from flext_core._constants.errors import FlextConstantsErrors as ce
+from flext_core._constants.logging import FlextConstantsLogging as cl
+from flext_core._exceptions.factories import FlextExceptionsFactories as ef
 from flext_core.result import FlextResult as r
+from flext_core.typings import FlextTypes as t
 
 from .flextlogger_part_02 import (
     FlextLogger as FlextLoggerPart02,
@@ -36,12 +39,12 @@ class FlextLogger(FlextLoggerPart02):
         **kw: t.LogValue,
     ) -> t.LogResult:
         """Log warning message."""
-        return self._log_standard_level(c.LogLevel.WARNING, msg, *args, **kw)
+        return self._log_standard_level(cl.LogLevel.WARNING, msg, *args, **kw)
 
     @staticmethod
-    def _resolve_level_name(level: c.LogLevel | str) -> str:
+    def _resolve_level_name(level: cl.LogLevel | str) -> str:
         match level:
-            case c.LogLevel() as enum_level:
+            case cl.LogLevel() as enum_level:
                 level_raw: str = enum_level.value
             case _:
                 level_raw = level
@@ -63,7 +66,7 @@ class FlextLogger(FlextLoggerPart02):
 
     def _log(
         self,
-        level: c.LogLevel | str,
+        level: cl.LogLevel | str,
         event: str,
         *args: t.LogValue,
         **context: t.LogValue,
@@ -74,12 +77,12 @@ class FlextLogger(FlextLoggerPart02):
             scalar_context = FlextLogger._resolve_log_context(args, context)
             getattr(self.logger, level_str)(event, **scalar_context)
             return r[bool].ok(True)
-        except c.EXC_BROAD_RUNTIME as exc:
-            return e.fail_operation("logging", exc)
+        except ce.EXC_BROAD_RUNTIME as exc:
+            return ef.fail_operation("logging", exc)
 
     def _log_standard_level(
         self,
-        level: c.LogLevel,
+        level: cl.LogLevel,
         msg: str,
         *args: t.LogValue,
         **kw: t.LogValue,
@@ -93,7 +96,7 @@ class FlextLogger(FlextLoggerPart02):
         **kw: t.LogValue,
     ) -> t.LogResult:
         """Log critical message."""
-        return self._log_standard_level(c.LogLevel.CRITICAL, msg, *args, **kw)
+        return self._log_standard_level(cl.LogLevel.CRITICAL, msg, *args, **kw)
 
     def debug(
         self,
@@ -102,7 +105,7 @@ class FlextLogger(FlextLoggerPart02):
         **kw: t.LogValue,
     ) -> t.LogResult:
         """Log debug message."""
-        return self._log_standard_level(c.LogLevel.DEBUG, msg, *args, **kw)
+        return self._log_standard_level(cl.LogLevel.DEBUG, msg, *args, **kw)
 
     def error(
         self,
@@ -111,7 +114,7 @@ class FlextLogger(FlextLoggerPart02):
         **kw: t.LogValue,
     ) -> t.LogResult:
         """Log error message."""
-        return self._log_standard_level(c.LogLevel.ERROR, msg, *args, **kw)
+        return self._log_standard_level(cl.LogLevel.ERROR, msg, *args, **kw)
 
     def info(
         self,
@@ -120,7 +123,7 @@ class FlextLogger(FlextLoggerPart02):
         **kw: t.LogValue,
     ) -> t.LogResult:
         """Log info message."""
-        return self._log_standard_level(c.LogLevel.INFO, msg, *args, **kw)
+        return self._log_standard_level(cl.LogLevel.INFO, msg, *args, **kw)
 
     def log(
         self,
@@ -130,9 +133,9 @@ class FlextLogger(FlextLoggerPart02):
         **context: t.LogValue,
     ) -> t.LogResult:
         """Log message with specified level."""
-        level_enum: c.LogLevel | str = level
+        level_enum: cl.LogLevel | str = level
         with suppress(ValueError, AttributeError):
-            level_enum = c.LogLevel(level.upper())
+            level_enum = cl.LogLevel(level.upper())
         converted_args: tuple[t.JsonValue, ...] = tuple(
             FlextLogger._to_container_value(arg) for arg in args
         )
@@ -148,16 +151,16 @@ class FlextLogger(FlextLoggerPart02):
         try:
             try:
                 formatted_message = message % args if args else message
-            except c.EXC_TYPE_VALIDATION:
+            except ce.EXC_TYPE_VALIDATION:
                 formatted_message = f"{message} | args={args!r}"
             self.logger.debug(
                 formatted_message,
                 **FlextLogger._to_scalar_context(kwargs),
             )
             return r[bool].ok(True)
-        except c.EXC_BROAD_RUNTIME as exc:
+        except ce.EXC_BROAD_RUNTIME as exc:
             FlextLogger._report_internal_logging_failure("trace", exc)
-            return e.fail_operation("trace logging", exc)
+            return ef.fail_operation("trace logging", exc)
 
 
 __all__: list[str] = ["FlextLogger"]
