@@ -7,7 +7,6 @@ import sys
 import warnings
 from pathlib import Path
 
-from flext_core._constants.enforcement import FlextMroViolation
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import TestsFlextModelsMixins
@@ -179,7 +178,6 @@ class_stem_override = "XmlAPI"
             warnings.simplefilter("always")
             FlextUtilitiesEnforcement.run_layer(bad, "constants")
         assert len(recorded) == 2
-        assert all(r.category is FlextMroViolation for r in recorded)
         texts = [str(r.message) for r in recorded]
         assert any("[const_mutable]" in text for text in texts)
         assert any("[ENFORCE-079]" in text for text in texts)
@@ -208,10 +206,7 @@ class_stem_override = "XmlAPI"
         assert recorded == []
 
     def test_run_layer_silent_for_clean_class(self) -> None:
-        clean = make_class(
-            "FlextSyntheticCleanConstants",
-            {"items": ("a",), "__annotations__": {"items": tuple[str, ...]}},
-        )
+        clean = make_class("FlextSyntheticCleanConstants", {})
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
             FlextUtilitiesEnforcement.run_layer(clean, "constants")

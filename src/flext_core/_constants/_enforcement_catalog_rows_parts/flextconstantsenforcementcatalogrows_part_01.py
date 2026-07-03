@@ -102,6 +102,15 @@ class FlextConstantsEnforcementCatalogInfraRows:
             "Backwards-compatibility alias retained after refactor — should be removed.",
         ),
         (
+            "ENFORCE-080",
+            "HIGH",
+            "compatibility_alias_violations",
+            "4-import-law",
+            ("flext-import-rules", "flext-mro-namespace-rules"),
+            False,
+            "Canonical alias imported from flext_core when the current project re-exports the same slot locally. Use from <proj>.constants import c etc. Violates AGENTS.md §4 (Import Law).",
+        ),
+        (
             "ENFORCE-011",
             "HIGH",
             "class_placement_violations",

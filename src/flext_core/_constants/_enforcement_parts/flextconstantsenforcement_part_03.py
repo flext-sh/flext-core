@@ -111,12 +111,44 @@ class FlextConstantsEnforcementNamespace:
     """Canonical short aliases exposed by FLEXT facade namespaces."""
 
     ENFORCEMENT_PROJECT_ALIAS_OWNERS: Final[Mapping[str, tuple[str, ...]]] = (
-        MappingProxyType({
-            "flext_cli": ("c", "m", "p", "t", "u", "d", "e", "h", "r", "s", "x"),
-            "flext_core": ("c", "m", "p", "t", "u", "d", "e", "h", "r", "s", "x"),
-            "flext_infra": ("c", "m", "p", "t", "u"),
-            "flext_tests": ("c", "m", "p", "t", "u"),
-        })
+        MappingProxyType(
+            dict.fromkeys(
+                (
+                    "flext_api",
+                    "flext_auth",
+                    "flext_cli",
+                    "flext_core",
+                    "flext_db_oracle",
+                    "flext_dbt_ldap",
+                    "flext_dbt_ldif",
+                    "flext_dbt_oracle",
+                    "flext_dbt_oracle_wms",
+                    "flext_grpc",
+                    "flext_infra",
+                    "flext_ldap",
+                    "flext_ldif",
+                    "flext_meltano",
+                    "flext_observability",
+                    "flext_oracle_oic",
+                    "flext_oracle_wms",
+                    "flext_plugin",
+                    "flext_quality",
+                    "flext_tap_ldap",
+                    "flext_tap_ldif",
+                    "flext_tap_oracle",
+                    "flext_tap_oracle_oic",
+                    "flext_tap_oracle_wms",
+                    "flext_target_ldap",
+                    "flext_target_ldif",
+                    "flext_target_oracle",
+                    "flext_target_oracle_oic",
+                    "flext_target_oracle_wms",
+                    "flext_tests",
+                    "flext_web",
+                ),
+                ("c", "m", "p", "t", "u"),
+            )
+        )
     )
     """SSOT: project package name → canonical aliases it re-exports locally.
 

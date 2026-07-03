@@ -11,6 +11,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "TestsFlextBadAccessors",
             "TestsFlextBadAnyField",
             "TestsFlextBadBareCollection",
+            "TestsFlextBadClassVarConstant",
             "TestsFlextBadConstants",
             "TestsFlextBadFrozen",
             "TestsFlextBadInlineUnion",

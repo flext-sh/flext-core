@@ -195,14 +195,6 @@ class FlextConstantsEnforcementCatalogBeartypeRows:
             ("flext-mro-namespace-rules", "flext-constants-discipline"),
             "ClassVar constant declared outside a _constants module; move to the canonical constants surface and re-export via c.*.",
         ),
-        (
-            "ENFORCE-080",
-            "HIGH",
-            "foreign_canonical_alias_import",
-            "4-import-law",
-            ("flext-import-rules", "flext-mro-namespace-rules"),
-            "Canonical alias imported from flext_core when the current project re-exports the same slot locally. Use from <proj>.constants import c etc. Violates AGENTS.md §4 (Import Law).",
-        ),
     )
 
 

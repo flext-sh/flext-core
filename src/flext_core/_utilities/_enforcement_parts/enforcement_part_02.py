@@ -25,11 +25,11 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
     """Rule-driven runtime enforcement (static-only)."""
 
     _canonical_catalog: ClassVar[me.EnforcementCatalog | None] = None
-    _MODEL_CONSTRUCTION_CATEGORIES: ClassVar[frozenset[c.EnforcementCategory]] = frozenset(
-        {
+    _MODEL_CONSTRUCTION_CATEGORIES: ClassVar[frozenset[c.EnforcementCategory]] = (
+        frozenset({
             c.EnforcementCategory.FIELD,
             c.EnforcementCategory.MODEL_CLASS,
-        }
+        })
     )
 
     @staticmethod
