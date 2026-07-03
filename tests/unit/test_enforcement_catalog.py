@@ -94,6 +94,36 @@ class TestsFlextEnforcementCatalog:
             categories.add(rule.source.category)
         assert "flext_core._constants.enforcement.FlextMroViolation" in categories
 
+    def test_fix_action_rules_match_declared_constants(self) -> None:
+        catalog = u.build_canonical_catalog()
+        rule_ids = {rule.id for rule in catalog.rules}
+
+        assert set(c.ENFORCEMENT_FIX_ACTIONS) <= rule_ids
+
+    def test_declared_fix_actions_materialize_in_catalog(self) -> None:
+        catalog = u.build_canonical_catalog()
+        materialized = {
+            rule.id: rule.fix_action
+            for rule in catalog.rules
+            if rule.fix_action is not None
+        }
+
+        assert set(materialized) == set(c.ENFORCEMENT_FIX_ACTIONS)
+        for rule_id, fix_action in materialized.items():
+            declared = c.ENFORCEMENT_FIX_ACTIONS[rule_id]
+            assert fix_action.kind == declared["kind"]
+            assert fix_action.target == declared["target"]
+            assert fix_action.params == declared["params"]
+            assert fix_action.safe is declared["safe"]
+
+    def test_compatibility_alias_import_uses_rope_rewriter(self) -> None:
+        rule = u.build_canonical_catalog().by_id("ENFORCE-064")
+
+        assert rule is not None
+        assert rule.fix_action is not None
+        assert rule.fix_action.kind == "rope"
+        assert rule.fix_action.target == "rewrite_compatibility_alias"
+
     def test_rule_spec_construction_rejects_invalid_id_format(self) -> None:
         with pytest.raises(c.ValidationError):
             m.EnforcementRuleSpec(

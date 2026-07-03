@@ -98,8 +98,8 @@ class FlextConstantsEnforcementFixActions:
             "safe": True,
         },
         "ENFORCE-064": {
-            "kind": "transformer",
-            "target": "compatibility_alias",
+            "kind": "rope",
+            "target": "rewrite_compatibility_alias",
             "params": {},
             "safe": True,
         },
