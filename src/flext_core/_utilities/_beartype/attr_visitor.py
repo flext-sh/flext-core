@@ -7,6 +7,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import get_origin
 
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
@@ -32,13 +33,12 @@ _CONSTANT_CONTAINER_TYPES: tuple[type, ...] = (
     frozenset,
     tuple,
     dict,
+    list,
+    set,
     MappingProxyType,
     Path,
 )
 """Container/call types accepted as canonical constant values."""
-
-_CLASSVAR_EXEMPT_NAMES: frozenset[str] = frozenset({"model_config", "logger"})
-"""ClassVar attribute names that are framework idioms and stay in place."""
 
 
 class FlextUtilitiesBeartypeAttrVisitor:
@@ -105,29 +105,58 @@ class FlextUtilitiesBeartypeAttrVisitor:
         )
 
     @staticmethod
+    def _is_implicit_constant(
+        params: me.ClassVarConstantParams,
+        target: type,
+        name: str,
+        value: object,
+    ) -> bool:
+        """Return True when an UPPER_CASE attribute looks like a constant but lacks ClassVar."""
+        if not params.detect_implicit_constants:
+            return False
+        if FlextUtilitiesBeartypeAttrVisitor._has_classvar_annotation(target, name):
+            return False
+        return FlextUtilitiesBeartypeAttrVisitor._is_constant_value(value)
+
+    @staticmethod
     def v_classvar_constant(
         params: me.ClassVarConstantParams,
         target: type,
     ) -> t.StrMapping | None:
-        """CLASSVAR_CONSTANT — flag ClassVar constants declared outside _constants."""
-        _ = params
+        """CLASSVAR_CONSTANT — flag constants declared outside _constants."""
         module_name = getattr(target, "__module__", "") or ""
         if module_name.endswith("._constants") or "._constants." in module_name:
             return _NO_VIOLATION
         for name, value in vars(target).items():
             if name.startswith("_") or name != name.upper():
                 continue
-            if name in _CLASSVAR_EXEMPT_NAMES:
+            if name in c.ENFORCEMENT_CLASSVAR_EXEMPT_NAMES:
                 continue
-            if not FlextUtilitiesBeartypeAttrVisitor._has_classvar_annotation(
+            has_classvar = FlextUtilitiesBeartypeAttrVisitor._has_classvar_annotation(
                 target,
                 name,
-            ):
+            )
+            is_implicit = (
+                not has_classvar
+                and FlextUtilitiesBeartypeAttrVisitor._is_implicit_constant(
+                    params,
+                    target,
+                    name,
+                    value,
+                )
+            )
+            if not (has_classvar or is_implicit):
                 continue
             if not FlextUtilitiesBeartypeAttrVisitor._is_constant_value(value):
                 continue
+            project = module_name.split(".", 1)[0] or "project"
             return {
                 "name": name,
                 "module": module_name.rsplit(".", 1)[-1],
+                "class_name": getattr(target, "__qualname__", "<class>"),
+                "full_module": module_name,
+                "implicit": str(is_implicit),
+                "suggested_name": name,
+                "suggested_target": f"{project}._constants",
             }
         return _NO_VIOLATION

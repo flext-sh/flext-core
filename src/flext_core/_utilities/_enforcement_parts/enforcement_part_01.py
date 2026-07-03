@@ -202,7 +202,7 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
         # --- Constants discipline ---
         "classvar_constant_outside_constants": (
             pk.CLASSVAR_CONSTANT,
-            me.ClassVarConstantParams(),
+            me.ClassVarConstantParams(detect_implicit_constants=True),
         ),
         "foreign_canonical_alias_import": (
             pk.FOREIGN_CANONICAL_ALIAS_IMPORT,

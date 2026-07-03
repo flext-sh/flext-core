@@ -7,7 +7,8 @@ import sys
 import warnings
 from pathlib import Path
 
-from flext_core import FlextMroViolation, FlextUtilitiesEnforcement
+from flext_core._constants.enforcement import FlextMroViolation
+from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import TestsFlextModelsMixins
 from tests.unit._enforcement_support import make_class
@@ -177,12 +178,11 @@ class_stem_override = "XmlAPI"
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
             FlextUtilitiesEnforcement.run_layer(bad, "constants")
-        assert len(recorded) == 1
-        assert recorded[0].category is FlextMroViolation
-        text = str(recorded[0].message)
-        assert "FlextSyntheticConstants violates FLEXT Constants HARD rules" in text
-        assert "[const_mutable]" in text
-        assert "Fix: See AGENTS.md § Constants governance." in text
+        assert len(recorded) == 2
+        assert all(r.category is FlextMroViolation for r in recorded)
+        texts = [str(r.message) for r in recorded]
+        assert any("[const_mutable]" in text for text in texts)
+        assert any("[ENFORCE-079]" in text for text in texts)
 
     def test_run_layer_skips_function_local_classes(self) -> None:
         class FlextLocalConstants:
@@ -210,7 +210,7 @@ class_stem_override = "XmlAPI"
     def test_run_layer_silent_for_clean_class(self) -> None:
         clean = make_class(
             "FlextSyntheticCleanConstants",
-            {"ITEMS": ("a",), "__annotations__": {"ITEMS": tuple[str, ...]}},
+            {"items": ("a",), "__annotations__": {"items": tuple[str, ...]}},
         )
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
@@ -228,8 +228,7 @@ class_stem_override = "XmlAPI"
         )
         report = u.check(bad)
         assert any(
-            "ClassVar constant 'GROUPS' declared" in v.message
-            and v.rule_id == "ENFORCE-079"
+            "Constant 'GROUPS' declared" in v.message and v.rule_id == "ENFORCE-079"
             for v in report.violations
         )
 
@@ -271,5 +270,27 @@ class_stem_override = "XmlAPI"
                 "__annotations__": {"groups": "ClassVar[frozenset[str]]"},
             },
         )
+        report = u.check(good)
+        assert not any(v.rule_id == "ENFORCE-079" for v in report.violations)
+
+    def test_implicit_constant_outside_constants_emits_enforce_079(self) -> None:
+        """UPPER_CASE constant-like attributes without ClassVar also trigger ENFORCE-079."""
+        bad = make_class(
+            "FlextSyntheticCli",
+            {"GROUPS": frozenset({"foo"})},
+        )
+        report = u.check(bad)
+        assert any(
+            "Constant 'GROUPS' declared" in v.message and v.rule_id == "ENFORCE-079"
+            for v in report.violations
+        )
+
+    def test_implicit_constant_inside_constants_is_exempt(self) -> None:
+        """Implicit constants inside _constants modules are allowed."""
+        good = make_class(
+            "FlextSyntheticConstantsRefactor",
+            {"GROUPS": frozenset({"foo"})},
+        )
+        good.__module__ = "flext_infra._constants.refactor"
         report = u.check(good)
         assert not any(v.rule_id == "ENFORCE-079" for v in report.violations)

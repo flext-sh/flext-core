@@ -64,7 +64,9 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
     class ForeignCanonicalAliasImportParams(EnforcementModelBase):
         """Parameters for FOREIGN_CANONICAL_ALIAS_IMPORT predicate."""
 
-        kind: Literal["foreign_canonical_alias_import"] = "foreign_canonical_alias_import"
+        kind: Literal["foreign_canonical_alias_import"] = (
+            "foreign_canonical_alias_import"
+        )
         project_alias_owners: t.StrSequenceMapping = Field(default_factory=dict)
 
     class ClassPlacementParams(EnforcementModelBase):
@@ -143,6 +145,8 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """Parameters for CLASSVAR_CONSTANT predicate."""
 
         kind: Literal["classvar_constant"] = "classvar_constant"
+        detect_implicit_constants: bool = True
+        """Also flag UPPER_CASE attributes that look like constants but lack ClassVar."""
 
     class ProtocolTreeParams(EnforcementModelBase):
         """Parameters for PROTOCOL_TREE predicate."""

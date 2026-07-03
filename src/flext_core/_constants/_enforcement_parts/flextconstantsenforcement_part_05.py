@@ -102,8 +102,8 @@ _BASE_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
         "Replace cast() with FlextResult narrowing or explicit isinstance().",
     ),
     "classvar_constant_outside_constants": (
-        "ClassVar constant '{name}' declared in {module} (outside _constants)",
-        "Move the constant to a module under _constants and re-export via c.*.",
+        "Constant '{name}' declared in {module} (outside _constants)",
+        "Move the constant to {suggested_target} and re-export via c.*.",
     ),
     "model_rebuild_call": (
         "model_rebuild() invocation in {file} (AGENTS.md §3.4)",

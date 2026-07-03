@@ -22,7 +22,7 @@ from collections.abc import (
 
 import pytest
 
-from flext_core import FlextMroViolation
+from flext_core._constants.enforcement import FlextMroViolation
 from tests.typings import t
 
 
@@ -83,7 +83,7 @@ class TestsFlextEnforcementIntegration:
             ("mutable constant value", "const_mutable"),
             ("UPPER_CASE", "const_lowercase"),
             (
-                "ClassVar constant 'GROUPS' declared",
+                "Constant 'GROUPS' declared",
                 "classvar_constant_outside_constants",
             ),
         ],
