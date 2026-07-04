@@ -15,11 +15,11 @@ from typing import Annotated, ClassVar
 
 from flext_core import (
     FlextConstants as c,
-    FlextModelsBase as m,
-    FlextModelsPydantic as mp,
     FlextProtocols as p,
     FlextTypes as t,
 )
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 from .flextmodelshandler_part_01 import (
     FlextModelsHandler as FlextModelsHandlerPart01,

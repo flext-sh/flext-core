@@ -14,11 +14,11 @@ from typing import Annotated, ClassVar
 
 from flext_core import (
     FlextConstants as c,
-    FlextModelsBase as m,
-    FlextModelsPydantic as mp,
     FlextTypes as t,
-    FlextTypesPydantic as tp,
 )
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextModelsExceptionParams:
