@@ -43,8 +43,14 @@ class FlextUtilitiesPydantic:
     Use u.* / up.* instead.
     """
 
-    Field = mp.Field
-    PrivateAttr = PrivateAttr
+    # Wrap field specifiers in ``staticmethod`` so pyright treats ``u.Field`` /
+    # ``u.PrivateAttr`` as static callables rather than instance-bound descriptors.
+    # Why: a bare ``Field = mp.Field`` binds ``_field``'s generic first parameter
+    # (``default: DefaultT``) to ``self`` = ``FlextUtilities`` when accessed via the
+    # facade, so ``u.Field(default_factory=...)`` was mis-inferred as returning
+    # ``FlextUtilities`` (bogus reportAssignmentType). ``mp.Field`` already does this.
+    Field = staticmethod(mp.Field)
+    PrivateAttr = staticmethod(PrivateAttr)
     SkipValidation = SkipValidation
 
     computed_field = computed_field
