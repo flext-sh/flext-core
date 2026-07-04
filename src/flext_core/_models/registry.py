@@ -37,10 +37,9 @@ class FlextModelsRegistry:
         registered_keys: Annotated[
             frozenset[str],
             mp.Field(
-                default_factory=frozenset,
                 description="Keys registered in the instance scope of the registry.",
             ),
-        ]
+        ] = mp.Field(default_factory=frozenset)
 
         @up.computed_field()
         def configured(self) -> bool:

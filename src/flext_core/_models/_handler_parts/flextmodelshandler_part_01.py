@@ -127,17 +127,15 @@ class FlextModelsHandler:
         context_stack: Annotated[
             MutableSequence[FlextModelsHandler.ExecutionContext],
             mp.Field(
-                default_factory=list,
                 description="Stack of nested execution contexts.",
             ),
-        ]
+        ] = mp.Field(default_factory=list)
         accepted_message_types: Annotated[
             tuple[t.TypeHintSpecifier, ...],
             mp.Field(
-                default_factory=tuple,
                 description="Accepted message types computed for dispatch routing",
             ),
-        ]
+        ] = mp.Field(default_factory=tuple)
         revalidate_pydantic_messages: Annotated[
             bool,
             mp.Field(

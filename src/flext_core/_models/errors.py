@@ -28,10 +28,9 @@ class FlextModelsErrors:
         exception_counts: Annotated[
             t.MutableIntMapping,
             mp.Field(
-                default_factory=dict,
                 description="Per-exception occurrence totals keyed by type name.",
             ),
-        ]
+        ] = mp.Field(default_factory=dict)
         exception_counts_summary: Annotated[
             str,
             mp.Field(description="Human-readable summary for logs and diagnostics."),
@@ -64,10 +63,9 @@ class FlextModelsErrors:
         exception_counts: Annotated[
             t.MutableIntMapping,
             mp.Field(
-                default_factory=dict,
                 description="Recorded counts keyed by exception type name.",
             ),
-        ]
+        ] = mp.Field(default_factory=dict)
 
         @up.computed_field()
         @property

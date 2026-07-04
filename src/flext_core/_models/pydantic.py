@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from re import Pattern
 from types import EllipsisType
@@ -60,8 +60,10 @@ from pydantic_settings import (
 )
 
 type _FieldValue = JsonValue | Path
+type _FieldSchemaExtra = Mapping[str, _FieldValue | Sequence[_FieldValue]]
 type _FieldKeywordValue[DefaultT] = (
     _FieldValue
+    | _FieldSchemaExtra
     | PydanticUndefinedType
     | FieldInfo
     | AliasChoices

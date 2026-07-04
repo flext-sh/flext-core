@@ -55,10 +55,9 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             mp.Field(
-                default_factory=lambda: ug.now(),
                 description="Timestamp when service was registered (configured timezone)",
             ),
-        ]
+        ] = mp.Field(default_factory=lambda: ug.now())
         metadata: Annotated[
             m.Metadata | FlextModelsContainers.ConfigMap | None,
             mp.BeforeValidator(
@@ -82,10 +81,9 @@ class FlextModelsContainer:
         tags: Annotated[
             t.StrSequence,
             mp.Field(
-                default_factory=tuple,
                 description="Service tags for categorization",
             ),
-        ]
+        ] = mp.Field(default_factory=tuple)
 
         @up.field_validator("service", mode="before")
         @classmethod
@@ -126,10 +124,9 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             mp.Field(
-                default_factory=lambda: ug.now(),
                 description="Timestamp when factory was registered (configured timezone)",
             ),
-        ]
+        ] = mp.Field(default_factory=lambda: ug.now())
         is_singleton: Annotated[
             bool,
             mp.Field(
