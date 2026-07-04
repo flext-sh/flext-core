@@ -17,6 +17,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 from re import Pattern
+from types import EllipsisType
+from typing import dataclass_transform
 
 from pydantic import (
     AfterValidator,
@@ -58,7 +60,7 @@ from pydantic_settings import (
 )
 
 type _FieldValue = JsonValue | Path
-type _FieldKeywordValue = (
+type _FieldKeywordValue[DefaultT] = (
     _FieldValue
     | PydanticUndefinedType
     | FieldInfo
@@ -66,21 +68,19 @@ type _FieldKeywordValue = (
     | AliasPath
     | Discriminator
     | Pattern[str]
+    | Callable[..., DefaultT]
     | Callable[..., _FieldValue | None]
+    | type[DefaultT]
 )
-_FIELD_FACTORY: Callable[..., FieldInfo] = Field
 
 
 def _field[DefaultT](
-    default: DefaultT | PydanticUndefinedType = PydanticUndefined,
-    **kwargs: _FieldKeywordValue | None,
-) -> FieldInfo:
+    default: DefaultT | PydanticUndefinedType | EllipsisType = PydanticUndefined,
+    **kwargs: _FieldKeywordValue[DefaultT] | None,
+) -> DefaultT:
     """Typed FLEXT facade for ``pydantic.Field``."""
-    field = _FIELD_FACTORY(default, **kwargs)
-    if not isinstance(field, FieldInfo):
-        msg = "pydantic.Field returned a non-FieldInfo value"
-        raise TypeError(msg)
-    return field
+    field_factory: Callable[..., DefaultT] = Field
+    return field_factory(default, **kwargs)
 
 
 class FlextModelsPydantic:
@@ -94,12 +94,15 @@ class FlextModelsPydantic:
         RootModel: Container model for single validated values/collections
     """
 
+    @dataclass_transform(kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr))
     class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
+    @dataclass_transform(kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr))
     class BaseSettings(PydanticBaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
+    @dataclass_transform(kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr))
     class RootModel[RootValueT](PydanticRootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
 
