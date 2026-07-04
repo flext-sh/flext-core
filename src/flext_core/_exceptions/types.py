@@ -10,13 +10,10 @@ from typing import ClassVar
 
 from pydantic import ValidationError as _PydanticValidationError
 
-from flext_core import (
-    FlextConstants as c,
-    FlextExceptionsBase,
-    FlextModelsExceptionParams as m,
-    FlextModelsPydantic as mp,
-    FlextTypes as t,
-)
+from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core._exceptions.base import FlextExceptionsBase
+from flext_core._models.exception_params import FlextModelsExceptionParams as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextExceptionsTypes(FlextExceptionsBase):

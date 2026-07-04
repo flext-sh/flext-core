@@ -16,11 +16,11 @@ from flext_core import (
     FlextConstants as c,
     FlextExceptions as e,
     FlextModels as m,
-    FlextModelsContainers,
     FlextProtocols as p,
     FlextResult as r,
     FlextTypes as t,
 )
+from flext_core._models.containers import FlextModelsContainers
 
 from .mapper_access_part_01 import (
     FlextUtilitiesMapperAccess as FlextUtilitiesMapperAccessPart01,

@@ -18,12 +18,8 @@ import structlog
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
-from flext_core import (
-    FlextConstants as c,
-    FlextModelsPydantic as mp,
-    FlextProtocols as p,
-    FlextTypes as t,
-)
+from flext_core import FlextConstants as c, FlextProtocols as p, FlextTypes as t
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 from .logging_config_part_01 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart01,

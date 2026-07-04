@@ -20,10 +20,8 @@ from .logging_config_part_02 import (
 if TYPE_CHECKING:
     from structlog.types import Processor
 
-    from flext_core import (
-        FlextModelsPydantic as mp,
-        FlextTypes as t,
-    )
+from flext_core import FlextTypes as t
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):

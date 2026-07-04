@@ -13,12 +13,10 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, get_origin, get_type_hints
 
-from flext_core import (
-    FlextConstants as c,
-    FlextProtocolsResult as p,
-    FlextTypesServices as ts,
-    FlextTypingBase as tb,
-)
+from flext_core import FlextConstants as c
+from flext_core._protocols.result import FlextProtocolsResult as p
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.services import FlextTypesServices as ts
 from flext_core.result import FlextResult as r
 
 from .checker_part_01 import (

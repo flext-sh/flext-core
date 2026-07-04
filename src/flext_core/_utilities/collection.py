@@ -15,12 +15,12 @@ from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
 from flext_core import (
     FlextConstants as c,
-    FlextModelsContainers as mc,
     FlextProtocols as p,
     FlextResult as r,
     FlextRuntime,
     FlextTypes as t,
 )
+from flext_core._models.containers import FlextModelsContainers as mc
 
 from .collection_iter import FlextUtilitiesCollectionIter
 from .collection_merge import FlextUtilitiesCollectionMerge

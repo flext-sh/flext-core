@@ -18,9 +18,11 @@ from flext_core import (
     FlextResult as r,
     FlextRuntime,
     FlextTypes as t,
-    FlextUtilitiesContextState,
+)
+from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
     FlextUtilitiesLoggingContext,
 )
+from flext_core._utilities.context_state import FlextUtilitiesContextState
 
 from ._context_crud_set import FlextUtilitiesContextCrudSetMixin
 

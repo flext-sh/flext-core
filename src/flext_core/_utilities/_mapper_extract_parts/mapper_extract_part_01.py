@@ -10,12 +10,14 @@ from flext_core import (
     FlextConstants as c,
     FlextExceptions as e,
     FlextModels as m,
-    FlextModelsContainers,
-    FlextModelsPydantic,
     FlextProtocols as p,
     FlextResult as r,
     FlextRuntime,
     FlextTypes as t,
+)
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities._mapper_access_parts.mapper_access_part_01 import (
     FlextUtilitiesMapperAccess,
 )
 

@@ -5,12 +5,12 @@ from __future__ import annotations
 from flext_core import (
     FlextConstants as c,
     FlextExceptions as e,
-    FlextModelsExceptionParams,
     FlextProtocols as p,
     FlextResult as r,
     FlextTypes as t,
-    FlextUtilitiesGuards,
 )
+from flext_core._models.exception_params import FlextModelsExceptionParams
+from flext_core._utilities._guards_parts.guards_part_01 import FlextUtilitiesGuards
 
 from .mapper_extract_part_01 import (
     FlextUtilitiesMapperExtract as FlextUtilitiesMapperExtractPart01,

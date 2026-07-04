@@ -12,11 +12,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import (
-    FlextProtocolsResult as p,
-    r,
-    t,
-)
+from flext_core import r, t
+from flext_core._protocols.result import FlextProtocolsResult as p
 
 from .guards_part_01 import (
     FlextUtilitiesGuards as FlextUtilitiesGuardsPart01,

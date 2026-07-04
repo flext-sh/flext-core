@@ -6,7 +6,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypingBase as t
+    from flext_core import FlextTypes as t
 
 
 class FlextConstantsProjectMetadata:

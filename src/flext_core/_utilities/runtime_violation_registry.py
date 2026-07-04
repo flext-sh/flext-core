@@ -17,7 +17,7 @@ import threading
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
-    from flext_core import FlextModelsEnforcement as _me
+    from flext_core._models.enforcement import FlextModelsEnforcement as _me
 
 
 class FlextUtilitiesRuntimeViolationRegistry:

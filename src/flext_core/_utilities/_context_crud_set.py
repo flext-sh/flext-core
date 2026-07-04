@@ -11,9 +11,9 @@ from flext_core import (
     FlextResult as r,
     FlextRuntime,
     FlextTypes as t,
-    FlextUtilitiesContextState,
-    FlextUtilitiesModel,
 )
+from flext_core._utilities.context_state import FlextUtilitiesContextState
+from flext_core._utilities.model import FlextUtilitiesModel
 
 
 class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):

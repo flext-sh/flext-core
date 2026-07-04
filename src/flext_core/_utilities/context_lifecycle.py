@@ -20,8 +20,8 @@ from flext_core import (
     FlextProtocols as p,
     FlextRuntime,
     FlextTypes as t,
-    FlextUtilitiesContextCrud,
 )
+from flext_core._utilities.context_crud import FlextUtilitiesContextCrud
 
 
 class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):

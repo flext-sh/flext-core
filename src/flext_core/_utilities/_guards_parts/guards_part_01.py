@@ -13,13 +13,11 @@ from __future__ import annotations
 import operator
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import (
-    FlextModelsCollections,
-    FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesGuardsTypeModel,
-    FlextUtilitiesGuardsTypeProtocol,
-    t,
-)
+from flext_core import t
+from flext_core._models.collections import FlextModelsCollections
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sized

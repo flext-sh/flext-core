@@ -19,9 +19,11 @@ from flext_core import (
     FlextResult as r,
     FlextRuntime,
     FlextTypes as t,
-    FlextUtilitiesCollection,
+)
+from flext_core._utilities._logging_config_parts.logging_config_part_02 import (
     FlextUtilitiesLoggingConfig,
 )
+from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 
 if TYPE_CHECKING:

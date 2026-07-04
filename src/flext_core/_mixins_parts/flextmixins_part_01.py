@@ -21,16 +21,8 @@ from typing import (
 
 from pydantic import ConfigDict, PrivateAttr
 
-from flext_core import (
-    FlextContainer,
-    FlextContext,
-    FlextTypesPydantic as tp,
-    c,
-    m,
-    p,
-    t,
-    u,
-)
+from flext_core import FlextContainer, FlextContext, c, m, p, t, u
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 if TYPE_CHECKING:
     from collections.abc import (

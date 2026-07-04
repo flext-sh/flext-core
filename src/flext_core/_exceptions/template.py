@@ -6,13 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import (
-    FlextConstants as c,
-    FlextModelsContainers as mc,
-    FlextModelsPydantic as mp,
-    FlextRuntime,
-    FlextTypes as t,
-)
+from flext_core import FlextConstants as c, FlextRuntime, FlextTypes as t
+from flext_core._models.containers import FlextModelsContainers as mc
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextExceptionsTemplate:

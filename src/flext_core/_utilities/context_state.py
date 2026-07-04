@@ -19,10 +19,12 @@ from flext_core import (
     FlextResult as r,
     FlextRuntime,
     FlextTypes as t,
-    FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesGuardsTypeModel,
+)
+from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
     FlextUtilitiesLoggingContext,
 )
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 
 if TYPE_CHECKING:
     import contextvars
