@@ -24,7 +24,7 @@ from importlib.metadata import PackageNotFoundError, metadata, packages_distribu
 from pathlib import Path
 from types import ModuleType
 
-from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
+from flext_core._constants.file import FlextConstantsFile as cf
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters as ta
@@ -53,9 +53,9 @@ class FlextUtilitiesProjectMetadata(mpm):
         flext-infra ``pyproject_payload`` validation layer — shares the
         same disk read; no parallel file I/O.
         """
-        pyproject = root / cpm.PYPROJECT_FILENAME
+        pyproject = root / cf.PYPROJECT_FILENAME
         if not pyproject.is_file():
-            msg = f"{cpm.PYPROJECT_FILENAME} not found under {root}"
+            msg = f"{cf.PYPROJECT_FILENAME} not found under {root}"
             raise FileNotFoundError(msg)
         with pyproject.open("rb") as stream:
             # No PEP 526 local annotation: beartype.claw resolves local-variable
