@@ -14,8 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from pydantic import (
     Field,
@@ -23,7 +22,11 @@ from pydantic import (
 
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
 from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.base import FlextTypingBase as tb
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextModelsProjectMetadata:

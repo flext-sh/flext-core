@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from tests.models import m
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tests.typings import t
 
 
 class TestsFlextUtilitiesReliabilityScenariosMixin:
@@ -16,10 +19,10 @@ class TestsFlextUtilitiesReliabilityScenariosMixin:
         """Centralized reliability scenarios - single source of truth."""
 
         _RETRY_BASE_SETTINGS: ClassVar[m.ConfigMap] = m.ConfigMap(
-            root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10}
+            root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
         )
         _RETRY_EXHAUSTED_SETTINGS: ClassVar[m.ConfigMap] = m.ConfigMap(
-            root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10}
+            root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10},
         )
 
         RETRY_SCENARIOS: ClassVar[Sequence[m.Tests.ReliabilityScenario]] = [

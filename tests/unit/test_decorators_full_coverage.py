@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import time
 import warnings
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import d, e, r, tm
 
 from flext_core import FlextContainer
 from tests.models import m
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextDecorators:

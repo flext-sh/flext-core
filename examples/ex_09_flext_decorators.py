@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from functools import wraps
+from typing import TYPE_CHECKING
 
 from examples import p, r
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _log_result[T](fn: Callable[..., T]) -> Callable[..., T]:

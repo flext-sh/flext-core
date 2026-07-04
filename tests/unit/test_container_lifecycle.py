@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_tests import tm
 
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextContainerLifecycle:
@@ -100,7 +104,7 @@ class TestsFlextContainerLifecycle:
         scoped = clean_container.scope(
             subproject="unit",
             registration=m.ServiceRegistrationSpec.model_validate({
-                "services": {"scoped_service": "scoped-value"}
+                "services": {"scoped_service": "scoped-value"},
             }),
         )
         tm.that(scoped.has("scoped_service"), eq=True)

@@ -16,17 +16,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import (
-    MutableSequence,
-)
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_core import FlextContainer, FlextSettings
 from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
 
 from .settings_integration_precedence import TestsFlextFlextSettingsPrecedenceCase
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableSequence,
+    )
+    from pathlib import Path
+
+    from tests.typings import t
 
 
 class TestsFlextSettingsIntegration(TestsFlextFlextSettingsPrecedenceCase):

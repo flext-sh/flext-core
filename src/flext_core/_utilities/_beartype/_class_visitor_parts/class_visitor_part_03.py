@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
 
 from .class_visitor_part_01 import (
     NO_VIOLATION,
@@ -12,6 +12,10 @@ from .class_visitor_part_01 import (
 from .class_visitor_part_02 import (
     FlextUtilitiesBeartypeClassVisitor as FlextUtilitiesBeartypeClassVisitorPart02,
 )
+
+if TYPE_CHECKING:
+    from flext_core._models.enforcement import FlextModelsEnforcement as me
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart02):

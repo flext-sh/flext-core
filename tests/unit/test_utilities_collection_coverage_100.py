@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 from flext_core import u
 from tests.models import m
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tests.typings import t
 
 
 class TestsFlextUtilitiesCollection:
@@ -88,7 +92,8 @@ class TestsFlextUtilitiesCollection:
 
     def test_find_returns_failure_when_mapping_has_no_matching_value(self) -> None:
         result = u.find(
-            {"tenant": "acme", "mode": "full"}, lambda value: value == "delta"
+            {"tenant": "acme", "mode": "full"},
+            lambda value: value == "delta",
         )
 
         tm.fail(result)

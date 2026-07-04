@@ -8,8 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-import types
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 from flext_core import FlextConstants as c, FlextProtocols as p
 from flext_core._models.containers import FlextModelsContainers as mc
@@ -18,6 +17,9 @@ from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from .flextlogger_part_03 import (
     FlextLogger as FlextLoggerPart03,
 )
+
+if TYPE_CHECKING:
+    import types
 
 
 class FlextLogger(FlextLoggerPart03):

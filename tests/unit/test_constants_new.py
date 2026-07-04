@@ -61,7 +61,9 @@ class TestsFlextConstantsNew:
             name.startswith("FlextConstants") for name in vars(module)
         )
         tm.that(
-            has_constants_class, eq=True, msg=f"{module_path} missing FlextConstants*"
+            has_constants_class,
+            eq=True,
+            msg=f"{module_path} missing FlextConstants*",
         )
 
     def test_port_range_invariant(self) -> None:
@@ -129,7 +131,8 @@ class TestsFlextConstantsNew:
         )
 
     @pytest.mark.parametrize(
-        "token", tuple(c.PARSER_BOOLEAN_TRUTHY) + tuple(c.PARSER_BOOLEAN_FALSY)
+        "token",
+        tuple(c.PARSER_BOOLEAN_TRUTHY) + tuple(c.PARSER_BOOLEAN_FALSY),
     )
     def test_boolean_tokens_are_lowercase_and_unique(self, token: str) -> None:
         """Validation token sets remain normalized and collision-free."""

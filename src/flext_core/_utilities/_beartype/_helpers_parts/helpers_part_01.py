@@ -6,13 +6,15 @@ import functools
 import importlib
 import sys
 from typing import (
+    TYPE_CHECKING,
     Any,
     TypeAliasType,
     get_args,
     get_origin,
 )
 
-from flext_core._typings.base import FlextTypingBase as t
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeHelpers:
@@ -40,7 +42,7 @@ class FlextUtilitiesBeartypeHelpers:
         lazy_module = importlib.import_module("flext_core.lazy")
         lazy_imports = lazy_module.normalize_lazy_imports(
             package.__name__,
-            getattr(package, "_LAZY_IMPORTS"),
+            package._LAZY_IMPORTS,
         )
         return tuple(
             (

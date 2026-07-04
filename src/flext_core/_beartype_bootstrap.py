@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from importlib import import_module
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from beartype.claw import beartype_this_package
 
-from ._typings.base import FlextTypingBase as t
+if TYPE_CHECKING:
+    from ._typings.base import FlextTypingBase as t
 
 
 class FlextCoreBeartypeBootstrap:

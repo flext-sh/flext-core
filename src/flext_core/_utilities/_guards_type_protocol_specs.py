@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from types import MappingProxyType
-from typing import TypeIs
+from typing import TYPE_CHECKING, TypeIs
 
 from flext_core import c, t
 from flext_core._protocols.container import FlextProtocolsContainer as pc
@@ -12,7 +11,11 @@ from flext_core._protocols.logging import FlextProtocolsLogging as pl
 from flext_core._protocols.result import FlextProtocolsResult as pr
 from flext_core._protocols.service import FlextProtocolsService as psrv
 from flext_core._protocols.settings import FlextProtocolsSettings as ps
-from flext_core._utilities._guards_type_protocol_types import ProtocolGuardInput
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flext_core._utilities._guards_type_protocol_types import ProtocolGuardInput
 
 
 class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
@@ -37,7 +40,7 @@ class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
                 ),
                 "handler": lambda v: isinstance(v, ph.Handler),
                 "logger": lambda v: isinstance(v, pl.Logger),
-                "result": lambda v: cls.result_like(v),
+                "result": cls.result_like,
                 "service": lambda v: isinstance(v, psrv.Service),
                 "middleware": lambda v: isinstance(v, ph.Middleware),
             })

@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, Self
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
 from pydantic import (
     AliasChoices,
@@ -18,11 +18,13 @@ from pydantic import (
 )
 
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.settings import FlextProtocolsSettings as p
 from flext_core.constants import FlextConstants as c
-from flext_core.typings import FlextTypes as t
 
 from .base import FlextModelsBase as m
+
+if TYPE_CHECKING:
+    from flext_core._protocols.settings import FlextProtocolsSettings as p
+    from flext_core.typings import FlextTypes as t
 
 
 class FlextModelsSettings:

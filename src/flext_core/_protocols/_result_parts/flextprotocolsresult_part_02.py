@@ -12,10 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import (
-    Callable,
-)
-from types import TracebackType
 from typing import TYPE_CHECKING, Self, overload, override
 
 from flext_core._models.pydantic import FlextModelsPydantic as mp
@@ -24,6 +20,11 @@ from flext_core._protocols._result_parts.flextprotocolsresult_part_01 import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+    )
+    from types import TracebackType
+
     from flext_core._typings.base import FlextTypingBase as t
 
 

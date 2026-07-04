@@ -17,17 +17,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    ItemsView,
-    KeysView,
-    ValuesView,
-)
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
-from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.services import FlextTypesServices
 
 from .pydantic import FlextModelsPydantic as mp
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        ItemsView,
+        KeysView,
+        ValuesView,
+    )
+
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextModelsContainers:

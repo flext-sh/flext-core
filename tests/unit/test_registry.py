@@ -4,16 +4,20 @@ from __future__ import annotations
 
 import io
 import time
-from collections.abc import Callable
 from contextlib import redirect_stdout
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import r
 
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tests.typings import t
 
 
 def _capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
@@ -103,7 +107,9 @@ class TestsFlextRegistry:
         registry = u.build_registry(dispatcher=u.Tests.OkDispatcher())
 
         instance_registration = registry.register_plugin(
-            "validators", "local", "plugin"
+            "validators",
+            "local",
+            "plugin",
         )
         assert instance_registration.success
         assert registry.fetch_plugin("validators", "local").value == "plugin"

@@ -36,7 +36,8 @@ class TestsFlextModelsServiceCaseReliabilityMixin:
             ),
         ] = True
         description: Annotated[
-            str | None, m.Field(description="Human-readable scenario description")
+            str | None,
+            m.Field(description="Human-readable scenario description"),
         ] = None
 
 

@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import sys
 from types import ModuleType
-
-import pytest
+from typing import TYPE_CHECKING
 
 from tests.constants import c
 from tests.models import m
+
+if TYPE_CHECKING:
+    import pytest
 
 
 class TestsFlextModelsCqrs:

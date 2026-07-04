@@ -35,7 +35,8 @@ from typing import Annotated, ClassVar, ForwardRef, get_args, get_origin
 
 import typing_extensions as _typing_extensions
 
-from flext_core._typings.base import FlextTypingBase as t
+if _typing.TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeTypingExtPatch:
@@ -76,7 +77,7 @@ class FlextUtilitiesBeartypeTypingExtPatch:
             new_value = (current, te)
 
         if new_value is not current:
-            setattr(cf, "HintPep695TypeAlias", new_value)
+            cf.HintPep695TypeAlias = new_value
             # Modules that did ``from _cavefast import HintPep695TypeAlias`` hold
             # a stale reference; patch only loaded beartype modules and avoid
             # module-level __getattr__ side effects during import-time patching.
@@ -84,7 +85,7 @@ class FlextUtilitiesBeartypeTypingExtPatch:
                 if not mod_name.startswith("beartype"):
                     continue
                 if mod.__dict__.get("HintPep695TypeAlias") is current:
-                    setattr(mod, "HintPep695TypeAlias", new_value)
+                    mod.HintPep695TypeAlias = new_value
 
     @classmethod
     def _patch_forwardref_module_scope(cls) -> None:
@@ -110,7 +111,7 @@ class FlextUtilitiesBeartypeTypingExtPatch:
             if not mod_name.startswith("beartype"):
                 continue
             if mod.__dict__.get("get_hint_pep695_unsubbed_alias") is original:
-                setattr(mod, "get_hint_pep695_unsubbed_alias", tagged)
+                mod.get_hint_pep695_unsubbed_alias = tagged
 
     @staticmethod
     def _tag_forward_refs(

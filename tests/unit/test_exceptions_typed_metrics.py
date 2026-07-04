@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import e
 
 from tests.constants import c
 from tests.models import m
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class TestsFlextExceptionsTypedMetrics:
@@ -41,7 +44,9 @@ class TestsFlextExceptionsTypedMetrics:
             ),
             (
                 lambda: e.AuthorizationError(
-                    "Test message", user_id="u-1", permission="read"
+                    "Test message",
+                    user_id="u-1",
+                    permission="read",
                 ),
                 e.AuthorizationError,
             ),

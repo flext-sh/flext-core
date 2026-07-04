@@ -9,15 +9,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-)
+from typing import TYPE_CHECKING
 
 from flext_core import c, e, m, p, r, t
 
 from .flextregistry_part_03 import (
     FlextRegistry as FlextRegistryPart03,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+    )
 
 
 class FlextRegistry(FlextRegistryPart03):

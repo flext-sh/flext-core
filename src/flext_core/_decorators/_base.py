@@ -7,20 +7,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import warnings
-from collections.abc import Callable
 from functools import wraps
-from typing import ClassVar, TypeIs
+from typing import TYPE_CHECKING, ClassVar, TypeIs
 
 from flext_core._loggings_parts.flextlogger_part_05 import FlextLogger
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.base import FlextProtocolsBase as pb
-from flext_core._protocols.container import FlextProtocolsContainer as pc
-from flext_core._protocols.context import FlextProtocolsContext as pcx
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flext_core._protocols.base import FlextProtocolsBase as pb
+    from flext_core._protocols.container import FlextProtocolsContainer as pc
+    from flext_core._protocols.context import FlextProtocolsContext as pcx
 
 
 class FlextDecoratorsBase:

@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import sys
-from types import ModuleType
+from typing import TYPE_CHECKING
 
 from examples import m, p
 from flext_core import FlextSettings
 
 from .ex_08_container_registration import Ex08ContainerRegistration
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 
 class _WireProbe:
@@ -64,10 +67,12 @@ class Ex08ContainerScoped(Ex08ContainerRegistration):
             "scoped.default.get_typed_service_matches",
             (
                 scoped_default.resolve(
-                    self._registered_service_name, type_cls=int
+                    self._registered_service_name,
+                    type_cls=int,
                 ).value
                 if scoped_default.resolve(
-                    self._registered_service_name, type_cls=int
+                    self._registered_service_name,
+                    type_cls=int,
                 ).success
                 else -1
             )

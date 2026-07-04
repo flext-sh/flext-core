@@ -9,9 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import contextvars
-from collections.abc import Iterator
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import (
     FlextConstants as c,
@@ -25,6 +23,10 @@ from flext_core import (
 )
 
 from ._context_crud_set import FlextUtilitiesContextCrudSetMixin
+
+if TYPE_CHECKING:
+    import contextvars
+    from collections.abc import Iterator
 
 
 class FlextUtilitiesContextCrud(

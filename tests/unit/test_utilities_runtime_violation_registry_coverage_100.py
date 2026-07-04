@@ -18,8 +18,8 @@ class TestsFlextRuntimeViolationRegistry:
                     layer="Runtime",
                     severity="warning",
                     message="captured violation",
-                )
-            ]
+                ),
+            ],
         )
 
         runtime_registry.append_violation_report(report)

@@ -11,14 +11,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
-from types import ModuleType
-from typing import Self, override
+from typing import TYPE_CHECKING, Self, override
 
 from flext_core import c, e, m, p, r, t, u
 
 from .flextcontainer_part_03 import (
     FlextContainer as FlextContainerPart03,
 )
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 
 class FlextContainer(FlextContainerPart03, ABC):

@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.protocols import p
 from tests.utilities import u
 
 from .service_fixtures import TestsFlextFlextServiceFixtures
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tests.protocols import p
 
 
 class TestsFlextFlextServiceLifecycleCases(TestsFlextFlextServiceFixtures):

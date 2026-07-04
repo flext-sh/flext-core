@@ -6,15 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, Self
+from typing import TYPE_CHECKING, Annotated, Self
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic
-from flext_core.protocols import FlextProtocols as p
 
 from .flextmodelscontextscope_part_02 import (
     FlextModelsContextScope as FlextModelsContextScopePart02,
 )
+
+if TYPE_CHECKING:
+    from flext_core.protocols import FlextProtocols as p
 
 
 class FlextModelsContextScope(FlextModelsContextScopePart02):

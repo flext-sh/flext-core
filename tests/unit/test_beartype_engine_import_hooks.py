@@ -29,7 +29,7 @@ class TestsFlextBeartypeEngineImportHooks(TestsFlextBeartypeEngine):
 
                 class Probe:
                     value = c
-                """
+                """,
             ).strip()
             + "\n",
             encoding="utf-8",
@@ -51,7 +51,7 @@ class TestsFlextBeartypeEngineImportHooks(TestsFlextBeartypeEngine):
                     me.DeprecatedSyntaxParams(ast_shape="no_wrapper_root_alias_import"),
                     Probe,
                 )))
-                """
+                """,
             ),
             cwd=Path(__file__).resolve().parents[2],
         )
@@ -74,7 +74,7 @@ class TestsFlextBeartypeEngineImportHooks(TestsFlextBeartypeEngine):
                 """
                 class Probe:
                     value = "from tests.constants import c"
-                """
+                """,
             ).strip()
             + "\n",
             encoding="utf-8",
@@ -96,7 +96,7 @@ class TestsFlextBeartypeEngineImportHooks(TestsFlextBeartypeEngine):
                     me.DeprecatedSyntaxParams(ast_shape="no_wrapper_root_alias_import"),
                     Probe,
                 )))
-                """
+                """,
             ),
             cwd=Path(__file__).resolve().parents[2],
         )

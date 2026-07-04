@@ -25,7 +25,7 @@ class TestsFlextBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
                 from flext_core import FlextUtilitiesBeartypeConf
 
                 beartype_this_package(conf=FlextUtilitiesBeartypeConf.build_beartype_conf())
-                """
+                """,
             ).strip()
             + "\n",
             encoding="utf-8",
@@ -41,7 +41,7 @@ class TestsFlextBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
 
 
                 ProbeModel(value=1)
-                """
+                """,
             ).strip()
             + "\n",
             encoding="utf-8",
@@ -63,7 +63,7 @@ class TestsFlextBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
 
 
                 assert isinstance(ProbeImpl(), ProbeProtocol)
-                """
+                """,
             ).strip()
             + "\n",
             encoding="utf-8",
@@ -78,7 +78,7 @@ class TestsFlextBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
                 import pkgprobe.models
                 import pkgprobe.protocols
                 print("pkgprobe_ok")
-                """
+                """,
             ),
             cwd=Path(__file__).resolve().parents[2],
         )
@@ -100,7 +100,7 @@ class TestsFlextBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
                 from flext_core import FlextUtilitiesBeartypeConf
 
                 beartype_this_package(conf=FlextUtilitiesBeartypeConf.build_beartype_conf())
-                """
+                """,
             ).strip()
             + "\n",
             encoding="utf-8",
@@ -111,7 +111,7 @@ class TestsFlextBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
                 type JsonLike = dict[str, JsonLike] | list[JsonLike] | str | int | float | bool | None
 
                 VALUE: JsonLike = {"ok": [1, "x", None]}
-                """
+                """,
             ).strip()
             + "\n",
             encoding="utf-8",
@@ -125,7 +125,7 @@ class TestsFlextBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
                 sys.path.insert(0, {str(tmp_path)!r})
                 import aliasprobe.aliases as aliases
                 print("aliasprobe_ok", aliases.VALUE["ok"][1])
-                """
+                """,
             ),
             cwd=Path(__file__).resolve().parents[2],
         )
@@ -147,7 +147,7 @@ class TestsFlextBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
                 )
                 import flext_core
                 print("unexpected_success", hasattr(flext_core, "u"))
-                """
+                """,
             ),
             cwd=Path(__file__).resolve().parents[2],
         )

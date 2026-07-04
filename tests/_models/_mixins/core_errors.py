@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Callable, Iterator
-from typing import Annotated, Never, override
+from typing import TYPE_CHECKING, Annotated, Never, override
 
 from flext_core import m
 from tests.constants import c
 from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
 
 
 class TestsFlextModelsCoreErrorsMixin:
@@ -46,10 +48,12 @@ class TestsFlextModelsCoreErrorsMixin:
         """Simple model with name/value attributes for mapper tests."""
 
         name: Annotated[
-            str, m.Field(description="Attribute recursive container name")
+            str,
+            m.Field(description="Attribute recursive container name"),
         ] = "name"
         value: Annotated[
-            int, m.Field(description="Attribute recursive container value")
+            int,
+            m.Field(description="Attribute recursive container value"),
         ] = 1
 
     class BadMapping(UserDict[str, t.JsonValue]):

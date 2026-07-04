@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 import pytest
 from flext_tests import h, r, x
 
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
 from tests.typings import t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
 HandlerTypeScenario = TestsFlextFlextHandlers.HandlerTypeScenario
@@ -58,7 +60,8 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
         handler = self.FailingTestHandler(settings=settings)
         result = handler.handle("test_message")
         u.Tests.assert_failure(
-            result, expected_error="Handler failed for: test_message"
+            result,
+            expected_error="Handler failed for: test_message",
         )
 
     def test_handlers_config_access(self) -> None:
@@ -78,7 +81,7 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
             "Test Handler 6",
         )
         handler: TestsFlextFlextHandlers.ConcreteTestHandler = self.ConcreteTestHandler(
-            settings=settings
+            settings=settings,
         )
         result = handler.execute("test_message")
         u.Tests.assert_success(result, expected_value="processed_test_message")

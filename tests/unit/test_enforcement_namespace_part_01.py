@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 from tests.models import TestsFlextModelsMixins
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestsFlextEnforcementNamespacePart01:
@@ -125,7 +128,8 @@ class TestsFlextEnforcementNamespacePart01:
         assert not namespace_msgs
 
     def test_project_class_stem_override_controls_class_prefix(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         root = tmp_path / "sample"
         package = root / "src" / "xmlapi"
@@ -145,7 +149,8 @@ class_stem_override = "XmlAPI"
         module_path = package / "__init__.py"
         module_path.write_text("class XmlAPIModels:\n    pass\n", encoding="utf-8")
         spec = importlib.util.spec_from_file_location(
-            "xmlapi_override_sample", module_path
+            "xmlapi_override_sample",
+            module_path,
         )
         assert spec is not None and spec.loader is not None
         module = importlib.util.module_from_spec(spec)

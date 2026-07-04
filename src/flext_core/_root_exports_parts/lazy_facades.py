@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Final
+from typing import TYPE_CHECKING, Final
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 ROOT_LAZY_FACADES: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType({
     ".constants": ("FlextConstants", "c"),

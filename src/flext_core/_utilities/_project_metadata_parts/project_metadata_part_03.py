@@ -20,14 +20,17 @@ import importlib
 from functools import cache
 from pathlib import Path
 from types import MappingProxyType, ModuleType
+from typing import TYPE_CHECKING
 
 from flext_core._constants.file import FlextConstantsFile as cf
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
-from flext_core._typings.base import FlextTypingBase as tb
 
 from .project_metadata_part_02 import (
     FlextUtilitiesProjectMetadata as FlextUtilitiesProjectMetadataPart02,
 )
+
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart02):

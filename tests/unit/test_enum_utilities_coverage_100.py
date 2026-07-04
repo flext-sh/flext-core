@@ -15,17 +15,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Sequence,
-)
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 import pytest
 from flext_tests import tm
 
 from tests.models import m
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Sequence,
+    )
 
 
 class TestsFlextEnumUtilities:
@@ -56,10 +58,12 @@ class TestsFlextEnumUtilities:
             m.Field(description="Whether parse should succeed"),
         ]
         expected_status: Annotated[
-            StrEnum | None, m.Field(description="Expected parsed enum status")
+            StrEnum | None,
+            m.Field(description="Expected parsed enum status"),
         ] = None
         expected_error: Annotated[
-            str | None, m.Field(description="Expected error message fragment")
+            str | None,
+            m.Field(description="Expected error message fragment"),
         ] = None
 
     PARSE: ClassVar[Sequence[ParseScenario]] = [

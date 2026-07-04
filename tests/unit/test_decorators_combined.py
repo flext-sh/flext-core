@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import d, r
 from hypothesis import given, settings, strategies as st
 
-from tests.protocols import p
 from tests.unit._decorators_support import (
     TestsFlextDecoratorsLegacy,
 )
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 COMBINED_SCENARIOS = TestsFlextDecoratorsLegacy.COMBINED_SCENARIOS
 

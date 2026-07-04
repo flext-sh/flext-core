@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from itertools import count
-from typing import ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_tests import m as tm
 
 from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tests.typings import t
 
 
 class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMixin):
@@ -102,14 +105,16 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
             cls._counter = count(1)
 
     class GetUserServiceFactory(
-        _GetUserFactoryBase[TestsFlextUtilitiesRailwayServicesMixin.GetUserService]
+        _GetUserFactoryBase[TestsFlextUtilitiesRailwayServicesMixin.GetUserService],
     ):
         """Factory for `GetUserService`."""
 
         @classmethod
         @override
         def build(
-            cls, *, user_id: str | None = None
+            cls,
+            *,
+            user_id: str | None = None,
         ) -> TestsFlextUtilitiesUserFactoriesMixin.GetUserService:
             """Build a `GetUserService` instance."""
             return TestsFlextUtilitiesUserFactoriesMixin.GetUserService(

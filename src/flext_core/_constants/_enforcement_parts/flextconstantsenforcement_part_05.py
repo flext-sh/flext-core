@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from flext_core._constants._enforcement_data import SMELL_RULES_TEXT
-from flext_core._typings.base import FlextTypingBase as t
 
 from .flextconstantsenforcement_part_09 import _NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from flext_core._typings.base import FlextTypingBase as t
 
 _BASE_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
     "no_any": (

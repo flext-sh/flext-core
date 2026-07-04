@@ -95,7 +95,7 @@ class TestsFlextModelsProjectMetadata:
             c.Tests.SAMPLE_AUTHOR_BOB,
         )
         assert project.urls == MappingProxyType({
-            "Homepage": "https://example.test/flext-ldif"
+            "Homepage": "https://example.test/flext-ldif",
         })
         assert project.requires_python == "3.13"
 
@@ -133,7 +133,7 @@ class TestsFlextModelsProjectMetadata:
             tool_config.project.project_class == c.Tests.SAMPLE_PROJECT_CLASS_PLATFORM
         )
         assert tool_config.namespace.alias_parent_sources == {
-            "c": c.Tests.SAMPLE_ALIAS_PARENT_SOURCE
+            "c": c.Tests.SAMPLE_ALIAS_PARENT_SOURCE,
         }
         assert tool_config.namespace.include_dynamic_dirs is True
         assert tool_config.docs.site_title == "Flext LDIF"

@@ -12,17 +12,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._runtime._container import FlextRuntimeContainer as FlextRuntime
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+
+if TYPE_CHECKING:
+    from datetime import datetime
+
+    from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextModelsContainer:
@@ -57,7 +60,7 @@ class FlextModelsContainer:
             mp.Field(
                 description="Timestamp when service was registered (configured timezone)",
             ),
-        ] = mp.Field(default_factory=lambda: ug.now())
+        ] = mp.Field(default_factory=ug.now)
         metadata: Annotated[
             m.Metadata | FlextModelsContainers.ConfigMap | None,
             mp.BeforeValidator(
@@ -126,7 +129,7 @@ class FlextModelsContainer:
             mp.Field(
                 description="Timestamp when factory was registered (configured timezone)",
             ),
-        ] = mp.Field(default_factory=lambda: ug.now())
+        ] = mp.Field(default_factory=ug.now)
         is_singleton: Annotated[
             bool,
             mp.Field(

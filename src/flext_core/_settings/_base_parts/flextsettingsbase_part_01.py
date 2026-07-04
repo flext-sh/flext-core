@@ -5,13 +5,14 @@ from __future__ import annotations
 import threading
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
-from typing import ClassVar, Self, Unpack
+from typing import TYPE_CHECKING, ClassVar, Self, Unpack
 
 from pydantic import BaseModel, ConfigDict
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as tb
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextSettingsBase(BaseSettings):

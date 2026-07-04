@@ -53,31 +53,38 @@ class Ex02FlextSettingsFieldChecks(ExamplesFlextShared):
         self.audit_check("field.database_url", settings.database_url)
         self.audit_check("field.database_pool_size", settings.database_pool_size)
         self.audit_check(
-            "field.circuit_breaker_threshold", settings.circuit_breaker_threshold
+            "field.circuit_breaker_threshold",
+            settings.circuit_breaker_threshold,
         )
         self.audit_check(
-            "field.rate_limit_max_requests", settings.rate_limit_max_requests
+            "field.rate_limit_max_requests",
+            settings.rate_limit_max_requests,
         )
         self.audit_check(
-            "field.rate_limit_window_seconds", settings.rate_limit_window_seconds
+            "field.rate_limit_window_seconds",
+            settings.rate_limit_window_seconds,
         )
         self.audit_check("field.retry_delay", settings.retry_delay)
         self.audit_check("field.max_retry_attempts", settings.max_retry_attempts)
         self.audit_check(
-            "field.enable_timeout_executor", settings.enable_timeout_executor
+            "field.enable_timeout_executor",
+            settings.enable_timeout_executor,
         )
         self.audit_check(
-            "field.dispatcher_enable_logging", settings.dispatcher_enable_logging
+            "field.dispatcher_enable_logging",
+            settings.dispatcher_enable_logging,
         )
         self.audit_check(
-            "field.dispatcher_auto_context", settings.dispatcher_auto_context
+            "field.dispatcher_auto_context",
+            settings.dispatcher_auto_context,
         )
         self.audit_check(
             "field.dispatcher_timeout_seconds",
             settings.dispatcher_timeout_seconds,
         )
         self.audit_check(
-            "field.dispatcher_enable_metrics", settings.dispatcher_enable_metrics
+            "field.dispatcher_enable_metrics",
+            settings.dispatcher_enable_metrics,
         )
         self.audit_check("field.executor_workers", settings.executor_workers)
         self.audit_check("field.timeout_seconds", settings.timeout_seconds)
@@ -85,7 +92,8 @@ class Ex02FlextSettingsFieldChecks(ExamplesFlextShared):
         self.audit_check("field.max_batch_size", settings.max_batch_size)
         self.audit_check("field.api_key", settings.api_key)
         self.audit_check(
-            "field.exception_failure_level", settings.exception_failure_level
+            "field.exception_failure_level",
+            settings.exception_failure_level,
         )
         validated = FlextSettings.model_validate(settings.model_dump())
         self.audit_check(

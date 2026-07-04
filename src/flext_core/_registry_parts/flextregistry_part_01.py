@@ -11,14 +11,16 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import (
-    MutableMapping,
-)
-from typing import Annotated, ClassVar, Self, override
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 
 from pydantic import PrivateAttr
 
 from flext_core import h, m, p, s, t, u
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableMapping,
+    )
 
 
 class FlextRegistry(s[bool]):
@@ -34,7 +36,7 @@ class FlextRegistry(s[bool]):
     for actual handler registration and execution.
     """
 
-    _state: m.RegistryState = PrivateAttr(default_factory=lambda: m.RegistryState())
+    _state: m.RegistryState = PrivateAttr(default_factory=m.RegistryState)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
 
     _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}

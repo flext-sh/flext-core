@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 import pytest
 
-from tests.constants import c
 from tests.models import m
 from tests.typings import t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.constants import c
 
 HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
 HandlerTypeScenario = TestsFlextFlextHandlers.HandlerTypeScenario
@@ -36,7 +38,7 @@ class TestsFlextHandlersValidationContext(TestsFlextFlextHandlers):
             handler_mode=handler_mode,
         )
         handler: TestsFlextFlextHandlers.ConcreteTestHandler = self.ConcreteTestHandler(
-            settings=settings
+            settings=settings,
         )
         result = handler.validate_message("test_message")
         _ = u.Tests.assert_success(result)

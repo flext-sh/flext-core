@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from typing import TYPE_CHECKING
 
 from flext_tests import r, tm
 
 from tests.models import m
-from tests.protocols import p
 from tests.unit._result_scenarios import (
     ResultOperationType,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import MutableSequence
+
+    from tests.protocols import p
 
 
 class TestsFlextResultRecentBehaviors:

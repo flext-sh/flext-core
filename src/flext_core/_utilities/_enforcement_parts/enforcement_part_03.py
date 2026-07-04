@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 
 from .enforcement_part_02 import (
     FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart02,
 )
+
+if TYPE_CHECKING:
+    from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):

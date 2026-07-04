@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_tests import h, r, tm
 
 from tests.base import s
 from tests.constants import c
-from tests.models import m
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from tests.models import m
+    from tests.protocols import p
 
 
 class TestsFlextHandlerDecoratorEdges:

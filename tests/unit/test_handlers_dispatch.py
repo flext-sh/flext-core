@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_tests import h, r
 
 from tests.constants import c
-from tests.models import m
-from tests.protocols import p
 from tests.typings import t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.models import m
+    from tests.protocols import p
 
 HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
 HandlerTypeScenario = TestsFlextFlextHandlers.HandlerTypeScenario
@@ -86,7 +88,8 @@ class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
         handler = RestrictiveHandler(settings=settings)
         result = handler.dispatch_message("test_message", operation="command")
         u.Tests.assert_failure(
-            result, expected_error="Handler cannot handle message type str"
+            result,
+            expected_error="Handler cannot handle message type str",
         )
 
     def test_handlers_dispatch_message_validation_failure(self) -> None:
@@ -134,5 +137,6 @@ class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
         handler = ExceptionHandler(settings=settings)
         result = handler.dispatch_message("test_message", operation="command")
         u.Tests.assert_failure(
-            result, expected_error="Critical handler failure: Test exception in handler"
+            result,
+            expected_error="Critical handler failure: Test exception in handler",
         )

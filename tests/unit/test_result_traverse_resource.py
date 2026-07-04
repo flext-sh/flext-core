@@ -2,18 +2,22 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import r, tm
 
 from tests.models import m
-from tests.protocols import p
-from tests.typings import t
 from tests.unit._result_scenarios import (
     ResultOperationType,
 )
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import MutableSequence
+
+    from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextResultTraverseResource:
@@ -195,7 +199,9 @@ class TestsFlextResultTraverseResource:
 
         class ModelDumpCarrier:
             def model_dump(
-                self, *, mode: str = "python"
+                self,
+                *,
+                mode: str = "python",
             ) -> t.MappingKV[str, t.JsonPayload | None]:
                 _ = mode
                 return {"alpha": 1, "beta": "two"}

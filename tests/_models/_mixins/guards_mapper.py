@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import ItemsView, Iterator
-from typing import Annotated, ClassVar, override
+from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_core import m
 from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import ItemsView, Iterator
 
 
 class TestsFlextModelsGuardsMapperMixin:
@@ -30,7 +32,7 @@ class TestsFlextModelsGuardsMapperMixin:
         """
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            arbitrary_types_allowed=True
+            arbitrary_types_allowed=True,
         )
 
         def debug(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:

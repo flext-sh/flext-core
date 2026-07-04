@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
 from pydantic import ValidationError
@@ -12,11 +11,13 @@ from returns.result import Failure, Success
 from flext_core._constants.errors import FlextConstantsErrors as c
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure
 from flext_core._constants.mixins import FlextConstantsMixins
-from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.result import FlextProtocolsResult as p
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flext_core._models.containers import FlextModelsContainers as mc
+    from flext_core._protocols.result import FlextProtocolsResult as p
     from flext_core.typings import FlextTypes as t
 
 from .behavior import FlextResultBehaviorMixin

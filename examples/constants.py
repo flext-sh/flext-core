@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-from examples import t
+from typing import TYPE_CHECKING
+
 from flext_core import c as _c
+
+if TYPE_CHECKING:
+    from examples import t
 
 c = _c
 

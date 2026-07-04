@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from flext_tests import e
 
 from tests.constants import c
 from tests.models import m
 from tests.protocols import p
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 type FailureFactory = Callable[[], p.Result[bool]]
 

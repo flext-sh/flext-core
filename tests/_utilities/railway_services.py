@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, override
+from typing import TYPE_CHECKING, Annotated, override
 
 from flext_tests import m as tm, r, u
 
@@ -10,8 +10,10 @@ from tests._models.mixins import TestsFlextModelsMixins
 from tests.base import s
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
 from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextUtilitiesRailwayServicesMixin:
@@ -120,7 +122,7 @@ class TestsFlextUtilitiesRailwayServicesMixin:
                     )
                 case _:
                     return r[t.JsonMapping].fail(
-                        f"{c.Tests.UNKNOWN_OPERATION_PREFIX} {self.operation}"
+                        f"{c.Tests.UNKNOWN_OPERATION_PREFIX} {self.operation}",
                     )
 
     @staticmethod

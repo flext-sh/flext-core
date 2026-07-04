@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
@@ -11,6 +11,9 @@ from tests.constants import c
 from tests.models import m
 from tests.unit._project_metadata_support import write_pyproject
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestsFlextUtilitiesProjectMetadataRead:
@@ -73,7 +76,8 @@ class TestsFlextUtilitiesProjectMetadataRead:
             """,
         )
         tm.that(
-            u.read_project_metadata(root).license, eq=c.Tests.SAMPLE_PROJECT_LICENSE
+            u.read_project_metadata(root).license,
+            eq=c.Tests.SAMPLE_PROJECT_LICENSE,
         )
 
     def test_read_project_metadata_extracts_author_names_from_project_table(

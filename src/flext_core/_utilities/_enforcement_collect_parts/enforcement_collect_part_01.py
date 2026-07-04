@@ -3,19 +3,23 @@
 from __future__ import annotations
 
 import inspect
-from collections.abc import Callable, Iterator
 from enum import EnumType
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.base import FlextProtocolsBase as pb
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
 from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+
+    from flext_core._models.pydantic import FlextModelsPydantic as mp
+    from flext_core._protocols.base import FlextProtocolsBase as pb
+    from flext_core._typings.base import FlextTypingBase as t
+    from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
@@ -74,14 +78,14 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
                     pyproject = parent / "pyproject.toml"
                     if pyproject.exists():
                         class_stem_override = upm.read_tool_flext_config(
-                            parent
+                            parent,
                         ).project.class_stem_override
                         break
         canonical_project_name = src.replace("_", "-")
         head, _, tail = canonical_project_name.partition("-")
         namespace = mpm.derive_class_stem(tail or head)
         project_prefix = class_stem_override or mpm.derive_class_stem(
-            canonical_project_name
+            canonical_project_name,
         )
         if top in {"tests", "examples", "scripts"} and top != (src or ""):
             return mpm.derive_class_stem(top) + project_prefix, namespace

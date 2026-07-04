@@ -6,10 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import FlextConstants as c, FlextProtocols as p, FlextTypes as t
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, MutableMapping
 
 
 class FlextSettingsRegistry:

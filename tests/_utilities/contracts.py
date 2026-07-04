@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence, Sequence
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_tests import r, u
 
 from tests.constants import c
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from collections.abc import MutableSequence, Sequence
+
+    from tests.protocols import p
 
 
 class TestsFlextUtilitiesContractsMixin:

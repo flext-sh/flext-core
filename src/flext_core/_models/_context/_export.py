@@ -7,16 +7,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from pydantic import BeforeValidator, Field
 
-from flext_core import t
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.entity import FlextModelsEntity
 
 from ._data import FlextModelsContextData
+
+if TYPE_CHECKING:
+    from flext_core import t
+    from flext_core._models.base import FlextModelsBase as m
+    from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextModelsContextExport:
@@ -38,7 +40,7 @@ class FlextModelsContextExport:
         metadata: Annotated[
             m.Metadata | FlextModelsContainers.Dict | None,
             BeforeValidator(
-                lambda v: FlextModelsContextData.normalize_metadata_before(v),
+                FlextModelsContextData.normalize_metadata_before,
             ),
             Field(
                 default=None,

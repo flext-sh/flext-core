@@ -7,16 +7,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
 from contextlib import suppress
 from functools import wraps
+from typing import TYPE_CHECKING
 
 from flext_core._constants.base import FlextConstantsBase as cb
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure as ci
 from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
-from flext_core._protocols.logging import FlextProtocolsLogging as pl
-from flext_core._typings.base import FlextTypingBase as tb
 from flext_core.utilities import FlextUtilities as u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flext_core._protocols.logging import FlextProtocolsLogging as pl
+    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):

@@ -69,7 +69,8 @@ class Ex03FlextLogger(ExamplesFlextShared):
             self._ok(FlextLogger.unbind_global_context("application")),
         )
         self.audit_check(
-            "clear_global_context.ok", self._ok(FlextLogger.clear_global_context())
+            "clear_global_context.ok",
+            self._ok(FlextLogger.clear_global_context()),
         )
 
     def _exercise_instance_methods(self) -> None:
@@ -99,7 +100,7 @@ class Ex03FlextLogger(ExamplesFlextShared):
                     exception=ValueError("boom"),
                     exc_info=False,
                     context={"op": "example"},
-                )
+                ),
             ).__name__,
         )
         self.audit_check("exception.ok", self._exception_ok(logger, "exception"))
@@ -171,7 +172,8 @@ class Ex03FlextLogger(ExamplesFlextShared):
             self._ok(FlextLogger.clear_scope("application")),
         )
         self.audit_check(
-            "clear_scope.request.ok", self._ok(FlextLogger.clear_scope("request"))
+            "clear_scope.request.ok",
+            self._ok(FlextLogger.clear_scope("request")),
         )
         self.audit_check(
             "clear_scope.operation.ok",

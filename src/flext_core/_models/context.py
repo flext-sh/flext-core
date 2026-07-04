@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes as t
+from typing import TYPE_CHECKING
 
 from ._context._data import FlextModelsContextData
 from ._context._export import FlextModelsContextExport
@@ -17,6 +17,9 @@ from ._context._metadata import FlextModelsContextMetadata
 from ._context._proxy_var import FlextModelsContextProxyVar
 from ._context._scope import FlextModelsContextScope
 from ._context._tokens import FlextModelsContextTokens
+
+if TYPE_CHECKING:
+    from flext_core import FlextTypes as t
 
 
 class FlextModelsContext(

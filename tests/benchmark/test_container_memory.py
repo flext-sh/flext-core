@@ -15,13 +15,16 @@ from __future__ import annotations
 
 import gc
 import sys
-from collections.abc import (
-    Callable,
-)
+from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_core import FlextContainer
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+    )
 
 
 def get_memory_usage() -> int:

@@ -8,10 +8,9 @@ from __future__ import annotations
 
 import contextvars
 from types import MappingProxyType
-from typing import Annotated, Self
+from typing import TYPE_CHECKING, Annotated, Self
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._models.containers import FlextModelsContainers
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 from flext_core.constants import FlextConstants as c
 from flext_core.typings import FlextTypes as t
@@ -19,6 +18,9 @@ from flext_core.typings import FlextTypes as t
 from .flextmodelscontextscope_part_01 import (
     FlextModelsContextScope as FlextModelsContextScopePart01,
 )
+
+if TYPE_CHECKING:
+    from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextModelsContextScope(FlextModelsContextScopePart01):
@@ -42,11 +44,11 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
         statistics: Annotated[
             FlextModelsContextScope.ContextStatistics,
             FlextUtilitiesPydantic.Field(
-                default_factory=lambda: FlextModelsContextScope.ContextStatistics(),
+                default_factory=FlextModelsContextScope.ContextStatistics,
                 description="Operation counters for this context instance",
             ),
         ] = FlextUtilitiesPydantic.Field(
-            default_factory=lambda: FlextModelsContextScope.ContextStatistics(),
+            default_factory=FlextModelsContextScope.ContextStatistics,
         )
         active: Annotated[
             bool,

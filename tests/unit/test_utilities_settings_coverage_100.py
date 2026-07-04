@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_tests import tm
 
 from flext_core import FlextContainer, u
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextUtilitiesSettings:
@@ -48,7 +51,7 @@ class TestsFlextUtilitiesSettings:
                         trace=True,
                         debug=False,
                         log_level=c.LogLevel.ERROR,
-                    )
+                    ),
                 ),
             )
         finally:
@@ -107,7 +110,7 @@ class TestsFlextUtilitiesSettingsRegisterFactory(TestsFlextUtilitiesSettings):
                         trace=False,
                         debug=True,
                         log_level=c.LogLevel.WARNING,
-                    )
+                    ),
                 ),
             }
 

@@ -9,10 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import contextvars
-from collections.abc import MutableMapping
 from datetime import datetime
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import (
     FlextConstants as c,
@@ -25,6 +23,10 @@ from flext_core import (
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesLoggingContext,
 )
+
+if TYPE_CHECKING:
+    import contextvars
+    from collections.abc import MutableMapping
 
 
 class FlextUtilitiesContextState:

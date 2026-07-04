@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextSettings, FlextSettingsBase
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextSettings:
@@ -90,7 +94,7 @@ class TestsFlextSettings:
             assert RequiredSettings._instance is None
 
             resolved = RequiredSettings.fetch_global(
-                overrides={"required_value": "configured"}
+                overrides={"required_value": "configured"},
             )
 
             assert resolved.required_value == "configured"

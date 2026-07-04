@@ -21,7 +21,7 @@ class ExamplesFlextModelsEx05:
     class UserModel(m.Value):
         name: str = u.Field(description="User display name")
         status: ExamplesFlextModelsEx05.StatusEnum = u.Field(
-            description="User account status"
+            description="User account status",
         )
         age: int = u.Field(description="User age in years")
 
@@ -58,7 +58,8 @@ class ExamplesFlextModelsEx05:
             value: m.ConfigMap,
         ) -> ExamplesFlextModelsEx05.GoodProcessor:
             return cast(
-                "ExamplesFlextModelsEx05.GoodProcessor", cls.model_validate(value)
+                "ExamplesFlextModelsEx05.GoodProcessor",
+                cls.model_validate(value),
             )
 
     class BadProcessor(m.Value):

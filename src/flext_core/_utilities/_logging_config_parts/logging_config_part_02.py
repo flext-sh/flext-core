@@ -11,14 +11,12 @@ from __future__ import annotations
 
 import logging
 import sys
-import types
 import typing
 from contextlib import suppress
 
 import structlog
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
-from structlog.types import Processor
 
 from flext_core import (
     FlextConstants as c,
@@ -30,6 +28,11 @@ from flext_core import (
 from .logging_config_part_01 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart01,
 )
+
+if typing.TYPE_CHECKING:
+    import types
+
+    from structlog.types import Processor
 
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):

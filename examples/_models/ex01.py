@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-from examples import t
+from typing import TYPE_CHECKING
+
 from flext_core import m, u
+
+if TYPE_CHECKING:
+    from examples import t
 
 
 class ExamplesFlextModelsEx01:
@@ -19,10 +23,10 @@ class ExamplesFlextModelsEx01:
         """Result demo summary model."""
 
         demonstrations_completed: int = u.Field(
-            description="Count of completed demonstrations"
+            description="Count of completed demonstrations",
         )
         patterns_covered: t.VariadicTuple[str] = u.Field(
-            description="Tuple of covered pattern names"
+            description="Tuple of covered pattern names",
         )
         completed_at: str = u.Field(description="ISO 8601 completion timestamp")
 
@@ -46,5 +50,5 @@ class ExamplesFlextModelsEx01:
 
         name: str = u.Field(description="Person name")
         age: str = u.Field(
-            description="Invalid age (string instead of int) for testing"
+            description="Invalid age (string instead of int) for testing",
         )

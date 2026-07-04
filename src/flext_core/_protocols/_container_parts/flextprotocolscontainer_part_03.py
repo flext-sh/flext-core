@@ -8,11 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
-from flext_core._protocols.context import FlextProtocolsContext
-from flext_core._protocols.settings import FlextProtocolsSettings
-
 if TYPE_CHECKING:
     from flext_core import FlextModels as m
+    from flext_core._protocols.context import FlextProtocolsContext
+    from flext_core._protocols.settings import FlextProtocolsSettings
 from flext_core._protocols._container_parts.flextprotocolscontainer_part_02 import (
     FlextProtocolsContainer as FlextProtocolsContainerPart02,
 )

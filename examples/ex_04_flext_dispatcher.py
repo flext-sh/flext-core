@@ -81,7 +81,7 @@ def _ping_handler(message: p.Routable) -> p.Result[str]:
     return r[str].ok(f"pong:{message.value}")
 
 
-setattr(_ping_handler, "message_type", m.Examples.Ping)
+_ping_handler.message_type = m.Examples.Ping
 
 
 def _failing_delete_handler(message: p.Routable) -> p.Result[str]:
@@ -90,7 +90,7 @@ def _failing_delete_handler(message: p.Routable) -> p.Result[str]:
     return r[str].fail("delete_failed")
 
 
-setattr(_failing_delete_handler, "message_type", m.Examples.FailingDelete)
+_failing_delete_handler.message_type = m.Examples.FailingDelete
 
 
 def _no_route_handler(message: p.Routable) -> p.Result[str]:
@@ -165,7 +165,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
 
         self.section("auto_discovery")
         auto_discovery_registration = dispatcher.register_handler(
-            _AutoFallbackHandler()
+            _AutoFallbackHandler(),
         )
         auto_discovery = dispatcher.dispatch(m.Examples.UnknownQuery(payload="x"))
         self.audit_check(
@@ -178,21 +178,24 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         self.section("error_cases")
         no_route_registration = dispatcher.register_handler(_no_route_handler)
         no_handler = u.build_dispatcher().dispatch(
-            m.Examples.GetUser(username="missing")
+            m.Examples.GetUser(username="missing"),
         )
         failing_registration = dispatcher.register_handler(_failing_delete_handler)
         failing_dispatch = dispatcher.dispatch(
-            m.Examples.FailingDelete(username="alice")
+            m.Examples.FailingDelete(username="alice"),
         )
         self.audit_check(
-            "register(no_route_attrs).is_failure", no_route_registration.failure
+            "register(no_route_attrs).is_failure",
+            no_route_registration.failure,
         )
         self.audit_check("dispatch(no_handler).is_failure", no_handler.failure)
         self.audit_check(
-            "register(failing_callable).is_success", failing_registration.success
+            "register(failing_callable).is_success",
+            failing_registration.success,
         )
         self.audit_check(
-            "dispatch(handler_returns_fail).is_failure", failing_dispatch.failure
+            "dispatch(handler_returns_fail).is_failure",
+            failing_dispatch.failure,
         )
 
         self.section("event_publishing")
@@ -209,10 +212,11 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
             m.Examples.UserCreated(username="bob"),
         ])
         publish_without_subscribers = dispatcher.publish(
-            m.Examples.NoSubscriberEvent(marker="none")
+            m.Examples.NoSubscriberEvent(marker="none"),
         )
         self.audit_check(
-            "register(event_subscriber).is_success", register_subscriber.success
+            "register(event_subscriber).is_success",
+            register_subscriber.success,
         )
         self.audit_check(
             "register(audit_subscriber).is_success",

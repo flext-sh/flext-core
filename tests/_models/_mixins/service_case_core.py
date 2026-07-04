@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, override
+from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_tests import r
 
 from flext_core import m
 from tests.base import s
-from tests.protocols import p
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextModelsServiceCaseCoreMixin:
@@ -30,8 +32,9 @@ class TestsFlextModelsServiceCaseCoreMixin:
         ) -> p.Result[TestsFlextModelsServiceCaseCoreMixin.ServiceUserData]:
             return r[TestsFlextModelsServiceCaseCoreMixin.ServiceUserData].ok(
                 TestsFlextModelsServiceCaseCoreMixin.ServiceUserData(
-                    user_id=1, name="test_user"
-                )
+                    user_id=1,
+                    name="test_user",
+                ),
             )
 
     class ServiceTestCase(m.BaseModel):
@@ -46,10 +49,12 @@ class TestsFlextModelsServiceCaseCoreMixin:
             ),
         ] = None
         input_value: Annotated[
-            str | None, m.Field(description="Primary service input")
+            str | None,
+            m.Field(description="Primary service input"),
         ] = None
         user_id: Annotated[
-            str | None, m.Field(description="User identifier for documented tests")
+            str | None,
+            m.Field(description="User identifier for documented tests"),
         ] = None
         expected_success: Annotated[
             bool,
@@ -64,10 +69,12 @@ class TestsFlextModelsServiceCaseCoreMixin:
             ),
         ] = None
         description: Annotated[
-            str, m.Field(description="Human-readable test case description")
+            str,
+            m.Field(description="Human-readable test case description"),
         ] = ""
         extra_param: Annotated[
-            int, m.Field(description="Auxiliary numeric parameter")
+            int,
+            m.Field(description="Auxiliary numeric parameter"),
         ] = 3
 
     class RailwayTestCase(m.BaseModel):
@@ -84,7 +91,8 @@ class TestsFlextModelsServiceCaseCoreMixin:
             m.Field(description="Pipeline operations to execute"),
         ] = m.Field(default_factory=tuple)
         expected_pipeline_length: Annotated[
-            int, m.Field(description="Expected number of pipeline stages")
+            int,
+            m.Field(description="Expected number of pipeline stages"),
         ] = 1
         should_fail_at: Annotated[
             int | None,

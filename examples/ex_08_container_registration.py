@@ -33,7 +33,8 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
         empty_after_register = container.has("")
         self.audit_check("register.service.returns_self", register_ok is container)
         self.audit_check(
-            "register.service.success", container.resolve(service_name).success
+            "register.service.success",
+            container.resolve(service_name).success,
         )
         self.audit_check(
             "register.service.stored_value_matches",
@@ -45,7 +46,8 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
             == service_value,
         )
         self.audit_check(
-            "register.service.duplicate_returns_self", register_dup is container
+            "register.service.duplicate_returns_self",
+            register_dup is container,
         )
         self.audit_check(
             "register.service.duplicate_failure",
@@ -83,10 +85,12 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
 
         register_factory_bad = container.factory(bad_factory_name, _factory_raises)
         self.audit_check(
-            "register.factory.returns_self", register_factory_ok is container
+            "register.factory.returns_self",
+            register_factory_ok is container,
         )
         self.audit_check(
-            "register.factory.success", container.resolve(factory_name).success
+            "register.factory.success",
+            container.resolve(factory_name).success,
         )
         self.audit_check(
             "register.factory.duplicate_failure",
@@ -107,10 +111,12 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
         register_resource_ok = container.resource(resource_name, _resource_data)
         register_resource_dup = container.resource(resource_name, _resource_data)
         self.audit_check(
-            "register.resource.returns_self", register_resource_ok is container
+            "register.resource.returns_self",
+            register_resource_ok is container,
         )
         self.audit_check(
-            "register.resource.success", container.resolve(resource_name).success
+            "register.resource.success",
+            container.resolve(resource_name).success,
         )
         self.audit_check(
             "register.resource.duplicate_failure",
@@ -174,5 +180,6 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
         self.audit_check("list_services.contains.service", service_name in service_list)
         self.audit_check("list_services.contains.factory", factory_name in service_list)
         self.audit_check(
-            "list_services.contains.resource", resource_name in service_list
+            "list_services.contains.resource",
+            resource_name in service_list,
         )

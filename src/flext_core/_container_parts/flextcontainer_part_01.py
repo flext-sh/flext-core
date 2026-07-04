@@ -12,17 +12,19 @@ from __future__ import annotations
 
 import threading
 from abc import ABC
-from collections.abc import (
-    Callable,
-    MutableMapping,
-)
-from typing import ClassVar, Self, override
-
-from dependency_injector import containers as di_containers
+from typing import TYPE_CHECKING, ClassVar, Self, override
 
 from flext_core import m, p, t
 from flext_core.context import FlextContext
 from flext_core.settings import FlextSettings
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        MutableMapping,
+    )
+
+    from dependency_injector import containers as di_containers
 
 
 class FlextContainer(p.Container, ABC):

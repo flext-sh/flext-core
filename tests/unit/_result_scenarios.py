@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from tests.models import m
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tests.typings import t
 
 
 @unique
@@ -42,7 +45,8 @@ class ResultScenario(m.BaseModel):
         m.Field(description="Input value for result operation"),
     ]
     is_success_expected: Annotated[
-        bool, m.Field(description="Expected success state")
+        bool,
+        m.Field(description="Expected success state"),
     ] = True
     expected_result: Annotated[
         t.JsonValue | None,
@@ -86,7 +90,9 @@ STRING_SCENARIOS: Sequence[ResultScenario] = [
         is_success_expected=False,
     ),
     ResultScenario(
-        name="alt_success", operation_type=ResultOperationType.ALT, value="success"
+        name="alt_success",
+        operation_type=ResultOperationType.ALT,
+        value="success",
     ),
     ResultScenario(
         name="alt_failure",
@@ -95,7 +101,9 @@ STRING_SCENARIOS: Sequence[ResultScenario] = [
         is_success_expected=False,
     ),
     ResultScenario(
-        name="lash_success", operation_type=ResultOperationType.LASH, value="success"
+        name="lash_success",
+        operation_type=ResultOperationType.LASH,
+        value="success",
     ),
     ResultScenario(
         name="lash_failure",
@@ -117,14 +125,20 @@ STRING_SCENARIOS: Sequence[ResultScenario] = [
 ]
 INT_SCENARIOS: Sequence[ResultScenario] = [
     ResultScenario(
-        name="unwrap_success", operation_type=ResultOperationType.UNWRAP, value=42
+        name="unwrap_success",
+        operation_type=ResultOperationType.UNWRAP,
+        value=42,
     ),
     ResultScenario(name="map_success", operation_type=ResultOperationType.MAP, value=5),
     ResultScenario(
-        name="flat_map_success", operation_type=ResultOperationType.FLAT_MAP, value=5
+        name="flat_map_success",
+        operation_type=ResultOperationType.FLAT_MAP,
+        value=5,
     ),
     ResultScenario(
-        name="filter_passes", operation_type=ResultOperationType.FILTER, value=10
+        name="filter_passes",
+        operation_type=ResultOperationType.FILTER,
+        value=10,
     ),
     ResultScenario(
         name="filter_fails",

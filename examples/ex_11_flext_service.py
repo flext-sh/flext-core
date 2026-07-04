@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, override
+from typing import TYPE_CHECKING, Annotated, override
 
 from examples import ExamplesFlextShared, m, p, r, s, t, u
-from flext_core.protocols import p as core_p
+
+if TYPE_CHECKING:
+    from flext_core.protocols import p as core_p
 
 
 class _EchoService(s[str]):
@@ -17,7 +19,7 @@ class _EchoService(s[str]):
     rule_error: Annotated[
         str,
         u.Field(
-            description="Optional validation error returned by the example service"
+            description="Optional validation error returned by the example service",
         ),
     ] = ""
 

@@ -104,7 +104,7 @@ class FlextModelsContextData:
         metadata: Annotated[
             m.Metadata | t.MappingKV[str, t.Scalar] | None,
             BeforeValidator(
-                lambda v: FlextModelsContextData.normalize_metadata_before(v),
+                FlextModelsContextData.normalize_metadata_before,
             ),
             mp.Field(
                 default=None,

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_tests import h, r, tm
 
-from tests.protocols import p
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextHandlerDiscoveryClass:

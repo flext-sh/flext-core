@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 
 from pydantic import model_validator
 from pydantic_settings import SettingsConfigDict
@@ -36,7 +36,9 @@ from ._settings.di import FlextSettingsDI
 from ._settings.dispatcher import FlextSettingsDispatcher
 from ._settings.infrastructure import FlextSettingsInfrastructure
 from ._settings.registry import FlextSettingsRegistry
-from ._typings.base import FlextTypingBase as t
+
+if TYPE_CHECKING:
+    from ._typings.base import FlextTypingBase as t
 
 
 class FlextSettings(

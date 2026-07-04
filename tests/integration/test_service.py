@@ -9,12 +9,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-from tests.protocols import p
 from tests.utilities import u
 
 from .service_lifecycle_cases import TestsFlextFlextServiceLifecycleCases
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextServiceIntegration(TestsFlextFlextServiceLifecycleCases):

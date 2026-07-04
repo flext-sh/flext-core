@@ -11,14 +11,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import (
     FlextConstantsInfrastructure as _c,
     FlextModelsContext,
     FlextTypes as t,
 )
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class FlextUtilitiesContext:

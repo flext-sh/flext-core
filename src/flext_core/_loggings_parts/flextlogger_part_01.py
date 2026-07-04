@@ -8,13 +8,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 
 import structlog
-from structlog.typing import Context
 
 from flext_core import FlextConstants as c, FlextProtocols as p, FlextTypes as t
 from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
+
+if TYPE_CHECKING:
+    from structlog.typing import Context
 
 
 class FlextLogger(ulc):

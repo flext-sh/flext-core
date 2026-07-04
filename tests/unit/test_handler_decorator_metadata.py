@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from typing import TYPE_CHECKING
 
 from flext_tests import h, r, tm
 
-from tests.base import s
 from tests.constants import c
-from tests.models import m
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from collections.abc import MutableSequence
+
+    from tests.base import s
+    from tests.models import m
+    from tests.protocols import p
 
 
 class TestsFlextHandlerDecoratorMetadata:

@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import d, e, r
 
-from tests.protocols import p
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextDocumentedPatterns:

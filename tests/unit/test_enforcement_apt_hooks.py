@@ -17,14 +17,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import FlextUtilitiesBeartypeEngine as ube
 from flext_core._utilities.enforcement import PREDICATE_BINDINGS
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextEnforcementAptHooks:

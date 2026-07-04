@@ -13,7 +13,7 @@ class TestsFlextHandlersProperties(TestsFlextFlextHandlers):
     def test_create_from_callable_hypothesis(self, handler_name: str) -> None:
         """Property: create_from_callable works with any non-empty name."""
         handler = h.create_from_callable(
-            handler_callable=lambda value: str(value),
+            handler_callable=str,
             handler_name=handler_name,
         )
         tm.that(handler.handler_name, eq=handler_name)

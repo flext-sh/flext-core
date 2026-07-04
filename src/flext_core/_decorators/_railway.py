@@ -7,8 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
 from functools import wraps
+from typing import TYPE_CHECKING
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure as ci
@@ -16,9 +16,13 @@ from flext_core._constants.validation import FlextConstantsValidation as cv
 from flext_core._decorators._logging import FlextDecoratorsLogging
 from flext_core._exceptions.types import FlextExceptionsTypes as et
 from flext_core._models.settings import FlextModelsSettings as ms
-from flext_core._protocols.logging import FlextProtocolsLogging as pl
-from flext_core._protocols.result import FlextProtocolsResult as pr
 from flext_core.result import FlextResult as r
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flext_core._protocols.logging import FlextProtocolsLogging as pl
+    from flext_core._protocols.result import FlextProtocolsResult as pr
 
 
 class FlextDecoratorsRailway(FlextDecoratorsLogging):

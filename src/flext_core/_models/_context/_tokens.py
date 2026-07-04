@@ -9,13 +9,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 from flext_core.constants import FlextConstants as c
-from flext_core.typings import FlextTypes as t
+
+if TYPE_CHECKING:
+    from datetime import datetime
+
+    from flext_core.typings import FlextTypes as t
 
 
 class FlextModelsContextTokens:

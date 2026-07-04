@@ -117,7 +117,7 @@ class TestsFlextEnforcementReports:
             "\n\nFix: See AGENTS.md §3.1 and search for ENFORCE-001."
         )
         assert str(caught[1].message).startswith(
-            "\nX.Z violates FLEXT Model HARD rules"
+            "\nX.Z violates FLEXT Model HARD rules",
         )
 
     def test_emit_strict_mode_warns_then_raises_type_error(self) -> None:

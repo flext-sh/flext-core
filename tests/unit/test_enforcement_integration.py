@@ -17,15 +17,18 @@ import importlib
 import sys
 import textwrap
 import warnings
-from collections.abc import (
-    Iterator,
-)
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Iterator,
+    )
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _BAD_MODULE_DOTTED = "tests_flext_enforcement_integration_fixtures_bad"
@@ -135,7 +138,7 @@ def _import_fresh_warning_messages(
             and "violates FLEXT" in str(entry.message)
         ]
         print(json.dumps(messages, ensure_ascii=True))
-        """
+        """,
     ).strip()
     result = u.Cli.run_raw(
         [

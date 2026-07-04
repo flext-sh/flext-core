@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 
 from flext_core import m, u
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from datetime import datetime
+
+    from tests.typings import t
 
 
 class TestsFlextModelsCorePublicMixin:

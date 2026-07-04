@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextModelsExceptionParamsCore:
@@ -45,7 +48,9 @@ class TestsFlextModelsExceptionParamsCore:
         ids=["str-value", "int-value", "float-value", "bool-value", "all-none"],
     )
     def test_validation_error_params_scalar_values(
-        self, field: str | None, value: t.Scalar | None
+        self,
+        field: str | None,
+        value: t.Scalar | None,
     ) -> None:
         params = m.ValidationErrorParams(field=field, value=value)
         tm.that(params.field, eq=field)
@@ -64,7 +69,8 @@ class TestsFlextModelsExceptionParamsCore:
 
     def test_configuration_error_params_with_values(self) -> None:
         params = m.ConfigurationErrorParams(
-            config_key="database_url", config_source=".env"
+            config_key="database_url",
+            config_source=".env",
         )
         tm.that(params.config_key, eq="database_url")
         tm.that(params.config_source, eq=".env")
@@ -96,7 +102,8 @@ class TestsFlextModelsExceptionParamsCore:
         ids=["int-timeout", "float-timeout", "zero", "none"],
     )
     def test_connection_error_params_timeout_types(
-        self, timeout_val: float | None
+        self,
+        timeout_val: float | None,
     ) -> None:
         params = m.ConnectionErrorParams(timeout=timeout_val)
         tm.that(params.timeout, eq=timeout_val)
@@ -139,7 +146,8 @@ class TestsFlextModelsExceptionParamsCore:
 
     def test_authentication_error_params_serialization(self) -> None:
         params = m.AuthenticationErrorParams(
-            auth_method="oauth2", user_id="svc-account"
+            auth_method="oauth2",
+            user_id="svc-account",
         )
         data = params.model_dump()
         tm.that(data["auth_method"], eq="oauth2")

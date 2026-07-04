@@ -45,7 +45,8 @@ class TestsFlextModelsExceptionParamsOperations:
 
     def test_operation_error_params_with_values(self) -> None:
         params = m.OperationErrorParams(
-            operation="publish_events", reason="transient_backend_error"
+            operation="publish_events",
+            reason="transient_backend_error",
         )
         tm.that(params.operation, eq="publish_events")
         tm.that(params.reason, eq="transient_backend_error")
@@ -63,14 +64,16 @@ class TestsFlextModelsExceptionParamsOperations:
 
     def test_attribute_access_error_params_with_values(self) -> None:
         params = m.AttributeAccessErrorParams(
-            attribute_name="token", attribute_context={"owner": "session"}
+            attribute_name="token",
+            attribute_context={"owner": "session"},
         )
         tm.that(params.attribute_name, eq="token")
         tm.that(params.attribute_context, eq={"owner": "session"})
 
     def test_attribute_access_error_params_serialization(self) -> None:
         params = m.AttributeAccessErrorParams(
-            attribute_name="settings", attribute_context="runtime"
+            attribute_name="settings",
+            attribute_context="runtime",
         )
         data = params.model_dump()
         tm.that(data["attribute_name"], eq="settings")
@@ -106,7 +109,9 @@ class TestsFlextModelsExceptionParamsOperations:
 
     def test_roundtrip_authorization_error_params(self) -> None:
         original = m.AuthorizationErrorParams(
-            user_id="u-1", resource="docs:secret", permission="read"
+            user_id="u-1",
+            resource="docs:secret",
+            permission="read",
         )
         rebuilt = m.AuthorizationErrorParams.model_validate(original.model_dump())
         tm.that(rebuilt.user_id, eq=original.user_id)
@@ -115,7 +120,9 @@ class TestsFlextModelsExceptionParamsOperations:
 
     def test_roundtrip_rate_limit_error_params(self) -> None:
         original = m.RateLimitErrorParams(
-            limit=1000, window_seconds=3600, retry_after=2.5
+            limit=1000,
+            window_seconds=3600,
+            retry_after=2.5,
         )
         rebuilt = m.RateLimitErrorParams.model_validate(original.model_dump())
         tm.that(rebuilt.limit, eq=original.limit)

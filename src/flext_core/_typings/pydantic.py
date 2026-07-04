@@ -16,8 +16,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeAlias
-
 import pydantic
 import pydantic_core
 from pydantic_core import core_schema
@@ -32,9 +30,9 @@ class FlextTypesPydantic:
 
     # String constraints
     constr = pydantic.constr
-    StrictStr: TypeAlias = pydantic.StrictStr
-    EmailStr: TypeAlias = pydantic.EmailStr
-    NameEmail: TypeAlias = pydantic.NameEmail
+    type StrictStr = pydantic.StrictStr
+    type EmailStr = pydantic.EmailStr
+    type NameEmail = pydantic.NameEmail
 
     # Numeric constraints (callables — remain attributes)
     conint = pydantic.conint
@@ -45,72 +43,72 @@ class FlextTypesPydantic:
     condate = pydantic.condate
     condecimal = pydantic.condecimal
     confrozenset = pydantic.confrozenset
-    PositiveInt: TypeAlias = pydantic.PositiveInt
-    NonNegativeInt: TypeAlias = pydantic.NonNegativeInt
-    NegativeInt: TypeAlias = pydantic.NegativeInt
-    NonPositiveInt: TypeAlias = pydantic.NonPositiveInt
-    PositiveFloat: TypeAlias = pydantic.PositiveFloat
-    NonNegativeFloat: TypeAlias = pydantic.NonNegativeFloat
-    NegativeFloat: TypeAlias = pydantic.NegativeFloat
-    NonPositiveFloat: TypeAlias = pydantic.NonPositiveFloat
-    FiniteFloat: TypeAlias = pydantic.FiniteFloat
-    ByteSize: TypeAlias = pydantic.ByteSize
+    type PositiveInt = pydantic.PositiveInt
+    type NonNegativeInt = pydantic.NonNegativeInt
+    type NegativeInt = pydantic.NegativeInt
+    type NonPositiveInt = pydantic.NonPositiveInt
+    type PositiveFloat = pydantic.PositiveFloat
+    type NonNegativeFloat = pydantic.NonNegativeFloat
+    type NegativeFloat = pydantic.NegativeFloat
+    type NonPositiveFloat = pydantic.NonPositiveFloat
+    type FiniteFloat = pydantic.FiniteFloat
+    type ByteSize = pydantic.ByteSize
 
     # Strict types
-    StrictInt: TypeAlias = pydantic.StrictInt
-    StrictFloat: TypeAlias = pydantic.StrictFloat
-    StrictBool: TypeAlias = pydantic.StrictBool
-    StrictBytes: TypeAlias = pydantic.StrictBytes
+    type StrictInt = pydantic.StrictInt
+    type StrictFloat = pydantic.StrictFloat
+    type StrictBool = pydantic.StrictBool
+    type StrictBytes = pydantic.StrictBytes
 
     # Date and time types
-    AwareDatetime: TypeAlias = pydantic.AwareDatetime
-    NaiveDatetime: TypeAlias = pydantic.NaiveDatetime
-    FutureDate: TypeAlias = pydantic.FutureDate
-    FutureDatetime: TypeAlias = pydantic.FutureDatetime
-    PastDate: TypeAlias = pydantic.PastDate
-    PastDatetime: TypeAlias = pydantic.PastDatetime
+    type AwareDatetime = pydantic.AwareDatetime
+    type NaiveDatetime = pydantic.NaiveDatetime
+    type FutureDate = pydantic.FutureDate
+    type FutureDatetime = pydantic.FutureDatetime
+    type PastDate = pydantic.PastDate
+    type PastDatetime = pydantic.PastDatetime
 
     # URL and network types
-    AnyUrl: TypeAlias = pydantic.AnyUrl
-    AnyHttpUrl: TypeAlias = pydantic.AnyHttpUrl
-    AnyWebsocketUrl: TypeAlias = pydantic.AnyWebsocketUrl
-    HttpUrl: TypeAlias = pydantic.HttpUrl
-    WebsocketUrl: TypeAlias = pydantic.WebsocketUrl
-    FileUrl: TypeAlias = pydantic.FileUrl
-    FtpUrl: TypeAlias = pydantic.FtpUrl
-    PostgresDsn: TypeAlias = pydantic.PostgresDsn
-    MySQLDsn: TypeAlias = pydantic.MySQLDsn
-    MariaDBDsn: TypeAlias = pydantic.MariaDBDsn
-    CockroachDsn: TypeAlias = pydantic.CockroachDsn
-    ClickHouseDsn: TypeAlias = pydantic.ClickHouseDsn
-    MongoDsn: TypeAlias = pydantic.MongoDsn
-    KafkaDsn: TypeAlias = pydantic.KafkaDsn
-    RedisDsn: TypeAlias = pydantic.RedisDsn
-    SnowflakeDsn: TypeAlias = pydantic.SnowflakeDsn
-    NatsDsn: TypeAlias = pydantic.NatsDsn
+    type AnyUrl = pydantic.AnyUrl
+    type AnyHttpUrl = pydantic.AnyHttpUrl
+    type AnyWebsocketUrl = pydantic.AnyWebsocketUrl
+    type HttpUrl = pydantic.HttpUrl
+    type WebsocketUrl = pydantic.WebsocketUrl
+    type FileUrl = pydantic.FileUrl
+    type FtpUrl = pydantic.FtpUrl
+    type PostgresDsn = pydantic.PostgresDsn
+    type MySQLDsn = pydantic.MySQLDsn
+    type MariaDBDsn = pydantic.MariaDBDsn
+    type CockroachDsn = pydantic.CockroachDsn
+    type ClickHouseDsn = pydantic.ClickHouseDsn
+    type MongoDsn = pydantic.MongoDsn
+    type KafkaDsn = pydantic.KafkaDsn
+    type RedisDsn = pydantic.RedisDsn
+    type SnowflakeDsn = pydantic.SnowflakeDsn
+    type NatsDsn = pydantic.NatsDsn
 
     # File system types
-    FilePath: TypeAlias = pydantic.FilePath
-    DirectoryPath: TypeAlias = pydantic.DirectoryPath
-    NewPath: TypeAlias = pydantic.NewPath
-    SocketPath: TypeAlias = pydantic.SocketPath
+    type FilePath = pydantic.FilePath
+    type DirectoryPath = pydantic.DirectoryPath
+    type NewPath = pydantic.NewPath
+    type SocketPath = pydantic.SocketPath
 
     # UUID types
-    UUID1: TypeAlias = pydantic.UUID1
-    UUID3: TypeAlias = pydantic.UUID3
-    UUID4: TypeAlias = pydantic.UUID4
-    UUID5: TypeAlias = pydantic.UUID5
-    UUID6: TypeAlias = pydantic.UUID6
-    UUID7: TypeAlias = pydantic.UUID7
-    UUID8: TypeAlias = pydantic.UUID8
+    type UUID1 = pydantic.UUID1
+    type UUID3 = pydantic.UUID3
+    type UUID4 = pydantic.UUID4
+    type UUID5 = pydantic.UUID5
+    type UUID6 = pydantic.UUID6
+    type UUID7 = pydantic.UUID7
+    type UUID8 = pydantic.UUID8
 
     # Binary and encoding types
-    Base64Str: TypeAlias = pydantic.Base64Str
-    Base64Bytes: TypeAlias = pydantic.Base64Bytes
-    Base64UrlStr: TypeAlias = pydantic.Base64UrlStr
-    Base64UrlBytes: TypeAlias = pydantic.Base64UrlBytes
-    EncodedStr: TypeAlias = pydantic.EncodedStr
-    EncodedBytes: TypeAlias = pydantic.EncodedBytes
+    type Base64Str = pydantic.Base64Str
+    type Base64Bytes = pydantic.Base64Bytes
+    type Base64UrlStr = pydantic.Base64UrlStr
+    type Base64UrlBytes = pydantic.Base64UrlBytes
+    type EncodedStr = pydantic.EncodedStr
+    type EncodedBytes = pydantic.EncodedBytes
 
     # JSON and special types
     # pydantic.Json / ImportString / InstanceOf / Secret are Generic classes/aliases
@@ -126,12 +124,12 @@ class FlextTypesPydantic:
     InstanceOf = pydantic.InstanceOf
     Secret = pydantic.Secret
     SecretStr = pydantic.SecretStr
-    SecretBytes: TypeAlias = pydantic.SecretBytes
+    type SecretBytes = pydantic.SecretBytes
 
     # IP types
-    IPvAnyAddress: TypeAlias = pydantic.IPvAnyAddress
-    IPvAnyInterface: TypeAlias = pydantic.IPvAnyInterface
-    IPvAnyNetwork: TypeAlias = pydantic.IPvAnyNetwork
+    type IPvAnyAddress = pydantic.IPvAnyAddress
+    type IPvAnyInterface = pydantic.IPvAnyInterface
+    type IPvAnyNetwork = pydantic.IPvAnyNetwork
 
     # Constraint helper types (runtime markers / classes)
     StringConstraints = pydantic.StringConstraints

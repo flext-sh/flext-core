@@ -12,14 +12,16 @@ from __future__ import annotations
 
 import inspect
 import sys
-from types import FrameType, ModuleType
-from typing import Self, override
+from typing import TYPE_CHECKING, Self, override
 
 from flext_core import c, e, m, p, r, t, u
 
 from .flextcontainer_part_04 import (
     FlextContainer as FlextContainerPart04,
 )
+
+if TYPE_CHECKING:
+    from types import FrameType, ModuleType
 
 
 class FlextContainer(FlextContainerPart04):

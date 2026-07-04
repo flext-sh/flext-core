@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
@@ -10,6 +10,9 @@ from flext_tests import tm
 from tests.constants import c
 from tests.unit._project_metadata_support import write_pyproject
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestsFlextUtilitiesProjectMetadataConfig:

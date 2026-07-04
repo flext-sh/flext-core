@@ -14,11 +14,12 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import TypeIs
-
-from pydantic import BaseModel as PydanticBaseModel
+from typing import TYPE_CHECKING, TypeIs
 
 from flext_core import FlextTypes as t
+
+if TYPE_CHECKING:
+    from pydantic import BaseModel as PydanticBaseModel
 
 
 class FlextUtilitiesGuardsTypeCore:

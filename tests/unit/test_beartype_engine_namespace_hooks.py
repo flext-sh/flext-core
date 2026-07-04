@@ -28,7 +28,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
 
                 class Probe:
                     value = c.Core.Tests.ERR_OK_FAILED
-                """
+                """,
             ).strip()
             + "\n",
             encoding="utf-8",
@@ -50,7 +50,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
                     me.DeprecatedSyntaxParams(ast_shape="no_core_tests_namespace"),
                     Probe,
                 )))
-                """
+                """,
             ),
             cwd=Path(__file__).resolve().parents[2],
         )
@@ -73,7 +73,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
                 """
                 class Probe:
                     value = "c.Core.Tests.ERR_OK_FAILED"
-                """
+                """,
             ).strip()
             + "\n",
             encoding="utf-8",
@@ -95,7 +95,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
                     me.DeprecatedSyntaxParams(ast_shape="no_core_tests_namespace"),
                     Probe,
                 )))
-                """
+                """,
             ),
             cwd=Path(__file__).resolve().parents[2],
         )

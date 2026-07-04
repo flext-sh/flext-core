@@ -81,29 +81,31 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
         fail_value = r[int].fail("oops")
         self.audit_check(
             "tap.success",
-            ok_value.tap(lambda n: side_effects.append(n)).success,
+            ok_value.tap(side_effects.append).success,
         )
         self.audit_check(
             "tap.failure",
-            fail_value.tap(lambda n: side_effects.append(n)).failure,
+            fail_value.tap(side_effects.append).failure,
         )
         self.audit_check("tap.log", side_effects)
         self.audit_check(
             "tap_error.failure",
-            fail_value.tap_error(lambda e: error_effects.append(e)).failure,
+            fail_value.tap_error(error_effects.append).failure,
         )
         self.audit_check(
             "tap_error.success",
-            ok_value.tap_error(lambda e: error_effects.append(e)).success,
+            ok_value.tap_error(error_effects.append).success,
         )
         self.audit_check("tap_error.log", error_effects)
         self.audit_check("map_or.success_default", ok_value.map_or(0))
         self.audit_check("map_or.failure_default", fail_value.map_or(0))
         self.audit_check(
-            "map_or.success_func", ok_value.map_or("none", lambda n: f"n={n}")
+            "map_or.success_func",
+            ok_value.map_or("none", lambda n: f"n={n}"),
         )
         self.audit_check(
-            "map_or.failure_func", fail_value.map_or("none", lambda n: f"n={n}")
+            "map_or.failure_func",
+            fail_value.map_or("none", lambda n: f"n={n}"),
         )
         self.audit_check(
             "fold.success",
@@ -120,10 +122,12 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
             ),
         )
         self.audit_check(
-            "filter.success_pass", ok_value.filter(lambda n: n > 0).success
+            "filter.success_pass",
+            ok_value.filter(lambda n: n > 0).success,
         )
         self.audit_check(
-            "filter.success_fail", ok_value.filter(lambda n: n < 0).failure
+            "filter.success_fail",
+            ok_value.filter(lambda n: n < 0).failure,
         )
         self.audit_check(
             "filter.failure_stays",
@@ -157,7 +161,7 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
         )
         self.audit_check(
             "flat_map_chain.failure",
-            base_fail.flat_map(lambda n: r[int].ok(n)).failure,
+            base_fail.flat_map(r[int].ok).failure,
         )
         bind_ok = self.bind_probe(base_ok, 3)
         bind_fail = self.bind_probe(base_fail, 3)
@@ -188,6 +192,7 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
             base_ok.lash(lambda _: r[int].ok(99)).unwrap_or(-1),
         )
         self.audit_check(
-            "recover.failure", base_fail.recover(lambda e: len(e)).unwrap_or(-1)
+            "recover.failure",
+            base_fail.recover(len).unwrap_or(-1),
         )
         self.audit_check("recover.success", base_ok.recover(lambda _: 0).unwrap_or(-1))

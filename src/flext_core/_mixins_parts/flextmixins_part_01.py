@@ -11,13 +11,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import (
-    Generator,
-    Mapping,
-    MutableMapping,
-)
 from contextlib import contextmanager
 from typing import (
+    TYPE_CHECKING,
     Annotated,
     ClassVar,
     Unpack,
@@ -35,6 +31,13 @@ from flext_core import (
     t,
     u,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Generator,
+        Mapping,
+        MutableMapping,
+    )
 
 
 class FlextMixins(m.ArbitraryTypesModel):

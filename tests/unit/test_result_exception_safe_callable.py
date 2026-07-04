@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Sized
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import r, tm
 
-from tests.protocols import p
 from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
+
+if TYPE_CHECKING:
+    from collections.abc import Sized
+
+    from tests.protocols import p
 
 
 class TestsFlextResultExceptionSafeCallable(TestsFlextResultExceptionCarrying):

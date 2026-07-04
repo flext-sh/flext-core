@@ -17,15 +17,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
-from types import ModuleType
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
-from flext_core._typings.base import FlextTypingBase as tb
 
 from .project_metadata_part_01 import (
     FlextUtilitiesProjectMetadata as FlextUtilitiesProjectMetadataPart01,
 )
+
+if TYPE_CHECKING:
+    from types import ModuleType
+
+    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart01):

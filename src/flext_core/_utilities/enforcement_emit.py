@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import warnings
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core._constants.enforcement import (
     FlextConstantsEnforcement as c,
@@ -11,7 +12,9 @@ from flext_core._constants.enforcement import (
     FlextSmellViolation,
 )
 from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
+
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as t
 
 _BEARTYPE_TAG_TO_RULE: MappingProxyType[str, t.StrPair] = MappingProxyType({
     tag: (rule_id, anchor)

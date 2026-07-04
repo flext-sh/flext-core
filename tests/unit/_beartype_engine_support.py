@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import sys
 import typing
-from pathlib import Path
 
 from tests.models import m
 from tests.typings import t
 from tests.utilities import u
+
+if typing.TYPE_CHECKING:
+    from pathlib import Path
 
 type AnyAlias = str | typing.Any
 type CleanAlias = str | int

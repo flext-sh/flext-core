@@ -13,6 +13,7 @@ from collections.abc import (
 )
 from types import UnionType
 from typing import (
+    TYPE_CHECKING,
     TypeAliasType,
     Union,
     get_args,
@@ -22,12 +23,14 @@ from typing import (
 # Import directly from base modules to avoid a circular load through the public
 # flext_core facade while this module is still being initialized.
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._protocols.base import FlextProtocolsBase as p
-from flext_core._typings.base import FlextTypingBase as t
 
 from .helpers_part_02 import (
     FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpersPart02,
 )
+
+if TYPE_CHECKING:
+    from flext_core._protocols.base import FlextProtocolsBase as p
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):

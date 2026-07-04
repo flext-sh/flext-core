@@ -8,17 +8,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.logging import FlextConstantsLogging as cl
 from flext_core._exceptions.factories import FlextExceptionsFactories as ef
 from flext_core.result import FlextResult as r
-from flext_core.typings import FlextTypes as t
 
 from .flextlogger_part_02 import (
     FlextLogger as FlextLoggerPart02,
 )
+
+if TYPE_CHECKING:
+    from flext_core.typings import FlextTypes as t
 
 
 class FlextLogger(FlextLoggerPart02):

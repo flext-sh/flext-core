@@ -6,9 +6,11 @@ import typing
 from abc import ABC, abstractmethod
 from typing import Final, Protocol, runtime_checkable
 
-from tests.typings import t
 from tests.unit._enforcement_support import messages
 from tests.utilities import u
+
+if typing.TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextEnforcementLayers:
@@ -118,7 +120,8 @@ class TestsFlextEnforcementLayers:
             type GoodAlias = str
 
         assert not messages(
-            u.check(_TTypes, layer="types"), fragment="Any in type alias"
+            u.check(_TTypes, layer="types"),
+            fragment="Any in type alias",
         )
 
     def test_instance_method_detected(self) -> None:

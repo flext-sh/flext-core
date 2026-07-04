@@ -10,23 +10,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
-from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from .base import FlextProtocolsBase
-from .container import FlextProtocolsContainer
-from .context import FlextProtocolsContext
-from .handler import FlextProtocolsHandler
-from .logging import FlextProtocolsLogging
-from .registry import FlextProtocolsRegistry
-from .result import FlextProtocolsResult
-from .settings import FlextProtocolsSettings
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        Mapping,
+    )
+    from contextlib import AbstractContextManager
+
     from flext_core import FlextTypesServices as ts, FlextTypingBase as tb
+
+    from .container import FlextProtocolsContainer
+    from .context import FlextProtocolsContext
+    from .handler import FlextProtocolsHandler
+    from .logging import FlextProtocolsLogging
+    from .registry import FlextProtocolsRegistry
+    from .result import FlextProtocolsResult
+    from .settings import FlextProtocolsSettings
 
 
 class FlextProtocolsService:

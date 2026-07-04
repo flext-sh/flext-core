@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_tests import r, tm
 
 from tests.constants import c
-from tests.protocols import p
 from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextResultExceptionTraverseValidation(TestsFlextResultExceptionCarrying):

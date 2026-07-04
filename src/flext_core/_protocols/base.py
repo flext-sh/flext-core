@@ -6,15 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Iterable,
-    MutableSequence,
-)
-from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        Iterable,
+        MutableSequence,
+    )
+    from types import TracebackType
+
     from flext_core import FlextModelsDomainEvent, FlextProtocolsResult, t
 
 

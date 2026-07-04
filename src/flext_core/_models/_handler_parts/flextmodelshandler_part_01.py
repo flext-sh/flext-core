@@ -12,16 +12,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import (
-    MutableSequence,
-)
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from flext_core import c, t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableSequence,
+    )
 
 
 class FlextModelsHandler:

@@ -5,14 +5,17 @@ from __future__ import annotations
 import io
 import time
 from contextlib import redirect_stdout
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import r
 
 from tests.models import m
 from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextDispatcher:

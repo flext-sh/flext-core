@@ -20,15 +20,17 @@ from __future__ import annotations
 
 import time
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from flext_tests import x
 
 from flext_core import FlextContext
 from tests.models import m
 from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextMixins:
@@ -76,7 +78,8 @@ class TestsFlextMixins:
             ),
         ] = False
         operation_context: Annotated[
-            str | None, m.Field(description="Optional operation context name")
+            str | None,
+            m.Field(description="Optional operation context name"),
         ] = None
 
     class ModelConversionScenario(m.BaseModel):

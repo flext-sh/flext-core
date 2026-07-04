@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from flext_core.container import FlextContainer
 from flext_core.settings import FlextSettings
 from tests.models import TestsFlextModels, m
-from tests.protocols import p
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextContainerConfig:

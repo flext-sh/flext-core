@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableSequence
-from types import ModuleType
+from typing import TYPE_CHECKING
 
 from flext_core import c, m, t
 
 from .flexthandlers_part_06 import (
     FlextHandlers as FlextHandlersPart06,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, MutableSequence
+    from types import ModuleType
 
 
 class FlextHandlers[MessageT_contra, ResultT](

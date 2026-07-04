@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_tests import u
 
 from tests.constants import c
 from tests.models import m
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class TestsFlextUtilitiesParserScenariosMixin:

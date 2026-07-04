@@ -12,17 +12,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    MutableSequence,
-)
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from flext_tests import r
 
-from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        MutableSequence,
+    )
+
+    from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextUtilitiesReliability:

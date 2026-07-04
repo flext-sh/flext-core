@@ -11,10 +11,12 @@ from __future__ import annotations
 import sys
 import textwrap
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextEnforcementWarningVisibility:
@@ -49,7 +51,7 @@ class TestsFlextEnforcementWarningVisibility:
                         FlextMroViolation,
                         stacklevel=2,
                     )
-                """
+                """,
             ).strip()
             + "\n",
             encoding="utf-8",

@@ -5,11 +5,14 @@ from __future__ import annotations
 import importlib
 import sys
 from types import ModuleType
+from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core import t
 from flext_core.lazy import install_lazy_exports, lazy
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class TestsFlextLazy:

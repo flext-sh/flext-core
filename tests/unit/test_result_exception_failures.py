@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_tests import r, tm
 
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
 from tests.typings import t
 from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextResultExceptionFailures(TestsFlextResultExceptionCarrying):
@@ -33,7 +37,9 @@ class TestsFlextResultExceptionFailures(TestsFlextResultExceptionCarrying):
         error_code = "INVALID_INPUT"
         exc = ValueError("expected integer")
         result: p.Result[str] = r[str].fail(
-            error_msg, error_code=error_code, exception=exc
+            error_msg,
+            error_code=error_code,
+            exception=exc,
         )
         tm.that(result.failure, eq=True)
         tm.that(result.error, eq=error_msg)
@@ -71,7 +77,7 @@ class TestsFlextResultExceptionFailures(TestsFlextResultExceptionCarrying):
                     attributes={
                         "field": "email",
                         "details": {"retryable": False},
-                    }
+                    },
                 )
                 self.correlation_id = "corr-123"
 

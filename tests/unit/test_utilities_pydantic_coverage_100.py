@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core import u
 from tests.models import m
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextUtilitiesPydantic:
@@ -52,7 +56,7 @@ class TestsFlextUtilitiesPydantic:
                 "subproject": "source-runtime",
                 "wire_packages": ["flext.core.runtime", "tests.runtime"],
                 "settings_overrides": {"dry_run": True},
-            })
+            }),
         )
 
         @u.validate_call()

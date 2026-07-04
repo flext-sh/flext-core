@@ -18,7 +18,8 @@ class ExamplesFlextModelsEx11:
 
     class ServiceHandlerConfig(FlextSettings):
         enabled: Annotated[
-            bool, u.Field(description="Whether the service is enabled")
+            bool,
+            u.Field(description="Whether the service is enabled"),
         ] = True
 
     class ServiceHandlerLike(m.BaseModel):

@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_tests import r, tm
 
-from tests.protocols import p
 from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextResultExceptionMapping(TestsFlextResultExceptionCarrying):
@@ -36,7 +40,7 @@ class TestsFlextResultExceptionMapping(TestsFlextResultExceptionCarrying):
         exc = TypeError("type error")
         result: p.Result[int] = r[int].fail("error", exception=exc)
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: r[str].ok(str(value))
+            lambda value: r[str].ok(str(value)),
         )
         tm.that(flat_mapped.failure, eq=True)
         tm.that(flat_mapped.exception is exc, eq=True)
@@ -44,7 +48,7 @@ class TestsFlextResultExceptionMapping(TestsFlextResultExceptionCarrying):
     def test_flat_map_success_no_exception(self) -> None:
         result: p.Result[int] = r[int].ok(5)
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: r[str].ok(str(value))
+            lambda value: r[str].ok(str(value)),
         )
         tm.that(flat_mapped.success, eq=True)
         tm.that(flat_mapped.value, eq="5")

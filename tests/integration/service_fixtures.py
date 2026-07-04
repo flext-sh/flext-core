@@ -2,18 +2,21 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableMapping,
-    MutableSequence,
-)
-from typing import Annotated, ClassVar, override
+from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_tests import r
 
 from tests.base import s
 from tests.models import m
-from tests.protocols import p
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableMapping,
+        MutableSequence,
+    )
+
+    from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextUserServiceEntity(m.BaseModel):
@@ -29,7 +32,7 @@ class TestsFlextUserQueryService(s[bool]):
     """Real user query service using ``s``."""
 
     _users: MutableMapping[str, TestsFlextUserServiceEntity] = m.PrivateAttr(
-        default_factory=lambda: dict[str, TestsFlextUserServiceEntity](),
+        default_factory=dict[str, TestsFlextUserServiceEntity],
     )
     _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)
     _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
@@ -74,7 +77,7 @@ class TestsFlextNotificationService(s[str]):
     """Real notification service using ``s``."""
 
     _sent_notifications: MutableSequence[str] = m.PrivateAttr(
-        default_factory=lambda: list[str](),
+        default_factory=list[str],
     )
     _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
     _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)
@@ -124,7 +127,7 @@ class TestsFlextLifecycleService(s[str]):
 
     _initialized: bool = m.PrivateAttr(default_factory=lambda: False)
     _service_config: TestsFlextServiceConfig | None = m.PrivateAttr(
-        default_factory=lambda: None
+        default_factory=lambda: None,
     )
     _shutdown_called: bool = m.PrivateAttr(default_factory=lambda: False)
     _should_fail_init: bool = m.PrivateAttr(default_factory=lambda: False)

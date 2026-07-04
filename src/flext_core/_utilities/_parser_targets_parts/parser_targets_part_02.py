@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 from contextlib import suppress
+from typing import TYPE_CHECKING
 
 from flext_core import c, t
 from flext_core._utilities.model import FlextUtilitiesModel
-from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
 
 from .parser_targets_part_01 import (
     FlextUtilitiesParserTargets as FlextUtilitiesParserTargetsPart01,
 )
+
+if TYPE_CHECKING:
+    from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
 
 
 class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):

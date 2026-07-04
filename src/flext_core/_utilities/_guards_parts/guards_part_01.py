@@ -11,8 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from collections.abc import Callable, Mapping, Sized
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import (
     FlextModelsCollections,
@@ -21,6 +20,9 @@ from flext_core import (
     FlextUtilitiesGuardsTypeProtocol,
     t,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping, Sized
 
 
 class FlextUtilitiesGuards(
@@ -174,7 +176,9 @@ class FlextUtilitiesGuards(
             guard_spec = guard_spec.model_copy(update=criteria_update)
         check_val = FlextUtilitiesGuards._resolve_numeric(value)
         return FlextUtilitiesGuards._check_special_constraints(
-            value, guard_spec, check_val
+            value,
+            guard_spec,
+            check_val,
         ) and FlextUtilitiesGuards._check_spec_ops(value, guard_spec, check_val)
 
     @staticmethod

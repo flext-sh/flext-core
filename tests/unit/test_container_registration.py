@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
@@ -10,8 +10,12 @@ from flext_tests import tm
 from flext_core.container import FlextContainer
 from tests.models import TestsFlextModels
 from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tests.typings import t
 
 
 class TestsFlextContainerRegistration:
@@ -57,7 +61,8 @@ class TestsFlextContainerRegistration:
             msg=f"Container must expose {scenario.name} after registration",
         )
         u.Tests.assert_success(
-            clean_container.resolve(scenario.name), expected_value=scenario.service
+            clean_container.resolve(scenario.name),
+            expected_value=scenario.service,
         )
 
     @pytest.mark.parametrize(
@@ -121,7 +126,8 @@ class TestsFlextContainerRegistration:
             msg=f"Factory {factory_name} must be registered",
         )
         u.Tests.assert_success(
-            clean_container.resolve(factory_name), expected_value=return_value
+            clean_container.resolve(factory_name),
+            expected_value=return_value,
         )
 
     @pytest.mark.parametrize(
@@ -139,7 +145,8 @@ class TestsFlextContainerRegistration:
         factory = u.Tests.create_factory(return_value)
         factory_typed: Callable[[], t.RegisterableService] = factory
         result = container.factory(
-            f"factory_{type(return_value).__name__}", factory_typed
+            f"factory_{type(return_value).__name__}",
+            factory_typed,
         )
         tm.that(
             result is container,
@@ -160,5 +167,6 @@ class TestsFlextContainerRegistration:
         factory2 = u.Tests.create_factory("value2")
         clean_container.factory("factory1", factory2)
         u.Tests.assert_success(
-            clean_container.resolve("factory1"), expected_value="value1"
+            clean_container.resolve("factory1"),
+            expected_value="value1",
         )

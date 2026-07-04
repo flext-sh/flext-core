@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import typing
-from collections.abc import MutableSequence
 from types import MappingProxyType
 from typing import Annotated
 
@@ -13,9 +12,13 @@ from pydantic.warnings import PydanticDeprecatedSince20
 from flext_core import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
 from tests.unit._enforcement_support import messages
 from tests.utilities import u
+
+if typing.TYPE_CHECKING:
+    from collections.abc import MutableSequence
+
+    from tests.typings import t
 
 
 class TestsFlextEnforcementModels:

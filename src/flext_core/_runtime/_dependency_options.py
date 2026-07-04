@@ -7,12 +7,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
-
-from flext_core._protocols.container import FlextProtocolsContainer as pc
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
+from typing import TYPE_CHECKING
 
 from ._dependency_types import FlextRuntimeDependencyTypes
+
+if TYPE_CHECKING:
+    from flext_core._protocols.container import FlextProtocolsContainer as pc
+    from flext_core._typings.base import FlextTypingBase as tb
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextRuntimeDependencyOptions(FlextRuntimeDependencyTypes):

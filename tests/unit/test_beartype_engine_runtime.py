@@ -27,7 +27,7 @@ class TestsFlextBeartypeEngineRuntime(TestsFlextBeartypeEngine):
                     except AttributeError as exc:
                         print("runtime_exc", type(exc).__name__)
                     print("warning_count", len(caught))
-                """
+                """,
             ),
             cwd=Path(__file__).resolve().parents[2],
         )
@@ -73,7 +73,7 @@ class TestsFlextBeartypeEngineRuntime(TestsFlextBeartypeEngine):
                     if caught:
                         print("warning_type", type(caught[0].message).__name__)
                         print("warning_text", str(caught[0].message))
-                """
+                """,
             ),
             cwd=Path(__file__).resolve().parents[2],
         )
@@ -107,7 +107,7 @@ class TestsFlextBeartypeEngineRuntime(TestsFlextBeartypeEngine):
                 )
                 import flext_core
                 print("unexpected_success", hasattr(flext_core, "u"))
-                """
+                """,
             ),
             cwd=Path(__file__).resolve().parents[2],
         )

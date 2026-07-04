@@ -94,7 +94,8 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
         base = FlextSettings.fetch_global()
         cloned = FlextSettings.fetch_global()
         self.audit_check(
-            "fetch_global.clone_same_values", cloned.app_name == base.app_name
+            "fetch_global.clone_same_values",
+            cloned.app_name == base.app_name,
         )
         self.audit_check("fetch_global.clone_new_object", cloned is base)
         overridden = FlextSettings.fetch_global(
@@ -102,7 +103,8 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
         )
         self.audit_check("fetch_global.override.app_name", overridden.app_name)
         self.audit_check(
-            "fetch_global.override.timeout_seconds", overridden.timeout_seconds
+            "fetch_global.override.timeout_seconds",
+            overridden.timeout_seconds,
         )
         provider = overridden.resolve_di_settings_provider()
         self.audit_check("resolve_di_settings_provider.type", type(provider).__name__)
@@ -124,7 +126,8 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
             )
             created = auto.create_settings()
             self.audit_check(
-                "AutoSettings.create_settings.type", type(created).__name__
+                "AutoSettings.create_settings.type",
+                type(created).__name__,
             )
             self.audit_check(
                 "AutoSettings.create_settings.service_name",
@@ -182,7 +185,8 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
             from_registered.timeout_seconds,
         )
         self.audit_check(
-            "for_context.registered.max_workers", from_registered.max_workers
+            "for_context.registered.max_workers",
+            from_registered.max_workers,
         )
         self.audit_check(
             "for_context.runtime_override.feature_enabled",

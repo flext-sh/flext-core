@@ -3,18 +3,20 @@
 from __future__ import annotations
 
 import inspect
-from typing import Annotated, get_args, get_origin
+from typing import TYPE_CHECKING, Annotated, get_args, get_origin
 
 from pydantic.fields import FieldInfo
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
 
 from .helpers import (
     FlextUtilitiesBeartypeHelpers as _ubh,
 )
+
+if TYPE_CHECKING:
+    from flext_core._models.enforcement import FlextModelsEnforcement as me
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeFieldVisitor:

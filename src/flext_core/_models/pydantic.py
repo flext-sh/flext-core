@@ -17,8 +17,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from re import Pattern
-from types import EllipsisType
-from typing import dataclass_transform
+from typing import TYPE_CHECKING, dataclass_transform
 
 from pydantic import (
     AfterValidator,
@@ -59,6 +58,9 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
+if TYPE_CHECKING:
+    from types import EllipsisType
+
 type _FieldValue = JsonValue | Path
 type _FieldSchemaExtra = Mapping[str, _FieldValue | Sequence[_FieldValue]]
 type _FieldKeywordValue[DefaultT] = (
@@ -97,19 +99,22 @@ class FlextModelsPydantic:
     """
 
     @dataclass_transform(
-        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
+        kw_only_default=True,
+        field_specifiers=(_field, Field, PrivateAttr),
     )
     class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
     @dataclass_transform(
-        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
+        kw_only_default=True,
+        field_specifiers=(_field, Field, PrivateAttr),
     )
     class BaseSettings(PydanticBaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
     @dataclass_transform(
-        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
+        kw_only_default=True,
+        field_specifiers=(_field, Field, PrivateAttr),
     )
     class RootModel[RootValueT](PydanticRootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""

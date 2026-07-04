@@ -31,7 +31,8 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
         except e.ConfigurationError as exc:
             self.audit_check("ConfigurationError.config_key", exc.config_key or "")
             self.audit_check(
-                "ConfigurationError.config_source", exc.config_source or ""
+                "ConfigurationError.config_source",
+                exc.config_source or "",
             )
         try:
             raise e.ConnectionError(
@@ -114,10 +115,12 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
         except e.CircuitBreakerError as exc:
             self.audit_check("CircuitBreakerError.service_name", exc.service_name or "")
             self.audit_check(
-                "CircuitBreakerError.failure_count", exc.failure_count or 0
+                "CircuitBreakerError.failure_count",
+                exc.failure_count or 0,
             )
             self.audit_check(
-                "CircuitBreakerError.reset_timeout", exc.reset_timeout or 0.0
+                "CircuitBreakerError.reset_timeout",
+                exc.reset_timeout or 0.0,
             )
         try:
             raise e.TypeError(
@@ -151,7 +154,8 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
             )
         except e.AttributeAccessError as exc:
             self.audit_check(
-                "AttributeAccessError.attribute_name", exc.attribute_name or ""
+                "AttributeAccessError.attribute_name",
+                exc.attribute_name or "",
             )
             self.audit_check(
                 "AttributeAccessError.attribute_context",

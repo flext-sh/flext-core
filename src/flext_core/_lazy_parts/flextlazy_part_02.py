@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import (
-    Sequence,
-)
 from types import ModuleType
+from typing import TYPE_CHECKING
 
 from flext_core._typings.lazy import FlextTypesLazy
 
@@ -16,6 +14,11 @@ from .flextlazy_part_01 import (
     LazyImportMap,
     MutableLazyImportMap,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Sequence,
+    )
 
 type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
 type ModuleGlobals = FlextTypesLazy.ModuleGlobals

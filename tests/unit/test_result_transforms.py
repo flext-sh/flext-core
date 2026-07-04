@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from typing import TYPE_CHECKING
 
 from flext_tests import r, tm
 
-from tests.protocols import p
 from tests.unit._result_scenarios import (
     ResultOperationType,
 )
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import MutableSequence
+
+    from tests.protocols import p
 
 
 class TestsFlextResultTransforms:
@@ -43,7 +47,7 @@ class TestsFlextResultTransforms:
     def test_recover_converts_failure_to_success(self) -> None:
         """Test recover maps failure errors into success values."""
         failure: p.Result[int] = r[int].fail("missing")
-        recovered = failure.recover(lambda error: len(error))
+        recovered = failure.recover(len)
         _ = u.Tests.assert_success(recovered)
         tm.that(recovered.value, eq=7)
 
