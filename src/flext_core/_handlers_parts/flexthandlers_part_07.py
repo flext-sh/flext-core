@@ -15,6 +15,8 @@ from .flexthandlers_part_06 import (
 class FlextHandlers[MessageT_contra, ResultT](
     FlextHandlersPart06[MessageT_contra, ResultT],
 ):
+    """Final CQRS handler facade with discovery utilities composed by MRO."""
+
     class Discovery:
         """Auto-discovery mechanism for handler decorators.
 
