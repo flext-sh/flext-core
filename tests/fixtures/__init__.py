@@ -7,18 +7,6 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
-        ".bad_module": (
-            "TestsFlextBadAccessors",
-            "TestsFlextBadAnyField",
-            "TestsFlextBadBareCollection",
-            "TestsFlextBadClassVarConstant",
-            "TestsFlextBadConstants",
-            "TestsFlextBadFrozen",
-            "TestsFlextBadInlineUnion",
-            "TestsFlextBadMissingDesc",
-            "TestsFlextBadMutableDefault",
-            "TestsFlextBadWorkerSettings",
-        ),
         ".clean_module": (
             "TestsFlextCleanConstants",
             "TestsFlextCleanModels",

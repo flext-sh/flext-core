@@ -40,17 +40,6 @@ TESTS_FLEXT_CORE_LAZY_IMPORTS_PART_02 = build_lazy_import_map({
         "TestsFlextConstants",
         "c",
     ),
-    ".fixtures.bad_module": (
-        "TestsFlextBadAccessors",
-        "TestsFlextBadAnyField",
-        "TestsFlextBadBareCollection",
-        "TestsFlextBadConstants",
-        "TestsFlextBadFrozen",
-        "TestsFlextBadInlineUnion",
-        "TestsFlextBadMissingDesc",
-        "TestsFlextBadMutableDefault",
-        "TestsFlextBadWorkerSettings",
-    ),
     ".fixtures.clean_module": (
         "TestsFlextCleanConstants",
         "TestsFlextCleanModels",

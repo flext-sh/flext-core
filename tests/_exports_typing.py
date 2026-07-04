@@ -28,15 +28,6 @@ from tests._exports_typing_facades import (
 )
 from tests._exports_typing_integration import (
     TestsFlextAutomatedArchitecture,
-    TestsFlextBadAccessors,
-    TestsFlextBadAnyField,
-    TestsFlextBadBareCollection,
-    TestsFlextBadConstants,
-    TestsFlextBadFrozen,
-    TestsFlextBadInlineUnion,
-    TestsFlextBadMissingDesc,
-    TestsFlextBadMutableDefault,
-    TestsFlextBadWorkerSettings,
     TestsFlextCleanConstants,
     TestsFlextCleanModels,
     TestsFlextCleanProtocols,
@@ -99,15 +90,6 @@ from tests._models.mixins import TestsFlextModelsMixins
 
 __all__: list[str] = [
     "TestsFlextAutomatedArchitecture",
-    "TestsFlextBadAccessors",
-    "TestsFlextBadAnyField",
-    "TestsFlextBadBareCollection",
-    "TestsFlextBadConstants",
-    "TestsFlextBadFrozen",
-    "TestsFlextBadInlineUnion",
-    "TestsFlextBadMissingDesc",
-    "TestsFlextBadMutableDefault",
-    "TestsFlextBadWorkerSettings",
     "TestsFlextCleanConstants",
     "TestsFlextCleanModels",
     "TestsFlextCleanProtocols",

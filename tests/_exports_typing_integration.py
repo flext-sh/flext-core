@@ -5,17 +5,6 @@ from __future__ import annotations
 from tests.benchmark.test_container_memory import TestsFlextContainerMemory
 from tests.benchmark.test_container_performance import TestsFlextContainerPerformance
 from tests.benchmark.test_lazy_performance import TestsFlextLazyPerformance
-from tests.fixtures.bad_module import (
-    TestsFlextBadAccessors,
-    TestsFlextBadAnyField,
-    TestsFlextBadBareCollection,
-    TestsFlextBadConstants,
-    TestsFlextBadFrozen,
-    TestsFlextBadInlineUnion,
-    TestsFlextBadMissingDesc,
-    TestsFlextBadMutableDefault,
-    TestsFlextBadWorkerSettings,
-)
 from tests.fixtures.clean_module import (
     TestsFlextCleanConstants,
     TestsFlextCleanModels,
@@ -33,15 +22,6 @@ from tests.integration.test_system import TestsFlextSystemIntegration
 
 __all__: list[str] = [
     "TestsFlextAutomatedArchitecture",
-    "TestsFlextBadAccessors",
-    "TestsFlextBadAnyField",
-    "TestsFlextBadBareCollection",
-    "TestsFlextBadConstants",
-    "TestsFlextBadFrozen",
-    "TestsFlextBadInlineUnion",
-    "TestsFlextBadMissingDesc",
-    "TestsFlextBadMutableDefault",
-    "TestsFlextBadWorkerSettings",
     "TestsFlextCleanConstants",
     "TestsFlextCleanModels",
     "TestsFlextCleanProtocols",
