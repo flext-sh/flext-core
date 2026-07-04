@@ -14,16 +14,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from pathlib import Path
+from re import Pattern
+
 from pydantic import (
     AfterValidator,
+    AliasChoices,
+    AliasPath,
     BaseModel as PydanticBaseModel,
     BeforeValidator,
     ConfigDict,
+    Discriminator,
     Field,
     FieldSerializationInfo,
     GetCoreSchemaHandler,
     GetJsonSchemaHandler,
     GetPydanticSchema,
+    JsonValue,
     PlainSerializer,
     PlainValidator,
     PrivateAttr,
@@ -38,6 +46,8 @@ from pydantic import (
 )
 from pydantic.fields import FieldInfo
 from pydantic_core import (
+    PydanticUndefined,
+    PydanticUndefinedType,
     SchemaValidator,
 )
 from pydantic_settings import (
@@ -46,6 +56,32 @@ from pydantic_settings import (
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
+
+
+type _JsonSchemaExtra = dict[str, JsonValue] | Callable[[dict[str, JsonValue]], None]
+type _FieldValue = JsonValue | Path
+type _FieldKeywordValue = (
+    _FieldValue
+    | PydanticUndefinedType
+    | FieldInfo
+    | AliasChoices
+    | AliasPath
+    | Discriminator
+    | Pattern[str]
+    | Callable[..., _FieldValue | None]
+)
+
+
+def _field[DefaultT](
+    default: DefaultT | PydanticUndefinedType = PydanticUndefined,
+    **kwargs: _FieldKeywordValue | None,
+) -> FieldInfo:
+    """Typed FLEXT facade for ``pydantic.Field``."""
+    field = Field(default, **kwargs)
+    if not isinstance(field, FieldInfo):
+        msg = "pydantic.Field returned a non-FieldInfo value"
+        raise TypeError(msg)
+    return field
 
 
 class FlextModelsPydantic:
@@ -72,7 +108,7 @@ class FlextModelsPydantic:
     ConfigDict = ConfigDict
     SettingsConfigDict = SettingsConfigDict
 
-    Field = Field
+    Field = staticmethod(_field)
     PrivateAttr = PrivateAttr
     SkipValidation = SkipValidation
     computed_field = computed_field
