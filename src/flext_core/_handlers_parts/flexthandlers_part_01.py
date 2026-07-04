@@ -112,7 +112,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     @property
     def handler_name(self) -> str:
-        """Get handler name from configuration.
+        """Handler name from configuration.
 
         Returns:
             str: The handler name
@@ -122,7 +122,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     @property
     def mode(self) -> c.HandlerType:
-        """Get handler mode from configuration.
+        """Handler mode from configuration.
 
         Returns:
             c.HandlerType: The handler mode (command, query, event, saga)

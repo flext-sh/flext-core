@@ -44,7 +44,7 @@ class FlextModelsEnforcementBase:
 
         @property
         def messages(self) -> t.StrSequence:
-            """Return plain messages for text emission."""
+            """Plain messages for text emission."""
             return [violation.message for violation in self.violations]
 
         @property

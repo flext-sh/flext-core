@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from pydantic import (
     AfterValidator,
-    Field,
     PlainSerializer,
     PlainValidator,
     PrivateAttr,
@@ -44,7 +43,7 @@ class FlextUtilitiesPydantic:
     Use u.* / up.* instead.
     """
 
-    Field = Field
+    Field = mp.Field
     PrivateAttr = PrivateAttr
     SkipValidation = SkipValidation
 

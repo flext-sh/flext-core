@@ -63,22 +63,22 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     @property
     def settings(self) -> p.Settings:
-        """Return the runtime settings associated with this component."""
+        """Runtime settings associated with this component."""
         return self._get_runtime().settings
 
     @property
     def container(self) -> p.Container:
-        """Get global FlextContainer instance with lazy initialization."""
+        """Global FlextContainer instance with lazy initialization."""
         return self._get_runtime().container
 
     @property
     def context(self) -> p.Context:
-        """Get FlextContext instance for context operations."""
+        """FlextContext instance for context operations."""
         return self._get_runtime().context
 
     @property
     def logger(self) -> p.Logger:
-        """Get or create FlextLogger for this component."""
+        """FlextLogger instance for this component."""
         return self._get_or_create_logger()
 
     @classmethod

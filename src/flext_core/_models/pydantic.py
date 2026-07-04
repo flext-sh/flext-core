@@ -57,8 +57,6 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-
-type _JsonSchemaExtra = dict[str, JsonValue] | Callable[[dict[str, JsonValue]], None]
 type _FieldValue = JsonValue | Path
 type _FieldKeywordValue = (
     _FieldValue
@@ -70,6 +68,7 @@ type _FieldKeywordValue = (
     | Pattern[str]
     | Callable[..., _FieldValue | None]
 )
+_FIELD_FACTORY: Callable[..., FieldInfo] = Field
 
 
 def _field[DefaultT](
@@ -77,7 +76,7 @@ def _field[DefaultT](
     **kwargs: _FieldKeywordValue | None,
 ) -> FieldInfo:
     """Typed FLEXT facade for ``pydantic.Field``."""
-    field = Field(default, **kwargs)
+    field = _FIELD_FACTORY(default, **kwargs)
     if not isinstance(field, FieldInfo):
         msg = "pydantic.Field returned a non-FieldInfo value"
         raise TypeError(msg)

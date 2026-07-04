@@ -80,19 +80,19 @@ class FlextContainer(p.Container, ABC):
     @property
     @override
     def settings(self) -> p.Settings:
-        """Return configuration bound to this container."""
+        """Configuration bound to this container."""
         return self._config
 
     @property
     @override
     def context(self) -> p.Context:
-        """Return the execution context bound to this container."""
+        """Execution context bound to this container."""
         return self._context
 
     @property
     @override
     def provide(self) -> Callable[[str], t.RegisterableService]:
-        """Return the dependency-injector Provide helper scoped to the bridge."""
+        """Dependency-injector Provide helper scoped to the bridge."""
         return self._di_bridge.provide
 
     @classmethod

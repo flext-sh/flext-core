@@ -62,7 +62,7 @@ class _CqrsPagination(m.FlexibleInternalModel):
     @computed_field
     @property
     def limit(self) -> int:
-        """Get limit (same as size)."""
+        """Limit alias for size."""
         return self.size
 
     @computed_field
