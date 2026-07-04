@@ -104,6 +104,12 @@ class FlextConstantsEnforcementFixActions:
             "params": {},
             "safe": False,
         },
+        "ENFORCE-039": {
+            "kind": "transformer",
+            "target": "cast_remover",
+            "params": {},
+            "safe": True,
+        },
         "ENFORCE-045": {
             "kind": "transformer",
             "target": "import_modernizer",
@@ -289,6 +295,30 @@ class FlextConstantsEnforcementFixActions:
             "target": "extract_magic_literal",
             "params": {},
             "safe": False,
+        },
+        "ENFORCE-017": {
+            "kind": "manual",
+            "target": "remove_bypass",
+            "params": {},
+            "safe": True,
+        },
+        "ENFORCE-052": {
+            "kind": "manual",
+            "target": "move_to_type_checking",
+            "params": {},
+            "safe": True,
+        },
+        "ENFORCE-095": {
+            "kind": "manual",
+            "target": "route_oracledb_import",
+            "params": {},
+            "safe": True,
+        },
+        "ENFORCE-096": {
+            "kind": "manual",
+            "target": "route_ldap3_import",
+            "params": {},
+            "safe": True,
         },
     }
 
