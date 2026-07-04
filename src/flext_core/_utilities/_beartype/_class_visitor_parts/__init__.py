@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
+        "._parts": ("_parts",),
         ".class_visitor_part_03": ("FlextUtilitiesBeartypeClassVisitor",),
     },
 )

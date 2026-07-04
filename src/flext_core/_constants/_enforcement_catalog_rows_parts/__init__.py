@@ -8,6 +8,12 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_core._constants._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_a import (
+        INFRA_DETECTOR_ROWS_CORE as INFRA_DETECTOR_ROWS_CORE,
+    )
+    from flext_core._constants._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_b import (
+        INFRA_DETECTOR_ROWS_PATTERNS as INFRA_DETECTOR_ROWS_PATTERNS,
+    )
     from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_01 import (
         FlextConstantsEnforcementCatalogInfraRows as FlextConstantsEnforcementCatalogInfraRows,
     )
@@ -20,8 +26,18 @@ if TYPE_CHECKING:
     from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_04 import (
         FlextConstantsEnforcementCatalogBeartypeRows as FlextConstantsEnforcementCatalogBeartypeRows,
     )
+    from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_05 import (
+        FlextConstantsEnforcementCatalogInfraRowsExtended as FlextConstantsEnforcementCatalogInfraRowsExtended,
+    )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
+        "._parts": ("_parts",),
+        "._parts.flextconstantsenforcementcatalogrows_part_01_a": (
+            "INFRA_DETECTOR_ROWS_CORE",
+        ),
+        "._parts.flextconstantsenforcementcatalogrows_part_01_b": (
+            "INFRA_DETECTOR_ROWS_PATTERNS",
+        ),
         ".flextconstantsenforcementcatalogrows_part_01": (
             "FlextConstantsEnforcementCatalogInfraRows",
         ),
@@ -33,6 +49,9 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ),
         ".flextconstantsenforcementcatalogrows_part_04": (
             "FlextConstantsEnforcementCatalogBeartypeRows",
+        ),
+        ".flextconstantsenforcementcatalogrows_part_05": (
+            "FlextConstantsEnforcementCatalogInfraRowsExtended",
         ),
     },
 )

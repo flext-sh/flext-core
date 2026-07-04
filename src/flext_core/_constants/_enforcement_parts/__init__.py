@@ -42,6 +42,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".flextconstantsenforcement_part_06": ("FlextConstantsEnforcementTargets",),
         ".flextconstantsenforcement_part_07": ("FlextConstantsEnforcementSmellData",),
         ".flextconstantsenforcement_part_08": ("FlextConstantsEnforcementFixActions",),
+        ".flextconstantsenforcement_part_09": ("flextconstantsenforcement_part_09",),
     },
 )
 

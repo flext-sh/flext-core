@@ -9,11 +9,11 @@ FLEXT_CORE__UTILITIES_LAZY_IMPORTS_PART_02 = build_lazy_import_map(
     {
         "._beartype": ("_beartype",),
         "._checker_parts": ("_checker_parts",),
-        "._enforcement_collect_parts": ("_enforcement_collect_parts",),
-        "._enforcement_parts": ("_enforcement_parts",),
+        "._enforcement_collect_parts.enforcement_collect_part_02": (
+            "FlextUtilitiesEnforcementCollect",
+        ),
         "._enforcement_parts.enforcement_part_01": ("PREDICATE_BINDINGS",),
-        "._generators_parts": ("_generators_parts",),
-        "._guards_parts": ("_guards_parts",),
+        "._generators_parts.generators_part_02": ("FlextUtilitiesGenerators",),
         "._guards_parts.guards_part_02": ("FlextUtilitiesGuards",),
         "._guards_type_protocol_specs": ("FlextUtilitiesGuardsTypeProtocolSpecsMixin",),
         "._guards_type_protocol_string": (
@@ -36,6 +36,8 @@ FLEXT_CORE__UTILITIES_LAZY_IMPORTS_PART_02 = build_lazy_import_map(
         "._project_metadata_parts.project_metadata_part_04": (
             "FlextUtilitiesProjectMetadata",
         ),
+        ".enforcement_emit": ("FlextUtilitiesEnforcementEmit",),
+        ".enum": ("FlextUtilitiesEnum",),
         ".guards_type_core": ("FlextUtilitiesGuardsTypeCore",),
         ".guards_type_model": ("FlextUtilitiesGuardsTypeModel",),
         ".guards_type_protocol": ("FlextUtilitiesGuardsTypeProtocol",),

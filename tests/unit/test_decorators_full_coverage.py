@@ -184,6 +184,6 @@ class TestsFlextDecorators:
             return _Payload(v=7)
 
         built = build()
-        payload = built.unwrap() if isinstance(built, p.Result) else built
+        payload = built.unwrap() if isinstance(built, r) else built
         assert isinstance(payload, _Payload)
         tm.that(payload.v, eq=7)
