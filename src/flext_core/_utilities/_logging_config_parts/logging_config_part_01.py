@@ -96,7 +96,7 @@ class FlextUtilitiesLoggingConfig:
 
         @property
         def buffer(self) -> typing.BinaryIO:
-            """Return underlying binary buffer."""
+            """The underlying binary buffer."""
             buf: typing.BinaryIO | None = getattr(self._target_stream, "buffer", None)
             if buf is not None:
                 return buf
@@ -104,7 +104,7 @@ class FlextUtilitiesLoggingConfig:
 
         @property
         def line_buffering(self) -> bool:
-            """Return whether line buffering is enabled."""
+            """The whether line buffering is enabled."""
             return bool(getattr(self._target_stream, "line_buffering", False))
 
         @override

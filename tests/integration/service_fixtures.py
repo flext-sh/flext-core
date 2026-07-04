@@ -36,7 +36,7 @@ class TestsFlextUserQueryService(s[bool]):
 
     @override
     def execute(self) -> p.Result[bool]:
-        """Return service availability."""
+        """The service availability."""
         if self._should_fail:
             return r[bool].fail("User service unavailable")
         return r[bool].ok(True)
@@ -66,7 +66,7 @@ class TestsFlextUserQueryService(s[bool]):
 
     @property
     def call_count(self) -> int:
-        """Get call count."""
+        """The call count."""
         return self._call_count
 
 
@@ -100,12 +100,12 @@ class TestsFlextNotificationService(s[str]):
 
     @property
     def sent_notifications(self) -> t.StrSequence:
-        """Get sent notifications."""
+        """The sent notifications."""
         return list(self._sent_notifications)
 
     @property
     def call_count(self) -> int:
-        """Get call count."""
+        """The call count."""
         return self._call_count
 
 
@@ -167,17 +167,17 @@ class TestsFlextLifecycleService(s[str]):
 
     @property
     def initialized(self) -> bool:
-        """Get initialization status."""
+        """The initialization status."""
         return self._initialized
 
     @property
     def service_config(self) -> TestsFlextServiceConfig | None:
-        """Get service configuration."""
+        """The service configuration."""
         return self._service_config
 
     @property
     def shutdown_called(self) -> bool:
-        """Get shutdown status."""
+        """The shutdown status."""
         return self._shutdown_called
 
 

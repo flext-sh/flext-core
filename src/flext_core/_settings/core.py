@@ -43,7 +43,7 @@ class FlextSettingsCore:
     @computed_field
     @property
     def effective_log_level(self) -> c.LogLevel:
-        """Get effective log level based on debug/trace flags."""
+        """The effective log level based on debug/trace flags."""
         return FlextRuntime.resolve_effective_log_level(
             trace=self.trace,
             debug=self.debug,

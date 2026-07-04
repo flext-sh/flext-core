@@ -51,7 +51,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
 
         @property
         def provide(self) -> Callable[[str], t.RegisterableService]:
-            """Return the dependency-injector Provide helper scoped to the bridge."""
+            """The dependency-injector Provide helper scoped to the bridge."""
             ...
 
         def clear(self) -> None:
@@ -87,7 +87,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
         ) -> FlextProtocolsResult.Result[t.RegisterableService]: ...
 
         def snapshot(self) -> m.ConfigMap:
-            """Return the merged settings exposed by this container."""
+            """The merged settings exposed by this container."""
             ...
 
         def has(self, name: str) -> bool:
