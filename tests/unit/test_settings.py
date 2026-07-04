@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
-from flext_core import FlextSettings
+from flext_core import FlextSettings, FlextSettingsBase
 from tests.typings import t
 
 
@@ -76,6 +77,26 @@ class TestsFlextSettings:
         assert cloned is not None
         assert cloned is not original
         assert cloned.app_name == original.app_name
+
+    def test_fetch_global_validation_failure_does_not_poison_singleton(self) -> None:
+        class RequiredSettings(FlextSettingsBase):
+            required_value: str
+
+        RequiredSettings.reset_for_testing()
+        try:
+            with pytest.raises(ValidationError):
+                RequiredSettings.fetch_global()
+
+            assert RequiredSettings._instance is None
+
+            resolved = RequiredSettings.fetch_global(
+                overrides={"required_value": "configured"}
+            )
+
+            assert resolved.required_value == "configured"
+            assert RequiredSettings._instance is None
+        finally:
+            RequiredSettings.reset_for_testing()
 
 
 __all__: t.MutableSequenceOf[str] = ["TestsFlextSettings"]

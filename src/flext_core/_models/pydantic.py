@@ -96,15 +96,21 @@ class FlextModelsPydantic:
         RootModel: Container model for single validated values/collections
     """
 
-    @dataclass_transform(kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr))
+    @dataclass_transform(
+        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
+    )
     class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
-    @dataclass_transform(kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr))
+    @dataclass_transform(
+        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
+    )
     class BaseSettings(PydanticBaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
-    @dataclass_transform(kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr))
+    @dataclass_transform(
+        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
+    )
     class RootModel[RootValueT](PydanticRootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
 

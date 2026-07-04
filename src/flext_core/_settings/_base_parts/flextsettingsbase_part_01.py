@@ -68,6 +68,18 @@ class FlextSettingsBase(BaseSettings):
             cls._instance = None
 
     @classmethod
+    def _initialized_instance(cls) -> Self | None:
+        """Return the cached singleton only after Pydantic finished initialization."""
+        existing = getattr(cls, "_instance", None)
+        if isinstance(existing, cls) and hasattr(existing, "__pydantic_fields_set__"):
+            return existing
+        if existing is not None:
+            with cls._lock:
+                if getattr(cls, "_instance", None) is existing:
+                    cls._instance = None
+        return None
+
+    @classmethod
     @contextmanager
     def singleton_disabled(cls) -> Generator[None]:
         """Temporarily disable singleton enforcement for clone operations."""
@@ -86,11 +98,22 @@ class FlextSettingsBase(BaseSettings):
         When ``overrides`` is given, return an isolated deep clone instead —
         the global singleton is NOT mutated (use ``update_global`` for that).
         """
-        existing = getattr(cls, "_instance", None)
-        instance = existing if isinstance(existing, cls) else cls()
-        if not overrides:
+        instance = cls._initialized_instance()
+        if overrides:
+            if instance is not None:
+                return instance.clone(**overrides)
+            with cls.singleton_disabled():
+                return cls(**overrides)
+        if instance is not None:
             return instance
-        return instance.clone(**overrides)
+        with cls._lock:
+            instance = cls._initialized_instance()
+            if instance is not None:
+                return instance
+            with cls.singleton_disabled():
+                created = cls()
+            cls._instance = created
+            return created
 
     @classmethod
     def merge_overrides(
