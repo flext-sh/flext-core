@@ -8,32 +8,49 @@ entry-point. It registers the runtime-warning contribution with the central
 
 from __future__ import annotations
 
-from flext_core._constants.enforcement import (
+from flext_core import (
     FlextMroViolation,
     FlextSmellViolation,
 )
+from flext_tests.enforcement import (
+    EnforcementContribution,
+    register as register_enforcement_contribution,
+)
+
+
+class FlextCoreEnforcementPytestPlugin:
+    """Class-owned pytest contribution for flext-core runtime warnings."""
+
+    _SOURCE_KIND: str = "runtime_warning"
+
+    @classmethod
+    def source_kind(cls) -> str:
+        """Return the catalog source kind owned by this plugin."""
+        return cls._SOURCE_KIND
+
+    @classmethod
+    def contribution(cls) -> EnforcementContribution:
+        """Return the registry contribution for the flext-tests dispatcher."""
+        return EnforcementContribution(
+            source_kind=cls.source_kind(),
+            warning_categories=(FlextMroViolation, FlextSmellViolation),
+        )
+
+    @classmethod
+    def register(cls) -> None:
+        """Register this plugin in the flext-tests enforcement registry."""
+        register_enforcement_contribution(cls.source_kind(), cls.contribution())
 
 
 def _register() -> None:
-    """Register flext-core enforcement contribution when flext-tests is present."""
-    try:
-        from flext_tests._fixtures._enforcement_parts.registry import (  # noqa: PLC0415, PLC2701
-            EnforcementContribution,
-            register,
-        )
-    except ImportError:
-        return
-
-    register(
-        "flext_core_runtime_warning",
-        EnforcementContribution(
-            source_kind="runtime_warning",
-            warning_categories=(FlextMroViolation, FlextSmellViolation),
-        ),
-    )
+    """Module-level registration helper used by tests."""
+    FlextCoreEnforcementPytestPlugin.register()
 
 
-_register()
+FlextCoreEnforcementPytestPlugin.register()
 
 
-__all__: list[str] = []
+__all__: list[str] = [
+    "FlextCoreEnforcementPytestPlugin",
+    "_register",
+]
