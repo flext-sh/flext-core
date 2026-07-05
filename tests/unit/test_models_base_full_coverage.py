@@ -22,6 +22,9 @@ class TestsFlextCoreModelsBaseFullCoverage:
         name: Annotated[str, m.Field(description="Frozen value name")]
         count: Annotated[int, m.Field(description="Frozen value count")]
 
+        def __hash__(self) -> int:
+            return m.FrozenValueModel.__hash__(self)
+
     class _Identifiable(m.FlexibleModel, m.IdentifiableMixin):
         pass
 

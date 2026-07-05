@@ -68,10 +68,12 @@ class FlextUtilitiesBeartypeTypingExtPatch:
                 item for item in raw_current if isinstance(item, type)
             )
             if len(current_types) != len(raw_current):
-                return
+                msg = "beartype HintPep695TypeAlias contains non-type members"
+                raise TypeError(msg)
             current = current_types
         else:
-            return
+            msg = "beartype HintPep695TypeAlias cave is unavailable"
+            raise TypeError(msg)
 
         new_value = current
         te = _typing_extensions.TypeAliasType
@@ -79,21 +81,22 @@ class FlextUtilitiesBeartypeTypingExtPatch:
         if isinstance(current, tuple):
             if te not in current:
                 new_value = (*current, te)
+            else:
+                return
         elif current is te:
             return
         else:
             new_value = (current, te)
 
-        if new_value is not current:
-            cavefast.__dict__["HintPep695TypeAlias"] = new_value
-            # Modules that did ``from _cavefast import HintPep695TypeAlias`` hold
-            # a stale reference; patch only loaded beartype modules and avoid
-            # module-level __getattr__ side effects during import-time patching.
-            for mod_name, mod in tuple(_sys.modules.items()):
-                if not mod_name.startswith("beartype"):
-                    continue
-                if mod.__dict__.get("HintPep695TypeAlias") is current:
-                    mod.__dict__["HintPep695TypeAlias"] = new_value
+        cavefast.__dict__["HintPep695TypeAlias"] = new_value
+        # Modules that did ``from _cavefast import HintPep695TypeAlias`` hold
+        # a stale reference; patch only loaded beartype modules and avoid
+        # module-level __getattr__ side effects during import-time patching.
+        for mod_name, mod in tuple(_sys.modules.items()):
+            if not mod_name.startswith("beartype"):
+                continue
+            if mod.__dict__.get("HintPep695TypeAlias") is current:
+                mod.__dict__["HintPep695TypeAlias"] = new_value
 
     @classmethod
     def _patch_forwardref_module_scope(cls) -> None:
@@ -103,7 +106,8 @@ class FlextUtilitiesBeartypeTypingExtPatch:
         )
         raw_original = pep695.__dict__.get("get_hint_pep695_unsubbed_alias")
         if not callable(raw_original):
-            return
+            msg = "beartype get_hint_pep695_unsubbed_alias hook is unavailable"
+            raise TypeError(msg)
 
         # Dynamic module dictionaries expose plugin callables as object; callable()
         # above validates the runtime boundary before narrowing the contract.

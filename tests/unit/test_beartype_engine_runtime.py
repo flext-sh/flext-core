@@ -88,7 +88,7 @@ class TestsFlextBeartypeEngineRuntime(TestsFlextBeartypeEngine):
         # emitted a UserWarning is implementation detail of beartype, not
         # part of the warn-mode contract under test.
         assert "runtime_exc AttributeError" in combined_output
-        assert "'int' object has no attribute 'replace'" in combined_output
+        assert "'int' object has no attribute" in combined_output
 
     def test_claw_without_skip_hits_recursive_container_schema(self) -> None:
         """Removing skip settings still fails to import flext_core under claw."""

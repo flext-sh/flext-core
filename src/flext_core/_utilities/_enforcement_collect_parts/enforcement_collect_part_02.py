@@ -3,20 +3,16 @@
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING
+from collections.abc import Iterator
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._protocols.base import FlextProtocolsBase as pb
+from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 
 from .enforcement_collect_part_01 import (
     FlextUtilitiesEnforcementCollect as FlextUtilitiesEnforcementCollectPart01,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator
-
-    from flext_core._protocols.base import FlextProtocolsBase as pb
-    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):

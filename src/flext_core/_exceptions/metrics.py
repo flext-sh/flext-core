@@ -6,12 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core._models.errors import FlextModelsErrors
-
-if TYPE_CHECKING:
-    from flext_core import FlextTypes as t
+from flext_core.typings import FlextTypes as t
 
 
 class FlextExceptionsMetrics:

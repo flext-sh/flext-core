@@ -12,12 +12,12 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING, ClassVar
 
+from flext_core.typings import FlextTypes as t
+
 if TYPE_CHECKING:
     from collections.abc import (
         MutableMapping,
     )
-
-    from flext_core import FlextTypes as t
 
 
 class FlextUtilitiesEnum:

@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from collections.abc import Hashable
 from datetime import datetime
 from types import MappingProxyType
 from typing import Annotated, ClassVar, override
@@ -119,7 +120,7 @@ class FlextModelsBase(FlextModelsBasePart01):
             frozen=True,
         )
 
-    class FrozenValueModel(ContractModel):
+    class FrozenValueModel(ContractModel, Hashable):
         """Value model with equality/hash by value."""
 
         @override

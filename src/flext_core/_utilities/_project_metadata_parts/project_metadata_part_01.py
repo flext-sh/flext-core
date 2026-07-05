@@ -25,14 +25,13 @@ from typing import TYPE_CHECKING
 
 from flext_core._constants.file import FlextConstantsFile as cf
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters as ta
 from flext_core.lazy import normalize_lazy_imports
 
 if TYPE_CHECKING:
     from pathlib import Path
     from types import ModuleType
-
-    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextUtilitiesProjectMetadata(mpm):
@@ -62,8 +61,6 @@ class FlextUtilitiesProjectMetadata(mpm):
             msg = f"{cf.PYPROJECT_FILENAME} not found under {root}"
             raise FileNotFoundError(msg)
         with pyproject.open("rb") as stream:
-            # No PEP 526 local annotation: beartype.claw resolves local-variable
-            # alias hints in the wrong namespace (JsonValue unresolvable here).
             parsed = tomllib.load(stream)
             validated: tb.JsonMapping = ta.json_mapping_adapter().validate_python(
                 parsed,

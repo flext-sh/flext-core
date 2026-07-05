@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
+from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     BINARY_ARITY,
     NO_VIOLATION,
 )
 from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
-
-if TYPE_CHECKING:
-    from flext_core._models.enforcement import FlextModelsEnforcement as me
-    from flext_core._typings.base import FlextTypingBase as t
 
 
 def _peer_first_allowed(

@@ -6,10 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes as t
+from flext_core.typings import FlextTypes as t
 
 
 class FlextModelsContextMetadata:

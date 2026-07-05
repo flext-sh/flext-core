@@ -3,14 +3,11 @@
 from __future__ import annotations
 
 from enum import EnumType
-from typing import TYPE_CHECKING
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
-
-if TYPE_CHECKING:
-    from flext_core._models.enforcement import FlextModelsEnforcement as me
-    from flext_core._typings.base import FlextTypingBase as t
 
 NO_VIOLATION: t.StrMapping | None = None
 BARE_VIOLATION: t.StrMapping = {}

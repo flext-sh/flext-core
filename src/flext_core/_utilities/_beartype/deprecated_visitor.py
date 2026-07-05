@@ -4,18 +4,16 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TypeAlias
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._constants.regex import FlextConstantsRegex as cre
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
 
 from .helpers import (
     FlextUtilitiesBeartypeHelpers as _ubh,
 )
-
-if TYPE_CHECKING:
-    from flext_core._models.enforcement import FlextModelsEnforcement as me
-    from flext_core._typings.base import FlextTypingBase as t
 
 _NO_VIOLATION: t.StrMapping | None = None
 _typing_TypeAlias = TypeAlias  # sentinel for ``X: TypeAlias = Y`` annotation match.

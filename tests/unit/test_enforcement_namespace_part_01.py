@@ -7,7 +7,6 @@ import sys
 from typing import TYPE_CHECKING
 
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
-from tests.models import TestsFlextModelsMixins
 from tests.utilities import u
 
 if TYPE_CHECKING:
@@ -117,7 +116,9 @@ class TestsFlextEnforcementNamespacePart01:
 
     def test_tests_module_gets_tests_prefix_composition(self) -> None:
         """Classes in ``tests.*`` carry ``Tests`` + project prefix (e.g. TestsFlext)."""
-        report = u.check(TestsFlextModelsMixins)
+        target = type("TestsFlextModelsMixins", (), {})
+        target.__module__ = "tests._models.mixins"
+        report = u.check(target)
         namespace_msgs = [
             v.message
             for v in report.violations

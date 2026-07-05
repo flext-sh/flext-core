@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, TypeIs
 
 from pydantic import BaseModel as PydanticBaseModel
 
+from flext_core.typings import FlextTypes as t
+
 if TYPE_CHECKING:
     from collections.abc import (
         Callable,
@@ -14,7 +16,6 @@ if TYPE_CHECKING:
     from flext_core._models.pydantic import FlextModelsPydantic as mp
     from flext_core._protocols.base import FlextProtocolsBase as pb
     from flext_core._protocols.result import FlextProtocolsResult as pr
-    from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesGuardsTypeModel:
