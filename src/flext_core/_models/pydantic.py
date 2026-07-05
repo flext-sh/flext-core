@@ -17,7 +17,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from re import Pattern
-from typing import TYPE_CHECKING, dataclass_transform
+from typing import TYPE_CHECKING, TypeAlias, dataclass_transform
 
 from pydantic import (
     AfterValidator,
@@ -120,8 +120,8 @@ class FlextModelsPydantic:
         """Canonical RootModel exported through the FLEXT models facade."""
 
     # Pydantic field utilities
-    ConfigDict = _PydanticConfigDict
-    SettingsConfigDict = _PydanticSettingsConfigDict
+    ConfigDict: TypeAlias = _PydanticConfigDict
+    SettingsConfigDict: TypeAlias = _PydanticSettingsConfigDict
 
     Field = staticmethod(_field)
     PrivateAttr = PrivateAttr
