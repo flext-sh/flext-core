@@ -1,9 +1,10 @@
-"""Smoke tests for c — production constants facade.
+"""Behavioral tests for c — the public production constants facade.
 
-Per YAGNI: StrEnum @unique already enforces uniqueness at class creation,
-Final type annotations enforce immutability, and the class body IS the
-source of truth. Only semantic invariants (MIN < MAX) and facade
-completeness add real coverage beyond Python's own guarantees.
+These tests assert the OBSERVABLE public contract of the constants facade:
+semantic range invariants (MIN < MAX), StrEnum wire-value semantics that
+callers rely on for routing/serialization, the public token/method catalogs,
+and facade completeness (every advertised member is reachable). They do NOT
+poke private internals (`_constants` package, `_LAZY_IMPORTS`, module `vars()`).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
+import enum
 
 import pytest
 from flext_tests import tm
@@ -20,52 +21,9 @@ from tests.constants import c
 
 
 class TestsFlextConstantsNew:
-    """Semantic invariants over the c facade."""
+    """Observable public-contract behavior over the c facade."""
 
-    def test_constants_package_initializer_is_loadable(self) -> None:
-        """_constants package lazy map must be present and non-empty."""
-        module = importlib.import_module("flext_core._constants")
-        tm.that(hasattr(module, "_LAZY_IMPORTS"), eq=True)
-        tm.that(bool(getattr(module, "_LAZY_IMPORTS")), eq=True)
-
-    @pytest.mark.parametrize(
-        "module_path",
-        [
-            "flext_core._constants.base",
-            "flext_core._constants.cqrs",
-            "flext_core._constants.enforcement",
-            "flext_core._constants.environment",
-            "flext_core._constants.errors",
-            "flext_core._constants.file",
-            "flext_core._constants.guards",
-            "flext_core._constants.infrastructure",
-            "flext_core._constants.logging",
-            "flext_core._constants.mixins",
-            "flext_core._constants.project_metadata",
-            "flext_core._constants.pydantic",
-            "flext_core._constants.regex",
-            "flext_core._constants.serialization",
-            "flext_core._constants.settings",
-            "flext_core._constants.status",
-            "flext_core._constants.timeout",
-            "flext_core._constants.validation",
-        ],
-    )
-    def test_constants_modules_are_loadable_and_expose_constants_class(
-        self,
-        module_path: str,
-    ) -> None:
-        """Force execution of each _constants module and validate facade class shape."""
-        module = importlib.import_module(module_path)
-        has_constants_class = any(
-            name.startswith("FlextConstants") for name in vars(module)
-        )
-        tm.that(
-            has_constants_class,
-            eq=True,
-            msg=f"{module_path} missing FlextConstants*",
-        )
-
+    # ----------------------------------------------------------------- ranges
     def test_port_range_invariant(self) -> None:
         """MIN_PORT < MAX_PORT within valid TCP range."""
         tm.that(c.MIN_PORT, gt=0)
@@ -89,6 +47,83 @@ class TestsFlextConstantsNew:
         tm.that(c.MIN_RETRIES, lte=c.DEFAULT_RETRIES)
         tm.that(c.DEFAULT_RETRIES, lte=c.MAX_RETRIES)
 
+    # -------------------------------------------------- StrEnum wire semantics
+    @pytest.mark.parametrize(
+        "domain_enum",
+        [
+            c.Status,
+            c.HealthStatus,
+            c.ErrorDomain,
+            c.LogLevel,
+            c.Environment,
+            c.HandlerType,
+            c.SerializationFormat,
+            c.BackoffStrategy,
+            c.ParserCase,
+        ],
+    )
+    def test_domain_enums_are_string_valued_for_routing(
+        self,
+        domain_enum: type[enum.StrEnum],
+    ) -> None:
+        """Every routing enum is a StrEnum whose str() equals its wire value.
+
+        Callers serialize these members to strings and compare against raw wire
+        tokens, so ``str(member) == member.value`` is a load-bearing contract.
+        """
+        members = list(domain_enum)
+        tm.that(bool(members), eq=True, msg=f"{domain_enum.__name__} is empty")
+        for member in members:
+            tm.that(isinstance(member, str), eq=True)
+            tm.that(str(member), eq=member.value)
+
+    @pytest.mark.parametrize(
+        "domain_enum",
+        [
+            c.Status,
+            c.ErrorDomain,
+            c.LogLevel,
+            c.Environment,
+            c.SerializationFormat,
+        ],
+    )
+    def test_domain_enum_value_lookup_roundtrips(
+        self,
+        domain_enum: type[enum.StrEnum],
+    ) -> None:
+        """A caller can reconstruct any member from its public wire value."""
+        for member in domain_enum:
+            tm.that(domain_enum(member.value), eq=member)
+
+    def test_error_domain_string_conversion_returns_value(self) -> None:
+        """ErrorDomain.__str__ returns enum value for routing semantics."""
+        tm.that(str(c.ErrorDomain.VALIDATION), eq=c.ErrorDomain.VALIDATION.value)
+
+    # ----------------------------------------------------- parser token tables
+    def test_boolean_truthy_and_falsy_sets_are_disjoint(self) -> None:
+        """A token can never be simultaneously truthy and falsy."""
+        truthy = set(c.PARSER_BOOLEAN_TRUTHY)
+        falsy = set(c.PARSER_BOOLEAN_FALSY)
+        tm.that(bool(truthy), eq=True)
+        tm.that(bool(falsy), eq=True)
+        tm.that(truthy.isdisjoint(falsy), eq=True)
+
+    @pytest.mark.parametrize(
+        "token",
+        tuple(c.PARSER_BOOLEAN_TRUTHY) + tuple(c.PARSER_BOOLEAN_FALSY),
+    )
+    def test_boolean_tokens_are_lowercase_and_spaceless(self, token: str) -> None:
+        """Validation token sets remain normalized (lowercase, no whitespace)."""
+        tm.that(token, eq=token.lower())
+        assert " " not in token
+
+    def test_string_method_map_exposes_core_type_predicates(self) -> None:
+        """STRING_METHOD_MAP publishes the type-guard token vocabulary callers use."""
+        tokens = set(c.STRING_METHOD_MAP)
+        expected = {"str", "int", "float", "bool", "list", "dict", "tuple", "none"}
+        tm.that(expected.issubset(tokens), eq=True, msg=f"missing: {expected - tokens}")
+
+    # -------------------------------------------------- identifier regex rules
     @pytest.mark.parametrize(("raw_app_id", "normalized"), c.Tests.FORMAT_APP_ID_CASES)
     def test_app_id_cases_match_core_identifier_regex(
         self,
@@ -130,19 +165,7 @@ class TestsFlextConstantsNew:
             eq=False,
         )
 
-    @pytest.mark.parametrize(
-        "token",
-        tuple(c.PARSER_BOOLEAN_TRUTHY) + tuple(c.PARSER_BOOLEAN_FALSY),
-    )
-    def test_boolean_tokens_are_lowercase_and_unique(self, token: str) -> None:
-        """Validation token sets remain normalized and collision-free."""
-        tm.that(token, eq=token.lower())
-        assert " " not in token
-
-    def test_error_domain_string_conversion_returns_value(self) -> None:
-        """ErrorDomain.__str__ returns enum value for routing semantics."""
-        tm.that(str(c.ErrorDomain.VALIDATION), eq=c.ErrorDomain.VALIDATION.value)
-
+    # ---------------------------------------------------- facade completeness
     @pytest.mark.parametrize(
         "attr",
         [

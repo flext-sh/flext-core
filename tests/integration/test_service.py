@@ -1,7 +1,9 @@
-"""Integration tests for s implementations.
+"""Behavioral integration tests for the ``s`` service contract.
 
-Tests real s implementations with proper dependency injection,
-service composition, and lifecycle management patterns.
+Exercises the OBSERVABLE public surface of the test service implementations:
+``r[T]`` outcomes (success/failure, value, error), public model state, public
+properties, dependency-injection resolve round-trips, and ``r[T]`` combinators.
+No private attributes, no monkeypatching, no internal-collaborator spying.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,205 +17,209 @@ import pytest
 
 from tests.utilities import u
 
-from .service_lifecycle_cases import TestsFlextFlextServiceLifecycleCases
+from .service_lifecycle_cases import (
+    TestsFlextFlextServiceLifecycleCases as _ServiceLifecycleCases,
+)
 
 if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextServiceIntegration(TestsFlextFlextServiceLifecycleCases):
+class TestsFlextCoreService(_ServiceLifecycleCases):
+    """Behavioral contract of the user/notification/lifecycle services.
+
+    Inherits the lifecycle behavioral cases and the service fixture accessors
+    (``UserQueryService``, ``NotificationService``, ``UserServiceEntity`` ...).
+    """
+
     pytestmark = [pytest.mark.integration]
 
-    @pytest.mark.integration
-    def test_user_service_execution(self, clean_container: p.Container) -> None:
-        """Test user service execution with s.
-
-        Args:
-            clean_container: Isolated container fixture.
-
-        """
-        user_service = self.UserQueryService()
-        result = user_service.execute()
-        _ = u.Tests.assert_success(result)
-        assert result.value is True
-
-    @pytest.mark.integration
-    def test_user_service_fetch_user(self, clean_container: p.Container) -> None:
-        """Test user service fetch_user method.
-
-        Args:
-            clean_container: Isolated container fixture.
-
-        """
-        user_service = self.UserQueryService()
-        user_id = "test_user_123"
-        result = user_service.fetch_user(user_id)
-        _ = u.Tests.assert_success(result)
-        assert result.value is not None
-        assert result.value.unique_id == user_id
-        assert result.value.name == f"User {user_id}"
-        assert result.value.email == f"user{user_id}@example.com"
-        assert user_service.call_count == 1
-
-    @pytest.mark.integration
-    def test_user_service_with_custom_data(
+    # ------------------------------------------------------------------ #
+    # UserQueryService.execute — availability contract
+    # ------------------------------------------------------------------ #
+    def test_user_service_execute_reports_available(
         self,
         clean_container: p.Container,
     ) -> None:
-        """Test user service with custom user data.
+        """execute() succeeds with True when the service is available."""
+        service = self.UserQueryService()
+        result = service.execute()
+        assert u.Tests.assert_success(result, expected_value=True) is True
 
-        Args:
-            clean_container: Isolated container fixture.
+    def test_user_service_execute_reports_unavailable_in_failure_mode(
+        self,
+        clean_container: p.Container,
+    ) -> None:
+        """execute() fails with the unavailable error under failure mode."""
+        service = self.UserQueryService()
+        service.configure_failure_mode(should_fail=True)
+        result = service.execute()
+        assert result.failure
+        _ = u.Tests.assert_failure(result, "User service unavailable")
 
-        """
-        user_service = self.UserQueryService()
+    # ------------------------------------------------------------------ #
+    # UserQueryService.fetch_user — value derivation contract
+    # ------------------------------------------------------------------ #
+    @pytest.mark.parametrize(
+        "user_id",
+        ["test_user_123", "abc", "user-42"],
+    )
+    def test_fetch_user_derives_default_entity(
+        self,
+        clean_container: p.Container,
+        user_id: str,
+    ) -> None:
+        """fetch_user() derives a default entity from the requested id."""
+        service = self.UserQueryService()
+        entity = u.Tests.assert_success(service.fetch_user(user_id))
+        assert entity.unique_id == user_id
+        assert entity.name == f"User {user_id}"
+        assert entity.email == f"user{user_id}@example.com"
+        assert entity.active is True
+
+    def test_fetch_user_returns_applied_custom_entity(
+        self,
+        clean_container: p.Container,
+    ) -> None:
+        """fetch_user() returns previously applied custom user data verbatim."""
+        service = self.UserQueryService()
         user_id = "custom_user"
-        custom_user = self.UserServiceEntity(
+        custom = self.UserServiceEntity(
             unique_id=user_id,
             name="Custom User",
             email="custom@example.com",
             active=True,
         )
-        user_service.apply_user_data(user_id, custom_user)
-        result = user_service.fetch_user(user_id)
-        _ = u.Tests.assert_success(result)
-        assert result.value is not None
-        assert result.value.unique_id == user_id
-        assert result.value.name == "Custom User"
-        assert result.value.email == "custom@example.com"
+        service.apply_user_data(user_id, custom)
+        entity = u.Tests.assert_success(service.fetch_user(user_id))
+        assert entity.model_dump() == custom.model_dump()
 
-    @pytest.mark.integration
-    def test_user_service_failure_mode(self, clean_container: p.Container) -> None:
-        """Test user service failure mode.
-
-        Args:
-            clean_container: Isolated container fixture.
-
-        """
-        user_service = self.UserQueryService()
-        user_service.configure_failure_mode(should_fail=True)
-        result = user_service.execute()
-        _ = u.Tests.assert_failure(result)
-        assert result.error == "User service unavailable"
-
-    @pytest.mark.integration
-    def test_notification_service_execution(
+    def test_fetch_user_fails_in_failure_mode(
         self,
         clean_container: p.Container,
     ) -> None:
-        """Test notification service execution.
+        """fetch_user() surfaces a failure result under failure mode."""
+        service = self.UserQueryService()
+        service.configure_failure_mode(should_fail=True)
+        result = service.fetch_user("anyone")
+        assert result.failure
+        _ = u.Tests.assert_failure(result, "User service unavailable")
 
-        Args:
-            clean_container: Isolated container fixture.
+    def test_fetch_user_counts_each_call(
+        self,
+        clean_container: p.Container,
+    ) -> None:
+        """call_count reflects the number of fetch_user invocations."""
+        service = self.UserQueryService()
+        assert service.call_count == 0
+        _ = service.fetch_user("a")
+        _ = service.fetch_user("b")
+        assert service.call_count == 2
 
-        """
-        notification_service = self.NotificationService()
-        result = notification_service.execute()
-        _ = u.Tests.assert_success(result)
-        assert result.value == "sent"
+    def test_fetch_user_result_supports_combinators(
+        self,
+        clean_container: p.Container,
+    ) -> None:
+        """The r[T] returned by fetch_user chains via map/flat_map."""
+        service = self.UserQueryService()
+        email = (
+            service
+            .fetch_user("chained")
+            .map(lambda entity: entity.email)
+            .unwrap_or("missing")
+        )
+        assert email == "userchained@example.com"
 
-    @pytest.mark.integration
-    def test_notification_service_send(self, clean_container: p.Container) -> None:
-        """Test notification service send method.
+    # ------------------------------------------------------------------ #
+    # NotificationService — send/execute contract
+    # ------------------------------------------------------------------ #
+    def test_notification_execute_reports_sent(
+        self,
+        clean_container: p.Container,
+    ) -> None:
+        """execute() succeeds with the 'sent' status."""
+        service = self.NotificationService()
+        result = service.execute()
+        assert u.Tests.assert_success(result, expected_value="sent") == "sent"
 
-        Args:
-            clean_container: Isolated container fixture.
-
-        """
-        notification_service = self.NotificationService()
+    def test_notification_send_records_recipient(
+        self,
+        clean_container: p.Container,
+    ) -> None:
+        """send() succeeds and records the recipient in the public log."""
+        service = self.NotificationService()
         email = "test@example.com"
-        result = notification_service.send(email)
-        _ = u.Tests.assert_success(result)
-        assert result.value == "sent"
-        assert email in notification_service.sent_notifications
-        assert notification_service.call_count == 1
+        result = service.send(email)
+        assert u.Tests.assert_success(result, expected_value="sent") == "sent"
+        assert email in service.sent_notifications
+        assert service.call_count == 1
 
-    @pytest.mark.integration
-    def test_notification_service_failure_mode(
+    def test_notification_send_fails_in_failure_mode(
         self,
         clean_container: p.Container,
     ) -> None:
-        """Test notification service failure mode.
+        """send() fails and does not record the recipient under failure mode."""
+        service = self.NotificationService()
+        service.configure_failure_mode(should_fail=True)
+        result = service.send("test@example.com")
+        assert result.failure
+        _ = u.Tests.assert_failure(result, "Notification service unavailable")
+        assert "test@example.com" not in service.sent_notifications
 
-        Args:
-            clean_container: Isolated container fixture.
-
-        """
-        notification_service = self.NotificationService()
-        notification_service.configure_failure_mode(should_fail=True)
-        result = notification_service.send("test@example.com")
-        _ = u.Tests.assert_failure(result)
-        assert result.error == "Notification service unavailable"
-
-    @pytest.mark.integration
-    def test_service_dependency_injection(
+    # ------------------------------------------------------------------ #
+    # Dependency injection — resolve round-trip contract
+    # ------------------------------------------------------------------ #
+    def test_container_resolves_bound_services_functionally(
         self,
         clean_container: p.Container,
     ) -> None:
-        """Test dependency injection patterns with real services.
-
-        Demonstrates proper dependency injection testing with real s
-        implementations, service composition, and result validation.
-
-        Args:
-            clean_container: Isolated container fixture.
-
-        """
+        """Bound services resolve back and remain fully functional."""
         user_service = self.UserQueryService()
         notification_service = self.NotificationService()
         user_id = "test_user_123"
-        user_entity = self.UserServiceEntity(
-            unique_id=user_id,
-            name=f"User {user_id}",
-            email=f"user{user_id}@example.com",
-            active=True,
+        user_service.apply_user_data(
+            user_id,
+            self.UserServiceEntity(
+                unique_id=user_id,
+                name=f"User {user_id}",
+                email=f"user{user_id}@example.com",
+                active=True,
+            ),
         )
-        user_service.apply_user_data(user_id, user_entity)
         _ = clean_container.bind("user_service", user_service)
         _ = clean_container.bind("notification_service", notification_service)
-        user_service_result = clean_container.resolve(
-            "user_service",
-            type_cls=self.UserQueryService,
-        )
-        notification_service_result = clean_container.resolve(
-            "notification_service",
-            type_cls=self.NotificationService,
-        )
-        assert user_service_result.success
-        assert notification_service_result.success
-        retrieved_user_service = user_service_result.value
-        retrieved_notification_service = notification_service_result.value
-        assert isinstance(retrieved_user_service, self.UserQueryService)
-        assert isinstance(retrieved_notification_service, self.NotificationService)
-        user_result = retrieved_user_service.fetch_user(user_id)
-        assert user_result.success is True
-        user_entity = user_result.value
-        assert user_entity is not None
-        notification_result = retrieved_notification_service.send(user_entity.email)
-        assert notification_result.success is True
-        assert user_entity.email in retrieved_notification_service.sent_notifications
 
-    @pytest.mark.integration
-    def test_service_with_external_service(
+        resolved_user = u.Tests.assert_success(
+            clean_container.resolve("user_service", type_cls=self.UserQueryService),
+        )
+        resolved_notification = u.Tests.assert_success(
+            clean_container.resolve(
+                "notification_service",
+                type_cls=self.NotificationService,
+            ),
+        )
+
+        entity = u.Tests.assert_success(resolved_user.fetch_user(user_id))
+        _ = u.Tests.assert_success(
+            resolved_notification.send(entity.email),
+            expected_value="sent",
+        )
+        assert entity.email in resolved_notification.sent_notifications
+
+    # ------------------------------------------------------------------ #
+    # External-service integration — boundary contract
+    # ------------------------------------------------------------------ #
+    def test_external_service_processes_user_email(
         self,
         clean_container: p.Container,
         mock_external_service: u.Tests.FunctionalExternalService,
     ) -> None:
-        """Test service integration with external service.
-
-        Args:
-            clean_container: Isolated container fixture.
-            mock_external_service: External service fixture.
-
-        """
-        user_service = self.UserQueryService()
-        user_id = "test_user"
-        user_result = user_service.fetch_user(user_id)
-        assert user_result.success is True
-        user_entity = user_result.value
-        assert user_entity is not None
-        external_result = mock_external_service.process(user_entity.email)
-        assert external_result.success is True
-        expected_processed = f"processed_{user_entity.email}"
-        assert expected_processed in mock_external_service.processed_items
+        """A fetched user email flows through the external service boundary."""
+        service = self.UserQueryService()
+        entity = u.Tests.assert_success(service.fetch_user("test_user"))
+        processed = u.Tests.assert_success(
+            mock_external_service.process(entity.email),
+        )
+        assert processed == f"processed_{entity.email}"
+        assert processed in mock_external_service.processed_items
         assert mock_external_service.get_call_count() == 1

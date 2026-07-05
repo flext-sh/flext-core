@@ -20,11 +20,22 @@ class TestsFlextModelsExceptionParamsCore:
         with pytest.raises(c.ValidationError):
             m.ParamsModel.model_validate({"unknown_field": "value"})
 
-    def test_params_model_strict_mode(self) -> None:
-        """ParamsModel enforces strict=True in settings."""
-        tm.that(m.ParamsModel.model_config.get("strict"), eq=True)
-        tm.that(m.ParamsModel.model_config.get("extra"), eq="forbid")
-        tm.that(m.ParamsModel.model_config.get("validate_assignment"), eq=True)
+    def test_strict_mode_rejects_type_coercion(self) -> None:
+        """strict=True: a string is not coerced into an int port."""
+        with pytest.raises(c.ValidationError):
+            m.ConnectionErrorParams(port="5432")
+
+    def test_validate_assignment_rejects_bad_value(self) -> None:
+        """validate_assignment=True: reassigning an invalid type raises."""
+        params = m.ConnectionErrorParams(port=1)
+        with pytest.raises(c.ValidationError):
+            setattr(params, "port", "bad")
+
+    def test_validate_assignment_rejects_extra_field(self) -> None:
+        """extra=forbid + validate_assignment: unknown attribute assignment raises."""
+        params = m.ConnectionErrorParams()
+        with pytest.raises(c.ValidationError):
+            setattr(params, "unknown_field", "value")
 
     def test_validation_error_params_defaults(self) -> None:
         params = m.ValidationErrorParams()
@@ -107,6 +118,25 @@ class TestsFlextModelsExceptionParamsCore:
     ) -> None:
         params = m.ConnectionErrorParams(timeout=timeout_val)
         tm.that(params.timeout, eq=timeout_val)
+
+    @pytest.mark.parametrize(
+        ("host", "port", "expected"),
+        [
+            ("db.internal", 5432, "db.internal:5432"),
+            ("db.internal", None, "db.internal"),
+            (None, 5432, "unknown:5432"),
+            (None, None, "unknown"),
+        ],
+        ids=["host-and-port", "host-only", "port-only", "neither"],
+    )
+    def test_connection_target_formats_host_port(
+        self,
+        host: str | None,
+        port: int | None,
+        expected: str,
+    ) -> None:
+        params = m.ConnectionErrorParams(host=host, port=port)
+        tm.that(params.connection_target, eq=expected)
 
     def test_connection_error_params_serialization(self) -> None:
         params = m.ConnectionErrorParams(host="localhost", port=8080, timeout=10)

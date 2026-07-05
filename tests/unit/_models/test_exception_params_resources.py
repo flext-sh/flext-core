@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
+from tests.constants import c
 from tests.models import m
 
 
@@ -35,6 +36,17 @@ class TestsFlextModelsExceptionParamsResources:
         tm.that(data["user_id"], eq="admin")
         tm.that(data["resource"], eq="settings")
         tm.that(data["permission"], eq="delete")
+
+    def test_authorization_error_params_round_trip(self) -> None:
+        params = m.AuthorizationErrorParams(user_id="u1", permission="read")
+        restored = m.AuthorizationErrorParams.model_validate(params.model_dump())
+        tm.that(restored.user_id, eq="u1")
+        tm.that(restored.permission, eq="read")
+        tm.that(restored.resource, none=True)
+
+    def test_authorization_error_params_forbids_extra_field(self) -> None:
+        with pytest.raises(c.ValidationError):
+            m.AuthorizationErrorParams.model_validate({"role": "admin"})
 
     def test_not_found_error_params_defaults(self) -> None:
         params = m.NotFoundErrorParams()
@@ -67,6 +79,10 @@ class TestsFlextModelsExceptionParamsResources:
         )
         tm.that(params.resource_type, eq=resource_type)
         tm.that(params.resource_id, eq=resource_id)
+
+    def test_not_found_error_params_forbids_extra_field(self) -> None:
+        with pytest.raises(c.ValidationError):
+            m.NotFoundErrorParams.model_validate({"resource_name": "x"})
 
     def test_conflict_error_params_defaults(self) -> None:
         params = m.ConflictErrorParams()
@@ -119,6 +135,19 @@ class TestsFlextModelsExceptionParamsResources:
         params = m.RateLimitErrorParams(retry_after=retry_after)
         tm.that(params.retry_after, eq=retry_after)
 
+    def test_rate_limit_error_params_strict_rejects_string_limit(self) -> None:
+        """strict=True: a numeric string is not coerced into an int limit."""
+        with pytest.raises(c.ValidationError):
+            m.RateLimitErrorParams(limit="100")
+
+    def test_rate_limit_error_params_validate_assignment_rejects_bad_value(
+        self,
+    ) -> None:
+        """validate_assignment=True: reassigning an invalid type raises."""
+        params = m.RateLimitErrorParams(limit=10)
+        with pytest.raises(c.ValidationError):
+            setattr(params, "limit", "not-an-int")
+
     def test_circuit_breaker_error_params_defaults(self) -> None:
         params = m.CircuitBreakerErrorParams()
         tm.that(params.service_name, none=True)
@@ -145,3 +174,7 @@ class TestsFlextModelsExceptionParamsResources:
         tm.that(data["service_name"], eq="auth-svc")
         tm.that(data["failure_count"], eq=3)
         tm.that(data["reset_timeout"], eq=15)
+
+    def test_circuit_breaker_error_params_forbids_extra_field(self) -> None:
+        with pytest.raises(c.ValidationError):
+            m.CircuitBreakerErrorParams.model_validate({"threshold": 1})

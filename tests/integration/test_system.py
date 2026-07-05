@@ -1,12 +1,14 @@
-"""Teste de integração completo para o sistema FLEXT com refatoração adequada.
+"""Behavioral integration tests for the flext-core public surface.
 
-Este teste único e abrangente valida que todo o sistema flext-core funciona
-corretamente após wildcard imports, com foco em railway-oriented programming,
-hierarquia de constantes, sistema de exceções e utilitários.
+Every assertion here exercises OBSERVABLE PUBLIC CONTRACT only: the ``r[T]``
+railway outcome (``success`` / ``failure`` / ``value`` / ``error`` / combinators),
+the ``FlextExceptions`` family (class + public fields + message), the constants
+facade, public utilities, and the ``FlextContainer`` dependency-injection API.
+No private attributes, no internal-collaborator spying, no patching of the unit
+under test.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -14,163 +16,299 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
+import pytest
 from flext_tests import e, r
 
 from flext_core import FlextContainer
 from tests.constants import c
-from tests.typings import t
 from tests.utilities import u
-
-from .system_integration_cases import TestsFlextFlextSystemWorkflowCases
 
 if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextSystemIntegration(TestsFlextFlextSystemWorkflowCases):
-    """Teste de integração completo do sistema FLEXT.
+class TestsFlextCoreSystem:
+    """Behavioral contract of the composed flext-core public API."""
 
-    Este teste único valida todo o ecosistema flext-core através de cenários
-    realistas que demonstram a integração correta entre componentes.
-    """
+    # ------------------------------------------------------------------ #
+    # Railway-oriented programming: r[T] outcome contract                 #
+    # ------------------------------------------------------------------ #
 
-    def test_complete_system_integration_workflow(self) -> None:
-        """Teste completo de integração do sistema FLEXT.
+    def test_ok_result_exposes_success_contract(self) -> None:
+        """A successful result is success, not failure, carries the value, no error."""
+        result = r[str].ok("payload")
 
-        Este teste abrange:
-        1. Wildcard imports funcionais
-        2. Railway-oriented programming com r
-        3. Sistema hierárquico de constantes
-        4. Hierarquia de exceções estruturada
-        5. Utilitários e funções auxiliares
-        7. Validação e configuração
-        8. Cenários de erro e recuperação
+        assert result.success is True
+        assert result.failure is False
+        assert result.value == "payload"
+        assert result.unwrap() == "payload"
+        assert result.error is None
 
-        """
-        self._validate_imports()
-        self._test_railway_programming()
-        self._test_constants_system()
-        self._test_exceptions_system()
-        self._test_utilities()
-        self._test_container_system()
-        self._test_complex_integration()
-        self._test_error_recovery()
-        self._validate_final_system()
+    def test_fail_result_exposes_failure_contract(self) -> None:
+        """A failed result is failure, exposes the error, and carries the error code."""
+        result: p.Result[str] = r[str].fail(
+            "processing_failed",
+            error_code=c.ErrorCode.VALIDATION_ERROR,
+        )
 
-    def _validate_imports(self) -> None:
-        """Validate that all main components are available."""
-        assert r is not None, "r não está disponível"
-        assert c is not None, "c não está disponível"
-        assert e is not None, "e não está disponível"
-        assert u is not None, "u não está disponível"
-        assert t is not None, "t não está disponível"
+        assert result.success is False
+        assert result.failure is True
+        assert result.error == "processing_failed"
+        assert result.error_code == c.ErrorCode.VALIDATION_ERROR
 
-    def _test_railway_programming(self) -> None:
-        """Test railway-oriented programming with r."""
-        success_result = r[str].ok("dados_iniciais")
-        assert success_result.success
-        assert success_result.success
-        assert success_result.failure is False
-        assert success_result.value == "dados_iniciais"
-        assert success_result.error is None
-        pipeline_result = (
-            success_result
+    def test_unwrap_or_returns_default_only_on_failure(self) -> None:
+        """unwrap_or yields the value on success and the default on failure."""
+        assert r[str].ok("real").unwrap_or("default") == "real"
+        assert r[str].fail("boom").unwrap_or("default") == "default"
+
+    @pytest.mark.parametrize(
+        ("start", "expected"),
+        [
+            ("dados_iniciais", "processado-DADOS-INICIAIS"),
+            ("abc", "processado-ABC"),
+        ],
+    )
+    def test_map_chain_transforms_success_value(
+        self, start: str, expected: str
+    ) -> None:
+        """Chained map applies each transform in order to a successful value."""
+        result = (
+            r[str]
+            .ok(start)
             .map(lambda x: x.upper())
             .map(lambda x: f"processado_{x}")
             .map(lambda x: x.replace("_", "-"))
         )
-        assert pipeline_result.success is True
-        assert pipeline_result.value == "processado-DADOS-INICIAIS"
-        failure_result: p.Result[str] = r[str].fail(
-            "erro_de_processamento",
-        )
-        assert failure_result.success is False
-        assert failure_result.failure is True
-        assert failure_result.error == "erro_de_processamento"
-        assert failure_result.unwrap_or("") == ""
 
-        def operacao_que_pode_falhar(data: str) -> p.Result[str]:
-            if "invalido" in data:
+        assert result.success is True
+        assert result.value == expected
+
+    def test_map_is_skipped_on_failure(self) -> None:
+        """Map does not run its function once the result is a failure."""
+        result = r[str].fail("boom").map(lambda x: x.upper())
+
+        assert result.failure is True
+        assert result.error == "boom"
+
+    @pytest.mark.parametrize(
+        ("data", "expect_success", "expected"),
+        [
+            ("dados_iniciais", True, "validado_dados_iniciais"),
+            ("dados_invalido", False, "dados_invalidos"),
+        ],
+    )
+    def test_flat_map_chains_or_short_circuits(
+        self, data: str, expect_success: bool, expected: str
+    ) -> None:
+        """flat_map threads a fallible op and short-circuits on its failure."""
+
+        def maybe_fail(value: str) -> p.Result[str]:
+            if "invalido" in value:
                 return r[str].fail("dados_invalidos")
-            return r[str].ok(f"validado_{data}")
+            return r[str].ok(f"validado_{value}")
 
-        flat_map_success = success_result.flat_map(operacao_que_pode_falhar)
-        assert flat_map_success.success is True
-        assert flat_map_success.value == "validado_dados_iniciais"
-        invalid_data = r[str].ok("dados_invalido")
-        flat_map_failure = invalid_data.flat_map(operacao_que_pode_falhar)
-        assert flat_map_failure.success is False
-        assert flat_map_failure.error == "dados_invalidos"
+        result = r[str].ok(data).flat_map(maybe_fail)
 
-    def _test_constants_system(self) -> None:
-        """Test hierarchical constants system."""
-        timeout_default = c.DEFAULT_TIMEOUT_SECONDS
-        assert isinstance(timeout_default, (int, float))
-        assert timeout_default > 0
-        validation_error_code = c.ErrorCode.VALIDATION_ERROR
-        assert isinstance(validation_error_code, str)
-        assert validation_error_code == "VALIDATION_ERROR"
-        config_error_code = c.ErrorCode.CONFIG_ERROR
-        assert isinstance(config_error_code, str)
-        assert config_error_code == "CONFIG_ERROR"
+        assert result.success is expect_success
+        assert (result.value if expect_success else result.error) == expected
 
-    def _test_exceptions_system(self) -> None:
-        """Test structured exceptions system."""
-        validation_exception = e.ValidationError("campo_invalido")
-        assert isinstance(validation_exception, Exception)
-        assert isinstance(validation_exception, e.BaseError)
-        error_message = str(validation_exception)
-        assert "[VALIDATION_ERROR]" in error_message
-        assert "campo_invalido" in error_message
-        operation_exception = e.OperationError("operacao_falhada")
-        assert isinstance(operation_exception, e.BaseError)
-        assert "operacao_falhada" in str(operation_exception)
+    def test_lash_replaces_failure_with_success(self) -> None:
+        """Lash turns a failure into a successful fallback result."""
+        recovered = (
+            r[str]
+            .fail("erro_original")
+            .lash(
+                lambda _error: r[str].ok("valor_recuperado"),
+            )
+        )
+
+        assert recovered.success is True
+        assert recovered.value == "valor_recuperado"
+
+    def test_flat_map_pipeline_propagates_first_failure(self) -> None:
+        """A multi-stage flat_map pipeline stops at the first failing stage."""
+
+        def stage_1(data: str) -> p.Result[str]:
+            return r[str].ok(f"etapa1_{data}")
+
+        def stage_2(data: str) -> p.Result[str]:
+            if "erro" in data:
+                return r[str].fail("erro_na_etapa2")
+            return r[str].ok(f"etapa2_{data}")
+
+        def stage_3(data: str) -> p.Result[str]:
+            return r[str].ok(f"final_{data}")
+
+        ok_pipe = (
+            r[str].ok("dados").flat_map(stage_1).flat_map(stage_2).flat_map(stage_3)
+        )
+        fail_pipe = (
+            r[str]
+            .ok("dados_erro")
+            .flat_map(stage_1)
+            .flat_map(stage_2)
+            .flat_map(stage_3)
+        )
+
+        assert ok_pipe.value == "final_etapa2_etapa1_dados"
+        assert fail_pipe.failure is True
+        assert fail_pipe.error == "erro_na_etapa2"
+
+    # ------------------------------------------------------------------ #
+    # Constants facade contract                                           #
+    # ------------------------------------------------------------------ #
+
+    def test_default_timeout_is_a_positive_number(self) -> None:
+        """The default timeout constant is a positive numeric value."""
+        assert isinstance(c.DEFAULT_TIMEOUT_SECONDS, (int, float))
+        assert c.DEFAULT_TIMEOUT_SECONDS > 0
+
+    @pytest.mark.parametrize(
+        ("code", "expected"),
+        [
+            (c.ErrorCode.VALIDATION_ERROR, "VALIDATION_ERROR"),
+            (c.ErrorCode.CONFIG_ERROR, "CONFIG_ERROR"),
+        ],
+    )
+    def test_error_codes_render_as_their_string_value(
+        self, code: str, expected: str
+    ) -> None:
+        """Error-code constants are string-valued and stable."""
+        assert isinstance(code, str)
+        assert code == expected
+
+    # ------------------------------------------------------------------ #
+    # FlextExceptions family contract                                     #
+    # ------------------------------------------------------------------ #
+
+    @pytest.mark.parametrize(
+        ("factory", "message", "code"),
+        [
+            (e.ValidationError, "campo_invalido", "VALIDATION_ERROR"),
+            (e.OperationError, "operacao_falhada", "OPERATION_ERROR"),
+        ],
+    )
+    def test_exception_carries_code_and_message_publicly(
+        self, factory: type[e.BaseError], message: str, code: str
+    ) -> None:
+        """Each family exception is a BaseError exposing its code and message."""
+        exc = factory(message)
+
+        assert isinstance(exc, e.BaseError)
+        assert isinstance(exc, Exception)
+        assert message in str(exc)
+        assert f"[{code}]" in str(exc)
+
+    def test_family_exceptions_are_raisable_and_catchable_as_base(self) -> None:
+        """A specific family error is caught through its BaseError supertype."""
+        message = "campo_invalido"
+        with pytest.raises(e.BaseError) as caught:
+            raise e.ValidationError(message)
+
+        assert isinstance(caught.value, e.ValidationError)
+        assert caught.value.error_code == "VALIDATION_ERROR"
+
+    def test_family_hierarchy_subclasses_base_error(self) -> None:
+        """Concrete family classes derive from BaseError."""
         assert issubclass(e.ValidationError, e.BaseError)
         assert issubclass(e.OperationError, e.BaseError)
 
-    def _test_utilities(self) -> None:
-        """Test utilities and helper functions."""
-        generated_id = u.generate()
-        assert isinstance(generated_id, str)
-        assert len(generated_id) == 36
-        uuid_obj = uuid.UUID(generated_id)
-        assert str(uuid_obj) == generated_id
+    # ------------------------------------------------------------------ #
+    # Public utilities contract                                           #
+    # ------------------------------------------------------------------ #
+
+    def test_generate_returns_a_parseable_uuid_string(self) -> None:
+        """Generate returns a 36-char string that round-trips as a UUID."""
+        generated = u.generate()
+
+        assert isinstance(generated, str)
+        assert len(generated) == 36
+        assert str(uuid.UUID(generated)) == generated
+
+    def test_generate_produces_unique_values(self) -> None:
+        """Successive generate calls produce distinct identifiers."""
+        assert u.generate() != u.generate()
+
+    def test_iso_timestamp_is_a_non_empty_string(self) -> None:
+        """generate_iso_timestamp returns a non-empty string."""
         timestamp = u.generate_iso_timestamp()
+
         assert isinstance(timestamp, str)
         assert timestamp
-        try:
-            safe_int_success = int("42")
-            assert safe_int_success == 42
-        except ValueError:
-            safe_int_success = -1
-        try:
-            safe_int_failure = int("not_a_number")
-        except ValueError:
-            safe_int_failure = -1
-        assert safe_int_failure == -1
 
-    def _test_container_system(self) -> None:
-        """Test container system (Dependency Injection)."""
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("payload", True),
+            ("", False),
+            ("   ", False),
+        ],
+    )
+    def test_string_non_empty_reports_meaningful_content(
+        self, value: str, expected: bool
+    ) -> None:
+        """string_non_empty is True only for strings with non-whitespace content."""
+        assert u.string_non_empty(value) is expected
+
+    # ------------------------------------------------------------------ #
+    # FlextContainer dependency-injection contract                        #
+    # ------------------------------------------------------------------ #
+
+    def test_bind_is_fluent_and_resolve_returns_bound_value(self) -> None:
+        """Bind returns the container for chaining; resolve yields the value."""
         container = FlextContainer()
-        register_result = container.bind("test_service", "test_value")
-        assert register_result is container
-        retrieved_service_result = container.resolve("test_service")
-        assert retrieved_service_result.success is True
-        retrieved_service = retrieved_service_result.value
-        assert retrieved_service == "test_value"
-        not_found_result = container.resolve("servico_inexistente")
-        assert not_found_result.success is False
-        assert not_found_result.error is not None
 
-    def _validate_final_system(self) -> None:
-        """Validate final system state."""
-        assert r is not None
-        assert c is not None
-        assert e is not None
-        assert u is not None
-        assert t is not None
-        container_final = FlextContainer()
-        assert container_final is not None
-        resultado_final = r[str].ok("sistema_funcionando")
-        assert resultado_final.success is True
-        assert resultado_final.value == "sistema_funcionando"
+        assert container.bind("service", "value") is container
+
+        resolved = container.resolve("service")
+        assert resolved.success is True
+        assert resolved.value == "value"
+
+    def test_resolve_unknown_key_fails_with_error(self) -> None:
+        """Resolving an unregistered key yields a failure carrying an error."""
+        resolved = FlextContainer().resolve("missing_service")
+
+        assert resolved.success is False
+        assert resolved.error is not None
+
+    # ------------------------------------------------------------------ #
+    # End-to-end domain workflow over the public r[T] surface             #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _process_user_data(data: dict[str, str]) -> p.Result[dict[str, str]]:
+        if not data:
+            return r[dict[str, str]].fail(
+                "Dados não fornecidos",
+                error_code=c.ErrorCode.VALIDATION_ERROR,
+            )
+        processed: dict[str, str] = {}
+        for key, value in data.items():
+            if not u.string_non_empty(value):
+                return r[dict[str, str]].fail(
+                    f"Campo '{key}' não pode estar vazio",
+                    error_code=c.ErrorCode.VALIDATION_ERROR,
+                )
+            processed[key] = f"processado_{value}"
+        return r[dict[str, str]].ok(processed)
+
+    def test_workflow_transforms_every_field_on_success(self) -> None:
+        """A valid record yields a success whose fields are all transformed."""
+        result = self._process_user_data(
+            {"nome": "João", "email": "joao@exemplo.com"},
+        )
+
+        assert result.success is True
+        assert result.value["nome"] == "processado_João"
+        assert result.value["email"] == "processado_joao@exemplo.com"
+
+    def test_workflow_fails_with_field_error_on_empty_value(self) -> None:
+        """An empty field aborts the workflow with a descriptive validation error."""
+        result = self._process_user_data(
+            {"nome": "", "email": "joao@exemplo.com"},
+        )
+
+        assert result.success is False
+        assert result.error is not None
+        assert "não pode estar vazio" in result.error
+        assert result.error_code == c.ErrorCode.VALIDATION_ERROR

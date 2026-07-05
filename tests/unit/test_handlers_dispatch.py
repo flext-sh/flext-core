@@ -1,9 +1,10 @@
-"""Handler dispatch pipeline tests."""
+"""Behavioral tests for the handler dispatch pipeline public contract."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
+import pytest
 from flext_tests import h, r
 
 from tests.constants import c
@@ -15,18 +16,21 @@ if TYPE_CHECKING:
     from tests.models import m
     from tests.protocols import p
 
-HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
-HandlerTypeScenario = TestsFlextFlextHandlers.HandlerTypeScenario
-VALIDATION_TYPES = TestsFlextFlextHandlers.VALIDATION_TYPES
-
 
 class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
-    def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        class DictHandler(h[t.JsonMapping, t.JsonPayload]):
-            @override
-            def __init__(self, settings: m.Handler) -> None:
-                super().__init__(settings=settings)
+    """Assert observable dispatch/execute behavior, not implementation details."""
 
+    @staticmethod
+    def _command_settings(handler_id: str) -> m.Handler:
+        return u.Tests.create_handler_config(
+            handler_id,
+            handler_id.replace("_", " ").title(),
+            handler_type=c.HandlerType.COMMAND,
+            handler_mode=c.HandlerType.COMMAND,
+        )
+
+    def test_execute_returns_processed_payload_for_dict_message(self) -> None:
+        class DictHandler(h[t.JsonMapping, t.JsonPayload]):
             @override
             def execute(
                 self,
@@ -43,100 +47,148 @@ class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
                     return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)
                 return r[t.JsonPayload].ok(f"processed_{message}")
 
-        settings = u.Tests.create_handler_config(
-            "test_pipeline_dict_command_id",
-            "Test Pipeline Dict Command ID",
-            handler_type=c.HandlerType.COMMAND,
-            handler_mode=c.HandlerType.COMMAND,
-        )
-        handler = DictHandler(settings=settings)
+        handler = DictHandler(settings=self._command_settings("dict_command"))
         dict_message = {"command_id": "cmd_123", "data": "test_data"}
+
         result = handler.execute(dict_message)
-        _ = u.Tests.assert_success(result)
 
-    def test_handlers_dispatch_message_mode_validation_error(self) -> None:
-        settings = u.Tests.create_handler_config(
-            "test_pipeline_mode_error",
-            "Test Pipeline Mode Error",
-            handler_type=c.HandlerType.COMMAND,
-            handler_mode=c.HandlerType.COMMAND,
-        )
-        handler = self.ConcreteTestHandler(settings=settings)
-        result = handler.dispatch_message("test_message", operation="query")
-        u.Tests.assert_failure(
+        _ = u.Tests.assert_success(
             result,
-            expected_error="Handler with mode 'command' cannot execute query pipelines",
+            expected_value=f"processed_{dict_message}",
         )
 
-    def test_handlers_dispatch_message_cannot_handle_message_type(self) -> None:
-        class RestrictiveHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
-            @override
-            def __init__(self, settings: m.Handler) -> None:
-                super().__init__(settings=settings)
+    def test_execute_returns_processed_payload_for_string_message(self) -> None:
+        handler = self.ConcreteTestHandler(
+            settings=self._command_settings("string_command"),
+        )
 
+        result = handler.execute("hello")
+
+        _ = u.Tests.assert_success(result, expected_value="processed_hello")
+
+    def test_execute_rejects_none_message_via_validation(self) -> None:
+        handler = self.ConcreteTestHandler(
+            settings=self._command_settings("none_command"),
+        )
+
+        result = handler.execute(None)
+
+        _ = u.Tests.assert_failure(
+            result,
+            expected_error=c.ERR_MESSAGE_CANNOT_BE_NONE,
+        )
+
+    def test_dispatch_matching_operation_returns_processed_payload(self) -> None:
+        handler = self.ConcreteTestHandler(
+            settings=self._command_settings("dispatch_ok"),
+        )
+
+        result = handler.dispatch_message("test_message", operation="command")
+
+        _ = u.Tests.assert_success(result, expected_value="processed_test_message")
+
+    @pytest.mark.parametrize(
+        ("operation", "expected_error"),
+        [
+            (
+                "query",
+                "Handler with mode 'command' cannot execute query pipelines",
+            ),
+            (
+                "event",
+                "Handler with mode 'command' cannot execute event pipelines",
+            ),
+        ],
+    )
+    def test_dispatch_incompatible_operation_fails(
+        self,
+        operation: str,
+        expected_error: str,
+    ) -> None:
+        handler = self.ConcreteTestHandler(
+            settings=self._command_settings("dispatch_mode_error"),
+        )
+
+        result = handler.dispatch_message("test_message", operation=operation)
+
+        _ = u.Tests.assert_failure(result, expected_error=expected_error)
+
+    def test_dispatch_rejects_unhandleable_message_type(self) -> None:
+        class RestrictiveHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
             @override
             def can_handle(self, message_type: type) -> bool:
                 _ = message_type
                 return False
 
-        settings = u.Tests.create_handler_config(
-            "test_pipeline_cannot_handle",
-            "Test Pipeline Cannot Handle",
-            handler_type=c.HandlerType.COMMAND,
-            handler_mode=c.HandlerType.COMMAND,
+        handler = RestrictiveHandler(
+            settings=self._command_settings("dispatch_cannot_handle"),
         )
-        handler = RestrictiveHandler(settings=settings)
+
         result = handler.dispatch_message("test_message", operation="command")
-        u.Tests.assert_failure(
+
+        _ = u.Tests.assert_failure(
             result,
             expected_error="Handler cannot handle message type str",
         )
 
-    def test_handlers_dispatch_message_validation_failure(self) -> None:
+    def test_dispatch_propagates_validation_failure(self) -> None:
         class ValidationFailingHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
-            @override
-            def __init__(self, settings: m.Handler) -> None:
-                super().__init__(settings=settings)
-
             @override
             def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
                 _ = data
                 return r[bool].fail(c.Tests.VALIDATION_FAILED_FOR_TEST)
 
-        settings = u.Tests.create_handler_config(
-            "test_pipeline_validation_failure",
-            "Test Pipeline Validation Failure",
-            handler_type=c.HandlerType.COMMAND,
-            handler_mode=c.HandlerType.COMMAND,
+        handler = ValidationFailingHandler(
+            settings=self._command_settings("dispatch_validation_failure"),
         )
-        handler = ValidationFailingHandler(settings=settings)
+
         result = handler.dispatch_message("test_message", operation="command")
-        u.Tests.assert_failure(
+
+        _ = u.Tests.assert_failure(
             result,
             expected_error="Message validation failed: Validation failed for test",
         )
 
-    def test_handlers_dispatch_message_handler_exception(self) -> None:
+    def test_dispatch_converts_handler_exception_to_critical_failure(self) -> None:
         class ExceptionHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
-            @override
-            def __init__(self, settings: m.Handler) -> None:
-                super().__init__(settings=settings)
-
             @override
             def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
                 _ = message
                 msg = "Test exception in handler"
                 raise ValueError(msg)
 
-        settings = u.Tests.create_handler_config(
-            "test_pipeline_exception",
-            "Test Pipeline Exception",
-            handler_type=c.HandlerType.COMMAND,
-            handler_mode=c.HandlerType.COMMAND,
+        handler = ExceptionHandler(
+            settings=self._command_settings("dispatch_exception"),
         )
-        handler = ExceptionHandler(settings=settings)
+
         result = handler.dispatch_message("test_message", operation="command")
-        u.Tests.assert_failure(
+
+        _ = u.Tests.assert_failure(
             result,
             expected_error="Critical handler failure: Test exception in handler",
+        )
+
+    @pytest.mark.parametrize("message_type", [str, int, dict])
+    def test_flexible_handler_accepts_any_message_type(
+        self,
+        message_type: type,
+    ) -> None:
+        handler = self.ConcreteTestHandler(
+            settings=self._command_settings("can_handle"),
+        )
+
+        assert handler.can_handle(message_type) is True
+
+    def test_validate_message_reports_success_and_failure(self) -> None:
+        handler = self.ConcreteTestHandler(
+            settings=self._command_settings("validate_message"),
+        )
+
+        _ = u.Tests.assert_success(
+            handler.validate_message("test_message"),
+            expected_value=True,
+        )
+        _ = u.Tests.assert_failure(
+            handler.validate_message(None),
+            expected_error=c.ERR_MESSAGE_CANNOT_BE_NONE,
         )
