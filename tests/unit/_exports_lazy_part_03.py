@@ -29,10 +29,10 @@ TESTS_FLEXT_CORE_UNIT_LAZY_IMPORTS_PART_03 = build_lazy_import_map({
     ".test_typings_validation_numbers": ("TestsFlextTypesValidationNumbers",),
     ".test_typings_validation_scalars": ("TestsFlextTypesValidationScalars",),
     ".test_utilities": ("TestsFlextUtilitiesSmoke",),
-    ".test_utilities_collection_coverage_100": ("TestsFlextUtilitiesCollection",),
-    ".test_utilities_coverage": ("TestsFlextUtilitiesCoverage",),
+    ".test_utilities_collection_coverage_100": ("TestsFlextCoreUtilitiesCollection",),
+    ".test_utilities_coverage": ("TestsFlextCoreUtilitiesCoverage",),
     ".test_utilities_domain": ("TestsFlextUtilitiesDomain",),
-    ".test_utilities_generators_full_coverage": ("TestsFlextUtilitiesGenerators",),
+    ".test_utilities_generators_full_coverage": ("TestsFlextCoreUtilitiesGenerators",),
     ".test_utilities_project_metadata": ("test_utilities_project_metadata",),
     ".test_utilities_project_metadata_config": (
         "TestsFlextUtilitiesProjectMetadataConfig",
@@ -43,15 +43,11 @@ TESTS_FLEXT_CORE_UNIT_LAZY_IMPORTS_PART_03 = build_lazy_import_map({
     ".test_utilities_pydantic_coverage_100": ("TestsFlextUtilitiesPydantic",),
     ".test_utilities_reliability": ("TestsFlextUtilitiesReliability",),
     ".test_utilities_runtime_violation_registry_coverage_100": (
-        "TestsFlextRuntimeViolationRegistry",
+        "TestsFlextCoreUtilitiesRuntimeViolationRegistry",
     ),
-    ".test_utilities_settings_coverage_100": (
-        "TestsFlextUtilitiesSettings",
-        "TestsFlextUtilitiesSettingsEnvFile",
-        "TestsFlextUtilitiesSettingsRegisterFactory",
-    ),
+    ".test_utilities_settings_coverage_100": ("TestsFlextCoreUtilitiesSettings",),
     ".test_utilities_text_full_coverage": ("TestsFlextUtilitiesText",),
-    ".test_utilities_type_guards_coverage_100": ("TestsFlextUtilitiesTypeGuards",),
+    ".test_utilities_type_guards_coverage_100": ("TestsFlextCoreUtilitiesTypeGuards",),
     ".test_version": ("TestsFlextVersion",),
 })
 

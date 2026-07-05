@@ -1,13 +1,12 @@
-"""Real tests to achieve 100% enum utilities coverage - no mocks.
+"""Behavioral tests for the public enum utilities surface (u.parse / u.enum_values).
 
 Module: flext_core
-Scope: FlextUtilitiesEnum - all methods and edge cases
+Scope: public contract of ``u.enum_values`` and ``u.parse`` for StrEnum targets.
 
-This module provides comprehensive real tests (no mocks, patches, or bypasses)
-to cover all remaining lines in _utilities/enum.py.
-
-Uses Python 3.13 patterns, u, FlextConstants,
-and aggressive parametrization for DRY testing.
+These tests assert only observable public behavior — return values, the ``r[T]``
+outcome of the fallible ``parse`` operation, and the immutability/completeness
+invariants of ``enum_values``. No private attributes, internal caches, or
+collaborators are inspected.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -25,15 +24,15 @@ from tests.models import m
 from tests.utilities import u
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Sequence,
-    )
+    from collections.abc import Sequence
 
 
-class TestsFlextEnumUtilities:
+class TestsFlextCoreEnumUtilities:
+    """Behavioral contract of the public enum utilities."""
+
     @unique
     class Status(StrEnum):
-        """Test StrEnum for enum testing."""
+        """Test StrEnum with lowercase values."""
 
         ACTIVE = "active"
         PENDING = "pending"
@@ -41,14 +40,14 @@ class TestsFlextEnumUtilities:
 
     @unique
     class Priority(StrEnum):
-        """Test StrEnum for enum testing."""
+        """Independent StrEnum to prove per-type isolation."""
 
         LOW = "low"
         MEDIUM = "medium"
         HIGH = "high"
 
     class ParseScenario(m.BaseModel):
-        """Parse test scenario."""
+        """Declarative parse case for the public ``u.parse`` contract."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Parse scenario name")]
@@ -59,7 +58,7 @@ class TestsFlextEnumUtilities:
         ]
         expected_status: Annotated[
             StrEnum | None,
-            m.Field(description="Expected parsed enum status"),
+            m.Field(description="Expected parsed enum member"),
         ] = None
         expected_error: Annotated[
             str | None,
@@ -68,53 +67,82 @@ class TestsFlextEnumUtilities:
 
     PARSE: ClassVar[Sequence[ParseScenario]] = [
         ParseScenario(
-            name="valid_string",
+            name="valid_string_resolves_to_member",
             value="active",
             expected_success=True,
             expected_status=Status.ACTIVE,
-            expected_error=None,
         ),
         ParseScenario(
-            name="valid_enum",
+            name="enum_instance_is_returned_unchanged",
             value=Status.PENDING,
             expected_success=True,
             expected_status=Status.PENDING,
-            expected_error=None,
         ),
         ParseScenario(
-            name="invalid_string",
+            name="unknown_string_fails",
             value="invalid",
             expected_success=False,
-            expected_status=None,
+            expected_error="Cannot parse",
+        ),
+        ParseScenario(
+            name="wrong_case_string_fails",
+            value="ACTIVE",
+            expected_success=False,
+            expected_error="Cannot parse",
+        ),
+        ParseScenario(
+            name="empty_string_fails",
+            value="",
+            expected_success=False,
             expected_error="Cannot parse",
         ),
     ]
 
     @pytest.mark.parametrize("scenario", PARSE, ids=lambda s: s.name)
-    def test_parse(self, scenario: ParseScenario) -> None:
-        """Test parse with various scenarios."""
+    def test_parse_returns_expected_outcome(self, scenario: ParseScenario) -> None:
+        """Parse yields success with the member, or a failure carrying the reason."""
         result = u.parse(scenario.value, self.Status)
+
         if scenario.expected_success:
             tm.ok(result)
             tm.that(result.value, eq=scenario.expected_status)
         else:
             assert result.failure
-            assert (
-                result.error is not None
-                and scenario.expected_error is not None
-                and (scenario.expected_error in result.error)
-            )
+            assert scenario.expected_error is not None
+            assert result.error is not None
+            assert scenario.expected_error in result.error
 
-    def test_values(self) -> None:
-        """Test values method."""
+    def test_parsed_member_round_trips_into_enum_values(self) -> None:
+        """A successfully parsed member's value is present in enum_values."""
+        result = u.parse("pending", self.Status)
+
+        tm.ok(result)
+        assert result.value.value in u.enum_values(self.Status)
+
+    def test_enum_values_returns_complete_value_set(self) -> None:
+        """enum_values exposes exactly the declared member string values."""
         values = u.enum_values(self.Status)
-        tm.that(values.__class__, eq=frozenset)
-        assert "active" in values
-        assert "pending" in values
-        assert "inactive" in values
 
-    def test_metadata_caching(self) -> None:
-        """Test that metadata methods are cached."""
-        values1 = u.enum_values(self.Status)
-        values2 = u.enum_values(self.Status)
-        tm.that(values1 is values2, eq=True)
+        tm.that(values, eq=frozenset({"active", "pending", "inactive"}))
+
+    def test_enum_values_is_immutable_frozenset(self) -> None:
+        """The returned value set is a frozenset and cannot be mutated."""
+        values = u.enum_values(self.Status)
+
+        assert isinstance(values, frozenset)
+        assert not hasattr(values, "add")
+
+    def test_enum_values_is_idempotent(self) -> None:
+        """Repeated calls return equal value sets regardless of internal caching."""
+        first = u.enum_values(self.Status)
+        second = u.enum_values(self.Status)
+
+        tm.that(first, eq=second)
+
+    def test_enum_values_isolates_distinct_enum_types(self) -> None:
+        """Different StrEnum types produce their own, non-overlapping value sets."""
+        status_values = u.enum_values(self.Status)
+        priority_values = u.enum_values(self.Priority)
+
+        tm.that(priority_values, eq=frozenset({"low", "medium", "high"}))
+        assert status_values.isdisjoint(priority_values)

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextDecorators:
+class TestsFlextCoreDecorators:
     """Behavior contract for flext_core.decorators — public API only."""
 
     def test_deprecated_emits_deprecation_warning_and_preserves_return(self) -> None:

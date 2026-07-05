@@ -10,7 +10,7 @@ from tests.constants import c
 from tests.models import m
 
 
-class TestsFlextUtilitiesGenerators:
+class TestsFlextCoreUtilitiesGenerators:
     def test_public_generators_build_dispatch_audit_metadata(self) -> None:
         request = m.Tests.DispatchRequest(
             command_name="sync-users",

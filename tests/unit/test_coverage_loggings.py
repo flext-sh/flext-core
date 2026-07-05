@@ -72,7 +72,8 @@ class TestsFlextCoverageLoggings:
         scope: str,
         context: dict[str, str],
     ) -> None:
-        _ = u.bind_context(scope=scope, **context)
+        bind_result = u.bind_context(scope=scope, **context)
+        _ = self.assert_log_result_success(bind_result)
 
         result = u.clear_scope(scope)
 

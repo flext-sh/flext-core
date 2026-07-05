@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, override
+from typing import Annotated, override
 
 from flext_tests import r
 
 from tests.base import s
 from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 from tests.utilities import u
-
-if TYPE_CHECKING:
-    from tests.protocols import p
-    from tests.typings import t
 
 
 class TestsFlextServiceBootstrap:

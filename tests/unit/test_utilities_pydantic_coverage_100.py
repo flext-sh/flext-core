@@ -2,25 +2,44 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import pytest
 
 from flext_core import u
 from tests.models import m
-
-if TYPE_CHECKING:
-    from tests.typings import t
+from tests.typings import t
 
 
 class TestsFlextUtilitiesPydantic:
-    def test_public_facade_validates_serializes_and_tracks_private_state(self) -> None:
+    @pytest.mark.parametrize(
+        ("raw_name", "expected_name"),
+        [
+            ("  ada lovelace ", "Ada Lovelace"),
+            ("GRACE HOPPER", "Grace Hopper"),
+            ("alan", "Alan"),
+        ],
+    )
+    def test_field_validator_normalizes_aliased_name(
+        self,
+        raw_name: str,
+        expected_name: str,
+    ) -> None:
+        payload = m.Tests.PublicPayload.model_validate({
+            "rawName": raw_name,
+            "visits": "3",
+        })
+
+        assert payload.raw_name == expected_name
+
+    def test_serialization_applies_alias_serializer_and_computed_field(
+        self,
+    ) -> None:
         payload = m.Tests.PublicPayload.model_validate({
             "rawName": "  ada lovelace ",
             "visits": "3",
         })
+
         payload_dump = payload.model_dump(mode="json", by_alias=True)
 
-        assert payload.raw_name == "Ada Lovelace"
-        assert payload._events == ["validated"]
         assert payload_dump["rawName"] == "Ada Lovelace"
         assert payload_dump["visits"] == "3 visits"
         assert payload_dump["label"] == "Ada Lovelace:3"
@@ -47,6 +66,17 @@ class TestsFlextUtilitiesPydantic:
         assert payload_dump == {"name": "queue", "count": 2, "tags": ["cli"]}
         assert payload_dict == {"name": "queue", "count": 2, "tags": ["cli"]}
         assert payload_jsonable == payload_dict
+
+    def test_validate_call_rejects_invalid_argument_types(self) -> None:
+        @u.validate_call()
+        def to_upper(value: str) -> str:
+            return value.upper()
+
+        assert to_upper("cli") == "CLI"
+        with pytest.raises(m.ValidationError):
+            # Why: negative test feeds a deliberately wrong-typed argument to
+            # prove ``u.validate_call`` enforces the annotation at runtime.
+            to_upper(object())  # type: ignore[arg-type]
 
     def test_public_facade_resolves_runtime_bootstrap_options_from_json(
         self,

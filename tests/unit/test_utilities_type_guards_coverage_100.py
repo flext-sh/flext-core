@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from tests.typings import t
 
 
-class TestsFlextUtilitiesTypeGuards:
+class TestsFlextCoreUtilitiesTypeGuards:
     """Behavior contract for public guard helpers on runtime metadata."""
 
     def test_public_type_guards_validate_normalized_dispatch_metadata(self) -> None:

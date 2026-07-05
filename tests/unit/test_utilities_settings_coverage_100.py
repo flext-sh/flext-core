@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import pytest
 from flext_tests import tm
 
 from flext_core import FlextContainer, u
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from tests.typings import t
 
 
-class TestsFlextUtilitiesSettings:
+class TestsFlextCoreUtilitiesSettings:
     _original_env_file: str | None
     _original_cwd: Path
 
@@ -33,7 +34,34 @@ class TestsFlextUtilitiesSettings:
         os.chdir(self._original_cwd)
         FlextContainer.reset_for_testing()
 
-    def test_public_settings_helpers_resolve_env_override_and_bootstrap_context(
+    @pytest.mark.parametrize(
+        ("trace", "debug", "requested", "expected"),
+        [
+            (True, False, c.LogLevel.ERROR, c.LogLevel.DEBUG),
+            (True, True, c.LogLevel.WARNING, c.LogLevel.DEBUG),
+            (False, True, c.LogLevel.WARNING, c.LogLevel.INFO),
+            (False, True, c.LogLevel.ERROR, c.LogLevel.INFO),
+            (False, False, c.LogLevel.ERROR, c.LogLevel.ERROR),
+            (False, False, c.LogLevel.WARNING, c.LogLevel.WARNING),
+        ],
+    )
+    def test_effective_log_level_prioritises_trace_then_debug_then_request(
+        self,
+        *,
+        trace: bool,
+        debug: bool,
+        requested: c.LogLevel,
+        expected: c.LogLevel,
+    ) -> None:
+        resolved = u.resolve_effective_log_level(
+            trace=trace,
+            debug=debug,
+            log_level=requested,
+        )
+
+        assert resolved == expected
+
+    def test_env_override_and_process_environment_are_observable(
         self,
         tmp_path: Path,
     ) -> None:
@@ -62,9 +90,7 @@ class TestsFlextUtilitiesSettings:
         assert snapshot.process_environment[probe_env_var] == "integration"
         assert snapshot.log_level == c.LogLevel.DEBUG
 
-
-class TestsFlextUtilitiesSettingsEnvFile(TestsFlextUtilitiesSettings):
-    def test_public_settings_helpers_resolve_cwd_env_and_fallback_paths(
+    def test_env_file_resolves_cwd_default_then_override_then_fallback(
         self,
         tmp_path: Path,
     ) -> None:
@@ -73,32 +99,18 @@ class TestsFlextUtilitiesSettingsEnvFile(TestsFlextUtilitiesSettings):
         default_env_file.write_text("FLEXT_DEBUG=true\n", encoding="utf-8")
 
         cwd_resolved = u.resolve_env_file()
-        explicit_level = u.resolve_effective_log_level(
-            trace=False,
-            debug=False,
-            log_level=c.LogLevel.ERROR,
-        )
-        debug_level = u.resolve_effective_log_level(
-            trace=False,
-            debug=True,
-            log_level=c.LogLevel.WARNING,
-        )
 
         default_env_file.unlink()
         missing_override = str(tmp_path / "missing.env")
         os.environ[c.ENV_FILE_ENV_VAR] = missing_override
 
         assert cwd_resolved == str(default_env_file.resolve())
-        assert explicit_level == c.LogLevel.ERROR
-        assert debug_level == c.LogLevel.INFO
         assert u.resolve_env_file() == missing_override
 
         os.environ.pop(c.ENV_FILE_ENV_VAR, None)
         assert u.resolve_env_file() == c.ENV_FILE_DEFAULT
 
-
-class TestsFlextUtilitiesSettingsRegisterFactory(TestsFlextUtilitiesSettings):
-    def test_public_settings_helpers_register_factory_success_and_failure(self) -> None:
+    def test_register_factory_reports_success_and_resolvable_service(self) -> None:
         container = FlextContainer()
         container.clear()
 
@@ -121,6 +133,17 @@ class TestsFlextUtilitiesSettingsRegisterFactory(TestsFlextUtilitiesSettings):
         )
         resolved_summary = container.resolve("settings_summary")
 
+        tm.ok(success_result)
+        assert success_result.value is True
+        tm.ok(resolved_summary)
+        assert resolved_summary.value == {
+            "env_file": c.ENV_FILE_DEFAULT,
+            "log_level": c.LogLevel.INFO,
+        }
+
+    def test_register_factory_surfaces_factory_failure_as_result(self) -> None:
+        container = FlextContainer()
+        container.clear()
         error_message = "factory exploded"
 
         def failing_factory() -> t.RegisterableService:
@@ -132,13 +155,6 @@ class TestsFlextUtilitiesSettingsRegisterFactory(TestsFlextUtilitiesSettings):
             failing_factory,
         )
 
-        tm.ok(success_result)
-        assert success_result.value is True
-        tm.ok(resolved_summary)
-        assert resolved_summary.value == {
-            "env_file": c.ENV_FILE_DEFAULT,
-            "log_level": c.LogLevel.INFO,
-        }
         tm.fail(failure_result)
         assert failure_result.error is not None
-        assert "factory exploded" in failure_result.error
+        assert error_message in failure_result.error

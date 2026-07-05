@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from tests.typings import t
 
 
-class TestsFlextUtilitiesCollection:
+class TestsFlextCoreUtilitiesCollection:
     """Behavior contract for u.map / u.find / u.filter / u.count / u.process / u.merge_mappings."""
 
     def test_normalize_domain_event_data_flattens_public_payloads(self) -> None:
@@ -196,4 +196,4 @@ class TestsFlextUtilitiesCollection:
         tm.that(result.value["b"], is_=dict)
 
 
-__all__: list[str] = ["TestsFlextUtilitiesCollection"]
+__all__: list[str] = ["TestsFlextCoreUtilitiesCollection"]
