@@ -6,20 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from types import ModuleType
+from typing import Annotated, ClassVar
 
 from dependency_injector import containers, providers
 from pydantic import BaseModel, ConfigDict
 
+from flext_core._models.containers import FlextModelsContainers as mc
+from flext_core._protocols.container import FlextProtocolsContainer as pc
+from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
-
-if TYPE_CHECKING:
-    from types import ModuleType
-
-    from flext_core._models.containers import FlextModelsContainers as mc
-    from flext_core._protocols.container import FlextProtocolsContainer as pc
-    from flext_core._typings.base import FlextTypingBase as tb
-    from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextRuntimeDependencyTypes:

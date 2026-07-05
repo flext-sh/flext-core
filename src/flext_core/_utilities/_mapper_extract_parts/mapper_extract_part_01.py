@@ -17,9 +17,7 @@ from flext_core import (
 )
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities._mapper_access_parts.mapper_access_part_01 import (
-    FlextUtilitiesMapperAccess,
-)
+from flext_core._utilities.mapper_access import FlextUtilitiesMapperAccess
 
 
 class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):

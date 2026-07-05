@@ -12,9 +12,7 @@ if TYPE_CHECKING:
     from types import ModuleType
 
     from flext_core import (
-        FlextProtocolsHandler,
-        FlextProtocolsRegistry,
-        FlextProtocolsSettings,
+        p,
         t,
     )
 from .flextprotocolscontext_part_02 import (
@@ -26,12 +24,12 @@ class FlextProtocolsContext(FlextProtocolsContextPart02):
     class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options for service initialization."""
 
-        settings: FlextProtocolsSettings.Settings | None
+        settings: p.Settings | None
         settings_type: type | None
         settings_overrides: t.ScalarMapping | None
-        context: FlextProtocolsContext.Context | None
-        dispatcher: FlextProtocolsHandler.Dispatcher | None
-        registry: FlextProtocolsRegistry.Registry | None
+        context: p.Context | None
+        dispatcher: p.Dispatcher | None
+        registry: p.Registry | None
         subproject: str | None
         services: t.MappingKV[str, t.RegisterableService] | None
         factories: t.MappingKV[str, t.FactoryCallable] | None

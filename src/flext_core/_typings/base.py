@@ -176,5 +176,5 @@ class FlextTypingBase(tp, ta):
     type IntPair = Pair[int, int]
 
     type TypeHintSpecifier = (
-        type | str | UnionType | GenericAlias | TypeAliasType | ForwardRef
+        type[object] | str | UnionType | GenericAlias | TypeAliasType | ForwardRef
     )

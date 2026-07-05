@@ -12,18 +12,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import Annotated, ClassVar
 
 from flext_core import c, t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
-
-if TYPE_CHECKING:
-    from collections.abc import (
-        MutableSequence,
-    )
 
 
 class FlextModelsHandler:
@@ -118,52 +113,6 @@ class FlextModelsHandler:
                 return 0.0
             elapsed: float = time.time() - self.started_at
             return round(elapsed * c.DEFAULT_SIZE, 2)
-
-    class HandlerRuntimeState(m.ArbitraryTypesModel):
-        """Aggregate runtime state for the active handler pipeline."""
-
-        execution_context: Annotated[
-            FlextModelsHandler.ExecutionContext,
-            mp.Field(description="Execution context for the active handler"),
-        ]
-        context_stack: Annotated[
-            MutableSequence[FlextModelsHandler.ExecutionContext],
-            mp.Field(
-                description="Stack of nested execution contexts.",
-            ),
-        ] = mp.Field(default_factory=list)
-        accepted_message_types: Annotated[
-            tuple[t.TypeHintSpecifier, ...],
-            mp.Field(
-                description="Accepted message types computed for dispatch routing",
-            ),
-        ] = mp.Field(default_factory=tuple)
-        revalidate_pydantic_messages: Annotated[
-            bool,
-            mp.Field(
-                default=False,
-                description="Whether Pydantic messages must be revalidated on dispatch",
-            ),
-        ] = False
-        type_warning_emitted: Annotated[
-            bool,
-            mp.Field(
-                default=False,
-                description="Whether the handler already emitted a type warning",
-            ),
-        ] = False
-
-        @up.computed_field()
-        @property
-        def handler_name(self) -> str:
-            """Active handler name taken from the execution context."""
-            return self.execution_context.handler_name
-
-        @up.computed_field()
-        @property
-        def handler_mode(self) -> c.HandlerType:
-            """Active handler mode taken from the execution context."""
-            return self.execution_context.handler_mode
 
 
 __all__: list[str] = ["FlextModelsHandler"]

@@ -15,20 +15,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import Annotated, ClassVar
 
 from pydantic import (
     Field,
 )
 
 from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.base import FlextTypingBase as tb
 
 from .flextmodelsprojectmetadata_part_02 import (
     FlextModelsProjectMetadata as FlextModelsProjectMetadataPart02,
 )
-
-if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextModelsProjectMetadata(FlextModelsProjectMetadataPart02):

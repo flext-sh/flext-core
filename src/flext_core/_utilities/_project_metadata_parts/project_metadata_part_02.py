@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING
 
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 
@@ -105,23 +105,6 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart01):
                 return class_name.removesuffix("Constants")
         msg = f"constants class stem for package {package_name!r} was not found"
         raise RuntimeError(msg)
-
-    @staticmethod
-    @override
-    def derive_class_stem(project_name: str) -> str:
-        """Derive the installed package class stem from generated lazy exports."""
-        if not project_name:
-            msg = "empty project name"
-            raise ValueError(msg)
-        distribution_name = FlextUtilitiesProjectMetadata._distribution_name(
-            FlextUtilitiesProjectMetadata._package_name(project_name),
-        )
-        import_name = FlextUtilitiesProjectMetadata._package_name(distribution_name)
-        package = importlib.import_module(import_name)
-        return FlextUtilitiesProjectMetadata._class_stem_from_lazy(
-            import_name,
-            package,
-        )
 
     @staticmethod
     def read_lazy_alias_metadata(

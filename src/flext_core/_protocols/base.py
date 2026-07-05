@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     )
     from types import TracebackType
 
-    from flext_core import FlextModelsDomainEvent, FlextProtocolsResult, t
+    from flext_core import m, p, t
 
 
 class FlextProtocolsBase:
@@ -159,7 +159,7 @@ class FlextProtocolsBase:
 
         def execute(
             self,
-        ) -> FlextProtocolsResult.Result[t.JsonPayload]: ...
+        ) -> p.Result[t.JsonPayload]: ...
 
         def service_info(self) -> t.JsonMapping: ...
 
@@ -216,7 +216,7 @@ class FlextProtocolsBase:
         """
 
         unique_id: str
-        domain_events: MutableSequence[FlextModelsDomainEvent.Entry]
+        domain_events: MutableSequence[m.DomainEvent]
 
 
 __all__: list[str] = ["FlextProtocolsBase"]

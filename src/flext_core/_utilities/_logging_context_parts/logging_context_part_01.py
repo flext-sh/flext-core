@@ -20,11 +20,9 @@ from flext_core import (
     FlextRuntime,
     FlextTypes as t,
 )
-from flext_core._utilities._logging_config_parts.logging_config_part_02 import (
-    FlextUtilitiesLoggingConfig,
-)
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
 
 if TYPE_CHECKING:
     import types

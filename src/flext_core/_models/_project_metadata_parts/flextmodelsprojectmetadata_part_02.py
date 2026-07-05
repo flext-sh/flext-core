@@ -14,8 +14,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import Annotated, ClassVar
 
 from pydantic import (
     BeforeValidator,
@@ -29,9 +30,6 @@ from flext_core._typings.base import FlextTypingBase as tb
 from .flextmodelsprojectmetadata_part_01 import (
     FlextModelsProjectMetadata as FlextModelsProjectMetadataPart01,
 )
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class FlextModelsProjectMetadata(FlextModelsProjectMetadataPart01):

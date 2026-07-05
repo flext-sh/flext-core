@@ -42,22 +42,18 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _instance: ClassVar[Self | None] = None
 
+    def __init__(
+        self,
+        **model_data: t.GuardInput | p.Settings | p.Context | t.SettingsClass | None,
+    ) -> None:
+        """Initialize service state through the shared FLEXT runtime mixin."""
+        super().__init__(**model_data)
+
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
         """Inject a per-class singleton slot for every concrete subclass."""
         _ = kwargs
         super().__init_subclass__()
         cls._instance = None
-
-    def __init__(self, **model_data: t.GuardInput | None) -> None:
-        """Initialize the service model through the canonical Pydantic bag.
-
-        ``FlextService`` is the shared kernel for many project-specific facades,
-        so subclasses pass both common runtime fields and their own model fields
-        through ``super().__init__(...)``. Keeping that owner entrypoint explicit
-        avoids ``super().__init__`` self-type mismatches without narrowing the
-        accepted field surface of descendant services.
-        """
-        self.__pydantic_validator__.validate_python(model_data, self_instance=self)
 
     @classmethod
     def fetch_global(cls) -> Self:

@@ -6,15 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, Self
+from types import MappingProxyType
+from typing import Annotated, Self
 
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
 from .base import FlextModelsBase as m
-
-if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextModelsErrors:
@@ -28,11 +27,11 @@ class FlextModelsErrors:
             mp.Field(description="Total recorded exception occurrences."),
         ] = 0
         exception_counts: Annotated[
-            t.MutableIntMapping,
+            t.IntMapping,
             mp.Field(
                 description="Per-exception occurrence totals keyed by type name.",
             ),
-        ] = mp.Field(default_factory=dict)
+        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
         exception_counts_summary: Annotated[
             str,
             mp.Field(description="Human-readable summary for logs and diagnostics."),
@@ -60,14 +59,14 @@ class FlextModelsErrors:
             return payload
 
     class ExceptionMetricsState(m.StrictModel):
-        """Mutable-through-copy runtime state for exception counters."""
+        """Copy-updated runtime state for exception counters."""
 
         exception_counts: Annotated[
-            t.MutableIntMapping,
+            t.IntMapping,
             mp.Field(
                 description="Recorded counts keyed by exception type name.",
             ),
-        ] = mp.Field(default_factory=dict)
+        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
 
         @up.computed_field()
         @property
@@ -100,7 +99,9 @@ class FlextModelsErrors:
 
         def clear(self) -> Self:
             """Return a cleared metrics state."""
-            cleared: Self = self.model_copy(update={"exception_counts": {}})
+            cleared: Self = self.model_copy(
+                update={"exception_counts": MappingProxyType({})}
+            )
             return cleared
 
         def snapshot(self) -> FlextModelsErrors.ExceptionMetricsSnapshot:

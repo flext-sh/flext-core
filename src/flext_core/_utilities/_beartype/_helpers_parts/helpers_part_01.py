@@ -42,7 +42,7 @@ class FlextUtilitiesBeartypeHelpers:
         lazy_module = importlib.import_module("flext_core.lazy")
         lazy_imports = lazy_module.normalize_lazy_imports(
             package.__name__,
-            package._LAZY_IMPORTS,
+            getattr(package, "_LAZY_IMPORTS"),
         )
         return tuple(
             (
@@ -107,6 +107,8 @@ class FlextUtilitiesBeartypeHelpers:
         seen.add(hint_id)
         if hint is Any or hint is object:
             return True
+        if hint is type or get_origin(hint) is type:
+            return False
         return any(
             h.contains_any_recursive(child, seen=seen) for child in get_args(hint)
         )
