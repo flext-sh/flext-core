@@ -148,10 +148,15 @@ class TestsFlextService(FlextTestsCase):
     def test_isolated_runtime_scopes_settings_without_leaking(self) -> None:
         baseline_app_name = self._PureService.fetch_settings().app_name
 
-        with self._PureService.isolated_test_runtime(app_name="service-scoped"):
+        with self._PureService.isolated_test_runtime(
+            app_name="service-scoped",
+        ) as scoped_service:
             scoped_global = FlextTestsSettings.fetch_global()
+            scoped_settings = FlextTestsSettings.model_validate(
+                scoped_service.settings,
+            )
 
-            assert self._PureService.fetch_settings().app_name == "service-scoped"
+            assert scoped_settings.app_name == "service-scoped"
             assert FlextTestsSettings.fetch_global() is scoped_global
             assert scoped_global.app_name != "service-scoped"
 
