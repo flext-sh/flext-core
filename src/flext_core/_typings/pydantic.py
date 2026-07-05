@@ -4,11 +4,8 @@ Including: StrictStr, EmailStr, UUID*, HttpUrl, PositiveInt, etc.
 
 Architecture: Abstraction boundary - typings layer
 
-Type aliases use PEP 613 TypeAlias (class body compatible with mypy 1.20+) instead
-of PEP 695 `type X = ...` which PEP 695 officially restricts to module scope and
-mypy treats inconsistently inside class bodies (rejecting usages as types).
-Runtime callables and generic classes that accept `[T]` parameterization remain
-as plain attributes because `TypeAlias` only applies to non-generic aliases.
+Type aliases use PEP 695 `type` statements for concrete and generic aliases.
+Runtime callables remain plain attributes.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -113,15 +110,15 @@ class FlextTypesPydantic:
     type EncodedBytes = pydantic.EncodedBytes
 
     # JSON and special types
-    # pydantic.Json / ImportString / InstanceOf / Secret are Generic classes/aliases
-    # used with [T] parameterization (e.g. `Json[Mapping[str, int]]`). TypeAlias only
-    # supports non-generic aliases, so we keep them as plain attributes which pydantic
-    # and the mypy plugin recognize as type markers.
+    # pydantic.Json / ImportString / InstanceOf / Secret are generic
+    # runtime markers recognized by pydantic and the mypy plugin.
     Json = pydantic.Json
     # JsonValue is also module-level so beartype can resolve forward references
     # emitted from aliases that flow through this class namespace.
     type JsonValue = pydantic.JsonValue
+    type BaseModelType = pydantic.BaseModel
     BaseModel = pydantic.BaseModel
+    type TypeAdapterType[T] = pydantic.TypeAdapter[T]
     TypeAdapter = pydantic.TypeAdapter
     ConfigDict = pydantic.ConfigDict
     ImportString = pydantic.ImportString

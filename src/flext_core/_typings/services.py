@@ -32,7 +32,7 @@ from flext_core._typings.pydantic import FlextTypesPydantic as tp
 class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
-    type JsonPayloadLeaf = t.Scalar | Path | tp.JsonValue | tp.BaseModel
+    type JsonPayloadLeaf = t.Scalar | Path | tp.JsonValue | tp.BaseModelType
     type JsonPayloadCollectionValue = (
         JsonPayloadLeaf
         | t.MappingKV[str, JsonPayloadLeaf]
@@ -56,20 +56,20 @@ class FlextTypesServices:
     )
     type SettingsOverridesMapping = t.MappingKV[str, SettingsOverride | None]
     type RegistryDict[T] = MutableMapping[str, T]
-    type DomainModelCarrier = tp.BaseModel | p.Model
-    type ScalarOrModel = t.Scalar | tp.BaseModel
-    type ModelClass[T: tp.BaseModel] = type[T]
+    type DomainModelCarrier = tp.BaseModelType | p.Model
+    type ScalarOrModel = t.Scalar | tp.BaseModelType
+    type ModelClass[T: tp.BaseModelType] = type[T]
     type LogArgument = JsonPayload | p.Model
     type LogValue = LogArgument | Exception
     type LogResult = prt.Result[bool]
     type MetadataMapping = t.MappingKV[str, JsonPayload]
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
-    type RuntimeData = tp.JsonValue | tp.BaseModel
-    type BootstrapInput = tp.BaseModel | t.JsonMapping
+    type RuntimeData = tp.JsonValue | tp.BaseModelType
+    type BootstrapInput = tp.BaseModelType | t.JsonMapping
     type SettingsInput = SettingsOverride
     type ServiceValue = (
         JsonPayload
-        | tp.BaseModel
+        | tp.BaseModelType
         | pl.Logger
         | ps.Settings
         | pcx.Context
@@ -96,22 +96,22 @@ class FlextTypesServices:
 
     type HandlerCallable = Callable[
         ...,
-        tp.BaseModel | prt.ResultLike[ScalarOrModel],
+        tp.BaseModelType | prt.ResultLike[ScalarOrModel],
     ]
     type DispatchableHandler = (
-        tp.BaseModel
+        tp.BaseModelType
         | ph.DispatchMessage
         | ph.Handle
         | ph.Execute
         | ph.AutoDiscoverableHandler
         | Callable[
             ...,
-            tp.BaseModel | JsonPayload | prt.ResultLike[JsonPayload] | None,
+            tp.BaseModelType | JsonPayload | prt.ResultLike[JsonPayload] | None,
         ]
     )
     type ResolvedHandlerCallable = Callable[
         ...,
-        tp.BaseModel | JsonPayload | prt.ResultLike[JsonPayload] | None,
+        tp.BaseModelType | JsonPayload | prt.ResultLike[JsonPayload] | None,
     ]
     type RoutedHandlerCallable = Callable[
         [p.Routable],
@@ -122,7 +122,7 @@ class FlextTypesServices:
     type LoggerWrapperFactory = Callable[[], type[pl.Logger]]
 
     type SortableObjectType = str | int | float
-    type ValueAdapter[T] = tp.TypeAdapter[T]
+    type ValueAdapter[T] = tp.TypeAdapterType[T]
     type MessageTypeSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
     type IncEx = AbstractSet[str] | t.MappingKV[str, AbstractSet[str] | bool]
 
@@ -171,7 +171,7 @@ class FlextTypesServices:
         | JsonPayload
         | bytearray
         | bytes
-        | Callable[..., tp.JsonValue | tp.BaseModel]
+        | Callable[..., tp.JsonValue | tp.BaseModelType]
         | Callable[[], RegisterableService]
         | Path
         | t.Scalar
@@ -182,7 +182,7 @@ class FlextTypesServices:
         | t.MappingKV[str, JsonPayload]
         | tp.JsonValue
         | ModuleType
-        | tp.BaseModel
+        | tp.BaseModelType
         | pc.Container
         | pcx.Context
         | ph.Dispatcher

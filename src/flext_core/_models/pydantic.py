@@ -143,6 +143,7 @@ class FlextModelsPydantic:
     FieldInfo = FieldInfo
     FieldSerializationInfo = FieldSerializationInfo
 
+    type TypeAdapterType[T] = PydanticTypeAdapter[T]
     TypeAdapter = PydanticTypeAdapter
 
     # Schema and validator handlers
