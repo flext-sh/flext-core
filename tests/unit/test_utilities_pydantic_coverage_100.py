@@ -67,16 +67,14 @@ class TestsFlextUtilitiesPydantic:
         assert payload_dict == {"name": "queue", "count": 2, "tags": ["cli"]}
         assert payload_jsonable == payload_dict
 
-    def test_validate_call_rejects_invalid_argument_types(self) -> None:
+    def test_validate_call_rejects_invalid_argument_values(self) -> None:
         @u.validate_call()
-        def to_upper(value: str) -> str:
-            return value.upper()
+        def double_positive(value: t.PositiveInt) -> int:
+            return value * 2
 
-        assert to_upper("cli") == "CLI"
+        assert double_positive(4) == 8
         with pytest.raises(m.ValidationError):
-            # Why: negative test feeds a deliberately wrong-typed argument to
-            # prove ``u.validate_call`` enforces the annotation at runtime.
-            to_upper(object())  # type: ignore[arg-type]
+            double_positive(-1)
 
     def test_public_facade_resolves_runtime_bootstrap_options_from_json(
         self,

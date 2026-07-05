@@ -19,7 +19,9 @@ from tests.models import m
 class TestsFlextCoreExceptionsPublicMetrics:
     """Public-contract behavior of exception occurrence metrics."""
 
-    @pytest.fixture(autouse=True)
+    pytestmark = pytest.mark.usefixtures("_isolated_metrics")
+
+    @pytest.fixture
     def _isolated_metrics(self) -> Iterator[None]:
         """Guarantee each test observes a clean, isolated metrics state."""
         e.clear_metrics()

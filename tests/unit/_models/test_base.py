@@ -92,13 +92,15 @@ class TestsFlextCoreBase:
 
         assert base != SampleValue(amount=amount, label=label)
 
-    def test_equal_value_objects_share_hash_and_deduplicate_in_set(self) -> None:
+    def test_equal_value_objects_share_hash_and_distinct_values_do_not(self) -> None:
         first = SampleValue(amount=9, label="gbp")
         second = SampleValue(amount=9, label="gbp")
         distinct = SampleValue(amount=10, label="gbp")
 
+        assert first == second
+        assert first != distinct
         assert hash(first) == hash(second)
-        assert len({first, second, distinct}) == 2
+        assert len({hash(first), hash(second), hash(distinct)}) == 2
 
     def test_value_object_is_not_equal_to_foreign_type(self) -> None:
         value = SampleValue(amount=1, label="jpy")

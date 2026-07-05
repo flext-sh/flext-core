@@ -64,13 +64,14 @@ class TestsFlextConstantsNew:
     )
     def test_domain_enums_are_string_valued_for_routing(
         self,
-        domain_enum: type[enum.StrEnum],
+        domain_enum: type[enum.Enum],
     ) -> None:
         """Every routing enum is a StrEnum whose str() equals its wire value.
 
         Callers serialize these members to strings and compare against raw wire
         tokens, so ``str(member) == member.value`` is a load-bearing contract.
         """
+        tm.that(issubclass(domain_enum, enum.StrEnum), eq=True)
         members = list(domain_enum)
         tm.that(bool(members), eq=True, msg=f"{domain_enum.__name__} is empty")
         for member in members:

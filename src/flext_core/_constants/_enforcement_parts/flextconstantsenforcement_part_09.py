@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase as t
 
-_NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
+NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
     "no_core_tests_namespace": (
         'deprecated namespace "{symbol}" in {file}:{line}',
         "Use flat test namespace access (c/p/t/m/u.Tests.*) with no Core intermediary.",
@@ -94,4 +94,4 @@ _NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
     ),
 }
 
-__all__: list[str] = ["_NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT"]
+__all__: list[str] = ["NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT"]

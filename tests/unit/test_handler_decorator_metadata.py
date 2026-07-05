@@ -72,13 +72,17 @@ class TestsFlextHandlerDecoratorMetadata:
         class CreateCommand:
             pass
 
-        with pytest.raises(c.ValidationError):
-
+        def define_invalid_service() -> None:
             class Service:
                 @h.handler(command=CreateCommand, priority=-3)
                 def handle_user(self, cmd: CreateCommand) -> p.Result[str]:
                     _ = cmd
                     return r[str].ok("handled")
+
+            _ = Service
+
+        with pytest.raises(c.ValidationError):
+            define_invalid_service()
 
     def test_defaults_apply_when_only_command_given(self) -> None:
         class CreateCommand:

@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import Hashable, MutableSequence
 from typing import Annotated, override
 
 from pydantic import Field
@@ -39,6 +39,7 @@ class FlextModelsEntity:
         m.TimestampedModel,
         m.IdentifiableMixin,
         m.VersionableMixin,
+        Hashable,
     ):
         """Entity implementation - base class for domain entities with identity.
 
@@ -78,19 +79,8 @@ class FlextModelsEntity:
             if self.updated_at is None:
                 self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
 
-    class Value(m.ContractModel):
+    class Value(m.FrozenValueModel):
         """Base class for value objects - immutable and compared by value."""
-
-        @override
-        def __eq__(self, other: object) -> bool:
-            """Compare by value."""
-            if not isinstance(other, m.EnforcedModel):
-                return NotImplemented
-            return u.compare_value_objects_by_value(self, other)
-
-        def __hash__(self) -> int:
-            """Hash based on values for use in sets/dicts."""
-            return u.hash_value_object_by_value(self)
 
     class AggregateRoot(Entity):
         """Aggregate-root marker class (DDD consistency boundary)."""

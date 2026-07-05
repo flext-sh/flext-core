@@ -28,21 +28,21 @@ from tests.unit.test_project_metadata_facade_access import (
 )
 from tests.unit.test_public_api_contract import TestsFlextCorePublicApiContract
 from tests.unit.test_registry import TestsFlextCoreRegistry
-from tests.unit.test_runtime import TestsFlextRuntime
+from tests.unit.test_runtime import TestsFlextCoreRuntime
 from tests.unit.test_service import TestsFlextService
-from tests.unit.test_service_bootstrap import TestsFlextServiceBootstrap
-from tests.unit.test_settings import TestsFlextSettings
-from tests.unit.test_utilities import TestsFlextUtilitiesSmoke
+from tests.unit.test_service_bootstrap import TestsFlextCoreServiceBootstrap
+from tests.unit.test_settings import TestsFlextCoreSettings
+from tests.unit.test_utilities import TestsFlextCoreUtilities
 from tests.unit.test_utilities_collection_coverage_100 import (
     TestsFlextCoreUtilitiesCollection,
 )
 from tests.unit.test_utilities_coverage import TestsFlextCoreUtilitiesCoverage
-from tests.unit.test_utilities_domain import TestsFlextUtilitiesDomain
+from tests.unit.test_utilities_domain import TestsFlextCoreUtilitiesDomain
 from tests.unit.test_utilities_generators_full_coverage import (
     TestsFlextCoreUtilitiesGenerators,
 )
 from tests.unit.test_utilities_pydantic_coverage_100 import TestsFlextUtilitiesPydantic
-from tests.unit.test_utilities_reliability import TestsFlextUtilitiesReliability
+from tests.unit.test_utilities_reliability import TestsFlextCoreUtilitiesReliability
 from tests.unit.test_utilities_runtime_violation_registry_coverage_100 import (
     TestsFlextCoreUtilitiesRuntimeViolationRegistry,
 )
@@ -53,7 +53,7 @@ from tests.unit.test_utilities_text_full_coverage import TestsFlextUtilitiesText
 from tests.unit.test_utilities_type_guards_coverage_100 import (
     TestsFlextCoreUtilitiesTypeGuards,
 )
-from tests.unit.test_version import TestsFlextVersion
+from tests.unit.test_version import TestsFlextCoreVersion
 
 __all__: list[str] = [
     "TestsFlextConstantsNew",
@@ -66,12 +66,19 @@ __all__: list[str] = [
     "TestsFlextCoreModelsCqrs",
     "TestsFlextCorePublicApiContract",
     "TestsFlextCoreRegistry",
+    "TestsFlextCoreRuntime",
+    "TestsFlextCoreServiceBootstrap",
+    "TestsFlextCoreSettings",
+    "TestsFlextCoreUtilities",
     "TestsFlextCoreUtilitiesCollection",
     "TestsFlextCoreUtilitiesCoverage",
+    "TestsFlextCoreUtilitiesDomain",
     "TestsFlextCoreUtilitiesGenerators",
+    "TestsFlextCoreUtilitiesReliability",
     "TestsFlextCoreUtilitiesRuntimeViolationRegistry",
     "TestsFlextCoreUtilitiesSettings",
     "TestsFlextCoreUtilitiesTypeGuards",
+    "TestsFlextCoreVersion",
     "TestsFlextCoverageLoggings",
     "TestsFlextDecoratorsDiscovery",
     "TestsFlextDispatcher",
@@ -82,14 +89,7 @@ __all__: list[str] = [
     "TestsFlextLoggings",
     "TestsFlextMixins",
     "TestsFlextModelsProjectMetadata",
-    "TestsFlextRuntime",
     "TestsFlextService",
-    "TestsFlextServiceBootstrap",
-    "TestsFlextSettings",
-    "TestsFlextUtilitiesDomain",
     "TestsFlextUtilitiesPydantic",
-    "TestsFlextUtilitiesReliability",
-    "TestsFlextUtilitiesSmoke",
     "TestsFlextUtilitiesText",
-    "TestsFlextVersion",
 ]

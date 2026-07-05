@@ -87,7 +87,7 @@ class FlextTypesServices:
     type ResourceCallable = Callable[[], RegisterableService]
     type ModelInput = tp.JsonValue | prt.HasModelDump | t.MappingKV[str, JsonPayload]
     type ConfigModelInput = prt.HasModelDump | t.MappingKV[str, JsonPayload]
-    type MetadataInput = prt.HasModelDump | t.MappingKV[str, tp.JsonValue] | None
+    type MetadataInput = prt.HasModelDump | t.MappingKV[str, JsonPayload | None] | None
     type ServiceMap = t.MappingKV[str, RegisterableService]
     type FactoryMap = t.MappingKV[str, FactoryCallable]
     type ResourceMap = t.MappingKV[str, ResourceCallable]

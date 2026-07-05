@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Final
 
 from flext_core._constants._enforcement_data import SMELL_RULES_TEXT
 
-from .flextconstantsenforcement_part_09 import _NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT
+from .flextconstantsenforcement_part_09 import NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -122,7 +122,7 @@ _BASE_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
         '{probe}(obj, "{name}") probes private attribute in {file}',
         "Refactor the consumer to use the public surface (AGENTS.md §3.6).",
     ),
-    **_NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT,
+    **NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT,
 }
 
 

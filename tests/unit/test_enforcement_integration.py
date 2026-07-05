@@ -120,8 +120,7 @@ def _capture_import_warnings(
         return tuple(
             str(entry.message)
             for entry in caught
-            if isinstance(entry.category, type)
-            and issubclass(entry.category, FlextMroViolation)
+            if issubclass(entry.category, FlextMroViolation)
             and "violates FLEXT" in str(entry.message)
         )
     finally:

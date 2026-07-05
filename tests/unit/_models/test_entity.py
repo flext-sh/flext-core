@@ -83,11 +83,12 @@ class TestsFlextCoreEntity:
 
         assert hash(original) == hash(same_identity)
 
-    def test_entities_with_same_identity_collapse_in_set(self) -> None:
+    def test_entities_with_same_identity_share_hash(self) -> None:
         original = self._Sample(name="a")
         same_identity = self._Sample(name="other", unique_id=original.unique_id)
 
-        assert len({original, same_identity}) == 1
+        assert original == same_identity
+        assert len({hash(original), hash(same_identity)}) == 1
 
     def test_entity_model_dump_exposes_public_fields(self) -> None:
         entity = self._Sample(name="alpha")

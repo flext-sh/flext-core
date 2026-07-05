@@ -9,8 +9,6 @@ internal registries or logging side effects.
 
 from __future__ import annotations
 
-from typing import override
-
 import pytest
 from flext_tests import r
 
@@ -39,7 +37,6 @@ class RecordingHandler:
         self.message_type = route
         self.received: list[p.Routable] = []
 
-    @override
     def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
         self.received.append(message)
         return r[t.JsonPayload].ok({"route": self.message_type})

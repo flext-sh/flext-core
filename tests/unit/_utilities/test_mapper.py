@@ -61,7 +61,14 @@ class TestsFlextCoreMapper:
         assert u.agg([{"x": 1}, {"x": 2}, {"x": 3}], "x") == 6
 
     def test_agg_applies_custom_reducer(self) -> None:
-        assert u.agg([{"x": 1}, {"x": 5}, {"x": 3}], "x", fn=max) == 5
+        def max_numeric(values: t.SequenceOf[t.Numeric]) -> t.Numeric:
+            iterator = iter(values)
+            highest = next(iterator)
+            for value in iterator:
+                highest = max(highest, value)
+            return highest
+
+        assert u.agg([{"x": 1}, {"x": 5}, {"x": 3}], "x", fn=max_numeric) == 5
 
     def test_agg_empty_sequence_returns_zero(self) -> None:
         assert u.agg([], "x") == 0

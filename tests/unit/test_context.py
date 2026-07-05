@@ -18,7 +18,9 @@ from flext_core import FlextContext
 class TestsFlextCoreContext:
     """Contract: scope store + metadata + process-global contextvar operations."""
 
-    @pytest.fixture(autouse=True)
+    pytestmark = pytest.mark.usefixtures("_isolate_process_context")
+
+    @pytest.fixture
     def _isolate_process_context(self) -> Iterator[None]:
         """Keep process-global contextvars from leaking across tests."""
         FlextContext.clear_context()
