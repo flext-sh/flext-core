@@ -157,7 +157,7 @@ class TestsFlextCoreModelsContainer:
     # ------------------------------------------------------------------ #
 
     def test_config_map_model_dump_returns_plain_mapping(self) -> None:
-        payload = {"a": 1, "b": "two"}
+        payload: dict[str, t.JsonPayload] = {"a": 1, "b": "two"}
         assert m.ConfigMap(root=payload).model_dump() == payload
 
     def test_config_map_round_trips_through_model_dump(self) -> None:
@@ -188,7 +188,7 @@ class TestsFlextCoreModelsContainer:
         assert bool(m.ObjectList(root=root)) is truthy
 
     def test_object_list_model_dump_returns_plain_list(self) -> None:
-        payload = ["a", 1, "b"]
+        payload: list[t.JsonPayload] = ["a", 1, "b"]
         assert m.ObjectList(root=payload).model_dump() == payload
 
     def test_object_list_rejects_non_sequence_root(self) -> None:

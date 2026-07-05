@@ -17,6 +17,7 @@ from tests.unit._result_exception_support import TestsFlextResultExceptionCarryi
 
 if TYPE_CHECKING:
     from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(
@@ -135,7 +136,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
 
     def test_from_validation_success_returns_populated_model(self) -> None:
         # Arrange
-        valid = {"name": "Alice", "age": 30}
+        valid: dict[str, t.JsonPayload] = {"name": "Alice", "age": 30}
 
         # Act
         result = r[TestsFlextResultExceptionCarrying.UserModel].from_validation(

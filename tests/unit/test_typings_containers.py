@@ -105,7 +105,7 @@ class TestsFlextCoreTypingsContainers:
 
     def test_dict_model_dump_returns_underlying_mapping(self) -> None:
         """model_dump round-trips the validated mapping as a plain dict."""
-        payload = {"a": 1, "b": "two"}
+        payload: dict[str, t.JsonPayload] = {"a": 1, "b": "two"}
         d = m.Dict(root=payload)
         tm.that(d.model_dump(), eq=payload)
 
@@ -152,7 +152,7 @@ class TestsFlextCoreTypingsContainers:
 
     def test_object_list_model_dump_returns_list(self) -> None:
         """model_dump round-trips the validated sequence as a plain list."""
-        payload = ["a", 1, True]
+        payload: list[t.JsonPayload] = ["a", 1, True]
         tm.that(m.ObjectList(root=payload).model_dump(), eq=payload)
 
     def test_object_list_rejects_non_sequence_root(self) -> None:

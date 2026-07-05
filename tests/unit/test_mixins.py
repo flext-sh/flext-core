@@ -159,16 +159,17 @@ class TestsFlextMixins:
             ("settings_overrides", "not-a-mapping"),
             ("runtime_settings", 123),
             ("initial_context", "not-a-context"),
-            ("settings_type", object()),
+            ("settings_type", str),
         ],
     )
     def test_constructor_rejects_invalid_bootstrap_value(
         self,
         field_name: str,
-        bad_value: object,
+        bad_value: t.GuardInput,
     ) -> None:
+        invalid_bootstrap: dict[str, t.GuardInput] = {field_name: bad_value}
         with pytest.raises(TypeError):
-            self._Service(**{field_name: bad_value})
+            self._Service(**invalid_bootstrap)
 
     def test_correlation_id_round_trips_through_flext_context(self) -> None:
         FlextContext.apply_correlation_id("trace-42")
