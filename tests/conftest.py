@@ -11,6 +11,7 @@ import io
 import json
 import logging
 import os
+import sys
 import time
 from collections.abc import (
     Iterator,
@@ -21,7 +22,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Annotated, Literal, TypeVar
+from types import ModuleType
+from typing import Annotated, Literal, TypeVar, cast
 
 import pytest
 from flext_tests import (
@@ -134,7 +136,9 @@ def pytest_markdown_docs_globals() -> dict[str, object]:
         "ldif_content": "",
     }
 
-    return {
+    runtime_module = ModuleType("tests._markdown_docs_runtime")
+    sys.modules[runtime_module.__name__] = runtime_module
+    runtime_module.__dict__.update({
         # Canonical runtime aliases and common classes.
         "c": c,
         "d": getattr(core, "d", _DocsStub),
@@ -182,4 +186,5 @@ def pytest_markdown_docs_globals() -> dict[str, object]:
         "handle_error": lambda _error: None,
         "process_entries": lambda entries: entries,
         **stub_names,
-    }
+    })
+    return cast("dict[str, object]", runtime_module.__dict__)
