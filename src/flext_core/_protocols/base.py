@@ -136,22 +136,28 @@ class FlextProtocolsBase:
 
     @runtime_checkable
     class Routable(Protocol):
-        """Protocol for messages that carry explicit route information."""
+        """Base protocol for messages that carry explicit route information."""
 
-        @property
-        def command_type(self) -> str | None:
-            """Command type identifier."""
-            ...
+    @runtime_checkable
+    class CommandRoutable(Routable, Protocol):
+        """Protocol for command messages."""
 
-        @property
-        def event_type(self) -> str | None:
-            """Event type identifier."""
-            ...
+        command_type: str
+        """Command type identifier."""
 
-        @property
-        def query_type(self) -> str | None:
-            """Query type identifier."""
-            ...
+    @runtime_checkable
+    class EventRoutable(Routable, Protocol):
+        """Protocol for event messages."""
+
+        event_type: str
+        """Event type identifier."""
+
+    @runtime_checkable
+    class QueryRoutable(Routable, Protocol):
+        """Protocol for query messages."""
+
+        query_type: str
+        """Query type identifier."""
 
     @runtime_checkable
     class Executable(Base, Protocol):

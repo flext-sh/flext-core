@@ -72,7 +72,7 @@ class FlextModelsBase:
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(frozen=True)
 
-    class ArbitraryTypesModel(EnumManagedModel):
+    class ArbitraryTypesModel(ManagedModel):
         """Base model with arbitrary types support."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(

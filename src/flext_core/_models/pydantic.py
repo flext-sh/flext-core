@@ -25,7 +25,7 @@ from pydantic import (
     AliasPath,
     BaseModel as PydanticBaseModel,
     BeforeValidator,
-    ConfigDict,
+    ConfigDict as _PydanticConfigDict,
     Discriminator,
     Field,
     FieldSerializationInfo,
@@ -55,7 +55,7 @@ from pydantic_settings import (
     BaseSettings as PydanticBaseSettings,
     EnvSettingsSource,
     PydanticBaseSettingsSource,
-    SettingsConfigDict,
+    SettingsConfigDict as _PydanticSettingsConfigDict,
 )
 
 if TYPE_CHECKING:
@@ -120,8 +120,8 @@ class FlextModelsPydantic:
         """Canonical RootModel exported through the FLEXT models facade."""
 
     # Pydantic field utilities
-    ConfigDict = ConfigDict
-    SettingsConfigDict = SettingsConfigDict
+    ConfigDict = _PydanticConfigDict
+    SettingsConfigDict = _PydanticSettingsConfigDict
 
     Field = staticmethod(_field)
     PrivateAttr = PrivateAttr

@@ -20,22 +20,20 @@ from flext_core._models.container import FlextModelsContainer as mc
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core._typings.services import FlextTypesServices as ts
-
 
 class FlextDecoratorsRuntime(FlextDecoratorsCombined):
     """Decorators for runtime factory metadata and timeout enforcement."""
 
     @staticmethod
-    def factory(
+    def factory[**P, T](
         name: str,
         *,
         singleton: bool = False,
         lazy: bool = True,
-    ) -> Callable[[ts.HandlerCallable], ts.HandlerCallable]:
+    ) -> Callable[[Callable[P, T]], Callable[P, T]]:
         """Mark functions as factories for DI container discovery."""
 
-        def decorator(func: ts.HandlerCallable) -> ts.HandlerCallable:
+        def decorator(func: Callable[P, T]) -> Callable[P, T]:
             settings = mc.FactoryDecoratorConfig(
                 name=name,
                 singleton=singleton,
