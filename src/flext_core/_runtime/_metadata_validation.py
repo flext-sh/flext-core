@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
@@ -27,18 +27,8 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
     """Validate metadata payloads after JSON normalization."""
 
     @staticmethod
-    @overload
-    def normalize_metadata_input_mapping(value: None) -> None: ...
-
-    @staticmethod
-    @overload
     def normalize_metadata_input_mapping(
-        value: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump,
-    ) -> tb.MappingKV[str, ts.JsonPayload | None]: ...
-
-    @staticmethod
-    def normalize_metadata_input_mapping(
-        value: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+        value: ts.JsonPayload | pr.HasModelDump | None,
     ) -> tb.MappingKV[str, ts.JsonPayload | None] | None:
         """Normalize mapping-like metadata input while preserving explicit None."""
         if value is None:
@@ -70,6 +60,8 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
         normalized_result = (
             FlextRuntimeMetadataValidation.normalize_metadata_input_mapping(value)
         )
+        if normalized_result is None:
+            return {}
         normalized_mapping = normalized_result
         for key in normalized_mapping:
             if key.startswith("_"):

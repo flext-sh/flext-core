@@ -111,7 +111,7 @@ class TestsFlextCoreRuntime:
 
     def test_normalize_metadata_input_mapping_rejects_non_dict_like_input(self) -> None:
         with pytest.raises(TypeError, match="dict-like"):
-            FlextRuntime.normalize_metadata_input_mapping("not-a-mapping")  # type: ignore[arg-type]  # Why: exercising the runtime type-guard contract.
+            FlextRuntime.normalize_metadata_input_mapping("not-a-mapping")
 
     def test_validate_metadata_attributes_drops_none_values(self) -> None:
         assert FlextRuntime.validate_metadata_attributes({"a": 1, "b": None}) == {
@@ -159,7 +159,7 @@ class TestsFlextCoreRuntime:
 
     def test_normalize_registerable_service_rejects_unregisterable_value(self) -> None:
         with pytest.raises(ValueError, match="RegisterableService"):
-            FlextRuntime.normalize_registerable_service(object())  # type: ignore[arg-type]  # Why: asserting the rejection contract for unsupported inputs.
+            FlextRuntime.normalize_registerable_service(bytearray(b"unsupported"))
 
     def test_create_container_exposes_registered_object_provider(self) -> None:
         container = FlextRuntime.DependencyIntegration.create_container(

@@ -65,7 +65,7 @@ class TestsFlextCoreModels:
 
     def test_value_object_rejects_wrong_field_type(self) -> None:
         with pytest.raises(m.ValidationError):
-            self._SampleValue(x="not-an-int", y="a")  # type: ignore[arg-type]
+            self._SampleValue.model_validate({"x": "not-an-int", "y": "a"})
 
     # ----- Entity: identity-based semantics ----------------------------------
 
@@ -83,10 +83,10 @@ class TestsFlextCoreModels:
         assert same_reference == first
         assert first != second
 
-    def test_entity_hash_supports_identity_deduplication(self) -> None:
+    def test_entity_hash_is_stable_for_identity(self) -> None:
         entity = self._SampleEntity(name="a")
 
-        assert len({entity, entity}) == 1
+        assert hash(entity) == hash(entity)
 
     def test_entity_not_equal_to_non_entity_object(self) -> None:
         entity = self._SampleEntity(name="a")
