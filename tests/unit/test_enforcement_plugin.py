@@ -8,6 +8,7 @@ flext-tests dispatcher.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from importlib.metadata import entry_points
 
 import pytest
@@ -28,7 +29,7 @@ class TestsFlextCoreEnforcementPlugin:
     """Entry-point and registration contract for the flext-core plugin."""
 
     @pytest.fixture
-    def _clear_registry(self) -> None:
+    def _clear_registry(self) -> Iterator[None]:
         """Keep the shared contribution registry isolated between cases."""
         clear()
         yield
