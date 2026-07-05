@@ -75,22 +75,22 @@ class _AuditSubscriber:
         return r[bool].ok(True)
 
 
-def _ping_handler(message: p.Routable) -> p.Result[str]:
-    if not isinstance(message, m.Examples.Ping):
-        return r[str].fail("unexpected_message")
-    return r[str].ok(f"pong:{message.value}")
+class _PingHandler:
+    message_type = m.Examples.Ping
+
+    def __call__(self, message: p.Routable) -> p.Result[str]:
+        if not isinstance(message, m.Examples.Ping):
+            return r[str].fail("unexpected_message")
+        return r[str].ok(f"pong:{message.value}")
 
 
-_ping_handler.message_type = m.Examples.Ping
+class _FailingDeleteHandler:
+    message_type = m.Examples.FailingDelete
 
-
-def _failing_delete_handler(message: p.Routable) -> p.Result[str]:
-    if not isinstance(message, m.Examples.FailingDelete):
-        return r[str].fail("unexpected_message")
-    return r[str].fail("delete_failed")
-
-
-_failing_delete_handler.message_type = m.Examples.FailingDelete
+    def __call__(self, message: p.Routable) -> p.Result[str]:
+        if not isinstance(message, m.Examples.FailingDelete):
+            return r[str].fail("unexpected_message")
+        return r[str].fail("delete_failed")
 
 
 def _no_route_handler(message: p.Routable) -> p.Result[str]:
@@ -108,7 +108,7 @@ class Ex04DispatchDsl:
         _ = dispatcher.register_handler(_CreateUserHandler())
         _ = dispatcher.register_handler(_GetUserHandler())
         _ = dispatcher.register_handler(_DeleteUserHandler())
-        _ = dispatcher.register_handler(_ping_handler)
+        _ = dispatcher.register_handler(_PingHandler())
         return dispatcher
 
     @classmethod
@@ -148,7 +148,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         )
         self.audit_check(
             "register(callable).is_success",
-            dispatcher.register_handler(_ping_handler).success,
+            dispatcher.register_handler(_PingHandler()).success,
         )
         created = dispatcher.dispatch(m.Examples.CreateUser(username="alice"))
         fetched = dispatcher.dispatch(m.Examples.GetUser(username="alice"))
@@ -180,7 +180,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         no_handler = u.build_dispatcher().dispatch(
             m.Examples.GetUser(username="missing"),
         )
-        failing_registration = dispatcher.register_handler(_failing_delete_handler)
+        failing_registration = dispatcher.register_handler(_FailingDeleteHandler())
         failing_dispatch = dispatcher.dispatch(
             m.Examples.FailingDelete(username="alice"),
         )
