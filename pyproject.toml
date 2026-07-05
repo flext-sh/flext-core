@@ -61,6 +61,9 @@ name = "FLEXT Team"
 email = "team@flext.sh"
 name = "FLEXT Team"
 
+[project.entry-points.pytest11]
+flext_core_enforcement = "flext_core._fixtures.enforcement"
+
 # [MANAGED] consolidated development dependencies
 [project.optional-dependencies]
 dev = [
