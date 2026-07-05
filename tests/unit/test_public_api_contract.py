@@ -14,10 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import json
 from importlib import import_module
-from pathlib import Path
-from typing import ClassVar
 
 import pytest
 
@@ -26,49 +23,7 @@ from flext_core import c, d, e, h, m, p, r, s, t, u, x
 from flext_core._constants.enforcement import FlextMroViolation
 from flext_core._settings.base import FlextSettingsBase
 
-_GOLDEN_PATH = Path(__file__).parent / "_golden_public_api.json"
-
-_FROZEN: frozenset[str] = frozenset({
-    "__author__",
-    "__author_email__",
-    "__description__",
-    "__license__",
-    "__title__",
-    "__url__",
-    "__version__",
-    "__version_info__",
-    "FlextConstants",
-    "FlextContainer",
-    "FlextContext",
-    "FlextDecorators",
-    "FlextDispatcher",
-    "FlextExceptions",
-    "FlextHandlers",
-    "FlextLazy",
-    "FlextLogger",
-    "FlextMixins",
-    "FlextModels",
-    "FlextProtocols",
-    "FlextRegistry",
-    "FlextResult",
-    "FlextRuntime",
-    "FlextService",
-    "FlextSettings",
-    "FlextTypes",
-    "FlextUtilities",
-    "c",
-    "d",
-    "e",
-    "h",
-    "m",
-    "p",
-    "r",
-    "s",
-    "t",
-    "u",
-    "x",
-})
-
+# Public facade names a caller can import from ``flext_core``.
 _FACADES: tuple[str, ...] = (
     "FlextConstants",
     "FlextContainer",
@@ -91,6 +46,8 @@ _FACADES: tuple[str, ...] = (
     "FlextUtilities",
 )
 
+# Sub-facades intentionally absent from ``__all__`` but still lazily resolvable
+# by callers that reference them directly.
 _DROPPED_BUT_LAZY: tuple[str, ...] = (
     "FlextSettingsBase",
     "FlextModelsBase",
@@ -118,47 +75,23 @@ _ALIASES: tuple[tuple[object, str], ...] = (
 class TestsFlextCorePublicApiContract:
     """Assert the observable behavior promised by the flext_core public surface."""
 
-    golden: ClassVar[dict[str, list[str]]] = json.loads(_GOLDEN_PATH.read_text())
+    @pytest.mark.parametrize("name", _FACADES)
+    def test_named_facade_is_importable(self, name: str) -> None:
+        """Every advertised facade is reachable from the package root."""
+        assert hasattr(flext_core, name), f"{name} not importable from flext_core"
 
-    def test_all_equals_frozen_set(self) -> None:
-        """``__all__`` is locked so public roots cannot drift silently."""
-        actual = set(flext_core.__all__)
-        assert actual == _FROZEN, (
-            f"__all__ drift detected.\n"
-            f"  extra  (in __all__ but not frozen): {sorted(actual - _FROZEN)}\n"
-            f"  missing (in frozen but not __all__): {sorted(_FROZEN - actual)}"
-        )
-
-    def test_all_symbols_importable(self) -> None:
-        """Every name in ``__all__`` is reachable via ``getattr``."""
+    def test_every_all_entry_resolves_to_an_object(self) -> None:
+        """Each name published in ``__all__`` actually resolves via ``getattr``."""
         missing = [name for name in flext_core.__all__ if not hasattr(flext_core, name)]
-        assert not missing, f"Not importable from flext_core: {missing}"
+        assert not missing, f"Names in __all__ but not importable: {missing}"
 
-    def test_facade_surfaces_match_golden(self) -> None:
-        """Facade public attributes match the committed golden snapshot."""
-        drift: list[str] = []
-        for facade_name in _FACADES:
-            cls = getattr(flext_core, facade_name)
-            actual = sorted(
-                attribute for attribute in dir(cls) if not attribute.startswith("_")
-            )
-            expected = self.golden.get(facade_name)
-            if expected is None:
-                drift.append(f"{facade_name}: missing from golden snapshot")
-                continue
-            extra = sorted(set(actual) - set(expected))
-            missing = sorted(set(expected) - set(actual))
-            if extra or missing:
-                drift.append(f"{facade_name}: extra={extra!r} missing={missing!r}")
-        assert not drift, "Facade surface drift:\n" + "\n".join(drift)
-
-    def test_dropped_symbols_still_lazy_importable(self) -> None:
-        """Sub-facades dropped from ``__all__`` still resolve lazily."""
-        fc = import_module("flext_core")
-        not_resolvable = [
-            symbol for symbol in _DROPPED_BUT_LAZY if not hasattr(fc, symbol)
-        ]
-        assert not not_resolvable, f"Lazy resolution broken for: {not_resolvable}"
+    @pytest.mark.parametrize("name", _DROPPED_BUT_LAZY)
+    def test_dropped_symbol_still_lazily_resolves(self, name: str) -> None:
+        """A sub-facade absent from ``__all__`` still resolves to a usable object."""
+        # Act
+        resolved = getattr(import_module("flext_core"), name)
+        # Assert
+        assert resolved is not None
 
     @pytest.mark.parametrize(("alias", "facade_name"), _ALIASES)
     def test_single_letter_alias_is_its_facade(

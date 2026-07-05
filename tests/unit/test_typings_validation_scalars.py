@@ -1,4 +1,13 @@
-"""Scalar validation type tests."""
+"""Behavioral tests for constrained scalar typing aliases.
+
+Each alias is a public ``Annotated`` contract exposed through the ``t`` facade.
+Tests assert the observable validation behavior of ``TypeAdapter`` against the
+public boundary rules (accepted values round-trip unchanged; out-of-range values
+raise the public ``ValidationError``) -- never how the constraint is implemented.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -12,136 +21,149 @@ from tests.models import m
 from tests.typings import t
 
 
-class TestsFlextTypesValidationScalars:
-    def test_batch_size_valid(self) -> None:
-        """BatchSize accepts 1-10000."""
+class TestsFlextCoreTypingsValidationScalars:
+    """Public validation contract of constrained scalar aliases."""
+
+    # -- integer constraints -------------------------------------------------
+
+    @pytest.mark.parametrize("value", [1, 2, 5000, 9999, 10000])
+    def test_batch_size_accepts_in_range(self, value: int) -> None:
+        """BatchSize round-trips integers within its inclusive 1..10000 range."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.BatchSize)
-        tm.that(adapter.validate_python(1), eq=1)
-        tm.that(adapter.validate_python(10000), eq=10000)
+        tm.that(adapter.validate_python(value), eq=value)
 
-    def test_batch_size_rejects_zero(self) -> None:
-        """BatchSize rejects 0."""
+    @pytest.mark.parametrize("value", [0, -1, 10001, 20000])
+    def test_batch_size_rejects_out_of_range(self, value: int) -> None:
+        """BatchSize rejects integers below 1 or above 10000."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.BatchSize)
-        with pytest.raises(c.ValidationError):
-            adapter.validate_python(0)
+        with pytest.raises(c.ValidationError) as exc:
+            adapter.validate_python(value)
+        tm.that(exc.value.error_count(), gte=1)
 
-    def test_max_length_valid(self) -> None:
-        """MaxLength accepts positive integers."""
+    @pytest.mark.parametrize("value", [1, 2, 9999, 1_000_000])
+    def test_max_length_accepts_positive(self, value: int) -> None:
+        """MaxLength round-trips any integer >= 1."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.MaxLength)
-        tm.that(adapter.validate_python(1), eq=1)
-        tm.that(adapter.validate_python(9999), eq=9999)
+        tm.that(adapter.validate_python(value), eq=value)
 
-    def test_max_length_rejects_zero(self) -> None:
-        """MaxLength rejects 0."""
+    @pytest.mark.parametrize("value", [0, -1, -100])
+    def test_max_length_rejects_non_positive(self, value: int) -> None:
+        """MaxLength rejects integers below 1."""
         adapter: m.TypeAdapter[int] = m.TypeAdapter(t.MaxLength)
         with pytest.raises(c.ValidationError):
-            adapter.validate_python(0)
+            adapter.validate_python(value)
 
-    def test_positive_float_valid(self) -> None:
-        """PositiveFloat accepts positive floats."""
+    # -- float constraints ---------------------------------------------------
+
+    @pytest.mark.parametrize("value", [0.1, 1.0, math.pi, 1e6])
+    def test_positive_float_accepts_positive(self, value: float) -> None:
+        """PositiveFloat round-trips strictly positive floats."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.PositiveFloat)
-        tm.that(adapter.validate_python(0.1), eq=0.1)
+        tm.that(adapter.validate_python(value), eq=value)
 
-    def test_positive_float_rejects_zero(self) -> None:
-        """PositiveFloat rejects 0.0."""
+    @pytest.mark.parametrize("value", [0.0, -0.1, -100.0])
+    def test_positive_float_rejects_non_positive(self, value: float) -> None:
+        """PositiveFloat rejects zero and negative floats."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.PositiveFloat)
         with pytest.raises(c.ValidationError):
-            adapter.validate_python(0.0)
+            adapter.validate_python(value)
 
-    def test_non_negative_float_valid(self) -> None:
-        """NonNegativeFloat accepts 0.0 and positive."""
+    @pytest.mark.parametrize("value", [0.0, 0.5, math.pi, 1e9])
+    def test_non_negative_float_accepts_zero_and_positive(
+        self, value: float
+    ) -> None:
+        """NonNegativeFloat round-trips zero and positive floats."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.NonNegativeFloat)
-        tm.that(adapter.validate_python(0.0), eq=0.0)
-        tm.that(adapter.validate_python(math.pi), eq=math.pi)
+        tm.that(adapter.validate_python(value), eq=value)
 
-    def test_non_negative_float_rejects_negative(self) -> None:
-        """NonNegativeFloat rejects negative floats."""
+    @pytest.mark.parametrize("value", [-0.1, -1.0, -1e6])
+    def test_non_negative_float_rejects_negative(self, value: float) -> None:
+        """NonNegativeFloat rejects any negative float."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.NonNegativeFloat)
         with pytest.raises(c.ValidationError):
-            adapter.validate_python(-0.1)
+            adapter.validate_python(value)
 
-    def test_positive_timeout_valid(self) -> None:
-        """PositiveTimeout accepts 0 < x <= 300."""
+    @pytest.mark.parametrize("value", [0.001, 1.0, 150.0, 300.0])
+    def test_positive_timeout_accepts_in_range(self, value: float) -> None:
+        """PositiveTimeout round-trips values in the exclusive-lower 0..300 range."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.PositiveTimeout)
-        tm.that(adapter.validate_python(1.0), eq=1.0)
-        tm.that(adapter.validate_python(300.0), eq=300.0)
+        tm.that(adapter.validate_python(value), eq=value)
 
-    def test_positive_timeout_rejects_zero(self) -> None:
-        """PositiveTimeout rejects 0.0."""
-        adapter: m.TypeAdapter[float] = m.TypeAdapter(t.PositiveTimeout)
-        with pytest.raises(c.ValidationError):
-            adapter.validate_python(0.0)
-
-    def test_positive_timeout_rejects_too_high(self) -> None:
-        """PositiveTimeout rejects > 300."""
+    @pytest.mark.parametrize("value", [0.0, -1.0, 300.1, 1000.0])
+    def test_positive_timeout_rejects_out_of_range(self, value: float) -> None:
+        """PositiveTimeout rejects zero, negatives, and values above 300."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.PositiveTimeout)
         with pytest.raises(c.ValidationError):
-            adapter.validate_python(300.1)
+            adapter.validate_python(value)
 
-    def test_backoff_multiplier_valid(self) -> None:
-        """BackoffMultiplier accepts >= 1.0."""
+    @pytest.mark.parametrize("value", [1.0, 1.5, 2.5, 100.0])
+    def test_backoff_multiplier_accepts_at_or_above_one(
+        self, value: float
+    ) -> None:
+        """BackoffMultiplier round-trips floats >= 1.0 (lower bound inclusive)."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.BackoffMultiplier)
-        tm.that(adapter.validate_python(1.0), eq=1.0)
-        tm.that(adapter.validate_python(2.5), eq=2.5)
+        tm.that(adapter.validate_python(value), eq=value)
 
-    def test_backoff_multiplier_rejects_below_one(self) -> None:
-        """BackoffMultiplier rejects < 1.0."""
+    @pytest.mark.parametrize("value", [0.9, 0.0, -1.0])
+    def test_backoff_multiplier_rejects_below_one(self, value: float) -> None:
+        """BackoffMultiplier rejects floats below 1.0."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.BackoffMultiplier)
         with pytest.raises(c.ValidationError):
-            adapter.validate_python(0.9)
+            adapter.validate_python(value)
 
-    def test_percentage_valid(self) -> None:
-        """Percentage accepts 0.0-100.0."""
+    @pytest.mark.parametrize("value", [0.0, 50.0, 99.9, 100.0])
+    def test_percentage_accepts_in_range(self, value: float) -> None:
+        """Percentage round-trips values in the inclusive 0..100 range."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.Percentage)
-        tm.that(adapter.validate_python(0.0), eq=0.0)
-        tm.that(adapter.validate_python(50.0), eq=50.0)
-        tm.that(adapter.validate_python(100.0), eq=100.0)
+        tm.that(adapter.validate_python(value), eq=value)
 
-    def test_percentage_rejects_over_100(self) -> None:
-        """Percentage rejects > 100."""
+    @pytest.mark.parametrize("value", [-0.1, 100.1, 1000.0])
+    def test_percentage_rejects_out_of_range(self, value: float) -> None:
+        """Percentage rejects values below 0 or above 100."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.Percentage)
         with pytest.raises(c.ValidationError):
-            adapter.validate_python(100.1)
+            adapter.validate_python(value)
 
-    def test_decimal_fraction_valid(self) -> None:
-        """DecimalFraction accepts 0.0-1.0."""
+    @pytest.mark.parametrize("value", [0.0, 0.25, 0.5, 1.0])
+    def test_decimal_fraction_accepts_in_range(self, value: float) -> None:
+        """DecimalFraction round-trips values in the inclusive 0..1 range."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.DecimalFraction)
-        tm.that(adapter.validate_python(0.0), eq=0.0)
-        tm.that(adapter.validate_python(0.5), eq=0.5)
-        tm.that(adapter.validate_python(1.0), eq=1.0)
+        tm.that(adapter.validate_python(value), eq=value)
 
-    def test_decimal_fraction_rejects_over_one(self) -> None:
-        """DecimalFraction rejects > 1.0."""
+    @pytest.mark.parametrize("value", [-0.1, 1.1, 2.0])
+    def test_decimal_fraction_rejects_out_of_range(self, value: float) -> None:
+        """DecimalFraction rejects values below 0 or above 1."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.DecimalFraction)
         with pytest.raises(c.ValidationError):
-            adapter.validate_python(1.1)
+            adapter.validate_python(value)
 
-    def test_hostname_str_valid(self) -> None:
-        """HostnameStr accepts non-empty strings."""
-        adapter: m.TypeAdapter[str] = m.TypeAdapter(t.HostnameStr)
-        result = adapter.validate_python(c.LOCALHOST)
-        tm.that(result, eq=c.LOCALHOST)
+    # -- non-empty string constraints ----------------------------------------
 
-    def test_hostname_str_rejects_empty(self) -> None:
-        """HostnameStr rejects empty strings."""
-        adapter: m.TypeAdapter[str] = m.TypeAdapter(t.HostnameStr)
+    @pytest.mark.parametrize(
+        "alias",
+        [t.HostnameStr, t.UriString, t.TimestampStr],
+        ids=["hostname", "uri", "timestamp"],
+    )
+    @pytest.mark.parametrize(
+        "value",
+        [c.LOCALHOST, "https://example.com", "2025-01-01T00:00:00Z"],
+    )
+    def test_non_empty_string_aliases_accept_non_empty(
+        self, alias: type[str], value: str
+    ) -> None:
+        """Non-empty string aliases round-trip any string of length >= 1."""
+        adapter: m.TypeAdapter[str] = m.TypeAdapter(alias)
+        tm.that(adapter.validate_python(value), eq=value)
+
+    @pytest.mark.parametrize(
+        "alias",
+        [t.HostnameStr, t.UriString, t.TimestampStr],
+        ids=["hostname", "uri", "timestamp"],
+    )
+    def test_non_empty_string_aliases_reject_empty(
+        self, alias: type[str]
+    ) -> None:
+        """Non-empty string aliases reject the empty string."""
+        adapter: m.TypeAdapter[str] = m.TypeAdapter(alias)
         with pytest.raises(c.ValidationError):
             adapter.validate_python("")
-
-    def test_uri_string_valid(self) -> None:
-        """UriString accepts non-empty strings."""
-        adapter: m.TypeAdapter[str] = m.TypeAdapter(t.UriString)
-        result = adapter.validate_python("https://example.com")
-        tm.that(result, eq="https://example.com")
-
-    def test_uri_string_rejects_empty(self) -> None:
-        """UriString rejects empty strings."""
-        adapter: m.TypeAdapter[str] = m.TypeAdapter(t.UriString)
-        with pytest.raises(c.ValidationError):
-            adapter.validate_python("")
-
-    def test_timestamp_str_valid(self) -> None:
-        """TimestampStr accepts non-empty strings."""
-        adapter: m.TypeAdapter[str] = m.TypeAdapter(t.TimestampStr)
-        result = adapter.validate_python("2025-01-01T00:00:00Z")
-        tm.that(result, eq="2025-01-01T00:00:00Z")

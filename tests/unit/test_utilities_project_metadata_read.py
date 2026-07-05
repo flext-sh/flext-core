@@ -111,6 +111,75 @@ class TestsFlextUtilitiesProjectMetadataRead:
         tm.that(constants.CLASS_STEM, eq="Flext")
         tm.that("c" in constants.RUNTIME_ALIAS_NAMES, eq=True)
 
+    def test_read_project_metadata_derives_package_name_and_stem_from_name(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        root = write_pyproject(
+            tmp_path,
+            f"""
+            [project]
+            name = "{c.Tests.SAMPLE_PROJECT_NAME}"
+            version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
+            license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
+            """,
+        )
+        meta = u.read_project_metadata(root)
+        tm.that(meta.package_name, eq=c.Tests.SAMPLE_PROJECT_NAME.replace("-", "_"))
+        tm.that(meta.class_stem, eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
+
+    def test_read_project_metadata_extracts_optional_url_and_requires_python(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        root = write_pyproject(
+            tmp_path,
+            f"""
+            [project]
+            name = "{c.Tests.SAMPLE_PROJECT_NAME}"
+            version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
+            license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
+            requires-python = ">=3.13"
+            urls = {{Homepage = "https://example.com"}}
+            """,
+        )
+        meta = u.read_project_metadata(root)
+        tm.that(meta.requires_python, eq="3.13")
+        tm.that(meta.url, eq="https://example.com")
+
+    def test_read_project_metadata_defaults_optional_fields_when_absent(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        root = write_pyproject(
+            tmp_path,
+            f"""
+            [project]
+            name = "{c.Tests.SAMPLE_PROJECT_NAME}"
+            version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
+            license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
+            """,
+        )
+        meta = u.read_project_metadata(root)
+        tm.that(meta.description, eq="")
+        tm.that(meta.url, eq="")
+        tm.that(meta.requires_python, eq="")
+        tm.that(meta.authors, eq=())
+
+    def test_project_metadata_is_immutable(self, tmp_path: Path) -> None:
+        root = write_pyproject(
+            tmp_path,
+            f"""
+            [project]
+            name = "{c.Tests.SAMPLE_PROJECT_NAME}"
+            version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
+            license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
+            """,
+        )
+        meta = u.read_project_metadata(root)
+        with pytest.raises(m.ValidationError):
+            meta.name = "mutated"
+
     def test_read_project_metadata_raises_on_missing_pyproject(
         self,
         tmp_path: Path,

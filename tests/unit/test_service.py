@@ -1,59 +1,120 @@
-"""Behavioral tests for the current slim service contract."""
+"""Behavioral tests for the slim ``FlextService`` public contract.
+
+Every assertion targets observable public behavior: the ``r[T]`` outcome of
+``execute``, the shared-runtime singleton returned by ``fetch_global``, the
+public ``settings``/``logger`` accessors, the ``with_settings`` snapshot, the
+``isolated_test_runtime`` isolation invariant, the ``track`` context-manager
+contract, and the public state of the ``ServiceUserData`` result model. No
+private attributes, internal collaborators, or implementation details are
+inspected.
+"""
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import override
 
-from flext_tests import FlextTestsCase, e, r
+import pytest
+from flext_tests import FlextTestsCase, r
 from flext_tests.settings import FlextTestsSettings
 
 from tests.base import s
-from tests.constants import c
 from tests.models import m
 from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
 
 
 class TestsFlextService(FlextTestsCase):
-    """Validate stable behavior of FlextService subclasses."""
+    """Validate stable, caller-facing behavior of ``FlextService`` subclasses."""
 
-    def test_shared_pytest_runtime_binds_aliases_to_self(self) -> None:
-        assert self.service is type(self.service).fetch_global()
-        assert self.settings is self.service.settings
-        assert self.logger is self.service.logger
-        assert self.c is c
-        assert self.e is e
-        assert self.m is m
-        assert self.p is p
-        assert self.r is r
-        assert self.t is t
-        assert self.u is u
+    class _PureService(s[bool]):
+        """Minimal service whose ``execute`` always succeeds."""
 
-    def test_service_initializes_and_executes(self) -> None:
+        @override
+        def execute(self) -> p.Result[bool]:
+            return r[bool].ok(value=True)
+
+    class _FailingService(s[bool]):
+        """Minimal service whose ``execute`` always fails with a known error."""
+
+        @override
+        def execute(self) -> p.Result[bool]:
+            return r[bool].fail("execute-boom")
+
+    # --- execute(): the r[T] contract ------------------------------------
+
+    def test_execute_reports_success_and_typed_payload(self) -> None:
         service = m.Tests.ServiceUserService()
-        assert isinstance(service, s)
+
         result = service.execute()
-        assert result.success
 
-    def test_execute_returns_typed_payload(self) -> None:
+        assert result.success
+        assert not result.failure
+        assert result.unwrap() == m.Tests.ServiceUserData(user_id=1, name="test_user")
+
+    def test_execute_success_value_exposes_public_model_fields(self) -> None:
         result = m.Tests.ServiceUserService().execute()
-        assert result.success
-        assert result.value == m.Tests.ServiceUserData(
-            user_id=1,
-            name="test_user",
-        )
 
-    def test_test_service_settings_include_tests_namespace(self) -> None:
+        payload = result.value
+        assert isinstance(payload, m.Tests.ServiceUserData)
+        assert payload.user_id == 1
+        assert payload.name == "test_user"
+
+    def test_execute_failure_propagates_error_through_result(self) -> None:
+        result = self._FailingService().execute()
+
+        assert result.failure
+        assert not result.success
+        assert result.error == "execute-boom"
+
+    def test_execute_success_result_supports_combinators(self) -> None:
+        result = self._PureService().execute()
+
+        assert result.map(lambda ok: ok and True).unwrap() is True
+        assert result.flat_map(lambda ok: r[bool].ok(value=not ok)).unwrap() is False
+
+    def test_execute_failure_result_short_circuits_combinators(self) -> None:
+        result = self._FailingService().execute()
+
+        assert result.map(lambda ok: not ok).failure
+        assert result.unwrap_or(default=False) is False
+
+    def test_service_instance_is_a_flext_service(self) -> None:
+        service = m.Tests.ServiceUserService()
+
+        assert isinstance(service, s)
+
+    # --- ServiceUserData: public model state -----------------------------
+
+    @pytest.mark.parametrize(
+        ("user_id", "name"),
+        [(1, "test_user"), (2, "other"), (99, "édge-café")],
+    )
+    def test_service_user_data_round_trips_public_state(
+        self,
+        user_id: int,
+        name: str,
+    ) -> None:
+        data = m.Tests.ServiceUserData(user_id=user_id, name=name)
+
+        assert data.model_dump() == {"user_id": user_id, "name": name}
+        assert data == m.Tests.ServiceUserData(user_id=user_id, name=name)
+
+    # --- fetch_global(): shared-runtime singleton ------------------------
+
+    def test_fetch_global_returns_the_shared_singleton(self) -> None:
+        first = type(self.service).fetch_global()
+        second = type(self.service).fetch_global()
+
+        assert first is self.service
+        assert second is first
+
+    # --- settings / logger public accessors ------------------------------
+
+    def test_settings_expose_tests_namespace(self) -> None:
         settings = m.Tests.ServiceUserService().settings
 
         assert isinstance(settings, FlextTestsSettings)
         assert isinstance(settings.Tests, m.SettingsValue)
-
-    class _PureService(s[bool]):
-        @override
-        def execute(self) -> p.Result[bool]:
-            return r[bool].ok(True)
 
     def test_fetch_settings_returns_typed_tests_settings(self) -> None:
         with self._PureService.isolated_test_runtime():
@@ -62,32 +123,48 @@ class TestsFlextService(FlextTestsCase):
             assert isinstance(settings, FlextTestsSettings)
             assert isinstance(settings.Tests, m.SettingsValue)
 
-    def test_fetch_logger_reuses_service_logger(self) -> None:
+    def test_fetch_logger_matches_shared_service_logger(self) -> None:
         with self._PureService.isolated_test_runtime():
-            logger = self._PureService.fetch_logger()
+            assert (
+                self._PureService.fetch_logger()
+                is self._PureService.fetch_global().logger
+            )
 
-            assert logger is self._PureService.fetch_global().logger
+    # --- with_settings(): runtime snapshot -------------------------------
 
-    def test_with_settings_uses_provided_runtime_settings_snapshot(self) -> None:
+    def test_with_settings_applies_provided_snapshot(self) -> None:
         settings = m.Tests.ServiceUserService().settings.clone(
             app_name="service-settings-override",
         )
 
         service = self._PureService.with_settings(settings)
-        service_settings_dump = service.settings.model_dump()
 
-        assert service_settings_dump == settings.model_dump()
-        assert service_settings_dump["app_name"] == "service-settings-override"
+        dumped = service.settings.model_dump()
+        assert dumped == settings.model_dump()
+        assert dumped["app_name"] == "service-settings-override"
 
-    def test_with_test_settings_clones_current_runtime_settings(self) -> None:
-        with self._PureService.isolated_test_runtime(
-            app_name="service-test-helper",
-        ):
-            global_settings = FlextTestsSettings.fetch_global()
+    # --- isolated_test_runtime(): isolation invariant --------------------
 
-            assert self._PureService.fetch_settings().app_name == "service-test-helper"
-            assert FlextTestsSettings.fetch_global() is global_settings
-            assert FlextTestsSettings.fetch_global().app_name != "service-test-helper"
+    def test_isolated_runtime_scopes_settings_without_leaking(self) -> None:
+        baseline_app_name = self._PureService.fetch_settings().app_name
+
+        with self._PureService.isolated_test_runtime(app_name="service-scoped"):
+            scoped_global = FlextTestsSettings.fetch_global()
+
+            assert self._PureService.fetch_settings().app_name == "service-scoped"
+            assert FlextTestsSettings.fetch_global() is scoped_global
+            assert scoped_global.app_name != "service-scoped"
+
+        assert self._PureService.fetch_settings().app_name == baseline_app_name
+
+    # --- track(): context-manager metrics contract -----------------------
+
+    def test_track_yields_named_operation_metrics(self) -> None:
+        service = m.Tests.ServiceUserService()
+
+        with service.track("load_users") as metrics:
+            assert isinstance(metrics, Mapping)
+            assert metrics["operation_name"] == "load_users"
 
 
 __all__: list[str] = ["TestsFlextService"]

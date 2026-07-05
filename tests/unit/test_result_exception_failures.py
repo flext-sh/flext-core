@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextResultExceptionFailures:
+class TestsFlextCoreResultExceptionFailures:
     @pytest.mark.parametrize(
         ("error_msg", "expected_error"),
         [

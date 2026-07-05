@@ -1,9 +1,15 @@
-"""Result exception traversal and validation tests."""
+"""Behavioral tests for r traverse, validation, and exception carrying.
+
+All assertions target the public FlextResult contract (success/failure,
+value, error, exception, combinators) and the FlextExceptions family via
+from_validation. No private attributes or internal collaborators are touched.
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
 from flext_tests import r, tm
 
 from tests.constants import c
@@ -13,99 +19,193 @@ if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextResultExceptionTraverseValidation(TestsFlextResultExceptionCarrying):
-    def test_traverse_propagates_exception(self) -> None:
-        exc = ValueError("item error")
-        items = [1, 2, 3]
-
-        def process_with_failure(value: int) -> p.Result[int]:
+class TestsFlextCoreResultExceptionTraverseValidation(
+    TestsFlextResultExceptionCarrying,
+):
+    @pytest.mark.parametrize(
+        "raised",
+        [ValueError("item error"), TypeError("bad type"), KeyError("missing")],
+    )
+    def test_traverse_fail_fast_carries_originating_failure_exception(
+        self,
+        raised: Exception,
+    ) -> None:
+        # Arrange
+        def process(value: int) -> p.Result[int]:
             if value == 2:
-                return r[int].fail("error", exception=exc)
+                return r[int].fail("boom", exception=raised)
             return r[int].ok(value * 2)
 
-        result = r[int].traverse(items, process_with_failure, fail_fast=True)
-        tm.that(result.failure, eq=True)
-        tm.that(result.exception is exc, eq=True)
+        # Act
+        result = r[int].traverse([1, 2, 3], process, fail_fast=True)
 
-    def test_traverse_callback_exception_returns_failure(self) -> None:
+        # Assert
+        tm.that(result.failure, eq=True)
+        tm.that(result.exception is raised, eq=True)
+
+    def test_traverse_fail_fast_wraps_callback_exception(self) -> None:
+        # Arrange
         exc = RuntimeError("traverse callback failed")
 
-        def process_with_exception(value: int) -> p.Result[int]:
+        def process(value: int) -> p.Result[int]:
             if value == 2:
                 raise exc
             return r[int].ok(value * 2)
 
-        result = r[int].traverse([1, 2, 3], process_with_exception, fail_fast=True)
+        # Act
+        result = r[int].traverse([1, 2, 3], process, fail_fast=True)
 
+        # Assert
         tm.that(result.failure, eq=True)
         tm.that(result.exception is exc, eq=True)
         tm.that(result.error, eq=str(exc))
 
-    def test_traverse_accumulate_preserves_exceptions(self) -> None:
-        exc1 = ValueError("error 1")
-        exc2 = TypeError("error 2")
-        items = [1, 2, 3]
+    def test_traverse_fail_fast_all_success_returns_mapped_sequence(self) -> None:
+        # Arrange
+        def double(value: int) -> p.Result[int]:
+            return r[int].ok(value * 2)
 
-        def process_with_failures(value: int) -> p.Result[int]:
+        # Act
+        result = r[int].traverse([1, 2, 3], double, fail_fast=True)
+
+        # Assert
+        tm.that(result.success, eq=True)
+        tm.that(list(result.value), eq=[2, 4, 6])
+        tm.that(result.exception, none=True)
+
+    def test_traverse_accumulate_reports_every_failure(self) -> None:
+        # Arrange
+        def process(value: int) -> p.Result[int]:
             if value == 1:
-                return r[int].fail("error 1", exception=exc1)
+                return r[int].fail("error 1", exception=ValueError("error 1"))
             if value == 3:
-                return r[int].fail("error 2", exception=exc2)
+                return r[int].fail("error 2", exception=TypeError("error 2"))
             return r[int].ok(value * 2)
 
-        result = r[int].traverse(items, process_with_failures, fail_fast=False)
+        # Act
+        result = r[int].traverse([1, 2, 3], process, fail_fast=False)
+
+        # Assert
         tm.that(result.failure, eq=True)
         tm.that(result.error, none=False)
-        if result.error is not None:
-            tm.that("error 1" in result.error and "error 2" in result.error, eq=True)
+        tm.that(result.error, has=["error 1", "error 2"])
 
-    def test_traverse_accumulates_callback_exceptions(self) -> None:
-        def process_with_exception(value: int) -> p.Result[int]:
+    def test_traverse_accumulate_reports_every_callback_exception(self) -> None:
+        # Arrange
+        def process(value: int) -> p.Result[int]:
             if value in {1, 3}:
-                raise RuntimeError(f"callback error {value}")
+                msg = f"callback error {value}"
+                raise RuntimeError(msg)
             return r[int].ok(value * 2)
 
-        result = r[int].traverse([1, 2, 3], process_with_exception, fail_fast=False)
+        # Act
+        result = r[int].traverse([1, 2, 3], process, fail_fast=False)
 
+        # Assert
         tm.that(result.failure, eq=True)
         tm.that(result.error, none=False)
-        if result.error is not None:
-            tm.that("callback error 1" in result.error, eq=True)
-            tm.that("callback error 3" in result.error, eq=True)
+        tm.that(result.error, has=["callback error 1", "callback error 3"])
 
-    def test_from_validation_carries_exception(self) -> None:
-        invalid_data = {"name": "Alice", "age": "not_an_int"}
-        result = r[TestsFlextResultExceptionCarrying.UserModel].from_validation(
-            invalid_data,
+    def test_traverse_accumulate_all_success_returns_mapped_sequence(self) -> None:
+        # Arrange
+        def double(value: int) -> p.Result[int]:
+            return r[int].ok(value * 2)
+
+        # Act
+        result = r[int].traverse([1, 2, 3], double, fail_fast=False)
+
+        # Assert
+        tm.that(result.success, eq=True)
+        tm.that(list(result.value), eq=[2, 4, 6])
+
+    def test_from_validation_failure_carries_validation_error(self) -> None:
+        # Arrange
+        invalid = {"name": "Alice", "age": "not_an_int"}
+
+        # Act
+        result = r[
+            TestsFlextResultExceptionCarrying.UserModel
+        ].from_validation(
+            invalid,
             TestsFlextResultExceptionCarrying.UserModel,
         )
+
+        # Assert
         tm.that(result.failure, eq=True)
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=c.ValidationError)
 
-    def test_error_or_pattern_unchanged(self) -> None:
-        result_success = r[int].ok(42)
-        result_failure: p.Result[int] = r[int].fail("error message")
-        error_success = result_success.error or "fallback"
-        error_failure = result_failure.error or "fallback"
-        tm.that(error_success, eq="fallback")
-        tm.that(error_failure, eq="error message")
+    def test_from_validation_success_returns_populated_model(self) -> None:
+        # Arrange
+        valid = {"name": "Alice", "age": 30}
 
-    def test_error_or_pattern_with_exception(self) -> None:
+        # Act
+        result = r[
+            TestsFlextResultExceptionCarrying.UserModel
+        ].from_validation(
+            valid,
+            TestsFlextResultExceptionCarrying.UserModel,
+        )
+
+        # Assert
+        tm.that(result.success, eq=True)
+        user = result.value
+        tm.that(user.name, eq="Alice")
+        tm.that(user.age, eq=30)
+        tm.that(result.exception, none=True)
+
+    def test_success_error_is_none_and_yields_fallback(self) -> None:
+        # Arrange / Act
+        result = r[int].ok(42)
+
+        # Assert
+        tm.that(result.error, none=True)
+        tm.that(result.error or "fallback", eq="fallback")
+
+    def test_failure_error_message_is_preserved(self) -> None:
+        # Arrange / Act
+        result: p.Result[int] = r[int].fail("error message")
+
+        # Assert
+        tm.that(result.error or "fallback", eq="error message")
+
+    def test_failure_preserves_both_error_message_and_exception(self) -> None:
+        # Arrange
         exc = RuntimeError("runtime error")
+
+        # Act
         result: p.Result[int] = r[int].fail("error", exception=exc)
-        error_msg = result.error or "fallback"
-        tm.that(error_msg, eq="error")
+
+        # Assert
+        tm.that(result.error, eq="error")
         tm.that(result.exception is exc, eq=True)
 
-    def test_ok_bool_succeeds(self) -> None:
-        result = r[bool].ok(True)
-        tm.that(result.success, eq=True)
-        tm.that(result.value, eq=True)
+    def test_failure_short_circuits_map_and_unwrap_or_uses_default(self) -> None:
+        # Arrange
+        exc = RuntimeError("runtime error")
+        result: p.Result[int] = r[int].fail("error", exception=exc)
 
-    def test_ok_with_valid_value_succeeds(self) -> None:
-        value = 42
-        result: p.Result[int] = r[int].ok(value)
+        # Act
+        mapped = result.map(lambda value: value + 1)
+
+        # Assert
+        tm.that(mapped.failure, eq=True)
+        tm.that(mapped.exception is exc, eq=True)
+        tm.that(result.unwrap_or(-1), eq=-1)
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [(True, True), (False, False), (42, 42)],
+    )
+    def test_ok_reports_success_and_wraps_value(
+        self,
+        value: bool | int,
+        expected: bool | int,
+    ) -> None:
+        # Arrange / Act
+        result = r[bool | int].ok(value)
+
+        # Assert
         tm.that(result.success, eq=True)
-        tm.that(result.value, eq=42)
+        tm.that(result.value, eq=expected)
         tm.that(result.exception, none=True)

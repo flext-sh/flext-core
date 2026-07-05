@@ -8,9 +8,6 @@ import pytest
 from flext_tests import r, tm
 
 from tests.models import m
-from tests.unit._result_scenarios import (
-    ResultOperationType,
-)
 from tests.utilities import u
 
 if TYPE_CHECKING:
@@ -21,8 +18,6 @@ if TYPE_CHECKING:
 
 
 class TestsFlextResultTraverseResource:
-    ResultOperationType = ResultOperationType
-
     def test_accumulate_errors_all_success(self) -> None:
         """Test accumulate_errors with all successes."""
         results = [r[int].ok(1), r[int].ok(2), r[int].ok(3)]

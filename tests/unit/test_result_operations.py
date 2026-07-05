@@ -1,4 +1,4 @@
-"""Result operation scenario tests."""
+"""Behavioral tests for the r[T] public contract (creation + combinators)."""
 
 from __future__ import annotations
 
@@ -7,150 +7,210 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import r, tm
 
-from tests.unit._result_scenarios import (
-    BOOL_SCENARIOS,
-    INT_SCENARIOS,
-    STRING_SCENARIOS,
-    ResultOperationType,
-    ResultScenario,
-)
-from tests.utilities import u
-
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from tests.protocols import p
-    from tests.typings import t
 
 
 class TestsFlextResultOperations:
-    ResultOperationType = ResultOperationType
+    """Assert the observable r[T] contract: success/failure state and combinators."""
 
-    @pytest.mark.parametrize("scenario", STRING_SCENARIOS, ids=lambda s: s.name)
-    def test_result_string_operations(self, scenario: ResultScenario) -> None:
-        """Test r with string values across all scenarios."""
-        op_type = scenario.operation_type
-        value = scenario.value
-        success = scenario.is_success_expected
-        if not isinstance(value, str):
-            pytest.fail("Expected string scenario value")
-        if op_type == self.ResultOperationType.CREATION_SUCCESS:
-            creation_result: p.Result[str] = u.Tests.create_result_from_value(
-                value,
-                error_on_none="Value cannot be None",
-            )
-            u.Tests.assert_success(creation_result, expected_value=value)
-        elif op_type == self.ResultOperationType.CREATION_FAILURE:
-            failure_result_raw = r[str].fail(value)
-            failure_result: p.Result[str] = failure_result_raw
-            u.Tests.assert_failure(failure_result, value)
-        elif op_type == self.ResultOperationType.UNWRAP_OR:
-            if success:
-                unwrap_result: p.Result[str] = r[str].ok(value)
-            else:
-                failure_raw = r[str].fail(value)
-                unwrap_result = failure_raw
-            default = "default"
-            tm.that(
-                unwrap_result.unwrap_or(default),
-                eq=value if success else default,
-            )
-        elif op_type == self.ResultOperationType.MAP:
-            map_result: p.Result[str] = r[str].fail(value)
-            mapped = map_result.map(lambda x: x * 2)
-            u.Tests.assert_failure(mapped, value)
-        elif op_type == self.ResultOperationType.FLAT_MAP:
-            failure_raw = r[str].fail(value)
-            flat_map_result: p.Result[str] = failure_raw
-            flat_mapped = flat_map_result.flat_map(lambda x: r[str].ok(f"value_{x}"))
-            u.Tests.assert_failure(flat_mapped, value)
-        elif op_type == self.ResultOperationType.ALT:
-            if success:
-                result_alt: p.Result[str] = r[str].ok(value)
-            else:
-                failure_raw = r[str].fail(value)
-                result_alt = failure_raw
-            alt_result = result_alt.map_error(lambda e: f"alt_{e}")
-            if success:
-                u.Tests.assert_success(alt_result, expected_value=value)
-            else:
-                error_str_alt: str = f"alt_{value}"
-                u.Tests.assert_failure(alt_result, error_str_alt)
-        elif op_type == self.ResultOperationType.LASH:
-            lash_result_base: p.Result[str] = (
-                r[str].ok(value) if success else r[str].fail(value)
-            )
-            lash_result = lash_result_base.lash(lambda e: r[str].ok(f"recovered_{e}"))
-            if success:
-                u.Tests.assert_success(lash_result, expected_value=value)
-            else:
-                expected = f"recovered_{value}"
-                u.Tests.assert_success(lash_result, expected_value=expected)
-        elif op_type == self.ResultOperationType.OR_OPERATOR:
-            if success:
-                result_or: p.Result[str] = r[str].ok(value)
-            else:
-                failure_raw = r[str].fail(value)
-                result_or = failure_raw
-            default = "default"
-            tm.that(result_or | default, eq=value if success else default)
+    # --- creation + terminal state --------------------------------------
 
-    @pytest.mark.parametrize("scenario", INT_SCENARIOS, ids=lambda s: s.name)
-    def test_result_int_operations(self, scenario: ResultScenario) -> None:
-        """Test r with integer values across all scenarios."""
-        op_type = scenario.operation_type
-        value = scenario.value
-        success = scenario.is_success_expected
-        if op_type == self.ResultOperationType.UNWRAP:
-            if not isinstance(value, int):
-                pytest.fail("Expected integer scenario value")
-            result = r[int].ok(value)
-            tm.that(result.value, eq=value)
-        elif op_type == self.ResultOperationType.MAP:
-            if not isinstance(value, int):
-                pytest.fail("Expected integer scenario value")
-            result = r[int].ok(value)
-            mapped = result.map(lambda x: x * 2)
-            u.Tests.assert_success(mapped, expected_value=value * 2)
-        elif op_type == self.ResultOperationType.FLAT_MAP:
-            if not isinstance(value, int):
-                pytest.fail("Expected integer scenario value")
-            result = r[int].ok(value)
-            flat_mapped = result.flat_map(lambda x: r[str].ok(f"value_{x}"))
-            expected = f"value_{value}"
-            u.Tests.assert_success(flat_mapped, expected_value=expected)
-        elif op_type == self.ResultOperationType.FILTER:
-            if not isinstance(value, int):
-                pytest.fail("Expected integer scenario value")
-            result = r[int].ok(value)
-            filtered = result.filter(lambda x: x > 5)
-            if success:
-                u.Tests.assert_success(filtered, expected_value=value)
-            else:
-                _ = u.Tests.assert_failure(filtered)
-        elif op_type == self.ResultOperationType.RAILWAY_COMPOSITION:
-            if not isinstance(value, int):
-                pytest.fail("Expected integer scenario value")
-            res1 = r[int].ok(value)
-            res2 = res1.map(lambda v: v * 2)
-            res3 = res2.map(lambda v: f"result_{v}")
-            expected = f"result_{value * 2}"
-            result_list: t.SequenceOf[p.Result[str]] = [
-                res1.map(str),
-                res2.map(str),
-                res3,
-            ]
-            u.Tests.assert_result_chain(
-                result_list,
-                expected_success_count=3,
-                expected_failure_count=0,
-                first_failure_index=None,
-            )
-            u.Tests.assert_success(res3, expected_value=expected)
+    @pytest.mark.parametrize("value", ["success", "", "multi word value"])
+    def test_ok_reports_success_and_exposes_value(self, value: str) -> None:
+        """r.ok is success, carries the value, and has no error."""
+        result: p.Result[str] = r[str].ok(value)
 
-    @pytest.mark.parametrize("scenario", BOOL_SCENARIOS, ids=lambda s: s.name)
-    def test_result_bool_operations(self, scenario: ResultScenario) -> None:
-        """Test r with boolean values across all scenarios."""
-        if scenario.operation_type == self.ResultOperationType.BOOL_CONVERSION:
-            result = (
-                r[str].ok("value") if scenario.value else r[str].fail("generic_error")
-            )
-            tm.that(bool(result), eq=bool(scenario.value))
+        assert result.success is True
+        assert result.failure is False
+        assert bool(result) is True
+        assert result.value == value
+        assert result.unwrap() == value
+        assert result.error is None
+
+    @pytest.mark.parametrize("message", ["boom", "error message", "not found"])
+    def test_fail_reports_failure_and_preserves_error(self, message: str) -> None:
+        """r.fail is failure, preserves the error message, and has no value."""
+        result: p.Result[str] = r[str].fail(message)
+
+        assert result.failure is True
+        assert result.success is False
+        assert bool(result) is False
+        assert result.error == message
+
+    @pytest.mark.parametrize("message", ["boom", "denied"])
+    def test_value_and_unwrap_raise_on_failure(self, message: str) -> None:
+        """Accessing value or unwrap on a failure raises with the error message."""
+        result: p.Result[str] = r[str].fail(message)
+
+        with pytest.raises(RuntimeError, match=message):
+            _ = result.value
+        with pytest.raises(RuntimeError, match=message):
+            result.unwrap()
+
+    # --- unwrap_or / | default ------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("result", "default", "expected"),
+        [
+            (r[str].ok("value"), "default", "value"),
+            (r[str].fail("error"), "default", "default"),
+        ],
+        ids=["success-keeps-value", "failure-yields-default"],
+    )
+    def test_unwrap_or_returns_value_on_success_default_on_failure(
+        self,
+        result: p.Result[str],
+        default: str,
+        expected: str,
+    ) -> None:
+        """unwrap_or and the | operator both yield value on success, default on failure."""
+        assert result.unwrap_or(default) == expected
+        assert (result | default) == expected
+
+    # --- map -------------------------------------------------------------
+
+    def test_map_transforms_the_success_value(self) -> None:
+        """Map applies the function to a success payload."""
+        result: p.Result[int] = r[int].ok(5)
+
+        mapped = result.map(lambda x: x * 2)
+
+        assert mapped.success is True
+        assert mapped.unwrap() == 10
+
+    def test_map_is_a_no_op_on_failure_and_preserves_error(self) -> None:
+        """Map does not run the function on a failure; the error passes through."""
+        result: p.Result[int] = r[int].fail("boom")
+
+        mapped = result.map(lambda x: x * 2)
+
+        assert mapped.failure is True
+        assert mapped.error == "boom"
+
+    # --- flat_map --------------------------------------------------------
+
+    def test_flat_map_chains_a_dependent_success(self) -> None:
+        """flat_map threads the value into a further fallible step."""
+        result: p.Result[int] = r[int].ok(5)
+
+        chained = result.flat_map(lambda x: r[str].ok(f"value_{x}"))
+
+        assert chained.unwrap() == "value_5"
+
+    def test_flat_map_short_circuits_on_failure(self) -> None:
+        """flat_map skips the continuation when the source is a failure."""
+        result: p.Result[int] = r[int].fail("boom")
+
+        chained = result.flat_map(lambda x: r[str].ok(f"value_{x}"))
+
+        assert chained.failure is True
+        assert chained.error == "boom"
+
+    def test_flat_map_propagates_a_failing_continuation(self) -> None:
+        """flat_map surfaces the error produced by the continuation."""
+        result: p.Result[int] = r[int].ok(5)
+
+        chained = result.flat_map(lambda _: r[str].fail("downstream"))
+
+        assert chained.failure is True
+        assert chained.error == "downstream"
+
+    # --- map_error -------------------------------------------------------
+
+    def test_map_error_rewrites_only_the_failure_message(self) -> None:
+        """map_error transforms the error text of a failure."""
+        result: p.Result[str] = r[str].fail("original")
+
+        remapped = result.map_error(lambda e: f"alt_{e}")
+
+        assert remapped.failure is True
+        assert remapped.error == "alt_original"
+
+    def test_map_error_leaves_a_success_untouched(self) -> None:
+        """map_error is a no-op on a success value."""
+        result: p.Result[str] = r[str].ok("value")
+
+        remapped = result.map_error(lambda e: f"alt_{e}")
+
+        assert remapped.unwrap() == "value"
+
+    # --- lash (recover-with-result) -------------------------------------
+
+    def test_lash_recovers_a_failure_into_a_success(self) -> None:
+        """Lash replaces a failure with a recovery result."""
+        result: p.Result[str] = r[str].fail("error")
+
+        recovered = result.lash(lambda e: r[str].ok(f"recovered_{e}"))
+
+        assert recovered.unwrap() == "recovered_error"
+
+    def test_lash_passes_a_success_through_unchanged(self) -> None:
+        """Lash does not invoke the handler on a success."""
+        result: p.Result[str] = r[str].ok("value")
+
+        recovered = result.lash(lambda e: r[str].ok(f"recovered_{e}"))
+
+        assert recovered.unwrap() == "value"
+
+    # --- filter ----------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("value", "expected_success"),
+        [(10, True), (3, False)],
+        ids=["predicate-passes", "predicate-fails"],
+    )
+    def test_filter_keeps_value_when_predicate_holds(
+        self,
+        value: int,
+        *,
+        expected_success: bool,
+    ) -> None:
+        """Filter keeps a success only when the predicate is satisfied."""
+        result: p.Result[int] = r[int].ok(value)
+
+        filtered = result.filter(lambda x: x > 5)
+
+        assert filtered.success is expected_success
+        if expected_success:
+            assert filtered.unwrap() == value
+
+    # --- boolean protocol ------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("result", "expected"),
+        [(r[str].ok("value"), True), (r[str].fail("error"), False)],
+        ids=["success-truthy", "failure-falsy"],
+    )
+    def test_bool_reflects_success_state(
+        self,
+        result: p.Result[str],
+        *,
+        expected: bool,
+    ) -> None:
+        """bool(result) is True for success and False for failure."""
+        assert bool(result) is expected
+        tm.that(bool(result), eq=expected)
+
+    # --- railway composition --------------------------------------------
+
+    def test_railway_composition_threads_successes_end_to_end(self) -> None:
+        """A chain of map steps composes without breaking the success track."""
+        composed: p.Result[str] = (
+            r[int].ok(5).map(lambda v: v * 2).map(lambda v: f"result_{v}")
+        )
+
+        assert composed.success is True
+        assert composed.unwrap() == "result_10"
+
+    def test_railway_composition_short_circuits_at_first_failure(self) -> None:
+        """A failure mid-chain halts every downstream step and keeps its error."""
+        steps: list[Callable[[int], int]] = [lambda v: v + 1, lambda v: v * 10]
+        result: p.Result[int] = r[int].fail("early")
+        for step in steps:
+            result = result.map(step)
+
+        assert result.failure is True
+        assert result.error == "early"
