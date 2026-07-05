@@ -20,6 +20,8 @@ import pydantic
 import pydantic_core
 from pydantic_core import core_schema
 
+type JsonValue = pydantic.JsonValue
+
 
 class FlextTypesPydantic:
     """Constrained and specialized types: strict types, URL types, numeric types, etc.
@@ -116,7 +118,9 @@ class FlextTypesPydantic:
     # supports non-generic aliases, so we keep them as plain attributes which pydantic
     # and the mypy plugin recognize as type markers.
     Json = pydantic.Json
-    JsonValue = pydantic.JsonValue
+    # JsonValue is also module-level so beartype can resolve forward references
+    # emitted from aliases that flow through this class namespace.
+    type JsonValue = pydantic.JsonValue
     BaseModel = pydantic.BaseModel
     TypeAdapter = pydantic.TypeAdapter
     ConfigDict = pydantic.ConfigDict
