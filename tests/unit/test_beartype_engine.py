@@ -108,7 +108,7 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
     def test_attr_accept_constants_rejects_descriptor_values(self) -> None:
         """Descriptor values (staticmethod/classmethod/property) are not constants."""
 
-        def _fn() -> int:
+        def _fn(_self: p.AttributeProbe) -> int:
             return 0
 
         static_value: p.AttributeProbe = staticmethod(_fn)

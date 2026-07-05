@@ -69,9 +69,7 @@ class TestsFlextCoreTypingsValidationScalars:
             adapter.validate_python(value)
 
     @pytest.mark.parametrize("value", [0.0, 0.5, math.pi, 1e9])
-    def test_non_negative_float_accepts_zero_and_positive(
-        self, value: float
-    ) -> None:
+    def test_non_negative_float_accepts_zero_and_positive(self, value: float) -> None:
         """NonNegativeFloat round-trips zero and positive floats."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.NonNegativeFloat)
         tm.that(adapter.validate_python(value), eq=value)
@@ -97,9 +95,7 @@ class TestsFlextCoreTypingsValidationScalars:
             adapter.validate_python(value)
 
     @pytest.mark.parametrize("value", [1.0, 1.5, 2.5, 100.0])
-    def test_backoff_multiplier_accepts_at_or_above_one(
-        self, value: float
-    ) -> None:
+    def test_backoff_multiplier_accepts_at_or_above_one(self, value: float) -> None:
         """BackoffMultiplier round-trips floats >= 1.0 (lower bound inclusive)."""
         adapter: m.TypeAdapter[float] = m.TypeAdapter(t.BackoffMultiplier)
         tm.that(adapter.validate_python(value), eq=value)
@@ -160,9 +156,7 @@ class TestsFlextCoreTypingsValidationScalars:
         [t.HostnameStr, t.UriString, t.TimestampStr],
         ids=["hostname", "uri", "timestamp"],
     )
-    def test_non_empty_string_aliases_reject_empty(
-        self, alias: type[str]
-    ) -> None:
+    def test_non_empty_string_aliases_reject_empty(self, alias: type[str]) -> None:
         """Non-empty string aliases reject the empty string."""
         adapter: m.TypeAdapter[str] = m.TypeAdapter(alias)
         with pytest.raises(c.ValidationError):

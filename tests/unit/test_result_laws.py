@@ -139,7 +139,10 @@ class TestsFlextCoreResultLaws:
         assert folded == expected
 
     def test_map_error_rewrites_failure_message_only(self) -> None:
-        assert r[int].fail("boom").map_error(lambda e: f"wrapped:{e}").error == "wrapped:boom"
+        assert (
+            r[int].fail("boom").map_error(lambda e: f"wrapped:{e}").error
+            == "wrapped:boom"
+        )
         assert r[int].ok(1).map_error(lambda e: f"wrapped:{e}").value == 1
 
     # ------------------------------------------------------------------ #

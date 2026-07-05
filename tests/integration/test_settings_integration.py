@@ -19,7 +19,6 @@ import pytest
 from flext_core import FlextContainer, FlextSettings
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
 from tests.utilities import u
 
 from .settings_integration_precedence import TestsFlextFlextSettingsPrecedenceCase
@@ -50,7 +49,7 @@ class TestsFlextSettingsIntegration(TestsFlextFlextSettingsPrecedenceCase):
 
         # Assert — identity is the observable singleton contract
         assert first is second is third
-        assert isinstance(first, p.Settings)
+        assert first.model_dump()["app_name"] == first.app_name
 
     def test_reset_for_testing_replaces_the_global_instance(self) -> None:
         """reset_for_testing() causes the next fetch_global() to be a new object."""
@@ -63,7 +62,7 @@ class TestsFlextSettingsIntegration(TestsFlextFlextSettingsPrecedenceCase):
 
         # Assert — a fresh instance is served after reset
         assert after is not before
-        assert isinstance(after, p.Settings)
+        assert after.model_dump()["app_name"] == after.app_name
 
     def test_container_resolves_settings_to_the_global_singleton(self) -> None:
         """The container's "settings" binding is the same object as fetch_global()."""

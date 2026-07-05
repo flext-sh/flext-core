@@ -123,9 +123,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         invalid = {"name": "Alice", "age": "not_an_int"}
 
         # Act
-        result = r[
-            TestsFlextResultExceptionCarrying.UserModel
-        ].from_validation(
+        result = r[TestsFlextResultExceptionCarrying.UserModel].from_validation(
             invalid,
             TestsFlextResultExceptionCarrying.UserModel,
         )
@@ -140,9 +138,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         valid = {"name": "Alice", "age": 30}
 
         # Act
-        result = r[
-            TestsFlextResultExceptionCarrying.UserModel
-        ].from_validation(
+        result = r[TestsFlextResultExceptionCarrying.UserModel].from_validation(
             valid,
             TestsFlextResultExceptionCarrying.UserModel,
         )

@@ -76,7 +76,9 @@ class TestsFlextCoreGuards:
     def test_matches_type_unknown_string_spec_returns_false(self) -> None:
         assert u.matches_type("x", "no_such_spec") is False
 
-    @pytest.mark.parametrize("spec", ["string_non_empty", "dict_non_empty", "list_non_empty"])
+    @pytest.mark.parametrize(
+        "spec", ["string_non_empty", "dict_non_empty", "list_non_empty"]
+    )
     def test_matches_type_excludes_pydantic_models_from_non_empty_specs(
         self,
         spec: str,
@@ -159,7 +161,15 @@ class TestsFlextCoreGuards:
     # ------------------------------------------------------------------
     @pytest.mark.parametrize(
         ("value", "expected"),
-        [("x", True), (1, True), (1.5, True), (True, True), ([1], False), ({}, False), (None, False)],
+        [
+            ("x", True),
+            (1, True),
+            (1.5, True),
+            (True, True),
+            ([1], False),
+            ({}, False),
+            (None, False),
+        ],
     )
     def test_scalar_identifies_scalar_values(
         self,
@@ -170,7 +180,14 @@ class TestsFlextCoreGuards:
 
     @pytest.mark.parametrize(
         ("value", "expected"),
-        [("x", True), (1, True), (1.5, True), (True, True), ([1], False), ({"k": 1}, False)],
+        [
+            ("x", True),
+            (1, True),
+            (1.5, True),
+            (True, True),
+            ([1], False),
+            ({"k": 1}, False),
+        ],
     )
     def test_primitive_identifies_primitive_values(
         self,
@@ -190,7 +207,13 @@ class TestsFlextCoreGuards:
 
     @pytest.mark.parametrize(
         ("value", "expected"),
-        [([1], True), ((1,), True), ("text", False), (b"bytes", False), ({"k": 1}, False)],
+        [
+            ([1], True),
+            ((1,), True),
+            ("text", False),
+            (b"bytes", False),
+            ({"k": 1}, False),
+        ],
     )
     def test_list_like_excludes_strings_and_bytes(
         self,
@@ -209,7 +232,16 @@ class TestsFlextCoreGuards:
     # ------------------------------------------------------------------
     @pytest.mark.parametrize(
         ("value", "expected"),
-        [(None, True), ("", True), ("x", False), ([], True), ([1], False), ({}, True), ({"k": 1}, False), (0, False)],
+        [
+            (None, True),
+            ("", True),
+            ("x", False),
+            ([], True),
+            ([1], False),
+            ({}, True),
+            ({"k": 1}, False),
+            (0, False),
+        ],
     )
     def test_empty_value_reports_absence_or_empty_containers(
         self,

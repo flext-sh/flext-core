@@ -54,7 +54,7 @@ class TestsFlextCoreModels:
         value = self._SampleValue(x=1, y="a")
 
         with pytest.raises(m.ValidationError):
-            value.x = 5
+            setattr(value, "x", 5)
 
     def test_value_object_model_dump_exposes_public_fields(self) -> None:
         value = self._SampleValue(x=7, y="ok")

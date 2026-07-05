@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from types import ModuleType
 from typing import TYPE_CHECKING, ClassVar
 
 from dependency_injector import providers
@@ -16,8 +17,6 @@ from flext_core._constants.logging import FlextConstantsLogging as cl
 from flext_core._typings.base import FlextTypingBase as tb
 
 if TYPE_CHECKING:
-    from types import ModuleType
-
     from flext_core._protocols.logging import FlextProtocolsLogging as pl
     from flext_core._typings.services import FlextTypesServices as ts
 
@@ -55,6 +54,9 @@ class FlextRuntimeBase:
     @staticmethod
     def dependency_providers() -> ModuleType:
         """Return the dependency-injector providers module."""
+        if not isinstance(providers, ModuleType):
+            msg = "dependency_injector.providers is not a module"
+            raise TypeError(msg)
         return providers
 
     @staticmethod

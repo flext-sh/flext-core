@@ -12,6 +12,7 @@ from __future__ import annotations
 import pytest
 
 from tests.models import m
+from tests.typings import t
 
 
 class TestsFlextCoreModelsContainer:
@@ -87,7 +88,7 @@ class TestsFlextCoreModelsContainer:
     )
     def test_config_map_bool_reflects_emptiness(
         self,
-        root: dict[str, int],
+        root: dict[str, t.JsonPayload],
         truthy: bool,
     ) -> None:
         assert bool(m.ConfigMap(root=root)) is truthy
@@ -181,7 +182,7 @@ class TestsFlextCoreModelsContainer:
     )
     def test_object_list_bool_reflects_emptiness(
         self,
-        root: list[str],
+        root: list[t.JsonPayload],
         truthy: bool,
     ) -> None:
         assert bool(m.ObjectList(root=root)) is truthy

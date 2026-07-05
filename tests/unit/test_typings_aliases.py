@@ -54,9 +54,7 @@ class TestsFlextCoreTypingsAliases:
         tm.that(resolved, ne=None)
 
     @pytest.mark.parametrize("alias_name", FLAT_ALIAS_NAMES)
-    def test_flat_mapping_alias_reachable_through_facade(
-        self, alias_name: str
-    ) -> None:
+    def test_flat_mapping_alias_reachable_through_facade(self, alias_name: str) -> None:
         """Every flat mapping alias resolves to a real object on ``t``."""
         resolved = getattr(t, alias_name)
         tm.that(resolved, ne=None)
@@ -115,7 +113,17 @@ class TestsFlextCoreTypingsAliases:
 
     @pytest.mark.parametrize(
         "value",
-        ["text", 3, 2.0, True, datetime(2026, 1, 1, tzinfo=UTC), Path("/tmp"), [1], {"a": 1}, (1,)],
+        [
+            "text",
+            3,
+            2.0,
+            True,
+            datetime(2026, 1, 1, tzinfo=UTC),
+            Path("/tmp"),
+            [1],
+            {"a": 1},
+            (1,),
+        ],
     )
     def test_container_and_collection_tuple_accepts_every_container_value(
         self, value: object

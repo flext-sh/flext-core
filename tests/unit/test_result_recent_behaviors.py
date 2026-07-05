@@ -77,9 +77,13 @@ class TestsFlextCoreResultRecentBehaviors:
 
     def test_flow_through_threads_value_through_all_steps(self) -> None:
         """When every step succeeds, ``flow_through`` returns the final value."""
-        result = r[int].ok(1).flow_through(
-            lambda v: r[int].ok(v + 1),
-            lambda v: r[int].ok(v * 10),
+        result = (
+            r[int]
+            .ok(1)
+            .flow_through(
+                lambda v: r[int].ok(v + 1),
+                lambda v: r[int].ok(v * 10),
+            )
         )
 
         assert result.success is True
@@ -87,7 +91,7 @@ class TestsFlextCoreResultRecentBehaviors:
 
     def test_create_from_callable_fails_when_result_is_none(self) -> None:
         """``create_from_callable`` fails when the callable returns ``None``."""
-        result = r[int].create_from_callable(lambda: None)
+        result: p.Result[int] = r[int].create_from_callable(lambda: None)
 
         assert result.failure is True
         assert result.error is not None

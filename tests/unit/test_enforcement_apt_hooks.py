@@ -68,7 +68,8 @@ class TestsFlextEnforcementAptHooks:
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None
         assert rule.description != ""
-        assert rule.fix_action != ""
+        assert rule.fix_action is not None
+        assert rule.fix_action.target != ""
 
     @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
     def test_a_pt_rule_severity_is_a_named_level(self, rule_id: str) -> None:

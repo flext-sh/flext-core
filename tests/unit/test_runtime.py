@@ -135,7 +135,9 @@ class TestsFlextCoreRuntime:
     ) -> None:
         existing = FlextRuntime.validate_metadata_model_input({"a": 1}, m.Metadata)
 
-        assert FlextRuntime.validate_metadata_model_input(existing, m.Metadata) is existing
+        assert (
+            FlextRuntime.validate_metadata_model_input(existing, m.Metadata) is existing
+        )
 
     def test_validate_metadata_model_input_yields_empty_attributes_for_none(
         self,

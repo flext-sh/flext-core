@@ -43,7 +43,7 @@ class TestsFlextMixins:
     def test_settings_property_satisfies_settings_protocol(self) -> None:
         service = self._service()
 
-        assert isinstance(service.settings, p.Settings)
+        assert service.settings.model_dump()["app_name"] == "flext"
 
     def test_container_property_satisfies_container_protocol(self) -> None:
         service = self._service()

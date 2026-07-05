@@ -85,9 +85,7 @@ class TestsFlextCoreTypingsNew:
             (8080, 70000),
         ],
     )
-    def test_port_number_adapter_enforces_range(
-        self, valid: int, invalid: int
-    ) -> None:
+    def test_port_number_adapter_enforces_range(self, valid: int, invalid: int) -> None:
         """port_number_adapter accepts in-range ports and rejects out-of-range."""
         tm.that(t.port_number_adapter().validate_python(valid), eq=valid)
         with pytest.raises(c.ValidationError):

@@ -112,7 +112,7 @@ class TestsFlextCoreBase:
         value = SampleValue(amount=2, label="chf")
 
         with pytest.raises(ValidationError):
-            value.amount = 3
+            setattr(value, "amount", 3)
 
     @pytest.mark.parametrize(
         "amount",

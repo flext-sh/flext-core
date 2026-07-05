@@ -72,7 +72,9 @@ class TestsFlextCoreUtilitiesReliability:
     def test_retry_returns_first_attempt_result_when_operation_succeeds(
         self,
     ) -> None:
-        op, attempts = _counting_operation(fail_before=1, success_value=self.SUCCESS_VALUE)
+        op, attempts = _counting_operation(
+            fail_before=1, success_value=self.SUCCESS_VALUE
+        )
 
         result: p.Result[int] = u.retry(op, max_attempts=3, delay_seconds=0.0)
 
@@ -81,7 +83,9 @@ class TestsFlextCoreUtilitiesReliability:
         assert len(attempts) == 1
 
     def test_retry_recovers_after_transient_failures(self) -> None:
-        op, attempts = _counting_operation(fail_before=3, success_value=self.SUCCESS_VALUE)
+        op, attempts = _counting_operation(
+            fail_before=3, success_value=self.SUCCESS_VALUE
+        )
 
         result: p.Result[int] = u.retry(op, max_attempts=5, delay_seconds=0.0)
 
@@ -90,7 +94,9 @@ class TestsFlextCoreUtilitiesReliability:
         assert len(attempts) == 3
 
     def test_retry_reports_failure_after_exhausting_attempts(self) -> None:
-        op, attempts = _counting_operation(fail_before=99, success_value=self.SUCCESS_VALUE)
+        op, attempts = _counting_operation(
+            fail_before=99, success_value=self.SUCCESS_VALUE
+        )
 
         result: p.Result[int] = u.retry(op, max_attempts=3, delay_seconds=0.0)
 
@@ -141,7 +147,9 @@ class TestsFlextCoreUtilitiesReliability:
         assert "Max attempts must be at least" in (result.error or "")
 
     def test_retry_accepts_configuration_via_options_model(self) -> None:
-        op, attempts = _counting_operation(fail_before=2, success_value=self.SUCCESS_VALUE)
+        op, attempts = _counting_operation(
+            fail_before=2, success_value=self.SUCCESS_VALUE
+        )
         options = u.RetryOptions(max_attempts=3, delay_seconds=0.0)
 
         result: p.Result[int] = u.retry(op, options)

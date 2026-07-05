@@ -70,7 +70,8 @@ class TestsFlextUtilitiesPydantic:
     def test_validate_call_rejects_invalid_argument_values(self) -> None:
         @u.validate_call()
         def double_positive(value: t.PositiveInt) -> int:
-            return value * 2
+            doubled: int = value * 2
+            return doubled
 
         assert double_positive(4) == 8
         with pytest.raises(m.ValidationError):

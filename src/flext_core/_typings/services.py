@@ -190,6 +190,7 @@ class FlextTypesServices:
         | ph.Middleware
         | pl.HasLogger
         | pl.Logger
+        | prt.HasModelDump
         | pr.Registry
         | p.Model
         | prt.ResultLike[JsonPayload]

@@ -50,8 +50,8 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
             return self.Handle(value=21)
 
         def clean_handle(handle: ExamplesFlextShared.Handle) -> None:
-            handle.cleaned = True
-            cleaned_values.append(handle.value)
+            cleaned = handle.model_copy(update={"cleaned": True})
+            cleaned_values.append(cleaned.value)
 
         success_resource = r[int].with_resource(
             make_handle,

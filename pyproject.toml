@@ -213,9 +213,14 @@ exclude = "^tests/fixtures(?:/|$)"
 explicit_package_bases = true
 extra_checks = true
 follow_imports = "normal"
-ignore_missing_imports = true
 local_partial_types = true
-mypy_path = [ ".", "src" ]
+mypy_path = [
+  ".",
+  "src",
+  "../flext-cli/src",
+  "../flext-infra/src",
+  "../flext-tests/src",
+]
 namespace_packages = true
 no_implicit_reexport = true
 overrides = [  ]

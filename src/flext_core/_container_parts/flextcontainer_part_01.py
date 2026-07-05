@@ -95,7 +95,8 @@ class FlextContainer(p.Container, ABC):
     @override
     def provide(self) -> Callable[[str], t.RegisterableService]:
         """Dependency-injector Provide helper scoped to the bridge."""
-        return self._di_bridge.provide
+        provider: Callable[[str], t.RegisterableService] = self._di_bridge.provide
+        return provider
 
     @classmethod
     def reset_for_testing(cls) -> None:

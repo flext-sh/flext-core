@@ -104,7 +104,7 @@ class FlextSettingsBase(BaseSettings):
             if instance is not None:
                 return instance.clone(**overrides)
             with cls.singleton_disabled():
-                return cls(**overrides)
+                return cls.model_validate(dict(overrides))
         if instance is not None:
             return instance
         with cls._lock:

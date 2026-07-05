@@ -124,7 +124,11 @@ class TestsFlextCoreIntegration:
         expected = f"processed_{input_data}"
 
         def create_result() -> str:
-            return mock_external_service.process(input_data).unwrap_or("")
+            processed: p.Result[str] = mock_external_service.process(input_data)
+            if not processed.success:
+                raise AssertionError(processed.error)
+            value: str = processed.value
+            return value
 
         # Act
         factory_return = clean_container.factory("result_factory", create_result)

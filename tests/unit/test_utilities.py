@@ -62,9 +62,7 @@ class TestsFlextCoreUtilities:
             (None, False),
         ],
     )
-    def test_to_bool_follows_truthiness(
-        self, value: ConvValue, expected: bool
-    ) -> None:
+    def test_to_bool_follows_truthiness(self, value: ConvValue, expected: bool) -> None:
         assert u.to_bool(value) is expected
 
     @pytest.mark.parametrize(

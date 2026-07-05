@@ -69,7 +69,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
     def test_metadata_is_frozen(self) -> None:
         model = m.Metadata()
         with pytest.raises(c.ValidationError):
-            model.version = "2.0.0"
+            setattr(model, "version", "2.0.0")
 
     def test_metadata_rejects_extra_fields(self) -> None:
         with pytest.raises(c.ValidationError):

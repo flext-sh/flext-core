@@ -18,6 +18,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from tests.constants import c
@@ -96,7 +98,7 @@ class TestsFlextFacadeFlatSsotAccess:
             name="flext-ldif",
             version="1.2.3",
             license="MIT",
-            root="/tmp/flext-ldif",
+            root=Path("/tmp/flext-ldif"),
         )
 
         # Assert — public field state.
@@ -110,7 +112,7 @@ class TestsFlextFacadeFlatSsotAccess:
             name="flext-ldif",
             version="1.0.0",
             license="MIT",
-            root="/tmp",
+            root=Path("/tmp"),
         )
 
         # Assert
@@ -138,7 +140,7 @@ class TestsFlextFacadeFlatSsotAccess:
             name=name,
             version="1.0.0",
             license="MIT",
-            root="/tmp",
+            root=Path("/tmp"),
         )
 
         # Assert — derived public accessors.
@@ -151,7 +153,7 @@ class TestsFlextFacadeFlatSsotAccess:
             name="flext-ldif",
             version="1.0.0",
             license="MIT",
-            root="/tmp",
+            root=Path("/tmp"),
         )
 
         # Act / Assert — frozen model rejects mutation.
@@ -165,7 +167,7 @@ class TestsFlextFacadeFlatSsotAccess:
                 name="flext-ldif",
                 version="1.0.0",
                 license="MIT",
-                root="/tmp",
+                root=Path("/tmp"),
                 unexpected="value",
             )
 
@@ -175,17 +177,17 @@ class TestsFlextFacadeFlatSsotAccess:
         blank_field: str,
     ) -> None:
         # Arrange
-        kwargs: dict[str, str] = {
+        kwargs: dict[str, str | Path] = {
             "name": "flext-ldif",
             "version": "1.0.0",
             "license": "MIT",
-            "root": "/tmp",
+            "root": Path("/tmp"),
         }
         kwargs[blank_field] = ""
 
         # Act / Assert — min_length=1 enforced.
         with pytest.raises(m.ValidationError):
-            m.ProjectMetadata(**kwargs)
+            m.ProjectMetadata.model_validate(kwargs)
 
     def test_project_metadata_model_dump_exposes_public_fields(self) -> None:
         # Arrange
@@ -193,7 +195,7 @@ class TestsFlextFacadeFlatSsotAccess:
             name="flext-ldif",
             version="1.0.0",
             license="MIT",
-            root="/tmp",
+            root=Path("/tmp"),
         )
 
         # Act

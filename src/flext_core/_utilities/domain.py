@@ -20,6 +20,7 @@ from flext_core import c, t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._models.domain_event import FlextModelsDomainEvent as mde
+from flext_core._protocols.result import FlextProtocolsResult as prt
 
 from .guards import FlextUtilitiesGuards as u
 
@@ -31,7 +32,9 @@ class FlextUtilitiesDomain:
     """Reusable DDD helpers for dispatcher-driven domain workflows."""
 
     @staticmethod
-    def same_type(obj_a: t.JsonPayload, obj_b: t.JsonPayload) -> bool:
+    def same_type(
+        obj_a: t.JsonPayload | prt.HasModelDump, obj_b: t.JsonPayload | prt.HasModelDump
+    ) -> bool:
         """Exact-type identity comparison (no MRO traversal).
 
         Returns True only when both objects are the exact same concrete type.
@@ -40,8 +43,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: t.JsonPayload,
-        entity_b: t.JsonPayload,
+        entity_a: t.JsonPayload | prt.HasModelDump,
+        entity_b: t.JsonPayload | prt.HasModelDump,
         id_attr: str = c.FIELD_ID,
     ) -> bool:
         """Compare two entities by unique ID (identity, not value).
@@ -64,8 +67,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_value_objects_by_value(
-        obj_a: t.JsonPayload,
-        obj_b: t.JsonPayload,
+        obj_a: t.JsonPayload | prt.HasModelDump,
+        obj_b: t.JsonPayload | prt.HasModelDump,
     ) -> bool:
         """Compare two value objects by all attributes (value, not identity).
 
@@ -117,7 +120,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def hash_entity_by_id(
-        entity: t.JsonPayload,
+        entity: t.JsonPayload | prt.HasModelDump,
         id_attr: str = c.FIELD_ID,
     ) -> int:
         """Hash entity by ID + type. Falls back to identity hash if ID missing."""
@@ -129,7 +132,7 @@ class FlextUtilitiesDomain:
         return hash((u.type_name(entity), entity_id))
 
     @staticmethod
-    def hash_value_object_by_value(obj: t.JsonPayload) -> int:
+    def hash_value_object_by_value(obj: t.JsonPayload | prt.HasModelDump) -> int:
         """Hash value object by all attributes. Falls back to repr hash."""
         if u.scalar(obj):
             return hash(obj)

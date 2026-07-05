@@ -102,10 +102,13 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
                     for item in value
                 ],
             )
-        if isinstance(
-            value,
-            (str, int, float, bool, bytes, datetime, Path, BaseModel),
-        ) or value is None:
+        if (
+            isinstance(
+                value,
+                (str, int, float, bool, bytes, datetime, Path, BaseModel),
+            )
+            or value is None
+        ):
             return value
         if FlextRuntimeContainer._is_registerable_runtime_service(value):
             return value
