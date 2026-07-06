@@ -5,7 +5,6 @@ from __future__ import annotations
 import io
 from contextlib import redirect_stdout
 from pathlib import Path
-from typing import override
 
 from examples import ExamplesFlextShared, p
 from flext_core import FlextContainer, FlextLogger
@@ -180,7 +179,6 @@ class Ex03FlextLogger(ExamplesFlextShared):
             self._ok(FlextLogger.clear_scope("operation")),
         )
 
-    @override
     def exercise(self) -> None:
         """Run all logger example sections in deterministic order."""
         self._exercise_factory_methods()
@@ -192,7 +190,6 @@ class Ex03FlextLogger(ExamplesFlextShared):
         self._exercise_performance_tracker()
         self._exercise_result_adapter()
 
-    @override
     def run(self) -> None:
         """Run the example while keeping logger output out of golden stdout."""
         with redirect_stdout(io.StringIO()):

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, override
+from typing import TYPE_CHECKING, Annotated
 
 from examples import ExamplesFlextShared, m, p, r, s, t, u
 
@@ -23,7 +23,6 @@ class _EchoService(s[str]):
         ),
     ] = ""
 
-    @override
     def execute(self) -> p.Result[str]:
         validation = self.validate_business_rules()
         if validation.failure:
@@ -59,7 +58,6 @@ class ExampleService:
 class _ExampleServiceGolden(ExamplesFlextShared):
     """Golden-file harness for the service example."""
 
-    @override
     def exercise(self) -> None:
         """Exercise service execution, validation, and runtime accessors."""
         service = _EchoService(payload=m.Examples.Payload(text="ok"))
