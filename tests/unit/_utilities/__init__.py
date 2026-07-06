@@ -7,8 +7,8 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
-        ".test_guards": ("TestsFlextUtilitiesGuards",),
-        ".test_mapper": ("TestsFlextUtilitiesMapper",),
+        ".test_guards": ("TestsFlextCoreGuards",),
+        ".test_mapper": ("TestsFlextCoreMapper",),
         "flext_tests": (
             "c",
             "d",

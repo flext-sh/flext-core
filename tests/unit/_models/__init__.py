@@ -7,13 +7,17 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
-        ".test_base": ("TestsFlextModelsBase",),
-        ".test_cqrs": ("TestsFlextModelsCQRS",),
-        ".test_enforcement_sources": ("TestsFlextModelsEnforcementSources",),
-        ".test_entity": ("TestsFlextModelsEntity",),
+        ".test_base": (
+            "Sample",
+            "SampleValue",
+            "TestsFlextCoreBase",
+        ),
+        ".test_cqrs": ("TestsFlextCoreCqrs",),
+        ".test_enforcement_sources": ("TestsFlextCoreEnforcementSources",),
+        ".test_entity": ("TestsFlextCoreEntity",),
         ".test_exception_params_core": ("TestsFlextModelsExceptionParamsCore",),
         ".test_exception_params_operations": (
-            "TestsFlextModelsExceptionParamsOperations",
+            "TestsFlextCoreExceptionParamsOperations",
         ),
         ".test_exception_params_resources": (
             "TestsFlextModelsExceptionParamsResources",

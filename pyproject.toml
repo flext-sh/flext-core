@@ -219,10 +219,10 @@ follow_imports = "normal"
 local_partial_types = true
 mypy_path = [
   ".",
-  "src",
   "../flext-cli/src",
   "../flext-infra/src",
   "../flext-tests/src",
+  "src",
 ]
 namespace_packages = true
 no_implicit_reexport = true
