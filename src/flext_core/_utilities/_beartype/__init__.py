@@ -14,9 +14,6 @@ if TYPE_CHECKING:
     from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_03 import (
         FlextUtilitiesBeartypeClassVisitor,
     )
-    from flext_core._utilities._beartype._helpers_parts.helpers_part_03 import (
-        FlextUtilitiesBeartypeHelpers,
-    )
     from flext_core._utilities._beartype._library_visitor import (
         FlextUtilitiesBeartypeLibraryVisitor,
     )
@@ -29,6 +26,7 @@ if TYPE_CHECKING:
     from flext_core._utilities._beartype.field_visitor import (
         FlextUtilitiesBeartypeFieldVisitor,
     )
+    from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
     from flext_core._utilities._beartype.import_visitor import (
         FlextUtilitiesBeartypeImportVisitor,
     )
@@ -46,11 +44,11 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "FlextUtilitiesBeartypeClassVisitor",
         ),
         "._helpers_parts": ("_helpers_parts",),
-        "._helpers_parts.helpers_part_03": ("FlextUtilitiesBeartypeHelpers",),
         "._library_visitor": ("FlextUtilitiesBeartypeLibraryVisitor",),
         ".attr_visitor": ("FlextUtilitiesBeartypeAttrVisitor",),
         ".deprecated_visitor": ("FlextUtilitiesBeartypeDeprecatedVisitor",),
         ".field_visitor": ("FlextUtilitiesBeartypeFieldVisitor",),
+        ".helpers": ("FlextUtilitiesBeartypeHelpers",),
         ".import_visitor": ("FlextUtilitiesBeartypeImportVisitor",),
         ".method_visitor": ("FlextUtilitiesBeartypeMethodVisitor",),
         ".module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),

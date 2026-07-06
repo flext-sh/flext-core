@@ -84,14 +84,11 @@ if TYPE_CHECKING:
         FlextSettings,
         FlextTypes,
         FlextUtilities,
-        build_lazy_import_map,
         c,
         d,
         e,
         h,
-        lazy,
         m,
-        normalize_lazy_imports,
         p,
         r,
         s,
@@ -120,7 +117,6 @@ if TYPE_CHECKING:
         FlextModelsRegistry,
         FlextModelsService,
         FlextModelsSettings,
-        mc,
     )
     from flext_core._root_typing_parts.utilities_part_01 import (
         FlextUtilitiesArgs,
@@ -177,8 +173,6 @@ if TYPE_CHECKING:
         FlextUtilitiesRuntimeViolationRegistry,
         FlextUtilitiesSettings,
         FlextUtilitiesText,
-        execute_dispatcher_handler,
-        ube,
     )
 _LAZY_IMPORTS = build_lazy_import_map(
     {

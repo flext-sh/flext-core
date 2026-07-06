@@ -14,9 +14,6 @@ if TYPE_CHECKING:
     from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_03 import (
         FlextUtilitiesBeartypeClassVisitor,
     )
-    from flext_core._utilities._beartype._helpers_parts.helpers_part_03 import (
-        FlextUtilitiesBeartypeHelpers,
-    )
     from flext_core._utilities._beartype._library_visitor import (
         FlextUtilitiesBeartypeLibraryVisitor,
     )
@@ -29,6 +26,7 @@ if TYPE_CHECKING:
     from flext_core._utilities._beartype.field_visitor import (
         FlextUtilitiesBeartypeFieldVisitor,
     )
+    from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
     from flext_core._utilities._beartype.import_visitor import (
         FlextUtilitiesBeartypeImportVisitor,
     )
@@ -56,7 +54,6 @@ if TYPE_CHECKING:
     from flext_core._utilities._enforcement_parts.enforcement_part_06 import (
         EXTENDED_PREDICATE_BINDINGS,
     )
-    from flext_core._utilities._exports import FLEXT_CORE__UTILITIES_LAZY_IMPORTS
     from flext_core._utilities._generators_parts.generators_part_02 import (
         FlextUtilitiesGenerators,
     )
@@ -88,7 +85,7 @@ if TYPE_CHECKING:
     )
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
-    from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine, ube
+    from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
     from flext_core._utilities.beartype_typingext_patch import (
         FlextUtilitiesBeartypeTypingExtPatch,
     )
@@ -101,7 +98,6 @@ if TYPE_CHECKING:
     from flext_core._utilities.context_state import FlextUtilitiesContextState
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
-    from flext_core._utilities.dispatcher_execute import execute_dispatcher_handler
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
     from flext_core._utilities.enum import FlextUtilitiesEnum
@@ -131,11 +127,11 @@ _LAZY_IMPORTS = build_lazy_import_map(
         "._beartype._class_visitor_parts.class_visitor_part_03": (
             "FlextUtilitiesBeartypeClassVisitor",
         ),
-        "._beartype._helpers_parts.helpers_part_03": ("FlextUtilitiesBeartypeHelpers",),
         "._beartype._library_visitor": ("FlextUtilitiesBeartypeLibraryVisitor",),
         "._beartype.attr_visitor": ("FlextUtilitiesBeartypeAttrVisitor",),
         "._beartype.deprecated_visitor": ("FlextUtilitiesBeartypeDeprecatedVisitor",),
         "._beartype.field_visitor": ("FlextUtilitiesBeartypeFieldVisitor",),
+        "._beartype.helpers": ("FlextUtilitiesBeartypeHelpers",),
         "._beartype.import_visitor": ("FlextUtilitiesBeartypeImportVisitor",),
         "._beartype.method_visitor": ("FlextUtilitiesBeartypeMethodVisitor",),
         "._beartype.module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),
@@ -150,7 +146,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
         "._enforcement_parts.enforcement_part_01": ("PREDICATE_BINDINGS",),
         "._enforcement_parts.enforcement_part_05": ("FlextUtilitiesEnforcement",),
         "._enforcement_parts.enforcement_part_06": ("EXTENDED_PREDICATE_BINDINGS",),
-        "._exports": ("FLEXT_CORE__UTILITIES_LAZY_IMPORTS",),
         "._generators_parts": ("_generators_parts",),
         "._generators_parts.generators_part_02": ("FlextUtilitiesGenerators",),
         "._guards_parts": ("_guards_parts",),
