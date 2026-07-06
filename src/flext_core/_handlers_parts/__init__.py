@@ -8,9 +8,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._handlers_parts.flexthandlers_part_07 import (
-        FlextHandlers as FlextHandlers,
-    )
+    from flext_core._handlers_parts.flexthandlers_part_07 import FlextHandlers
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".flexthandlers_part_07": ("FlextHandlers",),

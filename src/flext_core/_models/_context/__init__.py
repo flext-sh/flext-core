@@ -9,23 +9,13 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_03 import (
-        FlextModelsContextScope as FlextModelsContextScope,
+        FlextModelsContextScope,
     )
-    from flext_core._models._context._data import (
-        FlextModelsContextData as FlextModelsContextData,
-    )
-    from flext_core._models._context._export import (
-        FlextModelsContextExport as FlextModelsContextExport,
-    )
-    from flext_core._models._context._metadata import (
-        FlextModelsContextMetadata as FlextModelsContextMetadata,
-    )
-    from flext_core._models._context._proxy_var import (
-        FlextModelsContextProxyVar as FlextModelsContextProxyVar,
-    )
-    from flext_core._models._context._tokens import (
-        FlextModelsContextTokens as FlextModelsContextTokens,
-    )
+    from flext_core._models._context._data import FlextModelsContextData
+    from flext_core._models._context._export import FlextModelsContextExport
+    from flext_core._models._context._metadata import FlextModelsContextMetadata
+    from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
+    from flext_core._models._context._tokens import FlextModelsContextTokens
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".__scope_parts": ("__scope_parts",),

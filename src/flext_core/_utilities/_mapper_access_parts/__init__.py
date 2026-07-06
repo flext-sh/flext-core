@@ -9,7 +9,7 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._utilities._mapper_access_parts.mapper_access_part_02 import (
-        FlextUtilitiesMapperAccess as FlextUtilitiesMapperAccess,
+        FlextUtilitiesMapperAccess,
     )
 _LAZY_IMPORTS = build_lazy_import_map(
     {

@@ -9,7 +9,7 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._utilities._enforcement_collect_parts.enforcement_collect_part_02 import (
-        FlextUtilitiesEnforcementCollect as FlextUtilitiesEnforcementCollect,
+        FlextUtilitiesEnforcementCollect,
     )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
