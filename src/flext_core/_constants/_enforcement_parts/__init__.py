@@ -9,31 +9,31 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
-        FlextConstantsEnforcementEnums,
+        FlextConstantsEnforcementEnums as FlextConstantsEnforcementEnums,
     )
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_02 import (
-        FlextConstantsEnforcementRuntime,
+        FlextConstantsEnforcementRuntime as FlextConstantsEnforcementRuntime,
     )
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_03 import (
-        FlextConstantsEnforcementNamespace,
+        FlextConstantsEnforcementNamespace as FlextConstantsEnforcementNamespace,
     )
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
-        FlextConstantsEnforcementRules,
+        FlextConstantsEnforcementRules as FlextConstantsEnforcementRules,
     )
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_05 import (
-        FlextConstantsEnforcementRuleText,
+        FlextConstantsEnforcementRuleText as FlextConstantsEnforcementRuleText,
     )
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_06 import (
-        FlextConstantsEnforcementTargets,
+        FlextConstantsEnforcementTargets as FlextConstantsEnforcementTargets,
     )
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_07 import (
-        FlextConstantsEnforcementSmellData,
+        FlextConstantsEnforcementSmellData as FlextConstantsEnforcementSmellData,
     )
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_08 import (
-        FlextConstantsEnforcementFixActions,
+        FlextConstantsEnforcementFixActions as FlextConstantsEnforcementFixActions,
     )
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_09 import (
-        NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT,
+        NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT as NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT,
     )
 _LAZY_IMPORTS = build_lazy_import_map(
     {

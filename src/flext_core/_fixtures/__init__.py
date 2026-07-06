@@ -8,7 +8,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._fixtures.enforcement import FlextCoreEnforcementPytestPlugin
+    from flext_core._fixtures.enforcement import (
+        FlextCoreEnforcementPytestPlugin as FlextCoreEnforcementPytestPlugin,
+    )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         ".enforcement": ("FlextCoreEnforcementPytestPlugin",),

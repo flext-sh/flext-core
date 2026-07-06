@@ -9,32 +9,34 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._utilities._beartype._alias_visitor import (
-        FlextUtilitiesBeartypeAliasVisitor,
+        FlextUtilitiesBeartypeAliasVisitor as FlextUtilitiesBeartypeAliasVisitor,
     )
     from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_03 import (
-        FlextUtilitiesBeartypeClassVisitor,
+        FlextUtilitiesBeartypeClassVisitor as FlextUtilitiesBeartypeClassVisitor,
     )
     from flext_core._utilities._beartype._library_visitor import (
-        FlextUtilitiesBeartypeLibraryVisitor,
+        FlextUtilitiesBeartypeLibraryVisitor as FlextUtilitiesBeartypeLibraryVisitor,
     )
     from flext_core._utilities._beartype.attr_visitor import (
-        FlextUtilitiesBeartypeAttrVisitor,
+        FlextUtilitiesBeartypeAttrVisitor as FlextUtilitiesBeartypeAttrVisitor,
     )
     from flext_core._utilities._beartype.deprecated_visitor import (
-        FlextUtilitiesBeartypeDeprecatedVisitor,
+        FlextUtilitiesBeartypeDeprecatedVisitor as FlextUtilitiesBeartypeDeprecatedVisitor,
     )
     from flext_core._utilities._beartype.field_visitor import (
-        FlextUtilitiesBeartypeFieldVisitor,
+        FlextUtilitiesBeartypeFieldVisitor as FlextUtilitiesBeartypeFieldVisitor,
     )
-    from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
+    from flext_core._utilities._beartype.helpers import (
+        FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpers,
+    )
     from flext_core._utilities._beartype.import_visitor import (
-        FlextUtilitiesBeartypeImportVisitor,
+        FlextUtilitiesBeartypeImportVisitor as FlextUtilitiesBeartypeImportVisitor,
     )
     from flext_core._utilities._beartype.method_visitor import (
-        FlextUtilitiesBeartypeMethodVisitor,
+        FlextUtilitiesBeartypeMethodVisitor as FlextUtilitiesBeartypeMethodVisitor,
     )
     from flext_core._utilities._beartype.module_visitor import (
-        FlextUtilitiesBeartypeModuleVisitor,
+        FlextUtilitiesBeartypeModuleVisitor as FlextUtilitiesBeartypeModuleVisitor,
     )
 _LAZY_IMPORTS = build_lazy_import_map(
     {

@@ -9,19 +9,19 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._constants._errors_parts.flextconstantserrors_part_01 import (
-        FlextConstantsErrorsMessages,
+        FlextConstantsErrorsMessages as FlextConstantsErrorsMessages,
     )
     from flext_core._constants._errors_parts.flextconstantserrors_part_02 import (
-        FlextConstantsErrorsRuntimeExceptions,
+        FlextConstantsErrorsRuntimeExceptions as FlextConstantsErrorsRuntimeExceptions,
     )
     from flext_core._constants._errors_parts.flextconstantserrors_part_03 import (
-        FlextConstantsErrorsValidationExceptions,
+        FlextConstantsErrorsValidationExceptions as FlextConstantsErrorsValidationExceptions,
     )
     from flext_core._constants._errors_parts.flextconstantserrors_part_04 import (
-        FlextConstantsErrorsDomainParser,
+        FlextConstantsErrorsDomainParser as FlextConstantsErrorsDomainParser,
     )
     from flext_core._constants._errors_parts.flextconstantserrors_part_05 import (
-        FlextConstantsErrorsRuntimeSettings,
+        FlextConstantsErrorsRuntimeSettings as FlextConstantsErrorsRuntimeSettings,
     )
 _LAZY_IMPORTS = build_lazy_import_map(
     {

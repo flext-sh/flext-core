@@ -9,12 +9,18 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._models._enforcement._base import (
-        EnforcementModelBase,
-        FlextModelsEnforcementBase,
+        EnforcementModelBase as EnforcementModelBase,
+        FlextModelsEnforcementBase as FlextModelsEnforcementBase,
     )
-    from flext_core._models._enforcement._catalog import FlextModelsEnforcementCatalog
-    from flext_core._models._enforcement._params import FlextModelsEnforcementParams
-    from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
+    from flext_core._models._enforcement._catalog import (
+        FlextModelsEnforcementCatalog as FlextModelsEnforcementCatalog,
+    )
+    from flext_core._models._enforcement._params import (
+        FlextModelsEnforcementParams as FlextModelsEnforcementParams,
+    )
+    from flext_core._models._enforcement._sources import (
+        FlextModelsEnforcementSources as FlextModelsEnforcementSources,
+    )
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         "._base": (

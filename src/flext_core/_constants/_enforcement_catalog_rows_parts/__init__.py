@@ -9,25 +9,25 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._constants._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_a import (
-        INFRA_DETECTOR_ROWS_CORE,
+        INFRA_DETECTOR_ROWS_CORE as INFRA_DETECTOR_ROWS_CORE,
     )
     from flext_core._constants._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_b import (
-        INFRA_DETECTOR_ROWS_PATTERNS,
+        INFRA_DETECTOR_ROWS_PATTERNS as INFRA_DETECTOR_ROWS_PATTERNS,
     )
     from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_01 import (
-        FlextConstantsEnforcementCatalogInfraRows,
+        FlextConstantsEnforcementCatalogInfraRows as FlextConstantsEnforcementCatalogInfraRows,
     )
     from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_02 import (
-        FlextConstantsEnforcementCatalogSkillRows,
+        FlextConstantsEnforcementCatalogSkillRows as FlextConstantsEnforcementCatalogSkillRows,
     )
     from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_03 import (
-        FlextConstantsEnforcementCatalogToolRows,
+        FlextConstantsEnforcementCatalogToolRows as FlextConstantsEnforcementCatalogToolRows,
     )
     from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_04 import (
-        FlextConstantsEnforcementCatalogBeartypeRows,
+        FlextConstantsEnforcementCatalogBeartypeRows as FlextConstantsEnforcementCatalogBeartypeRows,
     )
     from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_05 import (
-        FlextConstantsEnforcementCatalogInfraRowsExtended,
+        FlextConstantsEnforcementCatalogInfraRowsExtended as FlextConstantsEnforcementCatalogInfraRowsExtended,
     )
 _LAZY_IMPORTS = build_lazy_import_map(
     {

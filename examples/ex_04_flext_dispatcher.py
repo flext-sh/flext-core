@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import override
 
 from examples import ExamplesFlextShared, m, p, r, u
 
@@ -123,6 +124,7 @@ class Ex04DispatchDsl:
 class _Ex04DispatchGolden(ExamplesFlextShared):
     """Golden-file harness for the dispatcher example."""
 
+    @override
     def exercise(self) -> None:
         """Exercise handler registration, dispatching, auto-discovery, and events."""
         dispatcher = Ex04DispatchDsl.build_dispatcher()

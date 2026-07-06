@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, override
 
 from examples import c, d, m, p, r, s, t, u
 
@@ -29,6 +29,7 @@ class ExamplesFlextDatabaseService(s[m.ConfigMap]):
     ]
 
     @d.log_operation("database_query")
+    @override
     def execute(self) -> p.Result[m.ConfigMap]:
         """Execute database operations.
 
@@ -44,6 +45,7 @@ class ExamplesFlextDatabaseService(s[m.ConfigMap]):
         results = m.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
         return r[m.ConfigMap].ok(results)
 
+    @override
     def model_post_init(self, /, __context: t.ScalarMapping | None) -> None:
         """Post-initialization hook.
 
@@ -78,6 +80,7 @@ class ExamplesFlextMigrationService(s[m.ConfigMap]):
         m.Field(description="Whether to perform synchronous migration."),
     ]
 
+    @override
     def model_post_init(self, /, __context: t.ScalarMapping | None) -> None:
         """Post-initialization hook.
 
@@ -104,6 +107,7 @@ class ExamplesFlextMigrationService(s[m.ConfigMap]):
         )
 
     @d.log_operation("migration_process")
+    @override
     def execute(self) -> p.Result[m.ConfigMap]:
         """Execute migration.
 
