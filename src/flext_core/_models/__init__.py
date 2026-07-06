@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     )
     from flext_core._models.builder import FlextModelsBuilder
     from flext_core._models.collections import FlextModelsCollections
-    from flext_core._models.containers import FlextModelsContainers
+    from flext_core._models.containers import FlextModelsContainers, mc
     from flext_core._models.context import FlextModelsContext
     from flext_core._models.dispatcher import FlextModelsDispatcher
     from flext_core._models.domain_event import FlextModelsDomainEvent

@@ -85,7 +85,7 @@ if TYPE_CHECKING:
     )
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
-    from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
+    from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine, ube
     from flext_core._utilities.beartype_typingext_patch import (
         FlextUtilitiesBeartypeTypingExtPatch,
     )
@@ -98,6 +98,7 @@ if TYPE_CHECKING:
     from flext_core._utilities.context_state import FlextUtilitiesContextState
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
+    from flext_core._utilities.dispatcher_execute import execute_dispatcher_handler
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
     from flext_core._utilities.enum import FlextUtilitiesEnum
