@@ -57,12 +57,12 @@ version = "0.12.0-dev"
 email = "team@flext.sh"
 name = "FLEXT Team"
 
+[project.entry-points.pytest11]
+flext_core_enforcement = "flext_core._fixtures.enforcement"
+
 [[project.maintainers]]
 email = "team@flext.sh"
 name = "FLEXT Team"
-
-[project.entry-points.pytest11]
-flext_core_enforcement = "flext_core._fixtures.enforcement"
 
 # [MANAGED] consolidated development dependencies
 [project.optional-dependencies]
@@ -216,14 +216,9 @@ exclude = "^tests/fixtures(?:/|$)"
 explicit_package_bases = true
 extra_checks = true
 follow_imports = "normal"
+ignore_missing_imports = true
 local_partial_types = true
-mypy_path = [
-  ".",
-  "../flext-cli/src",
-  "../flext-infra/src",
-  "../flext-tests/src",
-  "src",
-]
+mypy_path = [ ".", "src" ]
 namespace_packages = true
 no_implicit_reexport = true
 overrides = [  ]
@@ -281,6 +276,7 @@ project-excludes = [
   "vendor/**",
 ]
 project-includes = [ "examples/**/*.py*", "scripts/**/*.py*", "src/**/*.py*", "tests/**/*.py*" ]
+python-interpreter-path = "../.venv/bin/python"
 python-version = "3.13"
 search-path = [
   ".",
@@ -407,7 +403,6 @@ exclude = [
   ".venv",
 ]
 extraPaths = [ ".", "src" ]
-ignore = [ "**/*.pyi" ]
 include = [ "examples", "scripts", "src", "tests" ]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
