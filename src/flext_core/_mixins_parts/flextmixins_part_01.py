@@ -16,8 +16,8 @@ from contextlib import contextmanager
 from typing import (
     TYPE_CHECKING,
     ClassVar,
+    TypeIs,
     Unpack,
-    cast,
 )
 
 from pydantic import ConfigDict, PrivateAttr
@@ -116,16 +116,20 @@ class FlextMixins(m.ArbitraryTypesModel):
         return logger
 
     @staticmethod
-    def _coerce_settings_type(value: _RuntimeBootstrapValue) -> t.SettingsClass | None:
-        """Validate the explicit settings class accepted by service constructors."""
-        if value is None:
-            return None
-        if (
+    def _is_settings_class(value: object) -> TypeIs[t.SettingsClass]:
+        return (
             isinstance(value, type)
             and callable(getattr(value, "fetch_global", None))
             and callable(getattr(value, "model_copy", None))
-        ):
-            return cast("t.SettingsClass", value)
+        )
+
+    @classmethod
+    def _coerce_settings_type(cls, value: _RuntimeBootstrapValue) -> t.SettingsClass | None:
+        """Validate the explicit settings class accepted by service constructors."""
+        if value is None:
+            return None
+        if cls._is_settings_class(value):
+            return value
         msg = "settings_type must satisfy p.SettingsType"
         raise TypeError(msg)
 

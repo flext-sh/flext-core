@@ -58,16 +58,15 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                 try:
                     module_annotations = inspect.get_annotations(module, eval_str=False)
                 except (TypeError, NameError):
-                    pass
-                else:
-                    violation = next(
-                        (
-                            {"file": file_name, "line": "?"}
-                            for annotation in module_annotations.values()
-                            if annotation is _typing_TypeAlias
-                        ),
-                        _NO_VIOLATION,
-                    )
+                    module_annotations: dict[str, object] = {}
+                violation = next(
+                    (
+                        {"file": file_name, "line": "?"}
+                        for annotation in module_annotations.values()
+                        if annotation is _typing_TypeAlias
+                    ),
+                    _NO_VIOLATION,
+                )
             case "cast_outside_core":
                 if not any(
                     marker in src_file for marker in c.ENFORCE_FLEXT_CORE_PATH_MARKERS
