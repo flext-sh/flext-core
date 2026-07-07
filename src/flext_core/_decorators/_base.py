@@ -10,13 +10,13 @@ import warnings
 from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
-from flext_core._loggings_parts.flextlogger_part_05 import FlextLogger
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
+from flext_core.loggings import FlextUtilitiesLogging
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -71,7 +71,7 @@ class FlextDecoratorsBase:
             if isinstance(func_module, str)
             else (func.__module__ if callable(func) else __name__)
         )
-        logger: pl.Logger = FlextLogger.fetch_logger(module_name)
+        logger: pl.Logger = FlextUtilitiesLogging.fetch_logger(module_name)
         return logger
 
     @staticmethod

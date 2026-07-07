@@ -65,7 +65,7 @@ class FlextContainer(FlextContainerPart03, ABC):
         if str(c.ServiceName.LOGGER) not in self._internal_registrations:
             self.factory(
                 c.ServiceName.LOGGER,
-                lambda: u.fetch_logger(c.DEFAULT_LOGGER_MODULE),
+                lambda: u.fetch_logger(c.LOGGER_NAME_FLEXT_CORE),
             )
             self._internal_registrations.add(str(c.ServiceName.LOGGER))
         if c.FIELD_CONTEXT not in self._internal_registrations:

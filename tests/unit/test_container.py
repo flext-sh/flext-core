@@ -9,6 +9,7 @@ model state) rather than internal structures.
 
 from __future__ import annotations
 
+import inspect
 from typing import TYPE_CHECKING
 
 import pytest
@@ -81,6 +82,18 @@ class TestsFlextCoreContainer:
         _ = u.Tests.assert_failure(
             clean_container.drop("ghost"),
             expected_error="not found",
+        )
+
+    def test_logger_requires_explicit_module_name(
+        self,
+        clean_container: p.Container,
+    ) -> None:
+        params = inspect.signature(type(clean_container).logger).parameters
+        module_param = params["module_name"]
+        tm.that(
+            module_param.default is inspect.Parameter.empty,
+            eq=True,
+            msg="module_name must be required, not optional",
         )
 
     def test_clear_empties_all_registrations(

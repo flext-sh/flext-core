@@ -129,7 +129,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
 
         def logger(
             self,
-            module_name: str | None = None,
+            module_name: str,
             *,
             service_name: str | None = None,
             service_version: str | None = None,
