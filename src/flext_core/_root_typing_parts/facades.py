@@ -36,7 +36,7 @@ from flext_core.lazy import (
     normalize_lazy_imports,
 )
 from flext_core.loggings import (
-    FlextLogger,
+    FlextUtilitiesLogging,
 )
 from flext_core.mixins import (
     FlextMixins,
@@ -92,7 +92,7 @@ ROOT_TYPING_FACADES_ALL: Final[tuple[str, ...]] = (
     "build_lazy_import_map",
     "lazy",
     "normalize_lazy_imports",
-    "FlextLogger",
+    "FlextUtilitiesLogging",
     "FlextMixins",
     "x",
     "FlextModels",
@@ -120,7 +120,6 @@ __all__: tuple[str, ...] = (
     "FlextExceptions",
     "FlextHandlers",
     "FlextLazy",
-    "FlextLogger",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",
@@ -131,6 +130,7 @@ __all__: tuple[str, ...] = (
     "FlextSettings",
     "FlextTypes",
     "FlextUtilities",
+    "FlextUtilitiesLogging",
     "build_lazy_import_map",
     "c",
     "d",

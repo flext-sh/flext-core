@@ -13,11 +13,11 @@ from flext_core import FlextConstants as c, FlextExceptions as e, FlextTypes as 
 from flext_core.result import FlextResult as r
 
 from .flextlogger_part_01 import (
-    FlextLogger as FlextLoggerPart01,
+    FlextUtilitiesLogging as FlextUtilitiesLoggingPart01,
 )
 
 
-class FlextLogger(FlextLoggerPart01):
+class FlextUtilitiesLogging(FlextUtilitiesLoggingPart01):
     def _exception_context_from_inputs(
         self,
         resolved_exception: Exception | None,
@@ -44,7 +44,7 @@ class FlextLogger(FlextLoggerPart01):
             if key in {"exception", "exc_info"}:
                 continue
             if not isinstance(value, BaseException):
-                context_dict[key] = FlextLogger._to_container_value(value)
+                context_dict[key] = FlextUtilitiesLogging._to_container_value(value)
         if resolved_exception is None and isinstance(raw_exception, BaseException):
             context_dict["exception_type"] = raw_exception.__class__.__name__
             context_dict["exception_message"] = str(raw_exception)
@@ -59,7 +59,7 @@ class FlextLogger(FlextLoggerPart01):
         """Log exception with conditional stack trace (DEBUG only)."""
         message = msg
         filtered_args: tuple[t.JsonValue, ...] = tuple(
-            FlextLogger._to_container_value(arg)
+            FlextUtilitiesLogging._to_container_value(arg)
             for arg in args
             if not isinstance(arg, BaseException)
         )
@@ -76,11 +76,11 @@ class FlextLogger(FlextLoggerPart01):
             _ = self.logger.error(
                 message,
                 *filtered_args,
-                **FlextLogger._to_scalar_context(context_dict),
+                **FlextUtilitiesLogging._to_scalar_context(context_dict),
             )
             return r[bool].ok(True)
         except c.EXC_BROAD_RUNTIME as exc:
-            FlextLogger._report_internal_logging_failure("exception", exc)
+            FlextUtilitiesLogging._report_internal_logging_failure("exception", exc)
             return e.fail_operation("exception logging", exc)
 
     def build_exception_context(
@@ -94,7 +94,7 @@ class FlextLogger(FlextLoggerPart01):
         result: t.JsonDict = {
             k: str(v)
             if isinstance(v, Exception)
-            else FlextLogger._to_container_value(v)
+            else FlextUtilitiesLogging._to_container_value(v)
             for k, v in context.items()
         }
         if exception is not None:
@@ -105,4 +105,4 @@ class FlextLogger(FlextLoggerPart01):
         return result
 
 
-__all__: list[str] = ["FlextLogger"]
+__all__: list[str] = ["FlextUtilitiesLogging"]

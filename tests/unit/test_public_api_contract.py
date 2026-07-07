@@ -33,7 +33,7 @@ _FACADES: tuple[str, ...] = (
     "FlextExceptions",
     "FlextHandlers",
     "FlextLazy",
-    "FlextLogger",
+    "FlextUtilitiesLogging",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",

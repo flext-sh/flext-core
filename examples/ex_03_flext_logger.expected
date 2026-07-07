@@ -25,15 +25,14 @@ level.info.ok: True
 unbind_context_for_level.ok: True
 
 [container]
-for_container.protocol: True
-for_container.debug.ok: True
+u.fetch_logger.container.protocol: True
+u.fetch_logger.container.debug.ok: True
 with_container_context.info.ok: True
 
 [instance_methods]
 bind.protocol: True
 new.protocol: True
 unbind.protocol: True
-unbind_safe.protocol: True
 with_result.protocol: True
 trace.ok: True
 debug.ok: True

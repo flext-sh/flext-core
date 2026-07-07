@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
 from typing import TYPE_CHECKING, ClassVar, Self
 
 import structlog
@@ -19,8 +18,8 @@ if TYPE_CHECKING:
     from structlog.typing import Context
 
 
-class FlextLogger(ulc):
-    """Context-aware logger tuned for dispatcher-centric CQRS flows.
+class FlextUtilitiesLogging(ulc):
+    """Context-aware utility logger tuned for dispatcher-centric CQRS flows.
 
     Composed via MRO from:
     - FlextUtilitiesLoggingConfig — structlog configuration, async writer, processors
@@ -37,15 +36,18 @@ class FlextLogger(ulc):
 
     def __init__(
         self,
-        name: str | None = None,
+        name: str,
         *,
         settings: p.Settings | None = None,
         _bound_logger: p.Logger | None = None,
         context: t.MappingKV[str, t.JsonPayload | None] | None = None,
     ) -> None:
-        """Initialize FlextLogger with name and optional context."""
+        """Initialize FlextUtilitiesLogging with name and optional context."""
         super().__init__()
-        resolved_name = name or type(self).__name__
+        if not name:
+            msg = "logger name is required"
+            raise ValueError(msg)
+        resolved_name = name
         self.name = resolved_name
         if _bound_logger is not None:
             self._structlog_instance = _bound_logger
@@ -53,7 +55,7 @@ class FlextLogger(ulc):
         resolved_context: t.MutableJsonMapping = {}
         if context is not None:
             resolved_context = dict(
-                FlextLogger.to_container_context({
+                FlextUtilitiesLogging.to_container_context({
                     key: value for key, value in context.items() if value is not None
                 }),
             )
@@ -69,7 +71,9 @@ class FlextLogger(ulc):
                 resolved_context[c.ContextKey.CORRELATION_ID] = correlation_id
         base_logger = type(self).resolve_bound_logger(resolved_name)
         self._structlog_instance = (
-            base_logger.bind(**FlextLogger._to_scalar_context(resolved_context))
+            base_logger.bind(
+                **FlextUtilitiesLogging._to_scalar_context(resolved_context)
+            )
             if resolved_context
             else base_logger
         )
@@ -95,15 +99,12 @@ class FlextLogger(ulc):
         return instance
 
     @classmethod
-    def resolve_bound_logger(cls, name: str | None = None) -> p.Logger:
+    def resolve_bound_logger(cls, name: str) -> p.Logger:
         """Fetch the underlying bound structlog logger for internal use."""
         cls.ensure_structlog_configured()
-        if name is None:
-            frame = inspect.currentframe()
-            if frame is not None and frame.f_back is not None:
-                name = frame.f_back.f_globals.get("__name__", __name__)
-            else:
-                name = __name__
+        if not name:
+            msg = "logger name is required"
+            raise ValueError(msg)
         logger: p.Logger = structlog.get_logger(name)
         return logger
 
@@ -117,4 +118,4 @@ class FlextLogger(ulc):
         return self.bind(**context)
 
 
-__all__: list[str] = ["FlextLogger"]
+__all__: list[str] = ["FlextUtilitiesLogging"]

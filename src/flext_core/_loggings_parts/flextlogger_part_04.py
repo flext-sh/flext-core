@@ -15,14 +15,14 @@ from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 
 from .flextlogger_part_03 import (
-    FlextLogger as FlextLoggerPart03,
+    FlextUtilitiesLogging as FlextUtilitiesLoggingPart03,
 )
 
 if TYPE_CHECKING:
     import types
 
 
-class FlextLogger(FlextLoggerPart03):
+class FlextUtilitiesLogging(FlextUtilitiesLoggingPart03):
     class PerformanceTracker:
         """Context manager for performance tracking with automatic logging."""
 
@@ -61,12 +61,12 @@ class FlextLogger(FlextLoggerPart03):
             if success:
                 _ = self.logger.info(
                     f"{self._operation_name} {status}",
-                    **FlextLogger.to_container_context(context.root),
+                    **FlextUtilitiesLogging.to_container_context(context.root),
                 )
             else:
                 _ = self.logger.error(
                     f"{self._operation_name} {status}",
-                    **FlextLogger.to_container_context(context.root),
+                    **FlextUtilitiesLogging.to_container_context(context.root),
                 )
 
     class Integration:
@@ -80,7 +80,7 @@ class FlextLogger(FlextLoggerPart03):
             enable_context_correlation: bool = True,
         ) -> None:
             """Setup complete service infrastructure."""
-            sl = FlextLogger.structlog()
+            sl = FlextUtilitiesLogging.structlog()
             _ = sl.contextvars.bind_contextvars(service_name=service_name)
             if service_version:
                 _ = sl.contextvars.bind_contextvars(
@@ -105,7 +105,7 @@ class FlextLogger(FlextLoggerPart03):
             event_data: mc.ConfigMap | None = None,
         ) -> None:
             """Track domain event with context correlation."""
-            sl = FlextLogger.structlog()
+            sl = FlextUtilitiesLogging.structlog()
             context_vars = sl.contextvars.get_contextvars()
             correlation_id = context_vars.get(c.ContextKey.CORRELATION_ID)
             sl.fetch_logger(__name__).info(
@@ -124,7 +124,7 @@ class FlextLogger(FlextLoggerPart03):
             error_message: str | None = None,
         ) -> None:
             """Track service resolution with context correlation."""
-            sl = FlextLogger.structlog()
+            sl = FlextUtilitiesLogging.structlog()
             context_vars = sl.contextvars.get_contextvars()
             correlation_id = context_vars.get(c.ContextKey.CORRELATION_ID)
             logger = sl.fetch_logger(__name__)
@@ -143,4 +143,4 @@ class FlextLogger(FlextLoggerPart03):
                 )
 
 
-__all__: list[str] = ["FlextLogger"]
+__all__: list[str] = ["FlextUtilitiesLogging"]

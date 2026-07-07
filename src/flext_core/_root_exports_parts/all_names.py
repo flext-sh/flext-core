@@ -13,7 +13,7 @@ ROOT_ALL: Final[tuple[str, ...]] = (
     "FlextExceptions",
     "FlextHandlers",
     "FlextLazy",
-    "FlextLogger",
+    "FlextUtilitiesLogging",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",

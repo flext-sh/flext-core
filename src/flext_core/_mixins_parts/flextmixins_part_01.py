@@ -100,7 +100,7 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     @property
     def logger(self) -> p.Logger:
-        """FlextLogger instance for this component."""
+        """FlextUtilitiesLogging instance for this component."""
         return self._get_or_create_logger()
 
     @classmethod

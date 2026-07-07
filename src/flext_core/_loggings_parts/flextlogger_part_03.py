@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from contextlib import suppress
 from typing import TYPE_CHECKING, Self
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
@@ -16,21 +15,16 @@ from flext_core._exceptions.factories import FlextExceptionsFactories as ef
 from flext_core.result import FlextResult as r
 
 from .flextlogger_part_02 import (
-    FlextLogger as FlextLoggerPart02,
+    FlextUtilitiesLogging as FlextUtilitiesLoggingPart02,
 )
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes as t
 
 
-class FlextLogger(FlextLoggerPart02):
-    def unbind(self, *keys: str, safe: bool = False) -> Self:
+class FlextUtilitiesLogging(FlextUtilitiesLoggingPart02):
+    def unbind(self, *keys: str) -> Self:
         """Unbind keys from logger — implements BindableLogger protocol."""
-        if safe:
-            with suppress(KeyError, ValueError, AttributeError):
-                bound_logger = self.logger.unbind(*keys)
-                return self.__class__(self.name, _bound_logger=bound_logger)
-            return self
         bound_logger = self.logger.unbind(*keys)
         return self.__class__(self.name, _bound_logger=bound_logger)
 
@@ -59,12 +53,12 @@ class FlextLogger(FlextLoggerPart02):
     ) -> t.JsonMapping:
         resolved_context: dict[str, t.LogValue] = dict(context)
         if "source" not in resolved_context and (
-            source_path := FlextLogger._caller_source_path()
+            source_path := FlextUtilitiesLogging._caller_source_path()
         ):
             resolved_context["source"] = source_path
         for idx, arg in enumerate(args):
             resolved_context[f"arg_{idx}"] = arg
-        return FlextLogger._to_scalar_context(resolved_context)
+        return FlextUtilitiesLogging._to_scalar_context(resolved_context)
 
     def _log(
         self,
@@ -75,8 +69,8 @@ class FlextLogger(FlextLoggerPart02):
     ) -> t.LogResult:
         """Internal logging method — consolidates all log level methods."""
         try:
-            level_str = FlextLogger._resolve_level_name(level)
-            scalar_context = FlextLogger._resolve_log_context(args, context)
+            level_str = FlextUtilitiesLogging._resolve_level_name(level)
+            scalar_context = FlextUtilitiesLogging._resolve_log_context(args, context)
             getattr(self.logger, level_str)(event, **scalar_context)
             return r[bool].ok(True)
         except ce.EXC_BROAD_RUNTIME as exc:
@@ -135,11 +129,9 @@ class FlextLogger(FlextLoggerPart02):
         **context: t.LogValue,
     ) -> t.LogResult:
         """Log message with specified level."""
-        level_enum: cl.LogLevel | str = level
-        with suppress(ValueError, AttributeError):
-            level_enum = cl.LogLevel(level.upper())
+        level_enum: cl.LogLevel = cl.LogLevel(level.upper())
         converted_args: tuple[t.JsonValue, ...] = tuple(
-            FlextLogger._to_container_value(arg) for arg in args
+            FlextUtilitiesLogging._to_container_value(arg) for arg in args
         )
         return self._log(level_enum, message, *converted_args, **context)
 
@@ -157,12 +149,12 @@ class FlextLogger(FlextLoggerPart02):
                 formatted_message = f"{message} | args={args!r}"
             self.logger.debug(
                 formatted_message,
-                **FlextLogger._to_scalar_context(kwargs),
+                **FlextUtilitiesLogging._to_scalar_context(kwargs),
             )
             return r[bool].ok(True)
         except ce.EXC_BROAD_RUNTIME as exc:
-            FlextLogger._report_internal_logging_failure("trace", exc)
+            FlextUtilitiesLogging._report_internal_logging_failure("trace", exc)
             return ef.fail_operation("trace logging", exc)
 
 
-__all__: list[str] = ["FlextLogger"]
+__all__: list[str] = ["FlextUtilitiesLogging"]

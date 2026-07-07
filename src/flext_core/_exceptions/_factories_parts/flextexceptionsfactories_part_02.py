@@ -33,7 +33,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
 
         Usage::
 
-            return e.fail_type_mismatch("FlextLogger", type(svc).__name__)
+            return e.fail_type_mismatch("FlextUtilitiesLogging", type(svc).__name__)
             return e.fail_type_mismatch(
                 m.ServiceLookupParams(
                     service_name="connection",

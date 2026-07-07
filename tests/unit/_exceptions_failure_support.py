@@ -93,10 +93,10 @@ FAILURES: t.SequenceOf[
     ),
     (
         "type_mismatch",
-        lambda: e.fail_type_mismatch("FlextLogger", "str"),
-        "FlextLogger",
+        lambda: e.fail_type_mismatch("FlextUtilitiesLogging", "str"),
+        "FlextUtilitiesLogging",
         c.ErrorCode.TYPE_ERROR,
-        {"expected_type": "FlextLogger", "actual_type": "str"},
+        {"expected_type": "FlextUtilitiesLogging", "actual_type": "str"},
     ),
     (
         "validation",
