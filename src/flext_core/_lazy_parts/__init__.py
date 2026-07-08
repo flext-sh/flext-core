@@ -11,10 +11,11 @@ from flext_core._lazy_parts.flextlazy_part_01 import (
     MutableLazyImportMap,
     StrPair,
 )
-from flext_core._lazy_parts.flextlazy_part_02 import FlextLazy
+from flext_core._lazy_parts.flextlazy_part_02 import FlextLazy, FlextLazyAttribute
 
 __all__: list[str] = [
     "FlextLazy",
+    "FlextLazyAttribute",
     "LazyImportAliasGroups",
     "LazyImportDict",
     "LazyImportEntry",

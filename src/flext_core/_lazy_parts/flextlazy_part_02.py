@@ -24,7 +24,63 @@ type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
 type ModuleGlobals = FlextTypesLazy.ModuleGlobals
 
 
+class FlextLazyAttribute:
+    """Descriptor that resolves a class attribute through ``FlextLazy``."""
+
+    __slots__ = (
+        "_lazy",
+        "_lazy_imports",
+        "_module_globals",
+        "_module_name",
+        "_name",
+    )
+
+    def __init__(
+        self,
+        lazy: FlextLazy,
+        name: str,
+        lazy_imports: LazyImportMap,
+        module_globals: ModuleGlobals,
+        module_name: str,
+    ) -> None:
+        self._lazy = lazy
+        self._name = name
+        self._lazy_imports = lazy_imports
+        self._module_globals = module_globals
+        self._module_name = module_name
+
+    def __get__(
+        self,
+        instance: ModuleGlobalValue | None,
+        owner: type | None = None,
+    ) -> ModuleGlobalValue:
+        """Resolve and cache the target symbol through the owning lazy container."""
+        _ = instance, owner
+        return self._lazy.get(
+            self._name,
+            self._lazy_imports,
+            self._module_globals,
+            self._module_name,
+        )
+
+
 class FlextLazy(FlextLazyPart01):
+    def attribute(
+        self,
+        name: str,
+        lazy_imports: LazyImportMap,
+        module_globals: ModuleGlobals,
+        module_name: str,
+    ) -> FlextLazyAttribute:
+        """Return a descriptor for class-namespace lazy attributes."""
+        return FlextLazyAttribute(
+            self,
+            name,
+            lazy_imports,
+            module_globals,
+            module_name,
+        )
+
     def get(
         self,
         name: str,
@@ -151,4 +207,4 @@ class FlextLazy(FlextLazyPart01):
         self.install_cache[module_name] = pre_signature
 
 
-__all__: list[str] = ["FlextLazy"]
+__all__: list[str] = ["FlextLazy", "FlextLazyAttribute"]

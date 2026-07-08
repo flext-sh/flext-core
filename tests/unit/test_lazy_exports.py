@@ -9,7 +9,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports, lazy
+from flext_core.lazy import (
+    build_lazy_import_map,
+    install_lazy_exports,
+    lazy,
+    lazy_attribute,
+)
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -254,6 +259,26 @@ class TestsFlextCoreLazyExports:
 
         # Assert
         assert resolved is alpha_cls
+        assert module_globals["Alpha"] is alpha_cls
+
+    def test_attribute_resolves_class_namespace_symbol_and_caches_global(
+        self,
+        registered_alpha_module: tuple[str, type],
+    ) -> None:
+        # Arrange
+        module_name, alpha_cls = registered_alpha_module
+        module_globals: t.ModuleGlobals = {}
+
+        class Namespace:
+            Alpha = lazy_attribute(
+                "Alpha",
+                {"Alpha": (module_name, "Alpha")},
+                module_globals,
+                "test_lazy_pkg",
+            )
+
+        # Act / Assert
+        assert Namespace.Alpha is alpha_cls
         assert module_globals["Alpha"] is alpha_cls
 
     def test_get_raises_attribute_error_for_name_absent_from_map(self) -> None:

@@ -41,6 +41,10 @@ class FlextProtocolsLogging:
             """Remove bound keys and optionally ignore missing values."""
             ...
 
+        def try_unbind(self, *keys: str) -> Self:
+            """Remove bound keys while ignoring missing values."""
+            ...
+
         def build_exception_context(
             self,
             *,

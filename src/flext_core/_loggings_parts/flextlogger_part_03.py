@@ -23,10 +23,16 @@ if TYPE_CHECKING:
 
 
 class FlextUtilitiesLogging(FlextUtilitiesLoggingPart02):
-    def unbind(self, *keys: str) -> Self:
+    def unbind(self, *keys: str, safe: bool = False) -> Self:
         """Unbind keys from logger — implements BindableLogger protocol."""
-        bound_logger = self.logger.unbind(*keys)
+        bound_logger = (
+            self.logger.try_unbind(*keys) if safe else self.logger.unbind(*keys)
+        )
         return self.__class__(self.name, _bound_logger=bound_logger)
+
+    def try_unbind(self, *keys: str) -> Self:
+        """Unbind keys while ignoring missing values."""
+        return self.unbind(*keys, safe=True)
 
     def warning(
         self,

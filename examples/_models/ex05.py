@@ -45,7 +45,6 @@ class ExamplesFlextModelsEx05:
         )
 
     class GoodProcessor(m.Value):
-
         def process(self) -> bool:
             return True
 

@@ -109,6 +109,26 @@ class TestsFlextLoggings:
         with pytest.raises(KeyError):
             logger.unbind("missing")
 
+    def test_unbind_with_safe_ignores_missing_key(
+        self,
+        logger: p.Logger,
+    ) -> None:
+        result = self._assert_log_output(
+            lambda: logger.unbind("missing", safe=True).info("safe unbind ok"),
+            contains="safe unbind ok",
+        )
+        tm.ok(result)
+
+    def test_try_unbind_ignores_missing_key(
+        self,
+        logger: p.Logger,
+    ) -> None:
+        result = self._assert_log_output(
+            lambda: logger.try_unbind("missing").info("try unbind ok"),
+            contains="try unbind ok",
+        )
+        tm.ok(result)
+
     def test_build_exception_context_captures_exception_metadata(
         self,
         logger: p.Logger,

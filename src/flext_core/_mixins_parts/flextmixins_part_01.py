@@ -124,7 +124,9 @@ class FlextMixins(m.ArbitraryTypesModel):
         )
 
     @classmethod
-    def _coerce_settings_type(cls, value: _RuntimeBootstrapValue) -> t.SettingsClass | None:
+    def _coerce_settings_type(
+        cls, value: _RuntimeBootstrapValue
+    ) -> t.SettingsClass | None:
         """Validate the explicit settings class accepted by service constructors."""
         if value is None:
             return None
