@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import sys
+from importlib.machinery import ModuleSpec
 from types import ModuleType
 from typing import TYPE_CHECKING
 
@@ -260,6 +261,45 @@ class TestsFlextCoreLazyExports:
         # Assert
         assert resolved is alpha_cls
         assert module_globals["Alpha"] is alpha_cls
+
+    def test_get_does_not_cache_symbol_from_initializing_module(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        # Arrange
+        lazy.reset()
+        module_name = "test_lazy_pkg.partial"
+        partial = ModuleType(module_name)
+        spec = ModuleSpec(module_name, loader=None)
+        setattr(spec, "_initializing", True)
+        partial.__spec__ = spec
+
+        class PartialAlias:
+            pass
+
+        class FinalAlias:
+            pass
+
+        setattr(partial, "u", PartialAlias)
+        monkeypatch.setitem(sys.modules, module_name, partial)
+        module_globals: t.ModuleGlobals = {}
+        lazy_map = {"u": (module_name, "u")}
+
+        # Act
+        partial_resolved = lazy.get("u", lazy_map, module_globals, "test_lazy_pkg")
+
+        # Assert
+        assert partial_resolved is PartialAlias
+        assert "u" not in module_globals
+
+        # Act
+        setattr(spec, "_initializing", False)
+        setattr(partial, "u", FinalAlias)
+        final_resolved = lazy.get("u", lazy_map, module_globals, "test_lazy_pkg")
+
+        # Assert
+        assert final_resolved is FinalAlias
+        assert module_globals["u"] is FinalAlias
 
     def test_attribute_resolves_class_namespace_symbol_and_caches_global(
         self,

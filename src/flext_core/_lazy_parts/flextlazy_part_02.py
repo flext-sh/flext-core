@@ -65,6 +65,11 @@ class FlextLazyAttribute:
 
 
 class FlextLazy(FlextLazyPart01):
+    @staticmethod
+    def _module_is_initializing(module: ModuleType) -> bool:
+        """Return whether Python is still executing a module body."""
+        return bool(getattr(getattr(module, "__spec__", None), "_initializing", False))
+
     def attribute(
         self,
         name: str,
@@ -103,19 +108,22 @@ class FlextLazy(FlextLazyPart01):
 
         mod = self._load(module_path)
         if not attr:
-            module_globals[name] = mod
+            if not self._module_is_initializing(mod):
+                module_globals[name] = mod
             return mod
 
         try:
             value: ModuleGlobalValue = getattr(mod, attr)
         except AttributeError:
             if isinstance(entry, str) and module_path.rsplit(".", 1)[-1] == name:
-                module_globals[name] = mod
+                if not self._module_is_initializing(mod):
+                    module_globals[name] = mod
                 return mod
             msg = f"module {module_path!r} has no attribute {attr!r}"
             raise AttributeError(msg) from None
 
-        module_globals[name] = value
+        if not self._module_is_initializing(mod):
+            module_globals[name] = value
         return value
 
     def cleanup(
