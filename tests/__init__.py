@@ -285,6 +285,9 @@ if TYPE_CHECKING:
     from tests.unit.test_beartype_engine_runtime import (
         TestsFlextCoreBeartypeEngineRuntime as TestsFlextCoreBeartypeEngineRuntime,
     )
+    from tests.unit.test_config_runtime import (
+        TestsFlextCoreConfigRuntime as TestsFlextCoreConfigRuntime,
+    )
     from tests.unit.test_constants_new import (
         TestsFlextConstantsNew as TestsFlextConstantsNew,
     )
@@ -518,6 +521,9 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_utilities_collection_coverage_100 import (
         TestsFlextCoreUtilitiesCollection as TestsFlextCoreUtilitiesCollection,
+    )
+    from tests.unit.test_utilities_config import (
+        TestsFlextCoreUtilitiesConfig as TestsFlextCoreUtilitiesConfig,
     )
     from tests.unit.test_utilities_coverage import (
         TestsFlextCoreUtilitiesCoverage as TestsFlextCoreUtilitiesCoverage,
@@ -776,6 +782,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_beartype_engine_runtime": (
                 "TestsFlextCoreBeartypeEngineRuntime",
             ),
+            ".unit.test_config_runtime": ("TestsFlextCoreConfigRuntime",),
             ".unit.test_constants_new": ("TestsFlextConstantsNew",),
             ".unit.test_constants_project_metadata": (
                 "TestsFlextCoreConstantsProjectMetadata",
@@ -914,6 +921,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_utilities_collection_coverage_100": (
                 "TestsFlextCoreUtilitiesCollection",
             ),
+            ".unit.test_utilities_config": ("TestsFlextCoreUtilitiesConfig",),
             ".unit.test_utilities_coverage": ("TestsFlextCoreUtilitiesCoverage",),
             ".unit.test_utilities_domain": ("TestsFlextCoreUtilitiesDomain",),
             ".unit.test_utilities_generators_full_coverage": (

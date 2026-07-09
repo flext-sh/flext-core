@@ -52,6 +52,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextBeartypeEngineNamespaceHooks",
             ),
             ".test_beartype_engine_runtime": ("TestsFlextCoreBeartypeEngineRuntime",),
+            ".test_config_runtime": ("TestsFlextCoreConfigRuntime",),
             ".test_constants_new": ("TestsFlextConstantsNew",),
             ".test_constants_project_metadata": (
                 "TestsFlextCoreConstantsProjectMetadata",
@@ -171,6 +172,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_utilities_collection_coverage_100": (
                 "TestsFlextCoreUtilitiesCollection",
             ),
+            ".test_utilities_config": ("TestsFlextCoreUtilitiesConfig",),
             ".test_utilities_coverage": ("TestsFlextCoreUtilitiesCoverage",),
             ".test_utilities_domain": ("TestsFlextCoreUtilitiesDomain",),
             ".test_utilities_generators_full_coverage": (
