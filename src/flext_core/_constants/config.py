@@ -3,8 +3,8 @@
 Minimal, runtime-safe defaults for the ADR-005 config layer. flext-core stays
 runtime-minimal: only stdlib-backed config primitives live here. The advanced
 multi-format loader, Jinja2 templating, and JSON-Schema validation are owned by
-``flext-cli`` (``u.Cli.config_load`` / ``u.Cli.render_template`` /
-``u.Cli.yaml_validate_schema``).
+``flext-cli`` (``u.Cli.config_load`` / ``u.Cli.template_render`` /
+``u.Cli.schema_validate``).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,6 +27,7 @@ class FlextConstantsConfig:
     CONFIG_TOML_SUFFIX: Final[str] = ".toml"
     CONFIG_YAML_SUFFIX: Final[str] = ".yaml"
     CONFIG_JSON_SUFFIX: Final[str] = ".json"
+    CONFIG_EXPAND_MAX_PASSES: Final[int] = 10
     ERR_CONFIG_READ_FAILED: Final[str] = "config: cannot read source"
     ERR_CONFIG_PARSE_FAILED: Final[str] = "config: cannot parse source"
     ERR_CONFIG_NOT_MAPPING: Final[str] = "config: expected a mapping object"

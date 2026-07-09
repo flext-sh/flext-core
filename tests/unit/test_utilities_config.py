@@ -101,3 +101,26 @@ class TestsFlextCoreUtilitiesConfig:
         expanded = u.config_env_override(["${HOME}", 2, "${HOME}/y"], {"HOME": "/h"})
 
         assert expanded == ["/h", 2, "/h/y"]
+
+    def test_config_env_override_nested_default_var_present(self) -> None:
+        # AI_HUB present -> outer wins, inner default never used.
+        expanded = u.config_env_override(
+            "${AI_HUB:-${HOME}/.ai-hub}", {"AI_HUB": "/x/.ai-hub", "HOME": "/x"}
+        )
+
+        assert expanded == "/x/.ai-hub"
+
+    def test_config_env_override_nested_default_var_absent(self) -> None:
+        # AI_HUB absent -> inner ${HOME} default resolves.
+        expanded = u.config_env_override(
+            "${AI_HUB:-${HOME}/.ai-hub}", {"HOME": "/x"}
+        )
+
+        assert expanded == "/x/.ai-hub"
+
+    def test_config_env_override_nested_fallback_chain(self) -> None:
+        expanded = u.config_env_override(
+            "${A:-${B:-http://d}}", {"B": "http://b"}
+        )
+
+        assert expanded == "http://b"

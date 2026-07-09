@@ -29,7 +29,7 @@ class FlextUtilitiesConfig:
     """Minimal stdlib-backed config load, merge, and env-override helpers."""
 
     _EXPAND_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-        r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?::-(?P<default>[^}]*))?\}"
+        r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?::-(?P<default>[^{}]*))?\}"
     )
 
     @staticmethod
@@ -40,6 +40,19 @@ class FlextUtilitiesConfig:
             return env[name]
         default = match.group("default")
         return default if default is not None else ""
+
+    @staticmethod
+    def _expand_str(value: str, env: Mapping[str, str]) -> str:
+        """Expand innermost ``${...}`` repeatedly so nested defaults resolve."""
+        current = value
+        for _ in range(c.CONFIG_EXPAND_MAX_PASSES):
+            expanded = FlextUtilitiesConfig._EXPAND_PATTERN.sub(
+                lambda match: FlextUtilitiesConfig._expand_one(match, env), current
+            )
+            if expanded == current:
+                return expanded
+            current = expanded
+        return current
 
     @staticmethod
     def config_load(path: Path) -> p.Result[t.JsonMapping]:
@@ -94,9 +107,7 @@ class FlextUtilitiesConfig:
         ``${VAR:-default}`` resolves to ``env[VAR]`` or ``default`` when absent.
         """
         if isinstance(value, str):
-            return FlextUtilitiesConfig._EXPAND_PATTERN.sub(
-                lambda match: FlextUtilitiesConfig._expand_one(match, env), value
-            )
+            return FlextUtilitiesConfig._expand_str(value, env)
         if g.mapping(value):
             return {
                 key: FlextUtilitiesConfig.config_env_override(item, env)
