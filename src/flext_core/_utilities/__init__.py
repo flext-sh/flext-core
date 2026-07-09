@@ -109,6 +109,9 @@ if TYPE_CHECKING:
     from flext_core._utilities.collection_merge import (
         FlextUtilitiesCollectionMerge as FlextUtilitiesCollectionMerge,
     )
+    from flext_core._utilities.config import (
+        FlextUtilitiesConfig as FlextUtilitiesConfig,
+    )
     from flext_core._utilities.context import (
         FlextUtilitiesContext as FlextUtilitiesContext,
     )
@@ -245,6 +248,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".collection": ("FlextUtilitiesCollection",),
         ".collection_iter": ("FlextUtilitiesCollectionIter",),
         ".collection_merge": ("FlextUtilitiesCollectionMerge",),
+        ".config": ("FlextUtilitiesConfig",),
         ".context": ("FlextUtilitiesContext",),
         ".context_crud": ("FlextUtilitiesContextCrud",),
         ".context_lifecycle": ("FlextUtilitiesContextLifecycle",),

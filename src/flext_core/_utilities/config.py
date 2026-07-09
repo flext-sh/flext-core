@@ -1,0 +1,96 @@
+"""FlextUtilitiesConfig - minimal declarative config helpers (ADR-005).
+
+Runtime-minimal config primitives for flext-core self-configuration: TOML load
+(stdlib ``tomllib``), deep merge, and ``${VAR}`` env expansion (stdlib
+``string.Template``). **No Jinja2, no YAML, no JSON Schema here** — those live in
+``flext-cli`` (``u.Cli.config_load`` / ``u.Cli.render_template`` /
+``u.Cli.yaml_validate_schema``), which imports and amplifies these primitives.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import tomllib
+from pathlib import Path
+from string import Template
+from typing import TYPE_CHECKING
+
+from flext_core import c, p, r, t
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as g
+from flext_core._utilities.reliability import FlextUtilitiesReliability as rel
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+
+class FlextUtilitiesConfig:
+    """Minimal stdlib-backed config load, merge, and env-override helpers."""
+
+    @staticmethod
+    def config_load(path: Path) -> p.Result[t.JsonMapping]:
+        """Load and parse a TOML config source into a validated mapping.
+
+        Fail-closed: a missing file, parse error, or non-mapping top level is a
+        failed ``r[T]``, never a raised exception escaping ``config_load``.
+        """
+        if not path.is_file():
+            return r[t.JsonMapping].fail(f"{c.ERR_CONFIG_READ_FAILED}: {path}")
+        parsed = rel.try_(
+            lambda: tomllib.loads(path.read_text(encoding=c.CONFIG_DEFAULT_ENCODING)),
+            catch=(OSError, tomllib.TOMLDecodeError),
+            op_name="config_load",
+        )
+        if parsed.failure:
+            return r[t.JsonMapping].fail(
+                parsed.error or f"{c.ERR_CONFIG_PARSE_FAILED}: {path}"
+            )
+        payload = parsed.value
+        if not g.mapping(payload):
+            return r[t.JsonMapping].fail(f"{c.ERR_CONFIG_NOT_MAPPING}: {path}")
+        return r[t.JsonMapping].ok(payload)
+
+    @staticmethod
+    def config_merge(
+        base: t.JsonMapping,
+        override: t.JsonMapping,
+    ) -> t.JsonDict:
+        """Deep-merge ``override`` onto ``base``, returning a new mapping."""
+        merged: dict[str, t.JsonValue] = dict(base)
+        for key, value in override.items():
+            current = merged.get(key)
+            if g.mapping(current) and g.mapping(value):
+                nested: t.JsonValue = dict(
+                    FlextUtilitiesConfig.config_merge(current, value)
+                )
+                merged[key] = nested
+            else:
+                merged[key] = value
+        return merged
+
+    @staticmethod
+    def config_env_override(
+        value: t.JsonValue,
+        env: Mapping[str, str],
+    ) -> t.JsonValue:
+        """Expand ``${VAR}`` placeholders in string leaves using ``env``.
+
+        Recurses through mappings and sequences; non-string leaves pass through
+        unchanged. Unknown variables are left intact (``safe_substitute``).
+        """
+        if isinstance(value, str):
+            return Template(value).safe_substitute(env)
+        if g.mapping(value):
+            return {
+                key: FlextUtilitiesConfig.config_env_override(item, env)
+                for key, item in value.items()
+            }
+        if isinstance(value, list):
+            return [
+                FlextUtilitiesConfig.config_env_override(item, env) for item in value
+            ]
+        return value
+
+
+__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesConfig"]

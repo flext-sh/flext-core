@@ -19,6 +19,7 @@ from ._utilities.beartype_conf import FlextUtilitiesBeartypeConf
 from ._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
 from ._utilities.checker import FlextUtilitiesChecker
 from ._utilities.collection import FlextUtilitiesCollection
+from ._utilities.config import FlextUtilitiesConfig
 from ._utilities.context import FlextUtilitiesContext
 from ._utilities.conversion import FlextUtilitiesConversion
 from ._utilities.discovery import FlextUtilitiesDiscovery
@@ -45,6 +46,7 @@ class FlextUtilities(
     FlextUtilitiesBeartypeEngine,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,
+    FlextUtilitiesConfig,
     FlextUtilitiesSettings,
     FlextUtilitiesContext,
     FlextUtilitiesConversion,
