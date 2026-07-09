@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from ._constants.base import FlextConstantsBase
+from ._constants.config import FlextConstantsConfig
 from ._constants.cqrs import FlextConstantsCqrs
 from ._constants.enforcement import FlextConstantsEnforcement
 from ._constants.environment import FlextConstantsEnvironment
@@ -39,6 +40,7 @@ class FlextConstants(
     FlextConstantsSerialization,
     FlextConstantsValidation,
     FlextConstantsSettings,
+    FlextConstantsConfig,
     FlextConstantsCqrs,
     FlextConstantsErrors,
     FlextConstantsGuards,

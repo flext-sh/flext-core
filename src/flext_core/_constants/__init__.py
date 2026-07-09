@@ -72,6 +72,9 @@ if TYPE_CHECKING:
         FlextConstantsErrorsRuntimeSettings as FlextConstantsErrorsRuntimeSettings,
     )
     from flext_core._constants.base import FlextConstantsBase as FlextConstantsBase
+    from flext_core._constants.config import (
+        FlextConstantsConfig as FlextConstantsConfig,
+    )
     from flext_core._constants.cqrs import FlextConstantsCqrs as FlextConstantsCqrs
     from flext_core._constants.enforcement import (
         FlextConstantsEnforcement as FlextConstantsEnforcement,
@@ -191,6 +194,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "FlextConstantsErrorsRuntimeSettings",
         ),
         ".base": ("FlextConstantsBase",),
+        ".config": ("FlextConstantsConfig",),
         ".cqrs": ("FlextConstantsCqrs",),
         ".enforcement": (
             "FlextConstantsEnforcement",

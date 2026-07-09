@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from ._protocols.base import FlextProtocolsBase
+from ._protocols.config import FlextProtocolsConfig
 from ._protocols.container import FlextProtocolsContainer
 from ._protocols.context import FlextProtocolsContext
 from ._protocols.handler import FlextProtocolsHandler
@@ -20,6 +21,7 @@ from ._protocols.settings import FlextProtocolsSettings
 
 class FlextProtocols(
     FlextProtocolsBase,
+    FlextProtocolsConfig,
     FlextProtocolsContext,
     FlextProtocolsResult,
     FlextProtocolsSettings,
