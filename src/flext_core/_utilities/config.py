@@ -12,10 +12,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 import tomllib
 from pathlib import Path
-from string import Template
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, p, r, t
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as g
@@ -27,6 +27,19 @@ if TYPE_CHECKING:
 
 class FlextUtilitiesConfig:
     """Minimal stdlib-backed config load, merge, and env-override helpers."""
+
+    _EXPAND_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+        r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?::-(?P<default>[^}]*))?\}"
+    )
+
+    @staticmethod
+    def _expand_one(match: re.Match[str], env: Mapping[str, str]) -> str:
+        """Resolve one ``${VAR}`` / ``${VAR:-default}`` match against ``env``."""
+        name = match.group("name")
+        if name in env:
+            return env[name]
+        default = match.group("default")
+        return default if default is not None else ""
 
     @staticmethod
     def config_load(path: Path) -> p.Result[t.JsonMapping]:
@@ -74,13 +87,16 @@ class FlextUtilitiesConfig:
         value: t.JsonValue,
         env: Mapping[str, str],
     ) -> t.JsonValue:
-        """Expand ``${VAR}`` placeholders in string leaves using ``env``.
+        """Expand ``${VAR}`` / ``${VAR:-default}`` placeholders in string leaves.
 
         Recurses through mappings and sequences; non-string leaves pass through
-        unchanged. Unknown variables are left intact (``safe_substitute``).
+        unchanged. ``${VAR}`` resolves to ``env[VAR]`` or ``""`` when absent;
+        ``${VAR:-default}`` resolves to ``env[VAR]`` or ``default`` when absent.
         """
         if isinstance(value, str):
-            return Template(value).safe_substitute(env)
+            return FlextUtilitiesConfig._EXPAND_PATTERN.sub(
+                lambda match: FlextUtilitiesConfig._expand_one(match, env), value
+            )
         if g.mapping(value):
             return {
                 key: FlextUtilitiesConfig.config_env_override(item, env)

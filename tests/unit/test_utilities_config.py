@@ -77,10 +77,25 @@ class TestsFlextCoreUtilitiesConfig:
 
         assert expanded == {"home": "/tmp", "n": {"p": "/tmp/x"}, "keep": 5}
 
-    def test_config_env_override_unknown_var_left_intact(self) -> None:
+    def test_config_env_override_unknown_var_expands_to_empty(self) -> None:
         expanded = u.config_env_override("${MISSING}", {})
 
-        assert expanded == "${MISSING}"
+        assert expanded == ""
+
+    def test_config_env_override_default_used_when_var_absent(self) -> None:
+        expanded = u.config_env_override("${MISSING:-fallback}", {})
+
+        assert expanded == "fallback"
+
+    def test_config_env_override_default_ignored_when_var_present(self) -> None:
+        expanded = u.config_env_override("${PORT:-9120}", {"PORT": "8080"})
+
+        assert expanded == "8080"
+
+    def test_config_env_override_default_empty_string(self) -> None:
+        expanded = u.config_env_override("${MISSING:-}", {})
+
+        assert expanded == ""
 
     def test_config_env_override_expands_sequences(self) -> None:
         expanded = u.config_env_override(["${HOME}", 2, "${HOME}/y"], {"HOME": "/h"})
