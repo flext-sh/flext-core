@@ -83,6 +83,7 @@ if TYPE_CHECKING:
         p as p,
         r as r,
         s as s,
+        settings as settings,
         t as t,
         u as u,
         x as x,

@@ -37,6 +37,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _ENV_FILE_ENV_VAR = "FLEXT_ENV_FILE"
 _ENV_FILE_DEFAULT = ".env"
+_ERR_TRACE_REQUIRES_DEBUG = "trace mode requires debug mode to be enabled"
 
 
 def _resolve_env_file(namespace: str | None = None) -> str:
@@ -83,10 +84,6 @@ class FlextSettings(BaseSettings):
     def _resolve_env_file(namespace: str | None = None) -> str:
         """Delegate to the module-level ``_resolve_env_file`` helper."""
         return _resolve_env_file(namespace)
-
-    _ENV_FILE_ENV_VAR = "FLEXT_ENV_FILE"
-    _ENV_FILE_DEFAULT = ".env"
-    _ERR_TRACE_REQUIRES_DEBUG = "trace mode requires debug mode to be enabled"
 
     debug: Annotated[bool, Field(description="Enable debug mode")] = False
     trace: Annotated[bool, Field(description="Enable trace mode")] = False
@@ -199,7 +196,7 @@ class FlextSettings(BaseSettings):
         if not overrides:
             with self.__class__.singleton_disabled():
                 return self.model_copy(deep=True)
-        merged = self.__class__._merge_overrides(self, **overrides)
+        merged = self.__class__._merge_overrides(self, **overrides)  # noqa: SLF001  Why: internal helper on same class
         with self.__class__.singleton_disabled():
             copied = self.model_copy(update=merged, deep=True)
             return type(copied).model_validate(copied, from_attributes=True)

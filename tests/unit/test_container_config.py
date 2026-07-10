@@ -151,7 +151,7 @@ class TestsFlextCoreContainerConfig:
         )
         assert isinstance(settings, FlextSettings)
         tm.that(
-            settings.app_name,
-            eq=FlextSettings.fetch_global().app_name,
+            settings.log_level,
+            eq=FlextSettings.fetch_global().log_level,
             msg="Container settings property must reflect the bound public settings",
         )

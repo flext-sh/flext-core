@@ -6,6 +6,7 @@ from typing import Final
 
 from flext_core._settings import (
     FlextSettings,
+    settings,
 )
 from flext_core.constants import (
     FlextConstants,
@@ -142,6 +143,7 @@ __all__: tuple[str, ...] = (
     "p",
     "r",
     "s",
+    "settings",
     "t",
     "u",
     "x",

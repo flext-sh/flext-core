@@ -2,61 +2,30 @@
 constructor.singleton_identity: True
 fetch_global.identity: True
 reset_for_testing.recreates_singleton: True
-reset_for_testing.recreates_global: True
 subclass.singleton_identity: True
+subclass.isolated_slot: True
 
 [settings_fields_and_validation]
-field.app_name: 'demo-app'
-field.version: '9.8.7'
 field.debug: True
-field.trace: False
-field.log_level: <LogLevel.INFO: 'INFO'>
+field.trace: True
+field.log_level: 'ERROR'
+field.timezone: 'America/Sao_Paulo'
 field.async_logging: False
-field.enable_caching: False
-field.cache_ttl: 321
-field.database_url: 'sqlite:///tmp/demo.db'
-field.database_pool_size: 11
-field.circuit_breaker_threshold: 4
-field.rate_limit_max_requests: 77
-field.rate_limit_window_seconds: 42
-field.retry_delay: 5
-field.max_retry_attempts: 6
-field.enable_timeout_executor: False
-field.dispatcher_enable_logging: False
-field.dispatcher_auto_context: False
-field.dispatcher_timeout_seconds: 2.5
-field.dispatcher_enable_metrics: False
-field.executor_workers: 3
-field.timeout_seconds: 13.0
-field.max_workers: 7
-field.max_batch_size: 29
-field.api_key: 'demo-key'
-field.exception_failure_level: <FailureLevel.PERMISSIVE: 'permissive'>
-validate_configuration.indirect_via_model_validate: 'demo-app'
+validate_configuration.indirect_via_model_validate: 'ERROR'
 
-[effective_log_level_and_override]
-effective_log_level.base: <LogLevel.ERROR: 'ERROR'>
-effective_log_level.debug: <LogLevel.INFO: 'INFO'>
-effective_log_level.trace: <LogLevel.DEBUG: 'DEBUG'>
-
-[fetch_global_and_provider]
-fetch_global.clone_same_values: True
-fetch_global.clone_new_object: True
-fetch_global.override.app_name: 'materialized'
-fetch_global.override.timeout_seconds: 55.0
-resolve_di_settings_provider.type: 'Singleton'
+[update_global_and_clone]
+update_global.before.log_level: 'INFO'
+update_global.replaces_instance: True
+update_global.installed_as_singleton: True
+update_global.after.log_level: 'ERROR'
+update_global.after.debug: True
+clone.new_object: True
+clone.override.trace: True
+clone.inherits.log_level: 'ERROR'
+fetch_global.override.new_object: True
+fetch_global.override.timezone: 'Asia/Tokyo'
 
 [resolve_env_file_and_auto_settings]
-resolve_env_file.custom_path: '/home/marlonsc/flext/flext-core/examples/flext_settings_example.env'
+resolve_env_file.matches_requested: True
 AutoSettings.create_settings.type: '_TestConfig'
 AutoSettings.create_settings.service_name: 'test-service'
-
-[namespace_system]
-fetch_namespace.decorated.service_name: 'decorated'
-fetch_namespace.registered.service_name: 'registered'
-
-[context_system]
-register_context_overrides.service_name: 'worker-service'
-for_context.registered.timeout_seconds: 41.0
-for_context.registered.max_workers: 2
-for_context.runtime_override.feature_enabled: False

@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from threading import RLock
-from typing import ClassVar, Self
+from typing import ClassVar, Self, override
 
 from pydantic_settings import (
     BaseSettings,
@@ -55,7 +55,8 @@ class FlextConfig(BaseSettings):
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Give every concrete subclass its own isolated singleton slot."""
-        super().__init_subclass__(**kwargs)
+        _ = kwargs
+        super().__init_subclass__()
         cls._instance = None
 
     @classmethod
@@ -67,6 +68,7 @@ class FlextConfig(BaseSettings):
         return sorted(config_dir.glob("*.yaml")) + sorted(config_dir.glob("*.yml"))
 
     @classmethod
+    @override
     def settings_customise_sources(
         cls,
         settings_cls: type[BaseSettings],

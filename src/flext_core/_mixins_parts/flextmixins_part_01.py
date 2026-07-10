@@ -59,6 +59,10 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     _auto_context_scope: ClassVar[bool] = True
 
+    _settings_type: t.SettingsClass | None = PrivateAttr(default=None)
+
+    _runtime_settings: p.Settings | None = PrivateAttr(default=None)
+
     _settings_overrides: t.JsonMapping | None = PrivateAttr(default=None)
 
     _initial_context: p.Context | None = PrivateAttr(default=None)

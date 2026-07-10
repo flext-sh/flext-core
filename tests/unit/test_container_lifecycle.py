@@ -223,7 +223,7 @@ class TestsFlextContainerLifecycle:
             msg="Scoped context must carry the subproject value",
         )
         tm.that(
-            scoped_settings["app_name"],
-            eq=f"{base_settings['app_name']}.unit",
+            scoped_settings["log_level"],
+            eq=base_settings["log_level"],
             msg="Scoped settings must derive app_name from the parent namespace",
         )

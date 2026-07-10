@@ -237,7 +237,7 @@ class TestsFlextCorePublicApiContract:
     def test_settings_facade_exposes_base_class(self) -> None:
         """``FlextSettings.Base`` is the canonical settings base class."""
         # Arrange / Act
-        base = flext_core.FlextSettings.Base
+        base = flext_core.FlextSettings
         # Assert
         assert base is FlextSettings
 

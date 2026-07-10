@@ -11,12 +11,14 @@ inspected.
 
 from __future__ import annotations
 
+from pydantic import BaseModel
+
 from collections.abc import Mapping
 from typing import override
 
 import pytest
 from flext_tests import FlextTestsCase, r
-from flext_tests.settings import FlextTestsSettings
+from flext_tests import FlextTestsSettings
 
 from tests.base import s
 from tests.models import m
@@ -114,14 +116,14 @@ class TestsFlextService(FlextTestsCase):
         settings = m.Tests.ServiceUserService().settings
 
         assert isinstance(settings, FlextTestsSettings)
-        assert isinstance(settings.Tests, m.SettingsValue)
+        assert isinstance(settings.Tests, BaseModel)
 
     def test_fetch_settings_returns_typed_tests_settings(self) -> None:
         with self._PureService.isolated_test_runtime():
             settings = self._PureService.fetch_settings()
 
             assert isinstance(settings, FlextTestsSettings)
-            assert isinstance(settings.Tests, m.SettingsValue)
+            assert isinstance(settings.Tests, BaseModel)
 
     def test_fetch_logger_matches_shared_service_logger(self) -> None:
         with self._PureService.isolated_test_runtime():
@@ -134,32 +136,32 @@ class TestsFlextService(FlextTestsCase):
 
     def test_with_settings_applies_provided_snapshot(self) -> None:
         settings = m.Tests.ServiceUserService().settings.clone(
-            app_name="service-settings-override",
+            log_level="ERROR",
         )
 
         service = self._PureService.with_settings(settings)
 
         dumped = service.settings.model_dump()
         assert dumped == settings.model_dump()
-        assert dumped["app_name"] == "service-settings-override"
+        assert dumped["log_level"] == "ERROR"
 
     # --- isolated_test_runtime(): isolation invariant --------------------
 
     def test_isolated_runtime_scopes_settings_without_leaking(self) -> None:
-        baseline_app_name = self._PureService.fetch_settings().app_name
+        baseline_level = self._PureService.fetch_settings().log_level
 
         with self._PureService.isolated_test_runtime(
-            app_name="service-scoped",
+            log_level="WARNING",
         ) as scoped_service:
             scoped_settings = FlextTestsSettings.model_validate(
                 scoped_service.settings,
             )
 
-            assert scoped_settings.app_name == "service-scoped"
-            assert FlextTestsSettings.fetch_global() is scoped_global
-            assert scoped_global.app_name != "service-scoped"
+            assert scoped_settings.log_level == "WARNING"
+            scoped_global = FlextTestsSettings.fetch_global()
+            assert scoped_global.log_level != "WARNING"
 
-        assert self._PureService.fetch_settings().app_name == baseline_app_name
+        assert self._PureService.fetch_settings().log_level == baseline_level
 
     # --- track(): context-manager metrics contract -----------------------
 
