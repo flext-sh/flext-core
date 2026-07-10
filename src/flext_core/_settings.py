@@ -29,7 +29,6 @@ import os
 import threading
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
-from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, ClassVar, Self
 
@@ -89,18 +88,9 @@ class FlextSettings(BaseSettings):
     _ENV_FILE_DEFAULT = ".env"
     _ERR_TRACE_REQUIRES_DEBUG = "trace mode requires debug mode to be enabled"
 
-    class LogLevel(StrEnum):
-        """Canonical log levels owned by the settings layer (no external dep)."""
-
-        DEBUG = "DEBUG"
-        INFO = "INFO"
-        WARNING = "WARNING"
-        ERROR = "ERROR"
-        CRITICAL = "CRITICAL"
-
     debug: Annotated[bool, Field(description="Enable debug mode")] = False
     trace: Annotated[bool, Field(description="Enable trace mode")] = False
-    log_level: Annotated[LogLevel, Field(description="Log level")] = LogLevel.INFO
+    log_level: Annotated[str, Field(default="INFO", description="Log level")]
     timezone: Annotated[
         str,
         Field(description="IANA timezone for datetime operations"),
@@ -255,4 +245,4 @@ class FlextSettings(BaseSettings):
 settings: FlextSettings = FlextSettings.fetch_global()
 """Pre-instantiated root settings singleton — ``from flext_core import settings``."""
 
-__all__: list[str] = ["FlextSettings", "LogLevel", "settings"]
+__all__: list[str] = ["FlextSettings", "settings"]
