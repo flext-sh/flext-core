@@ -23,6 +23,7 @@ from flext_core._root_exports import (
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_core._config import FlextConfig as FlextConfig, config as config
     from flext_core._root_typing_parts.contracts import (
         FlextProtocolsBase as FlextProtocolsBase,
         FlextProtocolsContainer as FlextProtocolsContainer,
@@ -51,7 +52,6 @@ if TYPE_CHECKING:
         FlextMroViolation as FlextMroViolation,
         FlextSmellViolation as FlextSmellViolation,
     )
-    from flext_core._config import FlextConfig as FlextConfig, config as config
     from flext_core._root_typing_parts.facades import (
         FlextConstants as FlextConstants,
         FlextContainer as FlextContainer,
