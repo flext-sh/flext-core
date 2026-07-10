@@ -13,6 +13,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
+import flext_core as fc
 from flext_core import (
     FlextConfig,
     FlextSettings,
@@ -29,7 +30,7 @@ class TestsFlextCoreConfigSettingsCanonical:
         assert isinstance(config, FlextConfig)
         assert config is FlextConfig.fetch_global()
         with pytest.raises(ValidationError):
-            config.anything = "mutated"  # frozen
+            setattr(config, "anything", "mutated")
 
     def test_settings_is_preinstantiated_usable_singleton(self) -> None:
         """S2: ``settings`` is a ready-to-use FlextSettings instance used directly."""
@@ -43,8 +44,6 @@ class TestsFlextCoreConfigSettingsCanonical:
 
     def test_direct_import_usage_no_self_accessor(self) -> None:
         """S4: root exposes config/settings as instances; no legacy self.settings property."""
-        import flext_core as fc
-
         for name in ("config", "settings"):
             assert hasattr(fc, name), name
         # legacy apply_override shim exterminated

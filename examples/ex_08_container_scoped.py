@@ -38,7 +38,7 @@ class Ex08ContainerScoped(Ex08ContainerRegistration):
         scoped_subproject = container.scope(subproject=subproject_alpha)
         explicit_context = container.context
         explicit_settings = container.settings.clone(
-            app_name=f"scoped.{self.rand_str(8)}",
+            timezone=f"scoped/{self.rand_str(8)}",
         )
         scoped_service_name = f"svc.{self.rand_str(6)}"
         scoped_factory_name = f"svc.{self.rand_str(6)}"
@@ -78,17 +78,17 @@ class Ex08ContainerScoped(Ex08ContainerRegistration):
             )
             == self._registered_service_value,
         )
-        scoped_sub_settings = scoped_subproject.settings
+
         scoped_full_settings = scoped_full.settings
         self.audit_check(
-            "scoped.subproject.app_name_suffix",
-            isinstance(scoped_sub_settings, FlextSettings)
-            and scoped_sub_settings.app_name.endswith(f".{subproject_alpha}"),
+            "scoped.subproject.context_marker",
+            scoped_subproject.context.get("subproject").unwrap_or("")
+            == subproject_alpha,
         )
         self.audit_check("scoped.full.new_instance", scoped_full is not container)
         self.audit_check(
-            "scoped.full.settings_app_name",
-            scoped_full_settings.app_name
+            "scoped.full.settings_timezone",
+            scoped_full_settings.timezone
             if isinstance(scoped_full_settings, FlextSettings)
             else "",
         )

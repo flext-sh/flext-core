@@ -90,14 +90,6 @@ class FlextContainer(FlextContainerPart03, ABC):
             else self._config
         )
         base_config: p.Settings = settings_source.clone()
-        base_config_dump = base_config.model_dump()
-        base_app_name = base_config_dump.get("app_name")
-        if (
-            subproject
-            and scope_registration.settings is None
-            and isinstance(base_app_name, str)
-        ):
-            base_config = base_config.clone(app_name=f"{base_app_name}.{subproject}")
         scoped_context = (
             self.context.clone()
             if scope_registration.context is None

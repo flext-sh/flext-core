@@ -79,7 +79,7 @@ class TestsFlextSettingsIntegration:
             FlextSettings.update_global(trace=True, debug=False)
 
     def test_clone_produces_independent_copy_with_overrides(self) -> None:
-        """clone applies overrides without mutating the source."""
+        """Clone applies overrides without mutating the source."""
         with FlextSettings.singleton_disabled():
             original = FlextSettings(log_level="INFO")
         clone = original.clone(log_level="CRITICAL")

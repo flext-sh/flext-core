@@ -11,14 +11,12 @@ inspected.
 
 from __future__ import annotations
 
-from pydantic import BaseModel
-
 from collections.abc import Mapping
 from typing import override
 
 import pytest
-from flext_tests import FlextTestsCase, r
-from flext_tests import FlextTestsSettings
+from flext_tests import FlextTestsCase, FlextTestsSettings, r
+from pydantic import BaseModel
 
 from tests.base import s
 from tests.models import m

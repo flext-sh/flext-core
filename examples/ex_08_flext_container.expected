@@ -62,9 +62,9 @@ wire_modules.calls_completed: True
 scoped.default.new_instance: True
 scoped.default.inherits_service: True
 scoped.default.get_typed_service_matches: True
-scoped.subproject.app_name_suffix: False
+scoped.subproject.context_marker: True
 scoped.full.new_instance: True
-scoped.full.settings_app_name: 'scoped.egyayiyc'
+scoped.full.settings_timezone: 'scoped/egyayiyc'
 scoped.full.uses_explicit_context: True
 scoped.full.has_service: True
 scoped.full.has_factory: True
@@ -80,8 +80,8 @@ initialize_registrations.list_services_empty: 0
 sync_settings_to_di.service_settings_present: False
 register_core_services.logger_present: False
 register_core_services.command_bus_present: False
-create_module_logger.default.type: 'FlextUtilities'
-create_module_logger.custom.type: 'FlextUtilities'
+create_module_logger.explicit.type: 'FlextUtilitiesLogging'
+create_module_logger.explicit_custom.type: 'FlextUtilitiesLogging'
 unregister.existing.success: True
 unregister.missing.failure: True
 clear_all.count: 0

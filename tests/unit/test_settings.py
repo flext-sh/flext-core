@@ -47,7 +47,7 @@ class TestsFlextCoreSettings:
             FlextSettings.update_global(typo_field="x")
 
     def test_clone_produces_isolated_snapshot(self) -> None:
-        """clone returns an isolated copy without mutating the singleton."""
+        """Clone returns an isolated copy without mutating the singleton."""
         FlextSettings.reset_for_testing()
         original = FlextSettings.fetch_global()
         original_level = original.log_level

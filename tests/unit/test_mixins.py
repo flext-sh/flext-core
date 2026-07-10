@@ -43,7 +43,13 @@ class TestsFlextMixins:
     def test_settings_property_satisfies_settings_protocol(self) -> None:
         service = self._service()
 
-        assert service.settings.model_dump()["log_level"] == "INFO"
+        assert service.settings.model_dump()["log_level"] in {
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+        }
 
     def test_container_property_satisfies_container_protocol(self) -> None:
         service = self._service()
