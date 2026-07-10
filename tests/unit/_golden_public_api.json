@@ -1159,7 +1159,6 @@
         "Base",
         "api_key",
         "app_name",
-        "apply_override",
         "async_logging",
         "auto_register",
         "cache_ttl",

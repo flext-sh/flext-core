@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import c, m, u
-from flext_core.settings import FlextSettings
+from flext_core._settings import FlextSettings
 
 from .ex_02_flext_settings_helpers import Ex02FlextSettingsFieldChecks
 
@@ -59,13 +59,11 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
         first = FlextSettings()
         second = FlextSettings()
         self.audit_check("constructor.singleton_identity", first is second)
-        global_instance = FlextSettings.fetch_global()
         self.audit_check("fetch_global.identity", global_instance is first)
         FlextSettings.reset_for_testing()
         third = FlextSettings()
         self.audit_check("reset_for_testing.recreates_singleton", third is not first)
         FlextSettings.reset_for_testing()
-        fourth = FlextSettings.fetch_global()
         self.audit_check("reset_for_testing.recreates_global", fourth is not third)
         self._TestConfig.reset_for_testing()
         test_a = self._TestConfig()
@@ -73,19 +71,26 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
         self.audit_check("subclass.singleton_identity", test_a is test_b)
 
     def _exercise_effective_log_level_and_override(self) -> None:
-        """Exercise effective_log_level property and apply_override."""
+        """Exercise effective_log_level property and update_global."""
         self.section("effective_log_level_and_override")
         FlextSettings.reset_for_testing()
-        settings = FlextSettings(debug=False, trace=False, log_level=c.LogLevel.ERROR)
-        self.audit_check("effective_log_level.base", settings.effective_log_level)
-        valid_override = settings.apply_override("debug", True)
-        self.audit_check("apply_override.valid_return", valid_override)
-        self.audit_check("apply_override.valid_applied", settings.debug)
-        self.audit_check("effective_log_level.debug", settings.effective_log_level)
-        settings.apply_override("trace", True)
-        self.audit_check("effective_log_level.trace", settings.effective_log_level)
-        invalid_override = settings.apply_override("does_not_exist", "x")
-        self.audit_check("apply_override.invalid_return", invalid_override)
+        FlextSettings.update_global(
+            debug=False,
+            trace=False,
+            log_level=c.LogLevel.ERROR,
+        )
+        base = FlextSettings.fetch_global()
+        self.audit_check("effective_log_level.base", base.effective_log_level)
+        FlextSettings.update_global(debug=True)
+        self.audit_check(
+            "effective_log_level.debug",
+            FlextSettings.fetch_global().effective_log_level,
+        )
+        FlextSettings.update_global(trace=True)
+        self.audit_check(
+            "effective_log_level.trace",
+            FlextSettings.fetch_global().effective_log_level,
+        )
 
     def _exercise_fetch_global_and_provider(self) -> None:
         """Exercise fetch_global and DI settings provider."""

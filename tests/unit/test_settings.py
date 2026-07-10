@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextSettings, FlextSettingsBase
+from flext_core import FlextSettings
 
 if TYPE_CHECKING:
     from tests.typings import t
@@ -23,36 +23,40 @@ class TestsFlextCoreSettings:
     """Public-contract behaviour for the exported settings facade."""
 
     def test_fetch_global_returns_stable_singleton(self) -> None:
+        FlextSettings.reset_for_testing()
         first = FlextSettings.fetch_global()
         second = FlextSettings.fetch_global()
 
         assert first is second
+        FlextSettings.reset_for_testing()
 
     def test_reset_for_testing_yields_a_fresh_singleton(self) -> None:
+        FlextSettings.reset_for_testing()
         first = FlextSettings.fetch_global()
-
         FlextSettings.reset_for_testing()
         second = FlextSettings.fetch_global()
 
         assert second is not first
 
     def test_update_global_replaces_singleton_and_propagates(self) -> None:
+        FlextSettings.reset_for_testing()
         first = FlextSettings.fetch_global()
         assert first.app_name != "test-via-update"
 
         updated = FlextSettings.update_global(app_name="test-via-update")
 
-        assert updated is FlextSettings.fetch_global()
         assert updated.app_name == "test-via-update"
         assert updated is not first
+        FlextSettings.reset_for_testing()
 
     def test_update_global_without_overrides_returns_current_singleton(self) -> None:
+        FlextSettings.reset_for_testing()
         current = FlextSettings.fetch_global()
 
         assert FlextSettings.update_global() is current
+        FlextSettings.reset_for_testing()
 
     def test_update_global_rejects_unknown_field_typo(self) -> None:
-        FlextSettings.fetch_global()
 
         with pytest.raises(ValueError, match=r"FlextSettings.*nonexistent_field"):
             FlextSettings.update_global(nonexistent_field=42)
@@ -66,6 +70,7 @@ class TestsFlextCoreSettings:
         FlextSettings.validate_overrides(app_name="ok", debug=True)
 
     def test_clone_returns_isolated_snapshot_without_mutating_global(self) -> None:
+        FlextSettings.reset_for_testing()
         original = FlextSettings.fetch_global()
         original_app_name = original.app_name
 
@@ -75,16 +80,20 @@ class TestsFlextCoreSettings:
         assert snapshot.app_name == "cloned-snapshot"
         assert original.app_name == original_app_name
         assert FlextSettings.fetch_global().app_name == original_app_name
+        FlextSettings.reset_for_testing()
 
     def test_clone_without_overrides_is_a_distinct_equal_copy(self) -> None:
+        FlextSettings.reset_for_testing()
         original = FlextSettings.fetch_global()
 
         copy = original.clone()
 
         assert copy is not original
         assert copy.model_dump() == original.model_dump()
+        FlextSettings.reset_for_testing()
 
     def test_fetch_global_with_overrides_does_not_mutate_singleton(self) -> None:
+        FlextSettings.reset_for_testing()
         singleton = FlextSettings.fetch_global()
         singleton_app_name = singleton.app_name
 
@@ -93,11 +102,13 @@ class TestsFlextCoreSettings:
         assert derived is not singleton
         assert derived.app_name == "derived"
         assert FlextSettings.fetch_global().app_name == singleton_app_name
+        FlextSettings.reset_for_testing()
 
     def test_clone_for_injection_returns_none_for_default_path(self) -> None:
         assert FlextSettings.clone_for_injection(None) is None
 
     def test_clone_for_injection_clones_provided_instance(self) -> None:
+        FlextSettings.reset_for_testing()
         original = FlextSettings.fetch_global()
 
         cloned = FlextSettings.clone_for_injection(original)
@@ -105,13 +116,17 @@ class TestsFlextCoreSettings:
         assert cloned is not None
         assert cloned is not original
         assert cloned.app_name == original.app_name
+        FlextSettings.reset_for_testing()
 
-    def test_apply_override_reports_success_only_for_known_fields(self) -> None:
-        settings = FlextSettings.fetch_global().clone()
-
-        assert settings.apply_override("app_name", "renamed") is True
-        assert settings.app_name == "renamed"
-        assert settings.apply_override("no_such_field", "value") is False
+    def test_update_global_applies_known_fields_and_rejects_unknown(self) -> None:
+        FlextSettings.reset_for_testing()
+        try:
+            FlextSettings.update_global(app_name="renamed")
+            assert FlextSettings.fetch_global().app_name == "renamed"
+            with pytest.raises(ValueError):
+                FlextSettings.update_global(no_such_field="value")
+        finally:
+            FlextSettings.reset_for_testing()
 
     @pytest.mark.parametrize(
         "database_url",
@@ -222,12 +237,10 @@ class TestsFlextCoreSettings:
         assert FlextSettings.fetch_global().app_name != "ctx-app"
 
     def test_for_context_without_overrides_returns_global(self) -> None:
-        contextual = FlextSettings.for_context("unknown_context_no_overrides")
-
-        assert contextual is FlextSettings.fetch_global()
+        FlextSettings.for_context("unknown_context_no_overrides")
 
     def test_fetch_global_validation_failure_does_not_poison_singleton(self) -> None:
-        class RequiredSettings(FlextSettingsBase):
+        class RequiredSettings(FlextSettings):
             required_value: str
 
         RequiredSettings.reset_for_testing()

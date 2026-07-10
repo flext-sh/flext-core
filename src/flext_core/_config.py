@@ -24,9 +24,8 @@ from __future__ import annotations
 
 from pathlib import Path
 from threading import RLock
-from typing import Annotated, ClassVar, Self
+from typing import ClassVar, Self
 
-from pydantic import Field
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -50,8 +49,6 @@ class FlextConfig(BaseSettings):
         extra="allow",
         env_prefix="FLEXT_CONFIG_",
     )
-
-    app_name: Annotated[str, Field(description="Application name")] = "flext"
 
     _lock: ClassVar[RLock] = RLock()
     _instance: ClassVar[FlextConfig | None] = None
@@ -111,6 +108,7 @@ class FlextConfig(BaseSettings):
             cls._instance = None
 
 
-config = FlextConfig
+config: FlextConfig = FlextConfig.fetch_global()
+"""Pre-instantiated frozen config singleton — ``from flext_core import config``."""
 
 __all__: list[str] = ["FlextConfig", "config"]

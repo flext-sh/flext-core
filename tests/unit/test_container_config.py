@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
+from flext_core._settings import FlextSettings
 from flext_core.container import FlextContainer
-from flext_core.settings import FlextSettings
 from tests.models import TestsFlextModels, m
 
 if TYPE_CHECKING:

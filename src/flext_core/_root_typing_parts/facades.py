@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Final
 
+from flext_core._settings import (
+    FlextSettings,
+)
 from flext_core.constants import (
     FlextConstants,
     c,
@@ -63,9 +66,6 @@ from flext_core.runtime import (
 from flext_core.service import (
     FlextService,
     s,
-)
-from flext_core.settings import (
-    FlextSettings,
 )
 from flext_core.typings import (
     FlextTypes,

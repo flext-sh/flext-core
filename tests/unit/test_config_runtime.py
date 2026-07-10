@@ -1,8 +1,11 @@
-"""Behavior contract for flext_core.FlextConfig — ADR-005 §7 runtime object.
+"""Behavior contract for flext_core config/settings — ADR-005 canonical singletons.
 
-Asserts the public config surface: frozen singleton, dual independent
-``self.settings``/``self.config`` accessors on a service, clean root import
-(no cycle), and removal of the legacy ``apply_override`` shim (ADR-005 §8).
+Asserts the locked operator law: ``config`` and ``settings`` are PRE-INSTANTIATED
+namespaced singletons imported directly (``from flext_core import config, settings``)
+and used directly (no ``self.`` accessor, not embedded in classes). ``config`` is an
+OPEN pydantic-settings object (no declared model fields, ``extra='allow'``) auto-loaded
+from ``config/*.yaml``. All legacy access forms are exterminated: no ``apply_override``
+shim, no ``def settings(self) -> XSettings: return XSettings.fetch_global()`` overrides.
 """
 
 from __future__ import annotations
@@ -10,46 +13,39 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextConfig, FlextService, FlextSettings, config
+from flext_core import (
+    FlextConfig,
+    FlextSettings,
+    config,
+    settings,
+)
 
 
-class TestsFlextCoreConfigRuntime:
-    """Public-contract behaviour for the exported config facade."""
+class TestsFlextCoreConfigSettingsCanonical:
+    """Public-contract behaviour for the canonical config/settings singletons."""
 
-    def test_config_singleton_frozen(self) -> None:
-        """S1: config is a stable frozen singleton; mutation raises."""
-        first = FlextConfig.fetch_global()
-        second = FlextConfig.fetch_global()
-        assert first is second
-        assert config is FlextConfig
+    def test_config_is_preinstantiated_frozen_singleton(self) -> None:
+        """S1: ``config`` is a ready-to-use frozen FlextConfig instance; mutation raises."""
+        assert isinstance(config, FlextConfig)
+        assert config is FlextConfig.fetch_global()
         with pytest.raises(ValidationError):
-            first.app_name = "mutated"  # frozen
+            config.anything = "mutated"  # frozen
 
-    def test_service_dual_accessor_independent(self) -> None:
-        """S2: self.settings (mutable) and self.config (frozen) are independent."""
+    def test_settings_is_preinstantiated_usable_singleton(self) -> None:
+        """S2: ``settings`` is a ready-to-use FlextSettings instance used directly."""
+        assert isinstance(settings, FlextSettings)
+        assert isinstance(settings.model_dump(), dict)
 
-        class _Svc(FlextService):
-            def execute(self) -> object:
-                return None
+    def test_config_is_open_no_model(self) -> None:
+        """S3: config is OPEN (extra=allow, zero declared fields — no app_name)."""
+        assert config.model_config.get("extra") == "allow"
+        assert "app_name" not in type(config).model_fields
 
-        svc = _Svc()
-        assert isinstance(svc.settings, FlextSettings)
-        assert isinstance(svc.config, FlextConfig)
-        assert type(svc.settings) is not type(svc.config)
-        # settings never exposes config.* and vice versa
-        assert not hasattr(svc.settings, "fetch_config")
-        assert not isinstance(svc.config, FlextSettings)
-
-    def test_root_facades_and_config_import_clean(self) -> None:
-        """S3: root facades + config all resolve, no import cycle."""
+    def test_direct_import_usage_no_self_accessor(self) -> None:
+        """S4: root exposes config/settings as instances; no legacy self.settings property."""
         import flext_core as fc
 
-        for name in ("c", "t", "p", "m", "u", "settings", "config"):
+        for name in ("config", "settings"):
             assert hasattr(fc, name), name
-
-    def test_apply_override_removed(self) -> None:
-        """S4: legacy apply_override shim is gone; update_global works."""
-        settings = FlextSettings.fetch_global()
-        assert getattr(settings, "apply_override", None) is None
-        updated = FlextSettings.update_global(app_name="renamed-via-update")
-        assert updated.app_name == "renamed-via-update"
+        # legacy apply_override shim exterminated
+        assert getattr(FlextSettings.fetch_global(), "apply_override", None) is None

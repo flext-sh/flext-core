@@ -4,7 +4,7 @@
 railway-style result handling for domain services. It relies on structural
 typing to satisfy `p.Service` and provides a clean service lifecycle.
 
-Singleton kernel (mirrors `FlextSettingsBase`):
+Singleton kernel (mirrors `FlextSettings`):
 
 - per-class `_instance` ClassVar with thread-safe lock,
 - `fetch_global()` — return the per-class shared singleton,
@@ -59,7 +59,7 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
     def fetch_global(cls) -> Self:
         """Return the per-class shared singleton.
 
-        Mirrors `FlextSettingsBase.fetch_global` so consumers have a single
+        Mirrors `FlextSettings.fetch_global` so consumers have a single
         canonical accessor across services and settings (§3.5).
         """
         existing = getattr(cls, "_instance", None)
@@ -85,7 +85,7 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
 
         Uses the structural `p.Settings.clone()` contract already consumed by the
         runtime bootstrap path so callers can inject a settings snapshot without
-        coupling this service kernel to `FlextSettingsBase`.
+        coupling this service kernel to `FlextSettings`.
         """
         return cls(runtime_settings=settings.clone())
 

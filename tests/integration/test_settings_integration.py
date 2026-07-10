@@ -43,9 +43,6 @@ class TestsFlextSettingsIntegration(TestsFlextFlextSettingsPrecedenceCase):
     def test_fetch_global_returns_same_singleton_instance(self) -> None:
         """fetch_global() always yields the identical global instance."""
         # Arrange / Act
-        first = FlextSettings.fetch_global()
-        second = FlextSettings.fetch_global()
-        third = FlextSettings.fetch_global()
 
         # Assert — identity is the observable singleton contract
         assert first is second is third
@@ -54,11 +51,9 @@ class TestsFlextSettingsIntegration(TestsFlextFlextSettingsPrecedenceCase):
     def test_reset_for_testing_replaces_the_global_instance(self) -> None:
         """reset_for_testing() causes the next fetch_global() to be a new object."""
         # Arrange
-        before = FlextSettings.fetch_global()
 
         # Act
         FlextSettings.reset_for_testing()
-        after = FlextSettings.fetch_global()
 
         # Assert — a fresh instance is served after reset
         assert after is not before
@@ -67,7 +62,6 @@ class TestsFlextSettingsIntegration(TestsFlextFlextSettingsPrecedenceCase):
     def test_container_resolves_settings_to_the_global_singleton(self) -> None:
         """The container's "settings" binding is the same object as fetch_global()."""
         # Arrange
-        global_settings = FlextSettings.fetch_global()
 
         # Act
         resolved = FlextContainer().resolve("settings")
@@ -102,7 +96,6 @@ class TestsFlextSettingsIntegration(TestsFlextFlextSettingsPrecedenceCase):
         }):
             FlextSettings.reset_for_testing()
             # Act
-            settings = FlextSettings.fetch_global()
 
             # Assert — public fields carry the environment values
             assert settings.app_name == "test-app-from-env"

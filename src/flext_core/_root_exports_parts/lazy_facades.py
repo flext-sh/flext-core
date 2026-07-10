@@ -25,7 +25,7 @@ ROOT_LAZY_FACADES: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType({
     ".result": ("FlextResult", "r"),
     ".runtime": ("FlextRuntime",),
     ".service": ("FlextService", "s"),
-    ".settings": ("FlextSettings",),
+    "._config": ("FlextConfig", "config"),
     ".typings": ("FlextTypes", "t"),
     ".utilities": ("FlextUtilities", "u"),
 })

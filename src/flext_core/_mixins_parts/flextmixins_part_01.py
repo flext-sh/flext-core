@@ -30,9 +30,7 @@ if TYPE_CHECKING:
         MutableMapping,
     )
 
-type _RuntimeBootstrapValue = (
-    t.GuardInput | p.Settings | p.Context | t.SettingsClass | None
-)
+type _RuntimeBootstrapValue = t.GuardInput | p.Context | None
 
 
 class FlextMixins(m.ArbitraryTypesModel):
@@ -60,10 +58,6 @@ class FlextMixins(m.ArbitraryTypesModel):
     _context_type: ClassVar[p.ContextType] = FlextContext
 
     _auto_context_scope: ClassVar[bool] = True
-
-    _settings_type: t.SettingsClass | None = PrivateAttr(default=None)
-
-    _runtime_settings: p.Settings | None = PrivateAttr(default=None)
 
     _settings_overrides: t.JsonMapping | None = PrivateAttr(default=None)
 

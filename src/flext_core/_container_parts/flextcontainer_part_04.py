@@ -142,25 +142,6 @@ class FlextContainer(FlextContainerPart03, ABC):
             root={k: u.normalize_to_container(v) for k, v in config_dict.items()},
         )
         _ = u.DependencyIntegration.bind_configuration(self._di_container, config_map)
-        namespaces = self._settings_type.registered_namespaces()
-        for namespace in namespaces or []:
-            factory_name = f"settings.{namespace}"
-            settings_class = self._settings_type.resolve_namespace_settings(namespace)
-            if settings_class is None:
-                continue
-
-            def namespace_factory(
-                _namespace: str = namespace,
-                _settings_class: t.SettingsClass = settings_class,
-            ) -> p.Settings:
-                return self._settings_type.fetch_global().fetch_namespace(
-                    _namespace,
-                    _settings_class,
-                )
-
-            if factory_name not in self._factories:
-                self.factory(factory_name, namespace_factory)
-                self._internal_registrations.add(factory_name)
 
     @override
     def drop(self, name: str) -> p.Result[bool]:

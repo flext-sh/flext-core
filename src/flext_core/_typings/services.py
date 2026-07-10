@@ -66,7 +66,6 @@ class FlextTypesServices:
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
     type RuntimeData = tp.JsonValue | tp.BaseModelType
     type BootstrapInput = tp.BaseModelType | t.JsonMapping
-    type SettingsInput = SettingsOverride
     type ServiceValue = (
         JsonPayload
         | tp.BaseModelType
@@ -131,10 +130,6 @@ class FlextTypesServices:
     type ScopedContainerRegistry = MutableMapping[
         str,
         t.MutableJsonMapping,
-    ]
-    type ScopedScalarRegistry = MutableMapping[
-        str,
-        MutableMapping[str, t.Scalar],
     ]
     type SettingsClass = type[ps.Settings]
     type LazyScalar = t.Scalar | bytes | date | time

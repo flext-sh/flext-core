@@ -15,8 +15,8 @@ from abc import ABC
 from typing import TYPE_CHECKING, ClassVar, Self, override
 
 from flext_core import m, p, t
+from flext_core._settings import FlextSettings
 from flext_core.context import FlextContext
-from flext_core.settings import FlextSettings
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -41,7 +41,7 @@ class FlextContainer(p.Container, ABC):
 
     _global_lock: threading.RLock = threading.RLock()
 
-    _settings_type: ClassVar[p.NamespacedSettingsType] = FlextSettings
+    _settings_type: ClassVar[p.SettingsType] = FlextSettings
 
     _context_type: ClassVar[p.ContextType] = FlextContext
 

@@ -52,7 +52,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextBeartypeEngineNamespaceHooks",
             ),
             ".test_beartype_engine_runtime": ("TestsFlextCoreBeartypeEngineRuntime",),
-            ".test_config_runtime": ("TestsFlextCoreConfigRuntime",),
+            ".test_config_runtime": ("TestsFlextCoreConfigSettingsCanonical",),
             ".test_constants_new": ("TestsFlextConstantsNew",),
             ".test_constants_project_metadata": (
                 "TestsFlextCoreConstantsProjectMetadata",

@@ -49,9 +49,9 @@ if TYPE_CHECKING:
         FlextExceptionsBase as FlextExceptionsBase,
         FlextExceptionsTemplate as FlextExceptionsTemplate,
         FlextMroViolation as FlextMroViolation,
-        FlextSettingsBase as FlextSettingsBase,
         FlextSmellViolation as FlextSmellViolation,
     )
+    from flext_core._config import FlextConfig as FlextConfig, config as config
     from flext_core._root_typing_parts.facades import (
         FlextConstants as FlextConstants,
         FlextContainer as FlextContainer,
@@ -177,6 +177,7 @@ if not _PUBLIC_NAMES <= _PUBLISHED_NAMES:
     raise RuntimeError(_ROOT_EXPORTS_DRIFT_ERROR)
 
 __all__: tuple[str, ...] = (
+    "FlextConfig",
     "FlextConstants",
     "FlextContainer",
     "FlextContext",
@@ -205,6 +206,7 @@ __all__: tuple[str, ...] = (
     "__version__",
     "__version_info__",
     "c",
+    "config",
     "d",
     "e",
     "h",
@@ -212,6 +214,7 @@ __all__: tuple[str, ...] = (
     "p",
     "r",
     "s",
+    "settings",
     "t",
     "u",
     "x",

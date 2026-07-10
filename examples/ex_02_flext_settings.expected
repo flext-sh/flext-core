@@ -36,11 +36,8 @@ validate_configuration.indirect_via_model_validate: 'demo-app'
 
 [effective_log_level_and_override]
 effective_log_level.base: <LogLevel.ERROR: 'ERROR'>
-apply_override.valid_return: True
-apply_override.valid_applied: True
 effective_log_level.debug: <LogLevel.INFO: 'INFO'>
 effective_log_level.trace: <LogLevel.DEBUG: 'DEBUG'>
-apply_override.invalid_return: False
 
 [fetch_global_and_provider]
 fetch_global.clone_same_values: True

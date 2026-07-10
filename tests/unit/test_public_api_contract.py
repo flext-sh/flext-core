@@ -21,7 +21,7 @@ import pytest
 import flext_core
 from flext_core import c, d, e, h, m, p, r, s, t, u, x
 from flext_core._constants.enforcement import FlextMroViolation
-from flext_core._settings.base import FlextSettingsBase
+from flext_core._settings import FlextSettings
 
 # Public facade names a caller can import from ``flext_core``.
 _FACADES: tuple[str, ...] = (
@@ -49,7 +49,7 @@ _FACADES: tuple[str, ...] = (
 # Sub-facades intentionally absent from ``__all__`` but still lazily resolvable
 # by callers that reference them directly.
 _DROPPED_BUT_LAZY: tuple[str, ...] = (
-    "FlextSettingsBase",
+    "FlextSettings",
     "FlextModelsBase",
     "FlextUtilitiesText",
     "mc",
@@ -239,7 +239,7 @@ class TestsFlextCorePublicApiContract:
         # Arrange / Act
         base = flext_core.FlextSettings.Base
         # Assert
-        assert base is FlextSettingsBase
+        assert base is FlextSettings
 
     def test_exceptions_mro_violation_is_real_reference(self) -> None:
         """``FlextExceptions.MroViolation`` is the canonical violation class."""

@@ -151,7 +151,6 @@ class TestsFlextService(FlextTestsCase):
         with self._PureService.isolated_test_runtime(
             app_name="service-scoped",
         ) as scoped_service:
-            scoped_global = FlextTestsSettings.fetch_global()
             scoped_settings = FlextTestsSettings.model_validate(
                 scoped_service.settings,
             )

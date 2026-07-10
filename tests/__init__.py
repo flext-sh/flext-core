@@ -286,7 +286,7 @@ if TYPE_CHECKING:
         TestsFlextCoreBeartypeEngineRuntime as TestsFlextCoreBeartypeEngineRuntime,
     )
     from tests.unit.test_config_runtime import (
-        TestsFlextCoreConfigRuntime as TestsFlextCoreConfigRuntime,
+        TestsFlextCoreConfigSettingsCanonical as TestsFlextCoreConfigSettingsCanonical,
     )
     from tests.unit.test_constants_new import (
         TestsFlextConstantsNew as TestsFlextConstantsNew,
@@ -782,7 +782,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_beartype_engine_runtime": (
                 "TestsFlextCoreBeartypeEngineRuntime",
             ),
-            ".unit.test_config_runtime": ("TestsFlextCoreConfigRuntime",),
+            ".unit.test_config_runtime": ("TestsFlextCoreConfigSettingsCanonical",),
             ".unit.test_constants_new": ("TestsFlextConstantsNew",),
             ".unit.test_constants_project_metadata": (
                 "TestsFlextCoreConstantsProjectMetadata",

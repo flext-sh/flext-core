@@ -116,7 +116,7 @@ class FlextUtilitiesGenerators(FlextUtilitiesGeneratorsPart01):
     @staticmethod
     def configured_timezone() -> tzinfo:
         """Resolve the configured timezone from ``FlextSettings.timezone``."""
-        settings_module = import_module("flext_core.settings")
+        settings_module = import_module("flext_core._settings")
         settings_cls = settings_module.FlextSettings
         return FlextUtilitiesGenerators.resolve_timezone(
             settings_cls.fetch_global().timezone,

@@ -78,29 +78,8 @@ from flext_core._exceptions.template import (
 from flext_core._exceptions.types import (
     FlextExceptionsTypes,
 )
-from flext_core._settings.base import (
-    FlextSettingsBase,
-)
-from flext_core._settings.context import (
-    FlextSettingsContext,
-)
-from flext_core._settings.core import (
-    FlextSettingsCore,
-)
-from flext_core._settings.database import (
-    FlextSettingsDatabase,
-)
-from flext_core._settings.di import (
-    FlextSettingsDI,
-)
-from flext_core._settings.dispatcher import (
-    FlextSettingsDispatcher,
-)
-from flext_core._settings.infrastructure import (
-    FlextSettingsInfrastructure,
-)
-from flext_core._settings.registry import (
-    FlextSettingsRegistry,
+from flext_core._settings import (
+    FlextSettings,
 )
 
 ROOT_TYPING_CORE_ALL: Final[tuple[str, ...]] = (
@@ -130,14 +109,7 @@ ROOT_TYPING_CORE_ALL: Final[tuple[str, ...]] = (
     "FlextExceptionsMetrics",
     "FlextExceptionsTemplate",
     "FlextExceptionsTypes",
-    "FlextSettingsBase",
-    "FlextSettingsContext",
-    "FlextSettingsCore",
-    "FlextSettingsDatabase",
-    "FlextSettingsDI",
-    "FlextSettingsDispatcher",
-    "FlextSettingsInfrastructure",
-    "FlextSettingsRegistry",
+    "FlextSettings",
 )
 __all__: tuple[str, ...] = (
     "FlextConstantsBase",
@@ -165,13 +137,6 @@ __all__: tuple[str, ...] = (
     "FlextExceptionsTemplate",
     "FlextExceptionsTypes",
     "FlextMroViolation",
-    "FlextSettingsBase",
-    "FlextSettingsContext",
-    "FlextSettingsCore",
-    "FlextSettingsDI",
-    "FlextSettingsDatabase",
-    "FlextSettingsDispatcher",
-    "FlextSettingsInfrastructure",
-    "FlextSettingsRegistry",
+    "FlextSettings",
     "FlextSmellViolation",
 )

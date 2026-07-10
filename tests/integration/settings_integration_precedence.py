@@ -28,7 +28,6 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
                 "FLEXT_ENV_FILE",
             ),
         ):
-            config_defaults = FlextSettings.fetch_global()
             assert config_defaults.app_name == "flext"
             assert config_defaults.log_level == "INFO"
             assert config_defaults.debug is False
@@ -40,10 +39,9 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
             assert env_file.exists()
             assert env_file.read_text(encoding="utf-8") == env_content
             with u.Tests.env_vars_context({"FLEXT_ENV_FILE": str(env_file)}):
-                config_dotenv = FlextSettings.fetch_global()
-            assert config_dotenv.app_name in {"from-dotenv", "flext"}, (
-                f"Expected 'from-dotenv' or 'flext' (default), got '{config_dotenv.app_name}'"
-            )
+                assert config_dotenv.app_name in {"from-dotenv", "flext"}, (
+                    f"Expected 'from-dotenv' or 'flext' (default), got '{config_dotenv.app_name}'"
+                )
             if config_dotenv.app_name == "from-dotenv":
                 assert config_dotenv.log_level == "WARNING"
                 assert config_dotenv.debug is True
@@ -55,11 +53,10 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
                 "FLEXT_DEBUG": "false",
                 "FLEXT_TIMEOUT_SECONDS": "90",
             }):
-                config_env = FlextSettings.fetch_global()
-            assert config_env.app_name == "from-env-var"
-            assert config_env.log_level == "DEBUG"
-            assert config_env.debug is False
-            assert config_env.timeout_seconds == 90
+                assert config_env.app_name == "from-env-var"
+                assert config_env.log_level == "DEBUG"
+                assert config_env.debug is False
+                assert config_env.timeout_seconds == 90
             FlextSettings.reset_for_testing()
             config_explicit = FlextSettings(
                 app_name="from-init",
