@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from typing import ClassVar, cast
+from typing import cast
 
 from examples._shared_parts.shared_part_01 import ExamplesFlextSharedBase
 from examples.models import m
@@ -81,8 +81,6 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
 
     class Handle(m.Examples.Handle):
         """Tiny model used to exercise ``with_resource``."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
     @staticmethod
     def bind_probe(result_obj: p.Result[int], delta: int) -> int | str:

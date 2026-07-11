@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
+from flext_core._settings import FlextSettings
 from flext_core.container import FlextContainer
-from flext_core.settings import FlextSettings
 from tests.models import TestsFlextModels, m
-from tests.protocols import p
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.protocols import p
+    from tests.typings import t
 
 
-class TestsFlextContainerConfig:
+class TestsFlextCoreContainerConfig:
     @pytest.mark.parametrize(
         "settings",
         TestsFlextModels.Tests.ContainerScenarios.CONFIG_SCENARIOS,
@@ -101,6 +105,41 @@ class TestsFlextContainerConfig:
             msg="Config must contain max_services",
         )
 
+    def test_apply_none_is_noop_returning_self(
+        self, clean_container: p.Container
+    ) -> None:
+        """apply(None) must be a no-op that preserves settings and returns self."""
+        container = clean_container
+        before = container.snapshot()
+        result = container.apply(None)
+        tm.that(
+            result is container,
+            eq=True,
+            msg="apply(None) must return self for fluent chaining",
+        )
+        tm.that(
+            container.snapshot().root,
+            eq=before.root,
+            msg="apply(None) must leave existing settings unchanged",
+        )
+
+    def test_apply_is_idempotent(self, clean_container: p.Container) -> None:
+        """Applying the same overrides twice must yield identical public settings."""
+        container = clean_container
+        settings: t.ScalarMapping = {"max_services": 16, "enable_singleton": True}
+        first = container.apply(settings).snapshot()
+        second = container.apply(settings).snapshot()
+        tm.that(
+            second.root,
+            eq=first.root,
+            msg="Re-applying identical overrides must be idempotent",
+        )
+        tm.that(
+            second.root.get("max_services"),
+            eq=16,
+            msg="Idempotent apply must retain the applied value",
+        )
+
     def test_config_property(self) -> None:
         """Test accessing settings via property."""
         container = FlextContainer()
@@ -112,7 +151,7 @@ class TestsFlextContainerConfig:
         )
         assert isinstance(settings, FlextSettings)
         tm.that(
-            settings.app_name,
-            eq=FlextSettings.fetch_global().app_name,
+            settings.log_level,
+            eq=FlextSettings.fetch_global().log_level,
             msg="Container settings property must reflect the bound public settings",
         )

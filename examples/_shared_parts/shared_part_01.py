@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import hashlib
 import string
-from collections.abc import MutableSequence
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from examples.models import m
 from flext_core import r, u
+
+if TYPE_CHECKING:
+    from collections.abc import MutableSequence
 
 
 class ExamplesFlextSharedBase(m.BaseModel):

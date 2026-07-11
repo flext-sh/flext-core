@@ -17,7 +17,6 @@ class FlextConstantsInfrastructure:
 
     DEFAULT_MAX_FACTORIES: Final[int] = 500
     MAX_FACTORIES: Final[int] = 5000
-    DEFAULT_LOGGER_MODULE: Final[str] = "flext_core"
 
     @unique
     class ContextScope(StrEnum):

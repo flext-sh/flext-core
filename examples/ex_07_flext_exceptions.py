@@ -47,7 +47,8 @@ class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
         self.audit_check("base.correlation_id", base.correlation_id or "")
         self.audit_check("base.auto_log", base.auto_log)
         self.audit_check(
-            "base.meta.scope", str(base.metadata.attributes.get("scope") or "")
+            "base.meta.scope",
+            str(base.metadata.attributes.get("scope") or ""),
         )
         self.audit_check(
             "base.meta.channel",
@@ -79,7 +80,7 @@ class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
         self.audit_check(
             "create_error.AttributeError",
             type(
-                e.AttributeAccessError("factory attribute", attribute_name="test")
+                e.AttributeAccessError("factory attribute", attribute_name="test"),
             ).__name__,
         )
         created_dynamic = e.ValidationError(

@@ -1,18 +1,22 @@
-"""Behavior contract for flext_core.loggings.FlextLogger — public API only."""
+"""Behavior contract for flext_core.loggings.FlextUtilitiesLogging — public API only."""
 
 from __future__ import annotations
 
 import io
 import time
-from collections.abc import Callable
 from contextlib import redirect_stdout
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tests.typings import t
 
 LOG_LEVELS: tuple[tuple[str, bool], ...] = (
     ("debug", False),
@@ -25,7 +29,7 @@ LOG_LEVELS: tuple[tuple[str, bool], ...] = (
 
 
 class TestsFlextLoggings:
-    """Behavior contract for FlextLogger public API: create, bind, log, track, strict returns."""
+    """Behavior contract for FlextUtilitiesLogging public API: create, bind, log, track, strict returns."""
 
     @classmethod
     def _assert_log_output[TResult: p.ResultLike[bool] | None](
@@ -90,12 +94,13 @@ class TestsFlextLoggings:
         )
         tm.ok(result)
 
-    def test_unbind_with_safe_flag_ignores_missing_keys(
+    def test_unbind_missing_key_fails_loud(
         self,
         logger: p.Logger,
     ) -> None:
         bound = logger.bind(a="1")
-        tm.that(bound.unbind("missing", safe=True), none=False)
+        with pytest.raises(KeyError):
+            bound.unbind("missing")
 
     def test_unbind_without_safe_raises_on_missing_key(
         self,
@@ -103,6 +108,26 @@ class TestsFlextLoggings:
     ) -> None:
         with pytest.raises(KeyError):
             logger.unbind("missing")
+
+    def test_unbind_with_safe_ignores_missing_key(
+        self,
+        logger: p.Logger,
+    ) -> None:
+        result = self._assert_log_output(
+            lambda: logger.unbind("missing", safe=True).info("safe unbind ok"),
+            contains="safe unbind ok",
+        )
+        tm.ok(result)
+
+    def test_try_unbind_ignores_missing_key(
+        self,
+        logger: p.Logger,
+    ) -> None:
+        result = self._assert_log_output(
+            lambda: logger.try_unbind("missing").info("try unbind ok"),
+            contains="try unbind ok",
+        )
+        tm.ok(result)
 
     def test_build_exception_context_captures_exception_metadata(
         self,
@@ -204,3 +229,22 @@ class TestsFlextLoggings:
             )
             tm.ok(result)
             tm.that(result.value, eq=True)
+
+    def test_log_source_points_to_call_site_not_logging_internals(
+        self,
+        logger: p.Logger,
+    ) -> None:
+        marker = "source probe"
+        stream = io.StringIO()
+        with redirect_stdout(stream):
+            result = logger.info(marker)
+            deadline = time.monotonic() + 0.25
+            while marker not in stream.getvalue() and time.monotonic() < deadline:
+                time.sleep(0.01)
+
+        output = stream.getvalue()
+        tm.ok(result)
+        tm.that(marker in output, eq=True)
+        tm.that("tests/unit/test_loggings_full_coverage.py" in output, eq=True)
+        tm.that("_logging_context_parts" in output, eq=False)
+        tm.that("_loggings_parts" in output, eq=False)

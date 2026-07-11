@@ -36,67 +36,49 @@ class FlextModelsProjectMetadata(FlextModelsProjectMetadataPart03):
         )
 
         project: Annotated[
-            FlextModelsProjectMetadata.ProjectToolFlextProject,
+            FlextModelsProjectMetadataPart03.ProjectToolFlextProject,
             Field(
-                default_factory=lambda: (
-                    FlextModelsProjectMetadata.ProjectToolFlextProject()
-                ),
+                default_factory=FlextModelsProjectMetadataPart03.ProjectToolFlextProject,
                 description="[tool.flext.project] sub-table.",
             ),
         ] = Field(
-            default_factory=lambda: (
-                FlextModelsProjectMetadata.ProjectToolFlextProject()
-            ),
+            default_factory=FlextModelsProjectMetadataPart03.ProjectToolFlextProject,
         )
         namespace: Annotated[
-            FlextModelsProjectMetadata.ProjectToolFlextNamespace,
+            FlextModelsProjectMetadataPart03.ProjectToolFlextNamespace,
             Field(
-                default_factory=lambda: (
-                    FlextModelsProjectMetadata.ProjectToolFlextNamespace()
-                ),
+                default_factory=FlextModelsProjectMetadataPart03.ProjectToolFlextNamespace,
                 description="[tool.flext.namespace] sub-table.",
             ),
         ] = Field(
-            default_factory=lambda: (
-                FlextModelsProjectMetadata.ProjectToolFlextNamespace()
-            ),
+            default_factory=FlextModelsProjectMetadataPart03.ProjectToolFlextNamespace,
         )
         docs: Annotated[
-            FlextModelsProjectMetadata.ProjectToolFlextDocs,
+            FlextModelsProjectMetadataPart03.ProjectToolFlextDocs,
             Field(
-                default_factory=lambda: (
-                    FlextModelsProjectMetadata.ProjectToolFlextDocs()
-                ),
+                default_factory=FlextModelsProjectMetadataPart03.ProjectToolFlextDocs,
                 description="[tool.flext.docs] sub-table.",
             ),
         ] = Field(
-            default_factory=lambda: FlextModelsProjectMetadata.ProjectToolFlextDocs(),
+            default_factory=FlextModelsProjectMetadataPart03.ProjectToolFlextDocs,
         )
         aliases: Annotated[
-            FlextModelsProjectMetadata.ProjectToolFlextAliases,
+            FlextModelsProjectMetadataPart03.ProjectToolFlextAliases,
             Field(
-                default_factory=lambda: (
-                    FlextModelsProjectMetadata.ProjectToolFlextAliases()
-                ),
+                default_factory=FlextModelsProjectMetadataPart03.ProjectToolFlextAliases,
                 description="[tool.flext.aliases] sub-table.",
             ),
         ] = Field(
-            default_factory=lambda: (
-                FlextModelsProjectMetadata.ProjectToolFlextAliases()
-            ),
+            default_factory=FlextModelsProjectMetadataPart03.ProjectToolFlextAliases,
         )
         workspace: Annotated[
-            FlextModelsProjectMetadata.ProjectToolFlextWorkspace,
+            FlextModelsProjectMetadataPart03.ProjectToolFlextWorkspace,
             Field(
-                default_factory=lambda: (
-                    FlextModelsProjectMetadata.ProjectToolFlextWorkspace()
-                ),
+                default_factory=FlextModelsProjectMetadataPart03.ProjectToolFlextWorkspace,
                 description="[tool.flext.workspace] sub-table.",
             ),
         ] = Field(
-            default_factory=lambda: (
-                FlextModelsProjectMetadata.ProjectToolFlextWorkspace()
-            ),
+            default_factory=FlextModelsProjectMetadataPart03.ProjectToolFlextWorkspace,
         )
 
 

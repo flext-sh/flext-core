@@ -44,7 +44,7 @@ class FlextModelsEnforcementBase:
 
         @property
         def messages(self) -> t.StrSequence:
-            """Return plain messages for text emission."""
+            """Plain messages for text emission."""
             return [violation.message for violation in self.violations]
 
         @property
@@ -61,7 +61,7 @@ class FlextModelsEnforcementBase:
             return bool(self.violations)
 
         def __getitem__(self, index: int) -> str:
-            """Return the nth message for ``report[i]`` access."""
+            """The nth message for ``report[i]`` access."""
             return self.messages[index]
 
         def __contains__(self, fragment: t.Scalar | None) -> bool:

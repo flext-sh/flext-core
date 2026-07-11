@@ -12,17 +12,19 @@ from __future__ import annotations
 
 import threading
 from abc import ABC
-from collections.abc import (
-    Callable,
-    MutableMapping,
-)
-from typing import ClassVar, Self, override
-
-from dependency_injector import containers as di_containers
+from typing import TYPE_CHECKING, ClassVar, Self, override
 
 from flext_core import m, p, t
+from flext_core._settings import FlextSettings
 from flext_core.context import FlextContext
-from flext_core.settings import FlextSettings
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        MutableMapping,
+    )
+
+    from dependency_injector import containers as di_containers
 
 
 class FlextContainer(p.Container, ABC):
@@ -39,7 +41,7 @@ class FlextContainer(p.Container, ABC):
 
     _global_lock: threading.RLock = threading.RLock()
 
-    _settings_type: ClassVar[p.NamespacedSettingsType] = FlextSettings
+    _settings_type: ClassVar[p.SettingsType] = FlextSettings
 
     _context_type: ClassVar[p.ContextType] = FlextContext
 
@@ -80,20 +82,21 @@ class FlextContainer(p.Container, ABC):
     @property
     @override
     def settings(self) -> p.Settings:
-        """Return configuration bound to this container."""
+        """Configuration bound to this container."""
         return self._config
 
     @property
     @override
     def context(self) -> p.Context:
-        """Return the execution context bound to this container."""
+        """Execution context bound to this container."""
         return self._context
 
     @property
     @override
     def provide(self) -> Callable[[str], t.RegisterableService]:
-        """Return the dependency-injector Provide helper scoped to the bridge."""
-        return self._di_bridge.provide
+        """Dependency-injector Provide helper scoped to the bridge."""
+        provider: Callable[[str], t.RegisterableService] = self._di_bridge.provide
+        return provider
 
     @classmethod
     def reset_for_testing(cls) -> None:

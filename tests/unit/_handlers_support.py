@@ -3,17 +3,20 @@
 from __future__ import annotations
 
 import math
-from collections.abc import (
-    Sequence,
-)
-from typing import Annotated, ClassVar, override
+from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_tests import h, r
 
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
 from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Sequence,
+    )
+
+    from tests.protocols import p
 
 
 class TestsFlextFlextHandlers:

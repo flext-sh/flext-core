@@ -25,10 +25,9 @@ classifiers = [
 ]
 dependencies = [
   "beartype @ git+https://github.com/beartype/beartype.git@ee481e0c6da5c0cf8a6b27a53a10354e9df4ac71",
-  "cachetools>=7.1.0",
+  "cachetools>=6.2,<7.0",
   "dependency-injector>=4.49.0",
   "docker>=7.1.0",
-  "jinja2>=3.1.6",
   "limits>=5.8.0",
   "orjson>=3.11.8",
   "pybreaker>=1.4.1",
@@ -57,6 +56,9 @@ version = "0.12.0-dev"
 email = "team@flext.sh"
 name = "FLEXT Team"
 
+[project.entry-points.pytest11]
+flext_core_enforcement = "flext_core._fixtures.enforcement"
+
 [[project.maintainers]]
 email = "team@flext.sh"
 name = "FLEXT Team"
@@ -84,7 +86,7 @@ dev = [
   "matplotlib-stubs>=0.3",
   "mkdocs-awesome-pages-plugin>=2.9",
   "mkdocs-encryptcontent-plugin>=2",
-  "mkdocs-exclude>=1",
+  "mkdocs-exclude>=1.0.2",
   "mkdocs-get-deps>=0.2",
   "mkdocs-git-revision-date-localized-plugin>=1.2",
   "mkdocs-literate-nav>=0.6",
@@ -95,14 +97,14 @@ dev = [
   "mkdocs-minify-plugin>=0.7",
   "mkdocs-print-site-plugin>=0.8",
   "mkdocs-redirects>=1.2",
-  "mkdocs-section-index>=0.3",
+  "mkdocs-section-index>=0.3.12",
   "mkdocs-versioning>=0.2",
   "mkdocs>=1.6",
   "mkdocstrings-python>=1.7",
   "mkdocstrings>=0.24",
   "mypy>=1.20.2",
   "pip-audit>=2.7.3",
-  "pre-commit>=4.0.1",
+  "pre-commit>=4.6.0",
   "pylint>=3.3",
   "pyrefly>=1.1.1,<1.2.0",
   "pytest-benchmark>=5.1",
@@ -111,6 +113,7 @@ dev = [
   "pytest-cov>=6.2",
   "pytest-deadfixtures>=2.2.1",
   "pytest-env>=1.1.5",
+  "pytest-markdown-docs>=0.9.2",
   "pytest-mock>=3.14",
   "pytest-randomly>=3.16",
   "pytest-sugar>=1",
@@ -135,7 +138,7 @@ dev = [
   "types-pyasn1>=0.6",
   "types-pyopenssl>=24.1",
   "types-python-dateutil>=2.9",
-  "types-pyyaml>=6.0.12",
+  "types-pyyaml>=6.0.12.20260518",
   "types-redis>=4.6",
   "types-requests>=2.32.4",
   "types-setuptools>=80.9",
@@ -214,7 +217,7 @@ extra_checks = true
 follow_imports = "normal"
 ignore_missing_imports = true
 local_partial_types = true
-mypy_path = [ ".", "../typings", "../typings/generated", "src" ]
+mypy_path = [ ".", "src" ]
 namespace_packages = true
 no_implicit_reexport = true
 overrides = [  ]
@@ -272,6 +275,7 @@ project-excludes = [
   "vendor/**",
 ]
 project-includes = [ "examples/**/*.py*", "scripts/**/*.py*", "src/**/*.py*", "tests/**/*.py*" ]
+python-interpreter-path = "../.venv/bin/python"
 python-version = "3.13"
 search-path = [
   ".",
@@ -290,7 +294,6 @@ use-ignore-files = false
 
 [tool.pyrefly.errors]
 abstract-method-call = false
-annotation-mismatch = "error"
 bad-argument-count = "error"
 bad-argument-type = "error"
 bad-assignment = "error"
@@ -398,8 +401,7 @@ exclude = [
   ".reports",
   ".venv",
 ]
-extraPaths = [ ".", "../typings", "../typings/generated", "src" ]
-ignore = [ "**/*.pyi", "../typings", "../typings/generated" ]
+extraPaths = [ ".", "src" ]
 include = [ "examples", "scripts", "src", "tests" ]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
@@ -425,12 +427,12 @@ reportUnnecessaryComparison = "warning"
 reportUnnecessaryIsInstance = "warning"
 reportUnreachable = "none"
 reportUnsupportedDunderAll = "none"
+reportUntypedBaseClass = "none"
 reportUntypedFunctionDecorator = "none"
 reportUnusedClass = "error"
 reportUnusedFunction = "error"
 reportUnusedImport = "error"
 reportUnusedVariable = "error"
-stubPath = "../typings"
 typeCheckingMode = "strict"
 venv = ".venv"
 venvPath = ".."

@@ -23,25 +23,152 @@ from flext_core._root_exports import (
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core.constants import FlextConstants as FlextConstants, c as c
-    from flext_core.container import FlextContainer as FlextContainer
-    from flext_core.context import FlextContext as FlextContext
-    from flext_core.decorators import FlextDecorators as FlextDecorators, d as d
-    from flext_core.dispatcher import FlextDispatcher as FlextDispatcher
-    from flext_core.exceptions import FlextExceptions as FlextExceptions, e as e
-    from flext_core.handlers import FlextHandlers as FlextHandlers, h as h
-    from flext_core.lazy import FlextLazy as FlextLazy
-    from flext_core.loggings import FlextLogger as FlextLogger
-    from flext_core.mixins import FlextMixins as FlextMixins, x as x
-    from flext_core.models import FlextModels as FlextModels, m as m
-    from flext_core.protocols import FlextProtocols as FlextProtocols, p as p
-    from flext_core.registry import FlextRegistry as FlextRegistry
-    from flext_core.result import FlextResult as FlextResult, r as r
-    from flext_core.runtime import FlextRuntime as FlextRuntime
-    from flext_core.service import FlextService as FlextService, s as s
-    from flext_core.settings import FlextSettings as FlextSettings
-    from flext_core.typings import FlextTypes as FlextTypes, t as t
-    from flext_core.utilities import FlextUtilities as FlextUtilities, u as u
+    from flext_core._config import FlextConfig as FlextConfig, config as config
+    from flext_core._root_typing_parts.contracts import (
+        FlextProtocolsBase as FlextProtocolsBase,
+        FlextProtocolsContainer as FlextProtocolsContainer,
+        FlextProtocolsContext as FlextProtocolsContext,
+        FlextProtocolsHandler as FlextProtocolsHandler,
+        FlextProtocolsLogging as FlextProtocolsLogging,
+        FlextProtocolsPydantic as FlextProtocolsPydantic,
+        FlextProtocolsRegistry as FlextProtocolsRegistry,
+        FlextProtocolsResult as FlextProtocolsResult,
+        FlextProtocolsService as FlextProtocolsService,
+        FlextProtocolsSettings as FlextProtocolsSettings,
+        FlextTypesAnnotateds as FlextTypesAnnotateds,
+        FlextTypesCore as FlextTypesCore,
+        FlextTypesPydantic as FlextTypesPydantic,
+        FlextTypesServices as FlextTypesServices,
+        FlextTypesTypeAdapters as FlextTypesTypeAdapters,
+        FlextTypingBase as FlextTypingBase,
+        FlextTypingContainers as FlextTypingContainers,
+        FlextTypingProjectMetadata as FlextTypingProjectMetadata,
+    )
+    from flext_core._root_typing_parts.core import (
+        FlextConstantsCqrs as FlextConstantsCqrs,
+        FlextConstantsInfrastructure as FlextConstantsInfrastructure,
+        FlextExceptionsBase as FlextExceptionsBase,
+        FlextExceptionsTemplate as FlextExceptionsTemplate,
+        FlextMroViolation as FlextMroViolation,
+        FlextSmellViolation as FlextSmellViolation,
+    )
+    from flext_core._root_typing_parts.facades import (
+        FlextConstants as FlextConstants,
+        FlextContainer as FlextContainer,
+        FlextContext as FlextContext,
+        FlextDecorators as FlextDecorators,
+        FlextDispatcher as FlextDispatcher,
+        FlextExceptions as FlextExceptions,
+        FlextHandlers as FlextHandlers,
+        FlextLazy as FlextLazy,
+        FlextMixins as FlextMixins,
+        FlextModels as FlextModels,
+        FlextProtocols as FlextProtocols,
+        FlextRegistry as FlextRegistry,
+        FlextResult as FlextResult,
+        FlextRuntime as FlextRuntime,
+        FlextService as FlextService,
+        FlextSettings as FlextSettings,
+        FlextTypes as FlextTypes,
+        FlextUtilities as FlextUtilities,
+        FlextUtilitiesLogging as FlextUtilitiesLogging,
+        build_lazy_import_map as build_lazy_import_map,
+        c as c,
+        d as d,
+        e as e,
+        h as h,
+        lazy as lazy,
+        m as m,
+        normalize_lazy_imports as normalize_lazy_imports,
+        p as p,
+        r as r,
+        s as s,
+        settings as settings,
+        t as t,
+        u as u,
+        x as x,
+    )
+    from flext_core._root_typing_parts.models import (
+        FlextModelsBase as FlextModelsBase,
+        FlextModelsBuilder as FlextModelsBuilder,
+        FlextModelsCollections as FlextModelsCollections,
+        FlextModelsContainer as FlextModelsContainer,
+        FlextModelsContainers as FlextModelsContainers,
+        FlextModelsContext as FlextModelsContext,
+        FlextModelsCqrs as FlextModelsCqrs,
+        FlextModelsDispatcher as FlextModelsDispatcher,
+        FlextModelsDomainEvent as FlextModelsDomainEvent,
+        FlextModelsEnforcement as FlextModelsEnforcement,
+        FlextModelsEntity as FlextModelsEntity,
+        FlextModelsErrors as FlextModelsErrors,
+        FlextModelsExceptionParams as FlextModelsExceptionParams,
+        FlextModelsHandler as FlextModelsHandler,
+        FlextModelsNamespace as FlextModelsNamespace,
+        FlextModelsProjectMetadata as FlextModelsProjectMetadata,
+        FlextModelsPydantic as FlextModelsPydantic,
+        FlextModelsRegistry as FlextModelsRegistry,
+        FlextModelsService as FlextModelsService,
+        FlextModelsSettings as FlextModelsSettings,
+        mc as mc,
+    )
+    from flext_core._root_typing_parts.utilities_part_01 import (
+        FlextUtilitiesArgs as FlextUtilitiesArgs,
+        FlextUtilitiesBeartypeAttrVisitor as FlextUtilitiesBeartypeAttrVisitor,
+        FlextUtilitiesBeartypeClassVisitor as FlextUtilitiesBeartypeClassVisitor,
+        FlextUtilitiesBeartypeConf as FlextUtilitiesBeartypeConf,
+        FlextUtilitiesBeartypeDeprecatedVisitor as FlextUtilitiesBeartypeDeprecatedVisitor,
+        FlextUtilitiesBeartypeEngine as FlextUtilitiesBeartypeEngine,
+        FlextUtilitiesBeartypeFieldVisitor as FlextUtilitiesBeartypeFieldVisitor,
+        FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpers,
+        FlextUtilitiesBeartypeImportVisitor as FlextUtilitiesBeartypeImportVisitor,
+        FlextUtilitiesBeartypeMethodVisitor as FlextUtilitiesBeartypeMethodVisitor,
+        FlextUtilitiesBeartypeModuleVisitor as FlextUtilitiesBeartypeModuleVisitor,
+        FlextUtilitiesBeartypeTypingExtPatch as FlextUtilitiesBeartypeTypingExtPatch,
+        FlextUtilitiesChecker as FlextUtilitiesChecker,
+        FlextUtilitiesCollection as FlextUtilitiesCollection,
+        FlextUtilitiesCollectionIter as FlextUtilitiesCollectionIter,
+        FlextUtilitiesCollectionMerge as FlextUtilitiesCollectionMerge,
+        FlextUtilitiesContext as FlextUtilitiesContext,
+        FlextUtilitiesContextCrud as FlextUtilitiesContextCrud,
+    )
+    from flext_core._root_typing_parts.utilities_part_02 import (
+        FlextUtilitiesContextLifecycle as FlextUtilitiesContextLifecycle,
+        FlextUtilitiesContextState as FlextUtilitiesContextState,
+        FlextUtilitiesConversion as FlextUtilitiesConversion,
+        FlextUtilitiesDiscovery as FlextUtilitiesDiscovery,
+        FlextUtilitiesDomain as FlextUtilitiesDomain,
+        FlextUtilitiesEnforcement as FlextUtilitiesEnforcement,
+        FlextUtilitiesEnforcementCollect as FlextUtilitiesEnforcementCollect,
+        FlextUtilitiesEnforcementEmit as FlextUtilitiesEnforcementEmit,
+        FlextUtilitiesEnum as FlextUtilitiesEnum,
+        FlextUtilitiesGenerators as FlextUtilitiesGenerators,
+        FlextUtilitiesGuards as FlextUtilitiesGuards,
+        FlextUtilitiesGuardsTypeCore as FlextUtilitiesGuardsTypeCore,
+        FlextUtilitiesGuardsTypeModel as FlextUtilitiesGuardsTypeModel,
+        FlextUtilitiesGuardsTypeProtocol as FlextUtilitiesGuardsTypeProtocol,
+        FlextUtilitiesHandler as FlextUtilitiesHandler,
+        FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfig,
+        FlextUtilitiesLoggingContext as FlextUtilitiesLoggingContext,
+        FlextUtilitiesMapper as FlextUtilitiesMapper,
+    )
+    from flext_core._root_typing_parts.utilities_part_03 import (
+        FlextUtilitiesMapperAccess as FlextUtilitiesMapperAccess,
+        FlextUtilitiesMapperExtract as FlextUtilitiesMapperExtract,
+        FlextUtilitiesModel as FlextUtilitiesModel,
+        FlextUtilitiesModelOptions as FlextUtilitiesModelOptions,
+        FlextUtilitiesModelRuntime as FlextUtilitiesModelRuntime,
+        FlextUtilitiesParser as FlextUtilitiesParser,
+        FlextUtilitiesParserCoerce as FlextUtilitiesParserCoerce,
+        FlextUtilitiesParserTargets as FlextUtilitiesParserTargets,
+        FlextUtilitiesProjectMetadata as FlextUtilitiesProjectMetadata,
+        FlextUtilitiesPydantic as FlextUtilitiesPydantic,
+        FlextUtilitiesReliability as FlextUtilitiesReliability,
+        FlextUtilitiesRuntimeViolationRegistry as FlextUtilitiesRuntimeViolationRegistry,
+        FlextUtilitiesSettings as FlextUtilitiesSettings,
+        FlextUtilitiesText as FlextUtilitiesText,
+        execute_dispatcher_handler as execute_dispatcher_handler,
+        ube as ube,
+    )
 
 _LAZY_IMPORTS = build_lazy_import_map(ROOT_LAZY_MODULES, sort_keys=False)
 _PUBLISHED_NAMES = frozenset({*_LAZY_IMPORTS, *ROOT_METADATA_NAMES})
@@ -49,6 +176,50 @@ _PUBLIC_NAMES = frozenset(ROOT_ALL)
 _ROOT_EXPORTS_DRIFT_ERROR = "flext_core root exports drift from ROOT_ALL"
 if not _PUBLIC_NAMES <= _PUBLISHED_NAMES:
     raise RuntimeError(_ROOT_EXPORTS_DRIFT_ERROR)
+
+__all__: tuple[str, ...] = (
+    "FlextConfig",
+    "FlextConstants",
+    "FlextContainer",
+    "FlextContext",
+    "FlextDecorators",
+    "FlextDispatcher",
+    "FlextExceptions",
+    "FlextHandlers",
+    "FlextLazy",
+    "FlextMixins",
+    "FlextModels",
+    "FlextProtocols",
+    "FlextRegistry",
+    "FlextResult",
+    "FlextRuntime",
+    "FlextService",
+    "FlextSettings",
+    "FlextTypes",
+    "FlextUtilities",
+    "FlextUtilitiesLogging",
+    "__author__",
+    "__author_email__",
+    "__description__",
+    "__license__",
+    "__title__",
+    "__url__",
+    "__version__",
+    "__version_info__",
+    "c",
+    "config",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "settings",
+    "t",
+    "u",
+    "x",
+)
 
 install_lazy_exports(
     __name__,

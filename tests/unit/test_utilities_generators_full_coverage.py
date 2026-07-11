@@ -10,7 +10,7 @@ from tests.constants import c
 from tests.models import m
 
 
-class TestsFlextUtilitiesGenerators:
+class TestsFlextCoreUtilitiesGenerators:
     def test_public_generators_build_dispatch_audit_metadata(self) -> None:
         request = m.Tests.DispatchRequest(
             command_name="sync-users",
@@ -148,7 +148,7 @@ class TestsFlextUtilitiesGenerators:
         entity_prefix, entity_name, entity_suffix = audit.entity_id.split("_")
         batch_prefix, batch_name, batch_suffix = audit.batch_id.split("_")
         transaction_body, transaction_suffix = audit.transaction_id.removeprefix(
-            "txn_"
+            "txn_",
         ).rsplit("_", 1)
         saga_body, saga_suffix = audit.saga_id.removeprefix("saga_").rsplit("_", 1)
         timestamped_prefix, timestamped_body = audit.timestamped_batch_id.split("_", 1)

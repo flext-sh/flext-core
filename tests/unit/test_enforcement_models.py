@@ -133,17 +133,38 @@ class TestsFlextEnforcementModels:
             cat in c.EnforcementCategory for cat in c.ENFORCEMENT_TAG_CATEGORY.values()
         )
 
-    def test_flext_core_uses_flext_override(self) -> None:
-        """``flext_core`` is the canonical src layer and overrides to ``Flext``."""
-        project = FlextUtilitiesEnforcement._project(FlextUtilitiesEnforcement)
-        assert project is not None
-        prefix, namespace = project
-        assert prefix == "Flext"
-        assert namespace == "Core"
+    def test_canonical_flext_core_class_satisfies_prefix_contract(self) -> None:
+        """A correctly named ``flext_core`` class raises no class-prefix violation."""
+        assert not messages(
+            u.check(FlextUtilitiesEnforcement),
+            fragment="class_prefix",
+        )
 
-    def test_synthetic_markdown_module_is_unknowable(self) -> None:
-        """Docs code fences run in synthetic modules and must not invent prefixes."""
-        fake = type("CreateUserService", (), {})
-        fake.__module__ = "fence"
+    @pytest.mark.parametrize(
+        ("module", "expect_prefix_violation"),
+        [
+            ("flext_core.synthetic_module", True),
+            ("fence", False),
+        ],
+    )
+    def test_class_prefix_enforced_only_for_knowable_projects(
+        self,
+        module: str,
+        expect_prefix_violation: bool,
+    ) -> None:
+        """``flext_core`` demands the ``Flext`` prefix; doc-fence modules stay silent.
 
-        assert FlextUtilitiesEnforcement._project(fake) is None
+        A misnamed class inside the canonical ``flext_core`` src layer must be
+        reported as missing the derived ``Flext`` project prefix, while a class
+        whose module is a synthetic markdown code-fence (``fence``) is unknowable
+        and must never have a prefix invented for it.
+        """
+        misnamed: type = type("CreateUserService", (), {})
+        misnamed.__module__ = module
+        misnamed.__qualname__ = "CreateUserService"
+
+        hits = messages(u.check(misnamed), fragment="class_prefix")
+
+        assert bool(hits) is expect_prefix_violation
+        if expect_prefix_violation:
+            assert any('prefix "Flext"' in message for message in hits)

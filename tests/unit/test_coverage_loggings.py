@@ -4,15 +4,19 @@ from __future__ import annotations
 
 import io
 import time
-from collections.abc import Callable
 from contextlib import redirect_stdout
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
-from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextCoverageLoggings:
@@ -68,7 +72,8 @@ class TestsFlextCoverageLoggings:
         scope: str,
         context: dict[str, str],
     ) -> None:
-        _ = u.bind_context(scope=scope, **context)
+        bind_result = u.bind_context(scope=scope, **context)
+        _ = self.assert_log_result_success(bind_result)
 
         result = u.clear_scope(scope)
 

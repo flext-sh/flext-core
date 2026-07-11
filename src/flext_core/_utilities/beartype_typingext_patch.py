@@ -30,8 +30,8 @@ from __future__ import annotations
 
 import importlib
 import sys as _sys
-import typing as _typing
-from typing import Annotated, ClassVar, ForwardRef, get_args, get_origin
+from collections.abc import Callable
+from typing import Annotated, ClassVar, ForwardRef, cast, get_args, get_origin
 
 import typing_extensions as _typing_extensions
 
@@ -40,6 +40,10 @@ from flext_core._typings.base import FlextTypingBase as t
 
 class FlextUtilitiesBeartypeTypingExtPatch:
     """Idempotent beartype patches for ``typing_extensions`` PEP 695 aliases."""
+
+    type _TypeHintSpecifier = t.TypeHintSpecifier | _typing_extensions.TypeAliasType
+    type _HintPep695AliasValue = type | tuple[type, ...]
+    type _Pep695Getter = Callable[[_TypeHintSpecifier, str], _TypeHintSpecifier]
 
     _applied: ClassVar[bool] = False
 
@@ -55,36 +59,44 @@ class FlextUtilitiesBeartypeTypingExtPatch:
     @classmethod
     def _patch_alias_recognition(cls) -> None:
         """Extend ``HintPep695TypeAlias`` with ``typing_extensions.TypeAliasType``."""
-        cf = importlib.import_module("beartype._cave._cavefast")
+        cavefast = importlib.import_module("beartype._cave._cavefast")
+        raw_current = cavefast.__dict__.get("HintPep695TypeAlias")
+        if isinstance(raw_current, type):
+            current: cls._HintPep695AliasValue = raw_current
+        elif isinstance(raw_current, tuple):
+            current_types = tuple(
+                item for item in raw_current if isinstance(item, type)
+            )
+            if len(current_types) != len(raw_current):
+                msg = "beartype HintPep695TypeAlias contains non-type members"
+                raise TypeError(msg)
+            current = current_types
+        else:
+            msg = "beartype HintPep695TypeAlias cave is unavailable"
+            raise TypeError(msg)
 
-        # Already patched or not applicable on this interpreter.
-        if not hasattr(cf, "HintPep695TypeAlias"):
-            return
-
-        current = cf.HintPep695TypeAlias
         new_value = current
         te = _typing_extensions.TypeAliasType
-        std = _typing.TypeAliasType
 
         if isinstance(current, tuple):
             if te not in current:
                 new_value = (*current, te)
-        elif current is std:
-            if len({std, te}) > 1:
-                new_value = (std, te)
-        elif current is not te:
+            else:
+                return
+        elif current is te:
+            return
+        else:
             new_value = (current, te)
 
-        if new_value is not current:
-            setattr(cf, "HintPep695TypeAlias", new_value)
-            # Modules that did ``from _cavefast import HintPep695TypeAlias`` hold
-            # a stale reference; patch only loaded beartype modules and avoid
-            # module-level __getattr__ side effects during import-time patching.
-            for mod_name, mod in tuple(_sys.modules.items()):
-                if not mod_name.startswith("beartype"):
-                    continue
-                if mod.__dict__.get("HintPep695TypeAlias") is current:
-                    setattr(mod, "HintPep695TypeAlias", new_value)
+        cavefast.__dict__["HintPep695TypeAlias"] = new_value
+        # Modules that did ``from _cavefast import HintPep695TypeAlias`` hold
+        # a stale reference; patch only loaded beartype modules and avoid
+        # module-level __getattr__ side effects during import-time patching.
+        for mod_name, mod in tuple(_sys.modules.items()):
+            if not mod_name.startswith("beartype"):
+                continue
+            if mod.__dict__.get("HintPep695TypeAlias") is current:
+                mod.__dict__["HintPep695TypeAlias"] = new_value
 
     @classmethod
     def _patch_forwardref_module_scope(cls) -> None:
@@ -92,17 +104,24 @@ class FlextUtilitiesBeartypeTypingExtPatch:
         pep695 = importlib.import_module(
             "beartype._util.hint.pep.proposal.pep695",
         )
-        original = pep695.get_hint_pep695_unsubbed_alias
+        raw_original = pep695.__dict__.get("get_hint_pep695_unsubbed_alias")
+        if not callable(raw_original):
+            msg = "beartype get_hint_pep695_unsubbed_alias hook is unavailable"
+            raise TypeError(msg)
+
+        # Dynamic module dictionaries expose plugin callables as object; callable()
+        # above validates the runtime boundary before narrowing the contract.
+        original = cast("cls._Pep695Getter", raw_original)
 
         def tagged(
-            hint: t.TypeHintSpecifier,
+            hint: cls._TypeHintSpecifier,
             exception_prefix: str = "",
-        ) -> t.TypeHintSpecifier:
+        ) -> cls._TypeHintSpecifier:
             reduced = original(hint, exception_prefix)
             module_name = getattr(hint, "__module__", None)
-            if module_name:
+            if isinstance(module_name, str) and module_name:
                 return cls._tag_forward_refs(reduced, module_name)
-            return _typing.cast("t.TypeHintSpecifier", reduced)
+            return reduced
 
         # Replace the getter across every beartype module that imported it by
         # name (``redpep695``) as well as its defining module.
@@ -110,13 +129,13 @@ class FlextUtilitiesBeartypeTypingExtPatch:
             if not mod_name.startswith("beartype"):
                 continue
             if mod.__dict__.get("get_hint_pep695_unsubbed_alias") is original:
-                setattr(mod, "get_hint_pep695_unsubbed_alias", tagged)
+                mod.__dict__["get_hint_pep695_unsubbed_alias"] = tagged
 
     @staticmethod
     def _tag_forward_refs(
-        hint: t.TypeHintSpecifier,
+        hint: _TypeHintSpecifier,
         module_name: str,
-    ) -> t.TypeHintSpecifier:
+    ) -> _TypeHintSpecifier:
         """Rebind bare stringified forward refs in ``hint`` to ``module_name``."""
         tag = FlextUtilitiesBeartypeTypingExtPatch._tag_forward_refs
         if isinstance(hint, str):
@@ -136,8 +155,14 @@ class FlextUtilitiesBeartypeTypingExtPatch:
         if new_args == args:
             return hint
         if len(new_args) == 1:
-            return _typing.cast("t.TypeHintSpecifier", origin[new_args[0]])
-        return _typing.cast("t.TypeHintSpecifier", origin[new_args])
+            return cast(
+                "FlextUtilitiesBeartypeTypingExtPatch._TypeHintSpecifier",
+                origin[new_args[0]],
+            )
+        return cast(
+            "FlextUtilitiesBeartypeTypingExtPatch._TypeHintSpecifier",
+            origin[new_args],
+        )
 
 
 # Apply immediately so any subsequent beartype.claw usage sees both fixes.

@@ -11,9 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, Unpack
-
-from pydantic import ConfigDict
+from typing import TYPE_CHECKING, ClassVar, Unpack
 
 from flext_core import (
     c,
@@ -21,8 +19,12 @@ from flext_core import (
     m,
     x,
 )
-from flext_core._models.handler import FlextModelsHandler
 from flext_core._utilities.handler import FlextUtilitiesHandler
+
+if TYPE_CHECKING:
+    from pydantic import ConfigDict
+
+    from flext_core._models.handler import FlextModelsHandler
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):
@@ -112,7 +114,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     @property
     def handler_name(self) -> str:
-        """Get handler name from configuration.
+        """Handler name from configuration.
 
         Returns:
             str: The handler name
@@ -122,7 +124,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     @property
     def mode(self) -> c.HandlerType:
-        """Get handler mode from configuration.
+        """Handler mode from configuration.
 
         Returns:
             c.HandlerType: The handler mode (command, query, event, saga)

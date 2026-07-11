@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from tests._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tests.typings import t
 
 
 class TestsFlextUtilitiesCaseServiceFactoriesMixin(
-    TestsFlextUtilitiesServiceFactoriesMixin
+    TestsFlextUtilitiesServiceFactoriesMixin,
 ):
     """Service case construction helpers."""
 
@@ -108,7 +111,7 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             match case.service_type:
                 case c.Tests.SERVICE_TEST_TYPE_GET_USER:
                     service = TestsFlextUtilitiesCaseServiceFactoriesMixin.GetUserServiceFactory.build(
-                        user_id=case.input_value
+                        user_id=case.input_value,
                     )
                 case c.Tests.SERVICE_TEST_TYPE_VALIDATE:
                     service = TestsFlextUtilitiesCaseServiceFactoriesMixin.ValidatingServiceFactory.build(
@@ -117,7 +120,7 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
                     )
                 case c.Tests.SERVICE_TEST_TYPE_FAIL:
                     service = TestsFlextUtilitiesCaseServiceFactoriesMixin.FailingServiceFactory.build(
-                        error_message=case.input_value or c.Tests.DEFAULT_ERROR_MESSAGE
+                        error_message=case.input_value or c.Tests.DEFAULT_ERROR_MESSAGE,
                     )
                 case _:
                     msg = f"Unsupported service type: {case.service_type}"

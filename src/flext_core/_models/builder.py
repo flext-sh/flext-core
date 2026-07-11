@@ -6,13 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self, override
+from typing import TYPE_CHECKING, Self, override
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
 
 from .base import FlextModelsBase as m
+
+if TYPE_CHECKING:
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextModelsBuilder:

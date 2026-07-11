@@ -5,10 +5,8 @@ from __future__ import annotations
 import dis
 import inspect
 import types as _types_mod
-from collections.abc import (
-    Iterator,
-)
 from typing import (
+    TYPE_CHECKING,
     Annotated,
     ClassVar,
     ForwardRef,
@@ -17,11 +15,17 @@ from typing import (
 )
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._typings.base import FlextTypingBase as t
 
 from .helpers_part_01 import (
     FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpersPart01,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        Iterator,
+    )
+
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):

@@ -8,15 +8,17 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from types import ModuleType
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from dependency_injector import providers
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.logging import FlextConstantsLogging as cl
-from flext_core._protocols.logging import FlextProtocolsLogging as pl
 from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
+
+if TYPE_CHECKING:
+    from flext_core._protocols.logging import FlextProtocolsLogging as pl
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextRuntimeBase:
@@ -52,6 +54,9 @@ class FlextRuntimeBase:
     @staticmethod
     def dependency_providers() -> ModuleType:
         """Return the dependency-injector providers module."""
+        if not isinstance(providers, ModuleType):
+            msg = "dependency_injector.providers is not a module"
+            raise TypeError(msg)
         return providers
 
     @staticmethod

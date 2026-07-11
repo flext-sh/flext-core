@@ -70,7 +70,7 @@ def _normalize_dispatcher_output(
     raw_candidate: t.JsonPayload | p.ResultLike[t.JsonPayload] | None,
     dispatch_result: type[r[t.JsonPayload]],
 ) -> t.JsonPayload | p.Result[t.JsonPayload] | None:
-    if isinstance(raw_candidate, p.Result):
+    if isinstance(raw_candidate, r):
         return cast("p.Result[t.JsonPayload]", raw_candidate)
     if raw_candidate is None:
         return None

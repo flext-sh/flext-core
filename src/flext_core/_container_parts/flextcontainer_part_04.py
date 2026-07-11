@@ -11,14 +11,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
-from types import ModuleType
-from typing import Self, override
+from typing import TYPE_CHECKING, Self, override
 
 from flext_core import c, e, m, p, r, t, u
 
 from .flextcontainer_part_03 import (
     FlextContainer as FlextContainerPart03,
 )
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 
 class FlextContainer(FlextContainerPart03, ABC):
@@ -63,7 +65,7 @@ class FlextContainer(FlextContainerPart03, ABC):
         if str(c.ServiceName.LOGGER) not in self._internal_registrations:
             self.factory(
                 c.ServiceName.LOGGER,
-                lambda: u.fetch_logger(c.DEFAULT_LOGGER_MODULE),
+                lambda: u.fetch_logger(c.LOGGER_NAME_FLEXT_CORE),
             )
             self._internal_registrations.add(str(c.ServiceName.LOGGER))
         if c.FIELD_CONTEXT not in self._internal_registrations:
@@ -88,14 +90,6 @@ class FlextContainer(FlextContainerPart03, ABC):
             else self._config
         )
         base_config: p.Settings = settings_source.clone()
-        base_config_dump = base_config.model_dump()
-        base_app_name = base_config_dump.get("app_name")
-        if (
-            subproject
-            and scope_registration.settings is None
-            and isinstance(base_app_name, str)
-        ):
-            base_config = base_config.clone(app_name=f"{base_app_name}.{subproject}")
         scoped_context = (
             self.context.clone()
             if scope_registration.context is None
@@ -140,25 +134,6 @@ class FlextContainer(FlextContainerPart03, ABC):
             root={k: u.normalize_to_container(v) for k, v in config_dict.items()},
         )
         _ = u.DependencyIntegration.bind_configuration(self._di_container, config_map)
-        namespaces = self._settings_type.registered_namespaces()
-        for namespace in namespaces or []:
-            factory_name = f"settings.{namespace}"
-            settings_class = self._settings_type.resolve_namespace_settings(namespace)
-            if settings_class is None:
-                continue
-
-            def namespace_factory(
-                _namespace: str = namespace,
-                _settings_class: t.SettingsClass = settings_class,
-            ) -> p.Settings:
-                return self._settings_type.fetch_global().fetch_namespace(
-                    _namespace,
-                    _settings_class,
-                )
-
-            if factory_name not in self._factories:
-                self.factory(factory_name, namespace_factory)
-                self._internal_registrations.add(factory_name)
 
     @override
     def drop(self, name: str) -> p.Result[bool]:

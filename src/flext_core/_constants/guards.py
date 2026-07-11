@@ -43,7 +43,7 @@ class FlextConstantsGuards:
                 isinstance(v, (list, tuple, range)) and not isinstance(v, (str, bytes))
             ),
             "sized": lambda v: hasattr(v, "__len__"),
-            "callable": lambda v: callable(v),
+            "callable": callable,
             "bytes": lambda v: isinstance(v, bytes),
             "int": lambda v: isinstance(v, int),
             "float": lambda v: isinstance(v, float),

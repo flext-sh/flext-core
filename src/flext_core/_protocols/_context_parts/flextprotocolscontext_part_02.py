@@ -6,14 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
+    from contextlib import AbstractContextManager
+
     from flext_core import (
-        FlextProtocolsContainer,
-        FlextProtocolsResult,
         m,
+        p,
         t,
     )
 from .flextprotocolscontext_part_01 import (
@@ -73,19 +73,19 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
         def create(
             cls,
             **initial_data: t.JsonPayload,
-        ) -> FlextProtocolsContext.Context:
+        ) -> p.Context:
             """Create a new context instance."""
             ...
 
         @classmethod
-        def resolve_container(cls) -> FlextProtocolsContainer.Container:
+        def resolve_container(cls) -> p.Container:
             """Resolve the configured container."""
             ...
 
         @classmethod
         def configure_container(
             cls,
-            container: FlextProtocolsContainer.Container,
+            container: p.Container,
         ) -> None:
             """Configure the container used by the context service namespace."""
             ...
@@ -93,7 +93,7 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
         @staticmethod
         def fetch_service(
             service_name: str,
-        ) -> FlextProtocolsResult.Result[t.RegisterableService]:
+        ) -> p.Result[t.RegisterableService]:
             """Resolve a named service from the configured container."""
             ...
 
@@ -101,7 +101,7 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
         def register_service(
             service_name: str,
             service: t.RegisterableService,
-        ) -> FlextProtocolsResult.Result[bool]:
+        ) -> p.Result[bool]:
             """Register a named service through the configured container."""
             ...
 

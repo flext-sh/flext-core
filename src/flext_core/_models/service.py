@@ -86,7 +86,7 @@ class FlextModelsService:
                 validate_default=True,
             ),
         ] = None
-        settings_type: type | None = mp.Field(
+        settings_type: t.SettingsClass | None = mp.Field(
             None,
             description="FlextSettings class used to load runtime settings.",
             validate_default=True,

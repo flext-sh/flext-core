@@ -9,28 +9,40 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence, Set as AbstractSet
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal, TypeGuard
 
 from pydantic import BaseModel
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.base import FlextProtocolsBase as pb
 from flext_core._protocols.context import FlextProtocolsContext as pcx
 from flext_core._protocols.handler import FlextProtocolsHandler as ph
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
 from flext_core._protocols.settings import FlextProtocolsSettings as ps
 from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ugc
 
 from ._metadata_validation import FlextRuntimeMetadataValidation
 
+if TYPE_CHECKING:
+    from flext_core._protocols.base import FlextProtocolsBase as pb
+    from flext_core._typings.services import FlextTypesServices as ts
+
 
 class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
     """Normalize runtime container and service registration payloads."""
+
+    @staticmethod
+    def _is_registerable_runtime_service(
+        value: ts.RegisterableService | ts.GuardInput,
+    ) -> TypeGuard[ts.RegisterableService]:
+        """Narrow runtime service values accepted by the dependency container."""
+        return callable(value) or isinstance(
+            value,
+            (pl.Logger, ps.Settings, pcx.Context, ph.Dispatcher),
+        )
 
     @staticmethod
     def _normalize_payload_item(
@@ -67,55 +79,44 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
 
     @staticmethod
     def normalize_registerable_service(
-        value: ts.RegisterableService,
+        value: ts.RegisterableService | ts.GuardInput,
     ) -> ts.RegisterableService | mc.ConfigMap | mc.ObjectList:
         """Normalize container registration payloads to canonical runtime types."""
-        normalized_service: ts.RegisterableService | mc.ConfigMap | mc.ObjectList
-        match value:
-            case Mapping():
-                normalized_service = mc.ConfigMap(
-                    root={
-                        key_s: FlextRuntimeContainer._normalize_payload_item(
-                            item,
-                            container_kind="mapping",
-                        )
-                        for key_s, item in value.items()
-                    },
-                )
-            case Sequence() if not isinstance(value, tb.STR_BINARY_TYPES):
-                normalized_service = mc.ObjectList(
-                    root=[
-                        FlextRuntimeContainer._normalize_payload_item(
-                            item,
-                            container_kind="sequence",
-                        )
-                        for item in value
-                    ],
-                )
-            case (
-                None
-                | str()
-                | int()
-                | float()
-                | bool()
-                | bytes()
-                | datetime()
-                | Path()
-                | BaseModel()
-            ):
-                normalized_service = value
-            case _ if callable(value) or isinstance(
+        if isinstance(value, Mapping):
+            return mc.ConfigMap(
+                root={
+                    key_s: FlextRuntimeContainer._normalize_payload_item(
+                        item,
+                        container_kind="mapping",
+                    )
+                    for key_s, item in value.items()
+                },
+            )
+        if isinstance(value, Sequence) and not isinstance(value, tb.STR_BINARY_TYPES):
+            return mc.ObjectList(
+                root=[
+                    FlextRuntimeContainer._normalize_payload_item(
+                        item,
+                        container_kind="sequence",
+                    )
+                    for item in value
+                ],
+            )
+        if (
+            isinstance(
                 value,
-                (pl.Logger, ps.Settings, pcx.Context, ph.Dispatcher),
-            ):
-                normalized_service = value
-            case _:
-                raise ValueError(
-                    ce.ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE.format(
-                        type_name=type(value).__name__,
-                    ),
-                )
-        return normalized_service
+                (str, int, float, bool, bytes, datetime, Path, BaseModel),
+            )
+            or value is None
+        ):
+            return value
+        if FlextRuntimeContainer._is_registerable_runtime_service(value):
+            return value
+        raise ValueError(
+            ce.ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE.format(
+                type_name=type(value).__name__,
+            ),
+        )
 
     @staticmethod
     def validate_callable_input[TCallable](

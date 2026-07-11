@@ -14,13 +14,6 @@ from collections.abc import Callable
 from types import MappingProxyType
 from typing import ClassVar, override
 
-# Side-effect: monkey-patch beartype cave so typing_extensions.TypeAliasType
-# (used by pydantic.JsonValue et al.) is accepted as a PEP-695 alias.
-from .beartype_typingext_patch import (
-    FlextUtilitiesBeartypeTypingExtPatch as _FlextUtilitiesBeartypeTypingExtPatch,
-)
-
-_: type[_FlextUtilitiesBeartypeTypingExtPatch]
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.base import FlextProtocolsBase as p
@@ -50,8 +43,14 @@ from ._beartype.method_visitor import (
 from ._beartype.module_visitor import (
     FlextUtilitiesBeartypeModuleVisitor,
 )
+from .beartype_typingext_patch import (
+    FlextUtilitiesBeartypeTypingExtPatch as _FlextUtilitiesBeartypeTypingExtPatch,
+)
 
 _NO_VIOLATION: t.StrMapping | None = None
+# Side-effect: monkey-patch beartype cave so typing_extensions.TypeAliasType
+# (used by pydantic.JsonValue et al.) is accepted as a PEP-695 alias.
+_FlextUtilitiesBeartypeTypingExtPatch.apply()
 
 
 class FlextUtilitiesBeartypeEngine(

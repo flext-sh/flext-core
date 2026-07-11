@@ -8,6 +8,12 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_core._constants._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_a import (
+        INFRA_DETECTOR_ROWS_CORE as INFRA_DETECTOR_ROWS_CORE,
+    )
+    from flext_core._constants._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_b import (
+        INFRA_DETECTOR_ROWS_PATTERNS as INFRA_DETECTOR_ROWS_PATTERNS,
+    )
     from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_01 import (
         FlextConstantsEnforcementCatalogInfraRows as FlextConstantsEnforcementCatalogInfraRows,
     )
@@ -19,6 +25,9 @@ if TYPE_CHECKING:
     )
     from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_04 import (
         FlextConstantsEnforcementCatalogBeartypeRows as FlextConstantsEnforcementCatalogBeartypeRows,
+    )
+    from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_05 import (
+        FlextConstantsEnforcementCatalogInfraRowsExtended as FlextConstantsEnforcementCatalogInfraRowsExtended,
     )
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
         FlextConstantsEnforcementEnums as FlextConstantsEnforcementEnums,
@@ -44,6 +53,9 @@ if TYPE_CHECKING:
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_08 import (
         FlextConstantsEnforcementFixActions as FlextConstantsEnforcementFixActions,
     )
+    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_09 import (
+        NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT as NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT,
+    )
     from flext_core._constants._errors_parts.flextconstantserrors_part_01 import (
         FlextConstantsErrorsMessages as FlextConstantsErrorsMessages,
     )
@@ -60,6 +72,9 @@ if TYPE_CHECKING:
         FlextConstantsErrorsRuntimeSettings as FlextConstantsErrorsRuntimeSettings,
     )
     from flext_core._constants.base import FlextConstantsBase as FlextConstantsBase
+    from flext_core._constants.config import (
+        FlextConstantsConfig as FlextConstantsConfig,
+    )
     from flext_core._constants.cqrs import FlextConstantsCqrs as FlextConstantsCqrs
     from flext_core._constants.enforcement import (
         FlextConstantsEnforcement as FlextConstantsEnforcement,
@@ -112,6 +127,12 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS = build_lazy_import_map(
     {
         "._enforcement_catalog_rows_parts": ("_enforcement_catalog_rows_parts",),
+        "._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_a": (
+            "INFRA_DETECTOR_ROWS_CORE",
+        ),
+        "._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_b": (
+            "INFRA_DETECTOR_ROWS_PATTERNS",
+        ),
         "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_01": (
             "FlextConstantsEnforcementCatalogInfraRows",
         ),
@@ -123,6 +144,9 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ),
         "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_04": (
             "FlextConstantsEnforcementCatalogBeartypeRows",
+        ),
+        "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_05": (
+            "FlextConstantsEnforcementCatalogInfraRowsExtended",
         ),
         "._enforcement_data": ("_enforcement_data",),
         "._enforcement_parts": ("_enforcement_parts",),
@@ -150,6 +174,9 @@ _LAZY_IMPORTS = build_lazy_import_map(
         "._enforcement_parts.flextconstantsenforcement_part_08": (
             "FlextConstantsEnforcementFixActions",
         ),
+        "._enforcement_parts.flextconstantsenforcement_part_09": (
+            "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",
+        ),
         "._errors_parts": ("_errors_parts",),
         "._errors_parts.flextconstantserrors_part_01": (
             "FlextConstantsErrorsMessages",
@@ -167,6 +194,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "FlextConstantsErrorsRuntimeSettings",
         ),
         ".base": ("FlextConstantsBase",),
+        ".config": ("FlextConstantsConfig",),
         ".cqrs": ("FlextConstantsCqrs",),
         ".enforcement": (
             "FlextConstantsEnforcement",

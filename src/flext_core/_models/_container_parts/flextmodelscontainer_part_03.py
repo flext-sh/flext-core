@@ -46,7 +46,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
                 title="Config",
                 description="Settings instance bound to the container runtime.",
             ),
-        ]
+        ] = None
         context: Annotated[
             p.Context | None,
             tp.SkipValidation,
@@ -55,7 +55,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
                 title="Context",
                 description="Execution context attached to the container.",
             ),
-        ]
+        ] = None
         services: t.MappingKV[str, FlextModelsContainer.ServiceRegistration] | None = (
             mp.Field(
                 None,

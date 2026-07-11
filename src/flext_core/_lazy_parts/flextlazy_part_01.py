@@ -9,7 +9,7 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from types import ModuleType
+from typing import TYPE_CHECKING
 
 from pydantic import (
     BaseModel,
@@ -20,6 +20,9 @@ from pydantic import (
     ValidationError,
     computed_field,
 )
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 type StrPair = tuple[str, str]
 type LazyImportEntry = str | StrPair
@@ -68,11 +71,13 @@ class FlextLazy(BaseModel):
 
     _activate_core_beartype: Callable[[], None] = PrivateAttr(
         default_factory=lambda: (
-            lambda: importlib.import_module(
+            importlib.import_module(
                 "flext_core._beartype_bootstrap",
-            ).FlextCoreBeartypeBootstrap.activate_package_beartype()
+            ).FlextCoreBeartypeBootstrap.activate_package_beartype
         ),
     )
+
+    _activating_core_beartype: bool = PrivateAttr(default=False)
 
     @computed_field(return_type=dict[str, int])
     @property
@@ -123,8 +128,12 @@ class FlextLazy(BaseModel):
 
     def _must_activate_core_beartype(self, module_path: str) -> bool:
         """Return whether importing a module should activate flext_core beartype."""
-        return module_path.startswith("flext_core.") and not module_path.startswith(
-            "flext_core._constants",
+        root_module = sys.modules.get("flext_core")
+        root_ready = root_module is not None and "t" in vars(root_module)
+        return (
+            root_ready
+            and module_path.startswith("flext_core.")
+            and not module_path.startswith("flext_core._constants")
         )
 
     def normalize_map(
@@ -139,8 +148,15 @@ class FlextLazy(BaseModel):
         cached = self.module_cache.get(module_path)
         if cached is not None:
             return cached
-        if self._must_activate_core_beartype(module_path):
-            self._activate_core_beartype()
+        if (
+            self._must_activate_core_beartype(module_path)
+            and not self._activating_core_beartype
+        ):
+            self._activating_core_beartype = True
+            try:
+                self._activate_core_beartype()
+            finally:
+                self._activating_core_beartype = False
         mod = sys.modules.get(module_path) or self._import_module(module_path)
         self.module_cache[module_path] = mod
         return mod

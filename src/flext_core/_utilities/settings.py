@@ -15,8 +15,16 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from flext_core import c, p, r, t
+# AGENT-COORDINATION (2026-07-11, ai-hub-mkzg): p/t MUST stay a RUNTIME import.
+# beartype.claw evaluates annotations at runtime; moving FlextProtocols/FlextTypes
+# under TYPE_CHECKING raises NameError at import (test_beartype_engine_claw_packages).
+# Do NOT "optimize" this into a TYPE_CHECKING block. Same precedent: model_options.py,
+# model_runtime.py. Contact owner of bead ai-hub-mkzg before touching this line.
+from flext_core import FlextProtocols as p, FlextTypes as t
+from flext_core._constants.environment import FlextConstantsEnvironment
+from flext_core._constants.errors import FlextConstantsErrors
 from flext_core._exceptions.factories import FlextExceptionsFactories as e
+from flext_core.result import r
 
 
 class FlextUtilitiesSettings:
@@ -30,16 +38,16 @@ class FlextUtilitiesSettings:
     @staticmethod
     def resolve_env_file() -> str:
         """Resolve .env file path from FLEXT_ENV_FILE env var."""
-        custom_env_file = os.environ.get(c.ENV_FILE_ENV_VAR)
+        custom_env_file = os.environ.get(FlextConstantsEnvironment.ENV_FILE_ENV_VAR)
         if custom_env_file:
             custom_path = Path(custom_env_file)
             if custom_path.exists():
                 return str(custom_path.resolve())
             return custom_env_file
-        default_path = Path.cwd() / c.ENV_FILE_DEFAULT
+        default_path = Path.cwd() / FlextConstantsEnvironment.ENV_FILE_DEFAULT
         if default_path.exists():
             return str(default_path.resolve())
-        return c.ENV_FILE_DEFAULT
+        return FlextConstantsEnvironment.ENV_FILE_DEFAULT
 
     @staticmethod
     def register_factory(
@@ -53,7 +61,8 @@ class FlextUtilitiesSettings:
         if resolved.failure:
             failure: p.Result[bool] = e.fail_operation(
                 "resolve registered config factory",
-                resolved.error or c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
+                resolved.error
+                or FlextConstantsErrors.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
             )
             return failure
         return r[bool].ok(True)

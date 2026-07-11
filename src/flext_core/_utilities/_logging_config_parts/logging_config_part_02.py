@@ -1,6 +1,6 @@
 """Structlog configuration and processor chain building.
 
-Extracted from FlextLogger as an MRO mixin to keep the facade under
+Extracted from FlextUtilitiesLogging as an MRO mixin to keep the facade under
 the 200-line cap (AGENTS.md §3.1).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -11,25 +11,24 @@ from __future__ import annotations
 
 import logging
 import sys
-import types
 import typing
 from contextlib import suppress
 
 import structlog
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
-from structlog.types import Processor
 
-from flext_core import (
-    FlextConstants as c,
-    FlextModelsPydantic as mp,
-    FlextProtocols as p,
-    FlextTypes as t,
-)
+from flext_core import FlextConstants as c, FlextProtocols as p, FlextTypes as t
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 from .logging_config_part_01 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart01,
 )
+
+if typing.TYPE_CHECKING:
+    import types
+
+    from structlog.types import Processor
 
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):

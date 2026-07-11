@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
 from pydantic import ValidationError
@@ -12,11 +11,13 @@ from returns.result import Failure, Success
 from flext_core._constants.errors import FlextConstantsErrors as c
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure
 from flext_core._constants.mixins import FlextConstantsMixins
-from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.result import FlextProtocolsResult as p
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flext_core._models.containers import FlextModelsContainers as mc
+    from flext_core._protocols.result import FlextProtocolsResult as p
     from flext_core.typings import FlextTypes as t
 
 from .behavior import FlextResultBehaviorMixin
@@ -63,7 +64,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
     def _from_result[V](
         cls,
         source: p.Result[V],
-    ) -> p.Result[V]:
+    ) -> FlextResultConstructionMixin[V]:
         if source.success:
             # Cannot use source.value: it raises ValueError when _payload is None.
             # r[None].ok(None) is a valid success with a None payload — access the
@@ -84,7 +85,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
         cls,
         func: Callable[[], V | None],
         error_code: str | None = None,
-    ) -> p.Result[V]:
+    ) -> FlextResultConstructionMixin[V]:
         """Execute callable; catch exceptions and None returns."""
         try:
             value = func()
@@ -109,7 +110,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
         error_code: str | None = None,
         error_data: t.JsonMapping | t.ConfigModelInput | None = None,
         exception: BaseException | None = None,
-    ) -> p.Result[V]:
+    ) -> FlextResultConstructionMixin[V]:
         """Create failed result with error message, optional code and metadata."""
         error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._extract_exception_error_code(exception)
@@ -133,7 +134,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
         cls: type[FlextResultConstructionMixin[V]],
         operation: str,
         exc: Exception | str | None = None,
-    ) -> p.Result[V]:
+    ) -> FlextResultConstructionMixin[V]:
         """Create a failure result for a named operation with optional exception."""
         if isinstance(exc, Exception):
             return cls.fail(f"{operation} failed: {exc}", exception=exc)
@@ -147,7 +148,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
         cls,
         data: t.ModelInput,
         model: t.ModelClass[ModelT],
-    ) -> p.Result[ModelT]:
+    ) -> FlextResultConstructionMixin[ModelT]:
         """Create result from Pydantic validation."""
         try:
             return cls.ok(model.model_validate(data))
@@ -160,7 +161,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
     def ok[V](
         cls,
         value: V,
-    ) -> p.Result[V]:
+    ) -> FlextResultConstructionMixin[V]:
         """Create successful result wrapping value."""
         # Type bridge: class factories intentionally rebind the generic payload.
         result_class = cast("type[FlextResultConstructionMixin[V]]", cls)
@@ -172,7 +173,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
     def from_result[V](
         cls,
         source: p.Result[V],
-    ) -> p.Result[V]:
+    ) -> FlextResultConstructionMixin[V]:
         """Normalize structural result to FlextResult."""
         return cls._from_result(source)
 

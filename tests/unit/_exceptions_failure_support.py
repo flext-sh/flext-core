@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from flext_tests import e
 
 from tests.constants import c
 from tests.models import m
 from tests.protocols import p
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 type FailureFactory = Callable[[], p.Result[bool]]
 
@@ -90,10 +93,10 @@ FAILURES: t.SequenceOf[
     ),
     (
         "type_mismatch",
-        lambda: e.fail_type_mismatch("FlextLogger", "str"),
-        "FlextLogger",
+        lambda: e.fail_type_mismatch("FlextUtilitiesLogging", "str"),
+        "FlextUtilitiesLogging",
         c.ErrorCode.TYPE_ERROR,
-        {"expected_type": "FlextLogger", "actual_type": "str"},
+        {"expected_type": "FlextUtilitiesLogging", "actual_type": "str"},
     ),
     (
         "validation",

@@ -74,14 +74,14 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
                     pyproject = parent / "pyproject.toml"
                     if pyproject.exists():
                         class_stem_override = upm.read_tool_flext_config(
-                            parent
+                            parent,
                         ).project.class_stem_override
                         break
         canonical_project_name = src.replace("_", "-")
         head, _, tail = canonical_project_name.partition("-")
         namespace = mpm.derive_class_stem(tail or head)
         project_prefix = class_stem_override or mpm.derive_class_stem(
-            canonical_project_name
+            canonical_project_name,
         )
         if top in {"tests", "examples", "scripts"} and top != (src or ""):
             return mpm.derive_class_stem(top) + project_prefix, namespace

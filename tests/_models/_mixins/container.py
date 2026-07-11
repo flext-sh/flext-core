@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from flext_core import m
 from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class TestsFlextModelsContainerMixin:
@@ -21,7 +23,8 @@ class TestsFlextModelsContainerMixin:
         )
         name: Annotated[str, m.Field(description="Service scenario name")]
         service: Annotated[
-            t.Primitives, m.Field(description="Service value to register")
+            t.Primitives,
+            m.Field(description="Service value to register"),
         ]
         description: Annotated[str, m.Field(description="Scenario description")] = ""
 

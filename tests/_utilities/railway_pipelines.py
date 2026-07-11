@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_tests import e, m as tm, r
 
 from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayServicesMixin):
@@ -29,7 +33,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
             ).execute()
         )
         result: p.Result[str | tm.Tests.User | m.Tests.EmailResponse] = user_result.map(
-            lambda user: user
+            lambda user: user,
         )
         for operation in case.operations:
             if operation == "get_email":

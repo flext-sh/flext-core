@@ -6,9 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
+from collections.abc import MutableSequence
 from typing import Annotated
 
 from flext_core._models.pydantic import FlextModelsPydantic as mp
@@ -37,12 +35,12 @@ class FlextModelsRegistry:
         registered_keys: Annotated[
             frozenset[str],
             mp.Field(
-                default_factory=frozenset,
                 description="Keys registered in the instance scope of the registry.",
             ),
-        ]
+        ] = mp.Field(default_factory=frozenset)
 
         @up.computed_field()
+        @property
         def configured(self) -> bool:
             """Whether a dispatcher has been materialized for the registry."""
             return self.dispatcher is not None
@@ -72,11 +70,13 @@ class FlextModelsRegistry:
         ] = mp.Field(default_factory=list[str])
 
         @up.computed_field()
+        @property
         def failure(self) -> bool:
             """Indicate whether the batch registration had errors."""
             return bool(self.errors)
 
         @up.computed_field()
+        @property
         def success(self) -> bool:
             """Indicate whether the batch registration fully succeeded."""
             return not self.errors

@@ -4,7 +4,7 @@
 railway-style result handling for domain services. It relies on structural
 typing to satisfy `p.Service` and provides a clean service lifecycle.
 
-Singleton kernel (mirrors `FlextSettingsBase`):
+Singleton kernel (mirrors `FlextSettings`):
 
 - per-class `_instance` ClassVar with thread-safe lock,
 - `fetch_global()` — return the per-class shared singleton,
@@ -42,28 +42,24 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _instance: ClassVar[Self | None] = None
 
+    def __init__(
+        self,
+        **model_data: t.GuardInput | p.Settings | p.Context | t.SettingsClass | None,
+    ) -> None:
+        """Initialize service state through the shared FLEXT runtime mixin."""
+        super().__init__(**model_data)
+
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
         """Inject a per-class singleton slot for every concrete subclass."""
         _ = kwargs
         super().__init_subclass__()
         cls._instance = None
 
-    def __init__(self, **model_data: t.GuardInput | None) -> None:
-        """Initialize the service model through the canonical Pydantic bag.
-
-        ``FlextService`` is the shared kernel for many project-specific facades,
-        so subclasses pass both common runtime fields and their own model fields
-        through ``super().__init__(...)``. Keeping that owner entrypoint explicit
-        avoids ``super().__init__`` self-type mismatches without narrowing the
-        accepted field surface of descendant services.
-        """
-        self.__pydantic_validator__.validate_python(model_data, self_instance=self)
-
     @classmethod
     def fetch_global(cls) -> Self:
         """Return the per-class shared singleton.
 
-        Mirrors `FlextSettingsBase.fetch_global` so consumers have a single
+        Mirrors `FlextSettings.fetch_global` so consumers have a single
         canonical accessor across services and settings (§3.5).
         """
         existing = getattr(cls, "_instance", None)
@@ -85,16 +81,13 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
 
     @classmethod
     def with_settings(cls, settings: p.Settings) -> Self:
-        """Return the per-class singleton with one isolated runtime settings clone.
+        """Return an isolated service snapshot with one runtime settings clone.
 
         Uses the structural `p.Settings.clone()` contract already consumed by the
         runtime bootstrap path so callers can inject a settings snapshot without
-        coupling this service kernel to `FlextSettingsBase`.
+        coupling this service kernel to `FlextSettings`.
         """
-        instance = cls.fetch_global()
-        instance.runtime_settings = settings.clone()
-        instance._runtime = None
-        return instance
+        return cls(runtime_settings=settings.clone())
 
     def execute(self) -> p.Result[TDomainResult]:
         """Execute the service domain logic.

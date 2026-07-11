@@ -6,21 +6,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-)
-from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
 from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.context import FlextProtocolsContext
-from flext_core._protocols.handler import FlextProtocolsHandler
-from flext_core._protocols.logging import FlextProtocolsLogging
-from flext_core._protocols.result import FlextProtocolsResult
 from flext_core._protocols.settings import FlextProtocolsSettings
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+    )
+    from types import ModuleType
+
     from flext_core import FlextModels as m, FlextTypes as t
+    from flext_core._protocols.context import FlextProtocolsContext
+    from flext_core._protocols.handler import FlextProtocolsHandler
+    from flext_core._protocols.logging import FlextProtocolsLogging
+    from flext_core._protocols.result import FlextProtocolsResult
 from flext_core._protocols._container_parts.flextprotocolscontainer_part_01 import (
     FlextProtocolsContainer as FlextProtocolsContainerPart01,
 )
@@ -51,7 +52,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
 
         @property
         def provide(self) -> Callable[[str], t.RegisterableService]:
-            """Return the dependency-injector Provide helper scoped to the bridge."""
+            """The dependency-injector Provide helper scoped to the bridge."""
             ...
 
         def clear(self) -> None:
@@ -87,7 +88,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
         ) -> FlextProtocolsResult.Result[t.RegisterableService]: ...
 
         def snapshot(self) -> m.ConfigMap:
-            """Return the merged settings exposed by this container."""
+            """The merged settings exposed by this container."""
             ...
 
         def has(self, name: str) -> bool:
@@ -128,7 +129,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
 
         def logger(
             self,
-            module_name: str | None = None,
+            module_name: str,
             *,
             service_name: str | None = None,
             service_version: str | None = None,

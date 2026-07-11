@@ -18,7 +18,8 @@ class TestsFlextModelsServiceCaseValidationMixin:
 
         name: Annotated[str, m.Field(description="Unique scenario name")]
         validator_type: Annotated[
-            str, m.Field(description="Validator category under test")
+            str,
+            m.Field(description="Validator category under test"),
         ]
         input_value: Annotated[
             t.JsonValue | None,
@@ -49,7 +50,8 @@ class TestsFlextModelsServiceCaseValidationMixin:
             ),
         ] = None
         description: Annotated[
-            str | None, m.Field(description="Human-readable scenario description")
+            str | None,
+            m.Field(description="Human-readable scenario description"),
         ] = None
 
     class Operation(m.BaseModel):
@@ -112,10 +114,12 @@ class TestsFlextModelsServiceCaseValidationMixin:
             ),
         ] = True
         error_contains: Annotated[
-            str | None, m.Field(description="Expected parser error substring")
+            str | None,
+            m.Field(description="Expected parser error substring"),
         ] = None
         description: Annotated[
-            str | None, m.Field(description="Human-readable scenario description")
+            str | None,
+            m.Field(description="Human-readable scenario description"),
         ] = None
 
     class PublicParseCase(m.BaseModel):
@@ -136,10 +140,12 @@ class TestsFlextModelsServiceCaseValidationMixin:
             m.Field(description="Public target type passed to u.parse()"),
         ]
         options: Annotated[
-            m.BaseModel | None, m.Field(description="Optional ParseOptions instance")
+            m.BaseModel | None,
+            m.Field(description="Optional ParseOptions instance"),
         ] = None
         should_succeed: Annotated[
-            bool, m.Field(description="Whether parsing should succeed")
+            bool,
+            m.Field(description="Whether parsing should succeed"),
         ] = True
         expected_value: Annotated[
             t.JsonPayload | None,
@@ -150,10 +156,12 @@ class TestsFlextModelsServiceCaseValidationMixin:
             m.Field(description="Expected parsed model_dump payload"),
         ] = None
         error_contains: Annotated[
-            str | None, m.Field(description="Expected failure error substring")
+            str | None,
+            m.Field(description="Expected failure error substring"),
         ] = None
         description: Annotated[
-            str | None, m.Field(description="Human-readable scenario description")
+            str | None,
+            m.Field(description="Human-readable scenario description"),
         ] = None
 
 

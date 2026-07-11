@@ -6,13 +6,15 @@ import functools
 import importlib
 import sys
 from typing import (
+    TYPE_CHECKING,
     Any,
     TypeAliasType,
     get_args,
     get_origin,
 )
 
-from flext_core._typings.base import FlextTypingBase as t
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeHelpers:
@@ -105,6 +107,8 @@ class FlextUtilitiesBeartypeHelpers:
         seen.add(hint_id)
         if hint is Any or hint is object:
             return True
+        if hint is type or get_origin(hint) is type:
+            return False
         return any(
             h.contains_any_recursive(child, seen=seen) for child in get_args(hint)
         )

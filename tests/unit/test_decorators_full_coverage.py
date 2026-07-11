@@ -4,16 +4,19 @@ from __future__ import annotations
 
 import time
 import warnings
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import d, e, r, tm
 
 from flext_core import FlextContainer
 from tests.models import m
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
-class TestsFlextDecorators:
+class TestsFlextCoreDecorators:
     """Behavior contract for flext_core.decorators — public API only."""
 
     def test_deprecated_emits_deprecation_warning_and_preserves_return(self) -> None:
@@ -184,6 +187,6 @@ class TestsFlextDecorators:
             return _Payload(v=7)
 
         built = build()
-        payload = built.unwrap() if isinstance(built, p.Result) else built
+        payload = built.unwrap() if isinstance(built, r) else built
         assert isinstance(payload, _Payload)
         tm.that(payload.v, eq=7)

@@ -9,12 +9,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_core import (
-    FlextModels as m,
-    FlextProtocols as p,
-    FlextTypes as t,
-    FlextUtilitiesModel,
-)
+from flext_core import FlextModels as m, FlextProtocols as p, FlextTypes as t
+from flext_core._utilities.model import FlextUtilitiesModel
 
 
 class FlextUtilitiesModelOptions(FlextUtilitiesModel):

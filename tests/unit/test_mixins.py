@@ -1,16 +1,13 @@
-"""Tests for x infrastructure - Container, Context, Logging, Metrics, Service.
+"""Behavioral tests for FlextMixins service infrastructure.
 
 Module: flext_core
-Scope: x - all nested mixin classes
+Scope: FlextMixins public surface (settings/container/context/logger
+properties, ``track`` operation context manager, container registration,
+runtime bootstrap setters, FlextContext correlation).
 
-Tests x functionality including:
-- Container mixin (_register_in_container)
-- Context mixin (context property, correlation IDs)
-- Metrics mixin (track context manager)
-- Service mixin (_init_service)
-
-Uses Python 3.13 patterns, u, FlextConstants,
-and aggressive parametrization for DRY testing.
+Every test asserts OBSERVABLE public behavior of the mixin contract -- the
+value a service author actually depends on -- never private internals or
+implementation collaborators.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,181 +15,172 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import time
-from enum import StrEnum, unique
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING
 
+import pytest
 from flext_tests import x
 
 from flext_core import FlextContext
-from tests.models import m
 from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from tests.typings import t
 
 
 class TestsFlextMixins:
-    """Comprehensive test suite for nested mixin classes using u."""
+    """Behavioral suite for the FlextMixins public contract."""
 
-    @unique
-    class ServiceMixinScenarioType(StrEnum):
-        """Service mixin test scenario types."""
+    class _Service(x):
+        """Minimal service composing FlextMixins for behavioral exercise."""
 
-        CONTAINER_REGISTER = "container_register"
-        CONTEXT_PROPERTY = "context_property"
-        CONTEXT_CORRELATION = "context_correlation"
-        METRICS_TRACK = "metrics_track"
-        SERVICE_INIT = "service_init"
+    def _service(self) -> x:
+        """Build a fresh service instance exposing the mixin surface."""
+        return self._Service()
 
-    @unique
-    class ModelConversionScenarioType(StrEnum):
-        """ModelConversion test scenario types."""
+    def test_settings_property_satisfies_settings_protocol(self) -> None:
+        service = self._service()
 
-        WITH_BASEMODEL = "with_basemodel"
-        WITH_DICT = "with_dict"
-        WITH_NONE = "with_none"
+        assert service.settings.model_dump()["log_level"] in {
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+        }
 
-    @unique
-    class ResultHandlingScenarioType(StrEnum):
-        """ResultHandling test scenario types."""
+    def test_container_property_satisfies_container_protocol(self) -> None:
+        service = self._service()
 
-        RAW_VALUE = "raw_value"
-        EXISTING_RESULT = "existing_result"
-        TYPE_PRESERVATION = "type_preservation"
+        assert isinstance(service.container, p.Container)
 
-    class ServiceMixinScenario(m.BaseModel):
-        """Service mixin test scenario definition."""
+    def test_context_property_satisfies_context_protocol(self) -> None:
+        service = self._service()
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-        name: Annotated[str, m.Field(description="Service mixin scenario name")]
-        scenario_type: Annotated[
-            TestsFlextMixins.ServiceMixinScenarioType,
-            m.Field(description="Service mixin scenario type"),
-        ]
-        needs_init: Annotated[
-            bool,
-            m.Field(
-                description="Whether service initialization is required",
-            ),
-        ] = False
-        operation_context: Annotated[
-            str | None, m.Field(description="Optional operation context name")
-        ] = None
+        assert isinstance(service.context, p.Context)
 
-    class ModelConversionScenario(m.BaseModel):
-        """ModelConversion test scenario definition."""
+    def test_logger_property_satisfies_logger_protocol(self) -> None:
+        service = self._service()
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-        name: Annotated[str, m.Field(description="Model conversion scenario name")]
-        scenario_type: Annotated[
-            TestsFlextMixins.ModelConversionScenarioType,
-            m.Field(description="Model conversion scenario type"),
-        ]
-        input_value: Annotated[
-            t.JsonValue,
-            m.Field(description="Input value for conversion"),
-        ]
-        expected_output: Annotated[
-            m.ConfigMap,
-            m.Field(description="Expected conversion output"),
-        ]
+        assert isinstance(service.logger, p.Logger)
 
-    class ResultHandlingScenario(m.BaseModel):
-        """ResultHandling test scenario definition."""
+    def test_track_yields_metrics_mapping_with_operation_metadata(self) -> None:
+        service = self._service()
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-        name: Annotated[str, m.Field(description="Result handling scenario name")]
-        scenario_type: Annotated[
-            TestsFlextMixins.ResultHandlingScenarioType,
-            m.Field(description="Result handling scenario type"),
-        ]
-        input_value: Annotated[
-            t.JsonValue,
-            m.Field(description="Input value for result handling"),
-        ]
+        with service.track("load") as metrics:
+            captured: Mapping[str, t.JsonPayload] = metrics
 
-    def _service_scenarios(
+        assert "operation_name" in captured
+        assert "start_time" in captured
+        assert captured["operation_count"] == 1
+
+    def test_track_increments_operation_count_across_invocations(self) -> None:
+        service = self._service()
+
+        with service.track("load") as first:
+            first_count = first["operation_count"]
+        with service.track("load") as second:
+            second_count = second["operation_count"]
+
+        assert first_count == 1
+        assert second_count == 2
+
+    def test_track_returns_body_value_on_success(self) -> None:
+        service = self._service()
+
+        def run() -> str:
+            with service.track("compute"):
+                return "done"
+
+        assert run() == "done"
+
+    def test_track_propagates_exception_raised_in_body(self) -> None:
+        service = self._service()
+        boom = ValueError("boom")
+
+        with pytest.raises(ValueError, match="boom"), service.track("fail"):
+            raise boom
+
+    def test_track_recovers_after_failed_operation(self) -> None:
+        service = self._service()
+        boom = ValueError("boom")
+
+        with pytest.raises(ValueError, match="boom"), service.track("op"):
+            raise boom
+        with service.track("op") as metrics:
+            recovered = metrics["operation_count"]
+
+        assert recovered == 2
+
+    def test_register_in_container_succeeds_and_reports_true(self) -> None:
+        service = self._service()
+
+        result = service._register_in_container("discovery_target")
+        registered = u.Tests.assert_success(result)
+
+        assert registered is True
+
+    def test_register_in_container_is_idempotent(self) -> None:
+        service = self._service()
+
+        _ = u.Tests.assert_success(service._register_in_container("target"))
+        second = u.Tests.assert_success(service._register_in_container("target"))
+
+        assert second is True
+        assert service.container.has("target") is True
+
+    def test_init_service_makes_service_discoverable_in_container(self) -> None:
+        service = self._service()
+
+        assert service.container.has("DiscoverableService") is False
+        service._init_service("DiscoverableService")
+
+        assert service.container.has("DiscoverableService") is True
+
+    def test_init_service_defaults_registration_name_to_class(self) -> None:
+        service = self._service()
+
+        service._init_service()
+
+        assert service.container.has(type(service).__name__) is True
+
+    def test_initial_context_defaults_to_none(self) -> None:
+        service = self._service()
+
+        assert service.initial_context is None
+
+    def test_settings_overrides_setter_round_trips(self) -> None:
+        service = self._service()
+        overrides: t.JsonMapping = {"feature_flag": True, "retries": 3}
+
+        service.settings_overrides = overrides
+
+        assert service.settings_overrides == overrides
+
+    @pytest.mark.parametrize(
+        ("field_name", "bad_value"),
+        [
+            ("settings_overrides", "not-a-mapping"),
+            ("runtime_settings", 123),
+            ("initial_context", "not-a-context"),
+            ("settings_type", str),
+        ],
+    )
+    def test_constructor_rejects_invalid_bootstrap_value(
         self,
-    ) -> t.SequenceOf[TestsFlextMixins.ServiceMixinScenario]:
-        return [
-            self.ServiceMixinScenario(
-                name="container_register_in_container",
-                scenario_type=self.ServiceMixinScenarioType.CONTAINER_REGISTER,
-            ),
-            self.ServiceMixinScenario(
-                name="context_mixin_property",
-                scenario_type=self.ServiceMixinScenarioType.CONTEXT_PROPERTY,
-            ),
-            self.ServiceMixinScenario(
-                name="context_correlation_id",
-                scenario_type=self.ServiceMixinScenarioType.CONTEXT_CORRELATION,
-            ),
-            self.ServiceMixinScenario(
-                name="metrics_track",
-                scenario_type=self.ServiceMixinScenarioType.METRICS_TRACK,
-            ),
-            self.ServiceMixinScenario(
-                name="service_init_service",
-                scenario_type=self.ServiceMixinScenarioType.SERVICE_INIT,
-                needs_init=True,
-            ),
-        ]
-
-    def test_service_mixin_scenarios(self) -> None:
-        """Test service mixin functionality across scenarios."""
-        for scenario in self._service_scenarios():
-            self._assert_service_mixin_scenario(scenario)
-
-    def _assert_service_mixin_scenario(
-        self,
-        scenario: TestsFlextMixins.ServiceMixinScenario,
+        field_name: str,
+        bad_value: t.GuardInput,
     ) -> None:
+        invalid_bootstrap: dict[str, t.GuardInput] = {field_name: bad_value}
+        with pytest.raises(TypeError):
+            self._Service(**invalid_bootstrap)
 
-        class MyService(x):
-            """Test service for mixin scenarios."""
+    def test_correlation_id_round_trips_through_flext_context(self) -> None:
+        FlextContext.apply_correlation_id("trace-42")
 
-            def __init__(self) -> None:
-                super().__init__(
-                    settings_type=None,
-                    settings_overrides=None,
-                    initial_context=None,
-                )
-                if scenario.needs_init:
-                    self._init_service("MyTestService")
-
-            def run_process(self) -> str:
-                """Process operation for metrics testing.
-
-                Validates:
-                1. Track context manager provides metrics dict
-                2. Operation completes successfully after delay
-                3. Metrics are tracked correctly
-                """
-                with self.track("test_op") as metrics:
-                    assert isinstance(metrics, dict), "Metrics should be a dict"
-                    assert "operation_name" in metrics or "start_time" in metrics, (
-                        "Metrics should contain operation info"
-                    )
-                    time.sleep(0.01)
-                    return "done"
-
-        service = MyService()
-        if scenario.scenario_type == self.ServiceMixinScenarioType.CONTAINER_REGISTER:
-            result = service._register_in_container("test_service")
-            _ = u.Tests.assert_success(result)
-        elif scenario.scenario_type == self.ServiceMixinScenarioType.CONTEXT_PROPERTY:
-            assert isinstance(service.context, p.Context)
-        elif (
-            scenario.scenario_type == self.ServiceMixinScenarioType.CONTEXT_CORRELATION
-        ):
-            FlextContext.apply_correlation_id("test-123")
-            assert FlextContext.resolve_correlation_id() == "test-123"
-        elif scenario.scenario_type == self.ServiceMixinScenarioType.METRICS_TRACK:
-            assert service.run_process() == "done"
-        elif scenario.scenario_type == self.ServiceMixinScenarioType.SERVICE_INIT:
-            assert all(
-                hasattr(service, attr) for attr in ["logger", "container", "settings"]
-            )
+        assert FlextContext.resolve_correlation_id() == "trace-42"
 
 
 __all__: t.MutableSequenceOf[str] = ["TestsFlextMixins"]

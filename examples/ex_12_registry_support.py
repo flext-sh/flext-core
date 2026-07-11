@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from examples.models import m
-from examples.protocols import p
 from examples.typings import t
 from examples.utilities import u
 from flext_core import h, r
+
+if TYPE_CHECKING:
+    from examples.protocols import p
 
 
 class ProtocolHandler:
@@ -42,14 +46,19 @@ def as_registry_handler(
 ) -> t.DispatchableHandler:
     """Adapt protocol handlers to the registry callable contract."""
 
-    def call(message: p.Routable) -> t.JsonPayload:
-        return u.normalize_to_container(handler.handle(message).unwrap_or(""))
+    class _RegistryHandlerCallable:
+        handler_id: str
+        message_type: type[m.Command]
 
-    handler_name = handler.message_type.__name__
-    setattr(call, "__name__", handler_name)
-    setattr(call, "handler_id", handler_name)
-    setattr(call, "message_type", handler.message_type)
-    return call
+        def __init__(self, source: ProtocolHandler) -> None:
+            self._source = source
+            self.handler_id = source.message_type.__name__
+            self.message_type = source.message_type
+
+        def __call__(self, message: p.Routable) -> t.JsonPayload:
+            return u.normalize_to_container(self._source.handle(message).unwrap_or(""))
+
+    return _RegistryHandlerCallable(handler)
 
 
 @h.handler(m.Examples.CommandA, priority=3)

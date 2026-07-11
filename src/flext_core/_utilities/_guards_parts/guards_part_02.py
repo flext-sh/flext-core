@@ -10,17 +10,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-from flext_core import (
-    FlextProtocolsResult as p,
-    r,
-    t,
-)
+from flext_core import r, t
+from flext_core._protocols.result import FlextProtocolsResult as p
 
 from .guards_part_01 import (
     FlextUtilitiesGuards as FlextUtilitiesGuardsPart01,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FlextUtilitiesGuards(FlextUtilitiesGuardsPart01):

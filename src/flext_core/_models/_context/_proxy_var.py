@@ -22,7 +22,7 @@ class FlextModelsContextProxyVar:
         """ContextVar-like proxy using structlog as backend (single source of truth).
 
         Delegates ALL operations to structlog's contextvar storage ensuring
-        FlextContext.Variables and FlextLogger use THE SAME underlying storage.
+        FlextContext.Variables and FlextUtilitiesLogging use THE SAME underlying storage.
 
         """
 

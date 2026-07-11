@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from .flextconstantsenforcement_part_01 import (
     FlextConstantsEnforcementEnums,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 class FlextConstantsEnforcementRuntime:
@@ -34,7 +36,7 @@ class FlextConstantsEnforcementRuntime:
     still blocked by a second upstream beartype defect: decorating a class whose
     nested ``@beartype``-decorated class defines ``__init__`` shadows the outer
     class's *inherited* ``__init__`` with the nested one, breaking the c/m/p/t/u
-    nested-class facades (e.g. ``FlextLogger.PerformanceTracker``). Fixing it
+    nested-class facades (e.g. ``FlextUtilitiesLogging.PerformanceTracker``). Fixing it
     requires changes to beartype's core class decorator / the enforcement
     decoration path, outside the beartype-patch surface — see
     ``.beads/artifacts/mro-31mj/fix-waves/L0-beartype``.

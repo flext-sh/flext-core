@@ -4,15 +4,6 @@ from __future__ import annotations
 
 TESTS_FLEXT_CORE_PUBLIC_EXPORTS: tuple[str, ...] = (
     "TestsFlextAutomatedArchitecture",
-    "TestsFlextBadAccessors",
-    "TestsFlextBadAnyField",
-    "TestsFlextBadBareCollection",
-    "TestsFlextBadConstants",
-    "TestsFlextBadFrozen",
-    "TestsFlextBadInlineUnion",
-    "TestsFlextBadMissingDesc",
-    "TestsFlextBadMutableDefault",
-    "TestsFlextBadWorkerSettings",
     "TestsFlextCleanConstants",
     "TestsFlextCleanModels",
     "TestsFlextCleanProtocols",

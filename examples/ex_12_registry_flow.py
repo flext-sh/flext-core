@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from examples.constants import c
 from examples.models import m
-from examples.protocols import p
 from examples.shared import ExamplesFlextShared
-from examples.typings import t
 from examples.utilities import u
 from flext_core import h, r
 
@@ -15,6 +15,10 @@ from .ex_12_registry_support import (
     as_registry_handler,
     discovered_handler,
 )
+
+if TYPE_CHECKING:
+    from examples.protocols import p
+    from examples.typings import t
 
 
 class Ex12RegistryFlow(ExamplesFlextShared):
@@ -34,7 +38,7 @@ class Ex12RegistryFlow(ExamplesFlextShared):
         self.audit_check(
             "decorated_handler.type",
             type(
-                discovered_handler(m.Examples.CommandA(value=discovered_value))
+                discovered_handler(m.Examples.CommandA(value=discovered_value)),
             ).__name__,
         )
         self.audit_check("execute.success", registry.execute().success)
@@ -73,7 +77,8 @@ class Ex12RegistryFlow(ExamplesFlextShared):
         self.audit_check("register_handler.mode.success", reg_mode.success)
         handler_mode_probe = handler_mode.handle(callable_prefix)
         self.audit_check(
-            "create_from_callable.handle_success", handler_mode_probe.success
+            "create_from_callable.handle_success",
+            handler_mode_probe.success,
         )
         batch = registry.register_handlers([
             as_registry_handler(handler_a),

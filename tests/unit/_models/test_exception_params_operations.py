@@ -1,4 +1,10 @@
-"""Exception parameter type, operation, attribute, and cross-cutting tests."""
+"""Behavioral tests for the exception-parameter model public contract.
+
+Exercises only the public surface of the ``m.*ErrorParams`` models: field
+values, serialization, roundtrip, ``extra="forbid"`` / strict validation, the
+``connection_target`` computed value, and inherited fields. No private
+attribute access, no patching, no collaborator spying.
+"""
 
 from __future__ import annotations
 
@@ -13,16 +19,23 @@ from tests.unit._models._exception_params_support import (
 )
 
 
-class TestsFlextModelsExceptionParamsOperations:
-    def test_type_error_params_defaults(self) -> None:
-        params = m.TypeErrorParams()
-        tm.that(params.expected_type, none=True)
-        tm.that(params.actual_type, none=True)
+class TestsFlextCoreExceptionParamsOperations:
+    @pytest.mark.parametrize("model_cls", _ALL_PARAMS_MODELS, ids=_ALL_PARAMS_IDS)
+    def test_no_arg_construction_yields_all_none_fields(
+        self,
+        model_cls: type[m.ParamsModel],
+    ) -> None:
+        instance = model_cls()
+        for value in instance.model_dump().values():
+            tm.that(value, none=True)
 
-    def test_type_error_params_with_values(self) -> None:
-        params = m.TypeErrorParams(expected_type="str", actual_type="int")
-        tm.that(params.expected_type, eq="str")
-        tm.that(params.actual_type, eq="int")
+    @pytest.mark.parametrize("model_cls", _ALL_PARAMS_MODELS, ids=_ALL_PARAMS_IDS)
+    def test_unknown_field_is_rejected(
+        self,
+        model_cls: type[m.ParamsModel],
+    ) -> None:
+        with pytest.raises(c.ValidationError):
+            model_cls.model_validate({"bogus_field": "nope"})
 
     @pytest.mark.parametrize(
         ("expected", "actual"),
@@ -33,91 +46,86 @@ class TestsFlextModelsExceptionParamsOperations:
         ],
         ids=["str-int", "list-dict", "model-none"],
     )
-    def test_type_error_params_type_pairs(self, expected: str, actual: str) -> None:
+    def test_type_error_params_exposes_expected_and_actual(
+        self,
+        expected: str,
+        actual: str,
+    ) -> None:
         params = m.TypeErrorParams(expected_type=expected, actual_type=actual)
         tm.that(params.expected_type, eq=expected)
         tm.that(params.actual_type, eq=actual)
 
-    def test_operation_error_params_defaults(self) -> None:
-        params = m.OperationErrorParams()
-        tm.that(params.operation, none=True)
-        tm.that(params.reason, none=True)
-
-    def test_operation_error_params_with_values(self) -> None:
-        params = m.OperationErrorParams(
-            operation="publish_events", reason="transient_backend_error"
-        )
-        tm.that(params.operation, eq="publish_events")
-        tm.that(params.reason, eq="transient_backend_error")
-
-    def test_operation_error_params_serialization(self) -> None:
+    def test_operation_error_params_serialize_field_values(self) -> None:
         params = m.OperationErrorParams(operation="save_state", reason="disk_full")
         data = params.model_dump()
         tm.that(data["operation"], eq="save_state")
         tm.that(data["reason"], eq="disk_full")
 
-    def test_attribute_access_error_params_defaults(self) -> None:
-        params = m.AttributeAccessErrorParams()
-        tm.that(params.attribute_name, none=True)
-        tm.that(params.attribute_context, none=True)
-
-    def test_attribute_access_error_params_with_values(self) -> None:
+    def test_attribute_access_error_params_preserve_mapping_context(self) -> None:
         params = m.AttributeAccessErrorParams(
-            attribute_name="token", attribute_context={"owner": "session"}
+            attribute_name="token",
+            attribute_context={"owner": "session"},
         )
         tm.that(params.attribute_name, eq="token")
         tm.that(params.attribute_context, eq={"owner": "session"})
 
-    def test_attribute_access_error_params_serialization(self) -> None:
-        params = m.AttributeAccessErrorParams(
-            attribute_name="settings", attribute_context="runtime"
-        )
-        data = params.model_dump()
-        tm.that(data["attribute_name"], eq="settings")
-        tm.that(data["attribute_context"], eq="runtime")
+    @pytest.mark.parametrize(
+        ("host", "port", "expected_target"),
+        [
+            ("db.internal", 5432, "db.internal:5432"),
+            ("db.internal", None, "db.internal"),
+            (None, None, "unknown"),
+        ],
+        ids=["host-port", "host-only", "neither"],
+    )
+    def test_connection_target_formats_host_and_port(
+        self,
+        host: str | None,
+        port: int | None,
+        expected_target: str,
+    ) -> None:
+        params = m.ConnectionErrorParams(host=host, port=port)
+        tm.that(params.connection_target, eq=expected_target)
 
-    @pytest.mark.parametrize("model_cls", _ALL_PARAMS_MODELS, ids=_ALL_PARAMS_IDS)
-    def test_all_params_reject_extra_fields(
+    @pytest.mark.parametrize(
+        ("model_cls", "payload"),
+        [
+            (m.ValidationErrorParams, {"field": 123}),
+            (m.ConnectionErrorParams, {"host": "h", "port": "5432"}),
+            (m.TypeErrorParams, {"expected_type": 1}),
+        ],
+        ids=["field-int", "port-str", "expected-type-int"],
+    )
+    def test_strict_typing_rejects_wrong_type(
         self,
         model_cls: type[m.ParamsModel],
+        payload: dict[str, object],
     ) -> None:
         with pytest.raises(c.ValidationError):
-            model_cls.model_validate({"bogus_field": "nope"})
+            model_cls.model_validate(payload)
 
-    @pytest.mark.parametrize("model_cls", _ALL_PARAMS_MODELS, ids=_ALL_PARAMS_IDS)
-    def test_all_params_instantiate_with_no_args(self, model_cls: type) -> None:
-        instance = model_cls()
-        data = instance.model_dump()
-        for value in data.values():
-            tm.that(value, none=True)
-
-    def test_validate_assignment_enforced(self) -> None:
-        """Assigning a wrong type to a strict str field raises."""
+    def test_assignment_revalidates_field_type(self) -> None:
         params = m.ValidationErrorParams(field="email")
+        wrong_value: object = 123
         with pytest.raises(c.ValidationError):
-            setattr(params, "field", 123)
+            setattr(params, "field", wrong_value)
 
-    def test_roundtrip_connection_error_params(self) -> None:
-        original = m.ConnectionErrorParams(host="db.internal", port=5432, timeout=5)
-        rebuilt = m.ConnectionErrorParams.model_validate(original.model_dump())
-        tm.that(rebuilt.host, eq=original.host)
-        tm.that(rebuilt.port, eq=original.port)
-        tm.that(rebuilt.timeout, eq=original.timeout)
-
-    def test_roundtrip_authorization_error_params(self) -> None:
-        original = m.AuthorizationErrorParams(
-            user_id="u-1", resource="docs:secret", permission="read"
-        )
-        rebuilt = m.AuthorizationErrorParams.model_validate(original.model_dump())
-        tm.that(rebuilt.user_id, eq=original.user_id)
-        tm.that(rebuilt.resource, eq=original.resource)
-        tm.that(rebuilt.permission, eq=original.permission)
-
-    def test_roundtrip_rate_limit_error_params(self) -> None:
-        original = m.RateLimitErrorParams(
-            limit=1000, window_seconds=3600, retry_after=2.5
-        )
-        rebuilt = m.RateLimitErrorParams.model_validate(original.model_dump())
-        tm.that(rebuilt.limit, eq=original.limit)
-        tm.that(rebuilt.window_seconds, eq=original.window_seconds)
-        tm.that(rebuilt.retry_after, eq=original.retry_after)
+    @pytest.mark.parametrize(
+        "params",
+        [
+            m.ConnectionErrorParams(host="db.internal", port=5432, timeout=5),
+            m.AuthorizationErrorParams(
+                user_id="u-1",
+                resource="docs:secret",
+                permission="read",
+            ),
+            m.RateLimitErrorParams(limit=1000, window_seconds=3600, retry_after=2.5),
+        ],
+        ids=["connection", "authorization", "rate-limit"],
+    )
+    def test_model_dump_roundtrip_preserves_values(
+        self,
+        params: m.ParamsModel,
+    ) -> None:
+        rebuilt = type(params).model_validate(params.model_dump())
+        tm.that(rebuilt.model_dump(), eq=params.model_dump())

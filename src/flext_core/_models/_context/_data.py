@@ -12,7 +12,7 @@ from collections.abc import (
 from types import MappingProxyType
 from typing import Annotated
 
-from pydantic import BeforeValidator, field_validator
+from pydantic import field_validator
 
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
@@ -103,14 +103,20 @@ class FlextModelsContextData:
         ] = mp.Field(default_factory=lambda: _EMPTY_SCALAR_MAPPING)
         metadata: Annotated[
             m.Metadata | t.MappingKV[str, t.Scalar] | None,
-            BeforeValidator(
-                lambda v: FlextModelsContextData.normalize_metadata_before(v),
-            ),
             mp.Field(
                 default=None,
                 description="Context metadata (creation info, source, etc.)",
             ),
         ] = None
+
+        @field_validator("metadata", mode="before")
+        @classmethod
+        def validate_metadata_before(
+            cls,
+            v: t.JsonPayload | None,
+        ) -> t.JsonPayload | None:
+            """Normalize metadata before Pydantic validates the field."""
+            return FlextModelsContextData.normalize_metadata_before(v)
 
         @classmethod
         def normalize_to_serializable_value(

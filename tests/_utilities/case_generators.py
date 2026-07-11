@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from tests._utilities.case_service_factories import (
     TestsFlextUtilitiesCaseServiceFactoriesMixin,
 )
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextUtilitiesCaseGeneratorsMixin(
-    TestsFlextUtilitiesCaseServiceFactoriesMixin
+    TestsFlextUtilitiesCaseServiceFactoriesMixin,
 ):
     """Service case generator helpers."""
 
@@ -104,7 +108,7 @@ class TestsFlextUtilitiesCaseGeneratorsMixin(
         ):
             """Create appropriate service based on case type."""
             return TestsFlextUtilitiesCaseGeneratorsMixin.ServiceFactoryRegistry.create_service(
-                case
+                case,
             )
 
     class GenericModelFactory:

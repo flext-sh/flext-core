@@ -12,7 +12,7 @@ from typing import Annotated, Self
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core.constants import FlextConstants as c
 from flext_core.typings import FlextTypes as t
 
@@ -27,37 +27,37 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
 
         metadata: Annotated[
             FlextModelsBase.Metadata,
-            FlextUtilitiesPydantic.Field(
+            mp.Field(
                 default_factory=FlextModelsBase.Metadata,
                 description="Normalized metadata bound to the active context",
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=FlextModelsBase.Metadata)
+        ] = mp.Field(default_factory=FlextModelsBase.Metadata)
         hooks: Annotated[
             t.ContextHookMap,
-            FlextUtilitiesPydantic.Field(
+            mp.Field(
                 default_factory=lambda: MappingProxyType({}),
                 description="Lifecycle hooks keyed by event name",
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
+        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
         statistics: Annotated[
-            FlextModelsContextScope.ContextStatistics,
-            FlextUtilitiesPydantic.Field(
-                default_factory=lambda: FlextModelsContextScope.ContextStatistics(),
+            FlextModelsContextScopePart01.ContextStatistics,
+            mp.Field(
+                default_factory=FlextModelsContextScopePart01.ContextStatistics,
                 description="Operation counters for this context instance",
             ),
-        ] = FlextUtilitiesPydantic.Field(
-            default_factory=lambda: FlextModelsContextScope.ContextStatistics(),
+        ] = mp.Field(
+            default_factory=FlextModelsContextScopePart01.ContextStatistics,
         )
         active: Annotated[
             bool,
-            FlextUtilitiesPydantic.Field(
+            mp.Field(
                 default=True,
                 description="Whether the context accepts operations",
             ),
         ] = True
         suspended: Annotated[
             bool,
-            FlextUtilitiesPydantic.Field(
+            mp.Field(
                 default=False,
                 description="Whether the context is temporarily suspended",
             ),
@@ -67,11 +67,11 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 str,
                 contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
             ],
-            FlextUtilitiesPydantic.Field(
+            mp.Field(
                 default_factory=lambda: MappingProxyType({}),
                 description="ContextVar registry keyed by scope name",
             ),
-        ] = FlextUtilitiesPydantic.Field(default_factory=lambda: MappingProxyType({}))
+        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
 
         @classmethod
         def create_default(

@@ -2,21 +2,44 @@
 
 from __future__ import annotations
 
+import pytest
+
 from flext_core import u
 from tests.models import m
 from tests.typings import t
 
 
 class TestsFlextUtilitiesPydantic:
-    def test_public_facade_validates_serializes_and_tracks_private_state(self) -> None:
+    @pytest.mark.parametrize(
+        ("raw_name", "expected_name"),
+        [
+            ("  ada lovelace ", "Ada Lovelace"),
+            ("GRACE HOPPER", "Grace Hopper"),
+            ("alan", "Alan"),
+        ],
+    )
+    def test_field_validator_normalizes_aliased_name(
+        self,
+        raw_name: str,
+        expected_name: str,
+    ) -> None:
+        payload = m.Tests.PublicPayload.model_validate({
+            "rawName": raw_name,
+            "visits": "3",
+        })
+
+        assert payload.raw_name == expected_name
+
+    def test_serialization_applies_alias_serializer_and_computed_field(
+        self,
+    ) -> None:
         payload = m.Tests.PublicPayload.model_validate({
             "rawName": "  ada lovelace ",
             "visits": "3",
         })
+
         payload_dump = payload.model_dump(mode="json", by_alias=True)
 
-        assert payload.raw_name == "Ada Lovelace"
-        assert payload._events == ["validated"]
         assert payload_dump["rawName"] == "Ada Lovelace"
         assert payload_dump["visits"] == "3 visits"
         assert payload_dump["label"] == "Ada Lovelace:3"
@@ -44,6 +67,16 @@ class TestsFlextUtilitiesPydantic:
         assert payload_dict == {"name": "queue", "count": 2, "tags": ["cli"]}
         assert payload_jsonable == payload_dict
 
+    def test_validate_call_rejects_invalid_argument_values(self) -> None:
+        @u.validate_call()
+        def double_positive(value: t.PositiveInt) -> int:
+            doubled: int = value * 2
+            return doubled
+
+        assert double_positive(4) == 8
+        with pytest.raises(m.ValidationError):
+            double_positive(-1)
+
     def test_public_facade_resolves_runtime_bootstrap_options_from_json(
         self,
     ) -> None:
@@ -52,7 +85,7 @@ class TestsFlextUtilitiesPydantic:
                 "subproject": "source-runtime",
                 "wire_packages": ["flext.core.runtime", "tests.runtime"],
                 "settings_overrides": {"dry_run": True},
-            })
+            }),
         )
 
         @u.validate_call()

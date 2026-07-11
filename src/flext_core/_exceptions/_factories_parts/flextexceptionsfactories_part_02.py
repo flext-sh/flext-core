@@ -8,12 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import (
-    FlextConstants as c,
-    FlextExceptionsTemplate,
-    FlextModelsExceptionParams as m,
-    FlextProtocols as p,
-)
+from flext_core import FlextConstants as c, FlextProtocols as p
+from flext_core._exceptions.template import FlextExceptionsTemplate
+from flext_core._models.exception_params import FlextModelsExceptionParams as m
 
 from .flextexceptionsfactories_part_01 import (
     FlextExceptionsFactories as FlextExceptionsFactoriesPart01,
@@ -36,7 +33,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
 
         Usage::
 
-            return e.fail_type_mismatch("FlextLogger", type(svc).__name__)
+            return e.fail_type_mismatch("FlextUtilitiesLogging", type(svc).__name__)
             return e.fail_type_mismatch(
                 m.ServiceLookupParams(
                     service_name="connection",

@@ -1,9 +1,18 @@
-"""Beartype annotation inspection tests."""
+"""Behavioral tests for FlextUtilitiesBeartypeEngine annotation inspection.
+
+These assert the OBSERVABLE CONTRACT of the public static methods only:
+their return values for representative type hints. No private attribute or
+method of the engine is accessed; the engine is exercised exclusively through
+its public surface (``contains_any``, ``has_forbidden_collection_origin``,
+``count_union_members``, ``matches_str_none_union``, ``alias_contains_any``).
+"""
 
 from __future__ import annotations
 
 import typing
 from collections.abc import Mapping
+
+import pytest
 
 from flext_core import FlextUtilitiesBeartypeEngine as be
 from tests.typings import t
@@ -16,128 +25,94 @@ from tests.unit._beartype_engine_support import (
 
 
 class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
-    def test_direct_any(self) -> None:
-        """typing.Any is detected."""
-        assert be.contains_any(typing.Any) is True
+    """Contract of the beartype annotation-inspection engine."""
 
-    def test_str_clean(self) -> None:
-        """Plain str has no Any."""
-        assert be.contains_any(str) is False
+    @pytest.mark.parametrize(
+        ("hint", "expected"),
+        [
+            (typing.Any, True),
+            (Mapping[str, typing.Any], True),
+            (Mapping[str, t.SequenceOf[typing.Any]], True),
+            (str | typing.Any, True),
+            (typing.Any | None, True),
+            (str, False),
+            (int, False),
+            (str | None, False),
+            (t.IntMapping, False),
+            (t.StrSequence, False),
+            (Mapping[str, t.SequenceOf[int]], False),
+            (None, False),
+        ],
+    )
+    def test_contains_any_reports_presence_of_any(
+        self, hint: t.TypeHintSpecifier | None, *, expected: bool
+    ) -> None:
+        """contains_any is True iff typing.Any appears at any nesting depth."""
+        assert be.contains_any(hint) is expected
 
-    def test_int_clean(self) -> None:
-        """Plain int has no Any."""
-        assert be.contains_any(int) is False
+    @pytest.mark.parametrize(
+        ("hint", "expected"),
+        [
+            (dict[str, int], (True, "dict")),
+            (list[str], (True, "list")),
+            (set[int], (True, "set")),
+            (t.IntMapping, (False, "")),
+            (t.StrSequence, (False, "")),
+            (str, (False, "")),
+            (None, (False, "")),
+        ],
+    )
+    def test_has_forbidden_collection_origin_names_offending_origin(
+        self, hint: t.TypeHintSpecifier | None, expected: tuple[bool, str]
+    ) -> None:
+        """Bare mutable collection origins are flagged with their name."""
+        assert be.has_forbidden_collection_origin(hint, self.FORBIDDEN) == expected
 
-    def test_mapping_with_any_value(self) -> None:
-        """Mapping[str, Any] detected at 1 level."""
-        assert be.contains_any(Mapping[str, typing.Any]) is True
+    @pytest.mark.parametrize(
+        ("hint", "expected"),
+        [
+            (str | int, 2),
+            (str | int | float, 3),
+            (str | None, 1),
+            (str | int | float | None, 3),
+            (str, 0),
+            (None, 0),
+        ],
+    )
+    def test_count_union_members_excludes_none(
+        self, hint: t.TypeHintSpecifier | None, *, expected: int
+    ) -> None:
+        """count_union_members counts non-None members; 0 for non-unions."""
+        assert be.count_union_members(hint) == expected
 
-    def test_deep_nested_any(self) -> None:
-        """Mapping[str, t.SequenceOf[Any]] detected at 2 levels."""
-        assert be.contains_any(Mapping[str, t.SequenceOf[typing.Any]]) is True
+    @pytest.mark.parametrize(
+        ("hint", "expected"),
+        [
+            (str | None, True),
+            (str | int | None, True),
+            (str, False),
+            (int | None, False),
+            (str | int, False),
+            (None, False),
+        ],
+    )
+    def test_matches_str_none_union_requires_str_and_none(
+        self, hint: t.TypeHintSpecifier | None, *, expected: bool
+    ) -> None:
+        """Union matches iff both str and None are members."""
+        assert be.matches_str_none_union(hint) is expected
 
-    def test_clean_mapping(self) -> None:
-        """t.IntMapping has no Any."""
-        assert be.contains_any(t.IntMapping) is False
-
-    def test_clean_sequence(self) -> None:
-        """t.StrSequence has no Any."""
-        assert be.contains_any(t.StrSequence) is False
-
-    def test_union_with_any(self) -> None:
-        """Str | Any detected."""
-        assert be.contains_any(str | typing.Any) is True
-
-    def test_optional_any(self) -> None:
-        """Any | None detected."""
-        assert be.contains_any(typing.Any | None) is True
-
-    def test_clean_optional(self) -> None:
-        """Str | None has no Any."""
-        assert be.contains_any(str | None) is False
-
-    def test_complex_clean_type(self) -> None:
-        """Mapping[str, t.SequenceOf[int]] has no Any."""
-        assert be.contains_any(Mapping[str, t.SequenceOf[int]]) is False
-
-    def test_bare_dict(self) -> None:
-        """dict[str, int] is forbidden."""
-        result = be.has_forbidden_collection_origin(dict[str, int], self.FORBIDDEN)
-        assert result == (True, "dict")
-
-    def test_bare_list(self) -> None:
-        """list[str] is forbidden."""
-        result = be.has_forbidden_collection_origin(list[str], self.FORBIDDEN)
-        assert result == (True, "list")
-
-    def test_bare_set(self) -> None:
-        """set[int] is forbidden."""
-        result = be.has_forbidden_collection_origin(set[int], self.FORBIDDEN)
-        assert result == (True, "set")
-
-    def test_mapping_ok(self) -> None:
-        """t.IntMapping is not forbidden."""
-        result = be.has_forbidden_collection_origin(t.IntMapping, self.FORBIDDEN)
-        assert result == (False, "")
-
-    def test_sequence_ok(self) -> None:
-        """t.StrSequence is not forbidden."""
-        result = be.has_forbidden_collection_origin(t.StrSequence, self.FORBIDDEN)
-        assert result == (False, "")
-
-    def test_plain_str_ok(self) -> None:
-        """Plain str has no origin."""
-        result = be.has_forbidden_collection_origin(str, self.FORBIDDEN)
-        assert result == (False, "")
-
-    def test_simple_union(self) -> None:
-        """Str | int has 2 members."""
-        assert be.count_union_members(str | int) == 2
-
-    def test_optional(self) -> None:
-        """Str | None has 1 non-None member."""
-        assert be.count_union_members(str | None) == 1
-
-    def test_complex_union(self) -> None:
-        """Str | int | float | None has 3 non-None members."""
-        assert be.count_union_members(str | int | float | None) == 3
-
-    def test_non_union(self) -> None:
-        """Plain str returns 0."""
-        assert be.count_union_members(str) == 0
-
-    def test_triple_union(self) -> None:
-        """Str | int | float has 3 members."""
-        assert be.count_union_members(str | int | float) == 3
-
-    def test_str_none(self) -> None:
-        """Str | None detected."""
-        assert be.matches_str_none_union(str | None) is True
-
-    def test_plain_str(self) -> None:
-        """Plain str is not str | None."""
-        assert be.matches_str_none_union(str) is False
-
-    def test_int_none(self) -> None:
-        """Int | None is NOT str | None."""
-        assert be.matches_str_none_union(int | None) is False
-
-    def test_str_int(self) -> None:
-        """Str | int is NOT str | None."""
-        assert be.matches_str_none_union(str | int) is False
-
-    def test_str_int_none(self) -> None:
-        """Str | int | None IS str | None (str and None both present)."""
-        assert be.matches_str_none_union(str | int | None) is True
-
-    def test_alias_with_any(self) -> None:
-        """Type alias containing Any is detected."""
-        assert be.alias_contains_any(AnyAlias.__value__) is True
-
-    def test_clean_alias(self) -> None:
-        """Type alias without Any passes."""
-        assert be.alias_contains_any(CleanAlias.__value__) is False
-
-    def test_nested_any_in_alias(self) -> None:
-        """Nested Any in alias is detected."""
-        assert be.alias_contains_any(NestedAnyAlias.__value__) is True
+    @pytest.mark.parametrize(
+        ("alias_value", "expected"),
+        [
+            (AnyAlias.__value__, True),
+            (NestedAnyAlias.__value__, True),
+            (CleanAlias.__value__, False),
+            (None, False),
+        ],
+    )
+    def test_alias_contains_any_unwraps_alias_values(
+        self, alias_value: t.TypeHintSpecifier | None, *, expected: bool
+    ) -> None:
+        """alias_contains_any detects Any inside a resolved type-alias value."""
+        assert be.alias_contains_any(alias_value) is expected

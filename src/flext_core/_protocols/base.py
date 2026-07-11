@@ -6,16 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Iterable,
-    MutableSequence,
-)
-from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
-    from flext_core import FlextModelsDomainEvent, FlextProtocolsResult, t
+    from collections.abc import (
+        Callable,
+        Iterable,
+        MutableSequence,
+    )
+    from types import TracebackType
+
+    from flext_core import m, p, t
 
 
 class FlextProtocolsBase:
@@ -135,22 +136,28 @@ class FlextProtocolsBase:
 
     @runtime_checkable
     class Routable(Protocol):
-        """Protocol for messages that carry explicit route information."""
+        """Base protocol for messages that carry explicit route information."""
 
-        @property
-        def command_type(self) -> str | None:
-            """Command type identifier."""
-            ...
+    @runtime_checkable
+    class CommandRoutable(Routable, Protocol):
+        """Protocol for command messages."""
 
-        @property
-        def event_type(self) -> str | None:
-            """Event type identifier."""
-            ...
+        command_type: str
+        """Command type identifier."""
 
-        @property
-        def query_type(self) -> str | None:
-            """Query type identifier."""
-            ...
+    @runtime_checkable
+    class EventRoutable(Routable, Protocol):
+        """Protocol for event messages."""
+
+        event_type: str
+        """Event type identifier."""
+
+    @runtime_checkable
+    class QueryRoutable(Routable, Protocol):
+        """Protocol for query messages."""
+
+        query_type: str
+        """Query type identifier."""
 
     @runtime_checkable
     class Executable(Base, Protocol):
@@ -158,7 +165,7 @@ class FlextProtocolsBase:
 
         def execute(
             self,
-        ) -> FlextProtocolsResult.Result[t.JsonPayload]: ...
+        ) -> p.Result[t.JsonPayload]: ...
 
         def service_info(self) -> t.JsonMapping: ...
 
@@ -215,7 +222,7 @@ class FlextProtocolsBase:
         """
 
         unique_id: str
-        domain_events: MutableSequence[FlextModelsDomainEvent.Entry]
+        domain_events: MutableSequence[m.DomainEvent]
 
 
 __all__: list[str] = ["FlextProtocolsBase"]

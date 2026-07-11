@@ -1,6 +1,6 @@
 """Structlog configuration and processor chain building.
 
-Extracted from FlextLogger as an MRO mixin to keep the facade under
+Extracted from FlextUtilitiesLogging as an MRO mixin to keep the facade under
 the 200-line cap (AGENTS.md §3.1).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -96,7 +96,7 @@ class FlextUtilitiesLoggingConfig:
 
         @property
         def buffer(self) -> typing.BinaryIO:
-            """Return underlying binary buffer."""
+            """The underlying binary buffer."""
             buf: typing.BinaryIO | None = getattr(self._target_stream, "buffer", None)
             if buf is not None:
                 return buf
@@ -104,7 +104,7 @@ class FlextUtilitiesLoggingConfig:
 
         @property
         def line_buffering(self) -> bool:
-            """Return whether line buffering is enabled."""
+            """The whether line buffering is enabled."""
             return bool(getattr(self._target_stream, "line_buffering", False))
 
         @override

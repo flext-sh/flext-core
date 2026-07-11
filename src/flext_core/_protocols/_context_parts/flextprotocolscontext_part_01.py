@@ -6,12 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
+    from contextlib import AbstractContextManager
+
     from flext_core import (
-        FlextProtocolsResult,
+        p,
         t,
     )
 
@@ -26,7 +27,7 @@ class FlextProtocolsContext:
         def get(
             self,
             key: str,
-        ) -> FlextProtocolsResult.Result[t.JsonPayload]:
+        ) -> p.Result[t.JsonPayload]:
             """Get a context value by key."""
             ...
 
@@ -54,7 +55,7 @@ class FlextProtocolsContext:
             self,
             key: str,
             value: t.JsonPayload,
-        ) -> FlextProtocolsResult.Result[bool]:
+        ) -> p.Result[bool]:
             """Set a context value in the context scope."""
             ...
 
@@ -100,7 +101,7 @@ class FlextProtocolsContext:
         def resolve_metadata(
             self,
             key: str,
-        ) -> FlextProtocolsResult.Result[t.JsonPayload]:
+        ) -> p.Result[t.JsonPayload]:
             """Get a metadata value by key."""
             ...
 
@@ -134,7 +135,7 @@ class FlextProtocolsContext:
         @staticmethod
         def fetch_service(
             service_name: str,
-        ) -> FlextProtocolsResult.Result[t.RegisterableService]:
+        ) -> p.Result[t.RegisterableService]:
             """Resolve a service from the configured container."""
             ...
 
@@ -142,7 +143,7 @@ class FlextProtocolsContext:
         def register_service(
             service_name: str,
             service: t.RegisterableService,
-        ) -> FlextProtocolsResult.Result[bool]:
+        ) -> p.Result[bool]:
             """Register a service through the configured container."""
             ...
 

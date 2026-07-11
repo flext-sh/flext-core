@@ -20,14 +20,17 @@ import importlib
 from functools import cache
 from pathlib import Path
 from types import MappingProxyType, ModuleType
+from typing import TYPE_CHECKING
 
-from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
+from flext_core._constants.file import FlextConstantsFile as cf
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
-from flext_core._typings.base import FlextTypingBase as tb
 
 from .project_metadata_part_02 import (
     FlextUtilitiesProjectMetadata as FlextUtilitiesProjectMetadataPart02,
 )
+
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart02):
@@ -157,7 +160,7 @@ class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart02):
             TIER_FACADE_PREFIX=MappingProxyType(tier_facade_prefix),
             SCAN_DIRECTORIES=scan_dirs,
             TIER_SUB_NAMESPACE=MappingProxyType(tier_sub_namespace),
-            PYPROJECT_FILENAME=cpm.PYPROJECT_FILENAME,
+            PYPROJECT_FILENAME=cf.PYPROJECT_FILENAME,
         )
 
 

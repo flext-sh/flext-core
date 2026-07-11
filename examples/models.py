@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from examples import t
+from typing import TYPE_CHECKING
+
 from examples._models.errors import ExamplesFlextModelsErrors
 from examples._models.ex00 import ExamplesFlextModelsEx00
 from examples._models.ex01 import ExamplesFlextModelsEx01
@@ -22,6 +23,9 @@ from examples._models.shared import (
     ExamplesFlextSharedPerson,
 )
 from flext_core import m
+
+if TYPE_CHECKING:
+    from examples import t
 
 
 class ExamplesFlextModels(

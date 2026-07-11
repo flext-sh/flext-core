@@ -56,18 +56,17 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
         match shape:
             case "AnnAssign[TypeAlias]":
                 try:
-                    module_annotations = inspect.get_annotations(module, eval_str=False)
-                except (TypeError, NameError):
-                    pass
-                else:
-                    violation = next(
-                        (
-                            {"file": file_name, "line": "?"}
-                            for annotation in module_annotations.values()
-                            if annotation is _typing_TypeAlias
-                        ),
-                        _NO_VIOLATION,
+                    has_type_alias = any(
+                        annotation is _typing_TypeAlias
+                        for annotation in inspect.get_annotations(
+                            module,
+                            eval_str=False,
+                        ).values()
                     )
+                except (TypeError, NameError):
+                    has_type_alias = False
+                if has_type_alias:
+                    violation = {"file": file_name, "line": "?"}
             case "cast_outside_core":
                 if not any(
                     marker in src_file for marker in c.ENFORCE_FLEXT_CORE_PATH_MARKERS

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import (
-    Sequence,
-)
 from types import ModuleType
+from typing import TYPE_CHECKING
 
 from flext_core._typings.lazy import FlextTypesLazy
 
@@ -17,11 +15,77 @@ from .flextlazy_part_01 import (
     MutableLazyImportMap,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import (
+        Sequence,
+    )
+
 type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
 type ModuleGlobals = FlextTypesLazy.ModuleGlobals
 
 
+class FlextLazyAttribute:
+    """Descriptor that resolves a class attribute through ``FlextLazy``."""
+
+    __slots__ = (
+        "_lazy",
+        "_lazy_imports",
+        "_module_globals",
+        "_module_name",
+        "_name",
+    )
+
+    def __init__(
+        self,
+        lazy: FlextLazy,
+        name: str,
+        lazy_imports: LazyImportMap,
+        module_globals: ModuleGlobals,
+        module_name: str,
+    ) -> None:
+        self._lazy = lazy
+        self._name = name
+        self._lazy_imports = lazy_imports
+        self._module_globals = module_globals
+        self._module_name = module_name
+
+    def __get__(
+        self,
+        instance: ModuleGlobalValue | None,
+        owner: type | None = None,
+    ) -> ModuleGlobalValue:
+        """Resolve and cache the target symbol through the owning lazy container."""
+        _ = instance, owner
+        return self._lazy.get(
+            self._name,
+            self._lazy_imports,
+            self._module_globals,
+            self._module_name,
+        )
+
+
 class FlextLazy(FlextLazyPart01):
+    @staticmethod
+    def _module_is_initializing(module: ModuleType) -> bool:
+        """Return whether Python is still executing a module body."""
+        return bool(getattr(getattr(module, "__spec__", None), "_initializing", False))
+
+    def attribute(
+        self,
+        name: str,
+        lazy_imports: LazyImportMap,
+        module_globals: ModuleGlobals,
+        module_name: str,
+    ) -> FlextLazyAttribute:
+        """Return a descriptor for class-namespace lazy attributes."""
+        return FlextLazyAttribute(
+            self,
+            name,
+            lazy_imports,
+            module_globals,
+            module_name,
+        )
+
     def get(
         self,
         name: str,
@@ -44,19 +108,22 @@ class FlextLazy(FlextLazyPart01):
 
         mod = self._load(module_path)
         if not attr:
-            module_globals[name] = mod
+            if not self._module_is_initializing(mod):
+                module_globals[name] = mod
             return mod
 
         try:
             value: ModuleGlobalValue = getattr(mod, attr)
         except AttributeError:
             if isinstance(entry, str) and module_path.rsplit(".", 1)[-1] == name:
-                module_globals[name] = mod
+                if not self._module_is_initializing(mod):
+                    module_globals[name] = mod
                 return mod
             msg = f"module {module_path!r} has no attribute {attr!r}"
             raise AttributeError(msg) from None
 
-        module_globals[name] = value
+        if not self._module_is_initializing(mod):
+            module_globals[name] = value
         return value
 
     def cleanup(
@@ -148,4 +215,4 @@ class FlextLazy(FlextLazyPart01):
         self.install_cache[module_name] = pre_signature
 
 
-__all__: list[str] = ["FlextLazy"]
+__all__: list[str] = ["FlextLazy", "FlextLazyAttribute"]

@@ -1,145 +1,258 @@
-"""Namespace enforcement tests — part 02 (run_layer and constant rules)."""
+"""Namespace enforcement tests — part 02 (run_layer, constant rules, mode dispatch).
+
+Behavioral contract of ``FlextUtilitiesEnforcement`` exercised through its public
+surface only:
+
+* ``run_layer(target, layer)`` — the ``__init_subclass__`` hook. Observable
+  behavior is the *warnings it emits* (or does not emit) for a class.
+* ``check(target, *, layer=...)`` — returns an ``m.Report`` whose public
+  ``violations`` carry ``rule_id`` / ``severity`` / ``layer`` / ``qualname`` /
+  ``agents_md_anchor`` / ``message``.
+* ``emit(report, *, mode=...)`` — dispatches on the enforcement mode: silent when
+  OFF, warns when WARN, raises ``TypeError`` when STRICT.
+
+No test inspects private attributes, patches internals, or asserts on
+implementation-only shapes (``__qualname__`` internals, exact warning counts).
+"""
 
 from __future__ import annotations
 
 import warnings
+from collections.abc import Callable
 
+import pytest
+
+from flext_core import FlextMroViolation, FlextSmellViolation, c, m
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
-from tests.constants import c
 from tests.unit._enforcement_support import make_class
 from tests.utilities import u
 
+type WarningRecords = list[warnings.WarningMessage]
+type ClassFactory = Callable[[], type]
 
-class TestsFlextEnforcementNamespacePart02:
-    __test__ = False
 
-    def test_run_layer_emits_mro_violation_under_default_warn_mode(self) -> None:
-        """``run_layer`` gates on ``c.ENFORCEMENT_NAMESPACE_MODE`` (Final, WARN).
+def _synthetic(name: str, body: dict[str, object], module: str | None = None) -> type:
+    """Build a synthetic class, optionally overriding its owning module."""
+    cls = make_class(name, body)
+    if module is not None:
+        cls.__module__ = module
+    return cls
 
-        Coverage note: the OFF/STRICT branches of this gate cannot be driven
-        directly — ``run_layer`` takes no ``mode`` parameter and the module
-        constant is ``Final`` (mutating globals is forbidden). Mode dispatch
-        itself is fully covered by the explicit ``emit(mode=...)`` tests in
-        ``test_enforcement_reports.py``; ``run_layer`` delegates to ``emit``
-        with the namespace-mode constant asserted here as precondition.
+
+def _local_constants_class() -> type:
+    """Return a genuinely function-local class (has ``<locals>`` qualname)."""
+
+    class FlextLocalConstants:
+        ITEMS: list[str] = ["a"]  # violating shape, but function-local
+
+    return FlextLocalConstants
+
+
+def _run_layer_records(target: type, layer: str) -> WarningRecords:
+    """Drive ``run_layer`` and return the warnings it emits (public behavior)."""
+    with warnings.catch_warnings(record=True) as recorded:
+        warnings.simplefilter("always")
+        FlextUtilitiesEnforcement.run_layer(target, layer)
+    return list(recorded)
+
+
+def _bad_constant_report() -> m.Report:
+    """A non-empty constants report for mode-dispatch tests."""
+    return u.check(
+        make_class("FlextSyntheticCli", {"GROUPS": frozenset({"foo"})}),
+        layer="constants",
+    )
+
+
+class TestsFlextCoreEnforcementNamespacePart02:
+    __test__ = True
+
+    # ------------------------------------------------------------------ #
+    # run_layer — emitted warnings are the observable contract           #
+    # ------------------------------------------------------------------ #
+
+    def test_run_layer_warns_on_mutable_constant_with_smell_category(self) -> None:
+        """A constants class with a mutable ``list`` field is flagged.
+
+        The caller observes ``FlextMroViolation``-family warnings whose messages
+        name the offending rules (``const_mutable`` and ``ENFORCE-079``).
         """
-        assert c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.WARN
         bad = make_class(
             "FlextSyntheticConstants",
             {"ITEMS": ["a"], "__annotations__": {"ITEMS": list[str]}},
         )
-        with warnings.catch_warnings(record=True) as recorded:
-            warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.run_layer(bad, "constants")
-        assert len(recorded) == 2
-        texts = [str(r.message) for r in recorded]
+
+        recorded = _run_layer_records(bad, "constants")
+
+        assert recorded, "expected run_layer to emit at least one warning"
+        assert all(issubclass(rec.category, FlextMroViolation) for rec in recorded), (
+            "every emitted warning must be from the FLEXT violation family"
+        )
+        texts = [str(rec.message) for rec in recorded]
         assert any("[const_mutable]" in text for text in texts)
         assert any("[ENFORCE-079]" in text for text in texts)
 
-    def test_run_layer_skips_function_local_classes(self) -> None:
-        class FlextLocalConstants:
-            ITEMS: list[str] = ["a"]  # violating shape, but function-local
+    @pytest.mark.parametrize(
+        ("case", "factory"),
+        [
+            ("function_local", _local_constants_class),
+            (
+                "tests_qualified_exempt",
+                lambda: _synthetic(
+                    "TestsFlextSyntheticConstants",
+                    {"ITEMS": ["a"], "__annotations__": {"ITEMS": list[str]}},
+                    module="tests.unit.synthetic",
+                ),
+            ),
+            ("clean_class", lambda: make_class("FlextSyntheticCleanConstants", {})),
+        ],
+    )
+    def test_run_layer_stays_silent_for_exempt_or_clean_classes(
+        self, case: str, factory: ClassFactory
+    ) -> None:
+        """Function-local, tests-qualified, and clean classes emit no warnings."""
+        target = factory()
 
-        assert "<locals>" in FlextLocalConstants.__qualname__
-        with warnings.catch_warnings(record=True) as recorded:
-            warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.run_layer(FlextLocalConstants, "constants")
-        assert recorded == []
+        recorded = _run_layer_records(target, "constants")
 
-    def test_run_layer_exempts_tests_qualified_classes(self) -> None:
-        fake = type(
-            "TestsFlextSyntheticConstants",
-            (),
-            {"ITEMS": ["a"], "__annotations__": {"ITEMS": list[str]}},
-        )
-        fake.__qualname__ = "TestsFlextSyntheticConstants"
-        fake.__module__ = "tests.unit.synthetic"
-        with warnings.catch_warnings(record=True) as recorded:
-            warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.run_layer(fake, "constants")
-        assert recorded == []
+        assert recorded == [], f"{case} should not raise enforcement warnings"
 
-    def test_run_layer_silent_for_clean_class(self) -> None:
-        clean = make_class("FlextSyntheticCleanConstants", {})
-        with warnings.catch_warnings(record=True) as recorded:
-            warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.run_layer(clean, "constants")
-        assert recorded == []
+    # ------------------------------------------------------------------ #
+    # check — Report.violations public contract                          #
+    # ------------------------------------------------------------------ #
 
-    def test_classvar_constant_outside_constants_emits_enforce_079(self) -> None:
-        """ClassVar UPPER_CASE attributes outside _constants trigger ENFORCE-079."""
-        bad = make_class(
-            "FlextSyntheticCli",
-            {
-                "GROUPS": frozenset({"foo"}),
-                "__annotations__": {"GROUPS": "ClassVar[frozenset[str]]"},
-            },
-        )
-        report = u.check(bad)
-        assert any(
-            "Constant 'GROUPS' declared" in v.message and v.rule_id == "ENFORCE-079"
-            for v in report.violations
-        )
-
-    def test_classvar_constant_inside_constants_is_exempt(self) -> None:
-        """ClassVar UPPER_CASE attributes inside _constants modules are allowed."""
-        good = make_class(
-            "FlextSyntheticConstantsRefactor",
-            {
-                "GROUPS": frozenset({"foo"}),
-                "__annotations__": {"GROUPS": "ClassVar[frozenset[str]]"},
-            },
-        )
-        good.__module__ = "flext_infra._constants.refactor"
-        report = u.check(good)
-        assert not any(v.rule_id == "ENFORCE-079" for v in report.violations)
-
-    def test_classvar_constant_exempt_model_config_and_logger(self) -> None:
-        """model_config and logger ClassVar names are framework idioms."""
-        good = make_class(
-            "FlextSyntheticModel",
-            {
-                "model_config": {"title": "x"},
-                "logger": None,
-                "__annotations__": {
-                    "model_config": "ClassVar[dict[str, str]]",
-                    "logger": "ClassVar[object | None]",
+    @pytest.mark.parametrize(
+        ("name", "body"),
+        [
+            (
+                "classvar_constant",
+                {
+                    "GROUPS": frozenset({"foo"}),
+                    "__annotations__": {"GROUPS": "ClassVar[frozenset[str]]"},
                 },
-            },
-        )
-        report = u.check(good)
-        assert not any(v.rule_id == "ENFORCE-079" for v in report.violations)
+            ),
+            ("implicit_constant", {"GROUPS": frozenset({"foo"})}),
+        ],
+    )
+    def test_check_flags_constant_declared_outside_constants(
+        self, name: str, body: dict[str, object]
+    ) -> None:
+        """UPPER_CASE constants outside ``_constants`` yield an ENFORCE-079 violation.
 
-    def test_classvar_constant_lowercase_name_skipped(self) -> None:
-        """Non-UPPER_CASE ClassVar attributes are not treated as constants."""
-        good = make_class(
-            "FlextSyntheticCli",
-            {
-                "groups": frozenset({"foo"}),
-                "__annotations__": {"groups": "ClassVar[frozenset[str]]"},
-            },
-        )
-        report = u.check(good)
-        assert not any(v.rule_id == "ENFORCE-079" for v in report.violations)
+        The full public violation contract is asserted, not just its presence.
+        """
+        bad = make_class("FlextSyntheticCli", body)
 
-    def test_implicit_constant_outside_constants_emits_enforce_079(self) -> None:
-        """UPPER_CASE constant-like attributes without ClassVar also trigger ENFORCE-079."""
-        bad = make_class(
-            "FlextSyntheticCli",
-            {"GROUPS": frozenset({"foo"})},
-        )
         report = u.check(bad)
-        assert any(
-            "Constant 'GROUPS' declared" in v.message and v.rule_id == "ENFORCE-079"
-            for v in report.violations
+
+        matches = [v for v in report.violations if v.rule_id == "ENFORCE-079"]
+        assert matches, f"{name}: expected an ENFORCE-079 violation"
+        violation = matches[0]
+        assert "Constant 'GROUPS' declared" in violation.message
+        assert violation.qualname == "FlextSyntheticCli"
+        assert violation.agents_md_anchor
+        assert violation.severity
+        assert violation.layer
+
+    @pytest.mark.parametrize(
+        ("case", "body", "module"),
+        [
+            (
+                "inside_constants_module",
+                {"GROUPS": frozenset({"foo"})},
+                "flext_infra._constants.refactor",
+            ),
+            (
+                "classvar_inside_constants_module",
+                {
+                    "GROUPS": frozenset({"foo"}),
+                    "__annotations__": {"GROUPS": "ClassVar[frozenset[str]]"},
+                },
+                "flext_infra._constants.refactor",
+            ),
+            (
+                "framework_idiom_names",
+                {
+                    "model_config": {"title": "x"},
+                    "logger": None,
+                    "__annotations__": {
+                        "model_config": "ClassVar[dict[str, str]]",
+                        "logger": "ClassVar[object | None]",
+                    },
+                },
+                None,
+            ),
+            (
+                "lowercase_name_not_a_constant",
+                {
+                    "groups": frozenset({"foo"}),
+                    "__annotations__": {"groups": "ClassVar[frozenset[str]]"},
+                },
+                None,
+            ),
+        ],
+    )
+    def test_check_exempts_permitted_constant_shapes(
+        self, case: str, body: dict[str, object], module: str | None
+    ) -> None:
+        """Constants inside ``_constants``, framework idioms, and lowercase names pass."""
+        good = _synthetic("FlextSyntheticExempt", body, module=module)
+
+        report = u.check(good)
+
+        assert not any(v.rule_id == "ENFORCE-079" for v in report.violations), (
+            f"{case} must not raise ENFORCE-079"
         )
 
-    def test_implicit_constant_inside_constants_is_exempt(self) -> None:
-        """Implicit constants inside _constants modules are allowed."""
-        good = make_class(
-            "FlextSyntheticConstantsRefactor",
-            {"GROUPS": frozenset({"foo"})},
-        )
-        good.__module__ = "flext_infra._constants.refactor"
-        report = u.check(good)
-        assert not any(v.rule_id == "ENFORCE-079" for v in report.violations)
+    def test_check_clean_class_reports_no_violations(self) -> None:
+        """A structurally clean class produces an empty report."""
+        clean = make_class("FlextSyntheticCleanConstants", {})
+
+        report = u.check(clean, layer="constants")
+
+        assert report.empty
+        assert report.violations == []
+
+    # ------------------------------------------------------------------ #
+    # emit — mode dispatch is the observable contract                    #
+    # ------------------------------------------------------------------ #
+
+    def test_emit_raises_type_error_in_strict_mode(self) -> None:
+        """STRICT mode turns a violation report into a raised ``TypeError``."""
+        report = _bad_constant_report()
+        assert not report.empty
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with pytest.raises(TypeError, match="ENFORCE-079"):
+                FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.STRICT)
+
+    def test_emit_stays_silent_in_off_mode(self) -> None:
+        """OFF mode neither warns nor raises for a non-empty report."""
+        report = _bad_constant_report()
+        assert not report.empty
+
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.OFF)
+
+        assert recorded == []
+
+    def test_emit_warns_in_warn_mode(self) -> None:
+        """WARN mode surfaces the violation as a ``FlextSmellViolation`` warning."""
+        report = _bad_constant_report()
+        assert not report.empty
+
+        with pytest.warns(FlextSmellViolation, match="ENFORCE-079"):
+            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
+
+    def test_emit_is_a_noop_for_empty_report(self) -> None:
+        """An empty report never warns or raises regardless of mode."""
+        empty_report = u.check(make_class("FlextSyntheticCleanConstants", {}))
+        assert empty_report.empty
+
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            FlextUtilitiesEnforcement.emit(empty_report, mode=c.EnforcementMode.STRICT)
+
+        assert recorded == []

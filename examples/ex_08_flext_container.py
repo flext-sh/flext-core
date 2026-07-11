@@ -35,19 +35,23 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
         max_factories = self.rand_int(1, 1000)
         with_service_result = container.bind(fluent_service_name, fluent_service_value)
         with_factory_result = container.factory(
-            fluent_factory_name, lambda: fluent_factory_value
+            fluent_factory_name,
+            lambda: fluent_factory_value,
         )
         with_resource_result = container.resource(
-            fluent_resource_name, lambda: fluent_resource_value
+            fluent_resource_name,
+            lambda: fluent_resource_value,
         )
         with_settings_result = container.apply({"max_factories": max_factories})
         self.audit_check("with_service.returns_self", with_service_result is container)
         self.audit_check("with_factory.returns_self", with_factory_result is container)
         self.audit_check(
-            "with_resource.returns_self", with_resource_result is container
+            "with_resource.returns_self",
+            with_resource_result is container,
         )
         self.audit_check(
-            "with_settings.returns_self", with_settings_result is container
+            "with_settings.returns_self",
+            with_settings_result is container,
         )
         configured_max_services = self.rand_int(1, 1000)
         configured_factory_caching = self.rand_bool()

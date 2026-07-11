@@ -16,7 +16,7 @@ from typing import overload, override
 from dependency_injector import containers as di_containers
 
 from flext_core import c, e, m, p, r, t, u
-from flext_core._loggings_parts.flextlogger_part_05 import FlextLogger
+from flext_core.loggings import FlextUtilitiesLogging
 
 from .flextcontainer_part_01 import (
     FlextContainer as FlextContainerPart01,
@@ -27,7 +27,7 @@ class FlextContainer(FlextContainerPart01, ABC):
     @override
     def logger(
         self,
-        module_name: str | None = None,
+        module_name: str,
         *,
         service_name: str | None = None,
         service_version: str | None = None,
@@ -35,9 +35,7 @@ class FlextContainer(FlextContainerPart01, ABC):
     ) -> p.Logger:
         """Create a module logger for the specified runtime scope."""
         _ = service_name, service_version, correlation_id
-        logger: p.Logger = FlextLogger.fetch_logger(
-            module_name or c.DEFAULT_LOGGER_MODULE,
-        )
+        logger: p.Logger = FlextUtilitiesLogging.fetch_logger(module_name)
         return logger
 
     def _resolve_callable[T: t.RegisterableService](

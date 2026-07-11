@@ -52,13 +52,15 @@ class Ex08ContainerLifecycle(Ex08ContainerScoped):
             "register_core_services.command_bus_present",
             container.has("command_bus"),
         )
-        logger_default = container.logger()
+        logger_default = container.logger(f"examples.{self.rand_str(6)}")
         logger_custom = container.logger(f"examples.{self.rand_str(6)}")
         self.audit_check(
-            "create_module_logger.default.type", type(logger_default).__name__
+            "create_module_logger.explicit.type",
+            type(logger_default).__name__,
         )
         self.audit_check(
-            "create_module_logger.custom.type", type(logger_custom).__name__
+            "create_module_logger.explicit_custom.type",
+            type(logger_custom).__name__,
         )
         removable_name = f"svc.{self.rand_str(6)}"
         missing_remove_name = f"svc.{self.rand_str(6)}"
@@ -73,7 +75,8 @@ class Ex08ContainerLifecycle(Ex08ContainerScoped):
         FlextContainer.reset_for_testing()
         after_reset = FlextContainer.shared()
         self.audit_check(
-            "reset_singleton.new_instance", before_reset is not after_reset
+            "reset_singleton.new_instance",
+            before_reset is not after_reset,
         )
         self.audit_check(
             "reset_singleton.fetch_global.same_after_reset",

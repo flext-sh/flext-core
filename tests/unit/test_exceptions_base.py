@@ -3,21 +3,36 @@
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
+import pytest
 from flext_tests import e
 
 from tests.constants import c
 from tests.models import m
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
-class TestsFlextExceptionsBase:
-    def test_exception_hierarchy_uses_base_error(self) -> None:
-        assert issubclass(e.ValidationError, e.BaseError)
-        assert issubclass(e.NotFoundError, e.BaseError)
-        assert issubclass(e.AuthenticationError, e.BaseError)
-        assert issubclass(e.TimeoutError, e.BaseError)
-        assert issubclass(e.BaseError, Exception)
+class TestsFlextCoreExceptionsBase:
+    @pytest.mark.parametrize(
+        "subclass",
+        [
+            e.ValidationError,
+            e.NotFoundError,
+            e.AuthenticationError,
+            e.TimeoutError,
+            e.ConflictError,
+            e.ConfigurationError,
+        ],
+    )
+    def test_typed_exceptions_are_base_error_subclasses(
+        self,
+        subclass: type[e.BaseError],
+    ) -> None:
+        assert issubclass(subclass, e.BaseError)
+        assert issubclass(subclass, Exception)
 
     def test_base_error_sets_timestamp_and_formats_string(self) -> None:
         before = time.time()
@@ -39,6 +54,15 @@ class TestsFlextExceptionsBase:
         assert attributes["scope"] == "service"
         assert attributes["new_field"] == "new_value"
 
+    def test_typed_exception_raises_and_is_caught_as_base_error(self) -> None:
+        error = e.ValidationError("bad", field="email")
+        with pytest.raises(e.BaseError) as excinfo:
+            raise error
+        raised = excinfo.value
+        assert isinstance(raised, e.ValidationError)
+        assert raised.field == "email"
+        assert "bad" in str(raised)
+
     def test_fail_operation_returns_structured_failure(self) -> None:
         result: p.Result[bool] = e.fail_operation(
             "register service",
@@ -52,6 +76,16 @@ class TestsFlextExceptionsBase:
         assert result.error_data is not None
         assert result.error_data["operation"] == "register service"
         assert result.error_data["reason"] == "boom"
+
+    def test_failure_result_short_circuits_map_and_recovers(self) -> None:
+        result: p.Result[bool] = e.fail_operation(
+            "register service",
+            ValueError("boom"),
+        )
+        mapped = result.map(lambda _value: False)
+        assert mapped.failure
+        assert mapped.error == result.error
+        assert result.unwrap_or(True) is True
 
     def test_fail_not_found_returns_structured_failure(self) -> None:
         result: p.Result[bool] = e.fail_not_found(
@@ -96,33 +130,31 @@ class TestsFlextExceptionsBase:
         assert result.error_data["expected_type"] == "ldap3.Connection"
         assert result.error_data["actual_type"] == "str"
 
-    def test_fail_validation_returns_structured_failure(self) -> None:
+    @pytest.mark.parametrize(
+        ("field", "value", "cause"),
+        [
+            ("name", "", "empty"),
+            ("email", "bad", "invalid"),
+        ],
+    )
+    def test_fail_validation_returns_structured_failure(
+        self,
+        field: str,
+        value: str,
+        cause: str,
+    ) -> None:
         result: p.Result[bool] = e.fail_validation(
-            m.ValidationErrorParams(field="name", value=""),
-            error="empty",
+            m.ValidationErrorParams(field=field, value=value),
+            error=cause,
         )
         assert result.failure
         assert result.error is not None
-        assert "validate name" in result.error
+        assert f"validate {field}" in result.error
         assert result.error_code == c.ErrorCode.VALIDATION_ERROR
         assert result.error_data is not None
-        assert result.error_data["field"] == "name"
-        assert result.error_data["value"] == ""
-        assert result.error_data["cause"] == "empty"
-
-    def test_fail_validation_accepts_validation_error_params(self) -> None:
-        result: p.Result[bool] = e.fail_validation(
-            m.ValidationErrorParams(field="email", value="bad"),
-            error="invalid",
-        )
-
-        assert result.failure
-        assert result.error is not None
-        assert "validate email" in result.error
-        assert result.error_data is not None
-        assert result.error_data["field"] == "email"
-        assert result.error_data["value"] == "bad"
-        assert result.error_data["cause"] == "invalid"
+        assert result.error_data["field"] == field
+        assert result.error_data["value"] == value
+        assert result.error_data["cause"] == cause
 
     def test_declarative_error_supports_public_auto_correlation(self) -> None:
         error = e.ValidationError(

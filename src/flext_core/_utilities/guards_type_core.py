@@ -14,11 +14,12 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-from typing import TypeIs
-
-from pydantic import BaseModel as PydanticBaseModel
+from typing import TYPE_CHECKING, TypeGuard, TypeIs
 
 from flext_core import FlextTypes as t
+
+if TYPE_CHECKING:
+    from pydantic import BaseModel as PydanticBaseModel
 
 
 class FlextUtilitiesGuardsTypeCore:
@@ -161,7 +162,7 @@ class FlextUtilitiesGuardsTypeCore:
         )
 
     @staticmethod
-    def string_non_empty(value: t.GuardInput) -> TypeIs[str]:
+    def string_non_empty(value: t.GuardInput) -> TypeGuard[str]:
         """Check if value is a non-empty string (after stripping whitespace)."""
         return isinstance(value, str) and bool(value.strip())
 

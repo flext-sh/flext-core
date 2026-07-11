@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import io
 import time
-from collections.abc import Callable, Sequence
 from contextlib import redirect_stdout
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from tests.models import m
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
 
 def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:

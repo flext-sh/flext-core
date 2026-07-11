@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Annotated, ClassVar, override
+from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_core import m
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tests.typings import t
 
 
 class TestsFlextModelsDomainMixin:
@@ -70,7 +73,10 @@ class TestsFlextModelsDomainMixin:
         items: t.StrSequence = []
 
         def __init__(
-            self, data: str = "", items: t.StrSequence | None = None, **kwargs: t.Scalar
+            self,
+            data: str = "",
+            items: t.StrSequence | None = None,
+            **kwargs: t.Scalar,
         ) -> None:
             """Initialize complex value with non-hashable items."""
             super().__init__(data=data, items=items or [], **kwargs)

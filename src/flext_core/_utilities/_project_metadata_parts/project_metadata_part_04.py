@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import typing as _typing
-from pathlib import Path
 from types import MappingProxyType
 
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
-from flext_core._typings.base import FlextTypingBase as tb
 
 from .project_metadata_part_03 import (
     FlextUtilitiesProjectMetadata as FlextUtilitiesProjectMetadataPart03,
 )
+
+if _typing.TYPE_CHECKING:
+    from pathlib import Path
+
+    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextUtilitiesProjectMetadata(FlextUtilitiesProjectMetadataPart03):

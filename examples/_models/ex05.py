@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import ClassVar, cast, override
+from typing import override
 
 from flext_core.models import m
 from flext_core.utilities import u
@@ -21,7 +21,7 @@ class ExamplesFlextModelsEx05:
     class UserModel(m.Value):
         name: str = u.Field(description="User display name")
         status: ExamplesFlextModelsEx05.StatusEnum = u.Field(
-            description="User account status"
+            description="User account status",
         )
         age: int = u.Field(description="User age in years")
 
@@ -36,18 +36,15 @@ class ExamplesFlextModelsEx05:
             return ExamplesFlextModelsEx05.StatusEnum(value)
 
     class HandlerBad(m.Value):
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        """Marker model that is not a valid handler."""
 
     class HandlerLike(m.Value):
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
         data: m.ConfigMap = u.Field(
             default_factory=lambda: m.ConfigMap(root={}),
             description="Handler payload map",
         )
 
     class GoodProcessor(m.Value):
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
-
         def process(self) -> bool:
             return True
 
@@ -57,9 +54,7 @@ class ExamplesFlextModelsEx05:
             cls,
             value: m.ConfigMap,
         ) -> ExamplesFlextModelsEx05.GoodProcessor:
-            return cast(
-                "ExamplesFlextModelsEx05.GoodProcessor", cls.model_validate(value)
-            )
+            return cls.model_validate(value)
 
     class BadProcessor(m.Value):
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        """Marker model that is not a valid processor."""

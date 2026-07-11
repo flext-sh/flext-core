@@ -4,13 +4,9 @@ from __future__ import annotations
 
 from importlib import import_module
 
-from flext_core import (
-    FlextModels as m,
-    FlextProtocols as p,
-    FlextTypes as t,
-    FlextUtilitiesDiscovery,
-    FlextUtilitiesGuardsTypeProtocol,
-)
+from flext_core import FlextModels as m, FlextProtocols as p, FlextTypes as t
+from flext_core._utilities.discovery import FlextUtilitiesDiscovery
+from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
 
 from .model_options import FlextUtilitiesModelOptions
 

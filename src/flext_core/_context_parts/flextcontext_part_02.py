@@ -14,15 +14,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 from flext_core import c, m, t, u
 
 from .flextcontext_part_01 import (
     FlextContext as FlextContextPart01,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 class FlextContext(FlextContextPart01):

@@ -87,7 +87,14 @@ if TYPE_CHECKING:
     from examples.shared import ExamplesFlextShared as ExamplesFlextShared
     from examples.typings import ExamplesFlextTypes as ExamplesFlextTypes, t as t
     from examples.utilities import u as u
-    from flext_core import d as d, e as e, h as h, r as r, s as s, x as x
+    from flext_core._root_typing_parts.facades import (
+        d as d,
+        e as e,
+        h as h,
+        r as r,
+        s as s,
+        x as x,
+    )
 _LAZY_IMPORTS = merge_lazy_imports(
     (
         "._models",
@@ -154,7 +161,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "t",
             ),
             ".utilities": ("u",),
-            "flext_core": (
+            "flext_core._root_typing_parts.facades": (
                 "d",
                 "e",
                 "h",

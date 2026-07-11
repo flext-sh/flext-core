@@ -24,7 +24,7 @@ ROOT_TYPING_ONLY_NAMES: Final[tuple[str, ...]] = (
     "FlextTypingBase",
     "FlextTypingContainers",
     "FlextTypingProjectMetadata",
-    "FlextSettingsBase",
+    "FlextSettings",
     "FlextModelsBase",
     "FlextModelsBuilder",
     "FlextModelsCollections",

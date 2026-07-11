@@ -1,111 +1,146 @@
-"""Decorator injection, logging, and tracking tests."""
+"""Behavioral tests for injection and logging decorators.
+
+Covers the public contract of ``d.inject``, ``d.log_operation``,
+``d.with_correlation`` and ``d.deprecated`` through observable behavior only:
+return values, propagated exceptions, emitted log output, correlation state and
+warnings. No private attributes, internal collaborators or implementation
+structures are asserted.
+"""
 
 from __future__ import annotations
-
-import time
 
 import pytest
 from flext_tests import d
 
+from flext_core.container import FlextContainer
+from flext_core.context import FlextContext
 from tests.models import m
-from tests.unit._decorators_support import (
-    TestsFlextDecoratorsLegacy,
-    capture_stdout,
-)
-
-INJECT_SCENARIOS = TestsFlextDecoratorsLegacy.INJECT_SCENARIOS
-LOG_SCENARIOS = TestsFlextDecoratorsLegacy.LOG_SCENARIOS
-TRACK_SCENARIOS = TestsFlextDecoratorsLegacy.TRACK_SCENARIOS
+from tests.unit._decorators_support import capture_stdout
 
 
-class TestsFlextDecoratorsInjectionLogging(TestsFlextDecoratorsLegacy):
-    @pytest.mark.parametrize("test_case", INJECT_SCENARIOS, ids=lambda case: case.name)
-    def test_inject_decorator(
+class TestsFlextCoreDecoratorsInjectionLogging:
+    @pytest.fixture
+    def container(self) -> FlextContainer:
+        return FlextContainer.shared()
+
+    # --- d.inject --------------------------------------------------------
+    def test_inject_resolves_registered_service_from_container(
         self,
-        test_case: TestsFlextDecoratorsLegacy.DecoratorTestCase,
+        container: FlextContainer,
     ) -> None:
-        if test_case.operation == self.DecoratorOperationType.INJECT_BASIC:
+        container.bind("inject_greeter", "HELLO")
 
-            @d.inject(test_service="test_service")
-            def process_data_basic(
-                data: str,
-                *,
-                test_service: TestsFlextDecoratorsLegacy.TestService | None = None,
-            ) -> str:
-                if test_service is not None:
-                    return f"{data}_{test_service.get_value()}"
-                return f"{data}_default"
+        @d.inject(greeter="inject_greeter")
+        def greet(name: str, *, greeter: str = "DEFAULT") -> str:
+            return f"{greeter}:{name}"
 
-            assert process_data_basic("input") == "input_default"
-        elif test_case.operation == self.DecoratorOperationType.INJECT_MISSING:
+        assert greet("bob") == "HELLO:bob"
 
-            @d.inject(missing_service="missing_service")
-            def process_data_missing(*, missing_service: str = "default") -> str:
-                return missing_service
-
-            assert process_data_missing() == "default"
-        elif test_case.operation == self.DecoratorOperationType.INJECT_PROVIDED:
-
-            class TestServiceTyped(m.BaseModel):
-                value: str
-
-            @d.inject(service="service")
-            def process(*, service: TestServiceTyped) -> str:
-                return service.value
-
-            explicit_service = TestServiceTyped.model_validate({"value": "explicit"})
-            assert process(service=explicit_service) == "explicit"
-
-    @pytest.mark.parametrize("test_case", LOG_SCENARIOS, ids=lambda case: case.name)
-    def test_log_operation_decorator(
+    def test_inject_explicit_kwarg_overrides_container_value(
         self,
-        test_case: TestsFlextDecoratorsLegacy.DecoratorTestCase,
+        container: FlextContainer,
     ) -> None:
-        if test_case.operation == self.DecoratorOperationType.LOG_OPERATION_BASIC:
+        container.bind("inject_override", "CONTAINER")
 
-            @d.log_operation("test_operation")
-            def simple_function() -> str:
-                return "success"
+        @d.inject(greeter="inject_override")
+        def greet(*, greeter: str = "DEFAULT") -> str:
+            return greeter
 
-            assert simple_function() == "success"
-        elif test_case.operation == self.DecoratorOperationType.LOG_OPERATION_EXCEPTION:
+        assert greet(greeter="EXPLICIT") == "EXPLICIT"
 
-            @d.log_operation("failing_operation")
-            def failing_function() -> None:
-                error_msg = "Test error"
-                raise ValueError(error_msg)
+    def test_inject_missing_key_preserves_default_argument(self) -> None:
+        @d.inject(dependency="unregistered_key_xyz")
+        def use(*, dependency: str = "fallback") -> str:
+            return dependency
 
-            def emit() -> None:
-                with pytest.raises(ValueError, match="Test error"):
-                    failing_function()
+        assert use() == "fallback"
 
-            _ = capture_stdout(emit, contains="failing_operation")
-
-    @pytest.mark.parametrize("test_case", TRACK_SCENARIOS, ids=lambda case: case.name)
-    def test_track_performance_decorator(
+    def test_inject_delivers_pydantic_model_instance(
         self,
-        test_case: TestsFlextDecoratorsLegacy.DecoratorTestCase,
+        container: FlextContainer,
     ) -> None:
-        if test_case.operation == self.DecoratorOperationType.TRACK_PERFORMANCE_BASIC:
+        class InjectedService(m.BaseModel):
+            value: str
 
-            @d.log_operation("timed_operation")
-            def timed_function() -> str:
-                time.sleep(0.01)
-                return "completed"
+        container.bind("inject_model", InjectedService(value="model-value"))
 
-            assert timed_function() == "completed"
-        elif (
-            test_case.operation
-            == self.DecoratorOperationType.TRACK_PERFORMANCE_EXCEPTION
-        ):
+        @d.inject(service="inject_model")
+        def read(*, service: InjectedService | None = None) -> str:
+            return service.value if service is not None else "none"
 
-            @d.log_operation("failing_operation")
-            def failing_function() -> None:
-                error_msg = "Timed failure"
-                raise RuntimeError(error_msg)
+        assert read() == "model-value"
 
-            def emit() -> None:
-                with pytest.raises(RuntimeError, match="Timed failure"):
-                    failing_function()
+    # --- d.log_operation -------------------------------------------------
+    @pytest.mark.parametrize("payload", ["success", "", "multi word result"])
+    def test_log_operation_returns_wrapped_value_unchanged(
+        self,
+        payload: str,
+    ) -> None:
+        @d.log_operation("payload_op")
+        def produce() -> str:
+            return payload
 
-            _ = capture_stdout(emit, contains="failing_operation")
+        assert produce() == payload
+
+    def test_log_operation_with_perf_tracking_returns_value(self) -> None:
+        @d.log_operation("timed_op", track_perf=True)
+        def compute() -> int:
+            return 42
+
+        assert compute() == 42
+
+    @pytest.mark.parametrize(
+        ("exc_type", "message"),
+        [
+            (ValueError, "bad value"),
+            (RuntimeError, "runtime boom"),
+            (KeyError, "missing"),
+        ],
+    )
+    def test_log_operation_propagates_wrapped_exception(
+        self,
+        exc_type: type[Exception],
+        message: str,
+    ) -> None:
+        @d.log_operation("failing_op")
+        def boom() -> None:
+            raise exc_type(message)
+
+        with pytest.raises(exc_type, match=message):
+            boom()
+
+    def test_log_operation_emits_operation_name_on_failure(self) -> None:
+        @d.log_operation("named_failure_op")
+        def boom() -> None:
+            error_msg = "kaboom"
+            raise ValueError(error_msg)
+
+        def emit() -> None:
+            with pytest.raises(ValueError, match="kaboom"):
+                boom()
+
+        _ = capture_stdout(emit, contains="named_failure_op")
+
+    # --- d.with_correlation ----------------------------------------------
+    def test_with_correlation_establishes_correlation_id_during_call(self) -> None:
+        @d.with_correlation()
+        def inside() -> str:
+            return FlextContext.ensure_correlation_id()
+
+        assert inside()
+
+    def test_with_correlation_returns_wrapped_value(self) -> None:
+        @d.with_correlation()
+        def produce() -> str:
+            return "wrapped"
+
+        assert produce() == "wrapped"
+
+    # --- d.deprecated ----------------------------------------------------
+    def test_deprecated_warns_and_returns_value(self) -> None:
+        @d.deprecated("use new_api")
+        def old_api() -> int:
+            return 7
+
+        with pytest.warns(DeprecationWarning, match="deprecated"):
+            assert old_api() == 7

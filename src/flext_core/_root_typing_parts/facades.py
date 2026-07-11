@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import Final
 
+from flext_core._settings import (
+    FlextSettings,
+    settings,
+)
 from flext_core.constants import (
     FlextConstants,
     c,
@@ -36,7 +40,7 @@ from flext_core.lazy import (
     normalize_lazy_imports,
 )
 from flext_core.loggings import (
-    FlextLogger,
+    FlextUtilitiesLogging,
 )
 from flext_core.mixins import (
     FlextMixins,
@@ -64,9 +68,6 @@ from flext_core.service import (
     FlextService,
     s,
 )
-from flext_core.settings import (
-    FlextSettings,
-)
 from flext_core.typings import (
     FlextTypes,
     t,
@@ -92,7 +93,7 @@ ROOT_TYPING_FACADES_ALL: Final[tuple[str, ...]] = (
     "build_lazy_import_map",
     "lazy",
     "normalize_lazy_imports",
-    "FlextLogger",
+    "FlextUtilitiesLogging",
     "FlextMixins",
     "x",
     "FlextModels",
@@ -120,7 +121,6 @@ __all__: tuple[str, ...] = (
     "FlextExceptions",
     "FlextHandlers",
     "FlextLazy",
-    "FlextLogger",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",
@@ -131,6 +131,7 @@ __all__: tuple[str, ...] = (
     "FlextSettings",
     "FlextTypes",
     "FlextUtilities",
+    "FlextUtilitiesLogging",
     "build_lazy_import_map",
     "c",
     "d",
@@ -142,6 +143,7 @@ __all__: tuple[str, ...] = (
     "p",
     "r",
     "s",
+    "settings",
     "t",
     "u",
     "x",

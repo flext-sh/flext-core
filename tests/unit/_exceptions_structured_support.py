@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from flext_tests import e
 
 from tests.constants import c
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 type ErrorFactory = Callable[[], e.BaseError]
 

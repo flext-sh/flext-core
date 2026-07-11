@@ -100,7 +100,7 @@ INFRA_DETECTOR_ROWS_CORE: Final[
     (
         "ENFORCE-080",
         "HIGH",
-        "compatibility_alias_violations",
+        "foreign_canonical_alias_violations",
         "4-import-law",
         ("flext-import-rules", "flext-mro-namespace-rules"),
         False,

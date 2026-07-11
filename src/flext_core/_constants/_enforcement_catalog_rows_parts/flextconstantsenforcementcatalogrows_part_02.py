@@ -81,7 +81,7 @@ class FlextConstantsEnforcementCatalogSkillRows:
             "models-have-no-helpers",
             "3-1-supreme-law",
             ("pydantic-v2-governance", "pydantic-v2-patterns"),
-            "Pydantic 2 data models must contain only fields, model_config, field_validator/model_validator/computed_field, and essential dunders. Methods named get_*/to_*/from_*/is_*/with_* on data models violate AGENTS.md §3.1 (Pydantic v2 Mastery) — relocate to a service mixin or @computed_field. Carve-out: infrastructure base classes (FlextSettingsBase, FlextService, Flext<X>ServiceBase) may expose singleton/clone/factory kernel methods. Extends ENFORCE-034 (get_/set_) to to_/from_/is_/with_ family.",
+            "Pydantic 2 data models must contain only fields, model_config, field_validator/model_validator/computed_field, and essential dunders. Methods named get_*/to_*/from_*/is_*/with_* on data models violate AGENTS.md §3.1 (Pydantic v2 Mastery) — relocate to a service mixin or @computed_field. Carve-out: infrastructure base classes (FlextSettings, FlextService, Flext<X>ServiceBase) may expose singleton/clone/factory kernel methods. Extends ENFORCE-034 (get_/set_) to to_/from_/is_/with_ family.",
         ),
         (
             "ENFORCE-059",

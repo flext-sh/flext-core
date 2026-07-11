@@ -37,15 +37,15 @@ class FlextModelsBase(FlextModelsBasePart02):
 
         created_at: Annotated[
             datetime,
-            mp.AfterValidator(lambda v: ur.ensure_utc_datetime(v)),
+            mp.AfterValidator(ur.ensure_utc_datetime),
             mp.Field(
                 description="Creation timestamp (configured timezone)",
                 frozen=True,
             ),
-        ] = mp.Field(default_factory=lambda: ug.now())
+        ] = mp.Field(default_factory=ug.now)
         updated_at: Annotated[
             datetime | None,
-            mp.AfterValidator(lambda v: ur.ensure_utc_datetime(v)),
+            mp.AfterValidator(ur.ensure_utc_datetime),
             mp.Field(
                 default=None,
                 description="Last update timestamp (configured timezone)",

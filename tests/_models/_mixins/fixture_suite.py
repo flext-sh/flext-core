@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from flext_core import m
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextModelsFixtureSuiteMixin:

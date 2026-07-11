@@ -30,6 +30,57 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
         with pytest.raises(ValueError, match=message):
             core_u.safe_string(value)
 
+    @pytest.mark.parametrize(
+        ("raw", "expected_id", "expected_key"),
+        [
+            pytest.param(
+                "  Fleet Sync_App v2  ",
+                "fleet-sync-app-v2",
+                "fleetsyncappv2",
+                id="mixed-space-underscore",
+            ),
+            pytest.param("A B", "a-b", "ab", id="uppercase-space"),
+            pytest.param("__x__", "--x--", "x", id="underscore-padding"),
+        ],
+    )
+    def test_public_text_helpers_derive_stable_identifiers(
+        self,
+        raw: str,
+        expected_id: str,
+        expected_key: str,
+    ) -> None:
+        """format_app_id and normalize_alnum expose a deterministic contract."""
+        cleaned = core_u.safe_string(raw)
+
+        app_id = core_u.format_app_id(cleaned)
+        normalized_key = core_u.normalize_alnum(cleaned)
+
+        assert app_id == expected_id
+        assert app_id == app_id.lower()
+        assert " " not in app_id
+        assert "_" not in app_id
+        assert normalized_key == expected_key
+        assert normalized_key.isalnum() or normalized_key == ""
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            pytest.param("  spaced  ", id="surrounding-space"),
+            pytest.param("a b", id="inner-space"),
+            pytest.param("Fleet Sync_App v2", id="app-name"),
+        ],
+    )
+    def test_public_text_helpers_are_idempotent(self, value: str) -> None:
+        """Re-applying the helpers to their own output is a fixed point."""
+        cleaned = core_u.safe_string(value)
+        assert core_u.safe_string(cleaned) == cleaned
+
+        app_id = core_u.format_app_id(cleaned)
+        assert core_u.format_app_id(app_id) == app_id
+
+        normalized_key = core_u.normalize_alnum(cleaned)
+        assert core_u.normalize_alnum(normalized_key) == normalized_key
+
     def test_public_text_helpers_prepare_and_persist_app_manifest(
         self,
         tmp_path: Path,

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Final
+from typing import TYPE_CHECKING, Final
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 ROOT_LAZY_CORE: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType({
     "._constants.base": ("FlextConstantsBase",),
@@ -65,14 +67,7 @@ ROOT_LAZY_CORE: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType({
     "._protocols.result": ("FlextProtocolsResult",),
     "._protocols.service": ("FlextProtocolsService",),
     "._protocols.settings": ("FlextProtocolsSettings",),
-    "._settings.base": ("FlextSettingsBase",),
-    "._settings.context": ("FlextSettingsContext",),
-    "._settings.core": ("FlextSettingsCore",),
-    "._settings.database": ("FlextSettingsDatabase",),
-    "._settings.di": ("FlextSettingsDI",),
-    "._settings.dispatcher": ("FlextSettingsDispatcher",),
-    "._settings.infrastructure": ("FlextSettingsInfrastructure",),
-    "._settings.registry": ("FlextSettingsRegistry",),
+    "._settings": ("FlextSettings", "settings"),
     "._typings.annotateds": ("FlextTypesAnnotateds",),
     "._typings.base": ("FlextTypingBase",),
     "._typings.containers": ("FlextTypingContainers",),

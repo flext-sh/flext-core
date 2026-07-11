@@ -61,6 +61,7 @@ if TYPE_CHECKING:
     from flext_core._models.collections import (
         FlextModelsCollections as FlextModelsCollections,
     )
+    from flext_core._models.config import FlextModelsConfig as FlextModelsConfig
     from flext_core._models.containers import (
         FlextModelsContainers as FlextModelsContainers,
         mc as mc,
@@ -121,6 +122,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ),
         ".builder": ("FlextModelsBuilder",),
         ".collections": ("FlextModelsCollections",),
+        ".config": ("FlextModelsConfig",),
         ".containers": (
             "FlextModelsContainers",
             "mc",

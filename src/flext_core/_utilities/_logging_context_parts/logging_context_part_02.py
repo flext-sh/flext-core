@@ -1,6 +1,6 @@
 """Logging context binding and value normalization.
 
-Extracted from FlextLogger as an MRO mixin to keep the facade under
+Extracted from FlextUtilitiesLogging as an MRO mixin to keep the facade under
 the 200-line cap (AGENTS.md §3.1).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import inspect
 import logging
-import types
 from contextlib import suppress
+from typing import TYPE_CHECKING
 
 from flext_core import (
     FlextConstants as c,
@@ -21,6 +21,9 @@ from flext_core import (
 from .logging_context_part_01 import (
     FlextUtilitiesLoggingContext as FlextUtilitiesLoggingContextPart01,
 )
+
+if TYPE_CHECKING:
+    import types
 
 
 class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):

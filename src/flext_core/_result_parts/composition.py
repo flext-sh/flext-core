@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Callable, MutableSequence, Sequence
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from pydantic import ValidationError
 
 from flext_core._constants.errors import FlextConstantsErrors as c
-from flext_core._protocols.result import FlextProtocolsResult as p
-from flext_core._typings.base import FlextTypingBase as t
 
 from .construction import FlextResultConstructionMixin
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, MutableSequence, Sequence
+
+    from flext_core._protocols.result import FlextProtocolsResult as p
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):

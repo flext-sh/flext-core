@@ -14,16 +14,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
+from re import Pattern
+from typing import TYPE_CHECKING, TypeAlias, dataclass_transform
+
 from pydantic import (
     AfterValidator,
+    AliasChoices,
+    AliasPath,
     BaseModel as PydanticBaseModel,
     BeforeValidator,
-    ConfigDict,
+    ConfigDict as _PydanticConfigDict,
+    Discriminator,
     Field,
     FieldSerializationInfo,
     GetCoreSchemaHandler,
     GetJsonSchemaHandler,
     GetPydanticSchema,
+    JsonValue,
     PlainSerializer,
     PlainValidator,
     PrivateAttr,
@@ -38,14 +47,44 @@ from pydantic import (
 )
 from pydantic.fields import FieldInfo
 from pydantic_core import (
+    PydanticUndefined,
+    PydanticUndefinedType,
     SchemaValidator,
 )
 from pydantic_settings import (
     BaseSettings as PydanticBaseSettings,
     EnvSettingsSource,
     PydanticBaseSettingsSource,
-    SettingsConfigDict,
+    SettingsConfigDict as _PydanticSettingsConfigDict,
 )
+
+if TYPE_CHECKING:
+    from types import EllipsisType
+
+type _FieldValue = JsonValue | Path
+type _FieldSchemaExtra = Mapping[str, _FieldValue | Sequence[_FieldValue]]
+type _FieldKeywordValue[DefaultT] = (
+    _FieldValue
+    | _FieldSchemaExtra
+    | PydanticUndefinedType
+    | FieldInfo
+    | AliasChoices
+    | AliasPath
+    | Discriminator
+    | Pattern[str]
+    | Callable[..., DefaultT]
+    | Callable[..., _FieldValue | None]
+    | type[DefaultT]
+)
+
+
+def _field[DefaultT](
+    default: DefaultT | PydanticUndefinedType | EllipsisType = PydanticUndefined,
+    **kwargs: _FieldKeywordValue[DefaultT] | None,
+) -> DefaultT:
+    """Typed FLEXT facade for ``pydantic.Field``."""
+    field_factory: Callable[..., DefaultT] = Field
+    return field_factory(default, **kwargs)
 
 
 class FlextModelsPydantic:
@@ -59,20 +98,32 @@ class FlextModelsPydantic:
         RootModel: Container model for single validated values/collections
     """
 
+    @dataclass_transform(
+        kw_only_default=True,
+        field_specifiers=(_field, Field, PrivateAttr),
+    )
     class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
+    @dataclass_transform(
+        kw_only_default=True,
+        field_specifiers=(_field, Field, PrivateAttr),
+    )
     class BaseSettings(PydanticBaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
+    @dataclass_transform(
+        kw_only_default=True,
+        field_specifiers=(_field, Field, PrivateAttr),
+    )
     class RootModel[RootValueT](PydanticRootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
 
     # Pydantic field utilities
-    ConfigDict = ConfigDict
-    SettingsConfigDict = SettingsConfigDict
+    ConfigDict: TypeAlias = _PydanticConfigDict
+    SettingsConfigDict: TypeAlias = _PydanticSettingsConfigDict
 
-    Field = Field
+    Field = staticmethod(_field)
     PrivateAttr = PrivateAttr
     SkipValidation = SkipValidation
     computed_field = computed_field
@@ -92,6 +143,7 @@ class FlextModelsPydantic:
     FieldInfo = FieldInfo
     FieldSerializationInfo = FieldSerializationInfo
 
+    type TypeAdapterType[T] = PydanticTypeAdapter[T]
     TypeAdapter = PydanticTypeAdapter
 
     # Schema and validator handlers

@@ -21,6 +21,9 @@ if TYPE_CHECKING:
         FlextProtocolsResult as FlextProtocolsResult,
     )
     from flext_core._protocols.base import FlextProtocolsBase as FlextProtocolsBase
+    from flext_core._protocols.config import (
+        FlextProtocolsConfig as FlextProtocolsConfig,
+    )
     from flext_core._protocols.handler import (
         FlextProtocolsHandler as FlextProtocolsHandler,
     )
@@ -49,6 +52,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         "._result_parts": ("_result_parts",),
         "._result_parts.flextprotocolsresult_part_04": ("FlextProtocolsResult",),
         ".base": ("FlextProtocolsBase",),
+        ".config": ("FlextProtocolsConfig",),
         ".handler": ("FlextProtocolsHandler",),
         ".pydantic": ("FlextProtocolsPydantic",),
         ".registry": ("FlextProtocolsRegistry",),

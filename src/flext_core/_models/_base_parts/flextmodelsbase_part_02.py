@@ -13,9 +13,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from collections.abc import Hashable
 from datetime import datetime
 from types import MappingProxyType
 from typing import Annotated, ClassVar, override
+
+from pydantic import ConfigDict
 
 from flext_core._models._base_parts.flextmodelsbase_part_01 import (
     FlextModelsBase as FlextModelsBasePart01,
@@ -30,12 +33,13 @@ from flext_core.constants import FlextConstants as c
 
 
 class FlextModelsBase(FlextModelsBasePart01):
-    StrictModel = FlextModelsBasePart01.StrictModel
+    class StrictModel(FlextModelsBasePart01.StrictModel):
+        """Reusable strict model preset for validated domain boundaries."""
 
     class Metadata(mp.BaseModel):
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             extra=c.EXTRA_CONFIG_FORBID,
             frozen=True,
             validate_assignment=True,
@@ -49,7 +53,7 @@ class FlextModelsBase(FlextModelsBasePart01):
                 title="Created At",
                 examples=["2026-03-03T10:00:00+00:00"],
             ),
-        ] = mp.Field(default_factory=lambda: ug.now())
+        ] = mp.Field(default_factory=ug.now)
         updated_at: Annotated[
             datetime,
             mp.Field(
@@ -57,7 +61,7 @@ class FlextModelsBase(FlextModelsBasePart01):
                 title="Updated At",
                 examples=["2026-03-03T10:05:00+00:00"],
             ),
-        ] = mp.Field(default_factory=lambda: ug.now())
+        ] = mp.Field(default_factory=ug.now)
         version: Annotated[
             str,
             mp.Field(
@@ -110,7 +114,7 @@ class FlextModelsBase(FlextModelsBasePart01):
     class ContractModel(StrictModel):
         """Immutable base model with strict validation."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_return=True,
             arbitrary_types_allowed=True,
             ser_json_timedelta=c.SERIALIZATION_ISO8601,
@@ -119,7 +123,7 @@ class FlextModelsBase(FlextModelsBasePart01):
             frozen=True,
         )
 
-    class FrozenValueModel(ContractModel):
+    class FrozenValueModel(ContractModel, Hashable):
         """Value model with equality/hash by value."""
 
         @override
@@ -137,7 +141,7 @@ class FlextModelsBase(FlextModelsBasePart01):
     class MutableConfiguredMixin:
         """Shared preset for mutable mixins with assignment validation."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True,
             arbitrary_types_allowed=True,
         )
@@ -145,7 +149,7 @@ class FlextModelsBase(FlextModelsBasePart01):
     class NormalizedMutableConfiguredMixin(MutableConfiguredMixin):
         """Shared preset for mutable mixins with whitespace normalization."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             str_strip_whitespace=True,
         )
 

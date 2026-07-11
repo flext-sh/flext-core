@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterator,
-)
+from collections.abc import Iterator
 from enum import EnumType
 from typing import ClassVar
 

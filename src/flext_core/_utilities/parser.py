@@ -18,8 +18,8 @@ from flext_core import (
     FlextProtocols as p,
     FlextResult as r,
     FlextTypes as t,
-    FlextUtilitiesGuardsTypeModel,
 )
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 
 from .parser_targets import FlextUtilitiesParserTargets
 

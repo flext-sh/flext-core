@@ -27,7 +27,8 @@ class Ex01r(Ex01ResultAdvancedSections):
         self.audit_check("value.success", ok_value.value)
         self.audit_check("value.failure.unwrap_or", fail_value.unwrap_or(123))
         self.audit_check(
-            "map.success", ok_value.map(lambda value: value + 1).unwrap_or(-1)
+            "map.success",
+            ok_value.map(lambda value: value + 1).unwrap_or(-1),
         )
         self.audit_check("map.failure", fail_value.map(lambda value: value + 1).failure)
         self.audit_check(
@@ -108,7 +109,8 @@ class Ex01r(Ex01ResultAdvancedSections):
         callable_fail = r[str].create_from_callable(func_fail, error_code="E_CALL")
         callable_none = r[str].create_from_callable(func_none, error_code="E_NONE")
         self.audit_check(
-            "create_from_callable.success", callable_ok.unwrap_or("fallback")
+            "create_from_callable.success",
+            callable_ok.unwrap_or("fallback"),
         )
         self.audit_check("create_from_callable.failure.code", callable_fail.error_code)
         self.audit_check("create_from_callable.none.error", callable_none.error)

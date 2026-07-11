@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
+
+if TYPE_CHECKING:
+    from tests.typings import t
 
 
 class TestsFlextModelsExceptionParamsCore:
@@ -17,11 +20,22 @@ class TestsFlextModelsExceptionParamsCore:
         with pytest.raises(c.ValidationError):
             m.ParamsModel.model_validate({"unknown_field": "value"})
 
-    def test_params_model_strict_mode(self) -> None:
-        """ParamsModel enforces strict=True in settings."""
-        tm.that(m.ParamsModel.model_config.get("strict"), eq=True)
-        tm.that(m.ParamsModel.model_config.get("extra"), eq="forbid")
-        tm.that(m.ParamsModel.model_config.get("validate_assignment"), eq=True)
+    def test_strict_mode_rejects_type_coercion(self) -> None:
+        """strict=True: a string is not coerced into an int port."""
+        with pytest.raises(c.ValidationError):
+            m.ConnectionErrorParams(port="5432")
+
+    def test_validate_assignment_rejects_bad_value(self) -> None:
+        """validate_assignment=True: reassigning an invalid type raises."""
+        params = m.ConnectionErrorParams(port=1)
+        with pytest.raises(c.ValidationError):
+            setattr(params, "port", "bad")
+
+    def test_validate_assignment_rejects_extra_field(self) -> None:
+        """extra=forbid + validate_assignment: unknown attribute assignment raises."""
+        params = m.ConnectionErrorParams()
+        with pytest.raises(c.ValidationError):
+            setattr(params, "unknown_field", "value")
 
     def test_validation_error_params_defaults(self) -> None:
         params = m.ValidationErrorParams()
@@ -45,7 +59,9 @@ class TestsFlextModelsExceptionParamsCore:
         ids=["str-value", "int-value", "float-value", "bool-value", "all-none"],
     )
     def test_validation_error_params_scalar_values(
-        self, field: str | None, value: t.Scalar | None
+        self,
+        field: str | None,
+        value: t.Scalar | None,
     ) -> None:
         params = m.ValidationErrorParams(field=field, value=value)
         tm.that(params.field, eq=field)
@@ -64,7 +80,8 @@ class TestsFlextModelsExceptionParamsCore:
 
     def test_configuration_error_params_with_values(self) -> None:
         params = m.ConfigurationErrorParams(
-            config_key="database_url", config_source=".env"
+            config_key="database_url",
+            config_source=".env",
         )
         tm.that(params.config_key, eq="database_url")
         tm.that(params.config_source, eq=".env")
@@ -96,10 +113,30 @@ class TestsFlextModelsExceptionParamsCore:
         ids=["int-timeout", "float-timeout", "zero", "none"],
     )
     def test_connection_error_params_timeout_types(
-        self, timeout_val: float | None
+        self,
+        timeout_val: float | None,
     ) -> None:
         params = m.ConnectionErrorParams(timeout=timeout_val)
         tm.that(params.timeout, eq=timeout_val)
+
+    @pytest.mark.parametrize(
+        ("host", "port", "expected"),
+        [
+            ("db.internal", 5432, "db.internal:5432"),
+            ("db.internal", None, "db.internal"),
+            (None, 5432, "unknown:5432"),
+            (None, None, "unknown"),
+        ],
+        ids=["host-and-port", "host-only", "port-only", "neither"],
+    )
+    def test_connection_target_formats_host_port(
+        self,
+        host: str | None,
+        port: int | None,
+        expected: str,
+    ) -> None:
+        params = m.ConnectionErrorParams(host=host, port=port)
+        tm.that(params.connection_target, eq=expected)
 
     def test_connection_error_params_serialization(self) -> None:
         params = m.ConnectionErrorParams(host="localhost", port=8080, timeout=10)
@@ -139,7 +176,8 @@ class TestsFlextModelsExceptionParamsCore:
 
     def test_authentication_error_params_serialization(self) -> None:
         params = m.AuthenticationErrorParams(
-            auth_method="oauth2", user_id="svc-account"
+            auth_method="oauth2",
+            user_id="svc-account",
         )
         data = params.model_dump()
         tm.that(data["auth_method"], eq="oauth2")

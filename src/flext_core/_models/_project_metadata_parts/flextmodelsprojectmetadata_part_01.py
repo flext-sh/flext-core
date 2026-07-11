@@ -41,7 +41,7 @@ class FlextModelsProjectMetadata:
 
     @staticmethod
     def derive_class_stem(project_name: str) -> str:
-        """Return the generic PascalCase class stem for metadata models."""
+        """The generic PascalCase class stem for metadata models."""
         if not project_name:
             msg = "empty project name"
             raise ValueError(msg)
@@ -101,12 +101,12 @@ class FlextModelsProjectMetadata:
 
         @property
         def package_name(self) -> str:
-            """Return the Python package name (``flext-ldif`` → ``flext_ldif``)."""
+            """The Python package name (``flext-ldif`` → ``flext_ldif``)."""
             return self.name.replace("-", "_")
 
         @property
         def class_stem(self) -> str:
-            """Return the canonical PascalCase class stem (SSOT-derived)."""
+            """The canonical PascalCase class stem (SSOT-derived)."""
             return FlextModelsProjectMetadata.derive_class_stem(self.name)
 
     class ProjectConstants(FlextModelsPydantic.BaseModel):

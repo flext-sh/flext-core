@@ -9,13 +9,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableMapping,
-)
 from enum import StrEnum
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import FlextTypes as t
+from flext_core.typings import FlextTypes as t
+
+if TYPE_CHECKING:
+    from collections.abc import (
+        MutableMapping,
+    )
 
 
 class FlextUtilitiesEnum:

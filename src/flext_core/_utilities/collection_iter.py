@@ -7,11 +7,12 @@ collection facade stays under the 200-LOC cap (logical LOC, AGENTS.md §3.1).
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import overload
-
-from flext_core import t
+from typing import TYPE_CHECKING, overload
 
 from .collection_merge import FlextUtilitiesCollectionMerge
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):

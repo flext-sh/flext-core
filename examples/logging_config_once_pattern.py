@@ -28,8 +28,8 @@ class ExamplesFlextDatabaseService(s[m.ConfigMap]):
         m.Field(description="Database connection settings."),
     ]
 
-    @override
     @d.log_operation("database_query")
+    @override
     def execute(self) -> p.Result[m.ConfigMap]:
         """Execute database operations.
 
@@ -106,8 +106,8 @@ class ExamplesFlextMigrationService(s[m.ConfigMap]):
             **normalized_settings,
         )
 
-    @override
     @d.log_operation("migration_process")
+    @override
     def execute(self) -> p.Result[m.ConfigMap]:
         """Execute migration.
 

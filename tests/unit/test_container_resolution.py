@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from flext_tests import tm
 
 from tests.models import TestsFlextModels
-from tests.protocols import p
-from tests.typings import t
 from tests.utilities import u
+
+if TYPE_CHECKING:
+    from tests.protocols import p
+    from tests.typings import t
 
 
 class TestsFlextContainerResolution:
@@ -38,7 +42,7 @@ class TestsFlextContainerResolution:
         factory = u.Tests.create_factory(factory_result)
         clean_container.factory("factory_service", factory)
         result: p.Result[t.RegisterableService] = clean_container.resolve(
-            "factory_service"
+            "factory_service",
         )
         u.Tests.assert_success(result, expected_value=factory_result)
 
@@ -49,12 +53,12 @@ class TestsFlextContainerResolution:
         )
         clean_container.factory("factory_service", factory)
         result1: p.Result[t.RegisterableService] = clean_container.resolve(
-            "factory_service"
+            "factory_service",
         )
         _ = u.Tests.assert_success(result1)
         tm.that(get_count(), eq=1, msg="Factory must be called once after first get()")
         result2: p.Result[t.RegisterableService] = clean_container.resolve(
-            "factory_service"
+            "factory_service",
         )
         _ = u.Tests.assert_success(result2)
         tm.that(
@@ -81,7 +85,7 @@ class TestsFlextContainerResolution:
                 container.resolve(
                     scenario.name,
                     type_cls=scenario.expected_type,
-                )
+                ),
             )
             tm.that(
                 str(resolved_service),
@@ -98,7 +102,7 @@ class TestsFlextContainerResolution:
                 container.resolve(
                     scenario.name,
                     type_cls=scenario.expected_type,
-                )
+                ),
             )
 
     def test_get_typed_wrong_type(self, clean_container: p.Container) -> None:

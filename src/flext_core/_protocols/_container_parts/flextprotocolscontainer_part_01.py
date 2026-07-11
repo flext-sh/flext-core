@@ -6,12 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core._protocols.base import FlextProtocolsBase
 
 if TYPE_CHECKING:
+    from types import ModuleType
+
     from flext_core import FlextModels as m, FlextTypes as t
 
 
