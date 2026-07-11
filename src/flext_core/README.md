@@ -30,6 +30,7 @@ assert safe_divide(10, 0).failure
 ```python
 from flext_core import FlextSettings
 
+settings = FlextSettings.fetch_global()
 assert isinstance(settings.model_dump(), dict)
 ```
 
