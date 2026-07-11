@@ -59,7 +59,8 @@ class FlextUtilitiesSettings:
         if resolved.failure:
             failure: p.Result[bool] = e.fail_operation(
                 "resolve registered config factory",
-                resolved.error or FlextConstantsErrors.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
+                resolved.error
+                or FlextConstantsErrors.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
             )
             return failure
         return r[bool].ok(True)
