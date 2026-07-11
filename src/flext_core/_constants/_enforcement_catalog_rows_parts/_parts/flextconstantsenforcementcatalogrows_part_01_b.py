@@ -187,6 +187,18 @@ INFRA_DETECTOR_ROWS_PATTERNS: Final[
         False,
         "Magic number or string literal used where a named constant exists or should exist.",
     ),
+    (
+        "ENFORCE-098",
+        "HIGH",
+        "loose_test_function_violations",
+        "8-testing-r22",
+        ("testing-patterns",),
+        False,
+        (
+            "Module-level test_* function outside a Tests* class — nest it in "
+            "one Tests<Module> class (one nested class per test module)."
+        ),
+    ),
 )
 
 

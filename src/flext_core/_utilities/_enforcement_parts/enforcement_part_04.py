@@ -56,6 +56,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                 agents_md_anchor=anchor,
                 skills=skills,
                 fix_action=cls._fix_action_for(rid),
+                enabled=rid not in c.STAGED_INFRA_RULE_IDS,
             )
             for rid, sev, vf, anchor, skills, mm, desc in c.INFRA_DETECTOR_ROWS
         )

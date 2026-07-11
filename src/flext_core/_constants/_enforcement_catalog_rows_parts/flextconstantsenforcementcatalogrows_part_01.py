@@ -26,5 +26,13 @@ class FlextConstantsEnforcementCatalogInfraRows:
         *FlextConstantsEnforcementCatalogInfraRowsExtended.INFRA_DETECTOR_ROWS_EXTENDED,
     )
 
+    # Staged (inert) detector rules: present in the catalog and testable in
+    # isolation, but shipped ``enabled=False`` so the workspace gate does not
+    # fire on them until their existing offenders are cleared. Move an id out of
+    # this set (same cycle the offenders reach zero) to activate the rule.
+    STAGED_INFRA_RULE_IDS: Final[frozenset[str]] = frozenset({
+        "ENFORCE-098",
+    })
+
 
 __all__ = ["FlextConstantsEnforcementCatalogInfraRows"]
