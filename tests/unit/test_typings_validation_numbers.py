@@ -101,3 +101,31 @@ class TestsFlextCoreTypingsValidationNumbers:
         twice = adapter.validate_python(once)
 
         tm.that(twice, eq=once)
+
+
+class TestsFlextCoreTypingsStrippedStr:
+    """Public contract of t.StrippedStr: strip surrounding whitespace, reject blank."""
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("hello", "hello"),
+            ("  hello  ", "hello"),
+            ("\tspaced\n", "spaced"),
+        ],
+    )
+    def test_strips_surrounding_whitespace(self, value: str, expected: str) -> None:
+        """A non-blank value is returned with surrounding whitespace removed."""
+        adapter: m.TypeAdapter[str] = m.TypeAdapter(t.StrippedStr)
+
+        result = adapter.validate_python(value)
+
+        tm.that(result, eq=expected)
+
+    @pytest.mark.parametrize("value", ["", "   ", "\t\n"])
+    def test_rejects_blank_or_whitespace_only(self, value: str) -> None:
+        """An empty or whitespace-only value raises the public ValidationError."""
+        adapter: m.TypeAdapter[str] = m.TypeAdapter(t.StrippedStr)
+
+        with pytest.raises(c.ValidationError):
+            adapter.validate_python(value)

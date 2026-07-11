@@ -33,7 +33,14 @@ class FlextTypesAnnotateds:
 
     # -- string constraints --------------------------------------------------
     type NonEmptyStr = Annotated[str, Len(1)]
-    type StrippedStr = Annotated[str, Len(1)]
+    # NOTE (multi-agent, bead mro-wfc8): StrippedStr strips surrounding whitespace and
+    # rejects blank/whitespace-only (was Annotated[str, Len(1)] — a copy of NonEmptyStr
+    # that neither stripped nor rejected "   "). Canonical reuse point for the workspace
+    # declaration-purity campaign (models drop validate_business_rules empty-string checks).
+    type StrippedStr = Annotated[
+        str,
+        FlextTypesPydantic.StringConstraints(strip_whitespace=True, min_length=1),
+    ]
     type BoundedStr = Annotated[str, Len(1, 255)]
     type HostnameStr = Annotated[str, Len(1)]
     type UriString = Annotated[str, Len(1)]
