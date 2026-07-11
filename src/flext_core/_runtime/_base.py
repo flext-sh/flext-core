@@ -7,10 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from types import ModuleType
 from typing import TYPE_CHECKING, ClassVar
-
-from dependency_injector import providers
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.logging import FlextConstantsLogging as cl
@@ -21,6 +18,7 @@ if TYPE_CHECKING:
     from flext_core._typings.services import FlextTypesServices as ts
 
 
+# mro-i6nq.8: Keep the runtime base free of unused provider passthroughs.
 class FlextRuntimeBase:
     """Foundational runtime helpers shared by higher runtime namespaces."""
 
@@ -50,14 +48,6 @@ class FlextRuntimeBase:
         if value is not None and value.tzinfo is None:
             return value.replace(tzinfo=UTC)
         return value
-
-    @staticmethod
-    def dependency_providers() -> ModuleType:
-        """Return the dependency-injector providers module."""
-        if not isinstance(providers, ModuleType):
-            msg = "dependency_injector.providers is not a module"
-            raise TypeError(msg)
-        return providers
 
     @staticmethod
     def resolve_effective_log_level(
