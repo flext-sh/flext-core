@@ -12,6 +12,7 @@ from ._protocols.container import FlextProtocolsContainer
 from ._protocols.context import FlextProtocolsContext
 from ._protocols.handler import FlextProtocolsHandler
 from ._protocols.logging import FlextProtocolsLogging
+from ._protocols.project_metadata import FlextProtocolsProjectMetadata
 from ._protocols.pydantic import FlextProtocolsPydantic
 from ._protocols.registry import FlextProtocolsRegistry
 from ._protocols.result import FlextProtocolsResult
@@ -29,6 +30,7 @@ class FlextProtocols(
     FlextProtocolsService,
     FlextProtocolsHandler,
     FlextProtocolsLogging,
+    FlextProtocolsProjectMetadata,
     FlextProtocolsPydantic,
     FlextProtocolsRegistry,
 ):

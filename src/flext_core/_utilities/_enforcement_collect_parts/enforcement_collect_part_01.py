@@ -8,7 +8,6 @@ from enum import EnumType
 from pathlib import Path
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.base import FlextProtocolsBase as pb
 from flext_core._typings.base import FlextTypingBase as t
@@ -46,8 +45,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
                     if child.is_dir() and (child / "__init__.py").exists():
                         child_name: str = child.name
                         return child_name
-            meta = upm.read_project_metadata(parent)
-            package_name: str = meta.package_name
+            metadata_result = upm.read_project_metadata(parent)
+            if metadata_result.failure:
+                return None
+            package_name: str = metadata_result.value.package_name
             return package_name
         return None
 
@@ -73,18 +74,21 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
                 for parent in Path(src_file).parents:
                     pyproject = parent / "pyproject.toml"
                     if pyproject.exists():
-                        class_stem_override = upm.read_tool_flext_config(
-                            parent,
-                        ).project.class_stem_override
+                        metadata_result = upm.read_project_metadata(parent)
+                        if metadata_result.failure:
+                            return None
+                        class_stem_override = (
+                            metadata_result.value.flext.project.class_stem_override
+                        )
                         break
         canonical_project_name = src.replace("_", "-")
         head, _, tail = canonical_project_name.partition("-")
-        namespace = mpm.derive_class_stem(tail or head)
-        project_prefix = class_stem_override or mpm.derive_class_stem(
+        namespace = upm.derive_class_stem(tail or head)
+        project_prefix = class_stem_override or upm.derive_class_stem(
             canonical_project_name,
         )
         if top in {"tests", "examples", "scripts"} and top != (src or ""):
-            return mpm.derive_class_stem(top) + project_prefix, namespace
+            return upm.derive_class_stem(top) + project_prefix, namespace
         return project_prefix, namespace
 
     @staticmethod

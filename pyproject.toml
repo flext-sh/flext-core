@@ -130,6 +130,7 @@ dev = [
   "types-defusedxml>=0.7",
   "types-docker>=7.1",
   "types-flask>=1.1.6",
+  "types-jsonschema>=4.26",
   "types-ldap3>=2.9.13.20250622",
   "types-paramiko>=4.0",
   "types-protobuf>=6.30.2.20250703",
@@ -211,7 +212,7 @@ disable_error_code = [
   "prop-decorator",
   "valid-type",
 ]
-exclude = "^tests/fixtures(?:/|$)"
+exclude = "^(?:tests|examples|legado)(?:/|$)"
 explicit_package_bases = true
 extra_checks = true
 follow_imports = "normal"
@@ -264,8 +265,11 @@ project-excludes = [
   "**/.venv/**",
   "**/__pycache__",
   "**/__pyrefly_virtual__/**",
+  "**/examples/**",
+  "**/legado/**",
   "**/node_modules",
   "**/site-packages/**",
+  "**/tests/**",
   "**/typings/**",
   "**/vendor/**",
   "**/venv/**",
@@ -279,13 +283,16 @@ python-interpreter-path = "../.venv/bin/python"
 python-version = "3.13"
 search-path = [
   ".",
-  "../flext-cli/examples",
+  "../flext-cli/legado",
   "../flext-cli/src",
   "../flext-core/examples",
+  "../flext-core/legado",
   "../flext-core/scripts",
   "../flext-core/src",
+  "../flext-infra/legado",
   "../flext-infra/src",
   "../flext-infra/tmp_flow_test",
+  "../flext-tests/legado",
   "../flext-tests/src",
   "scripts",
   "src",
@@ -391,18 +398,22 @@ exclude = [
   "**/__pyrefly_virtual__/**",
   "**/dist-packages",
   "**/dist-packages/**",
+  "**/examples",
+  "**/examples/**",
+  "**/legado",
+  "**/legado/**",
   "**/node_modules",
   "**/site-packages",
   "**/site-packages/**",
-  "**/tests/fixtures",
-  "**/tests/fixtures/**",
+  "**/tests",
+  "**/tests/**",
   "**/venv",
   "**/venv/**",
   ".reports",
   ".venv",
 ]
 extraPaths = [ ".", "src" ]
-include = [ "examples", "scripts", "src", "tests" ]
+include = [ "scripts", "src" ]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportArgumentType = "none"
@@ -440,22 +451,12 @@ venvPath = ".."
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ ".", "src" ]
 reportPrivateUsage = "none"
-root = "examples"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [ ".", "src" ]
-reportPrivateUsage = "none"
 root = "scripts"
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ "src" ]
 reportPrivateUsage = "error"
 root = "src"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [ ".", "src" ]
-reportPrivateUsage = "none"
-root = "tests"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
@@ -521,10 +522,11 @@ exclude = [
   "backup",
   "build",
   "dist",
+  "examples",
   "htmlcov",
+  "legado",
   "temp-backup",
-  "tests/fixtures",
-  "tests/fixtures/**",
+  "tests",
   "typings",
   "vendor",
   "venv",
@@ -534,7 +536,7 @@ line-length = 88
 preview = true
 respect-gitignore = true
 show-fixes = true
-src = [ "examples", "scripts", "src", "tests" ]
+src = [ "scripts", "src" ]
 target-version = "py313"
 
 [tool.ruff.format]
@@ -555,6 +557,8 @@ ignore = [
   "CPY001",
   "D203",
   "D213",
+  "D401",
+  "D417",
   "DOC201",
   "DOC202",
   "DOC402",
@@ -609,25 +613,6 @@ split-on-trailing-comma = true
 "**/*_pb2*.py" = [ "ALL" ]
 "**/*dispatcher*" = [  ]
 "**/*docs*" = [ "INP001", "S404", "S603", "T201" ]
-"**/*examples*" = [
-  "ANN401",
-  "C901",
-  "D103",
-  "EXE001",
-  "FBT001",
-  "FBT002",
-  "FIX002",
-  "INP001",
-  "N999",
-  "PLR2004",
-  "S105",
-  "S106",
-  "S112",
-  "S404",
-  "S603",
-  "T201",
-  "TID252",
-]
 "**/*exceptions*" = [ "A001", "S105", "SLF001" ]
 "**/*handlers*" = [  ]
 "**/*instrumentation*" = [ "C901", "FBT001", "SLF001" ]
@@ -655,81 +640,6 @@ split-on-trailing-comma = true
 ]
 "**/*service*" = [ "N815", "PLC2801", "S404", "S603", "SLF001" ]
 "**/*subprocess_utils*" = [ "S404", "S603" ]
-"**/*tests*" = [
-  "ANN001",
-  "ANN002",
-  "ANN003",
-  "ANN401",
-  "ARG001",
-  "ARG002",
-  "ARG003",
-  "ARG004",
-  "ARG005",
-  "B009",
-  "B010",
-  "B018",
-  "B903",
-  "C901",
-  "D100",
-  "D101",
-  "D102",
-  "D103",
-  "D104",
-  "D106",
-  "D107",
-  "EM102",
-  "F822",
-  "FBT001",
-  "FBT002",
-  "FBT003",
-  "FURB118",
-  "INP001",
-  "N818",
-  "N999",
-  "PLC0206",
-  "PLC1901",
-  "PLC2701",
-  "PLC2801",
-  "PLR0904",
-  "PLR0912",
-  "PLR0913",
-  "PLR0914",
-  "PLR0915",
-  "PLR0917",
-  "PLR1704",
-  "PLR2004",
-  "PLR6301",
-  "PLW1641",
-  "PLW2901",
-  "PT011",
-  "PT018",
-  "PT019",
-  "PYI063",
-  "RUF012",
-  "RUF029",
-  "S101",
-  "S103",
-  "S104",
-  "S105",
-  "S106",
-  "S107",
-  "S108",
-  "S110",
-  "S112",
-  "S311",
-  "S404",
-  "S603",
-  "S607",
-  "S608",
-  "SIM105",
-  "SIM117",
-  "SLF001",
-  "TD002",
-  "TD003",
-  "TID252",
-  "TRY003",
-  "TRY004",
-]
 "**/*typings*" = [ "ANN401" ]
 "**/*utilities*" = [ "C901", "E402", "PLC2801", "PLW1510", "S404", "S603" ]
 "**/__init__.py" = [

@@ -7,7 +7,7 @@
 # =============================================================================
 
 PROJECT_NAME := flext-core
-PYTHON_VERSION ?= 3.13
+PYTHON_VERSION ?= >=3.13,<3.14
 SRC_DIR ?= src
 TESTS_DIR ?= tests
 # Detect workspace root by walking up until we find the parent repo's .gitmodules.
