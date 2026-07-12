@@ -39,7 +39,7 @@ class TestsFlextUserQueryService(s[bool]):
 
     @override
     def execute(self) -> p.Result[bool]:
-        """The service availability."""
+        """Return the service availability."""
         if self._should_fail:
             return r[bool].fail("User service unavailable")
         return r[bool].ok(True)

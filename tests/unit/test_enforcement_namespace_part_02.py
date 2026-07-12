@@ -57,7 +57,7 @@ def _run_layer_records(target: type, layer: str) -> WarningRecords:
 
 
 def _bad_constant_report() -> m.Report:
-    """A non-empty constants report for mode-dispatch tests."""
+    """Build a non-empty constants report for mode-dispatch tests."""
     return u.check(
         make_class("FlextSyntheticCli", {"GROUPS": frozenset({"foo"})}),
         layer="constants",

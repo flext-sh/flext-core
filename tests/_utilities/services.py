@@ -48,7 +48,7 @@ class TestsFlextUtilitiesServicesMixin:
 
         @override
         def execute(self) -> p.Result[str]:
-            """Always fails."""
+            """Fail unconditionally with the configured message."""
             return r[str].fail(self.error_message)
 
     class GetUserServiceAuto(TestsFlextUtilitiesRailwayServicesMixin.GetUserService):

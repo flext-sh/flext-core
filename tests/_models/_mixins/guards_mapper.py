@@ -92,7 +92,7 @@ class TestsFlextModelsGuardsMapperMixin:
 
         @override
         def __iter__(self) -> Iterator[str]:
-            """__iter__ method."""
+            """Raise RuntimeError when iterated (guard stub)."""
             msg = "bad iter"
             raise RuntimeError(msg)
 

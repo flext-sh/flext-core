@@ -20,7 +20,7 @@ class TestsFlextCoreRegistry:
 
     @pytest.fixture
     def registry(self) -> p.Registry:
-        """A registry backed by an accepting dispatcher."""
+        """Build a registry backed by an accepting dispatcher."""
         return u.build_registry(dispatcher=u.Tests.OkDispatcher())
 
     def test_execute_succeeds_when_dispatcher_present(self) -> None:
