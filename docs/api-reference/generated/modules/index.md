@@ -20,6 +20,5 @@ These pages are generated from public modules and their docstrings.
 - [flext_core.result](result.md)
 - [flext_core.runtime](runtime.md)
 - [flext_core.service](service.md)
-- [flext_core.settings](settings.md)
 - [flext_core.typings](typings.md)
 - [flext_core.utilities](utilities.md)

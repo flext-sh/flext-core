@@ -40,6 +40,7 @@ Canonical `make` verbs (`check`, `test`, `val`, `docs`) — see `AGENTS.md` §5 
 ## Governance Pointer
 
 - Engineering law: [`/flext/AGENTS.md`](../AGENTS.md)
+- Governance + ADRs: [`/flext/docs/GOVERNANCE.md`](../docs/GOVERNANCE.md)
 - Skills index: [`/flext/.agents/skills/`](../.agents/skills/)
 - Onboarding: [`/flext/docs/guides/onboarding.md`](../docs/guides/onboarding.md)
 - Full project portal: [`docs/index.md`](docs/index.md).
