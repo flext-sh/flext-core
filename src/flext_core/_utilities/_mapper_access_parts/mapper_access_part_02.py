@@ -94,7 +94,7 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
         data: p.AccessibleData | t.ConfigModelInput,
         key: str,
     ) -> t.JsonPayload | t.JsonValue:
-        """Internal helper for raw get without DSL conversion."""
+        """Get raw values without DSL conversion."""
         match data:
             case dict() | Mapping() if key in data:
                 return FlextUtilitiesMapperAccess._normalize_accessible_value(data[key])

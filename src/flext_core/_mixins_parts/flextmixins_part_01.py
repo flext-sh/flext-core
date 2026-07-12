@@ -103,7 +103,7 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     @classmethod
     def _get_or_create_logger(cls) -> p.Logger:
-        """The or create DI-injected logger with fallback to direct creation."""
+        """Get or create a DI-injected logger with fallback to direct creation."""
         logger_name = f"{cls.__module__}.{cls.__name__}"
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
@@ -279,7 +279,7 @@ class FlextMixins(m.ArbitraryTypesModel):
             self._context_type.apply_operation_name("")
 
     def _get_runtime(self) -> m.ServiceRuntime:
-        """The or create a runtime triple shared across mixin consumers."""
+        """Get or create a runtime triple shared across mixin consumers."""
         runtime = self._runtime
         if isinstance(runtime, m.ServiceRuntime):
             return runtime

@@ -73,7 +73,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingPart02):
         *args: t.LogValue,
         **context: t.LogValue,
     ) -> t.LogResult:
-        """Internal logging method — consolidates all log level methods."""
+        """Consolidate all log level methods into one internal logging path."""
         try:
             level_str = FlextUtilitiesLogging._resolve_level_name(level)
             scalar_context = FlextUtilitiesLogging._resolve_log_context(args, context)

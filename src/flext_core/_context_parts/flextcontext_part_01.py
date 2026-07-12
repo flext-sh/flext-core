@@ -132,7 +132,7 @@ class FlextContext(m.ManagedModel):
 
     @classmethod
     def create(cls, **initial_data: t.JsonPayload) -> p.Context:
-        """Factory: build a context instance seeded with initial scope values."""
+        """Build a context instance seeded with initial scope values."""
         context = cls()
         for key, value in initial_data.items():
             _ = context.set(key, value)

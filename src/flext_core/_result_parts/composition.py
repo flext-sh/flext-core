@@ -117,7 +117,7 @@ class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):
         cls,
         func: Callable[PFunc, U],
     ) -> Callable[PFunc, p.Result[U]]:
-        """Decorator: wrap function in FlextResult, catch exceptions."""
+        """Wrap function in FlextResult, catching exceptions."""
 
         def wrapper(
             *args: PFunc.args,

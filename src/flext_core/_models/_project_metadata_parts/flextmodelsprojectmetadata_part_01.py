@@ -41,7 +41,7 @@ class FlextModelsProjectMetadata:
 
     @staticmethod
     def derive_class_stem(project_name: str) -> str:
-        """The generic PascalCase class stem for metadata models."""
+        """Return the generic PascalCase class stem for metadata models."""
         if not project_name:
             msg = "empty project name"
             raise ValueError(msg)

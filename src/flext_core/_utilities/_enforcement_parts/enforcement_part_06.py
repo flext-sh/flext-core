@@ -14,7 +14,7 @@ def _extended_bindings() -> t.MappingKV[
     str,
     tuple[c.EnforcementPredicateKind, mp.BaseModel],
 ]:
-    """Extended tag → (predicate_kind, params) dispatch mapping."""
+    """Map extended tags to (predicate_kind, params) dispatch entries."""
     pk = c.EnforcementPredicateKind
     dsp = me.DeprecatedSyntaxParams
     cpp = me.ClassPlacementParams

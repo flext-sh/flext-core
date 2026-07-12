@@ -41,7 +41,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         timeout: float | None = c.DEFAULT_TIMEOUT_SECONDS,
         middleware: t.SequenceOf[type[p.Middleware]] | None = None,
     ) -> Callable[[Callable[PHandler, TResult]], Callable[PHandler, TResult]]:
-        """Decorator to mark methods as handlers for commands.
+        """Mark methods as handlers for commands.
 
         Stores handler configuration as metadata on the decorated method,
         enabling auto-discovery by FlextService and handler registries.

@@ -88,7 +88,7 @@ class FlextRegistry(s[bool]):
         runtime: m.ServiceRuntime | None = None,
         auto_discover_handlers: bool = False,
     ) -> Self:
-        """Factory method to create a new FlextRegistry instance.
+        """Create a new FlextRegistry instance.
 
         This is the preferred way to instantiate FlextRegistry. It provides
         a clean factory pattern that each class owns, respecting Clean

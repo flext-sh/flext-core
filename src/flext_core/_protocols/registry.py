@@ -51,7 +51,7 @@ class FlextProtocolsRegistry:
             runtime: m.ServiceRuntime | None = None,
             auto_discover_handlers: bool = False,
         ) -> Self:
-            """Factory method to create a new registry instance."""
+            """Create a new registry instance."""
             ...
 
         def configure_runtime(

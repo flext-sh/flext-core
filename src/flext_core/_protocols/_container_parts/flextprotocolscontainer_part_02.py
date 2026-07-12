@@ -88,7 +88,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
         ) -> FlextProtocolsResult.Result[t.RegisterableService]: ...
 
         def snapshot(self) -> m.ConfigMap:
-            """The merged settings exposed by this container."""
+            """Return the merged settings exposed by this container."""
             ...
 
         def has(self, name: str) -> bool:

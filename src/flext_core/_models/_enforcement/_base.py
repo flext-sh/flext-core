@@ -61,7 +61,7 @@ class FlextModelsEnforcementBase:
             return bool(self.violations)
 
         def __getitem__(self, index: int) -> str:
-            """The nth message for ``report[i]`` access."""
+            """Return the nth message for ``report[i]`` access."""
             return self.messages[index]
 
         def __contains__(self, fragment: t.Scalar | None) -> bool:

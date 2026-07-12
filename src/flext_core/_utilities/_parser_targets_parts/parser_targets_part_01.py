@@ -35,7 +35,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         options: FlextUtilitiesParserCoerce.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
-        """Helper: Try direct type call."""
+        """Try a direct type call."""
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         default = opts.default
         default_factory = opts.default_factory
@@ -77,7 +77,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         options: FlextUtilitiesParserCoerce.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
-        """Helper: Try enum parsing, raise ValueError if not enum or invalid."""
+        """Try enum parsing, raising ValueError if not enum or invalid."""
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if not issubclass(target, StrEnum):
             raise TypeError(
@@ -135,7 +135,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         options: FlextUtilitiesParserCoerce.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
-        """Helper: Try model parsing, raise ValueError if not model or invalid."""
+        """Try model parsing, raising ValueError if not model or invalid."""
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if not FlextUtilitiesGuardsTypeModel.model_type(target):
             raise TypeError(

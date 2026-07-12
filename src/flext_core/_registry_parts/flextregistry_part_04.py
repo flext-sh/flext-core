@@ -97,6 +97,7 @@ class FlextRegistry(FlextRegistryPart03):
         Args:
             category: Plugin category
             name: Plugin name
+            scope: Registration scope to unregister from (instance or class level)
 
         Returns:
             r[bool]: Success if unregistered, failure if not found.

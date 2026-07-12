@@ -47,7 +47,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
         fp: str,
         kwargs: dict[str, t.JsonPayload],
     ) -> T:
-        """Internal dispatcher with pre-resolved options for stable type inference."""
+        """Dispatch parsing with pre-resolved options for stable type inference."""
         resolved_value: T
         if value is None:
             default_result_initial: p.Result[T] = (

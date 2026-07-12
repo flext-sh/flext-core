@@ -156,6 +156,7 @@ class FlextRegistry(FlextRegistryPart01):
 
         Args:
             category: Plugin category to list
+            scope: Registration scope to list (instance or class level)
 
         Returns:
             r[t.StrSequence]: Success with list of plugin names.

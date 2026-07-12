@@ -79,7 +79,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingPart03):
             service_version: str | None = None,
             enable_context_correlation: bool = True,
         ) -> None:
-            """Setup complete service infrastructure."""
+            """Set up complete service infrastructure."""
             sl = FlextUtilitiesLogging.structlog()
             _ = sl.contextvars.bind_contextvars(service_name=service_name)
             if service_version:

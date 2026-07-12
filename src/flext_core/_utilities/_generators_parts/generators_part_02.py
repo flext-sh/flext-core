@@ -124,12 +124,12 @@ class FlextUtilitiesGenerators(FlextUtilitiesGeneratorsPart01):
 
     @staticmethod
     def now() -> datetime:
-        """Current timezone-aware datetime in the configured timezone (FlextSettings.timezone)."""
+        """Return the current timezone-aware datetime in the configured timezone (FlextSettings.timezone)."""
         return datetime.now(FlextUtilitiesGenerators.configured_timezone())
 
     @staticmethod
     def now_iso() -> str:
-        """Current ISO timestamp (no microseconds) in the configured timezone."""
+        """Return the current ISO timestamp (no microseconds) in the configured timezone."""
         return (
             datetime
             .now(FlextUtilitiesGenerators.configured_timezone())

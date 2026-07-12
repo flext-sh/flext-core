@@ -24,7 +24,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
         options: FlextUtilitiesParserCoerce.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T | None:
-        """Helper function for type primitive parsing fallback."""
+        """Fall back to primitive type parsing."""
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if value is None:
             parsed_default: T = FlextUtilitiesParserTargets._parse_with_default(

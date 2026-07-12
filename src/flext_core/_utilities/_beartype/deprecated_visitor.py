@@ -27,7 +27,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
         _params: me.WrapperParams,
         target: type,
     ) -> t.StrMapping | None:
-        """WRAPPER — pass-through wrapper detection via bytecode (ENFORCE-043)."""
+        """Detect pass-through wrappers via bytecode (ENFORCE-043)."""
         module = _ubh.runtime_module_for(target)
         if module is None:
             return _NO_VIOLATION
