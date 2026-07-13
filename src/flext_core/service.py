@@ -42,13 +42,6 @@ class FlextService[TDomainResult: p.Base = p.Base](x):
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _instance: ClassVar[Self | None] = None
 
-    def __init__(
-        self,
-        **model_data: t.GuardInput | p.Settings | p.Context | t.SettingsClass | None,
-    ) -> None:
-        """Initialize service state through the shared FLEXT runtime mixin."""
-        super().__init__(**model_data)
-
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
         """Inject a per-class singleton slot for every concrete subclass."""
         _ = kwargs
