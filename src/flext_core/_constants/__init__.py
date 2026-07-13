@@ -56,21 +56,6 @@ if TYPE_CHECKING:
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_09 import (
         NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT as NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT,
     )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_01 import (
-        FlextConstantsErrorsMessages as FlextConstantsErrorsMessages,
-    )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_02 import (
-        FlextConstantsErrorsRuntimeExceptions as FlextConstantsErrorsRuntimeExceptions,
-    )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_03 import (
-        FlextConstantsErrorsValidationExceptions as FlextConstantsErrorsValidationExceptions,
-    )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_04 import (
-        FlextConstantsErrorsDomainParser as FlextConstantsErrorsDomainParser,
-    )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_05 import (
-        FlextConstantsErrorsRuntimeSettings as FlextConstantsErrorsRuntimeSettings,
-    )
     from flext_core._constants.base import FlextConstantsBase as FlextConstantsBase
     from flext_core._constants.config import (
         FlextConstantsConfig as FlextConstantsConfig,
@@ -88,6 +73,11 @@ if TYPE_CHECKING:
     )
     from flext_core._constants.errors import (
         FlextConstantsErrors as FlextConstantsErrors,
+        FlextConstantsErrorsDomainParser as FlextConstantsErrorsDomainParser,
+        FlextConstantsErrorsMessages as FlextConstantsErrorsMessages,
+        FlextConstantsErrorsRuntimeExceptions as FlextConstantsErrorsRuntimeExceptions,
+        FlextConstantsErrorsRuntimeSettings as FlextConstantsErrorsRuntimeSettings,
+        FlextConstantsErrorsValidationExceptions as FlextConstantsErrorsValidationExceptions,
     )
     from flext_core._constants.file import FlextConstantsFile as FlextConstantsFile
     from flext_core._constants.guards import (
@@ -177,21 +167,13 @@ _LAZY_IMPORTS = build_lazy_import_map(
         "._enforcement_parts.flextconstantsenforcement_part_09": (
             "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",
         ),
-        "._errors_parts": ("_errors_parts",),
-        "._errors_parts.flextconstantserrors_part_01": (
+        ".errors": (
             "FlextConstantsErrorsMessages",
-        ),
-        "._errors_parts.flextconstantserrors_part_02": (
             "FlextConstantsErrorsRuntimeExceptions",
-        ),
-        "._errors_parts.flextconstantserrors_part_03": (
             "FlextConstantsErrorsValidationExceptions",
-        ),
-        "._errors_parts.flextconstantserrors_part_04": (
             "FlextConstantsErrorsDomainParser",
-        ),
-        "._errors_parts.flextconstantserrors_part_05": (
             "FlextConstantsErrorsRuntimeSettings",
+            "FlextConstantsErrors",
         ),
         ".base": ("FlextConstantsBase",),
         ".config": ("FlextConstantsConfig",),
@@ -202,7 +184,6 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ),
         ".enforcement_catalog_rows": ("FlextConstantsEnforcementCatalogRows",),
         ".environment": ("FlextConstantsEnvironment",),
-        ".errors": ("FlextConstantsErrors",),
         ".file": ("FlextConstantsFile",),
         ".guards": ("FlextConstantsGuards",),
         ".infrastructure": ("FlextConstantsInfrastructure",),
