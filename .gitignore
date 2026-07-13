@@ -18,6 +18,9 @@
 !ansible/
 !docker/
 !dbt/
+!/config/
+!/templates/
+!/schemas/
 !.github/
 !.vscode/
 
@@ -60,6 +63,9 @@
 !ansible/**
 !docker/**
 !dbt/**
+!/config/**
+!/templates/**
+!/schemas/**
 !.github/**
 !.vscode/**
 
