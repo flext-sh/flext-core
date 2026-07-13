@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from ._lazy_parts import FlextLazy, FlextLazyAttribute
+# mro-wkii.17.26 (codex): private package inits are inert; import the leaf owner.
+from flext_core._lazy_parts.flextlazy_part_02 import FlextLazy, FlextLazyAttribute
 
 lazy = FlextLazy()
 """Shared ``FlextLazy`` singleton used by package-level lazy exports."""
