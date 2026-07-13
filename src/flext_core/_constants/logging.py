@@ -57,7 +57,6 @@ class FlextConstantsLogging:
     # Internal logging machinery path fragments — used to skip the logging stack
     LOGGING_INTERNAL_PATH_FRAGMENTS: Final[frozenset[str]] = frozenset({
         "flext_core/loggings.py",
-        "flext_core/_loggings_parts/",
         "flext_core/_utilities/logging_context.py",
         "flext_core/_utilities/_logging_context_parts/",
         "flext_core/_utilities/logging_config.py",
