@@ -21,36 +21,53 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     """Project resolution + rule-input iterators."""
 
     @staticmethod
-    def _discover_src_package(target: type) -> str | None:
-        """Walk parents to the first ``pyproject.toml`` and return the package name.
-
-        Source-skip on built-in classes / dynamic types per the runtime-safety
-        contract: ``inspect.getsourcefile`` raises ``TypeError`` for built-ins
-        and ``OSError`` when the source file cannot be read; both produce
-        ``None`` here so the dispatcher cleanly skips the target.
-        """
+    def _owning_project_root(target: type) -> Path | None:
+        """Return the pyproject root that physically owns the target source."""
         try:
             src_file = inspect.getsourcefile(target)
         except (OSError, TypeError):
             return None
         if src_file is None:
             return None
-        for parent in Path(src_file).parents:
-            pyproject = parent / "pyproject.toml"
-            if not pyproject.exists():
+        source = Path(src_file).resolve()
+        top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
+        if not top:
+            return None
+        for parent in source.parents:
+            if not (parent / "pyproject.toml").is_file():
                 continue
-            src = parent / "src"
-            if src.is_dir():
-                for child in src.iterdir():
-                    if child.is_dir() and (child / "__init__.py").exists():
-                        child_name: str = child.name
-                        return child_name
-            metadata_result = upm.read_project_metadata(parent)
-            if metadata_result.failure:
-                return None
-            package_name: str = metadata_result.value.package_name
-            return package_name
+            try:
+                relative = source.relative_to(parent)
+            except ValueError:
+                continue
+            if relative.is_relative_to(Path("src") / top) or relative.is_relative_to(
+                top,
+            ):
+                # mro-j47u (codex): never attribute .venv/site-packages classes
+                # to the consuming project's pyproject and namespace prefix.
+                return parent
         return None
+
+    @staticmethod
+    def _discover_src_package(target: type) -> str | None:
+        """Return the package owned by the target's physical project root.
+
+        Source-skip on built-in classes / dynamic types per the runtime-safety
+        contract: ``inspect.getsourcefile`` raises ``TypeError`` for built-ins
+        and ``OSError`` when the source file cannot be read; both produce
+        ``None`` here so the dispatcher cleanly skips the target.
+        """
+        project_root = FlextUtilitiesEnforcementCollect._owning_project_root(target)
+        if project_root is None:
+            return None
+        top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
+        if (project_root / "src" / top).is_dir() or (project_root / top).is_dir():
+            return top
+        metadata_result = upm.read_project_metadata(project_root)
+        if metadata_result.failure:
+            return None
+        package_name: str = metadata_result.value.package_name
+        return package_name
 
     @staticmethod
     def _project(target: type) -> t.StrPair | None:
@@ -65,22 +82,17 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             src = top
             class_stem_override = None
         else:
-            try:
-                src_file = inspect.getsourcefile(target)
-            except (OSError, TypeError):
-                src_file = None
             class_stem_override = None
-            if src_file is not None:
-                for parent in Path(src_file).parents:
-                    pyproject = parent / "pyproject.toml"
-                    if pyproject.exists():
-                        metadata_result = upm.read_project_metadata(parent)
-                        if metadata_result.failure:
-                            return None
-                        class_stem_override = (
-                            metadata_result.value.flext.project.class_stem_override
-                        )
-                        break
+            project_root = FlextUtilitiesEnforcementCollect._owning_project_root(
+                target,
+            )
+            if project_root is not None:
+                metadata_result = upm.read_project_metadata(project_root)
+                if metadata_result.failure:
+                    return None
+                class_stem_override = (
+                    metadata_result.value.flext.project.class_stem_override
+                )
         canonical_project_name = src.replace("_", "-")
         head, _, tail = canonical_project_name.partition("-")
         namespace = upm.derive_class_stem(tail or head)
