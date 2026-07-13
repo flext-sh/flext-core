@@ -10,11 +10,10 @@ import contextvars
 from types import MappingProxyType
 from typing import Annotated, Self
 
+from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core.constants import FlextConstants as c
-from flext_core.typings import FlextTypes as t
 
 from .flextmodelscontextscope_part_01 import (
     FlextModelsContextScope as FlextModelsContextScopePart01,

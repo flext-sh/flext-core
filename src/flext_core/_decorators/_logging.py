@@ -11,10 +11,10 @@ from contextlib import suppress
 from functools import wraps
 from typing import TYPE_CHECKING
 
+from flext_core import FlextUtilities as u
 from flext_core._constants.base import FlextConstantsBase as cb
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure as ci
 from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
-from flext_core.utilities import FlextUtilities as u
 
 if TYPE_CHECKING:
     from collections.abc import Callable

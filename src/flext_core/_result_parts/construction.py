@@ -16,9 +16,9 @@ from flext_core._models.pydantic import FlextModelsPydantic as mp
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from flext_core import FlextTypes as t
     from flext_core._models.containers import FlextModelsContainers as mc
     from flext_core._protocols.result import FlextProtocolsResult as p
-    from flext_core.typings import FlextTypes as t
 
 from .behavior import FlextResultBehaviorMixin
 

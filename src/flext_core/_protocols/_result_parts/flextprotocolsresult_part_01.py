@@ -18,7 +18,7 @@ if TYPE_CHECKING:
         Callable,
     )
 
-    from flext_core.typings import FlextTypes as t
+    from flext_core import FlextTypes as t
 
 
 class FlextProtocolsResult:

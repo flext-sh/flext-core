@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples.models import m
-from examples.typings import t
-from examples.utilities import u
+from examples import m
+from examples import t
+from examples import u
 from flext_core import h, r
 
 if TYPE_CHECKING:
-    from examples.protocols import p
+    from examples import p
 
 
 class ProtocolHandler:

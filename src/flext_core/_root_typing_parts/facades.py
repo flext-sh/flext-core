@@ -4,13 +4,21 @@ from __future__ import annotations
 
 from typing import Final
 
+from flext_core import (
+    FlextConstants,
+    FlextModels,
+    FlextProtocols,
+    FlextTypes,
+    FlextUtilities,
+    c,
+    m,
+    p,
+    t,
+    u,
+)
 from flext_core._settings import (
     FlextSettings,
     settings,
-)
-from flext_core.constants import (
-    FlextConstants,
-    c,
 )
 from flext_core.container import (
     FlextContainer,
@@ -46,14 +54,6 @@ from flext_core.mixins import (
     FlextMixins,
     x,
 )
-from flext_core.models import (
-    FlextModels,
-    m,
-)
-from flext_core.protocols import (
-    FlextProtocols,
-    p,
-)
 from flext_core.registry import (
     FlextRegistry,
 )
@@ -67,14 +67,6 @@ from flext_core.runtime import (
 from flext_core.service import (
     FlextService,
     s,
-)
-from flext_core.typings import (
-    FlextTypes,
-    t,
-)
-from flext_core.utilities import (
-    FlextUtilities,
-    u,
 )
 
 ROOT_TYPING_FACADES_ALL: Final[tuple[str, ...]] = (

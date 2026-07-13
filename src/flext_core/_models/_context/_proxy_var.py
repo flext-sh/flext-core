@@ -10,7 +10,7 @@ from datetime import datetime
 
 import structlog.contextvars
 
-from flext_core.typings import FlextTypes as t
+from flext_core import FlextTypes as t
 
 from ._tokens import FlextModelsContextTokens
 

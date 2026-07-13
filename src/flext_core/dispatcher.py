@@ -7,11 +7,13 @@ from collections.abc import (
     Sequence,
 )
 
-from flext_core.constants import FlextConstants as c
-from flext_core.protocols import FlextProtocols as p
+from flext_core import (
+    FlextConstants as c,
+    FlextProtocols as p,
+    FlextTypes as t,
+    FlextUtilities as u,
+)
 from flext_core.result import FlextResult as r
-from flext_core.typings import FlextTypes as t
-from flext_core.utilities import FlextUtilities as u
 
 from ._utilities.dispatcher_execute import execute_dispatcher_handler
 

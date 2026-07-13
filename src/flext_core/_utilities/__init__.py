@@ -1,66 +1,40 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Utilities package."""
+"""Flext Core. Utilities package."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+# mro-i6nq.10: The package consumes its manifest's public-export contract.
+from flext_core._utilities.__unit__ import (
+    CHILD_MODULE_PATHS as _CHILD_MODULE_PATHS,
+    EXCLUDED_LAZY_NAMES as _EXCLUDED_LAZY_NAMES,
+    LAZY_ALIAS_GROUPS as _LAZY_ALIAS_GROUPS,
+    LAZY_MODULES as _LAZY_MODULES,
+    PUBLIC_EXPORTS as _PUBLIC_EXPORTS,
+)
+from flext_core.lazy import (
+    build_lazy_import_map,
+    install_lazy_exports,
+    merge_lazy_imports,
+)
 
 if TYPE_CHECKING:
-    from flext_core._utilities._beartype._alias_visitor import (
-        FlextUtilitiesBeartypeAliasVisitor as FlextUtilitiesBeartypeAliasVisitor,
-    )
-    from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_03 import (
-        FlextUtilitiesBeartypeClassVisitor as FlextUtilitiesBeartypeClassVisitor,
-    )
-    from flext_core._utilities._beartype._library_visitor import (
-        FlextUtilitiesBeartypeLibraryVisitor as FlextUtilitiesBeartypeLibraryVisitor,
-    )
-    from flext_core._utilities._beartype.attr_visitor import (
-        FlextUtilitiesBeartypeAttrVisitor as FlextUtilitiesBeartypeAttrVisitor,
-    )
-    from flext_core._utilities._beartype.deprecated_visitor import (
-        FlextUtilitiesBeartypeDeprecatedVisitor as FlextUtilitiesBeartypeDeprecatedVisitor,
-    )
-    from flext_core._utilities._beartype.field_visitor import (
-        FlextUtilitiesBeartypeFieldVisitor as FlextUtilitiesBeartypeFieldVisitor,
-    )
-    from flext_core._utilities._beartype.helpers import (
-        FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpers,
-    )
-    from flext_core._utilities._beartype.import_visitor import (
-        FlextUtilitiesBeartypeImportVisitor as FlextUtilitiesBeartypeImportVisitor,
-    )
-    from flext_core._utilities._beartype.method_visitor import (
-        FlextUtilitiesBeartypeMethodVisitor as FlextUtilitiesBeartypeMethodVisitor,
-    )
-    from flext_core._utilities._beartype.module_visitor import (
-        FlextUtilitiesBeartypeModuleVisitor as FlextUtilitiesBeartypeModuleVisitor,
-    )
-    from flext_core._utilities._checker_parts.checker_part_03 import (
-        FlextUtilitiesChecker as FlextUtilitiesChecker,
+    from flext_core._utilities import (
+        _beartype as _beartype,
+        _checker_parts as _checker_parts,
+        _enforcement_collect_parts as _enforcement_collect_parts,
+        _enforcement_parts as _enforcement_parts,
+        _generators_parts as _generators_parts,
+        _guards_parts as _guards_parts,
+        _logging_config_parts as _logging_config_parts,
+        _logging_context_parts as _logging_context_parts,
+        _mapper_access_parts as _mapper_access_parts,
+        _mapper_extract_parts as _mapper_extract_parts,
+        _parser_targets_parts as _parser_targets_parts,
     )
     from flext_core._utilities._context_crud_set import (
         FlextUtilitiesContextCrudSetMixin as FlextUtilitiesContextCrudSetMixin,
-    )
-    from flext_core._utilities._enforcement_collect_parts.enforcement_collect_part_02 import (
-        FlextUtilitiesEnforcementCollect as FlextUtilitiesEnforcementCollect,
-    )
-    from flext_core._utilities._enforcement_parts.enforcement_part_01 import (
-        PREDICATE_BINDINGS as PREDICATE_BINDINGS,
-    )
-    from flext_core._utilities._enforcement_parts.enforcement_part_05 import (
-        FlextUtilitiesEnforcement as FlextUtilitiesEnforcement,
-    )
-    from flext_core._utilities._enforcement_parts.enforcement_part_06 import (
-        EXTENDED_PREDICATE_BINDINGS as EXTENDED_PREDICATE_BINDINGS,
-    )
-    from flext_core._utilities._generators_parts.generators_part_02 import (
-        FlextUtilitiesGenerators as FlextUtilitiesGenerators,
-    )
-    from flext_core._utilities._guards_parts.guards_part_02 import (
-        FlextUtilitiesGuards as FlextUtilitiesGuards,
     )
     from flext_core._utilities._guards_type_protocol_specs import (
         FlextUtilitiesGuardsTypeProtocolSpecsMixin as FlextUtilitiesGuardsTypeProtocolSpecsMixin,
@@ -70,24 +44,6 @@ if TYPE_CHECKING:
     )
     from flext_core._utilities._guards_type_protocol_types import (
         ProtocolGuardInput as ProtocolGuardInput,
-    )
-    from flext_core._utilities._logging_config_parts.logging_config_part_03 import (
-        FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfig,
-    )
-    from flext_core._utilities._logging_context_parts.logging_context_part_02 import (
-        FlextUtilitiesLoggingContext as FlextUtilitiesLoggingContext,
-    )
-    from flext_core._utilities._mapper_access_parts.mapper_access_part_02 import (
-        FlextUtilitiesMapperAccess as FlextUtilitiesMapperAccess,
-    )
-    from flext_core._utilities._mapper_extract_parts.mapper_extract_part_02 import (
-        FlextUtilitiesMapperExtract as FlextUtilitiesMapperExtract,
-    )
-    from flext_core._utilities._parser_targets_parts.parser_targets_part_02 import (
-        FlextUtilitiesParserTargets as FlextUtilitiesParserTargets,
-    )
-    from flext_core._utilities._project_metadata_parts.project_metadata_part_04 import (
-        FlextUtilitiesProjectMetadata as FlextUtilitiesProjectMetadata,
     )
     from flext_core._utilities.args import FlextUtilitiesArgs as FlextUtilitiesArgs
     from flext_core._utilities.beartype_conf import (
@@ -99,6 +55,9 @@ if TYPE_CHECKING:
     )
     from flext_core._utilities.beartype_typingext_patch import (
         FlextUtilitiesBeartypeTypingExtPatch as FlextUtilitiesBeartypeTypingExtPatch,
+    )
+    from flext_core._utilities.checker import (
+        FlextUtilitiesChecker as FlextUtilitiesChecker,
     )
     from flext_core._utilities.collection import (
         FlextUtilitiesCollection as FlextUtilitiesCollection,
@@ -136,10 +95,23 @@ if TYPE_CHECKING:
     from flext_core._utilities.domain import (
         FlextUtilitiesDomain as FlextUtilitiesDomain,
     )
+    from flext_core._utilities.enforcement import (
+        PREDICATE_BINDINGS as PREDICATE_BINDINGS,
+        FlextUtilitiesEnforcement as FlextUtilitiesEnforcement,
+    )
+    from flext_core._utilities.enforcement_collect import (
+        FlextUtilitiesEnforcementCollect as FlextUtilitiesEnforcementCollect,
+    )
     from flext_core._utilities.enforcement_emit import (
         FlextUtilitiesEnforcementEmit as FlextUtilitiesEnforcementEmit,
     )
     from flext_core._utilities.enum import FlextUtilitiesEnum as FlextUtilitiesEnum
+    from flext_core._utilities.generators import (
+        FlextUtilitiesGenerators as FlextUtilitiesGenerators,
+    )
+    from flext_core._utilities.guards import (
+        FlextUtilitiesGuards as FlextUtilitiesGuards,
+    )
     from flext_core._utilities.guards_type_core import (
         FlextUtilitiesGuardsTypeCore as FlextUtilitiesGuardsTypeCore,
     )
@@ -152,8 +124,20 @@ if TYPE_CHECKING:
     from flext_core._utilities.handler import (
         FlextUtilitiesHandler as FlextUtilitiesHandler,
     )
+    from flext_core._utilities.logging_config import (
+        FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfig,
+    )
+    from flext_core._utilities.logging_context import (
+        FlextUtilitiesLoggingContext as FlextUtilitiesLoggingContext,
+    )
     from flext_core._utilities.mapper import (
         FlextUtilitiesMapper as FlextUtilitiesMapper,
+    )
+    from flext_core._utilities.mapper_access import (
+        FlextUtilitiesMapperAccess as FlextUtilitiesMapperAccess,
+    )
+    from flext_core._utilities.mapper_extract import (
+        FlextUtilitiesMapperExtract as FlextUtilitiesMapperExtract,
     )
     from flext_core._utilities.model import FlextUtilitiesModel as FlextUtilitiesModel
     from flext_core._utilities.model_options import (
@@ -168,6 +152,12 @@ if TYPE_CHECKING:
     from flext_core._utilities.parser_coerce import (
         FlextUtilitiesParserCoerce as FlextUtilitiesParserCoerce,
     )
+    from flext_core._utilities.parser_targets import (
+        FlextUtilitiesParserTargets as FlextUtilitiesParserTargets,
+    )
+    from flext_core._utilities.project_metadata import (
+        FlextUtilitiesProjectMetadata as FlextUtilitiesProjectMetadata,
+    )
     from flext_core._utilities.pydantic import (
         FlextUtilitiesPydantic as FlextUtilitiesPydantic,
     )
@@ -181,106 +171,27 @@ if TYPE_CHECKING:
         FlextUtilitiesSettings as FlextUtilitiesSettings,
     )
     from flext_core._utilities.text import FlextUtilitiesText as FlextUtilitiesText
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        "._beartype": ("_beartype",),
-        "._beartype._alias_visitor": ("FlextUtilitiesBeartypeAliasVisitor",),
-        "._beartype._class_visitor_parts.class_visitor_part_03": (
-            "FlextUtilitiesBeartypeClassVisitor",
-        ),
-        "._beartype._library_visitor": ("FlextUtilitiesBeartypeLibraryVisitor",),
-        "._beartype.attr_visitor": ("FlextUtilitiesBeartypeAttrVisitor",),
-        "._beartype.deprecated_visitor": ("FlextUtilitiesBeartypeDeprecatedVisitor",),
-        "._beartype.field_visitor": ("FlextUtilitiesBeartypeFieldVisitor",),
-        "._beartype.helpers": ("FlextUtilitiesBeartypeHelpers",),
-        "._beartype.import_visitor": ("FlextUtilitiesBeartypeImportVisitor",),
-        "._beartype.method_visitor": ("FlextUtilitiesBeartypeMethodVisitor",),
-        "._beartype.module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),
-        "._checker_parts": ("_checker_parts",),
-        "._checker_parts.checker_part_03": ("FlextUtilitiesChecker",),
-        "._context_crud_set": ("FlextUtilitiesContextCrudSetMixin",),
-        "._enforcement_collect_parts": ("_enforcement_collect_parts",),
-        "._enforcement_collect_parts.enforcement_collect_part_02": (
-            "FlextUtilitiesEnforcementCollect",
-        ),
-        "._enforcement_parts": ("_enforcement_parts",),
-        "._enforcement_parts.enforcement_part_01": ("PREDICATE_BINDINGS",),
-        "._enforcement_parts.enforcement_part_05": ("FlextUtilitiesEnforcement",),
-        "._enforcement_parts.enforcement_part_06": ("EXTENDED_PREDICATE_BINDINGS",),
-        "._generators_parts": ("_generators_parts",),
-        "._generators_parts.generators_part_02": ("FlextUtilitiesGenerators",),
-        "._guards_parts": ("_guards_parts",),
-        "._guards_parts.guards_part_02": ("FlextUtilitiesGuards",),
-        "._guards_type_protocol_specs": ("FlextUtilitiesGuardsTypeProtocolSpecsMixin",),
-        "._guards_type_protocol_string": (
-            "FlextUtilitiesGuardsTypeProtocolStringMixin",
-        ),
-        "._guards_type_protocol_types": ("ProtocolGuardInput",),
-        "._logging_config_parts": ("_logging_config_parts",),
-        "._logging_config_parts.logging_config_part_03": (
-            "FlextUtilitiesLoggingConfig",
-        ),
-        "._logging_context_parts": ("_logging_context_parts",),
-        "._logging_context_parts.logging_context_part_02": (
-            "FlextUtilitiesLoggingContext",
-        ),
-        "._mapper_access_parts": ("_mapper_access_parts",),
-        "._mapper_access_parts.mapper_access_part_02": ("FlextUtilitiesMapperAccess",),
-        "._mapper_extract_parts": ("_mapper_extract_parts",),
-        "._mapper_extract_parts.mapper_extract_part_02": (
-            "FlextUtilitiesMapperExtract",
-        ),
-        "._parser_targets_parts": ("_parser_targets_parts",),
-        "._parser_targets_parts.parser_targets_part_02": (
-            "FlextUtilitiesParserTargets",
-        ),
-        "._project_metadata_parts": ("_project_metadata_parts",),
-        "._project_metadata_parts.project_metadata_part_04": (
-            "FlextUtilitiesProjectMetadata",
-        ),
-        ".args": ("FlextUtilitiesArgs",),
-        ".beartype_conf": ("FlextUtilitiesBeartypeConf",),
-        ".beartype_engine": (
-            "FlextUtilitiesBeartypeEngine",
-            "ube",
-        ),
-        ".beartype_typingext_patch": ("FlextUtilitiesBeartypeTypingExtPatch",),
-        ".collection": ("FlextUtilitiesCollection",),
-        ".collection_iter": ("FlextUtilitiesCollectionIter",),
-        ".collection_merge": ("FlextUtilitiesCollectionMerge",),
-        ".config": ("FlextUtilitiesConfig",),
-        ".context": ("FlextUtilitiesContext",),
-        ".context_crud": ("FlextUtilitiesContextCrud",),
-        ".context_lifecycle": ("FlextUtilitiesContextLifecycle",),
-        ".context_state": ("FlextUtilitiesContextState",),
-        ".conversion": ("FlextUtilitiesConversion",),
-        ".discovery": ("FlextUtilitiesDiscovery",),
-        ".dispatcher_execute": ("execute_dispatcher_handler",),
-        ".domain": ("FlextUtilitiesDomain",),
-        ".enforcement_emit": ("FlextUtilitiesEnforcementEmit",),
-        ".enum": ("FlextUtilitiesEnum",),
-        ".guards_type_core": ("FlextUtilitiesGuardsTypeCore",),
-        ".guards_type_model": ("FlextUtilitiesGuardsTypeModel",),
-        ".guards_type_protocol": ("FlextUtilitiesGuardsTypeProtocol",),
-        ".handler": ("FlextUtilitiesHandler",),
-        ".mapper": ("FlextUtilitiesMapper",),
-        ".model": ("FlextUtilitiesModel",),
-        ".model_options": ("FlextUtilitiesModelOptions",),
-        ".model_runtime": ("FlextUtilitiesModelRuntime",),
-        ".parser": ("FlextUtilitiesParser",),
-        ".parser_coerce": ("FlextUtilitiesParserCoerce",),
-        ".pydantic": ("FlextUtilitiesPydantic",),
-        ".reliability": ("FlextUtilitiesReliability",),
-        ".runtime_violation_registry": ("FlextUtilitiesRuntimeViolationRegistry",),
-        ".settings": ("FlextUtilitiesSettings",),
-        ".text": ("FlextUtilitiesText",),
-    },
+
+    # mro-i6nq.10: Static declaration mirrors the installer-owned runtime binding.
+    __all__: tuple[str, ...]
+
+
+_LAZY_IMPORTS = merge_lazy_imports(
+    _CHILD_MODULE_PATHS,
+    build_lazy_import_map(
+        _LAZY_MODULES,
+        alias_groups=_LAZY_ALIAS_GROUPS,
+        sort_keys=False,
+    ),
+    exclude_names=_EXCLUDED_LAZY_NAMES,
+    module_name=__name__,
 )
 
 
+# mro-i6nq.10: The installer publishes __all__ from the manifest's literal ABI.
 install_lazy_exports(
     __name__,
     globals(),
     _LAZY_IMPORTS,
-    publish_all=False,
+    public_exports=_PUBLIC_EXPORTS,
 )

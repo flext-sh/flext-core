@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, TypeIs
 
 from pydantic import BaseModel as PydanticBaseModel
 
-from flext_core.typings import FlextTypes as t
+from flext_core import FlextTypes as t
 
 if TYPE_CHECKING:
     from collections.abc import (

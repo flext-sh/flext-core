@@ -10,8 +10,8 @@ from flext_core._protocols.result import FlextProtocolsResult as p
 if TYPE_CHECKING:
     from returns.result import Result
 
+    from flext_core import FlextTypes as t
     from flext_core._models.containers import FlextModelsContainers as mc
-    from flext_core.typings import FlextTypes as t
 
 
 class FlextResultBehaviorMixin[T](p.Result[T], ABC):

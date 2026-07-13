@@ -10,13 +10,11 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core.constants import c
-from flext_core.models import m
+from flext_core import c, m
 from flext_core.result import r
 
 if TYPE_CHECKING:
-    from flext_core.protocols import p
-    from flext_core.typings import t
+    from flext_core import p, t
 
 
 class FlextUtilitiesParserCoerce:

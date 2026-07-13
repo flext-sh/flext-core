@@ -9,11 +9,10 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated
 
+from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core._models._context._data import FlextModelsContextData
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core.constants import FlextConstants as c
-from flext_core.typings import FlextTypes as t
 
 
 class FlextModelsContextScope:

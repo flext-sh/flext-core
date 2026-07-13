@@ -14,10 +14,9 @@ from typing import Annotated
 
 from pydantic import field_validator
 
+from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core.constants import FlextConstants as c
-from flext_core.typings import FlextTypes as t
 
 _EMPTY_SCALAR_MAPPING: t.MappingKV[str, t.Scalar] = MappingProxyType({})
 

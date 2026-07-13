@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Annotated, override
 from examples import ExamplesFlextShared, m, p, r, s, t, u
 
 if TYPE_CHECKING:
-    from flext_core.protocols import p as core_p
+    from flext_core import p as core_p
 
 
 class _EchoService(s[str]):
