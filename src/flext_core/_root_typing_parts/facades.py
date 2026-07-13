@@ -4,21 +4,19 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_core import (
-    FlextConstants,
-    FlextModels,
-    FlextProtocols,
-    FlextTypes,
-    FlextUtilities,
-    c,
-    m,
-    p,
-    t,
-    u,
-)
+# NOTE (multi-agent, mro-f8vk / kimi): facade imports must resolve from their
+# owner modules (flext_core.constants/.models/.protocols/.typings/.utilities),
+# never from the root package — self-importing flext_core here degraded every
+# workspace `from flext_core import c/m/p/t/u` to Module("flext_core") under
+# TYPE_CHECKING (pyright: "Argument to class must be a base class"). Generator
+# propagation is tracked in mro-i6nq.10.
 from flext_core._settings import (
     FlextSettings,
     settings,
+)
+from flext_core.constants import (
+    FlextConstants,
+    c,
 )
 from flext_core.container import (
     FlextContainer,
@@ -54,6 +52,14 @@ from flext_core.mixins import (
     FlextMixins,
     x,
 )
+from flext_core.models import (
+    FlextModels,
+    m,
+)
+from flext_core.protocols import (
+    FlextProtocols,
+    p,
+)
 from flext_core.registry import (
     FlextRegistry,
 )
@@ -67,6 +73,14 @@ from flext_core.runtime import (
 from flext_core.service import (
     FlextService,
     s,
+)
+from flext_core.typings import (
+    FlextTypes,
+    t,
+)
+from flext_core.utilities import (
+    FlextUtilities,
+    u,
 )
 
 ROOT_TYPING_FACADES_ALL: Final[tuple[str, ...]] = (
