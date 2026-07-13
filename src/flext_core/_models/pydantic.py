@@ -124,7 +124,10 @@ class FlextModelsPydantic:
     SettingsConfigDict: TypeAlias = _PydanticSettingsConfigDict
 
     Field = staticmethod(_field)
-    PrivateAttr = PrivateAttr
+    # NOTE (multi-agent): mro-ecfu — staticmethod wrap matches Field above and
+    # u.PrivateAttr (_utilities/pydantic.py): pyright cannot model an unwrapped
+    # function class attribute called through the facade (mixins.py:59 error).
+    PrivateAttr = staticmethod(PrivateAttr)
     SkipValidation = SkipValidation
     computed_field = computed_field
     field_validator = field_validator
