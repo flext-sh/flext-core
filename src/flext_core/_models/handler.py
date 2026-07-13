@@ -67,13 +67,8 @@ class FlextModelsHandler:
             ),
         ] = c.Status.RUNNING
 
-    class HandlerExecutionContext(m.ArbitraryTypesModel):
-        """Handler execution state (identity + timing + metrics payload).
-
-        Defined at module level so it can be referenced by HandlerRuntimeState
-        annotations without forward-reference issues. Exposed as
-        FlextModelsHandler.ExecutionContext.
-        """
+    class ExecutionContext(m.ArbitraryTypesModel):
+        """Handler execution state (identity + timing + metrics payload)."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
             arbitrary_types_allowed=True,
@@ -124,11 +119,11 @@ class FlextModelsHandler:
         """Aggregate runtime state for the active handler pipeline."""
 
         execution_context: Annotated[
-            FlextModelsHandler.HandlerExecutionContext,
+            FlextModelsHandler.ExecutionContext,
             mp.Field(description="Execution context for the active handler"),
         ]
         context_stack: Annotated[
-            MutableSequence[FlextModelsHandler.HandlerExecutionContext],
+            MutableSequence[FlextModelsHandler.ExecutionContext],
             mp.Field(
                 description="Stack of nested execution contexts.",
             ),
