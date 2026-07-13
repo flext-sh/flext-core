@@ -13,7 +13,7 @@ dev = [ "types-defusedxml>=0.7.0.20260408", "vulture>=2.16" ]
 # [CUSTOM] project metadata
 [project]
 classifiers = [
-  "Development Status :: 5 - Production/Stable",
+  "Development Status :: 3 - Alpha",
   "Framework :: Pydantic :: 2",
   "Framework :: Pydantic",
   "Intended Audience :: Developers",
@@ -24,7 +24,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "beartype @ git+https://github.com/beartype/beartype.git@ee481e0c6da5c0cf8a6b27a53a10354e9df4ac71",
+  "beartype>=0.22.9,<0.23",
   "cachetools>=6.2,<7.0",
   "dependency-injector>=4.49.0",
   "docker>=7.1.0",
@@ -50,7 +50,7 @@ license = "MIT"
 name = "flext-core"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-version = "0.12.0-dev"
+version = "0.12.0"
 
 [[project.authors]]
 email = "team@flext.sh"
@@ -186,6 +186,9 @@ project_class = "platform"
 
 [tool.hatch.build.targets.wheel]
 packages = [ "src/flext_core" ]
+
+[tool.hatch.build.targets.wheel.force-include]
+config = "flext_core/config"
 
 [tool.hatch.metadata]
 allow-direct-references = true

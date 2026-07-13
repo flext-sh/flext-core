@@ -22,6 +22,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 from threading import RLock
 from typing import ClassVar, Self, override
@@ -58,9 +59,35 @@ class FlextConfig(BaseSettings):
         cls._instance = None
 
     @classmethod
+    def _config_dir(cls) -> Path:
+        """Resolve ``config/`` deterministically, independent of the caller's CWD.
+
+        ``CONFIG_DIR`` may be an absolute path (explicit override, used verbatim)
+        or a relative name (default ``"config"``). When relative it is resolved
+        against the concrete subclass's own module layout, trying in order:
+
+        1. ``<pkg>/config`` — the packaged copy shipped via hatch force-include,
+           present after ``pip install`` (``site-packages/<pkg>/config``).
+        2. ``<project-root>/config`` — the editable/workspace source tree, where
+           ``config/`` sits beside ``src/`` (``<root>/src/<pkg>/_config.py`` →
+           ``parents[2]`` is the project root).
+
+        Library code must never depend on the process CWD, so the legacy
+        CWD-relative lookup is gone.
+        """
+        config_dir = Path(cls.CONFIG_DIR)
+        if config_dir.is_absolute():
+            return config_dir
+        module_path = Path(inspect.getfile(cls)).resolve()
+        packaged = module_path.parent / config_dir
+        if packaged.is_dir():
+            return packaged
+        return module_path.parents[2] / config_dir
+
+    @classmethod
     def _config_files(cls) -> list[Path]:
         """Auto-discover every ``config/*.yaml`` (sorted for deterministic merge)."""
-        config_dir = Path(cls.CONFIG_DIR)
+        config_dir = cls._config_dir()
         if not config_dir.is_dir():
             return []
         return sorted(config_dir.glob("*.yaml")) + sorted(config_dir.glob("*.yml"))
