@@ -257,12 +257,7 @@ class FlextRegistry(s[bool]):
             if key not in self._state.registered_keys:
                 return e.fail_not_found(category, name)
             raw_result = self.container.resolve(key)
-            if raw_result.failure:
-                return e.fail_operation(
-                    f"retrieve {category} '{name}'",
-                    raw_result.error or c.CQRS_OPERATION_FAILED,
-                )
-            return r[t.JsonPayload | None].ok(self._narrow_value(raw_result.value))
+            return raw_result.map(self._narrow_value)
         cls = type(self)
         if key not in cls._class_registered_keys:
             return e.fail_not_found(category, name)
@@ -358,10 +353,7 @@ class FlextRegistry(s[bool]):
             if reg_result.success:
                 self._add_successful_registration(key, reg_result.value, summary)
             else:
-                summary.errors.append(
-                    reg_result.error
-                    or f"Failed to register binding for {message_type_name}"
-                )
+                summary.errors.append(r.require_error(reg_result))
         return self._finalize_summary(summary)
 
     def register_handler(
@@ -400,10 +392,7 @@ class FlextRegistry(s[bool]):
         )
 
         if registration_result.failure:
-            return e.fail_operation(
-                "register handler in dispatcher",
-                registration_result.error or c.ERR_HANDLER_FAILED,
-            )
+            return r[m.RegistrationDetails].from_failure(registration_result)
 
         self._remember_registered_key(handler_id)
         return r[m.RegistrationDetails].ok(
@@ -436,9 +425,7 @@ class FlextRegistry(s[bool]):
             if result.success:
                 self._add_successful_registration(key, result.value, summary)
             else:
-                summary.errors.append(
-                    result.error or f"Failed to register handler '{key}'"
-                )
+                summary.errors.append(r.require_error(result))
         return self._finalize_summary(summary)
 
     def register_plugin(
@@ -478,10 +465,7 @@ class FlextRegistry(s[bool]):
             try:
                 validation_result = validate(plugin)
                 if validation_result.failure:
-                    result = e.fail_operation(
-                        "validate plugin registration",
-                        validation_result.error or c.ERR_VALIDATION_FAILED,
-                    )
+                    result = validation_result
             except c.EXC_RUNTIME_TYPE as exc:
                 result = e.fail_operation("validate plugin registration", exc)
         if result.success:

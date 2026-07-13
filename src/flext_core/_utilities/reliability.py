@@ -145,7 +145,7 @@ class FlextUtilitiesReliability:
                 result = operation()
                 if result.success:
                     return result
-                last_error = result.error or "Unknown error"
+                last_error = r.require_error(result)
             except FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS as e:
                 last_error = str(e)
             if attempt < max_att - 1:

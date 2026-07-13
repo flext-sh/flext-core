@@ -73,9 +73,7 @@ class FlextUtilitiesConfig:
             op_name="config_load",
         )
         if parsed.failure:
-            return r[t.JsonMapping].fail(
-                parsed.error or f"{c.ERR_CONFIG_PARSE_FAILED}: {path}"
-            )
+            return r[t.JsonMapping].from_failure(parsed)
         payload = parsed.value
         if not g.mapping(payload):
             return r[t.JsonMapping].fail(f"{c.ERR_CONFIG_NOT_MAPPING}: {path}")

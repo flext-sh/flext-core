@@ -59,11 +59,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             return r[ResultT].fail_op("validate handler message type", error_msg)
         validation = self.validate_message(message)
         if validation.failure:
-            error_detail = validation.error or c.ERR_VALIDATION_FAILED
-            error_msg = c.ERR_HANDLER_MESSAGE_VALIDATION_FAILED.format(
-                error=error_detail
-            )
-            return r[ResultT].fail_op("validate handler message", error_msg)
+            return r[ResultT].from_failure(validation)
         self._runtime_state = FlextUtilitiesHandler.start_execution(self._runtime_state)
         _ = self.push_context(self._runtime_state.execution_context)
         try:
@@ -132,10 +128,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         validation = self.validate_message(message)
         if validation.failure:
-            return r[ResultT].fail_op(
-                "execute handler validation",
-                validation.error or c.ERR_VALIDATION_FAILED,
-            )
+            return r[ResultT].from_failure(validation)
         return self.handle(message)
 
 

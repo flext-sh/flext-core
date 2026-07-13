@@ -21,7 +21,6 @@ class FlextConstantsErrorsMessages:
     ERR_TEMPLATE_FAILED_WITH_ERROR: Final[str] = "Failed to {operation}: {error}"
     ERR_TEMPLATE_KEY_NOT_FOUND: Final[str] = "Key '{key}' not found"
     ERR_TEMPLATE_KEY_NOT_FOUND_AT_PATH: Final[str] = "Key '{key}' not found at '{path}'"
-    ERR_TEMPLATE_FOUND_NONE: Final[str] = "found_none:{key}"
     ERR_TEMPLATE_INDEX_OUT_OF_RANGE: Final[str] = "Index {index} out of range"
     ERR_TEMPLATE_INVALID_INDEX: Final[str] = "Invalid index {index}"
     ERR_TEMPLATE_MISSING_VALUE: Final[str] = (
@@ -123,6 +122,12 @@ class FlextConstantsErrorsMessages:
     )
     ERR_RESULT_FILTER_PREDICATE_FAILED: Final[str] = (
         "Value did not pass filter predicate"
+    )
+    ERR_RESULT_FAILURE_MESSAGE_REQUIRED: Final[str] = (
+        "Failed result must carry a non-empty error message"
+    )
+    ERR_RESULT_FAILURE_REQUIRED: Final[str] = (
+        "Cannot propagate a successful result as a failure"
     )
     ERR_RESULT_CANNOT_ACCESS_VALUE: Final[str] = (
         "Cannot access value of failed result: {error}"
@@ -407,9 +412,6 @@ class FlextConstantsErrorsDomainParser:
     )
     ERR_COLLECTION_NO_MATCHING_ITEM_FOUND: Final[str] = "No matching item found"
     ERR_MAPPER_NOT_A_SEQUENCE: Final[str] = "Not a sequence"
-    ERR_MAPPER_FOUND_NONE_INDEX: Final[str] = (
-        FlextConstantsErrorsMessages.ERR_TEMPLATE_FOUND_NONE.format(key="index")
-    )
     ERR_INFRA_INVALID_HANDLER_MODE: Final[str] = (
         "handler_mode must be 'command' or 'query'"
     )

@@ -32,7 +32,7 @@ class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):
             if result.success:
                 successes.append(result.value)
             else:
-                errors.append(result.error or "Unknown error")
+                errors.append(cls.require_error(result))
         if errors:
             # Type bridge: accumulated failures carry no payload value.
             result_class = cast(
@@ -59,12 +59,7 @@ class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):
                 except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
                     return result_class.fail(str(exc), exception=exc)
                 if result.failure:
-                    return result_class.fail(
-                        result.error or "Unknown error",
-                        error_code=result.error_code,
-                        error_data=result.error_data,
-                        exception=result.exception,
-                    )
+                    return result_class.from_failure(result)
                 results.append(result.value)
             return cls.ok(results)
         item_result_class = cast("type[FlextResultConstructionMixin[U]]", cls)

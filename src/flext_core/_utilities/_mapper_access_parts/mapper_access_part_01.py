@@ -62,17 +62,11 @@ class FlextUtilitiesMapperAccess:
         return str(value)
 
     @staticmethod
-    def _resolve_raw_value(
-        raw: t.JsonPayload | None, key_part: str
-    ) -> p.Result[t.JsonPayload]:
-        """Wrap raw value in Result: fail on None, keep containers, stringify rest."""
+    def _resolve_raw_value(raw: t.JsonPayload | None) -> p.Result[t.JsonPayload | None]:
+        """Wrap a raw value while preserving an explicit ``None`` as data."""
         if raw is None:
-            return r[t.JsonPayload].fail_op(
-                "resolve extracted value",
-                "found_none:"
-                + e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
-            )
-        return r[t.JsonPayload].ok(
+            return r[t.JsonPayload | None].ok(None)
+        return r[t.JsonPayload | None].ok(
             raw if FlextUtilitiesGuards.container(raw) else str(raw)
         )
 
@@ -84,12 +78,12 @@ class FlextUtilitiesMapperAccess:
         | t.SequenceOf[t.JsonValue | t.JsonPayload]
         | None,
         key_part: str,
-    ) -> p.Result[t.JsonPayload]:
-        """Get raw value from dict/object/model, returning found_none or not-found failures."""
-        not_found_result = r[t.JsonPayload].fail_op(
+    ) -> p.Result[t.JsonPayload | None]:
+        """Get a raw value from a mapping, model, or protocol object."""
+        not_found_result = r[t.JsonPayload | None].fail_op(
             "extract key", e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part)
         )
-        result: p.Result[t.JsonPayload]
+        result: p.Result[t.JsonPayload | None]
         mapping_obj: t.MappingKV[str, t.JsonValue | t.JsonPayload] | None = None
         if isinstance(current, FlextModelsContainers.ConfigMap):
             mapping_obj = current.root
@@ -97,11 +91,9 @@ class FlextUtilitiesMapperAccess:
             mapping_obj = current
         if mapping_obj is not None:
             result = (
-                FlextUtilitiesMapperAccess._resolve_raw_value(
-                    mapping_obj[key_part], key_part
-                )
+                FlextUtilitiesMapperAccess._resolve_raw_value(mapping_obj[key_part])
                 if key_part in mapping_obj
-                else r[t.JsonPayload].fail_op(
+                else r[t.JsonPayload | None].fail_op(
                     "extract mapping key",
                     e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part)
                     + " in Mapping",
@@ -109,7 +101,7 @@ class FlextUtilitiesMapperAccess:
             )
         elif hasattr(current, key_part):
             result = FlextUtilitiesMapperAccess._resolve_raw_value(
-                getattr(current, key_part), key_part
+                getattr(current, key_part)
             )
         else:
             result = not_found_result

@@ -55,7 +55,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
 
     @staticmethod
     def _extract_resolve_result(
-        result: p.Result[t.JsonPayload],
+        result: p.Result[t.JsonPayload | None],
         *,
         failure_message: str,
         default: t.JsonPayload | None,
@@ -63,8 +63,6 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
     ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
         """Resolve extractor step result into next value or early fallback result."""
         if result.failure:
-            if "found_none:" in (result.error or ""):
-                return None, None
             return None, FlextUtilitiesMapperExtract._extract_fail_or_default(
                 failure_message, default=default, required=required
             )
