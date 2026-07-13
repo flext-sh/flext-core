@@ -10,13 +10,12 @@ from collections.abc import MutableSequence
 from typing import Annotated
 
 from flext_core import FlextTypes as t
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.handler import FlextProtocolsHandler as p
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
-
-from .base import FlextModelsBase as m
-from .entity import FlextModelsEntity
-from .handler import FlextModelsHandler
 
 
 class FlextModelsRegistry:

@@ -17,7 +17,8 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from re import Pattern
-from typing import TYPE_CHECKING, TypeAlias, dataclass_transform
+from types import EllipsisType
+from typing import TypeAlias, dataclass_transform
 
 from pydantic import (
     AfterValidator,
@@ -57,9 +58,6 @@ from pydantic_settings import (
     PydanticBaseSettingsSource,
     SettingsConfigDict as _PydanticSettingsConfigDict,
 )
-
-if TYPE_CHECKING:
-    from types import EllipsisType
 
 type _FieldValue = JsonValue | Path
 type _FieldSchemaExtra = Mapping[str, _FieldValue | Sequence[_FieldValue]]

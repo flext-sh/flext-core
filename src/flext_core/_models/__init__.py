@@ -24,10 +24,8 @@ if TYPE_CHECKING:
         _base_parts as _base_parts,
         _container_parts as _container_parts,
         _context as _context,
-        _cqrs_parts as _cqrs_parts,
         _enforcement as _enforcement,
         _exception_params_parts as _exception_params_parts,
-        _handler_parts as _handler_parts,
     )
     from flext_core._models.base import FlextModelsBase as FlextModelsBase
     from flext_core._models.builder import FlextModelsBuilder as FlextModelsBuilder

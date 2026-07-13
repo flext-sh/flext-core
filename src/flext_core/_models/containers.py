@@ -19,9 +19,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated
 
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.services import FlextTypesServices
-
-from .pydantic import FlextModelsPydantic as mp
 
 if TYPE_CHECKING:
     from collections.abc import (

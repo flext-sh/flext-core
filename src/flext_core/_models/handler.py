@@ -9,6 +9,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
 import time
 from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
@@ -18,63 +20,6 @@ from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
-
-
-# NOTE (multi-agent): mro-i6nq.12 — consolidated _handler_parts/part_01..02 (one
-# FlextModelsHandler namespace class split across a numbered MRO chain) into this
-# single facade module.
-class _HandlerExecutionContext(m.ArbitraryTypesModel):
-    """Handler execution state (identity + timing + metrics payload).
-
-    Defined at module level so it can be referenced by HandlerRuntimeState
-    annotations without forward-reference issues. Exposed as
-    FlextModelsHandler.ExecutionContext.
-    """
-
-    model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-        arbitrary_types_allowed=True,
-        validate_assignment=True,
-        json_schema_extra={
-            "title": "HandlerExecutionContext",
-            "description": "Handler execution context for tracking performance and state",
-        },
-    )
-    handler_name: Annotated[
-        t.NonEmptyStr,
-        mp.Field(
-            description="Name of the handler being executed",
-            examples=["ProcessOrderCommand", "GetUserQuery", "OrderCreatedEvent"],
-        ),
-    ]
-    handler_mode: Annotated[
-        c.HandlerType,
-        mp.Field(
-            description="Mode of handler execution",
-            examples=["command", "query", "event"],
-        ),
-    ]
-    started_at: Annotated[
-        float | None,
-        mp.Field(
-            default=None,
-            description="Monotonic start timestamp used to compute execution time.",
-        ),
-    ] = None
-    metrics_state_data: Annotated[
-        mc.Dict,
-        mp.Field(
-            default_factory=lambda: mc.Dict(root={}),
-            description="Mutable metrics payload for the active handler execution.",
-        ),
-    ] = mp.Field(default_factory=lambda: mc.Dict(root={}))
-
-    @up.computed_field()
-    def execution_time_ms(self) -> float:
-        """Elapsed execution time in milliseconds (0 until started)."""
-        if self.started_at is None:
-            return 0.0
-        elapsed: float = time.time() - self.started_at
-        return round(elapsed * c.DEFAULT_SIZE, 2)
 
 
 class FlextModelsHandler:
@@ -122,17 +67,68 @@ class FlextModelsHandler:
             ),
         ] = c.Status.RUNNING
 
-    ExecutionContext = _HandlerExecutionContext
+    class HandlerExecutionContext(m.ArbitraryTypesModel):
+        """Handler execution state (identity + timing + metrics payload).
+
+        Defined at module level so it can be referenced by HandlerRuntimeState
+        annotations without forward-reference issues. Exposed as
+        FlextModelsHandler.ExecutionContext.
+        """
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            arbitrary_types_allowed=True,
+            validate_assignment=True,
+            json_schema_extra={
+                "title": "HandlerExecutionContext",
+                "description": "Handler execution context for tracking performance and state",
+            },
+        )
+        handler_name: Annotated[
+            t.NonEmptyStr,
+            mp.Field(
+                description="Name of the handler being executed",
+                examples=["ProcessOrderCommand", "GetUserQuery", "OrderCreatedEvent"],
+            ),
+        ]
+        handler_mode: Annotated[
+            c.HandlerType,
+            mp.Field(
+                description="Mode of handler execution",
+                examples=["command", "query", "event"],
+            ),
+        ]
+        started_at: Annotated[
+            float | None,
+            mp.Field(
+                default=None,
+                description="Monotonic start timestamp used to compute execution time.",
+            ),
+        ] = None
+        metrics_state_data: Annotated[
+            mc.Dict,
+            mp.Field(
+                default_factory=lambda: mc.Dict(root={}),
+                description="Mutable metrics payload for the active handler execution.",
+            ),
+        ] = mp.Field(default_factory=lambda: mc.Dict(root={}))
+
+        @up.computed_field()
+        def execution_time_ms(self) -> float:
+            """Elapsed execution time in milliseconds (0 until started)."""
+            if self.started_at is None:
+                return 0.0
+            elapsed: float = time.time() - self.started_at
+            return round(elapsed * c.DEFAULT_SIZE, 2)
 
     class HandlerRuntimeState(m.ArbitraryTypesModel):
         """Aggregate runtime state for the active handler pipeline."""
 
         execution_context: Annotated[
-            _HandlerExecutionContext,
+            FlextModelsHandler.HandlerExecutionContext,
             mp.Field(description="Execution context for the active handler"),
         ]
         context_stack: Annotated[
-            MutableSequence[_HandlerExecutionContext],
+            MutableSequence[FlextModelsHandler.HandlerExecutionContext],
             mp.Field(
                 description="Stack of nested execution contexts.",
             ),

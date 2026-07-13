@@ -18,10 +18,9 @@ from pydantic import (
 )
 
 from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.settings import FlextProtocolsSettings as p
-
-from .base import FlextModelsBase as m
 
 
 class FlextModelsSettings:
