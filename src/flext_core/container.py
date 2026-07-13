@@ -14,18 +14,25 @@ import inspect
 import sys
 import threading
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, ClassVar, Self, overload, override
+from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, overload, override
 
 from dependency_injector import containers as di_containers
 
-# NOTE (multi-agent): mro-i6nq.12 — consolidated _container_parts/part_01..05 (one
-# FlextContainer class split across a numbered MRO chain) into this single facade
-# module; final class is concrete (ABC dropped, matching the former part_05).
-from flext_core import c, e, m, p, r, t, u
-from flext_core._settings import FlextSettings
-from flext_core.context import FlextContext
-from flext_core.loggings import FlextUtilitiesLogging
+from flext_core import (
+    FlextContext,
+    FlextSettings,
+    FlextUtilitiesLogging,
+    c,
+    e,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
+# NOTE (multi-agent): mro-i6nq.12 — the concrete public facade remains the
+# runtime implementation; p.ContainerType is only its structural contract.
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping
     from types import FrameType, ModuleType
@@ -122,6 +129,13 @@ class FlextContainer(p.Container):
         logger: p.Logger = FlextUtilitiesLogging.fetch_logger(module_name)
         return logger
 
+    @staticmethod
+    def _matches_service_type[T: t.RegisterableService](
+        value: t.RegisterableService, expected: type[T]
+    ) -> TypeGuard[T]:
+        """Narrow a resolved service through its structural runtime type."""
+        return isinstance(value, expected)
+
     def _resolve_callable[T: t.RegisterableService](
         self, callable_obj: t.FactoryCallable, kind: str, type_cls: type[T] | None
     ) -> p.Result[T] | p.Result[t.RegisterableService]:
@@ -133,7 +147,7 @@ class FlextContainer(p.Container):
                 e.fail_operation(f"resolve {kind}", exc)
             )
         if type_cls is not None:
-            if isinstance(resolved, type_cls):
+            if self._matches_service_type(resolved, type_cls):
                 return r[T].ok(resolved)
             return r[T].from_result(
                 e.fail_type_mismatch(type_cls.__name__, type(resolved).__name__)
