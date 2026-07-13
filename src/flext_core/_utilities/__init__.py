@@ -25,8 +25,6 @@ if TYPE_CHECKING:
         _checker_parts as _checker_parts,
         _enforcement_collect_parts as _enforcement_collect_parts,
         _enforcement_parts as _enforcement_parts,
-        _generators_parts as _generators_parts,
-        _guards_parts as _guards_parts,
         _logging_config_parts as _logging_config_parts,
         _logging_context_parts as _logging_context_parts,
         _mapper_access_parts as _mapper_access_parts,
