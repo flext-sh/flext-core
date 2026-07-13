@@ -82,10 +82,7 @@ class FlextUtilitiesConfig:
         return r[t.JsonMapping].ok(payload)
 
     @staticmethod
-    def config_merge(
-        base: t.JsonMapping,
-        override: t.JsonMapping,
-    ) -> t.JsonDict:
+    def config_merge(base: t.JsonMapping, override: t.JsonMapping) -> t.JsonDict:
         """Deep-merge ``override`` onto ``base``, returning a new mapping."""
         merged: dict[str, t.JsonValue] = dict(base)
         for key, value in override.items():
@@ -100,10 +97,7 @@ class FlextUtilitiesConfig:
         return merged
 
     @staticmethod
-    def config_env_override(
-        value: t.JsonValue,
-        env: Mapping[str, str],
-    ) -> t.JsonValue:
+    def config_env_override(value: t.JsonValue, env: Mapping[str, str]) -> t.JsonValue:
         """Expand ``${VAR}`` / ``${VAR:-default}`` placeholders in string leaves.
 
         Recurses through mappings and sequences; non-string leaves pass through

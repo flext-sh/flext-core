@@ -191,10 +191,7 @@ class FlextConstantsErrorsRuntimeExceptions:
     )
     """Mapping access + type-validation catch for dict-shape boundaries."""
 
-    EXC_TYPE_VALIDATION: Final[tuple[type[Exception], ...]] = (
-        TypeError,
-        ValueError,
-    )
+    EXC_TYPE_VALIDATION: Final[tuple[type[Exception], ...]] = (TypeError, ValueError)
     """Minimal type-validation catch for value-coercion boundaries."""
 
     EXC_NETWORK_TYPE: Final[tuple[type[Exception], ...]] = (
@@ -238,16 +235,10 @@ class FlextConstantsErrorsRuntimeExceptions:
     )
     """Filesystem read + decoding catch for file-handler boundaries."""
 
-    EXC_OS_VALUE: Final[tuple[type[Exception], ...]] = (
-        OSError,
-        ValueError,
-    )
+    EXC_OS_VALUE: Final[tuple[type[Exception], ...]] = (OSError, ValueError)
     """Filesystem + value-validation catch for path/IO boundaries."""
 
-    EXC_OS_DECODING: Final[tuple[type[Exception], ...]] = (
-        OSError,
-        UnicodeDecodeError,
-    )
+    EXC_OS_DECODING: Final[tuple[type[Exception], ...]] = (OSError, UnicodeDecodeError)
     """Filesystem read + unicode decoding catch for text-file boundaries."""
 
     EXC_ATTR_RUNTIME_TYPE: Final[tuple[type[Exception], ...]] = (
@@ -265,16 +256,10 @@ class FlextConstantsErrorsRuntimeExceptions:
     )
     """Filesystem + typing catch for path/IO + value-validation boundaries."""
 
-    EXC_ATTR_TYPE: Final[tuple[type[Exception], ...]] = (
-        AttributeError,
-        TypeError,
-    )
+    EXC_ATTR_TYPE: Final[tuple[type[Exception], ...]] = (AttributeError, TypeError)
     """Minimal attribute-access + type catch for object-shape boundaries."""
 
-    EXC_OS_TYPE: Final[tuple[type[Exception], ...]] = (
-        OSError,
-        TypeError,
-    )
+    EXC_OS_TYPE: Final[tuple[type[Exception], ...]] = (OSError, TypeError)
     """Filesystem + type-validation catch for path-handler boundaries."""
 
     EXC_BROAD_RUNTIME_OS: Final[tuple[type[Exception], ...]] = (
@@ -357,10 +342,7 @@ class FlextConstantsErrorsValidationExceptions:
     )
     """Mapping + filesystem + typing catch for IO-bound config flows."""
 
-    EXC_OS_SYNTAX: Final[tuple[type[Exception], ...]] = (
-        OSError,
-        SyntaxError,
-    )
+    EXC_OS_SYNTAX: Final[tuple[type[Exception], ...]] = (OSError, SyntaxError)
     """Filesystem + syntax catch for source-parsing boundaries."""
 
     EXC_ATTR_RUNTIME_VALIDATION: Final[tuple[type[Exception], ...]] = (

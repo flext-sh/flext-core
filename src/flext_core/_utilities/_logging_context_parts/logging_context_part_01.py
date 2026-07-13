@@ -37,17 +37,13 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @classmethod
     def _merge_scoped_context(
-        cls,
-        scope: str,
-        context: t.MappingKV[str, t.JsonPayload],
+        cls, scope: str, context: t.MappingKV[str, t.JsonPayload]
     ) -> t.JsonDict:
         cls._scoped_contexts.setdefault(scope, {})
         current_context = cls.to_container_context(cls._scoped_contexts[scope])
         incoming_context = cls.to_container_context(context)
         merge_result = FlextUtilitiesCollection.merge_mappings(
-            incoming_context,
-            current_context,
-            strategy=c.MergeStrategy.DEEP,
+            incoming_context, current_context, strategy=c.MergeStrategy.DEEP
         )
         return dict(merge_result.unwrap_or(current_context))
 
@@ -59,10 +55,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             cls.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return e.fail_operation(
-                f"{c.LoggingOperation.BIND_CONTEXT} '{scope}'",
-                exc,
-            )
+            return e.fail_operation(f"{c.LoggingOperation.BIND_CONTEXT} '{scope}'", exc)
 
     @classmethod
     def bind_global_context(cls, **context: t.JsonPayload) -> p.Result[bool]:
@@ -117,11 +110,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             return str(value)
         if FlextUtilitiesGuardsTypeModel.has_model_dump(value):
             dumped_value: t.JsonValue = t.json_value_adapter().validate_python(
-                value.model_dump(mode="json"),
+                value.model_dump(mode="json")
             )
             return dumped_value
         normalized_value: t.JsonValue = t.json_value_adapter().validate_python(
-            FlextRuntime.normalize_to_json_value(value),
+            FlextRuntime.normalize_to_json_value(value)
         )
         return normalized_value
 
@@ -137,12 +130,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @classmethod
     def _to_scalar_context(
-        cls,
-        context: t.MappingKV[str, t.LogValue | t.JsonValue | t.JsonPayload | None],
+        cls, context: t.MappingKV[str, t.LogValue | t.JsonValue | t.JsonPayload | None]
     ) -> t.JsonMapping:
-        validated: t.JsonMapping = t.json_mapping_adapter().validate_python(
-            {key: cls._to_container_value(value) for key, value in context.items()},
-        )
+        validated: t.JsonMapping = t.json_mapping_adapter().validate_python({
+            key: cls._to_container_value(value) for key, value in context.items()
+        })
         return validated
 
     @staticmethod

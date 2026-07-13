@@ -27,9 +27,7 @@ class FlextModelsErrors:
         ] = 0
         exception_counts: Annotated[
             t.IntMapping,
-            mp.Field(
-                description="Per-exception occurrence totals keyed by type name.",
-            ),
+            mp.Field(description="Per-exception occurrence totals keyed by type name."),
         ] = mp.Field(default_factory=lambda: MappingProxyType({}))
         exception_counts_summary: Annotated[
             str,
@@ -62,9 +60,7 @@ class FlextModelsErrors:
 
         exception_counts: Annotated[
             t.IntMapping,
-            mp.Field(
-                description="Recorded counts keyed by exception type name.",
-            ),
+            mp.Field(description="Recorded counts keyed by exception type name."),
         ] = mp.Field(default_factory=lambda: MappingProxyType({}))
 
         @up.computed_field()

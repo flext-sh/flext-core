@@ -11,16 +11,9 @@ if TYPE_CHECKING:
     from flext_core._utilities._enforcement_collect_parts.enforcement_collect_part_02 import (
         FlextUtilitiesEnforcementCollect as FlextUtilitiesEnforcementCollect,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".enforcement_collect_part_02": ("FlextUtilitiesEnforcementCollect",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".enforcement_collect_part_02": ("FlextUtilitiesEnforcementCollect",)
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

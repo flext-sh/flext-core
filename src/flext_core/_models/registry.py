@@ -34,7 +34,7 @@ class FlextModelsRegistry:
         registered_keys: Annotated[
             frozenset[str],
             mp.Field(
-                description="Keys registered in the instance scope of the registry.",
+                description="Keys registered in the instance scope of the registry."
             ),
         ] = mp.Field(default_factory=frozenset)
 
@@ -50,7 +50,7 @@ class FlextModelsRegistry:
         registered: Annotated[
             MutableSequence[FlextModelsHandler.RegistrationDetails],
             mp.Field(
-                description="Successfully registered handlers with registration details.",
+                description="Successfully registered handlers with registration details."
             ),
         ] = mp.Field(default_factory=list[FlextModelsHandler.RegistrationDetails])
         skipped: Annotated[

@@ -13,10 +13,7 @@ LAZY_MODULES: dict[str, tuple[str, ...]] = {
     ".collections": ("FlextModelsCollections",),
     ".config": ("FlextModelsConfig",),
     ".container": ("FlextModelsContainer",),
-    ".containers": (
-        "FlextModelsContainers",
-        "mc",
-    ),
+    ".containers": ("FlextModelsContainers", "mc"),
     ".context": ("FlextModelsContext",),
     ".cqrs": ("FlextModelsCqrs",),
     ".dispatcher": ("FlextModelsDispatcher",),
@@ -42,10 +39,8 @@ CHILD_MODULE_PATHS: tuple[str, ...] = (
     "._base_parts",
     "._container_parts",
     "._context",
-    "._cqrs_parts",
     "._enforcement",
     "._exception_params_parts",
-    "._handler_parts",
 )
 
 
@@ -77,9 +72,7 @@ PUBLIC_EXPORTS: tuple[str, ...] = (
     "_base_parts",
     "_container_parts",
     "_context",
-    "_cqrs_parts",
     "_enforcement",
     "_exception_params_parts",
-    "_handler_parts",
     "mc",
 )

@@ -14,9 +14,7 @@ from flext_core._runtime._metadata_validation import (
 )
 from flext_core._typings.base import FlextTypingBase as tb
 
-from .flextexceptionsbase_part_02 import (
-    FlextBaseErrorStateMixin,
-)
+from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -61,7 +59,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
             combined_extra: MutableMapping[str, ts.JsonPayload | None] = {}
             try:
                 merged_kwargs_map = FlextRuntime.normalize_metadata_input_mapping(
-                    merged_kwargs,
+                    merged_kwargs
                 )
             except ce.EXC_PYDANTIC_TYPE_VALUE:
                 merged_kwargs_map = None
@@ -92,17 +90,12 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
                 if preserved_metadata_raw is not None
                 else None
             )
-            correlation_id_raw = remaining_extra.pop(
-                ci.ContextKey.CORRELATION_ID,
-                None,
-            )
+            correlation_id_raw = remaining_extra.pop(ci.ContextKey.CORRELATION_ID, None)
             correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
-                correlation_id_raw,
+                correlation_id_raw
             )
             param_values = FlextExceptionsHelpers.build_param_map(
-                context,
-                remaining_extra,
-                keys=declared_param_keys,
+                context, remaining_extra, keys=declared_param_keys
             )
             for key, value in resolved_named.items():
                 if value is None:

@@ -36,9 +36,7 @@ class FlextModelsContainer(FlextModelsContainerPart03):
 
         Examples:
             >>> settings = mc.FactoryDecoratorConfig(
-            ...     name="database_service",
-            ...     singleton=True,
-            ...     lazy=False,
+            ...     name="database_service", singleton=True, lazy=False
             ... )
             >>> settings.name
             'database_service'
@@ -50,22 +48,17 @@ class FlextModelsContainer(FlextModelsContainerPart03):
         name: Annotated[
             t.NonEmptyStr,
             mp.Field(
-                ...,
-                description="Name to register this factory under in the container",
+                ..., description="Name to register this factory under in the container"
             ),
         ]
         singleton: Annotated[
             bool,
-            mp.Field(
-                False,
-                description="Whether factory creates singleton instances",
-            ),
+            mp.Field(False, description="Whether factory creates singleton instances"),
         ] = False
         lazy: Annotated[
             bool,
             mp.Field(
-                True,
-                description="Whether to defer factory invocation until first use",
+                True, description="Whether to defer factory invocation until first use"
             ),
         ] = True
 

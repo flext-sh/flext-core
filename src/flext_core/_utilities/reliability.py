@@ -21,9 +21,7 @@ from flext_core._models.base import FlextModelsBase
 from flext_core._utilities.args import FlextUtilitiesArgs
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
+    from collections.abc import Callable
 
 type _HandledExceptions = tuple[type[Exception], ...]
 
@@ -35,16 +33,10 @@ class FlextUtilitiesReliability:
         """Configuration options for retry logic."""
 
         max_attempts: Annotated[
-            int | None,
-            Field(
-                description="Maximum number of retry attempts",
-            ),
+            int | None, Field(description="Maximum number of retry attempts")
         ] = None
         delay_seconds: Annotated[
-            float | None,
-            Field(
-                description="Initial delay between retries in seconds",
-            ),
+            float | None, Field(description="Initial delay between retries in seconds")
         ] = None
 
     _RETRYABLE_EXCEPTIONS: _HandledExceptions = (
@@ -130,9 +122,7 @@ class FlextUtilitiesReliability:
 
         """
         opts_res = FlextUtilitiesArgs.resolve_options(
-            options,
-            kwargs,
-            FlextUtilitiesReliability.RetryOptions,
+            options, kwargs, FlextUtilitiesReliability.RetryOptions
         )
         if opts_res.failure:
             return r[TResult].fail(opts_res.error)
@@ -147,7 +137,7 @@ class FlextUtilitiesReliability:
         )
         if max_att < c.DEFAULT_RETRY_DELAY_SECONDS:
             return r[TResult].fail(
-                f"Max attempts must be at least {c.DEFAULT_RETRY_DELAY_SECONDS}",
+                f"Max attempts must be at least {c.DEFAULT_RETRY_DELAY_SECONDS}"
             )
         last_error: str | None = None
         for attempt in range(max_att):
@@ -166,7 +156,7 @@ class FlextUtilitiesReliability:
                 if current_delay > 0:
                     time.sleep(current_delay)
         return r[TResult].fail(
-            f"Operation failed after {max_att} attempts: {last_error}",
+            f"Operation failed after {max_att} attempts: {last_error}"
         )
 
 

@@ -13,7 +13,7 @@ from flext_core._protocols.base import FlextProtocolsBase
 if TYPE_CHECKING:
     from types import ModuleType
 
-    from flext_core import FlextModels as m, FlextTypes as t
+    from flext_core import FlextTypes as t
 
 
 class FlextProtocolsContainer:
@@ -27,7 +27,15 @@ class FlextProtocolsContainer:
         objects that wrap a dict with a root attribute.
         """
 
-        root: t.MappingKV[str, RootValueT]
+        @property
+        def root(self) -> t.MappingKV[str, RootValueT]: ...
+
+    @runtime_checkable
+    class MutableRootDict[RootValueT](Protocol):
+        """Structural contract for mutable validated root mappings."""
+
+        @property
+        def root(self) -> t.MutableMappingKV[str, RootValueT]: ...
 
     @runtime_checkable
     class ProviderLike[T_co](Protocol):
@@ -54,26 +62,31 @@ class FlextProtocolsContainer:
     class ContainerCreationOptions(FlextProtocolsBase.Base, Protocol):
         """Structural contract for DI container bootstrap options."""
 
-        settings: m.ConfigMap | None
-        services: t.MappingKV[str, t.RegisterableService] | None
-        factories: t.MappingKV[str, t.FactoryCallable] | None
-        resources: t.MappingKV[str, t.ResourceCallable] | None
-        wire_modules: t.SequenceOf[ModuleType] | None
-        wire_packages: t.StrSequence | None
-        wire_classes: t.SequenceOf[type] | None
-        factory_cache: bool
+        @property
+        def settings(
+            self,
+        ) -> FlextProtocolsContainer.RootDict[t.JsonPayload] | None: ...
 
-    @runtime_checkable
-    class ContainerCreationOptionsType(Protocol):
-        """Protocol for concrete model classes that validate container options."""
+        @property
+        def services(self) -> t.MappingKV[str, t.RegisterableService] | None: ...
 
-        @classmethod
-        def model_validate(
-            cls,
-            obj: t.MappingKV[str, t.JsonPayload],
-        ) -> FlextProtocolsContainer.ContainerCreationOptions:
-            """Validate arbitrary input into container creation options."""
-            ...
+        @property
+        def factories(self) -> t.MappingKV[str, t.FactoryCallable] | None: ...
+
+        @property
+        def resources(self) -> t.MappingKV[str, t.ResourceCallable] | None: ...
+
+        @property
+        def wire_modules(self) -> t.SequenceOf[ModuleType] | None: ...
+
+        @property
+        def wire_packages(self) -> t.StrSequence | None: ...
+
+        @property
+        def wire_classes(self) -> t.SequenceOf[type] | None: ...
+
+        @property
+        def factory_cache(self) -> bool: ...
 
 
 __all__: list[str] = ["FlextProtocolsContainer"]

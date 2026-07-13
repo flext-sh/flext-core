@@ -13,10 +13,7 @@ from flext_tests.enforcement import (
     register as register_enforcement_contribution,
 )
 
-from flext_core import (
-    FlextMroViolation,
-    FlextSmellViolation,
-)
+from flext_core import FlextMroViolation, FlextSmellViolation
 
 
 class FlextCoreEnforcementPytestPlugin:
@@ -57,7 +54,4 @@ def _register() -> None:
 FlextCoreEnforcementPytestPlugin.register()
 
 
-__all__: list[str] = [
-    "FlextCoreEnforcementPytestPlugin",
-    "_register",
-]
+__all__: list[str] = ["FlextCoreEnforcementPytestPlugin", "_register"]

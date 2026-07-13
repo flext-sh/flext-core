@@ -56,8 +56,4 @@ class FlextConstants(
 # mro-j47u: publish the canonical constants alias with no stray runtime surface.
 c = FlextConstants
 
-__all__: tuple[str, ...] = (
-    "FlextConstants",
-    "FlextConstantsEnforcement",
-    "c",
-)
+__all__: tuple[str, ...] = ("FlextConstants", "FlextConstantsEnforcement", "c")

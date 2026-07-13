@@ -42,33 +42,24 @@ if TYPE_CHECKING:
     from flext_core._protocols.settings import (
         FlextProtocolsSettings as FlextProtocolsSettings,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        "._container_parts": ("_container_parts",),
-        "._container_parts.flextprotocolscontainer_part_03": (
-            "FlextProtocolsContainer",
-        ),
-        "._context_parts": ("_context_parts",),
-        "._context_parts.flextprotocolscontext_part_03": ("FlextProtocolsContext",),
-        "._logging_parts": ("_logging_parts",),
-        "._logging_parts.flextprotocolslogging_part_03": ("FlextProtocolsLogging",),
-        "._result_parts": ("_result_parts",),
-        "._result_parts.flextprotocolsresult_part_04": ("FlextProtocolsResult",),
-        ".base": ("FlextProtocolsBase",),
-        ".config": ("FlextProtocolsConfig",),
-        ".handler": ("FlextProtocolsHandler",),
-        ".pydantic": ("FlextProtocolsPydantic",),
-        ".project_metadata": ("FlextProtocolsProjectMetadata",),
-        ".registry": ("FlextProtocolsRegistry",),
-        ".service": ("FlextProtocolsService",),
-        ".settings": ("FlextProtocolsSettings",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    "._container_parts": ("_container_parts",),
+    "._container_parts.flextprotocolscontainer_part_03": ("FlextProtocolsContainer",),
+    "._context_parts": ("_context_parts",),
+    "._context_parts.flextprotocolscontext_part_03": ("FlextProtocolsContext",),
+    "._logging_parts": ("_logging_parts",),
+    "._logging_parts.flextprotocolslogging_part_03": ("FlextProtocolsLogging",),
+    "._result_parts": ("_result_parts",),
+    "._result_parts.flextprotocolsresult_part_04": ("FlextProtocolsResult",),
+    ".base": ("FlextProtocolsBase",),
+    ".config": ("FlextProtocolsConfig",),
+    ".handler": ("FlextProtocolsHandler",),
+    ".pydantic": ("FlextProtocolsPydantic",),
+    ".project_metadata": ("FlextProtocolsProjectMetadata",),
+    ".registry": ("FlextProtocolsRegistry",),
+    ".service": ("FlextProtocolsService",),
+    ".settings": ("FlextProtocolsSettings",),
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

@@ -35,26 +35,17 @@ if TYPE_CHECKING:
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_09 import (
         NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT as NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".flextconstantsenforcement_part_01": ("FlextConstantsEnforcementEnums",),
-        ".flextconstantsenforcement_part_02": ("FlextConstantsEnforcementRuntime",),
-        ".flextconstantsenforcement_part_03": ("FlextConstantsEnforcementNamespace",),
-        ".flextconstantsenforcement_part_04": ("FlextConstantsEnforcementRules",),
-        ".flextconstantsenforcement_part_05": ("FlextConstantsEnforcementRuleText",),
-        ".flextconstantsenforcement_part_06": ("FlextConstantsEnforcementTargets",),
-        ".flextconstantsenforcement_part_07": ("FlextConstantsEnforcementSmellData",),
-        ".flextconstantsenforcement_part_08": ("FlextConstantsEnforcementFixActions",),
-        ".flextconstantsenforcement_part_09": (
-            "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",
-        ),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".flextconstantsenforcement_part_01": ("FlextConstantsEnforcementEnums",),
+    ".flextconstantsenforcement_part_02": ("FlextConstantsEnforcementRuntime",),
+    ".flextconstantsenforcement_part_03": ("FlextConstantsEnforcementNamespace",),
+    ".flextconstantsenforcement_part_04": ("FlextConstantsEnforcementRules",),
+    ".flextconstantsenforcement_part_05": ("FlextConstantsEnforcementRuleText",),
+    ".flextconstantsenforcement_part_06": ("FlextConstantsEnforcementTargets",),
+    ".flextconstantsenforcement_part_07": ("FlextConstantsEnforcementSmellData",),
+    ".flextconstantsenforcement_part_08": ("FlextConstantsEnforcementFixActions",),
+    ".flextconstantsenforcement_part_09": ("NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",),
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

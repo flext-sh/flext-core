@@ -14,9 +14,7 @@ from flext_core._utilities._beartype.deprecated_visitor import (
 from flext_core._utilities._beartype.field_visitor import (
     FlextUtilitiesBeartypeFieldVisitor,
 )
-from flext_core._utilities._beartype.helpers import (
-    FlextUtilitiesBeartypeHelpers,
-)
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
 from flext_core._utilities._beartype.import_visitor import (
     FlextUtilitiesBeartypeImportVisitor,
 )
@@ -26,36 +24,18 @@ from flext_core._utilities._beartype.method_visitor import (
 from flext_core._utilities._beartype.module_visitor import (
     FlextUtilitiesBeartypeModuleVisitor,
 )
-from flext_core._utilities.args import (
-    FlextUtilitiesArgs,
-)
-from flext_core._utilities.beartype_conf import (
-    FlextUtilitiesBeartypeConf,
-)
-from flext_core._utilities.beartype_engine import (
-    FlextUtilitiesBeartypeEngine,
-)
+from flext_core._utilities.args import FlextUtilitiesArgs
+from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
+from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
 from flext_core._utilities.beartype_typingext_patch import (
     FlextUtilitiesBeartypeTypingExtPatch,
 )
-from flext_core._utilities.checker import (
-    FlextUtilitiesChecker,
-)
-from flext_core._utilities.collection import (
-    FlextUtilitiesCollection,
-)
-from flext_core._utilities.collection_iter import (
-    FlextUtilitiesCollectionIter,
-)
-from flext_core._utilities.collection_merge import (
-    FlextUtilitiesCollectionMerge,
-)
-from flext_core._utilities.context import (
-    FlextUtilitiesContext,
-)
-from flext_core._utilities.context_crud import (
-    FlextUtilitiesContextCrud,
-)
+from flext_core._utilities.checker import FlextUtilitiesChecker
+from flext_core._utilities.collection import FlextUtilitiesCollection
+from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
+from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
+from flext_core._utilities.context import FlextUtilitiesContext
+from flext_core._utilities.context_crud import FlextUtilitiesContextCrud
 
 __all__: tuple[str, ...] = (
     "FlextUtilitiesArgs",

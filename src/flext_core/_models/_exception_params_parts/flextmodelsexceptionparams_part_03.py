@@ -29,19 +29,15 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
 
         operation: Annotated[
             str | None,
-            mp.Field(
-                description="Operation name associated with the failure.",
-            ),
+            mp.Field(description="Operation name associated with the failure."),
         ] = None
         reason: Annotated[
             str | None,
-            mp.Field(
-                description="Short reason explaining the operation failure.",
-            ),
+            mp.Field(description="Short reason explaining the operation failure."),
         ] = None
 
     class ServiceLookupParams(
-        FlextModelsExceptionParamsPart01.ExpectedActualTypeParams,
+        FlextModelsExceptionParamsPart01.ExpectedActualTypeParams
     ):
         """Validated params for service lookup and narrowing failures."""
 

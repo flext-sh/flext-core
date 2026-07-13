@@ -5,9 +5,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
-from .flextconstantsenforcement_part_01 import (
-    FlextConstantsEnforcementEnums,
-)
+from .flextconstantsenforcement_part_01 import FlextConstantsEnforcementEnums
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -106,7 +104,7 @@ class FlextConstantsEnforcementRuntime:
     """Derived view: collection names used by annotation-origin checks."""
 
     ENFORCEMENT_MUTABLE_RUNTIME_TYPES: Final[tuple[type, ...]] = tuple(
-        ENFORCEMENT_FORBIDDEN_COLLECTIONS,
+        ENFORCEMENT_FORBIDDEN_COLLECTIONS
     )
     """Derived view: concrete types used by ``isinstance`` checks."""
 

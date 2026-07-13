@@ -42,22 +42,18 @@ class FlextUtilitiesGenerators:
             description="Optional parts inserted between prefix and random suffix",
         )
         length: int | None = Field(
-            default=None,
-            description="Optional random suffix length override",
+            default=None, description="Optional random suffix length override"
         )
         include_timestamp: bool = Field(
-            default=False,
-            description="Whether to prepend a UTC timestamp to parts",
+            default=False, description="Whether to prepend a UTC timestamp to parts"
         )
         separator: str = Field(
-            default="_",
-            description="Separator used for custom formatted IDs",
+            default="_", description="Separator used for custom formatted IDs"
         )
 
     @staticmethod
     def _determine_prefix(
-        kind: str | None,
-        prefix: str | None,
+        kind: str | None, prefix: str | None
     ) -> t.Pair[bool, str | None]:
         """Resolve ID prefix from kind or custom override."""
         if prefix is not None:
@@ -86,9 +82,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _generate_prefixed_id(
-        prefix: str,
-        *parts: t.JsonValue,
-        length: int = c.SHORT_UUID_LENGTH,
+        prefix: str, *parts: t.JsonValue, length: int = c.SHORT_UUID_LENGTH
     ) -> str:
         """Generate {prefix}_{parts}_{uuid[:length]} formatted ID."""
         uuid_part = str(uuid.uuid4())[:length]
@@ -99,9 +93,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _build_parts_list(
-        parts: t.VariadicTuple[t.JsonValue] | None,
-        *,
-        include_timestamp: bool,
+        parts: t.VariadicTuple[t.JsonValue] | None, *, include_timestamp: bool
     ) -> t.SequenceOf[t.JsonValue]:
         """Collect ID parts including optional timestamp prefix."""
         all_parts: t.JsonValueList = []
@@ -127,15 +119,12 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def generate(
-        kind: str | None = None,
-        *,
-        options: GenerateOptions | None = None,
+        kind: str | None = None, *, options: GenerateOptions | None = None
     ) -> str:
         """Generate ID by kind or custom prefix (the ONLY public ID generation method)."""
         resolved_options = options or FlextUtilitiesGenerators.GenerateOptions()
         _prefix_resolved, actual_prefix = FlextUtilitiesGenerators._determine_prefix(
-            kind,
-            resolved_options.prefix,
+            kind, resolved_options.prefix
         )
         generated_id: str
         match (kind, actual_prefix):
@@ -169,17 +158,12 @@ class FlextUtilitiesGenerators:
                 ):
                     generated_id = (
                         FlextUtilitiesGenerators._generate_custom_separator_id(
-                            pfx,
-                            all_parts,
-                            resolved_options.separator,
-                            id_length,
+                            pfx, all_parts, resolved_options.separator, id_length
                         )
                     )
                 else:
                     generated_id = FlextUtilitiesGenerators._generate_prefixed_id(
-                        pfx,
-                        *all_parts,
-                        length=id_length,
+                        pfx, *all_parts, length=id_length
                     )
             case _:
                 generated_id = FlextUtilitiesGenerators._generate_id()
@@ -219,7 +203,7 @@ class FlextUtilitiesGenerators:
         settings_module = import_module("flext_core._settings")
         settings_cls = settings_module.FlextSettings
         return FlextUtilitiesGenerators.resolve_timezone(
-            settings_cls.fetch_global().timezone,
+            settings_cls.fetch_global().timezone
         )
 
     @staticmethod
@@ -241,8 +225,7 @@ class FlextUtilitiesGenerators:
     def from_timestamp(timestamp: float) -> datetime:
         """Convert a POSIX timestamp to an aware datetime in the configured timezone."""
         return datetime.fromtimestamp(
-            timestamp,
-            FlextUtilitiesGenerators.configured_timezone(),
+            timestamp, FlextUtilitiesGenerators.configured_timezone()
         )
 
     @staticmethod

@@ -9,9 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
+from collections.abc import Mapping
 from typing import ClassVar, Self
 
 from flext_core import (
@@ -47,8 +45,8 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         if include_statistics and self.state.statistics:
             stats_dict_export = dict(
                 self._normalize_mapping_payload(
-                    self.state.statistics.model_dump(mode="python"),
-                ),
+                    self.state.statistics.model_dump(mode="python")
+                )
             )
         metadata_attributes: t.JsonDict | None = None
         if include_metadata:
@@ -91,24 +89,22 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         """Normalize an arbitrary mapping into a scope-compatible map."""
         try:
             source_mapping: t.JsonMapping = t.json_mapping_adapter().validate_python(
-                source,
+                source
             )
             normalized_payload = (
                 FlextUtilitiesContextLifecycle._normalize_mapping_payload(
-                    source_mapping,
+                    source_mapping
                 )
             )
             return m.ConfigMap.model_validate(normalized_payload)
         except c.EXC_BASIC_TYPE as exc:
             FlextUtilitiesContextLifecycle.logger.debug(
-                f"Context {label} validation failed",
-                exc_info=exc,
+                f"Context {label} validation failed", exc_info=exc
             )
             return None
 
     def _extract_config_map(
-        self,
-        other: p.Context | t.MappingKV[str, t.JsonPayload] | t.JsonMapping,
+        self, other: p.Context | t.MappingKV[str, t.JsonPayload] | t.JsonMapping
     ) -> m.ConfigMap | None:
         """Extract a ConfigMap from any supported merge source."""
         if isinstance(other, p.Context):
@@ -134,8 +130,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
                 self._update_contextvar(scope_name, scope_data)
 
     def merge(
-        self,
-        other: p.Context | t.MappingKV[str, t.JsonPayload] | t.JsonMapping,
+        self, other: p.Context | t.MappingKV[str, t.JsonPayload] | t.JsonMapping
     ) -> Self:
         """Merge another context or dictionary into this context."""
         if not self.state.active:

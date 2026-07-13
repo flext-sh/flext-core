@@ -32,27 +32,18 @@ if TYPE_CHECKING:
     from flext_core._exceptions.types import (
         FlextExceptionsTypes as FlextExceptionsTypes,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        "._base_parts": ("_base_parts",),
-        "._base_parts.flextexceptionsbase_part_01": ("FlextBaseErrorMetadataMixin",),
-        "._base_parts.flextexceptionsbase_part_02": ("FlextBaseErrorStateMixin",),
-        "._base_parts.flextexceptionsbase_part_03": ("FlextExceptionsBase",),
-        "._factories_parts": ("_factories_parts",),
-        "._factories_parts.flextexceptionsfactories_part_04": (
-            "FlextExceptionsFactories",
-        ),
-        ".helpers": ("FlextExceptionsHelpers",),
-        ".metrics": ("FlextExceptionsMetrics",),
-        ".template": ("FlextExceptionsTemplate",),
-        ".types": ("FlextExceptionsTypes",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    "._base_parts": ("_base_parts",),
+    "._base_parts.flextexceptionsbase_part_01": ("FlextBaseErrorMetadataMixin",),
+    "._base_parts.flextexceptionsbase_part_02": ("FlextBaseErrorStateMixin",),
+    "._base_parts.flextexceptionsbase_part_03": ("FlextExceptionsBase",),
+    "._factories_parts": ("_factories_parts",),
+    "._factories_parts.flextexceptionsfactories_part_04": ("FlextExceptionsFactories",),
+    ".helpers": ("FlextExceptionsHelpers",),
+    ".metrics": ("FlextExceptionsMetrics",),
+    ".template": ("FlextExceptionsTemplate",),
+    ".types": ("FlextExceptionsTypes",),
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

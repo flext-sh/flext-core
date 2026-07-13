@@ -32,9 +32,7 @@ class _PyprojectIngressContract(_ProjectMetadataContract):
 
     model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
         FlextModelsPydantic.ConfigDict(
-            frozen=True,
-            extra="ignore",
-            populate_by_name=True,
+            frozen=True, extra="ignore", populate_by_name=True
         )
     )
 
@@ -84,8 +82,7 @@ class _ProjectMetadataFields:
         """``[tool.flext.project]`` contract."""
 
         class_stem_override: Annotated[
-            str | None,
-            Field(default=None, description="Explicit class stem override"),
+            str | None, Field(default=None, description="Explicit class stem override")
         ] = None
 
     class ProjectToolFlextDocs(_ProjectMetadataContract):
@@ -96,8 +93,7 @@ class _ProjectMetadataFields:
             Field(default=None, description="Explicit import package override"),
         ] = None
         project_class: Annotated[
-            str,
-            Field(default="library", description="Documentation project class"),
+            str, Field(default="library", description="Documentation project class")
         ] = "library"
         site_title: Annotated[
             str | None,
@@ -142,12 +138,10 @@ class _ProjectMetadataAggregates(_ProjectMetadataFields):
             Field(default="", alias="requires-python", description="Python constraint"),
         ] = ""
         classifiers: Annotated[
-            t.StrTuple,
-            Field(default=(), description="Trove classifiers"),
+            t.StrTuple, Field(default=(), description="Trove classifiers")
         ] = ()
         keywords: Annotated[
-            t.StrTuple,
-            Field(default=(), description="Project search keywords"),
+            t.StrTuple, Field(default=(), description="Project search keywords")
         ] = ()
 
     class ProjectToolFlext(_ProjectMetadataContract):

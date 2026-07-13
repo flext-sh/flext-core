@@ -13,18 +13,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Unpack
 
-from flext_core import (
-    c,
-    e,
-    m,
-    x,
-)
+from flext_core import c, e, x
 from flext_core._utilities.handler import FlextUtilitiesHandler
 
 if TYPE_CHECKING:
     from pydantic import ConfigDict
 
-    from flext_core._models.handler import FlextModelsHandler
+    from flext_core import p
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):
@@ -41,7 +36,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     _expected_result_type: ClassVar[type | None] = None
 
-    def __init__(self, *, settings: m.Handler | None = None) -> None:
+    def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
         """Initialize handler with configuration and context.
 
         Sets up the handler with optional configuration parameters.
@@ -52,16 +47,15 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         """
         super().__init__(
-            settings_type=None,
-            settings_overrides=None,
-            initial_context=None,
+            settings_type=None, settings_overrides=None, initial_context=None
         )
         if settings is not None:
             self._config_model = settings
         else:
+            from flext_core import m
+
             self._config_model = m.Handler(
-                handler_id=f"handler_{id(self)}",
-                handler_name=self.__class__.__name__,
+                handler_id=f"handler_{id(self)}", handler_name=self.__class__.__name__
             )
         handler_type = self._config_model.handler_mode
         valid_handler_types = {
@@ -75,7 +69,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             error_msg = c.ERR_HANDLER_INVALID_MODE.format(mode=handler_type)
             raise e.ValidationError(error_msg)
         handler_mode_literal = self._handler_type_to_literal(handler_type)
-        self._runtime_state: FlextModelsHandler.HandlerRuntimeState = (
+        self._runtime_state: p.HandlerRuntimeState = (
             FlextUtilitiesHandler.create_runtime_state(
                 handler_name=self._config_model.handler_name,
                 handler_mode=handler_mode_literal,
@@ -106,7 +100,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         for klass in cls.mro():
             if klass is FlextHandlers:
                 msg = c.ERR_HANDLER_MISSING_HANDLE_IMPLEMENTATION.format(
-                    qualname=cls.__qualname__,
+                    qualname=cls.__qualname__
                 )
                 raise TypeError(msg)
             if c.MethodName.HANDLE in klass.__dict__:
@@ -133,9 +127,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         return self._runtime_state.execution_context.handler_mode
 
     @staticmethod
-    def _handler_type_to_literal(
-        handler_type: c.HandlerType | str,
-    ) -> c.HandlerType:
+    def _handler_type_to_literal(handler_type: c.HandlerType | str) -> c.HandlerType:
         """Coerce string or StrEnum to canonical HandlerType."""
         if isinstance(handler_type, c.HandlerType):
             return handler_type
@@ -143,7 +135,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             if member.value == handler_type:
                 return member
         raise TypeError(
-            c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type),
+            c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type)
         )
 
 

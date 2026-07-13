@@ -16,8 +16,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @staticmethod
     def _resolve_runtime_dispatcher(
-        runtime_options: m.RuntimeBootstrapOptions,
-        runtime_container: p.Container,
+        runtime_options: m.RuntimeBootstrapOptions, runtime_container: p.Container
     ) -> p.Dispatcher | None:
         """Resolve the dispatcher from explicit options or the built container."""
         explicit_dispatcher = runtime_options.dispatcher
@@ -59,9 +58,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @classmethod
     def _resolve_runtime_registry(
-        cls,
-        runtime_options: m.RuntimeBootstrapOptions,
-        runtime: m.ServiceRuntime,
+        cls, runtime_options: m.RuntimeBootstrapOptions, runtime: m.ServiceRuntime
     ) -> p.Registry:
         """Resolve the registry from explicit options or the shared runtime DSL."""
         explicit_registry = runtime_options.registry
@@ -71,8 +68,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @classmethod
     def _resolve_runtime_settings(
-        cls,
-        runtime_options: m.RuntimeBootstrapOptions,
+        cls, runtime_options: m.RuntimeBootstrapOptions
     ) -> p.Settings:
         """Resolve the runtime settings instance + apply overrides."""
         settings_instance = (
@@ -124,15 +120,13 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             }),
         )
         normalized_container_overrides = cls._normalize_runtime_override_mapping(
-            runtime_options.container_overrides,
+            runtime_options.container_overrides
         )
         if normalized_container_overrides:
             runtime_container.apply(normalized_container_overrides)
         if wire_modules or wire_packages or wire_classes:
             runtime_container.wire(
-                modules=wire_modules,
-                packages=wire_packages,
-                classes=wire_classes,
+                modules=wire_modules, packages=wire_packages, classes=wire_classes
             )
         return runtime_container
 
@@ -155,9 +149,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             else context_type.create()
         )
         runtime_container = cls._build_runtime_container(
-            runtime_options,
-            runtime_settings,
-            runtime_context,
+            runtime_options, runtime_settings, runtime_context
         )
         runtime_container_context = getattr(runtime_container, "context", None)
         resolved_context = (
@@ -166,8 +158,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             else runtime_context
         )
         runtime_dispatcher = cls._resolve_runtime_dispatcher(
-            runtime_options,
-            runtime_container,
+            runtime_options, runtime_container
         )
         service_runtime = m.ServiceRuntime(
             settings=runtime_settings,
@@ -176,11 +167,10 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             dispatcher=runtime_dispatcher,
         )
         runtime_registry = cls._resolve_runtime_registry(
-            runtime_options,
-            service_runtime,
+            runtime_options, service_runtime
         )
         resolved_runtime: m.ServiceRuntime = service_runtime.model_copy(
-            update={"registry": runtime_registry},
+            update={"registry": runtime_registry}
         )
         return resolved_runtime
 

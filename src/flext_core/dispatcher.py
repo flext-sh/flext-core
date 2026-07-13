@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-    Sequence,
-)
+from collections.abc import MutableSequence, Sequence
 
 from flext_core import (
     FlextConstants as c,
@@ -59,8 +56,7 @@ class FlextDispatcher:
                     break
         if not handler_entry:
             return r[t.JsonPayload].fail_op(
-                "resolve message handler",
-                f"No handler found for {route_name}",
+                "resolve message handler", f"No handler found for {route_name}"
             )
         _, resolved_handler = handler_entry
         return self._execute_handler(resolved_handler, message, route_name)
@@ -92,15 +88,12 @@ class FlextDispatcher:
         return r[bool].ok(True)
 
     def register_handler(
-        self,
-        handler: t.DispatchableHandler,
-        *,
-        is_event: bool = False,
+        self, handler: t.DispatchableHandler, *, is_event: bool = False
     ) -> p.Result[bool]:
         """Register a handler for a specific message type."""
         route_name: str | None = None
         accepted_message_types: tuple[t.TypeHintSpecifier, ...] = tuple(
-            u.compute_accepted_message_types(type(handler)),
+            u.compute_accepted_message_types(type(handler))
         )
         resolved_handler: t.RoutedHandlerCallable
         is_auto_discoverable = isinstance(handler, p.AutoDiscoverableHandler)
@@ -115,8 +108,7 @@ class FlextDispatcher:
                 resolved_handler = callable_handler
             case _:
                 return r[bool].fail_op(
-                    "register handler",
-                    c.ERR_HANDLER_MUST_BE_CALLABLE,
+                    "register handler", c.ERR_HANDLER_MUST_BE_CALLABLE
                 )
         handler_message_type = getattr(handler, "message_type", None)
         route_candidates: tuple[t.TypeHintSpecifier | str | None, ...] = (
@@ -145,13 +137,11 @@ class FlextDispatcher:
                     accepted_message_types,
                 ))
                 self.logger.info(
-                    c.LOG_REGISTERED_AUTO_DISCOVERY_HANDLER,
-                    handler=str(handler),
+                    c.LOG_REGISTERED_AUTO_DISCOVERY_HANDLER, handler=str(handler)
                 )
                 return r[bool].ok(True)
             return r[bool].fail_op(
-                "discover handler route",
-                c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED,
+                "discover handler route", c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED
             )
         if is_event:
             self._event_subscribers.setdefault(route_name, []).append((

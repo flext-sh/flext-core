@@ -53,13 +53,13 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart01):
         auth_method: Annotated[
             str | None,
             mp.Field(
-                description="Authentication method used when the failure occurred.",
+                description="Authentication method used when the failure occurred."
             ),
         ] = None
         user_id: Annotated[
             str | None,
             mp.Field(
-                description="User identifier associated with the authentication attempt.",
+                description="User identifier associated with the authentication attempt."
             ),
         ] = None
 

@@ -75,10 +75,10 @@ class FlextConstantsLogging:
 
     _TEMPLATE_REGISTERED: Final[str] = "Registered {subject}"
     LOG_REGISTERED_AUTO_DISCOVERY_HANDLER: Final[str] = _TEMPLATE_REGISTERED.format(
-        subject="auto-discovery handler",
+        subject="auto-discovery handler"
     )
     LOG_REGISTERED_EVENT_SUBSCRIBER: Final[str] = _TEMPLATE_REGISTERED.format(
-        subject="event subscriber",
+        subject="event subscriber"
     )
     LOG_REGISTERED_HANDLER: Final[str] = _TEMPLATE_REGISTERED.format(subject="handler")
     LOG_HANDLER_EXECUTION_FAILED: Final[str] = "Handler execution failed"

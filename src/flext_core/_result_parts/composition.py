@@ -23,8 +23,7 @@ class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):
 
     @classmethod
     def accumulate_errors[ValueT](
-        cls,
-        *results: p.Result[ValueT],
+        cls, *results: p.Result[ValueT]
     ) -> p.Result[Sequence[ValueT]]:
         """Collect successes or all errors combined."""
         successes: MutableSequence[ValueT] = []
@@ -37,8 +36,7 @@ class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):
         if errors:
             # Type bridge: accumulated failures carry no payload value.
             result_class = cast(
-                "type[FlextResultConstructionMixin[Sequence[ValueT]]]",
-                cls,
+                "type[FlextResultConstructionMixin[Sequence[ValueT]]]", cls
             )
             return result_class.fail("; ".join(errors))
         return cls.ok(successes)
@@ -113,16 +111,10 @@ class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):
         return str(error)
 
     @classmethod
-    def safe[U, **PFunc](
-        cls,
-        func: Callable[PFunc, U],
-    ) -> Callable[PFunc, p.Result[U]]:
+    def safe[U, **PFunc](cls, func: Callable[PFunc, U]) -> Callable[PFunc, p.Result[U]]:
         """Wrap function in FlextResult, catching exceptions."""
 
-        def wrapper(
-            *args: PFunc.args,
-            **kwargs: PFunc.kwargs,
-        ) -> p.Result[U]:
+        def wrapper(*args: PFunc.args, **kwargs: PFunc.kwargs) -> p.Result[U]:
             try:
                 return cls.ok(func(*args, **kwargs))
             except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:

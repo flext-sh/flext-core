@@ -11,16 +11,7 @@ if TYPE_CHECKING:
     from flext_core._handlers_parts.flexthandlers_part_07 import (
         FlextHandlers as FlextHandlers,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".flexthandlers_part_07": ("FlextHandlers",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({".flexthandlers_part_07": ("FlextHandlers",)})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

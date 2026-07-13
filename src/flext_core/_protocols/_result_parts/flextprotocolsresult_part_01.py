@@ -14,9 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, overload, runtime_checkable
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
+    from collections.abc import Callable
 
     from flext_core import FlextTypes as t
 

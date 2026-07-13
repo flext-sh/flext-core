@@ -26,18 +26,13 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
 
     @staticmethod
     def factory[**P, T](
-        name: str,
-        *,
-        singleton: bool = False,
-        lazy: bool = True,
+        name: str, *, singleton: bool = False, lazy: bool = True
     ) -> Callable[[Callable[P, T]], Callable[P, T]]:
         """Mark functions as factories for DI container discovery."""
 
         def decorator(func: Callable[P, T]) -> Callable[P, T]:
             settings = mc.FactoryDecoratorConfig(
-                name=name,
-                singleton=singleton,
-                lazy=lazy,
+                name=name, singleton=singleton, lazy=lazy
             )
             setattr(func, cm.FACTORY_ATTR, settings)
             return func
@@ -46,9 +41,7 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
 
     @classmethod
     def timeout[**PCallback, TResult](
-        cls,
-        timeout_seconds: float | None = None,
-        error_code: str | None = None,
+        cls, timeout_seconds: float | None = None, error_code: str | None = None
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
         """Raise a FLEXT timeout error when an operation exceeds the duration."""
         max_duration = (

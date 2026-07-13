@@ -11,16 +11,9 @@ if TYPE_CHECKING:
     from flext_core._fixtures.enforcement import (
         FlextCoreEnforcementPytestPlugin as FlextCoreEnforcementPytestPlugin,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".enforcement": ("FlextCoreEnforcementPytestPlugin",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".enforcement": ("FlextCoreEnforcementPytestPlugin",)
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

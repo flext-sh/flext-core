@@ -11,16 +11,9 @@ if TYPE_CHECKING:
     from flext_core._utilities._parser_targets_parts.parser_targets_part_02 import (
         FlextUtilitiesParserTargets as FlextUtilitiesParserTargets,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".parser_targets_part_02": ("FlextUtilitiesParserTargets",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".parser_targets_part_02": ("FlextUtilitiesParserTargets",)
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

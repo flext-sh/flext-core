@@ -59,7 +59,7 @@ class FlextMixins(m.ArbitraryTypesModel):
     _runtime: m.ServiceRuntime | None = mp.PrivateAttr(default=None)
 
     _operation_stats: MutableMapping[str, m.ConfigMap] = mp.PrivateAttr(
-        default_factory=dict[str, m.ConfigMap],
+        default_factory=dict[str, m.ConfigMap]
     )
 
     _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
@@ -110,7 +110,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         stats: m.ConfigMap = self._operation_stats.get(
             operation_name,
             m.ConfigMap(
-                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0},
+                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0}
             ),
         )
         stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
@@ -123,30 +123,22 @@ class FlextMixins(m.ArbitraryTypesModel):
                 try:
                     yield metrics_map
                     if "duration_ms" in metrics_map:
-                        total_dur = u.to_float(
-                            stats.get("total_duration_ms", 0.0),
-                        )
-                        dur_ms = u.to_float(
-                            metrics_map.get("duration_ms", 0.0),
-                        )
+                        total_dur = u.to_float(stats.get("total_duration_ms", 0.0))
+                        dur_ms = u.to_float(metrics_map.get("duration_ms", 0.0))
                         stats["total_duration_ms"] = total_dur + dur_ms
                 except c.EXC_BROAD_RUNTIME as exc:
                     self.logger.debug(
-                        c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION,
-                        exc_info=exc,
+                        c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION, exc_info=exc
                     )
                     stats["error_count"] = u.to_int(stats.get("error_count", 0)) + 1
                     raise
                 finally:
-                    op_count = u.to_int(
-                        stats.get("operation_count", 1),
-                        default=1,
-                    )
+                    op_count = u.to_int(stats.get("operation_count", 1), default=1)
                     err_count = u.to_int(stats.get("error_count", 0))
                     stats["success_rate"] = (op_count - err_count) / op_count
                     if op_count > 0:
                         total_dur_final = u.to_float(
-                            stats.get("total_duration_ms", 0.0),
+                            stats.get("total_duration_ms", 0.0)
                         )
                         stats["avg_duration_ms"] = total_dur_final / op_count
                     metrics_map["error_count"] = stats["error_count"]

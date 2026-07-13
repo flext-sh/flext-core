@@ -64,10 +64,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
             match target:
                 case tgt if issubclass(tgt, StrEnum):
                     enum_result: p.Result[T] = FlextUtilitiesParser._parse_try_enum(
-                        value,
-                        target,
-                        options=None,
-                        **kwargs,
+                        value, target, options=None, **kwargs
                     )
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
@@ -86,10 +83,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                     )
                 case tgt if FlextUtilitiesGuardsTypeModel.model_type(tgt):
                     model_result: p.Result[T] = FlextUtilitiesParser._parse_try_model(
-                        value,
-                        target,
-                        options=None,
-                        **kwargs,
+                        value, target, options=None, **kwargs
                     )
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
@@ -108,9 +102,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                     )
                 case tgt if tgt in {int, float, str, bool}:
                     prim: T | None = FlextUtilitiesParser._parse_try_primitive(
-                        value,
-                        target,
-                        options=None,
+                        value, target, options=None
                     )
                     resolved_value = (
                         prim
@@ -127,10 +119,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                     )
                 case _:
                     resolved_value = FlextUtilitiesParser._parse_try_direct(
-                        value,
-                        target,
-                        options=None,
-                        **kwargs,
+                        value, target, options=None, **kwargs
                     )
         return resolved_value
 

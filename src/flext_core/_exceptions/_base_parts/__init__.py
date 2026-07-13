@@ -17,18 +17,11 @@ if TYPE_CHECKING:
     from flext_core._exceptions._base_parts.flextexceptionsbase_part_03 import (
         FlextExceptionsBase as FlextExceptionsBase,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".flextexceptionsbase_part_01": ("FlextBaseErrorMetadataMixin",),
-        ".flextexceptionsbase_part_02": ("FlextBaseErrorStateMixin",),
-        ".flextexceptionsbase_part_03": ("FlextExceptionsBase",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".flextexceptionsbase_part_01": ("FlextBaseErrorMetadataMixin",),
+    ".flextexceptionsbase_part_02": ("FlextBaseErrorStateMixin",),
+    ".flextexceptionsbase_part_03": ("FlextExceptionsBase",),
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

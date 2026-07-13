@@ -13,9 +13,7 @@ from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
 
-from .flextexceptionsbase_part_01 import (
-    FlextBaseErrorMetadataMixin,
-)
+from .flextexceptionsbase_part_01 import FlextBaseErrorMetadataMixin
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -60,10 +58,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         """Canonical routing domain derived from the structured error code."""
         if not self.error_code:
             return None
-        domain = self._error_domains.get(
-            self.error_code,
-            ce.ErrorDomain.UNKNOWN,
-        )
+        domain = self._error_domains.get(self.error_code, ce.ErrorDomain.UNKNOWN)
         return domain.value
 
     @property
@@ -100,7 +95,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
                 continue
             try:
                 source_dict = FlextRuntime.normalize_metadata_input_mapping(
-                    source_value,
+                    source_value
                 )
             except ce.EXC_PYDANTIC_TYPE_VALUE:
                 continue
@@ -108,19 +103,14 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
                 continue
             for key, value in source_dict.items():
                 if value is not None:
-                    final_kwargs_dict[key] = FlextRuntime.normalize_to_metadata(
-                        value,
-                    )
+                    final_kwargs_dict[key] = FlextRuntime.normalize_to_metadata(value)
         final_kwargs = mc.ConfigMap.model_validate(final_kwargs_dict)
         self.correlation_id = (
             f"exc_{uuid.uuid4().hex[:8]}"
             if auto_correlation and (not correlation_id)
             else correlation_id
         )
-        self.metadata = type(self)._normalize_metadata(
-            metadata,
-            final_kwargs.root,
-        )
+        self.metadata = type(self)._normalize_metadata(metadata, final_kwargs.root)
         self.timestamp = time.time()
         self.auto_log = auto_log
 

@@ -48,16 +48,14 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 if args and cls._is_logger_carrier(args[0]):
                     logger_carrier = args[0]
                 logger = cls._resolve_logger(
-                    logger_carrier,
-                    func_module=func.__module__,
+                    logger_carrier, func_module=func.__module__
                 )
                 correlation_id = cls._resolve_correlation_id(
-                    ensure_correlation=ensure_correlation,
+                    ensure_correlation=ensure_correlation
                 )
                 cls._context_type.apply_operation_name(op_name)
                 binding_result = u.bind_context(
-                    ci.ContextScope.OPERATION,
-                    operation=op_name,
+                    ci.ContextScope.OPERATION, operation=op_name
                 )
                 if binding_result.failure:
                     logger.warning(
@@ -154,11 +152,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
             if track_perf:
                 exc_kw["duration_ms"] = tracked_duration * cb.DEFAULT_SIZE
                 exc_kw[ci.MetadataKey.DURATION_SECONDS] = tracked_duration
-            logger.exception(
-                op_name,
-                exception=exc,
-                **exc_kw,
-            )
+            logger.exception(op_name, exception=exc, **exc_kw)
             raise
 
     @classmethod

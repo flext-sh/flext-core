@@ -5,13 +5,7 @@ from __future__ import annotations
 import functools
 import importlib
 import sys
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeAliasType,
-    get_args,
-    get_origin,
-)
+from typing import TYPE_CHECKING, Any, TypeAliasType, get_args, get_origin
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase as t
@@ -41,8 +35,7 @@ class FlextUtilitiesBeartypeHelpers:
             return ()
         lazy_module = importlib.import_module("flext_core.lazy")
         lazy_imports = lazy_module.normalize_lazy_imports(
-            package.__name__,
-            getattr(package, "_LAZY_IMPORTS"),
+            package.__name__, getattr(package, "_LAZY_IMPORTS")
         )
         return tuple(
             (
@@ -61,7 +54,7 @@ class FlextUtilitiesBeartypeHelpers:
         return frozenset(
             alias
             for alias, _, _ in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
-                package_name,
+                package_name
             )
         )
 
@@ -71,7 +64,7 @@ class FlextUtilitiesBeartypeHelpers:
         return frozenset(
             module_path.rsplit(".", 1)[-1]
             for _, module_path, suffix in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
-                package_name,
+                package_name
             )
             if module_path.split(".", 1)[0] == package_name
             and suffix in {"Constants", "Models", "Protocols", "Types", "Utilities"}
@@ -93,9 +86,7 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def contains_any_recursive(
-        hint: t.TypeHintSpecifier | None,
-        *,
-        seen: set[int],
+        hint: t.TypeHintSpecifier | None, *, seen: set[int]
     ) -> bool:
         h = FlextUtilitiesBeartypeHelpers
         hint = h.unwrap_type_alias(hint)
@@ -115,8 +106,7 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def has_forbidden_collection_origin(
-        hint: t.TypeHintSpecifier | None,
-        forbidden: frozenset[str],
+        hint: t.TypeHintSpecifier | None, forbidden: frozenset[str]
     ) -> tuple[bool, str]:
         h = FlextUtilitiesBeartypeHelpers
         hint = h.unwrap_type_alias(hint)

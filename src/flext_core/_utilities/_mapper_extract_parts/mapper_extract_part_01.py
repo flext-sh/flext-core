@@ -27,24 +27,19 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         """Validated context envelope for one path-part extraction step."""
 
         path_context: Annotated[
-            str,
-            m.Field(default="", description="Resolved parent path context"),
+            str, m.Field(default="", description="Resolved parent path context")
         ]
         default: Annotated[
             t.JsonPayload | None,
             m.Field(default=None, description="Default fallback payload"),
         ]
         required: Annotated[
-            bool,
-            m.Field(default=False, description="Whether missing values are fatal"),
+            bool, m.Field(default=False, description="Whether missing values are fatal")
         ]
 
     @staticmethod
     def _extract_fail_or_default(
-        msg: str,
-        *,
-        default: t.JsonPayload | None,
-        required: bool,
+        msg: str, *, default: t.JsonPayload | None, required: bool
     ) -> p.Result[t.JsonPayload]:
         """Return fail (required) or ok(default) / fail (no default) for extract paths."""
         if required:
@@ -53,8 +48,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
             return r[t.JsonPayload].fail_op(
                 "extract path default",
                 e.render_template(
-                    c.ERR_TEMPLATE_MESSAGE_AND_DEFAULT_IS_NONE,
-                    message=msg,
+                    c.ERR_TEMPLATE_MESSAGE_AND_DEFAULT_IS_NONE, message=msg
                 ),
             )
         return r[t.JsonPayload].ok(default)
@@ -72,9 +66,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
             if "found_none:" in (result.error or ""):
                 return None, None
             return None, FlextUtilitiesMapperExtract._extract_fail_or_default(
-                failure_message,
-                default=default,
-                required=required,
+                failure_message, default=default, required=required
             )
         return result.unwrap_or(None), None
 
@@ -119,8 +111,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
                 else FlextRuntime.normalize_to_container(next_val)
             )
             index_result = FlextUtilitiesMapperExtract._extract_handle_array_index(
-                narrowed_for_index,
-                array_match,
+                narrowed_for_index, array_match
             )
             next_val, early_result = (
                 FlextUtilitiesMapperExtract._extract_resolve_result(
@@ -154,7 +145,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
                 root={
                     k: FlextUtilitiesMapperExtract._normalize_accessible_value(v)
                     for k, v in data.items()
-                },
+                }
             )
         else:
             model_dump_attr = getattr(data, "model_dump", None)

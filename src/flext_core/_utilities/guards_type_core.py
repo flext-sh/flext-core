@@ -10,10 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-    Sequence,
-)
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, TypeGuard, TypeIs
 
 from flext_core import FlextTypes as t
@@ -70,9 +67,7 @@ class FlextUtilitiesGuardsTypeCore:
         return bool(isinstance(value, Mapping) and value)
 
     @staticmethod
-    def empty_value(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue | None,
-    ) -> bool:
+    def empty_value(value: t.GuardInput | t.JsonPayload | t.JsonValue | None) -> bool:
         """Check whether a FLEXT value is absent or an empty text/container."""
         if value is None:
             return True
@@ -130,16 +125,12 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, t.SCALAR_TYPES)
 
     @staticmethod
-    def type_name(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue | None,
-    ) -> str:
+    def type_name(value: t.GuardInput | t.JsonPayload | t.JsonValue | None) -> str:
         """Return the concrete runtime type name for any FLEXT payload value."""
         return type(value).__qualname__
 
     @staticmethod
-    def _has_dict_protocol(
-        obj: t.GuardInput | t.JsonPayload | t.JsonValue,
-    ) -> bool:
+    def _has_dict_protocol(obj: t.GuardInput | t.JsonPayload | t.JsonValue) -> bool:
         return isinstance(obj, Mapping)
 
     @staticmethod
@@ -157,8 +148,7 @@ class FlextUtilitiesGuardsTypeCore:
     ) -> TypeIs[Sequence[t.JsonPayload]]:
         """Check if value behaves like a non-string object sequence."""
         return isinstance(value, t.SEQUENCE_PAIR_TYPES) and not isinstance(
-            value,
-            t.STR_BYTES_TYPES,
+            value, t.STR_BYTES_TYPES
         )
 
     @staticmethod

@@ -13,10 +13,7 @@ from pydantic import Discriminator, Field, model_validator
 from flext_core import FlextConstants as c
 from flext_core._typings.base import FlextTypingBase as t
 
-from ._base import (
-    EnforcementModelBase,
-    FlextModelsEnforcementBase,
-)
+from ._base import EnforcementModelBase, FlextModelsEnforcementBase
 from ._sources import FlextModelsEnforcementSources
 
 type EnforcementRuleSource = (
@@ -51,15 +48,10 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
         """Frozen catalog of all enforcement rules."""
 
         version: int = 1
-        rules: tuple[
-            FlextModelsEnforcementCatalog.EnforcementRuleSpec,
-            ...,
-        ] = ()
+        rules: tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec, ...] = ()
 
         @model_validator(mode="after")
-        def _check_unique_ids(
-            self,
-        ) -> FlextModelsEnforcementCatalog.EnforcementCatalog:
+        def _check_unique_ids(self) -> FlextModelsEnforcementCatalog.EnforcementCatalog:
             seen: set[str] = set()
             for rule in self.rules:
                 if rule.id in seen:
@@ -69,8 +61,7 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
             return self
 
         def by_id(
-            self,
-            rule_id: str,
+            self, rule_id: str
         ) -> FlextModelsEnforcementCatalog.EnforcementRuleSpec | None:
             """Return the rule with ``rule_id`` or ``None`` if absent."""
             for rule in self.rules:
@@ -85,8 +76,7 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
             return tuple(rule for rule in self.rules if rule.enabled)
 
         def by_kind(
-            self,
-            kind: FlextModelsEnforcementBase.EnforcementSourceKind,
+            self, kind: FlextModelsEnforcementBase.EnforcementSourceKind
         ) -> tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec, ...]:
             """Filter rules by source kind."""
             return tuple(rule for rule in self.rules if rule.source.kind == kind.value)

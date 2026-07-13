@@ -114,96 +114,86 @@ if TYPE_CHECKING:
     from flext_core._constants.validation import (
         FlextConstantsValidation as FlextConstantsValidation,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        "._enforcement_catalog_rows_parts": ("_enforcement_catalog_rows_parts",),
-        "._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_a": (
-            "INFRA_DETECTOR_ROWS_CORE",
-        ),
-        "._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_b": (
-            "INFRA_DETECTOR_ROWS_PATTERNS",
-        ),
-        "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_01": (
-            "FlextConstantsEnforcementCatalogInfraRows",
-        ),
-        "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_02": (
-            "FlextConstantsEnforcementCatalogSkillRows",
-        ),
-        "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_03": (
-            "FlextConstantsEnforcementCatalogToolRows",
-        ),
-        "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_04": (
-            "FlextConstantsEnforcementCatalogBeartypeRows",
-        ),
-        "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_05": (
-            "FlextConstantsEnforcementCatalogInfraRowsExtended",
-        ),
-        "._enforcement_data": ("_enforcement_data",),
-        "._enforcement_parts": ("_enforcement_parts",),
-        "._enforcement_parts.flextconstantsenforcement_part_01": (
-            "FlextConstantsEnforcementEnums",
-        ),
-        "._enforcement_parts.flextconstantsenforcement_part_02": (
-            "FlextConstantsEnforcementRuntime",
-        ),
-        "._enforcement_parts.flextconstantsenforcement_part_03": (
-            "FlextConstantsEnforcementNamespace",
-        ),
-        "._enforcement_parts.flextconstantsenforcement_part_04": (
-            "FlextConstantsEnforcementRules",
-        ),
-        "._enforcement_parts.flextconstantsenforcement_part_05": (
-            "FlextConstantsEnforcementRuleText",
-        ),
-        "._enforcement_parts.flextconstantsenforcement_part_06": (
-            "FlextConstantsEnforcementTargets",
-        ),
-        "._enforcement_parts.flextconstantsenforcement_part_07": (
-            "FlextConstantsEnforcementSmellData",
-        ),
-        "._enforcement_parts.flextconstantsenforcement_part_08": (
-            "FlextConstantsEnforcementFixActions",
-        ),
-        "._enforcement_parts.flextconstantsenforcement_part_09": (
-            "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",
-        ),
-        ".errors": (
-            "FlextConstantsErrorsMessages",
-            "FlextConstantsErrorsRuntimeExceptions",
-            "FlextConstantsErrorsValidationExceptions",
-            "FlextConstantsErrorsDomainParser",
-            "FlextConstantsErrorsRuntimeSettings",
-            "FlextConstantsErrors",
-        ),
-        ".base": ("FlextConstantsBase",),
-        ".config": ("FlextConstantsConfig",),
-        ".cqrs": ("FlextConstantsCqrs",),
-        ".enforcement": (
-            "FlextConstantsEnforcement",
-            "FlextMroViolation",
-        ),
-        ".enforcement_catalog_rows": ("FlextConstantsEnforcementCatalogRows",),
-        ".environment": ("FlextConstantsEnvironment",),
-        ".file": ("FlextConstantsFile",),
-        ".guards": ("FlextConstantsGuards",),
-        ".infrastructure": ("FlextConstantsInfrastructure",),
-        ".logging": ("FlextConstantsLogging",),
-        ".mixins": ("FlextConstantsMixins",),
-        ".project_metadata": ("FlextConstantsProjectMetadata",),
-        ".pydantic": ("FlextConstantsPydantic",),
-        ".regex": ("FlextConstantsRegex",),
-        ".serialization": ("FlextConstantsSerialization",),
-        ".settings": ("FlextConstantsSettings",),
-        ".status": ("FlextConstantsStatus",),
-        ".timeout": ("FlextConstantsTimeout",),
-        ".validation": ("FlextConstantsValidation",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    "._enforcement_catalog_rows_parts": ("_enforcement_catalog_rows_parts",),
+    "._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_a": (
+        "INFRA_DETECTOR_ROWS_CORE",
+    ),
+    "._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_b": (
+        "INFRA_DETECTOR_ROWS_PATTERNS",
+    ),
+    "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_01": (
+        "FlextConstantsEnforcementCatalogInfraRows",
+    ),
+    "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_02": (
+        "FlextConstantsEnforcementCatalogSkillRows",
+    ),
+    "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_03": (
+        "FlextConstantsEnforcementCatalogToolRows",
+    ),
+    "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_04": (
+        "FlextConstantsEnforcementCatalogBeartypeRows",
+    ),
+    "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_05": (
+        "FlextConstantsEnforcementCatalogInfraRowsExtended",
+    ),
+    "._enforcement_data": ("_enforcement_data",),
+    "._enforcement_parts": ("_enforcement_parts",),
+    "._enforcement_parts.flextconstantsenforcement_part_01": (
+        "FlextConstantsEnforcementEnums",
+    ),
+    "._enforcement_parts.flextconstantsenforcement_part_02": (
+        "FlextConstantsEnforcementRuntime",
+    ),
+    "._enforcement_parts.flextconstantsenforcement_part_03": (
+        "FlextConstantsEnforcementNamespace",
+    ),
+    "._enforcement_parts.flextconstantsenforcement_part_04": (
+        "FlextConstantsEnforcementRules",
+    ),
+    "._enforcement_parts.flextconstantsenforcement_part_05": (
+        "FlextConstantsEnforcementRuleText",
+    ),
+    "._enforcement_parts.flextconstantsenforcement_part_06": (
+        "FlextConstantsEnforcementTargets",
+    ),
+    "._enforcement_parts.flextconstantsenforcement_part_07": (
+        "FlextConstantsEnforcementSmellData",
+    ),
+    "._enforcement_parts.flextconstantsenforcement_part_08": (
+        "FlextConstantsEnforcementFixActions",
+    ),
+    "._enforcement_parts.flextconstantsenforcement_part_09": (
+        "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",
+    ),
+    ".errors": (
+        "FlextConstantsErrorsMessages",
+        "FlextConstantsErrorsRuntimeExceptions",
+        "FlextConstantsErrorsValidationExceptions",
+        "FlextConstantsErrorsDomainParser",
+        "FlextConstantsErrorsRuntimeSettings",
+        "FlextConstantsErrors",
+    ),
+    ".base": ("FlextConstantsBase",),
+    ".config": ("FlextConstantsConfig",),
+    ".cqrs": ("FlextConstantsCqrs",),
+    ".enforcement": ("FlextConstantsEnforcement", "FlextMroViolation"),
+    ".enforcement_catalog_rows": ("FlextConstantsEnforcementCatalogRows",),
+    ".environment": ("FlextConstantsEnvironment",),
+    ".file": ("FlextConstantsFile",),
+    ".guards": ("FlextConstantsGuards",),
+    ".infrastructure": ("FlextConstantsInfrastructure",),
+    ".logging": ("FlextConstantsLogging",),
+    ".mixins": ("FlextConstantsMixins",),
+    ".project_metadata": ("FlextConstantsProjectMetadata",),
+    ".pydantic": ("FlextConstantsPydantic",),
+    ".regex": ("FlextConstantsRegex",),
+    ".serialization": ("FlextConstantsSerialization",),
+    ".settings": ("FlextConstantsSettings",),
+    ".status": ("FlextConstantsStatus",),
+    ".timeout": ("FlextConstantsTimeout",),
+    ".validation": ("FlextConstantsValidation",),
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

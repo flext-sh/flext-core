@@ -15,11 +15,7 @@ from flext_core.__version__ import (
     __version__,
     __version_info__,
 )
-from flext_core._root_exports import (
-    ROOT_ALL,
-    ROOT_LAZY_MODULES,
-    ROOT_METADATA_NAMES,
-)
+from flext_core._root_exports import ROOT_ALL, ROOT_LAZY_MODULES, ROOT_METADATA_NAMES
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
@@ -221,9 +217,4 @@ __all__: tuple[str, ...] = (
     "x",
 )
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    public_exports=ROOT_ALL,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=ROOT_ALL)

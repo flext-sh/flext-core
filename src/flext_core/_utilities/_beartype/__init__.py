@@ -38,29 +38,22 @@ if TYPE_CHECKING:
     from flext_core._utilities._beartype.module_visitor import (
         FlextUtilitiesBeartypeModuleVisitor as FlextUtilitiesBeartypeModuleVisitor,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        "._alias_visitor": ("FlextUtilitiesBeartypeAliasVisitor",),
-        "._class_visitor_parts": ("_class_visitor_parts",),
-        "._class_visitor_parts.class_visitor_part_03": (
-            "FlextUtilitiesBeartypeClassVisitor",
-        ),
-        "._helpers_parts": ("_helpers_parts",),
-        "._library_visitor": ("FlextUtilitiesBeartypeLibraryVisitor",),
-        ".attr_visitor": ("FlextUtilitiesBeartypeAttrVisitor",),
-        ".deprecated_visitor": ("FlextUtilitiesBeartypeDeprecatedVisitor",),
-        ".field_visitor": ("FlextUtilitiesBeartypeFieldVisitor",),
-        ".helpers": ("FlextUtilitiesBeartypeHelpers",),
-        ".import_visitor": ("FlextUtilitiesBeartypeImportVisitor",),
-        ".method_visitor": ("FlextUtilitiesBeartypeMethodVisitor",),
-        ".module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    "._alias_visitor": ("FlextUtilitiesBeartypeAliasVisitor",),
+    "._class_visitor_parts": ("_class_visitor_parts",),
+    "._class_visitor_parts.class_visitor_part_03": (
+        "FlextUtilitiesBeartypeClassVisitor",
+    ),
+    "._helpers_parts": ("_helpers_parts",),
+    "._library_visitor": ("FlextUtilitiesBeartypeLibraryVisitor",),
+    ".attr_visitor": ("FlextUtilitiesBeartypeAttrVisitor",),
+    ".deprecated_visitor": ("FlextUtilitiesBeartypeDeprecatedVisitor",),
+    ".field_visitor": ("FlextUtilitiesBeartypeFieldVisitor",),
+    ".helpers": ("FlextUtilitiesBeartypeHelpers",),
+    ".import_visitor": ("FlextUtilitiesBeartypeImportVisitor",),
+    ".method_visitor": ("FlextUtilitiesBeartypeMethodVisitor",),
+    ".module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

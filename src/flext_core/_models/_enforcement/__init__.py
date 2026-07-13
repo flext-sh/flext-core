@@ -21,22 +21,12 @@ if TYPE_CHECKING:
     from flext_core._models._enforcement._sources import (
         FlextModelsEnforcementSources as FlextModelsEnforcementSources,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        "._base": (
-            "EnforcementModelBase",
-            "FlextModelsEnforcementBase",
-        ),
-        "._catalog": ("FlextModelsEnforcementCatalog",),
-        "._params": ("FlextModelsEnforcementParams",),
-        "._sources": ("FlextModelsEnforcementSources",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    "._base": ("EnforcementModelBase", "FlextModelsEnforcementBase"),
+    "._catalog": ("FlextModelsEnforcementCatalog",),
+    "._params": ("FlextModelsEnforcementParams",),
+    "._sources": ("FlextModelsEnforcementSources",),
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

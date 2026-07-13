@@ -42,14 +42,12 @@ class FlextDecoratorsBase:
 
     @classmethod
     def _is_logger_carrier(
-        cls,
-        value: pb.AttributeProbe | None,
+        cls, value: pb.AttributeProbe | None
     ) -> TypeIs[_LoggerCarrier]:
         """Return whether value carries or can route logging context."""
         _ = cls
         return isinstance(
-            value,
-            (pl.Logger, pl.HasLogger, mp.BaseModel, *tb.CONTAINER_TYPES),
+            value, (pl.Logger, pl.HasLogger, mp.BaseModel, *tb.CONTAINER_TYPES)
         )
 
     @classmethod
@@ -98,8 +96,7 @@ class FlextDecoratorsBase:
 
     @classmethod
     def inject[**PCallback, TResult](
-        cls,
-        **dependencies: str,
+        cls, **dependencies: str
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
         """Inject dependencies from the configured FLEXT container."""
 

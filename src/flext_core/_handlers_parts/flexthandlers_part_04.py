@@ -11,23 +11,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import (
-    c,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from typing import TYPE_CHECKING
+
+from flext_core import c, r, u
 from flext_core._utilities.handler import FlextUtilitiesHandler
 
-from .flexthandlers_part_03 import (
-    FlextHandlers as FlextHandlersPart03,
-)
+from .flexthandlers_part_03 import FlextHandlers as FlextHandlersPart03
+
+if TYPE_CHECKING:
+    from flext_core import p, t
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart03[MessageT_contra, ResultT],
+    FlextHandlersPart03[MessageT_contra, ResultT]
 ):
     def handle(self, message: MessageT_contra) -> p.Result[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.
@@ -50,29 +46,26 @@ class FlextHandlers[MessageT_contra, ResultT](
         _ = message
         raise NotImplementedError
 
-    def pop_context(self) -> p.Result[m.ConfigMap]:
+    def pop_context(self) -> p.Result[p.RootDict[t.JsonPayload]]:
         """Pop execution context from the local handler stack."""
         result = FlextUtilitiesHandler.pop_context(self._runtime_state)
         if result.failure:
-            return r[m.ConfigMap].fail_op(
-                "pop handler context",
-                result.error or c.ERR_HANDLER_FAILED,
-            )
-        return r[m.ConfigMap].ok(m.ConfigMap.model_validate(result.value))
+            return r.fail_op("pop handler context", result.error)
+        self._runtime_state, context = result.unwrap()
+        return r.ok(context)
 
-    def push_context(
-        self,
-        ctx: t.JsonMapping | m.ExecutionContext,
-    ) -> p.Result[bool]:
+    def push_context(self, ctx: t.JsonMapping | p.ExecutionContext) -> p.Result[bool]:
         """Push execution context onto the local handler stack."""
-        return FlextUtilitiesHandler.push_context(self._runtime_state, ctx)
+        result = FlextUtilitiesHandler.push_context(self._runtime_state, ctx)
+        if result.failure:
+            return r.fail_op("push handler context", result.error)
+        self._runtime_state = result.unwrap()
+        return r.ok(True)
 
     def record_metric(self, name: str, value: t.JsonPayload) -> p.Result[bool]:
         """Record a metric value in the current handler state."""
         return FlextUtilitiesHandler.record_metric(
-            self._runtime_state.execution_context,
-            name,
-            value,
+            self._runtime_state.execution_context, name, value
         )
 
     def validate_message(self, data: MessageT_contra) -> p.Result[bool]:
@@ -104,20 +97,15 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         if data is None:
             return r[bool].fail_op(
-                "validate handler message",
-                c.ERR_MESSAGE_CANNOT_BE_NONE,
+                "validate handler message", c.ERR_MESSAGE_CANNOT_BE_NONE
             )
         return r[bool].ok(True)
 
     def _record_execution_metrics(
-        self,
-        *,
-        success: bool,
-        error: str | None = None,
+        self, *, success: bool, error: str | None = None
     ) -> None:
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
-        raw_time = self._runtime_state.execution_context.execution_time_ms
-        exec_time = u.to_float(raw_time() if callable(raw_time) else raw_time)
+        exec_time = u.to_float(self._runtime_state.execution_context.execution_time_ms)
         _ = self.record_metric("execution_time_ms", exec_time)
         _ = self.record_metric("success", success)
         if error is not None:

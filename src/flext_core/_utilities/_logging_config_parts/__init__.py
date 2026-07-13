@@ -11,16 +11,9 @@ if TYPE_CHECKING:
     from flext_core._utilities._logging_config_parts.logging_config_part_03 import (
         FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfig,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".logging_config_part_03": ("FlextUtilitiesLoggingConfig",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".logging_config_part_03": ("FlextUtilitiesLoggingConfig",)
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

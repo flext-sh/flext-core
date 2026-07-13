@@ -29,19 +29,13 @@ class FlextUtilitiesParserCoerce:
             description="Reject coercions; fail on type mismatch",
         )
         case_insensitive: bool | None = m.Field(
-            None,
-            validate_default=True,
-            description="Normalize case before parsing",
+            None, validate_default=True, description="Normalize case before parsing"
         )
         default: T | None = m.Field(
-            None,
-            validate_default=True,
-            description="Fallback value when parsing fails",
+            None, validate_default=True, description="Fallback value when parsing fails"
         )
         default_factory: Callable[[], T] | None = m.Field(
-            None,
-            validate_default=True,
-            description="Factory producing fallback value",
+            None, validate_default=True, description="Factory producing fallback value"
         )
         field_name: str | None = m.Field(
             None,
@@ -57,9 +51,7 @@ class FlextUtilitiesParserCoerce:
 
     @staticmethod
     def _parse_normalize_str(
-        value: t.JsonPayload,
-        *,
-        case: str = c.ParserCase.LOWER.value,
+        value: t.JsonPayload, *, case: str = c.ParserCase.LOWER.value
     ) -> str:
         """Normalize string value (avoids circular import with u.normalize)."""
         value_str = value if isinstance(value, str) else str(value)
@@ -71,16 +63,13 @@ class FlextUtilitiesParserCoerce:
         """Coerce value to bool. Returns None if not coercible."""
         if isinstance(value, str):
             normalized_val = FlextUtilitiesParserCoerce._parse_normalize_str(
-                value,
-                case="lower",
+                value, case="lower"
             )
             if normalized_val in c.PARSER_BOOLEAN_TRUTHY:
                 return r[bool].ok(True)
             if normalized_val in c.PARSER_BOOLEAN_FALSY:
                 return r[bool].ok(False)
-            return r[bool].fail(
-                c.ERR_PARSER_COERCE_BOOL_FAILED.format(value=value),
-            )
+            return r[bool].fail(c.ERR_PARSER_COERCE_BOOL_FAILED.format(value=value))
         return r[bool].ok(bool(value))
 
     @staticmethod
@@ -88,13 +77,10 @@ class FlextUtilitiesParserCoerce:
         """Coerce value to float. Returns None if not coercible."""
         if isinstance(value, (str, int)):
             return r[float].create_from_callable(
-                lambda: float(value),
-                error_code="FLOAT_COERCE_ERROR",
+                lambda: float(value), error_code="FLOAT_COERCE_ERROR"
             )
         return r[float].fail(
-            c.ERR_PARSER_COERCE_FLOAT_FAILED.format(
-                type_name=value.__class__.__name__,
-            ),
+            c.ERR_PARSER_COERCE_FLOAT_FAILED.format(type_name=value.__class__.__name__),
             error_code="FLOAT_COERCE_TYPE_ERROR",
         )
 
@@ -103,21 +89,16 @@ class FlextUtilitiesParserCoerce:
         """Coerce value to int. Returns None if not coercible."""
         if isinstance(value, (str, float)):
             return r[int].create_from_callable(
-                lambda: int(float(value)),
-                error_code="INT_COERCE_ERROR",
+                lambda: int(float(value)), error_code="INT_COERCE_ERROR"
             )
         return r[int].fail(
-            c.ERR_PARSER_COERCE_INT_FAILED.format(
-                type_name=value.__class__.__name__,
-            ),
+            c.ERR_PARSER_COERCE_INT_FAILED.format(type_name=value.__class__.__name__),
             error_code="INT_COERCE_TYPE_ERROR",
         )
 
     @staticmethod
     def _parse_with_default[T](
-        default: T | None,
-        default_factory: Callable[[], T] | None,
-        error_msg: str,
+        default: T | None, default_factory: Callable[[], T] | None, error_msg: str
     ) -> p.Result[T]:
         """Return default or error for parse failures."""
         if default is not None:
@@ -128,10 +109,7 @@ class FlextUtilitiesParserCoerce:
 
     @staticmethod
     def norm_str(
-        value: t.JsonPayload | None,
-        *,
-        case: str | None = None,
-        default: str = "",
+        value: t.JsonPayload | None, *, case: str | None = None, default: str = ""
     ) -> str:
         """Normalize string (builder: norm().str())."""
         if value is None:

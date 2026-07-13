@@ -16,9 +16,7 @@ from flext_core._constants.mixins import FlextConstantsMixins as c
 from .base import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
+    from collections.abc import Callable
 
     from flext_core import FlextModels as m, FlextTypes as t
 
@@ -70,33 +68,25 @@ class FlextProtocolsRegistry:
         # --- handler registration ---
 
         def register(
-            self,
-            name: str,
-            service: t.RegistrablePlugin,
+            self, name: str, service: t.RegistrablePlugin
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a service component."""
             ...
 
         def register_handler(
-            self,
-            handler: t.DispatchableHandler,
+            self, handler: t.DispatchableHandler
         ) -> FlextProtocolsResult.Result[m.RegistrationDetails]:
             """Register a handler instance or callable."""
             ...
 
         def register_handlers(
-            self,
-            handlers: t.SequenceOf[t.DispatchableHandler],
+            self, handlers: t.SequenceOf[t.DispatchableHandler]
         ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register multiple handlers in batch."""
             ...
 
         def register_bindings(
-            self,
-            bindings: t.MappingKV[
-                t.RegistryBindingKey,
-                t.DispatchableHandler,
-            ],
+            self, bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler]
         ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register message-to-handler bindings."""
             ...
@@ -109,10 +99,7 @@ class FlextProtocolsRegistry:
             name: str,
             plugin: t.RegistrablePlugin,
             *,
-            validate: Callable[
-                [t.RegistrablePlugin],
-                FlextProtocolsResult.Result[bool],
-            ]
+            validate: Callable[[t.RegistrablePlugin], FlextProtocolsResult.Result[bool]]
             | None = None,
             scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
         ) -> FlextProtocolsResult.Result[bool]:

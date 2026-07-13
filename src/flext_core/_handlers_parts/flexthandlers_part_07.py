@@ -4,19 +4,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import c, m, t
+from flext_core import c, t
 
-from .flexthandlers_part_06 import (
-    FlextHandlers as FlextHandlersPart06,
-)
+from .flexthandlers_part_06 import FlextHandlers as FlextHandlersPart06
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence
     from types import ModuleType
 
+    from flext_core import p
+
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart06[MessageT_contra, ResultT],
+    FlextHandlersPart06[MessageT_contra, ResultT]
 ):
     """Final CQRS handler facade with discovery utilities composed by MRO."""
 
@@ -57,7 +57,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         @staticmethod
         def scan_class(
             target_class: type,
-        ) -> t.SequenceOf[tuple[str, m.DecoratorConfig]]:
+        ) -> t.SequenceOf[tuple[str, p.DecoratorConfig]]:
             """Scan class for methods decorated with @handler().
 
             Introspects the class to find all methods with handler configuration
@@ -75,7 +75,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 ...     print(f"{method_name}: {settings.command.__name__}")
 
             """
-            handlers: t.SequenceOf[tuple[str, m.DecoratorConfig]] = [
+            handlers: t.SequenceOf[tuple[str, p.DecoratorConfig]] = [
                 (name, getattr(method, c.HANDLER_ATTR))
                 for name in dir(target_class)
                 if hasattr(method := getattr(target_class, name, None), c.HANDLER_ATTR)
@@ -86,7 +86,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         def scan_module(
             module: ModuleType,
         ) -> t.SequenceOf[
-            tuple[str, Callable[..., t.Scalar | None], m.DecoratorConfig]
+            tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig]
         ]:
             """Scan module for functions decorated with @handler().
 
@@ -106,11 +106,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             """
             handlers: MutableSequence[
-                tuple[
-                    str,
-                    Callable[..., t.Scalar | None],
-                    m.DecoratorConfig,
-                ]
+                tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig]
             ] = []
             for name in dir(module):
                 if name.startswith("_"):
@@ -122,11 +118,10 @@ class FlextHandlers[MessageT_contra, ResultT](
                     continue
                 if not hasattr(func, c.HANDLER_ATTR):
                     continue
-                settings: m.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
+                settings: p.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
 
                 def narrowed_func(
-                    message: t.JsonPayload,
-                    function_name: str = name,
+                    message: t.JsonPayload, function_name: str = name
                 ) -> t.Scalar | None:
                     resolved_callable = getattr(module, function_name, None)
                     if not callable(resolved_callable):

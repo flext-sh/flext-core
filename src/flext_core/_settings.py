@@ -89,12 +89,10 @@ class FlextSettings(BaseSettings):
     trace: Annotated[bool, Field(description="Enable trace mode")] = False
     log_level: Annotated[str, Field(default="INFO", description="Log level")]
     timezone: Annotated[
-        str,
-        Field(description="IANA timezone for datetime operations"),
+        str, Field(description="IANA timezone for datetime operations")
     ] = "UTC"
     async_logging: Annotated[
-        bool,
-        Field(description="Enable asynchronous buffered logging"),
+        bool, Field(description="Enable asynchronous buffered logging")
     ] = True
 
     _lock: ClassVar[threading.RLock] = threading.RLock()
@@ -178,8 +176,7 @@ class FlextSettings(BaseSettings):
         for field_name, override_value in overrides.items():
             current_value = getattr(current, field_name, None)
             if isinstance(current_value, BaseModel) and isinstance(
-                override_value,
-                Mapping,
+                override_value, Mapping
             ):
                 computed = set(type(current_value).model_computed_fields)
                 merged_dict = {

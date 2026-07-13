@@ -54,8 +54,7 @@ def _requires_alias_first(
 
 
 def alias_first_violation(
-    target: type,
-    params: me.MroShapeParams,
+    target: type, params: me.MroShapeParams
 ) -> t.StrMapping | None:
     """Compute the alias/peer-first violation for ``v_mro_shape``."""
     _, separator, _ = target.__qualname__.partition(".")
@@ -67,9 +66,7 @@ def alias_first_violation(
     tier_facade_prefixes = (project_prefix, f"Tests{project_prefix}")
     is_facade = is_module_level and target.__name__.startswith(tier_facade_prefixes)
     module_name = getattr(target, "__module__", "") or ""
-    is_core_root = module_name.startswith(
-        "flext_core.",
-    ) and not module_name.startswith((
+    is_core_root = module_name.startswith("flext_core.") and not module_name.startswith((
         "flext_core.tests",
         "flext_core.examples",
         "flext_core.scripts",

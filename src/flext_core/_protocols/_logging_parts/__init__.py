@@ -11,16 +11,9 @@ if TYPE_CHECKING:
     from flext_core._protocols._logging_parts.flextprotocolslogging_part_03 import (
         FlextProtocolsLogging as FlextProtocolsLogging,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".flextprotocolslogging_part_03": ("FlextProtocolsLogging",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".flextprotocolslogging_part_03": ("FlextProtocolsLogging",)
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

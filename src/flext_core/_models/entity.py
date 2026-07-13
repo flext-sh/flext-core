@@ -34,12 +34,7 @@ class FlextModelsEntity:
     the forward-reference cycle that Pydantic cannot resolve.
     """
 
-    class Entity(
-        m.TimestampedModel,
-        m.IdentifiableMixin,
-        m.VersionableMixin,
-        Hashable,
-    ):
+    class Entity(m.TimestampedModel, m.IdentifiableMixin, m.VersionableMixin, Hashable):
         """Entity implementation - base class for domain entities with identity.
 
         Combines TimestampedModel, IdentifiableMixin, and VersionableMixin to provide:

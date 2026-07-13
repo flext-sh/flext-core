@@ -11,9 +11,7 @@ from flext_core._constants.regex import FlextConstantsRegex as cre
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
 
-from .helpers import (
-    FlextUtilitiesBeartypeHelpers as _ubh,
-)
+from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 
 _NO_VIOLATION: t.StrMapping | None = None
 _typing_TypeAlias = TypeAlias  # sentinel for ``X: TypeAlias = Y`` annotation match.
@@ -23,10 +21,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
     """DEPRECATED_SYNTAX + WRAPPER visitors via bytecode introspection."""
 
     @staticmethod
-    def v_wrapper(
-        _params: me.WrapperParams,
-        target: type,
-    ) -> t.StrMapping | None:
+    def v_wrapper(_params: me.WrapperParams, target: type) -> t.StrMapping | None:
         """Detect pass-through wrappers via bytecode (ENFORCE-043)."""
         module = _ubh.runtime_module_for(target)
         if module is None:
@@ -42,8 +37,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
 
     @staticmethod
     def v_deprecated_syntax(
-        params: me.DeprecatedSyntaxParams,
-        target: type,
+        params: me.DeprecatedSyntaxParams, target: type
     ) -> t.StrMapping | None:
         """DEPRECATED_SYNTAX — runtime introspection routed by ``params.ast_shape``."""
         shape = params.ast_shape
@@ -59,8 +53,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                     has_type_alias = any(
                         annotation is _typing_TypeAlias
                         for annotation in inspect.get_annotations(
-                            module,
-                            eval_str=False,
+                            module, eval_str=False
                         ).values()
                     )
                 except (TypeError, NameError):
@@ -105,7 +98,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                 wrapper_module = _ubh.runtime_wrapper_module_for(target)
                 if wrapper_module is not None:
                     wrapper_file_name = Path(
-                        _ubh.module_filename_for(wrapper_module) or "",
+                        _ubh.module_filename_for(wrapper_module) or ""
                     ).name
                     violation = next(
                         (
@@ -115,7 +108,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                 "line": "<runtime>",
                             }
                             for alias_name in _ubh.runtime_alias_names(
-                                wrapper_module.__name__.split(".", 1)[0],
+                                wrapper_module.__name__.split(".", 1)[0]
                             )
                             if (
                                 alias_value := getattr(wrapper_module, alias_name, None)
@@ -130,14 +123,14 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                 wrapper_module = _ubh.runtime_wrapper_module_for(target)
                 if wrapper_module is not None:
                     wrapper_file_name = Path(
-                        _ubh.module_filename_for(wrapper_module) or "",
+                        _ubh.module_filename_for(wrapper_module) or ""
                     ).name
                     package_name = wrapper_module.__name__.split(".", 1)[0]
                     wrapper_submodules = _ubh.facade_module_names(package_name)
                     violation = _NO_VIOLATION
                     try:
                         source = Path(
-                            _ubh.module_filename_for(wrapper_module) or "",
+                            _ubh.module_filename_for(wrapper_module) or ""
                         ).read_text(encoding="utf-8")
                     except OSError:
                         source = ""
@@ -147,7 +140,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                 {
                                     "file": wrapper_file_name,
                                     "line": str(
-                                        source.count("\n", 0, match.start()) + 1,
+                                        source.count("\n", 0, match.start()) + 1
                                     ),
                                     "statement": (
                                         f"from {match.group(1)}.{match.group(2)} "
@@ -155,7 +148,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                     ),
                                 }
                                 for match in cre.FORBIDDEN_FACADE_IMPORT_RE.finditer(
-                                    source,
+                                    source
                                 )
                                 for first_alias in (
                                     [
@@ -178,9 +171,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                 for alias_name in _ubh.runtime_alias_names(package_name)
                                 if (
                                     alias_value := getattr(
-                                        wrapper_module,
-                                        alias_name,
-                                        None,
+                                        wrapper_module, alias_name, None
                                     )
                                 )
                                 is not None

@@ -47,11 +47,7 @@ from pydantic import (
     field_validator,
 )
 from pydantic.fields import FieldInfo
-from pydantic_core import (
-    PydanticUndefined,
-    PydanticUndefinedType,
-    SchemaValidator,
-)
+from pydantic_core import PydanticUndefined, PydanticUndefinedType, SchemaValidator
 from pydantic_settings import (
     BaseSettings as PydanticBaseSettings,
     EnvSettingsSource,
@@ -97,22 +93,19 @@ class FlextModelsPydantic:
     """
 
     @dataclass_transform(
-        kw_only_default=True,
-        field_specifiers=(_field, Field, PrivateAttr),
+        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
     )
     class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
     @dataclass_transform(
-        kw_only_default=True,
-        field_specifiers=(_field, Field, PrivateAttr),
+        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
     )
     class BaseSettings(PydanticBaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
     @dataclass_transform(
-        kw_only_default=True,
-        field_specifiers=(_field, Field, PrivateAttr),
+        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
     )
     class RootModel[RootValueT](PydanticRootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""

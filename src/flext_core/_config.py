@@ -45,9 +45,7 @@ class FlextConfig(BaseSettings):
     CONFIG_DIR: ClassVar[str] = "config"
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
-        frozen=True,
-        extra="allow",
-        env_prefix="FLEXT_CONFIG_",
+        frozen=True, extra="allow", env_prefix="FLEXT_CONFIG_"
     )
 
     _lock: ClassVar[RLock] = RLock()
@@ -83,9 +81,7 @@ class FlextConfig(BaseSettings):
             init_settings,
             env_settings,
             YamlConfigSettingsSource(
-                settings_cls,
-                yaml_file=cls._config_files(),
-                deep_merge=True,
+                settings_cls, yaml_file=cls._config_files(), deep_merge=True
             ),
         )
 

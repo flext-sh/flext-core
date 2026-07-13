@@ -27,22 +27,15 @@ if TYPE_CHECKING:
     from flext_core._root_exports_parts.typing_only_names import (
         ROOT_TYPING_ONLY_NAMES as ROOT_TYPING_ONLY_NAMES,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".all_names": ("ROOT_ALL",),
-        ".exclude_names": ("ROOT_EXCLUDE_NAMES",),
-        ".lazy_core": ("ROOT_LAZY_CORE",),
-        ".lazy_facades": ("ROOT_LAZY_FACADES",),
-        ".lazy_utilities": ("ROOT_LAZY_UTILITIES",),
-        ".metadata_names": ("ROOT_METADATA_NAMES",),
-        ".typing_only_names": ("ROOT_TYPING_ONLY_NAMES",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".all_names": ("ROOT_ALL",),
+    ".exclude_names": ("ROOT_EXCLUDE_NAMES",),
+    ".lazy_core": ("ROOT_LAZY_CORE",),
+    ".lazy_facades": ("ROOT_LAZY_FACADES",),
+    ".lazy_utilities": ("ROOT_LAZY_UTILITIES",),
+    ".metadata_names": ("ROOT_METADATA_NAMES",),
+    ".typing_only_names": ("ROOT_TYPING_ONLY_NAMES",),
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

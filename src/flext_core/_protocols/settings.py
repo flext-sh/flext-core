@@ -22,19 +22,12 @@ class FlextProtocolsSettings:
     class Configurable(p.Base, Protocol):
         """Protocol for component configuration."""
 
-        def apply(
-            self,
-            settings: t.UserOverridesMapping | None = None,
-        ) -> Self:
+        def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
             """Apply configuration overrides."""
             ...
 
     @runtime_checkable
-    class Settings(
-        pr.HasModelDump,
-        p.Base,
-        Protocol,
-    ):
+    class Settings(pr.HasModelDump, p.Base, Protocol):
         """Minimal Pydantic-2 settings contract — operations only.
 
         Declares only the operation surface (``fetch_global``, ``clone``,
@@ -47,11 +40,7 @@ class FlextProtocolsSettings:
         """
 
         @classmethod
-        def fetch_global(
-            cls,
-            *,
-            overrides: t.ScalarMapping | None = None,
-        ) -> Self:
+        def fetch_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
             """Return the global singleton settings instance, optionally with overrides."""
             ...
 
@@ -112,9 +101,7 @@ class FlextProtocolsSettings:
 
         @classmethod
         def fetch_global(
-            cls,
-            *,
-            overrides: t.ScalarMapping | None = None,
+            cls, *, overrides: t.ScalarMapping | None = None
         ) -> FlextProtocolsSettings.Settings:
             """Return the global singleton settings instance."""
             ...

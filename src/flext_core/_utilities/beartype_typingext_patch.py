@@ -101,9 +101,7 @@ class FlextUtilitiesBeartypeTypingExtPatch:
     @classmethod
     def _patch_forwardref_module_scope(cls) -> None:
         """Tag a reduced alias's stringified refs with the alias's module."""
-        pep695 = importlib.import_module(
-            "beartype._util.hint.pep.proposal.pep695",
-        )
+        pep695 = importlib.import_module("beartype._util.hint.pep.proposal.pep695")
         raw_original = pep695.__dict__.get("get_hint_pep695_unsubbed_alias")
         if not callable(raw_original):
             msg = "beartype get_hint_pep695_unsubbed_alias hook is unavailable"
@@ -114,8 +112,7 @@ class FlextUtilitiesBeartypeTypingExtPatch:
         original = cast("cls._Pep695Getter", raw_original)
 
         def tagged(
-            hint: cls._TypeHintSpecifier,
-            exception_prefix: str = "",
+            hint: cls._TypeHintSpecifier, exception_prefix: str = ""
         ) -> cls._TypeHintSpecifier:
             reduced = original(hint, exception_prefix)
             module_name = getattr(hint, "__module__", None)
@@ -133,8 +130,7 @@ class FlextUtilitiesBeartypeTypingExtPatch:
 
     @staticmethod
     def _tag_forward_refs(
-        hint: _TypeHintSpecifier,
-        module_name: str,
+        hint: _TypeHintSpecifier, module_name: str
     ) -> _TypeHintSpecifier:
         """Rebind bare stringified forward refs in ``hint`` to ``module_name``."""
         tag = FlextUtilitiesBeartypeTypingExtPatch._tag_forward_refs
@@ -160,8 +156,7 @@ class FlextUtilitiesBeartypeTypingExtPatch:
                 origin[new_args[0]],
             )
         return cast(
-            "FlextUtilitiesBeartypeTypingExtPatch._TypeHintSpecifier",
-            origin[new_args],
+            "FlextUtilitiesBeartypeTypingExtPatch._TypeHintSpecifier", origin[new_args]
         )
 
 

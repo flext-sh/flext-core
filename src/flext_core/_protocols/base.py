@@ -9,10 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Iterable,
-        MutableSequence,
-    )
+    from collections.abc import Iterable, MutableSequence
     from types import TracebackType
 
     from flext_core import m, p, t
@@ -54,9 +51,7 @@ class FlextProtocolsBase:
         # on ``ModelType``.
 
         def model_dump(
-            self,
-            *,
-            mode: str = "python",
+            self, *, mode: str = "python"
         ) -> t.MappingKV[str, t.JsonPayload | None]:
             """Dump the validated model at an external serialization boundary."""
             ...
@@ -94,9 +89,7 @@ class FlextProtocolsBase:
     class Executable(Base, Protocol):
         """Protocol for objects that can be executed and report service info."""
 
-        def execute(
-            self,
-        ) -> p.Result[t.JsonPayload]: ...
+        def execute(self) -> p.Result[t.JsonPayload]: ...
 
         def service_info(self) -> t.JsonMapping: ...
 
@@ -105,9 +98,7 @@ class FlextProtocolsBase:
         """Protocol for mapping-like configuration payloads."""
 
         def get(
-            self,
-            key: str,
-            default: t.JsonPayload | None = None,
+            self, key: str, default: t.JsonPayload | None = None
         ) -> t.JsonPayload | None:
             """Fetch a configuration value by key."""
             ...

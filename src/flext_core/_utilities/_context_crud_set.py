@@ -21,20 +21,12 @@ class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
 
     @overload
     def set(
-        self,
-        key_or_data: str,
-        value: t.JsonPayload,
-        *,
-        scope: str = ...,
+        self, key_or_data: str, value: t.JsonPayload, *, scope: str = ...
     ) -> p.Result[bool]: ...
 
     @overload
     def set(
-        self,
-        key_or_data: t.JsonMapping,
-        value: None = ...,
-        *,
-        scope: str = ...,
+        self, key_or_data: t.JsonMapping, value: None = ..., *, scope: str = ...
     ) -> p.Result[bool]: ...
 
     def set(
@@ -49,8 +41,7 @@ class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
         prepared_update: tuple[t.JsonMapping, t.JsonMapping] | None = None
         if not self.state.active:
             operation_result = r[bool].fail_op(
-                c.ContextCrudOperation.SET_VALUE,
-                c.ERR_CONTEXT_NOT_ACTIVE,
+                c.ContextCrudOperation.SET_VALUE, c.ERR_CONTEXT_NOT_ACTIVE
             )
         else:
             match key_or_data, value:
@@ -67,8 +58,7 @@ class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
                 case str() as key, raw_value:
                     normalized_value_result: p.Result[t.JsonValue] = (
                         FlextUtilitiesModel.validate_value(
-                            t.JsonValue,
-                            FlextRuntime.normalize_to_container(raw_value),
+                            t.JsonValue, FlextRuntime.normalize_to_container(raw_value)
                         )
                     )
                     if normalized_value_result.failure:
@@ -86,7 +76,7 @@ class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
                     operation_result = r[bool].ok(True)
                 case payload_mapping, _:
                     mapping_payload = t.json_mapping_adapter().validate_python(
-                        payload_mapping,
+                        payload_mapping
                     )
                     normalized_mapping_result: p.Result[t.JsonValue] = (
                         FlextUtilitiesModel.validate_value(
@@ -113,8 +103,7 @@ class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
                 self._execute_hooks(c.ContextOperation.SET.value, hook_context)
             except TypeError as exc:
                 operation_result = e.fail_operation(
-                    c.ContextCrudOperation.APPLY_UPDATE,
-                    exc,
+                    c.ContextCrudOperation.APPLY_UPDATE, exc
                 )
         return operation_result
 

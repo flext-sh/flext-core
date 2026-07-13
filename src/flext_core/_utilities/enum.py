@@ -15,9 +15,7 @@ from typing import TYPE_CHECKING, ClassVar
 from flext_core import FlextTypes as t
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        MutableMapping,
-    )
+    from collections.abc import MutableMapping
 
 
 class FlextUtilitiesEnum:

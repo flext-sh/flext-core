@@ -11,10 +11,7 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     from types import ModuleType
 
-    from flext_core import (
-        p,
-        t,
-    )
+    from flext_core import p, t
 from .flextprotocolscontext_part_02 import (
     FlextProtocolsContext as FlextProtocolsContextPart02,
 )

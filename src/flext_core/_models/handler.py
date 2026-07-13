@@ -32,7 +32,7 @@ class FlextModelsHandler:
             json_schema_extra={
                 "title": "RegistrationDetails",
                 "description": "Handler registration tracking details",
-            },
+            }
         )
         registration_id: Annotated[
             t.NonEmptyStr,
@@ -108,6 +108,7 @@ class FlextModelsHandler:
         ] = mp.Field(default_factory=lambda: mc.Dict(root={}))
 
         @up.computed_field()
+        @property
         def execution_time_ms(self) -> float:
             """Elapsed execution time in milliseconds (0 until started)."""
             if self.started_at is None:
@@ -124,30 +125,8 @@ class FlextModelsHandler:
         ]
         context_stack: Annotated[
             MutableSequence[FlextModelsHandler.ExecutionContext],
-            mp.Field(
-                description="Stack of nested execution contexts.",
-            ),
+            mp.Field(description="Stack of nested execution contexts."),
         ] = mp.Field(default_factory=list)
-        accepted_message_types: Annotated[
-            tuple[t.MessageTypeSpecifier, ...],
-            mp.Field(
-                description="Accepted message types computed for dispatch routing",
-            ),
-        ] = mp.Field(default_factory=tuple)
-        revalidate_pydantic_messages: Annotated[
-            bool,
-            mp.Field(
-                default=False,
-                description="Whether Pydantic messages must be revalidated on dispatch",
-            ),
-        ] = False
-        type_warning_emitted: Annotated[
-            bool,
-            mp.Field(
-                default=False,
-                description="Whether the handler already emitted a type warning",
-            ),
-        ] = False
 
         @mp.computed_field()
         @property
@@ -165,12 +144,10 @@ class FlextModelsHandler:
         """Configuration extracted from @FlextHandlers.handler() decorator."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
+            frozen=True, arbitrary_types_allowed=True
         )
         command: Annotated[
-            type,
-            mp.Field(description="Command type this handler processes"),
+            type, mp.Field(description="Command type this handler processes")
         ]
         priority: Annotated[
             t.NonNegativeInt,

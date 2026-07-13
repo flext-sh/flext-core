@@ -17,18 +17,15 @@ class FlextTypesAnnotateds:
     """Generic Annotated aliases shared through the ``t`` facade."""
 
     type MessageUnion[CommandT, QueryT, EventT] = Annotated[
-        CommandT | QueryT | EventT,
-        FlextTypesPydantic.Discriminator("message_type"),
+        CommandT | QueryT | EventT, FlextTypesPydantic.Discriminator("message_type")
     ]
 
     type OperationResult[SuccessT, FailureT, PartialT] = Annotated[
-        SuccessT | FailureT | PartialT,
-        FlextTypesPydantic.Discriminator("result_type"),
+        SuccessT | FailureT | PartialT, FlextTypesPydantic.Discriminator("result_type")
     ]
 
     type ValidationOutcome[ValidT, InvalidT, WarningT] = Annotated[
-        ValidT | InvalidT | WarningT,
-        FlextTypesPydantic.Discriminator("outcome_type"),
+        ValidT | InvalidT | WarningT, FlextTypesPydantic.Discriminator("outcome_type")
     ]
 
     # -- string constraints --------------------------------------------------
@@ -38,8 +35,7 @@ class FlextTypesAnnotateds:
     # that neither stripped nor rejected "   "). Canonical reuse point for the workspace
     # declaration-purity campaign (models drop validate_business_rules empty-string checks).
     type StrippedStr = Annotated[
-        str,
-        FlextTypesPydantic.StringConstraints(strip_whitespace=True, min_length=1),
+        str, FlextTypesPydantic.StringConstraints(strip_whitespace=True, min_length=1)
     ]
     type BoundedStr = Annotated[str, Len(1, 255)]
     type HostnameStr = Annotated[str, Len(1)]

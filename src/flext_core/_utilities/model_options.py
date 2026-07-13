@@ -66,10 +66,7 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
         if not overrides:
             return resolved
         override_updates = dict(
-            cls.dump(
-                cls.resolve_runtime_options(overrides),
-                exclude_none=True,
-            ),
+            cls.dump(cls.resolve_runtime_options(overrides), exclude_none=True)
         )
         return (
             resolved.model_copy(update=override_updates)

@@ -29,9 +29,7 @@ class FlextProtocolsResult(FlextProtocolsResultPart03):
         """
 
         def model_dump(
-            self,
-            *,
-            mode: str = "python",
+            self, *, mode: str = "python"
         ) -> t.MappingKV[str, t.JsonPayload | None]:
             """Dump model data to a mapping that runtime helpers can normalize."""
             ...

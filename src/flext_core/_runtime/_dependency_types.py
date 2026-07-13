@@ -13,7 +13,6 @@ from dependency_injector import containers, providers
 from pydantic import BaseModel, ConfigDict
 
 from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._protocols.container import FlextProtocolsContainer as pc
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._typings.services import FlextTypesServices as ts
@@ -37,9 +36,7 @@ class FlextRuntimeDependencyTypes:
     class ContainerCreationOptions(BaseModel):
         """Validated options for dependency container creation."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            arbitrary_types_allowed=True,
-        )
+        model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
         settings: mc.ConfigMap | None = None
         services: (
@@ -57,10 +54,6 @@ class FlextRuntimeDependencyTypes:
         wire_classes: tb.SequenceOf[type] | None = None
         factory_cache: bool = True
 
-    ContainerCreationOptionsModel: ClassVar[pc.ContainerCreationOptionsType | None] = (
-        ContainerCreationOptions
-    )
-
     _OPTION_FIELDS: ClassVar[tb.StrSequence] = (
         "settings",
         "services",
@@ -70,20 +63,6 @@ class FlextRuntimeDependencyTypes:
         "wire_packages",
         "wire_classes",
     )
-
-    @classmethod
-    def _require_container_creation_options_model(
-        cls,
-    ) -> pc.ContainerCreationOptionsType:
-        """Return the bound container options model or raise a contract error."""
-        options_model = cls.ContainerCreationOptionsModel
-        if options_model is None:
-            msg = (
-                "FlextRuntime.DependencyIntegration.ContainerCreationOptionsModel "
-                "is not bound to a concrete implementation"
-            )
-            raise RuntimeError(msg)
-        return options_model
 
 
 __all__: list[str] = ["FlextRuntimeDependencyTypes"]

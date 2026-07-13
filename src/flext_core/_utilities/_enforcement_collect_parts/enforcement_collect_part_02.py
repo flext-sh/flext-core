@@ -18,34 +18,28 @@ from .enforcement_collect_part_01 import (
 class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
     @staticmethod
     def _ns_nested_mro(
-        target: type,
-        qn: str,
-        project: t.StrPair,
+        target: type, qn: str, project: t.StrPair
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if top and top == FlextUtilitiesEnforcementCollect._discover_src_package(
-            target,
+            target
         ):
             return
         yield qn, (target, project[0])
 
     @staticmethod
     def _ns_no_accessor_methods(
-        target: type,
-        qn: str,
+        target: type, qn: str
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         for name, value in vars(target).items():
             if inspect.isfunction(value) or isinstance(
-                value,
-                (classmethod, staticmethod),
+                value, (classmethod, staticmethod)
             ):
                 yield f"{qn}.{name}", (target, name)
 
     @staticmethod
     def _namespace_items(
-        target: type,
-        tag: str,
-        effective_layer: str = "",
+        target: type, tag: str, effective_layer: str = ""
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         """Per-tag dispatcher for namespace-category rule inputs."""
         if (

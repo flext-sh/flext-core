@@ -27,13 +27,11 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
                 return isinstance(value, (list, tuple))
             case "sequence_not_str":
                 return isinstance(value, (list, tuple, range)) and not isinstance(
-                    value,
-                    str,
+                    value, str
                 )
             case "sequence_not_str_bytes":
                 return isinstance(value, (list, tuple, range)) and not isinstance(
-                    value,
-                    (str, bytes),
+                    value, (str, bytes)
                 )
             case "sized":
                 return hasattr(value, "__len__")

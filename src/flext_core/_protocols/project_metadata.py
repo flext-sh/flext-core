@@ -103,9 +103,7 @@ class FlextProtocolsProjectMetadata:
         """Validated FLEXT project policy."""
 
         @property
-        def project(
-            self,
-        ) -> FlextProtocolsProjectMetadata.ProjectToolFlextProject: ...
+        def project(self) -> FlextProtocolsProjectMetadata.ProjectToolFlextProject: ...
 
         @property
         def docs(self) -> FlextProtocolsProjectMetadata.ProjectToolFlextDocs: ...

@@ -20,11 +20,7 @@ from typing import ClassVar, override
 
 import structlog
 
-from flext_core import (
-    FlextConstants as c,
-    FlextProtocols as p,
-    FlextTypes as t,
-)
+from flext_core import FlextConstants as c, FlextProtocols as p, FlextTypes as t
 
 
 class FlextUtilitiesLoggingConfig:
@@ -41,26 +37,18 @@ class FlextUtilitiesLoggingConfig:
             self._use_live_stdout = stream is sys.stdout
             self._use_live_stderr = stream is sys.stderr
             self._stream_mode: str = str(getattr(stream, "mode", "w"))
-            self._stream_name: str = str(
-                getattr(stream, "name", "<async-log-writer>"),
-            )
+            self._stream_name: str = str(getattr(stream, "name", "<async-log-writer>"))
             self._stream_encoding: str = str(
-                getattr(stream, "encoding", c.DEFAULT_ENCODING),
+                getattr(stream, "encoding", c.DEFAULT_ENCODING)
             )
             self._stream_errors: str | None = getattr(stream, "errors", None)
             self._stream_newlines: str | t.VariadicTuple[str] | None = getattr(
-                stream,
-                "newlines",
-                None,
+                stream, "newlines", None
             )
-            self.queue: queue.Queue[str | None] = queue.Queue(
-                maxsize=c.MAX_ITEMS,
-            )
+            self.queue: queue.Queue[str | None] = queue.Queue(maxsize=c.MAX_ITEMS)
             self.stop_event = threading.Event()
             self.thread = threading.Thread(
-                target=self._worker,
-                daemon=True,
-                name="flext-async-log-writer",
+                target=self._worker, daemon=True, name="flext-async-log-writer"
             )
             self.thread.start()
             _ = atexit.register(self.shutdown)
@@ -156,8 +144,7 @@ class FlextUtilitiesLoggingConfig:
                     continue
                 except (OSError, ValueError, TypeError) as exc:
                     self._writer_log.warning(
-                        "Async log writer stream operation failed",
-                        exc_info=exc,
+                        "Async log writer stream operation failed", exc_info=exc
                     )
                     with suppress(OSError, ValueError, TypeError):
                         _ = self._target_stream.write("Error in async log writer\n")

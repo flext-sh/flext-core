@@ -75,9 +75,7 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS = merge_lazy_imports(
     _CHILD_MODULE_PATHS,
     build_lazy_import_map(
-        _LAZY_MODULES,
-        alias_groups=_LAZY_ALIAS_GROUPS,
-        sort_keys=False,
+        _LAZY_MODULES, alias_groups=_LAZY_ALIAS_GROUPS, sort_keys=False
     ),
     exclude_names=_EXCLUDED_LAZY_NAMES,
     module_name=__name__,
@@ -85,9 +83,4 @@ _LAZY_IMPORTS = merge_lazy_imports(
 
 
 # mro-i6nq.10: The installer publishes __all__ from the manifest's literal ABI.
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    public_exports=_PUBLIC_EXPORTS,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=_PUBLIC_EXPORTS)

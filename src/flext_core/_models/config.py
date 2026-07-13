@@ -24,8 +24,7 @@ class FlextModelsConfig:
         """A loaded, parsed config document with optional schema/source refs."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
+            frozen=True, arbitrary_types_allowed=True
         )
 
         data: Annotated[

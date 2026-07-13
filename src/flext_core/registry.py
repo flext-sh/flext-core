@@ -46,8 +46,7 @@ class FlextRegistry(s[bool]):
     dispatcher: Annotated[
         p.Dispatcher | None,
         m.Field(
-            exclude=True,
-            description="The dispatcher instance for executing handlers.",
+            exclude=True, description="The dispatcher instance for executing handlers."
         ),
     ] = None
 
@@ -65,10 +64,7 @@ class FlextRegistry(s[bool]):
         )
         self._state = m.RegistryState(dispatcher=resolved_dispatcher)
 
-    def __init_subclass__(
-        cls,
-        **kwargs: t.Scalar | m.ConfigMap | t.ScalarList,
-    ) -> None:
+    def __init_subclass__(cls, **kwargs: t.Scalar | m.ConfigMap | t.ScalarList) -> None:
         """Auto-create per-subclass class-level storage.
 
         Each subclass gets its OWN storage (not shared with parent or siblings).
@@ -119,8 +115,7 @@ class FlextRegistry(s[bool]):
                 else runtime.dispatcher
             )
             instance = cls(dispatcher=resolved).configure_runtime(
-                runtime,
-                dispatcher=resolved,
+                runtime, dispatcher=resolved
             )
         if auto_discover_handlers:
             frame = inspect.currentframe()
@@ -135,10 +130,7 @@ class FlextRegistry(s[bool]):
         return instance
 
     def configure_runtime(
-        self,
-        runtime: m.ServiceRuntime,
-        *,
-        dispatcher: p.Dispatcher | None = None,
+        self, runtime: m.ServiceRuntime, *, dispatcher: p.Dispatcher | None = None
     ) -> Self:
         """Bind this registry to a pre-built runtime snapshot."""
         resolved_dispatcher = (
@@ -147,10 +139,7 @@ class FlextRegistry(s[bool]):
         self.dispatcher = resolved_dispatcher
         self._state = self._state.model_copy(update={"dispatcher": resolved_dispatcher})
         self._runtime = runtime.model_copy(
-            update={
-                "dispatcher": resolved_dispatcher,
-                "registry": self,
-            },
+            update={"dispatcher": resolved_dispatcher, "registry": self}
         )
         return self
 
@@ -175,8 +164,7 @@ class FlextRegistry(s[bool]):
         elif isinstance(value, m.BaseModel):
             narrowed = value
         elif isinstance(
-            value,
-            (p.Logger, p.Settings, p.Context, p.Dispatcher),
+            value, (p.Logger, p.Settings, p.Context, p.Dispatcher)
         ) or callable(value):
             narrowed = str(value)
         else:
@@ -192,8 +180,7 @@ class FlextRegistry(s[bool]):
         if callable(value):
 
             def normalized_callable(
-                *args: p.AttributeProbe,
-                **kwargs: p.AttributeProbe,
+                *args: p.AttributeProbe, **kwargs: p.AttributeProbe
             ) -> t.JsonPayload | m.BaseModel | None:
                 result = value(*args, **kwargs)
                 return FlextRegistry._narrow_value(result)
@@ -237,9 +224,7 @@ class FlextRegistry(s[bool]):
     def _remember_registered_key(self, key: str) -> None:
         """Persist one instance-scoped registry key via immutable model state."""
         self._state = self._state.model_copy(
-            update={
-                "registered_keys": self._state.registered_keys | frozenset({key}),
-            },
+            update={"registered_keys": self._state.registered_keys | frozenset({key})}
         )
 
     def _forget_registered_key(self, key: str) -> None:
@@ -250,8 +235,8 @@ class FlextRegistry(s[bool]):
                     existing_key
                     for existing_key in self._state.registered_keys
                     if existing_key != key
-                ),
-            },
+                )
+            }
         )
 
     def fetch_plugin(
@@ -282,7 +267,7 @@ class FlextRegistry(s[bool]):
         if key not in cls._class_registered_keys:
             return e.fail_not_found(category, name)
         return r[t.JsonPayload | None].ok(
-            self._narrow_value(cls._class_plugin_storage[key]),
+            self._narrow_value(cls._class_plugin_storage[key])
         )
 
     def list_plugins(
@@ -308,18 +293,14 @@ class FlextRegistry(s[bool]):
         return r[t.StrSequence].ok(plugins)
 
     def _add_successful_registration(
-        self,
-        key: str,
-        registration: m.RegistrationDetails,
-        summary: m.RegistrySummary,
+        self, key: str, registration: m.RegistrationDetails, summary: m.RegistrySummary
     ) -> None:
         """Add successful registration to summary."""
         self._remember_registered_key(key)
         summary.registered.append(registration)
 
     def _finalize_summary(
-        self,
-        summary: m.RegistrySummary,
+        self, summary: m.RegistrySummary
     ) -> p.Result[m.RegistrySummary]:
         """Finalize summary based on error state.
 
@@ -329,16 +310,11 @@ class FlextRegistry(s[bool]):
         """
         if summary.errors:
             return e.fail_operation(
-                "finalize registry summary",
-                "; ".join(summary.errors),
+                "finalize registry summary", "; ".join(summary.errors)
             )
         return r[m.RegistrySummary].ok(summary)
 
-    def register(
-        self,
-        name: str,
-        service: t.RegistrablePlugin,
-    ) -> p.Result[bool]:
+    def register(self, name: str, service: t.RegistrablePlugin) -> p.Result[bool]:
         """Register a service component in the runtime container.
 
         Args:
@@ -355,13 +331,11 @@ class FlextRegistry(s[bool]):
         if was_registered or self.container.has(name):
             return r[bool].ok(True)
         return r[bool].fail_op(
-            "register service in registry",
-            f"Service '{name}' was not registered",
+            "register service in registry", f"Service '{name}' was not registered"
         )
 
     def register_bindings(
-        self,
-        bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler],
+        self, bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler]
     ) -> p.Result[m.RegistrySummary]:
         """Register message-to-handler bindings.
 
@@ -386,13 +360,12 @@ class FlextRegistry(s[bool]):
             else:
                 summary.errors.append(
                     reg_result.error
-                    or f"Failed to register binding for {message_type_name}",
+                    or f"Failed to register binding for {message_type_name}"
                 )
         return self._finalize_summary(summary)
 
     def register_handler(
-        self,
-        handler: t.DispatchableHandler,
+        self, handler: t.DispatchableHandler
     ) -> p.Result[m.RegistrationDetails]:
         """Register a handler instance or callable.
 
@@ -405,11 +378,7 @@ class FlextRegistry(s[bool]):
 
         """
         handler_id = str(getattr(handler, "handler_id", id(handler)))
-        status_raw: t.JsonPayload = getattr(
-            handler,
-            c.FIELD_STATUS,
-            c.Status.ACTIVE,
-        )
+        status_raw: t.JsonPayload = getattr(handler, c.FIELD_STATUS, c.Status.ACTIVE)
         status = self._get_status(status_raw)
         handler_mode_raw: t.JsonPayload = getattr(
             handler,
@@ -424,12 +393,10 @@ class FlextRegistry(s[bool]):
         dispatcher = self._state.dispatcher
         if dispatcher is None:
             return e.fail_operation(
-                "register handler in registry",
-                c.ERR_DISPATCHER_NOT_CONFIGURED,
+                "register handler in registry", c.ERR_DISPATCHER_NOT_CONFIGURED
             )
         registration_result = dispatcher.register_handler(
-            registration_handler,
-            is_event=(handler_mode == c.HandlerType.EVENT),
+            registration_handler, is_event=(handler_mode == c.HandlerType.EVENT)
         )
 
         if registration_result.failure:
@@ -441,15 +408,12 @@ class FlextRegistry(s[bool]):
         self._remember_registered_key(handler_id)
         return r[m.RegistrationDetails].ok(
             m.RegistrationDetails(
-                registration_id=handler_id,
-                handler_mode=handler_mode,
-                status=status,
-            ),
+                registration_id=handler_id, handler_mode=handler_mode, status=status
+            )
         )
 
     def register_handlers(
-        self,
-        handlers: t.SequenceOf[t.DispatchableHandler],
+        self, handlers: t.SequenceOf[t.DispatchableHandler]
     ) -> p.Result[m.RegistrySummary]:
         """Register multiple handlers in batch.
 
@@ -473,7 +437,7 @@ class FlextRegistry(s[bool]):
                 self._add_successful_registration(key, result.value, summary)
             else:
                 summary.errors.append(
-                    result.error or f"Failed to register handler '{key}'",
+                    result.error or f"Failed to register handler '{key}'"
                 )
         return self._finalize_summary(summary)
 
@@ -501,11 +465,7 @@ class FlextRegistry(s[bool]):
         """
         result: p.Result[bool] = r[bool].ok(True)
         if not name:
-            params = m.RegistryPluginParams(
-                category=category,
-                name=name,
-                scope=scope,
-            )
+            params = m.RegistryPluginParams(category=category, name=name, scope=scope)
             result = e.fail_validation(
                 m.ValidationErrorParams(field="name", value=name),
                 error=e.render_template(

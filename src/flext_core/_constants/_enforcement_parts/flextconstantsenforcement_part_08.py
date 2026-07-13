@@ -34,8 +34,8 @@ class FlextConstantsEnforcementFixActions:
                         "replacement": r"\g<indent>except Exception:\g<trail>",
                         "change_message": "Rewrote bare except to except Exception",
                         "flags": ["MULTILINE"],
-                    },
-                ],
+                    }
+                ]
             },
             "safe": True,
         },
@@ -48,7 +48,7 @@ class FlextConstantsEnforcementFixActions:
                         "regex": r"\bprint\s*\(\s*(?P<args>[^)]*)\s*\)",
                         "replacement": r"u.fetch_logger(__name__).info(\g<args>)",
                         "change_message": "Rewrote print() to u.fetch_logger(__name__).info()",
-                    },
+                    }
                 ],
                 "required_alias": "u",
             },
@@ -71,7 +71,7 @@ class FlextConstantsEnforcementFixActions:
                         "change_message": "Removed debugger statement",
                         "flags": ["MULTILINE"],
                     },
-                ],
+                ]
             },
             "safe": True,
         },
@@ -140,7 +140,7 @@ class FlextConstantsEnforcementFixActions:
                         "regex": r"\bList\s*\[",
                         "replacement": "t.SequenceOf[",
                         "change_message": "Rewrote List[...] to t.SequenceOf[...]",
-                    },
+                    }
                 ],
                 "required_alias": "t",
             },
@@ -155,7 +155,7 @@ class FlextConstantsEnforcementFixActions:
                         "regex": r"\btyping\s*\.\s*List\s*\[",
                         "replacement": "t.SequenceOf[",
                         "change_message": "Rewrote typing.List[...] to t.SequenceOf[...]",
-                    },
+                    }
                 ],
                 "required_alias": "t",
             },

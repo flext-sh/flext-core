@@ -11,16 +11,9 @@ if TYPE_CHECKING:
     from flext_core._utilities._beartype._helpers_parts.helpers_part_03 import (
         FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpers,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".helpers_part_03": ("FlextUtilitiesBeartypeHelpers",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".helpers_part_03": ("FlextUtilitiesBeartypeHelpers",)
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

@@ -5,9 +5,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
-from .flextconstantsenforcement_part_01 import (
-    FlextConstantsEnforcementEnums,
-)
+from .flextconstantsenforcement_part_01 import FlextConstantsEnforcementEnums
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -37,7 +35,7 @@ class FlextConstantsEnforcementNamespace:
 
     ENFORCEMENT_NAMESPACE_FACADE_ROOTS: Final[frozenset[str]] = frozenset(
         {f"Flext{name}" for name in NAMESPACE_LAYER_NAMES}
-        | {"FlextModelsBase", "FlextModelsNamespace", "EnforcedModel"},
+        | {"FlextModelsBase", "FlextModelsNamespace", "EnforcedModel"}
     )
     """Root facade class names — skip namespace prefix check on these."""
 
@@ -149,7 +147,7 @@ class FlextConstantsEnforcementNamespace:
                     "flext_web",
                 ),
                 ("c", "m", "p", "t", "u"),
-            ),
+            )
         )
     )
     """SSOT: project package name → canonical aliases it re-exports locally.

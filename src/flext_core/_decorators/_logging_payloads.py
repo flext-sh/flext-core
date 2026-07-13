@@ -22,10 +22,7 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
 
     @staticmethod
     def _start_log_payload(
-        *,
-        func_name: str,
-        func_module: str,
-        correlation_id: str | None,
+        *, func_name: str, func_module: str, correlation_id: str | None
     ) -> tb.MutableJsonMapping:
         """Build structured operation-start log payload."""
         payload: tb.MutableJsonMapping = {
@@ -45,10 +42,7 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
         start_time: float,
     ) -> tb.MutableJsonMapping:
         """Build structured operation-success log payload."""
-        payload: tb.MutableJsonMapping = {
-            "function": func_name,
-            "success": True,
-        }
+        payload: tb.MutableJsonMapping = {"function": func_name, "success": True}
         if correlation_id is not None:
             payload[ci.ContextKey.CORRELATION_ID] = correlation_id
         if track_perf:

@@ -11,16 +11,9 @@ if TYPE_CHECKING:
     from flext_core._utilities._mapper_extract_parts.mapper_extract_part_02 import (
         FlextUtilitiesMapperExtract as FlextUtilitiesMapperExtract,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".mapper_extract_part_02": ("FlextUtilitiesMapperExtract",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".mapper_extract_part_02": ("FlextUtilitiesMapperExtract",)
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

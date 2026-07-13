@@ -35,15 +35,11 @@ class FlextVersion:
     __author__: str = _metadata.get("Author", "") or _metadata.get("Author-Email", "")
     __author_email__: str = _metadata.get("Author-Email", "")
     __license__: str = _metadata.get("License-Expression", "") or _metadata.get(
-        "License",
-        "",
+        "License", ""
     )
     __url__: str = _metadata.get("Home-Page", "") or _metadata.get("Project-URL", "")
 
-    def __init_subclass__(
-        cls,
-        **kwargs: str | float | bool | None,
-    ) -> None:
+    def __init_subclass__(cls, **kwargs: str | float | bool | None) -> None:
         """Recompute derived attributes when a subclass overrides ``_metadata``."""
         _ = kwargs
         super().__init_subclass__()

@@ -51,10 +51,7 @@ class FlextRuntimeBase:
 
     @staticmethod
     def resolve_effective_log_level(
-        *,
-        trace: bool,
-        debug: bool,
-        log_level: cl.LogLevel,
+        *, trace: bool, debug: bool, log_level: cl.LogLevel
     ) -> cl.LogLevel:
         """Resolve log level: DEBUG if trace, INFO if debug, else log_level."""
         if trace:

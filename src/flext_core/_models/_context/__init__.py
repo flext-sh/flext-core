@@ -26,22 +26,15 @@ if TYPE_CHECKING:
     from flext_core._models._context._tokens import (
         FlextModelsContextTokens as FlextModelsContextTokens,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".__scope_parts": ("__scope_parts",),
-        ".__scope_parts.flextmodelscontextscope_part_03": ("FlextModelsContextScope",),
-        "._data": ("FlextModelsContextData",),
-        "._export": ("FlextModelsContextExport",),
-        "._metadata": ("FlextModelsContextMetadata",),
-        "._proxy_var": ("FlextModelsContextProxyVar",),
-        "._tokens": ("FlextModelsContextTokens",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".__scope_parts": ("__scope_parts",),
+    ".__scope_parts.flextmodelscontextscope_part_03": ("FlextModelsContextScope",),
+    "._data": ("FlextModelsContextData",),
+    "._export": ("FlextModelsContextExport",),
+    "._metadata": ("FlextModelsContextMetadata",),
+    "._proxy_var": ("FlextModelsContextProxyVar",),
+    "._tokens": ("FlextModelsContextTokens",),
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

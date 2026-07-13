@@ -74,7 +74,7 @@ class FlextUtilitiesLogging(ulc):
             resolved_context = dict(
                 FlextUtilitiesLogging.to_container_context({
                     key: value for key, value in context.items() if value is not None
-                }),
+                })
             )
         if settings is not None:
             service_name = getattr(settings, c.ContextKey.SERVICE_NAME, None)
@@ -109,9 +109,7 @@ class FlextUtilitiesLogging(ulc):
         """Wrapped structlog logger instance."""
         instance = self._structlog_instance
         if instance is None:
-            instance = type(self).resolve_bound_logger(
-                getattr(self, "name", __name__),
-            )
+            instance = type(self).resolve_bound_logger(getattr(self, "name", __name__))
             self._structlog_instance = instance
         return instance
 
@@ -152,7 +150,7 @@ class FlextUtilitiesLogging(ulc):
                         resolved_exception.__class__,
                         resolved_exception,
                         resolved_exception.__traceback__,
-                    ),
+                    )
                 )
         elif exc_info_value and include_stack_trace:
             context_dict["stack_trace"] = traceback.format_exc()
@@ -166,12 +164,7 @@ class FlextUtilitiesLogging(ulc):
             context_dict["exception_message"] = str(raw_exception)
         return context_dict
 
-    def exception(
-        self,
-        msg: str,
-        *args: t.LogValue,
-        **kw: t.LogValue,
-    ) -> t.LogResult:
+    def exception(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
         """Log exception with conditional stack trace (DEBUG only)."""
         message = msg
         filtered_args: tuple[t.JsonValue, ...] = tuple(
@@ -184,10 +177,7 @@ class FlextUtilitiesLogging(ulc):
                 args[0] if args and isinstance(args[0], Exception) else None
             )
             context_dict = self._exception_context_from_inputs(
-                resolved_exception,
-                kw.get("exception"),
-                kw.get("exc_info", True),
-                kw,
+                resolved_exception, kw.get("exception"), kw.get("exc_info", True), kw
             )
             _ = self.logger.error(
                 message,
@@ -231,12 +221,7 @@ class FlextUtilitiesLogging(ulc):
         """Unbind keys while ignoring missing values."""
         return self.unbind(*keys, safe=True)
 
-    def warning(
-        self,
-        msg: str,
-        *args: t.LogValue,
-        **kw: t.LogValue,
-    ) -> t.LogResult:
+    def warning(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
         """Log warning message."""
         return self._log_standard_level(cl.LogLevel.WARNING, msg, *args, **kw)
 
@@ -251,8 +236,7 @@ class FlextUtilitiesLogging(ulc):
 
     @staticmethod
     def _resolve_log_context(
-        args: t.SequenceOf[t.LogValue],
-        context: t.MappingKV[str, t.LogValue],
+        args: t.SequenceOf[t.LogValue], context: t.MappingKV[str, t.LogValue]
     ) -> t.JsonMapping:
         resolved_context: dict[str, t.LogValue] = dict(context)
         if "source" not in resolved_context and (
@@ -280,56 +264,28 @@ class FlextUtilitiesLogging(ulc):
             return ef.fail_operation("logging", exc)
 
     def _log_standard_level(
-        self,
-        level: cl.LogLevel,
-        msg: str,
-        *args: t.LogValue,
-        **kw: t.LogValue,
+        self, level: cl.LogLevel, msg: str, *args: t.LogValue, **kw: t.LogValue
     ) -> t.LogResult:
         return self._log(level, msg, *args, **kw)
 
-    def critical(
-        self,
-        msg: str,
-        *args: t.LogValue,
-        **kw: t.LogValue,
-    ) -> t.LogResult:
+    def critical(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
         """Log critical message."""
         return self._log_standard_level(cl.LogLevel.CRITICAL, msg, *args, **kw)
 
-    def debug(
-        self,
-        msg: str,
-        *args: t.LogValue,
-        **kw: t.LogValue,
-    ) -> t.LogResult:
+    def debug(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
         """Log debug message."""
         return self._log_standard_level(cl.LogLevel.DEBUG, msg, *args, **kw)
 
-    def error(
-        self,
-        msg: str,
-        *args: t.LogValue,
-        **kw: t.LogValue,
-    ) -> t.LogResult:
+    def error(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
         """Log error message."""
         return self._log_standard_level(cl.LogLevel.ERROR, msg, *args, **kw)
 
-    def info(
-        self,
-        msg: str,
-        *args: t.LogValue,
-        **kw: t.LogValue,
-    ) -> t.LogResult:
+    def info(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
         """Log info message."""
         return self._log_standard_level(cl.LogLevel.INFO, msg, *args, **kw)
 
     def log(
-        self,
-        level: str,
-        message: str,
-        *args: t.LogValue,
-        **context: t.LogValue,
+        self, level: str, message: str, *args: t.LogValue, **context: t.LogValue
     ) -> t.LogResult:
         """Log message with specified level."""
         level_enum: cl.LogLevel = cl.LogLevel(level.upper())
@@ -339,10 +295,7 @@ class FlextUtilitiesLogging(ulc):
         return self._log(level_enum, message, *converted_args, **context)
 
     def trace(
-        self,
-        message: str,
-        *args: t.LogValue,
-        **kwargs: t.JsonPayload,
+        self, message: str, *args: t.LogValue, **kwargs: t.JsonPayload
     ) -> t.LogResult:
         """Log trace message."""
         try:
@@ -351,8 +304,7 @@ class FlextUtilitiesLogging(ulc):
             except ce.EXC_TYPE_VALIDATION:
                 formatted_message = f"{message} | args={args!r}"
             self.logger.debug(
-                formatted_message,
-                **FlextUtilitiesLogging._to_scalar_context(kwargs),
+                formatted_message, **FlextUtilitiesLogging._to_scalar_context(kwargs)
             )
             return r[bool].ok(True)
         except ce.EXC_BROAD_RUNTIME as exc:
@@ -389,7 +341,7 @@ class FlextUtilitiesLogging(ulc):
                     c.MetadataKey.DURATION_SECONDS: elapsed,
                     c.HandlerType.OPERATION: self._operation_name,
                     c.FIELD_STATUS: status,
-                },
+                }
             )
             if not success:
                 context["exception_type"] = exc_type.__name__ if exc_type else ""
@@ -419,14 +371,10 @@ class FlextUtilitiesLogging(ulc):
             sl = FlextUtilitiesLogging.structlog()
             _ = sl.contextvars.bind_contextvars(service_name=service_name)
             if service_version:
-                _ = sl.contextvars.bind_contextvars(
-                    service_version=service_version,
-                )
+                _ = sl.contextvars.bind_contextvars(service_version=service_version)
             if enable_context_correlation:
                 correlation_id = f"flext-{ug.generate_id().replace('-', '')[:12]}"
-                _ = sl.contextvars.bind_contextvars(
-                    correlation_id=correlation_id,
-                )
+                _ = sl.contextvars.bind_contextvars(correlation_id=correlation_id)
             sl.fetch_logger(__name__).info(
                 "Service infrastructure initialized",
                 service_name=service_name,
@@ -485,10 +433,7 @@ class FlextUtilitiesLogging(ulc):
 
     @classmethod
     def create_module_logger(
-        cls,
-        name: str,
-        *,
-        context: t.MappingKV[str, t.JsonPayload | None] | None = None,
+        cls, name: str, *, context: t.MappingKV[str, t.JsonPayload | None] | None = None
     ) -> p.Logger:
         """Create a logger instance for a module."""
         cls.ensure_structlog_configured()
@@ -497,7 +442,7 @@ class FlextUtilitiesLogging(ulc):
             merged_context.update(
                 cls.to_container_context({
                     key: value for key, value in context.items() if value is not None
-                }),
+                })
             )
         logger: p.Logger = cls(name, context=merged_context)
         return logger

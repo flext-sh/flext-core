@@ -33,9 +33,7 @@ from ._enforcement_parts.flextconstantsenforcement_part_07 import (
 from ._enforcement_parts.flextconstantsenforcement_part_08 import (
     FlextConstantsEnforcementFixActions,
 )
-from .enforcement_catalog_rows import (
-    FlextConstantsEnforcementCatalogRows,
-)
+from .enforcement_catalog_rows import FlextConstantsEnforcementCatalogRows
 
 
 class FlextMroViolation(UserWarning):

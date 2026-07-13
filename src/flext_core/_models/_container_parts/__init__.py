@@ -11,16 +11,9 @@ if TYPE_CHECKING:
     from flext_core._models._container_parts.flextmodelscontainer_part_04 import (
         FlextModelsContainer as FlextModelsContainer,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".flextmodelscontainer_part_04": ("FlextModelsContainer",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".flextmodelscontainer_part_04": ("FlextModelsContainer",)
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

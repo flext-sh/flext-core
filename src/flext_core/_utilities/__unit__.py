@@ -14,10 +14,7 @@ LAZY_MODULES: dict[str, tuple[str, ...]] = {
     "._guards_type_protocol_types": ("ProtocolGuardInput",),
     ".args": ("FlextUtilitiesArgs",),
     ".beartype_conf": ("FlextUtilitiesBeartypeConf",),
-    ".beartype_engine": (
-        "FlextUtilitiesBeartypeEngine",
-        "ube",
-    ),
+    ".beartype_engine": ("FlextUtilitiesBeartypeEngine", "ube"),
     ".beartype_typingext_patch": ("FlextUtilitiesBeartypeTypingExtPatch",),
     ".checker": ("FlextUtilitiesChecker",),
     ".collection": ("FlextUtilitiesCollection",),
@@ -32,10 +29,7 @@ LAZY_MODULES: dict[str, tuple[str, ...]] = {
     ".discovery": ("FlextUtilitiesDiscovery",),
     ".dispatcher_execute": ("execute_dispatcher_handler",),
     ".domain": ("FlextUtilitiesDomain",),
-    ".enforcement": (
-        "FlextUtilitiesEnforcement",
-        "PREDICATE_BINDINGS",
-    ),
+    ".enforcement": ("FlextUtilitiesEnforcement", "PREDICATE_BINDINGS"),
     ".enforcement_collect": ("FlextUtilitiesEnforcementCollect",),
     ".enforcement_emit": ("FlextUtilitiesEnforcementEmit",),
     ".enum": ("FlextUtilitiesEnum",),

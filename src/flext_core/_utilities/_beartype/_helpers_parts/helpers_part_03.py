@@ -5,20 +5,9 @@ from __future__ import annotations
 import dis
 import inspect
 import types as _types_mod
-from collections.abc import (
-    Callable,
-    MutableMapping,
-    MutableSequence,
-    MutableSet,
-)
+from collections.abc import Callable, MutableMapping, MutableSequence, MutableSet
 from types import UnionType
-from typing import (
-    TYPE_CHECKING,
-    TypeAliasType,
-    Union,
-    get_args,
-    get_origin,
-)
+from typing import TYPE_CHECKING, TypeAliasType, Union, get_args, get_origin
 
 # Import directly from base modules to avoid a circular load through the public
 # flext_core facade while this module is still being initialized.
@@ -36,8 +25,7 @@ if TYPE_CHECKING:
 class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
     @staticmethod
     def has_attribute_call(
-        fn: _types_mod.FunctionType,
-        attr_name: str,
+        fn: _types_mod.FunctionType, attr_name: str
     ) -> dis.Instruction | None:
         for ins in dis.get_instructions(fn):
             if ins.opname == "LOAD_ATTR" and ins.argval == attr_name:
@@ -46,8 +34,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
 
     @staticmethod
     def has_private_attr_probe(
-        fn: _types_mod.FunctionType,
-        builtins_set: frozenset[str],
+        fn: _types_mod.FunctionType, builtins_set: frozenset[str]
     ) -> t.StrPair | None:
         last_builtin: str | None = None
         for ins in dis.get_instructions(fn):

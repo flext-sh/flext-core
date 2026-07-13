@@ -32,7 +32,7 @@ class FlextBaseErrorMetadataMixin:
                 for key, value in merged_kwargs.items()
             }
             resolved_metadata = m.Metadata.model_validate({
-                cm.FIELD_ATTRIBUTES: normalized_attrs,
+                cm.FIELD_ATTRIBUTES: normalized_attrs
             })
         else:
             metadata_model = FlextExceptionsHelpers.safe_metadata(metadata)
@@ -47,25 +47,24 @@ class FlextBaseErrorMetadataMixin:
                         continue
                     merged_attrs[key] = FlextRuntime.normalize_to_metadata(value)
                 resolved_metadata = m.Metadata.model_validate({
-                    cm.FIELD_ATTRIBUTES: merged_attrs,
+                    cm.FIELD_ATTRIBUTES: merged_attrs
                 })
             else:
                 metadata_dict: tb.MappingKV[str, ts.JsonPayload | None] | None = None
                 if isinstance(metadata, (Mapping, pr.HasModelDump)):
                     try:
                         metadata_dict = FlextRuntime.normalize_metadata_input_mapping(
-                            metadata,
+                            metadata
                         )
                     except ce.EXC_PYDANTIC_TYPE_VALUE:
                         metadata_dict = None
                 resolved_metadata = (
                     FlextBaseErrorMetadataMixin._normalize_metadata_from_dict(
-                        metadata_dict,
-                        merged_kwargs,
+                        metadata_dict, merged_kwargs
                     )
                     if metadata_dict is not None
                     else m.Metadata.model_validate({
-                        cm.FIELD_ATTRIBUTES: {"value": str(metadata)},
+                        cm.FIELD_ATTRIBUTES: {"value": str(metadata)}
                     })
                 )
         return resolved_metadata
@@ -91,7 +90,7 @@ class FlextBaseErrorMetadataMixin:
                 k: FlextRuntime.normalize_to_metadata(v)
                 for k, v in merged_attrs.items()
                 if v is not None
-            },
+            }
         })
 
 

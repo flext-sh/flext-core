@@ -6,9 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
+from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Annotated
 
@@ -46,22 +44,18 @@ class FlextModelsContextData:
         if isinstance(v, mp.BaseModel):
             return FlextModelsContextData._coerce_scalar_mapping(v.model_dump())
         msg = c.ERR_CONTEXT_CANNOT_NORMALIZE_TYPE_TO_MAPPING.format(
-            type_name=type(v).__name__,
+            type_name=type(v).__name__
         )
         raise ValueError(msg)
 
     @staticmethod
-    def normalize_metadata_before(
-        v: t.JsonPayload | None,
-    ) -> t.JsonPayload | None:
+    def normalize_metadata_before(v: t.JsonPayload | None) -> t.JsonPayload | None:
         """Normalize input to Metadata or return as-is."""
         if v is None or isinstance(v, m.Metadata):
             return v
         if isinstance(v, dict):
             try:
-                return m.Metadata.model_validate({
-                    c.FIELD_ATTRIBUTES: v,
-                })
+                return m.Metadata.model_validate({c.FIELD_ATTRIBUTES: v})
             except mp.ValidationError:
                 return v
         return v
@@ -72,8 +66,7 @@ class FlextModelsContextData:
         @field_validator("data", mode="before")
         @classmethod
         def validate_dict_serializable(
-            cls,
-            v: t.MappingKV[str, t.Scalar] | mp.BaseModel | None,
+            cls, v: t.MappingKV[str, t.Scalar] | mp.BaseModel | None
         ) -> t.MappingKV[str, t.Scalar]:
             """Validate that data values are JSON-serializable."""
             if v is None:
@@ -88,17 +81,12 @@ class FlextModelsContextData:
                 for k, val in v.model_dump().items()
             })
 
-    class ContextData(
-        SerializableDataValidatorMixin,
-        m.FlexibleInternalModel,
-    ):
+    class ContextData(SerializableDataValidatorMixin, m.FlexibleInternalModel):
         """Lightweight container for initializing context state."""
 
         data: Annotated[
             t.MappingKV[str, t.Scalar],
-            mp.Field(
-                description="Initial context data as key-value pairs",
-            ),
+            mp.Field(description="Initial context data as key-value pairs"),
         ] = mp.Field(default_factory=lambda: _EMPTY_SCALAR_MAPPING)
         metadata: Annotated[
             m.Metadata | t.MappingKV[str, t.Scalar] | None,
@@ -111,24 +99,18 @@ class FlextModelsContextData:
         @field_validator("metadata", mode="before")
         @classmethod
         def validate_metadata_before(
-            cls,
-            v: t.JsonPayload | None,
+            cls, v: t.JsonPayload | None
         ) -> t.JsonPayload | None:
             """Normalize metadata before Pydantic validates the field."""
             return FlextModelsContextData.normalize_metadata_before(v)
 
         @classmethod
-        def normalize_to_serializable_value(
-            cls,
-            val: t.Scalar,
-        ) -> t.Scalar:
+        def normalize_to_serializable_value(cls, val: t.Scalar) -> t.Scalar:
             """Return scalar value as-is (already serializable)."""
             return val
 
         @staticmethod
-        def normalize_to_container(
-            val: t.Scalar,
-        ) -> t.Scalar:
+        def normalize_to_container(val: t.Scalar) -> t.Scalar:
             """Return scalar value as-is."""
             return val if isinstance(val, t.PRIMITIVES_TYPES) else str(val)
 

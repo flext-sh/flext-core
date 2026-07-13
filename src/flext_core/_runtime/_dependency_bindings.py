@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence
     from types import ModuleType
 
-    from flext_core._models.containers import FlextModelsContainers as mc
     from flext_core._protocols.container import FlextProtocolsContainer as pc
     from flext_core._typings.base import FlextTypingBase as tb
     from flext_core._typings.services import FlextTypesServices as ts
@@ -44,10 +43,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
         if opts.factories:
             for name, factory in opts.factories.items():
                 _ = cls.register_factory(
-                    di_container,
-                    name,
-                    factory,
-                    cache=opts.factory_cache,
+                    di_container, name, factory, cache=opts.factory_cache
                 )
         if opts.resources:
             for name, resource_factory in opts.resources.items():
@@ -77,8 +73,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
 
     @classmethod
     def create_layered_bridge(
-        cls,
-        settings: mc.ConfigMap | None = None,
+        cls, settings: pc.RootDict[ts.JsonPayload] | None = None
     ) -> tuple[
         containers.DeclarativeContainer,
         containers.DynamicContainer,
@@ -97,12 +92,12 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
     def bind_configuration(
         cls,
         di_container: containers.DynamicContainer,
-        settings: mc.ConfigMap | None,
+        settings: pc.RootDict[ts.JsonPayload] | None,
     ) -> providers.Configuration:
         """Bind configuration mapping to the DI container."""
         configuration_provider = providers.Configuration()
         if settings:
-            configuration_provider.from_dict(dict(settings))
+            configuration_provider.from_dict(dict(settings.root))
         if isinstance(di_container, cls.DynamicContainerWithConfig):
             configured_container: FlextRuntimeDependencyBindings.DynamicContainerWithConfig = di_container
             configured_container.settings = configuration_provider
@@ -113,11 +108,11 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
     @staticmethod
     def bind_configuration_provider(
         configuration_provider: providers.Configuration,
-        settings: mc.ConfigMap | None,
+        settings: pc.RootDict[ts.JsonPayload] | None,
     ) -> providers.Configuration:
         """Bind configuration directly to an existing provider."""
         if settings:
-            configuration_provider.from_dict(dict(settings))
+            configuration_provider.from_dict(dict(settings.root))
         return configuration_provider
 
     @staticmethod
@@ -131,7 +126,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
         """Register a factory using Singleton/Factory providers."""
         if hasattr(di_container, name):
             raise ValueError(
-                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name),
+                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name)
             )
         provider: providers.Provider[T] = (
             providers.Singleton(factory) if cache else providers.Factory(factory)
@@ -141,14 +136,12 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
 
     @staticmethod
     def register_object[T](
-        di_container: containers.DynamicContainer,
-        name: str,
-        instance: T,
+        di_container: containers.DynamicContainer, name: str, instance: T
     ) -> providers.Provider[T]:
         """Register a concrete instance using ``providers.Object``."""
         if hasattr(di_container, name):
             raise ValueError(
-                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name),
+                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name)
             )
         provider: providers.Provider[T] = providers.Object(instance)
         setattr(di_container, name, provider)
@@ -156,14 +149,12 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
 
     @staticmethod
     def register_resource[T](
-        di_container: containers.DynamicContainer,
-        name: str,
-        factory: Callable[[], T],
+        di_container: containers.DynamicContainer, name: str, factory: Callable[[], T]
     ) -> providers.Provider[T]:
         """Register a resource provider for lifecycle-managed dependencies."""
         if hasattr(di_container, name):
             raise ValueError(
-                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name),
+                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name)
             )
         provider: providers.Provider[T] = providers.Resource(factory)
         setattr(di_container, name, provider)
@@ -187,9 +178,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
         _ = packages
         wire_runtime = wiring.wire
         wire_runtime(
-            modules=modules_to_wire or None,
-            packages=None,
-            container=container,
+            modules=modules_to_wire or None, packages=None, container=container
         )
 
 

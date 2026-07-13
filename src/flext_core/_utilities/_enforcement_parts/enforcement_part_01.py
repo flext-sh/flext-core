@@ -71,22 +71,13 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
             pk.PROTOCOL_TREE,
             ptp(require_inner_kind_protocol_or_namespace=True),
         ),
-        "proto_not_runtime": (
-            pk.PROTOCOL_TREE,
-            ptp(require_runtime_checkable=True),
-        ),
+        "proto_not_runtime": (pk.PROTOCOL_TREE, ptp(require_runtime_checkable=True)),
         "no_accessor_methods": (
             pk.METHOD_SHAPE,
             msp(forbidden_prefixes=("get_", "set_", "is_")),
         ),
-        "settings_inheritance": (
-            pk.LOOSE_SYMBOL,
-            lsp(require_settings_base=True),
-        ),
-        "cast_outside_core": (
-            pk.DEPRECATED_SYNTAX,
-            dsp(ast_shape="cast_outside_core"),
-        ),
+        "settings_inheritance": (pk.LOOSE_SYMBOL, lsp(require_settings_base=True)),
+        "cast_outside_core": (pk.DEPRECATED_SYNTAX, dsp(ast_shape="cast_outside_core")),
         "model_rebuild_call": (
             pk.DEPRECATED_SYNTAX,
             dsp(ast_shape="model_rebuild_call"),
@@ -127,14 +118,8 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
                 ),
             ),
         ),
-        "facade_base_is_alias_or_peer": (
-            pk.MRO_SHAPE,
-            msh(require_alias_first=True),
-        ),
-        "alias_first_multi_parent": (
-            pk.MRO_SHAPE,
-            msh(require_alias_first=True),
-        ),
+        "facade_base_is_alias_or_peer": (pk.MRO_SHAPE, msh(require_alias_first=True)),
+        "alias_first_multi_parent": (pk.MRO_SHAPE, msh(require_alias_first=True)),
         "alias_rebound_at_module_end": (
             pk.ALIAS_REBIND,
             arp(expected_form="rebound_at_module_end"),
@@ -160,8 +145,7 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, mp.BaseMod
 
 
 PREDICATE_BINDINGS: t.MappingKV[
-    str,
-    tuple[c.EnforcementPredicateKind, mp.BaseModel],
+    str, tuple[c.EnforcementPredicateKind, mp.BaseModel]
 ] = _bindings()
 
 

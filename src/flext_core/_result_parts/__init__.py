@@ -23,20 +23,13 @@ if TYPE_CHECKING:
     from flext_core._result_parts.unwrap import (
         FlextResultUnwrapMixin as FlextResultUnwrapMixin,
     )
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".behavior": ("FlextResultBehaviorMixin",),
-        ".composition": ("FlextResultCompositionMixin",),
-        ".construction": ("FlextResultConstructionMixin",),
-        ".transforms": ("FlextResultTransformsMixin",),
-        ".unwrap": ("FlextResultUnwrapMixin",),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".behavior": ("FlextResultBehaviorMixin",),
+    ".composition": ("FlextResultCompositionMixin",),
+    ".construction": ("FlextResultConstructionMixin",),
+    ".transforms": ("FlextResultTransformsMixin",),
+    ".unwrap": ("FlextResultUnwrapMixin",),
+})
 
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    _LAZY_IMPORTS,
-    publish_all=False,
-)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

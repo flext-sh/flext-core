@@ -44,17 +44,11 @@ class FlextUtilitiesGuards(
 
     _EQUALITY_OPS: ClassVar[
         t.MappingKV[str, Callable[[t.GuardInput, t.GuardInput], bool]]
-    ] = {
-        "eq": operator.eq,
-        "ne": operator.ne,
-    }
+    ] = {"eq": operator.eq, "ne": operator.ne}
 
     _MEMBERSHIP_OPS: ClassVar[
         t.MappingKV[str, Callable[[t.GuardInput, t.JsonList], bool]]
-    ] = {
-        "in_": _in_list,
-        "not_in": _not_in_list,
-    }
+    ] = {"in_": _in_list, "not_in": _not_in_list}
 
     _NUMERIC_OPS: ClassVar[Mapping[str, Callable[[t.Numeric, float], bool]]] = {
         "gt": lambda v, c: v > c,
@@ -82,8 +76,7 @@ class FlextUtilitiesGuards(
 
     @staticmethod
     def _check_string_ops(
-        value: str,
-        guard_spec: FlextModelsCollections.GuardCheckSpec,
+        value: str, guard_spec: FlextModelsCollections.GuardCheckSpec
     ) -> bool:
         """Check string-specific operations (starts, ends, contains)."""
         if guard_spec.starts is not None and not value.startswith(guard_spec.starts):
@@ -91,10 +84,7 @@ class FlextUtilitiesGuards(
         return not (guard_spec.ends is not None and not value.endswith(guard_spec.ends))
 
     @staticmethod
-    def _check_iterable_contains(
-        value: t.GuardInput,
-        contains: t.GuardInput,
-    ) -> bool:
+    def _check_iterable_contains(value: t.GuardInput, contains: t.GuardInput) -> bool:
         """Check if iterable value contains the target (strings handled upstream)."""
         if isinstance(value, str):
             return isinstance(contains, str) and contains in value
@@ -121,8 +111,7 @@ class FlextUtilitiesGuards(
             for mem_op, mem_fn in FlextUtilitiesGuards._MEMBERSHIP_OPS.items():
                 mem_raw = getattr(guard_spec, mem_op, None)
                 if mem_raw is not None and not mem_fn(
-                    value,
-                    t.json_list_adapter().validate_python(mem_raw),
+                    value, t.json_list_adapter().validate_python(mem_raw)
                 ):
                     result = False
                     break
@@ -138,8 +127,7 @@ class FlextUtilitiesGuards(
                         break
                     continue
                 if isinstance(spec_val_num, t.NUMERIC_TYPES) and not num_fn(
-                    check_val,
-                    spec_val_num,
+                    check_val, spec_val_num
                 ):
                     result = False
                     break
@@ -151,10 +139,9 @@ class FlextUtilitiesGuards(
                     pass
                 case contains_value:
                     result = FlextUtilitiesGuardsTypeCore.container(
-                        value,
+                        value
                     ) and FlextUtilitiesGuards._check_iterable_contains(
-                        value,
-                        contains_value,
+                        value, contains_value
                     )
         return result
 
@@ -169,7 +156,7 @@ class FlextUtilitiesGuards(
         )
         if criteria:
             criteria_spec = FlextModelsCollections.GuardCheckSpec.model_validate(
-                criteria,
+                criteria
             )
             criteria_update: dict[str, t.GuardInput | None] = {
                 field_name: getattr(criteria_spec, field_name)
@@ -178,9 +165,7 @@ class FlextUtilitiesGuards(
             guard_spec = guard_spec.model_copy(update=criteria_update)
         check_val = FlextUtilitiesGuards._resolve_numeric(value)
         return FlextUtilitiesGuards._check_special_constraints(
-            value,
-            guard_spec,
-            check_val,
+            value, guard_spec, check_val
         ) and FlextUtilitiesGuards._check_spec_ops(value, guard_spec, check_val)
 
     @staticmethod
@@ -219,10 +204,7 @@ class FlextUtilitiesGuards(
             tuple_types: tuple[type, ...] = tuple(
                 item for item in validator if isinstance(item, type)
             )
-            return len(tuple_types) == len(validator) and isinstance(
-                value,
-                tuple_types,
-            )
+            return len(tuple_types) == len(validator) and isinstance(value, tuple_types)
         if callable(validator):
             return validator(value)
         return bool(value)

@@ -38,7 +38,7 @@ class FlextModelsContextProxyVar:
                 structlog.contextvars.unbind_contextvars(token.key)
             else:
                 _ = structlog.contextvars.bind_contextvars(**{
-                    token.key: token.previous_value,
+                    token.key: token.previous_value
                 })
 
         def get(self) -> t.JsonPayload | datetime | None:
@@ -63,8 +63,7 @@ class FlextModelsContextProxyVar:
                 structlog.contextvars.unbind_contextvars(self._key)
             prev_value: t.JsonPayload | datetime | None = current_value
             return FlextModelsContextTokens.StructlogProxyToken(
-                key=self._key,
-                previous_value=prev_value,
+                key=self._key, previous_value=prev_value
             )
 
 

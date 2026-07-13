@@ -28,8 +28,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
 
     @classmethod
     def _extract_exception_error_code(
-        cls,
-        exception: BaseException | None,
+        cls, exception: BaseException | None
     ) -> str | None:
         if exception is None:
             return None
@@ -38,8 +37,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
 
     @classmethod
     def _extract_exception_error_data(
-        cls,
-        exception: BaseException | None,
+        cls, exception: BaseException | None
     ) -> mc.ConfigMap | None:
         if exception is None:
             return None
@@ -61,10 +59,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
         return payload
 
     @classmethod
-    def _from_result[V](
-        cls,
-        source: p.Result[V],
-    ) -> FlextResultConstructionMixin[V]:
+    def _from_result[V](cls, source: p.Result[V]) -> FlextResultConstructionMixin[V]:
         if source.success:
             # Cannot use source.value: it raises ValueError when _payload is None.
             # r[None].ok(None) is a valid success with a None payload — access the
@@ -82,9 +77,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
 
     @classmethod
     def create_from_callable[V](
-        cls,
-        func: Callable[[], V | None],
-        error_code: str | None = None,
+        cls, func: Callable[[], V | None], error_code: str | None = None
     ) -> FlextResultConstructionMixin[V]:
         """Execute callable; catch exceptions and None returns."""
         try:
@@ -93,8 +86,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
                 # Type bridge: callable failures carry the callable payload type.
                 result_class = cast("type[FlextResultConstructionMixin[V]]", cls)
                 return result_class.fail(
-                    "Callable returned None",
-                    error_code=error_code,
+                    "Callable returned None", error_code=error_code
                 )
             return cls.ok(value)
         except c.EXC_BROAD_RUNTIME as exc:
@@ -145,9 +137,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
 
     @classmethod
     def from_validation[ModelT: mp.BaseModel](
-        cls,
-        data: t.ModelInput,
-        model: t.ModelClass[ModelT],
+        cls, data: t.ModelInput, model: t.ModelClass[ModelT]
     ) -> FlextResultConstructionMixin[ModelT]:
         """Create result from Pydantic validation."""
         try:
@@ -158,10 +148,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
             return result_class.fail(str(exc), exception=exc)
 
     @classmethod
-    def ok[V](
-        cls,
-        value: V,
-    ) -> FlextResultConstructionMixin[V]:
+    def ok[V](cls, value: V) -> FlextResultConstructionMixin[V]:
         """Create successful result wrapping value."""
         # Type bridge: class factories intentionally rebind the generic payload.
         result_class = cast("type[FlextResultConstructionMixin[V]]", cls)
@@ -170,10 +157,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
         return result
 
     @classmethod
-    def from_result[V](
-        cls,
-        source: p.Result[V],
-    ) -> FlextResultConstructionMixin[V]:
+    def from_result[V](cls, source: p.Result[V]) -> FlextResultConstructionMixin[V]:
         """Normalize structural result to FlextResult."""
         return cls._from_result(source)
 

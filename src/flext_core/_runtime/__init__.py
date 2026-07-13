@@ -9,7 +9,4 @@ from __future__ import annotations
 from ._container import FlextRuntimeContainer
 from ._dependency import FlextRuntimeDependencyIntegration
 
-__all__: list[str] = [
-    "FlextRuntimeContainer",
-    "FlextRuntimeDependencyIntegration",
-]
+__all__: list[str] = ["FlextRuntimeContainer", "FlextRuntimeDependencyIntegration"]
