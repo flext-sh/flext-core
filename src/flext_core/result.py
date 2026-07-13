@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from types import TracebackType
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self, TypeIs, overload, override
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
@@ -15,8 +16,6 @@ from ._result_parts.unwrap import FlextResultUnwrapMixin
 from ._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
 
 if TYPE_CHECKING:
-    from types import TracebackType
-
     from ._protocols.logging import FlextProtocolsLogging as pl
     from ._typings.base import FlextTypingBase as tb
     from ._typings.services import FlextTypesServices as ts
