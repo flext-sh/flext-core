@@ -26,8 +26,117 @@ if TYPE_CHECKING:
 class FlextRuntimeMetadata(FlextRuntimeBase):
     """Normalize runtime values into metadata and JSON contracts."""
 
+    # mro-wkii.17.26 (agent: codex) — preserve JSON null and reject recursive
+    # container graphs with deterministic path context before adapter validation.
     @staticmethod
+    def _enter_normalization(
+        value: ts.JsonPayload
+        | tb.Scalar
+        | Path
+        | mc.ConfigMap
+        | mc.Dict
+        | AbstractSet[tb.Scalar]
+        | mp.BaseModel
+        | ts.ConfigModelInput
+        | tb.MappingKV[str, ts.JsonPayload | tb.Scalar],
+        active_ids: set[int],
+        path: str,
+    ) -> int:
+        """Track one active recursive value or fail with its JSON path."""
+        value_id = id(value)
+        if value_id in active_ids:
+            msg = (
+                "Cyclic reference detected during JSON normalization "
+                f"at {path} ({value.__class__.__name__})"
+            )
+            raise ValueError(msg)
+        active_ids.add(value_id)
+        return value_id
+
+    @classmethod
+    def _normalize_value(
+        cls,
+        value: ts.JsonPayload
+        | tb.Scalar
+        | Path
+        | mc.ConfigMap
+        | mc.Dict
+        | AbstractSet[tb.Scalar]
+        | mp.BaseModel
+        | ts.ConfigModelInput
+        | tb.MappingKV[str, ts.JsonPayload | tb.Scalar]
+        | None,
+        *,
+        active_ids: set[int],
+        path: str,
+    ) -> tb.JsonValue:
+        """Normalize one value while retaining the active recursion path."""
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.isoformat()
+        if isinstance(value, Path):
+            return str(value)
+        if isinstance(value, tb.PRIMITIVES_TYPES):
+            return value
+        if isinstance(value, (bytes, bytearray)):
+            return str(value)
+        if isinstance(value, (mc.ConfigMap, mc.Dict)):
+            value_id = cls._enter_normalization(value, active_ids, path)
+            try:
+                return dict(
+                    tta.json_mapping_adapter().validate_python({
+                        key: cls._normalize_value(
+                            item, active_ids=active_ids, path=f"{path}[{key!r}]"
+                        )
+                        for key, item in value.root.items()
+                    })
+                )
+            finally:
+                active_ids.remove(value_id)
+        if ugm.has_model_dump(value):
+            value_id = cls._enter_normalization(value, active_ids, path)
+            try:
+                dumped = value.model_dump(mode="json")
+                return cls._normalize_value(
+                    dumped, active_ids=active_ids, path=f"{path}.model_dump"
+                )
+            finally:
+                active_ids.remove(value_id)
+        if isinstance(value, Mapping):
+            value_id = cls._enter_normalization(value, active_ids, path)
+            try:
+                return dict(
+                    tta.json_mapping_adapter().validate_python({
+                        key: cls._normalize_value(
+                            item, active_ids=active_ids, path=f"{path}[{key!r}]"
+                        )
+                        for key, item in value.items()
+                    })
+                )
+            finally:
+                active_ids.remove(value_id)
+        if isinstance(value, AbstractSet) or (
+            isinstance(value, Sequence)
+            and not isinstance(value, (str, bytes, bytearray))
+        ):
+            value_id = cls._enter_normalization(value, active_ids, path)
+            try:
+                return list(
+                    tta.json_list_adapter().validate_python([
+                        cls._normalize_value(
+                            item, active_ids=active_ids, path=f"{path}[{index}]"
+                        )
+                        for index, item in enumerate(value)
+                    ])
+                )
+            finally:
+                active_ids.remove(value_id)
+        return tta.json_value_adapter().validate_python(value)
+
+    @classmethod
     def normalize_to_json_value(
+        cls,
         value: ts.JsonPayload
         | tb.Scalar
         | Path
@@ -38,44 +147,24 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         | None,
     ) -> tb.JsonValue:
         """Normalize arbitrary runtime input to one validated ``JsonValue``."""
-        validated_value: tb.JsonValue
-        if value is None:
-            validated_value = tta.json_value_adapter().validate_python("")
-        elif ugm.has_model_dump(value):
-            validated_value = tta.json_value_adapter().validate_python(
-                value.model_dump(mode="json")
-            )
-        elif isinstance(value, mp.BaseModel):
-            validated_value = tta.json_value_adapter().validate_python(str(value))
-        else:
-            validated_value = tta.json_value_adapter().validate_python(
-                FlextRuntimeMetadata.normalize_to_metadata(value)
-            )
-        return validated_value
-
-    @staticmethod
-    def normalize_to_json_mapping(
-        value: tb.MappingKV[str, ts.JsonPayload | tb.Scalar],
-    ) -> tb.JsonMapping:
-        """Normalize a mapping to a validated ``JsonMapping``."""
-        return FlextRuntimeMetadata._normalize_dict_entries([
-            (key, item) for key, item in value.items()
-        ])
-
-    @staticmethod
-    def _normalize_dict_entries(
-        items: tb.SequenceOf[tb.Pair[str, ts.JsonPayload]],
-    ) -> tb.JsonDict:
-        """Normalize key-value pairs for container dict construction."""
-        return dict(
-            tta.json_mapping_adapter().validate_python({
-                key: FlextRuntimeMetadata.normalize_to_json_value(item)
-                for key, item in items
-            })
+        return tta.json_value_adapter().validate_python(
+            cls._normalize_value(value, active_ids=set(), path="$")
         )
 
-    @staticmethod
+    @classmethod
+    def normalize_to_json_mapping(
+        cls, value: tb.MappingKV[str, ts.JsonPayload | tb.Scalar]
+    ) -> tb.JsonMapping:
+        """Normalize a mapping to a validated ``JsonMapping``."""
+        return dict(
+            tta.json_mapping_adapter().validate_python(
+                cls._normalize_value(value, active_ids=set(), path="$")
+            )
+        )
+
+    @classmethod
     def normalize_model_input_mapping(
+        cls,
         value: mp.BaseModel
         | mc.Dict
         | ts.ConfigModelInput
@@ -85,20 +174,15 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         """Normalize model-like input to a plain mapping."""
         if value is None:
             return None
-        if isinstance(value, mc.Dict):
-            return FlextRuntimeMetadata._normalize_dict_entries([
-                (key, item) for key, item in value.root.items()
-            ])
-        if isinstance(value, Mapping):
-            return FlextRuntimeMetadata._normalize_dict_entries([
-                (key, item) for key, item in value.items()
-            ])
         return dict(
-            tta.json_mapping_adapter().validate_python(value.model_dump(mode="json"))
+            tta.json_mapping_adapter().validate_python(
+                cls._normalize_value(value, active_ids=set(), path="$")
+            )
         )
 
-    @staticmethod
+    @classmethod
     def normalize_to_metadata(
+        cls,
         val: ts.JsonPayload
         | tb.Scalar
         | Path
@@ -108,38 +192,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         | None,
     ) -> tb.JsonValue:
         """Normalize input into metadata-compatible JSON-native values."""
-        normalized_value: tb.JsonValue
-        if isinstance(val, (mc.ConfigMap, mc.Dict)):
-            normalized_value = FlextRuntimeMetadata._normalize_dict_entries(
-                list(val.root.items())
-            )
-        elif val is None:
-            normalized_value = ""
-        elif isinstance(val, datetime):
-            normalized_value = val.isoformat()
-        elif isinstance(val, Path):
-            normalized_value = str(val)
-        elif isinstance(val, tb.PRIMITIVES_TYPES):
-            normalized_value = val
-        elif ugm.has_model_dump(val):
-            normalized_value = FlextRuntimeMetadata.normalize_to_json_value(val)
-        elif isinstance(val, Mapping):
-            normalized_value = FlextRuntimeMetadata._normalize_dict_entries(
-                list(val.items())
-            )
-        elif isinstance(val, AbstractSet) or (
-            isinstance(val, Sequence) and not isinstance(val, (str, bytes, bytearray))
-        ):
-            normalized_value = list(
-                tta.json_list_adapter().validate_python([
-                    FlextRuntimeMetadata.normalize_to_json_value(item) for item in val
-                ])
-            )
-        elif isinstance(val, (bytes, bytearray)):
-            normalized_value = str(val)
-        else:
-            normalized_value = val
-        return normalized_value
+        return cls._normalize_value(val, active_ids=set(), path="$")
 
 
 __all__: list[str] = ["FlextRuntimeMetadata"]
