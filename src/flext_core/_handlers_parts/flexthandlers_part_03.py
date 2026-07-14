@@ -11,16 +11,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 from flext_core import c
 
 from .flexthandlers_part_02 import FlextHandlers as FlextHandlersPart02
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from collections.abc import Callable
 
-    from flext_core import p, t
+from flext_core import p, t
 
 
 class FlextHandlers[MessageT_contra, ResultT](

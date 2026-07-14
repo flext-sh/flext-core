@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 import structlog
 
@@ -17,8 +16,8 @@ from .logging_config_part_02 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart02,
 )
 
-if TYPE_CHECKING:
-    from structlog.types import Processor
+from structlog.types import Processor
+
 
 from flext_core import FlextTypes as t
 from flext_core._models.pydantic import FlextModelsPydantic as mp

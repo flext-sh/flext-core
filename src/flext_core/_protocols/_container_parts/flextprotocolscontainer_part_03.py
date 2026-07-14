@@ -9,9 +9,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
 if TYPE_CHECKING:
+    # mro-wkii.17.26 (codex): keep annotation-only reverse/sibling edges out of
+    # runtime; eager loading closes cycles through FlextTypesServices.
     from flext_core import FlextModels as m
     from flext_core._protocols.context import FlextProtocolsContext
     from flext_core._protocols.settings import FlextProtocolsSettings
+
 from flext_core._protocols._container_parts.flextprotocolscontainer_part_02 import (
     FlextProtocolsContainer as FlextProtocolsContainerPart02,
 )

@@ -10,9 +10,11 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core._protocols.base import FlextProtocolsBase
 
-if TYPE_CHECKING:
-    from types import ModuleType
+from types import ModuleType
 
+if TYPE_CHECKING:
+    # mro-wkii.17.26 (codex): this module is loaded by FlextTypesServices, so
+    # its postponed aliases cannot eagerly request the composing root facade.
     from flext_core import FlextTypes as t
 
 

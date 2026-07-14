@@ -9,26 +9,80 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from collections.abc import Callable
+from typing import Protocol, Self, runtime_checkable
 
+from flext_core._constants.cqrs import FlextConstantsCqrs as cc
 from flext_core._constants.mixins import FlextConstantsMixins as c
+from flext_core._constants.status import FlextConstantsStatus as cs
+from flext_core import t
 
-from .base import FlextProtocolsBase
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from flext_core import FlextModels as m, FlextTypes as t
-
-    from .handler import FlextProtocolsHandler
-    from .result import FlextProtocolsResult
+from .handler import FlextProtocolsHandler
+from .result import FlextProtocolsResult
 
 
 class FlextProtocolsRegistry:
     """Protocols for handler registration and plugin management."""
 
+    # mro-wkii.17.26 (codex): registry owns structural result/runtime contracts;
+    # importing the concrete model facade here creates the p -> m -> p cycle.
     @runtime_checkable
-    class Registry(FlextProtocolsBase.Base, Protocol):
+    class RegistrationDetails(Protocol):
+        """Observable handler registration details."""
+
+        @property
+        def registration_id(self) -> str:
+            """Unique registration identifier."""
+            ...
+
+        @property
+        def handler_mode(self) -> cc.HandlerType:
+            """Registered handler mode."""
+            ...
+
+        @property
+        def timestamp(self) -> str:
+            """Registration timestamp."""
+            ...
+
+        @property
+        def status(self) -> cs.Status:
+            """Current registration status."""
+            ...
+
+    @runtime_checkable
+    class RegistrySummary(Protocol):
+        """Observable batch registration outcome."""
+
+        @property
+        def registered(
+            self,
+        ) -> t.SequenceOf[FlextProtocolsRegistry.RegistrationDetails]:
+            """Successful registration details."""
+            ...
+
+        @property
+        def skipped(self) -> t.StrSequence:
+            """Skipped handler identifiers."""
+            ...
+
+        @property
+        def errors(self) -> t.StrSequence:
+            """Registration error messages."""
+            ...
+
+        @property
+        def failure(self) -> bool:
+            """Whether any registration failed."""
+            ...
+
+        @property
+        def success(self) -> bool:
+            """Whether every registration succeeded."""
+            ...
+
+    @runtime_checkable
+    class Registry(Protocol):
         """Registry protocol for CQRS handler and plugin management.
 
         Mirrors the public instance API of ``FlextRegistry`` so consumers
@@ -46,7 +100,7 @@ class FlextProtocolsRegistry:
             cls,
             dispatcher: FlextProtocolsHandler.Dispatcher | None = None,
             *,
-            runtime: m.ServiceRuntime | None = None,
+            runtime: FlextProtocolsRegistry.ServiceRuntime | None = None,
             auto_discover_handlers: bool = False,
         ) -> Self:
             """Create a new registry instance."""
@@ -54,7 +108,7 @@ class FlextProtocolsRegistry:
 
         def configure_runtime(
             self,
-            runtime: m.ServiceRuntime,
+            runtime: FlextProtocolsRegistry.ServiceRuntime,
             *,
             dispatcher: FlextProtocolsHandler.Dispatcher | None = None,
         ) -> Self:
@@ -75,19 +129,19 @@ class FlextProtocolsRegistry:
 
         def register_handler(
             self, handler: t.DispatchableHandler
-        ) -> FlextProtocolsResult.Result[m.RegistrationDetails]:
+        ) -> FlextProtocolsResult.Result[FlextProtocolsRegistry.RegistrationDetails]:
             """Register a handler instance or callable."""
             ...
 
         def register_handlers(
             self, handlers: t.SequenceOf[t.DispatchableHandler]
-        ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
+        ) -> FlextProtocolsResult.Result[FlextProtocolsRegistry.RegistrySummary]:
             """Register multiple handlers in batch."""
             ...
 
         def register_bindings(
             self, bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler]
-        ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
+        ) -> FlextProtocolsResult.Result[FlextProtocolsRegistry.RegistrySummary]:
             """Register message-to-handler bindings."""
             ...
 
@@ -135,5 +189,29 @@ class FlextProtocolsRegistry:
             """List all plugins in a category."""
             ...
 
+    @runtime_checkable
+    class ServiceRuntime(Protocol):
+        """Runtime capabilities consumed by registry composition."""
 
-__all__: list[str] = ["FlextProtocolsRegistry"]
+        @property
+        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None:
+            """Dispatcher bound to the runtime."""
+            ...
+
+        def model_copy(
+            self,
+            *,
+            update: t.MappingKV[
+                str,
+                FlextProtocolsHandler.Dispatcher
+                | FlextProtocolsRegistry.Registry
+                | None,
+            ]
+            | None = None,
+            deep: bool = False,
+        ) -> FlextProtocolsRegistry.ServiceRuntime:
+            """Copy runtime state with registry-owned updates."""
+            ...
+
+
+__all__: tuple[str, ...] = ("FlextProtocolsRegistry",)

@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-if TYPE_CHECKING:
-    from pytest import Collector
+from pytest import Collector
+
 
 
 @pytest.hookimpl(tryfirst=True)

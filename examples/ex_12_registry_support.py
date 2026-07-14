@@ -9,8 +9,8 @@ from examples.typings import t
 from examples.utilities import u
 from flext_core import h, r
 
-if TYPE_CHECKING:
-    from examples.protocols import p
+from examples.protocols import p
+
 
 
 class ProtocolHandler:

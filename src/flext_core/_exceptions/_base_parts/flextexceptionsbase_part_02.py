@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import ClassVar, override
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.validation import FlextConstantsValidation as cv
@@ -15,13 +15,12 @@ from flext_core._runtime._metadata_validation import (
 
 from .flextexceptionsbase_part_01 import FlextBaseErrorMetadataMixin
 
-if TYPE_CHECKING:
-    from collections.abc import Mapping
+from collections.abc import Mapping
 
-    from flext_core._models.base import FlextModelsBase as m
-    from flext_core._protocols.result import FlextProtocolsResult as pr
-    from flext_core._typings.base import FlextTypingBase as tb
-    from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):

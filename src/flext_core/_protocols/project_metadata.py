@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from flext_core._protocols.base import FlextProtocolsBase as pb
 
-if TYPE_CHECKING:
-    from pathlib import Path
+from pathlib import Path
 
 
 # NOTE (multi-agent, mro-wkii.17.23 / agent: uv_overlay_owner): interfaces

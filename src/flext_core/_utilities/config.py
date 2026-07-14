@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 import tomllib
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core._constants.config import FlextConstantsConfig as c
 from flext_core._typings.base import FlextTypingBase as t
@@ -23,10 +23,9 @@ from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore 
 from flext_core._utilities.reliability import FlextUtilitiesReliability as rel
 from flext_core.result import r
 
-if TYPE_CHECKING:
-    from collections.abc import Mapping
+from collections.abc import Mapping
 
-    from flext_core import FlextProtocols as p
+from flext_core import FlextProtocols as p
 
 
 class FlextUtilitiesConfig:

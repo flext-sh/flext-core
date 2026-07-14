@@ -81,12 +81,6 @@ class FlextContainer(p.Container):
 
     @property
     @override
-    def settings(self) -> p.Settings:
-        """Configuration bound to this container."""
-        return self._config
-
-    @property
-    @override
     def context(self) -> p.Context:
         """Execution context bound to this container."""
         return self._context

@@ -6,16 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, overload
+from typing import Literal, overload
 
 from flext_core._decorators._railway import FlextDecoratorsRailway
 from flext_core._models.handler import FlextModelsHandler as mh
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from collections.abc import Callable
 
-    from flext_core._protocols.result import FlextProtocolsResult as pr
-    from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextDecoratorsCombined(FlextDecoratorsRailway):

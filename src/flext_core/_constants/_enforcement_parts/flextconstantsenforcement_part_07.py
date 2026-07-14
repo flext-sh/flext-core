@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
-from flext_core._constants._enforcement_data import (
+from flext_core._constants._enforcement_data.loader import (
     ENFORCEMENT_SMELL_TAGS,
     SMELL_BEARTYPE_ROWS,
     SMELL_CODE_SMELL_ROWS,
@@ -13,8 +13,7 @@ from flext_core._constants._enforcement_data import (
     SMELL_THRESHOLDS,
 )
 
-if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextConstantsEnforcementSmellData:

@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 from flext_core import m, u
 
-if TYPE_CHECKING:
-    from examples.typings import t
+from examples.typings import t
+
 
 
 class ExamplesFlextModelsEx01:

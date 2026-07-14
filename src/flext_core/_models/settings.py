@@ -52,7 +52,7 @@ class FlextModelsSettings:
         ] = None
 
         def create_settings(self) -> p.Settings:
-            return self.settings_class.fetch_global()
+            return settings_class.fetch_global()
 
     class SettingsValue(m.ImmutableValueModel):
         """Frozen settings branch model that preserves Pydantic env coercion."""

@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core import r, t
 from flext_core._models.collections import FlextModelsCollections
@@ -20,8 +20,7 @@ from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
 
-if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sized
+from collections.abc import Callable, Mapping, Sized
 
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _guards_parts/part_01..02 (one

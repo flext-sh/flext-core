@@ -16,9 +16,9 @@ from .ex_12_registry_support import (
     discovered_handler,
 )
 
-if TYPE_CHECKING:
-    from examples.protocols import p
-    from examples.typings import t
+from examples.protocols import p
+from examples.typings import t
+
 
 
 class Ex12RegistryFlow(ExamplesFlextShared):

@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING
 
 from dependency_injector import containers, providers, wiring
 
@@ -16,13 +15,12 @@ from flext_core._constants.file import FlextConstantsFile as cf
 
 from ._dependency_options import FlextRuntimeDependencyOptions
 
-if TYPE_CHECKING:
-    from collections.abc import Callable, MutableSequence
-    from types import ModuleType
+from collections.abc import Callable, MutableSequence
+from types import ModuleType
 
-    from flext_core._protocols.container import FlextProtocolsContainer as pc
-    from flext_core._typings.base import FlextTypingBase as tb
-    from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._protocols.container import FlextProtocolsContainer as pc
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):

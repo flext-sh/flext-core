@@ -8,10 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol
 
-if TYPE_CHECKING:
-    from types import ModuleType
+from types import ModuleType
 
+if TYPE_CHECKING:
+    # mro-wkii.17.26 (codex): the context protocol is part of the root p
+    # composition, so its postponed self-facade annotations cannot load p.
     from flext_core import p, t
+
 from .flextprotocolscontext_part_02 import (
     FlextProtocolsContext as FlextProtocolsContextPart02,
 )

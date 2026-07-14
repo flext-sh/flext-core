@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
+    # NOTE (multi-agent, mro-wkii.17.26.2): avoid the proven t -> p -> root cycle.
     from flext_core import FlextTypes as t
 
 

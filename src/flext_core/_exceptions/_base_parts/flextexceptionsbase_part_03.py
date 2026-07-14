@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure as ci
@@ -16,12 +16,11 @@ from flext_core._typings.base import FlextTypingBase as tb
 
 from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
 
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
+from collections.abc import MutableMapping
 
-    from flext_core._models.pydantic import FlextModelsPydantic as mp
-    from flext_core._protocols.result import FlextProtocolsResult as pr
-    from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextBaseError(FlextBaseErrorStateMixin, Exception):

@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
+    # mro-wkii.17.26 (codex): constants compose while the public t facade is
+    # still loading; this name is used only by a postponed Final annotation.
     from flext_core import FlextTypes as t
 
 

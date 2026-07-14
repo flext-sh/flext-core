@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 from examples.protocols import p
 from flext_core import r
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from collections.abc import Callable
+
 
 
 def _log_result[T](fn: Callable[..., T]) -> Callable[..., T]:

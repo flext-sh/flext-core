@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
-if TYPE_CHECKING:
-    from collections.abc import Mapping
+from collections.abc import Mapping
 
-    from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextConstantsEnforcementTargets:

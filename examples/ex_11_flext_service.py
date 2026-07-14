@@ -12,8 +12,8 @@ from examples.typings import t
 from examples.utilities import u
 from flext_core import r, s
 
-if TYPE_CHECKING:
-    from flext_core import p as p
+from flext_core import p as p
+
 
 
 class _EchoService(s[str]):

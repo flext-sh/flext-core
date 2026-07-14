@@ -25,10 +25,9 @@ from .logging_config_part_01 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart01,
 )
 
-if typing.TYPE_CHECKING:
-    import types
+import types
 
-    from structlog.types import Processor
+from structlog.types import Processor
 
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):

@@ -5,7 +5,6 @@ from __future__ import annotations
 import importlib
 import sys
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING
 
 from pydantic import (
     BaseModel,
@@ -17,8 +16,8 @@ from pydantic import (
     computed_field,
 )
 
-if TYPE_CHECKING:
-    from types import ModuleType
+from types import ModuleType
+
 
 type StrPair = tuple[str, str]
 type LazyImportEntry = str | StrPair

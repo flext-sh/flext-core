@@ -10,14 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import TYPE_CHECKING
 
 from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core._models.container import FlextModelsContainer
 
-if TYPE_CHECKING:
-    from collections.abc import MutableSequence
-    from types import ModuleType
+from collections.abc import MutableSequence
+from types import ModuleType
 
 
 class FlextUtilitiesDiscovery:

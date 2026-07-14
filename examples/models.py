@@ -21,8 +21,8 @@ from examples._models.output import ExamplesFlextModelsOutput
 from examples._models.shared import ExamplesFlextSharedHandle, ExamplesFlextSharedPerson
 from flext_core import m
 
-if TYPE_CHECKING:
-    from examples.typings import t
+from examples.typings import t
+
 
 
 class ExamplesFlextModels(m):

@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, get_origin, get_type_hints
+from typing import get_origin, get_type_hints
 
 from flext_core import FlextConstants as c
 from flext_core._protocols.result import FlextProtocolsResult as p
@@ -21,8 +21,7 @@ from flext_core.result import FlextResult as r
 
 from .checker_part_01 import FlextUtilitiesChecker as FlextUtilitiesCheckerPart01
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from collections.abc import Callable
 
 
 class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):

@@ -8,13 +8,12 @@ helpers in :mod:`parser_targets` and :mod:`parser` via MRO composition.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core import c, m
 from flext_core.result import r
 
-if TYPE_CHECKING:
-    from flext_core import p, t
+from flext_core import p, t
 
 
 class FlextUtilitiesParserCoerce:

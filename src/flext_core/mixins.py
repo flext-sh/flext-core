@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import threading
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import Annotated, ClassVar
 
 
 from flext_core import FlextContainer, FlextContext, c, m, p, t, u
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
-if TYPE_CHECKING:
-    from collections.abc import Generator, Mapping, MutableMapping
+from collections.abc import Generator, Mapping, MutableMapping
 
 
 class FlextMixins(m.ArbitraryTypesModel):

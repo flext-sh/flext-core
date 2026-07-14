@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
-if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextConstantsEnforcementFixActions:
@@ -269,7 +268,7 @@ class FlextConstantsEnforcementFixActions:
         },
         "ENFORCE-082": {
             "kind": "rope",
-            "target": "fix_silent_failure_sentinels",
+            "target": "rope_fix_silent_failure_sentinels",
             "params": {},
             "safe": True,
         },

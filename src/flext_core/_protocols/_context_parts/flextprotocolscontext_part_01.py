@@ -8,9 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-if TYPE_CHECKING:
-    from contextlib import AbstractContextManager
+from contextlib import AbstractContextManager
 
+if TYPE_CHECKING:
+    # NOTE (multi-agent, mro-wkii.17.26): this protocol loads during p/t
+    # composition; the root facades are needed only by postponed annotations.
     from flext_core import p, t
 
 

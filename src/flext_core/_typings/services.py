@@ -14,32 +14,20 @@ from types import GenericAlias, ModuleType, UnionType
 from typing import TypeAliasType
 
 from flext_core._protocols.base import FlextProtocolsBase as p
-from flext_core._protocols.container import FlextProtocolsContainer as pc
 from flext_core._protocols.context import FlextProtocolsContext as pcx
 from flext_core._protocols.handler import FlextProtocolsHandler as ph
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
-from flext_core._protocols.registry import FlextProtocolsRegistry as pr
 from flext_core._protocols.result import FlextProtocolsResult as prt
 from flext_core._protocols.settings import FlextProtocolsSettings as ps
 from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.containers import FlextTypingContainers as tc
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
-class FlextTypesServices:
+class FlextTypesServices(tc):
     """Type aliases for service registration and runtime mappings."""
 
-    type JsonPayloadLeaf = t.Scalar | Path | tp.JsonValue | tp.BaseModelType
-    type JsonPayloadCollectionValue = (
-        JsonPayloadLeaf
-        | t.MappingKV[str, JsonPayloadLeaf]
-        | t.SequenceOf[JsonPayloadLeaf]
-    )
-    type JsonPayload = (
-        JsonPayloadLeaf
-        | t.MappingKV[str, JsonPayloadCollectionValue]
-        | t.SequenceOf[JsonPayloadCollectionValue]
-    )
-    type SettingsOverrideLeaf = JsonPayloadLeaf | p.Model
+    type SettingsOverrideLeaf = tc.JsonPayloadLeaf | p.Model
     type SettingsOverrideCollectionValue = (
         SettingsOverrideLeaf
         | t.MappingKV[str, SettingsOverrideLeaf]
@@ -53,38 +41,38 @@ class FlextTypesServices:
     type SettingsOverridesMapping = t.MappingKV[str, SettingsOverride | None]
     type RegistryDict[T] = MutableMapping[str, T]
     type DomainModelCarrier = tp.BaseModelType | p.Model
-    type ScalarOrModel = t.Scalar | tp.BaseModelType
     type ModelClass[T: tp.BaseModelType] = type[T]
-    type LogArgument = JsonPayload | p.Model
+    type LogArgument = tc.JsonPayload | p.Model
     type LogValue = LogArgument | Exception
     type LogResult = prt.Result[bool]
-    type MetadataMapping = t.MappingKV[str, JsonPayload]
-    type MutableMetadataMapping = MutableMapping[str, JsonPayload]
+    type MetadataMapping = t.MappingKV[str, tc.JsonPayload]
+    type MutableMetadataMapping = MutableMapping[str, tc.JsonPayload]
     type RuntimeData = tp.JsonValue | tp.BaseModelType
     type BootstrapInput = tp.BaseModelType | t.JsonMapping
     type ServiceValue = (
-        JsonPayload
+        tc.JsonPayload
         | tp.BaseModelType
         | pl.Logger
         | ps.Settings
         | pcx.Context
         | ph.Dispatcher
     )
-    type UserOverridesMapping = t.MappingKV[str, JsonPayload]
     type RegisterableService = ServiceValue | Callable[..., ServiceValue]
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], RegisterableService]
-    type ModelInput = tp.JsonValue | prt.HasModelDump | t.MappingKV[str, JsonPayload]
-    type ConfigModelInput = prt.HasModelDump | t.MappingKV[str, JsonPayload]
-    type MetadataInput = prt.HasModelDump | t.MappingKV[str, JsonPayload | None] | None
+    type ModelInput = tp.JsonValue | prt.HasModelDump | t.MappingKV[str, tc.JsonPayload]
+    type ConfigModelInput = prt.HasModelDump | t.MappingKV[str, tc.JsonPayload]
+    type MetadataInput = (
+        prt.HasModelDump | t.MappingKV[str, tc.JsonPayload | None] | None
+    )
     type ServiceMap = t.MappingKV[str, RegisterableService]
     type FactoryMap = t.MappingKV[str, FactoryCallable]
     type ResourceMap = t.MappingKV[str, ResourceCallable]
-    type ContextHookCallable = Callable[[t.Scalar], JsonPayload]
+    type ContextHookCallable = Callable[[t.Scalar], tc.JsonPayload]
     type ContextHookMap = t.MappingKV[str, t.SequenceOf[ContextHookCallable]]
 
     type HandlerCallable = Callable[
-        ..., tp.BaseModelType | prt.ResultLike[ScalarOrModel]
+        ..., tp.BaseModelType | prt.ResultLike[tc.ScalarOrModel]
     ]
     type DispatchableHandler = (
         tp.BaseModelType
@@ -93,16 +81,16 @@ class FlextTypesServices:
         | ph.Execute
         | ph.AutoDiscoverableHandler
         | Callable[
-            ..., tp.BaseModelType | JsonPayload | prt.ResultLike[JsonPayload] | None
+            ...,
+            tp.BaseModelType | tc.JsonPayload | prt.ResultLike[tc.JsonPayload] | None,
         ]
     )
     type ResolvedHandlerCallable = Callable[
-        ..., tp.BaseModelType | JsonPayload | prt.ResultLike[JsonPayload] | None
+        ..., tp.BaseModelType | tc.JsonPayload | prt.ResultLike[tc.JsonPayload] | None
     ]
     type RoutedHandlerCallable = Callable[
-        [p.Routable], JsonPayload | prt.ResultLike[JsonPayload] | None
+        [p.Routable], tc.JsonPayload | prt.ResultLike[tc.JsonPayload] | None
     ]
-    type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
     type LoggerFactory = Callable[..., pl.OutputLogger] | None
     type LoggerWrapperFactory = Callable[[], type[pl.Logger]]
 
@@ -128,7 +116,7 @@ class FlextTypesServices:
     type LazyGetattr = Callable[[str], ModuleExport]
     type LazyDir = Callable[[], t.SequenceOf[str]]
 
-    type ValidatorCallable = Callable[[ScalarOrModel], ScalarOrModel]
+    type ValidatorCallable = Callable[[tc.ScalarOrModel], tc.ScalarOrModel]
 
     type MapperCallable = Callable[[tp.JsonValue], tp.JsonValue]
     MapperInput = MapperCallable | tp.JsonValue
@@ -143,7 +131,7 @@ class FlextTypesServices:
     type GuardInput = (
         type[BaseException | Enum]
         | AbstractSet[t.Scalar]
-        | JsonPayload
+        | tc.JsonPayload
         | bytearray
         | bytes
         | Callable[..., tp.JsonValue | tp.BaseModelType]
@@ -154,11 +142,10 @@ class FlextTypesServices:
         | Enum
         | frozenset[str]
         | GenericAlias
-        | t.MappingKV[str, JsonPayload]
+        | t.MappingKV[str, tc.JsonPayload]
         | tp.JsonValue
         | ModuleType
         | tp.BaseModelType
-        | pc.Container
         | pcx.Context
         | ph.Dispatcher
         | ph.Handle
@@ -166,12 +153,11 @@ class FlextTypesServices:
         | pl.HasLogger
         | pl.Logger
         | prt.HasModelDump
-        | pr.Registry
         | p.Model
-        | prt.ResultLike[JsonPayload]
+        | prt.ResultLike[tc.JsonPayload]
         | ps.Settings
         | RegisterableService
-        | t.SequenceOf[JsonPayload]
+        | t.SequenceOf[tc.JsonPayload]
         | tuple[tp.JsonValue, ...]
         | tuple[type, ...]
         | type

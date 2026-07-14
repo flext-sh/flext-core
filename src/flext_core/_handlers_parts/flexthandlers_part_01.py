@@ -11,15 +11,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Unpack
+from typing import ClassVar, Unpack
 
 from flext_core import c, e, x
 from flext_core._utilities.handler import FlextUtilitiesHandler
 
-if TYPE_CHECKING:
-    from pydantic import ConfigDict
+from pydantic import ConfigDict
 
-    from flext_core import p
+from flext_core import p
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):

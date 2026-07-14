@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING, ClassVar
 from examples.models import m
 from flext_core import r, u
 
-if TYPE_CHECKING:
-    from collections.abc import MutableSequence
+from collections.abc import MutableSequence
+
 
 
 class ExamplesFlextSharedBase(m.BaseModel):

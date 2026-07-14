@@ -10,11 +10,15 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core._protocols.base import FlextProtocolsBase
 
-if TYPE_CHECKING:
-    from datetime import datetime
+from datetime import datetime
 
+from flext_core._protocols.result import FlextProtocolsResult
+
+if TYPE_CHECKING:
+    # NOTE (multi-agent, mro-wkii.17.26): FlextTypesServices imports this
+    # protocol while t is still being composed; t is annotation-only here.
     from flext_core import FlextTypes as t
-    from flext_core._protocols.result import FlextProtocolsResult
+
 from .flextprotocolslogging_part_01 import (
     FlextProtocolsLogging as FlextProtocolsLoggingPart01,
 )

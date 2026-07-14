@@ -12,7 +12,6 @@ from __future__ import annotations
 import inspect
 import logging
 from contextlib import suppress
-from typing import TYPE_CHECKING
 
 from flext_core import FlextConstants as c
 
@@ -20,8 +19,7 @@ from .logging_context_part_01 import (
     FlextUtilitiesLoggingContext as FlextUtilitiesLoggingContextPart01,
 )
 
-if TYPE_CHECKING:
-    import types
+import types
 
 
 class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):

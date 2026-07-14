@@ -15,13 +15,11 @@ import time
 from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from flext_core import c, r
 from flext_core.runtime import FlextRuntime
 
-if TYPE_CHECKING:
-    from flext_core import p, t
+from flext_core import p, t
 
 
 class FlextUtilitiesHandler:

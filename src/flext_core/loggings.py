@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 import traceback
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import ClassVar, Self
 
 import structlog
 
@@ -27,10 +27,9 @@ from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
 from flext_core.result import FlextResult as r
 
-if TYPE_CHECKING:
-    import types
+import types
 
-    from structlog.typing import Context
+from structlog.typing import Context
 
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _loggings_parts/part_01..05

@@ -8,10 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-if TYPE_CHECKING:
-    from collections.abc import Iterable, MutableSequence
-    from types import TracebackType
+from collections.abc import Iterable, MutableSequence
+from types import TracebackType
 
+if TYPE_CHECKING:
+    # mro-wkii.17.26 (codex): p is composing this module; importing the root
+    # m/p/t facades here re-enters protocols and models before t is available.
     from flext_core import m, p, t
 
 

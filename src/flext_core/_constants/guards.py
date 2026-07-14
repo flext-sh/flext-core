@@ -21,6 +21,8 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
+    # mro-wkii.17.26 (codex): importing the local t facade while constants are
+    # composing re-enters models/constants; postponed annotations need no runtime edge.
     from flext_core import t
 
 

@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
 from flext_core._protocols.result import FlextProtocolsResult as p
 
-if TYPE_CHECKING:
-    from returns.result import Result
+from returns.result import Result
 
-    from flext_core import FlextTypes as t
-    from flext_core._models.containers import FlextModelsContainers as mc
+from flext_core import FlextTypes as t
+from flext_core._models.containers import FlextModelsContainers as mc
 
 
 class FlextResultBehaviorMixin[T](p.Result[T], ABC):

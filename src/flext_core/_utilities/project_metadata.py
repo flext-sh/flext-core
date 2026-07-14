@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import tomllib
-from typing import TYPE_CHECKING
 
 from flext_core._constants.file import FlextConstantsFile as cf
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
@@ -12,8 +11,7 @@ from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata
 from flext_core._protocols.result import FlextProtocolsResult as pr
 from flext_core.result import FlextResult as r
 
-if TYPE_CHECKING:
-    from pathlib import Path
+from pathlib import Path
 
 
 # NOTE (multi-agent, mro-wkii.17.23 / agent: uv_overlay_owner): this utility

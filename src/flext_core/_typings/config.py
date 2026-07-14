@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.containers import FlextTypingContainers as tc
 
 
 class FlextTypingConfig:
@@ -20,6 +21,7 @@ class FlextTypingConfig:
     type ConfigMapping = t.MappingKV[str, t.JsonValue]
     type ConfigDict = dict[str, t.JsonValue]
     type ConfigOverrideMapping = t.MappingKV[str, str]
+    type UserOverridesMapping = t.MappingKV[str, tc.JsonPayload]
 
 
 __all__: list[str] = ["FlextTypingConfig"]

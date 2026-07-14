@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING
 
 from pydantic import ValidationError as PydanticValidationError
 
@@ -19,9 +18,8 @@ from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
 
-if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as tb
-    from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextExceptionsHelpers:

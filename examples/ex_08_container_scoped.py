@@ -11,8 +11,8 @@ from flext_core import FlextSettings
 
 from .ex_08_container_registration import Ex08ContainerRegistration
 
-if TYPE_CHECKING:
-    from types import ModuleType
+from types import ModuleType
+
 
 
 class _WireProbe:
