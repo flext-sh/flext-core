@@ -9,80 +9,79 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from email.utils import parseaddr
 from importlib.metadata import PackageMetadata, metadata
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
 
 
-class FlextVersion:
-    """Package version and metadata — SSOT base class.
+class _FlextVersionMetadata:
+    """MRO base that derives package metadata for each concrete facade."""
 
-    Subclasses override only ``_metadata``.  ``__init_subclass__``
-    recomputes every derived attribute via MRO — zero duplication.
-    """
+    _metadata: PackageMetadata
+    __version__: str = ""
+    __version_info__: tuple[int | str, ...] = ()
+    __title__: str = ""
+    __description__: str = ""
+    __author__: str = ""
+    __author_email__: str = ""
+    __license__: str = ""
+    __url__: str = ""
 
-    _metadata: PackageMetadata = metadata("flext-core")
+    @staticmethod
+    def _resolve_author(package_metadata: PackageMetadata) -> tuple[str, str]:
+        """Return the first normalized author identity from package metadata."""
+        raw_email = package_metadata.get("Author-Email", "")
+        author_name, author_email = parseaddr(raw_email, strict=True)
+        if raw_email and not author_email:
+            msg = f"invalid Author-Email package metadata: {raw_email!r}"
+            raise ValueError(msg)
+        return (
+            package_metadata.get("Author", "") or author_name or author_email,
+            author_email,
+        )
 
-    # -- Base-class derivation (inline; subclass derivation via __init_subclass__) --
-    __version__: str = _metadata["Version"]
-    __version_info__: tuple[int | str, ...] = tuple(
-        int(part) if part.isdigit() else part for part in __version__.split(".")
-    )
-    __title__: str = _metadata.get("Name", "")
-    __description__: str = _metadata.get("Summary", "")
-    __author__: str = _metadata.get("Author", "") or _metadata.get("Author-Email", "")
-    __author_email__: str = _metadata.get("Author-Email", "")
-    __license__: str = _metadata.get("License-Expression", "") or _metadata.get(
-        "License", ""
-    )
-    __url__: str = _metadata.get("Home-Page", "") or _metadata.get("Project-URL", "")
+    @staticmethod
+    def _resolve_homepage(package_metadata: PackageMetadata) -> str:
+        """Return the legacy Home-Page or labeled Homepage project URL."""
+        if homepage := package_metadata.get("Home-Page", ""):
+            return homepage
+        for project_url in package_metadata.get_all("Project-URL") or ():
+            label, separator, url = project_url.partition(",")
+            if label.strip().casefold() != "homepage":
+                continue
+            if not separator or not url.strip():
+                msg = f"invalid Homepage project URL metadata: {project_url!r}"
+                raise ValueError(msg)
+            return url.strip()
+        return ""
+
+    @classmethod
+    def _apply_metadata(cls) -> None:
+        """Derive every public value once for the current MRO class."""
+        package_metadata = cls._metadata
+        cls.__version__ = package_metadata["Version"]
+        cls.__version_info__ = tuple(
+            int(part) if part.isdigit() else part for part in cls.__version__.split(".")
+        )
+        cls.__title__ = package_metadata.get("Name", "")
+        cls.__description__ = package_metadata.get("Summary", "")
+        cls.__author__, cls.__author_email__ = cls._resolve_author(package_metadata)
+        cls.__license__ = package_metadata.get(
+            "License-Expression", ""
+        ) or package_metadata.get("License", "")
+        cls.__url__ = cls._resolve_homepage(package_metadata)
 
     def __init_subclass__(cls, **kwargs: str | float | bool | None) -> None:
         """Recompute derived attributes when a subclass overrides ``_metadata``."""
         _ = kwargs
         super().__init_subclass__()
         if "_metadata" in cls.__dict__:
-            m = cls._metadata
-            cls.__version__ = m["Version"]
-            cls.__version_info__ = tuple(
-                int(p) if p.isdigit() else p for p in cls.__version__.split(".")
-            )
-            cls.__title__ = m.get("Name", "")
-            cls.__description__ = m.get("Summary", "")
-            cls.__author__ = m.get("Author", "") or m.get("Author-Email", "")
-            cls.__author_email__ = m.get("Author-Email", "")
-            cls.__license__ = m.get("License-Expression", "") or m.get("License", "")
-            cls.__url__ = m.get("Home-Page", "") or m.get("Project-URL", "")
+            cls._apply_metadata()
 
-    @classmethod
-    def resolve_package_info(cls) -> Mapping[str, str]:
-        """Get comprehensive package information dictionary."""
-        return {
-            "name": cls.__title__,
-            "version": cls.__version__,
-            "description": cls.__description__,
-            "author": cls.__author__,
-            "author_email": cls.__author_email__,
-            "license": cls.__license__,
-            "url": cls.__url__,
-        }
 
-    @classmethod
-    def resolve_version_info(cls) -> tuple[int | str, ...]:
-        """Get package version as comparison-friendly tuple."""
-        return cls.__version_info__
+class FlextVersion(_FlextVersionMetadata):
+    """Package metadata facade recomputed for subclasses through MRO."""
 
-    @classmethod
-    def resolve_version_string(cls) -> str:
-        """Get package version as human-readable string."""
-        return cls.__version__
-
-    @classmethod
-    def version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
-        """Check if current version meets minimum version requirement."""
-        return cls.__version_info__ >= (major, minor, patch)
+    _metadata: PackageMetadata = metadata("flext-core")
 
 
 __version__ = FlextVersion.__version__
