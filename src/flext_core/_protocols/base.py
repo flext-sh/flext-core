@@ -51,7 +51,15 @@ class FlextProtocolsBase:
         # on ``ModelType``.
 
         def model_dump(
-            self, *, mode: str = "python"
+            self,
+            *,
+            mode: str = "python",
+            include: t.JsonValue | None = None,
+            exclude: t.JsonValue | None = None,
+            by_alias: bool | None = None,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
         ) -> t.MappingKV[str, t.JsonPayload | None]:
             """Dump the validated model at an external serialization boundary."""
             ...
