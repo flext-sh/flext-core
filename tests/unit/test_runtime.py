@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import flext_core
-from flext_core import m
+from flext_core import FlextRuntime as PublicFlextRuntime, m
 from flext_core.runtime import FlextRuntime
 from flext_tests import tm
 
@@ -18,7 +17,7 @@ class TestsFlextRuntime:
 
         def test_exports_runtime_facade(self) -> None:
             """Expose the runtime facade from the public package root."""
-            tm.that(flext_core.FlextRuntime, is_=FlextRuntime)
+            tm.that(PublicFlextRuntime is FlextRuntime, eq=True)
 
     class TestsNormalization:
         """Runtime payload normalization scenarios."""
