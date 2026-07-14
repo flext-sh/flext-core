@@ -13,7 +13,7 @@ from examples.utilities import u
 from flext_core import r, s
 
 if TYPE_CHECKING:
-    from flext_core import p as core_p
+    from flext_core import p as p
 
 
 class _EchoService(s[str]):
@@ -39,7 +39,7 @@ class _EchoService(s[str]):
         return {"service": type(self).__name__, "payload": self.payload.text}
 
     def valid(self) -> bool:
-        validation: core_p.SuccessCheckable = self.validate_business_rules()
+        validation: p.SuccessCheckable = self.validate_business_rules()
         return validation.success
 
     def validate_business_rules(self) -> p.Result[bool]:
