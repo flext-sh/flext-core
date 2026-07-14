@@ -6,11 +6,7 @@ import threading
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-# NOTE (multi-agent): mro-i6nq.12 — consolidated _mixins_parts/part_01+part_02 into
-# this single domain module and refactored the runtime-bootstrap tower
-# (manual __init__/_coerce_*/_apply/property+setter pairs) into 4 native Pydantic
-# fields mirroring m.RuntimeBootstrapOptions; dead track/_init_service/
-# _register_in_container removed (zero callers).
+
 from flext_core import FlextContainer, FlextContext, c, m, p, t, u
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
