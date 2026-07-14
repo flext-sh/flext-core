@@ -24,7 +24,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "beartype>=0.22.9,<0.23",
+  "beartype>=0.22.9",
   "cachetools>=6.2,<7.0",
   "dependency-injector>=4.49.0",
   "docker>=7.1.0",
@@ -745,6 +745,11 @@ split-on-trailing-comma = false
 all = true
 in_place = true
 sort_first = [ "build-system", "dependency-groups", "project", "tool" ]
+
+[tool.uv.sources.beartype]
+# mro-45r9: PyPI remains at 0.22.9; Git consumers validate the 0.23 runtime.
+git = "https://github.com/beartype/beartype.git"
+rev = "ee481e0c6da5c0cf8a6b27a53a10354e9df4ac71"
 
 [tool.vulture]
 exclude = [ "*/_protocols/*" ]

@@ -30,16 +30,7 @@ def _adapt_dispatcher_output(
         )
     elif isinstance(raw_output, p.ResultLike):
         if raw_output.failure:
-            error_data_value = raw_output.error_data
-            result = dispatch_result.fail(
-                raw_output.error or c.ERR_HANDLER_FAILED,
-                error_code=raw_output.error_code,
-                error_data=(
-                    error_data_value
-                    if FlextUtilitiesGuardsTypeModel.pydantic_model(error_data_value)
-                    else None
-                ),
-            )
+            result = dispatch_result.from_failure(raw_output)
         else:
             output_value = raw_output.value
             if FlextUtilitiesGuardsTypeCore.container(output_value):

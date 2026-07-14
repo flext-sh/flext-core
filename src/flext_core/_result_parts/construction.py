@@ -26,6 +26,28 @@ from .behavior import FlextResultBehaviorMixin
 class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
     """Factory methods for the concrete result facade."""
 
+    @staticmethod
+    def require_error[V](source: p.ResultLike[V]) -> str:
+        """Return a failure message or raise when the Result invariant is broken."""
+        error = source.error
+        if not error:
+            raise ValueError(c.ERR_RESULT_FAILURE_MESSAGE_REQUIRED)
+        return error
+
+    @classmethod
+    def from_failure[V](
+        cls: type[FlextResultConstructionMixin[T]], source: p.ResultLike[V]
+    ) -> FlextResultConstructionMixin[T]:
+        """Rebind one failure payload type while preserving its full error state."""
+        if source.success:
+            raise ValueError(c.ERR_RESULT_FAILURE_REQUIRED)
+        return cls.fail(
+            cls.require_error(source),
+            error_code=source.error_code,
+            error_data=source.error_data,
+            exception=source.exception,
+        )
+
     @classmethod
     def _extract_exception_error_code(
         cls, exception: BaseException | None
@@ -69,7 +91,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
         # Type bridge: normalized failures carry the source result payload type.
         result_class = cast("type[FlextResultConstructionMixin[V]]", cls)
         return result_class.fail(
-            source.error or "",
+            cls.require_error(source),
             error_code=source.error_code,
             error_data=source.error_data,
             exception=source.exception,

@@ -14,6 +14,7 @@ import inspect
 import sys
 import threading
 from collections.abc import Sequence
+<<<<<<< HEAD
 from typing import ClassVar, Self, overload, override
 
 from dependency_injector import containers as di_containers
@@ -25,6 +26,30 @@ from flext_core import FlextUtilitiesLogging
 
 from collections.abc import Callable, MutableMapping
 from types import FrameType, ModuleType
+=======
+from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, overload, override
+
+from dependency_injector import containers as di_containers
+
+from flext_core import (
+    FlextContext,
+    FlextSettings,
+    FlextUtilitiesLogging,
+    c,
+    e,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
+
+# NOTE (multi-agent): mro-i6nq.12 — the concrete public facade remains the
+# runtime implementation; p.ContainerType is only its structural contract.
+if TYPE_CHECKING:
+    from collections.abc import Callable, MutableMapping
+    from types import FrameType, ModuleType
+>>>>>>> origin/0.12.0-dev
 
 
 class FlextContainer(p.Container):
@@ -118,6 +143,13 @@ class FlextContainer(p.Container):
         logger: p.Logger = FlextUtilitiesLogging.fetch_logger(module_name)
         return logger
 
+    @staticmethod
+    def _matches_service_type[T: t.RegisterableService](
+        value: t.RegisterableService, expected: type[T]
+    ) -> TypeGuard[T]:
+        """Narrow a resolved service through its structural runtime type."""
+        return isinstance(value, expected)
+
     def _resolve_callable[T: t.RegisterableService](
         self, callable_obj: t.FactoryCallable, kind: str, type_cls: type[T] | None
     ) -> p.Result[T] | p.Result[t.RegisterableService]:
@@ -129,9 +161,14 @@ class FlextContainer(p.Container):
                 e.fail_operation(f"resolve {kind}", exc)
             )
         if type_cls is not None:
+<<<<<<< HEAD
             if u.instance_of(resolved, type_cls):
                 resolved_result: p.Result[T] = r[T].ok(resolved)
                 return resolved_result
+=======
+            if self._matches_service_type(resolved, type_cls):
+                return r[T].ok(resolved)
+>>>>>>> origin/0.12.0-dev
             return r[T].from_result(
                 e.fail_type_mismatch(type_cls.__name__, type(resolved).__name__)
             )

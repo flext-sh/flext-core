@@ -167,7 +167,7 @@ class FlextResult[T](
             if self.success:
                 self._result = Success(self.value)
             else:
-                self._result = Failure(self.error or "")
+                self._result = Failure(self.require_error(self))
         return self._result
 
     @staticmethod

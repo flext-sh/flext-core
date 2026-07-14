@@ -72,8 +72,7 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
             )
         signature_result = cls._get_method_signature(handle_method_raw)
         if signature_result.failure:
-            signature_error = signature_result.error or "Invalid handle signature"
-            return r[tb.TypeHintSpecifier].fail(signature_error)
+            return r[tb.TypeHintSpecifier].from_failure(signature_result)
         signature = signature_result.unwrap()
         type_hints = cls._get_type_hints_safe(handle_method_raw, handler_class)
         for name, parameter in signature.parameters.items():

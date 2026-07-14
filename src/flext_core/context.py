@@ -18,10 +18,10 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
-# NOTE (multi-agent): mro-i6nq.12 — consolidated _context_parts/part_01+part_02 into
-# this single facade module; numbered MRO chain removed, no _context_parts indirection.
 from flext_core import c, m, p, r, t, u
 
+# NOTE (multi-agent): mro-i6nq.12 — Generator is annotation-only; importing it
+# under TYPE_CHECKING keeps the public runtime facade graph lazy.
 if TYPE_CHECKING:
     from collections.abc import Generator
 

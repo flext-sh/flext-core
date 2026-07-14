@@ -103,7 +103,7 @@ class FlextUtilitiesCollectionMerge:
                 result, key, value
             )
             if merge_result.failure:
-                return r[t.JsonMapping].fail(merge_result.error or "Unknown error")
+                return r[t.JsonMapping].from_failure(merge_result)
         return r[t.JsonMapping].ok(result)
 
     _MergeHandler = Callable[[t.JsonMapping, t.JsonMapping], "p.Result[t.JsonMapping]"]

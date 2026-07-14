@@ -330,9 +330,9 @@ class FlextUtilitiesLogging(ulc):
             self,
             exc_type: type[BaseException] | None,
             exc_val: BaseException | None,
-            exc_tb: types.TracebackType | None,
+            _exc_tb: types.TracebackType | None,
         ) -> None:
-            """Log operation result with timing."""
+            """Log timing; the context-manager traceback is intentionally unused."""
             elapsed = time.time() - self._start_time
             success = exc_type is None
             status = "success" if success else "failed"

@@ -70,13 +70,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                         FlextUtilitiesParser._parse_with_default(
                             opts.default,
                             opts.default_factory,
-                            enum_result.error
-                            or c.ERR_PARSER_CANNOT_PARSE_ENUM.format(
-                                field_prefix=fp,
-                                value=value,
-                                target_name=target.__name__,
-                                options=[],
-                            ),
+                            r.require_error(enum_result),
                         ).unwrap()
                         if enum_result.failure
                         else enum_result.value
@@ -89,13 +83,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                         FlextUtilitiesParser._parse_with_default(
                             opts.default,
                             opts.default_factory,
-                            model_result.error
-                            or c.ERR_PARSER_CANNOT_PARSE_TO_TARGET.format(
-                                field_prefix=fp,
-                                source_type=value.__class__.__name__,
-                                target_name=target.__name__,
-                                error="",
-                            ),
+                            r.require_error(model_result),
                         ).unwrap()
                         if model_result.failure
                         else model_result.value

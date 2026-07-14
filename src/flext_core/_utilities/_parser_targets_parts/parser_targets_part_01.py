@@ -153,10 +153,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         validation_result: p.Result[T] = FlextUtilitiesModel.validate_value(
             target, value, strict=opts.strict
         )
-        if validation_result.failure:
-            raise ValueError(validation_result.error or "")
-        validated_model: T = validation_result.value
-        return validated_model
+        return validation_result.unwrap()
 
 
 __all__: list[str] = ["FlextUtilitiesParserTargets"]

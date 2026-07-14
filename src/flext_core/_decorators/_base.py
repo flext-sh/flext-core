@@ -15,8 +15,13 @@ from flext_core._protocols.logging import FlextProtocolsLogging as pl
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
 from flext_core import FlextContainer
+<<<<<<< HEAD
 from flext_core import FlextContext
 from flext_core import FlextUtilitiesLogging
+=======
+from flext_core.context import FlextContext
+from flext_core.loggings import FlextUtilitiesLogging
+>>>>>>> origin/0.12.0-dev
 
 from collections.abc import Callable
 

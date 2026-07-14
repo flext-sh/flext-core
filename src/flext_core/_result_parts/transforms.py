@@ -38,7 +38,7 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
             # Type bridge: propagated failures adopt the chained payload type.
             result_class = cast("type[FlextResultConstructionMixin[U]]", self.__class__)
             return result_class.fail(
-                self.error or "",
+                self.require_error(self),
                 error_code=self.error_code,
                 error_data=self.error_data,
                 exception=self.exception,
@@ -76,14 +76,14 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
         """Catamorphism: reduce result to a single value via callbacks."""
         if self.success and self.value is not None:
             return on_success(self.value)
-        return on_failure(self.error or "")
+        return on_failure(self.require_error(self))
 
     @override
     def lash(self, func: Callable[[str], p.Result[T]]) -> p.Result[T]:
         """Apply recovery function on failure; returns self if success."""
         if self.failure:
             try:
-                return self.__class__._from_result(func(self.error or ""))
+                return self.__class__._from_result(func(self.require_error(self)))
             except c.EXC_BROAD_RUNTIME as exc:
                 return self.__class__.fail(str(exc), exception=exc)
         return self
@@ -103,7 +103,7 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
         # Type bridge: propagated failures adopt the mapped payload type.
         result_class = cast("type[FlextResultConstructionMixin[U]]", self.__class__)
         return result_class.fail(
-            self.error or "",
+            self.require_error(self),
             error_code=self.error_code,
             error_data=self.error_data,
             exception=self.exception,
@@ -115,7 +115,7 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
         if self.failure:
             try:
                 return self.__class__.fail(
-                    func(self.error or ""),
+                    func(self.require_error(self)),
                     error_code=self.error_code,
                     error_data=self.error_data,
                     exception=self.exception,
@@ -147,7 +147,7 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
             value: T | U = self.value
             return self.__class__.ok(value)
         try:
-            return self.__class__.ok(func(self.error or ""))
+            return self.__class__.ok(func(self.require_error(self)))
         except c.EXC_BROAD_RUNTIME as exc:
             result_class = cast(
                 "type[FlextResultConstructionMixin[T | U]]", self.__class__
@@ -169,7 +169,7 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
         """Side effect on failure; return unchanged."""
         if self.failure:
             try:
-                func(self.error or "")
+                func(self.require_error(self))
             except c.EXC_BROAD_RUNTIME as exc:
                 return cast("Self", self.__class__.fail(str(exc), exception=exc))
         return self
@@ -181,7 +181,7 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
             # Type bridge: propagated failures adopt the converted model type.
             result_class = cast("type[FlextResultConstructionMixin[U]]", self.__class__)
             return result_class.fail(
-                self.error or "",
+                self.require_error(self),
                 error_code=self.error_code,
                 error_data=self.error_data,
                 exception=self.exception,
