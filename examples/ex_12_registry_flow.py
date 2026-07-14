@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples import c
-from examples import m
+from examples.constants import c
+from examples.models import m
 from examples.shared import ExamplesFlextShared
-from examples import u
+from examples.utilities import u
 from flext_core import h, r
 
 from .ex_12_registry_support import (
@@ -17,16 +17,14 @@ from .ex_12_registry_support import (
 )
 
 if TYPE_CHECKING:
-    from examples import p
-    from examples import t
+    from examples.protocols import p
+    from examples.typings import t
 
 
 class Ex12RegistryFlow(ExamplesFlextShared):
     """Registry flow checks for the executable example."""
 
-    def _exercise_create_and_service_methods(
-        self,
-    ) -> t.Pair[p.Registry, p.Dispatcher]:
+    def _exercise_create_and_service_methods(self) -> t.Pair[p.Registry, p.Dispatcher]:
         self.section("create_and_service_methods")
         discovered_value = self.rand_str(4)
         dispatcher = u.build_dispatcher()
@@ -38,16 +36,14 @@ class Ex12RegistryFlow(ExamplesFlextShared):
         self.audit_check(
             "decorated_handler.type",
             type(
-                discovered_handler(m.Examples.CommandA(value=discovered_value)),
+                discovered_handler(m.Examples.CommandA(value=discovered_value))
             ).__name__,
         )
         self.audit_check("execute.success", registry.execute().success)
         return (registry, dispatcher)
 
     def _exercise_registration_and_dispatch(
-        self,
-        registry: p.Registry,
-        dispatcher: p.Dispatcher,
+        self, registry: p.Registry, dispatcher: p.Dispatcher
     ) -> t.Pair[ProtocolHandler, ProtocolHandler]:
         self.section("registration_and_dispatch")
         label_a = self.rand_str(3)
@@ -61,7 +57,7 @@ class Ex12RegistryFlow(ExamplesFlextShared):
         handler_mode = h.create_from_callable(
             lambda msg: f"{callable_prefix}:{msg!r}",
             handler_name=callable_name,
-            mode=c.HandlerType.COMMAND,
+            handler_type=c.HandlerType.COMMAND,
         )
         reg_one = registry.register_handler(as_registry_handler(handler_a))
         reg_dup = registry.register_handler(as_registry_handler(handler_a))
@@ -77,8 +73,7 @@ class Ex12RegistryFlow(ExamplesFlextShared):
         self.audit_check("register_handler.mode.success", reg_mode.success)
         handler_mode_probe = handler_mode.handle(callable_prefix)
         self.audit_check(
-            "create_from_callable.handle_success",
-            handler_mode_probe.success,
+            "create_from_callable.handle_success", handler_mode_probe.success
         )
         batch = registry.register_handlers([
             as_registry_handler(handler_a),
@@ -98,15 +93,13 @@ class Ex12RegistryFlow(ExamplesFlextShared):
         dispatch_a = dispatcher.dispatch(cmd_a)
         self.audit_check("dispatch.a.success", dispatch_a.success)
         self.audit_check(
-            "dispatch.a.value",
-            dispatch_a.value == f"{label_a}:{cmd_a_value}",
+            "dispatch.a.value", dispatch_a.value == f"{label_a}:{cmd_a_value}"
         )
         cmd_b = m.Examples.CommandB(amount=cmd_b_value)
         dispatch_b = dispatcher.dispatch(cmd_b)
         self.audit_check("dispatch.b.success", dispatch_b.success)
         self.audit_check(
-            "dispatch.b.value",
-            dispatch_b.value == f"{label_b}:{cmd_b_value}",
+            "dispatch.b.value", dispatch_b.value == f"{label_b}:{cmd_b_value}"
         )
         return (handler_a, handler_b)
 
@@ -153,8 +146,7 @@ class Ex12RegistryFlow(ExamplesFlextShared):
         self.audit_check("mixin.fail.error", fail_result.error == fail_message)
         self.audit_check("mixin.fail.error_code", fail_result.error_code == fail_code)
         self.audit_check(
-            "ensure_result.raw",
-            r[int].ok(ensured_raw).unwrap_or(0) == ensured_raw,
+            "ensure_result.raw", r[int].ok(ensured_raw).unwrap_or(0) == ensured_raw
         )
         self.audit_check(
             "ensure_result.existing",
@@ -175,6 +167,5 @@ class Ex12RegistryFlow(ExamplesFlextShared):
             u.generate_prefixed_id(prefix, 6).startswith(f"{prefix}_"),
         )
         self.audit_check(
-            "generate_datetime_utc.type",
-            type(u.generate_datetime_utc()).__name__,
+            "generate_datetime_utc.type", type(u.generate_datetime_utc()).__name__
         )

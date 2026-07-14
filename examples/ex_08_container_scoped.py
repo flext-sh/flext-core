@@ -5,7 +5,8 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING
 
-from examples import m, p
+from examples.models import m
+from examples.protocols import p
 from flext_core import FlextSettings
 
 from .ex_08_container_registration import Ex08ContainerRegistration
@@ -22,8 +23,7 @@ class Ex08ContainerScoped(Ex08ContainerRegistration):
     """Scoped container checks for the container example."""
 
     def _exercise_wiring_and_scoped(
-        self,
-        container: p.ContainerLifecycle,
+        self, container: p.ContainerLifecycle
     ) -> p.ContainerLifecycle:
         """Exercise wire_modules and scoped with all supported parameter styles."""
         self.section("wiring_and_scoped")
@@ -38,7 +38,7 @@ class Ex08ContainerScoped(Ex08ContainerRegistration):
         scoped_subproject = container.scope(subproject=subproject_alpha)
         explicit_context = container.context
         explicit_settings = container.settings.clone(
-            timezone=f"scoped/{self.rand_str(8)}",
+            timezone=f"scoped/{self.rand_str(8)}"
         )
         scoped_service_name = f"svc.{self.rand_str(6)}"
         scoped_factory_name = f"svc.{self.rand_str(6)}"
@@ -54,7 +54,7 @@ class Ex08ContainerScoped(Ex08ContainerRegistration):
                 "services": {scoped_service_name: scoped_service_value},
                 "factories": {scoped_factory_name: lambda: scoped_factory_value},
                 "resources": {
-                    scoped_resource_name: lambda: {"res": scoped_resource_value},
+                    scoped_resource_name: lambda: {"res": scoped_resource_value}
                 },
             }),
         )
@@ -67,12 +67,10 @@ class Ex08ContainerScoped(Ex08ContainerRegistration):
             "scoped.default.get_typed_service_matches",
             (
                 scoped_default.resolve(
-                    self._registered_service_name,
-                    type_cls=int,
+                    self._registered_service_name, type_cls=int
                 ).value
                 if scoped_default.resolve(
-                    self._registered_service_name,
-                    type_cls=int,
+                    self._registered_service_name, type_cls=int
                 ).success
                 else -1
             )
@@ -93,20 +91,16 @@ class Ex08ContainerScoped(Ex08ContainerRegistration):
             else "",
         )
         self.audit_check(
-            "scoped.full.uses_explicit_context",
-            scoped_full.context is explicit_context,
+            "scoped.full.uses_explicit_context", scoped_full.context is explicit_context
         )
         self.audit_check(
-            "scoped.full.has_service",
-            scoped_full.has(scoped_service_name),
+            "scoped.full.has_service", scoped_full.has(scoped_service_name)
         )
         self.audit_check(
-            "scoped.full.has_factory",
-            scoped_full.has(scoped_factory_name),
+            "scoped.full.has_factory", scoped_full.has(scoped_factory_name)
         )
         self.audit_check(
-            "scoped.full.has_resource",
-            scoped_full.has(scoped_resource_name),
+            "scoped.full.has_resource", scoped_full.has(scoped_resource_name)
         )
         self.audit_check(
             "scoped.full.get_service_matches",

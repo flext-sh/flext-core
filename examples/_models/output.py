@@ -6,14 +6,12 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from examples import c
+from examples.constants import c
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Mapping,
-    )
+    from collections.abc import Mapping
 
-    from examples import t
+    from examples.typings import t
 
 
 class ExamplesFlextModelsOutput:
@@ -39,11 +37,9 @@ class ExamplesFlextModelsOutput:
         LABEL_VALUE_SEPARATOR: ClassVar[str] = ": "
         RESULT_LINE_PATTERN: ClassVar[t.RegexPattern] = c.PATTERN_EXAMPLE_RESULT_LINE_RE
         TEMPLATE_BY_KIND: ClassVar[Mapping[OutputKind, OutputTemplate]] = (
-            MappingProxyType(
-                {
-                    OutputKind.SUCCESS: OutputTemplate.SUCCESS,
-                    OutputKind.FAIL: OutputTemplate.FAIL,
-                    OutputKind.GENERATED: OutputTemplate.GENERATED,
-                },
-            )
+            MappingProxyType({
+                OutputKind.SUCCESS: OutputTemplate.SUCCESS,
+                OutputKind.FAIL: OutputTemplate.FAIL,
+                OutputKind.GENERATED: OutputTemplate.GENERATED,
+            })
         )

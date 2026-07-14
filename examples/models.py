@@ -18,19 +18,14 @@ from examples._models.ex11 import ExamplesFlextModelsEx11
 from examples._models.ex12 import ExamplesFlextModelsEx12
 from examples._models.ex14 import ExamplesFlextModelsEx14
 from examples._models.output import ExamplesFlextModelsOutput
-from examples._models.shared import (
-    ExamplesFlextSharedHandle,
-    ExamplesFlextSharedPerson,
-)
+from examples._models.shared import ExamplesFlextSharedHandle, ExamplesFlextSharedPerson
 from flext_core import m
 
 if TYPE_CHECKING:
-    from examples import t
+    from examples.typings import t
 
 
-class ExamplesFlextModels(
-    m,
-):
+class ExamplesFlextModels(m):
     """Public examples model facade — composes all _models/* via MRO."""
 
     class Examples(

@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples import m
-from examples import t
-from examples import u
+from examples.models import m
+from examples.typings import t
+from examples.utilities import u
 from flext_core import h, r
 
 if TYPE_CHECKING:
-    from examples import p
+    from examples.protocols import p
 
 
 class ProtocolHandler:
@@ -41,9 +41,7 @@ class ProtocolHandler:
         return self.handle(message)
 
 
-def as_registry_handler(
-    handler: ProtocolHandler,
-) -> t.DispatchableHandler:
+def as_registry_handler(handler: ProtocolHandler) -> t.DispatchableHandler:
     """Adapt protocol handlers to the registry callable contract."""
 
     class _RegistryHandlerCallable:
@@ -63,4 +61,5 @@ def as_registry_handler(
 
 @h.handler(m.Examples.CommandA, priority=3)
 def discovered_handler(message: m.Command) -> m.Command:
+    """Return the discovered command unchanged for registry dispatch."""
     return message

@@ -12,7 +12,7 @@ class ExamplesFlextModelsEx14:
         """Create user command payload."""
 
         user_id: str = u.Field(
-            description="Unique identifier for the user being created.",
+            description="Unique identifier for the user being created."
         )
         name: str = u.Field(description="Full name of the user.")
         email: str = u.Field(description="Email address of the user.")
@@ -21,7 +21,7 @@ class ExamplesFlextModelsEx14:
         """Get user query payload."""
 
         user_id: str = u.Field(
-            description="Unique identifier for the user to retrieve.",
+            description="Unique identifier for the user to retrieve."
         )
 
     class UserDTO(m.Value):

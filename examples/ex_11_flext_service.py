@@ -5,7 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, override
 
-from examples import ExamplesFlextShared, m, p, r, s, t, u
+from examples.models import m
+from examples.protocols import p
+from examples.shared import ExamplesFlextShared
+from examples.typings import t
+from examples.utilities import u
+from flext_core import r, s
 
 if TYPE_CHECKING:
     from flext_core import p as core_p
@@ -19,7 +24,7 @@ class _EchoService(s[str]):
     rule_error: Annotated[
         str,
         u.Field(
-            description="Optional validation error returned by the example service",
+            description="Optional validation error returned by the example service"
         ),
     ] = ""
 
@@ -31,10 +36,7 @@ class _EchoService(s[str]):
         return r[str].ok(f"echo:{self.payload.text}")
 
     def service_info(self) -> t.JsonMapping:
-        return {
-            "service": type(self).__name__,
-            "payload": self.payload.text,
-        }
+        return {"service": type(self).__name__, "payload": self.payload.text}
 
     def valid(self) -> bool:
         validation: core_p.SuccessCheckable = self.validate_business_rules()
@@ -74,8 +76,7 @@ class _ExampleServiceGolden(ExamplesFlextShared):
         service_runtime = u.build_service_runtime(service)
         self.audit_check("execute.unwrap", execute_result.unwrap_or(""))
         self.audit_check(
-            "execute.unwrap.matches",
-            execute_result.unwrap_or("") == "echo:ok",
+            "execute.unwrap.matches", execute_result.unwrap_or("") == "echo:ok"
         )
         self.audit_check("runtime.type", type(service_runtime).__name__)
         self.audit_check("context.type", type(service.context).__name__)
@@ -87,12 +88,10 @@ class _ExampleServiceGolden(ExamplesFlextShared):
         )
         self.audit_check("valid.default", service.valid())
         self.audit_check(
-            "validate_business_rules.override.success",
-            failed_validation.success,
+            "validate_business_rules.override.success", failed_validation.success
         )
         self.audit_check(
-            "validate_business_rules.override.error",
-            failed_validation.error,
+            "validate_business_rules.override.error", failed_validation.error
         )
         self.audit_check("valid.override", validation_failure.valid())
 
@@ -101,8 +100,7 @@ class _ExampleServiceGolden(ExamplesFlextShared):
         runtime_with_override = u.build_service_runtime(service, subproject="examples")
         info = service.service_info()
         self.audit_check(
-            "create_runtime.default.context",
-            type(runtime_default.context).__name__,
+            "create_runtime.default.context", type(runtime_default.context).__name__
         )
         self.audit_check(
             "create_runtime.full.container",
@@ -120,10 +118,7 @@ class _ExampleServiceGolden(ExamplesFlextShared):
         failed_execute = validation_failure.execute()
         self.audit_check("ok.unwrap", ok_result.unwrap_or(""))
         self.audit_check("fail.error", failed_execute.failure)
-        self.audit_check(
-            "fail.error.message",
-            failed_execute.error,
-        )
+        self.audit_check("fail.error.message", failed_execute.error)
 
 
 if __name__ == "__main__":
