@@ -57,7 +57,7 @@ class FlextProtocolsBase:
             by_alias: bool | None = None,
             exclude_defaults: bool = False,
             exclude_none: bool = False,
-        ) -> t.MappingKV[str, t.JsonPayload | None]:
+        ) -> t.JsonDict:
             """Dump the validated model at an external serialization boundary."""
             ...
 
