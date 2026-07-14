@@ -30,7 +30,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
     # canonical Result contract; the concrete construction mixin stays private.
 
     @staticmethod
-    def require_error[V](source: p.ResultLike[V]) -> str:
+    def require_error[V](source: p.ResultObservable[V]) -> str:
         """Return a failure message or raise when the Result invariant is broken."""
         error = source.error
         if not error:
@@ -39,7 +39,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
 
     @classmethod
     def from_failure[V](
-        cls: type[FlextResultConstructionMixin[T]], source: p.ResultLike[V]
+        cls: type[FlextResultConstructionMixin[T]], source: p.ResultObservable[V]
     ) -> p.Result[T]:
         """Rebind one failure payload type while preserving its full error state."""
         if source.success:

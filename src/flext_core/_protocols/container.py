@@ -6,13 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ._container_parts.flextprotocolscontainer_part_03 import (
-    FlextProtocolsContainer as FlextProtocolsContainerPartFinal,
-)
+from ._container import FlextProtocolsContainerOptions, FlextProtocolsContainerRuntime
 
 
-class FlextProtocolsContainer(FlextProtocolsContainerPartFinal):
-    """Public facade for FlextProtocolsContainer."""
+# mro-wkii.17.26 (codex): compose focused contracts and retire numbered parts.
+class FlextProtocolsContainer(
+    FlextProtocolsContainerOptions, FlextProtocolsContainerRuntime
+):
+    """Dependency injection protocol facade."""
 
 
-__all__: list[str] = ["FlextProtocolsContainer"]
+__all__: tuple[str, ...] = ("FlextProtocolsContainer",)
