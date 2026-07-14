@@ -6,15 +6,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Annotated
 
-from flext_core import (
-    FlextConstants as c,
-    FlextExceptions as e,
-    FlextModels as m,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextRuntime,
-    FlextTypes as t,
-)
+from flext_core import t, p, m, r, FlextRuntime
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._utilities.mapper_access import FlextUtilitiesMapperAccess
@@ -41,32 +33,24 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
     def _extract_fail_or_default(
         msg: str, *, default: t.JsonPayload | None, required: bool
     ) -> p.Result[t.JsonPayload]:
-        """Return fail (required) or ok(default) / fail (no default) for extract paths."""
-        if required:
-            return r[t.JsonPayload].fail_op("extract required path", msg)
-        if default is None:
-            return r[t.JsonPayload].fail_op(
-                "extract path default",
-                e.render_template(
-                    c.ERR_TEMPLATE_MESSAGE_AND_DEFAULT_IS_NONE, message=msg
-                ),
-            )
-        return r[t.JsonPayload].ok(default)
+        """Return required failure, configured default, or missing-default failure."""
+        if not required and default is not None:
+            return r[t.JsonPayload].ok(default)
+        return r[t.JsonPayload].fail_op("extract path", msg)
 
     @staticmethod
     def _extract_resolve_result(
-        result: p.Result[t.JsonPayload | None],
+        result: p.Result[t.JsonPayload],
         *,
-        failure_message: str,
         default: t.JsonPayload | None,
         required: bool,
     ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
         """Resolve extractor step result into next value or early fallback result."""
         if result.failure:
-            return None, FlextUtilitiesMapperExtract._extract_fail_or_default(
-                failure_message, default=default, required=required
-            )
-        return result.unwrap_or(None), None
+            if not required and default is not None:
+                return None, r[t.JsonPayload].ok(default)
+            return None, r[t.JsonPayload].from_failure(result)
+        return result.unwrap(), None
 
     @staticmethod
     def _extract_resolve_path_part(
@@ -79,7 +63,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         *,
         context: ExtractResolvePathPartContext,
     ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
-        """Resolve one path segment; returns (next_current, None) or (None, early_result)."""
+        """Resolve one path segment and return its cursor or an early result."""
         if "[" in part and part.endswith("]"):
             bracket_pos = part.index("[")
             array_match = part[bracket_pos + 1 : -1]
@@ -89,14 +73,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
 
         get_result = FlextUtilitiesMapperExtract._extract_get_value(current, key_part)
         next_val, early_result = FlextUtilitiesMapperExtract._extract_resolve_result(
-            get_result,
-            failure_message=e.render_template(
-                c.ERR_TEMPLATE_KEY_NOT_FOUND_AT_PATH,
-                key=key_part,
-                path=context.path_context,
-            ),
-            default=context.default,
-            required=context.required,
+            get_result, default=context.default, required=context.required
         )
         if early_result is not None:
             return None, early_result
@@ -113,14 +90,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
             )
             next_val, early_result = (
                 FlextUtilitiesMapperExtract._extract_resolve_result(
-                    index_result,
-                    failure_message=e.render_template(
-                        c.ERR_TEMPLATE_ARRAY_ERROR_AT_KEY,
-                        key=key_part,
-                        error=index_result.error,
-                    ),
-                    default=context.default,
-                    required=context.required,
+                    index_result, default=context.default, required=context.required
                 )
             )
             if early_result is not None:

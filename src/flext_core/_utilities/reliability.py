@@ -33,10 +33,11 @@ class FlextUtilitiesReliability:
         """Configuration options for retry logic."""
 
         max_attempts: Annotated[
-            int | None, Field(description="Maximum number of retry attempts")
+            int | None, Field(ge=1, description="Maximum number of retry attempts")
         ] = None
         delay_seconds: Annotated[
-            float | None, Field(description="Initial delay between retries in seconds")
+            float | None,
+            Field(ge=0, description="Initial delay between retries in seconds"),
         ] = None
 
     _RETRYABLE_EXCEPTIONS: _HandledExceptions = (
@@ -125,7 +126,8 @@ class FlextUtilitiesReliability:
             options, kwargs, FlextUtilitiesReliability.RetryOptions
         )
         if opts_res.failure:
-            return r[TResult].fail(opts_res.error)
+            # Preserve the validated options failure metadata for every consumer.
+            return r[TResult].from_failure(opts_res)
         opts = opts_res.value
         max_att = (
             opts.max_attempts if opts.max_attempts is not None else c.MAX_RETRY_ATTEMPTS
@@ -135,19 +137,15 @@ class FlextUtilitiesReliability:
             if opts.delay_seconds is not None
             else c.DEFAULT_RETRY_DELAY_SECONDS
         )
-        if max_att < c.DEFAULT_RETRY_DELAY_SECONDS:
-            return r[TResult].fail(
-                f"Max attempts must be at least {c.DEFAULT_RETRY_DELAY_SECONDS}"
-            )
-        last_error: str | None = None
+        last_failure: p.Result[TResult] | None = None
         for attempt in range(max_att):
             try:
                 result = operation()
-                if result.success:
-                    return result
-                last_error = r.require_error(result)
-            except FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS as e:
-                last_error = str(e)
+            except FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS as exc:
+                result = r[TResult].fail_op("execute retry operation", exc)
+            if result.success:
+                return result
+            last_failure = result
             if attempt < max_att - 1:
                 current_delay = min(
                     delay_sec * c.DEFAULT_BACKOFF_MULTIPLIER**attempt,
@@ -155,8 +153,14 @@ class FlextUtilitiesReliability:
                 )
                 if current_delay > 0:
                     time.sleep(current_delay)
-        return r[TResult].fail(
-            f"Operation failed after {max_att} attempts: {last_error}"
+        if last_failure is None:
+            return r[TResult].fail(c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT)
+        return (
+            r[TResult]
+            .from_failure(last_failure)
+            .map_error(
+                lambda error: f"Operation failed after {max_att} attempts: {error}"
+            )
         )
 
 

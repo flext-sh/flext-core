@@ -9,18 +9,12 @@ from typing import Final, override
 
 from pydantic import ValidationError as _PydanticValidationError
 
-# NOTE (multi-agent): mro-i6nq.12 — inlined the 5 _errors_parts responsibility
-# mixins (Messages/RuntimeExceptions/ValidationExceptions/DomainParser/
-# RuntimeSettings) into this facade module, composed by MRO into FlextConstantsErrors.
-# Definition order 01→05 preserved (DomainParser references Messages at class-body time).
-
 
 class FlextConstantsErrorsMessages:
     """Template, domain, handler, and context error constants."""
 
     ERR_TEMPLATE_FAILED_WITH_ERROR: Final[str] = "Failed to {operation}: {error}"
     ERR_TEMPLATE_KEY_NOT_FOUND: Final[str] = "Key '{key}' not found"
-    ERR_TEMPLATE_KEY_NOT_FOUND_AT_PATH: Final[str] = "Key '{key}' not found at '{path}'"
     ERR_TEMPLATE_INDEX_OUT_OF_RANGE: Final[str] = "Index {index} out of range"
     ERR_TEMPLATE_INVALID_INDEX: Final[str] = "Invalid index {index}"
     ERR_TEMPLATE_MISSING_VALUE: Final[str] = (
@@ -29,10 +23,6 @@ class FlextConstantsErrorsMessages:
     ERR_TEMPLATE_VALIDATION_FAILED_FOR_FIELD: Final[str] = (
         "Validation failed for {field}"
     )
-    ERR_TEMPLATE_MESSAGE_AND_DEFAULT_IS_NONE: Final[str] = (
-        "{message} and default is None"
-    )
-    ERR_TEMPLATE_ARRAY_ERROR_AT_KEY: Final[str] = "Array error at '{key}': {error}"
     ERR_TEMPLATE_PATH_IS_NONE: Final[str] = "Path '{path}' is None"
     ERR_TEMPLATE_EXTRACTED_VALUE_IS_NONE: Final[str] = "Extracted value is None"
     ERR_TEMPLATE_EXTRACT_FAILED: Final[str] = "Extract failed: {error}"
@@ -431,7 +421,8 @@ class FlextConstantsErrorsDomainParser:
     ERR_SERVICE_REGISTRATION_FAILED: Final[str] = "Service registration failed"
     ERR_SERVICE_EXECUTION_FAILED: Final[str] = "Service execution failed"
     ERR_TEXT_NONE_NOT_ALLOWED: Final[str] = (
-        "Text cannot be None. Use explicit empty string '' or handle None in calling code."
+        "Text cannot be None. Use explicit empty string '' or handle None "
+        "in calling code."
     )
     ERR_TEXT_EMPTY_NOT_ALLOWED: Final[str] = (
         "Text cannot be empty or whitespace-only. Use explicit non-empty string."
@@ -580,7 +571,8 @@ class FlextConstantsErrorsRuntimeSettings:
         "Unsupported generator kind: {kind}"
     )
     ERR_RUNTIME_CONTAINER_NOT_INITIALIZED: Final[str] = (
-        "Container not initialized. Call FlextContext.configure_container(container) before using resolve_container()."
+        "Container not initialized. Call FlextContext.configure_container(container) "
+        "before using resolve_container()."
     )
 
     # --- Exceptions / Error handling ---
@@ -608,7 +600,8 @@ class FlextConstantsErrorsRuntimeSettings:
         "settings_class is required when decorator=False"
     )
     ERR_SETTINGS_NAMESPACE_TYPE_MISMATCH: Final[str] = (
-        "Namespace '{namespace}' settings instance {instance_class} is not instance of {expected_type}"
+        "Namespace '{namespace}' settings instance {instance_class} is not instance "
+        "of {expected_type}"
     )
 
 
