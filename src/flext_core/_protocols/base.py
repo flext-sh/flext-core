@@ -54,10 +54,7 @@ class FlextProtocolsBase:
             self,
             *,
             mode: str = "python",
-            include: t.JsonValue | None = None,
-            exclude: t.JsonValue | None = None,
             by_alias: bool | None = None,
-            exclude_unset: bool = False,
             exclude_defaults: bool = False,
             exclude_none: bool = False,
         ) -> t.MappingKV[str, t.JsonPayload | None]:
