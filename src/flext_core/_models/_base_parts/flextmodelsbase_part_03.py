@@ -15,7 +15,6 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, ClassVar, Self
 
-# mro-wkii.17.26 (codex): internal static init must not re-enter the root lazy ABI.
 from flext_core.constants import FlextConstants as c
 from flext_core._models._base_parts.flextmodelsbase_part_02 import (
     FlextModelsBase as FlextModelsBasePart02,

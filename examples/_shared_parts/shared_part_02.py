@@ -6,18 +6,14 @@ import sys
 from typing import cast
 
 from examples._shared_parts.shared_part_01 import ExamplesFlextSharedBase
-from examples import m
+from examples.models import m
 from flext_core import p, r, t
 
 
 class ExamplesFlextShared(ExamplesFlextSharedBase):
     """Base class for golden-file example scripts."""
 
-    def audit_check(
-        self,
-        label: str,
-        value: object | None,
-    ) -> None:
+    def audit_check(self, label: str, value: object | None) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         separator = m.Examples.LABEL_VALUE_SEPARATOR
         self._results.append(f"{label}{separator}{self.ser(value)}")
@@ -43,13 +39,15 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
         if expected_path.exists():
             expected = expected_path.read_text(encoding="utf-8")
             if actual == expected:
-                pass_template = m.Examples.TEMPLATE_BY_KIND[m.Examples.OutputKind.PASS]
+                pass_template = m.Examples.TEMPLATE_BY_KIND[
+                    m.Examples.OutputKind.SUCCESS
+                ]
                 _ = sys.stdout.write(
                     pass_template.format(
-                        kind=m.Examples.OutputKind.PASS,
+                        kind=m.Examples.OutputKind.SUCCESS,
                         stem=self.caller_file.stem,
                         checks=checks,
-                    ),
+                    )
                 )
                 return
             actual_path = self.caller_file.with_suffix(".actual")
@@ -61,7 +59,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
                     stem=self.caller_file.stem,
                     expected_name=expected_path.name,
                     actual_name=actual_path.name,
-                ),
+                )
             )
             sys.exit(1)
         _ = expected_path.write_text(actual, encoding="utf-8")
@@ -73,7 +71,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
                 kind=m.Examples.OutputKind.GENERATED,
                 expected_name=expected_path.name,
                 checks=checks,
-            ),
+            )
         )
 
     class Person(m.Examples.Person):
@@ -94,9 +92,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
             return f"{type(exc).__name__}:{exc}"
 
     @staticmethod
-    def bind_status(
-        value: t.JsonValue,
-    ) -> t.JsonValue:
+    def bind_status(value: t.JsonValue) -> t.JsonValue:
         """Return a summary ConfigMap when *value* is a ``r``."""
         return value
 

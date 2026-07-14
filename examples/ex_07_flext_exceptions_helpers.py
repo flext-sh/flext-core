@@ -15,9 +15,7 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
         self.section("subclasses")
         try:
             raise e.ValidationError(
-                m.Examples.ErrorMessages.INVALID,
-                field="email",
-                value="bad",
+                m.Examples.ErrorMessages.INVALID, field="email", value="bad"
             )
         except e.ValidationError as exc:
             self.audit_check("ValidationError.field", exc.field or "")
@@ -31,15 +29,11 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
         except e.ConfigurationError as exc:
             self.audit_check("ConfigurationError.config_key", exc.config_key or "")
             self.audit_check(
-                "ConfigurationError.config_source",
-                exc.config_source or "",
+                "ConfigurationError.config_source", exc.config_source or ""
             )
         try:
             raise e.ConnectionError(
-                m.Examples.ErrorMessages.DOWN,
-                host="127.0.0.1",
-                port=5432,
-                timeout=3.5,
+                m.Examples.ErrorMessages.DOWN, host="127.0.0.1", port=5432, timeout=3.5
             )
         except e.ConnectionError as exc:
             self.audit_check("ConnectionError.host", exc.host or "")
@@ -47,18 +41,14 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
             self.audit_check("ConnectionError.timeout", exc.timeout or 0.0)
         try:
             raise e.TimeoutError(
-                m.Examples.ErrorMessages.LATE,
-                timeout_seconds=2.0,
-                operation="sync",
+                m.Examples.ErrorMessages.LATE, timeout_seconds=2.0, operation="sync"
             )
         except e.TimeoutError as exc:
             self.audit_check("TimeoutError.timeout_seconds", exc.timeout_seconds or 0.0)
             self.audit_check("TimeoutError.operation", exc.operation or "")
         try:
             raise e.AuthenticationError(
-                m.Examples.ErrorMessages.AUTH_FAIL,
-                auth_method="token",
-                user_id="u-1",
+                m.Examples.ErrorMessages.AUTH_FAIL, auth_method="token", user_id="u-1"
             )
         except e.AuthenticationError as exc:
             self.audit_check("AuthenticationError.auth_method", exc.auth_method or "")
@@ -115,18 +105,14 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
         except e.CircuitBreakerError as exc:
             self.audit_check("CircuitBreakerError.service_name", exc.service_name or "")
             self.audit_check(
-                "CircuitBreakerError.failure_count",
-                exc.failure_count or 0,
+                "CircuitBreakerError.failure_count", exc.failure_count or 0
             )
             self.audit_check(
-                "CircuitBreakerError.reset_timeout",
-                exc.reset_timeout or 0.0,
+                "CircuitBreakerError.reset_timeout", exc.reset_timeout or 0.0
             )
         try:
             raise e.TypeError(
-                m.Examples.ErrorMessages.WRONG_TYPE,
-                expected_type=str,
-                actual_type=int,
+                m.Examples.ErrorMessages.WRONG_TYPE, expected_type=str, actual_type=int
             )
         except e.TypeError as exc:
             self.audit_check(
@@ -139,9 +125,7 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
             )
         try:
             raise e.OperationError(
-                m.Examples.ErrorMessages.FAILED_OP,
-                operation="publish",
-                reason="quota",
+                m.Examples.ErrorMessages.FAILED_OP, operation="publish", reason="quota"
             )
         except e.OperationError as exc:
             self.audit_check("OperationError.operation", exc.operation or "")
@@ -154,8 +138,7 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
             )
         except e.AttributeAccessError as exc:
             self.audit_check(
-                "AttributeAccessError.attribute_name",
-                exc.attribute_name or "",
+                "AttributeAccessError.attribute_name", exc.attribute_name or ""
             )
             self.audit_check(
                 "AttributeAccessError.attribute_context",

@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples import c
-from examples import m
+from examples.constants import c
+from examples.models import m
 from flext_core import r
 
 from .ex_12_registry_flow import Ex12RegistryFlow
 from .ex_12_registry_support import ProtocolHandler, as_registry_handler
 
 if TYPE_CHECKING:
-    from examples import p
+    from examples.protocols import p
 
 
 class Ex12RegistryPlugins(Ex12RegistryFlow):
@@ -83,8 +83,7 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
         plugin_list = registry.list_plugins(plugin_ns)
         plugin_unreg_ok = registry.unregister_plugin(plugin_ns, plugin_name_a)
         plugin_unreg_missing = registry.unregister_plugin(
-            plugin_ns,
-            plugin_unreg_missing_name,
+            plugin_ns, plugin_unreg_missing_name
         )
         self.audit_check("fetch_plugin.ok", plugin_fetch_ok.value == plugin_value_a)
         self.audit_check("fetch_plugin.missing", plugin_fetch_missing.failure)
@@ -107,43 +106,30 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
             scope=c.RegistrationScope.CLASS,
         )
         class_empty = registry.register_plugin(
-            class_ns,
-            "",
-            class_plugin_value,
-            scope=c.RegistrationScope.CLASS,
+            class_ns, "", class_plugin_value, scope=c.RegistrationScope.CLASS
         )
         class_fetch_ok = registry.fetch_plugin(
-            class_ns,
-            class_plugin_name,
-            scope=c.RegistrationScope.CLASS,
+            class_ns, class_plugin_name, scope=c.RegistrationScope.CLASS
         )
         class_fetch_missing = registry.fetch_plugin(
-            class_ns,
-            class_missing_name,
-            scope=c.RegistrationScope.CLASS,
+            class_ns, class_missing_name, scope=c.RegistrationScope.CLASS
         )
         class_list = registry.list_plugins(class_ns, scope=c.RegistrationScope.CLASS)
         class_unreg_ok = registry.unregister_plugin(
-            class_ns,
-            class_plugin_name,
-            scope=c.RegistrationScope.CLASS,
+            class_ns, class_plugin_name, scope=c.RegistrationScope.CLASS
         )
         class_unreg_missing = registry.unregister_plugin(
-            class_ns,
-            class_unreg_missing_name,
-            scope=c.RegistrationScope.CLASS,
+            class_ns, class_unreg_missing_name, scope=c.RegistrationScope.CLASS
         )
         self.audit_check("register_class_plugin.ok", class_ok.success)
         self.audit_check("register_class_plugin.dup", class_dup.success)
         self.audit_check("register_class_plugin.empty_name", class_empty.failure)
         self.audit_check(
-            "fetch_class_plugin.ok",
-            class_fetch_ok.value == class_plugin_value,
+            "fetch_class_plugin.ok", class_fetch_ok.value == class_plugin_value
         )
         self.audit_check("fetch_class_plugin.missing", class_fetch_missing.failure)
         self.audit_check(
-            "list_class_plugins.auth",
-            class_list.value if class_list.success else [],
+            "list_class_plugins.auth", class_list.value if class_list.success else []
         )
         self.audit_check("unregister_class_plugin.ok", class_unreg_ok.success)
         self.audit_check("unregister_class_plugin.missing", class_unreg_missing.failure)
@@ -164,10 +150,7 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
             svc_dict_name,
             m.Metadata(attributes={"team": team_value, "version": version_value}),
         )
-        reg_meta_model = registry.register(
-            svc_meta_name,
-            meta_model,
-        )
+        reg_meta_model = registry.register(svc_meta_name, meta_model)
         reg_bad = registry.register("", bad_value)
         self.audit_check("register.service.plain", reg_plain.success)
         self.audit_check("register.service.meta_dict", reg_meta_dict.success)

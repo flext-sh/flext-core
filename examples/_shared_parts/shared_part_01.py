@@ -6,9 +6,9 @@ import hashlib
 import string
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from examples import m
+from examples.models import m
 from flext_core import r, u
 
 if TYPE_CHECKING:
@@ -19,6 +19,7 @@ class ExamplesFlextSharedBase(m.BaseModel):
     """Base state and deterministic helpers for golden-file examples."""
 
     SEED: int = 42
+    _BOOL_THRESHOLD: ClassVar[float] = 0.5
 
     caller_file: Path
     _results: MutableSequence[str] = u.PrivateAttr(default_factory=list)
@@ -43,12 +44,12 @@ class ExamplesFlextSharedBase(m.BaseModel):
 
     def rand_bool(self) -> bool:
         """Return a deterministic pseudo-random boolean."""
-        return self._next_unit_float() >= 0.5
+        return self._next_unit_float() >= self._BOOL_THRESHOLD
 
     def rand_dict(self, n: int = 3) -> m.ConfigMap:
         """Return a ConfigMap with ``n`` random string keys to int values."""
         return m.ConfigMap(
-            root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)},
+            root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)}
         )
 
     def rand_float(self, lo: float = -1000.0, hi: float = 1000.0) -> float:
@@ -75,10 +76,7 @@ class ExamplesFlextSharedBase(m.BaseModel):
             self._results.append("")
         self._results.append(f"[{name}]")
 
-    def ser(
-        self,
-        v: object | None,
-    ) -> str:
+    def ser(self, v: object | None) -> str:
         """Deterministic, human-readable serialisation for golden-file output."""
         if v is None:
             return "None"

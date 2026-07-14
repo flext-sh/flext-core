@@ -3,17 +3,4 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
-
-if TYPE_CHECKING:
-    from flext_core._utilities._mapper_access_parts.mapper_access_part_02 import (
-        FlextUtilitiesMapperAccess as FlextUtilitiesMapperAccess,
-    )
-_LAZY_IMPORTS = build_lazy_import_map({
-    ".mapper_access_part_02": ("FlextUtilitiesMapperAccess",)
-})
-
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
+__all__: tuple[str, ...] = ()

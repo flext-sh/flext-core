@@ -2,8 +2,8 @@
 
 This module is loaded automatically via the ``flext_core_enforcement`` pytest11
 entry-point. It registers the runtime-warning contribution with the central
-``flext_tests`` enforcement dispatcher so that ``FlextMroViolation`` and
-``FlextSmellViolation`` warnings are tracked during test sessions.
+``flext_tests`` enforcement dispatcher so that ``e.MroViolation`` and
+``e.SmellViolation`` warnings are tracked during test sessions.
 """
 
 from __future__ import annotations
