@@ -20,7 +20,7 @@ from typing import Annotated, ClassVar, override
 
 from pydantic import ConfigDict
 
-from flext_core import FlextConstants as c
+from flext_core.constants import FlextConstants as c
 from flext_core._models._base_parts.flextmodelsbase_part_01 import (
     FlextModelsBase as FlextModelsBasePart01,
 )

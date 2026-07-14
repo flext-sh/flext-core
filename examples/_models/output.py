@@ -25,14 +25,14 @@ class ExamplesFlextModelsOutput:
         class OutputKind(StrEnum):
             """Supported output result kinds."""
 
-            PASS = "PASS"
+            SUCCESS = "PASS"
             FAIL = "FAIL"
             GENERATED = "GENERATED"
 
         class OutputTemplate(StrEnum):
             """Canonical output templates for example verification."""
 
-            PASS = "{kind}: {stem} ({checks} checks)\\n"
+            SUCCESS = "{kind}: {stem} ({checks} checks)\\n"
             FAIL = "{kind}: {stem} — diff {expected_name} {actual_name}\\n"
             GENERATED = "{kind}: {expected_name} ({checks} checks)\\n"
 
@@ -41,7 +41,7 @@ class ExamplesFlextModelsOutput:
         TEMPLATE_BY_KIND: ClassVar[Mapping[OutputKind, OutputTemplate]] = (
             MappingProxyType(
                 {
-                    OutputKind.PASS: OutputTemplate.PASS,
+                    OutputKind.SUCCESS: OutputTemplate.SUCCESS,
                     OutputKind.FAIL: OutputTemplate.FAIL,
                     OutputKind.GENERATED: OutputTemplate.GENERATED,
                 },

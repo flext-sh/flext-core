@@ -43,10 +43,12 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
         if expected_path.exists():
             expected = expected_path.read_text(encoding="utf-8")
             if actual == expected:
-                pass_template = m.Examples.TEMPLATE_BY_KIND[m.Examples.OutputKind.PASS]
+                pass_template = m.Examples.TEMPLATE_BY_KIND[
+                    m.Examples.OutputKind.SUCCESS
+                ]
                 _ = sys.stdout.write(
                     pass_template.format(
-                        kind=m.Examples.OutputKind.PASS,
+                        kind=m.Examples.OutputKind.SUCCESS,
                         stem=self.caller_file.stem,
                         checks=checks,
                     ),

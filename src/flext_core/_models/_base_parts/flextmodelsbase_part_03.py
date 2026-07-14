@@ -15,7 +15,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, ClassVar, Self
 
-from flext_core import FlextConstants as c
+from flext_core.constants import FlextConstants as c
 from flext_core._models._base_parts.flextmodelsbase_part_02 import (
     FlextModelsBase as FlextModelsBasePart02,
 )

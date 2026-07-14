@@ -2,8 +2,8 @@
 
 This module is loaded automatically via the ``flext_core_enforcement`` pytest11
 entry-point. It registers the runtime-warning contribution with the central
-``flext_tests`` enforcement dispatcher so that ``FlextMroViolation`` and
-``FlextSmellViolation`` warnings are tracked during test sessions.
+``flext_tests`` enforcement dispatcher so that ``e.MroViolation`` and
+``e.SmellViolation`` warnings are tracked during test sessions.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from flext_tests.enforcement import (
     register as register_enforcement_contribution,
 )
 
-from flext_core import FlextMroViolation, FlextSmellViolation
+from flext_core import e
 
 
 class FlextCoreEnforcementPytestPlugin:
@@ -37,7 +37,7 @@ class FlextCoreEnforcementPytestPlugin:
         """Return the registry contribution for the flext-tests dispatcher."""
         return EnforcementContribution(
             source_kind=cls.source_kind(),
-            warning_categories=(FlextMroViolation, FlextSmellViolation),
+            warning_categories=(e.MroViolation, e.SmellViolation),
         )
 
     @classmethod
