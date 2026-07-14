@@ -14,7 +14,7 @@ import inspect
 import sys
 import threading
 from collections.abc import Sequence
-from typing import ClassVar, Self, overload, override
+from typing import ClassVar, Self, TypeGuard, overload, override
 
 from dependency_injector import containers as di_containers
 

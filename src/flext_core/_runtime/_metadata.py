@@ -154,10 +154,10 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
     @classmethod
     def normalize_to_json_mapping(
         cls, value: tb.MappingKV[str, ts.JsonPayload | tb.Scalar]
-    ) -> tb.JsonMapping:
-        """Normalize a mapping to a validated ``JsonMapping``."""
+    ) -> tb.JsonDict:
+        """Normalize a mapping to a concrete validated ``JsonDict``."""
         return dict(
-            tta.json_mapping_adapter().validate_python(
+            tta.json_dict_adapter().validate_python(
                 cls._normalize_value(value, active_ids=set(), path="$")
             )
         )

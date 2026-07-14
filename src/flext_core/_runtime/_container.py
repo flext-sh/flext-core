@@ -132,9 +132,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         if val is None:
             normalized_data = ""
         elif isinstance(val, (mc.ConfigMap, mc.Dict)):
-            normalized_data = FlextRuntimeContainer._normalize_dict_entries(
-                list(val.root.items())
-            )
+            normalized_data = FlextRuntimeContainer.normalize_to_json_mapping(val.root)
         elif isinstance(val, mc.ObjectList):
             normalized_data = list(
                 tta.json_list_adapter().validate_python([
@@ -148,9 +146,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         elif ugc.scalar(val):
             normalized_data = FlextRuntimeContainer.normalize_to_json_value(val)
         elif isinstance(val, Mapping):
-            normalized_data = FlextRuntimeContainer._normalize_dict_entries(
-                list(val.items())
-            )
+            normalized_data = FlextRuntimeContainer.normalize_to_json_mapping(val)
         elif isinstance(val, Sequence) and not isinstance(val, tb.STR_BYTES_TYPES):
             normalized_data = list(
                 tta.json_list_adapter().validate_python([
