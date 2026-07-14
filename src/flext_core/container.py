@@ -14,21 +14,17 @@ import inspect
 import sys
 import threading
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, ClassVar, Self, overload, override
+from typing import ClassVar, Self, overload, override
 
 from dependency_injector import containers as di_containers
 
-# NOTE (multi-agent): mro-i6nq.12 — consolidated _container_parts/part_01..05 (one
-# FlextContainer class split across a numbered MRO chain) into this single facade
-# module; final class is concrete (ABC dropped, matching the former part_05).
 from flext_core import c, e, m, p, r, t, u
-from flext_core._settings import FlextSettings
-from flext_core.context import FlextContext
-from flext_core.loggings import FlextUtilitiesLogging
+from flext_core import FlextSettings
+from flext_core import FlextContext
+from flext_core import FlextUtilitiesLogging
 
-if TYPE_CHECKING:
-    from collections.abc import Callable, MutableMapping
-    from types import FrameType, ModuleType
+from collections.abc import Callable, MutableMapping
+from types import FrameType, ModuleType
 
 
 class FlextContainer(p.Container):
@@ -133,8 +129,9 @@ class FlextContainer(p.Container):
                 e.fail_operation(f"resolve {kind}", exc)
             )
         if type_cls is not None:
-            if isinstance(resolved, type_cls):
-                return r[T].ok(resolved)
+            if u.instance_of(resolved, type_cls):
+                resolved_result: p.Result[T] = r[T].ok(resolved)
+                return resolved_result
             return r[T].from_result(
                 e.fail_type_mismatch(type_cls.__name__, type(resolved).__name__)
             )
@@ -173,7 +170,7 @@ class FlextContainer(p.Container):
                 result: p.Result[T] | p.Result[t.RegisterableService] = r[
                     t.RegisterableService
                 ].ok(service)
-            elif isinstance(service, type_cls):
+            elif u.instance_of(service, type_cls):
                 result = r[T].ok(service)
             else:
                 result = r[T].from_result(

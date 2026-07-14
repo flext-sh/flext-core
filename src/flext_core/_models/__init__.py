@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING
 from flext_core._models.__unit__ import (
     CHILD_MODULE_PATHS as _CHILD_MODULE_PATHS,
     EXCLUDED_LAZY_NAMES as _EXCLUDED_LAZY_NAMES,
-    LAZY_ALIAS_GROUPS as _LAZY_ALIAS_GROUPS,
-    LAZY_MODULES as _LAZY_MODULES,
     PUBLIC_EXPORTS as _PUBLIC_EXPORTS,
 )
 from flext_core.lazy import (

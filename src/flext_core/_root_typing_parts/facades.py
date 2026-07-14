@@ -13,7 +13,7 @@ from typing import Final
 from flext_core._settings import FlextSettings, settings
 from flext_core.constants import FlextConstants, c
 from flext_core.container import FlextContainer
-from flext_core.context import FlextContext
+from flext_core import FlextContext
 from flext_core.decorators import FlextDecorators, d
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.exceptions import FlextExceptions, e
@@ -24,7 +24,7 @@ from flext_core.lazy import (
     lazy,
     normalize_lazy_imports,
 )
-from flext_core.loggings import FlextUtilitiesLogging
+from flext_core import FlextUtilitiesLogging
 from flext_core.mixins import FlextMixins, x
 from flext_core.models import FlextModels, m
 from flext_core.protocols import FlextProtocols, p

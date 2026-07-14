@@ -157,8 +157,9 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def instance_of[T](value: t.GuardInput | T, type_cls: type[T]) -> bool:
-        """Check if value is instance of type class (handles generics)."""
+    # mro-wkii.17.26 (codex): expose the runtime check as a typed narrowing.
+    def instance_of[T](value: t.GuardInput | T, type_cls: type[T]) -> TypeIs[T]:
+        """Narrow a value to the requested runtime type, including generics."""
         return isinstance(value, getattr(type_cls, "__origin__", None) or type_cls)
 
     @staticmethod
