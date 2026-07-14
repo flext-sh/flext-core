@@ -58,4 +58,10 @@ class FlextConstantsEnforcement(
     """Constants governing Pydantic v2 enforcement behavior."""
 
 
-__all__: list[str] = ["FlextConstantsEnforcement", "FlextMroViolation"]
+# mro-pulj (codex): the declaring module owns every supported root import;
+# generated registries must not be required to publish this violation model.
+__all__: list[str] = [
+    "FlextConstantsEnforcement",
+    "FlextMroViolation",
+    "FlextSmellViolation",
+]
