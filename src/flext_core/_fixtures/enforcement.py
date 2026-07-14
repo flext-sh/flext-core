@@ -13,7 +13,7 @@ from flext_tests.enforcement import (
     register as register_enforcement_contribution,
 )
 
-from flext_core import FlextMroViolation, FlextSmellViolation
+from flext_core import e
 
 
 class FlextCoreEnforcementPytestPlugin:
@@ -37,7 +37,7 @@ class FlextCoreEnforcementPytestPlugin:
         """Return the registry contribution for the flext-tests dispatcher."""
         return EnforcementContribution(
             source_kind=cls.source_kind(),
-            warning_categories=(FlextMroViolation, FlextSmellViolation),
+            warning_categories=(e.MroViolation, e.SmellViolation),
         )
 
     @classmethod

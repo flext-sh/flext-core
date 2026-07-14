@@ -1,12 +1,14 @@
-"""Runtime facade implementation building blocks.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Runtime package."""
 
 from __future__ import annotations
 
-from ._container import FlextRuntimeContainer
-from ._dependency import FlextRuntimeDependencyIntegration
+from ._container import FlextRuntimeContainer as FlextRuntimeContainer
+from ._dependency import (
+    FlextRuntimeDependencyIntegration as FlextRuntimeDependencyIntegration,
+)
 
-__all__: list[str] = ["FlextRuntimeContainer", "FlextRuntimeDependencyIntegration"]
+__all__: tuple[str, ...] = (
+    "FlextRuntimeContainer",
+    "FlextRuntimeDependencyIntegration",
+)

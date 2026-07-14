@@ -1,16 +1,8 @@
-"""Composed decorator facade namespace.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Decorators package."""
 
 from __future__ import annotations
 
-from ._runtime import FlextDecoratorsRuntime
+from .facade import FlextDecorators as FlextDecorators
 
-
-class FlextDecorators(FlextDecoratorsRuntime):
-    """Automation decorators for infrastructure concerns."""
-
-
-__all__: list[str] = ["FlextDecorators"]
+__all__: tuple[str, ...] = ("FlextDecorators",)
