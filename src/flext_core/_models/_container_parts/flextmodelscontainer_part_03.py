@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import Annotated, ClassVar
 
 from flext_core import FlextTypes as t
 from flext_core._models._container_parts.flextmodelscontainer_part_02 import (
@@ -21,12 +21,10 @@ from flext_core._models._container_parts.flextmodelscontainer_part_02 import (
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.context import FlextProtocolsContext as pc
+from flext_core._protocols.settings import FlextProtocolsSettings as ps
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
-
-if TYPE_CHECKING:
-    # NOTE (multi-agent, mro-wkii.17.26.2): avoid the proven p -> m -> root cycle.
-    from flext_core import FlextProtocols as p
 
 
 class FlextModelsContainer(FlextModelsContainerPart02):
@@ -42,7 +40,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         )
 
         settings: Annotated[
-            p.Settings | None,
+            ps.Settings | None,
             tp.SkipValidation,
             mp.Field(
                 None,
@@ -51,7 +49,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             ),
         ] = None
         context: Annotated[
-            p.Context | None,
+            pc.Context | None,
             tp.SkipValidation,
             mp.Field(
                 None,
