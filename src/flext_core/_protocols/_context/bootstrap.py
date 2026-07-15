@@ -1,26 +1,19 @@
-"""FlextProtocolsContext - context and bootstrap protocols.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Runtime bootstrap protocol composed by the context facade."""
 
 from __future__ import annotations
 
+from types import ModuleType
 from typing import TYPE_CHECKING, Protocol
 
-from types import ModuleType
-
 if TYPE_CHECKING:
-    # mro-wkii.17.26 (codex): the context protocol is part of the root p
-    # composition, so its postponed self-facade annotations cannot load p.
+    # mro-wkii.17.26 (codex): reverse p/t edges are annotation-only while the
+    # public protocol facade is still being composed.
     from flext_core import p, t
 
-from .flextprotocolscontext_part_02 import (
-    FlextProtocolsContext as FlextProtocolsContextPart02,
-)
 
+class FlextProtocolsContextBootstrap:
+    """Runtime bootstrap option contracts."""
 
-class FlextProtocolsContext(FlextProtocolsContextPart02):
     class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options for service initialization."""
 
@@ -40,4 +33,4 @@ class FlextProtocolsContext(FlextProtocolsContextPart02):
         wire_classes: t.SequenceOf[type] | None
 
 
-__all__: list[str] = ["FlextProtocolsContext"]
+__all__: tuple[str, ...] = ("FlextProtocolsContextBootstrap",)

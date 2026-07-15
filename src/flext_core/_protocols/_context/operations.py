@@ -1,23 +1,18 @@
-"""FlextProtocolsContext - context and bootstrap protocols.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Context operation protocols composed by the context facade."""
 
 from __future__ import annotations
 
+from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from contextlib import AbstractContextManager
-
 if TYPE_CHECKING:
-    # NOTE (multi-agent, mro-wkii.17.26): this protocol loads during p/t
-    # composition; the root facades are needed only by postponed annotations.
+    # mro-wkii.17.26 (codex): reverse p/t edges are annotation-only while the
+    # public protocol facade is still being composed.
     from flext_core import p, t
 
 
-class FlextProtocolsContext:
-    """Protocols for context and runtime bootstrap options."""
+class FlextProtocolsContextOperations:
+    """Instance, service, and correlation context contracts."""
 
     @runtime_checkable
     class ContextRead(Protocol):
@@ -100,15 +95,7 @@ class FlextProtocolsContext:
         ContextMetadataAccess,
         Protocol,
     ):
-        """Full context protocol — composed from capability sub-protocols.
-
-        Consumers should depend on the NARROWEST sub-protocol they need:
-        - ContextRead: read-only access (get/has/keys/values/items)
-        - ContextWrite: mutation (set/remove/clear)
-        - ContextLifecycle: clone/merge/validate
-        - ContextExport: serialization
-        - ContextMetadataAccess: metadata operations
-        """
+        """Full context protocol composed from capability sub-protocols."""
 
     @runtime_checkable
     class ContextServiceNamespace(Protocol):
@@ -148,4 +135,4 @@ class FlextProtocolsContext:
             ...
 
 
-__all__: list[str] = ["FlextProtocolsContext"]
+__all__: tuple[str, ...] = ("FlextProtocolsContextOperations",)

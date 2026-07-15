@@ -6,13 +6,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ._context_parts.flextprotocolscontext_part_03 import (
-    FlextProtocolsContext as FlextProtocolsContextPartFinal,
+from ._context import (
+    FlextProtocolsContextBootstrap,
+    FlextProtocolsContextNamespaces,
+    FlextProtocolsContextOperations,
 )
 
 
-class FlextProtocolsContext(FlextProtocolsContextPartFinal):
-    """Public facade for FlextProtocolsContext."""
+# mro-wkii.17.26 (codex): compose focused contracts and retire numbered parts.
+class FlextProtocolsContext(
+    FlextProtocolsContextBootstrap,
+    FlextProtocolsContextNamespaces,
+    FlextProtocolsContextOperations,
+):
+    """Context and runtime bootstrap protocol facade."""
 
 
-__all__: list[str] = ["FlextProtocolsContext"]
+__all__: tuple[str, ...] = ("FlextProtocolsContext",)

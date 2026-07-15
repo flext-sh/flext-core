@@ -1,26 +1,19 @@
-"""FlextProtocolsContext - context and bootstrap protocols.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Context namespace protocols composed by the context facade."""
 
 from __future__ import annotations
 
+from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Protocol
 
-from contextlib import AbstractContextManager
-
 if TYPE_CHECKING:
-    # NOTE (multi-agent, mro-wkii.17.26): this protocol loads during p/t
-    # composition; the root facades are needed only by postponed annotations.
+    # mro-wkii.17.26 (codex): reverse m/p/t edges are annotation-only while the
+    # public protocol facade is still being composed.
     from flext_core import m, p, t
 
-from .flextprotocolscontext_part_01 import (
-    FlextProtocolsContext as FlextProtocolsContextPart01,
-)
 
+class FlextProtocolsContextNamespaces:
+    """Request, performance, serialization, and utility namespaces."""
 
-class FlextProtocolsContext(FlextProtocolsContextPart01):
     class ContextRequestNamespace(Protocol):
         """Protocol for request-level helpers on the context class."""
 
@@ -152,4 +145,4 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
             ...
 
 
-__all__: list[str] = ["FlextProtocolsContext"]
+__all__: tuple[str, ...] = ("FlextProtocolsContextNamespaces",)
