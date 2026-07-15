@@ -44,6 +44,9 @@ class FlextConfig(BaseSettings):
     """
 
     CONFIG_DIR: ClassVar[str] = "config"
+    # NOTE (multi-agent): exact-file consumers declare their YAML surface here;
+    # the empty default preserves deterministic directory auto-discovery.
+    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ()
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True, extra="allow", env_prefix="FLEXT_CONFIG_"
@@ -89,7 +92,26 @@ class FlextConfig(BaseSettings):
         """Auto-discover every ``config/*.yaml`` (sorted for deterministic merge)."""
         config_dir = cls._config_dir()
         if not config_dir.is_dir():
+            if cls.CONFIG_FILENAMES:
+                msg = f"declared config directory does not exist: {config_dir}"
+                raise FileNotFoundError(msg)
             return []
+        if cls.CONFIG_FILENAMES:
+            invalid = tuple(
+                filename
+                for filename in cls.CONFIG_FILENAMES
+                if Path(filename).name != filename
+                or Path(filename).suffix not in {".yaml", ".yml"}
+            )
+            if invalid:
+                msg = "invalid declared config filenames: " + ", ".join(invalid)
+                raise ValueError(msg)
+            files = [config_dir / filename for filename in cls.CONFIG_FILENAMES]
+            missing = tuple(str(path) for path in files if not path.is_file())
+            if missing:
+                msg = "declared config files do not exist: " + ", ".join(missing)
+                raise FileNotFoundError(msg)
+            return files
         return sorted(config_dir.glob("*.yaml")) + sorted(config_dir.glob("*.yml"))
 
     @classmethod
