@@ -63,7 +63,7 @@ class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
             ("1", "AttributeError"),
             ("3.5", "AttributeError"),
             ("['a']", "AttributeError"),
-            ("None", "ValueError"),
+            ("None", "AttributeError"),
         ],
     )
     def test_default_import_does_not_intercept_wrongly_typed_public_call(
