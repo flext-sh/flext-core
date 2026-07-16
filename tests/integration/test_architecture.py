@@ -31,26 +31,20 @@ class TestsFlextCoreArchitecture:
         repo_root = Path(__file__).resolve().parents[c.Tests.REPO_ROOT_PARENT_DEPTH]
         return repo_root / c.Tests.PYPROJECT_FILENAME
 
-    def test_each_validator_verb_succeeds_and_self_identifies(
-        self,
-    ) -> None:
+    def test_each_validator_verb_succeeds_and_self_identifies(self) -> None:
         for verb in c.Tests.VALIDATOR_METHODS:
             scan = tm.ok(getattr(tv, verb)(self._core_package()))
             tm.that(scan.validator_name, eq=verb)
             tm.that(scan.files_scanned, is_=int, gte=1)
 
     @pytest.mark.parametrize("verb", c.Tests.VALIDATOR_METHODS)
-    def test_passed_flag_is_true_exactly_when_no_violations(
-        self,
-        verb: str,
-    ) -> None:
+    def test_passed_flag_is_true_exactly_when_no_violations(self, verb: str) -> None:
         scan = tm.ok(getattr(tv, verb)(self._core_package()))
         tm.that(scan.passed, eq=not scan.violations)
 
     @pytest.mark.parametrize("verb", c.Tests.VALIDATOR_METHODS)
     def test_every_emitted_violation_exposes_valid_public_fields(
-        self,
-        verb: str,
+        self, verb: str
     ) -> None:
         scan = tm.ok(getattr(tv, verb)(self._core_package()))
         valid_severities = frozenset(c.Tests.ValidatorSeverity)
@@ -74,20 +68,17 @@ class TestsFlextCoreArchitecture:
             eq=sum(len(scan.violations) for scan in individual),
         )
         tm.that(
-            aggregate.files_scanned,
-            eq=max(scan.files_scanned for scan in individual),
+            aggregate.files_scanned, eq=max(scan.files_scanned for scan in individual)
         )
         tm.that(aggregate.passed, eq=not aggregate.violations)
 
-    def test_all_with_pyproject_option_still_returns_passed_invariant(
-        self,
-    ) -> None:
+    def test_all_with_pyproject_option_still_returns_passed_invariant(self) -> None:
         package = self._core_package()
         scan = tm.ok(
             tv.all(
                 package,
                 options=tv.AllValidationOptions(pyproject_path=self._pyproject()),
-            ),
+            )
         )
         tm.that(scan.validator_name, eq="all")
         tm.that(scan.passed, eq=not scan.violations)
@@ -121,10 +112,8 @@ class TestsFlextCoreArchitecture:
         tm.that(options.pyproject_path, none=True)
 
     def test_scan_result_create_derives_passed_from_violations(self) -> None:
-        empty_scan = m.Tests.ScanResult.create(
-            validator_name="unit",
-            files_scanned=3,
-            violations=[],
+        empty_scan = m.Tests.ScanResult(
+            validator_name="unit", files_scanned=3, violations=[]
         )
         tm.that(empty_scan.passed, eq=True)
 
@@ -135,10 +124,8 @@ class TestsFlextCoreArchitecture:
             severity=c.Tests.ValidatorSeverity.HIGH,
             description="something went wrong",
         )
-        failing_scan = m.Tests.ScanResult.create(
-            validator_name="unit",
-            files_scanned=3,
-            violations=[violation],
+        failing_scan = m.Tests.ScanResult(
+            validator_name="unit", files_scanned=3, violations=[violation]
         )
         tm.that(failing_scan.passed, eq=False)
         tm.that(len(failing_scan.violations), eq=1)
@@ -151,10 +138,8 @@ class TestsFlextCoreArchitecture:
             severity=c.Tests.ValidatorSeverity.MEDIUM,
             description="detail",
         )
-        original = m.Tests.ScanResult.create(
-            validator_name="roundtrip",
-            files_scanned=2,
-            violations=[violation],
+        original = m.Tests.ScanResult(
+            validator_name="roundtrip", files_scanned=2, violations=[violation]
         )
         restored = m.Tests.ScanResult.model_validate(original.model_dump())
         tm.that(restored.validator_name, eq="roundtrip")
@@ -172,9 +157,7 @@ class TestsFlextCoreArchitecture:
         ],
     )
     def test_violation_coerces_severity_string_to_enum(
-        self,
-        raw_severity: str,
-        expected: c.Tests.ValidatorSeverity,
+        self, raw_severity: str, expected: c.Tests.ValidatorSeverity
     ) -> None:
         violation = m.Tests.Violation(
             file_path=Path("x.py"),
