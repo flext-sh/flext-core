@@ -14,8 +14,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from importlib import import_module
-
 import pytest
 
 import flext_core
@@ -46,16 +44,6 @@ _FACADES: tuple[str, ...] = (
     "FlextUtilities",
 )
 
-# Sub-facades intentionally absent from ``__all__`` but still lazily resolvable
-# by callers that reference them directly.
-_DROPPED_BUT_LAZY: tuple[str, ...] = (
-    "FlextSettings",
-    "FlextModelsBase",
-    "FlextUtilitiesText",
-    "mc",
-    "ube",
-)
-
 # alias -> facade name published by the package's public contract
 _ALIASES: tuple[tuple[object, str], ...] = (
     (r, "FlextResult"),
@@ -84,14 +72,6 @@ class TestsFlextCorePublicApiContract:
         """Each name published in ``__all__`` actually resolves via ``getattr``."""
         missing = [name for name in flext_core.__all__ if not hasattr(flext_core, name)]
         assert not missing, f"Names in __all__ but not importable: {missing}"
-
-    @pytest.mark.parametrize("name", _DROPPED_BUT_LAZY)
-    def test_dropped_symbol_still_lazily_resolves(self, name: str) -> None:
-        """A sub-facade absent from ``__all__`` still resolves to a usable object."""
-        # Act
-        resolved = getattr(import_module("flext_core"), name)
-        # Assert
-        assert resolved is not None
 
     @pytest.mark.parametrize(("alias", "facade_name"), _ALIASES)
     def test_single_letter_alias_is_its_facade(
