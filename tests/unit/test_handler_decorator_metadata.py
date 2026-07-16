@@ -35,7 +35,7 @@ class TestsFlextHandlerDecoratorMetadata:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        config: p.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
         tm.that(config.command is CreateCommand, eq=True)
         tm.that(config.priority, eq=10)
 
@@ -64,7 +64,7 @@ class TestsFlextHandlerDecoratorMetadata:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        config: p.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
         tm.that(config.priority, eq=priority)
         tm.that(config.timeout, eq=timeout)
 
@@ -94,7 +94,7 @@ class TestsFlextHandlerDecoratorMetadata:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        config: p.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
         tm.that(config.priority, eq=c.DEFAULT_MAX_COMMAND_RETRIES)
         tm.that(config.timeout, eq=c.DEFAULT_TIMEOUT_SECONDS)
         tm.that(config.middleware, empty=True)
@@ -111,7 +111,7 @@ class TestsFlextHandlerDecoratorMetadata:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        config: p.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
         tm.that(config.middleware, eq=middleware_types)
 
     def test_middleware_is_captured_by_value_not_reference(self) -> None:
@@ -136,7 +136,7 @@ class TestsFlextHandlerDecoratorMetadata:
 
         # Mutating the caller's list after decoration must not leak into config.
         middleware_types.append(PassthroughMiddleware)
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        config: p.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
         tm.that(len(config.middleware), eq=1)
 
     def test_decorator_returns_same_callable(self) -> None:
@@ -165,6 +165,6 @@ class TestsFlextHandlerDecoratorMetadata:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        config: p.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
         tm.that(config.command is CreateCommand, eq=True)
         tm.that(config.priority, eq=1)

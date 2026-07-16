@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextConstants as c, FlextTypes as t
-from flext_core._models.pydantic import FlextModelsPydantic as m
 from flext_core._protocols.result import FlextProtocolsResult as p
 from flext_core.result import FlextResult as r
 
@@ -18,7 +17,7 @@ class FlextUtilitiesArgs:
     """Utilities for model-based option parsing."""
 
     @staticmethod
-    def parse_model[M: m.BaseModel](
+    def parse_model[M: p.BaseModel](
         kwargs: t.MappingKV[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
@@ -44,7 +43,7 @@ class FlextUtilitiesArgs:
             return r[M].fail_op("parse options model", exc)
 
     @staticmethod
-    def resolve_options[M: m.BaseModel](
+    def resolve_options[M: p.BaseModel](
         options: M | None,
         kwargs: t.MappingKV[str, t.JsonPayload],
         model_cls: t.ModelClass[M],

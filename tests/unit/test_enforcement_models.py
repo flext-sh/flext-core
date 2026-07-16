@@ -13,7 +13,7 @@ from pydantic.warnings import PydanticDeprecatedSince20
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
+from tests.typings import p, t
 from tests.unit._enforcement_support import messages
 from tests.utilities import u
 

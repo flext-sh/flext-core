@@ -1,6 +1,6 @@
 """FlextModelsNamespace — base class for ALL facade namespace enforcement.
 
-Inherit from this class in any facade (c, p, t, m, u) to get automatic
+Inherit from this class in any facade (c, p, t, m, p, u) to get automatic
 MRO namespace governance via __init_subclass__. Layer detection is automatic
 from the class name suffix (Constants, Protocols, Types, Utilities, Models).
 

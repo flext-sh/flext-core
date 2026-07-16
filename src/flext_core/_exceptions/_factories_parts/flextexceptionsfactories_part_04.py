@@ -24,7 +24,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart03):
         resource_id: str,
         reason: str | None = None,
         *,
-        options: m.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical conflict message.

@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import Self, override
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
-from flext_core._models.base import FlextModelsBase as m
 from flext_core._typings.base import FlextTypingBase as tb
 
 from flext_core._typings.services import FlextTypesServices as ts
@@ -21,7 +20,7 @@ class FlextModelsBuilder:
     class Builder:
         """Canonical builder DSL namespace exposed as ``m.Builder`` via MRO."""
 
-        class Base[StateT: m.ContractModel, ProductT]:
+        class Base[StateT: p.ContractModel, ProductT]:
             """Canonical builder that evolves immutable state and delegates build()."""
 
             state: StateT
@@ -55,7 +54,7 @@ class FlextModelsBuilder:
                 return self._set(**{field_name: (*current_values, value)})
 
             @staticmethod
-            def _model[ModelT: m.ContractModel](
+            def _model[ModelT: p.ContractModel](
                 model_type: type[ModelT],
                 /,
                 **data: ts.JsonPayload | tb.SequenceOf[ts.JsonPayload],
@@ -64,7 +63,7 @@ class FlextModelsBuilder:
                 model: ModelT = model_type.model_validate(data)
                 return model
 
-            def _append_model[ModelT: m.ContractModel](
+            def _append_model[ModelT: p.ContractModel](
                 self,
                 field_name: str,
                 model_type: type[ModelT],
@@ -91,7 +90,7 @@ class FlextModelsBuilder:
                 """Build the final product from the current state."""
                 return self._build_product(self.state)
 
-        class Identity[StateT: m.ContractModel](Base[StateT, StateT]):
+        class Identity[StateT: p.ContractModel](Base[StateT, StateT]):
             """Canonical builder for DSLs whose final product is the state model."""
 
             @override

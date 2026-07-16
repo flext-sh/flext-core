@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 
-from flext_core import c, t
+from flext_core import c, p, t
 
 from .flexthandlers_part_06 import FlextHandlers as FlextHandlersPart06
 
 from collections.abc import Callable, MutableSequence
 from types import ModuleType
-
-from flext_core import p
 
 
 class FlextHandlers[MessageT_contra, ResultT](

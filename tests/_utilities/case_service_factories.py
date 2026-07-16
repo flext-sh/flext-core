@@ -11,7 +11,7 @@ from tests.models import m
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextUtilitiesCaseServiceFactoriesMixin(
@@ -96,7 +96,7 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
         @classmethod
         def create_service(
             cls,
-            case: m.Tests.ServiceTestCase,
+            case: p.Tests.ServiceTestCase,
         ) -> (
             TestsFlextUtilitiesCaseServiceFactoriesMixin.GetUserService
             | TestsFlextUtilitiesCaseServiceFactoriesMixin.ValidatingService

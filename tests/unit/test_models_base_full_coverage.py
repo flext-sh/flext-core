@@ -42,7 +42,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
         assert model.attributes == {"key": "value"}
 
     def test_metadata_attributes_accepts_t_dict_and_kwargs_mapping(self) -> None:
-        from_root = m.Metadata.model_validate({"attributes": m.Dict(root={"a": 1})})
+        from_root = m.Metadata.model_validate({"attributes": p.Dict(root={"a": 1})})
         from_kwargs = m.Metadata(attributes={"b": 2})
         assert from_root.attributes == {"a": 1}
         assert from_kwargs.attributes == {"b": 2}
@@ -54,7 +54,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
 
     def test_metadata_attributes_broken_dump_object_rejected(self) -> None:
         with pytest.raises(TypeError):
-            m.Metadata.model_validate({"attributes": m.Tests._BrokenDumpModel()})
+            m.Metadata.model_validate({"attributes": p.Tests._BrokenDumpModel()})
 
     # --- Metadata defaults and immutability ------------------------------
 

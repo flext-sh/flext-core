@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core.typings import t
+from flext_core.typings import p, t
 from tests.utilities import u
 
 

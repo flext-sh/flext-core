@@ -22,8 +22,8 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
     def fail_connection[TResult](
         host: str,
         *,
-        params: m.ConnectionErrorParams | None = None,
-        options: m.ExceptionFactoryOptions | None = None,
+        params: p.ConnectionErrorParams | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical connection-error message.
@@ -84,7 +84,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
         auth_method: str | None = None,
         user_id: str | None = None,
         *,
-        options: m.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authentication-error message.
@@ -113,7 +113,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
         resource: str,
         permission: str | None = None,
         *,
-        options: m.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authorization-error message.

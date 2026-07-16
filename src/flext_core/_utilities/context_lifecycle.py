@@ -26,8 +26,8 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
     """Lifecycle operations (merge/export) for FlextContext."""
 
     logger: ClassVar[p.Logger]
-    state: m.ContextRuntimeState
-    initial_data: m.ContextData | t.JsonValue | None
+    state: p.ContextRuntimeState
+    initial_data: p.ContextData | t.JsonValue | None
 
     def export(
         self,
@@ -54,7 +54,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
                 k: FlextRuntime.normalize_to_metadata(v)
                 for k, v in self._metadata_map().items()
             }
-        export_model: m.ContextExport = m.ContextExport.model_validate({
+        export_model: p.ContextExport = m.ContextExport.model_validate({
             "data": dict(all_data),
             "metadata": (
                 m.Metadata.model_validate({"attributes": metadata_attributes})
@@ -118,7 +118,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
             return self._as_config_map(exported_payload, "export payload")
         return self._as_config_map(other, "export payload")
 
-    def _apply_scoped_merge(self, exported_map: m.ConfigMap) -> None:
+    def _apply_scoped_merge(self, exported_map: p.ConfigMap) -> None:
         """Merge exported scopes from another FlextContext."""
         for scope_name, scope_payload in exported_map.items():
             if scope_name not in c.CONTEXT_MERGEABLE_SCOPES:

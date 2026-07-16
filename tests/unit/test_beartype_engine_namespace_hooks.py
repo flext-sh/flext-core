@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from tests.models import m
-from tests.typings import t
+from tests.typings import p, t
 from tests.unit._beartype_engine_support import (
     TestsFlextBeartypeEngine,
 )

@@ -9,7 +9,7 @@ from flext_tests import h, r
 
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
+from tests.typings import p, t
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -23,7 +23,7 @@ class TestsFlextFlextHandlers:
     class ConcreteTestHandler(h[t.JsonPayload, t.JsonPayload]):
         """Test handler for string messages."""
 
-        def __init__(self, *, settings: m.Handler | None = None) -> None:
+        def __init__(self, *, settings: p.Handler | None = None) -> None:
             super().__init__(settings=settings)
 
         @override
@@ -106,7 +106,7 @@ class TestsFlextFlextHandlers:
     class ValidationTestHandler(h[t.JsonPayload, t.JsonPayload]):
         """Test handler for validation."""
 
-        def __init__(self, *, settings: m.Handler | None = None) -> None:
+        def __init__(self, *, settings: p.Handler | None = None) -> None:
             super().__init__(settings=settings)
 
         @override
@@ -124,7 +124,7 @@ class TestsFlextFlextHandlers:
     class FailingTestHandler(h[t.JsonPayload, t.JsonPayload]):
         """Test handler that fails."""
 
-        def __init__(self, *, settings: m.Handler | None = None) -> None:
+        def __init__(self, *, settings: p.Handler | None = None) -> None:
             super().__init__(settings=settings)
 
         @override

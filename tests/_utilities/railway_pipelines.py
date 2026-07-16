@@ -19,7 +19,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
 
     @staticmethod
     def execute_v1_pipeline(
-        case: m.Tests.RailwayTestCase,
+        case: p.Tests.RailwayTestCase,
     ) -> p.Result[str | tm.Tests.User | m.Tests.EmailResponse]:
         """Execute the documented V1 railway pipeline."""
         if not case.user_ids:
@@ -63,7 +63,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
 
     @staticmethod
     def execute_v2_pipeline(
-        case: m.Tests.RailwayTestCase,
+        case: p.Tests.RailwayTestCase,
     ) -> tm.Tests.User | str:
         """Execute the documented V2 railway pipeline."""
         if not case.user_ids:
@@ -98,7 +98,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                 if not isinstance(raw_response, m.Tests.EmailResponse):
                     msg = c.Tests.INVALID_EMAIL
                     raise e.BaseError(msg)
-                response_obj: m.Tests.EmailResponse = raw_response
+                response_obj: p.Tests.EmailResponse = raw_response
                 user = response_obj.status
         return user
 

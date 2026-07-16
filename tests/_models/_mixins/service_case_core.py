@@ -11,7 +11,7 @@ from tests.base import s
 
 if TYPE_CHECKING:
     from tests.protocols import p
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextModelsServiceCaseCoreMixin:

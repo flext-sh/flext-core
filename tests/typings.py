@@ -17,7 +17,7 @@ from collections.abc import (
     MutableSequence,
 )
 
-from flext_tests import t
+from flext_tests import p, t
 
 
 class TestsFlextTypes(t):

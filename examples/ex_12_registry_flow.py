@@ -17,7 +17,7 @@ from .ex_12_registry_support import (
 )
 
 from examples.protocols import p
-from examples.typings import t
+from examples.typings import p, t
 
 
 

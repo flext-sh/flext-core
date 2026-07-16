@@ -32,7 +32,7 @@ class FlextModelsContainer:
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
-        Replaces: m.ConfigMap for service tracking.
+        Replaces: p.ConfigMap for service tracking.
         """
 
         name: Annotated[
@@ -85,7 +85,7 @@ class FlextModelsContainer:
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
-        Replaces: m.ConfigMap for factory tracking.
+        Replaces: p.ConfigMap for factory tracking.
         """
 
         name: Annotated[

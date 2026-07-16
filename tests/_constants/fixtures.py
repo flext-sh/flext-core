@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum, unique
+from enum import StrEnum, p, unique
 from typing import ClassVar, Literal
 
 

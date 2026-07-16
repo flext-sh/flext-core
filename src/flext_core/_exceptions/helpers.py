@@ -57,7 +57,7 @@ class FlextExceptionsHelpers:
         | None,
     ) -> p.Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model."""
-        metadata: m.Metadata | None = None
+        metadata: p.Metadata | None = None
         if value is not None:
             try:
                 metadata = m.Metadata.model_validate(value, from_attributes=True)

@@ -10,7 +10,7 @@ from tests.constants import c
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextModelsCoreStateMixin:

@@ -22,7 +22,7 @@ import pytest
 from tests.constants import c
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests.typings import p, t
 
 _CHECK_COUNT_RE = re.compile(r"\((\d+) checks\)")
 

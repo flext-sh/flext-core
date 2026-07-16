@@ -6,7 +6,7 @@ import sys
 import typing
 
 from tests.models import m
-from tests.typings import t
+from tests.typings import p, t
 from tests.utilities import u
 
 if typing.TYPE_CHECKING:

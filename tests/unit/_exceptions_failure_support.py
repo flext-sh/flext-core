@@ -12,7 +12,7 @@ from tests.models import m
 from tests.protocols import p
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests.typings import p, t
 
 type FailureFactory = Callable[[], p.Result[bool]]
 

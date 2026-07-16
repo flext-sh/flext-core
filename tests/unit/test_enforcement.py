@@ -24,7 +24,7 @@ class TestsFlextCoreEnforcement:
 
     def test_check_returns_report_with_violations_collection(self) -> None:
         """``u.check`` yields an ``m.Report`` exposing a ``violations`` list."""
-        report: m.Report = u.check(int)
+        report: p.Report = u.check(int)
 
         dumped = report.model_dump()
         assert "violations" in dumped

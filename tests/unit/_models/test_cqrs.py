@@ -13,7 +13,7 @@ from typing import Annotated
 
 import pytest
 
-from flext_core import c, t
+from flext_core import c, p, t
 from tests.models import m
 
 

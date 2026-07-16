@@ -10,7 +10,7 @@ from tests.utilities import u
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextSettingsConfigTestCase(m.BaseModel):

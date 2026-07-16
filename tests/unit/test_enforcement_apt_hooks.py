@@ -25,7 +25,7 @@ from tests.constants import c
 from tests.utilities import u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 # Note: the top-level class name is intentionally ``TestsFlextEnforcementAptHooks``

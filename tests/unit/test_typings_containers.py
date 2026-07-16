@@ -15,7 +15,7 @@ import pytest
 from flext_tests import m as ftm, tm
 
 from tests.models import m
-from tests.typings import t
+from tests.typings import p, t
 
 
 class TestsFlextCoreTypingsContainers:

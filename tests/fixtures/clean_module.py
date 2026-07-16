@@ -14,7 +14,7 @@ from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
 from tests.models import m
 from tests.protocols import p
 from flext_tests import r
-from tests.typings import t
+from tests.typings import p, t
 from tests.utilities import u
 
 

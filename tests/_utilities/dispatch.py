@@ -8,7 +8,7 @@ from flext_tests import h, r
 
 from tests.constants import c
 from tests.protocols import p
-from tests.typings import t
+from tests.typings import p, t
 
 
 class TestsFlextUtilitiesDispatchMixin:

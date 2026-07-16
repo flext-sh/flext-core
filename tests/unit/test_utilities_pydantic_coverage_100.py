@@ -6,7 +6,7 @@ import pytest
 
 from flext_core import u
 from tests.models import m
-from tests.typings import t
+from tests.typings import p, t
 
 
 class TestsFlextUtilitiesPydantic:
@@ -90,7 +90,7 @@ class TestsFlextUtilitiesPydantic:
 
         @u.validate_call()
         def build_runtime_options(
-            options: m.RuntimeBootstrapOptions,
+            options: p.RuntimeBootstrapOptions,
             override_subproject: str,
             override_packages: t.StrSequence,
         ) -> p.RuntimeBootstrapOptions:

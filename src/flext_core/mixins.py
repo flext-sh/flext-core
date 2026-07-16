@@ -51,7 +51,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         ),
     ] = None
 
-    _runtime: m.ServiceRuntime | None = mp.PrivateAttr(default=None)
+    _runtime: p.ServiceRuntime | None = mp.PrivateAttr(default=None)
 
     _operation_stats: MutableMapping[str, m.ConfigMap] = mp.PrivateAttr(
         default_factory=dict[str, m.ConfigMap]
@@ -102,7 +102,7 @@ class FlextMixins(m.ArbitraryTypesModel):
     @contextmanager
     def track(self, operation_name: str) -> Generator[Mapping[str, t.JsonPayload]]:
         """Track operation performance with timing and automatic context cleanup."""
-        stats: m.ConfigMap = self._operation_stats.get(
+        stats: p.ConfigMap = self._operation_stats.get(
             operation_name,
             m.ConfigMap(
                 root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0}

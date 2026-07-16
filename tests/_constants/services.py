@@ -6,14 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum, unique
+from enum import StrEnum, p, unique
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core import t
+    from flext_core import p, t
 
 
 class TestsFlextConstantsServices:

@@ -9,7 +9,7 @@ from flext_tests import h, r
 
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
+from tests.typings import p, t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 from tests.utilities import u
 
@@ -159,7 +159,7 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
 
     def test_subclass_specialises_handle_for_its_own_message_type(self) -> None:
         class IntHandler(h[t.JsonPayload, t.JsonPayload]):
-            def __init__(self, *, settings: m.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.Handler | None = None) -> None:
                 super().__init__(settings=settings)
 
             @override

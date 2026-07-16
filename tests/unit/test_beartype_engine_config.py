@@ -12,7 +12,7 @@ from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
 from tests.constants import c
-from tests.typings import t
+from tests.typings import p, t
 from tests.unit._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
 from tests.utilities import u
 

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.typings import t
+from tests.typings import p, t
 from tests.utilities import u
 
 

@@ -15,22 +15,22 @@ import pytest
 
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
+from tests.typings import p, t
 
 # One representative valid instance per surviving source variant, keyed by the
 # discriminator literal it must expose on the public ``kind`` field.
 _SOURCE_CASES: dict[str, m.BaseModel] = {
-    "flext_infra_detector": m.EnforcementInfraDetectorSource(
+    "flext_infra_detector": p.EnforcementInfraDetectorSource(
         violation_field="loose_symbol",
     ),
-    "flext_tests_validator": m.EnforcementTestsValidatorSource(method="check_x"),
-    "runtime_warning": m.EnforcementRuntimeWarningSource(category="FlextMroWarning"),
-    "beartype": m.EnforcementBeartypeSource(
+    "flext_tests_validator": p.EnforcementTestsValidatorSource(method="check_x"),
+    "runtime_warning": p.EnforcementRuntimeWarningSource(category="FlextMroWarning"),
+    "beartype": p.EnforcementBeartypeSource(
         predicate_kind=c.EnforcementPredicateKind.MODULE_ALIAS,
     ),
-    "ruff": m.EnforcementRuffSource(rule_code="ANN401"),
-    "skill_pointer": m.EnforcementSkillPointerSource(skill="pydantic-canonical"),
-    "code_smell": m.EnforcementCodeSmellSource(smell_tag="complex-method"),
+    "ruff": p.EnforcementRuffSource(rule_code="ANN401"),
+    "skill_pointer": p.EnforcementSkillPointerSource(skill="pydantic-canonical"),
+    "code_smell": p.EnforcementCodeSmellSource(smell_tag="complex-method"),
 }
 
 
@@ -53,7 +53,7 @@ class TestsFlextCoreEnforcementSources:
     )
     def test_source_kind_member_exposes_expected_value(
         self,
-        member: m.EnforcementSourceKind,
+        member: p.EnforcementSourceKind,
         value: str,
     ) -> None:
         assert member.value == value
@@ -81,7 +81,7 @@ class TestsFlextCoreEnforcementSources:
     def test_source_model_exposes_matching_discriminator_literal(
         self,
         expected_kind: str,
-        source: m.BaseModel,
+        source: p.BaseModel,
     ) -> None:
         assert source.model_dump()["kind"] == expected_kind
 
@@ -163,7 +163,7 @@ class TestsFlextCoreEnforcementSources:
     def test_source_model_dump_round_trips(
         self,
         expected_kind: str,
-        source: m.BaseModel,
+        source: p.BaseModel,
     ) -> None:
         dumped = source.model_dump()
         assert dumped["kind"] == expected_kind

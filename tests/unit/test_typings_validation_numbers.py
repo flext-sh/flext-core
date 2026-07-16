@@ -13,7 +13,7 @@ from flext_tests import tm
 
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
+from tests.typings import p, t
 
 
 class TestsFlextCoreTypingsValidationNumbers:
@@ -50,7 +50,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         value: str | int,
     ) -> None:
         """A value inside the constraint validates to itself unchanged."""
-        adapter: m.TypeAdapter[str | int] = m.TypeAdapter(alias)
+        adapter: p.TypeAdapter[str | int] = m.TypeAdapter(alias)
 
         result = adapter.validate_python(value)
 
@@ -81,7 +81,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         value: str | int,
     ) -> None:
         """A value outside the constraint raises the public ValidationError."""
-        adapter: m.TypeAdapter[str | int] = m.TypeAdapter(alias)
+        adapter: p.TypeAdapter[str | int] = m.TypeAdapter(alias)
 
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)
@@ -95,7 +95,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         alias: type[int],
     ) -> None:
         """Re-validating an already-valid value yields the same result."""
-        adapter: m.TypeAdapter[int] = m.TypeAdapter(alias)
+        adapter: p.TypeAdapter[int] = m.TypeAdapter(alias)
 
         once = adapter.validate_python(100)
         twice = adapter.validate_python(once)
@@ -116,7 +116,7 @@ class TestsFlextCoreTypingsStrippedStr:
     )
     def test_strips_surrounding_whitespace(self, value: str, expected: str) -> None:
         """A non-blank value is returned with surrounding whitespace removed."""
-        adapter: m.TypeAdapter[str] = m.TypeAdapter(t.StrippedStr)
+        adapter: p.TypeAdapter[str] = m.TypeAdapter(t.StrippedStr)
 
         result = adapter.validate_python(value)
 
@@ -125,7 +125,7 @@ class TestsFlextCoreTypingsStrippedStr:
     @pytest.mark.parametrize("value", ["", "   ", "\t\n"])
     def test_rejects_blank_or_whitespace_only(self, value: str) -> None:
         """An empty or whitespace-only value raises the public ValidationError."""
-        adapter: m.TypeAdapter[str] = m.TypeAdapter(t.StrippedStr)
+        adapter: p.TypeAdapter[str] = m.TypeAdapter(t.StrippedStr)
 
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)

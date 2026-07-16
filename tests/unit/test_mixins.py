@@ -27,7 +27,7 @@ from tests.utilities import u
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextMixins:

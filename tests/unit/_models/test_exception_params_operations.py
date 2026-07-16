@@ -125,7 +125,7 @@ class TestsFlextCoreExceptionParamsOperations:
     )
     def test_model_dump_roundtrip_preserves_values(
         self,
-        params: m.ParamsModel,
+        params: p.ParamsModel,
     ) -> None:
         rebuilt = type(params).model_validate(params.model_dump())
         tm.that(rebuilt.model_dump(), eq=params.model_dump())

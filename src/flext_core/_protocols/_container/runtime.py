@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_ch
 if TYPE_CHECKING:
     # NOTE (multi-agent, mro-wkii.17.26.2): protocol annotations must not load
     # root facades while FlextTypesServices is composing this protocol graph.
-    from flext_core import m, p, t
+    from flext_core import p, t
 
 
 class FlextProtocolsContainerRuntime:
@@ -103,7 +103,7 @@ class FlextProtocolsContainerRuntime:
             self,
             *,
             subproject: str | None = None,
-            registration: m.ServiceRegistrationSpec | None = None,
+            registration: p.ServiceRegistrationSpec | None = None,
         ) -> Self:
             """Create an isolated container scope."""
             ...
@@ -127,7 +127,7 @@ class FlextProtocolsContainerRuntime:
             ...
 
         def initialize_registrations(
-            self, *, registration: m.ServiceRegistrationSpec | None = None
+            self, *, registration: p.ServiceRegistrationSpec | None = None
         ) -> None:
             """Initialize registrations and runtime-bound state."""
             ...

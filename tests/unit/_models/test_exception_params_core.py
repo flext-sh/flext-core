@@ -12,7 +12,7 @@ from tests.constants import c
 from tests.models import m
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextModelsExceptionParamsCore:

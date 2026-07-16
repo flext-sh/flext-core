@@ -34,11 +34,11 @@ class FlextUtilitiesContextState:
     """Normalization + scope access primitives used by FlextContext."""
 
     logger: ClassVar[p.Logger]
-    state: m.ContextRuntimeState
+    state: p.ContextRuntimeState
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
-        ctx_value: m.ConfigMap | t.MappingKV[str, t.JsonPayload] | p.Model | None,
+        ctx_value: p.ConfigMap | t.MappingKV[str, t.JsonPayload] | p.Model | None,
     ) -> t.JsonMapping:
         """Return contextvar payload as a flat container mapping with safe default."""
         try:
@@ -84,7 +84,7 @@ class FlextUtilitiesContextState:
                 scopes[scope_name] = dict(scope_dict)
         return scopes
 
-    def _update_contextvar(self, scope: str, data: m.ConfigMap | t.JsonMapping) -> None:
+    def _update_contextvar(self, scope: str, data: p.ConfigMap | t.JsonMapping) -> None:
         """Set multiple values in contextvar scope."""
         ctx_var = self._scope_var(scope)
         incoming = self._narrow_contextvar_to_configuration_dict(data)

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Annotated, override
 from examples.models import m
 from examples.protocols import p
 from examples.shared import ExamplesFlextShared
-from examples.typings import t
+from examples.typings import p, t
 from examples.utilities import u
 from flext_core import r, s
 

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Annotated, Never, override
 
 from flext_core import m
 from tests.constants import c
-from tests.typings import t
+from tests.typings import p, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator

@@ -24,7 +24,7 @@ from flext_core.lazy import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import t
+    from flext_core import p, t
 
 
 class TestsFlextCoreLazyExportsMerge:

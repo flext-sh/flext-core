@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from examples.models import m
-from examples.typings import t
+from examples.typings import p, t
 from examples.utilities import u
 from flext_core import h, r
 
@@ -60,6 +60,6 @@ def as_registry_handler(handler: ProtocolHandler) -> t.DispatchableHandler:
 
 
 @h.handler(m.Examples.CommandA, priority=3)
-def discovered_handler(message: m.Command) -> p.Command:
+def discovered_handler(message: p.Command) -> p.Command:
     """Return the discovered command unchanged for registry dispatch."""
     return message

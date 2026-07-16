@@ -66,7 +66,7 @@ class FlextModelsContainer(FlextModelsContainerPart01):
     class ContainerConfig(m.FlexibleInternalModel):
         """Model for container configuration.
 
-        Replaces: m.ConfigMap for container configuration storage.
+        Replaces: p.ConfigMap for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 

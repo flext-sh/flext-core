@@ -61,7 +61,7 @@ class FlextExceptionsFactories:
 
     @staticmethod
     def _resolve_options(
-        options: m.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
     ) -> tuple[p.ExceptionFactoryOptions, Exception | str | None]:
         resolved_options = (
             options if options is not None else m.ExceptionFactoryOptions()
@@ -85,7 +85,7 @@ class FlextExceptionsFactories:
         message: str,
         params: mp.BaseModel | None,
         *,
-        options: m.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         default_error_code: str,
         result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:

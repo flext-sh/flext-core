@@ -25,7 +25,7 @@ class TestsFlextCoreEnforcementLayers:
     """Public behaviour of the layered enforcement checker."""
 
     @staticmethod
-    def _rule_tags(report: m.Report) -> set[tuple[str, str]]:
+    def _rule_tags(report: p.Report) -> set[tuple[str, str]]:
         """Extract the observable ``(layer, rule_tag)`` pairs from a report.
 
         The rule tag is the trailing ``[...]`` marker every violation message

@@ -20,7 +20,7 @@ import pytest
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
-from tests.typings import t
+from tests.typings import p, t
 
 _FORBIDDEN_IMPORT = "from tests.constants import c"
 

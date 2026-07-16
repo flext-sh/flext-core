@@ -35,8 +35,8 @@ class FlextRegistry(s[bool]):
     for actual handler registration and execution.
     """
 
-    _state: m.RegistryState = PrivateAttr(default_factory=m.RegistryState)
-    _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
+    _state: p.RegistryState = PrivateAttr(default_factory=m.RegistryState)
+    _runtime: p.ServiceRuntime | None = PrivateAttr(default=None)
 
     _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
 
@@ -80,7 +80,7 @@ class FlextRegistry(s[bool]):
         cls,
         dispatcher: p.Dispatcher | None = None,
         *,
-        runtime: m.ServiceRuntime | None = None,
+        runtime: p.ServiceRuntime | None = None,
         auto_discover_handlers: bool = False,
     ) -> Self:
         """Create a new FlextRegistry instance.
@@ -129,7 +129,7 @@ class FlextRegistry(s[bool]):
         return instance
 
     def configure_runtime(
-        self, runtime: m.ServiceRuntime, *, dispatcher: p.Dispatcher | None = None
+        self, runtime: p.ServiceRuntime, *, dispatcher: p.Dispatcher | None = None
     ) -> Self:
         """Bind this registry to a pre-built runtime snapshot."""
         resolved_dispatcher = (
@@ -287,14 +287,14 @@ class FlextRegistry(s[bool]):
         return r[t.StrSequence].ok(plugins)
 
     def _add_successful_registration(
-        self, key: str, registration: m.RegistrationDetails, summary: m.RegistrySummary
+        self, key: str, registration: p.RegistrationDetails, summary: p.RegistrySummary
     ) -> None:
         """Add successful registration to summary."""
         self._remember_registered_key(key)
         summary.registered.append(registration)
 
     def _finalize_summary(
-        self, summary: m.RegistrySummary
+        self, summary: p.RegistrySummary
     ) -> p.Result[p.RegistrySummary]:
         """Finalize summary based on error state.
 

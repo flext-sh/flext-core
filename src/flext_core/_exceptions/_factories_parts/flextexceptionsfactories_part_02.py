@@ -21,7 +21,7 @@ from flext_core.result import FlextResult
 class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
     @staticmethod
     def fail_type_mismatch[TResult](
-        details: m.ServiceLookupParams | str,
+        details: p.ServiceLookupParams | str,
         actual: str | None = None,
         *,
         error_code: str | None = None,
@@ -63,7 +63,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
 
     @staticmethod
     def fail_validation[TResult](
-        details: m.ValidationErrorParams | str | None = None,
+        details: p.ValidationErrorParams | str | None = None,
         *,
         error_code: str | None = None,
         error: Exception | str | None = None,
@@ -114,7 +114,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
         config_key: str,
         config_source: str | None = None,
         *,
-        options: m.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[FlextResult[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical configuration-error message.

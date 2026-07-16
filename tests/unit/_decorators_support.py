@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 import time
 from contextlib import redirect_stdout
-from enum import StrEnum, unique
+from enum import StrEnum, p, unique
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from tests.models import m

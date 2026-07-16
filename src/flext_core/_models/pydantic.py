@@ -85,7 +85,7 @@ class FlextModelsPydantic:
     """Public base model classes from pydantic v2.
 
     **NEVER import pydantic directly outside flext-core/src/.**
-    Extend from these bases via m.* instead: m.BaseModel, m.RootModel
+    Extend from these bases via m.* instead: p.BaseModel, m.RootModel
 
     Available model bases (accessible as m.MODEL_NAME):
         BaseModel: Pydantic v2 base for all data models with validation

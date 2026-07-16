@@ -19,7 +19,7 @@ from flext_tests import r
 from flext_core import FlextContainer, FlextService
 from tests.models import m
 from tests.protocols import p
-from tests.typings import t
+from tests.typings import p, t
 from tests.utilities import u
 
 from .migration_validation_cases import capture_stdout

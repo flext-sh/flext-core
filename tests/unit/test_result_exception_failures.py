@@ -15,7 +15,7 @@ from flext_tests import r, tm
 
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
+from tests.typings import p, t
 
 if TYPE_CHECKING:
     from tests.protocols import p
@@ -97,7 +97,7 @@ class TestsFlextCoreResultExceptionFailures:
 
     def test_fail_enriches_error_data_from_exception_metadata(self) -> None:
         class MetadataError(ValueError):
-            metadata: m.Metadata
+            metadata: p.Metadata
             correlation_id: str
 
             def __init__(self) -> None:

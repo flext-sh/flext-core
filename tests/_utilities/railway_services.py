@@ -10,7 +10,7 @@ from tests._models.mixins import TestsFlextModelsMixins
 from tests.base import s
 from tests.constants import c
 from tests.models import m
-from tests.typings import t
+from tests.typings import p, t
 
 if TYPE_CHECKING:
     from tests.protocols import p
@@ -138,7 +138,7 @@ class TestsFlextUtilitiesRailwayServicesMixin:
 
     @staticmethod
     def create_user_service(
-        case: m.Tests.ServiceTestCase,
+        case: p.Tests.ServiceTestCase,
     ) -> TestsFlextUtilitiesRailwayServicesMixin.GetUserService:
         """Create a user service from a documented service case."""
         return TestsFlextUtilitiesRailwayServicesMixin.make(

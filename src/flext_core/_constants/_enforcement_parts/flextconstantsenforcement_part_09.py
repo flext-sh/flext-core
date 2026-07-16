@@ -13,7 +13,7 @@ NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
     ),
     "no_wrapper_root_alias_import": (
         'wrapper alias import must use root package in {file}:{line}: "{statement}"',
-        "Use `from tests|examples|scripts import c, p, t, m, u` (no submodule alias imports).",
+        "Use `from tests|examples|scripts import c, p, t, m, p, u` (no submodule alias imports).",
     ),
     "compatibility_alias_import": (
         'non-canonical compatibility alias import "{name}" from {module} in {file}',

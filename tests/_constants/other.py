@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_core import c, t
+from flext_core import c, p, t
 
 
 class TestsFlextConstantsOther:

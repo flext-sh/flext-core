@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import m, u
+from flext_core import m, p, u
 
-from examples.typings import t
+from examples.typings import p, t
 
 
 

@@ -20,7 +20,7 @@ from typing import Annotated, override
 from examples.constants import c
 from examples.models import m
 from examples.protocols import p
-from examples.typings import t
+from examples.typings import p, t
 from examples.utilities import u
 from flext_core import d, r, s
 

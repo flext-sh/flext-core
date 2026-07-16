@@ -11,7 +11,7 @@ from tests._models._mixins.service_cases import TestsFlextModelsServiceCasesMixi
 from tests._models._mixins.test_data import TestsFlextModelsTestDataMixin
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextModelsMixins(

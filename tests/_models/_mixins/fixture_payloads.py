@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, ClassVar
 from flext_core import m
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextModelsFixturePayloadsMixin:

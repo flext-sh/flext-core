@@ -36,7 +36,7 @@ class FlextUtilitiesContextCrud(
     """CRUD operations on context scopes for FlextContext."""
 
     logger: ClassVar[p.Logger]
-    state: m.ContextRuntimeState
+    state: p.ContextRuntimeState
 
     def _iter_scoped_dicts(self) -> Iterator[t.JsonMapping]:
         for ctx_var in self.state.scope_vars.values():
@@ -51,7 +51,7 @@ class FlextUtilitiesContextCrud(
             if scope_name == c.ContextScope.GLOBAL:
                 _ = FlextUtilitiesLoggingContext.clear_global_context()
         self.state = self.state.model_copy(
-            update={"metadata": m.Metadata()}
+            update={"metadata": p.Metadata()}
         ).with_operation_update(c.ContextOperation.CLEAR.value)
 
     def get(

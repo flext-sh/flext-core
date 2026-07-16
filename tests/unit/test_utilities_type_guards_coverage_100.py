@@ -12,7 +12,7 @@ from flext_core import u
 from tests.models import m
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextCoreUtilitiesTypeGuards:

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from flext_tests import r
 
 from tests.constants import c
-from tests.typings import t
+from tests.typings import p, t
 from tests.utilities import u
 
 if TYPE_CHECKING:

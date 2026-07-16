@@ -25,7 +25,7 @@ from pathlib import Path
 import pytest
 
 from flext_core import e
-from tests.typings import t
+from tests.typings import p, t
 
 _CLEAN_MODULE = "tests.fixtures.clean_module"
 _BAD_MODULE = "tests_flext_enforcement_integration_fixtures_bad"

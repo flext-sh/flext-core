@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from tests.protocols import p
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextCoverageLoggings:

@@ -9,7 +9,7 @@ from flext_core import m
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextModelsDomainMixin:
@@ -131,7 +131,7 @@ class TestsFlextModelsDomainMixin:
         delimiter: str
         expected: t.StrSequence | None = None
         expected_error: str | None = None
-        options: m.BaseModel | None = None
+        options: p.BaseModel | None = None
         strip: bool = True
         remove_empty: bool = True
         validator: Callable[[str], bool] | None = None

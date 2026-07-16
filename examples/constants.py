@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from flext_core import c as _c
 
-from examples.typings import t
+from examples.typings import p, t
 
 
 c = _c

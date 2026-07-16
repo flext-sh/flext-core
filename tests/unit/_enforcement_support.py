@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 def messages(
-    report: m.Report,
+    report: p.Report,
     *,
     fragment: str,
 ) -> list[str]:

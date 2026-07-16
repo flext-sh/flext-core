@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from tests.constants import c
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextUtilitiesRailwayCasesMixin:

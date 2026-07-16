@@ -16,7 +16,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @staticmethod
     def _resolve_runtime_dispatcher(
-        runtime_options: m.RuntimeBootstrapOptions, runtime_container: p.Container
+        runtime_options: p.RuntimeBootstrapOptions, runtime_container: p.Container
     ) -> p.Dispatcher | None:
         """Resolve the dispatcher from explicit options or the built container."""
         explicit_dispatcher = runtime_options.dispatcher
@@ -40,7 +40,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         cls,
         dispatcher: p.Dispatcher | None = None,
         *,
-        runtime: m.ServiceRuntime | None = None,
+        runtime: p.ServiceRuntime | None = None,
         auto_discover_handlers: bool = False,
     ) -> p.Registry:
         """Materialize the canonical registry implementation behind ``p.Registry``."""
@@ -58,7 +58,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @classmethod
     def _resolve_runtime_registry(
-        cls, runtime_options: m.RuntimeBootstrapOptions, runtime: m.ServiceRuntime
+        cls, runtime_options: p.RuntimeBootstrapOptions, runtime: p.ServiceRuntime
     ) -> p.Registry:
         """Resolve the registry from explicit options or the shared runtime DSL."""
         explicit_registry = runtime_options.registry
@@ -68,7 +68,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @classmethod
     def _resolve_runtime_settings(
-        cls, runtime_options: m.RuntimeBootstrapOptions
+        cls, runtime_options: p.RuntimeBootstrapOptions
     ) -> p.Settings:
         """Resolve the runtime settings instance + apply overrides."""
         settings_instance = (
@@ -94,7 +94,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
     @classmethod
     def _build_runtime_container(
         cls,
-        runtime_options: m.RuntimeBootstrapOptions,
+        runtime_options: p.RuntimeBootstrapOptions,
         runtime_settings: p.Settings,
         runtime_context: p.Context,
     ) -> p.Container:
@@ -169,7 +169,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         runtime_registry = cls._resolve_runtime_registry(
             runtime_options, service_runtime
         )
-        resolved_runtime: m.ServiceRuntime = service_runtime.model_copy(
+        resolved_runtime: p.ServiceRuntime = service_runtime.model_copy(
             update={"registry": runtime_registry}
         )
         return resolved_runtime

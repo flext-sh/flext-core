@@ -130,7 +130,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             }
 
         @staticmethod
-        def _norm_callable_reg[Reg: m.ArbitraryTypesModel](
+        def _norm_callable_reg[Reg: p.ArbitraryTypesModel](
             value: t.MappingKV[str, Reg | t.FactoryCallable] | None, reg_cls: type[Reg]
         ) -> t.MappingKV[str, Reg] | None:
             """Normalize a name→(Registration|callable) dict to name→Registration."""

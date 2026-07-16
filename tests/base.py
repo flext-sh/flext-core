@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, override
 from flext_tests import s as tests_s
 
 from tests.constants import c
-from tests.typings import t
+from tests.typings import p, t
 
 if TYPE_CHECKING:
     from tests.protocols import p

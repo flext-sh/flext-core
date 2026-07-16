@@ -49,7 +49,7 @@ class FlextContainer(p.Container):
 
     _config: p.Settings
 
-    _user_overrides: m.ConfigMap
+    _user_overrides: p.ConfigMap
 
     _di_bridge: di_containers.DeclarativeContainer
 
@@ -67,9 +67,9 @@ class FlextContainer(p.Container):
 
     _internal_registrations: set[str]
 
-    _global_config: m.ContainerConfig
+    _global_config: p.ContainerConfig
 
-    def __new__(cls, *, registration: m.ServiceRegistrationSpec | None = None) -> Self:
+    def __new__(cls, *, registration: p.ServiceRegistrationSpec | None = None) -> Self:
         """Create or return the global singleton instance."""
         _ = registration
         if cls._global_instance is None:
@@ -216,7 +216,7 @@ class FlextContainer(p.Container):
         self._di_container.settings = config_provider
 
     def initialize_registrations(
-        self, *, registration: m.ServiceRegistrationSpec | None = None
+        self, *, registration: p.ServiceRegistrationSpec | None = None
     ) -> None:
         """Initialize service registrations and configuration."""
         spec = registration or m.ServiceRegistrationSpec()
@@ -399,7 +399,7 @@ class FlextContainer(p.Container):
         self,
         *,
         subproject: str | None = None,
-        registration: m.ServiceRegistrationSpec | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> Self:
         """Create an isolated container scope with optional overrides."""
         scope_registration = registration or m.ServiceRegistrationSpec()
@@ -502,7 +502,7 @@ class FlextContainer(p.Container):
         )
 
     def __init__(
-        self, *, registration: m.ServiceRegistrationSpec | None = None
+        self, *, registration: p.ServiceRegistrationSpec | None = None
     ) -> None:
         """Initialize the singleton container (idempotent)."""
         if hasattr(self, "_di_container"):
@@ -560,7 +560,7 @@ class FlextContainer(p.Container):
             _ = instance.factory(factory_config.name, factory_func)
 
     def _apply_explicit_bootstrap(
-        self, registration: m.ServiceRegistrationSpec
+        self, registration: p.ServiceRegistrationSpec
     ) -> None:
         """Apply explicit bootstrap overrides to an existing singleton instance."""
         if registration.settings is not None:

@@ -17,7 +17,6 @@ from .flextexceptionsbase_part_01 import FlextBaseErrorMetadataMixin
 
 from collections.abc import Mapping
 
-from flext_core._models.base import FlextModelsBase as m
 from flext_core._protocols.result import FlextProtocolsResult as pr
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
@@ -27,7 +26,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
     message: str
     error_code: str
     correlation_id: str | None
-    metadata: m.Metadata
+    metadata: p.Metadata
     timestamp: float
     auto_log: bool
     args: tuple[str, ...]

@@ -22,7 +22,7 @@ from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViola
 from tests.utilities import u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests.typings import p, t
 
 
 class TestsFlextCoreEnforcementWarningVisibility:
