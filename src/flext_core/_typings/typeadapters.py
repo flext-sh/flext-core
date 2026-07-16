@@ -45,7 +45,7 @@ class FlextTypesTypeAdapters:
     @classmethod
     @cache
     def strict_json_mapping_adapter(cls) -> tp.TypeAdapterType[t.JsonMapping]:
-        return tp.TypeAdapter(t.JsonMapping, config=tp.ConfigDict(strict=True))
+        return tp.TypeAdapter(t.JsonMapping, config=t.ConfigDict(strict=True))
 
     @classmethod
     @cache
@@ -79,7 +79,7 @@ class FlextTypesTypeAdapters:
     @classmethod
     @cache
     def strict_json_list_adapter(cls) -> tp.TypeAdapterType[t.JsonList]:
-        return tp.TypeAdapter(t.JsonList, config=tp.ConfigDict(strict=True))
+        return tp.TypeAdapter(t.JsonList, config=t.ConfigDict(strict=True))
 
     @classmethod
     @cache
@@ -181,7 +181,7 @@ class FlextTypesTypeAdapters:
     @classmethod
     @cache
     def strict_str_sequence_adapter(cls) -> tp.TypeAdapterType[t.StrSequence]:
-        return tp.TypeAdapter(t.StrSequence, config=tp.ConfigDict(strict=True))
+        return tp.TypeAdapter(t.StrSequence, config=t.ConfigDict(strict=True))
 
     @classmethod
     @cache

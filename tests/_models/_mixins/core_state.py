@@ -33,7 +33,7 @@ class TestsFlextModelsCoreStateMixin:
     class SettingsModelForTest(m.BaseModel):
         """Test configuration model (mutable for set_parameter tests)."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
             extra="forbid",
         )
@@ -50,7 +50,7 @@ class TestsFlextModelsCoreStateMixin:
     class SingletonClassForTest(m.BaseModel):
         """Test singleton class with Pydantic validation."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
             extra="forbid",
         )
@@ -79,7 +79,7 @@ class TestsFlextModelsCoreStateMixin:
     class BadSettingsForTest(m.BaseModel):
         """Settings that fails to instantiate."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
         )
 
@@ -110,7 +110,7 @@ class TestsFlextModelsCoreStateMixin:
     class _SampleEntity(m.BaseModel):
         """Test entity for domain utility tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=False)
 
         unique_id: str = "test-123"
         name: str = "test"
@@ -118,7 +118,7 @@ class TestsFlextModelsCoreStateMixin:
     class _FrozenEntity(m.BaseModel):
         """Frozen entity for immutability tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         unique_id: str = "frozen-1"
 

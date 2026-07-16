@@ -39,7 +39,7 @@ class FlextModelsExceptionParams:
     class ParamsModel(m.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = t.ConfigDict(
             extra="forbid",
             strict=True,
             validate_assignment=True,

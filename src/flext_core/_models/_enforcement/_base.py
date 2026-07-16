@@ -16,7 +16,7 @@ from flext_core._typings.base import FlextTypingBase as t
 class EnforcementModelBase(mp.BaseModel):
     """Frozen, extra-forbid base for internal enforcement models."""
 
-    model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(frozen=True, extra="forbid")
+    model_config: ClassVar[t.ConfigDict] = t.ConfigDict(frozen=True, extra="forbid")
 
 
 class FlextModelsEnforcementBase:

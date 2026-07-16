@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import FlextTypes as t
+from flext_core import p, t
 from flext_core._models._container_parts.flextmodelscontainer_part_02 import (
     FlextModelsContainer as FlextModelsContainerPart02,
 )
@@ -35,7 +35,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         Deferred to TIER 1 to avoid circular imports with p/t.
         """
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = t.ConfigDict(
             strict=True, arbitrary_types_allowed=True
         )
 

@@ -28,7 +28,7 @@ class FlextModelsHandler:
     class RegistrationDetails(m.ArbitraryTypesModel):
         """Registration details tracked by ``FlextRegistry``."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = t.ConfigDict(
             json_schema_extra={
                 "title": "RegistrationDetails",
                 "description": "Handler registration tracking details",
@@ -70,7 +70,7 @@ class FlextModelsHandler:
     class ExecutionContext(m.ArbitraryTypesModel):
         """Handler execution state (identity + timing + metrics payload)."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = t.ConfigDict(
             arbitrary_types_allowed=True,
             validate_assignment=True,
             json_schema_extra={
@@ -143,7 +143,7 @@ class FlextModelsHandler:
     class DecoratorConfig(m.ArbitraryTypesModel):
         """Configuration extracted from @FlextHandlers.handler() decorator."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = t.ConfigDict(
             frozen=True, arbitrary_types_allowed=True
         )
         command: Annotated[

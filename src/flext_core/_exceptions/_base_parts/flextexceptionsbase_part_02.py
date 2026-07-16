@@ -6,6 +6,7 @@ import time
 import uuid
 from typing import ClassVar, override
 
+from flext_core import p
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.validation import FlextConstantsValidation as cv
 from flext_core._models.containers import FlextModelsContainers as mc

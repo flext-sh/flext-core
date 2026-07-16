@@ -10,6 +10,7 @@ from collections.abc import Mapping
 
 from pydantic import ValidationError as PydanticValidationError
 
+from flext_core import p
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.mixins import FlextConstantsMixins as cm
 from flext_core._models.base import FlextModelsBase as m

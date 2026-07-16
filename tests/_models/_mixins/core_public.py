@@ -15,7 +15,7 @@ class TestsFlextModelsCorePublicMixin:
     class DispatchRequest(m.BaseModel):
         """Request shape used by generator behavior tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         command_name: str
         tenant: str
@@ -24,7 +24,7 @@ class TestsFlextModelsCorePublicMixin:
     class DispatchAudit(m.BaseModel):
         """Dispatch audit payload used by generator behavior tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         correlation_id: str
         command_id: str
@@ -38,7 +38,7 @@ class TestsFlextModelsCorePublicMixin:
     class QueryAudit(m.BaseModel):
         """Query audit payload used by generator behavior tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         request_id: str
         explicit_id: str
@@ -52,7 +52,7 @@ class TestsFlextModelsCorePublicMixin:
     class OrchestrationAudit(m.BaseModel):
         """Orchestration audit payload used by generator behavior tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         entity_id: str
         batch_id: str
@@ -64,7 +64,7 @@ class TestsFlextModelsCorePublicMixin:
     class DispatchEnvelope(m.BaseModel):
         """Normalized dispatch metadata payload used by type-guard tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         command_name: str
         correlation_id: str
@@ -75,7 +75,7 @@ class TestsFlextModelsCorePublicMixin:
     class ManifestSnapshot(m.BaseModel):
         """Manifest snapshot used by public text-helper tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         app_id: str
         normalized_key: str
@@ -85,7 +85,7 @@ class TestsFlextModelsCorePublicMixin:
     class BootstrapSnapshot(m.BaseModel):
         """Bootstrap snapshot used by public settings-helper tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         env_file: str
         process_environment: dict[str, str]
@@ -94,7 +94,7 @@ class TestsFlextModelsCorePublicMixin:
     class PublicPayload(m.BaseModel):
         """Payload model used to exercise the public Pydantic facade."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(populate_by_name=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(populate_by_name=True)
 
         raw_name: str = u.Field(alias="rawName")
         visits: int = 0

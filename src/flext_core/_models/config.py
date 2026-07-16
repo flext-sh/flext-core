@@ -23,7 +23,7 @@ class FlextModelsConfig:
     class ConfigDocument(m.FrozenModel):
         """A loaded, parsed config document with optional schema/source refs."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = t.ConfigDict(
             frozen=True, arbitrary_types_allowed=True
         )
 

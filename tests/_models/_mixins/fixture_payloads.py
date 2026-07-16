@@ -16,7 +16,7 @@ class TestsFlextModelsFixturePayloadsMixin:
     class UserProfileDict(m.BaseModel):
         """User profile for property-based testing."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         id: str
         name: str
@@ -25,7 +25,7 @@ class TestsFlextModelsFixturePayloadsMixin:
     class SettingsTestCaseDict(m.BaseModel):
         """Configuration test case."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         domain: str
         port: int
@@ -35,7 +35,7 @@ class TestsFlextModelsFixturePayloadsMixin:
     class PerformanceMetricsDict(m.BaseModel):
         """Performance metrics from testing."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         total_operations: int
         time_elapsed: float
@@ -45,7 +45,7 @@ class TestsFlextModelsFixturePayloadsMixin:
     class StressTestResultDict(m.BaseModel):
         """Result from stress testing."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         iterations: int
         success_count: int
@@ -55,7 +55,7 @@ class TestsFlextModelsFixturePayloadsMixin:
     class AsyncPayloadDict(m.BaseModel):
         """Async event payload."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         data: str
         status: str
@@ -63,7 +63,7 @@ class TestsFlextModelsFixturePayloadsMixin:
     class AsyncTestDataDict(m.BaseModel):
         """Async test data."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         event_type: str
         timestamp: str
@@ -75,7 +75,7 @@ class TestsFlextModelsFixturePayloadsMixin:
     class UserPayloadDict(m.BaseModel):
         """User command payload."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         username: str
         email: str
@@ -83,7 +83,7 @@ class TestsFlextModelsFixturePayloadsMixin:
     class UpdateFieldDict(m.BaseModel):
         """Individual update field."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         field_name: str
         new_value: t.Primitives
@@ -91,7 +91,7 @@ class TestsFlextModelsFixturePayloadsMixin:
     class UpdatePayloadDict(m.BaseModel):
         """Update command payload."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         target_user_id: str
         updates: t.MappingKV[
@@ -102,7 +102,7 @@ class TestsFlextModelsFixturePayloadsMixin:
     class UserDataDict(m.BaseModel):
         """User data response."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         id: str
         username: str
@@ -112,7 +112,7 @@ class TestsFlextModelsFixturePayloadsMixin:
     class UpdateResultDict(m.BaseModel):
         """Update operation result."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         user_id: str
         updated_fields: t.StrSequence
@@ -121,7 +121,7 @@ class TestsFlextModelsFixturePayloadsMixin:
     class CommandPayloadDict(m.BaseModel):
         """Generic command payload."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         id: str = ""
         username: str = ""

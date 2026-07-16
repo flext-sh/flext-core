@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import StrEnum, p, unique
+from enum import StrEnum, unique
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from tests.models import m
@@ -33,7 +33,7 @@ class ResultOperationType(StrEnum):
 class ResultScenario(m.BaseModel):
     """Generic result scenario for r tests."""
 
-    model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+    model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
     name: Annotated[str, m.Field(description="Result scenario name")]
     operation_type: Annotated[
         ResultOperationType,

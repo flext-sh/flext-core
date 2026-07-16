@@ -136,7 +136,7 @@ class TestsFlextFlextHandlers:
     class HandlerTypeScenario(m.Value):
         """Scenario for handler types."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Handler type scenario name")]
         handler_type: Annotated[c.HandlerType, m.Field(description="Type")]
         handler_mode: Annotated[c.HandlerType, m.Field(description="Mode")]

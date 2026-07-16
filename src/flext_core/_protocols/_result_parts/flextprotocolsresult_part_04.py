@@ -62,7 +62,7 @@ class FlextProtocolsResult(FlextProtocolsResultPart03):
             ...
 
         @property
-        def metadata(self) -> p.Metadata:
+        def metadata(self) -> FlextProtocolsResult.Metadata:
             """Structured metadata attached to the error."""
             ...
 

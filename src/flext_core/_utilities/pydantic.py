@@ -28,7 +28,7 @@ from pydantic import (
     with_config,
 )
 from pydantic_core import from_json, to_json, to_jsonable_python
-
+from flext_core import t
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
@@ -62,7 +62,7 @@ class FlextUtilitiesPydantic:
     PlainSerializer = PlainSerializer
     WrapSerializer = WrapSerializer
 
-    ConfigDict = mp.ConfigDict
+    ConfigDict = t.ConfigDict
     FieldSerializationInfo = mp.FieldSerializationInfo
     TypeAdapter = mp.TypeAdapter
     create_model = create_model

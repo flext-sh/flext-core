@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import m, t
+from flext_core import m, p, t
 from tests.utilities import u
 
 

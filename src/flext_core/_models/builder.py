@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Self, override
 
+from flext_core import p
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._typings.base import FlextTypingBase as tb
 

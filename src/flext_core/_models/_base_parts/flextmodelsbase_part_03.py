@@ -15,7 +15,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, ClassVar, Self
 
-from flext_core.constants import FlextConstants as c
+from flext_core import c, t
 from flext_core._models._base_parts.flextmodelsbase_part_02 import (
     FlextModelsBase as FlextModelsBasePart02,
 )
@@ -23,7 +23,6 @@ from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as ur,
 )
-from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
@@ -88,7 +87,7 @@ class FlextModelsBase(FlextModelsBasePart02):
     class RetryConfigurationMixin(mp.BaseModel):
         """Mixin for shared retry configuration properties."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(populate_by_name=True)
+        model_config: ClassVar[t.ConfigDict] = t.ConfigDict(populate_by_name=True)
         max_retries: Annotated[
             t.NonNegativeInt,
             mp.Field(

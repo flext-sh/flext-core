@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 import time
 from contextlib import redirect_stdout
-from enum import StrEnum, p, unique
+from enum import StrEnum, unique
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from tests.models import m
@@ -51,7 +51,7 @@ class TestsFlextDecoratorsLegacy:
     class DecoratorTestCase(m.BaseModel):
         """Test case for decorator."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Decorator test case name")]
         operation: Annotated[str, m.Field(description="Decorator operation under test")]
 
