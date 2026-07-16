@@ -56,7 +56,7 @@ class FlextConstantsEnforcementCatalogToolRows:
             "HIGH",
             "bypass",
             ("BYPASS-001", "BYPASS-002", "BYPASS-003"),
-            ("flext-patterns",),
+            ("flext-agent-strict-rules",),
             "Bypass pattern — noqa, pragma: no cover (unapproved), or exception swallowing.",
         ),
         (

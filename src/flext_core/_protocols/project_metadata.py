@@ -55,6 +55,9 @@ class FlextProtocolsProjectMetadata:
         def requires_python(self) -> str: ...
 
         @property
+        def dependencies(self) -> tuple[str, ...]: ...
+
+        @property
         def authors(
             self,
         ) -> tuple[FlextProtocolsProjectMetadata.ProjectAuthor, ...]: ...
