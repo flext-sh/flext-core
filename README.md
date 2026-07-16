@@ -2,7 +2,9 @@
 
 # flext-core
 
-**Version**: `0.12.0-dev` | **Python**: 3.13+ | **Project class**: `platform`
+**Version**: `0.12.0` | **Python**: 3.13+ | **Project class**: `platform`
+
+> **Alpha (0.12.0).** This package is alpha quality. Every package in the workspace must be re-checked and re-validated at 0.12.0 before any promotion beyond alpha; treat interfaces as unstable.
 
 ## Purpose
 
@@ -30,7 +32,7 @@ Read [`/flext/AGENTS.md`](../AGENTS.md) §9 — Agent Execution Pre-requisites �
 ## Integration Points
 
 - Parent MRO chain: read this project's `pyproject.toml` `dependencies` array filtered by `flext-*`. The MRO cascade is encoded in the inheritance lists of the facade classes listed under Module Map above.
-- Public extensions exposed by this project: _none_.
+- Public extensions exposed by this project: `FlextConfig`, `FlextConstants`, `FlextContainer`, `FlextContext`, `FlextDecorators`, `FlextDispatcher` (+14 more).
 - Library abstraction boundaries: see AGENTS.md §2.7.
 
 ## Quality Gates
