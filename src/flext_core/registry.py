@@ -142,7 +142,7 @@ class FlextRegistry(s[bool]):
         )
         return self
 
-    def _create_initial_runtime(self) -> m.ServiceRuntime:
+    def _create_initial_runtime(self) -> p.ServiceRuntime:
         """Build the registry runtime without recursively materializing another registry."""
         return u.build_service_runtime(self, registry=self)
 
@@ -295,18 +295,18 @@ class FlextRegistry(s[bool]):
 
     def _finalize_summary(
         self, summary: m.RegistrySummary
-    ) -> p.Result[m.RegistrySummary]:
+    ) -> p.Result[p.RegistrySummary]:
         """Finalize summary based on error state.
 
         Returns:
-            r[m.RegistrySummary]: Success result with summary or failure result with errors.
+            r[p.RegistrySummary]: Success result with summary or failure result with errors.
 
         """
         if summary.errors:
             return e.fail_operation(
                 "finalize registry summary", "; ".join(summary.errors)
             )
-        return r[m.RegistrySummary].ok(summary)
+        return r[p.RegistrySummary].ok(summary)
 
     def register(self, name: str, service: t.RegistrablePlugin) -> p.Result[bool]:
         """Register a service component in the runtime container.
@@ -330,14 +330,14 @@ class FlextRegistry(s[bool]):
 
     def register_bindings(
         self, bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler]
-    ) -> p.Result[m.RegistrySummary]:
+    ) -> p.Result[p.RegistrySummary]:
         """Register message-to-handler bindings.
 
         Args:
             bindings: Map of MessageType -> HandlerInstance
 
         Returns:
-            r[m.RegistrySummary]: Batch registration summary
+            r[p.RegistrySummary]: Batch registration summary
 
         """
         summary = m.RegistrySummary()
@@ -357,7 +357,7 @@ class FlextRegistry(s[bool]):
 
     def register_handler(
         self, handler: t.DispatchableHandler
-    ) -> p.Result[m.RegistrationDetails]:
+    ) -> p.Result[p.RegistrationDetails]:
         """Register a handler instance or callable.
 
         Re-registration is ignored and treated as success to guarantee
@@ -365,7 +365,7 @@ class FlextRegistry(s[bool]):
         the same handler.
 
         Returns:
-            r[m.RegistrationDetails]: Success result with registration details.
+            r[p.RegistrationDetails]: Success result with registration details.
 
         """
         handler_id = str(getattr(handler, "handler_id", id(handler)))
@@ -391,10 +391,10 @@ class FlextRegistry(s[bool]):
         )
 
         if registration_result.failure:
-            return r[m.RegistrationDetails].from_failure(registration_result)
+            return r[p.RegistrationDetails].from_failure(registration_result)
 
         self._remember_registered_key(handler_id)
-        return r[m.RegistrationDetails].ok(
+        return r[p.RegistrationDetails].ok(
             m.RegistrationDetails(
                 registration_id=handler_id, handler_mode=handler_mode, status=status
             )
@@ -402,14 +402,14 @@ class FlextRegistry(s[bool]):
 
     def register_handlers(
         self, handlers: t.SequenceOf[t.DispatchableHandler]
-    ) -> p.Result[m.RegistrySummary]:
+    ) -> p.Result[p.RegistrySummary]:
         """Register multiple handlers in batch.
 
         Args:
             handlers: Sequence of handler instances or callables to register
 
         Returns:
-            r[m.RegistrySummary]: Batch registration summary
+            r[p.RegistrySummary]: Batch registration summary
 
         """
         summary = m.RegistrySummary()

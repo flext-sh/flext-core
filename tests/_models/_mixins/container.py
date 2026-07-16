@@ -17,7 +17,7 @@ class TestsFlextModelsContainerMixin:
     class ServiceScenario(m.BaseModel):
         """Test scenario for service registration and retrieval."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
             frozen=True,
             arbitrary_types_allowed=True,
         )
@@ -31,7 +31,7 @@ class TestsFlextModelsContainerMixin:
     class TypedRetrievalScenario(m.BaseModel):
         """Test scenario for typed service retrieval."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
             frozen=True,
             arbitrary_types_allowed=True,
         )

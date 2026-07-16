@@ -61,7 +61,7 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             expected_error: str | None = None,
             extra_param: int = c.Tests.MIN_LENGTH_DEFAULT,
             description: str | None = None,
-        ) -> m.Tests.ServiceTestCase:
+        ) -> p.Tests.ServiceTestCase:
             """Build a m.Tests.ServiceTestCase instance."""
             actual_type = service_type if service_type is not None else cls._next_type()
             actual_input = input_value if input_value is not None else cls._next_word()
@@ -80,7 +80,7 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             )
 
         @classmethod
-        def build_batch(cls, size: int) -> t.SequenceOf[m.Tests.ServiceTestCase]:
+        def build_batch(cls, size: int) -> t.SequenceOf[p.Tests.ServiceTestCase]:
             """Build multiple m.Tests.ServiceTestCase instances with auto-generated values."""
             return [cls.build() for _ in range(size)]
 

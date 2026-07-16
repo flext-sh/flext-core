@@ -23,7 +23,7 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
             m.RuntimeBootstrapOptions | t.MappingKV[str, t.JsonPayload] | p.Base | None
         ) = None,
         **overrides: t.JsonPayload,
-    ) -> m.RuntimeBootstrapOptions:
+    ) -> p.RuntimeBootstrapOptions:
         """Resolve runtime options from models, mappings, or service instances."""
         resolved = m.RuntimeBootstrapOptions()
         match source:

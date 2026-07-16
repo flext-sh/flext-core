@@ -18,14 +18,14 @@ class TestsFlextUtilitiesReliabilityScenariosMixin:
     class ReliabilityScenarios:
         """Centralized reliability scenarios - single source of truth."""
 
-        _RETRY_BASE_SETTINGS: ClassVar[m.ConfigMap] = m.ConfigMap(
+        _RETRY_BASE_SETTINGS: ClassVar[p.ConfigMap] = m.ConfigMap(
             root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
         )
-        _RETRY_EXHAUSTED_SETTINGS: ClassVar[m.ConfigMap] = m.ConfigMap(
+        _RETRY_EXHAUSTED_SETTINGS: ClassVar[p.ConfigMap] = m.ConfigMap(
             root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10},
         )
 
-        RETRY_SCENARIOS: ClassVar[Sequence[m.Tests.ReliabilityScenario]] = [
+        RETRY_SCENARIOS: ClassVar[Sequence[p.Tests.ReliabilityScenario]] = [
             m.Tests.ReliabilityScenario(
                 name="retry_immediate_success",
                 strategy="retry",
@@ -55,7 +55,7 @@ class TestsFlextUtilitiesReliabilityScenariosMixin:
             ),
         ]
         CIRCUIT_BREAKER_SCENARIOS: ClassVar[
-            t.SequenceOf[m.Tests.ReliabilityScenario]
+            t.SequenceOf[p.Tests.ReliabilityScenario]
         ] = [
             m.Tests.ReliabilityScenario(
                 name="circuit_initial_closed",

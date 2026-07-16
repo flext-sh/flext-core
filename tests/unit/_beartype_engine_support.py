@@ -23,7 +23,7 @@ class TestsFlextBeartypeEngine:
     FORBIDDEN: frozenset[str] = frozenset({"dict", "list", "set"})
 
     @staticmethod
-    def _run_python(script: str, cwd: Path) -> m.Cli.CommandOutput:
+    def _run_python(script: str, cwd: Path) -> p.Cli.CommandOutput:
         """Run a Python snippet in a subprocess and capture text output."""
         result = u.Cli.run_raw(
             [sys.executable, "-c", script],

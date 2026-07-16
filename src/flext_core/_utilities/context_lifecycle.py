@@ -35,7 +35,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         include_statistics: bool = False,
         include_metadata: bool = False,
         as_dict: bool = True,
-    ) -> m.ContextExport | t.MappingKV[str, t.JsonPayload]:
+    ) -> p.ContextExport | t.MappingKV[str, t.JsonPayload]:
         """Export context state using canonical Pydantic models."""
         all_data: dict[str, t.JsonPayload] = {}
         all_scopes = self._scope_payloads()
@@ -85,7 +85,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
     def _as_config_map(
         source: (t.JsonPayload | t.MappingKV[str, t.JsonPayload] | t.JsonMapping),
         label: str,
-    ) -> m.ConfigMap | None:
+    ) -> p.ConfigMap | None:
         """Normalize an arbitrary mapping into a scope-compatible map."""
         try:
             source_mapping: t.JsonMapping = t.json_mapping_adapter().validate_python(
@@ -105,7 +105,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
     def _extract_config_map(
         self, other: p.Context | t.MappingKV[str, t.JsonPayload] | t.JsonMapping
-    ) -> m.ConfigMap | None:
+    ) -> p.ConfigMap | None:
         """Extract a ConfigMap from any supported merge source."""
         if isinstance(other, p.Context):
             exported_result = other.export(as_dict=True)

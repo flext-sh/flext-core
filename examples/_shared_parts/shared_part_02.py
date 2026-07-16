@@ -52,7 +52,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
                 return
             actual_path = self.caller_file.with_suffix(".actual")
             _ = actual_path.write_text(actual, encoding="utf-8")
-            fail_template = m.Examples.TEMPLATE_BY_KIND[m.Examples.OutputKind.FAIL]
+            fail_template = m.Examples.TEMPLATE_BY_KIND[p.Examples.OutputKind.FAIL]
             _ = sys.stdout.write(
                 fail_template.format(
                     kind=m.Examples.OutputKind.FAIL,

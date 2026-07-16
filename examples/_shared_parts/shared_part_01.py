@@ -46,7 +46,7 @@ class ExamplesFlextSharedBase(m.BaseModel):
         """Return a deterministic pseudo-random boolean."""
         return self._next_unit_float() >= self._BOOL_THRESHOLD
 
-    def rand_dict(self, n: int = 3) -> m.ConfigMap:
+    def rand_dict(self, n: int = 3) -> p.ConfigMap:
         """Return a ConfigMap with ``n`` random string keys to int values."""
         return m.ConfigMap(
             root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)}

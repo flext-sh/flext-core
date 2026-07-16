@@ -26,7 +26,7 @@ class TestsFlextCleanModels:
             class GoodEntity(m.ArbitraryTypesModel):
                 """Well-formed entity."""
 
-                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="forbid")
+                model_config: ClassVar[p.ConfigDict] = m.ConfigDict(extra="forbid")
 
                 name: Annotated[
                     str,
@@ -47,7 +47,7 @@ class TestsFlextCleanModels:
             class GoodFrozenValue(m.FrozenValueModel):
                 """Frozen value object."""
 
-                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+                model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
                     frozen=True,
                     extra="forbid",
                 )

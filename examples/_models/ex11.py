@@ -23,7 +23,7 @@ class ExamplesFlextModelsEx11:
 
     class ServiceHandlerLike(m.BaseModel):
         message_type: Annotated[
-            type[m.Value], u.Field(description="Message type handled by this handler")
+            type[p.Value], u.Field(description="Message type handled by this handler")
         ] = m.Value
 
         def handle(self, message: ExamplesFlextModelsEx11.Payload) -> p.Result[str]:

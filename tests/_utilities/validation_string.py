@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class TestsFlextUtilitiesValidationStringScenarios:
     """String validation scenarios."""
 
-    REQUIRED_SCENARIOS: ClassVar[Sequence[m.Tests.ValidationScenario]] = [
+    REQUIRED_SCENARIOS: ClassVar[Sequence[p.Tests.ValidationScenario]] = [
         m.Tests.ValidationScenario(
             name="required_valid",
             validator_type="string",
@@ -71,7 +71,7 @@ class TestsFlextUtilitiesValidationStringScenarios:
             description="Single character string",
         ),
     ]
-    CHOICE_SCENARIOS: ClassVar[Sequence[m.Tests.ValidationScenario]] = [
+    CHOICE_SCENARIOS: ClassVar[Sequence[p.Tests.ValidationScenario]] = [
         m.Tests.ValidationScenario(
             name="choice_valid_single",
             validator_type="string",

@@ -38,7 +38,7 @@ class FlextModelsBuilder:
                 self,
                 **updates: ts.JsonPayload
                 | tb.SequenceOf[ts.JsonPayload]
-                | tb.SequenceOf[m.ContractModel],
+                | tb.SequenceOf[p.ContractModel],
             ) -> Self:
                 """Apply one immutable ``model_copy(update=...)`` transition."""
                 return self._replace(self.state.model_copy(update=updates))
@@ -73,10 +73,10 @@ class FlextModelsBuilder:
             ) -> Self:
                 """Build and append one ContractModel item to a sequence field."""
                 model_item = self._model(model_type, **data)
-                current_values: tb.VariadicTuple[m.ContractModel] = tuple(
+                current_values: tb.VariadicTuple[p.ContractModel] = tuple(
                     getattr(self.state, field_name)
                 )
-                updated: tb.SequenceOf[m.ContractModel] = (*current_values, model_item)
+                updated: tb.SequenceOf[p.ContractModel] = (*current_values, model_item)
                 return self._set(**{field_name: updated})
 
             def _build_product(self, state: StateT) -> ProductT:

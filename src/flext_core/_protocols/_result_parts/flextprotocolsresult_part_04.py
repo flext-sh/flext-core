@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 if TYPE_CHECKING:
     # mro-wkii.17.26 (codex): result protocols load while models/types compose;
     # every reference below is a postponed Protocol annotation.
-    from flext_core import FlextModels as m, FlextTypes as t
+    from flext_core import FlextTypes as t
 
 from flext_core._protocols._result_parts.flextprotocolsresult_part_03 import (
     FlextProtocolsResult as FlextProtocolsResultPart03,
@@ -62,7 +62,7 @@ class FlextProtocolsResult(FlextProtocolsResultPart03):
             ...
 
         @property
-        def metadata(self) -> m.Metadata:
+        def metadata(self) -> p.Metadata:
             """Structured metadata attached to the error."""
             ...
 

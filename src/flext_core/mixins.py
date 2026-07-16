@@ -145,7 +145,7 @@ class FlextMixins(m.ArbitraryTypesModel):
             _ = u.clear_scope(c.ContextScope.OPERATION)
             self._context_type.apply_operation_name("")
 
-    def _get_runtime(self) -> m.ServiceRuntime:
+    def _get_runtime(self) -> p.ServiceRuntime:
         """Get or create a runtime triple shared across mixin consumers."""
         runtime = self._runtime
         if isinstance(runtime, m.ServiceRuntime):

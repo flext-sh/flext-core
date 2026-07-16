@@ -137,7 +137,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             m.RuntimeBootstrapOptions | t.MappingKV[str, t.JsonPayload] | p.Base | None
         ) = None,
         **overrides: t.JsonPayload,
-    ) -> m.ServiceRuntime:
+    ) -> p.ServiceRuntime:
         """Materialize settings, context, and container from one runtime specification."""
         runtime_options = cls.resolve_runtime_options(source, **overrides)
         context_type = cls._context_type()

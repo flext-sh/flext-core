@@ -22,7 +22,7 @@ class FlextBaseErrorMetadataMixin:
     def _normalize_metadata(
         metadata: pr.HasModelDump | tb.JsonValue | None,
         merged_kwargs: tb.MappingKV[str, ts.JsonPayload],
-    ) -> m.Metadata:
+    ) -> p.Metadata:
         """Normalize metadata from various input types to m.Metadata model."""
         if metadata is None:
             normalized_attrs = {
@@ -71,7 +71,7 @@ class FlextBaseErrorMetadataMixin:
     def _normalize_metadata_from_dict(
         metadata_dict: tb.MappingKV[str, ts.JsonPayload | None],
         merged_kwargs: tb.MappingKV[str, ts.JsonPayload],
-    ) -> m.Metadata:
+    ) -> p.Metadata:
         """Normalize metadata from dict-like recursive containers."""
         merged_attrs: MutableMapping[str, tb.JsonValue | None] = {}
         for k, v in metadata_dict.items():

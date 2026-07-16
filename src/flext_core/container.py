@@ -187,7 +187,7 @@ class FlextContainer(p.Container):
         return result
 
     @override
-    def snapshot(self) -> m.ConfigMap:
+    def snapshot(self) -> p.ConfigMap:
         """Return the merged settings exposed by this container."""
         config_dict = self._global_config.model_dump()
         return m.ConfigMap(

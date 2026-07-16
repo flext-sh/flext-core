@@ -49,7 +49,7 @@ class TestsFlextCoreEnumUtilities:
     class ParseScenario(m.BaseModel):
         """Declarative parse case for the public ``u.parse`` contract."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Parse scenario name")]
         value: Annotated[str | StrEnum, m.Field(description="Input value to parse")]
         expected_success: Annotated[

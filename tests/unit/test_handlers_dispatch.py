@@ -21,7 +21,7 @@ class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
     """Assert observable dispatch/execute behavior, not implementation details."""
 
     @staticmethod
-    def _command_settings(handler_id: str) -> m.Handler:
+    def _command_settings(handler_id: str) -> p.Handler:
         return u.Tests.create_handler_config(
             handler_id,
             handler_id.replace("_", " ").title(),

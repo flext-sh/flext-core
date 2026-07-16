@@ -69,7 +69,7 @@ class TestsFlextBadInlineUnion(core_m.ArbitraryTypesModel):
 
 
 class TestsFlextBadFrozen(core_m.ImmutableValueModel):
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+    model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=False)
 
     payload: Annotated[str, u.Field(description="Data payload.")] = ""
 

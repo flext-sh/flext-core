@@ -55,11 +55,11 @@ class FlextUtilitiesContextState:
             empty_context: t.JsonMapping = {}
             return empty_context
 
-    def _scope_var(self, scope: str) -> contextvars.ContextVar[m.ConfigMap | None]:
+    def _scope_var(self, scope: str) -> contextvars.ContextVar[p.ConfigMap | None]:
         """Get or create contextvar for scope."""
         state, scope_var = self.state.resolve_scope_var(scope)
         self.state = state
-        resolved_scope_var: contextvars.ContextVar[m.ConfigMap | None] = scope_var
+        resolved_scope_var: contextvars.ContextVar[p.ConfigMap | None] = scope_var
         return resolved_scope_var
 
     def _contextvar_data(self, scope: str) -> t.JsonMapping:

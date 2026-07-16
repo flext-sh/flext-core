@@ -102,7 +102,7 @@ class FlextUtilitiesContextCrud(
         """Remove a key from the context."""
         if not self.state.active:
             return
-        ctx_var: contextvars.ContextVar[m.ConfigMap | None] = self._scope_var(scope)
+        ctx_var: contextvars.ContextVar[p.ConfigMap | None] = self._scope_var(scope)
         current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
         if key not in current:
             return

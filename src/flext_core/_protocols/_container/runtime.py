@@ -56,7 +56,7 @@ class FlextProtocolsContainerRuntime:
             self, name: str, *, type_cls: None = None
         ) -> p.Result[t.RegisterableService]: ...
 
-        def snapshot(self) -> m.ConfigMap:
+        def snapshot(self) -> p.ConfigMap:
             """Merged settings exposed by the container."""
             ...
 

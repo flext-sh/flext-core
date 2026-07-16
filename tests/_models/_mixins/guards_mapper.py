@@ -31,7 +31,7 @@ class TestsFlextModelsGuardsMapperMixin:
         matches_type(instance, 'logger') returns False.
         """
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
             arbitrary_types_allowed=True,
         )
 

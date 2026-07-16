@@ -55,7 +55,7 @@ class FlextExceptionsHelpers:
         | tb.MappingKV[str, ts.JsonPayload | None]
         | tb.JsonValue
         | None,
-    ) -> m.Metadata | None:
+    ) -> p.Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model."""
         metadata: m.Metadata | None = None
         if value is not None:

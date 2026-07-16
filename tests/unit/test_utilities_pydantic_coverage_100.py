@@ -93,7 +93,7 @@ class TestsFlextUtilitiesPydantic:
             options: m.RuntimeBootstrapOptions,
             override_subproject: str,
             override_packages: t.StrSequence,
-        ) -> m.RuntimeBootstrapOptions:
+        ) -> p.RuntimeBootstrapOptions:
             return u.resolve_runtime_options(
                 options,
                 subproject=override_subproject.strip().replace("_", "-"),

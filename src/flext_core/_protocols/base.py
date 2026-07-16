@@ -14,7 +14,7 @@ from types import TracebackType
 if TYPE_CHECKING:
     # mro-wkii.17.26 (codex): p is composing this module; importing the root
     # m/p/t facades here re-enters protocols and models before t is available.
-    from flext_core import m, p, t
+    from flext_core import p, t
 
 
 class FlextProtocolsBase:
@@ -151,7 +151,7 @@ class FlextProtocolsBase:
         """
 
         unique_id: str
-        domain_events: MutableSequence[m.DomainEvent]
+        domain_events: MutableSequence[p.DomainEvent]
 
 
 __all__: list[str] = ["FlextProtocolsBase"]

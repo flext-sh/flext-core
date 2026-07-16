@@ -16,14 +16,14 @@ from examples.protocols import p
 class ProtocolHandler:
     """Protocol-like handler used by the registry example."""
 
-    message_type: type[m.Command]
+    message_type: type[p.Command]
 
-    def __init__(self, label: str, message_type: type[m.Command]) -> None:
+    def __init__(self, label: str, message_type: type[p.Command]) -> None:
         """Store the handler label and message type."""
         self._label = label
         self.message_type = message_type
 
-    def can_handle(self, message_type: type[m.Command]) -> bool:
+    def can_handle(self, message_type: type[p.Command]) -> bool:
         """Return whether this handler supports the message type."""
         return message_type is self.message_type
 
@@ -46,7 +46,7 @@ def as_registry_handler(handler: ProtocolHandler) -> t.DispatchableHandler:
 
     class _RegistryHandlerCallable:
         handler_id: str
-        message_type: type[m.Command]
+        message_type: type[p.Command]
 
         def __init__(self, source: ProtocolHandler) -> None:
             self._source = source
@@ -60,6 +60,6 @@ def as_registry_handler(handler: ProtocolHandler) -> t.DispatchableHandler:
 
 
 @h.handler(m.Examples.CommandA, priority=3)
-def discovered_handler(message: m.Command) -> m.Command:
+def discovered_handler(message: m.Command) -> p.Command:
     """Return the discovered command unchanged for registry dispatch."""
     return message

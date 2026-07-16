@@ -46,7 +46,7 @@ class FlextContext(m.ManagedModel):
         m.Metadata, m.Field(description="Correlation and service metadata snapshot.")
     ] = m.Field(default_factory=m.Metadata)
 
-    _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
+    _container_state: ClassVar[p.ContextContainerState] = m.ContextContainerState()
 
     def set(self, key: str, value: t.JsonPayload) -> p.Result[bool]:
         """Store a value in this context's scope."""
@@ -239,7 +239,7 @@ class FlextContext(m.ManagedModel):
 
     @staticmethod
     @contextmanager
-    def timed_operation(operation_name: str | None = None) -> Generator[m.ConfigMap]:
+    def timed_operation(operation_name: str | None = None) -> Generator[p.ConfigMap]:
         """Scope a timed operation with performance metadata."""
         start_time = u.generate_datetime_utc()
         start_perf = time.perf_counter()

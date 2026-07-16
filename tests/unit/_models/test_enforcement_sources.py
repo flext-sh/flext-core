@@ -135,7 +135,7 @@ class TestsFlextCoreEnforcementSources:
     )
     def test_source_model_rejects_missing_required_field(
         self,
-        factory: type[m.BaseModel],
+        factory: type[p.BaseModel],
         payload: t.JsonMapping,
     ) -> None:
         with pytest.raises(c.ValidationError):
@@ -196,7 +196,7 @@ class TestsFlextCoreEnforcementSources:
         self,
         kind: str,
         source_payload: t.JsonMapping,
-        expected_type: type[m.BaseModel],
+        expected_type: type[p.BaseModel],
     ) -> None:
         spec = m.EnforcementRuleSpec.model_validate(
             {

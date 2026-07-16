@@ -21,10 +21,10 @@ class ExamplesFlextModelsEx02:
         def connect(self) -> p.Result[bool]:
             return r[bool].ok(True)
 
-        def query(self, sql: str) -> p.Result[m.ConfigMap]:
+        def query(self, sql: str) -> p.Result[p.ConfigMap]:
             if "INVALID" in sql:
-                return r[m.ConfigMap].fail("invalid query")
-            return r[m.ConfigMap].ok(m.ConfigMap(root={"rows": 1}))
+                return r[p.ConfigMap].fail("invalid query")
+            return r[p.ConfigMap].ok(m.ConfigMap(root={"rows": 1}))
 
     class CacheService(m.Value):
         """Cache service model used in example 02 settings integration."""

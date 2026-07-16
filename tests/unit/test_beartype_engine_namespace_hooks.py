@@ -33,7 +33,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
         files: t.MappingKV[str, str],
         import_target: str,
         ast_shape: str,
-    ) -> m.Cli.CommandOutput:
+    ) -> p.Cli.CommandOutput:
         """Materialize ``files``, import ``Probe`` from ``import_target``, run ``apply``.
 
         Returns the captured subprocess output; ``stdout`` holds ``repr`` of the

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class TestsFlextUtilitiesValidationPatternScenarios:
     """Pattern validation scenarios."""
 
-    LENGTH_SCENARIOS: ClassVar[Sequence[m.Tests.ValidationScenario]] = [
+    LENGTH_SCENARIOS: ClassVar[Sequence[p.Tests.ValidationScenario]] = [
         m.Tests.ValidationScenario(
             name="length_exact",
             validator_type="string",
@@ -60,7 +60,7 @@ class TestsFlextUtilitiesValidationPatternScenarios:
             description="Zero-length string allowed",
         ),
     ]
-    PATTERN_SCENARIOS: ClassVar[Sequence[m.Tests.ValidationScenario]] = [
+    PATTERN_SCENARIOS: ClassVar[Sequence[p.Tests.ValidationScenario]] = [
         m.Tests.ValidationScenario(
             name="pattern_email_valid",
             validator_type="string",

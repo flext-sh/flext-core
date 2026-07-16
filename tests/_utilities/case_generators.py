@@ -25,7 +25,7 @@ class TestsFlextUtilitiesCaseGeneratorsMixin(
         @staticmethod
         def generate_user_success_cases(
             num_cases: int = 3,
-        ) -> t.SequenceOf[m.Tests.ServiceTestCase]:
+        ) -> t.SequenceOf[p.Tests.ServiceTestCase]:
             """Generate successful user service test cases."""
             return [
                 m.Tests.ServiceTestCase(
@@ -39,7 +39,7 @@ class TestsFlextUtilitiesCaseGeneratorsMixin(
         @staticmethod
         def generate_validation_success_cases(
             num_cases: int = 2,
-        ) -> t.SequenceOf[m.Tests.ServiceTestCase]:
+        ) -> t.SequenceOf[p.Tests.ServiceTestCase]:
             """Generate successful validation test cases."""
             return [
                 m.Tests.ServiceTestCase(
@@ -84,17 +84,17 @@ class TestsFlextUtilitiesCaseGeneratorsMixin(
         """Unified factory for all test cases using advanced patterns."""
 
         @staticmethod
-        def user_success() -> t.SequenceOf[m.Tests.ServiceTestCase]:
+        def user_success() -> t.SequenceOf[p.Tests.ServiceTestCase]:
             """Generate cached-style success cases on demand."""
             return TestsFlextUtilitiesCaseGeneratorsMixin.TestDataGenerators.generate_user_success_cases()
 
         @staticmethod
-        def validate_success() -> t.SequenceOf[m.Tests.ServiceTestCase]:
+        def validate_success() -> t.SequenceOf[p.Tests.ServiceTestCase]:
             """Generate cached-style validation success cases on demand."""
             return TestsFlextUtilitiesCaseGeneratorsMixin.TestDataGenerators.generate_validation_success_cases()
 
         @staticmethod
-        def validate_failure() -> t.SequenceOf[m.Tests.ServiceTestCase]:
+        def validate_failure() -> t.SequenceOf[p.Tests.ServiceTestCase]:
             """Generate cached-style validation failure cases on demand."""
             return TestsFlextUtilitiesCaseGeneratorsMixin.TestDataGenerators.generate_validation_failure_cases()
 
@@ -119,7 +119,7 @@ class TestsFlextUtilitiesCaseGeneratorsMixin(
             success: int = 0,
             failure: int = 0,
             skipped: int = 0,
-        ) -> m.Tests.Operation:
+        ) -> p.Tests.Operation:
             """Create OperationProgress."""
             return m.Tests.Operation(
                 success_count=success,
@@ -129,7 +129,7 @@ class TestsFlextUtilitiesCaseGeneratorsMixin(
             )
 
         @staticmethod
-        def conversion_progress() -> m.Tests.Conversion:
+        def conversion_progress() -> p.Tests.Conversion:
             """Create ConversionProgress."""
             return m.Tests.Conversion(
                 converted=[],

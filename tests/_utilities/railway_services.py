@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 class TestsFlextUtilitiesRailwayServicesMixin:
     """Railway service helpers."""
 
-    class GetUserService(s[m.BaseModel]):
+    class GetUserService(s[p.BaseModel]):
         """Service to get user."""
 
         user_id: Annotated[
@@ -40,7 +40,7 @@ class TestsFlextUtilitiesRailwayServicesMixin:
                 ),
             )
 
-    class SendEmailService(s[m.BaseModel]):
+    class SendEmailService(s[p.BaseModel]):
         """Service to send email."""
 
         to: Annotated[
@@ -53,10 +53,10 @@ class TestsFlextUtilitiesRailwayServicesMixin:
         ] = ""
 
         @override
-        def execute(self) -> p.Result[m.Tests.EmailResponse]:
+        def execute(self) -> p.Result[p.Tests.EmailResponse]:
             if "@" not in self.to:
-                return r[m.Tests.EmailResponse].fail(c.Tests.INVALID_EMAIL)
-            return r[m.Tests.EmailResponse].ok(
+                return r[p.Tests.EmailResponse].fail(c.Tests.INVALID_EMAIL)
+            return r[p.Tests.EmailResponse].ok(
                 m.Tests.EmailResponse(status="sent", message_id=f"msg-{self.to}"),
             )
 

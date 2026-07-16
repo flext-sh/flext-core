@@ -35,7 +35,7 @@ class TestsFlextCoreUtilitiesRuntimeViolationRegistry:
         runtime_registry.clear_violation_reports()
 
     @staticmethod
-    def _report(message: str) -> m.Report:
+    def _report(message: str) -> p.Report:
         return m.Report(
             violations=[
                 m.Violation(

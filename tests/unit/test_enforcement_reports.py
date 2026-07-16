@@ -27,7 +27,7 @@ def _hard_violation(
     message: str = "boom [ENFORCE-001]",
     rule_id: str = "",
     anchor: str = "",
-) -> m.Violation:
+) -> p.Violation:
     """Build a Model-layer HARD-rules violation for emit-focused tests."""
     return m.Violation(
         qualname=qualname,

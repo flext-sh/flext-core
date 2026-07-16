@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     # mro-wkii.17.26 (codex): reverse m/p/t edges are annotation-only while the
     # public protocol facade is still being composed.
-    from flext_core import m, p, t
+    from flext_core import p, t
 
 
 class FlextProtocolsContextNamespaces:
@@ -130,7 +130,7 @@ class FlextProtocolsContextNamespaces:
         @staticmethod
         def timed_operation(
             operation_name: str | None = None,
-        ) -> AbstractContextManager[m.ConfigMap]:
+        ) -> AbstractContextManager[p.ConfigMap]:
             """Create a timed operation scope."""
             ...
 

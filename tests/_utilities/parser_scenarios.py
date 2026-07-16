@@ -19,7 +19,7 @@ class TestsFlextUtilitiesParserScenariosMixin:
     class ParserScenarios:
         """Centralized parser scenarios - single source of truth."""
 
-        PUBLIC_PARSE_CASES: ClassVar[Sequence[m.Tests.PublicParseCase]] = [
+        PUBLIC_PARSE_CASES: ClassVar[Sequence[p.Tests.PublicParseCase]] = [
             m.Tests.PublicParseCase(
                 name="string-to-int",
                 input_value="42",
@@ -129,7 +129,7 @@ class TestsFlextUtilitiesParserScenariosMixin:
             ),
         ]
 
-        LDIF_PARSE_SCENARIOS: ClassVar[Sequence[m.Tests.ParserScenario]] = [
+        LDIF_PARSE_SCENARIOS: ClassVar[Sequence[p.Tests.ParserScenario]] = [
             m.Tests.ParserScenario(
                 name="parse_simple_dn",
                 parser_method="parse",

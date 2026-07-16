@@ -40,7 +40,7 @@ class ExamplesFlextModelsEx10:
 
     class ProtocolHandler(m.BaseModel):
         message_type: Annotated[
-            type[m.Command], u.Field(description="Message type for protocol handler")
+            type[p.Command], u.Field(description="Message type for protocol handler")
         ] = m.Command
 
         def handle(self, message: ExamplesFlextModelsEx10.Message) -> p.Result[str]:
