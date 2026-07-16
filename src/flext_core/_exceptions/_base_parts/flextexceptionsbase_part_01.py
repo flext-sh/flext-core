@@ -38,7 +38,6 @@ class FlextBaseErrorMetadataMixin:
                 merged_attrs = {
                     key: FlextRuntime.normalize_to_metadata(value)
                     for key, value in metadata_model.attributes.items()
-                    if value is not None
                 }
                 for key, value in merged_kwargs.items():
                     if value is None:
