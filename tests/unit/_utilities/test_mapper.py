@@ -48,7 +48,7 @@ class TestsFlextCoreMapper:
 
         assert result.failure
         assert result.error is not None
-        assert "required" in result.error
+        assert "not found" in result.error
 
     def test_extract_honors_custom_separator(self) -> None:
         result = u.extract({"a": {"b": 7}}, "a/b", separator="/")
