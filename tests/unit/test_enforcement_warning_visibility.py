@@ -99,7 +99,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
                 """
                 import warnings
 
-                from flext_core import FlextMroViolation
+                from flext_core._constants.enforcement import FlextMroViolation
 
 
                 def test_probe() -> None:
