@@ -65,7 +65,7 @@ class TestsFlextHandlerDecoratorEdges:
         # Assert: defaults surfaced through the public config
         assert config.priority == 0
         assert config.timeout == 30
-        assert config.middleware == []
+        assert config.middleware == ()
 
     def test_none_timeout_is_preserved(self) -> None:
         # Arrange
