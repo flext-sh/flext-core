@@ -13,7 +13,7 @@ class FlextProtocolsLazy:
 
     # NOTE (multi-agent, mro-0ftd.3.3.1): separate resolved symbols from the
     # two exact PEP 562 callbacks so no callable or value aliases recurse.
-    type ResolvedExport = t.LazyModule | p.Model | p.ModuleOwned
+    type ResolvedExport = t.LazyModule | p.BaseModel | p.ModuleOwned
 
     class GetattrHook(Protocol):
         """Module ``__getattr__`` callback contract."""

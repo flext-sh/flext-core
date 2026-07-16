@@ -32,7 +32,7 @@ class FlextProtocolsHandler:
 
     # FLEXT: annotations remain structural; concrete models are construction-only.
     @runtime_checkable
-    class HandlerConfig(p.Model, Protocol):
+    class HandlerConfig(p.BaseModel, Protocol):
         """Validated handler configuration consumed by the runtime pipeline."""
 
         @property
@@ -45,7 +45,7 @@ class FlextProtocolsHandler:
         def handler_mode(self) -> c.HandlerType: ...
 
     @runtime_checkable
-    class ExecutionContext(p.Model, Protocol):
+    class ExecutionContext(p.BaseModel, Protocol):
         """Field-level contract for active handler execution state."""
 
         @property
@@ -67,13 +67,13 @@ class FlextProtocolsHandler:
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload | p.Model | t.SequenceOf[p.Model]]
+            update: t.MappingKV[str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]]
             | None = None,
             deep: bool = False,
         ) -> FlextProtocolsHandler.ExecutionContext: ...
 
     @runtime_checkable
-    class HandlerRuntimeState(p.Model, Protocol):
+    class HandlerRuntimeState(p.BaseModel, Protocol):
         """Field-level contract for copy-on-write handler pipeline state."""
 
         @property
@@ -88,13 +88,13 @@ class FlextProtocolsHandler:
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload | p.Model | t.SequenceOf[p.Model]]
+            update: t.MappingKV[str, t.JsonPayload | p.BaseModel | t.SequenceOf[p.BaseModel]]
             | None = None,
             deep: bool = False,
         ) -> FlextProtocolsHandler.HandlerRuntimeState: ...
 
     @runtime_checkable
-    class DecoratorConfig(p.Model, Protocol):
+    class DecoratorConfig(p.BaseModel, Protocol):
         """Handler decorator metadata consumed by discovery."""
 
         @property
@@ -268,8 +268,8 @@ class FlextProtocolsHandler:
 
         def process[TResult](
             self,
-            command: p.Model,
-            next_handler: Callable[[p.Model], pr.Result[TResult]],
+            command: p.BaseModel,
+            next_handler: Callable[[p.BaseModel], pr.Result[TResult]],
         ) -> pr.Result[TResult]: ...
 
 

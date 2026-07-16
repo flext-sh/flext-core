@@ -41,7 +41,7 @@ class FlextProtocolsBase:
         __module__: str
 
     @runtime_checkable
-    class Model(Base, Protocol):
+    class BaseModel(Base, Protocol):
         """Structural typing protocol for Pydantic v2 models.
 
         Ensures types have Pydantic signatures without importing BaseModel directly

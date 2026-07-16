@@ -121,8 +121,8 @@ class TestsFlextHandlerDecoratorMetadata:
         class PassthroughMiddleware:
             def process[TResult](
                 self,
-                command: p.Model,
-                next_handler: Callable[[p.Model], p.Result[TResult]],
+                command: p.BaseModel,
+                next_handler: Callable[[p.BaseModel], p.Result[TResult]],
             ) -> p.Result[TResult]:
                 return next_handler(command)
 

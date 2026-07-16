@@ -38,7 +38,7 @@ class FlextUtilitiesContextState:
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
-        ctx_value: p.ConfigMap | t.MappingKV[str, t.JsonPayload] | p.Model | None,
+        ctx_value: p.ConfigMap | t.MappingKV[str, t.JsonPayload] | p.BaseModel | None,
     ) -> t.JsonMapping:
         """Return contextvar payload as a flat container mapping with safe default."""
         try:

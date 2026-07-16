@@ -27,7 +27,7 @@ from flext_core._typings.pydantic import FlextTypesPydantic as tp
 class FlextTypesServices(tc):
     """Type aliases for service registration and runtime mappings."""
 
-    type SettingsOverrideLeaf = tc.JsonPayloadLeaf | p.Model
+    type SettingsOverrideLeaf = tc.JsonPayloadLeaf | p.BaseModel
     type SettingsOverrideCollectionValue = (
         SettingsOverrideLeaf
         | t.MappingKV[str, SettingsOverrideLeaf]
@@ -40,9 +40,9 @@ class FlextTypesServices(tc):
     )
     type SettingsOverridesMapping = t.MappingKV[str, SettingsOverride | None]
     type RegistryDict[T] = MutableMapping[str, T]
-    type DomainModelCarrier = tp.BaseModelType | p.Model
+    type DomainModelCarrier = tp.BaseModelType | p.BaseModel
     type ModelClass[T: tp.BaseModelType] = type[T]
-    type LogArgument = tc.JsonPayload | p.Model
+    type LogArgument = tc.JsonPayload | p.BaseModel
     type LogValue = LogArgument | Exception
     type LogResult = prt.Result[bool]
     type MetadataMapping = t.MappingKV[str, tc.JsonPayload]
@@ -153,7 +153,7 @@ class FlextTypesServices(tc):
         | pl.HasLogger
         | pl.Logger
         | prt.HasModelDump
-        | p.Model
+        | p.BaseModel
         | prt.ResultLike[tc.JsonPayload]
         | ps.Settings
         | RegisterableService

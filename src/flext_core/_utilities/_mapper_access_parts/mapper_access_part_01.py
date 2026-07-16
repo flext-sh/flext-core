@@ -26,7 +26,7 @@ class FlextUtilitiesMapperAccess:
 
     @staticmethod
     def _normalize_accessible_value(
-        value: t.JsonPayload | p.Model | p.HasModelDump | p.ValidatorSpec | None,
+        value: t.JsonPayload | p.BaseModel | p.HasModelDump | p.ValidatorSpec | None,
     ) -> t.JsonPayload | t.JsonValue:
         """Normalize protocol-accessible values.
 
