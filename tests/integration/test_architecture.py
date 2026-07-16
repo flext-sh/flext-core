@@ -141,7 +141,9 @@ class TestsFlextCoreArchitecture:
         original = m.Tests.ScanResult(
             validator_name="roundtrip", files_scanned=2, violations=[violation]
         )
-        restored = m.Tests.ScanResult.model_validate(original.model_dump())
+        restored = m.Tests.ScanResult.model_validate(
+            original.model_dump(exclude={"passed"})
+        )
         tm.that(restored.validator_name, eq="roundtrip")
         tm.that(restored.files_scanned, eq=2)
         tm.that(restored.passed, eq=False)
