@@ -19,7 +19,7 @@ class FlextTypingConfig:
 
     type ConfigValue = t.JsonValue
     type ConfigMapping = t.MappingKV[str, t.JsonValue]
-    type ConfigDict = dict[str, t.JsonValue]
+    type ConfigFileDict = dict[str, t.JsonValue]
     type ConfigOverrideMapping = t.MappingKV[str, str]
     type UserOverridesMapping = t.MappingKV[str, tc.JsonPayload]
 
