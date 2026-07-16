@@ -5,7 +5,9 @@ from __future__ import annotations
 import sys
 from types import ModuleType
 
-from flext_core._typings.lazy import FlextTypesLazy
+# NOTE (multi-agent, mro-0ftd.3.3.1): consume the finite structural contract;
+# the former self-recursive module-global alias has no runtime owner.
+from flext_core._protocols.lazy import FlextProtocolsLazy as p
 
 from .flextlazy_part_01 import (
     FlextLazy as FlextLazyPart01,
@@ -15,10 +17,6 @@ from .flextlazy_part_01 import (
 )
 
 from collections.abc import Sequence
-
-
-type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
-type ModuleGlobals = FlextTypesLazy.ModuleGlobals
 
 
 class FlextLazyAttribute:
@@ -31,7 +29,7 @@ class FlextLazyAttribute:
         lazy: FlextLazy,
         name: str,
         lazy_imports: LazyImportMap,
-        module_globals: ModuleGlobals,
+        module_globals: p.Namespace,
         module_name: str,
     ) -> None:
         self._lazy = lazy
@@ -41,8 +39,8 @@ class FlextLazyAttribute:
         self._module_name = module_name
 
     def __get__(
-        self, instance: ModuleGlobalValue | None, owner: type | None = None
-    ) -> ModuleGlobalValue:
+        self, instance: p.ResolvedExport | None, owner: type | None = None
+    ) -> p.ResolvedExport:
         """Resolve and cache the target symbol through the owning lazy container."""
         _ = instance, owner
         return self._lazy.get(
@@ -60,7 +58,7 @@ class FlextLazy(FlextLazyPart01):
         self,
         name: str,
         lazy_imports: LazyImportMap,
-        module_globals: ModuleGlobals,
+        module_globals: p.Namespace,
         module_name: str,
     ) -> FlextLazyAttribute:
         """Return a descriptor for class-namespace lazy attributes."""
@@ -70,9 +68,9 @@ class FlextLazy(FlextLazyPart01):
         self,
         name: str,
         lazy_imports: LazyImportMap,
-        module_globals: ModuleGlobals,
+        module_globals: p.Namespace,
         module_name: str,
-    ) -> ModuleGlobalValue:
+    ) -> p.ResolvedExport:
         """Resolve one lazy symbol and cache it."""
         lazy_imports = self._norm_map(module_name, lazy_imports)
         entry = lazy_imports.get(name)
@@ -93,7 +91,7 @@ class FlextLazy(FlextLazyPart01):
             return mod
 
         try:
-            value: ModuleGlobalValue = getattr(mod, attr)
+            value: p.ResolvedExport = getattr(mod, attr)
         except AttributeError:
             if isinstance(entry, str) and module_path.rsplit(".", 1)[-1] == name:
                 if not self._module_is_initializing(mod):
@@ -149,7 +147,7 @@ class FlextLazy(FlextLazyPart01):
     def install(
         self,
         module_name: str,
-        module_globals: ModuleGlobals,
+        module_globals: p.Namespace,
         lazy_imports: LazyImportMap,
         all_exports: Sequence[str] | None = None,
         *,
@@ -169,7 +167,8 @@ class FlextLazy(FlextLazyPart01):
 
         normalized = self._norm_map(module_name, lazy_imports)
         for name in normalized:
-            module_globals.pop(name, None)
+            if name in module_globals:
+                del module_globals[name]
         if public_exports is not None:
             names = tuple(dict.fromkeys(public_exports))
         elif all_exports is None:

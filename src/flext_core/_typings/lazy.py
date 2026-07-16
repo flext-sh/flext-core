@@ -2,28 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping
 from types import ModuleType
-
-from .base import FlextTypingBase as t
-
-type FlextLazyModuleGlobalValue = (
-    t.JsonValue
-    | t.LazyImportMap
-    | t.StrSequence
-    | ModuleType
-    | type
-    | Callable[..., FlextLazyModuleGlobalValue]
-    | Callable[..., t.JsonValue | t.StrSequence | ModuleType | type | None]
-    | None
-)
 
 
 class FlextTypesLazy:
     """Typing namespace for package-level lazy export internals."""
 
-    type ModuleGlobalValue = FlextLazyModuleGlobalValue
-    type ModuleGlobals = MutableMapping[str, FlextLazyModuleGlobalValue]
+    # NOTE (multi-agent, mro-0ftd.3.3.1): keep the low-tier export value finite;
+    # structural model and callback capabilities belong to the protocols facet.
+    type LazyModule = ModuleType
 
 
 __all__: list[str] = ["FlextTypesLazy"]

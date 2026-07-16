@@ -11,6 +11,7 @@ from ._protocols.config import FlextProtocolsConfig
 from ._protocols.container import FlextProtocolsContainer
 from ._protocols.context import FlextProtocolsContext
 from ._protocols.handler import FlextProtocolsHandler
+from ._protocols.lazy import FlextProtocolsLazy
 from ._protocols.logging import FlextProtocolsLogging
 from ._protocols.project_metadata import FlextProtocolsProjectMetadata
 from ._protocols.pydantic import FlextProtocolsPydantic
@@ -21,7 +22,10 @@ from ._protocols.settings import FlextProtocolsSettings
 
 
 class FlextProtocols(
+    # NOTE (multi-agent, mro-0ftd.3.3.1): expose the finite lazy-export contract
+    # through the canonical protocols facade for runtime consumers.
     FlextProtocolsBase,
+    FlextProtocolsLazy,
     FlextProtocolsConfig,
     FlextProtocolsContext,
     FlextProtocolsResult,
