@@ -175,8 +175,8 @@ class FlextProtocolsService:
         """Structural protocol for dispatch-capable service objects in the DI container."""
 
         def dispatch(
-            self, message: FlextProtocolsBase.Model, /
-        ) -> FlextProtocolsBase.Model:
+            self, message: FlextProtocolsBase.BaseModel, /
+        ) -> FlextProtocolsBase.BaseModel:
             """Dispatch a message and return the result."""
             ...
 

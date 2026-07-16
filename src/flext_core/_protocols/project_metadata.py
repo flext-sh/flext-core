@@ -15,7 +15,7 @@ class FlextProtocolsProjectMetadata:
     """Protocols for project metadata consumed across FLEXT layers."""
 
     @runtime_checkable
-    class ProjectAuthor(pb.Model, Protocol):
+    class ProjectAuthor(pb.BaseModel, Protocol):
         """PEP 621 author fields."""
 
         @property
@@ -25,7 +25,7 @@ class FlextProtocolsProjectMetadata:
         def email(self) -> str: ...
 
     @runtime_checkable
-    class ProjectUrls(pb.Model, Protocol):
+    class ProjectUrls(pb.BaseModel, Protocol):
         """Canonical PEP 621 URL fields."""
 
         @property
@@ -38,7 +38,7 @@ class FlextProtocolsProjectMetadata:
         def repository(self) -> str: ...
 
     @runtime_checkable
-    class Project(pb.Model, Protocol):
+    class Project(pb.BaseModel, Protocol):
         """PEP 621 project fields consumed by services."""
 
         @property
@@ -71,14 +71,14 @@ class FlextProtocolsProjectMetadata:
         def keywords(self) -> tuple[str, ...]: ...
 
     @runtime_checkable
-    class ProjectToolFlextProject(pb.Model, Protocol):
+    class ProjectToolFlextProject(pb.BaseModel, Protocol):
         """Project naming policy fields."""
 
         @property
         def class_stem_override(self) -> str | None: ...
 
     @runtime_checkable
-    class ProjectToolFlextDocs(pb.Model, Protocol):
+    class ProjectToolFlextDocs(pb.BaseModel, Protocol):
         """Documentation policy fields."""
 
         @property
@@ -94,14 +94,14 @@ class FlextProtocolsProjectMetadata:
         def exclude_docs(self) -> tuple[str, ...]: ...
 
     @runtime_checkable
-    class ProjectToolFlextWorkspace(pb.Model, Protocol):
+    class ProjectToolFlextWorkspace(pb.BaseModel, Protocol):
         """Workspace attachment policy fields."""
 
         @property
         def attached(self) -> bool: ...
 
     @runtime_checkable
-    class ProjectToolFlext(pb.Model, Protocol):
+    class ProjectToolFlext(pb.BaseModel, Protocol):
         """Validated FLEXT project policy."""
 
         @property
@@ -116,7 +116,7 @@ class FlextProtocolsProjectMetadata:
         ) -> FlextProtocolsProjectMetadata.ProjectToolFlextWorkspace: ...
 
     @runtime_checkable
-    class ProjectMetadata(pb.Model, Protocol):
+    class ProjectMetadata(pb.BaseModel, Protocol):
         """Canonical retained project metadata aggregate."""
 
         @property

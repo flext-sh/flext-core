@@ -36,8 +36,8 @@ class FlextProtocolsLogging(FlextProtocolsLoggingPart02):
 
     type AccessibleData = (
         t.JsonPayload
-        | FlextProtocolsBase.Model
-        | t.MappingKV[str, t.JsonPayload | FlextProtocolsBase.Model | None]
+        | FlextProtocolsBase.BaseModel
+        | t.MappingKV[str, t.JsonPayload | FlextProtocolsBase.BaseModel | None]
         | FlextProtocolsResult.HasModelDump
         | FlextProtocolsLogging.ValidatorSpec
     )

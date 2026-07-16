@@ -20,7 +20,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def has_model_dump(
-        value: t.GuardInput | pr.HasModelDump | pb.Model | t.JsonValue | None,
+        value: t.GuardInput | pr.HasModelDump | pb.BaseModel | t.JsonValue | None,
     ) -> TypeIs[pr.HasModelDump]:
         """Narrow value to objects exposing a callable ``model_dump``."""
         model_dump = getattr(value, "model_dump", None)
@@ -40,7 +40,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def pydantic_model(
-        value: t.GuardInput | pb.Model | t.JsonValue | PydanticBaseModel | None,
+        value: t.GuardInput | pb.BaseModel | t.JsonValue | PydanticBaseModel | None,
     ) -> TypeIs[mp.BaseModel]:
         """Narrow value to the canonical Pydantic model carrier.
 
