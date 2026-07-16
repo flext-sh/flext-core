@@ -25,14 +25,70 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 from threading import RLock
-from typing import ClassVar, Self, override
+from typing import ClassVar, Self, cast, override
 
+from pydantic import JsonValue
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
     YamlConfigSettingsSource,
 )
+from yaml import MappingNode, SafeLoader
+from yaml.constructor import ConstructorError
+from yaml.resolver import BaseResolver
+
+
+class _UniqueKeySafeLoader(SafeLoader):
+    """Safe YAML loader that rejects duplicate mapping keys at every depth."""
+
+
+def _construct_unique_mapping(
+    loader: SafeLoader, node: MappingNode, *, deep: bool = False
+) -> dict[str, JsonValue]:
+    """Construct one JSON mapping and fail before a duplicate can overwrite."""
+    values: dict[str, JsonValue] = {}
+    for key_node, value_node in node.value:
+        key = cast("JsonValue", loader.construct_object(key_node, deep=deep))
+        if not isinstance(key, str):
+            context = "while constructing a config mapping"
+            problem = "config mapping keys must be strings"
+            raise ConstructorError(
+                context, node.start_mark, problem, key_node.start_mark
+            )
+        if key in values:
+            context = "while constructing a config mapping"
+            problem = f"duplicate config key: {key}"
+            raise ConstructorError(
+                context, node.start_mark, problem, key_node.start_mark
+            )
+        values[key] = cast("JsonValue", loader.construct_object(value_node, deep=deep))
+    return values
+
+
+_UniqueKeySafeLoader.add_constructor(
+    BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping
+)
+
+
+class _StrictYamlConfigSettingsSource(YamlConfigSettingsSource):
+    """Pydantic settings source backed by the unique-key safe loader."""
+
+    @override
+    def _read_file(self, file_path: Path) -> dict[str, JsonValue]:
+        """Parse one YAML config file exactly once with strict mapping keys."""
+        with file_path.open(encoding=self.yaml_file_encoding) as yaml_file:
+            loader = _UniqueKeySafeLoader(yaml_file)
+            try:
+                loaded = cast("JsonValue", loader.get_single_data())
+            finally:
+                loader.dispose()
+        if loaded is None:
+            return {}
+        if not isinstance(loaded, dict):
+            msg = f"config YAML root must be a mapping: {file_path}"
+            raise TypeError(msg)
+        return loaded
 
 
 class FlextConfig(BaseSettings):
@@ -44,6 +100,9 @@ class FlextConfig(BaseSettings):
     """
 
     CONFIG_DIR: ClassVar[str] = "config"
+    # NOTE (multi-agent): exact-file consumers declare their YAML surface here;
+    # the empty default preserves deterministic directory auto-discovery.
+    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ()
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True, extra="allow", env_prefix="FLEXT_CONFIG_"
@@ -89,7 +148,26 @@ class FlextConfig(BaseSettings):
         """Auto-discover every ``config/*.yaml`` (sorted for deterministic merge)."""
         config_dir = cls._config_dir()
         if not config_dir.is_dir():
+            if cls.CONFIG_FILENAMES:
+                msg = f"declared config directory does not exist: {config_dir}"
+                raise FileNotFoundError(msg)
             return []
+        if cls.CONFIG_FILENAMES:
+            invalid = tuple(
+                filename
+                for filename in cls.CONFIG_FILENAMES
+                if Path(filename).name != filename
+                or Path(filename).suffix not in {".yaml", ".yml"}
+            )
+            if invalid:
+                msg = "invalid declared config filenames: " + ", ".join(invalid)
+                raise ValueError(msg)
+            files = [config_dir / filename for filename in cls.CONFIG_FILENAMES]
+            missing = tuple(str(path) for path in files if not path.is_file())
+            if missing:
+                msg = "declared config files do not exist: " + ", ".join(missing)
+                raise FileNotFoundError(msg)
+            return files
         return sorted(config_dir.glob("*.yaml")) + sorted(config_dir.glob("*.yml"))
 
     @classmethod
@@ -107,7 +185,9 @@ class FlextConfig(BaseSettings):
         return (
             init_settings,
             env_settings,
-            YamlConfigSettingsSource(
+            # NOTE (multi-agent): one canonical loader rejects duplicate keys
+            # before settings construction; consumers never add local parsers.
+            _StrictYamlConfigSettingsSource(
                 settings_cls, yaml_file=cls._config_files(), deep_merge=True
             ),
         )

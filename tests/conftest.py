@@ -1,19 +1,23 @@
-"""Pytest collection policy for flext-core's public test suite."""
+"""Comprehensive test configuration and utilities for flext-core.
+
+Provides highly automated testing infrastructure following strict
+type-system-architecture.md rules with real functionality testing.
+"""
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import TYPE_CHECKING
-
 import pytest
 
-from pytest import Collector
+from tests.utilities import u
+
+# NOTE (multi-agent): Shared fixtures come only from flext-tests' pytest11 plugin.
+
+collect_ignore_glob = [
+    "**/__init__.py",
+]
 
 
-
-@pytest.hookimpl(tryfirst=True)
-def pytest_collect_file(file_path: Path, parent: Collector) -> pytest.Module | None:
-    """Keep ``test_*.py`` under pytest's native collector before docstring scans."""
-    if file_path.suffix == ".py" and file_path.name.startswith("test_"):
-        return pytest.Module.from_parent(parent, path=file_path)
-    return None
+@pytest.fixture
+def mock_external_service() -> u.Tests.FunctionalExternalService:
+    """Provide mock external service for integration tests."""
+    return u.Tests.FunctionalExternalService()

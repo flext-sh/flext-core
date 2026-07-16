@@ -137,6 +137,10 @@ class _ProjectMetadataAggregates(_ProjectMetadataFields):
             str,
             Field(default="", alias="requires-python", description="Python constraint"),
         ] = ""
+        dependencies: Annotated[
+            t.StrTuple,
+            Field(default=(), description="PEP 508 runtime dependency declarations"),
+        ] = ()
         classifiers: Annotated[
             t.StrTuple, Field(default=(), description="Trove classifiers")
         ] = ()
@@ -207,9 +211,9 @@ class FlextModelsProjectMetadata(_ProjectMetadataDocument):
         """Complete validated project document ingress."""
 
         project: Annotated[
-            _ProjectMetadataAggregates.Project,
-            Field(description="PEP 621 project table"),
-        ]
+            _ProjectMetadataAggregates.Project | None,
+            Field(default=None, description="Optional PEP 621 project table"),
+        ] = None
         tool: Annotated[
             _ProjectMetadataDocument.PyprojectTool,
             Field(
