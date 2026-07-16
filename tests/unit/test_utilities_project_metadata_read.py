@@ -135,7 +135,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
         )
         meta = u.read_project_metadata(root).unwrap()
         with pytest.raises(m.ValidationError):
-            meta.package_name = "mutated"
+            setattr(meta, "package_name", "mutated")
 
     def test_read_project_metadata_fails_on_missing_pyproject(
         self, tmp_path: Path
@@ -157,4 +157,4 @@ class TestsFlextUtilitiesProjectMetadataRead:
         root = write_pyproject(tmp_path, body)
         result = u.read_project_metadata(root)
         tm.that(result.failure, eq=True)
-        tm.that(match_pattern in result.error, eq=True)
+        tm.that(match_pattern in (result.error or ""), eq=True)
