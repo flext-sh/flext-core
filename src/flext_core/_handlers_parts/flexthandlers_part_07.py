@@ -7,8 +7,11 @@ from flext_core import c, p, t
 
 from .flexthandlers_part_06 import FlextHandlers as FlextHandlersPart06
 
-from collections.abc import Callable, MutableSequence
-from types import ModuleType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from types import ModuleType
+    from collections.abc import Callable, MutableSequence
 
 
 class FlextHandlers[MessageT_contra, ResultT](

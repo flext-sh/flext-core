@@ -16,9 +16,12 @@ from flext_core import c
 
 from .flexthandlers_part_02 import FlextHandlers as FlextHandlersPart02
 
-from collections.abc import Callable
 
 from flext_core import p, t
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FlextHandlers[MessageT_contra, ResultT](
