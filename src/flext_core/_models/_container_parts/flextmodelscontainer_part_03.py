@@ -12,9 +12,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, TYPE_CHECKING
+from typing import Annotated, ClassVar
 
 from flext_core import p, t
+from flext_core._models._container_parts.flextmodelscontainer_part_01 import (
+    FlextModelsContainer as FlextModelsContainerPart01,
+)
 from flext_core._models._container_parts.flextmodelscontainer_part_02 import (
     FlextModelsContainer as FlextModelsContainerPart02,
 )
@@ -22,11 +25,6 @@ from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
-
-if TYPE_CHECKING:
-    from flext_core._protocols.settings import FlextProtocolsSettings as ps
-    from flext_core._protocols.context import FlextProtocolsContext as pc
-    from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextModelsContainer(FlextModelsContainerPart02):
@@ -42,7 +40,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         )
 
         settings: Annotated[
-            ps.Settings | None,
+            p.Settings | None,
             tp.SkipValidation,
             mp.Field(
                 None,
@@ -51,7 +49,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             ),
         ] = None
         context: Annotated[
-            pc.Context | None,
+            p.Context | None,
             tp.SkipValidation,
             mp.Field(
                 None,
@@ -59,43 +57,33 @@ class FlextModelsContainer(FlextModelsContainerPart02):
                 description="Execution context attached to the container.",
             ),
         ] = None
-        services: t.MappingKV[str, FlextModelsContainer.ServiceRegistration] | None = (
-            mp.Field(
-                None,
-                title="Services",
-                description="Pre-registered service instances for bootstrap.",
-                validate_default=True,
-            )
+        services: t.MappingKV[str, p.ServiceRegistration] | None = mp.Field(
+            None,
+            title="Services",
+            description="Pre-registered service instances for bootstrap.",
+            validate_default=True,
         )
-        factories: t.MappingKV[str, FlextModelsContainer.FactoryRegistration] | None = (
-            mp.Field(
-                None,
-                title="Factories",
-                description="Pre-registered factory callables for bootstrap.",
-                validate_default=True,
-            )
+        factories: t.MappingKV[str, p.FactoryRegistration] | None = mp.Field(
+            None,
+            title="Factories",
+            description="Pre-registered factory callables for bootstrap.",
+            validate_default=True,
         )
-        resources: (
-            t.MappingKV[str, FlextModelsContainer.ResourceRegistration] | None
-        ) = mp.Field(
+        resources: t.MappingKV[str, p.ResourceRegistration] | None = mp.Field(
             None,
             title="Resources",
             description="Pre-registered resource factories for bootstrap.",
             validate_default=True,
         )
         user_overrides: (
-            FlextModelsContainers.ConfigMap
-            | t.MappingKV[
-                str, FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar
-            ]
-            | None
+            p.ConfigMap | t.MappingKV[str, p.ConfigMap | t.ScalarList | t.Scalar] | None
         ) = mp.Field(
             None,
             title="User Overrides",
             description="User-level configuration overrides applied after defaults.",
             validate_default=True,
         )
-        container_config: FlextModelsContainer.ContainerConfig | None = mp.Field(
+        container_config: p.ContainerConfig | None = mp.Field(
             None,
             title="Container Config",
             description="Container configuration model controlling DI behavior.",
@@ -109,20 +97,21 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             value: (
                 t.MappingKV[
                     str,
-                    FlextModelsContainer.ServiceRegistration | t.RegisterableService,
+                    FlextModelsContainerPart01.ServiceRegistration
+                    | t.RegisterableService,
                 ]
                 | None
             ),
-        ) -> t.MappingKV[str, FlextModelsContainer.ServiceRegistration] | None:
+        ) -> t.MappingKV[str, FlextModelsContainerPart01.ServiceRegistration] | None:
             if value is None:
                 return None
             return {
                 name: (
                     registration
                     if isinstance(
-                        registration, FlextModelsContainer.ServiceRegistration
+                        registration, FlextModelsContainerPart01.ServiceRegistration
                     )
-                    else FlextModelsContainer.ServiceRegistration(
+                    else FlextModelsContainerPart01.ServiceRegistration(
                         name=name,
                         service=registration,
                         service_type=registration.__class__.__name__,
@@ -153,13 +142,14 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             cls,
             value: (
                 t.MappingKV[
-                    str, FlextModelsContainer.FactoryRegistration | t.FactoryCallable
+                    str,
+                    FlextModelsContainerPart01.FactoryRegistration | t.FactoryCallable,
                 ]
                 | None
             ),
-        ) -> t.MappingKV[str, FlextModelsContainer.FactoryRegistration] | None:
+        ) -> t.MappingKV[str, FlextModelsContainerPart01.FactoryRegistration] | None:
             return cls._norm_callable_reg(
-                value, FlextModelsContainer.FactoryRegistration
+                value, FlextModelsContainerPart01.FactoryRegistration
             )
 
         @up.field_validator("resources", mode="before")
@@ -168,13 +158,15 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             cls,
             value: (
                 t.MappingKV[
-                    str, FlextModelsContainer.ResourceRegistration | t.ResourceCallable
+                    str,
+                    FlextModelsContainerPart02.ResourceRegistration
+                    | t.ResourceCallable,
                 ]
                 | None
             ),
-        ) -> t.MappingKV[str, FlextModelsContainer.ResourceRegistration] | None:
+        ) -> t.MappingKV[str, FlextModelsContainerPart02.ResourceRegistration] | None:
             return cls._norm_callable_reg(
-                value, FlextModelsContainer.ResourceRegistration
+                value, FlextModelsContainerPart02.ResourceRegistration
             )
 
 
