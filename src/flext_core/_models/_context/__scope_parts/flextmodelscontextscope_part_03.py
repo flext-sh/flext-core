@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import FlextProtocols as p
+from flext_core import FlextProtocols as p  # noqa: TC001 — Pydantic field resolution needs runtime Container protocol
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 

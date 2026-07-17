@@ -10,13 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path  # noqa: TC003 — Pydantic field resolution needs runtime Path
 from typing import Annotated, ClassVar
 
 from pydantic import AliasChoices, Field
 
 from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.base import FlextTypingBase as t
 
 
 class _ProjectMetadataContract(FlextModelsPydantic.BaseModel):
@@ -100,7 +99,7 @@ class _ProjectMetadataFields:
             Field(default=None, description="Documentation site title override"),
         ] = None
         exclude_docs: Annotated[
-            t.StrTuple,
+            tuple[str, ...],
             Field(default=(), description="Documentation exclusion patterns"),
         ] = ()
 
@@ -138,14 +137,14 @@ class _ProjectMetadataAggregates(_ProjectMetadataFields):
             Field(default="", alias="requires-python", description="Python constraint"),
         ] = ""
         dependencies: Annotated[
-            t.StrTuple,
+            tuple[str, ...],
             Field(default=(), description="PEP 508 runtime dependency declarations"),
         ] = ()
         classifiers: Annotated[
-            t.StrTuple, Field(default=(), description="Trove classifiers")
+            tuple[str, ...], Field(default=(), description="Trove classifiers")
         ] = ()
         keywords: Annotated[
-            t.StrTuple, Field(default=(), description="Project search keywords")
+            tuple[str, ...], Field(default=(), description="Project search keywords")
         ] = ()
 
     class ProjectToolFlext(_ProjectMetadataContract):
