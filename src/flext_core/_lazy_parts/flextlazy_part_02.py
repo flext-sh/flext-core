@@ -7,7 +7,6 @@ from types import ModuleType
 
 # NOTE (multi-agent, mro-0ftd.3.3.1): consume the finite structural contract;
 # the former self-recursive module-global alias has no runtime owner.
-from flext_core._protocols.lazy import FlextProtocolsLazy as p
 
 from .flextlazy_part_01 import (
     FlextLazy as FlextLazyPart01,
@@ -16,7 +15,11 @@ from .flextlazy_part_01 import (
     MutableLazyImportMap,
 )
 
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from flext_core._protocols.lazy import FlextProtocolsLazy as p
 
 
 class FlextLazyAttribute:

@@ -16,7 +16,10 @@ from pydantic import (
     computed_field,
 )
 
-from types import ModuleType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 
 type StrPair = tuple[str, str]
