@@ -145,6 +145,34 @@ class FlextProtocolsEnforcement:
         ) -> FlextProtocolsEnforcement.EnforcementFixAction | None: ...
 
     @runtime_checkable
+    class EnforcementViolation(Protocol):
+        """Single enforcement violation emitted by the canonical model."""
+
+        @property
+        def qualname(self) -> str: ...
+
+        @property
+        def layer(self) -> str: ...
+
+        @property
+        def severity(self) -> str: ...
+
+        @property
+        def message(self) -> str: ...
+
+        @property
+        def rule_id(self) -> str: ...
+
+        @property
+        def agents_md_anchor(self) -> str: ...
+
+        @property
+        def file_path(self) -> str: ...
+
+        @property
+        def line_number(self) -> int: ...
+
+    @runtime_checkable
     class EnforcementCatalog(Protocol):
         """Catalog operations consumed by enforcement selection flows."""
 

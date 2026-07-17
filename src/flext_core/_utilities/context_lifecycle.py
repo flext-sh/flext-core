@@ -13,11 +13,11 @@ from collections.abc import Mapping
 from typing import ClassVar, Self
 
 from flext_core import (
-    FlextConstants as c,
-    FlextModels as m,
-    FlextProtocols as p,
+    c,
+    m,
+    p,
     FlextRuntime,
-    FlextTypes as t,
+    t,
 )
 from flext_core._utilities.context_crud import FlextUtilitiesContextCrud
 

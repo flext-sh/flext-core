@@ -10,7 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol
+from collections.abc import Callable, Mapping, Set as AbstractSet
+from typing import TYPE_CHECKING, Literal, Protocol
 
 from pydantic import (
     EncoderProtocol,
@@ -20,6 +21,12 @@ from pydantic import (
 )
 
 from .base import FlextProtocolsBase
+
+if TYPE_CHECKING:
+    from flext_core import t
+
+
+type _IncEx = AbstractSet[str] | Mapping[str, AbstractSet[str] | bool]
 
 
 class FlextProtocolsPydantic:
@@ -40,6 +47,30 @@ class FlextProtocolsPydantic:
 
         def validate_json(self, data: str | bytes | bytearray, /) -> ValidatedT:
             """Validate serialized JSON into the adapter's declared output type."""
+            ...
+
+        def dump_json(
+            self,
+            obj: ValidatedT,
+            /,
+            *,
+            indent: int | None = None,
+            ensure_ascii: bool = False,
+            include: _IncEx | None = None,
+            exclude: _IncEx | None = None,
+            by_alias: bool | None = None,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            exclude_computed_fields: bool = False,
+            round_trip: bool = False,
+            warnings: bool | Literal["none", "warn", "error"] = True,
+            fallback: Callable[[t.JsonPayload], t.JsonPayload] | None = None,
+            serialize_as_any: bool = False,
+            polymorphic_serialization: bool | None = None,
+            context: t.JsonMapping | None = None,
+        ) -> bytes:
+            """Serialize a validated object to JSON bytes."""
             ...
 
     # Protocols

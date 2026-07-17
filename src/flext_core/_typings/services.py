@@ -97,7 +97,26 @@ class FlextTypesServices(tc):
     type SortableObjectType = str | int | float
     type ValueAdapter[T] = tp.TypeAdapterType[T]
     type MessageTypeSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
-    type IncEx = AbstractSet[str] | t.MappingKV[str, AbstractSet[str] | bool]
+    type IncEx = (
+        AbstractSet[int]
+        | AbstractSet[str]
+        | t.MappingKV[
+            int,
+            bool
+            | AbstractSet[int]
+            | AbstractSet[str]
+            | t.MappingKV[int, bool]
+            | t.MappingKV[str, bool],
+        ]
+        | t.MappingKV[
+            str,
+            bool
+            | AbstractSet[int]
+            | AbstractSet[str]
+            | t.MappingKV[int, bool]
+            | t.MappingKV[str, bool],
+        ]
+    )
 
     type ConfigurationMapping = t.MappingKV[str, t.Scalar]
     type MutableConfigurationMapping = MutableMapping[str, t.Scalar]

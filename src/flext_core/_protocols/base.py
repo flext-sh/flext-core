@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, Protocol, Self, runtime_checkable
 
-from collections.abc import Iterable, MutableSequence
+from collections.abc import Callable, Iterable, MutableSequence
 from types import TracebackType
 
 if TYPE_CHECKING:
@@ -73,6 +73,28 @@ class FlextProtocolsBase:
             exclude_none: bool = False,
         ) -> t.JsonDict:
             """Dump the validated model at an external serialization boundary."""
+            ...
+
+        def model_dump_json(
+            self,
+            *,
+            indent: int | None = None,
+            ensure_ascii: bool = False,
+            include: t.IncEx | None = None,
+            exclude: t.IncEx | None = None,
+            context: t.JsonMapping | None = None,
+            by_alias: bool | None = None,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            exclude_computed_fields: bool = False,
+            round_trip: bool = False,
+            warnings: bool | Literal["none", "warn", "error"] = True,
+            fallback: Callable[[t.JsonPayload], t.JsonPayload] | None = None,
+            serialize_as_any: bool = False,
+            polymorphic_serialization: bool | None = None,
+        ) -> str:
+            """Serialize the validated model to a JSON string."""
             ...
 
         def model_copy(
