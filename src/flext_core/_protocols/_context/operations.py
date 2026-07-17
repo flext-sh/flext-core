@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
     # mro-wkii.17.26 (codex): reverse p/t edges are annotation-only while the
     # public protocol facade is still being composed.
+    from contextlib import AbstractContextManager
     from flext_core import p, t
 
 

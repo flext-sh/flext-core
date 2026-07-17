@@ -43,7 +43,7 @@ class FlextProtocolsSettings:
 
         @property
         def log_level(self) -> str:
-            """Return the universal runtime log level."""
+            """Universal runtime log level."""
             ...
 
         @classmethod

@@ -20,13 +20,18 @@ from pydantic import (
     ValidatorFunctionWrapHandler,
 )
 
-from .base import FlextProtocolsBase
 
 if TYPE_CHECKING:
+    from .base import FlextProtocolsBase
     from flext_core import t
 
 
-type _IncEx = AbstractSet[str] | Mapping[str, AbstractSet[str] | bool]
+type _IncEx = (
+    AbstractSet[int]
+    | AbstractSet[str]
+    | Mapping[int, bool | _IncEx]
+    | Mapping[str, bool | _IncEx]
+)
 
 
 class FlextProtocolsPydantic:

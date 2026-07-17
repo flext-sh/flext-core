@@ -9,16 +9,18 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence, Set as AbstractSet
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel as ugm
 
 from ._base import FlextRuntimeBase
 
-from flext_core._typings.services import FlextTypesServices as ts
+if TYPE_CHECKING:
+    from flext_core._protocols.base import FlextProtocolsBase as p
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextRuntimeMetadata(FlextRuntimeBase):
@@ -34,7 +36,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         | mc.ConfigMap
         | mc.Dict
         | AbstractSet[tb.Scalar]
-        | mp.BaseModel
+        | p.BaseModel
         | ts.ConfigModelInput
         | tb.MappingKV[str, ts.JsonPayload | tb.Scalar],
         active_ids: set[int],
@@ -60,7 +62,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         | mc.ConfigMap
         | mc.Dict
         | AbstractSet[tb.Scalar]
-        | mp.BaseModel
+        | p.BaseModel
         | ts.ConfigModelInput
         | tb.MappingKV[str, ts.JsonPayload | tb.Scalar]
         | None,
@@ -141,7 +143,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         | mc.ConfigMap
         | mc.Dict
         | AbstractSet[tb.Scalar]
-        | mp.BaseModel
+        | p.BaseModel
         | None,
     ) -> tb.JsonValue:
         """Normalize arbitrary runtime input to one validated ``JsonValue``."""
@@ -163,7 +165,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
     @classmethod
     def normalize_model_input_mapping(
         cls,
-        value: mp.BaseModel
+        value: p.BaseModel
         | mc.Dict
         | ts.ConfigModelInput
         | tb.MappingKV[str, ts.JsonPayload]

@@ -10,9 +10,12 @@ from collections.abc import Mapping, MutableMapping
 
 from ._dependency_types import FlextRuntimeDependencyTypes
 
-from flext_core._protocols.container import FlextProtocolsContainer as pc
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._typings.base import FlextTypingBase as tb
+    from flext_core._protocols.container import FlextProtocolsContainer as pc
 
 
 class FlextRuntimeDependencyOptions(FlextRuntimeDependencyTypes):

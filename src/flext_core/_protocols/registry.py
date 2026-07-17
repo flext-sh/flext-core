@@ -9,19 +9,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Protocol, Self, runtime_checkable
+from typing import Protocol, Self, runtime_checkable, TYPE_CHECKING
 
-from flext_core._constants.cqrs import FlextConstantsCqrs as cc
 from flext_core._constants.mixins import FlextConstantsMixins as c
-from flext_core._constants.status import FlextConstantsStatus as cs
-from flext_core import t
 
-from .container import FlextProtocolsContainer
-from .context import FlextProtocolsContext
-from .handler import FlextProtocolsHandler
-from .result import FlextProtocolsResult
-from .settings import FlextProtocolsSettings
+
+if TYPE_CHECKING:
+    from flext_core._constants.status import FlextConstantsStatus as cs
+    from flext_core._constants.cqrs import FlextConstantsCqrs as cc
+    from .settings import FlextProtocolsSettings
+    from .result import FlextProtocolsResult
+    from .handler import FlextProtocolsHandler
+    from .container import FlextProtocolsContainer
+    from flext_core import t
+    from .context import FlextProtocolsContext
+    from collections.abc import Callable
 
 
 class FlextProtocolsRegistry:

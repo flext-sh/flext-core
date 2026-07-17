@@ -15,11 +15,13 @@ from flext_core._constants.mixins import FlextConstantsMixins as cm
 from flext_core._protocols.result import FlextProtocolsResult as prt
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
 
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
-
 
 from ._metadata import FlextRuntimeMetadata
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):

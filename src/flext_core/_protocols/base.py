@@ -116,6 +116,10 @@ class FlextProtocolsBase:
         """Structural protocol for Pydantic models allowing arbitrary types."""
 
     @runtime_checkable
+    class ContractModel(BaseModel, Protocol):
+        """Structural protocol for immutable strict Pydantic contract models."""
+
+    @runtime_checkable
     class Routable(Protocol):
         """Base protocol for messages that carry explicit route information."""
 

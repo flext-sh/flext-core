@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
 if TYPE_CHECKING:
     # NOTE (multi-agent, mro-wkii.17.26.2): protocol annotations must not load
     # root facades while FlextTypesServices is composing this protocol graph.
+    from types import ModuleType
+    from collections.abc import Callable
     from flext_core import p, t
 
 

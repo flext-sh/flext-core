@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence, Set as AbstractSet
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal, TypeGuard
+from typing import Literal, TypeGuard, TYPE_CHECKING
 
 from pydantic import BaseModel
 
@@ -26,8 +26,10 @@ from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore 
 
 from ._metadata_validation import FlextRuntimeMetadataValidation
 
-from flext_core._protocols.base import FlextProtocolsBase as pb
-from flext_core._typings.services import FlextTypesServices as ts
+
+if TYPE_CHECKING:
+    from flext_core._protocols.base import FlextProtocolsBase as pb
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
