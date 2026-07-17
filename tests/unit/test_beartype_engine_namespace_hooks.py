@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 
 from tests.models import m
+from tests.protocols import p
 from tests.typings import t
 from tests.unit._beartype_engine_support import (
     TestsFlextBeartypeEngine,
@@ -33,7 +34,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
         files: t.MappingKV[str, str],
         import_target: str,
         ast_shape: str,
-    ) -> m.Cli.CommandOutput:
+    ) -> p.Cli.CommandOutput:
         """Materialize ``files``, import ``Probe`` from ``import_target``, run ``apply``.
 
         Returns the captured subprocess output; ``stdout`` holds ``repr`` of the

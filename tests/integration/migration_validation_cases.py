@@ -7,7 +7,7 @@ import time
 from contextlib import redirect_stdout
 from typing import TYPE_CHECKING
 
-from flext_tests import r
+from flext_tests import r, tm
 
 from flext_core import FlextContainer
 from tests.typings import t
@@ -20,17 +20,20 @@ if TYPE_CHECKING:
 
 
 def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
+    """Capture stdout until the expected observable message is emitted."""
     stream = io.StringIO()
     with redirect_stdout(stream):
         result = emit()
         deadline = time.monotonic() + 0.25
         while time.monotonic() < deadline and contains not in stream.getvalue():
             time.sleep(0.01)
-    assert contains in stream.getvalue()
+    tm.that(stream.getvalue(), has=contains)
     return result
 
 
 class TestsFlextFlextMigrationApplicationCase:
+    """Exercise the public application composition contract."""
+
     def test_application_functionality_works(self) -> None:
         """Verify application functionality works correctly."""
 
@@ -61,5 +64,5 @@ class TestsFlextFlextMigrationApplicationCase:
             lambda: app.process_data({"key": "value"}),
             contains="Processing data",
         )
-        assert result.success
-        assert result.value["processed"] is True
+        tm.that(result.success, eq=True)
+        tm.that(result.value["processed"], eq=True)

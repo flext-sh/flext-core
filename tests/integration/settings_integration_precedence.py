@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from flext_tests import tm
+
 from flext_core import FlextSettings
 from tests.utilities import u
 
@@ -29,20 +31,20 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
         with u.Tests.env_vars_context({}, vars_to_clear=_FLEXT_ENV_KEYS):
             FlextSettings.reset_for_testing()
             defaults = FlextSettings()
-            assert defaults.log_level == "INFO"
-            assert defaults.debug is False
-            assert defaults.trace is False
-            assert defaults.timezone == "UTC"
+            tm.that(defaults.log_level, eq="INFO")
+            tm.that(defaults.debug, eq=False)
+            tm.that(defaults.trace, eq=False)
+            tm.that(defaults.timezone, eq="UTC")
 
             FlextSettings.reset_for_testing()
             env_file = temp_dir / ".env"
             env_content = "FLEXT_LOG_LEVEL=WARNING\nFLEXT_DEBUG=true\n"
             _ = env_file.write_text(env_content, encoding="utf-8")
-            assert env_file.read_text(encoding="utf-8") == env_content
+            tm.that(env_file.read_text(encoding="utf-8"), eq=env_content)
             with u.Tests.env_vars_context({"FLEXT_ENV_FILE": str(env_file)}):
                 from_dotenv = FlextSettings(_env_file=str(env_file))
-                assert from_dotenv.log_level == "WARNING"
-                assert from_dotenv.debug is True
+                tm.that(from_dotenv.log_level, eq="WARNING")
+                tm.that(from_dotenv.debug, eq=True)
 
             FlextSettings.reset_for_testing()
             with u.Tests.env_vars_context({
@@ -51,9 +53,9 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
                 "FLEXT_TRACE": "true",
             }):
                 from_env = FlextSettings()
-                assert from_env.log_level == "DEBUG"
-                assert from_env.debug is True
-                assert from_env.trace is True
+                tm.that(from_env.log_level, eq="DEBUG")
+                tm.that(from_env.debug, eq=True)
+                tm.that(from_env.trace, eq=True)
 
             FlextSettings.reset_for_testing()
             explicit = FlextSettings(
@@ -62,8 +64,8 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
                 trace=False,
                 timezone="America/Sao_Paulo",
             )
-            assert explicit.log_level == "ERROR"
-            assert explicit.debug is True
-            assert explicit.trace is False
-            assert explicit.timezone == "America/Sao_Paulo"
+            tm.that(explicit.log_level, eq="ERROR")
+            tm.that(explicit.debug, eq=True)
+            tm.that(explicit.trace, eq=False)
+            tm.that(explicit.timezone, eq="America/Sao_Paulo")
         FlextSettings.reset_for_testing()

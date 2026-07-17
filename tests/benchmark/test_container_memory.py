@@ -18,13 +18,12 @@ import sys
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_core import FlextContainer
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
+    from collections.abc import Callable
 
 
 def get_memory_usage() -> int:
@@ -107,6 +106,9 @@ class TestsFlextContainerMemory:
         gc.collect()
         final_memory = get_memory_usage()
         memory_increase = final_memory - initial_memory
-        assert memory_increase < 1000000, (
-            f"Potential memory leak: {memory_increase} bytes increase"
+        permitted_growth_bytes = 1_000_000
+        tm.that(
+            memory_increase,
+            lt=permitted_growth_bytes,
+            msg=f"Potential memory leak: {memory_increase} bytes increase",
         )

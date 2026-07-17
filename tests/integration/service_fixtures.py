@@ -63,7 +63,7 @@ class TestsFlextUserQueryService(s[bool]):
         """Apply user data for testing."""
         self._users[user_id] = user
 
-    def configure_failure_mode(self, should_fail: bool) -> None:
+    def configure_failure_mode(self, *, should_fail: bool) -> None:
         """Configure failure mode for testing."""
         self._should_fail = should_fail
 
@@ -97,7 +97,7 @@ class TestsFlextNotificationService(s[str]):
         self._sent_notifications.append(email)
         return r[str].ok("sent")
 
-    def configure_failure_mode(self, should_fail: bool) -> None:
+    def configure_failure_mode(self, *, should_fail: bool) -> None:
         """Configure failure mode for testing."""
         self._should_fail = should_fail
 
@@ -165,6 +165,7 @@ class TestsFlextLifecycleService(s[str]):
         fail_init: bool = False,
         fail_shutdown: bool = False,
     ) -> None:
+        """Configure initialization and shutdown failure behavior."""
         self._should_fail_init = fail_init
         self._should_fail_shutdown = fail_shutdown
 

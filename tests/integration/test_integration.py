@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r
+from flext_tests import r, tm
 
 from flext_core import FlextContainer
 from flext_core.__version__ import __version__
@@ -21,6 +21,11 @@ if TYPE_CHECKING:
     from tests.typings import t
 
 pytestmark = [pytest.mark.integration]
+
+_DOUBLED_RESULT = 42
+_UNWRAP_VALUE = 7
+_UUID_DASH_COUNT = 4
+_UUID_TEXT_LENGTH = 36
 
 
 class TestsFlextCoreIntegration:
@@ -47,9 +52,9 @@ class TestsFlextCoreIntegration:
         resolved = clean_container.resolve("test_service")
 
         # Assert - bind is fluent, resolve yields the exact stored value
-        assert bind_return is clean_container
-        assert resolved.success is True
-        assert resolved.value == test_value
+        tm.that(bind_return is clean_container, eq=True)
+        tm.that(resolved.success, eq=True)
+        tm.that(resolved.value, eq=test_value)
 
     @pytest.mark.core
     def test_freshly_constructed_container_satisfies_container_protocol(self) -> None:
@@ -58,7 +63,7 @@ class TestsFlextCoreIntegration:
         container = FlextContainer()
 
         # Assert
-        assert isinstance(container, p.Container)
+        tm.that(container, is_=p.Container)
 
     def test_result_ok_exposes_wrapped_value_as_success(self) -> None:
         """r.ok wraps a value and reports success with that value."""
@@ -66,8 +71,8 @@ class TestsFlextCoreIntegration:
         result = r[str].ok("payload")
 
         # Assert
-        assert result.success is True
-        assert u.Tests.assert_success(result) == "payload"
+        tm.that(result.success, eq=True)
+        tm.that(u.Tests.assert_success(result), eq="payload")
 
     def test_result_map_transforms_only_success_value(self) -> None:
         """Mapping applies the function to the success value, preserving success."""
@@ -78,8 +83,8 @@ class TestsFlextCoreIntegration:
         mapped = result.map(lambda value: value * 2)
 
         # Assert
-        assert mapped.success is True
-        assert mapped.value == 42
+        tm.that(mapped.success, eq=True)
+        tm.that(mapped.value, eq=_DOUBLED_RESULT)
 
     def test_result_flat_map_chains_fallible_operations(self) -> None:
         """Chaining sequences a second r-returning step on success via flat_map."""
@@ -90,8 +95,8 @@ class TestsFlextCoreIntegration:
         chained = result.flat_map(lambda value: r[str].ok(f"resolved_{value}"))
 
         # Assert
-        assert chained.success is True
-        assert chained.value == "resolved_id-1"
+        tm.that(chained.success, eq=True)
+        tm.that(chained.value, eq="resolved_id-1")
 
     def test_result_fail_short_circuits_map_and_flat_map(self) -> None:
         """A failed r propagates its error through map/flat_map untouched."""
@@ -104,14 +109,14 @@ class TestsFlextCoreIntegration:
         )
 
         # Assert
-        assert mapped.success is False
-        assert mapped.error == "boom"
+        tm.that(mapped.success, eq=False)
+        tm.that(mapped.error, eq="boom")
 
     def test_result_unwrap_or_returns_default_on_failure(self) -> None:
         """Unwrapping yields the value on success and the default on failure."""
         # Assert - success keeps its value, failure falls back to the default
-        assert r[int].ok(7).unwrap_or(0) == 7
-        assert r[int].fail("missing").unwrap_or(0) == 0
+        tm.that(r[int].ok(_UNWRAP_VALUE).unwrap_or(0), eq=_UNWRAP_VALUE)
+        tm.that(r[int].fail("missing").unwrap_or(0), eq=0)
 
     def test_container_factory_resolves_computed_value(
         self,
@@ -135,9 +140,9 @@ class TestsFlextCoreIntegration:
         resolved = clean_container.resolve("result_factory")
 
         # Assert - factory is fluent and delivers the computed payload
-        assert factory_return is clean_container
-        assert resolved.success is True
-        assert resolved.value == expected
+        tm.that(factory_return is clean_container, eq=True)
+        tm.that(resolved.success, eq=True)
+        tm.that(resolved.value, eq=expected)
 
     def test_container_resolve_unknown_name_fails_with_error(
         self,
@@ -148,9 +153,9 @@ class TestsFlextCoreIntegration:
         resolved = clean_container.resolve("does_not_exist")
 
         # Assert
-        assert resolved.success is False
-        assert resolved.error is not None
-        assert "does_not_exist" in resolved.error
+        tm.that(resolved.success, eq=False)
+        tm.that(resolved.error, none=False)
+        tm.that(tm.not_none(resolved.error), has="does_not_exist")
 
     def test_container_bind_is_idempotent_for_existing_name(
         self,
@@ -165,8 +170,8 @@ class TestsFlextCoreIntegration:
         resolved = clean_container.resolve("svc")
 
         # Assert
-        assert resolved.success is True
-        assert resolved.value == "first"
+        tm.that(resolved.success, eq=True)
+        tm.that(resolved.value, eq="first")
 
     def test_generate_produces_unique_uuid_shaped_identifiers(self) -> None:
         """u.generate returns distinct 36-char, 4-dash UUID strings."""
@@ -176,10 +181,10 @@ class TestsFlextCoreIntegration:
 
         # Assert - shape contract and uniqueness
         for identifier in (first, second):
-            assert isinstance(identifier, str)
-            assert len(identifier) == 36
-            assert identifier.count("-") == 4
-        assert first != second
+            tm.that(identifier, is_=str)
+            tm.that(len(identifier), eq=_UUID_TEXT_LENGTH)
+            tm.that(identifier.count("-"), eq=_UUID_DASH_COUNT)
+        tm.that(first, ne=second)
 
     def test_generated_identifier_round_trips_through_result(self) -> None:
         """A generated identifier is preserved verbatim when wrapped in r.ok."""
@@ -190,10 +195,9 @@ class TestsFlextCoreIntegration:
         result = r[str].ok(entity_id)
 
         # Assert
-        assert u.Tests.assert_success(result, expected_value=entity_id) == entity_id
+        tm.that(u.Tests.assert_success(result, expected_value=entity_id), eq=entity_id)
 
     def test_version_metadata_is_dotted_nonempty_string(self) -> None:
         """The exported package version is a non-empty dotted string."""
         # Assert
-        assert __version__
-        assert "." in __version__
+        tm.that(__version__, empty=False, has=".")

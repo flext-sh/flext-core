@@ -13,6 +13,7 @@ from typing import Annotated, override
 import pytest
 from flext_tests import r
 
+from flext_core import FlextSettings
 from tests.base import s
 from tests.models import m
 from tests.protocols import p
@@ -78,6 +79,12 @@ class TestsFlextCoreServiceBootstrap:
         resolved = u.resolve_runtime_options(options)
 
         assert resolved.subproject == "keep"
+
+    def test_runtime_options_accepts_settings_class_contract(self) -> None:
+        """Settings class validation uses its method-only class protocol."""
+        options = m.RuntimeBootstrapOptions(settings_type=FlextSettings)
+
+        assert options.settings_type is FlextSettings
 
     def test_resolve_is_idempotent_for_resolved_model(self) -> None:
         once = u.resolve_runtime_options({"subproject": "demo"})

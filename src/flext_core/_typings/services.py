@@ -114,7 +114,7 @@ class FlextTypesServices:
     type ConfigurationMapping = t.MappingKV[str, t.Scalar]
     type MutableConfigurationMapping = MutableMapping[str, t.Scalar]
     type ScopedContainerRegistry = MutableMapping[str, t.MutableJsonMapping]
-    type SettingsClass = type[ps.Settings]
+    type SettingsClass = type[ps.SettingsType]
     type LazyScalar = t.Scalar | bytes | date | time
     type LazyCollection = t.MappingKV[str, LazyScalar] | t.SequenceOf[LazyScalar]
     type ModuleExportValue = tp.JsonValue | bytes | date | time

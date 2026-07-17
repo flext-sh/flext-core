@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_tests import r, u
+from flext_tests import r, tm, u
 
 from tests.constants import c
 
@@ -33,28 +33,24 @@ class TestsFlextUtilitiesContractsMixin:
         @staticmethod
         def assert_safe_string_valid(raw: str, expected: str) -> None:
             """Assert safe string normalization for valid input."""
-            assert u.safe_string(raw) == expected
+            tm.that(u.safe_string(raw), eq=expected)
 
         @staticmethod
         def assert_format_app_id(raw: str, expected: str) -> None:
             """Assert app id formatting behavior."""
-            assert u.format_app_id(raw) == expected
+            tm.that(u.format_app_id(raw), eq=expected)
 
     @staticmethod
     def assert_safe_string_valid(raw: str, expected: str) -> None:
         """Assert safe string normalization for valid input."""
         TestsFlextUtilitiesContractsMixin.Contract.assert_safe_string_valid(
-            raw,
-            expected,
+            raw, expected
         )
 
     @staticmethod
     def assert_format_app_id(raw: str, expected: str) -> None:
         """Assert app id formatting behavior."""
-        TestsFlextUtilitiesContractsMixin.Contract.assert_format_app_id(
-            raw,
-            expected,
-        )
+        TestsFlextUtilitiesContractsMixin.Contract.assert_format_app_id(raw, expected)
 
     class FunctionalExternalService:
         """Mock external service for integration testing.

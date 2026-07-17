@@ -22,16 +22,17 @@ class TestsFlextCleanModels:
     """Namespace holder with proper prefix and well-formed inner models."""
 
     class Core:
+        """Core test-model namespace."""
+
         class Tests:
+            """Clean model declarations used by enforcement probes."""
+
             class GoodEntity(m.ArbitraryTypesModel):
                 """Well-formed entity."""
 
                 model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="forbid")
 
-                name: Annotated[
-                    str,
-                    u.Field(description="Entity display name."),
-                ] = ""
+                name: Annotated[str, u.Field(description="Entity display name.")] = ""
                 tags: Annotated[
                     t.StrSequence,
                     u.Field(default_factory=tuple, description="Tag collection."),
@@ -48,21 +49,21 @@ class TestsFlextCleanModels:
                 """Frozen value object."""
 
                 model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-                    frozen=True,
-                    extra="forbid",
+                    frozen=True, extra="forbid"
                 )
 
-                id: Annotated[
-                    str,
-                    u.Field(description="Opaque value identifier."),
-                ]
+                id: Annotated[str, u.Field(description="Opaque value identifier.")]
 
 
 class TestsFlextCleanConstants:
     """Constants facade — UPPER_CASE names, frozen values."""
 
     class Core:
+        """Core constants namespace."""
+
         class Tests:
+            """Clean immutable constants used by enforcement probes."""
+
             MAX_RETRIES: Final[int] = 3
             ALLOWED_TAGS: Final[frozenset[str]] = frozenset({"a", "b"})
             BANNER: Final[str] = "clean"
@@ -72,12 +73,18 @@ class TestsFlextCleanProtocols:
     """Protocols facade with @runtime_checkable inner protocols."""
 
     class Core:
+        """Core protocols namespace."""
+
         class Tests:
+            """Clean protocol declarations used by enforcement probes."""
+
             @runtime_checkable
             class GoodProtocol(Protocol):
                 """Runtime-checkable protocol."""
 
-                def run(self) -> None: ...
+                def run(self) -> None:
+                    """Execute the clean protocol behavior."""
+                    ...
 
 
 class TestsFlextCleanServiceBase:

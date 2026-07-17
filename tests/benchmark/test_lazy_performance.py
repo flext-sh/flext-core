@@ -7,6 +7,7 @@ import time
 from types import ModuleType
 
 import pytest
+from flext_tests import tm
 
 import flext_core
 from flext_core.lazy import install_lazy_exports, lazy
@@ -23,19 +24,19 @@ class TestsFlextLazyPerformance:
         """Helpers for benchmark execution."""
 
         @staticmethod
-        def _new_virtual_module(module_name: str) -> ModuleType:
+        def new_virtual_module(module_name: str) -> ModuleType:
+            """Create an isolated module namespace for lazy-install timing."""
             module = ModuleType(module_name)
-            module.__dict__.update(
-                {
-                    "__name__": module_name,
-                    "__package__": "flext_core",
-                    "__all__": [],
-                },
-            )
+            module.__dict__.update({
+                "__name__": module_name,
+                "__package__": "flext_core",
+                "__all__": [],
+            })
             return module
 
         @staticmethod
-        def _exercise_lazy_path(reset_between_iterations: bool) -> None:
+        def exercise_lazy_path(*, reset_between_iterations: bool) -> None:
+            """Exercise one complete lazy export installation path."""
             if reset_between_iterations:
                 lazy.reset()
 
@@ -44,8 +45,8 @@ class TestsFlextLazyPerformance:
             for index, lazy_map in enumerate(c.Tests.LAZY_BENCHMARK_EXTRA_INSTALL_MAPS):
                 module_name = f"flext_core_{index}"
                 virtual_module = (
-                    TestsFlextLazyPerformance.LazyBenchmark._new_virtual_module(
-                        module_name,
+                    TestsFlextLazyPerformance.LazyBenchmark.new_virtual_module(
+                        module_name
                     )
                 )
                 install_lazy_exports(
@@ -59,11 +60,12 @@ class TestsFlextLazyPerformance:
                 getattr(reloaded_module, symbol_name)
 
         @staticmethod
-        def run(reset_between_iterations: bool, iterations: int) -> float:
+        def run(*, reset_between_iterations: bool, iterations: int) -> float:
+            """Return elapsed seconds for repeated lazy-path execution."""
             start = time.perf_counter()
             for _ in range(iterations):
-                TestsFlextLazyPerformance.LazyBenchmark._exercise_lazy_path(
-                    reset_between_iterations=reset_between_iterations,
+                TestsFlextLazyPerformance.LazyBenchmark.exercise_lazy_path(
+                    reset_between_iterations=reset_between_iterations
                 )
             return time.perf_counter() - start
 
@@ -71,21 +73,15 @@ class TestsFlextLazyPerformance:
     def test_lazy_install_and_resolution_cold_path(self) -> None:
         """Benchmark cold path with cache reset before each iteration."""
         lazy.reset()
-        elapsed = self.LazyBenchmark.run(
-            reset_between_iterations=True,
-            iterations=120,
-        )
-        assert elapsed > 0.0
+        elapsed = self.LazyBenchmark.run(reset_between_iterations=True, iterations=120)
+        tm.that(elapsed, gt=0.0)
 
     @pytest.mark.benchmark
     def test_lazy_install_and_resolution_warm_path(self) -> None:
         """Benchmark warm path with cache reuse across iterations."""
         lazy.reset()
         _ = self.LazyBenchmark.run(reset_between_iterations=False, iterations=10)
-        elapsed = self.LazyBenchmark.run(
-            reset_between_iterations=False,
-            iterations=120,
-        )
+        elapsed = self.LazyBenchmark.run(reset_between_iterations=False, iterations=120)
 
-        assert elapsed > 0.0
-        assert lazy.cache_stats["install_cache"] >= 1
+        tm.that(elapsed, gt=0.0)
+        tm.that(lazy.cache_stats["install_cache"], gt=0)
