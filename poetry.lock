@@ -1343,7 +1343,7 @@ files = [
 
 [[package]]
 name = "flext-cli"
-version = "0.12.0.dev0"
+version = "0.20.0.dev0"
 description = "FLEXT CLI - Developer Command Line Interface"
 optional = true
 python-versions = ">=3.13,<3.14"
@@ -1378,7 +1378,7 @@ url = "../flext-cli"
 
 [[package]]
 name = "flext-infra"
-version = "0.12.0.dev0"
+version = "0.20.0.dev0"
 description = "FLEXT Infrastructure Tooling - Build automation, code generation, and workspace management"
 optional = true
 python-versions = ">=3.13,<3.14"
@@ -1409,7 +1409,7 @@ url = "../flext-infra"
 
 [[package]]
 name = "flext-tests"
-version = "0.12.0.dev0"
+version = "0.20.0.dev0"
 description = "FLEXT Test Infrastructure - Shared test utilities, builders, factories, and validation for the FLEXT ecosystem"
 optional = true
 python-versions = ">=3.13,<3.14"

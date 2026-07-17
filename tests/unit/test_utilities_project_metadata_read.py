@@ -146,7 +146,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
     @pytest.mark.parametrize(
         ("body", "match_pattern"),
         [
-            ('[project]\nversion="0.12.0"\n', "name"),
+            ('[project]\nversion="0.20.0"\n', "name"),
             ('[project]\nname="x"\n', "version"),
         ],
         ids=["missing_name", "missing_version"],

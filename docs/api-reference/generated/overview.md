@@ -3,7 +3,7 @@
 # flext-core API Overview
 
 - Package: `flext_core`
-- Version: `0.12.0`
+- Version: `0.20.0`
 - Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
 - Doc summary: Flext Core package.
 - Classifiers: `Development Status :: 3 - Alpha`, `Framework :: Pydantic :: 2`, `Framework :: Pydantic`, `Intended Audience :: Developers`, `Operating System :: OS Independent`, `Programming Language :: Python :: 3 :: Only` (+3 more)

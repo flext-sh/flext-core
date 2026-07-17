@@ -132,9 +132,9 @@ class TestsFlextCoreModels:
     def test_dict_supports_item_assignment_and_lookup(self) -> None:
         payload = m.Dict(root={"name": "flext"})
 
-        payload["version"] = "0.12.0"
+        payload["version"] = "0.20.0"
 
-        assert payload["version"] == "0.12.0"
+        assert payload["version"] == "0.20.0"
         assert len(payload) == 2
         assert "name" in payload
 

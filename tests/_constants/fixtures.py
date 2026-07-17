@@ -21,7 +21,7 @@ class TestsFlextConstantsFixtures:
     StatusLiteral = Literal["active", "inactive"]
 
     SAMPLE_PROJECT_NAME: ClassVar[str] = "flext-ldif"
-    SAMPLE_PROJECT_VERSION: ClassVar[str] = "0.12.0-dev"
+    SAMPLE_PROJECT_VERSION: ClassVar[str] = "0.20.0-dev"
     SAMPLE_PROJECT_LICENSE: ClassVar[str] = "MIT"
     SAMPLE_PROJECT_CLASS_STEM: ClassVar[str] = "FlextLdif"
     SAMPLE_ALIAS_PARENT_SOURCE: ClassVar[str] = "flext_cli"
