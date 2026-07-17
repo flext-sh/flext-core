@@ -7,17 +7,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 from pydantic import ValidationError as PydanticValidationError
 
-from flext_core import p
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.mixins import FlextConstantsMixins as cm
 from flext_core._models.base import FlextModelsBase as m
-from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._protocols.result import FlextProtocolsResult as prt
 from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
+
+if TYPE_CHECKING:
+    # p is used only in annotations (p.Metadata); importing it at runtime here
+    # re-enters flext_core.__init__ before its lazy exports install -> import
+    # cycle. `from __future__ import annotations` keeps the annotations valid.
+    from flext_core import p
 
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
@@ -28,7 +34,7 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def _normalized_source_entries(
-        context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+        context: tb.MappingKV[str, ts.JsonPayload | None] | p.HasModelDump | None,
         extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
     ) -> tuple[tuple[str, tb.JsonValue], ...]:
         """Collect normalized metadata entries from context and kwargs once."""
@@ -52,7 +58,7 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def safe_metadata(
-        value: pr.HasModelDump
+        value: p.HasModelDump
         | tb.MappingKV[str, ts.JsonPayload | None]
         | tb.JsonValue
         | None,
@@ -63,7 +69,7 @@ class FlextExceptionsHelpers:
             try:
                 metadata = m.Metadata.model_validate(value, from_attributes=True)
             except (PydanticValidationError, TypeError):
-                if isinstance(value, (Mapping, pr.HasModelDump)):
+                if isinstance(value, (Mapping, prt.HasModelDump)):
                     try:
                         attrs_map = FlextRuntime.normalize_metadata_input_mapping(value)
                     except ce.EXC_PYDANTIC_TYPE_VALUE:
@@ -90,7 +96,7 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_context_map(
-        context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+        context: tb.MappingKV[str, ts.JsonPayload | None] | p.HasModelDump | None,
         extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
         excluded_keys: set[str] | frozenset[str] | None = None,
     ) -> tb.JsonDict:
@@ -106,7 +112,7 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_param_map(
-        context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+        context: tb.MappingKV[str, ts.JsonPayload | None] | p.HasModelDump | None,
         extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
         keys: set[str] | frozenset[str],
     ) -> tb.JsonDict:
