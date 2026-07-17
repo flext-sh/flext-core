@@ -56,7 +56,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         ),
     ] = None
 
-    _runtime: m.ServiceRuntime | None = mp.PrivateAttr(default=None)
+    _runtime: m.ServiceRuntime | None = mp.PrivateAttr(default_factory=lambda: None)
 
     _operation_stats: MutableMapping[str, m.ConfigMap] = mp.PrivateAttr(
         default_factory=dict[str, m.ConfigMap]
