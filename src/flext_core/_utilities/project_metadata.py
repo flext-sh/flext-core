@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import tomllib
+from functools import cache
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core._constants.file import FlextConstantsFile as cf
@@ -39,13 +40,26 @@ class FlextUtilitiesProjectMetadata(mpm):
         )
 
     @staticmethod
-    def _read_project_document(root: Path) -> pr.Result[mpm.PyprojectDocument]:
-        """Parse and validate one canonical pyproject document exactly once."""
+    @cache
+    def _read_project_document_cached(root: Path) -> mpm.PyprojectDocument:
+        """Parse and validate one canonical pyproject document exactly once.
+
+        Cached by project root because pyproject.toml is read repeatedly
+        during workspace-wide scans (enforcement collection, census, gates).
+        The cache is process-scoped and safe: a single command never mutates
+        its own pyproject.toml while still needing the pre-mutation document.
+        """
         pyproject = root / cf.PYPROJECT_FILENAME
+        with pyproject.open("rb") as stream:
+            return mpm.PyprojectDocument.model_validate(tomllib.load(stream))
+
+    @classmethod
+    def _read_project_document(cls, root: Path) -> pr.Result[mpm.PyprojectDocument]:
+        """Return a cached parsed pyproject document or a typed failure."""
         try:
-            with pyproject.open("rb") as stream:
-                document = mpm.PyprojectDocument.model_validate(tomllib.load(stream))
+            document = cls._read_project_document_cached(root)
         except (OSError, ValueError) as exc:
+            pyproject = root / cf.PYPROJECT_FILENAME
             return r[mpm.PyprojectDocument].fail(
                 f"cannot load project metadata from {pyproject}: {exc}"
             )
