@@ -217,7 +217,7 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Dispatcher(p.BaseModel, Protocol):
+    class Dispatcher(Protocol):
         """Protocol for dispatching and publishing messages in CQRS systems.
 
         Mirrors the public surface of ``FlextDispatcher``.
