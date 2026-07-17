@@ -12,19 +12,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, TYPE_CHECKING
 
 from flext_core import p, t
 from flext_core._models._container_parts.flextmodelscontainer_part_02 import (
     FlextModelsContainer as FlextModelsContainerPart02,
 )
 from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.context import FlextProtocolsContext as pc
-from flext_core._protocols.settings import FlextProtocolsSettings as ps
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+
+if TYPE_CHECKING:
+    from flext_core._protocols.settings import FlextProtocolsSettings as ps
+    from flext_core._protocols.context import FlextProtocolsContext as pc
+    from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextModelsContainer(FlextModelsContainerPart02):

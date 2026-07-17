@@ -6,15 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, Protocol, Self, runtime_checkable
-
-from collections.abc import Callable, Iterable, MutableSequence
-from types import TracebackType
+from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
     # mro-wkii.17.26 (codex): p is composing this module; importing the root
     # m/p/t facades here re-enters protocols and models before t is available.
+    from collections.abc import Iterable, MutableSequence
     from flext_core import p, t
+    from pydantic.fields import FieldInfo
+    from types import TracebackType
 
 
 class FlextProtocolsBase:
@@ -80,9 +80,6 @@ class FlextProtocolsBase:
             *,
             indent: int | None = None,
             ensure_ascii: bool = False,
-            include: t.IncEx | None = None,
-            exclude: t.IncEx | None = None,
-            context: t.JsonMapping | None = None,
             by_alias: bool | None = None,
             exclude_unset: bool = False,
             exclude_defaults: bool = False,
@@ -90,7 +87,6 @@ class FlextProtocolsBase:
             exclude_computed_fields: bool = False,
             round_trip: bool = False,
             warnings: bool | Literal["none", "warn", "error"] = True,
-            fallback: Callable[[t.JsonPayload], t.JsonPayload] | None = None,
             serialize_as_any: bool = False,
             polymorphic_serialization: bool | None = None,
         ) -> str:
@@ -111,6 +107,13 @@ class FlextProtocolsBase:
         ) -> Self:
             """Copy a Pydantic-compatible model instance."""
             ...
+
+        __pydantic_fields__: ClassVar[t.MappingKV[str, FieldInfo]]
+        """Pydantic-internal mapping of field names to ``FieldInfo``."""
+
+    @runtime_checkable
+    class ArbitraryTypesModel(BaseModel, Protocol):
+        """Structural protocol for Pydantic models allowing arbitrary types."""
 
     @runtime_checkable
     class Routable(Protocol):
