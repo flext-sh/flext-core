@@ -56,4 +56,5 @@ class FlextProtocolsConfig:
         @property
         def schema_ref(self) -> str | None: ...
 
+
 __all__: list[str] = ["FlextProtocolsConfig"]
