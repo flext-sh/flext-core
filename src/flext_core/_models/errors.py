@@ -6,13 +6,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (  # noqa: TC003 — Pydantic field resolution needs runtime Mapping
+    Mapping,
+)
 from types import MappingProxyType
-from typing import Annotated, Self
+from typing import Annotated, Self, TYPE_CHECKING
+
+from pydantic import NonNegativeInt  # noqa: TC002 — Pydantic field resolution needs runtime NonNegativeInt
 
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextModelsErrors:
@@ -22,11 +29,11 @@ class FlextModelsErrors:
         """Validated public snapshot for exception metric exports."""
 
         total_exceptions: Annotated[
-            t.NonNegativeInt,
+            NonNegativeInt,
             mp.Field(description="Total recorded exception occurrences."),
         ] = 0
         exception_counts: Annotated[
-            t.IntMapping,
+            Mapping[str, int],
             mp.Field(description="Per-exception occurrence totals keyed by type name."),
         ] = mp.Field(default_factory=lambda: MappingProxyType({}))
         exception_counts_summary: Annotated[
@@ -34,7 +41,7 @@ class FlextModelsErrors:
             mp.Field(description="Human-readable summary for logs and diagnostics."),
         ] = ""
         unique_exception_types: Annotated[
-            t.NonNegativeInt,
+            NonNegativeInt,
             mp.Field(description="Number of unique exception types recorded."),
         ] = 0
 
@@ -59,7 +66,7 @@ class FlextModelsErrors:
         """Copy-updated runtime state for exception counters."""
 
         exception_counts: Annotated[
-            t.IntMapping,
+            Mapping[str, int],
             mp.Field(description="Recorded counts keyed by exception type name."),
         ] = mp.Field(default_factory=lambda: MappingProxyType({}))
 

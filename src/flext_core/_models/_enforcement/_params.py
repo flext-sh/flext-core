@@ -6,11 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (  # noqa: TC003 — Pydantic field resolution needs runtime Mapping/Sequence
+    Mapping,
+    Sequence,
+)
 from typing import Literal
 
 from pydantic import Field
-
-from flext_core._typings.base import FlextTypingBase as t
 
 from ._base import EnforcementModelBase, FlextModelsEnforcementBase
 
@@ -37,24 +39,24 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         kind: Literal["model_config"] = "model_config"
         forbid_v1_config: bool = False
         require_extra_forbid: bool = False
-        allowed_extra_values: t.StrSequence = ()
+        allowed_extra_values: Sequence[str] = ()
         require_frozen_for_value_objects: bool = False
 
     class LooseSymbolParams(EnforcementModelBase):
         """Parameters for LOOSE_SYMBOL predicate."""
 
         kind: Literal["loose_symbol"] = "loose_symbol"
-        allowed_prefixes: t.StrSequence = ()
+        allowed_prefixes: Sequence[str] = ()
         require_future_annotations: bool = False
-        required_canonical_files: t.StrSequence = ()
+        required_canonical_files: Sequence[str] = ()
         require_settings_base: bool = False
 
     class ImportBlacklistParams(EnforcementModelBase):
         """Parameters for IMPORT_BLACKLIST predicate."""
 
         kind: Literal["import_blacklist"] = "import_blacklist"
-        forbidden_modules: t.StrSequence = ()
-        forbidden_symbols: t.StrSequence = ()
+        forbidden_modules: Sequence[str] = ()
+        forbidden_symbols: Sequence[str] = ()
         private_package_only: bool = False
         detect_cycles: bool = False
 
@@ -64,7 +66,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         kind: Literal["foreign_canonical_alias_import"] = (
             "foreign_canonical_alias_import"
         )
-        project_alias_owners: t.StrSequenceMapping = Field(default_factory=dict)
+        project_alias_owners: Mapping[str, Sequence[str]] = Field(default_factory=dict)
 
     class ClassPlacementParams(EnforcementModelBase):
         """Parameters for CLASS_PLACEMENT predicate."""
@@ -91,28 +93,28 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """Parameters for ALIAS_REBIND predicate."""
 
         kind: Literal["alias_rebind"] = "alias_rebind"
-        canonical_files: t.StrSequence = ()
-        alias_names: t.StrSequence = ()
+        canonical_files: Sequence[str] = ()
+        alias_names: Sequence[str] = ()
         expected_form: str = ""
 
     class CompatibilityAliasParams(EnforcementModelBase):
         """Parameters for COMPATIBILITY_ALIAS predicate."""
 
         kind: Literal["compatibility_alias"] = "compatibility_alias"
-        alias_renames: t.StrMapping = Field(default_factory=dict)
-        project_alias_owners: t.StrSequenceMapping = Field(default_factory=dict)
+        alias_renames: Mapping[str, str] = Field(default_factory=dict)
+        project_alias_owners: Mapping[str, Sequence[str]] = Field(default_factory=dict)
 
     class LibraryImportParams(EnforcementModelBase):
         """Parameters for LIBRARY_IMPORT predicate."""
 
         kind: Literal["library_import"] = "library_import"
-        library_owners: t.StrMapping = Field(default_factory=dict)
+        library_owners: Mapping[str, str] = Field(default_factory=dict)
 
     class DuplicateSymbolParams(EnforcementModelBase):
         """Parameters for DUPLICATE_SYMBOL predicate."""
 
         kind: Literal["duplicate_symbol"] = "duplicate_symbol"
-        hierarchy: t.StrSequence = ()
+        hierarchy: Sequence[str] = ()
         symbol_kinds: frozenset[str] = frozenset()
 
     class DeprecatedSyntaxParams(EnforcementModelBase):
@@ -125,7 +127,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """Parameters for METHOD_SHAPE predicate."""
 
         kind: Literal["method_shape"] = "method_shape"
-        forbidden_prefixes: t.StrSequence = ()
+        forbidden_prefixes: Sequence[str] = ()
         require_static_or_classmethod: bool = False
         max_params: int = 0
 

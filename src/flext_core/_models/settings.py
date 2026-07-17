@@ -9,14 +9,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, TYPE_CHECKING
 
 from pydantic import AliasChoices, ConfigDict, model_validator
 
 from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.settings import FlextProtocolsSettings as p
+
+if TYPE_CHECKING:
+    from flext_core._protocols.settings import FlextProtocolsSettings as p
 
 
 class FlextModelsSettings:
@@ -52,7 +54,7 @@ class FlextModelsSettings:
         ] = None
 
         def create_settings(self) -> p.Settings:
-            return settings_class.fetch_global()
+            return self.settings_class.fetch_global()
 
     class SettingsValue(m.ImmutableValueModel):
         """Frozen settings branch model that preserves Pydantic env coercion."""
