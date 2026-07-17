@@ -108,8 +108,8 @@ class TestsFlextCoreEnumUtilities:
             tm.that(result.value, eq=scenario.expected_status)
         else:
             tm.fail(result)
-            assert scenario.expected_error is not None
-            assert result.error is not None
+            tm.that(scenario.expected_error, none=False)
+            tm.that(result.error, none=False)
             assert scenario.expected_error in result.error
 
     def test_parsed_member_round_trips_into_enum_values(self) -> None:

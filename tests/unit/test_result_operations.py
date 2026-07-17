@@ -23,21 +23,21 @@ class TestsFlextResultOperations:
         """r.ok is success, carries the value, and has no error."""
         result: p.Result[str] = r[str].ok(value)
 
-        assert result.success is True
-        assert result.failure is False
-        assert bool(result) is True
+        tm.that(result.success, eq=True)
+        tm.that(result.failure, eq=False)
+        tm.that(bool(result), eq=True)
         tm.that(result.value, eq=value)
         tm.that(result.unwrap(), eq=value)
-        assert result.error is None
+        tm.that(result.error, none=True)
 
     @pytest.mark.parametrize("message", ["boom", "error message", "not found"])
     def test_fail_reports_failure_and_preserves_error(self, message: str) -> None:
         """r.fail is failure, preserves the error message, and has no value."""
         result: p.Result[str] = r[str].fail(message)
 
-        assert result.failure is True
-        assert result.success is False
-        assert bool(result) is False
+        tm.that(result.failure, eq=True)
+        tm.that(result.success, eq=False)
+        tm.that(bool(result), eq=False)
         tm.that(result.error, eq=message)
 
     @pytest.mark.parametrize("message", ["boom", "denied"])
@@ -78,7 +78,7 @@ class TestsFlextResultOperations:
 
         mapped = result.map(lambda x: x * 2)
 
-        assert mapped.success is True
+        tm.that(mapped.success, eq=True)
         tm.that(mapped.unwrap(), eq=10)
 
     def test_map_is_a_no_op_on_failure_and_preserves_error(self) -> None:
@@ -87,7 +87,7 @@ class TestsFlextResultOperations:
 
         mapped = result.map(lambda x: x * 2)
 
-        assert mapped.failure is True
+        tm.that(mapped.failure, eq=True)
         tm.that(mapped.error, eq="boom")
 
     # --- flat_map --------------------------------------------------------
@@ -106,7 +106,7 @@ class TestsFlextResultOperations:
 
         chained = result.flat_map(lambda x: r[str].ok(f"value_{x}"))
 
-        assert chained.failure is True
+        tm.that(chained.failure, eq=True)
         tm.that(chained.error, eq="boom")
 
     def test_flat_map_propagates_a_failing_continuation(self) -> None:
@@ -115,7 +115,7 @@ class TestsFlextResultOperations:
 
         chained = result.flat_map(lambda _: r[str].fail("downstream"))
 
-        assert chained.failure is True
+        tm.that(chained.failure, eq=True)
         tm.that(chained.error, eq="downstream")
 
     # --- map_error -------------------------------------------------------
@@ -126,7 +126,7 @@ class TestsFlextResultOperations:
 
         remapped = result.map_error(lambda e: f"alt_{e}")
 
-        assert remapped.failure is True
+        tm.that(remapped.failure, eq=True)
         tm.that(remapped.error, eq="alt_original")
 
     def test_map_error_leaves_a_success_untouched(self) -> None:
@@ -202,7 +202,7 @@ class TestsFlextResultOperations:
             r[int].ok(5).map(lambda v: v * 2).map(lambda v: f"result_{v}")
         )
 
-        assert composed.success is True
+        tm.that(composed.success, eq=True)
         tm.that(composed.unwrap(), eq="result_10")
 
     def test_railway_composition_short_circuits_at_first_failure(self) -> None:
@@ -212,5 +212,5 @@ class TestsFlextResultOperations:
         for step in steps:
             result = result.map(step)
 
-        assert result.failure is True
+        tm.that(result.failure, eq=True)
         tm.that(result.error, eq="early")

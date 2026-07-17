@@ -134,7 +134,7 @@ class TestsFlextCoreUtilitiesSettings:
         resolved_summary = container.resolve("settings_summary")
 
         tm.ok(success_result)
-        assert success_result.value is True
+        tm.that(success_result.value, eq=True)
         tm.ok(resolved_summary)
         tm.that(resolved_summary.value, eq={
             "env_file": c.ENV_FILE_DEFAULT,
@@ -156,5 +156,5 @@ class TestsFlextCoreUtilitiesSettings:
         )
 
         tm.fail(failure_result)
-        assert failure_result.error is not None
+        tm.that(failure_result.error, none=False)
         assert error_message in failure_result.error

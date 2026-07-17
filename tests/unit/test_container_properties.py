@@ -75,11 +75,11 @@ class TestsFlextCoreContainerProperties:
         container: FlextContainer,
     ) -> None:
         """``has`` is False before registration and True afterwards."""
-        assert container.has("late") is False
+        tm.that(container.has("late"), eq=False)
 
         _ = container.bind("late", 1)
 
-        assert container.has("late") is True
+        tm.that(container.has("late"), eq=True)
 
     def test_names_lists_registered_and_hides_internal(
         self,
@@ -131,7 +131,7 @@ class TestsFlextCoreContainerProperties:
 
         tm.ok(container.drop("temp"), eq=True)
 
-        assert container.has("temp") is False
+        tm.that(container.has("temp"), eq=False)
         tm.fail(container.resolve("temp"), has="temp")
 
     def test_clear_removes_all_user_registrations(
@@ -145,7 +145,7 @@ class TestsFlextCoreContainerProperties:
         container.clear()
 
         tm.that(list(container.names()), eq=[])
-        assert container.has("a") is False
+        tm.that(container.has("a"), eq=False)
 
     # -- invariants --------------------------------------------------------
 
