@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Annotated, override
 
 import pytest
-from flext_tests import r
+from flext_tests import r, tm
 
 from flext_core import FlextSettings
 from tests.base import s
@@ -42,8 +42,7 @@ class TestsFlextCoreServiceBootstrap:
 
         def _runtime_bootstrap_options(self) -> m.RuntimeBootstrapOptions:
             return m.RuntimeBootstrapOptions(
-                subproject="source-options",
-                wire_packages=("source-options",),
+                subproject="source-options", wire_packages=("source-options",)
             )
 
     class ConcreteTestService(s[bool]):
@@ -56,42 +55,47 @@ class TestsFlextCoreServiceBootstrap:
     # --- Service execution contract ------------------------------------
 
     def test_execute_returns_successful_result_with_payload(self) -> None:
+        """A concrete service returns its successful public payload."""
         result = self.ConcreteTestService().execute()
 
-        assert result.success
-        assert result.value is True
+        tm.that(result.success, eq=True)
+        tm.that(result.value, eq=True)
 
     def test_execute_result_unwraps_to_payload(self) -> None:
+        """The service result unwraps to its public payload."""
         result = self.ConcreteTestService().execute()
 
-        assert result.unwrap() is True
+        tm.that(result.unwrap(), eq=True)
 
     # --- resolve_runtime_options: empty / passthrough ------------------
 
     def test_resolve_with_no_source_yields_empty_options(self) -> None:
+        """Missing bootstrap input resolves to empty options."""
         resolved = u.resolve_runtime_options()
 
-        assert resolved.model_dump(exclude_none=True) == {}
+        tm.that(resolved.model_dump(exclude_none=True), eq={})
 
     def test_resolve_returns_supplied_model_unchanged(self) -> None:
+        """A supplied options model retains its public values."""
         options = m.RuntimeBootstrapOptions(subproject="keep")
 
         resolved = u.resolve_runtime_options(options)
 
-        assert resolved.subproject == "keep"
+        tm.that(resolved.subproject, eq="keep")
 
     def test_runtime_options_accepts_settings_class_contract(self) -> None:
         """Settings class validation uses its method-only class protocol."""
         options = m.RuntimeBootstrapOptions(settings_type=FlextSettings)
 
-        assert options.settings_type is FlextSettings
+        tm.that(options.settings_type is FlextSettings, eq=True)
 
     def test_resolve_is_idempotent_for_resolved_model(self) -> None:
+        """Resolving an already normalized model is idempotent."""
         once = u.resolve_runtime_options({"subproject": "demo"})
 
         twice = u.resolve_runtime_options(once)
 
-        assert twice.model_dump() == once.model_dump()
+        tm.that(twice.model_dump(), eq=once.model_dump())
 
     # --- resolve_runtime_options: mapping validation -------------------
 
@@ -106,28 +110,30 @@ class TestsFlextCoreServiceBootstrap:
         ],
     )
     def test_resolve_mapping_sanitizes_wire_packages_by_element_type(
-        self,
-        wire_packages: list[str | int],
-        expected: tuple[str, ...] | None,
+        self, wire_packages: list[str | int], expected: tuple[str, ...] | None
     ) -> None:
-        resolved = u.resolve_runtime_options(
-            {"subproject": "demo", "wire_packages": wire_packages},
-        )
+        """Wire package mappings retain only wholly valid string sequences."""
+        resolved = u.resolve_runtime_options({
+            "subproject": "demo",
+            "wire_packages": wire_packages,
+        })
 
-        assert resolved.subproject == "demo"
-        assert resolved.wire_packages == expected
+        tm.that(resolved.subproject, eq="demo")
+        tm.that(resolved.wire_packages, eq=expected)
 
     # --- resolve_runtime_options: service-like source ------------------
 
     def test_resolve_uses_source_bootstrap_hook_when_attrs_absent(self) -> None:
+        """The source hook supplies options when public attributes are absent."""
         source = self.RuntimeBootstrapSource()
 
         resolved = u.resolve_runtime_options(source)
 
-        assert resolved.subproject == "source-options"
-        assert resolved.wire_packages == ("source-options",)
+        tm.that(resolved.subproject, eq="source-options")
+        tm.that(resolved.wire_packages, eq=("source-options",))
 
     def test_resolve_source_attrs_override_bootstrap_hook(self) -> None:
+        """Explicit source attributes override values from its bootstrap hook."""
         dispatcher = u.Tests.OkDispatcher()
         source = self.RuntimeBootstrapSource(
             subproject="source-attrs",
@@ -137,11 +143,12 @@ class TestsFlextCoreServiceBootstrap:
 
         resolved = u.resolve_runtime_options(source)
 
-        assert resolved.subproject == "source-attrs"
-        assert resolved.wire_packages == ("source-attrs",)
-        assert resolved.dispatcher is dispatcher
+        tm.that(resolved.subproject, eq="source-attrs")
+        tm.that(resolved.wire_packages, eq=("source-attrs",))
+        tm.that(resolved.dispatcher is dispatcher, eq=True)
 
     def test_resolve_keyword_overrides_take_precedence_over_source(self) -> None:
+        """Keyword overrides take precedence over every source value."""
         dispatcher = u.Tests.OkDispatcher()
         source = self.RuntimeBootstrapSource(
             subproject="source-attrs",
@@ -150,11 +157,9 @@ class TestsFlextCoreServiceBootstrap:
         )
 
         resolved = u.resolve_runtime_options(
-            source,
-            subproject="override",
-            wire_packages=("override",),
+            source, subproject="override", wire_packages=("override",)
         )
 
-        assert resolved.subproject == "override"
-        assert list(resolved.wire_packages or ()) == ["override"]
-        assert resolved.dispatcher is dispatcher
+        tm.that(resolved.subproject, eq="override")
+        tm.that(list(resolved.wire_packages or ()), eq=["override"])
+        tm.that(resolved.dispatcher is dispatcher, eq=True)

@@ -51,15 +51,13 @@ class TestsFlextSettingsIntegration:
         tm.that(settings.debug, eq=False)
         tm.that(settings.trace, eq=False)
         tm.that(
-            {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"},
-            has=settings.log_level,
+            {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}, has=settings.log_level
         )
         tm.that(settings.timezone, eq="UTC")
         tm.that(settings.async_logging, eq=True)
 
     def test_environment_variables_override_settings(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """FLEXT_-prefixed env vars populate the settings fields."""
         monkeypatch.setenv("FLEXT_LOG_LEVEL", "ERROR")

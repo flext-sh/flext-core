@@ -8,15 +8,18 @@ No private attribute, internal collaborator or implementation detail is inspecte
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
-from flext_tests import d, e, r
+from flext_tests import tm
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from collections.abc import Callable
 
-    from tests.protocols import p
+from tests.protocols import p, d, e, r
+
+_COMBINED_SUM = 6
+_FLAT_MAP_VALUE = 20
+_FLOW_VALUE = 2
+_INCREMENTED_VALUE = 4
+_RECOVERED_VALUE = 99
 
 
 class TestsFlextCoreDocumentedPatterns:
@@ -31,19 +34,18 @@ class TestsFlextCoreDocumentedPatterns:
         ],
     )
     def test_map_transforms_success_value(
-        self,
-        seed: int,
-        transform: Callable[[int], int],
-        expected: int,
+        self, seed: int, transform: Callable[[int], int], expected: int
     ) -> None:
+        """Map transforms the public success value with the supplied callable."""
         # Arrange / Act
         result = r[int].ok(seed).map(transform)
 
         # Assert
-        assert result.success
-        assert result.value == expected
+        tm.that(result.success, eq=True)
+        tm.that(result.value, eq=expected)
 
     def test_map_leaves_failure_untransformed(self) -> None:
+        """Map preserves a failure and its original error message."""
         # Arrange
         failure = r[int].fail("boom")
 
@@ -51,10 +53,11 @@ class TestsFlextCoreDocumentedPatterns:
         result = failure.map(lambda value: value + 1)
 
         # Assert
-        assert result.failure
-        assert result.error == "boom"
+        tm.that(result.failure, eq=True)
+        tm.that(result.error, eq="boom")
 
     def test_flat_map_chains_fallible_steps(self) -> None:
+        """Flat map composes successive successful result-producing steps."""
         # Act
         result = (
             r[int]
@@ -64,10 +67,11 @@ class TestsFlextCoreDocumentedPatterns:
         )
 
         # Assert
-        assert result.success
-        assert result.value == 20
+        tm.that(result.success, eq=True)
+        tm.that(result.value, eq=_FLAT_MAP_VALUE)
 
     def test_flat_map_short_circuits_on_first_failure(self) -> None:
+        """Flat map preserves the first failure without executing later steps."""
         # Act
         result = (
             r[int]
@@ -77,41 +81,39 @@ class TestsFlextCoreDocumentedPatterns:
         )
 
         # Assert
-        assert result.failure
-        assert result.error == "stopped"
+        tm.that(result.failure, eq=True)
+        tm.that(result.error, eq="stopped")
 
     @pytest.mark.parametrize(
-        ("result", "expected"),
-        [
-            (r[str].ok("flext"), 5),
-            (r[str].fail("missing"), 0),
-        ],
+        ("result", "expected"), [(r[str].ok("flext"), 5), (r[str].fail("missing"), 0)]
     )
     def test_map_or_returns_default_on_failure(
-        self,
-        result: p.Result[str],
-        expected: int,
+        self, result: p.Result[str], expected: int
     ) -> None:
+        """Map or returns the mapped length or its declared failure default."""
         # Act / Assert
-        assert result.map_or(0, len) == expected
+        tm.that(result.map_or(0, len), eq=expected)
 
     def test_recover_replaces_failure_with_value(self) -> None:
+        """Recover converts a failure into the value returned by its handler."""
         # Act
-        result = r[int].fail("boom").recover(lambda _error: 99)
+        result = r[int].fail("boom").recover(lambda _error: _RECOVERED_VALUE)
 
         # Assert
-        assert result.success
-        assert result.value == 99
+        tm.that(result.success, eq=True)
+        tm.that(result.value, eq=_RECOVERED_VALUE)
 
     def test_map_error_rewrites_error_message(self) -> None:
+        """Map error transforms only the public failure message."""
         # Act
         result = r[int].fail("boom").map_error(lambda message: message.upper())
 
         # Assert
-        assert result.failure
-        assert result.error == "BOOM"
+        tm.that(result.failure, eq=True)
+        tm.that(result.error, eq="BOOM")
 
     def test_value_access_on_failure_raises(self) -> None:
+        """Reading the value channel of a failed result raises RuntimeError."""
         # Arrange
         failure = r[int].fail("no value here")
 
@@ -120,6 +122,8 @@ class TestsFlextCoreDocumentedPatterns:
             _ = failure.value
 
     def test_flow_through_pipes_success_into_next_step(self) -> None:
+        """Flow through sends a success value into the next result step."""
+
         def step(value: int) -> p.Result[int]:
             return r[int].ok(value + 1)
 
@@ -127,10 +131,12 @@ class TestsFlextCoreDocumentedPatterns:
         result = r[int].ok(1).flow_through(step)
 
         # Assert
-        assert result.success
-        assert result.value == 2
+        tm.that(result.success, eq=True)
+        tm.that(result.value, eq=_FLOW_VALUE)
 
     def test_not_found_factory_carries_structured_payload(self) -> None:
+        """The not-found factory preserves its code, message, and resource data."""
+
         def fetch_profile_name(user_id: str) -> p.Result[str]:
             if user_id != "u-1":
                 return e.fail_not_found("user", user_id)
@@ -141,16 +147,16 @@ class TestsFlextCoreDocumentedPatterns:
         missing = fetch_profile_name("u-2")
 
         # Assert — success path
-        assert found.success
-        assert found.value == "Ada"
+        tm.that(found.success, eq=True)
+        tm.that(found.value, eq="Ada")
 
         # Assert — failure path exposes typed code + structured data publicly
-        assert missing.failure
-        assert missing.error_code == "NOT_FOUND_ERROR"
-        assert missing.error == "User 'u-2' not found"
-        assert missing.error_data is not None
-        assert missing.error_data["resource_type"] == "user"
-        assert missing.error_data["resource_id"] == "u-2"
+        tm.that(missing.failure, eq=True)
+        tm.that(missing.error_code, eq="NOT_FOUND_ERROR")
+        tm.that(missing.error, eq="User 'u-2' not found")
+        error_data = tm.not_none(missing.error_data)
+        tm.that(error_data["resource_type"], eq="user")
+        tm.that(error_data["resource_id"], eq="u-2")
 
     @pytest.mark.parametrize(
         ("raw_email", "expect_success", "expected_value"),
@@ -162,11 +168,10 @@ class TestsFlextCoreDocumentedPatterns:
         ],
     )
     def test_validation_normalizes_or_fails(
-        self,
-        raw_email: str | None,
-        expect_success: bool,
-        expected_value: str | None,
+        self, raw_email: str | None, expected_value: str | None, *, expect_success: bool
     ) -> None:
+        """Validation normalizes meaningful email input and rejects empty input."""
+
         def require_email(candidate: str | None) -> p.Result[str]:
             if candidate is None:
                 return e.fail_validation("email", error="cannot be None")
@@ -179,15 +184,16 @@ class TestsFlextCoreDocumentedPatterns:
         result = require_email(raw_email)
 
         # Assert
-        assert result.success is expect_success
+        tm.that(result.success, eq=expect_success)
         if expect_success:
-            assert result.value == expected_value
+            tm.that(result.value, eq=expected_value)
         else:
-            assert result.error_code == "VALIDATION_ERROR"
-            assert result.error_data is not None
-            assert result.error_data["field"] == "email"
+            tm.that(result.error_code, eq="VALIDATION_ERROR")
+            tm.that(tm.not_none(result.error_data)["field"], eq="email")
 
     def test_timeout_exception_preserves_cause_and_context(self) -> None:
+        """Timeout errors retain operation context, cause, and correlation id."""
+
         def fetch_remote_profile() -> str:
             socket_message = "socket stalled"
             timeout_message = "Remote profile lookup timed out"
@@ -207,12 +213,13 @@ class TestsFlextCoreDocumentedPatterns:
             fetch_remote_profile()
 
         error = raised.value
-        assert error.operation == "fetch profile"
-        assert error.__cause__ is not None
-        assert isinstance(error.__cause__, RuntimeError)
-        assert error.correlation_id is not None
+        tm.that(error.operation, eq="fetch profile")
+        tm.that(tm.not_none(error.__cause__), is_=RuntimeError)
+        tm.that(error.correlation_id, none=False)
 
     def test_railway_decorator_wraps_return_in_success_result(self) -> None:
+        """The railway decorator exposes a successful result for a plain return."""
+
         @d.railway()
         def increment(value: int) -> int:
             return value + 1
@@ -221,15 +228,13 @@ class TestsFlextCoreDocumentedPatterns:
         result = increment(3)
 
         # Assert
-        assert result.success
-        assert result.value == 4
+        tm.that(result.success, eq=True)
+        tm.that(result.value, eq=_INCREMENTED_VALUE)
 
     def test_combined_decorator_wraps_return_in_success_result(self) -> None:
-        @d.combined(
-            operation_name="sum_values",
-            railway_enabled=True,
-            track_perf=False,
-        )
+        """The combined decorator exposes a successful result for a plain return."""
+
+        @d.combined(operation_name="sum_values", railway_enabled=True, track_perf=False)
         def sum_values(values: list[int]) -> int:
             return sum(values)
 
@@ -237,5 +242,5 @@ class TestsFlextCoreDocumentedPatterns:
         result = sum_values([1, 2, 3])
 
         # Assert
-        assert result.success
-        assert result.value == 6
+        tm.that(result.success, eq=True)
+        tm.that(result.value, eq=_COMBINED_SUM)
