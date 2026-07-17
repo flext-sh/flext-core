@@ -99,8 +99,6 @@ setup: venv ## Full standalone setup (venv + dependencies + base.mk)
 	@$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_DEPS_GROUP) extra-paths \
 		--apply \
 		--workspace "$(CURDIR)"
-	@$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_DEPS_GROUP) internal-sync \
-		--workspace "$(CURDIR)"
 	@$(BOOTSTRAP_VENV)/bin/poetry lock
 	@$(BOOTSTRAP_VENV)/bin/poetry install --all-extras --all-groups
 	@if git rev-parse --git-dir >/dev/null 2>&1; then \

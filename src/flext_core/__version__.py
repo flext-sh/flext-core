@@ -12,13 +12,15 @@ from __future__ import annotations
 from email.utils import parseaddr
 from importlib.metadata import PackageMetadata, metadata
 
+from packaging.version import Version
+
 
 class _FlextVersionMetadata:
     """MRO base that derives package metadata for each concrete facade."""
 
     _metadata: PackageMetadata
     __version__: str = ""
-    __version_info__: tuple[int | str, ...] = ()
+    __version_info__: tuple[int, int, int]
     __title__: str = ""
     __description__: str = ""
     __author__: str = ""
@@ -54,14 +56,22 @@ class _FlextVersionMetadata:
             return url.strip()
         return ""
 
+    @staticmethod
+    def _resolve_version_info(version: str) -> tuple[int, int, int]:
+        """Return the exact three-component PEP 440 release tuple."""
+        try:
+            major, minor, patch = Version(version).release
+        except ValueError as exc:
+            msg = f"invalid three-part semantic version metadata: {version!r}"
+            raise ValueError(msg) from exc
+        return major, minor, patch
+
     @classmethod
     def _apply_metadata(cls) -> None:
         """Derive every public value once for the current MRO class."""
         package_metadata = cls._metadata
         cls.__version__ = package_metadata["Version"]
-        cls.__version_info__ = tuple(
-            int(part) if part.isdigit() else part for part in cls.__version__.split(".")
-        )
+        cls.__version_info__ = cls._resolve_version_info(cls.__version__)
         cls.__title__ = package_metadata.get("Name", "")
         cls.__description__ = package_metadata.get("Summary", "")
         cls.__author__, cls.__author_email__ = cls._resolve_author(package_metadata)

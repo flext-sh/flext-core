@@ -367,9 +367,6 @@ if TYPE_CHECKING:
     from tests.unit.test_enforcement_namespace_part_02 import (
         TestsFlextCoreEnforcementNamespacePart02 as TestsFlextCoreEnforcementNamespacePart02,
     )
-    from tests.unit.test_enforcement_plugin import (
-        TestsFlextCoreEnforcementPlugin as TestsFlextCoreEnforcementPlugin,
-    )
     from tests.unit.test_enforcement_reports import (
         TestsFlextCoreEnforcementReports as TestsFlextCoreEnforcementReports,
     )
@@ -821,7 +818,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".unit.test_enforcement_namespace_part_02": (
                 "TestsFlextCoreEnforcementNamespacePart02",
             ),
-            ".unit.test_enforcement_plugin": ("TestsFlextCoreEnforcementPlugin",),
             ".unit.test_enforcement_reports": ("TestsFlextCoreEnforcementReports",),
             ".unit.test_enforcement_warning_visibility": (
                 "TestsFlextCoreEnforcementWarningVisibility",

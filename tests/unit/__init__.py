@@ -90,7 +90,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_enforcement_namespace_part_02": (
                 "TestsFlextCoreEnforcementNamespacePart02",
             ),
-            ".test_enforcement_plugin": ("TestsFlextCoreEnforcementPlugin",),
             ".test_enforcement_reports": ("TestsFlextCoreEnforcementReports",),
             ".test_enforcement_warning_visibility": (
                 "TestsFlextCoreEnforcementWarningVisibility",
